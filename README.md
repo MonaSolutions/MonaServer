@@ -1,4 +1,4 @@
 Mona-Server
 ===========
 
-Being developed
+In progress...
