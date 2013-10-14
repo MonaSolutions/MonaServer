@@ -1,0 +1,201 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="debug|Win32">
+      <Configuration>debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="release|Win32">
+      <Configuration>release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{59BC76A9-32CF-4580-8C32-9F12EA4BA22B}</ProjectGuid>
+    <RootNamespace>MonaBase</RootNamespace>
+    <Keyword>ManagedCProj</Keyword>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v120</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+    <CLRSupport>false</CLRSupport>
+    <WholeProgramOptimization>false</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v120</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+    <CLRSupport>false</CLRSupport>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>11.0.50727.1</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>$(ProjectDir)lib\</OutDir>
+    <IntDir>tmp/$(Configuration)\</IntDir>
+    <TargetName>$(ProjectName)d</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='release|Win32'">
+    <OutDir>$(ProjectDir)lib/\</OutDir>
+    <IntDir>tmp/$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <AdditionalOptions>/MP %(AdditionalOptions)</AdditionalOptions>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>../External/include;include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;STATIC;MONA_LOGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <MinimalRebuild>false</MinimalRebuild>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <PrecompiledHeader />
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+    </ClCompile>
+    <Lib>
+      <OutputFile>$(OutDir)$(ProjectName)d.lib</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='release|Win32'">
+    <ClCompile>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <OmitFramePointers>true</OmitFramePointers>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
+      <AdditionalIncludeDirectories>include;../External/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;STATIC;MONA_LOGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <PrecompiledHeader />
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat />
+      <Optimization>Full</Optimization>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+    </ClCompile>
+    <Lib>
+      <OutputFile>$(OutDir)$(ProjectName).lib</OutputFile>
+      <LinkTimeCodeGeneration>true</LinkTimeCodeGeneration>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <Reference Include="System">
+      <CopyLocalSatelliteAssemblies>true</CopyLocalSatelliteAssemblies>
+      <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
+    </Reference>
+    <Reference Include="System.Data">
+      <CopyLocalSatelliteAssemblies>true</CopyLocalSatelliteAssemblies>
+      <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
+    </Reference>
+    <Reference Include="System.Xml">
+      <CopyLocalSatelliteAssemblies>true</CopyLocalSatelliteAssemblies>
+      <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="sources\Application.cpp" />
+    <ClCompile Include="sources\HelpFormatter.cpp" />
+    <ClCompile Include="sources\Mona.cpp" />
+    <ClCompile Include="sources\BinaryReader.cpp" />
+    <ClCompile Include="sources\BinaryStream.cpp" />
+    <ClCompile Include="sources\BinaryWriter.cpp" />
+    <ClCompile Include="sources\MemoryReader.cpp" />
+    <ClCompile Include="sources\MemoryStream.cpp" />
+    <ClCompile Include="sources\MemoryWriter.cpp" />
+    <ClCompile Include="sources\AttemptCounter.cpp" />
+    <ClCompile Include="sources\DiffieHellman.cpp" />
+    <ClCompile Include="sources\Logs.cpp" />
+    <ClCompile Include="sources\MapParameters.cpp" />
+    <ClCompile Include="sources\Option.cpp">
+      <ExceptionHandling Condition="'$(Configuration)|$(Platform)'=='debug|Win32'">Sync</ExceptionHandling>
+    </ClCompile>
+    <ClCompile Include="sources\Options.cpp" />
+    <ClCompile Include="sources\Parameters.cpp" />
+    <ClCompile Include="sources\QualityOfService.cpp" />
+    <ClCompile Include="sources\ServerApplication.cpp" />
+    <ClCompile Include="sources\String.cpp" />
+    <ClCompile Include="sources\Time.cpp" />
+    <ClCompile Include="sources\TimeParser.cpp" />
+    <ClCompile Include="sources\Trigger.cpp" />
+    <ClCompile Include="sources\Util.cpp" />
+    <ClCompile Include="sources\PoolThread.cpp" />
+    <ClCompile Include="sources\PoolThreads.cpp" />
+    <ClCompile Include="sources\Startable.cpp" />
+    <ClCompile Include="sources\Task.cpp" />
+    <ClCompile Include="sources\TaskHandler.cpp" />
+    <ClCompile Include="sources\SocketHandler.cpp" />
+    <ClCompile Include="sources\SocketManager.cpp" />
+    <ClCompile Include="sources\SocketSender.cpp" />
+    <ClCompile Include="sources\TCPClient.cpp" />
+    <ClCompile Include="sources\TCPServer.cpp" />
+    <ClCompile Include="sources\UDPSocket.cpp" />
+    <ClCompile Include="sources\WinRegistryKey.cpp" />
+    <ClCompile Include="sources\WinService.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\Mona\HelpFormatter.h" />
+    <ClInclude Include="include\Mona\Parameters.h" />
+    <ClInclude Include="include\Mona\Application.h" />
+    <ClInclude Include="include\Mona\Exception.h" />
+    <ClInclude Include="include\Mona\Mona.h" />
+    <ClInclude Include="include\Mona\BinaryReader.h" />
+    <ClInclude Include="include\Mona\BinaryStream.h" />
+    <ClInclude Include="include\Mona\BinaryWriter.h" />
+    <ClInclude Include="include\Mona\MemoryReader.h" />
+    <ClInclude Include="include\Mona\MemoryStream.h" />
+    <ClInclude Include="include\Mona\MemoryWriter.h" />
+    <ClInclude Include="include\Mona\AttemptCounter.h" />
+    <ClInclude Include="include\Mona\DiffieHellman.h" />
+    <ClInclude Include="include\Mona\Entities.h" />
+    <ClInclude Include="include\Mona\Entity.h" />
+    <ClInclude Include="include\Mona\Logger.h" />
+    <ClInclude Include="include\Mona\Logs.h" />
+    <ClInclude Include="include\Mona\MapParameters.h" />
+    <ClInclude Include="include\Mona\Option.h" />
+    <ClInclude Include="include\Mona\Options.h" />
+    <ClInclude Include="include\Mona\QualityOfService.h" />
+    <ClInclude Include="include\Mona\ServerApplication.h" />
+    <ClInclude Include="include\Mona\StopWatch.h" />
+    <ClInclude Include="include\Mona\String.h" />
+    <ClInclude Include="include\Mona\Time.h" />
+    <ClInclude Include="include\Mona\TimeParser.h" />
+    <ClInclude Include="include\Mona\Trigger.h" />
+    <ClInclude Include="include\Mona\Util.h" />
+    <ClInclude Include="include\Mona\PoolThread.h" />
+    <ClInclude Include="include\Mona\PoolThreads.h" />
+    <ClInclude Include="include\Mona\Startable.h" />
+    <ClInclude Include="include\Mona\Task.h" />
+    <ClInclude Include="include\Mona\TaskHandler.h" />
+    <ClInclude Include="include\Mona\WinRegistryKey.h" />
+    <ClInclude Include="include\Mona\WinService.h" />
+    <ClInclude Include="include\Mona\WorkThread.h" />
+    <ClInclude Include="include\Mona\SocketHandler.h" />
+    <ClInclude Include="include\Mona\SocketManager.h" />
+    <ClInclude Include="include\Mona\SocketSender.h" />
+    <ClInclude Include="include\Mona\TCPClient.h" />
+    <ClInclude Include="include\Mona\TCPSender.h" />
+    <ClInclude Include="include\Mona\TCPServer.h" />
+    <ClInclude Include="include\Mona\UDPSender.h" />
+    <ClInclude Include="include\Mona\UDPSocket.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

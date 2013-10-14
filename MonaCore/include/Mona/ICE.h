@@ -1,0 +1,82 @@
+/* 
+	Copyright 2013 Mona - mathieu.poux[a]gmail.com
+ 
+	This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License received along this program for more
+	details (or else see http://www.gnu.org/licenses/).
+
+	This file is a part of Mona.
+*/
+
+#pragma once
+
+#include "Mona/Mona.h"
+#include "Mona/SDP.h"
+#include "Mona/Util.h"
+#include "Mona/Time.h"
+#include "Poco/Net/SocketAddress.h"
+#include <list>
+#include <set>
+
+namespace Mona {
+
+class Peer;
+class RelayServer;
+class ICE {
+public:
+	ICE(const Peer& initiator,const Peer& remote,const RelayServer& relay);
+	virtual ~ICE();
+
+	void						setCurrent(Peer& current);
+	Mona::UInt16				mediaIndex;
+
+	void			fromSDPLine(const std::string& line,SDPCandidate& publicCandidate);
+	void			fromSDPLine(const std::string& line,SDPCandidate& publicCandidate,std::list<SDPCandidate>& relayCurrentCandidates,std::list<SDPCandidate>& relayRemoteCandidates);
+
+	void			reset();
+	Mona::UInt32	elapsed();
+
+	static bool ProcessSDPPacket(DataReader& packet,Peer& current,Writer& currentWriter,Peer& remote,Writer& remoteWriter);
+
+private:
+	enum Type {
+		INITIATOR,
+		REMOTE
+	};
+	
+	void fromSDPLine(const std::string& line,SDPCandidate& publicCandidate,std::list<SDPCandidate>& relayCurrentCandidates,std::list<SDPCandidate>& relayRemoteCandidates,bool relayed);
+	void fromSDPCandidate(const std::string& candidate,SDPCandidate& publicCandidate,std::list<SDPCandidate>& relayCurrentCandidates,std::list<SDPCandidate>& relayRemoteCandidates,bool relayed);
+
+	std::map<Mona::UInt16,std::map<Mona::UInt8,std::set<Poco::Net::SocketAddress,Util::AddressComparator> > >	_initiatorAddresses;
+	std::map<Mona::UInt16,std::map<Mona::UInt8,std::set<Poco::Net::SocketAddress,Util::AddressComparator> > >	_remoteAddresses;
+	std::map<Mona::UInt16, std::map<Mona::UInt8,std::set<Mona::UInt16> > >		_relayPorts;
+	Mona::Time												_time;
+	const RelayServer&											_relay;
+	bool														_first;
+	Type														_type;
+	std::string													_publicHost;
+
+	std::string													_serverInitiatorHost;
+	std::string													_serverRemoteHost;
+
+	const Peer&													_initiator;
+	const Peer&													_remote;
+};
+
+inline void ICE::fromSDPLine(const std::string& line,SDPCandidate& publicCandidate,std::list<SDPCandidate>& relayCurrentCandidates,std::list<SDPCandidate>& relayRemoteCandidates) {
+	fromSDPLine(line,publicCandidate,relayCurrentCandidates,relayRemoteCandidates,true);
+}
+
+inline Mona::UInt32 ICE::elapsed() {
+	return (Mona::UInt32)_time.elapsed()/1000;
+}
+
+
+} // namespace Mona

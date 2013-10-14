@@ -1,0 +1,44 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Express 2013 for Windows Desktop
+VisualStudioVersion = 12.0.20827.3
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MonaBase", "MonaBase\MonaBase.vcxproj", "{59BC76A9-32CF-4580-8C32-9F12EA4BA22B}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MonaCore", "MonaCore\MonaCore.vcxproj", "{DB5EA81E-1995-4F9B-A37E-BFB70E564D4B}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MonaServer", "MonaServer\MonaServer.vcxproj", "{21C16553-20EB-4346-B2A5-2018BA8A8C52}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TestSuite", "TestSuite\TestSuite.vcxproj", "{5E8BB921-78A5-482C-8CCA-54B327C559F2}"
+	ProjectSection(ProjectDependencies) = postProject
+		{DB5EA81E-1995-4F9B-A37E-BFB70E564D4B} = {DB5EA81E-1995-4F9B-A37E-BFB70E564D4B}
+		{59BC76A9-32CF-4580-8C32-9F12EA4BA22B} = {59BC76A9-32CF-4580-8C32-9F12EA4BA22B}
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		debug|Win32 = debug|Win32
+		release|Win32 = release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{59BC76A9-32CF-4580-8C32-9F12EA4BA22B}.debug|Win32.ActiveCfg = debug|Win32
+		{59BC76A9-32CF-4580-8C32-9F12EA4BA22B}.debug|Win32.Build.0 = debug|Win32
+		{59BC76A9-32CF-4580-8C32-9F12EA4BA22B}.release|Win32.ActiveCfg = release|Win32
+		{59BC76A9-32CF-4580-8C32-9F12EA4BA22B}.release|Win32.Build.0 = release|Win32
+		{DB5EA81E-1995-4F9B-A37E-BFB70E564D4B}.debug|Win32.ActiveCfg = debug|Win32
+		{DB5EA81E-1995-4F9B-A37E-BFB70E564D4B}.debug|Win32.Build.0 = debug|Win32
+		{DB5EA81E-1995-4F9B-A37E-BFB70E564D4B}.release|Win32.ActiveCfg = release|Win32
+		{DB5EA81E-1995-4F9B-A37E-BFB70E564D4B}.release|Win32.Build.0 = release|Win32
+		{21C16553-20EB-4346-B2A5-2018BA8A8C52}.debug|Win32.ActiveCfg = debug|Win32
+		{21C16553-20EB-4346-B2A5-2018BA8A8C52}.debug|Win32.Build.0 = debug|Win32
+		{21C16553-20EB-4346-B2A5-2018BA8A8C52}.release|Win32.ActiveCfg = release|Win32
+		{21C16553-20EB-4346-B2A5-2018BA8A8C52}.release|Win32.Build.0 = release|Win32
+		{5E8BB921-78A5-482C-8CCA-54B327C559F2}.debug|Win32.ActiveCfg = Debug|Win32
+		{5E8BB921-78A5-482C-8CCA-54B327C559F2}.debug|Win32.Build.0 = Debug|Win32
+		{5E8BB921-78A5-482C-8CCA-54B327C559F2}.release|Win32.ActiveCfg = Release|Win32
+		{5E8BB921-78A5-482C-8CCA-54B327C559F2}.release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

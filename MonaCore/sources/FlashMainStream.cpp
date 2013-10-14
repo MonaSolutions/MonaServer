@@ -1,0 +1,212 @@
+/* 
+	Copyright 2013 Mona - mathieu.poux[a]gmail.com
+ 
+	This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License received along this program for more
+	details (or else see http://www.gnu.org/licenses/).
+
+	This file is a part of Mona.
+*/
+
+#include "Mona/FlashMainStream.h"
+#include "Mona/Invoker.h"
+#include "Mona/Util.h"
+#include "Mona/Exception.h"
+#include "Mona/Logs.h"
+#include "Poco/Format.h"
+#include <openssl/evp.h>
+
+
+using namespace std;
+using namespace Poco;
+using namespace Poco::Net;
+
+namespace Mona {
+
+
+FlashMainStream::FlashMainStream(Invoker& invoker,Peer& peer) : FlashStream(invoker,peer),_pGroup(NULL) {
+	
+}
+
+FlashMainStream::~FlashMainStream() {
+	if(_pGroup)
+		peer.unjoinGroup(*_pGroup);
+	// delete stream index remaining (which have not had time to send a 'destroyStream' message)
+	set<UInt32>::const_iterator it;
+	for(it=_streams.begin();it!=_streams.end();++it)
+		invoker.destroyFlashStream(*it);
+}
+
+void FlashMainStream::close(FlashWriter& writer,const string& error,int code) {
+	switch(code) {
+		case Exception::SOFTWARE:
+			writer.writeAMFError("NetConnection.Connect.Rejected",error);
+			break;
+		case Exception::APPLICATION:
+			writer.writeAMFError("NetConnection.Connect.InvalidApp",error);
+			break;
+		default:
+			writer.writeAMFError("NetConnection.Connect.Failed",error);
+	}
+	if(!error.empty())
+		ERROR("%s",error.c_str())
+	writer.writeInvocation("close");
+	writer.close();
+}
+
+
+void FlashMainStream::messageHandler(const string& name,AMFReader& message,FlashWriter& writer) {
+	if(name=="connect") {
+		message.stopReferencing();
+		AMFReader::Type type;
+		string name;
+		bool external=false;
+		if(message.readObject(name,external)) {
+			if(external)
+				throw Exception(Exception::PROTOCOL, "External type not acceptable for a connection message");
+			while((type=message.readItem(name))!=AMFReader::END) {
+				switch(type) {
+					case AMFReader::NIL:
+						message.readNull();
+						break;
+					case AMFReader::BOOLEAN:
+						peer.setBool(name,message.readBoolean());
+						break;
+					case AMFReader::NUMBER:
+						peer.setNumber(name,message.readNumber());
+						break;
+					case AMFReader::STRING: {
+						string value;
+						message.readString(value);
+						peer.setString(name,value);
+						break;
+					}
+					case AMFReader::DATE:
+						peer.setNumber(name, (double)(message.readDate().toInt() / 1000));
+						break;
+					default:
+						throw Exception(Exception::PROTOCOL, "Type ",type," not acceptable for a connection message");
+				}
+			}
+		}
+		message.startReferencing();
+
+		string tcUrl;
+		if (peer.path.empty() && peer.getString("tcUrl", tcUrl))
+			Util::UnpackUrl(tcUrl, (SocketAddress&)peer.serverAddress, (string&)peer.path, peer);
+
+		// Don't support AMF0 forced on NetConnection object because AMFWriter writes in AMF3 format
+		// But it's not a pb because NetConnection RTMFP works since flash player 10.0 only (which supports AMF3)
+		double objEncoding = 1;
+		if (peer.getNumber("objectEncoding", objEncoding) && objEncoding==0)
+			throw Exception(Exception::PROTOCOL, "ObjectEncoding client must be in a AMF3 format (not AMF0)");
+
+		// Check if the client is authorized
+		AMFWriter& response = writer.writeAMFSuccess("NetConnection.Connect.Success","Connection succeeded",true);
+		response.amf0Preference = true;
+		response.writeNumberProperty("objectEncoding",3.0);
+		response.amf0Preference = false;
+		peer.onConnection(writer,message,response);
+		response.endObject();
+
+
+	} else if(name == "setPeerInfo") {
+
+		peer.addresses.resize(1);
+		string addr;
+		while(message.available()) {
+			message.readString(addr); // private host
+			try {
+				peer.addresses.push_back(SocketAddress(addr));
+			} catch(exception& ex) {
+				ERROR("Bad peer address %s, %s",addr.c_str(),ex.what());
+			}
+		}
+		
+		BinaryWriter& response = writer.writeRaw();
+		response.write16(0x29); // Unknown!
+		response.write32(invoker.params.RTMFP.keepAliveServer);
+		response.write32(invoker.params.RTMFP.keepAlivePeer);
+
+	} else if(name == "initStream") {
+		// TODO?
+	} else if(name == "createStream") {
+
+		writer.writeMessage().writeNumber(*_streams.insert(invoker.createFlashStream(peer)).first);
+
+	} else if(name == "deleteStream") {
+		UInt32 id = (UInt32)message.readNumber();
+		_streams.erase(id);
+		invoker.destroyFlashStream(id);
+
+	} else {
+		try {
+			peer.onMessage(name,message);
+		} catch(exception& ex) {
+			writer.writeAMFError("NetConnection.Call.Failed",ex.what());
+		}		
+	}
+	
+}
+
+void FlashMainStream::rawHandler(UInt8 type,MemoryReader& data,FlashWriter& writer) {
+
+	if(type==0x01) {
+		if(data.available()>0) {
+			UInt32 size = data.read7BitValue()-1;
+			UInt8 flag = data.read8();
+
+			UInt8 groupId[ID_SIZE];
+
+			if(flag==0x10) {
+				vector<UInt8> groupIdVar(size);
+				data.readRaw(&groupIdVar[0],size);
+				EVP_Digest(&groupIdVar[0],groupIdVar.size(),(unsigned char *)groupId,NULL,EVP_sha256(),NULL);
+			} else
+				data.readRaw(groupId,ID_SIZE);
+		
+			_pGroup = invoker.groups(groupId);
+		
+			if(_pGroup)
+				peer.joinGroup(*_pGroup,&writer);
+			else
+				_pGroup = &peer.joinGroup(groupId,&writer);
+		}
+	} else {
+		UInt16 flag = data.read16();
+		if(flag==0x03) {
+			// setBufferTime
+			UInt32 streamId = data.read32();
+			if(streamId==0) {
+				setBufferTime(data.read32());
+				return;
+			}
+			AutoPtr<FlashStream>  pStream = invoker.getFlashStream(streamId);
+			if(pStream.isNull()) {
+				ERROR("setBufferTime message for a unknown %u stream",streamId)
+				return;
+			}
+			UInt32 ms = data.read32();
+			INFO("setBufferTime %u on stream %u",ms,pStream->id)
+			// To do working the buffertime on receiver side
+			BinaryWriter& raw = writer.writeRaw();
+			raw.write16(0);
+			raw.write32(pStream->id);
+			pStream->setBufferTime(ms);
+			return;
+		}
+		ERROR("Raw message %.2x/%u unknown on stream %u",type,flag,id);
+	}
+		
+}
+
+
+
+} // namespace Mona

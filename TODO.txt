@@ -1,0 +1,11 @@
+- remplacer les "format" par des concaténations
+- vérifier peer.serverAddress assignation partout!
+- créer une compilation 64bits
+- Vérifier les arguments
+- Vérifier services web
+- Vérifier que la surcharge std::exception::what par Exception fonctionne! (faire le tour de tous les try catch)
+- corriger le systeme de LOG avec le nouveau code de formattage
+- tester HelpFormatter
+- enlever ApplicationKiller?
+- tester vitesse logs
+- checks waitForTerminationRequest linux et windows!

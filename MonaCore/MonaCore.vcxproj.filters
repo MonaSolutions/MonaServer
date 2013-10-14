@@ -1,0 +1,382 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="sources">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="sources\Protocols">
+      <UniqueIdentifier>{61639c5b-51b0-418a-a0dd-d47cb0c3e545}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="sources\Protocols\RTMFP">
+      <UniqueIdentifier>{8074b1e3-65f7-4cc1-bf6d-ce488101f921}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="sources\Protocols\RTMP">
+      <UniqueIdentifier>{5196f134-a81e-41c7-807c-c8864dd76a99}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="sources\Protocols\WebSocket">
+      <UniqueIdentifier>{dfe15f85-03ab-4c5d-a2a4-fe6b79fb2a1f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="sources\Protocols\HTTP">
+      <UniqueIdentifier>{70368dd8-a289-4119-9cf0-c351cbc79715}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="sources\Multimedia">
+      <UniqueIdentifier>{78d78f7e-7e65-44da-98bc-4018546f7803}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="sources\Serializers">
+      <UniqueIdentifier>{20bf7e1f-a27f-45f3-935a-6f7405171d4b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="sources\Sessions">
+      <UniqueIdentifier>{512c7341-6c6a-4bf3-bfeb-70b7ea5f87aa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="sources\Flash">
+      <UniqueIdentifier>{185cb09a-288d-41d7-984d-50ad5436540d}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\Mona\Client.h">
+      <Filter>sources</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\Clients.h">
+      <Filter>sources</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\Decoding.h">
+      <Filter>sources</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\Gateway.h">
+      <Filter>sources</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\Group.h">
+      <Filter>sources</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\Handler.h">
+      <Filter>sources</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\ICE.h">
+      <Filter>sources</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\Invoker.h">
+      <Filter>sources</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\Peer.h">
+      <Filter>sources</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\RelayServer.h">
+      <Filter>sources</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\SDP.h">
+      <Filter>sources</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\Server.h">
+      <Filter>sources</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\ServerParams.h">
+      <Filter>sources</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\UDProtocol.h">
+      <Filter>sources</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\Writer.h">
+      <Filter>sources</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\Protocol.h">
+      <Filter>sources\Protocols</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\Protocols.h">
+      <Filter>sources\Protocols</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\RTMFP\BandWriter.h">
+      <Filter>sources\Protocols\RTMFP</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\RTMFP\RTMFP.h">
+      <Filter>sources\Protocols\RTMFP</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\RTMFP\RTMFPCookie.h">
+      <Filter>sources\Protocols\RTMFP</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\RTMFP\RTMFPCookieComputing.h">
+      <Filter>sources\Protocols\RTMFP</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\RTMFP\RTMFPDecoding.h">
+      <Filter>sources\Protocols\RTMFP</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\RTMFP\RTMFPFlow.h">
+      <Filter>sources\Protocols\RTMFP</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\RTMFP\RTMFPHandshake.h">
+      <Filter>sources\Protocols\RTMFP</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\RTMFP\RTMFPMessage.h">
+      <Filter>sources\Protocols\RTMFP</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\RTMFP\RTMFProtocol.h">
+      <Filter>sources\Protocols\RTMFP</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\RTMFP\RTMFPSender.h">
+      <Filter>sources\Protocols\RTMFP</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\RTMFP\RTMFPSession.h">
+      <Filter>sources\Protocols\RTMFP</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\RTMFP\RTMFPWriter.h">
+      <Filter>sources\Protocols\RTMFP</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\RTMP\RTMP.h">
+      <Filter>sources\Protocols\RTMP</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\RTMP\RTMPHandshaker.h">
+      <Filter>sources\Protocols\RTMP</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\RTMP\RTMProtocol.h">
+      <Filter>sources\Protocols\RTMP</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\RTMP\RTMPSender.h">
+      <Filter>sources\Protocols\RTMP</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\RTMP\RTMPSession.h">
+      <Filter>sources\Protocols\RTMP</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\RTMP\RTMPWriter.h">
+      <Filter>sources\Protocols\RTMP</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\WebSocket\WS.h">
+      <Filter>sources\Protocols\WebSocket</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\WebSocket\WSSender.h">
+      <Filter>sources\Protocols\WebSocket</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\WebSocket\WSSession.h">
+      <Filter>sources\Protocols\WebSocket</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\WebSocket\WSUnmasking.h">
+      <Filter>sources\Protocols\WebSocket</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\WebSocket\WSWriter.h">
+      <Filter>sources\Protocols\WebSocket</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\HTTP\HTTP.h">
+      <Filter>sources\Protocols\HTTP</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\HTTP\HTTPPacketHandler.h">
+      <Filter>sources\Protocols\HTTP</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\HTTP\HTTProtocol.h">
+      <Filter>sources\Protocols\HTTP</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\HTTP\HTTPSender.h">
+      <Filter>sources\Protocols\HTTP</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\HTTP\HTTPSession.h">
+      <Filter>sources\Protocols\HTTP</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\HTTP\HTTPWriter.h">
+      <Filter>sources\Protocols\HTTP</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\Listener.h">
+      <Filter>sources\Multimedia</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\Listeners.h">
+      <Filter>sources\Multimedia</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\Publication.h">
+      <Filter>sources\Multimedia</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\Publications.h">
+      <Filter>sources\Multimedia</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\AMFReader.h">
+      <Filter>sources\Serializers</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\AMFWriter.h">
+      <Filter>sources\Serializers</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\DataReader.h">
+      <Filter>sources\Serializers</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\DataWriter.h">
+      <Filter>sources\Serializers</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\HTTPPacketReader.h">
+      <Filter>sources\Serializers</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\HTTPPacketWriter.h">
+      <Filter>sources\Serializers</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\JSONReader.h">
+      <Filter>sources\Serializers</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\JSONWriter.h">
+      <Filter>sources\Serializers</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\StringReader.h">
+      <Filter>sources\Serializers</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\Session.h">
+      <Filter>sources\Sessions</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\Sessions.h">
+      <Filter>sources\Sessions</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\TCPSession.h">
+      <Filter>sources\Sessions</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\AMF.h">
+      <Filter>sources\Flash</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\FlashMainStream.h">
+      <Filter>sources\Flash</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\FlashStream.h">
+      <Filter>sources\Flash</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\FlashWriter.h">
+      <Filter>sources\Flash</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="sources\Decoding.cpp">
+      <Filter>sources</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\ICE.cpp">
+      <Filter>sources</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\Invoker.cpp">
+      <Filter>sources</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\Peer.cpp">
+      <Filter>sources</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\RelayServer.cpp">
+      <Filter>sources</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\SDP.cpp">
+      <Filter>sources</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\Server.cpp">
+      <Filter>sources</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\Writer.cpp">
+      <Filter>sources</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\Protocol.cpp">
+      <Filter>sources\Protocols</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\Protocols.cpp">
+      <Filter>sources\Protocols</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\RTMFP\RTMFP.cpp">
+      <Filter>sources\Protocols\RTMFP</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\RTMFP\RTMFPCookie.cpp">
+      <Filter>sources\Protocols\RTMFP</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\RTMFP\RTMFPCookieComputing.cpp">
+      <Filter>sources\Protocols\RTMFP</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\RTMFP\RTMFPFlow.cpp">
+      <Filter>sources\Protocols\RTMFP</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\RTMFP\RTMFPHandshake.cpp">
+      <Filter>sources\Protocols\RTMFP</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\RTMFP\RTMFPMessage.cpp">
+      <Filter>sources\Protocols\RTMFP</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\RTMFP\RTMFProtocol.cpp">
+      <Filter>sources\Protocols\RTMFP</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\RTMFP\RTMFPSender.cpp">
+      <Filter>sources\Protocols\RTMFP</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\RTMFP\RTMFPSession.cpp">
+      <Filter>sources\Protocols\RTMFP</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\RTMFP\RTMFPWriter.cpp">
+      <Filter>sources\Protocols\RTMFP</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\RTMP\RTMP.cpp">
+      <Filter>sources\Protocols\RTMP</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\RTMP\RTMPHandshaker.cpp">
+      <Filter>sources\Protocols\RTMP</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\RTMP\RTMProtocol.cpp">
+      <Filter>sources\Protocols\RTMP</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\RTMP\RTMPSender.cpp">
+      <Filter>sources\Protocols\RTMP</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\RTMP\RTMPSession.cpp">
+      <Filter>sources\Protocols\RTMP</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\RTMP\RTMPWriter.cpp">
+      <Filter>sources\Protocols\RTMP</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\WebSocket\WS.cpp">
+      <Filter>sources\Protocols\WebSocket</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\WebSocket\WSSession.cpp">
+      <Filter>sources\Protocols\WebSocket</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\WebSocket\WSWriter.cpp">
+      <Filter>sources\Protocols\WebSocket</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\HTTP\HTTP.cpp">
+      <Filter>sources\Protocols\HTTP</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\HTTP\HTTProtocol.cpp">
+      <Filter>sources\Protocols\HTTP</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\HTTP\HTTPSession.cpp">
+      <Filter>sources\Protocols\HTTP</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\HTTP\HTTPWriter.cpp">
+      <Filter>sources\Protocols\HTTP</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\Listener.cpp">
+      <Filter>sources\Multimedia</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\Publication.cpp">
+      <Filter>sources\Multimedia</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\AMFReader.cpp">
+      <Filter>sources\Serializers</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\AMFWriter.cpp">
+      <Filter>sources\Serializers</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\DataReader.cpp">
+      <Filter>sources\Serializers</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\HTTPPacketReader.cpp">
+      <Filter>sources\Serializers</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\HTTPPacketWriter.cpp">
+      <Filter>sources\Serializers</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\JSONReader.cpp">
+      <Filter>sources\Serializers</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\JSONWriter.cpp">
+      <Filter>sources\Serializers</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\Session.cpp">
+      <Filter>sources\Sessions</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\Sessions.cpp">
+      <Filter>sources\Sessions</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\TCPSession.cpp">
+      <Filter>sources\Sessions</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\FlashMainStream.cpp">
+      <Filter>sources\Flash</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\FlashStream.cpp">
+      <Filter>sources\Flash</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\FlashWriter.cpp">
+      <Filter>sources\Flash</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

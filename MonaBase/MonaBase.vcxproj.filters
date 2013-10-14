@@ -1,0 +1,245 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="sources">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="sources\Streams">
+      <UniqueIdentifier>{b8ef9199-65ab-4084-aec1-dacb203c793c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="sources\Util">
+      <UniqueIdentifier>{d9aa40ba-7bc0-4b47-91a8-146a8d3d5c51}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="sources\Threading">
+      <UniqueIdentifier>{2cf258b2-e1e6-4865-8244-fe2867363cf5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="sources\Net">
+      <UniqueIdentifier>{ff846d05-03a5-4c4f-b4b7-0fb6994681ff}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="sources\Mona.cpp">
+      <Filter>sources</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\BinaryReader.cpp">
+      <Filter>sources\Streams</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\BinaryStream.cpp">
+      <Filter>sources\Streams</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\BinaryWriter.cpp">
+      <Filter>sources\Streams</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\MemoryReader.cpp">
+      <Filter>sources\Streams</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\MemoryStream.cpp">
+      <Filter>sources\Streams</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\MemoryWriter.cpp">
+      <Filter>sources\Streams</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\AttemptCounter.cpp">
+      <Filter>sources\Util</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\DiffieHellman.cpp">
+      <Filter>sources\Util</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\Logs.cpp">
+      <Filter>sources\Util</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\QualityOfService.cpp">
+      <Filter>sources\Util</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\Trigger.cpp">
+      <Filter>sources\Util</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\Util.cpp">
+      <Filter>sources\Util</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\PoolThread.cpp">
+      <Filter>sources\Threading</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\PoolThreads.cpp">
+      <Filter>sources\Threading</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\Startable.cpp">
+      <Filter>sources\Threading</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\Task.cpp">
+      <Filter>sources\Threading</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\TaskHandler.cpp">
+      <Filter>sources\Threading</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\SocketHandler.cpp">
+      <Filter>sources\Net</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\SocketManager.cpp">
+      <Filter>sources\Net</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\SocketSender.cpp">
+      <Filter>sources\Net</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\TCPClient.cpp">
+      <Filter>sources\Net</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\TCPServer.cpp">
+      <Filter>sources\Net</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\UDPSocket.cpp">
+      <Filter>sources\Net</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\String.cpp">
+      <Filter>sources\Util</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\Application.cpp">
+      <Filter>sources</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\HelpFormatter.cpp">
+      <Filter>sources</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\MapParameters.cpp">
+      <Filter>sources</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\Option.cpp">
+      <Filter>sources</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\Options.cpp">
+      <Filter>sources</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\Parameters.cpp">
+      <Filter>sources</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\ServerApplication.cpp">
+      <Filter>sources</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\WinRegistryKey.cpp">
+      <Filter>sources</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\WinService.cpp">
+      <Filter>sources</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\Time.cpp">
+      <Filter>sources\Util</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\TimeParser.cpp">
+      <Filter>sources\Util</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\Mona\Mona.h">
+      <Filter>sources</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\BinaryReader.h">
+      <Filter>sources\Streams</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\BinaryStream.h">
+      <Filter>sources\Streams</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\BinaryWriter.h">
+      <Filter>sources\Streams</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\MemoryReader.h">
+      <Filter>sources\Streams</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\MemoryStream.h">
+      <Filter>sources\Streams</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\MemoryWriter.h">
+      <Filter>sources\Streams</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\AttemptCounter.h">
+      <Filter>sources\Util</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\DiffieHellman.h">
+      <Filter>sources\Util</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\Entities.h">
+      <Filter>sources\Util</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\Entity.h">
+      <Filter>sources\Util</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\Logger.h">
+      <Filter>sources\Util</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\Logs.h">
+      <Filter>sources\Util</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\QualityOfService.h">
+      <Filter>sources\Util</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\Trigger.h">
+      <Filter>sources\Util</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\Util.h">
+      <Filter>sources\Util</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\PoolThread.h">
+      <Filter>sources\Threading</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\PoolThreads.h">
+      <Filter>sources\Threading</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\Startable.h">
+      <Filter>sources\Threading</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\Task.h">
+      <Filter>sources\Threading</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\TaskHandler.h">
+      <Filter>sources\Threading</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\WorkThread.h">
+      <Filter>sources\Threading</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\SocketHandler.h">
+      <Filter>sources\Net</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\SocketManager.h">
+      <Filter>sources\Net</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\SocketSender.h">
+      <Filter>sources\Net</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\TCPClient.h">
+      <Filter>sources\Net</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\TCPSender.h">
+      <Filter>sources\Net</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\TCPServer.h">
+      <Filter>sources\Net</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\UDPSender.h">
+      <Filter>sources\Net</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\UDPSocket.h">
+      <Filter>sources\Net</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\String.h">
+      <Filter>sources\Util</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\HelpFormatter.h" />
+    <ClInclude Include="include\Mona\Parameters.h" />
+    <ClInclude Include="include\Mona\Application.h" />
+    <ClInclude Include="include\Mona\Exception.h" />
+    <ClInclude Include="include\Mona\MapParameters.h" />
+    <ClInclude Include="include\Mona\Option.h" />
+    <ClInclude Include="include\Mona\Options.h" />
+    <ClInclude Include="include\Mona\ServerApplication.h" />
+    <ClInclude Include="include\Mona\WinRegistryKey.h" />
+    <ClInclude Include="include\Mona\WinService.h" />
+    <ClInclude Include="include\Mona\StopWatch.h">
+      <Filter>sources\Util</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\Time.h">
+      <Filter>sources\Util</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\TimeParser.h">
+      <Filter>sources\Util</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
