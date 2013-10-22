@@ -19,6 +19,7 @@
 
 #include "Mona/Mona.h"
 #include "Mona/PoolThread.h"
+#include "Mona/Exceptions.h"
 #include <vector>
 
 namespace Mona {
@@ -31,7 +32,7 @@ public:
 	void			clear();
 	Mona::UInt32	threadsAvailable();
 
-	PoolThread*	enqueue(Poco::AutoPtr<WorkThread> pWork,PoolThread* pThread=NULL);
+	PoolThread*	enqueue(Exception& ex, Poco::AutoPtr<WorkThread> pWork,PoolThread* pThread=NULL);
 
 private:
 	std::vector<PoolThread*>	_threads;

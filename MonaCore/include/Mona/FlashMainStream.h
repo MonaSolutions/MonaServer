@@ -29,7 +29,7 @@ public:
 
 private:
 
-	void	messageHandler(const std::string& name,AMFReader& message,FlashWriter& writer);
+	void	messageHandler(Exception& ex, const std::string& name,AMFReader& message,FlashWriter& writer);
 	void	rawHandler(Mona::UInt8 type,MemoryReader& data,FlashWriter& writer);
 
 	void	close(FlashWriter& writer,const std::string& error,int code=0);

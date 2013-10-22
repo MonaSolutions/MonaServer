@@ -18,7 +18,7 @@ This file is a part of Mona.
 #pragma once
 
 #include "Mona/Mona.h"
-#include "Poco/NumberFormatter.h"
+#include "Mona/String.h"
 
 namespace Mona {
 
@@ -31,8 +31,8 @@ public:
 	bool getBool(const std::string& key, bool& value) const;
 
 	void setString(const std::string& key, const std::string& value) {setRaw(key, value);}
-	void setNumber(const std::string& key, double value) {setRaw(key, Poco::NumberFormatter::format(value));}
-	void setNumber(const std::string& key, int value) { setRaw(key, Poco::NumberFormatter::format(value)); }
+	void setNumber(const std::string& key, double value) { std::string val; setRaw(key, String::Format(val, value)); }
+	void setNumber(const std::string& key, int value) { std::string val; setRaw(key, String::Format(val, value)); }
 	void setBool(const std::string& key, bool value) {setRaw(key, value ? "true" : "false");}
 
 protected:

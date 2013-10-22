@@ -17,14 +17,11 @@
 
 #include "Mona/Util.h"
 #include "Mona/Logs.h"
-#include "Mona/Exception.h"
 #include "Poco/URI.h"
 #include "Poco/HexBinaryEncoder.h"
 #include "Poco/FileStream.h"
-#include "Poco/Ascii.h"
 #include "Poco/String.h"
 #include <sstream>
-#include "math.h"
 
 using namespace std;
 using namespace Poco;
@@ -103,7 +100,7 @@ void Util::UnpackUrl(const string& url, Poco::Net::SocketAddress& address, strin
 		address = SocketAddress(uri.getHost(),uri.getPort());
 		UnpackQuery(uri.getRawQuery(),properties);
 	} catch(Exception& ex) {
-		ERROR("Unpack url %s impossible, %s",url.c_str(),ex.code());
+		ERROR("Unpack url ",url," impossible, ",ex.code());
 	}
 }
 
@@ -189,52 +186,58 @@ void Util::Dump(const UInt8* in,UInt32 size,vector<UInt8>& out,const char* heade
 
 
 
-void Util::ReadIniFile(const string& path,MapParameters& parameters) {
-	FileInputStream istr(path, ios::in);
-	if (!istr.good())
-		throw Exception(Exception::FILE, "Impossible to open ", path, " file");
-	string section;
-	auto eof = char_traits<char>::eof();
-	while (!istr.eof()) {
-		int c = istr.get();
-		while (c != eof && Ascii::isSpace(c))
-			c = istr.get();
-		if (c == eof)
+void Util::ReadIniFile(Exception& ex, const string& path,MapParameters& parameters) {
+	try {
+		FileInputStream istr(path, ios::in);
+		if (!istr.good()) {
+			ex.set(Exception::FILE, "Impossible to open ", path, " file");
 			return;
-		if (c == ';') {
-			while (c != eof && c != '\n')
+		}
+		string section;
+		auto eof = char_traits<char>::eof();
+		while (!istr.eof()) {
+			int c = istr.get();
+			while (c != eof && isspace(c))
 				c = istr.get();
-		} else if (c == '[') {
-			string key;
-			c = istr.get();
-			while (c != eof && c != ']' && c != '\n') {
-				key += (char)c;
+			if (c == eof)
+				return;
+			if (c == ';') {
+				while (c != eof && c != '\n')
+					c = istr.get();
+			} else if (c == '[') {
+				string key;
 				c = istr.get();
-			}
-			section = trim(key);
-		} else {
-			string key;
-			while (c != eof && c != '=' && c != '\n') {
-				key += (char)c;
-				c = istr.get();
-			}
-			string value;
-			if (c == '=') {
-				c = istr.get();
-				while (c != eof && c != '\n') {
-					value += (char)c;
+				while (c != eof && c != ']' && c != '\n') {
+					key += (char)c;
 					c = istr.get();
 				}
+				section = trim(key);
+			} else {
+				string key;
+				while (c != eof && c != '=' && c != '\n') {
+					key += (char)c;
+					c = istr.get();
+				}
+				string value;
+				if (c == '=') {
+					c = istr.get();
+					while (c != eof && c != '\n') {
+						value += (char)c;
+						c = istr.get();
+					}
+				}
+				string fullKey = section;
+				if (!fullKey.empty())
+					fullKey += '.';
+				fullKey.append(trim(key));
+				parameters.setString(fullKey, trim(value));
 			}
-			string fullKey = section;
-			if (!fullKey.empty())
-				fullKey += '.';
-			fullKey.append(trim(key));
-			parameters.setString(fullKey, trim(value));
 		}
+	} catch (Poco::Exception exp) {
+		ex.set(Exception::FILE, exp.message());
+		return;
 	}
+
 }
-
-
 
 } // namespace Mona

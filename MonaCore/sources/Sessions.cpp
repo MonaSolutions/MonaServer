@@ -49,7 +49,7 @@ Session& Sessions::add(Session* pSession) {
 	_sessions[_nextId] = pSession;
 	_sessionsByPeerId[pSession->peer.id] = pSession;
 	_sessionsByAddress[pSession->peer.address] = pSession;
-	DEBUG("Session %u created",_nextId);
+	DEBUG("Session ",_nextId," created");
 
 	do {
 		++_nextId;
@@ -59,7 +59,7 @@ Session& Sessions::add(Session* pSession) {
 }
 
 void Sessions::remove(map<UInt32,Session*>::iterator it) {
-	DEBUG("Session %u died",it->second->id);
+	DEBUG("Session ",it->second->id," died");
 	_sessionsByPeerId.erase(it->second->peer.id);
 	_sessionsByAddress.erase(it->second->peer.address);
 	delete it->second;
@@ -67,7 +67,7 @@ void Sessions::remove(map<UInt32,Session*>::iterator it) {
 }
 
 void Sessions::changeAddress(const SocketAddress& oldAddress,Session& session) {
-	INFO("Session %u has changed its address (%s -> %s)",session.id,oldAddress.toString().c_str(),session.peer.address.toString().c_str());
+	INFO("Session ",session.id," has changed its address (",oldAddress.toString()," -> ",session.peer.address.toString(),")");
 	_sessionsByAddress.erase(oldAddress);
 	_sessionsByAddress[session.peer.address] = &session;
 }
@@ -106,7 +106,7 @@ void Sessions::manage() {
 		++it;
 	}
 	if(_sessions.size()!=_oldCount) {
-		INFO("%u clients",count());
+		INFO(count()," clients");
 		_oldCount=_sessions.size();
 	}
 }

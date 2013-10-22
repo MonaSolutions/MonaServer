@@ -70,7 +70,7 @@ void ServerConnection::sendPublicAddress() {
 void ServerConnection::connect() {
 	if(connected())
 		return;
-	INFO("Attempt to join %s server",address.c_str())
+	INFO("Attempt to join ",address," server")
 	TCPClient::connect(SocketAddress(address));
 	sendPublicAddress();
 }
@@ -79,7 +79,7 @@ void ServerConnection::send(const string& handler,ServerMessage& message) {
 	string handlerName(handler);
 	if(handlerName.size()>255) {
 		handlerName.resize(255);
-		WARN("The server handler '%s' truncated for 255 char (maximum acceptable size)",handlerName.c_str())
+		WARN("The server handler '",handlerName,"' truncated for 255 char (maximum acceptable size)")
 	}
 
 	// Search handler!
@@ -145,7 +145,7 @@ Mona::UInt32 ServerConnection::onReception(const Mona::UInt8* data, Mona::UInt32
 		if(ref>0) {
 			map<Mona::UInt32, string>::const_iterator it = _receivingRefs.find(ref);
 			if(it==_receivingRefs.end())
-				ERROR("Impossible to find the %u handler reference for the server %s",ref,peerAddress().toString().c_str())
+				ERROR("Impossible to find the ",ref," handler reference for the server ",peerAddress().toString())
 			else
 				handler.assign(it->second);
 		}

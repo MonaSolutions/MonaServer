@@ -20,7 +20,6 @@
 #include "Mona/Util.h"
 #include "Mona/Logs.h"
 #include "Poco/Format.h"
-#include "Poco/NumberFormatter.h"
 #include "Poco/RandomStream.h"
 
 using namespace std;
@@ -35,7 +34,7 @@ Session::Session(Protocol& protocol,Invoker& invoker, const Peer& peer,const cha
 	(string&)this->peer.protocol = protocol.name;
 	if(memcmp(this->peer.id,"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",ID_SIZE)==0)
 		RandomInputStream().read((char*)this->peer.id,ID_SIZE);
-	DEBUG("peer.id: %s",Util::FormatHex(this->peer.id,ID_SIZE).c_str());
+	DEBUG("peer.id: ",Util::FormatHex(this->peer.id,ID_SIZE));
 }
 	
 Session::Session(Protocol& protocol,Invoker& invoker, const char* name) :
@@ -43,7 +42,7 @@ Session::Session(Protocol& protocol,Invoker& invoker, const char* name) :
 	(string&)peer.protocol = protocol.name;
 	if(memcmp(peer.id,"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",ID_SIZE)==0)
 		RandomInputStream().read((char*)peer.id,ID_SIZE);
-	DEBUG("peer.id: %s",Util::FormatHex(this->peer.id,ID_SIZE).c_str());
+	DEBUG("peer.id: ",Util::FormatHex(this->peer.id,ID_SIZE));
 }
 
 
@@ -53,7 +52,7 @@ Session::~Session() {
 
 const string& Session::reference() {
 	if(name.empty())
-		(string&)name = NumberFormatter::format(id);
+		String::Format((string&)name, id);
 	return name;
 }
 
@@ -65,10 +64,11 @@ void Session::kill() {
 }
 
 void Session::decode(Decoding* pDecoding) {
-	try {
-		_pDecodingThread = invoker.poolThreads.enqueue(pDecoding,_pDecodingThread);
-	} catch(Exception& ex) {
-		WARN("Decoding message impossible on session %s, %s",reference().c_str(),ex.message().c_str());
+	
+	Exception ex;
+	_pDecodingThread = invoker.poolThreads.enqueue(ex, pDecoding,_pDecodingThread);
+	if (ex) {
+		WARN("Decoding message impossible on session ",reference(),", ",ex.error());
 	}
 }
 

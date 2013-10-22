@@ -125,7 +125,7 @@ void RTMPSession::packetHandler(MemoryReader& packet) {
 	if(_handshaking==0) {
 		UInt8 handshakeType = packet.read8();
 		if(handshakeType!=3 && handshakeType!=6) {
-			ERROR("RTMP Handshake type unknown: %u", handshakeType);
+			ERROR("RTMP Handshake type unknown: ", handshakeType);
 			kill();
 			return;
 		}
@@ -141,7 +141,7 @@ void RTMPSession::packetHandler(MemoryReader& packet) {
 	}
 	
 	if(!_pWriter) {
-		ERROR("Packet received on session %u without channel indication",id);
+		ERROR("Packet received on session ",id," without channel indication");
 		return;
 	}
 

@@ -63,9 +63,9 @@ int	LUAUDPSocket::Connect(lua_State* pState) {
 				SocketAddress addr(address);
 				udp.connect(addr);
 				if(udp.error())
-					SCRIPT_ERROR("%s",udp.error())
-			} catch(Exception& ex) {
-				SCRIPT_ERROR("Understandable address, %s",ex.displayText().c_str())
+					SCRIPT_ERROR(udp.error())
+			} catch(Poco::Exception& ex) {
+				SCRIPT_ERROR("Understandable address, ",ex.displayText())
 			}
 		} else
 			SCRIPT_ERROR("UDPSocket::connect takes a valid address in first argument");
@@ -81,7 +81,7 @@ int	LUAUDPSocket::Bind(lua_State* pState) {
 				SocketAddress addr(address);
 				if(!udp.bind(addr))
 					SCRIPT_WRITE_STRING(udp.error())
-			} catch(Exception& ex) {
+			} catch(Poco::Exception& ex) {
 				SCRIPT_WRITE_STRING(format("Understandable address, %s",ex.displayText()).c_str())
 			}
 		} else
@@ -102,9 +102,9 @@ int	LUAUDPSocket::Send(lua_State* pState) {
 				udp.send(data,size);
 			}
 			if(udp.error())
-				SCRIPT_ERROR("%s",udp.error())
-		} catch(Exception& ex) {
-			SCRIPT_ERROR("Understandable address, %s",ex.displayText().c_str())
+				SCRIPT_ERROR(udp.error())
+		} catch(Poco::Exception& ex) {
+			SCRIPT_ERROR("Understandable address, ",ex.displayText())
 		}
 	SCRIPT_CALLBACK_RETURN
 }

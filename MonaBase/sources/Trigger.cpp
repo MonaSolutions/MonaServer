@@ -17,7 +17,6 @@
 
 #include "Mona/Trigger.h"
 #include "Mona/Logs.h"
-#include "Poco/Exception.h"
 
 
 using namespace std;
@@ -34,7 +33,7 @@ Trigger::~Trigger() {
 }
 
 void Trigger::reset() {
-	_timeInit = Mona::Time();
+	_timeInit.update();
 	_time=0;
 	_cycle=-1;
 }
@@ -46,7 +45,7 @@ void Trigger::start() {
 	_running=true;
 }
 
-bool Trigger::raise() {
+bool Trigger::raise(Exception& ex) {
 	if(!_running)
 		return false;
 	// Wait at least 1 sec before to begin the repeat cycle, it means that it will be between 1 and 3 sec in truth (freg mangement is set to 2)
@@ -56,9 +55,11 @@ bool Trigger::raise() {
 	if(_time>=_cycle) {
 		_time=0;
 		++_cycle;
-		if(_cycle==7)
-			throw Exception("Repeat trigger failed");
-		DEBUG("Repeat trigger cycle %02x",_cycle+1);
+		if(_cycle==7) {
+			ex.set(Exception::APPLICATION, "Repeat trigger failed");
+			return false;
+		}
+		DEBUG("Repeat trigger cycle ",Format<Int8>("%02x",_cycle+1));
 		return true;
 	}
 	return false;

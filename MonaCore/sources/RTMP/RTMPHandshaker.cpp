@@ -20,6 +20,7 @@
 #include "Mona/Logs.h"
 #include "Mona/RTMP/RTMP.h"
 #include "Poco/RandomStream.h"
+#include "Mona/Time.h"
 #include <cstring>
 
 using namespace std;
@@ -61,7 +62,7 @@ void RTMPHandshaker::flushComplex() {
 	_writer.write8(encrypted ? 6 : 3);
 
 	//timestamp
-	_writer.write32((UInt32)Timestamp().epochTime());
+	_writer.write32((UInt32)Time().toInt());
 
 	//version
 	_writer.write32(0);

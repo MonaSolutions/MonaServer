@@ -18,6 +18,7 @@
 #pragma once
 
 #include "Mona/Mona.h"
+#include "Mona/Exceptions.h"
 #include "Mona/Writer.h"
 #include "Poco/URI.h"
 #include "Poco/Net/IPAddress.h"
@@ -46,10 +47,10 @@ class Peer;
 class SDP {
 public:
 	SDP();
-	SDP(const std::string& text);
+	SDP(Exception& ex, const std::string& text);
 	virtual ~SDP();
 
-	void build(const std::string& text);
+	bool build(Exception& ex, const std::string& text);
 	void build();
 
 	Mona::UInt32			version;

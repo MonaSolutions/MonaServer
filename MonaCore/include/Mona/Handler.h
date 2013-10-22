@@ -18,6 +18,7 @@
 #pragma once
 
 #include "Mona/Mona.h"
+#include "Mona/Exceptions.h"
 #include "Mona/Invoker.h"
 #include "Poco/RandomStream.h"
 #include <cstring>
@@ -31,10 +32,10 @@ public:
 	//events	
 	virtual	void			onRendezVousUnknown(const std::string& protocol,const Poco::UInt8* id,std::set<Poco::Net::SocketAddress,Util::AddressComparator>& addresses){}
 	virtual void			onHandshake(const std::string& protocol,const Poco::Net::SocketAddress& address,const std::string& path,const MapParameters& properties,Poco::UInt32 attempts,std::set<Poco::Net::SocketAddress,Util::AddressComparator>& addresses){}
-	virtual void			onConnection(Client& client,DataReader& parameters,DataWriter& response){} // ERROR_NOTFOUND, ERROR_APPLICATION
+	virtual void			onConnection(Exception& ex, Client& client,DataReader& parameters,DataWriter& response){} // ERROR_NOTFOUND, ERROR_APPLICATION
 	virtual void			onFailed(const Client& client,const std::string& error){}
 	virtual void			onDisconnection(const Client& client){}
-	virtual void			onMessage(Client& client,const std::string& name,DataReader& reader){} // ERROR_NOTFOUND, ERROR_APPLICATION
+	virtual void			onMessage(Exception& ex, Client& client,const std::string& name,DataReader& reader){} // ERROR_NOTFOUND, ERROR_APPLICATION
 	virtual bool			onRead(Client& client,std::string& filePath,MapParameters& parameters){return true;}  // ERROR_APPLICATION
 
 	virtual void			onJoinGroup(Client& client,Group& group){}

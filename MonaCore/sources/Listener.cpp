@@ -18,7 +18,6 @@
 #include "Mona/Listener.h"
 #include "Mona/Publication.h"
 #include "Mona/Logs.h"
-#include "Poco/NumberFormatter.h"
 
 using namespace Poco;
 using namespace std;
@@ -60,7 +59,7 @@ const QualityOfService& Listener::dataQOS() const {
 
 void Listener::init() {
 	if(_pAudioWriter)
-		WARN("Reinitialisation of one %s subscription",publication.name().c_str())
+		WARN("Reinitialisation of one ",publication.name()," subscription")
 	_writer.writeMedia(Writer::INIT,0,_publicationReader);
 	init(&_pAudioWriter,Writer::AUDIO);
 	init(&_pVideoWriter,Writer::VIDEO);
@@ -81,25 +80,25 @@ void Listener::init(Writer** ppWriter,Writer::MediaType type) {
 UInt32 Listener::computeTime(UInt32 time) {
 	if(_time==0) { // has been initialized, compute deltatime
 		_deltaTime = time;
-		DEBUG("Deltatime assignment, %u",_deltaTime);
+		DEBUG("Deltatime assignment, ",_deltaTime);
 	} else if(time==0)
 		time=(UInt32)(_ts.elapsed()/1000);
-	_ts = Mona::Time();
+	_ts.update();
 	if(_deltaTime>time) {
-		WARN("Subcription %s time %u inferior to deltaTime %u (non increasing time)",publication.name().c_str(),time,_deltaTime)
+		WARN("Subcription ",publication.name()," time ",time," inferior to deltaTime ",_deltaTime," (non increasing time)")
 		_deltaTime = time;
 	}
 	_time = time-_deltaTime+_addingTime;
 	if(_time==0)
 		_time=1;
-	TRACE("Time %u",_time)
+	TRACE("Time ",_time)
 	return (_time = time);
 }
 
 void Listener::startPublishing() {
 	_writer.writeMedia(Writer::START,0,_publicationReader);
 	_firstKeyFrame=false;
-	_ts = Mona::Time();
+	_ts.update();
 }
 
 void Listener::stopPublishing() {

@@ -72,9 +72,12 @@ void DataReader::read(Type type,DataWriter& writer) {
 			writer.writeString(value);
 			break;
 		}
-		case DATE:
-			writer.writeDate(readDate());
+		case TIME: {
+			Time time;
+			readTime(time);
+			writer.writeDate(time);
 			break;
+		}
 		case BYTES: {
 			UInt32 size;
 			const UInt8* bytes = readBytes(size);
@@ -123,7 +126,7 @@ void DataReader::read(Type type,DataWriter& writer) {
 			break;
 		}	 
 		default:
-			ERROR("Unknown DataReader %.2x type",type);
+			ERROR("Unknown DataReader ",Format<UInt8>("%.2x",(UInt8)type)," type");
 	}
 }
 

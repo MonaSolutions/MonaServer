@@ -73,7 +73,7 @@ bool UDPSocket::bind(const Poco::Net::SocketAddress & address) {
 	try {
 		getSocket()->bind(address,true);
 		_bound = true;
-	} catch(Exception& ex) {
+	} catch(Poco::Exception& ex) {
 		_error = format("Impossible to bind to %s, %s",address.toString(),ex.displayText());
 	}
 	return _bound;
@@ -89,7 +89,7 @@ void UDPSocket::connect(const SocketAddress& address) {
 	try {
 		getSocket()->connect(address);
 		_connected = true;
-	} catch(Exception& ex) {
+	} catch(Poco::Exception& ex) {
 		_error = format("Impossible to connect to %s, %s",address.toString(),ex.displayText());
 	}
 }

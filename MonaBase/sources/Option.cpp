@@ -16,7 +16,7 @@ This file is a part of Mona.
 */
 
 #include "Mona/Option.h"
-#include "Mona/Exception.h"
+#include "Mona/Exceptions.h"
 #include "Poco/String.h"
 
 using namespace std;

@@ -41,9 +41,9 @@ bool TCPServer::start(UInt16 port) {
 	stop();
 	try {
 		openSocket(new ServerSocket(port))->setLinger(false,0);
-	} catch(Exception& ex) {
+	} catch(Poco::Exception& ex) {
 		closeSocket();
-		ERROR("TCPServer starting error, %s",ex.displayText().c_str())
+		ERROR("TCPServer starting error, ",ex.displayText())
 		return false;
 	}
 	_port=port;
@@ -63,7 +63,7 @@ void TCPServer::onReadable() {
 }
 
 void TCPServer::onError(const string& error) {
-	ERROR("TCPServer socket, %s",error.c_str())
+	ERROR("TCPServer socket, ",error)
 	UInt16 port = _port;
 	stop();
 	if(port>0)

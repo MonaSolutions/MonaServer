@@ -70,7 +70,7 @@ int	LUATCPClient::Connect(lua_State* pState) {
 			client.connect(address);
 			if(client.error())
 				SCRIPT_WRITE_STRING(client.error())
-		} catch(Exception& ex) {
+		} catch(Poco::Exception& ex) {
 			SCRIPT_WRITE_STRING(format("Understandable TCPClient address, %s",ex.displayText()).c_str())
 		}
 	SCRIPT_CALLBACK_RETURN

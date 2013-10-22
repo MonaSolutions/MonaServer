@@ -29,12 +29,12 @@ namespace Mona {
 
 
 FlashStream::FlashStream(Invoker& invoker,Peer& peer) : id(0),invoker(invoker),peer(peer),_pPublication(NULL),_pListener(NULL),_bufferTime(0) {
-	DEBUG("FlashStream %u created",id)
+	DEBUG("FlashStream ",id," created")
 }
 
 FlashStream::~FlashStream() {
 	disengage();
-	DEBUG("FlashStream %u deleted",id)
+	DEBUG("FlashStream ",id," deleted")
 }
 
 void FlashStream::disengage(FlashWriter* pWriter) {
@@ -110,8 +110,14 @@ void FlashStream::messageHandler(const string& name,AMFReader& message,FlashWrit
 		if(message.available())
 			start = message.readNumber();
 
+		Exception ex;
+		_pListener = invoker.subscribe(ex,peer,publication,writer,start);
+		if (ex) {
+			writer.writeAMFStatus("NetStream.Play.Failed",ex.error());
+			return;
+		}
+
 		try {
-			_pListener = &invoker.subscribe(peer,publication,writer,start);
 			if(_bufferTime>0) {
 				// To do working the buffertime on receiver side
 				BinaryWriter& raw = writer.writeRaw();
@@ -121,7 +127,7 @@ void FlashStream::messageHandler(const string& name,AMFReader& message,FlashWrit
 			}
 			writer.writeAMFStatus("NetStream.Play.Reset","Playing and resetting " + publication);
 			writer.writeAMFStatus("NetStream.Play.Start","Started playing " + publication);
-		} catch(Exception& ex) {
+		} catch(Poco::Exception& ex) {
 			writer.writeAMFStatus("NetStream.Play.Failed",ex.message());
 		}
 		
@@ -136,30 +142,31 @@ void FlashStream::messageHandler(const string& name,AMFReader& message,FlashWrit
 		if(message.available())
 			message.readString(type); // TODO recording publication feature!
 
-		try {
-			_pPublication = &invoker.publish(peer,publication);
+		Exception ex;
+		_pPublication = invoker.publish(ex, peer,publication);
+		if (ex)
+			writer.writeAMFStatus("NetStream.Publish.BadName",ex.error());
+		else {
 			if(_bufferTime>0)
 				_pPublication->setBufferTime(_bufferTime);
 			writer.writeAMFStatus("NetStream.Publish.Start",publication +" is now published");
-		} catch(Exception& ex) {
-			writer.writeAMFStatus("NetStream.Publish.BadName",ex.message());
 		}
 	} else if(_pListener && name=="receiveAudio") {
 		_pListener->receiveAudio = message.readBoolean();
 	} else if(_pListener && name=="receiveVideo") {
 		_pListener->receiveVideo = message.readBoolean();
 	} else
-		ERROR("RTMFPMessage '%s' unknown on stream %u",name.c_str(),id);
+		ERROR("RTMFPMessage '",name,"' unknown on stream ",id);
 	
 }
 
 
 void FlashStream::rawHandler(UInt8 type,MemoryReader& data,FlashWriter& writer) {
 	if(data.read16()==0x22) { // TODO Here we receive publication bounds (id + tracks), useless? maybe to record a file and sync tracks?
-		//TRACE("Bound %u : %u %u",id,data.read32(),data.read32());
+		//TRACE("Bound ",id," : ",data.read32()," ",data.read32());
 		return;
 	}
-	ERROR("Raw message %u unknown on stream %u",type,id);
+	ERROR("Raw message ",type," unknown on stream ",id);
 }
 
 void FlashStream::setBufferTime(UInt32 ms) {
@@ -172,36 +179,36 @@ void FlashStream::setBufferTime(UInt32 ms) {
 
 void FlashStream::dataHandler(DataReader& data,UInt32 numberLostFragments) {
 	if(!_pPublication) {
-		ERROR("a data packet has been received on a no publishing stream %u",id);
+		ERROR("a data packet has been received on a no publishing stream ",id);
 		return;
 	}
 	if(_pPublication->publisher() == &peer)
 		_pPublication->pushData(data,numberLostFragments);
 	else
-		WARN("a data packet has been received on a stream %u which is not on owner of this publication, certainly a publication currently closing",id);
+		WARN("a data packet has been received on a stream ",id," which is not on owner of this publication, certainly a publication currently closing");
 }
 
 
 void FlashStream::audioHandler(MemoryReader& packet,UInt32 numberLostFragments) {
 	if(!_pPublication) {
-		WARN("an audio packet has been received on a no publishing stream %u, certainly a publication currently closing",id);
+		WARN("an audio packet has been received on a no publishing stream ",id,", certainly a publication currently closing");
 		return;
 	}
 	if(_pPublication->publisher() == &peer)
 		_pPublication->pushAudio(packet,packet.read32(),numberLostFragments);
 	else
-		WARN("an audio packet has been received on a stream %u which is not on owner of this publication, certainly a publication currently closing",id);
+		WARN("an audio packet has been received on a stream ",id," which is not on owner of this publication, certainly a publication currently closing");
 }
 
 void FlashStream::videoHandler(MemoryReader& packet,UInt32 numberLostFragments) {
 	if(!_pPublication) {
-		WARN("a video packet has been received on a no publishing stream %u, certainly a publication currently closing",id);
+		WARN("a video packet has been received on a no publishing stream ",id,", certainly a publication currently closing");
 		return;
 	}
 	if(_pPublication->publisher() == &peer)
 		_pPublication->pushVideo(packet,packet.read32(),numberLostFragments);
 	else
-		WARN("a video packet has been received on a stream %u which is not on owner of this publication, certainly a publication currently closing",id);
+		WARN("a video packet has been received on a stream ",id," which is not on owner of this publication, certainly a publication currently closing");
 }
 
 void FlashStream::flush() {

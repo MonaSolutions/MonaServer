@@ -35,7 +35,7 @@ private:
 };
 
 inline void UDProtocol::onError(const std::string& error) {
-	WARN("Protocol %s, %s",error.c_str(),name.c_str());
+	WARN("Protocol ",error,", ",name);
 }
 
 inline void UDProtocol::onReadable() {

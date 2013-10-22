@@ -31,7 +31,7 @@ public:
 		BOOLEAN,
 		NUMBER,
 		STRING,
-		DATE,
+		TIME,
 		ARRAY,
 		OBJECT,
 		BYTES,
@@ -47,7 +47,7 @@ public:
 	virtual double				readNumber()=0;
 	virtual bool				readBoolean()=0;
 	virtual const Mona::UInt8*	readBytes(Mona::UInt32& size)=0;
-	virtual Mona::Time		readDate()=0;
+	virtual void				readTime(Mona::Time& time) = 0;
 	virtual void				readNull()=0;
 
 	virtual bool				readObject(std::string& type,bool& external)=0;
@@ -101,7 +101,7 @@ public:
 	virtual double				readNumber(){return 0;}
 	virtual bool				readBoolean(){return false;}
 	virtual const Mona::UInt8*	readBytes(Mona::UInt32& size){return NULL;}
-	virtual Mona::Time		readDate(){return Mona::Time();}
+	virtual void				readTime(Mona::Time& time){ time.update(); }
 	virtual void				readNull(){}
 
 	virtual bool				readObject(std::string& type,bool& external){return false;}

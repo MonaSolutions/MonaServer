@@ -51,7 +51,7 @@ protected:
 };
 
 inline Poco::SharedPtr<Poco::Buffer<Mona::UInt8> > Protocol::receive(Poco::Net::SocketAddress& address){
-	ERROR("Protocol::receive called without treatment for %s",name.c_str());
+	ERROR("Protocol::receive called without treatment for ",name);
 	return NULL;
 }
 

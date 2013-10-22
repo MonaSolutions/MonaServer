@@ -127,6 +127,9 @@
     <ClCompile Include="sources\TimeParser.cpp">
       <Filter>sources\Util</Filter>
     </ClCompile>
+    <ClCompile Include="sources\Exceptions.cpp">
+      <Filter>sources\Util</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Mona\Mona.h">
@@ -222,16 +225,6 @@
     <ClInclude Include="include\Mona\String.h">
       <Filter>sources\Util</Filter>
     </ClInclude>
-    <ClInclude Include="include\Mona\HelpFormatter.h" />
-    <ClInclude Include="include\Mona\Parameters.h" />
-    <ClInclude Include="include\Mona\Application.h" />
-    <ClInclude Include="include\Mona\Exception.h" />
-    <ClInclude Include="include\Mona\MapParameters.h" />
-    <ClInclude Include="include\Mona\Option.h" />
-    <ClInclude Include="include\Mona\Options.h" />
-    <ClInclude Include="include\Mona\ServerApplication.h" />
-    <ClInclude Include="include\Mona\WinRegistryKey.h" />
-    <ClInclude Include="include\Mona\WinService.h" />
     <ClInclude Include="include\Mona\StopWatch.h">
       <Filter>sources\Util</Filter>
     </ClInclude>
@@ -240,6 +233,36 @@
     </ClInclude>
     <ClInclude Include="include\Mona\TimeParser.h">
       <Filter>sources\Util</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\Exceptions.h">
+      <Filter>sources\Util</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\Application.h">
+      <Filter>sources</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\HelpFormatter.h">
+      <Filter>sources</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\MapParameters.h">
+      <Filter>sources</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\Option.h">
+      <Filter>sources</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\Options.h">
+      <Filter>sources</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\Parameters.h">
+      <Filter>sources</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\ServerApplication.h">
+      <Filter>sources</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\WinRegistryKey.h">
+      <Filter>sources</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\WinService.h">
+      <Filter>sources</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

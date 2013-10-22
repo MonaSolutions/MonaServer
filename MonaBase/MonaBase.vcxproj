@@ -111,6 +111,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="sources\Application.cpp" />
+    <ClCompile Include="sources\Exceptions.cpp" />
     <ClCompile Include="sources\HelpFormatter.cpp" />
     <ClCompile Include="sources\Mona.cpp" />
     <ClCompile Include="sources\BinaryReader.cpp" />
@@ -150,10 +151,10 @@
     <ClCompile Include="sources\WinService.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\Mona\Exceptions.h" />
     <ClInclude Include="include\Mona\HelpFormatter.h" />
     <ClInclude Include="include\Mona\Parameters.h" />
     <ClInclude Include="include\Mona\Application.h" />
-    <ClInclude Include="include\Mona\Exception.h" />
     <ClInclude Include="include\Mona\Mona.h" />
     <ClInclude Include="include\Mona\BinaryReader.h" />
     <ClInclude Include="include\Mona\BinaryStream.h" />

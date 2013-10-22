@@ -46,7 +46,7 @@ BinaryReader& RTMFPMessage::reader(UInt32 fragment,UInt32& size) {
 
 void RTMFPMessage::addFragment(UInt32 size,UInt64 stage) {
 	((map<UInt32,UInt64>&)fragments)[size] = stage;
-	_time = Mona::Time();
+	_time.update();
 }
 
 UInt32 RTMFPMessage::length() {

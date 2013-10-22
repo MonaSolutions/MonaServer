@@ -16,7 +16,7 @@
 */
 
 #include "Mona/PoolThread.h"
-#include "Poco/NumberFormatter.h"
+#include "Mona/String.h"
 
 using namespace std;
 using namespace Poco;
@@ -25,7 +25,7 @@ namespace Mona {
 
 UInt32 PoolThread::_Id = 0;
 
-PoolThread::PoolThread() : Startable("PoolThread"+NumberFormatter::format(++_Id))  {
+PoolThread::PoolThread() : Startable(String::Format(string("PoolThread"), ++_Id))  {
 }
 
 PoolThread::~PoolThread() {

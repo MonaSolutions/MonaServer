@@ -18,6 +18,7 @@
 #pragma once
 
 #include "Mona/Mona.h"
+#include "Mona/Exceptions.h"
 #include "Mona/Listeners.h"
 #include "Mona/Peer.h"
 
@@ -42,14 +43,14 @@ public:
 
 	void					setBufferTime(Mona::UInt32 ms);
 
-	void					start(Peer& peer);
+	void					start(Exception& ex, Peer& peer);
 	void					stop(Peer& peer);
 
 	void					pushAudio(MemoryReader& packet,Mona::UInt32 time=0,Mona::UInt32 numberLostFragments=0);
 	void					pushVideo(MemoryReader& packet,Mona::UInt32 time=0,Mona::UInt32 numberLostFragments=0);
 	void					pushData(DataReader& data,Mona::UInt32 numberLostFragments=0);
 
-	Listener&				addListener(Peer& peer,Writer& writer,bool unbuffered);
+	Listener*				addListener(Exception& ex, Peer& peer,Writer& writer,bool unbuffered);
 	void					removeListener(Peer& peer);
 
 	void					flush();

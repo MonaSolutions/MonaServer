@@ -23,9 +23,11 @@
 namespace Mona {
 
 
-class Exception : public std::exception {
+class Exception : ObjectFix {
+
 public:
 	enum Code {
+		NIL,
 		APPLICATION = 1,
 		SOFTWARE,
 		FILE,
@@ -33,28 +35,36 @@ public:
 		OPTION,
 		SERVICE,
 		REGISTRY,
-		PROTOCOL
+		PROTOCOL,
+		NETWORK,
+		SOCKET,
+		NETADDRESS,
+		ASSERT,
+		FORMATTING
 	};
 
+	Exception() : _code(NIL) {}
+
 	template <typename ...Args>
-	Exception(Code code, const Args&... args) : _code(code) {
-		String::Format(_error,args...);
-		_what = _error.c_str();
+	void set(Code code, const Args&... args) {
+		_code = code;
+		String::Append(_error, args ...);
 	}
 
-	const char* what() const { return _what; }
-	Code		code() const { return _code; }
+	operator bool() const { return !_error.empty() || _code != Exception::NIL; }
+
+	const std::string&	error() const { return _error; }
+	Code				code() const { return _code; }
 
 private:
-	Exception(const Exception& other) {};
-	Exception& operator=(const Exception& other) {};
+	void reset();
 
-
-	Code			_code;
-	const char*		_what;
-	std::string		_error;
+	Code		_code;
+	std::string	_error;
 };
 
-
+#undef		ASSERT
+#define		ASSERT(CHECK)					if(!(CHECK)) { ex.set(Exception::ASSERT, #CHECK);return;}
+#define		ASSERT_RETURN(CHECK,RETURN)		if(!(CHECK)) { ex.set(Exception::ASSERT, #CHECK);return RETURN;}*/
 
 } // namespace Mona

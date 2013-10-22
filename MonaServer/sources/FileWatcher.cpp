@@ -22,8 +22,8 @@ using namespace Poco;
 using namespace Mona;
 
 
-FileWatcher::FileWatcher(const string& path) : _file(path),_lastModified(0),path(path) {
-
+FileWatcher::FileWatcher(const string& path) : _file(path), path(path) {
+	_lastModified.update(0);
 }
 
 
@@ -33,10 +33,10 @@ FileWatcher::~FileWatcher() {
 
 bool FileWatcher::watch() {
 	bool result=false;
-	Mona::Time lastModified=0;
 	if(_lastModified>0) {
-		if(!_file.exists() || !_file.isFile() || (_lastModified=Time(_file.getLastModified().epochMicroseconds()))>_lastModified) {
-			_lastModified=lastModified;
+		Mona::Int64 lastModif = _file.getLastModified().epochMicroseconds();
+		if (!_file.exists() || !_file.isFile() || lastModif > _lastModified) {
+			_lastModified.update(lastModif);
 			clear();
 			if(_lastModified>0) {
 				load();
@@ -44,7 +44,7 @@ bool FileWatcher::watch() {
 			}
 		}
 	} else if(_file.exists() && _file.isFile()) {
-		_lastModified = Time(_file.getLastModified().epochMicroseconds());
+		_lastModified.update(_file.getLastModified().epochMicroseconds());
 		load();
 		result=true;
 	}

@@ -45,12 +45,34 @@ public:
 protected:
 	const Mona::UInt32	farId;
 
-	void				flush(bool echoTime=true);
-	void				flush(bool echoTime,RTMFPEngine::Type type);
-	void				flush(Mona::UInt8 marker,bool echoTime);
-	void				flush(Mona::UInt8 marker,bool echoTime,RTMFPEngine::Type type);
+	void				flush(Exception& ex, bool echoTime=true);
+	void				flush(Exception& ex, bool echoTime,RTMFPEngine::Type type);
+	void				flush(Exception& ex, Mona::UInt8 marker,bool echoTime);
+	void				flush(Exception& ex, Mona::UInt8 marker,bool echoTime,RTMFPEngine::Type type);
 
-	void				fail(const std::string& fail);
+	template <typename ...Args>
+	void fail(const Args&... args) {
+		std::string error;
+		String::Format(error, args ...);
+
+		if(failed())
+			return;
+
+		// Here no new sending must happen except "failSignal"
+		map<UInt64,AutoPtr<RTMFPWriter> >::iterator it;
+		for(it=_flowWriters.begin();it!=_flowWriters.end();++it)
+			it->second->clear();
+
+		// unsubscribe peer for its groups
+		peer.unsubscribeGroups();
+
+		Session::failed=true;
+		if(!error.empty()) {
+			peer.onFailed(error);
+			failSignal();
+		}
+	
+	}
 	MemoryWriter&		writer();
 	
 private:
@@ -66,7 +88,7 @@ private:
 	void				close();
 	bool				failed() const;
 
-	MemoryWriter&		writeMessage(Mona::UInt8 type,Mona::UInt16 length,RTMFPWriter* pWriter=NULL);
+	MemoryWriter&		writeMessage(Exception& ex, Mona::UInt8 type,Mona::UInt16 length,RTMFPWriter* pWriter=NULL);
 
 	RTMFPEngine::Type	prevEngineType();
 	bool				keepAlive();
@@ -107,16 +129,16 @@ inline void RTMFPSession::close() {
 	failSignal();
 }
 
-inline void RTMFPSession::flush(Mona::UInt8 marker,bool echoTime) {
-	flush(marker,echoTime,prevEngineType());
+inline void RTMFPSession::flush(Exception& ex, Mona::UInt8 marker,bool echoTime) {
+	flush(ex, marker,echoTime,prevEngineType());
 }
 
-inline void RTMFPSession::flush(bool echoTime,RTMFPEngine::Type type) {
-	flush(0x4a,echoTime,type);
+inline void RTMFPSession::flush(Exception& ex, bool echoTime,RTMFPEngine::Type type) {
+	flush(ex, 0x4a,echoTime,type);
 }
 
-inline void RTMFPSession::flush(bool echoTime) {
-	flush(0x4a,echoTime,prevEngineType());
+inline void RTMFPSession::flush(Exception& ex, bool echoTime) {
+	flush(ex, 0x4a,echoTime,prevEngineType());
 }
 
 inline bool RTMFPSession::canWriteFollowing(RTMFPWriter& writer) {

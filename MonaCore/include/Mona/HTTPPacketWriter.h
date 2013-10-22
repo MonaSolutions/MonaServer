@@ -19,8 +19,6 @@
 
 #include "Mona/Mona.h"
 #include "Mona/DataWriter.h"
-#include "Poco/DateTimeFormatter.h"
-#include "Poco/DateTimeFormat.h"
 #include "Poco/Format.h"
 #include "math.h"
 

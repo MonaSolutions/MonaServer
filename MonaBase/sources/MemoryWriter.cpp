@@ -39,7 +39,7 @@ void MemoryWriter::limit(UInt32 length) {
 	if(length==0)
 		length = _size;
 	if(length>_size) {
-		WARN("Limit '%d' more upper than buffer size '%d' bytes",length,_size);
+		WARN("Limit '",length,"' more upper than buffer size '",_size,"' bytes");
 		length = _size;
 	}
 	_memory.resize(length);

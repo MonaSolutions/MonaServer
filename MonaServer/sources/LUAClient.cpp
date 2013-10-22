@@ -64,7 +64,7 @@ int LUAClient::Set(lua_State *pState) {
 			if(!newName)
 				SCRIPT_ERROR("Invalid name value")
 			else if(!client.setName(newName))
-				SCRIPT_ERROR("A client has already the '%s' name",newName)
+			SCRIPT_ERROR("A client has already the '", newName, "' name")
 		} else
 			lua_rawset(pState,1); // consumes key and value
 	SCRIPT_CALLBACK_RETURN

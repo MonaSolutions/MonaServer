@@ -41,7 +41,7 @@ void RTMFPCookieComputing::run() {
 	// Compute Diffie-Hellman secret
 	diffieHellman.computeSecret(initiatorKey,sharedSecret);
 
-	DEBUG("Shared Secret : %s",Util::FormatHex(sharedSecret.begin(),sharedSecret.size()).c_str());
+	DEBUG("Shared Secret : ",Util::FormatHex(sharedSecret.begin(),sharedSecret.size()));
 	
 	waitHandle();
 }

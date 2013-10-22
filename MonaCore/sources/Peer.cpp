@@ -200,35 +200,37 @@ void Peer::onRendezVousUnknown(const UInt8* peerId,set<SocketAddress,Util::Addre
 		WARN("Rendez-vous using before connection");
 }
 
-void Peer::onConnection(Writer& writer,DataReader& parameters,DataWriter& response) {
+void Peer::onConnection(Exception& ex, Writer& writer,DataReader& parameters,DataWriter& response) {
 	if(!connected) {
 		_pWriter = &writer;
-		try {
-			writer.state(Writer::CONNECTING);
-			_handler.onConnection(*this,parameters,response);
-			writer.state(Writer::CONNECTED);
-		}catch(...) {
+
+		writer.state(Writer::CONNECTING);
+		_handler.onConnection(ex, *this,parameters,response);
+		if (ex) {
 			writer.state(Writer::CONNECTED,true);
 			_pWriter = NULL;
-			throw;
+			return;
 		}
+		writer.state(Writer::CONNECTED);
 		string name;
 		if (getString("name", name)) {
-			if (!_handler._clientsByName.insert(pair<string, Client*>(name, this)).second)
-				throw Exception(format("Client with a '%s' name exists already", name));
+			if (!_handler._clientsByName.insert(pair<string, Client*>(name, this)).second) {
+				ex.set(Exception::NETWORK, "Client with a '%s' name exists already", name);
+				return;
+			}
 		}
 		(bool&)connected = true;
 		if(!_handler._clients.insert(pair<const UInt8*,Client*>(id,this)).second)
-			ERROR("Client %s seems already connected!",Util::FormatHex(id,ID_SIZE).c_str())
+			ERROR("Client ",Util::FormatHex(id,ID_SIZE)," seems already connected!")
 	} else
-		ERROR("Client %s seems already connected!",Util::FormatHex(id,ID_SIZE).c_str())
+		ERROR("Client ",Util::FormatHex(id,ID_SIZE)," seems already connected!")
 }
 
 void Peer::onFailed(const string& error) {
 	if(connected)
 		_handler.onFailed(*this,error);
 	else
-		WARN("Client failed: %s",error.c_str());
+		WARN("Client failed: ",error);
 }
 
 void Peer::onDisconnection() {
@@ -239,14 +241,14 @@ void Peer::onDisconnection() {
 		if (getString("name", name))
 			_handler._clientsByName.erase(name);
 		if(_handler._clients.erase(id)==0)
-			ERROR("Client %s seems already disconnected!",Util::FormatHex(id,ID_SIZE).c_str())
+			ERROR("Client ",Util::FormatHex(id,ID_SIZE)," seems already disconnected!")
 		_handler.onDisconnection(*this);
 	}
 }
 
-void Peer::onMessage(const string& name,DataReader& reader) {
+void Peer::onMessage(Exception& ex, const string& name,DataReader& reader) {
 	if(connected)
-		_handler.onMessage(*this,name,reader);
+		_handler.onMessage(ex, *this, name, reader);
 	else
 		ERROR("RPC client before connection")
 }
@@ -323,7 +325,7 @@ void Peer::onUnsubscribe(const Listener& listener) {
 bool Peer::onRead(string& filePath,MapParameters& parameters) {
 	if(connected)
 		return _handler.onRead(*this, filePath,parameters);
-	ERROR("Resource '%s' access by a not connected client", filePath.c_str())
+	ERROR("Resource '",filePath,"' access by a not connected client")
 	return false;
 }
 

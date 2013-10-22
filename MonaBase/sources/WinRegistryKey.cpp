@@ -16,7 +16,6 @@ This file is a part of Mona.
 */
 
 #include "Mona/WinRegistryKey.h"
-#include "Mona/Exception.h"
 #if defined(POCO_WIN32_UTF8)
 #include "Poco/UnicodeConverter.h"
 #endif
@@ -40,17 +39,17 @@ namespace {
 	};
 }
 
-WinRegistryKey::WinRegistryKey(const string& key, bool readOnly, REGSAM extraSam) :
+WinRegistryKey::WinRegistryKey(Exception& ex, const string& key, bool readOnly, REGSAM extraSam) :
 	_hKey(0),
 	_readOnly(readOnly),
 	_extraSam(extraSam) {
 		string::size_type pos = key.find('\\');
 		if (pos != string::npos) {
 			string rootKey = key.substr(0, pos);
-			_hRootKey = handleFor(rootKey);
 			_subKey = key.substr(pos + 1);
+			_hRootKey = handleFor(ex, rootKey);
 		} else
-			throw Exception(Exception::REGISTRY, key, "not a valid registry key");
+			ex.set(Exception::REGISTRY, key, "not a valid registry key");
 }
 
 WinRegistryKey::WinRegistryKey(HKEY hRootKey, const std::string& subKey, bool readOnly, REGSAM extraSam) :
@@ -62,31 +61,43 @@ WinRegistryKey::WinRegistryKey(HKEY hRootKey, const std::string& subKey, bool re
 }
 
 
-void WinRegistryKey::setString(const string& name, const string& value) {
-	open();
+void WinRegistryKey::setString(Exception& ex, const string& name, const string& value) {
+	open(ex);
+	if (ex)
+		return;
+
 #if defined(POCO_WIN32_UTF8)
 	wstring uname;
 	UnicodeConverter::toUTF16(name, uname);
 	wstring uvalue;
 	UnicodeConverter::toUTF16(value, uvalue);
-	if (RegSetValueExW(_hKey, uname.c_str(), 0, REG_SZ, (CONST BYTE*) uvalue.c_str(), (DWORD)(uvalue.size() + 1)*sizeof(wchar_t)) != ERROR_SUCCESS)
-		throw Exception(Exception::REGISTRY, "Failed to set registry value ", key(name));
+	if (RegSetValueExW(_hKey, uname.c_str(), 0, REG_SZ, (CONST BYTE*) uvalue.c_str(), (DWORD)(uvalue.size() + 1)*sizeof(wchar_t)) != ERROR_SUCCESS) {
+		ex.set(Exception::REGISTRY, "Failed to set registry value ", key(name));
+		return;
+	}
 #else
-	if (RegSetValueExA(_hKey, name.c_str(), 0, REG_SZ, (CONST BYTE*) value.c_str(), (DWORD) value.size() + 1) != ERROR_SUCCESS)
-		throw Exception(Exception::REGISTRY, "Failed to set registry value ", key(name));
+	if (RegSetValueExA(_hKey, name.c_str(), 0, REG_SZ, (CONST BYTE*) value.c_str(), (DWORD) value.size() + 1) != ERROR_SUCCESS) {
+		ex.set(Exception::REGISTRY, "Failed to set registry value ", key(name));
+		return;
+	}
 #endif
 }
 
 
-string WinRegistryKey::getString(const string& name) {
-	open();
+string WinRegistryKey::getString(Exception& ex, const string& name) {
+	open(ex);
+	if (ex)
+		return string();
+
 	DWORD type;
 	DWORD size;
 #if defined(POCO_WIN32_UTF8)
 	wstring uname;
 	UnicodeConverter::toUTF16(name, uname);
-	if (RegQueryValueExW(_hKey, uname.c_str(), NULL, &type, NULL, &size) != ERROR_SUCCESS || type != REG_SZ && type != REG_EXPAND_SZ)
-		Exception(Exception::REGISTRY, "Key ",key(name)," not found");
+	if (RegQueryValueExW(_hKey, uname.c_str(), NULL, &type, NULL, &size) != ERROR_SUCCESS || type != REG_SZ && type != REG_EXPAND_SZ) {
+		ex.set(Exception::REGISTRY, "Key ",key(name)," not found");
+		return string();
+	}
 	if (size > 0) {
 		DWORD len = size / 2;
 		wchar_t* buffer = new wchar_t[len + 1];
@@ -99,8 +110,10 @@ string WinRegistryKey::getString(const string& name) {
 		return result;
 	}
 #else
-	if (RegQueryValueExA(_hKey, name.c_str(), NULL, &type, NULL, &size) != ERROR_SUCCESS || type != REG_SZ && type != REG_EXPAND_SZ)
-		throw NotFoundException(key(name));
+	if (RegQueryValueExA(_hKey, name.c_str(), NULL, &type, NULL, &size) != ERROR_SUCCESS || type != REG_SZ && type != REG_EXPAND_SZ) {
+		ex.set(Exception::REGISTRY, "Key ",key(name)," not found");
+		return string();
+	}
 	if (size > 0)
 	{
 		char* buffer = new char[size + 1];
@@ -115,31 +128,43 @@ string WinRegistryKey::getString(const string& name) {
 }
 
 
-void WinRegistryKey::setStringExpand(const string& name, const string& value) {
-	open();
+void WinRegistryKey::setStringExpand(Exception& ex, const string& name, const string& value) {
+	open(ex);
+	if (ex)
+		return;
+
 #if defined(POCO_WIN32_UTF8)
 	wstring uname;
 	UnicodeConverter::toUTF16(name, uname);
 	wstring uvalue;
 	UnicodeConverter::toUTF16(value, uvalue);
-	if (RegSetValueExW(_hKey, uname.c_str(), 0, REG_EXPAND_SZ, (CONST BYTE*) uvalue.c_str(), (DWORD)(uvalue.size() + 1)*sizeof(wchar_t)) != ERROR_SUCCESS)
-		throw Exception(Exception::REGISTRY, "Failed to set registry value ", key(name));
+	if (RegSetValueExW(_hKey, uname.c_str(), 0, REG_EXPAND_SZ, (CONST BYTE*) uvalue.c_str(), (DWORD)(uvalue.size() + 1)*sizeof(wchar_t)) != ERROR_SUCCESS) {
+		ex.set(Exception::REGISTRY, "Failed to set registry value ", key(name));
+		return;
+	}
 #else
-	if (RegSetValueExA(_hKey, name.c_str(), 0, REG_EXPAND_SZ, (CONST BYTE*) value.c_str(), (DWORD) value.size() + 1) != ERROR_SUCCESS)
-		throw Exception(Exception::REGISTRY, "Failed to set registry value ", key(name)); 
+	if (RegSetValueExA(_hKey, name.c_str(), 0, REG_EXPAND_SZ, (CONST BYTE*) value.c_str(), (DWORD) value.size() + 1) != ERROR_SUCCESS) {
+		ex.set(Exception::REGISTRY, "Failed to set registry value ", key(name));
+		return;
+	}
 #endif
 }
 
 
-string WinRegistryKey::getStringExpand(const string& name) {
-	open();
+string WinRegistryKey::getStringExpand(Exception& ex, const string& name) {
+	open(ex);
+	if (ex)
+		return string();
+
 	DWORD type;
 	DWORD size;
 #if defined(POCO_WIN32_UTF8)
 	wstring uname;
 	UnicodeConverter::toUTF16(name, uname);
-	if (RegQueryValueExW(_hKey, uname.c_str(), NULL, &type, NULL, &size) != ERROR_SUCCESS || type != REG_SZ && type != REG_EXPAND_SZ)
-		throw Exception(Exception::REGISTRY,"Key ",key(name)," not found");
+	if (RegQueryValueExW(_hKey, uname.c_str(), NULL, &type, NULL, &size) != ERROR_SUCCESS || type != REG_SZ && type != REG_EXPAND_SZ) {
+		ex.set(Exception::REGISTRY,"Key ",key(name)," not found");
+		return string();
+	}
 	if (size > 0) {
 		DWORD len = size / 2;
 		wchar_t* buffer = new wchar_t[len + 1];
@@ -156,8 +181,10 @@ string WinRegistryKey::getStringExpand(const string& name) {
 		return result;
 	}
 #else
-	if (RegQueryValueExA(_hKey, name.c_str(), NULL, &type, NULL, &size) != ERROR_SUCCESS || type != REG_SZ && type != REG_EXPAND_SZ)
-		throw NotFoundException(key(name));
+	if (RegQueryValueExA(_hKey, name.c_str(), NULL, &type, NULL, &size) != ERROR_SUCCESS || type != REG_SZ && type != REG_EXPAND_SZ) {
+		ex.set(Exception::REGISTRY,"Key ",key(name)," not found");
+		return string();
+	}
 	if (size > 0)
 	{
 		char* buffer = new char[size + 1];
@@ -177,63 +204,89 @@ string WinRegistryKey::getStringExpand(const string& name) {
 }
 
 
-void WinRegistryKey::setInt(const string& name, int value) {
-	open();
+void WinRegistryKey::setInt(Exception& ex, const string& name, int value) {
+	open(ex);
+	if (ex)
+		return;
+
 	DWORD data = value;
 #if defined(POCO_WIN32_UTF8)
 	wstring uname;
 	UnicodeConverter::toUTF16(name, uname);
-	if (RegSetValueExW(_hKey, uname.c_str(), 0, REG_DWORD, (CONST BYTE*) &data, sizeof(data)) != ERROR_SUCCESS)
-		throw Exception(Exception::REGISTRY, "Failed to set registry value ", key(name));
+	if (RegSetValueExW(_hKey, uname.c_str(), 0, REG_DWORD, (CONST BYTE*) &data, sizeof(data)) != ERROR_SUCCESS) {
+		ex.set(Exception::REGISTRY, "Failed to set registry value ", key(name));
+		return;
+	}
 #else
-	if (RegSetValueExA(_hKey, name.c_str(), 0, REG_DWORD, (CONST BYTE*) &data, sizeof(data)) != ERROR_SUCCESS)
-		throw Exception(Exception::REGISTRY, "Failed to set registry value ", key(name));
+	if (RegSetValueExA(_hKey, name.c_str(), 0, REG_DWORD, (CONST BYTE*) &data, sizeof(data)) != ERROR_SUCCESS) {
+		ex.set(Exception::REGISTRY, "Failed to set registry value ", key(name));
+		return;
+	}
 #endif
 }
 
 
-int WinRegistryKey::getInt(const string& name) {
-	open();
+int WinRegistryKey::getInt(Exception& ex, const string& name) {
+	open(ex);
+	if (ex)
+		return 0;
+
 	DWORD type;
 	DWORD data;
 	DWORD size = sizeof(data);
 #if defined(POCO_WIN32_UTF8)
 	wstring uname;
 	UnicodeConverter::toUTF16(name, uname);
-	if (RegQueryValueExW(_hKey, uname.c_str(), NULL, &type, (BYTE*)&data, &size) != ERROR_SUCCESS || type != REG_DWORD)
-		throw Exception(Exception::REGISTRY, "Key ", key(name), " not found");
+	if (RegQueryValueExW(_hKey, uname.c_str(), NULL, &type, (BYTE*)&data, &size) != ERROR_SUCCESS || type != REG_DWORD) {
+		ex.set(Exception::REGISTRY, "Key ", key(name), " not found");
+		return 0;
+	}
 #else
-	if (RegQueryValueExA(_hKey, name.c_str(), NULL, &type, (BYTE*) &data, &size) != ERROR_SUCCESS || type != REG_DWORD)
-		throw NotFoundException(key(name));
+	if (RegQueryValueExA(_hKey, name.c_str(), NULL, &type, (BYTE*) &data, &size) != ERROR_SUCCESS || type != REG_DWORD) {
+		ex.set(Exception::REGISTRY, "Key ", key(name), " not found");
+		return 0;
+	}
 #endif
 	return data;
 }
 
 
-void WinRegistryKey::deleteValue(const string& name) {
-	open();
+void WinRegistryKey::deleteValue(Exception& ex, const string& name) {
+	open(ex);
+	if (ex)
+		return;
+
 #if defined(POCO_WIN32_UTF8)
 	wstring uname;
 	UnicodeConverter::toUTF16(name, uname);
-	if (RegDeleteValueW(_hKey, uname.c_str()) != ERROR_SUCCESS)
-		throw Exception(Exception::REGISTRY, "Key ", key(name), " not found");
+	if (RegDeleteValueW(_hKey, uname.c_str()) != ERROR_SUCCESS) {
+		ex.set(Exception::REGISTRY, "Key ", key(name), " not found");
+		return;
+	}
 #else
-	if (RegDeleteValueA(_hKey, name.c_str()) != ERROR_SUCCESS)
-		throw NotFoundException(key(name));
+	if (RegDeleteValueA(_hKey, name.c_str()) != ERROR_SUCCESS) {
+		ex.set(Exception::REGISTRY, "Key ", key(name), " not found");
+		return;
+	}
 #endif
 }
 
 
-void WinRegistryKey::deleteKey() {
+void WinRegistryKey::deleteKey(Exception& ex) {
 	Keys keys;
-	subKeys(keys);
+	subKeys(ex, keys);
+	if (ex)
+		return;
+
 	close();
 	for (Keys::iterator it = keys.begin(); it != keys.end(); ++it) {
 		string subKey(_subKey);
 		subKey += "\\";
 		subKey += *it;
 		WinRegistryKey subRegKey(_hRootKey, subKey);
-		subRegKey.deleteKey();
+		subRegKey.deleteKey(ex);
+		if (ex)
+			return;
 	}
 
 	// NOTE: RegDeleteKeyEx is only available on Windows XP 64-bit SP3, Windows Vista or later.
@@ -251,13 +304,15 @@ void WinRegistryKey::deleteKey() {
 			RegDeleteKeyExWFunc pRegDeleteKeyExW = reinterpret_cast<RegDeleteKeyExWFunc>(GetProcAddress(advAPI32.handle(), "RegDeleteKeyExW"));
 			if (pRegDeleteKeyExW) {
 				if ((*pRegDeleteKeyExW)(_hRootKey, usubKey.c_str(), _extraSam, 0) != ERROR_SUCCESS)
-					throw Exception(Exception::REGISTRY, "Key ", key(), " not found");
+					ex.set(Exception::REGISTRY, "Key ", key(), " not found");
 				return;
 			}
 		}
 	}
-	if (RegDeleteKeyW(_hRootKey, usubKey.c_str()) != ERROR_SUCCESS)
-		throw Exception(Exception::REGISTRY, "Key ", key(), " not found");
+	if (RegDeleteKeyW(_hRootKey, usubKey.c_str()) != ERROR_SUCCESS) {
+		ex.set(Exception::REGISTRY, "Key ", key(), " not found");
+		return;
+	}
 #else
 	typedef LONG (WINAPI *RegDeleteKeyExAFunc)(HKEY hKey, const char* lpSubKey, REGSAM samDesired, DWORD Reserved);
 	if (_extraSam != 0)
@@ -269,13 +324,15 @@ void WinRegistryKey::deleteKey() {
 			if (pRegDeleteKeyExA)
 			{
 				if ((*pRegDeleteKeyExA)(_hRootKey, _subKey.c_str(), _extraSam, 0) != ERROR_SUCCESS)
-					throw Exception(Exception::REGISTRY, "Key ", key(), " not found");
+					ex.set(Exception::REGISTRY, "Key ", key(), " not found");
 				return;
 			}
 		}
 	}
-	if (RegDeleteKey(_hRootKey, _subKey.c_str()) != ERROR_SUCCESS)
-		throw Exception(Exception::REGISTRY, "Key ", key(), " not found");
+	if (RegDeleteKey(_hRootKey, _subKey.c_str()) != ERROR_SUCCESS) {
+		ex.set(Exception::REGISTRY, "Key ", key(), " not found");
+		return;
+	}
 #endif
 }
 
@@ -300,21 +357,30 @@ bool WinRegistryKey::exists() {
 }
 
 
-WinRegistryKey::Type WinRegistryKey::type(const string& name) {
-	open();
+WinRegistryKey::Type WinRegistryKey::type(Exception& ex, const string& name) {
+	open(ex);
+	if (ex)
+		return REGT_NONE;
+
 	DWORD type = REG_NONE;
 	DWORD size;
 #if defined(POCO_WIN32_UTF8)
 	wstring uname;
 	UnicodeConverter::toUTF16(name, uname);
-	if (RegQueryValueExW(_hKey, uname.c_str(), NULL, &type, NULL, &size) != ERROR_SUCCESS)
-		throw Exception(Exception::REGISTRY, "Key ", key(name), " not found");
+	if (RegQueryValueExW(_hKey, uname.c_str(), NULL, &type, NULL, &size) != ERROR_SUCCESS) {
+		ex.set(Exception::REGISTRY, "Key ", key(name), " not found");
+		return REGT_NONE;
+	}
 #else
-	if (RegQueryValueExA(_hKey, name.c_str(), NULL, &type, NULL, &size) != ERROR_SUCCESS)
-		throw NotFoundException(key(name));
+	if (RegQueryValueExA(_hKey, name.c_str(), NULL, &type, NULL, &size) != ERROR_SUCCESS) {
+		ex.set(Exception::REGISTRY, "Key ", key(name), " not found");
+		return REGT_NONE;
+	}
 #endif
-	if (type != REG_SZ && type != REG_EXPAND_SZ && type != REG_DWORD)
-		throw Exception(Exception::REGISTRY, key(name), ", type not supported");
+	if (type != REG_SZ && type != REG_EXPAND_SZ && type != REG_DWORD) {
+		ex.set(Exception::REGISTRY, "Key ", key(name), " not found");
+		return REGT_NONE;
+	}
 
 	Type aType = (Type)type;
 	return aType;
@@ -344,27 +410,35 @@ bool WinRegistryKey::exists(const string& name) {
 }
 
 
-void WinRegistryKey::open() {
+void WinRegistryKey::open(Exception& ex) {
 	if (!_hKey) {
 #if defined(POCO_WIN32_UTF8)
 		wstring usubKey;
 		UnicodeConverter::toUTF16(_subKey, usubKey);
 		if (_readOnly) {
-			if (RegOpenKeyExW(_hRootKey, usubKey.c_str(), 0, KEY_READ | _extraSam, &_hKey) != ERROR_SUCCESS)
-				throw Exception(Exception::REGISTRY,"Cannot open registry ", key());
+			if (RegOpenKeyExW(_hRootKey, usubKey.c_str(), 0, KEY_READ | _extraSam, &_hKey) != ERROR_SUCCESS) {
+				ex.set(Exception::REGISTRY,"Cannot open registry ", key());
+				return;
+			}
 		} else {
-			if (RegCreateKeyExW(_hRootKey, usubKey.c_str(), 0, NULL, REG_OPTION_NON_VOLATILE, KEY_READ | KEY_WRITE | _extraSam, NULL, &_hKey, NULL) != ERROR_SUCCESS)
-				throw Exception(Exception::REGISTRY, "Cannot open registry ", key());
+			if (RegCreateKeyExW(_hRootKey, usubKey.c_str(), 0, NULL, REG_OPTION_NON_VOLATILE, KEY_READ | KEY_WRITE | _extraSam, NULL, &_hKey, NULL) != ERROR_SUCCESS) {
+				ex.set(Exception::REGISTRY,"Cannot open registry ", key());
+				return;
+			}
 		}
 #else
 		if (_readOnly) {
-			if (RegOpenKeyExA(_hRootKey, _subKey.c_str(), 0, KEY_READ | _extraSam, &_hKey) != ERROR_SUCCESS)
-				throw Exception(Exception::REGISTRY,"Cannot open registry ", key());
+			if (RegOpenKeyExA(_hRootKey, _subKey.c_str(), 0, KEY_READ | _extraSam, &_hKey) != ERROR_SUCCESS) {
+				ex.set(Exception::REGISTRY,"Cannot open registry ", key());
+				return;
+			}
 		}
 		else
 		{
-			if (RegCreateKeyExA(_hRootKey, _subKey.c_str(), 0, NULL, REG_OPTION_NON_VOLATILE, KEY_READ | KEY_WRITE | _extraSam, NULL, &_hKey, NULL) != ERROR_SUCCESS)
-				throw Exception(Exception::REGISTRY,"Cannot open registry ", key());
+			if (RegCreateKeyExA(_hRootKey, _subKey.c_str(), 0, NULL, REG_OPTION_NON_VOLATILE, KEY_READ | KEY_WRITE | _extraSam, NULL, &_hKey, NULL) != ERROR_SUCCESS) {
+				ex.set(Exception::REGISTRY,"Cannot open registry ", key());
+				return;
+			}
 		}
 #endif
 	}
@@ -411,7 +485,7 @@ string WinRegistryKey::key(const string& valueName) const {
 }
 
 
-HKEY WinRegistryKey::handleFor(const string& rootKey) {
+HKEY WinRegistryKey::handleFor(Exception& ex, const string& rootKey) {
 	if (rootKey == "HKEY_CLASSES_ROOT")
 		return HKEY_CLASSES_ROOT;
 	else if (rootKey == "HKEY_CURRENT_CONFIG")
@@ -424,13 +498,17 @@ HKEY WinRegistryKey::handleFor(const string& rootKey) {
 		return HKEY_USERS;
 	else if (rootKey == "HKEY_PERFORMANCE_DATA")
 		return HKEY_PERFORMANCE_DATA;
-	else
-		throw Exception(Exception::REGISTRY,"Not a valid root key ", rootKey);
+	else {
+		ex.set(Exception::REGISTRY,"Not a valid root key ", rootKey);
+		return 0;
+	}
 }
 
 
-void WinRegistryKey::subKeys(WinRegistryKey::Keys& keys) {
-	open();
+void WinRegistryKey::subKeys(Exception& ex, WinRegistryKey::Keys& keys) {
+	open(ex);
+	if (ex)
+		return;
 
 	DWORD subKeyCount = 0;
 	DWORD valueCount = 0;
@@ -466,8 +544,10 @@ void WinRegistryKey::subKeys(WinRegistryKey::Keys& keys) {
 }
 
 
-void WinRegistryKey::values(WinRegistryKey::Values& vals) {
-	open();
+void WinRegistryKey::values(Exception& ex, WinRegistryKey::Values& vals) {
+	open(ex);
+	if (ex)
+		return;
 
 	DWORD valueCount = 0;
 

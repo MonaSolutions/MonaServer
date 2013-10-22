@@ -42,13 +42,13 @@ private:
 		try {
 			Protocol* pProtocol = new ProtocolType(name,params,gateway,_invoker);
 			_protocols.push_back(pProtocol);
-			NOTE("%s server starts on %u %s port",pProtocol->name.c_str(),params.port,dynamic_cast<UDProtocol*>(pProtocol) ? "UDP" : "TCP");
+			NOTE(pProtocol->name," server starts on ",params.port," ",dynamic_cast<UDProtocol*>(pProtocol) ? "UDP" : "TCP"," port");
 		} catch(Poco::Exception& ex) {
-			ERROR("%s server, %s",name,ex.displayText().c_str());
+			ERROR(name," server, ",ex.displayText());
 		} catch (std::exception& ex) {
-			ERROR("%s server, %s",name,ex.what());
+			ERROR(name," server, ",ex.what());
 		} catch (...) {
-			ERROR("%s server, unknown error",name);
+			ERROR(name," server, unknown error");
 		}
 	}
 

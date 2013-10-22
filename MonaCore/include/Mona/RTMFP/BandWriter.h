@@ -18,6 +18,7 @@
 #pragma once
 
 #include "Mona/Mona.h"
+#include "Mona/Exceptions.h"
 #include "Mona/MemoryWriter.h"
 
 namespace Mona {
@@ -35,8 +36,8 @@ public:
 	virtual bool			failed() const = 0;
 	virtual bool			canWriteFollowing(RTMFPWriter& writer)=0;
 	virtual MemoryWriter&	writer()=0;
-	virtual MemoryWriter&	writeMessage(Mona::UInt8 type,Mona::UInt16 length,RTMFPWriter* pWriter=NULL)=0;
-	virtual void			flush(bool full=true)=0;
+	virtual MemoryWriter&	writeMessage(Exception& ex, Mona::UInt8 type,Mona::UInt16 length,RTMFPWriter* pWriter=NULL)=0;
+	virtual void			flush(Exception& ex, bool full=true)=0;
 	
 };
 

@@ -19,7 +19,6 @@
 #include "Mona/Peer.h"
 #include "Mona/Util.h"
 #include "Mona/Logs.h"
-#include "Poco/NumberFormatter.h"
 #include <cstring>
 
 using namespace std;
@@ -47,7 +46,7 @@ RTMFPWriter::~RTMFPWriter() {
 	Writer::close();
 	clear();
 	if(!signature.empty())
-		DEBUG("RTMFPWriter %s consumed",NumberFormatter::format(id).c_str());
+		DEBUG("RTMFPWriter ",id," consumed");
 }
 
 void RTMFPWriter::clear() {
@@ -69,7 +68,9 @@ void RTMFPWriter::clear() {
 	}
 	if(_stage>0) {
 		createBufferedMessage(); // Send a MESSAGE_ABANDONMENT just in the case where the receiver has been created
-		flush();
+		Exception ex;
+		flush(ex);
+		ERROR("Error in RTMFPWriter 'clear' function trying to flush : ", ex.error());
 		_trigger.stop();
 	}
 }
@@ -77,7 +78,7 @@ void RTMFPWriter::clear() {
 void RTMFPWriter::fail(const string& error) {
 	if(state()==CLOSED)
 		return;
-	WARN("RTMFPWriter %s has failed : %s",NumberFormatter::format(id).c_str(),error.c_str());
+	WARN("RTMFPWriter ",id," has failed : ",error);
 	clear();
 	_stage=_stageAck=_lostCount=_ackCount=0;
 	duplicate(); // To avoid the flow erase on "resetWriter"
@@ -111,12 +112,12 @@ void RTMFPWriter::acknowledgment(MemoryReader& reader) {
 	UInt64 stage = _stageAck+1;
 
 	if(stageReaden>_stage) {
-		ERROR("Acknowledgment received %s superior than the current sending stage %s on writer %s",NumberFormatter::format(stageReaden).c_str(),NumberFormatter::format(_stage).c_str(),NumberFormatter::format(id).c_str());
+		ERROR("Acknowledgment received ",stageReaden," superior than the current sending stage ",_stage," on writer ",id);
 		_stageAck = _stage;
 	} else if(stageReaden<=_stageAck) {
 		// already acked
 		if(reader.available()==0)
-			DEBUG("Acknowledgment %s obsolete on writer %s",NumberFormatter::format(stageReaden).c_str(),NumberFormatter::format(id).c_str());
+			DEBUG("Acknowledgment ",stageReaden," obsolete on writer ",id);
 	} else
 		_stageAck = stageReaden;
 
@@ -126,7 +127,7 @@ void RTMFPWriter::acknowledgment(MemoryReader& reader) {
 	while(reader.available()>0)
 		maxStageRecv += reader.read7BitLongValue()+reader.read7BitLongValue()+2;
 	if(pos != reader.position()) {
-		// TRACE("%u..x%s",stageReaden,Util::FormatHex(reader.current(),reader.available()).c_str());
+		// TRACE(stageReaden,"..x"Util::FormatHex(reader.current(),reader.available()));
 		reader.reset(pos);
 	}
 
@@ -141,7 +142,7 @@ void RTMFPWriter::acknowledgment(MemoryReader& reader) {
 		RTMFPMessage& message(**it);
 
 		if(message.fragments.empty()) {
-			CRITIC("RTMFPMessage %s is bad formatted on fowWriter %s",NumberFormatter::format(stage+1).c_str(),NumberFormatter::format(id).c_str());
+			CRITIC("RTMFPMessage ",(stage+1)," is bad formatted on fowWriter ",id);
 			++it;
 			continue;
 		}
@@ -173,7 +174,7 @@ void RTMFPWriter::acknowledgment(MemoryReader& reader) {
 				// check the range
 				if(lostStage>_stage) {
 					// Not yet sent
-					ERROR("Lost information received %s have not been yet sent on writer %s",NumberFormatter::format(lostStage).c_str(),NumberFormatter::format(id).c_str());
+					ERROR("Lost information received ",lostStage," have not been yet sent on writer ",id);
 					stop=true;
 				} else if(lostStage<=_stageAck) {
 					// already acked
@@ -205,7 +206,7 @@ void RTMFPWriter::acknowledgment(MemoryReader& reader) {
 					++stage;
 					header=true;
 				} else {
-					INFO("RTMFPWriter %s : message %s lost",NumberFormatter::format(id).c_str(),NumberFormatter::format(stage).c_str());
+					INFO("RTMFPWriter ",id," : message ",stage," lost");
 					--_ackCount;
 					++_lostCount;
 					_stageAck = stage;
@@ -228,7 +229,7 @@ void RTMFPWriter::acknowledgment(MemoryReader& reader) {
 
 			// Repeat message
 
-			DEBUG("RTMFPWriter %s : stage %s repeated",NumberFormatter::format(id).c_str(),NumberFormatter::format(stage).c_str());
+			DEBUG("RTMFPWriter ",id," : stage ",stage," repeated");
 			UInt32 available;
 			UInt32 fragment(itFrag->first);
 			BinaryReader& content = message.reader(fragment,available);
@@ -248,20 +249,36 @@ void RTMFPWriter::acknowledgment(MemoryReader& reader) {
 			UInt32 size = contentSize+4;
 			
 			if(!header && size>_band.writer().available()) {
-				_band.flush(false);
+				Exception ex;
+				_band.flush(ex, false);
+				if (ex) {
+					ERROR("Error during flush in Acknowledgment : ", ex.error())
+					continue;
+				}
 				header=true;
 			}
 
 			if(header)
 				size+=headerSize(stage);
 
-			if(size>_band.writer().available())
-				_band.flush(false);
+			Exception exf;
+			if(size>_band.writer().available()) {
+				_band.flush(exf, false);
+				if (exf) {
+					ERROR("Error during flush in Acknowledgment : ", exf.error())
+					continue;
+				}
+			}
 
 			// Write packet
 			size-=3;  // type + timestamp removed, before the "writeMessage"
-			flush(_band.writeMessage(header ? 0x10 : 0x11,(UInt16)size)
+			Exception ex;
+			flush(_band.writeMessage(ex, header ? 0x10 : 0x11,(UInt16)size)
 				,stage,flags,header,content,contentSize);
+			if (ex) {
+				ERROR("Error during writing : ", ex.error())
+				return;
+			}
 			available -= contentSize;
 			header=false;
 			--lostCount;
@@ -284,7 +301,7 @@ void RTMFPWriter::acknowledgment(MemoryReader& reader) {
 	}
 
 	if(lostCount>0 && reader.available()>0)
-		ERROR("Some lost information received have not been yet sent on writer %s",NumberFormatter::format(id).c_str());
+		ERROR("Some lost information received have not been yet sent on writer ",id);
 
 
 	// rest messages repeatable?
@@ -294,26 +311,29 @@ void RTMFPWriter::acknowledgment(MemoryReader& reader) {
 		_trigger.reset();
 }
 
-void RTMFPWriter::manage(Invoker& invoker) {
+void RTMFPWriter::manage(Exception& ex, Invoker& invoker) {
 	if(!consumed() && !_band.failed()) {
-		try {
-			if(_trigger.raise())
-				raiseMessage();
-		} catch(Exception& ex) {
-			fail("RTMFPWriter can't deliver its data, "+ex.message());
-			throw;
+		
+		if(_trigger.raise(ex))
+			raiseMessage(ex);
+
+		if (ex) {
+			fail("RTMFPWriter can't deliver its data, "+ex.error());
+			return;
 		}
 	}
-	if(critical && state()==CLOSED)
-		throw Exception("Main flow writer closed, session is closing");
-	flush();
+	if(critical && state()==CLOSED) {
+		ex.set(Exception::NETWORK, "Main flow writer closed, session is closing");
+		return;
+	}
+	flush(ex);
 }
 
 UInt32 RTMFPWriter::headerSize(UInt64 stage) { // max size header = 50
 	UInt32 size= Util::Get7BitValueSize(id);
 	size+= Util::Get7BitValueSize(stage);
 	if(_stageAck>stage)
-		CRITIC("stageAck %s superior to stage %s on writer %s",NumberFormatter::format(_stageAck).c_str(),NumberFormatter::format(stage).c_str(),NumberFormatter::format(id).c_str());
+		CRITIC("stageAck ",_stageAck," superior to stage ",stage," on writer ",id);
 	size+= Util::Get7BitValueSize(stage-_stageAck);
 	size+= _stageAck>0 ? 0 : (signature.size()+(flowId==0?2:(4+Util::Get7BitValueSize(flowId))));
 	return size;
@@ -328,7 +348,7 @@ void RTMFPWriter::flush(MemoryWriter& writer,UInt64 stage,UInt8 flags,bool heade
 	if(state()==CLOSED && _messages.size()==1) // On LAST message
 		flags |= MESSAGE_END;
 
-	// TRACE("RTMFPWriter %u stage %u",id,stage);
+	// TRACE("RTMFPWriter ",id," stage ",stage);
 
 	writer.write8(flags);
 
@@ -357,7 +377,7 @@ void RTMFPWriter::flush(MemoryWriter& writer,UInt64 stage,UInt8 flags,bool heade
 	}
 }
 
-void RTMFPWriter::raiseMessage() {
+void RTMFPWriter::raiseMessage(Exception& ex) {
 	list<RTMFPMessage*>::const_iterator it;
 	bool header = true;
 	bool stop = true;
@@ -380,7 +400,9 @@ void RTMFPWriter::raiseMessage() {
 		/// HERE -> message repeatable AND already flushed one time!
 
 		if(stop) {
-			_band.flush(false); // To repeat message, before we must send precedent waiting mesages
+			_band.flush(ex, false); // To repeat message, before we must send precedent waiting mesages
+			if (ex)
+				return;
 			stop = false;
 		}
 
@@ -410,16 +432,18 @@ void RTMFPWriter::raiseMessage() {
 			// Actual sending packet is enough large? Here we send just one packet!
 			if(size>_band.writer().available()) {
 				if(!sent)
-					ERROR("Raise messages on writer %s without sending!",NumberFormatter::format(id).c_str());
-				DEBUG("Raise message on writer %s finishs on stage %s",NumberFormatter::format(id).c_str(),NumberFormatter::format(stage).c_str());
+					ERROR("Raise messages on writer ",id," without sending!");
+				DEBUG("Raise message on writer ",id," finishs on stage ",stage);
 				return;
 			}
 			sent=true;
 
 			// Write packet
 			size-=3;  // type + timestamp removed, before the "writeMessage"
-			flush(_band.writeMessage(header ? 0x10 : 0x11,(UInt16)size)
+			flush(_band.writeMessage(ex, header ? 0x10 : 0x11,(UInt16)size)
 				,stage++,flags,header,content,contentSize);
+			if (ex)
+				return;
 			available -= contentSize;
 			header=false;
 		}
@@ -429,10 +453,10 @@ void RTMFPWriter::raiseMessage() {
 		_trigger.stop();
 }
 
-void RTMFPWriter::flush(bool full) {
+void RTMFPWriter::flush(Exception& ex, bool full) {
 
 	if(_messagesSent.size()>100)
-		DEBUG("_messagesSent.size()=%s",NumberFormatter::format(_messagesSent.size()).c_str());
+		DEBUG("_messagesSent.size()=",_messagesSent.size());
 
 	if(state()==CONNECTING) {
 		ERROR("Violation policy, impossible to flush data on a connecting writer");
@@ -471,7 +495,9 @@ void RTMFPWriter::flush(bool full) {
 			UInt32 contentSize = _band.writer().available();
 			UInt32 headerSize = (header && contentSize<62) ? this->headerSize(_stage) : 0; // calculate only if need!
 			if(contentSize<(headerSize+12)) { // 12 to have a size minimum of fragmentation
-				_band.flush(false); // send packet (and without time echo)
+				_band.flush(ex, false); // send packet (and without time echo)
+				if (ex)
+					return;
 				header=true;
 			}
 
@@ -499,7 +525,10 @@ void RTMFPWriter::flush(bool full) {
 
 			// Write packet
 			size-=3; // type + timestamp removed, before the "writeMessage"
-			flush(_band.writeMessage(head ? 0x10 : 0x11,(UInt16)size,this),_stage,flags,head,content,contentSize);
+			MemoryWriter& memw = _band.writeMessage(ex, head ? 0x10 : 0x11,(UInt16)size,this);
+			if (ex)
+				return;
+			flush(memw,_stage,flags,head,content,contentSize);
 
 			message.addFragment(fragments,_stage);
 			available -= contentSize;
@@ -512,8 +541,11 @@ void RTMFPWriter::flush(bool full) {
 		it=_messages.begin();
 	}
 
-	if(full)
-		_band.flush();
+	if(full) {
+		_band.flush(ex);
+		if (ex)
+			return;
+	}
 }
 
 RTMFPWriter::State RTMFPWriter::state(State value,bool minimal) {
@@ -553,7 +585,11 @@ AMFWriter& RTMFPWriter::write(AMF::ContentType type,UInt32 time,MemoryReader* pD
 			writer.write32(time);
 			if(type==AMF::DATA)
 				writer.write8(0);
-			writeRaw(pData->current(),pData->available());
+
+			Exception ex;
+			writeRaw(ex, pData->current(),pData->available());
+			if (ex)
+				ERROR("Error during write in RTMFPWriter : ", ex.error());
 			return AMFWriterNull;
 		}
 		DEBUG("Written unbuffered impossible, it requires 6 head bytes available on MemoryReader given");
@@ -576,7 +612,7 @@ void RTMFPWriter::writeMember(const Peer& peer) {
 	message.writer.writer.writeRaw(peer.id,ID_SIZE);
 }
 
-void RTMFPWriter::writeRaw(const UInt8* data,UInt32 size) {
+void RTMFPWriter::writeRaw(Exception& ex, const UInt8* data,UInt32 size) {
 	if(reliable || state()==CONNECTING) {
 		createBufferedMessage().writer.writer.writeRaw(data,size);
 		return;
@@ -585,7 +621,7 @@ void RTMFPWriter::writeRaw(const UInt8* data,UInt32 size) {
 		return;
 	RTMFPMessage* pMessage = new RTMFPMessageUnbuffered(data,size);
 	_messages.push_back(pMessage);
-	flush();
+	flush(ex);
 }
 
 bool RTMFPWriter::writeMedia(MediaType type,UInt32 time,MemoryReader& data) {
@@ -593,7 +629,7 @@ bool RTMFPWriter::writeMedia(MediaType type,UInt32 time,MemoryReader& data) {
 		// write bounds
 		AMFWriter& writer = write(AMF::RAW);
 		writer.writer.write16(0x22);
-		DEBUG("Writing %llu bound %u ",id,_boundCount);
+		DEBUG("Writing ",id," bound ",_boundCount);
 		writer.writer.write32(_boundCount);
 		writer.writer.write32(3); // 3 tracks!
 		_reseted=false;

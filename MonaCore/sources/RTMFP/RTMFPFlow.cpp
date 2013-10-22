@@ -21,7 +21,6 @@
 #include "Mona/Logs.h"
 #include "Mona/Util.h"
 #include "Poco/Format.h"
-#include "Poco/NumberFormatter.h"
 #include <cstring>
 
 using namespace std;
@@ -106,7 +105,7 @@ void RTMFPFlow::complete() {
 		return;
 
 	if(!_pStream.isNull()) // FlowNull instance, not display the message in FullNull case
-		DEBUG("RTMFPFlow %s consumed",NumberFormatter::format(id).c_str());
+		DEBUG("RTMFPFlow ",id," consumed");
 
 	// delete fragments
 	map<UInt64,RTMFPFragment*>::const_iterator it;
@@ -124,9 +123,12 @@ void RTMFPFlow::complete() {
 }
 
 void RTMFPFlow::fail(const string& error) {
-	ERROR("RTMFPFlow %s failed : %s",NumberFormatter::format(id).c_str(),error.c_str());
+	ERROR("RTMFPFlow ",id," failed : ",error);
 	if(!_completed) {
-		BinaryWriter& writer = _band.writeMessage(0x5e,Util::Get7BitValueSize(id)+1);
+		Exception ex;
+		BinaryWriter& writer = _band.writeMessage(ex, 0x5e,Util::Get7BitValueSize(id)+1);
+		if (ex)
+			ERROR("Error during fail : ", ex.error());
 		writer.write7BitLongValue(id);
 		writer.write8(0); // unknown
 	}
@@ -154,7 +156,7 @@ AMF::ContentType RTMFPFlow::unpack(MemoryReader& reader) {
 		case 0x01:
 			break;
 		default:
-			ERROR("Unpacking type '%02x' unknown",type);
+			ERROR("Unpacking type '",Format<UInt8>("%02x",(UInt8)type),"' unknown");
 			break;
 	}
 	return type;
@@ -185,7 +187,11 @@ void RTMFPFlow::commit() {
 	if(_pStream.isNull())
 		bufferSize=0;
 
-	MemoryWriter& ack = _band.writeMessage(0x51,Util::Get7BitValueSize(id)+Util::Get7BitValueSize(bufferSize)+Util::Get7BitValueSize(_stage)+size);
+	Exception ex;
+	MemoryWriter& ack = _band.writeMessage(ex, 0x51,Util::Get7BitValueSize(id)+Util::Get7BitValueSize(bufferSize)+Util::Get7BitValueSize(_stage)+size);
+	if (ex)
+		ERROR("Error while trying to write message : ", ex.error());
+
 	UInt32 pos = ack.position();
 	ack.write7BitLongValue(id);
 	ack.write7BitValue(bufferSize);
@@ -197,7 +203,10 @@ void RTMFPFlow::commit() {
 
 	if(!_pStream.isNull())
 		_pStream->flush();
-	_pWriter->flush();
+
+	Exception exf;
+	_pWriter->flush(exf);
+	ERROR("Error while trying to flush message : ", ex.error());
 }
 
 void RTMFPFlow::fragmentHandler(UInt64 _stage,UInt64 deltaNAck,MemoryReader& fragment,UInt8 flags) {
@@ -210,17 +219,17 @@ void RTMFPFlow::fragmentHandler(UInt64 _stage,UInt64 deltaNAck,MemoryReader& fra
 		return;
 	}
 
-//	TRACE("RTMFPFlow %s _stage %s",NumberFormatter::format(id).c_str(),NumberFormatter::format(_stage).c_str());
+//	TRACE("RTMFPFlow ",id," _stage ",_stage);
 
 	UInt64 nextStage = this->_stage+1;
 
 	if(_stage < nextStage) {
-		DEBUG("Stage %s on flow %s has already been received",NumberFormatter::format(_stage).c_str(),NumberFormatter::format(id).c_str());
+		DEBUG("Stage ",_stage," on flow ",id," has already been received");
 		return;
 	}
 
 	if(deltaNAck>_stage) {
-		WARN("DeltaNAck %s superior to _stage %s on flow %s",NumberFormatter::format(deltaNAck).c_str(),NumberFormatter::format(_stage).c_str(),NumberFormatter::format(id).c_str());
+		WARN("DeltaNAck ",deltaNAck," superior to _stage ",_stage," on flow ",id);
 		deltaNAck=_stage;
 	}
 	
@@ -251,9 +260,9 @@ void RTMFPFlow::fragmentHandler(UInt64 _stage,UInt64 deltaNAck,MemoryReader& fra
 				--it;
 			_fragments.insert(it,pair<UInt64,RTMFPFragment*>(_stage,new RTMFPFragment(fragment,flags)));
 			if(_fragments.size()>100)
-				DEBUG("_fragments.size()=%s",NumberFormatter::format(_fragments.size()).c_str());
+				DEBUG("_fragments.size()=",_fragments.size());
 		} else
-			DEBUG("Stage %s on flow %s has already been received",NumberFormatter::format(_stage).c_str(),NumberFormatter::format(id).c_str());
+			DEBUG("Stage ",_stage," on flow ",id," has already been received");
 	} else {
 		fragmentSortedHandler(nextStage++,fragment,flags);
 		if(flags&MESSAGE_END)
@@ -277,7 +286,7 @@ void RTMFPFlow::fragmentHandler(UInt64 _stage,UInt64 deltaNAck,MemoryReader& fra
 
 void RTMFPFlow::fragmentSortedHandler(UInt64 _stage,MemoryReader& fragment,UInt8 flags) {
 	if(_stage<=this->_stage) {
-		ERROR("Stage %s not sorted on flow %s",NumberFormatter::format(_stage).c_str(),NumberFormatter::format(id).c_str());
+		ERROR("Stage ",_stage," not sorted on flow ",id);
 		return;
 	}
 	if(_stage>(this->_stage+1)) {

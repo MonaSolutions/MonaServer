@@ -27,7 +27,7 @@ using namespace Poco::Net;
 
 Servers::Servers(Mona::UInt16 port, ServerHandler& handler, const SocketManager& manager, const string& targets) : TCPServer(manager), _port(port), _handler(handler), _manageTimes(1) {
 	if(port>0)
-		NOTE("Servers incoming connection enabled on port %hu",port)
+		NOTE("Servers incoming connection enabled on port ",port)
 	else if(!_targets.empty())
 		NOTE("Servers incoming connection disabled (servers.port==0)")
 
@@ -76,7 +76,7 @@ void Servers::connection(ServerConnection& server) {
 		targets._connections.insert(&server);
 	else
 		initiators._connections.insert(&server);
-	NOTE("Connection etablished with %s server ",server.address.c_str())
+	NOTE("Connection etablished with ",server.address," server ")
 }
 
 bool Servers::disconnection(ServerConnection& server) {
@@ -86,7 +86,7 @@ bool Servers::disconnection(ServerConnection& server) {
 		targets._connections.erase(&server);
 	else
 		initiators._connections.erase(&server);
-	NOTE("Disconnection from %s server ",server.address.c_str())
+	NOTE("Disconnection from ",server.address," server ")
 	if(_targets.find(&server)==_targets.end())
 		return true;
 	return false;

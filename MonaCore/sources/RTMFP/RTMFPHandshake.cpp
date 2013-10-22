@@ -51,7 +51,7 @@ void RTMFPHandshake::manage() {
 	while(it!=_cookies.end()) {
 		if(it->second->obsolete()) {
 			clearAttempt(it->second->tag);
-			DEBUG("Obsolete cookie : %s",Util::FormatHex(it->first,COOKIE_SIZE).c_str());
+			DEBUG("Obsolete cookie : ",Util::FormatHex(it->first,COOKIE_SIZE));
 			delete it->second;
 			_cookies.erase(it++);
 		} else
@@ -62,7 +62,7 @@ void RTMFPHandshake::manage() {
 void RTMFPHandshake::commitCookie(const UInt8* value) {
 	map<const UInt8*,RTMFPCookie*,CompareCookies>::iterator it = _cookies.find(value);
 	if(it==_cookies.end()) {
-		WARN("RTMFPCookie %s not found, maybe becoming obsolete before commiting (congestion?)",Util::FormatHex(value,COOKIE_SIZE).c_str());
+		WARN("RTMFPCookie ",Util::FormatHex(value,COOKIE_SIZE)," not found, maybe becoming obsolete before commiting (congestion?)");
 		return;
 	}
 	clearAttempt(it->second->tag);
@@ -81,11 +81,11 @@ void RTMFPHandshake::clear() {
 	_cookies.clear();
 }
 
-void RTMFPHandshake::createCookie(MemoryWriter& writer,HelloAttempt& attempt,const string& tag,const string& queryUrl) {
+void RTMFPHandshake::createCookie(Exception& ex, MemoryWriter& writer,HelloAttempt& attempt,const string& tag,const string& queryUrl) {
 	// New RTMFPCookie
 	RTMFPCookie* pCookie = attempt.pCookie;
 	if(!pCookie) {
-		pCookie = new RTMFPCookie(*this,invoker,tag,queryUrl);
+		pCookie = new RTMFPCookie(ex, *this,invoker,tag,queryUrl);
 		_cookies[pCookie->value()] =  pCookie;
 		attempt.pCookie = pCookie;
 	}
@@ -98,7 +98,7 @@ void RTMFPHandshake::packetHandler(MemoryReader& packet) {
 
 	UInt8 marker = packet.read8();
 	if(marker!=0x0b) {
-		ERROR("Marker handshake wrong : should be 0b and not %.2x",marker);
+		ERROR("Marker handshake wrong : should be 0b and not ",Format<UInt8>("%.2x",marker));
 		return;
 	}
 	
@@ -114,7 +114,10 @@ void RTMFPHandshake::packetHandler(MemoryReader& packet) {
 	if(idResponse>0) {
 		response.write8(idResponse);
 		response.write16(response.length()-response.position()-2);
-		flush();
+		Exception ex;
+		flush(ex);
+		if (ex)
+			ERROR("Error during flush in packetHandler of RTMFPHandshake : ", ex.error());
 	} else
 		response.clear(pos);
 
@@ -125,7 +128,7 @@ void RTMFPHandshake::packetHandler(MemoryReader& packet) {
 Session* RTMFPHandshake::createSession(const UInt8* cookieValue) {
 	map<const UInt8*,RTMFPCookie*,CompareCookies>::iterator itCookie = _cookies.find(cookieValue);
 	if(itCookie==_cookies.end()) {
-		WARN("Creating session for an unknown cookie '%s' (CPU congestion?)",Util::FormatHex(cookieValue,COOKIE_SIZE).c_str());
+		WARN("Creating session for an unknown cookie '",Util::FormatHex(cookieValue,COOKIE_SIZE),"' (CPU congestion?)");
 		return NULL;
 	}
 
@@ -149,7 +152,11 @@ Session* RTMFPHandshake::createSession(const UInt8* cookieValue) {
 	response.write8(0x78);
 	response.write16(cookie.length());
 	cookie.read(response);
-	flush();
+	Exception ex;
+	flush(ex);
+	if (ex)
+		ERROR("Error during flush in RTMFP createSession : ",ex.error());
+
 	(UInt32&)farId=0; // reset farid to 0!
 	return &session;
 }
@@ -200,12 +207,12 @@ UInt8 RTMFPHandshake::handshakeHandler(UInt8 id,MemoryReader& request,MemoryWrit
 					list<SocketAddress>::const_iterator it;
 					for(it=pSessionWanted->peer.addresses.begin();it!=pSessionWanted->peer.addresses.end();++it) {
 						response.writeAddress(*it,it==pSessionWanted->peer.addresses.begin());
-						DEBUG("P2P address initiator exchange, %s",it->toString().c_str());
+						DEBUG("P2P address initiator exchange, ",it->toString());
 					}
 					return 0x71;
 				}
 
-				DEBUG("UDP Hole punching : session %s wanted not found",Util::FormatHex(peerId,ID_SIZE).c_str())
+				DEBUG("UDP Hole punching : session ",Util::FormatHex(peerId,ID_SIZE)," wanted not found")
 				set<SocketAddress,Util::AddressComparator> addresses;
 				peer.onRendezVousUnknown(peerId,addresses);
 				set<SocketAddress,Util::AddressComparator>::const_iterator it;
@@ -213,9 +220,9 @@ UInt8 RTMFPHandshake::handshakeHandler(UInt8 id,MemoryReader& request,MemoryWrit
 					if(it->host().isWildcard())
 						continue;
 					if(peer.address == *it)
-						WARN("A client tries to connect to himself (same %s address)",peer.address.toString().c_str());
+						WARN("A client tries to connect to himself (same ",peer.address.toString()," address)");
 					response.writeAddress(*it,it==addresses.begin());
-					DEBUG("P2P address initiator exchange, %s",it->toString().c_str());
+					DEBUG("P2P address initiator exchange, ",it->toString());
 				}
 				return addresses.empty() ? 0 : 0x71;
 			}
@@ -241,26 +248,29 @@ UInt8 RTMFPHandshake::handshakeHandler(UInt8 id,MemoryReader& request,MemoryWrit
 				}
 
 				// New RTMFPCookie
-				createCookie(response,attempt,tag,epd);
+				Exception ex;
+				createCookie(ex, response,attempt,tag,epd);
+				if (ex)
+					ERROR("Error trying to create cookie in RTMFP handshakeHandler : ", ex.error());
 
 				// instance id (certificat in the middle)
 				response.writeRaw(_certificat,sizeof(_certificat));
 				return 0x70;
 			} else
-				ERROR("Unkown handshake first way with '%02x' type",type);
+				ERROR("Unkown handshake first way with '", Format<UInt8>("%02x",type), "' type");
 			break;
 		}
 		case 0x38: {
 			(UInt32&)farId = request.read32();
 
 			if(request.read7BitLongValue()!=COOKIE_SIZE) {
-				ERROR("Bad handshake cookie '%s': its size should be 64 bytes",Util::FormatHex(request.current(),COOKIE_SIZE).c_str());
+				ERROR("Bad handshake cookie '",Util::FormatHex(request.current(),COOKIE_SIZE),"': its size should be 64 bytes");
 				return 0;
 			}
 	
 			map<const UInt8*,RTMFPCookie*,CompareCookies>::iterator itCookie = _cookies.find(request.current());
 			if(itCookie==_cookies.end()) {
-				WARN("RTMFPCookie %s unknown, maybe already connected (udpBuffer congested?)",Util::FormatHex(request.current(),COOKIE_SIZE).c_str());
+				WARN("RTMFPCookie '",Util::FormatHex(request.current(),COOKIE_SIZE),"' unknown, maybe already connected (udpBuffer congested?)");
 				return 0;
 			}
 
@@ -281,7 +291,10 @@ UInt8 RTMFPHandshake::handshakeHandler(UInt8 id,MemoryReader& request,MemoryWrit
 			
 				UInt32 sizeNonce = request.read7BitValue();
 
-				cookie.computeSecret(initiatorKey,sizeKey,request.current(),sizeNonce);
+				Exception ex;
+				cookie.computeSecret(ex, initiatorKey,sizeKey,request.current(),sizeNonce);
+				if (ex)
+					ERROR("Error during computeSecret in RTMFP handshakeHandler : ", ex.error());
 			} else if(cookie.id>0) {
 				// Repeat cookie reponse!
 				cookie.read(response);
@@ -291,7 +304,7 @@ UInt8 RTMFPHandshake::handshakeHandler(UInt8 id,MemoryReader& request,MemoryWrit
 			break;
 		}
 		default:
-			ERROR("Unkown handshake packet id %u",id);
+			ERROR("Unkown handshake packet id ",id);
 	}
 
 	return 0;

@@ -76,10 +76,10 @@ void Server::run() {
 		while(sleep()!=STOP)
 			giveHandle();
 
-	} catch(Exception& ex) {
-		FATAL("Server, %s",ex.displayText().c_str());
+	} catch(Poco::Exception& ex) {
+		FATAL("Server, ",ex.displayText());
 	} catch (exception& ex) {
-		FATAL("Server, %s",ex.what());
+		FATAL("Server, ",ex.what());
 	} catch (...) {
 		FATAL("Server, unknown error");
 	}
@@ -122,7 +122,7 @@ void Server::readable(Protocol& protocol) {
 	if(!pSession) {
 		pSession = _sessions.find(id);
 		if(!pSession) {
-			WARN("Unknown session %u",id);
+			WARN("Unknown session ",id);
 			return;
 		}
 	}

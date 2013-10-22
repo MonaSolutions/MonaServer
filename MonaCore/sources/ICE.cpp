@@ -18,10 +18,7 @@
 #include "Mona/ICE.h"
 #include "Mona/RelayServer.h"
 #include "Mona/Logs.h"
-#include "Poco/Format.h"
-#include "Poco/String.h"
-#include "Poco/NumberParser.h"
-#include "Poco/StringTokenizer.h"
+#include "Mona/String.h"
 
 using namespace std;
 using namespace Poco;
@@ -44,7 +41,7 @@ void ICE::reset() {
 	_initiatorAddresses.clear();
 	_remoteAddresses.clear();
 	_type = INITIATOR;
-	_time = Mona::Time();
+	_time.update();
 	_relayPorts.clear();
 	mediaIndex=0;
 	_first = true;
@@ -88,36 +85,37 @@ void ICE::fromSDPCandidate(const string& candidate,SDPCandidate& publicCandidate
 		end = &candidate[candidate.size()-2];
 	} while(memcmp(end,"\\r",2)==0 || memcmp(end,"\\n",2)==0);
 
-	StringTokenizer fields(candidate," ",StringTokenizer::TOK_IGNORE_EMPTY | StringTokenizer::TOK_TRIM);
-	StringTokenizer::Iterator it;
+	vector<string> fields;
+	String::Split(candidate, " ", fields, String::TOK_IGNORE_EMPTY | String::TOK_TRIM);
 	UInt8 index=0;
 	string port;
 	const string* pHost=NULL;
 	bool isTCP=false;
 	string& content=publicCandidate.candidate;
 	UInt32 compoment=0;
-	for(it=fields.begin();it!=fields.end();++it) {
+	for(string& st : fields) {
 		if(index>0)
 			content.append(" ");
 		if(++index==2) {
-			NumberParser::tryParseUnsigned(*it,compoment);
-			content += *it;
-		} else if(index==3 && icompare(*it,"tcp")==0) {
+			Exception ex;
+			compoment = String::ToNumber<UInt32>(ex, st);
+			content += st;
+		} else if(index==3 && stricmp(st.c_str(), "tcp")==0) {
 			isTCP = true;
-			content += *it;
+			content += st;
 		} else if(index==4)
 			content += "1845501695";
 		else if(index==5) {
 			content += _publicHost; // address
-			pHost = &*it;
+			pHost = &st;
 		} else if(index==6) {
-			content += *it;
-			port = *it; // port	
-		} else if(index==8 && icompare(*it,"host")!=0) {
+			content += st;
+			port = st; // port	
+		} else if(index==8 && stricmp(st.c_str(),"host")!=0) {
 			content.clear();
 			return;
 		} else
-			content += *it;
+			content += st;
 	}
 	if(!content.empty()) {
 		//content.clear();
@@ -125,36 +123,41 @@ void ICE::fromSDPCandidate(const string& candidate,SDPCandidate& publicCandidate
 		publicCandidate.mLineIndex = mediaIndex;
 	}
 
-	DEBUG("%s candidate %hu[%u] %s %s:%s",_type==INITIATOR ? "Offer" : "Anwser",mediaIndex,compoment,isTCP ? "TCP" : "UDP",pHost ? pHost->c_str() : "?",port.c_str())
+	DEBUG(_type==INITIATOR ? "Offer" : "Anwser"," candidate ",mediaIndex,"[",compoment,"] ",isTCP ? "TCP" : "UDP"," ",pHost ? pHost->c_str() : "?",":",port)
 
 	if(relayed && !isTCP && !port.empty()) {
 		// informations usefull just for relay line!
-		try {
-			SocketAddress address(_publicHost,NumberParser::parse(port));
-			set<SocketAddress,Util::AddressComparator>& currentAddresses = _type==INITIATOR ? _initiatorAddresses[mediaIndex][compoment] : _remoteAddresses[mediaIndex][compoment];
-			set<SocketAddress,Util::AddressComparator>& remoteAddresses = _type==INITIATOR ?  _remoteAddresses[mediaIndex][compoment] :_initiatorAddresses[mediaIndex][compoment];
+		
+		Exception ex;
+		int valport = String::ToNumber<int>(ex, port);
+		if (ex) {
+			WARN("Invalid candidate address, ",ex.error());
+			return ;
+		}
+		SocketAddress address(_publicHost, valport);
 
-			if(currentAddresses.insert(address).second) {
-				set<SocketAddress,Util::AddressComparator>::const_iterator it;
-				for(it=remoteAddresses.begin();it!=remoteAddresses.end();++it) {
-					UInt16 port = _relay.add(_initiator,*it,_remote,address);
-					if(port==0)
-						continue;
-					if(_relayPorts[mediaIndex][compoment].insert(port).second) {
-						relayCurrentCandidates.resize(relayCurrentCandidates.size()+1);
-						SDPCandidate& currentCandidate = relayCurrentCandidates.back();
-						currentCandidate.candidate = format("a=candidate:7 %u udp 1 %s %hu typ host\\r\\n",compoment,_type==INITIATOR ? _serverInitiatorHost : _serverRemoteHost,port);
-						currentCandidate.mLineIndex = mediaIndex;
+			
+		set<SocketAddress,Util::AddressComparator>& currentAddresses = _type==INITIATOR ? _initiatorAddresses[mediaIndex][compoment] : _remoteAddresses[mediaIndex][compoment];
+		set<SocketAddress,Util::AddressComparator>& remoteAddresses = _type==INITIATOR ?  _remoteAddresses[mediaIndex][compoment] :_initiatorAddresses[mediaIndex][compoment];
 
-						relayRemoteCandidates.resize(relayRemoteCandidates.size()+1);
-						SDPCandidate& remoteCandidate = relayRemoteCandidates.back();
-						remoteCandidate.candidate = format("a=candidate:7 %u udp 1 %s %hu typ host\\r\\n",compoment,_type==INITIATOR ? _serverRemoteHost : _serverInitiatorHost,port);
-						remoteCandidate.mLineIndex = mediaIndex;
-					}
-				}	
-			}
-		} catch(Exception& ex) {
-			WARN("Invalid candidate address, %s",ex.displayText().c_str())
+		if(currentAddresses.insert(address).second) {
+			set<SocketAddress,Util::AddressComparator>::const_iterator it;
+			for(it=remoteAddresses.begin();it!=remoteAddresses.end();++it) {
+				UInt16 port = _relay.add(_initiator,*it,_remote,address);
+				if(port==0)
+					continue;
+				if(_relayPorts[mediaIndex][compoment].insert(port).second) {
+					relayCurrentCandidates.resize(relayCurrentCandidates.size()+1);
+					SDPCandidate& currentCandidate = relayCurrentCandidates.back();
+					String::Format(currentCandidate.candidate, "a=candidate:7 ",compoment," udp 1 ",_type==INITIATOR ? _serverInitiatorHost : _serverRemoteHost," ",port," typ host\\r\\n");
+					currentCandidate.mLineIndex = mediaIndex;
+
+					relayRemoteCandidates.resize(relayRemoteCandidates.size()+1);
+					SDPCandidate& remoteCandidate = relayRemoteCandidates.back();
+					String::Format(remoteCandidate.candidate, "a=candidate:7 ",compoment," udp 1 ",_type==INITIATOR ? _serverRemoteHost : _serverInitiatorHost," ",port," typ host\\r\\n");
+					remoteCandidate.mLineIndex = mediaIndex;
+				}
+			}	
 		}
 	}
 }

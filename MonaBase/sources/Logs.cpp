@@ -19,13 +19,13 @@
 #include "Mona/Util.h"
 
 using namespace std;
-using namespace Poco;
 
 namespace Mona {
 
 Logger*			Logs::_PLogger(NULL);
 Logs::DumpMode	Logs::_DumpMode(NOTHING);
 UInt8			Logs::_Level(Logger::PRIO_INFO); // default log level
+string			Logs::_logmsg;
 
 
 void Logs::Dump(const UInt8* data,UInt32 size,const char* header) {
@@ -36,6 +36,5 @@ void Logs::Dump(const UInt8* data,UInt32 size,const char* header) {
 	if(out.size()>0)
 		GetLogger()->dumpHandler(&out[0],out.size());
 }
-
 
 } // namespace Mona

@@ -30,12 +30,12 @@ StartableProcess::StartableProcess(Startable& startable):_startable(startable){
 void StartableProcess::run() {
 	try {
 		_startable.prerun();
-	} catch(Exception& ex) {
-		 CRITIC("Startable thread %s, %s",_startable.name().c_str(),ex.displayText().c_str());
+	} catch(Poco::Exception& ex) {
+		 CRITIC("Startable thread ",_startable.name(),", ",ex.displayText());
 	} catch(exception& ex) {
-		 CRITIC("Startable thread %s, %s",_startable.name().c_str(),ex.what());
+		 CRITIC("Startable thread ",_startable.name(),", ",ex.what());
 	} catch(...) {
-		 CRITIC("Startable thread %s, error unknown",_startable.name().c_str());
+		 CRITIC("Startable thread ",_startable.name(),", error unknown");
 	}
 }
 
@@ -63,7 +63,7 @@ void Startable::start() {
 		_haveToJoin = true;
 		_stop=false;
 	} catch (Poco::Exception& ex) {
-		ERROR("Impossible to start the thread, %s",ex.displayText().c_str());
+		ERROR("Impossible to start the thread, ",ex.displayText());
 	}
 }
 

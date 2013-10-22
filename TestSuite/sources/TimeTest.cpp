@@ -11,7 +11,7 @@ TEST_F(TimeTest, TestTimestamp) {
 	Time t1;
 	_sleep(200);
 	Time t2;
-	Time t3 = t2;
+	Time t3(t2);
 	EXPECT_TRUE(t1 != t2);
 	EXPECT_TRUE(!(t1 == t2));
 	EXPECT_TRUE(t2 > t1);
@@ -36,7 +36,7 @@ TEST_F(TimeTest, TestTimestamp) {
 	EXPECT_TRUE(!now.isElapsed(2000000));
 
 	Time t4;
-	Time t4Copy = t4;
+	Time t4Copy(t4);
 	t4 += 200;
 	EXPECT_TRUE(t4.toInt() == (t4Copy.toInt()+200));
 	t4 -= 200;
@@ -153,7 +153,7 @@ TEST_F(TimeTest, TestArithmetics) {
 	Int64 microsec = dt2 - dt1;
 	EXPECT_EQ(microsec, duration_cast<microseconds>(hours(24)).count());
 
-	Time dt3 = dt1 + microsec;
+	Time dt3(dt1 + microsec);
 	EXPECT_EQ(dt3, dt2);
 
 	dt3 -= microsec;

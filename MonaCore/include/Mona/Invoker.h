@@ -18,6 +18,7 @@
 #pragma once
 
 #include "Mona/Mona.h"
+#include "Mona/Exceptions.h"
 #include "Mona/Group.h"
 #include "Mona/Publications.h"
 #include "Mona/Entities.h"
@@ -46,12 +47,12 @@ public:
 	Poco::AutoPtr<FlashStream>  getFlashStream(Mona::UInt32 id);
 	void						destroyFlashStream(Mona::UInt32 id);
 
-	Publication&			publish(const std::string& name);
+	Publication*			publish(Exception& ex, const std::string& name);
 	void					unpublish(const std::string& name);
 
-	Publication&			publish(Peer& peer,const std::string& name);
+	Publication*			publish(Exception& ex, Peer& peer,const std::string& name);
 	void					unpublish(Peer& peer,const std::string& name);
-	Listener&				subscribe(Peer& peer,const std::string& name,Writer& writer,double start=-2000);
+	Listener*				subscribe(Exception& ex, Peer& peer,const std::string& name,Writer& writer,double start=-2000);
 	void					unsubscribe(Peer& peer,const std::string& name);
 
 	void					addBanned(const Poco::Net::IPAddress& ip);
@@ -80,8 +81,8 @@ private:
 };
 
 
-inline Publication& Invoker::publish(const std::string& name) {
-	return publish(myself(),name);
+inline Publication* Invoker::publish(Exception& ex, const std::string& name) {
+	return publish(ex, myself(),name);
 }
 
 inline void Invoker::unpublish(const std::string& name) {

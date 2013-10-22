@@ -92,17 +92,12 @@ public:
 														const Mona::UInt8* responderNonce,Mona::UInt16 respNonceSize,
 														 Mona::UInt8* requestKey,
 														 Mona::UInt8* responseKey);
-	static Mona::UInt16				TimeNow();
+
+	static Mona::UInt16				TimeNow() { return Time(Mona::Time().toInt()); }
 	static Mona::UInt16				Time(Mona::Int64 timeVal);
 
 private:
 	static Mona::UInt16				CheckSum(MemoryReader& packet);
 };
-
-
-inline Mona::UInt16 RTMFP::TimeNow() {
-
-	return Mona::Time().toInt();
-}
 
 }  // namespace Mona

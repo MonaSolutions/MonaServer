@@ -16,6 +16,7 @@
 #pragma once
 
 #include "Mona/Mona.h"
+#include "Mona/Exceptions.h"
 #include "Mona/MapParameters.h"
 #include "Poco/NullStream.h"
 #include "Poco/Net/SocketAddress.h"
@@ -49,7 +50,7 @@ public:
 	
 	static void UnpackQuery(const std::string& query, MapParameters& properties);
 
-	static void ReadIniFile(const std::string& path, MapParameters& parameters);
+	static void ReadIniFile(Exception& ex, const std::string& path, MapParameters& parameters);
 
 	static Poco::NullInputStream	NullInputStream;
 	static Poco::NullOutputStream	NullOutputStream;

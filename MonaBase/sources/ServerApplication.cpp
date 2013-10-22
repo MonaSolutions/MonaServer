@@ -18,13 +18,12 @@ This file is a part of Mona.
 
 #include "Mona/ServerApplication.h"
 #include "Mona/Logs.h"
-#include "Mona/Exception.h"
+#include "Mona/Exceptions.h"
 #include "Mona/HelpFormatter.h"
 #if !defined(POCO_VXWORKS)
 #include "Poco/Process.h"
 #include "Poco/NamedEvent.h"
 #endif
-#include "Poco/NumberFormatter.h"
 #include "Poco/String.h"
 #if defined(POCO_OS_FAMILY_UNIX) && !defined(POCO_VXWORKS)
 #include "Poco/TemporaryFile.h"
@@ -135,6 +134,7 @@ void ServerApplication::ServiceMain(DWORD argc, LPTSTR* argv) {
 	_serviceStatusHandle = RegisterServiceCtrlHandlerA("", ServiceControlHandler);
 
 	if (!_serviceStatusHandle)
+		// TODO ex.set(Exception::APPLICATION, "cannot register service control handler")
 		throw SystemException("cannot register service control handler");
 
 	_serviceStatus.dwServiceType             = SERVICE_WIN32; 
@@ -154,7 +154,7 @@ void ServerApplication::ServiceMain(DWORD argc, LPTSTR* argv) {
 		_serviceStatus.dwWin32ExitCode           = rc ? ERROR_SERVICE_SPECIFIC_ERROR : 0;
 		_serviceStatus.dwServiceSpecificExitCode = rc;
 	} catch (exception& ex) {
-		FATAL("%s", ex.what());
+		FATAL(ex.what());
 		_serviceStatus.dwWin32ExitCode = ERROR_SERVICE_SPECIFIC_ERROR;
 		_serviceStatus.dwServiceSpecificExitCode = EXIT_SOFTWARE;
 	} catch (...) {
@@ -192,7 +192,7 @@ int ServerApplication::run(int argc, char** argv) {
 		}
 		return main();
 	} catch (exception& ex) {
-		FATAL("%s", ex.what());
+		FATAL(ex.what());
 		return EXIT_SOFTWARE;
 	} catch (...) {
 		FATAL("Unknown error");
@@ -222,18 +222,27 @@ void ServerApplication::registerService() {
 	getString("application.baseName", name);
 	getString("application.path", path);
 	
-	WinService service(name);
+	Exception ex;
+	WinService service(ex, name);
+	// TODO managing the exception
+
 	if (_displayName.empty())
-		service.registerService(path);
+		service.registerService(ex, path);
 	else
-		service.registerService(path,_displayName);
+		service.registerService(ex, path,_displayName);
+	// TODO managing the exception
+	
 	if (_startup == "auto")
-		service.setStartup(WinService::AUTO_START);
+		service.setStartup(ex, WinService::AUTO_START);
 	else if (_startup == "manual")
-		service.setStartup(WinService::MANUAL_START);
+		service.setStartup(ex, WinService::MANUAL_START);
+	// TODO managing the exception
+
 	if (!_description.empty())
-		service.setDescription(_description);
-	NOTE("The application has been successfully registered as the %s service.", name.c_str())
+		service.setDescription(ex, _description);
+	// TODO managing the exception
+
+	NOTE("The application has been successfully registered as the ",name," service.")
 }
 
 
@@ -241,45 +250,58 @@ void ServerApplication::unregisterService() {
 	string name;
 	getString("application.baseName", name);
 	
-	WinService service(name);
-	service.unregisterService();
-	NOTE("The service %s has been successfully unregistered",name.c_str())
+	Exception ex;
+	WinService service(ex, name);
+	// TODO managing the exception
+
+	service.unregisterService(ex);
+	// TODO managing the exception
+
+	NOTE("The service ",name," has been successfully unregistered")
 }
 
 void ServerApplication::defineOptions(Options& options) {
 
-	options.add(
+	Exception ex;
+
+	options.add(ex,
 		Option("help", "h", "Displays help information about command-line usage.")
 		.handler([this](const string& value) { _action = SRV_HELP; })
 	);
+	// TODO managing the exception
 
-	options.add(
+	options.add(ex,
 		Option("registerService", "r", "Register the application as a service.")
 		.handler([this](const string& value) { _action = SRV_REGISTER; })
 	);
+	// TODO managing the exception
 
-	options.add(
+	options.add(ex,
 		Option("unregisterService", "u", "Unregister the application as a service.")
 		.handler([this](const string& value) { _action = SRV_UNREGISTER; })
 	);
+	// TODO managing the exception
 
-	options.add(
+	options.add(ex,
 		Option("name", "n", "Specify a display name for the service (only with /registerService).")
 		.argument("name")
 		.handler([this](const string& value) { _displayName = value; })
 	);
+	// TODO managing the exception
 
-	options.add(
+	options.add(ex,
 		Option("description", "d", "Specify a description for the service (only with /registerService).")
 		.argument("text")
 		.handler([this](const string& value) { _description = value; })
 	);
+	// TODO managing the exception
 
-	options.add(
+	options.add(ex,
 		Option("startup", "s", "Specify the startup mode for the service (only with /registerService).")
 		.argument("automatic|manual")
 		.handler([this](const string& value) {_startup = Poco::icompare(value, 4, string("auto")) == 0 ? "auto" : "manual"; })
 	);
+	// TODO managing the exception
 }
 
 
@@ -335,7 +357,7 @@ int ServerApplication::run(int argc, char** argv) {
 		}
 		return main();
 	} catch (exception& ex) {
-		FATAL("%s", ex.what());
+		FATAL( ex.what());
 		return EXIT_SOFTWARE;
 	} catch (...) {
 		FATAL("Unknown error");
@@ -436,7 +458,7 @@ void ServerApplication::waitForTerminationRequest() {
 	sys$qiow(0, ioChan, IO$_SETMODE | IO$M_CTRLCAST, 0, 0, 0, terminate, 0, 0, 0, 0, 0);
 
 	string evName("POCOTRM");
-	NumberFormatter::appendHex(evName, Poco::Process::id(), 8);
+	String::Append(evName, Format<UInt64>("%08" I64_FMT "X", Poco::Process::id()));
 	Poco::NamedEvent ev(evName);
 	try
 	{

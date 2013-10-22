@@ -19,8 +19,7 @@
 #include "Mona/Logs.h"
 #include "Poco/String.h"
 #include "Mona/TimeParser.h"
-#include "Poco/NumberParser.h"
-
+#include "Mona/Exceptions.h"
 
 
 using namespace std;
@@ -50,9 +49,9 @@ void HTTPPacketReader::readString(string& value) {
 	_type = MAP;
 }
 
-Mona::Time HTTPPacketReader::readDate() {
+void HTTPPacketReader::readTime(Time& time) {
 	_type = MAP;
-	return _date;
+	time.update(_date);
 }
 
 void HTTPPacketReader::readNull(){
@@ -162,11 +161,15 @@ HTTPPacketReader::Type HTTPPacketReader::readItem(string& name) {
 		_type = BOOLEAN;
 	} else if(_value == "null")
 		_type = NIL;
-	else if(NumberParser::tryParseFloat(_value,_number))
-		_type = NUMBER;
 	else {
-		if (_value.size() > 18 && _value.size() < 34 && _date.fromString(_value))
-			_type = DATE;
+		Exception ex;
+		_number = String::ToNumber<double>(ex, _value);
+		if(!ex)
+			_type = NUMBER;
+		else {
+			if (_value.size() > 18 && _value.size() < 34 && _date.fromString(_value))
+				_type = TIME;
+		}
 	}
 	return _type;
 }

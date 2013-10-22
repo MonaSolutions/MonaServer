@@ -23,7 +23,7 @@
 
 namespace Mona {
 
-class Time {
+class Time : ObjectFix {
 public:
 
 	// names used by formatter and parser
@@ -56,10 +56,30 @@ public:
 	/// \brief Construct a Time instance with a struct tm (GMT)
 	/// WARN : the tmtime parameter could be modified in case of
 	/// invalid date
-	Time(struct tm& tmtime, int milli = 0, int micro = 0);
+	Time(struct tm& tmtime, int milli = 0, int micro = 0) { update(tmtime, milli, micro); }
+
+	/// \brief Construct the object by copying time's value
+	Time(const Time& time) : _time(time._time) {}
 
 	/// \brief Destructor
 	~Time() { }
+
+	/// \brief Update the time object with current time
+	void update() { _time = std::chrono::system_clock::now(); }
+
+	/// \brief Update the time object with time parameter (in msec)
+	void update(Int64 time) { _time = std::chrono::system_clock::time_point(std::chrono::microseconds(time)); }
+
+	/// \brief Update the time object with the time_point value
+	void update(const std::chrono::system_clock::time_point& tp) { _time = tp; }
+
+	/// \brief Update the time object with struct tm parameter
+	/// WARN : the tmtime parameter could be modified in case of
+	/// invalid date
+	void update(struct tm& tmtime, int milli = 0, int micro = 0);
+
+	/// \brief Update the object by copying time's value
+	void update(const Time& time) { _time = time._time; }
 
 	/// \brief time_point object accessor
 	std::chrono::system_clock::time_point getTimePoint() const { return _time; };
@@ -86,7 +106,8 @@ public:
 	Int64 elapsed() const;
 
 	/// \brief Convert to a string with a particular format
-	bool toString(std::string &out, const std::string& fmt, int timezone = UTC) const;
+	bool toString(std::string& out, const std::string& fmt, int timezone = UTC) const;
+	bool toLocaleString(std::string& out, const std::string& fmt, int timezone = UTC) const;
 
 	/// \brief Try to parse a date string and assign the Time instance
 	bool fromString(const std::string &in);
@@ -108,6 +129,7 @@ public:
 private:
 	std::chrono::system_clock::time_point _time;
 
+	void formatDate(std::string& out, const struct tm& datetm, const std::string& fmt, int timezone = UTC) const;
 	void tzFormat(std::string& str, int tzDifferential, bool bISO = true) const;
 
 	int hour2AMPM(int hour) const;

@@ -17,32 +17,42 @@ This file is a part of Mona.
 */
 
 #include "Mona/Parameters.h"
-#include "Poco/NumberParser.h"
-#include "Poco/String.h"
+#include "Mona/String.h"
+#include "Mona/Exceptions.h"
 
 using namespace std;
-using namespace Poco;
 
 namespace Mona {
 
 bool Parameters::getNumber(const string& key, double& value) const {
 	string temp;
-	if (getRaw(key, temp))
-		return NumberParser::tryParseFloat(temp, value);
+	if (getRaw(key, temp)) {
+		Exception ex;
+		value = String::ToNumber<double>(ex, temp);
+		if (!ex)
+			return true;
+	}
 	return false;
 }
+
 bool Parameters::getNumber(const string& key, int& value) const {
 	string temp;
-	if (getRaw(key, temp))
-		return NumberParser::tryParse(temp, value);
+	if (getRaw(key, temp)) {
+		Exception ex;
+		value = String::ToNumber<int>(ex, temp);
+		if (!ex)
+			return true;
+	}
 	return false;
 }
 bool Parameters::getBool(const string& key, bool& value) const {
 	string temp;
 	if (!getRaw(key, temp))
 		return false;
-	int n;
-	value = NumberParser::tryParse(temp, n) && n != 0 || (icompare(temp, "false") != 0 && icompare(temp, "no") != 0 && icompare(temp, "off") != 0);
+	Exception ex;
+	int n = String::ToNumber<int>(ex, temp);
+	value = !ex && (n > 0); // true if n > 0
+	value |= (stricmp(temp.c_str(), "false") != 0 && stricmp(temp.c_str(), "no") != 0 && stricmp(temp.c_str(), "off") != 0);
 	return true;
 }
 

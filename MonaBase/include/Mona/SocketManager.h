@@ -18,6 +18,7 @@
 #pragma once
 
 #include "Mona.h"
+#include "Mona/Exceptions.h"
 #include "Mona/Startable.h"
 #include "Mona/TaskHandler.h"
 #include "Mona/PoolThreads.h"

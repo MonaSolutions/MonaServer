@@ -17,21 +17,18 @@
 
 #include "Mona/JSONReader.h"
 #include "Mona/Logs.h"
-#include "Poco/DateTimeParser.h"
-#include "Poco/NumberParser.h"
-#include "Poco/Ascii.h"
 #include "Poco/Base64Decoder.h"
+#include "Mona/Util.h"
 #include <sstream>
 #include <cstring>
 
 using namespace std;
-using namespace Poco;
 
 namespace Mona {
 
 bool JSONReader::IsValid(MemoryReader& reader) {
 	UInt8* cur = reader.current();
-	while(reader.available()>0 && Ascii::isSpace(*cur))
+	while(reader.available()>0 && isspace(*cur))
 		 ++cur;
 	if(reader.available()==0)
 		return false;
@@ -44,7 +41,7 @@ JSONReader::JSONReader(MemoryReader& reader) : DataReader(reader),_bool(false),_
 		if(readArray(_pos) && reader.available()>0) {
 			UInt8* cur = reader.current()+reader.available()-1;
 
-			while(cur>=reader.current() && Ascii::isSpace(*cur))
+			while(cur>=reader.current() && isspace(*cur))
 				--cur;
 			if(cur>=reader.current() && *cur== ']')
 		 		reader.shrink(cur-reader.current());
@@ -75,9 +72,9 @@ bool JSONReader::readBoolean() {
 	return _bool;
 }
 
-Time JSONReader::readDate() {
+void JSONReader::readTime(Time& time) {
 	_last=0;
-	return _date;
+	time.update(_date);
 }
 
 void JSONReader::readString(string& value) {
@@ -94,17 +91,19 @@ double JSONReader::readNumber() {
 	}
 	UInt32 pos = reader.position();
 	UInt8 c = reader.read8();
-	while(available() && (Ascii::isDigit(c) || c=='.'))
+	while(available() && (isdigit(c) || c=='.'))
 		c = reader.read8();
 
 	UInt32 size = reader.position()-pos;
 	string value((const char*)cur,size);
-	try {
-		return NumberParser::parse(value);
-	} catch(Exception& ex) {
-		ERROR("JSON number malformed, %s",ex.displayText().c_str());
+
+	Exception ex;
+	double dval = String::ToNumber<double>(ex, value);
+	if (ex) {
+		ERROR("JSON number malformed, ",ex.error());
+		return 0;
 	}
-	return 0;
+	return dval;
 }
 
 bool JSONReader::readObject(string& type,bool& external) {
@@ -117,7 +116,7 @@ bool JSONReader::readObject(string& type,bool& external) {
 	external=false;
 	if(cur[0]=='{')
 		return true;
-	ERROR("Char %.2x doesn't start a JSON object",cur[0]);
+	ERROR("Char ",Format<UInt8>("%.2x",cur[0])," doesn't start a JSON object");
 	return false;
 }
 
@@ -149,7 +148,7 @@ bool JSONReader::readArray(UInt32& size) {
 					if(size==0)
 						++size;
 					++size;
-				} else if(size==0 && !Ascii::isSpace(*cur))
+				} else if(size==0 && !isspace(*cur))
 					size=1;
 			}
 
@@ -164,7 +163,7 @@ bool JSONReader::readArray(UInt32& size) {
 		}
 		return true;
 	}
-	ERROR("Char %.2x doesn't start a JSON array",cur[0]);
+	ERROR("Char ",Format<UInt8>("%.2x",cur[0])," doesn't start a JSON array");
 	return false;
 }
 
@@ -197,7 +196,7 @@ JSONReader::Type JSONReader::followingType() {
 	if(_last==1)
 		return STRING;
 	if(_last==2)
-		return DATE;
+		return TIME;
 	if(!_text.empty())
 		_text.clear();
 	if(!available())
@@ -231,7 +230,7 @@ JSONReader::Type JSONReader::followingType() {
 		if(_bool) {
 			stringstream ss;
 			ss.write(_text.c_str(),size);
-			_text.assign(static_cast<stringstream const&>(ss << Base64Decoder(ss).rdbuf()).str());
+			_text.assign(static_cast<stringstream const&>(ss << Poco::Base64Decoder(ss).rdbuf()).str());
 		}
 		reader.next(1); // skip the second '"'
 		cur = current();
@@ -243,7 +242,7 @@ JSONReader::Type JSONReader::followingType() {
 		}
 		if (_text.size() > 18 && _text.size() < 34 && _date.fromString(_text)) {
 			_last=2;
-			return DATE;
+			return TIME;
 		}
 		return STRING;
 	}
@@ -261,7 +260,7 @@ JSONReader::Type JSONReader::followingType() {
 }
 
 const UInt8* JSONReader::current() {
-	while(available() && Ascii::isSpace(*reader.current()))
+	while(available() && isspace(*reader.current()))
 		reader.next(1);
 	if(!available())
 		return NULL;

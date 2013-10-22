@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include "Mona/Exceptions.h"
 #include "ApplicationKiller.h"
 #include "Service.h"
 #include "Servers.h"
@@ -43,11 +44,11 @@ private:
 	void					onRendezVousUnknown(const std::string& protocol,const Poco::UInt8* id,std::set<Poco::Net::SocketAddress,Mona::Util::AddressComparator>& addresses);
 	void					onHandshake(const std::string& protocol,const Poco::Net::SocketAddress& address,const std::string& path,const std::map<std::string,std::string>& properties,Poco::UInt32 attempts,std::set<Poco::Net::SocketAddress,Mona::Util::AddressComparator>& addresses);
 
-	void					onConnection(Mona::Client& client,Mona::DataReader& parameters,Mona::DataWriter& response);
+	void					onConnection(Mona::Exception& ex, Mona::Client& client,Mona::DataReader& parameters,Mona::DataWriter& response);
 	void					onFailed(const Mona::Client& client,const std::string& error);
 	void					onDisconnection(const Mona::Client& client);
-	void					onMessage(Mona::Client& client,const std::string& name,Mona::DataReader& reader);
-	bool					onRead(Mona::Client& client, std::string& filePath, Mona::DataReader& parameters);
+	void					onMessage(Mona::Exception& ex, Mona::Client& client,const std::string& name,Mona::DataReader& reader);
+	bool					onRead(Mona::Exception& ex, Mona::Client& client, std::string& filePath, Mona::DataReader& parameters);
 
 	void					onJoinGroup(Mona::Client& client,Mona::Group& group);
 	void					onUnjoinGroup(Mona::Client& client,Mona::Group& group);

@@ -42,7 +42,7 @@ int Script::Error(lua_State *pState) {
 #define SCRIPT_LOG_NAME_DISABLED true
 	SCRIPT_BEGIN(pState)
 		string msg;
-		SCRIPT_ERROR("%s",ToString(pState,msg));
+		SCRIPT_ERROR(ToString(pState,msg));
 	SCRIPT_END
 	return 0;
 }
@@ -51,7 +51,7 @@ int Script::Warn(lua_State *pState) {
 #define SCRIPT_LOG_NAME_DISABLED true
 	SCRIPT_BEGIN(pState)
 		string msg;
-		SCRIPT_WARN("%s",ToString(pState,msg));
+		SCRIPT_WARN(ToString(pState,msg));
 	SCRIPT_END
 	return 0;
 }
@@ -60,7 +60,7 @@ int Script::Note(lua_State *pState) {
 #define SCRIPT_LOG_NAME_DISABLED true
 	SCRIPT_BEGIN(pState)
 		string msg;
-		SCRIPT_NOTE("%s",ToString(pState,msg));
+		SCRIPT_NOTE(ToString(pState,msg));
 	SCRIPT_END
 	return 0;
 }
@@ -69,7 +69,7 @@ int Script::Info(lua_State *pState) {
 #define SCRIPT_LOG_NAME_DISABLED true
 	SCRIPT_BEGIN(pState)
 		string msg;
-		SCRIPT_INFO("%s",ToString(pState,msg));
+		SCRIPT_INFO(ToString(pState,msg));
 	SCRIPT_END
 	return 0;
 }
@@ -78,7 +78,7 @@ int Script::Debug(lua_State *pState) {
 #define SCRIPT_LOG_NAME_DISABLED true
 	SCRIPT_BEGIN(pState)
 		string msg;
-		SCRIPT_DEBUG("%s",ToString(pState,msg));
+		SCRIPT_DEBUG(ToString(pState,msg));
 	SCRIPT_END
 	return 0;
 }
@@ -87,7 +87,7 @@ int Script::Trace(lua_State *pState) {
 #define SCRIPT_LOG_NAME_DISABLED true
 	SCRIPT_BEGIN(pState)
 		string msg;
-		SCRIPT_TRACE("%s",ToString(pState,msg));
+		SCRIPT_TRACE(ToString(pState,msg));
 	SCRIPT_END
 	return 0;
 }
@@ -96,7 +96,7 @@ int Script::Trace(lua_State *pState) {
 int Script::Panic(lua_State *pState) {
 	SCRIPT_BEGIN(pState)
 		string msg;
-		SCRIPT_FATAL("%s",ToString(pState,msg));
+		SCRIPT_FATAL(ToString(pState,msg));
 	SCRIPT_END
 	return 1;
 }
@@ -190,8 +190,9 @@ void Script::WriteData(lua_State *pState,DataReader::Type type,DataReader& reade
 			lua_pushlstring(pState,value.c_str(),value.size());
 			break;
 		}
-		case DataReader::DATE: {
-			Time time = reader.readDate();
+		case DataReader::TIME: {
+			Time time;
+			reader.readTime(time);
 
 			struct tm datetm;
 			if (!time.toGMT(datetm))
@@ -302,7 +303,7 @@ void Script::WriteData(lua_State *pState,DataReader::Type type,DataReader& reade
 					SCRIPT_WRITE_BINARY(reader.reader.current(),reader.reader.available())
 					Service::StartVolatileObjectsRecording(pState);
 					if(lua_pcall(pState,2,1,0)!=0)
-						SCRIPT_ERROR("%s",Script::LastError(pState))
+						SCRIPT_ERROR(Script::LastError(pState))
 					else {
 						reader.reader.next((int)lua_tonumber(pState,-1));
 						lua_pop(pState,1);
@@ -310,7 +311,7 @@ void Script::WriteData(lua_State *pState,DataReader::Type type,DataReader& reade
 					Service::StopVolatileObjectsRecording(pState);
 					break;
 				} else if(external)
-					SCRIPT_ERROR("Impossible to deserialize the external type '%s' without a __readExternal method",objectType.c_str())
+					SCRIPT_ERROR("Impossible to deserialize the external type '",objectType,"' without a __readExternal method")
 				lua_pop(pState,1);
 			}
 			break;
@@ -325,7 +326,7 @@ void Script::WriteData(lua_State *pState,DataReader::Type type,DataReader& reade
 		}
 		default:
 			reader.reader.next(1);
-			SCRIPT_ERROR("AMF %u type unknown",type);
+			SCRIPT_ERROR("AMF ",type," type unknown");
 			break;
 	}
 	SCRIPT_END
@@ -341,7 +342,7 @@ void Script::ReadData(lua_State* pState,DataWriter& writer,UInt32 count,map<UInt
 	int top = lua_gettop(pState);
 	Int32 args = top-count;
 	if(args<0) {
-		SCRIPT_ERROR("Impossible to write %u missing AMF arguments",-args)
+		SCRIPT_ERROR("Impossible to write ",-args," missing AMF arguments")
 		args=0;
 	}
 	while(args++<top) {
@@ -434,7 +435,7 @@ void Script::ReadData(lua_State* pState,DataWriter& writer,UInt32 count,map<UInt
 						lua_pushvalue(pState,args);
 						Service::StartVolatileObjectsRecording(pState);
 						if(lua_pcall(pState,2,1,0)!=0)
-							SCRIPT_ERROR("%s",Script::LastError(pState))
+							SCRIPT_ERROR(Script::LastError(pState))
 						else {
 							writer.writer.writeRaw(lua_tostring(pState,-1),lua_objlen(pState,-1));
 							lua_pop(pState,1);
@@ -490,7 +491,7 @@ void Script::ReadData(lua_State* pState,DataWriter& writer,UInt32 count,map<UInt
 						else
 							ReadData(pState,writer,1);
 					} else
-						SCRIPT_WARN("Impossible to encode this table key of type %s in an AMF object format",lua_typename(pState,keyType))
+						SCRIPT_WARN("Impossible to encode this table key of type ",lua_typename(pState, keyType), " in an AMF object format")
 					/* removes 'value'; keeps 'key' for next iteration */
 					lua_pop(pState, 1);
 				}
@@ -520,7 +521,7 @@ void Script::ReadData(lua_State* pState,DataWriter& writer,UInt32 count,map<UInt
 				break;
 			}
 			default:
-				SCRIPT_WARN("Impossible to encode the '%s' type in a AMF format",lua_typename(pState,type))
+				SCRIPT_WARN("Impossible to encode the '",lua_typename(pState,type),"' type in a AMF format")
 			case LUA_TNIL:
 				writer.writeNull();
 				break;
@@ -564,7 +565,7 @@ const char* Script::ToString(lua_State* pState,string& out) {
 		if(pointer.empty())
 			out += lua_tostring(pState,args);
 		else
-			out += pointer + Poco::NumberFormatter::format(lua_topointer(pState, args));
+			String::Append(out, pointer, lua_topointer(pState, args));
 	}
 	return out.c_str();
 }

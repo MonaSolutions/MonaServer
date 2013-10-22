@@ -91,83 +91,92 @@ bool WSSession::buildPacket(MemoryReader& data,UInt32& packetSize) {
 void WSSession::packetHandler(MemoryReader& packet) {
 	
 	UInt8 type = 0;
+	Exception ex;
 	if(peer.connected) {
 		type = packet.read8();	
-		try {
-			switch(type) {
-				case WS_BINARY: {
-					StringReader reader(packet);
-					peer.onMessage("onMessage",reader);
-					break;
-				}
-				case WS_TEXT: {
-					if(!JSONReader::IsValid(packet)) {
-						StringReader reader(packet);
-						peer.onMessage("onMessage",reader);
-						break;
-					}
-					JSONReader reader(packet);
-					if(reader.followingType()!=JSONReader::STRING) {
-						peer.onMessage("onMessage",reader);
-						break;
-					}
-					string name;
-					reader.readString(name);
-					if(name=="__publish") {
-						if(reader.followingType()!=JSONReader::STRING)
-							throw Exception("__publish method takes a stream name in first parameter",WS_MALFORMED_PAYLOAD);
-						reader.readString(name);
-						if(_pPublication)
-							invoker.unpublish(peer,_pPublication->name());
-						_pPublication = &invoker.publish(peer,name);
-					} else if(name=="__play") {
-						if(reader.followingType()!=JSONReader::STRING)
-							throw Exception("__play method takes a stream name in first parameter",WS_MALFORMED_PAYLOAD);
-						reader.readString(name);
-						if(_pListener)
-							invoker.unsubscribe(peer,_pListener->publication.name());
-						_pListener = &invoker.subscribe(peer,name,_writer);
-					} else if(name=="__closePublish") {
-						if(_pPublication)
-							invoker.unpublish(peer,_pPublication->name());
-						_pPublication = NULL;
-					} else if(name=="__closePlay") {
-						if(_pListener)
-							invoker.unsubscribe(peer,_pListener->publication.name());
-						_pListener = NULL;
-					} else if(name=="__close") {
-						if(_pPublication)
-							invoker.unpublish(peer,_pPublication->name());
-						if(_pListener)
-							invoker.unsubscribe(peer,_pListener->publication.name());
-						_pListener = NULL;
-						_pPublication = NULL;
-					} else if(_pPublication) {
-						reader.reset();
-						_pPublication->pushData(reader);
-					} else
-						peer.onMessage(name,reader);
-					break;
-				}
-				case WS_CLOSE:
-					_writer.close(packet.available() ? packet.read16() : 0);
-					break;
-				case WS_PING:
-					_writer.writePong(packet.current(),packet.available());
-					break;
-				case WS_PONG:
-					_writer.ping = (UInt16&)peer.ping = (UInt16)(_time.elapsed()/1000);
-					break;
-				default:
-					throw Exception(format("Type %#?x unknown",(UInt8)type),WS_MALFORMED_PAYLOAD);
+		
+		switch(type) {
+			case WS_BINARY: {
+				StringReader reader(packet);
+				peer.onMessage(ex, "onMessage",reader);
+				break;
 			}
-		} catch(Exception& ex) {
-			if(ex.code()!=0) {
-				ERROR("%s",ex.message().c_str());
+			case WS_TEXT: {
+				if(!JSONReader::IsValid(packet)) {
+					StringReader reader(packet);
+					peer.onMessage(ex, "onMessage",reader);
+					break;
+				}
+				JSONReader reader(packet);
+				if(reader.followingType()!=JSONReader::STRING) {
+					peer.onMessage(ex, "onMessage",reader);
+					break;
+				}
+				string name;
+				reader.readString(name);
+				if(name=="__publish") {
+					if(reader.followingType()!=JSONReader::STRING) {
+						ex.set(Exception::PROTOCOL, "__publish method takes a stream name in first parameter",WS_MALFORMED_PAYLOAD);
+						break;
+					}
+					reader.readString(name);
+					if(_pPublication)
+						invoker.unpublish(peer,_pPublication->name());
+					_pPublication = invoker.publish(ex, peer,name);
+				} else if(name=="__play") {
+					if(reader.followingType()!=JSONReader::STRING) {
+						ex.set(Exception::PROTOCOL, "__play method takes a stream name in first parameter",WS_MALFORMED_PAYLOAD);
+						break;
+					}
+					reader.readString(name);
+					if(_pListener)
+						invoker.unsubscribe(peer,_pListener->publication.name());
+					_pListener = invoker.subscribe(ex, peer,name,_writer);
+					
+				} else if(name=="__closePublish") {
+					if(_pPublication)
+						invoker.unpublish(peer,_pPublication->name());
+					_pPublication = NULL;
+				} else if(name=="__closePlay") {
+					if(_pListener)
+						invoker.unsubscribe(peer,_pListener->publication.name());
+					_pListener = NULL;
+				} else if(name=="__close") {
+					if(_pPublication)
+						invoker.unpublish(peer,_pPublication->name());
+					if(_pListener)
+						invoker.unsubscribe(peer,_pListener->publication.name());
+					_pListener = NULL;
+					_pPublication = NULL;
+				} else if(_pPublication) {
+					reader.reset();
+					_pPublication->pushData(reader);
+				} else
+					peer.onMessage(ex, name,reader);
+				break;
+			}
+			case WS_CLOSE:
+				_writer.close(packet.available() ? packet.read16() : 0);
+				break;
+			case WS_PING:
+				_writer.writePong(packet.current(),packet.available());
+				break;
+			case WS_PONG:
+				_writer.ping = (UInt16&)peer.ping = (UInt16)(_time.elapsed()/1000);
+				break;
+			default:
+				ex.set(Exception::PROTOCOL, Format<UInt8>("Type %#?x unknown",type), WS_MALFORMED_PAYLOAD);
+				break;
+		}
+		
+		if (ex) {
+			if (ex.code() != Exception::APPLICATION) {
+				ERROR(ex.error());
 				_writer.close(ex.code());
 			} else
 				_writer.close(WS_PROTOCOL_ERROR); // onMessage displays already the error!
 		}
+		
 		if(_decoded>0) {
 			if((--_decoded==0) && _pPublication)
 				_pPublication->flush();
@@ -183,7 +192,7 @@ void WSSession::packetHandler(MemoryReader& packet) {
 void WSSession::manage() {
 	if(peer.connected && _time.elapsed()>60000000) {
 		_writer.writePing();
-		_time = Mona::Time();
+		_time.update();
 	}
 	_writer.flush();
 }

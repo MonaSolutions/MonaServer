@@ -32,7 +32,7 @@ public:
 	void				readString(std::string& value);
 	double				readNumber() {return 0;}
 	bool				readBoolean() {return false;}
-	Mona::Time		readDate() {return Mona::Time();}
+	void				readTime(Mona::Time& time) { time.update(); }
 	void				readNull() {}
 	const Mona::UInt8*	readBytes(Mona::UInt32& size) {return NULL;}
 

@@ -35,7 +35,7 @@ public:
 	void				readString(std::string& value);
 	double				readNumber();
 	bool				readBoolean();
-	Mona::Time			readDate();
+	void				readTime(Mona::Time& time);
 	void				readNull();
 
 	bool				readObject(std::string& type,bool& external);

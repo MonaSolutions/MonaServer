@@ -17,8 +17,10 @@
 
 #include "Mona/Writer.h"
 #include "Mona/Logs.h"
+#include <utility>
 
 using namespace Poco;
+using namespace std;
 
 namespace Mona {
 
@@ -45,7 +47,7 @@ void Writer::close(int code) {
 }
 
 bool Writer::writeMedia(MediaType type,UInt32 time,MemoryReader& data) {
-	ERROR("writeMedia method not supported by this protocol for %.2x type",type)
+	ERROR("writeMedia method not supported by this protocol for ",Format<UInt8>("%.2x",(UInt8)type)," type")
 	return true;
 }
 

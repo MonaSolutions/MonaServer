@@ -28,15 +28,16 @@ public:
 
 	void start() { 
 		if (!_running) {
-			_start = Time() - (_stop - _start);
+			_start.update(Time() - (_stop - _start));
 			_running = true;
 		}
 	}
 
-	void stop() { _stop = Time(); _running = false; }
+	void stop() { _stop.update(); _running = false; }
 
 	void restart() {
-		_start = _stop = Time(0);
+		_start.update(0);
+		_stop.update(0);
 		start();
 	}
 

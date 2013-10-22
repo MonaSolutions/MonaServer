@@ -18,6 +18,7 @@
 #pragma once
 
 #include "Mona/Mona.h"
+#include "Mona/Exceptions.h"
 #include "Mona/AttemptCounter.h"
 #include "Mona/RTMFP/RTMFPSession.h"
 #include "Mona/RTMFP/RTMFPCookie.h"
@@ -39,7 +40,7 @@ public:
 	RTMFPHandshake(RTMFProtocol& protocol,Gateway& gateway,Invoker& invoker);
 	virtual ~RTMFPHandshake();
 
-	void		createCookie(MemoryWriter& writer,HelloAttempt& attempt,const std::string& tag,const std::string& queryUrl);
+	void		createCookie(Exception& ex, MemoryWriter& writer,HelloAttempt& attempt,const std::string& tag,const std::string& queryUrl);
 	void		commitCookie(const Mona::UInt8* value);
 	void		manage();
 	void		clear();
@@ -47,8 +48,8 @@ public:
 
 private:
 
-	void		flush();
-	void		flush(RTMFPEngine::Type type);
+	void		flush(Exception& ex);
+	void		flush(Exception& ex, RTMFPEngine::Type type);
 
 	void		packetHandler(MemoryReader& packet);
 	Mona::UInt8	handshakeHandler(Mona::UInt8 id,MemoryReader& request,MemoryWriter& response);
@@ -64,12 +65,12 @@ private:
 	Gateway&											_gateway;
 };
 
-inline void RTMFPHandshake::flush() {
-	RTMFPSession::flush(0x0b,false);
+inline void RTMFPHandshake::flush(Exception& ex) {
+	RTMFPSession::flush(ex, 0x0b,false);
 }
 
-inline void RTMFPHandshake::flush(RTMFPEngine::Type type) {
-	RTMFPSession::flush(0x0b,false,type);
+inline void RTMFPHandshake::flush(Exception& ex, RTMFPEngine::Type type) {
+	RTMFPSession::flush(ex, 0x0b,false,type);
 }
 
 

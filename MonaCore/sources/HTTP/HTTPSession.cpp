@@ -18,7 +18,7 @@
 #include "Mona/HTTP/HTTPSession.h"
 #include "Mona/HTTP/HTTP.h"
 #include "Mona/HTTPPacketReader.h"
-#include "Mona/Exception.h"
+#include "Mona/Exceptions.h"
 #include "Poco/String.h"
 #include "Poco/Format.h"
 #include "Poco/File.h"
@@ -68,86 +68,90 @@ void HTTPSession::packetHandler(MemoryReader& packet) {
 	UInt32 pos = packet.position();
 	UInt32 posEnd = 0;
 
-	try {
+	string cmd,file,oldPath;
+	if(peer.connected)
+			oldPath = peer.path;
+	HTTPPacketReader request(packet);
 
-		string cmd,file,oldPath;
-		if(peer.connected)
-			 oldPath = peer.path;
-		HTTPPacketReader request(packet);
-
-		MapParameters headers;
-		HTTP::ReadHeader(request, headers, cmd, (string&)peer.path, file, peer);
-		string temp = "127.0.0.1"; // TODO?
-		headers.getString("host", temp);
-		(Poco::Net::SocketAddress&)peer.serverAddress = SocketAddress(temp, invoker.params.HTTP.port);
+	MapParameters headers;
+	HTTP::ReadHeader(request, headers, cmd, (string&)peer.path, file, peer);
+	string temp = "127.0.0.1"; // TODO?
+	headers.getString("host", temp);
+	(Poco::Net::SocketAddress&)peer.serverAddress = SocketAddress(temp, invoker.params.HTTP.port);
 		
-		if(peer.connected && icompare(oldPath,peer.path)!=0)
-			peer.onDisconnection();
+	if(peer.connected && icompare(oldPath,peer.path)!=0)
+		peer.onDisconnection();
 
-		if (icompare(cmd, "GET") == 0) {
-			bool connectionHasUpgrade = false;
-			if (headers.getString("connection", temp)) {
-				for (const string& field : StringTokenizer(temp, ",", StringTokenizer::TOK_IGNORE_EMPTY | StringTokenizer::TOK_TRIM)) {
-					if (icompare(field, "upgrade") == 0) {
-						connectionHasUpgrade = true;
-						break;
-					}
+	Exception ex;
+	if (icompare(cmd, "GET") == 0) {
+		bool connectionHasUpgrade = false;
+		if (headers.getString("connection", temp)) {
+			for (const string& field : StringTokenizer(temp, ",", StringTokenizer::TOK_IGNORE_EMPTY | StringTokenizer::TOK_TRIM)) {
+				if (icompare(field, "upgrade") == 0) {
+					connectionHasUpgrade = true;
+					break;
 				}
 			}
+		}
 				
-			if(connectionHasUpgrade) {
-				if (headers.getString("upgrade", temp) && icompare(temp, "websocket") == 0) {
-					peer.onDisconnection();
-					_isWS=true;
-					((string&)peer.protocol) = "WebSocket";
-					((string&)protocol.name) = "WebSocket";
-					DataWriter& response = _writer.writeMessage();
-					response.writeString("HTTP/1.1 101 Switching Protocols");
-					response.beginObject();
-					response.writeStringProperty("Upgrade","WebSocket");
-					response.writeStringProperty("Connection","Upgrade");
-					if (headers.getString("sec-websocket-key", temp)) {
-						WS::ComputeKey(temp);
-						response.writeStringProperty("Sec-WebSocket-Accept", temp);
-					}
-					posEnd = packet.position();
-					packet.reset(pos);
-					//skip first line (HTTP/1.1 / GET ..)
-					if(request.followingType()==HTTPPacketReader::STRING)
-						request.next();
-					peer.onConnection(wsWriter(),request,response);
+		if(connectionHasUpgrade) {
+			if (headers.getString("upgrade", temp) && icompare(temp, "websocket") == 0) {
+				peer.onDisconnection();
+				_isWS=true;
+				((string&)peer.protocol) = "WebSocket";
+				((string&)protocol.name) = "WebSocket";
+				DataWriter& response = _writer.writeMessage();
+				response.writeString("HTTP/1.1 101 Switching Protocols");
+				response.beginObject();
+				response.writeStringProperty("Upgrade","WebSocket");
+				response.writeStringProperty("Connection","Upgrade");
+				if (headers.getString("sec-websocket-key", temp)) {
+					WS::ComputeKey(temp);
+					response.writeStringProperty("Sec-WebSocket-Accept", temp);
+				}
+				posEnd = packet.position();
+				packet.reset(pos);
+				//skip first line (HTTP/1.1 / GET ..)
+				if(request.followingType()==HTTPPacketReader::STRING)
+					request.next();
+
+				peer.onConnection(ex, wsWriter(),request,response);
+				if (!ex)
 					response.endObject();
-				} // TODO else
-			} else
-				processGet(file);
+			} // TODO else
+		} else
+			processGet(ex, file);
 
-		} /* TODOelse if (icompare(cmd,"HEAD")==0) {
-			 response.writeString("HTTP/1.1 200 OK");
-			response.beginObject();
-			response.writeStringProperty("Date",Poco::DateTimeFormatter::format(DateTime(),DateTimeFormat::HTTP_FORMAT));
-			response.writeStringProperty("Server","Mona");
-			if(!peer.connected)
-				peer.onConnection(_writer,response);
-			if(file.empty())
-				file = "index.html";
-			if(peer.onRead(file)) {
-				Path path(file);
+	} /* TODOelse if (icompare(cmd,"HEAD")==0) {
+			response.writeString("HTTP/1.1 200 OK");
+		response.beginObject();
+		string stDate;
+		Time().toString(stDate, Time::HTTP_FORMAT);
+		response.writeStringProperty("Date", stDate);
+		response.writeStringProperty("Server","Mona");
+		if(!peer.connected)
+			peer.onConnection(_writer,response);
+		if(file.empty())
+			file = "index.html";
+		if(peer.onRead(file)) {
+			Path path(file);
 				
-				FileInputStream		fileStream(file);
-				fileStream.seekg(0,ios::end);
-				FileInputStream::pos_type size = fileStream.tellg();
-				fileStream.seekg(0, std::ios::beg);
+			FileInputStream		fileStream(file);
+			fileStream.seekg(0,ios::end);
+			FileInputStream::pos_type size = fileStream.tellg();
+			fileStream.seekg(0, std::ios::beg);
 
-				string type;
-				HTTP::MIMEType(path.getExtension(),type);
-				response.writeStringProperty("Content-Type",type);
-				response.writeNumberProperty("Content-Length",size);
-				//response.writeStringProperty("Connection","close"); // TODO support keep-alive?
-			}// TODO else??
-			response.endObject();
-		} // TODO else */
+			string type;
+			HTTP::MIMEType(path.getExtension(),type);
+			response.writeStringProperty("Content-Type",type);
+			response.writeNumberProperty("Content-Length",size);
+			//response.writeStringProperty("Connection","close"); // TODO support keep-alive?
+		}// TODO else??
+		response.endObject();
+	} // TODO else */
 
-	} catch(Exception& ex) {
+	if (ex) {
+		
 		string firstLine,title;
 		switch(ex.code()) {
 			case Exception::FILE:
@@ -163,7 +167,9 @@ void HTTPSession::packetHandler(MemoryReader& packet) {
 		DataWriter& response = _writer.writeMessage();
 		response.writeString(firstLine);
 		response.beginObject();
-		response.writeStringProperty("Date",Poco::DateTimeFormatter::format(DateTime(),DateTimeFormat::HTTP_FORMAT));
+		string stDate;
+		Time().toString(stDate, Time::HTTP_FORMAT);
+		response.writeStringProperty("Date", stDate);
 		response.writeStringProperty("Server","Mona");
 		response.writeStringProperty("Connection","Close");
 		response.endObject();
@@ -172,7 +178,7 @@ void HTTPSession::packetHandler(MemoryReader& packet) {
 		error += "</title></head><body><h1>";
 		error += title;
 		error += "</h1><p>";
-		error += ex.what();
+		error += ex.error();
 		error += "</p><hr><address>Mona Server at ";
 		error += peer.serverAddress.toString();
 		error += "</address></body></html>\r\n";
@@ -180,7 +186,7 @@ void HTTPSession::packetHandler(MemoryReader& packet) {
 		_writer.close();
 		kill();
 	}
-
+	
 	
 	if(!peer.connected) {
 		kill();
@@ -204,20 +210,25 @@ void HTTPSession::manage() {
 	/* TODO ping?
 	if(peer.connected && _time.elapsed()>60000000) {
 		_writer.writePing();
-		_time = Mona::Time();
+		_time.update();
 	}*/
 	_writer.flush();
 }
 
 
-void HTTPSession::processGet(const string& fileName) {
-	if(!peer.connected)
-		peer.onConnection(_writer);
+void HTTPSession::processGet(Exception& ex, const string& fileName) {
+	if(!peer.connected) {
+		peer.onConnection(ex, _writer);
+		if (ex)
+			return;
+	}
 
 	DataWriter& response = _writer.writeMessage();
 	response.writeString("HTTP/1.1 200 OK");
 	response.beginObject();
-	response.writeStringProperty("Date",Poco::DateTimeFormatter::format(DateTime(),DateTimeFormat::HTTP_FORMAT));
+	string stDate;
+	Time().toString(stDate, Time::HTTP_FORMAT);
+	response.writeStringProperty("Date", stDate);
 	response.writeStringProperty("Server","Mona");
 	//response.writeStringProperty("Connection","close"); // TODO support keep-alive?
 	
@@ -233,7 +244,8 @@ void HTTPSession::processGet(const string& fileName) {
 		File file(filePath);
 		if (!file.exists()) {
 			response.clear();
-			throw Exception(Exception::FILE,"File ", filePath, " doesn't exist");
+			ex.set(Exception::FILE,"File ", filePath, " doesn't exist");
+			return;
 		}
 		auto size = file.getSize();
 

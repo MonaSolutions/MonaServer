@@ -24,19 +24,19 @@ using namespace std;
 namespace Mona {
 
 #define SKIP_JUNK() \
-	while (it != end && !TimeParser::isDigit(*it)) ++it
+	while (it != end && !isdigit(*it)) ++it
 
 #define SKIP_DIGITS() \
-	while (it != end && TimeParser::isDigit(*it)) ++it
+	while (it != end && isdigit(*it)) ++it
 
 #define PARSE_NUMBER(var) \
-	while (it != end && TimeParser::isDigit(*it)) var = var * 10 + ((*it++) - '0')
+	while (it != end && isdigit(*it)) var = var * 10 + ((*it++) - '0')
 
 #define PARSE_NUMBER_N(var, n) \
-	{ int i = 0; while (i++ < n && it != end && TimeParser::isDigit(*it)) var = var * 10 + ((*it++) - '0');}
+	{ int i = 0; while (i++ < n && it != end && isdigit(*it)) var = var * 10 + ((*it++) - '0');}
 
 #define PARSE_FRACTIONAL_N(var, n) \
-	{ int i = 0; while (i < n && it != end && TimeParser::isDigit(*it)) { var = var * 10 + ((*it++) - '0'); i++; } while (i++ < n) var *= 10; }
+	{ int i = 0; while (i < n && it != end && isdigit(*it)) { var = var * 10 + ((*it++) - '0'); i++; } while (i++ < n) var *= 10; }
 
 bool TimeParser::tryParse(const string& in, Time& dateTime, int& tz) {
 	
@@ -48,7 +48,7 @@ bool TimeParser::tryParse(const string& in, Time& dateTime, int& tz) {
 		return parse(Time::ASCTIME_FORMAT, in, dateTime, tz);
 	else if (in.find(',') < 10)
 		return parse("%W, %e %b %r %H:%M:%S %Z", in, dateTime, tz);
-	else if (isDigit(in[0])) {
+	else if (isdigit(in[0])) {
 
 		if (in.find(' ') != string::npos || in.length() == 10)
 			return parse(Time::SORTABLE_FORMAT, in, dateTime, tz);
@@ -78,8 +78,8 @@ bool TimeParser::parse(const string& fmt, const string& in, Time& dateTime, int&
 				{
 				case 'w':
 				case 'W':
-					while (it != end && isSpace(*it)) ++it;
-					while (it != end && isAlpha(*it)) ++it;
+					while (it != end && isspace(*it)) ++it;
+					while (it != end && isalpha(*it)) ++it;
 					break;
 				case 'b':
 				case 'B':
@@ -186,10 +186,10 @@ bool TimeParser::parse(const string& fmt, const string& in, Time& dateTime, int&
 	tmtime.tm_sec = second;
 
 	if (Time::isValid(tmtime, millis, micros))
-		dateTime = move( Time(tmtime, millis, micros));
+		dateTime.update(tmtime, millis, micros);
 	else {
 
-		ERROR("Date/time component out of range (%s)", in.c_str());
+		ERROR("Date/time component out of range (", in, ")");
 		return false;
 	}
 
@@ -243,16 +243,16 @@ bool TimeParser::parseTZD(string::const_iterator& it, const string::const_iterat
 	};
 
 	int tzd = 0;
-	while (it != end && TimeParser::isSpace(*it)) ++it;
+	while (it != end && isspace(*it)) ++it;
 	if (it != end)
 	{
-		if (TimeParser::isAlpha(*it))
+		if (isalpha(*it))
 		{
 			string designator;
 			designator += *it++;
-			if (it != end && TimeParser::isAlpha(*it)) designator += *it++;
-			if (it != end && TimeParser::isAlpha(*it)) designator += *it++;
-			if (it != end && TimeParser::isAlpha(*it)) designator += *it++;
+			if (it != end && isalpha(*it)) designator += *it++;
+			if (it != end && isalpha(*it)) designator += *it++;
+			if (it != end && isalpha(*it)) designator += *it++;
 			for (unsigned i = 0; i < sizeof(zones) / sizeof(Zone); ++i)
 			{
 				if (designator == zones[i].designator)
@@ -283,18 +283,18 @@ bool TimeParser::parseTZD(string::const_iterator& it, const string::const_iterat
 bool TimeParser::parseMonth(string::const_iterator& it, const string::const_iterator& end, int& result) {
 
 	string month;
-	while (it != end && (TimeParser::isSpace(*it) || TimeParser::isPunct(*it))) ++it;
+	while (it != end && (isspace(*it) || ispunct(*it))) ++it;
 	bool isFirst = true;
-	while (it != end && TimeParser::isAlpha(*it)) {
+	while (it != end && isalpha(*it)) {
 
 		char ch = (*it++);
-		if (isFirst) { month += TimeParser::toUpper(ch); isFirst = false; }
-		else month += TimeParser::toLower(ch);
+		if (isFirst) { month += toupper(ch); isFirst = false; }
+		else month += tolower(ch);
 	}
 
 	if (month.length() < 3) {
 		
-		WARN("Month name must be at least three characters long (%s)", month);
+		WARN("Month name must be at least three characters long (", month, ")");
 		return false;
 	}
 
@@ -306,7 +306,7 @@ bool TimeParser::parseMonth(string::const_iterator& it, const string::const_iter
 		}
 	}
 	
-	WARN("Not a valid month name", month);
+	WARN("Not a valid month name (", month, ")");
 	return false;
 }
 
@@ -314,11 +314,11 @@ bool TimeParser::parseMonth(string::const_iterator& it, const string::const_iter
 bool TimeParser::parseAMPM(string::const_iterator& it, const string::const_iterator& end, int& result) {
 
 	string ampm;
-	while (it != end && (TimeParser::isSpace(*it) || TimeParser::isPunct(*it))) ++it;
-	while (it != end && TimeParser::isAlpha(*it)) {
+	while (it != end && (isspace(*it) || ispunct(*it))) ++it;
+	while (it != end && isalpha(*it)) {
 
 		char ch = (*it++);
-		ampm += TimeParser::toUpper(ch);
+		ampm += toupper(ch);
 	}
 
 	if (ampm == "AM") {
@@ -334,7 +334,7 @@ bool TimeParser::parseAMPM(string::const_iterator& it, const string::const_itera
 		return true;
 	}
 	
-	WARN("Not a valid AM/PM designator (%s)", ampm);
+	WARN("Not a valid AM/PM designator (", ampm, ")");
 	return false;
 }
 

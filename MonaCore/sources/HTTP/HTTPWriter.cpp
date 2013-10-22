@@ -17,10 +17,9 @@
 
 #include "Mona/HTTP/HTTPWriter.h"
 #include "Mona/HTTP/HTTP.h"
-#include "Poco/NumberParser.h"
+#include "Mona/String.h"
 
 using namespace std;
-using namespace Poco;
 using namespace Poco::Net;
 
 namespace Mona {
@@ -51,7 +50,7 @@ void HTTPWriter::flush(bool full) {
 HTTPWriter::State HTTPWriter::state(State value,bool minimal) {
 	State state = Writer::state(value,minimal);
 	if(state==CONNECTED && minimal) {
-		list<AutoPtr<HTTPSender>>::iterator it;
+		list<Poco::AutoPtr<HTTPSender>>::iterator it;
 		for(it=_senders.begin();it!=_senders.end();++it)
 			(*it)->writer.clear();
 		_senders.clear();
@@ -64,8 +63,9 @@ HTTPWriter::State HTTPWriter::state(State value,bool minimal) {
 DataWriter& HTTPWriter::writeInvocation(const std::string& name) {
 	DataWriter& writer = writeMessage();
 	string header("HTTP/1.1 ");
-	unsigned code;
-	if(NumberParser::tryParseUnsigned(name,code)) {
+	Exception ex;
+	UInt16 code = String::ToNumber<UInt16>(ex, name);
+	if(!ex) {
 		string message;
 		header.append(name);
 		header.append(" ");

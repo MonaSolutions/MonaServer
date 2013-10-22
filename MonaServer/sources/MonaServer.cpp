@@ -16,7 +16,7 @@
 */
 
 #include "MonaServer.h"
-#include "Mona/Exception.h"
+#include "Mona/Exceptions.h"
 #include "Poco/String.h"
 #include "LUAClient.h"
 #include "LUAPublication.h"
@@ -222,7 +222,7 @@ void MonaServer::readLUAAddress(const string& protocol,set<SocketAddress,Mona::U
 		}
 	} catch(Exception& ex) {
 		SCRIPT_BEGIN(_pState)
-			SCRIPT_ERROR("Invalid address, %s",ex.displayText().c_str());
+			SCRIPT_ERROR("Invalid address, ",ex.displayText());
 		SCRIPT_END
 	}
 }
@@ -273,11 +273,13 @@ void MonaServer::onHandshake(const string& protocol,const SocketAddress& address
 
 
 //// CLIENT_HANDLER /////
-void MonaServer::onConnection(Mona::Client& client,Mona::DataReader& parameters,Mona::DataWriter& response) {
+void MonaServer::onConnection(Mona::Exception& ex, Mona::Client& client,Mona::DataReader& parameters,Mona::DataWriter& response) {
 	// Here you can read custom client http parameters in reading "client.parameters".
 	Service* pService = _pService->get(client.path); 
-	if(!pService)
-		throw Mona::Exception(Mona::Exception::APPLICATION, "Applicaton ", client.path, " doesn't exist");
+	if(!pService) {
+		ex.set(Mona::Exception::APPLICATION, "Applicaton ", client.path, " doesn't exist");
+		return;
+	}
 
 	string error;
 	SCRIPT_BEGIN(pService->open())
@@ -306,12 +308,16 @@ void MonaServer::onConnection(Mona::Client& client,Mona::DataReader& parameters,
 			LUAClient::Clear(_pState,client);
 	SCRIPT_END
 
-	if(!error.empty())
-		throw Mona::Exception(Mona::Exception::SOFTWARE, error);
+	if(!error.empty()) {
+		ex.set(Mona::Exception::SOFTWARE, error);
+		return;
+	}
 
 	// build error!
-	if(!pService->lastError.empty())
-		throw Mona::Exception(Mona::Exception::SOFTWARE, pService->lastError);
+	if(!pService->lastError.empty()) {
+		ex.set(Mona::Exception::SOFTWARE, pService->lastError);
+		return;
+	}
 
 	client.setNumber("&Service",(double)reinterpret_cast<unsigned>(pService));
 	++pService->count;
@@ -319,7 +325,7 @@ void MonaServer::onConnection(Mona::Client& client,Mona::DataReader& parameters,
 
 // TODO keeping onFailed??
 void MonaServer::onFailed(const Mona::Client& client,const string& error) {
-	WARN("Client failed: %s",error.c_str());
+	WARN("Client failed: ",error);
 	double ptr = 0;
 	if (!client.getNumber("&Service", ptr))
 		return;
@@ -348,11 +354,13 @@ void MonaServer::onDisconnection(const Mona::Client& client) {
 	--pService->count;
 }
 
-void MonaServer::onMessage(Mona::Client& client,const string& name,Mona::DataReader& reader) {
+void MonaServer::onMessage(Mona::Exception& ex, Mona::Client& client,const string& name,Mona::DataReader& reader) {
 	string error("Method '" + name + "' not found");
 	double ptr = 0;
-	if (!client.getNumber("&Service", ptr))
-		throw Mona::Exception(Mona::Exception::APPLICATION, error);
+	if (!client.getNumber("&Service", ptr)) {
+		ex.set(Mona::Exception::APPLICATION, error);
+		return;
+	}
 	Service* pService = reinterpret_cast<Service*>(static_cast<unsigned>(ptr));
 	SCRIPT_BEGIN(pService->open())
 		SCRIPT_MEMBER_FUNCTION_BEGIN(Mona::Client,LUAClient,client,name.c_str())
@@ -364,16 +372,19 @@ void MonaServer::onMessage(Mona::Client& client,const string& name,Mona::DataRea
 				++__args;
 			}
 		SCRIPT_FUNCTION_END
-		if(SCRIPT_LAST_ERROR)
-			throw Mona::Exception(Mona::Exception::SOFTWARE,SCRIPT_LAST_ERROR);
+		if(SCRIPT_LAST_ERROR) {
+			ex.set(Mona::Exception::APPLICATION,SCRIPT_LAST_ERROR);
+			return;
+		}
 	SCRIPT_END
 	if(!error.empty()) {
-		ERROR("%s",error.c_str());
-		throw Mona::Exception(Mona::Exception::APPLICATION, error);
+		ERROR(error);
+		ex.set(Mona::Exception::APPLICATION, error);
+		return;
 	}
 }
 
-bool MonaServer::onRead(Mona::Client& client,string& filePath,Mona::DataReader& parameters) { 
+bool MonaServer::onRead(Mona::Exception& ex, Mona::Client& client,string& filePath,Mona::DataReader& parameters) { 
 	bool result = true;
 	double ptr = 0;
 	if (!client.getNumber("&Service", ptr))
@@ -392,8 +403,10 @@ bool MonaServer::onRead(Mona::Client& client,string& filePath,Mona::DataReader& 
 					filePath = SCRIPT_READ_STRING(filePath);
 			}
 		SCRIPT_FUNCTION_END
-		if (SCRIPT_LAST_ERROR)
-			throw Mona::Exception(Mona::Exception::SOFTWARE, SCRIPT_LAST_ERROR);
+		if (SCRIPT_LAST_ERROR) {
+			ex.set(Mona::Exception::SOFTWARE, SCRIPT_LAST_ERROR);
+			return false;
+		}
 	SCRIPT_END
 	return result;
 }
@@ -614,7 +627,7 @@ void MonaServer::message(ServerConnection& server,const std::string& handler,Mon
 
 void MonaServer::disconnection(const ServerConnection& server,const char* error) {
 	if(error)
-		ERROR("Servers error, %s",error)
+		ERROR("Servers error, ",error)
 
 	set<Service*>& events = _scriptEvents["onServerDisconnection"];
 	set<Service*>::const_iterator it;

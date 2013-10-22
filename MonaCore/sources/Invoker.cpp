@@ -25,7 +25,7 @@ namespace Mona {
 
 
 Invoker::Invoker(UInt32 bufferSize,UInt32 threads) : poolThreads(threads),relay(poolThreads,bufferSize),sockets(*this,poolThreads,bufferSize),clients(_clients,_clientsByName),groups(_groups),publications(_publications),_nextId(0) {
-	DEBUG("%u threads available in the server poolthreads",poolThreads.threadsAvailable());
+	DEBUG(poolThreads.threadsAvailable()," threads available in the server poolthreads");
 		
 }
 
@@ -51,15 +51,15 @@ UInt32 Invoker::createFlashStream(Peer& peer) {
 	return _nextId;
 }
 
-Publication& Invoker::publish(Peer& peer,const string& name) {
+Publication* Invoker::publish(Exception& ex, Peer& peer,const string& name) {
 	Publications::Iterator it = createPublication(name);
-	Publication& publication(*it->second);
-	try {
-		publication.start(peer);
-	} catch(...) {
-		if(!publication.publisher() && publication.listeners.count()==0)
+	Publication * publication = it->second;
+	
+	publication->start(ex, peer);
+	if (ex) {
+		if(!publication->publisher() && publication->listeners.count()==0)
 			destroyPublication(it);
-		throw;
+		return NULL;
 	}
 	return publication;
 }
@@ -67,7 +67,7 @@ Publication& Invoker::publish(Peer& peer,const string& name) {
 void Invoker::unpublish(Peer& peer,const string& name) {
 	Publications::Iterator it = _publications.find(name);
 	if(it == _publications.end()) {
-		DEBUG("The publication '%s' doesn't exist, unpublish useless",name.c_str());
+		DEBUG("The publication '",name,"' doesn't exist, unpublish useless");
 		return;
 	}
 	Publication& publication(*it->second);
@@ -76,22 +76,21 @@ void Invoker::unpublish(Peer& peer,const string& name) {
 		destroyPublication(it);
 }
 
-Listener& Invoker::subscribe(Peer& peer,const string& name,Writer& writer,double start) {
+Listener* Invoker::subscribe(Exception& ex, Peer& peer,const string& name,Writer& writer,double start) {
 	Publications::Iterator it = createPublication(name);
 	Publication& publication(*it->second);
-	try {
-		return publication.addListener(peer,writer,start==-3000 ? true : false);
-	} catch(...) {
+	Listener* pListener = publication.addListener(ex, peer,writer,start==-3000 ? true : false);
+	if (ex) {
 		if(!publication.publisher() && publication.listeners.count()==0)
 			destroyPublication(it);
-		throw;
 	}
+	return pListener;
 }
 
 void Invoker::unsubscribe(Peer& peer,const string& name) {
 	Publications::Iterator it = _publications.find(name);
 	if(it == _publications.end()) {
-		DEBUG("The publication '%s' doesn't exists, unsubscribe useless",name.c_str());
+		DEBUG("The publication '",name,"' doesn't exists, unsubscribe useless");
 		return;
 	}
 	Publication& publication(*it->second);

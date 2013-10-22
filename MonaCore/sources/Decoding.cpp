@@ -39,7 +39,7 @@ void Decoding::run() {
 	if(decode(*_pPacket))
 		waitHandle();
 	else
-		ERROR("Decoding error on session %u",id);
+		ERROR("Decoding error on session ",id);
 }
 
 void Decoding::handle() {

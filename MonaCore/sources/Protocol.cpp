@@ -32,7 +32,7 @@ Protocol::~Protocol(){
 bool Protocol::auth(const SocketAddress& address) {
 	bool auth = !invoker.isBanned(address.host());
 	if(!auth)
-		INFO("Data rejected because client %s is banned",address.host().toString().c_str());
+		INFO("Data rejected because client ",address.host().toString()," is banned");
 	return auth;
 }
 

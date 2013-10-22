@@ -40,7 +40,7 @@ void PoolThreads::clear() {
 		(*it)->clear();
 }
 
-PoolThread* PoolThreads::enqueue(AutoPtr<WorkThread> pWork,PoolThread* pThread) {
+PoolThread* PoolThreads::enqueue(Exception& ex, AutoPtr<WorkThread> pWork,PoolThread* pThread) {
 
 	UInt32 queue=0;
 	if(!pThread) {
@@ -55,8 +55,10 @@ PoolThread* PoolThreads::enqueue(AutoPtr<WorkThread> pWork,PoolThread* pThread) 
 		}
 	}
 
-	if (queue >= 10000)
-		throw Exception("PoolThreads 10000 limit runnable entries for every thread reached");
+	if (queue >= 10000) {
+		ex.set(Exception::APPLICATION, "PoolThreads 10000 limit runnable entries for every thread reached");
+		return pThread;
+	}
 
 	pThread->push(pWork);
 	return pThread;

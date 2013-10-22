@@ -18,7 +18,6 @@ This file is a part of Mona.
 
 #include "Mona/WinService.h"
 #include "Mona/WinRegistryKey.h"
-#include "Mona/Exception.h"
 #if defined(POCO_WIN32_UTF8)
 #include "Poco/UnicodeConverter.h"
 #endif
@@ -36,10 +35,10 @@ const int WinService::STARTUP_TIMEOUT = 30000;
 const string WinService::REGISTRY_KEY("SYSTEM\\CurrentControlSet\\Services\\");
 const string WinService::REGISTRY_DESCRIPTION("Description");
 
-WinService::WinService(const string& name) :_name(name),_svcHandle(0) {
+WinService::WinService(Exception& ex, const string& name) :_name(name),_svcHandle(0) {
 	_scmHandle = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
 	if (!_scmHandle)
-		throw Exception(Exception::SERVICE, "Cannot open Service Control Manager");
+		ex.set(Exception::SERVICE, "Cannot open Service Control Manager");
 }
 
 
@@ -48,8 +47,10 @@ WinService::~WinService() {
 	CloseServiceHandle(_scmHandle);
 }
 
-void WinService::getPath(string& path) const {
-	POCO_LPQUERY_SERVICE_CONFIG pSvcConfig = config();
+void WinService::getPath(Exception& ex, string& path) const {
+	POCO_LPQUERY_SERVICE_CONFIG pSvcConfig = config(ex);
+	if(ex) 
+		return;
 #if defined(POCO_WIN32_UTF8)
 	std::wstring upath(pSvcConfig->lpBinaryPathName);
 	UnicodeConverter::toUTF8(upath, path);
@@ -59,8 +60,10 @@ void WinService::getPath(string& path) const {
 	LocalFree(pSvcConfig);
 }
 
-void WinService::getDisplayName(string& name) const {
-	POCO_LPQUERY_SERVICE_CONFIG pSvcConfig = config();
+void WinService::getDisplayName(Exception& ex, string& name) const {
+	POCO_LPQUERY_SERVICE_CONFIG pSvcConfig = config(ex);
+	if(ex) 
+		return;
 #if defined(POCO_WIN32_UTF8)
 	wstring udispName(pSvcConfig->lpDisplayName);
 	string dispName;
@@ -71,7 +74,7 @@ void WinService::getDisplayName(string& name) const {
 	LocalFree(pSvcConfig);
 }
 
-void WinService::registerService(const std::string& path, const string& displayName) {
+void WinService::registerService(Exception& ex, const std::string& path, const string& displayName) {
 	close();
 #if defined(POCO_WIN32_UTF8)
 	wstring uname;
@@ -102,15 +105,19 @@ void WinService::registerService(const std::string& path, const string& displayN
 		_path.c_str(),
 		NULL, NULL, NULL, NULL, NULL);
 #endif
-	if (!_svcHandle)
-		throw Exception(Exception::SERVICE,"Cannot register service ", _name);
+	if (!_svcHandle) {
+		ex.set(Exception::SERVICE,"Cannot register service ", _name);
+		return;
+	}
 }
 
 
-void WinService::unregisterService() {
-	open();
-	if (!DeleteService(_svcHandle))
-		throw Exception(Exception::SERVICE,"Cannot unregister service ", _name);
+void WinService::unregisterService(Exception& ex) {
+	open(ex);
+	if (!DeleteService(_svcHandle)) {
+		ex.set(Exception::SERVICE,"Cannot unregister service ", _name);
+		return;
+	}
 }
 
 
@@ -119,19 +126,25 @@ bool WinService::registered() const {
 }
 
 
-bool WinService::running() const {
-	open();
+bool WinService::running(Exception& ex) const {
+	open(ex);
 	SERVICE_STATUS ss;
-	if (!QueryServiceStatus(_svcHandle, &ss))
-		throw Exception(Exception::SERVICE,"Cannot query service ",_name," status");
+	if (!QueryServiceStatus(_svcHandle, &ss)) {
+		ex.set(Exception::SERVICE,"Cannot query service ",_name," status");
+		return false;
+	}
 	return ss.dwCurrentState == SERVICE_RUNNING;
 }
 
 	
-void WinService::start() {
-	open();
-	if (!StartService(_svcHandle, 0, NULL))
-		throw Exception(Exception::SERVICE,"Cannot start service ", _name);
+void WinService::start(Exception& ex) {
+	open(ex);
+	if(ex)
+		return;
+	if (!StartService(_svcHandle, 0, NULL)) {
+		ex.set(Exception::SERVICE,"Cannot start service ", _name);
+		return;
+	}
 
 	SERVICE_STATUS svcStatus;
 	int msecs = 0;
@@ -143,23 +156,35 @@ void WinService::start() {
 		this_thread::sleep_for(chrono::milliseconds(250));
 		msecs += 250;
 	}
-	if (!QueryServiceStatus(_svcHandle, &svcStatus))
-		throw Exception(Exception::SERVICE,"Cannot query status of starting service ", _name);
-	else if (svcStatus.dwCurrentState != SERVICE_RUNNING)
-		throw Exception(Exception::SERVICE, "Service ",_name," failed to start within a reasonable time");
+	if (!QueryServiceStatus(_svcHandle, &svcStatus)) {
+		ex.set(Exception::SERVICE,"Cannot query status of starting service ", _name);
+		return;
+	}
+	else if (svcStatus.dwCurrentState != SERVICE_RUNNING) {
+		ex.set(Exception::SERVICE, "Service ",_name," failed to start within a reasonable time");
+		return;
+	}
  }
 
 
-void WinService::stop() {
-	open();
+void WinService::stop(Exception& ex) {
+	open(ex);
+	if (ex)
+		return;
+
 	SERVICE_STATUS svcStatus;
-	if (!ControlService(_svcHandle, SERVICE_CONTROL_STOP, &svcStatus))
-		throw Exception(Exception::SERVICE, "Cannot stop service ", _name);
+	if (!ControlService(_svcHandle, SERVICE_CONTROL_STOP, &svcStatus)) {
+		ex.set(Exception::SERVICE, "Cannot stop service ", _name);
+		return;
+	}
 }
 
 
-void WinService::setStartup(Startup startup) {
-	open();
+void WinService::setStartup(Exception& ex, Startup startup) {
+	open(ex);
+	if (ex)
+		return;
+
 	DWORD startType;
 	switch (startup) {
 	case AUTO_START:
@@ -174,13 +199,18 @@ void WinService::setStartup(Startup startup) {
 	default:
 		startType = SERVICE_NO_CHANGE;
 	}
-	if (!ChangeServiceConfig(_svcHandle, SERVICE_NO_CHANGE, startType, SERVICE_NO_CHANGE, NULL, NULL, NULL, NULL, NULL, NULL, NULL))
-		throw Exception(Exception::SERVICE,"Cannot change service ",_name," startup mode");
+	if (!ChangeServiceConfig(_svcHandle, SERVICE_NO_CHANGE, startType, SERVICE_NO_CHANGE, NULL, NULL, NULL, NULL, NULL, NULL, NULL)) {
+		ex.set(Exception::SERVICE,"Cannot change service ",_name," startup mode");
+		return;
+	}
 }
 
 	
-WinService::Startup WinService::getStartup() const {
-	POCO_LPQUERY_SERVICE_CONFIG pSvcConfig = config();
+WinService::Startup WinService::getStartup(Exception& ex) const {
+	POCO_LPQUERY_SERVICE_CONFIG pSvcConfig = config(ex);
+	if(ex) 
+		return MANUAL_START; // TODO verify the parameter
+
 	Startup result;
 	switch (pSvcConfig->dwStartType) {
 	case SERVICE_AUTO_START:
@@ -202,25 +232,27 @@ WinService::Startup WinService::getStartup() const {
 	return result;
 }
 
-void WinService::setDescription(const string& description) {
+void WinService::setDescription(Exception& ex, const string& description) {
 	string key(REGISTRY_KEY);
 	key += _name;
 	WinRegistryKey regKey(HKEY_LOCAL_MACHINE, key);
-	regKey.setString(REGISTRY_DESCRIPTION, description);
+	regKey.setString(ex, REGISTRY_DESCRIPTION, description);
 }
 
 
-void WinService::getDescription(string& description) const {
+void WinService::getDescription(Exception& ex, string& description) const {
 	string key(REGISTRY_KEY);
 	key += _name;
 	WinRegistryKey regKey(HKEY_LOCAL_MACHINE, key, true);
-	description = regKey.getString(REGISTRY_DESCRIPTION);
+	description = regKey.getString(ex, REGISTRY_DESCRIPTION);
 }
 
 
-void WinService::open() const {
-	if (!tryOpen())
-		throw Exception(Exception::SERVICE,"Service ",_name," does not exist");
+void WinService::open(Exception& ex) const {
+	if (!tryOpen()) {
+		ex.set(Exception::SERVICE,"Service ",_name," does not exist");
+		return;
+	}
 }
 
 bool WinService::tryOpen() const {
@@ -245,13 +277,18 @@ void WinService::close() const {
 }
 
 
-POCO_LPQUERY_SERVICE_CONFIG WinService::config() const {
-	open();
+POCO_LPQUERY_SERVICE_CONFIG WinService::config(Exception& ex) const {
+	open(ex);
+	if(ex) 
+		return NULL;
+
 	int size = 4096;
 	DWORD bytesNeeded;
 	POCO_LPQUERY_SERVICE_CONFIG pSvcConfig = (POCO_LPQUERY_SERVICE_CONFIG) LocalAlloc(LPTR, size);
-	if (!pSvcConfig)
-		throw Exception(Exception::SERVICE,"Cannot allocate service config buffer");
+	if (!pSvcConfig) {
+		ex.set(Exception::SERVICE,"Cannot allocate service config buffer");
+		return NULL;
+	}
 	try {
 #if defined(POCO_WIN32_UTF8)
 		while (!QueryServiceConfigW(_svcHandle, pSvcConfig, size, &bytesNeeded)) {
@@ -262,13 +299,15 @@ POCO_LPQUERY_SERVICE_CONFIG WinService::config() const {
 				LocalFree(pSvcConfig);
 				size = bytesNeeded;
 				pSvcConfig = (POCO_LPQUERY_SERVICE_CONFIG) LocalAlloc(LPTR, size);
+			} else {
+				ex.set(Exception::SERVICE,"Cannot query service ", _name, " configuration");
+				return NULL;
 			}
-			else
-				throw Exception(Exception::SERVICE,"Cannot query service ", _name, " configuration");
 		}
 	} catch (...) {
 		LocalFree(pSvcConfig);
-		throw;
+		ex.set(Exception::SERVICE,"Error unknown during query service ", _name, " configuration");
+		return NULL;
 	}
 	return pSvcConfig;
 }

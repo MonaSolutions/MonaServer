@@ -17,10 +17,9 @@
 
 #include "Mona/AMFReader.h"
 #include "Mona/Logs.h"
-#include "Poco/NumberParser.h"
+#include "Mona/Exceptions.h"
 
 using namespace std;
-using namespace Poco;
 
 namespace Mona {
 
@@ -70,7 +69,7 @@ void AMFReader::readNull() {
 		reader.next(1);
 		return;
 	}
-	ERROR("Type %.2x is not a AMF Null type",type);
+	ERROR("Type ",Format<UInt8>("%.2x",(UInt8)type)," is not a AMF Null type");
 }
 
 double AMFReader::readNumber() {
@@ -80,7 +79,7 @@ double AMFReader::readNumber() {
 		return 0;
 	}
 	if(type!=NUMBER) {
-		ERROR("Type %.2x is not a AMF Number type",type);
+		ERROR("Type ",Format<UInt8>("%.2x",(UInt8)type)," is not a AMF Number type");
 		return 0;
 	}
 	UInt8 byte = current();
@@ -104,7 +103,7 @@ bool AMFReader::readBoolean() {
 		return false;
 	}
 	if(type!=BOOLEAN) {
-		ERROR("Type %.2x is not a AMF Boolean type",type);
+		ERROR("Type ",Format<UInt8>("%.2x",(UInt8)type)," is not a AMF Boolean type");
 		return false;
 	}
 	if(_amf3)
@@ -120,7 +119,7 @@ const UInt8* AMFReader::readBytes(UInt32& size) {
 		return NULL;
 	}
 	if(type!=BYTES) {
-		ERROR("Type %.2x is not a AMF ByteArray type",type);
+		ERROR("Type ",Format<UInt8>("%.2x",(UInt8)type)," is not a AMF ByteArray type");
 		return NULL;
 	}
 	reader.next(1);
@@ -149,44 +148,50 @@ const UInt8* AMFReader::readBytes(UInt32& size) {
 	return result;
 }
 
-Time AMFReader::readDate() {
+void AMFReader::readTime(Mona::Time& time) {
 	Type type = followingType();
 	if(type==NIL) {
 		reader.next(1);
-		return Time(0);
+		time.update(0);
 	}
-	if(type!=DATE) {
-		ERROR("Type %.2x is not a AMF Date type",type);
-		return Time(0);
+	else if(type!=TIME) {
+		ERROR("Type ",Format<UInt8>("%.2x",(UInt8)type)," is not a AMF Date type");
+		time.update(0);
 	}
+	else {
 
-	reader.next(1);
-	double result=0;
-	if(_amf3) {
-		UInt32 flags = reader.read7BitValue();
-		UInt32 reference = reader.position();
-		bool isInline = flags&0x01;
-		if(isInline) {
-			if(_referencing)
-				_references.push_back(reference);
-			reader >> result;
-		} else {
-			flags >>= 1;
-			if(flags>_references.size()) {
-				ERROR("AMF3 reference not found")
-				return Time(0);
+		reader.next(1);
+		double result = 0;
+		if (_amf3) {
+			UInt32 flags = reader.read7BitValue();
+			UInt32 reference = reader.position();
+			bool isInline = flags & 0x01;
+			if (isInline) {
+				if (_referencing)
+					_references.push_back(reference);
+				reader >> result;
 			}
-			UInt32 reset = reader.position();
-			reader.reset(_references[flags]);
-			reader >> result;
-			reader.reset(reset);
+			else {
+				flags >>= 1;
+				if (flags > _references.size()) {
+					ERROR("AMF3 reference not found")
+					time.update(0);
+					return;
+				}
+				UInt32 reset = reader.position();
+				reader.reset(_references[flags]);
+				reader >> result;
+				reader.reset(reset);
+			}
+
+			time.update((Mona::Int64)result * 1000);
 		}
-		
-		return Time((Mona::Int64)result*1000);
+		else {
+			reader >> result;
+			reader.next(2); // Timezone, useless
+			time.update((Mona::Int64)result * 1000);
+		}
 	}
-	reader >> result;
-	reader.next(2); // Timezone, useless
-	return Time((Mona::Int64)result*1000);
 }
 
 void AMFReader::readString(string& value) {
@@ -197,7 +202,7 @@ void AMFReader::readString(string& value) {
 		return;
 	}
 	if(type!=STRING) {
-		ERROR("Type %.2x is not a AMF String type",type);
+		ERROR("Type ",Format<UInt8>("%.2x",(UInt8)type)," is not a AMF String type");
 		return;
 	}
 	reader.next(1);
@@ -219,7 +224,7 @@ bool AMFReader::readMap(UInt32& size,bool& weakKeys) {
 		return false;
 	}
 	if(type!=MAP) {
-		ERROR("Type %.2x is not a AMF Dictionary type",type);
+		ERROR("Type ",Format<UInt8>("%.2x",(UInt8)type)," is not a AMF Dictionary type");
 		return false;
 	}
 
@@ -286,7 +291,7 @@ bool AMFReader::readArray(UInt32& size) {
 		return false;
 	}
 	if(type!=ARRAY) {
-		ERROR("Type %.2x is not a AMF Array type",type);
+		ERROR("Type ",Format<UInt8>("%.2x",(UInt8)type)," is not a AMF Array type");
 		return false;
 	}
 
@@ -342,7 +347,7 @@ bool AMFReader::readObject(string& type,bool& external) {
 		return false;
 	}
 	if(marker!=OBJECT) {
-		ERROR("Type %.2x is not a AMF Object type",marker);
+		ERROR("Type ",Format<UInt8>("%.2x",(UInt8)marker)," is not a AMF Object type");
 		return false;
 	}
 
@@ -459,8 +464,9 @@ AMFReader::Type AMFReader::readItem(string& name) {
 			}
 			end=true;
 		} else if(objectDef.arrayType) {
-			int index;
-			if(NumberParser::tryParse(name,index) && index>=0)
+			Exception ex;
+			int index = String::ToNumber<int>(ex, name);
+			if(!ex && index>=0)
 				name.clear();
 		}
 	}
@@ -541,7 +547,7 @@ AMFReader::Type AMFReader::followingType() {
 			case AMF3_STRING:
 				return STRING;
 			case AMF3_DATE:
-				return DATE;
+				return TIME;
 			case AMF3_ARRAY:
 				return ARRAY;
 			case AMF3_DICTIONARY:
@@ -551,7 +557,7 @@ AMFReader::Type AMFReader::followingType() {
 			case AMF3_BYTEARRAY:
 				return BYTES;
 			default:
-				ERROR("Unknown AMF3 type %.2x",type)
+				ERROR("Unknown AMF3 type ",Format<UInt8>("%.2x",(UInt8)type))
 				reader.next(1);
 				return followingType();
 		}
@@ -571,7 +577,7 @@ AMFReader::Type AMFReader::followingType() {
 		case AMF_STRICT_ARRAY:
 			return ARRAY;
 		case AMF_DATE:
-			return DATE;
+			return TIME;
 		case AMF_BEGIN_OBJECT:
 		case AMF_BEGIN_TYPED_OBJECT:
 			return OBJECT;
@@ -595,7 +601,7 @@ AMFReader::Type AMFReader::followingType() {
 			reader.next(1);
 			return followingType();
 		default:
-			ERROR("Unknown AMF type %.2x",type)
+			ERROR("Unknown AMF type ",Format<UInt8>("%.2x",(UInt8)type))
 			reader.next(1);
 			return followingType();
 	}

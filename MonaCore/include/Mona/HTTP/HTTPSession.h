@@ -37,7 +37,7 @@ private:
 	bool			buildPacket(MemoryReader& data,Poco::UInt32& packetSize);
 	void			packetHandler(MemoryReader& packet);
 
-	void			processGet(const std::string& fileName);
+	void			processGet(Exception& ex, const std::string& fileName);
 
 	HTTPWriter		_writer;
 	bool			_isWS;

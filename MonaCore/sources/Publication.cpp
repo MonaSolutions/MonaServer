@@ -25,7 +25,7 @@ using namespace Poco;
 namespace Mona {
 
 Publication::Publication(const string& name):_name(name),_droppedFrames(0),_firstKeyFrame(false),listeners(_listeners),_pPublisher(NULL) {
-	DEBUG("New publication %s",_name.c_str());
+	DEBUG("New publication ",_name);
 }
 
 Publication::~Publication() {
@@ -34,18 +34,18 @@ Publication::~Publication() {
 	for(it=_listeners.begin();it!=_listeners.end();++it)
 		delete it->second;
 
-	DEBUG("Publication %s deleted",_name.c_str());
+	DEBUG("Publication ",_name," deleted");
 }
 
 void Publication::setBufferTime(UInt32 ms) {
 	// TODO?
 }
 
-Listener& Publication::addListener(Peer& peer,Writer& writer,bool unbuffered) {
+Listener* Publication::addListener(Exception& ex, Peer& peer,Writer& writer,bool unbuffered) {
 	map<Client*,Listener*>::iterator it = _listeners.lower_bound(&peer);
 	if(it!=_listeners.end() && it->first==&peer) {
-		WARN("Already subscribed for publication %s",_name.c_str());
-		return *it->second;
+		WARN("Already subscribed for publication ",_name);
+		return it->second;
 	}
 	if(it!=_listeners.begin())
 		--it;
@@ -55,18 +55,19 @@ Listener& Publication::addListener(Peer& peer,Writer& writer,bool unbuffered) {
 		_listeners.insert(it,pair<Client*,Listener*>(&peer,pListener));
 		if(_pPublisher)
 			pListener->startPublishing();
-		return *pListener;
+		return pListener;
 	}
 	if(error.empty())
 		error = "Not authorized to play " + _name;
 	delete pListener;
-	throw Exception(error);
+	ex.set(Exception::NETWORK, error);
+	return NULL;
 }
 
 void Publication::removeListener(Peer& peer) {
 	map<Client*,Listener*>::iterator it = _listeners.find(&peer);
 	if(it==_listeners.end()) {
-		WARN("Already unsubscribed of publication %s",_name.c_str());
+		WARN("Already unsubscribed of publication ",_name);
 		return;
 	}
 	Listener* pListener = it->second;
@@ -76,16 +77,19 @@ void Publication::removeListener(Peer& peer) {
 }
 
 
-void Publication::start(Peer& peer) {
-	if(_pPublisher) // has already a publisher
-		throw Exception(_name + " is already publishing");
+void Publication::start(Exception& ex, Peer& peer) {
+	if(_pPublisher) { // has already a publisher
+		ex.set(Exception::NETWORK, _name, " is already publishing");
+		return;
+	}
 	_pPublisher = &peer;
 	string error;
 	if(!peer.onPublish(*this,error)) {
 		if(error.empty())
 			error = "Not allowed to publish " + _name;
 		_pPublisher=NULL;
-		throw Exception(error);
+		ex.set(Exception::NETWORK, error);
+		return;
 	}
 	_firstKeyFrame=false;
 	map<Client*,Listener*>::const_iterator it;
@@ -98,7 +102,7 @@ void Publication::stop(Peer& peer) {
 	if(!_pPublisher)
 		return; // already done
 	if(_pPublisher!=&peer) {
-		ERROR("Unpublish '%s' operation with a different publisher",_name.c_str());
+		ERROR("Unpublish '",_name,"' operation with a different publisher");
 		return;
 	}
 	map<Client*,Listener*>::const_iterator it;
@@ -123,7 +127,7 @@ void Publication::flush() {
 
 void Publication::pushData(DataReader& packet,UInt32 numberLostFragments) {
 	if(!_pPublisher) {
-		ERROR("Data packet pushed on '%s' publication which has no publisher",_name.c_str());
+		ERROR("Data packet pushed on '",_name,"' publication which has no publisher");
 		return;
 	}
 	int pos = packet.reader.position();
@@ -139,13 +143,13 @@ void Publication::pushData(DataReader& packet,UInt32 numberLostFragments) {
 
 void Publication::pushAudio(MemoryReader& packet,UInt32 time,UInt32 numberLostFragments) {
 	if(!_pPublisher) {
-		ERROR("Audio packet pushed on '%s' publication which has no publisher",_name.c_str());
+		ERROR("Audio packet pushed on '",_name,"' publication which has no publisher");
 		return;
 	}
 
 	int pos = packet.position();
 	if(numberLostFragments>0)
-		INFO("%u audio fragments lost on publication %s",numberLostFragments,_name.c_str());
+		INFO(numberLostFragments," audio fragments lost on publication ",_name);
 	_audioQOS.add(_pPublisher->ping,packet.available()+4,packet.fragments,numberLostFragments); // 4 for time encoded
 	map<Client*,Listener*>::const_iterator it;
 	for(it=_listeners.begin();it!=_listeners.end();++it) {
@@ -157,7 +161,7 @@ void Publication::pushAudio(MemoryReader& packet,UInt32 time,UInt32 numberLostFr
 
 void Publication::pushVideo(MemoryReader& packet,UInt32 time,UInt32 numberLostFragments) {
 	if(!_pPublisher) {
-		ERROR("Video packet pushed on '%s' publication which has no publisher",_name.c_str());
+		ERROR("Video packet pushed on '",_name,"' publication which has no publisher");
 		return;
 	}
 	
@@ -172,10 +176,10 @@ void Publication::pushVideo(MemoryReader& packet,UInt32 time,UInt32 numberLostFr
 
 	_videoQOS.add(_pPublisher->ping,packet.available()+4,packet.fragments,numberLostFragments); // 4 for time encoded
 	if(numberLostFragments>0)
-		INFO("%u video fragments lost on publication %s",numberLostFragments,_name.c_str());
+		INFO(numberLostFragments," video fragments lost on publication ",_name);
 
 	if(!_firstKeyFrame) {
-		DEBUG("No key frame available on publication %s, frame dropped to wait first key frame",_name.c_str());
+		DEBUG("No key frame available on publication ",_name,", frame dropped to wait first key frame");
 		++_droppedFrames;
 		return;
 	}

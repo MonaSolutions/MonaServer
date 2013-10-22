@@ -19,30 +19,31 @@ This file is a part of Mona.
 
 #include "Mona/Mona.h"
 #include "Mona/Option.h"
+#include "Mona/Exceptions.h"
 #include <set>
 
 namespace Mona {
 
-class Options {
+class Options : ObjectFix {
 public:
 	typedef std::set<Option>::const_iterator Iterator;
 
 	Options();
 	virtual ~Options();
 
-	void			add(const Option& option);
+	void			add(Exception& ex, const Option& option);
 	void			remove(const std::string& name) { _options.erase(Option(name, "")); }
 
-	const Option&	get(const std::string& name) const;
+	const Option&	get(Exception& ex, const std::string& name) const;
 
 	Iterator		begin() const { return _options.begin(); }
 	Iterator		end() const { return _options.end(); }
 
 
-	void process(int argc, char* argv[], const std::function<void(const std::string&, const std::string&)>& handler = nullptr);
+	void process(Exception& ex, int argc, char* argv[], const std::function<void(const std::string&, const std::string&)>& handler = nullptr);
 
 private:
-	bool process(const std::string& argument,std::string& name,std::string& value, std::set<std::string>& alreadyReaden);
+	bool process(Exception& ex, const std::string& argument,std::string& name,std::string& value, std::set<std::string>& alreadyReaden);
 	void handleOption(const std::string& name,const std::string& value) {}
 	
 	std::set<Option>	_options;

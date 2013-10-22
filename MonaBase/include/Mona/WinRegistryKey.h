@@ -18,6 +18,7 @@ This file is a part of Mona.
 #pragma once
 
 #include "Mona/Mona.h"
+#include "Mona/Exceptions.h"
 #include "Poco/UnWindows.h"
 #include <vector>
 
@@ -42,7 +43,7 @@ public:
 		REGT_DWORD = 4
 	};
 
-	WinRegistryKey(const std::string& key, bool readOnly = false, REGSAM extraSam = 0);
+	WinRegistryKey(Exception& ex, const std::string& key, bool readOnly = false, REGSAM extraSam = 0);
 		/// Creates the WinRegistryKey.
 		///
 		/// The key must start with one of the root key names
@@ -54,6 +55,8 @@ public:
 		///
 		/// extraSam is used to pass extra flags (in addition to KEY_READ and KEY_WRITE)
 		/// to the samDesired argument of RegOpenKeyEx() or RegCreateKeyEx().
+		///
+		/// Throw an Exception if the key is not valid
 
 	WinRegistryKey(HKEY hRootKey, const std::string& subKey, bool readOnly = false, REGSAM extraSam = 0);
 	/// Creates the WinRegistryKey.
@@ -68,21 +71,21 @@ public:
 	virtual ~WinRegistryKey() { close(); }
 		/// Destroys the WinRegistryKey.
 
-	void setString(const std::string& name, const std::string& value);
+	void setString(Exception& ex, const std::string& name, const std::string& value);
 		/// Sets the string value (REG_SZ) with the given name.
 		/// An empty name denotes the default value.
 		
-	std::string getString(const std::string& name);
+	std::string getString(Exception& ex, const std::string& name);
 		/// Returns the string value (REG_SZ) with the given name.
 		/// An empty name denotes the default value.
 		///
 		/// Throws a NotFoundException if the value does not exist.
 
-	void setStringExpand(const std::string& name, const std::string& value);
+	void setStringExpand(Exception& ex, const std::string& name, const std::string& value);
 		/// Sets the expandable string value (REG_EXPAND_SZ) with the given name.
 		/// An empty name denotes the default value.
 		
-	std::string getStringExpand(const std::string& name);
+	std::string getStringExpand(Exception& ex, const std::string& name);
 		/// Returns the string value (REG_EXPAND_SZ) with the given name.
 		/// An empty name denotes the default value.
 		/// All references to environment variables (%VAR%) in the string
@@ -90,48 +93,52 @@ public:
 		///
 		/// Throws a NotFoundException if the value does not exist.
 
-	void setInt(const std::string& name, int value);
+	void setInt(Exception& ex, const std::string& name, int value);
 		/// Sets the numeric (REG_DWORD) value with the given name.
 		/// An empty name denotes the default value.
 		
-	int getInt(const std::string& name);
+	int getInt(Exception& ex, const std::string& name);
 		/// Returns the numeric value (REG_DWORD) with the given name.
 		/// An empty name denotes the default value.
 		///
 		/// Throws a NotFoundException if the value does not exist.
 
-	void deleteValue(const std::string& name);
+	void deleteValue(Exception& ex, const std::string& name);
 		/// Deletes the value with the given name.
 		///
 		/// Throws a NotFoundException if the value does not exist.
 
-	void deleteKey();
+	void deleteKey(Exception& ex);
 		/// Recursively deletes the key and all subkeys.
 
 	bool exists();
 		/// Returns true iff the key exists.
 
-	Type type(const std::string& name);
+	Type type(Exception& ex, const std::string& name);
 		/// Returns the type of the key value.
 		
 	bool exists(const std::string& name);
 		/// Returns true iff the given value exists under that key.
 
-	void subKeys(Keys& keys);
+	void subKeys(Exception& ex, Keys& keys);
 		/// Appends all subKey names to keys.
+		///
+		/// Throw an Exception it the Registry can't be open
 
-	void values(Values& vals);
+	void values(Exception& ex, Values& vals);
 		/// Appends all value names to vals;
+		///
+		/// Throw an Exception it the Registry can't be open
 		
 	bool isReadOnly() const { return _readOnly; }
 		/// Returns true iff the key has been opened for read-only access only.
 
 protected:
-	void open();
+	void open(Exception& ex);
 	void close();
 	std::string key() const;
 	std::string key(const std::string& valueName) const;
-	static HKEY handleFor(const std::string& rootKey);
+	static HKEY handleFor(Exception& ex, const std::string& rootKey);
 
 private:
 	HKEY        _hRootKey;

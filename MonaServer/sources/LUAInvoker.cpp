@@ -25,6 +25,7 @@
 #include "LUATCPServer.h"
 #include "LUAServers.h"
 #include "MonaServer.h"
+#include "Mona/Exceptions.h"
 #include <openssl/evp.h>
 #include "math.h"
 
@@ -49,17 +50,19 @@ int	LUAInvoker::Split(lua_State *pState) {
 
 int	LUAInvoker::Publish(lua_State *pState) {
 	SCRIPT_CALLBACK(Mona::Invoker,LUAInvoker,invoker)
-		string name = SCRIPT_READ_STRING("");
-		try {
-			SCRIPT_WRITE_PERSISTENT_OBJECT(Mona::Publication,LUAPublication,invoker.publish(name))
-			lua_getmetatable(pState,-1);
-			lua_pushlightuserdata(pState,&invoker);
-			lua_setfield(pState,-2,"__invoker");
-			lua_pop(pState,1);
-		} catch(Exception& ex) {
-			SCRIPT_ERROR("%s",ex.message().c_str())
-			SCRIPT_WRITE_NIL
-		}
+	string name = SCRIPT_READ_STRING("");
+	Mona::Exception ex;
+	
+	SCRIPT_WRITE_PERSISTENT_OBJECT(Mona::Publication,LUAPublication,*invoker.publish(ex, name))
+	if (ex) {
+		SCRIPT_ERROR(ex.error().c_str())
+		SCRIPT_WRITE_NIL
+	} else {
+		lua_getmetatable(pState,-1);
+		lua_pushlightuserdata(pState,&invoker);
+		lua_setfield(pState,-2,"__invoker");
+		lua_pop(pState,1);
+	}
 	SCRIPT_CALLBACK_RETURN
 }
 
@@ -156,7 +159,7 @@ int	LUAInvoker::AddToBlacklist(lua_State* pState) {
 			try {		
 				invoker.addBanned(IPAddress(SCRIPT_READ_STRING("")));
 			} catch(Exception& ex) {
-				SCRIPT_ERROR("Incomprehensible blacklist entry, %s",ex.displayText().c_str());
+				SCRIPT_ERROR("Incomprehensible blacklist entry, ",ex.displayText());
 			}
 		}
 	SCRIPT_CALLBACK_RETURN
@@ -168,7 +171,7 @@ int	LUAInvoker::RemoveFromBlacklist(lua_State* pState) {
 			try {
 				invoker.removeBanned(IPAddress(SCRIPT_READ_STRING("")));
 			} catch(Exception& ex) {
-				SCRIPT_ERROR("Incomprehensible blacklist entry, %s",ex.displayText().c_str());
+				SCRIPT_ERROR("Incomprehensible blacklist entry, ",ex.displayText());
 			}
 		}
 	SCRIPT_CALLBACK_RETURN

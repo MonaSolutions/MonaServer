@@ -18,7 +18,7 @@
 #include "Mona/FlashMainStream.h"
 #include "Mona/Invoker.h"
 #include "Mona/Util.h"
-#include "Mona/Exception.h"
+#include "Mona/Exceptions.h"
 #include "Mona/Logs.h"
 #include "Poco/Format.h"
 #include <openssl/evp.h>
@@ -56,21 +56,23 @@ void FlashMainStream::close(FlashWriter& writer,const string& error,int code) {
 			writer.writeAMFError("NetConnection.Connect.Failed",error);
 	}
 	if(!error.empty())
-		ERROR("%s",error.c_str())
+		ERROR(error)
 	writer.writeInvocation("close");
 	writer.close();
 }
 
 
-void FlashMainStream::messageHandler(const string& name,AMFReader& message,FlashWriter& writer) {
+void FlashMainStream::messageHandler(Exception& ex, const string& name,AMFReader& message,FlashWriter& writer) {
 	if(name=="connect") {
 		message.stopReferencing();
 		AMFReader::Type type;
 		string name;
 		bool external=false;
 		if(message.readObject(name,external)) {
-			if(external)
-				throw Exception(Exception::PROTOCOL, "External type not acceptable for a connection message");
+			if(external) {
+				ex.set(Exception::PROTOCOL, "External type not acceptable for a connection message");
+				return;
+			}
 			while((type=message.readItem(name))!=AMFReader::END) {
 				switch(type) {
 					case AMFReader::NIL:
@@ -88,11 +90,15 @@ void FlashMainStream::messageHandler(const string& name,AMFReader& message,Flash
 						peer.setString(name,value);
 						break;
 					}
-					case AMFReader::DATE:
-						peer.setNumber(name, (double)(message.readDate().toInt() / 1000));
+					case AMFReader::TIME: {
+						Time time;
+						message.readTime(time);
+						peer.setNumber(name, (double)(time.toInt() / 1000));
 						break;
+					}
 					default:
-						throw Exception(Exception::PROTOCOL, "Type ",type," not acceptable for a connection message");
+						ex.set(Exception::PROTOCOL, "Type ",type," not acceptable for a connection message");
+						return;
 				}
 			}
 		}
@@ -105,15 +111,19 @@ void FlashMainStream::messageHandler(const string& name,AMFReader& message,Flash
 		// Don't support AMF0 forced on NetConnection object because AMFWriter writes in AMF3 format
 		// But it's not a pb because NetConnection RTMFP works since flash player 10.0 only (which supports AMF3)
 		double objEncoding = 1;
-		if (peer.getNumber("objectEncoding", objEncoding) && objEncoding==0)
-			throw Exception(Exception::PROTOCOL, "ObjectEncoding client must be in a AMF3 format (not AMF0)");
+		if (peer.getNumber("objectEncoding", objEncoding) && objEncoding==0) {
+			ex.set(Exception::PROTOCOL, "ObjectEncoding client must be in a AMF3 format (not AMF0)");
+			return;
+		}
 
 		// Check if the client is authorized
 		AMFWriter& response = writer.writeAMFSuccess("NetConnection.Connect.Success","Connection succeeded",true);
 		response.amf0Preference = true;
 		response.writeNumberProperty("objectEncoding",3.0);
 		response.amf0Preference = false;
-		peer.onConnection(writer,message,response);
+		peer.onConnection(ex, writer,message,response);
+		if (ex)
+			return;
 		response.endObject();
 
 
@@ -126,7 +136,7 @@ void FlashMainStream::messageHandler(const string& name,AMFReader& message,Flash
 			try {
 				peer.addresses.push_back(SocketAddress(addr));
 			} catch(exception& ex) {
-				ERROR("Bad peer address %s, %s",addr.c_str(),ex.what());
+				ERROR("Bad peer address ",addr,", ",ex.what());
 			}
 		}
 		
@@ -147,10 +157,10 @@ void FlashMainStream::messageHandler(const string& name,AMFReader& message,Flash
 		invoker.destroyFlashStream(id);
 
 	} else {
-		try {
-			peer.onMessage(name,message);
-		} catch(exception& ex) {
-			writer.writeAMFError("NetConnection.Call.Failed",ex.what());
+		Exception exm;
+		peer.onMessage(exm, name, message);
+		if (exm) {
+			writer.writeAMFError("NetConnection.Call.Failed", exm.error());
 		}		
 	}
 	
@@ -190,11 +200,11 @@ void FlashMainStream::rawHandler(UInt8 type,MemoryReader& data,FlashWriter& writ
 			}
 			AutoPtr<FlashStream>  pStream = invoker.getFlashStream(streamId);
 			if(pStream.isNull()) {
-				ERROR("setBufferTime message for a unknown %u stream",streamId)
+				ERROR("setBufferTime message for a unknown ",streamId," stream")
 				return;
 			}
 			UInt32 ms = data.read32();
-			INFO("setBufferTime %u on stream %u",ms,pStream->id)
+			INFO("setBufferTime ",ms," on stream ",pStream->id)
 			// To do working the buffertime on receiver side
 			BinaryWriter& raw = writer.writeRaw();
 			raw.write16(0);
@@ -202,7 +212,7 @@ void FlashMainStream::rawHandler(UInt8 type,MemoryReader& data,FlashWriter& writ
 			pStream->setBufferTime(ms);
 			return;
 		}
-		ERROR("Raw message %.2x/%u unknown on stream %u",type,flag,id);
+		ERROR("Raw message ",Format<UInt8>("%.2x",type),"/",flag," unknown on stream ",id);
 	}
 		
 }

@@ -22,7 +22,6 @@
 #include "Mona/DataWriter.h"
 #include "Mona/Logs.h"
 #include "Poco/Format.h"
-#include "Poco/NumberFormatter.h"
 #include <cstring>
 #include <map>
 
@@ -36,28 +35,29 @@ extern "C" {
 #define SCRIPT_FILE(DEFAULT)					(strlen(Script::LuaDebug.short_src)>0 && strcmp(Script::LuaDebug.short_src,"[C]")!=0) ? Script::LuaDebug.short_src : DEFAULT
 #define SCRIPT_LINE(DEFAULT)					Script::LuaDebug.currentline>0 ? Script::LuaDebug.currentline : DEFAULT
 
-#define SCRIPT_LOG(PRIO,FILE,LINE,FMT, ...)		{ if(lua_getstack(__pState,0,&Script::LuaDebug)==1) lua_getinfo(__pState, "n", &Script::LuaDebug); \
-												if(lua_getstack(__pState,1,&Script::LuaDebug)==1) lua_getinfo(__pState, "Sl", &Script::LuaDebug); \
-												if(!SCRIPT_LOG_NAME_DISABLED && Script::LuaDebug.name) { \
-													if(Script::LuaDebug.namewhat) { \
-														LOG(PRIO,SCRIPT_FILE(FILE),SCRIPT_LINE(LINE),"(%s '%s') "FMT,Script::LuaDebug.namewhat,Script::LuaDebug.name,## __VA_ARGS__) \
+#define SCRIPT_LOG(PRIO,FILE,LINE, ...)		{ if(lua_getstack(__pState,0,&Script::LuaDebug)==1) lua_getinfo(__pState, "n", &Script::LuaDebug); \
+											if(lua_getstack(__pState,1,&Script::LuaDebug)==1) lua_getinfo(__pState, "Sl", &Script::LuaDebug); \
+											if(!SCRIPT_LOG_NAME_DISABLED && Script::LuaDebug.name) { \
+												 if(Script::LuaDebug.namewhat) { \
+														Mona::Logs::Log(PRIO, SCRIPT_FILE(FILE), SCRIPT_LINE(LINE), "(", Script::LuaDebug.namewhat, " '", Script::LuaDebug.name, "') ", ## __VA_ARGS__); \
 													} else { \
-														LOG(PRIO,SCRIPT_FILE(FILE),SCRIPT_LINE(LINE),"('%s') "FMT,Script::LuaDebug.name,## __VA_ARGS__)} \
+															Mona::Logs::Log(PRIO, SCRIPT_FILE(FILE), SCRIPT_LINE(LINE), "(", Script::LuaDebug.name, ") ", ## __VA_ARGS__); \
+													} \
 												} else \
-													LOG(PRIO,SCRIPT_FILE(FILE),SCRIPT_LINE(LINE),FMT,## __VA_ARGS__) \
+													Mona::Logs::Log(PRIO, SCRIPT_FILE(FILE), SCRIPT_LINE(LINE), ## __VA_ARGS__); \
 												Script::LuaDebug.name = Script::LuaDebug.namewhat = NULL; \
 												if(Script::LuaDebug.short_src) Script::LuaDebug.short_src[0]='\0'; \
 												Script::LuaDebug.currentline=0;}
 
 #define SCRIPT_LOG_NAME_DISABLED	false
-#define SCRIPT_FATAL(FMT, ...)		SCRIPT_LOG(Mona::Logger::PRIO_FATAL,__FILE__,__LINE__,FMT, ## __VA_ARGS__)
-#define SCRIPT_CRITIC(FMT, ...)		SCRIPT_LOG(Mona::Logger::PRIO_CRITIC,__FILE__,__LINE__,FMT, ## __VA_ARGS__)
-#define SCRIPT_ERROR(FMT, ...)		SCRIPT_LOG(Mona::Logger::PRIO_ERROR,__FILE__,__LINE__,FMT, ## __VA_ARGS__)
-#define SCRIPT_WARN(FMT, ...)		SCRIPT_LOG(Mona::Logger::PRIO_WARN,__FILE__,__LINE__,FMT, ## __VA_ARGS__)
-#define SCRIPT_NOTE(FMT, ...)		SCRIPT_LOG(Mona::Logger::PRIO_NOTE,__FILE__,__LINE__,FMT, ## __VA_ARGS__)
-#define SCRIPT_INFO(FMT, ...)		SCRIPT_LOG(Mona::Logger::PRIO_INFO,__FILE__,__LINE__,FMT, ## __VA_ARGS__)
-#define SCRIPT_DEBUG(FMT, ...)		SCRIPT_LOG(Mona::Logger::PRIO_DEBUG,__FILE__,__LINE__,FMT, ## __VA_ARGS__)
-#define SCRIPT_TRACE(FMT, ...)		SCRIPT_LOG(Mona::Logger::PRIO_TRACE,__FILE__,__LINE__,FMT, ## __VA_ARGS__)
+#define SCRIPT_FATAL(...)		SCRIPT_LOG(Mona::Logger::PRIO_FATAL,__FILE__,__LINE__, ## __VA_ARGS__)
+#define SCRIPT_CRITIC(...)		SCRIPT_LOG(Mona::Logger::PRIO_CRITIC,__FILE__,__LINE__, ## __VA_ARGS__)
+#define SCRIPT_ERROR(...)		SCRIPT_LOG(Mona::Logger::PRIO_ERROR,__FILE__,__LINE__, ## __VA_ARGS__)
+#define SCRIPT_WARN(...)		SCRIPT_LOG(Mona::Logger::PRIO_WARN,__FILE__,__LINE__, ## __VA_ARGS__)
+#define SCRIPT_NOTE(...)		SCRIPT_LOG(Mona::Logger::PRIO_NOTE,__FILE__,__LINE__, ## __VA_ARGS__)
+#define SCRIPT_INFO(...)		SCRIPT_LOG(Mona::Logger::PRIO_INFO,__FILE__,__LINE__, ## __VA_ARGS__)
+#define SCRIPT_DEBUG(...)		SCRIPT_LOG(Mona::Logger::PRIO_DEBUG,__FILE__,__LINE__, ## __VA_ARGS__)
+#define SCRIPT_TRACE(...)		SCRIPT_LOG(Mona::Logger::PRIO_TRACE,__FILE__,__LINE__, ## __VA_ARGS__)
 
 #define SCRIPT_CALLBACK(TYPE,LUATYPE,OBJ)						{int __args=1;lua_State* __pState = pState; bool __destructor=false; bool __thisIsConst=false; TYPE* pObj = Script::ToObject<TYPE,LUATYPE>(__pState,__thisIsConst,true);if(!pObj) return 0; TYPE& OBJ = *pObj;int __results=lua_gettop(__pState);
 #define SCRIPT_DESTRUCTOR_CALLBACK(TYPE,LUATYPE,OBJ)			{int __args=1;lua_State* __pState = pState; bool __destructor=true; TYPE* pObj = Script::DestructorCallback<TYPE,LUATYPE>(__pState);if(!pObj) return 0;TYPE& OBJ = *pObj;int __results=lua_gettop(__pState);
@@ -89,9 +89,9 @@ extern "C" {
 #define SCRIPT_MEMBER_FUNCTION_BEGIN(TYPE,LUATYPE,OBJ,MEMBER)	{ if(lua_getmetatable(__pState,LUA_GLOBALSINDEX)!=0) { lua_getfield(__pState,-1,"__pointers");if(!lua_isnil(__pState,-1)) {lua_replace(__pState,-2);std::string __id;Script::GetObjectID<TYPE,LUATYPE>(OBJ,__id);lua_getfield(__pState,-1,__id.c_str());if(!lua_isnil(__pState,-1)) {lua_getfield(__pState,-1,MEMBER);lua_replace(__pState,-3);}}} else {lua_pushnil(__pState);lua_pushnil(__pState);}if(!lua_isfunction(__pState,-2))lua_pop(__pState,2);else {int __top=lua_gettop(__pState)-1;std::string __name = #TYPE;__name += ".";__name += MEMBER;
 #define SCRIPT_FUNCTION_BEGIN(NAME)								{ bool __env=false; if(lua_getmetatable(__pState,LUA_GLOBALSINDEX)!=0) { lua_getfield(__pState,-1,"//env"); lua_replace(__pState,-2); if(!lua_isnil(__pState,-1)) { lua_getfield(__pState,-1,NAME); __env=true;} } else lua_getglobal(__pState,NAME); if(!lua_isfunction(__pState,-1)) lua_pop(__pState,__env ? 2 : 1); else { if(__env) { lua_pushvalue(__pState,-2); lua_setfenv(__pState,-2); lua_replace(__pState,-2); }	int __top=lua_gettop(__pState); string __name = NAME;
 #define SCRIPT_FUNCTION_CALL_WITHOUT_LOG						Service::StartVolatileObjectsRecording(__pState);if(lua_pcall(__pState,lua_gettop(__pState)-__top,LUA_MULTRET,0)!=0) { __error = lua_tostring(__pState,-1);} else {--__top;int __results=lua_gettop(__pState);int __args=__top;
-#define SCRIPT_FUNCTION_CALL									Service::StartVolatileObjectsRecording(__pState);if(lua_pcall(__pState,lua_gettop(__pState)-__top,LUA_MULTRET,0)!=0) { __error = lua_tostring(__pState,-1);SCRIPT_ERROR("%s",Script::LastError(__pState))} else {--__top;int __results=lua_gettop(__pState);int __args=__top;
+#define SCRIPT_FUNCTION_CALL									Service::StartVolatileObjectsRecording(__pState);if(lua_pcall(__pState,lua_gettop(__pState)-__top,LUA_MULTRET,0)!=0) { __error = lua_tostring(__pState,-1);SCRIPT_ERROR(Script::LastError(__pState))} else {--__top;int __results=lua_gettop(__pState);int __args=__top;
 #define SCRIPT_FUNCTION_NULL_CALL								{ lua_pop(__pState,lua_gettop(__pState)-__top+1);--__top;int __results=lua_gettop(__pState);int __args=__top;
-#define SCRIPT_FUNCTION_END										Service::StopVolatileObjectsRecording(__pState);lua_pop(__pState,__results-__top);__args = __results-__args; if(__args>0) SCRIPT_WARN("%d arguments not required on '%s' results",__args,__name.c_str()) else if(__args<0) SCRIPT_WARN("%d missing arguments on '%s' results",-__args,__name.c_str()) } } }
+#define SCRIPT_FUNCTION_END										Service::StopVolatileObjectsRecording(__pState);lua_pop(__pState,__results-__top);__args = __results-__args; if(__args>0) SCRIPT_WARN(__args," arguments not required on '",__name,"' results") else if(__args<0) SCRIPT_WARN(-__args," missing arguments on '",__name,"' results") } } }
 
 #define SCRIPT_CAN_READ											(__results-__args)>0
 #define SCRIPT_NEXT_TYPE										(SCRIPT_CAN_READ ? lua_type(__pState,__args+1) : LUA_TNONE)
@@ -126,8 +126,7 @@ public:
 	static void GetObjectID(const Type& object,std::string& id) {
 		LUAType::ID(id);
 		if(id.empty()) {
-			id.assign(LUAType::Name);
-			id.append(Poco::NumberFormatter::format((void*)&object));
+			Mona::String::Format(id, LUAType::Name, (void*)&object);
 		}
 	}
 

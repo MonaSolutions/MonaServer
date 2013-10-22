@@ -35,7 +35,7 @@ public:
 	double				readNumber();
 	bool				readBoolean();
 	const Mona::UInt8*	readBytes(Mona::UInt32& size);
-	Mona::Time		readDate();
+	void				readTime(Mona::Time& time);
 	void				readNull();
 
 	bool			readObject(std::string& type,bool& external);

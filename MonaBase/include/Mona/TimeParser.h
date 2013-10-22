@@ -29,15 +29,6 @@ public:
 
 	static bool tryParse(const std::string& in, Time& dateTime, int& tz);
 	static bool parse(const std::string& fmt, const std::string& in, Time& time, int& tzdifferencial);
-
-	static bool isDigit(char ch);
-	static bool isAlpha(char ch);
-	static bool isSpace(char ch);
-	static bool isPunct(char ch);
-	static bool isLower(int ch);
-	static bool isUpper(int ch);
-	static int toLower(int ch);
-	static int toUpper(int ch);
 	
 private:
 
@@ -45,22 +36,6 @@ private:
 	static bool parseMonth(std::string::const_iterator& it, const std::string::const_iterator& end, int& result);
 	static bool parseAMPM(std::string::const_iterator& it, const std::string::const_iterator& end, int& result);
 };
-
-inline bool TimeParser::isDigit(char ch) { return (ch >= '0') && (ch <= '9'); }
-
-inline bool TimeParser::isAlpha(char ch) { return ((ch >= 'a') && (ch <= 'z')) || ((ch >= 'A') && (ch <= 'Z')); }
-
-inline bool TimeParser::isSpace(char ch) { return (ch == ' ') || ((ch >= '\t') && (ch <= '\r')); }
-
-inline bool TimeParser::isPunct(char ch) { return ((ch >= '!') && (ch <= '/')) || ((ch >= ':') && (ch <= '@')) || ((ch >= '[') && (ch <= '`')) || ((ch >= '{') && (ch <= '~')); }
-
-inline bool TimeParser::isLower(int ch) { return (ch >= 'a') && (ch <= 'z'); }
-
-inline bool TimeParser::isUpper(int ch) { return (ch >= 'A') && (ch <= 'Z'); }
-
-inline int TimeParser::toLower(int ch) { return (isUpper(ch)) ? ch + 32 : ch; }
-
-inline int TimeParser::toUpper(int ch) { return (isLower(ch)) ? ch - 32 : ch; }
 
 } // namespace Mona
 

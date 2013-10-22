@@ -350,7 +350,7 @@ void Service::load() {
 	if(luaL_loadfile(_pState,FileWatcher::path.c_str())!=0) {
 		SCRIPT_BEGIN(_pState)
 			const char* error = Script::LastError(_pState);
-			SCRIPT_ERROR("%s",error)
+			SCRIPT_ERROR(error)
 			(string&)lastError = error;
 		SCRIPT_END
 		lua_pop(_pState,1);
@@ -369,10 +369,10 @@ void Service::load() {
 				SCRIPT_FUNCTION_CALL
 			SCRIPT_FUNCTION_END
 			_registry.startService(*this);
-			SCRIPT_INFO("Application www%s/main.lua loaded",path.c_str())
+			SCRIPT_INFO("Application www",path,"/main.lua loaded")
 		} else {
 			const char* error = Script::LastError(_pState);
-			SCRIPT_ERROR("%s",error)
+			SCRIPT_ERROR(error)
 			(string&)lastError = error;
 			// Clear environment
 			lua_pushnil(_pState);  // first key 

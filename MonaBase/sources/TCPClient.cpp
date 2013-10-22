@@ -66,7 +66,7 @@ void TCPClient::onReadable() {
 		available = rest;
 		rest = onReception(&_buffer[0],available);
 		if(rest>available) {
-			WARN("onReception has returned a 'rest' value more important than the available value (%u>%u)",rest,available);
+			WARN("onReception has returned a 'rest' value more important than the available value (",rest,">",available,")");
 			rest=available;
 		} else if(rest<available)
 			consumed=true;
@@ -86,7 +86,7 @@ bool TCPClient::connect(const SocketAddress& address) {
 	_error.clear();
 	try {
 		openSocket(new StreamSocket(address))->setNoDelay(true); // enabe nodelay per default: OSX really needs that
-	} catch(Exception& ex) {
+	} catch(Poco::Exception& ex) {
 		closeSocket();
 		error(format("Impossible to connect to %s, %s",address.toString(),ex.displayText()));
 	}

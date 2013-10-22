@@ -18,6 +18,7 @@
 #pragma once
 
 #include "Mona/Mona.h"
+#include "Mona/Exceptions.h"
 #include "Mona/Client.h"
 #include "Mona/DataReader.h"
 #include "Mona/ICE.h"
@@ -59,12 +60,12 @@ public:
 	void onRendezVousUnknown(const Poco::UInt8* peerId,std::set<Poco::Net::SocketAddress,Util::AddressComparator>& addresses);
 	void onHandshake(Poco::UInt32 attempts,std::set<Poco::Net::SocketAddress,Util::AddressComparator>& addresses);
 
-	void onConnection(Writer& writer);
-	void onConnection(Writer& writer,DataWriter& response);
-	void onConnection(Writer& writer,DataReader& parameters,DataWriter& response);
+	void onConnection(Exception& ex, Writer& writer);
+	void onConnection(Exception& ex, Writer& writer,DataWriter& response);
+	void onConnection(Exception& ex, Writer& writer,DataReader& parameters,DataWriter& response);
 	void onFailed(const std::string& error);
 	void onDisconnection();
-	void onMessage(const std::string& name,DataReader& reader);
+	void onMessage(Exception& ex, const std::string& name,DataReader& reader);
 
 	bool onPublish(const Publication& publication,std::string& error);
 	void onUnpublish(const Publication& publication);
@@ -98,12 +99,12 @@ inline bool Peer::onRead(std::string& filePath) {
 }
 
 
-inline void Peer::onConnection(Writer& writer) {
-	onConnection(writer,DataReaderNull,Writer::DataWriterNull);
+inline void Peer::onConnection(Exception& ex, Writer& writer) {
+	onConnection(ex, writer,DataReaderNull,Writer::DataWriterNull);
 }
 
-inline void Peer::onConnection(Writer& writer,DataWriter& response) {
-	onConnection(writer,DataReaderNull,response);
+inline void Peer::onConnection(Exception& ex, Writer& writer,DataWriter& response) {
+	onConnection(ex, writer,DataReaderNull,response);
 }
 
 } // namespace Mona

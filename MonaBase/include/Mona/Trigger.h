@@ -19,7 +19,7 @@
 
 #include "Mona/Mona.h"
 #include "Mona/Time.h"
-
+#include "Mona/Exceptions.h"
 
 namespace Mona {
 
@@ -29,7 +29,7 @@ public:
 	Trigger();
 	virtual ~Trigger();
 
-	bool raise();
+	bool raise(Exception& ex);
 	void start();
 	void reset();
 	void stop();

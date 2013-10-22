@@ -39,7 +39,7 @@ MemoryReader::~MemoryReader() {
 
 void MemoryReader::shrink(UInt32 rest) {
 	if(rest>available()) {
-		WARN("rest %u more upper than available %u bytes",rest,available());
+		WARN("rest ",rest," more upper than available ",available()," bytes");
 		rest = available();
 	}
 	_memory.resize(position()+rest);

@@ -27,7 +27,7 @@ namespace Mona {
 
 class RTMFPCookie {
 public:
-	RTMFPCookie(RTMFPHandshake& handshake,Invoker& invoker,const std::string& tag,const std::string& queryUrl); // For normal cookie
+	RTMFPCookie(Exception& ex, RTMFPHandshake& handshake,Invoker& invoker,const std::string& tag,const std::string& queryUrl); // For normal cookie
 	virtual ~RTMFPCookie();
 
 	const Mona::UInt32				id;
@@ -42,7 +42,7 @@ public:
 	const Mona::UInt8				decryptKey[HMAC_KEY_SIZE];
 	const Mona::UInt8				encryptKey[HMAC_KEY_SIZE];
 	
-	void							computeSecret(const Mona::UInt8* initiatorKey,Mona::UInt32 sizeKey,const Mona::UInt8* initiatorNonce,Mona::UInt32 sizeNonce);
+	void							computeSecret(Exception& ex, const Mona::UInt8* initiatorKey,Mona::UInt32 sizeKey,const Mona::UInt8* initiatorNonce,Mona::UInt32 sizeNonce);
 	void							finalize();
 
 	bool							obsolete();

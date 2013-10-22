@@ -18,6 +18,7 @@ This file is a part of Mona.
 #pragma once
 
 #include "Mona/Mona.h"
+#include "Mona/Exceptions.h"
 #include "Poco/UnWindows.h"
 
 #if defined(POCO_WIN32_UTF8)
@@ -37,23 +38,23 @@ public:
 		DISABLED
 	};
 	
-	WinService(const std::string& name);
+	WinService(Exception& ex, const std::string& name);
 	virtual ~WinService();
 
 	const std::string& name() const {return _name;}
 
-	void getPath(std::string& path) const;
+	void getPath(Exception& ex, std::string& path) const;
 
-	void getDisplayName(std::string& name) const;
+	void getDisplayName(Exception& ex, std::string& name) const;
 
-	void registerService(const std::string& path) { registerService(path,_name); }
-	void registerService(const std::string& path,const std::string& displayName);
+	void registerService(Exception& ex, const std::string& path) { registerService(ex, path,_name); }
+	void registerService(Exception& ex, const std::string& path,const std::string& displayName);
 		/// Creates a Windows service with the executable specified by path
 		/// and the given displayName.
 		///
 		/// Throws a ExistsException if the service has already been registered.
 		
-	void unregisterService();
+	void unregisterService(Exception& ex);
 		/// Deletes the Windows service. 
 		///
 		/// Throws a NotFoundException if the service has not been registered.
@@ -61,31 +62,31 @@ public:
 	bool registered() const;
 		/// Returns true if the service has been registered with the Service Control Manager.
 
-	bool running() const;
+	bool running(Exception& ex) const;
 		/// Returns true if the service is currently running.
 		
-	void start();
+	void start(Exception& ex);
 		/// Starts the service.
 		/// Does nothing if the service is already running.
 		///
 		/// Throws a NotFoundException if the service has not been registered.
 
-	void stop();
+	void stop(Exception& ex);
 		/// Stops the service.
 		/// Does nothing if the service is not running.
 		///
 		/// Throws a NotFoundException if the service has not been registered.
 
-	void setStartup(Startup startup);
+	void setStartup(Exception& ex, Startup startup);
 		/// Sets the startup mode for the service.
 		
-	Startup getStartup() const;
+	Startup getStartup(Exception& ex) const;
 		/// Returns the startup mode for the service.
 		
-	void setDescription(const std::string& description);
+	void setDescription(Exception& ex, const std::string& description);
 		/// Sets the service description in the registry.
 		
-	void getDescription(std::string& description) const;
+	void getDescription(Exception& ex, std::string& description) const;
 		/// Returns the service description from the registry.
 
 	static const int STARTUP_TIMEOUT;
@@ -95,10 +96,10 @@ protected:
 	static const std::string REGISTRY_DESCRIPTION;
 
 private:
-	void open() const;
+	void open(Exception& ex) const;
 	bool tryOpen() const;
 	void close() const;
-	POCO_LPQUERY_SERVICE_CONFIG config() const;
+	POCO_LPQUERY_SERVICE_CONFIG config(Exception& ex) const;
 
 	std::string       _name;
 	SC_HANDLE         _scmHandle;

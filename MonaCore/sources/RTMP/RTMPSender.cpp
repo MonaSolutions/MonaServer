@@ -62,7 +62,7 @@ AMFWriter& RTMPSender::write(UInt32 id,AMF::ContentType type,UInt32 time,UInt32 
 	pack();
 
 	if(time<_channel.time) {
-		ERROR("Not increasing time on RTMP channel %u",id)
+		ERROR("Not increasing time on RTMP channel ",id)
 		time = _channel.time;
 	}
 

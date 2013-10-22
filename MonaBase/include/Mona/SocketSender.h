@@ -18,6 +18,7 @@
 #pragma once
 
 #include "Mona.h"
+#include "Mona/Exceptions.h"
 #include "Mona/WorkThread.h"
 #include "Mona/SocketHandler.h"
 #include "Mona/PoolThread.h"
@@ -31,7 +32,7 @@ public:
 	virtual bool	flush();
 	virtual bool	available();
 
-	PoolThread*		go(PoolThread* pThread);
+	PoolThread*		go(Exception& ex, PoolThread* pThread);
 
 protected:
 	SocketSender(SocketHandlerBase& handler,const Mona::UInt8* data,Mona::UInt32 size,bool dump=false);

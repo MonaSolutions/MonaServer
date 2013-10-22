@@ -17,10 +17,6 @@
 
 #include "Mona/HTTP/HTTP.h"
 #include "Mona/Util.h"
-#include "Poco/String.h"
-#include "Poco/StringTokenizer.h"
-#include "Poco/NumberParser.h"
-
 
 using namespace std;
 using namespace Poco;
@@ -101,13 +97,12 @@ map<UInt16, string> HTTP::_CodeMessages({
 });
 
 void HTTP::MIMEType(const string& extension, string& type) {
-	if (icompare(extension, "svg") == 0)
+	if (stricmp(extension.c_str(), "svg") == 0)
 		type = "image/svg+xml";
-	else if (icompare(extension, "js") == 0)
+	else if (stricmp(extension.c_str(), "js") == 0)
 		type = "application/javascript";
 	else {
-		type.assign("text/");
-		type.append(extension);
+		String::Format(type, "text/", extension);
 	} // TODO!!
 }
 
@@ -120,15 +115,17 @@ void HTTP::ReadHeader(HTTPPacketReader& reader, MapParameters& headers, string& 
 			reader.readString(value);
 			if (first) {
 				first = false;
-				StringTokenizer fields(value, " ", StringTokenizer::TOK_IGNORE_EMPTY | StringTokenizer::TOK_TRIM);
-				if (fields.count() > 0) {
+				vector<string> fields;
+				String::Split(value, " ", fields, String::TOK_IGNORE_EMPTY | String::TOK_TRIM);
+				if (fields.size() > 0) {
 					cmd = fields[0];
-					if (fields.count() > 1) {
+					if (fields.size() > 1) {
 						Util::UnpackUrl(fields[1], path, file, properties);
-						if (fields.count() > 2) {
+						if (fields.size() > 2) {
 							unsigned found = fields[2].find_last_of("/");
-							double value;
-							if (found != string::npos && NumberParser::tryParseFloat(fields[2].substr(found + 1), value))
+							Exception ex;
+							double value = String::ToNumber<double>(ex, fields[2].substr(found + 1));
+							if (found != string::npos && !ex)
 								properties.setNumber("HTTPVersion", value); // TODO check how is named for AMF
 						}
 					}
@@ -148,7 +145,7 @@ void HTTP::ReadHeader(HTTPPacketReader& reader, MapParameters& headers, string& 
 				reader.next();
 				continue;
 			}
-			toLowerInPlace(name);
+			String::toLower(name);
 			if (name.compare("referer") == 0) {
 				string referer;
 				reader.readString(referer);

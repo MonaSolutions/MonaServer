@@ -68,7 +68,7 @@ int LUAGroups::Join(lua_State* pState) {
 			} else if(size!=ID_SIZE) {
 				pHandler=NULL;
 				if(peerId)
-					SCRIPT_ERROR("Bad member format id %s",Mona::Util::FormatHex(peerId,size).c_str())
+					SCRIPT_ERROR("Bad member format id ",Mona::Util::FormatHex(peerId,size))
 				else
 					SCRIPT_ERROR("Member id argument missing")
 			}
@@ -82,7 +82,7 @@ int LUAGroups::Join(lua_State* pState) {
 				} else if(size!=ID_SIZE) {
 					pHandler=NULL;
 					if(groupId)
-						SCRIPT_ERROR("Bad group format id %s",Mona::Util::FormatHex(groupId,size).c_str())
+						SCRIPT_ERROR("Bad group format id ",Mona::Util::FormatHex(groupId,size))
 					else
 						SCRIPT_ERROR("Group id argument missing")
 				}
@@ -122,7 +122,7 @@ int LUAGroups::Get(lua_State *pState) {
 				HexBinaryDecoder(ss).read((char*)id,ID_SIZE);
 				pGroup = groups(id);
 			} else if(id)
-				SCRIPT_ERROR("Bad group format id %s",Mona::Util::FormatHex(id,size).c_str())
+				SCRIPT_ERROR("Bad group format id ",Mona::Util::FormatHex(id,size))
 			else
 				SCRIPT_ERROR("Group id argument missing")
 			if(pGroup)

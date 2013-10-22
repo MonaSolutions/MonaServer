@@ -19,7 +19,6 @@
 #include "Mona/AMF.h"
 #include "Mona/Util.h"
 #include "Mona/Logs.h"
-#include "Poco/NumberFormatter.h"
 #include <cstring>
 
 using namespace std;

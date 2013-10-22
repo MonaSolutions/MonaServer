@@ -124,7 +124,7 @@ bool SocketManager::open(SocketHandlerBase& handler) const {
 #if defined(POCO_OS_FAMILY_WINDOWS)
 	if(WSAAsyncSelect(fd,_eventSystem,104,FD_ACCEPT | FD_CLOSE | FD_READ)!=0) {
 		delete pSocketManaged;
-		ERROR("Impossible to manage this socket, code error %d",WSAGetLastError())
+		ERROR("Impossible to manage this socket, code error ",WSAGetLastError())
 		return false;
 	}
 #else
@@ -136,7 +136,7 @@ bool SocketManager::open(SocketHandlerBase& handler) const {
 	if(res<0) {
 		try { error(errno);} catch(Exception& ex) {
 			delete pSocketManaged;
-			ERROR("Impossible to manage this socket, %s",ex.displayText().c_str());
+			ERROR("Impossible to manage this socket, ",ex.displayText());
 			return false;
 		}
 	}
@@ -158,7 +158,7 @@ bool SocketManager::open(SocketHandlerBase& handler) const {
 void SocketManager::startWrite(SocketHandlerBase& handler) const {
 #if defined(POCO_OS_FAMILY_WINDOWS)
 	if(WSAAsyncSelect(handler.getSocket()->impl()->sockfd(),_eventSystem,104,FD_ACCEPT | FD_CLOSE | FD_READ | FD_WRITE)!=0)
-		ERROR("Impossible to start writing on this socket, code error %d",WSAGetLastError())
+		ERROR("Impossible to start writing on this socket, code error ",WSAGetLastError())
 #else
 	epoll_event event;
 	event.events = EPOLLIN | EPOLLOUT | EPOLLRDHUP;
@@ -167,7 +167,7 @@ void SocketManager::startWrite(SocketHandlerBase& handler) const {
 	int res = epoll_ctl(_eventSystem, EPOLL_CTL_MOD,fd, &event);
 	if(res<0) {
 		try { error(errno);} catch(Exception& ex) {
-			ERROR("Impossible to start writing on this socket, %s",ex.displayText().c_str());
+			ERROR("Impossible to start writing on this socket, ",ex.displayText());
 		}
 	}
 #endif
@@ -176,7 +176,7 @@ void SocketManager::startWrite(SocketHandlerBase& handler) const {
 void SocketManager::stopWrite(SocketHandlerBase& handler) const {
 #if defined(POCO_OS_FAMILY_WINDOWS)
 	if(WSAAsyncSelect(handler.getSocket()->impl()->sockfd(),_eventSystem,104,FD_ACCEPT | FD_CLOSE | FD_READ)!=0)
-		WARN("Stop socket writing, code error %d",WSAGetLastError())
+		WARN("Stop socket writing, code error ",WSAGetLastError())
 #else
 	epoll_event event;
 	event.events = EPOLLIN | EPOLLRDHUP;
@@ -185,7 +185,7 @@ void SocketManager::stopWrite(SocketHandlerBase& handler) const {
 	int res = epoll_ctl(_eventSystem, EPOLL_CTL_MOD,fd, &event);
 	if(res<0) {
 		try { error(errno);} catch(Exception& ex) {
-			WARN("Stop socket writing, %s",ex.displayText().c_str());
+			WARN("Stop socket writing, ",ex.displayText());
 		}
 	}
 #endif
@@ -218,11 +218,14 @@ void SocketManager::close(SocketHandlerBase& handler) const {
 }
 
 void SocketManager::handle() {
-	if(!_error.empty())
-		throw Exception(_error);
+	if(!_error.empty()) {
+		ERROR("Error in SocketManager : " , _error);
+		return;
+		// TODO return Exception&?
+	}
 
 	if(sockfd()==POCO_INVALID_SOCKET) {
-		ERROR("%s manages an invalid socket",name().c_str())
+		ERROR(name()," manages an invalid socket")
 		return;
 	}
 
@@ -238,8 +241,8 @@ void SocketManager::handle() {
 	if(_currentError!=0) {
 		try {
 			error(_currentError);
-		} catch(Exception& ex) {
-			pSocketManaged->handler.onError(ex.displayText());
+		} catch(Poco::Exception& exp) {
+			pSocketManaged->handler.onError(exp.displayText());
 		}
 		return;
 	}
@@ -249,8 +252,8 @@ void SocketManager::handle() {
 #endif
 	try {
 		pSocketManaged->handler.onReadable();
-	} catch(Exception& ex) {
-		pSocketManaged->handler.onError(ex.displayText());
+	} catch(Poco::Exception& exp) {
+		pSocketManaged->handler.onError(exp.displayText());
 	}
 }
 

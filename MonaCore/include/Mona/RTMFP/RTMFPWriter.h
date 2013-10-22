@@ -47,10 +47,10 @@ public:
 
 	virtual Writer&	newWriter(WriterHandler* pHandler=NULL);
 
-	void			flush(bool full=false);
+	void			flush(Exception& ex, bool full=false);
 
 	void			acknowledgment(MemoryReader& reader);
-	void			manage(Invoker& invoker);
+	void			manage(Exception& ex, Invoker& invoker);
 
 	void			fail(const std::string& error);
 	void			clear();
@@ -62,7 +62,7 @@ public:
 	State			state(State value=GET,bool minimal=false);
 
 	bool			writeMedia(MediaType type,Mona::UInt32 time,MemoryReader& data);
-	void			writeRaw(const Mona::UInt8* data,Mona::UInt32 size);
+	void			writeRaw(Exception& ex, const Mona::UInt8* data,Mona::UInt32 size);
 	void			writeMember(const Peer& peer);
 
 private:
@@ -71,7 +71,7 @@ private:
 	Mona::UInt32			headerSize(Mona::UInt64 stage);
 	void					flush(MemoryWriter& writer,Mona::UInt64 stage,Mona::UInt8 flags,bool header,BinaryReader& reader,Mona::UInt16 size);
 
-	void					raiseMessage();
+	void					raiseMessage(Exception& ex);
 	RTMFPMessageBuffered&	createBufferedMessage();
 	AMFWriter&				write(AMF::ContentType type,Mona::UInt32 time=0,MemoryReader* pData=NULL);
 

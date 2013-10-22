@@ -38,11 +38,16 @@ SocketSender::~SocketSender() {
 		delete [] _data;
 }
 
-PoolThread* SocketSender::go(PoolThread* pThread) {
+PoolThread* SocketSender::go(Exception& ex, PoolThread* pThread) {
 	_running=true;
 	_pSocketClosed = _handler._pClosed;
 	duplicate();
-	return _handler.manager.poolThreads.enqueue(this,pThread);
+
+	PoolThread* plthread = _handler.manager.poolThreads.enqueue(ex, this,pThread);
+	if (ex)
+		return NULL;
+
+	return plthread;
 }
 
 void SocketSender::release() {
@@ -88,10 +93,10 @@ bool SocketSender::flush() {
 			_memcopied = true;
 		}
 		return false;
-	} catch(Exception& ex) {
-		 WARN("Socket sending error, %s",ex.displayText().c_str());
+	} catch(Poco::Exception& ex) {
+		 WARN("Socket sending error, ",ex.displayText());
 	} catch(exception& ex) {
-		 WARN("Socket sending error, %s",ex.what());
+		 WARN("Socket sending error, ",ex.what());
 	} catch(...) {
 		 WARN("Socket sending unknown error");
 	}

@@ -17,7 +17,7 @@ This file is a part of Mona.
 
 #include "Mona/Application.h"
 #include "Mona/Logs.h"
-#include "Mona/Exception.h"
+#include "Mona/Exceptions.h"
 #if defined(POCO_OS_FAMILY_WINDOWS)
 #include "Poco/UnWindows.h"
 #endif
@@ -68,6 +68,7 @@ void Application::displayHelp() {
 
 void Application::init(int argc, char* argv[]) {
 	Path appPath;
+	Exception ex;
 	string command(argv[0]);
 	getApplicationPath(command, appPath);
 	setString("application.command", command);
@@ -79,7 +80,9 @@ void Application::init(int argc, char* argv[]) {
 
 	// options
 	defineOptions(_options);
-	_options.process(argc, argv, [this](const string& name, const string& value){ setString("application." + name, value); });
+	_options.process(ex, argc, argv, [this](const string& name, const string& value){ setString("application." + name, value); });
+	if(ex)
+		ERROR(ex.error())
 }
 
 int Application::run(int argc, char* argv[]) {
@@ -87,7 +90,7 @@ int Application::run(int argc, char* argv[]) {
 		init(argc, argv);
 		return main();
 	} catch (exception& ex) {
-		FATAL("%s", ex.what());
+		FATAL(ex.what());
 		return Application::EXIT_SOFTWARE;
 	} catch (...) {
 		FATAL("Unknown error");
@@ -121,14 +124,16 @@ void Application::getApplicationPath(const string& command,Path& appPath) const 
 			appPath = p;
 		}
 		else
-			throw Exception(Exception::APPLICATION,"Impossible to determine the application file name");
+			//TODO ex.set(Exception::APPLICATION,"Impossible to determine the application file name");
+			throw RuntimeException("Impossible to determine the application file name");
 	#else
 		char path[1024];
 		int n = GetModuleFileNameA(0, path, sizeof(path));
 		if (n > 0)
 			appPath = path;
 		else
-			throw Exception(Exception::APPLICATION,"Impossible to determine the application file name");
+			// TODO ex.set(Exception::APPLICATION,"Impossible to determine the application file name");
+			throw RuntimeException("Impossible to determine the application file name");
 	#endif
 #else
 	appPath = command;

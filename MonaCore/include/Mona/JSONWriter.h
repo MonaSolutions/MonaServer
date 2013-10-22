@@ -20,8 +20,6 @@
 #include "Mona/Mona.h"
 #include "Mona/DataWriter.h"
 #include "Poco/Format.h"
-#include "Poco/DateTimeFormatter.h"
-#include "Poco/DateTimeFormat.h"
 #include "math.h"
 #include <list>
 

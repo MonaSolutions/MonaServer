@@ -44,7 +44,7 @@ int	LUAPublication::Close(lua_State *pState) {
 		if(lua_islightuserdata(pState,-1))
 			((Invoker*)lua_touserdata(pState,-1))->unpublish(publication.name());
 		else
-			SCRIPT_ERROR("You have not the handle on publication %s, you can't close it",publication.name().c_str())
+			SCRIPT_ERROR("You have not the handle on publication ",publication.name(),", you can't close it")
 		lua_pop(pState,1);
 	SCRIPT_CALLBACK_RETURN
 }
@@ -93,11 +93,11 @@ int	LUAPublication::PushData(lua_State *pState) {
 				if(!pReader.isNull())
 					publication.pushData(*pReader);
 				else
-					SCRIPT_ERROR("The publisher of %s publication has no reader type to push data, use a typed pushData version rather");
+					SCRIPT_ERROR("The publisher of ",publication.name()," publication has no reader type to push data, use a typed pushData version rather");
 			} else
-				SCRIPT_ERROR("The publisher of %s publication has no writer type to push data, use a typed pushData version rather");
+				SCRIPT_ERROR("The publisher of ",publication.name()," publication has no writer type to push data, use a typed pushData version rather");
 		} else
-			SCRIPT_ERROR("No data can be pushed on the %s publication without a publisher",publication.name().c_str())
+			SCRIPT_ERROR("No data can be pushed on the ",publication.name()," publication without a publisher")
 	SCRIPT_CALLBACK_RETURN
 }
 

@@ -25,8 +25,8 @@ using namespace Poco;
 
 namespace Mona {
 
-RTMFPCookie::RTMFPCookie(RTMFPHandshake& handshake,Invoker& invoker,const string& tag,const string& queryUrl) : peerId(),_invoker(invoker), _pComputingThread(NULL),_pCookieComputing(new RTMFPCookieComputing(handshake,invoker)),tag(tag),id(0),farId(0),queryUrl(queryUrl),_writer(_buffer,sizeof(_buffer)),_initiatorNonce(0),decryptKey(),encryptKey() {
-	_pComputingThread = invoker.poolThreads.enqueue(_pCookieComputing,_pComputingThread);
+RTMFPCookie::RTMFPCookie(Exception& ex, RTMFPHandshake& handshake,Invoker& invoker,const string& tag,const string& queryUrl) : peerId(),_invoker(invoker), _pComputingThread(NULL),_pCookieComputing(new RTMFPCookieComputing(handshake,invoker)),tag(tag),id(0),farId(0),queryUrl(queryUrl),_writer(_buffer,sizeof(_buffer)),_initiatorNonce(0),decryptKey(),encryptKey() {
+	_pComputingThread = invoker.poolThreads.enqueue(ex, _pCookieComputing,_pComputingThread);
 }
 
 RTMFPCookie::~RTMFPCookie() {
@@ -65,12 +65,12 @@ UInt16 RTMFPCookie::read(MemoryWriter& writer) {
 }
 
 
-void RTMFPCookie::computeSecret(const UInt8* initiatorKey,UInt32 sizeKey,const UInt8* initiatorNonce,UInt32 sizeNonce) {
+void RTMFPCookie::computeSecret(Exception& ex, const UInt8* initiatorKey,UInt32 sizeKey,const UInt8* initiatorNonce,UInt32 sizeNonce) {
 	_pCookieComputing->initiatorKey.resize(sizeKey);
 	memcpy(_pCookieComputing->initiatorKey.begin(),initiatorKey,sizeKey);
 	_initiatorNonce.resize(sizeNonce);
 	memcpy(_initiatorNonce.begin(),initiatorNonce,sizeNonce);
-	_pComputingThread = _invoker.poolThreads.enqueue(_pCookieComputing,_pComputingThread);
+	_pComputingThread = _invoker.poolThreads.enqueue(ex, _pCookieComputing,_pComputingThread);
 }
 
 

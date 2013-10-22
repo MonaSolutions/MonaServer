@@ -21,7 +21,8 @@
 #include "Mona/ServerApplication.h"
 #include "Poco/File.h"
 #include "Poco/FileStream.h"
-#include "Poco/DateTimeFormatter.h"
+#include "Mona/Time.h"
+
 #if defined(POCO_OS_FAMILY_UNIX)
 #include <signal.h>
 #endif
@@ -51,6 +52,7 @@
 
 #define LOG_SIZE 1000000
 
+using namespace Mona;
 using namespace Poco;
 using namespace Poco::Net;
 using namespace std;
@@ -97,17 +99,23 @@ private:
 
 		// options 
 
-		options.add(
+		Mona::Exception ex;
+		options.add(ex,
 			Mona::Option("log", "l", "Log level argument, must be beetween 0 and 8 : nothing, fatal, critic, error, warn, note, info, debug, trace. Default value is 6 (info), all logs until info level are displayed.")
 			.argument("level")
 			 // TODO changer pour directement appeler l'aide??
 		);
+		if (ex)
+			INFO(ex.error());
 
-		options.add(
+		options.add(ex, 
 			Mona::Option("dump", "d", "Enables packet traces in logs. Optional arguments are 'intern' or 'all' respectively to displays just intern packet exchanged (between servers) or all packet process. If no argument is given, just outside packet process will be dumped.")
 			.argument("intern|all", false)
 			.handler([](const string& value) { Mona::Logs::SetDump(value == "all" ? Mona::Logs::ALL : (value == "intern" ? Mona::Logs::INTERN : Mona::Logs::EXTERN)); })
 		);
+		if (ex)
+			INFO(ex.error());
+
 		ServerApplication::defineOptions(options);
 	}
 
@@ -140,7 +148,9 @@ private:
 			cout.flush();
 		}
 
-		_logStream << DateTimeFormatter::format(LocalDateTime(),"%d/%m %H:%M:%S.%c  ")
+		string stDate;
+		Time().toLocaleString(stDate, "%d/%m %H:%M:%S.%c  ");
+		_logStream << stDate 
 				<< LogPriorities[priority] << '\t' << threadName << '(' << threadId << ")\t"
 				<< (file + path.getFileName()) << '[' << line << "]  " << text << std::endl;
 		_logStream.flush();
@@ -154,10 +164,14 @@ private:
 			File file(_logPath+"10");
 			if(file.exists())
 				file.remove();
+
+			string stfile;
 			while(--num>=0) {
-				file = _logPath+NumberFormatter::format(num);
-				if(file.exists())
-					file.renameTo(_logPath+NumberFormatter::format(num+1));
+				file = String::Format(stfile, _logPath, num);
+				if(file.exists()) {
+					String::Format(stfile, _logPath, num+1);
+					file.renameTo(stfile);
+				}
 			}
 			_logStream.open(_pLogFile->path(),ios::in | ios::ate);
 		}	
@@ -167,10 +181,11 @@ private:
 ///// MAIN
 	int main() {
 		// configs MonaServer.ini
-		try {
-			string file("MonaServer.ini");
-			Mona::Util::ReadIniFile(makeAbsolute(file), *this);
-		} catch(...) {}
+		string file("MonaServer.ini");
+		Mona::Exception ex;
+		Mona::Util::ReadIniFile(ex, makeAbsolute(file), *this);
+		if (ex)
+			DEBUG("Impossible to find file MonaServer.ini (", ex.error(), ")");
 		
 		
 #if defined(POCO_OS_FAMILY_UNIX)
