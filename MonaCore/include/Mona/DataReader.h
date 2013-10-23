@@ -24,7 +24,7 @@
 
 namespace Mona {
 
-class DataReader {
+class DataReader : ObjectFix {
 public:
 	enum Type {
 		NIL=0,
@@ -46,24 +46,24 @@ public:
 	virtual void				readString(std::string& value)=0;
 	virtual double				readNumber()=0;
 	virtual bool				readBoolean()=0;
-	virtual const Mona::UInt8*	readBytes(Mona::UInt32& size)=0;
-	virtual void				readTime(Mona::Time& time) = 0;
+	virtual const UInt8*		readBytes(UInt32& size)=0;
+	virtual Time&				readTime(Time& time) = 0;
 	virtual void				readNull()=0;
 
 	virtual bool				readObject(std::string& type,bool& external)=0;
-	virtual bool				readArray(Mona::UInt32& size)=0;
+	virtual bool				readArray(UInt32& size)=0;
 	virtual Type				readItem(std::string& name)=0;
 
-	virtual bool				readMap(Mona::UInt32& size,bool& weakKeys);
-	virtual Type				readKey();
-	virtual Type				readValue();
+	virtual bool				readMap(UInt32& size,bool& weakKeys);
+	virtual Type				readKey() { return followingType(); }
+	virtual Type				readValue() { return followingType(); }
 
-	virtual bool				available();
+	virtual bool				available() { return reader.available() > 0; }
 
-	virtual void				reset();
+	virtual void				reset() { reader.reset(_pos); }
 
 	void						next();
-	void						read(DataWriter& writer,Mona::UInt32 count=0);
+	void						read(DataWriter& writer,UInt32 count=0);
 
 	MemoryReader&				reader;
 
@@ -72,24 +72,9 @@ protected:
 private:
 	void						read(Type type,DataWriter& writer);
 
-	Mona::UInt32				_pos;
+	UInt32				_pos;
 };
 
-inline bool DataReader::available() {
-	return reader.available()>0;
-}
-
-inline void DataReader::reset() {
-	reader.reset(_pos);
-}
-
-inline DataReader::Type DataReader::readKey() {
-	return followingType();
-}
-
-inline DataReader::Type	DataReader::readValue() {
-	return followingType();
-}
 
 class DataReaderNull : public DataReader {
 public:
@@ -100,12 +85,12 @@ public:
 	void						readString(std::string& value){}
 	virtual double				readNumber(){return 0;}
 	virtual bool				readBoolean(){return false;}
-	virtual const Mona::UInt8*	readBytes(Mona::UInt32& size){return NULL;}
-	virtual void				readTime(Mona::Time& time){ time.update(); }
+	virtual const UInt8*		readBytes(UInt32& size){return NULL;}
+	virtual Time&				readTime(Time& time) { return time.update(); }
 	virtual void				readNull(){}
 
 	virtual bool				readObject(std::string& type,bool& external){return false;}
-	virtual bool				readArray(Mona::UInt32& size){return false;}
+	virtual bool				readArray(UInt32& size){return false;}
 	virtual Type				readItem(std::string& name){return END;}
 };
 

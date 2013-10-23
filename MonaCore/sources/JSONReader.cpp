@@ -72,9 +72,9 @@ bool JSONReader::readBoolean() {
 	return _bool;
 }
 
-void JSONReader::readTime(Time& time) {
+Time& JSONReader::readTime(Time& time) {
 	_last=0;
-	time.update(_date);
+	return time.update(_date);
 }
 
 void JSONReader::readString(string& value) {

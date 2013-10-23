@@ -22,13 +22,11 @@
 #include "Poco/Format.h"
 
 using namespace std;
-using namespace Poco;
-using namespace Poco::Net;
 
 namespace Mona {
 
 
-FlashStream::FlashStream(Invoker& invoker,Peer& peer) : id(0),invoker(invoker),peer(peer),_pPublication(NULL),_pListener(NULL),_bufferTime(0) {
+FlashStream::FlashStream(UInt32 id, Invoker& invoker, Peer& peer) : id(id), invoker(invoker), peer(peer), _pPublication(NULL), _pListener(NULL), _bufferTime(0) {
 	DEBUG("FlashStream ",id," created")
 }
 
@@ -64,42 +62,39 @@ void FlashStream::process(AMF::ContentType type,MemoryReader& data,FlashWriter& 
 		return;
 	
 	writer.callbackHandle = 0;
-	try {
-		switch(type) {
-			case AMF::INVOCATION: {
-				string name;
-				AMFReader reader(data);
-				reader.readString(name);
-				writer.callbackHandle = reader.readNumber();
-				if(reader.followingType()==AMFReader::NIL)
-					reader.readNull();
-				messageHandler(name,reader,writer);
-				break;
-			}
-			case AMF::DATA: {
-				AMFReader reader(data);
-				dataHandler(reader,numberLostFragments);
-				break;
-			}
-			case AMF::AUDIO:
-				audioHandler(data,numberLostFragments);
-				break;
-			case AMF::VIDEO:
-				videoHandler(data,numberLostFragments);
-				break;
-			default:
-				rawHandler(type,data,writer);
+	Exception ex;
+	switch(type) {
+		case AMF::INVOCATION: {
+			string name;
+			AMFReader reader(data);
+			reader.readString(name);
+			writer.callbackHandle = reader.readNumber();
+			if(reader.followingType()==AMFReader::NIL)
+				reader.readNull();
+			messageHandler(ex,name,reader,writer);
+			break;
 		}
-	} catch(exception& ex) {
-		close(writer,ex.what());
-	} catch(...) {
-		close(writer,"Unknown error");
+		case AMF::DATA: {
+			AMFReader reader(data);
+			dataHandler(ex, reader, numberLostFragments);
+			break;
+		}
+		case AMF::AUDIO:
+			audioHandler(ex, data, numberLostFragments);
+			break;
+		case AMF::VIDEO:
+			videoHandler(ex, data, numberLostFragments);
+			break;
+		default:
+			rawHandler(ex, type, data, writer);
 	}
+	if (ex)
+		close(writer,ex.error());
 	writer.callbackHandle = 0;
 }
 
 
-void FlashStream::messageHandler(const string& name,AMFReader& message,FlashWriter& writer) {
+void FlashStream::messageHandler(Exception& ex,const string& name,AMFReader& message,FlashWriter& writer) {
 	if(name=="play") {
 		disengage(&writer);
 
@@ -117,19 +112,15 @@ void FlashStream::messageHandler(const string& name,AMFReader& message,FlashWrit
 			return;
 		}
 
-		try {
-			if(_bufferTime>0) {
-				// To do working the buffertime on receiver side
-				BinaryWriter& raw = writer.writeRaw();
-				raw.write16(0);
-				raw.write32(id);
-				_pListener->setBufferTime(_bufferTime);
-			}
-			writer.writeAMFStatus("NetStream.Play.Reset","Playing and resetting " + publication);
-			writer.writeAMFStatus("NetStream.Play.Start","Started playing " + publication);
-		} catch(Poco::Exception& ex) {
-			writer.writeAMFStatus("NetStream.Play.Failed",ex.message());
+		if(_bufferTime>0) {
+			// To do working the buffertime on receiver side
+			BinaryWriter& raw = writer.writeRaw();
+			raw.write16(0);
+			raw.write32(id);
+			_pListener->setBufferTime(_bufferTime);
 		}
+		writer.writeAMFStatus("NetStream.Play.Reset","Playing and resetting " + publication);
+		writer.writeAMFStatus("NetStream.Play.Start","Started playing " + publication);
 		
 	} else if(name == "closeStream") {
 		disengage(&writer);
@@ -161,7 +152,7 @@ void FlashStream::messageHandler(const string& name,AMFReader& message,FlashWrit
 }
 
 
-void FlashStream::rawHandler(UInt8 type,MemoryReader& data,FlashWriter& writer) {
+void FlashStream::rawHandler(Exception& ex, UInt8 type, MemoryReader& data, FlashWriter& writer) {
 	if(data.read16()==0x22) { // TODO Here we receive publication bounds (id + tracks), useless? maybe to record a file and sync tracks?
 		//TRACE("Bound ",id," : ",data.read32()," ",data.read32());
 		return;
@@ -177,7 +168,7 @@ void FlashStream::setBufferTime(UInt32 ms) {
 		_pListener->setBufferTime(ms);
 }
 
-void FlashStream::dataHandler(DataReader& data,UInt32 numberLostFragments) {
+void FlashStream::dataHandler(Exception& ex, DataReader& data, UInt32 numberLostFragments) {
 	if(!_pPublication) {
 		ERROR("a data packet has been received on a no publishing stream ",id);
 		return;
@@ -189,7 +180,7 @@ void FlashStream::dataHandler(DataReader& data,UInt32 numberLostFragments) {
 }
 
 
-void FlashStream::audioHandler(MemoryReader& packet,UInt32 numberLostFragments) {
+void FlashStream::audioHandler(Exception& ex, MemoryReader& packet, UInt32 numberLostFragments) {
 	if(!_pPublication) {
 		WARN("an audio packet has been received on a no publishing stream ",id,", certainly a publication currently closing");
 		return;
@@ -200,7 +191,7 @@ void FlashStream::audioHandler(MemoryReader& packet,UInt32 numberLostFragments) 
 		WARN("an audio packet has been received on a stream ",id," which is not on owner of this publication, certainly a publication currently closing");
 }
 
-void FlashStream::videoHandler(MemoryReader& packet,UInt32 numberLostFragments) {
+void FlashStream::videoHandler(Exception& ex, MemoryReader& packet, UInt32 numberLostFragments) {
 	if(!_pPublication) {
 		WARN("a video packet has been received on a no publishing stream ",id,", certainly a publication currently closing");
 		return;

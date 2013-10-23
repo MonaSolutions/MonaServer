@@ -28,6 +28,11 @@ HTTPPacketWriter::HTTPPacketWriter() {
 
 HTTPPacketWriter::~HTTPPacketWriter() {}
 
+void HTTPPacketWriter::writeDate(const Time& date) {
+	string str;
+	writeString(date.toString(Time::HTTP_FORMAT, str));
+}
+
 void HTTPPacketWriter::writePropertyName(const string& value) {
 	writer.writeRaw(value);
 	writer.writeRaw(": ",2);

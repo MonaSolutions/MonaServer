@@ -22,7 +22,6 @@
 #include "Mona/SocketManager.h"
 #include "Mona/ServerParams.h"
 #include "Mona/Invoker.h"
-#include "Mona/Logs.h"
 #include "Poco/Buffer.h"
 #include "Poco/SharedPtr.h"
 
@@ -33,13 +32,13 @@ class Protocol {
 public:
 	virtual ~Protocol();
 
-	virtual Poco::SharedPtr<Poco::Buffer<Mona::UInt8> >	receive(Poco::Net::SocketAddress& address);
-	virtual Mona::UInt32								unpack(MemoryReader& packet){return 0;}
-	virtual Session*									session(Mona::UInt32 id,MemoryReader& packet){return NULL;}
-	void												receive(Decoding& decoding);
+	virtual Poco::SharedPtr<Poco::Buffer<UInt8> >		receive(SocketAddress& address);
+	virtual UInt32										unpack(MemoryReader& packet){return 0;}
+	virtual Session*									session(UInt32 id,MemoryReader& packet){return NULL;}
+	void												receive(Decoding& decoding) { gateway.receive(decoding); }
 	virtual void										check(Session& session){}
 	virtual void										manage(){}
-	bool												auth(const Poco::Net::SocketAddress& address);
+	bool												auth(const SocketAddress& address);
 	
 	const std::string		name;
 protected:
@@ -49,15 +48,6 @@ protected:
 	Invoker&		invoker;
 	Gateway&		gateway;
 };
-
-inline Poco::SharedPtr<Poco::Buffer<Mona::UInt8> > Protocol::receive(Poco::Net::SocketAddress& address){
-	ERROR("Protocol::receive called without treatment for ",name);
-	return NULL;
-}
-
-inline void Protocol::receive(Decoding& decoding) {
-	gateway.receive(decoding);
-}
 
 
 } // namespace Mona

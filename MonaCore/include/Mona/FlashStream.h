@@ -27,16 +27,16 @@
 namespace Mona {
 
 class Invoker;
-class FlashStream : public Poco::RefCountedObject {
+class FlashStream {
 public:
-	FlashStream(Invoker& invoker,Peer& peer);
+	FlashStream(UInt32 id,Invoker& invoker,Peer& peer);
 	virtual ~FlashStream();
 
-	const Mona::UInt32	id;
+	const UInt32	id;
 	
-	void setBufferTime(Mona::UInt32 ms);
+	void setBufferTime(UInt32 ms);
 
-	void process(AMF::ContentType type,MemoryReader& data,FlashWriter& writer,Mona::UInt32 numberLostFragments=0);
+	void process(AMF::ContentType type,MemoryReader& data,FlashWriter& writer,UInt32 numberLostFragments=0);
 	void flush();
 
 protected:
@@ -47,17 +47,17 @@ protected:
 private:
 	void			disengage(FlashWriter* pWriter=NULL);
 
-	virtual void	messageHandler(const std::string& name,AMFReader& message,FlashWriter& writer);
-	virtual void	rawHandler(Mona::UInt8 type,MemoryReader& data,FlashWriter& writer);
-	virtual void	dataHandler(DataReader& data,Mona::UInt32 numberLostFragments);
-	virtual void	audioHandler(MemoryReader& packet,Mona::UInt32 numberLostFragments);
-	virtual void	videoHandler(MemoryReader& packet,Mona::UInt32 numberLostFragments);
+	virtual void	messageHandler(Exception& ex, const std::string& name, AMFReader& message, FlashWriter& writer);
+	virtual void	rawHandler(Exception& ex, UInt8 type, MemoryReader& data, FlashWriter& writer);
+	virtual void	dataHandler(Exception& ex, DataReader& data, UInt32 numberLostFragments);
+	virtual void	audioHandler(Exception& ex, MemoryReader& packet, UInt32 numberLostFragments);
+	virtual void	videoHandler(Exception& ex, MemoryReader& packet, UInt32 numberLostFragments);
 
 	virtual void	close(FlashWriter& writer,const std::string& error,int code=0);
 
 	Publication*	_pPublication;
 	Listener*		_pListener;
-	Mona::UInt32	_bufferTime;
+	UInt32			_bufferTime;
 };
 
 

@@ -35,11 +35,11 @@ public:
 	void				readString(std::string& value);
 	double				readNumber();
 	bool				readBoolean();
-	void				readTime(Mona::Time& time);
-	void				readNull();
+	Time&				readTime(Time& time);
+	void				readNull() { reader.next(4); }
 
 	bool				readObject(std::string& type,bool& external);
-	bool				readArray(Mona::UInt32& size);
+	bool				readArray(UInt32& size);
 	Type				readItem(std::string& name);
 	
 	Type				followingType();
@@ -47,22 +47,16 @@ public:
 	void				reset();
 
 private:
-	const Mona::UInt8*	readBytes(Mona::UInt32& size);
+	const UInt8*	readBytes(UInt32& size);
 
-	const Mona::UInt8*	current();
+	const UInt8*	current();
 
-	Mona::UInt32		_pos;
+	UInt32		_pos;
 	std::string			_text;
-	Mona::Time			_date;
+	Time			_date;
 	bool				_bool;
-	Mona::UInt8			_last;
+	UInt8			_last;
 };
-
-inline void JSONReader::readNull() {
-	reader.next(4);
-}
-
-
 
 
 } // namespace Mona

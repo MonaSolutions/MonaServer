@@ -42,12 +42,13 @@ Invoker::~Invoker() {
 }
 
 UInt32 Invoker::createFlashStream(Peer& peer) {
-	AutoPtr<FlashStream> pStream(new FlashStream(*this,peer));
-	pair<map<UInt32,AutoPtr<FlashStream> >::iterator, bool> result;
+
+	map<UInt32, shared_ptr<FlashStream> >::iterator it;
 	do {
-		result = _streams.insert(pair<UInt32,AutoPtr<FlashStream> >((++_nextId)==0 ? ++_nextId : _nextId,pStream));
-	} while(!result.second);
-	(UInt32&)pStream->id = _nextId;
+		it = _streams.lower_bound((++_nextId) == 0 ? ++_nextId : _nextId);
+	} while (it != _streams.end() && it->first == _nextId);
+	shared_ptr<FlashStream> pStream(new FlashStream(_nextId,*this, peer));
+	_streams.emplace_hint(it, _nextId, pStream);
 	return _nextId;
 }
 

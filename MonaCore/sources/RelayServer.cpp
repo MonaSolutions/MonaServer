@@ -16,50 +16,64 @@
 */
 
 #include "Mona/RelayServer.h"
+#include "Mona/UDPSender.h"
 #include "Mona/Logs.h"
 #include "Poco/Format.h"
 
 using namespace std;
-using namespace Poco;
-using namespace Poco::Net;
+
 
 namespace Mona {
 
 class Relay {
 public:
-	Relay(const Peer& peer1,const Poco::Net::SocketAddress& address1,const Peer& peer2,const Poco::Net::SocketAddress& address2,RelaySocket& socket,Mona::UInt16 timeout):
-	  pSender(new RelaySender(socket)),socket(socket),timeout(timeout*1000000),peer1(peer1),address1(address1),peer2(peer2),address2(address2),received(false) {}
+	Relay(const Peer& peer1,const SocketAddress& address1,const Peer& peer2,const SocketAddress& address2,RelaySocket& socket,Mona::UInt16 timeout):
+	 socket(socket),timeout(timeout*1000000),peer1(peer1),address1(address1),peer2(peer2),address2(address2),received(false) {}
 	const Peer&							peer1;
-	const Poco::Net::SocketAddress&		address1;
+	const SocketAddress&				address1;
 	const Peer&							peer2;
-	const Poco::Net::SocketAddress&		address2;
+	const SocketAddress&				address2;
 	bool								received;
-	Mona::Time						lastTime;
-	Mona::Int64							timeout;
+	Poco::Timestamp						lastTime;
+	Poco::Timestamp::TimeDiff			timeout;
 	RelaySocket&						socket;
-	Poco::AutoPtr<RelaySender>			pSender;
 };
 
-RelaySocket::RelaySocket(UInt16 port,const SocketManager& manager) : SocketHandler<DatagramSocket>(manager),port(port) {
-	openSocket(new DatagramSocket(SocketAddress("0.0.0.0",port),true));
-	INFO("Turn server listening on ",port," port")
+
+class RelaySender : public UDPSender {
+public:
+	RelaySender(UInt32 available) : data(available),UDPSender(true) {}
+	std::vector<UInt8> data;
+
+	const UInt8*	begin(bool displaying = false) { return data.empty() ? NULL : &data[0]; }
+	UInt32			size(bool displaying = false) { return data.size(); }
+};
+
+
+RelaySocket::RelaySocket(const SocketManager& manager) : DatagramSocket(manager), port(0) {
+	
 }
 
-RelaySocket::~RelaySocket(){
+
+bool RelaySocket::load(Exception& ex,const SocketAddress& address) {
+	if (!DatagramSocket::bind(ex, address))
+		return false;
+	(UInt16&)port = address.port();
+	return true;
 }
 
 Relay& RelaySocket::createRelay(const Peer& peer1,const SocketAddress& address1,const Peer& peer2,const SocketAddress& address2,UInt16 timeout) {
-	ScopedLock<FastMutex> lock(_mutex);
+	lock_guard<mutex> lock(_mutex);
 	Addresses::iterator it1 = ((Addresses&)addresses).insert(pair<SocketAddress,Relay*>(address1,NULL)).first;
 	Addresses::iterator it2 = ((Addresses&)addresses).insert(pair<SocketAddress,Relay*>(address2,NULL)).first;
 	return *(it1->second = it2->second = new Relay(peer1,it1->first,peer2,it2->first,*this,timeout));
 }
 
 UInt32 RelaySocket::releaseRelay(Relay& relay) {
-	ScopedLock<FastMutex> lock(_mutex);
+	lock_guard<mutex> lock(_mutex);
 	//remove turnPeers
 	if(relay.received) {
-		INFO("Turn finishing from ",relay.address1.toString()," to ",relay.address2.toString()," on ",getSocket()->address().port()," relayed port")
+		INFO("Turn finishing from %s to %s on %hu relayed port", relay.address1.toString().c_str(), relay.address2.toString().c_str(), port)
 		((Peer&)relay.peer1).turnPeers.erase(relay.peer2.id);
 		((Peer&)relay.peer2).turnPeers.erase(relay.peer1.id);
 	}
@@ -70,43 +84,43 @@ UInt32 RelaySocket::releaseRelay(Relay& relay) {
 }
 
 // executed in a parallel thread!
-void RelaySocket::onError(const std::string& error) {
-	DEBUG("Socket ",getSocket()->address().toString(),", ",error);
+void RelaySocket::onError(const string& error) {
+	DEBUG("Relay socket %hu, %s",port,error.c_str());
 }
 
 // executed in a parallel thread!
-void RelaySocket::onReadable() {
-	UInt32 available = getSocket()->available();
+void RelaySocket::onReadable(Exception& ex) {
+	UInt32 available = DatagramSocket::available(ex);
 	if(available==0)
 		return;
 
-	SharedPtr<Buffer<UInt8> >	pBuffer(new Buffer<UInt8>(available));
+	shared_ptr<RelaySender> pSender(new RelaySender(available));
 	SocketAddress address;
-	available = getSocket()->receiveFrom(pBuffer->begin(),pBuffer->size(),address);
+	available = DatagramSocket::receiveFrom(ex, &pSender->data[0], pSender->data.size(), address);
+	if (ex)
+		return;
 
-	ScopedLock<FastMutex> lock(_mutex);
+	lock_guard<mutex> lock(_mutex);
 	Addresses::const_iterator itAddress = addresses.find(address);
 	if(itAddress==addresses.end()) {
-		DEBUG("Unknown relay ",address.toString()," address")
+		DEBUG("Unknown relay %s address",address.toString().c_str())
 		return;
 	}
 
 	Relay& relay = *itAddress->second;
 	if(!relay.received) {
 		relay.received=true;
-		INFO("Turn starting from ",relay.address1.toString()," to ",relay.address2.toString()," on ",getSocket()->address().port()," relayed port")
+		INFO("Turn starting from %s to %s on %hu relayed port", relay.address1.toString().c_str(), relay.address2.toString().c_str(), port)
 		((Peer&)relay.peer1).turnPeers[relay.peer2.id] = (Peer*)&relay.peer2;
 		((Peer&)relay.peer2).turnPeers[relay.peer1.id] = (Peer*)&relay.peer1;
 	}
 
-	relay.pSender->setBuffer(pBuffer,available);
-	relay.pSender->address = Util::SameAddress(relay.address1,address) ? relay.address2 : relay.address1;
+	pSender->address = relay.address1==address ? relay.address2 : relay.address1;
 
-	DUMP(pBuffer->begin(),pBuffer->size(),format("Request from %s",address.toString()).c_str())
+	DUMP(pSender->begin(), pSender->size(), Poco::format("Request from %s", address.toString()).c_str())
 
 	relay.lastTime.update();
-	DEBUG("Relay packet (size=",pBuffer->size(),") from ",address.toString()," to ",relay.pSender->address.toString()," on ",getSocket()->address().port())
-	relay.pSender = new RelaySender(relay.socket);
+	DEBUG("Relay packet (size=%u) from %s to %s on %hu", pSender->size(), address.toString().c_str(), pSender->address.toString().c_str(), port)
 }
 
 
@@ -133,7 +147,7 @@ UInt16 RelayServer::add(const Peer& peer1,const SocketAddress& address1,const Pe
 		return 0;
 	}
 
-	if(Util::SameAddress(address1,address2)) {
+	if(address1==address2) {
 		ERROR("Relay useless between the two same addresses")
 		return 0;
 	}
@@ -145,7 +159,7 @@ UInt16 RelayServer::add(const Peer& peer1,const SocketAddress& address1,const Pe
 		port = (*it)->port;
 		RelaySocket::Addresses::const_iterator itRelay = (*it)->addresses.find(address1);
 		if(itRelay!=(*it)->addresses.end()) {
-			if((Util::SameAddress(itRelay->second->address1,address1) && Util::SameAddress(itRelay->second->address2,address2)) || (Util::SameAddress(itRelay->second->address1,address2) && Util::SameAddress(itRelay->second->address2,address1)))
+			if((itRelay->second->address1==address1 && itRelay->second->address2==address2) || (itRelay->second->address1==address2 && itRelay->second->address2==address1))
 				return port; // this relay exists already!
 		} else if((itRelay = (*it)->addresses.find(address2)) == (*it)->addresses.end()) {
 			pSocket = *it; // can use the same socket!
@@ -159,16 +173,27 @@ UInt16 RelayServer::add(const Peer& peer1,const SocketAddress& address1,const Pe
 			return 0;
 		}
 		++port;
-		try {
-			pSocket = new RelaySocket(port,_manager);
-			if(_sockets.empty())
-				it = _sockets.begin();
-			else
-				--it;
-			_sockets.insert(it,pSocket);
-		} catch(Poco::Exception& ex) {
-			ERROR("Turn listening impossible on port ",port,", ",ex.displayText())
+
+		SocketAddress address;
+		Exception ex;
+		if (!address.set(ex, "0.0.0.0", port)) {
+			DEBUG("Turn listening impossible on port %hu, %s", port, ex.error().c_str())
+			continue;
 		}
+
+		pSocket = new RelaySocket(_manager);
+		if (!pSocket->load(ex, address)) {
+			delete pSocket;
+			pSocket = NULL;
+			DEBUG("Turn listening impossible on port %hu, %s", port, ex.error().c_str())
+			continue;
+		}
+
+		INFO("Turn server listening on %hu port", port)
+
+		if (_sockets.empty())
+			it = _sockets.begin();
+		_sockets.insert(it, pSocket);
 	}
 
 	Relay* pRelay = &pSocket->createRelay(peer1,address1,peer2,address2,timeout);
@@ -180,13 +205,13 @@ UInt16 RelayServer::add(const Peer& peer1,const SocketAddress& address1,const Pe
 	((Peer&)peer1).relayable = true;
 	((Peer&)peer2).relayable = true;
 
-	DEBUG("Relay between ",address1.toString()," and ",address2.toString()," on ",port," port")
+	DEBUG("Relay between %s and %s on %hu port",address1.toString().c_str(),address2.toString().c_str(),port)
 
 	return port;
 }
 
 void RelayServer::remove(const Peer& peer) const {
-	ScopedLock<FastMutex>  lock(_mutex);
+	lock_guard<mutex> lock(_mutex);
 	map<const Peer*,set<Relay*> >::iterator it = _peers.find(&peer);
 	if(it==_peers.end())
 		return;
@@ -206,7 +231,7 @@ void RelayServer::remove(const Peer& peer) const {
 }
 
 void RelayServer::manage() const {
-	ScopedLock<FastMutex>  lock(_mutex);
+	lock_guard<mutex> lock(_mutex);
 	set<Relay*>::iterator it=_relays.begin();
 	while(it!=_relays.end()) {
 		Relay& relay(**it);
@@ -224,7 +249,7 @@ void RelayServer::manage() const {
 }
 
 void RelayServer::clear() {
-	ScopedLock<FastMutex>  lock(_mutex);
+	lock_guard<mutex> lock(_mutex);
 	set<Relay*>::iterator it;
 	for(it=_relays.begin();it!=_relays.end();++it) {
 		Relay& relay(**it);

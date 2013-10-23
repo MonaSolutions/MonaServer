@@ -18,7 +18,6 @@
 #pragma once
 
 #include "Mona/Mona.h"
-#include "Mona/Exceptions.h"
 #include "Mona/Group.h"
 #include "Mona/Publications.h"
 #include "Mona/Entities.h"
@@ -43,27 +42,27 @@ public:
 	const RelayServer		relay;
 	PoolThreads				poolThreads;
 
-	Mona::UInt32				createFlashStream(Peer& peer);
-	Poco::AutoPtr<FlashStream>  getFlashStream(Mona::UInt32 id);
-	void						destroyFlashStream(Mona::UInt32 id);
+	UInt32					createFlashStream(Peer& peer);
+	bool					getFlashStream(UInt32 id, std::shared_ptr<FlashStream>& pStream) { return (pStream=_streams[id]) ? true : false; }
+	void					 destroyFlashStream(UInt32 id) { _streams.erase(id); }
 
-	Publication*			publish(Exception& ex, const std::string& name);
-	void					unpublish(const std::string& name);
+	Publication&			publish(const std::string& name) { return publish(myself(), name); }
+	void					unpublish(const std::string& name) { unpublish(myself(), name); }
 
-	Publication*			publish(Exception& ex, Peer& peer,const std::string& name);
+	Publication&			publish(Peer& peer,const std::string& name);
 	void					unpublish(Peer& peer,const std::string& name);
-	Listener*				subscribe(Exception& ex, Peer& peer,const std::string& name,Writer& writer,double start=-2000);
+	Listener&				subscribe(Peer& peer,const std::string& name,Writer& writer,double start=-2000);
 	void					unsubscribe(Peer& peer,const std::string& name);
 
-	void					addBanned(const Poco::Net::IPAddress& ip);
-	void					removeBanned(const Poco::Net::IPAddress& ip);
-	void					clearBannedList();
-	bool					isBanned(const Poco::Net::IPAddress& ip);
+	void					addBanned(const IPAddress& ip) { _bannedList.insert(ip); }
+	void					removeBanned(const IPAddress& ip) { _bannedList.erase(ip); }
+	void					clearBannedList() { _bannedList.clear(); }
+	bool					isBanned(const IPAddress& ip) { return _bannedList.find(ip) != _bannedList.end(); }
 
 	const ServerParams		params;
 
 protected:
-	Invoker(Mona::UInt32 bufferSize,Mona::UInt32 threads);
+	Invoker(UInt32 bufferSize,UInt32 threads);
 	virtual ~Invoker();
 
 private:
@@ -75,44 +74,10 @@ private:
 	Entities<Group>::Map								_groups;
 	Entities<Client>::Map								_clients;
 	std::map<std::string,Client*>						_clientsByName;
-	std::set<Poco::Net::IPAddress>						_bannedList;
-	Mona::UInt32										_nextId;
-	std::map<Mona::UInt32,Poco::AutoPtr<FlashStream> >	_streams;
+	std::set<IPAddress>						    _bannedList;
+	UInt32										_nextId;
+	std::map<UInt32,std::shared_ptr<FlashStream> >	_streams;
 };
-
-
-inline Publication* Invoker::publish(Exception& ex, const std::string& name) {
-	return publish(ex, myself(),name);
-}
-
-inline void Invoker::unpublish(const std::string& name) {
-	unpublish(myself(),name);
-}
-
-
-inline Poco::AutoPtr<FlashStream> Invoker::getFlashStream(Mona::UInt32 id) {
-	return _streams[id];
-}
-
-inline void Invoker::destroyFlashStream(Mona::UInt32 id) {
-	_streams.erase(id);
-}
-
-inline void Invoker::addBanned(const Poco::Net::IPAddress& ip) {
-	_bannedList.insert(ip);
-}
-
-inline void Invoker::removeBanned(const Poco::Net::IPAddress& ip) {
-	_bannedList.erase(ip);
-}
-
-inline void Invoker::clearBannedList() {
-	_bannedList.clear();
-}
-
-inline bool Invoker::isBanned(const Poco::Net::IPAddress& ip) {
-	return _bannedList.find(ip)!=_bannedList.end();
-}
 
 
 } // namespace Mona

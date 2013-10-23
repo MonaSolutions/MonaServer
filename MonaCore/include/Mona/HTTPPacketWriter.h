@@ -30,45 +30,21 @@ public:
 	HTTPPacketWriter();
 	virtual ~HTTPPacketWriter();
 
-	void beginObject(const std::string& type="",bool external=false);
-	void endObject();
+	void beginObject(const std::string& type = "", bool external = false) {}
+	void endObject() { writer.writeRaw("\r\n", 2); }
 
 	void writePropertyName(const std::string& value);
 
-	void beginArray(Mona::UInt32 size);
-	void endArray();
+	void beginArray(UInt32 size) {}
+	void endArray() {}
 
-	void writeDate(const Mona::Time& date);
-	void writeNumber(double value);
+	void writeDate(const Time& date);
+	void writeNumber(double value) { writeString(ROUND(value) == value ? Poco::format("%u", (UInt32)value) : Poco::format("%f", value)); }
 	void writeString(const std::string& value);
 	void writeBoolean(bool value);
-	void writeNull();
-	void writeBytes(const Mona::UInt8* data,Mona::UInt32 size);
+	void writeNull() { writer.writeRaw("null\r\n", 6); }
+	void writeBytes(const UInt8* data, UInt32 size) { writer.writeRaw(data, size); }
 };
-
-
-inline void HTTPPacketWriter::writeDate(const Mona::Time& date) {
-	std::string str;
-	date.toString(str, Time::HTTP_FORMAT);
-	writeString(str);
-}
-
-inline void HTTPPacketWriter::writeNumber(double value) {
-	writeString(ROUND(value)==value ? Poco::format("%u",(Mona::UInt32)value) : Poco::format("%f",value));
-}
-
-inline void HTTPPacketWriter::writeNull() {
-	writer.writeRaw("null\r\n",6);
-}
-inline void HTTPPacketWriter::writeBytes(const Mona::UInt8* data,Mona::UInt32 size) {
-	writer.writeRaw(data,size);
-}
-
-
-inline void HTTPPacketWriter::beginObject(const std::string& type,bool external) {}
-inline void HTTPPacketWriter::endObject() {writer.writeRaw("\r\n",2);}
-inline void HTTPPacketWriter::beginArray(Mona::UInt32 size) {}
-inline void HTTPPacketWriter::endArray() {}
 
 
 } // namespace Mona

@@ -105,6 +105,13 @@ void JSONWriter::writeString(const string& value) {
 	writer << '"';
 }
 
+
+void JSONWriter::writeDate(const Time& date) {
+	string str;
+	writeString(date.toString(Time::ISO8601_FRAC_FORMAT, str));
+}
+
+
 void JSONWriter::writeBytes(const Mona::UInt8* data,Mona::UInt32 size) {
 	if(!_started) {
 		_started=true;

@@ -33,7 +33,7 @@ public:
 	void				readString(std::string& value);
 	double				readNumber();
 	bool				readBoolean();
-	void				readTime(Mona::Time& time);
+	Time&				readTime(Time& time);
 	void				readNull();
 
 	bool				readObject(std::string& type,bool& external);
@@ -53,7 +53,7 @@ private:
 	double				_number;
 	std::string			_value;
 	std::string			_name;
-	Mona::Time			_date;
+	Time			_date;
 };
 
 inline bool HTTPPacketReader::readObject(std::string& type,bool& external) {

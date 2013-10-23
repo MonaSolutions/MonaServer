@@ -17,7 +17,6 @@
 
 #include "Mona/Writer.h"
 #include "Mona/Logs.h"
-#include <utility>
 
 using namespace Poco;
 using namespace std;

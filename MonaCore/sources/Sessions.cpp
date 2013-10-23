@@ -72,7 +72,7 @@ void Sessions::changeAddress(const SocketAddress& oldAddress,Session& session) {
 	_sessionsByAddress[session.peer.address] = &session;
 }
 
-Session* Sessions::find(const Poco::Net::SocketAddress& address) {
+Session* Sessions::find(const SocketAddress& address) {
 	map<SocketAddress,Session*,Util::AddressComparator>::const_iterator it = _sessionsByAddress.find(address);
 	if(it==_sessionsByAddress.end())
 		return NULL;

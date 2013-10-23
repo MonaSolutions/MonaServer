@@ -25,51 +25,38 @@
 
 namespace Mona {
 
-class Sessions
-{
+class Sessions : ObjectFix {
 public:
-	typedef std::map<Mona::UInt32,Session*>::const_iterator Iterator;
+	typedef std::map<UInt32,Session*>::const_iterator Iterator;
 
 	Sessions();
 	virtual ~Sessions();
 
-	Mona::UInt32	count() const;
+	UInt32	count() const { return _sessions.size(); }
 
-	Session* find(Mona::UInt32 id);
-	Session* find(const Mona::UInt8* peerId);
-	Session* find(const Poco::Net::SocketAddress& address);
+	Session* find(UInt32 id);
+	Session* find(const UInt8* peerId);
+	Session* find(const SocketAddress& address);
 	
-	void	 changeAddress(const Poco::Net::SocketAddress& oldAddress,Session& session);
+	void	 changeAddress(const SocketAddress& oldAddress,Session& session);
 	Session& add(Session* pSession);
 
-	Iterator begin() const;
-	Iterator end() const;
+	Iterator begin() const { return _sessions.begin(); }
+	Iterator end() const { return _sessions.end(); }
 	
 	void		manage();
 	void		clear();
 
 private:
-	void    remove(std::map<Mona::UInt32,Session*>::iterator it);
+	void    remove(std::map<UInt32,Session*>::iterator it);
 
-	Mona::UInt32														_nextId;
-	std::map<Mona::UInt32,Session*>										_sessions;
-	Entities<Session>::Map												_sessionsByPeerId;
-	std::map<Poco::Net::SocketAddress,Session*,Util::AddressComparator>	_sessionsByAddress;
-	Mona::UInt32														_oldCount;
+	UInt32									_nextId;
+	std::map<UInt32,Session*>				_sessions;
+	Entities<Session>::Map					_sessionsByPeerId;
+	std::map<SocketAddress,Session*>		_sessionsByAddress;
+	UInt32									_oldCount;
 };
 
-
-inline Sessions::Iterator Sessions::begin() const {
-	return _sessions.begin();
-}
-
-inline Mona::UInt32 Sessions::count() const {
-	return _sessions.size();
-}
-
-inline Sessions::Iterator Sessions::end() const {
-	return _sessions.end();
-}
 
 
 } // namespace Mona

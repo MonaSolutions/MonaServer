@@ -34,15 +34,15 @@ public:
 	void				readString(std::string& value);
 	double				readNumber();
 	bool				readBoolean();
-	const Mona::UInt8*	readBytes(Mona::UInt32& size);
-	void				readTime(Mona::Time& time);
+	const UInt8*		readBytes(UInt32& size);
+	Time&				readTime(Time& time);
 	void				readNull();
 
 	bool			readObject(std::string& type,bool& external);
-	bool			readArray(Mona::UInt32& size);
+	bool			readArray(UInt32& size);
 	Type			readItem(std::string& name);
 
-	bool			readMap(Mona::UInt32& size,bool& weakKeys);
+	bool			readMap(UInt32& size,bool& weakKeys);
 	Type			readKey();
 	Type			readValue();
 
@@ -55,14 +55,14 @@ public:
 
 private:
 	void							readText(std::string& value);
-	Mona::UInt8						current();
+	UInt8						current();
 	std::list<ObjectDef*>			_objectDefs;
-	std::vector<Mona::UInt32>		_stringReferences;
-	std::vector<Mona::UInt32>		_classDefReferences;
-	std::vector<Mona::UInt32>		_references;
-	std::vector<Mona::UInt32>		_amf0References;
-	Mona::UInt32					_amf0Reset;
-	Mona::UInt32					_amf3;
+	std::vector<UInt32>		_stringReferences;
+	std::vector<UInt32>		_classDefReferences;
+	std::vector<UInt32>		_references;
+	std::vector<UInt32>		_amf0References;
+	UInt32					_amf0Reset;
+	UInt32					_amf3;
 	bool							_referencing;
 };
 
@@ -70,7 +70,7 @@ inline AMFReader::Type AMFReader::readValue() {
 	return readKey();
 }
 
-inline Mona::UInt8 AMFReader::current() {
+inline UInt8 AMFReader::current() {
 	return *reader.current();
 }
 

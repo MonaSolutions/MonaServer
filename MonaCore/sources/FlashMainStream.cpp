@@ -26,12 +26,11 @@
 
 using namespace std;
 using namespace Poco;
-using namespace Poco::Net;
 
 namespace Mona {
 
 
-FlashMainStream::FlashMainStream(Invoker& invoker,Peer& peer) : FlashStream(invoker,peer),_pGroup(NULL) {
+FlashMainStream::FlashMainStream(Invoker& invoker,Peer& peer) : FlashStream(0,invoker,peer),_pGroup(NULL) {
 	
 }
 
@@ -92,8 +91,7 @@ void FlashMainStream::messageHandler(Exception& ex, const string& name,AMFReader
 					}
 					case AMFReader::TIME: {
 						Time time;
-						message.readTime(time);
-						peer.setNumber(name, (double)(time.toInt() / 1000));
+						peer.setNumber(name, (double)(message.readTime(time).toInt() / 1000));
 						break;
 					}
 					default:
@@ -105,9 +103,9 @@ void FlashMainStream::messageHandler(Exception& ex, const string& name,AMFReader
 		message.startReferencing();
 
 		string tcUrl;
-		if (peer.path.empty() && peer.getString("tcUrl", tcUrl))
-			Util::UnpackUrl(tcUrl, (SocketAddress&)peer.serverAddress, (string&)peer.path, peer);
-
+		if (peer.path.empty() && peer.getString("tcUrl", tcUrl) && Util::UnpackUrl(ex, tcUrl, (SocketAddress&)peer.serverAddress, (string&)peer.path, peer))
+			return;
+	
 		// Don't support AMF0 forced on NetConnection object because AMFWriter writes in AMF3 format
 		// But it's not a pb because NetConnection RTMFP works since flash player 10.0 only (which supports AMF3)
 		double objEncoding = 1;
@@ -133,10 +131,13 @@ void FlashMainStream::messageHandler(Exception& ex, const string& name,AMFReader
 		string addr;
 		while(message.available()) {
 			message.readString(addr); // private host
-			try {
-				peer.addresses.push_back(SocketAddress(addr));
-			} catch(exception& ex) {
-				ERROR("Bad peer address ",addr,", ",ex.what());
+
+			peer.addresses.emplace_back();
+			Exception ex;
+			peer.addresses.back().set(ex,addr);
+			if (ex) {
+				ERROR("Bad peer address ",addr,", ",ex.error());
+				peer.addresses.pop_back();
 			}
 		}
 		
@@ -166,7 +167,7 @@ void FlashMainStream::messageHandler(Exception& ex, const string& name,AMFReader
 	
 }
 
-void FlashMainStream::rawHandler(UInt8 type,MemoryReader& data,FlashWriter& writer) {
+void FlashMainStream::rawHandler(Exception& ex,UInt8 type,MemoryReader& data,FlashWriter& writer) {
 
 	if(type==0x01) {
 		if(data.available()>0) {
@@ -198,8 +199,8 @@ void FlashMainStream::rawHandler(UInt8 type,MemoryReader& data,FlashWriter& writ
 				setBufferTime(data.read32());
 				return;
 			}
-			AutoPtr<FlashStream>  pStream = invoker.getFlashStream(streamId);
-			if(pStream.isNull()) {
+			shared_ptr<FlashStream> pStream;
+			if (!invoker.getFlashStream(streamId, pStream)) {
 				ERROR("setBufferTime message for a unknown ",streamId," stream")
 				return;
 			}

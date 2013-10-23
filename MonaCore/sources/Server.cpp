@@ -31,12 +31,12 @@ namespace Mona {
 ServerManager::ServerManager(Server& server):_server(server),Task(server),Startable("ServerManager"){
 }
 
-void ServerManager::run() {
+void ServerManager::run(Exception& ex) {
 	setPriority(Thread::PRIO_LOW);
 	do {
 		waitHandle();
 		_server.relay.manage();
-	} while(sleep(2000)!=STOP);
+	} while (sleep(ex, 2000) != STOP && !ex);
 }
 
 Server::Server(UInt32 bufferSize,UInt32 threads) : Startable("Server"),Handler(bufferSize,threads),_protocols(*this),_manager(*this) {
@@ -59,7 +59,8 @@ void Server::start(const ServerParams& params) {
 	Startable::start();
 }
 
-void Server::run() {
+void Server::run(Exception& exc) {
+	Exception ex;
 	ServerManager manager(*this);
 	try {
 		setPriority(params.threadPriority);
@@ -73,11 +74,10 @@ void Server::run() {
 		onStart();
 
 		_manager.start();
-		while(sleep()!=STOP)
-			giveHandle();
-
-	} catch(Poco::Exception& ex) {
-		FATAL("Server, ",ex.displayText());
+		while (!ex && sleep(ex) != STOP && !ex)
+			giveHandle(ex);
+		if (ex)
+			FATAL("Server, %s", ex.error().c_str());
 	} catch (exception& ex) {
 		FATAL("Server, ",ex.what());
 	} catch (...) {
