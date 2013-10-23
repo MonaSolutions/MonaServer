@@ -34,7 +34,7 @@ FileWatcher::~FileWatcher() {
 bool FileWatcher::watch() {
 	bool result=false;
 	if(_lastModified>0) {
-		Mona::Int64 lastModif = _file.getLastModified().epochMicroseconds();
+		Int64 lastModif = _file.getLastModified().epochMicroseconds();
 		if (!_file.exists() || !_file.isFile() || lastModif > _lastModified) {
 			_lastModified.update(lastModif);
 			clear();

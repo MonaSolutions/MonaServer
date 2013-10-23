@@ -192,36 +192,31 @@ void Script::WriteData(lua_State *pState,DataReader::Type type,DataReader& reade
 		}
 		case DataReader::TIME: {
 			Time time;
-			reader.readTime(time);
-
 			struct tm datetm;
-			if (!time.toGMT(datetm))
-				SCRIPT_ERROR("Error during conversion of datetime")
-			else {
-				lua_newtable(pState);
-				lua_pushnumber(pState, (double)(time.toInt() / 1000));
-				lua_setfield(pState, -2, "__time");
-				lua_pushnumber(pState, datetm.tm_year + 1900);
-				lua_setfield(pState, -2, "year");
-				lua_pushnumber(pState, datetm.tm_mon + 1);
-				lua_setfield(pState, -2, "month");
-				lua_pushnumber(pState, datetm.tm_mday);
-				lua_setfield(pState, -2, "day");
-				lua_pushnumber(pState, datetm.tm_yday);
-				lua_setfield(pState, -2, "yday");
-				lua_pushnumber(pState, datetm.tm_wday);
-				lua_setfield(pState, -2, "wday");
-				lua_pushnumber(pState, datetm.tm_hour);
-				lua_setfield(pState, -2, "hour");
-				lua_pushnumber(pState, datetm.tm_min);
-				lua_setfield(pState, -2, "min");
-				lua_pushnumber(pState, datetm.tm_sec);
-				lua_setfield(pState, -2, "sec");
-				lua_pushnumber(pState, time.millisec());
-				lua_setfield(pState, -2, "msec");
-				lua_pushboolean(pState, datetm.tm_isdst);
-				lua_setfield(pState, -2, "isdst");
-			}
+			reader.readTime(time).toGMT(datetm);
+			lua_newtable(pState);
+			lua_pushnumber(pState, (double)(time.toInt() / 1000));
+			lua_setfield(pState, -2, "__time");
+			lua_pushnumber(pState, datetm.tm_year + 1900);
+			lua_setfield(pState, -2, "year");
+			lua_pushnumber(pState, datetm.tm_mon + 1);
+			lua_setfield(pState, -2, "month");
+			lua_pushnumber(pState, datetm.tm_mday);
+			lua_setfield(pState, -2, "day");
+			lua_pushnumber(pState, datetm.tm_yday);
+			lua_setfield(pState, -2, "yday");
+			lua_pushnumber(pState, datetm.tm_wday);
+			lua_setfield(pState, -2, "wday");
+			lua_pushnumber(pState, datetm.tm_hour);
+			lua_setfield(pState, -2, "hour");
+			lua_pushnumber(pState, datetm.tm_min);
+			lua_setfield(pState, -2, "min");
+			lua_pushnumber(pState, datetm.tm_sec);
+			lua_setfield(pState, -2, "sec");
+			lua_pushnumber(pState, time.millisec());
+			lua_setfield(pState, -2, "msec");
+			lua_pushboolean(pState, datetm.tm_isdst);
+			lua_setfield(pState, -2, "isdst");
 			break;
 		}
 		case DataReader::ARRAY: {

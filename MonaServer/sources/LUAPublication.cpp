@@ -26,7 +26,7 @@ using namespace std;
 using namespace Mona;
 using namespace Poco;
 
-const char*		LUAPublication::Name="Mona::Publication";
+const char*		LUAPublication::Name="Publication";
 
 void LUAPublication::Clear(lua_State* pState,const Publication& publication){
 	Script::ClearPersistentObject<QualityOfService,LUAQualityOfService>(pState,publication.dataQOS());
@@ -58,7 +58,7 @@ int	LUAPublication::Flush(lua_State *pState) {
 int	LUAPublication::PushAudio(lua_State *pState) {
 	SCRIPT_CALLBACK(Publication,LUAPublication,publication)
 		SCRIPT_READ_BINARY(pData,size)
-		Mona::UInt32 time = SCRIPT_READ_UINT(0);
+		UInt32 time = SCRIPT_READ_UINT(0);
 		if(pData) {
 			MemoryReader reader(pData,size);
 			publication.pushAudio(reader,time,SCRIPT_READ_UINT(0));
@@ -69,7 +69,7 @@ int	LUAPublication::PushAudio(lua_State *pState) {
 int	LUAPublication::PushVideo(lua_State *pState) {
 	SCRIPT_CALLBACK(Publication,LUAPublication,publication)
 		SCRIPT_READ_BINARY(pData,size)
-		Mona::UInt32 time = SCRIPT_READ_UINT(0);
+		UInt32 time = SCRIPT_READ_UINT(0);
 		if(pData) {
 			MemoryReader reader(pData,size);
 			publication.pushVideo(reader,time,SCRIPT_READ_UINT(0));
@@ -84,7 +84,7 @@ int	LUAPublication::PushData(lua_State *pState) {
 			SharedPtr<DataWriter> pWriter;
 			pPublisher->writer().createWriter(pWriter);
 			if(!pWriter.isNull()) {
-				Mona::UInt32 offset = pWriter->stream.size();
+				UInt32 offset = pWriter->stream.size();
 				SCRIPT_READ_DATA(*pWriter)
 				MemoryReader reader(pWriter->stream.data(),pWriter->stream.size());
 				reader.next(offset);
@@ -104,7 +104,7 @@ int	LUAPublication::PushData(lua_State *pState) {
 int	LUAPublication::PushJSONData(lua_State *pState) {
 	SCRIPT_CALLBACK(Publication,LUAPublication,publication)
 		JSONWriter writer;
-		Mona::UInt32 offset = writer.stream.size();
+		UInt32 offset = writer.stream.size();
 		SCRIPT_READ_DATA(writer)
 		MemoryReader reader(writer.stream.data(),writer.stream.size());
 		reader.next(offset);
@@ -116,7 +116,7 @@ int	LUAPublication::PushJSONData(lua_State *pState) {
 int	LUAPublication::PushAMFData(lua_State *pState) {
 	SCRIPT_CALLBACK(Publication,LUAPublication,publication)
 		AMFWriter writer;
-		Mona::UInt32 offset = writer.stream.size();
+		UInt32 offset = writer.stream.size();
 		SCRIPT_READ_DATA(writer)
 		MemoryReader reader(writer.stream.data(),writer.stream.size());
 		reader.next(offset);
