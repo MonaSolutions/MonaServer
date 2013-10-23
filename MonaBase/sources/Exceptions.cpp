@@ -19,12 +19,24 @@
 
 
 #include "Mona/Exceptions.h"
+#include "Mona/String.h"
 
 namespace Mona {
 
 void Exception::reset() {
 	_code = NIL;
 	_error.clear();
+}
+
+template <typename ...Args>
+void Exception::set(Code code, const Args&... args) {
+	_code = code;
+	String::Append(_error, args ...);
+}
+
+void Exception::set(const Exception& other) {
+	_code = other._code;
+	_error = other._error;
 }
 
 } // namespace Mona

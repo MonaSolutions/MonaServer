@@ -16,93 +16,77 @@
 */
 
 #include "Mona/SocketSender.h"
-#include "Mona/SocketManager.h"
+#include "Mona/Socket.h"
 #include "Mona/Logs.h"
-#include "Poco/Format.h"
+
 
 using namespace std;
-using namespace Poco;
+
 
 namespace Mona {
-
-
-SocketSender::SocketSender(SocketHandlerBase& handler,const UInt8* data,UInt32 size,bool dump) : _wrote(false),_position(0),_data((UInt8*)data),_size(size),_memcopied(false),_dump(dump),_handler(handler),_running(false) {
-}
-
-SocketSender::SocketSender(SocketHandlerBase& handler,bool dump) : _wrote(false),_position(0),_data(NULL),_size(0),_memcopied(false),_dump(dump),_handler(handler),_running(false)  {
-}
-
 
 SocketSender::~SocketSender() {
 	if(_memcopied)
 		delete [] _data;
 }
 
-PoolThread* SocketSender::go(Exception& ex, PoolThread* pThread) {
-	_running=true;
-	_pSocketClosed = _handler._pClosed;
-	duplicate();
-
-	PoolThread* plthread = _handler.manager.poolThreads.enqueue(ex, this,pThread);
-	if (ex)
-		return NULL;
-
-	return plthread;
-}
-
-void SocketSender::release() {
-	if(!_running && !_wrote && referenceCount()==1 && available()) {
-		_wrote=true;
-		_handler.writeSocket(this);
-		return;
+bool SocketSender::run(Exception& ex) {
+	if (!_pSocketMutex || !_pSocket || _pThis.expired()) {
+		ex.set(Exception::SOCKET, "SocketSender failure, its associated socket is null");
+		return false;
 	}
-	WorkThread::release();
-}
 
-void SocketSender::run() {
-	if(!_running)
-		return;
-	if(!_pSocketClosed.isNull() && !*_pSocketClosed) {
-		duplicate();
-		_handler.writeSocket(this);
-	}
+	lock_guard<mutex> lock(*_pSocketMutex); // prevent socket deletion and socket close
+	if (_pSocketMutex.unique()) // socket is deleted
+		return true;
+	if (!_pSocket->_managed) // socket no more managed
+		return true;
+	shared_ptr<SocketSender> pThis(_pThis);
+	_pSocket->send(ex, pThis);
+	return true;
 }
 
 void SocketSender::dump(bool justInDebug) {
 	if(!_dump)
 		return;
-	if(!justInDebug || justInDebug&&Logs::GetLevel()>=7)
-		DUMP(begin(true),size(true),Poco::format("Response to %s",receiver().toString()).c_str())
+	if (!justInDebug || justInDebug&&Logs::GetLevel() >= 7) {
+		string address;
+		if (receiver(address) && _pSocket) {
+			SocketAddress address;
+			Exception ex;
+			DUMP(begin(true), size(true), "Response to ", _pSocket->peerAddress(ex, address).toString())
+		} else
+			DUMP(begin(true), size(true), "Response to ", address)
+		
+	}
 	_dump=false;
 }
 
-bool SocketSender::flush() {
+bool SocketSender::flush(Exception& ex,Socket& socket) {
 	if(!available())
 		return true;
 	dump();
-	try {
-		_position += send(begin()+_position,size()-_position);
-		if(_position == size())
-			return true;
-		if(!_memcopied && _data==begin()) {
-			_size = _size-_position;
-			UInt8* temp = new UInt8[_size]();
-			memcpy(temp,_data+_position,_size);
-			_data = temp;
-			_position = 0;
-			_memcopied = true;
-		}
-		return false;
-	} catch(Poco::Exception& ex) {
-		 WARN("Socket sending error, ",ex.displayText());
-	} catch(exception& ex) {
-		 WARN("Socket sending error, ",ex.what());
-	} catch(...) {
-		 WARN("Socket sending unknown error");
-	}
-	_position = size();
-	return true;
-}
 
+	_position += send(ex,socket,begin() + _position, size() - _position);
+	if (ex) {
+		// terminate the sender
+		_position = size();
+		return true;
+	}
+	// everything has been sent
+	if (_position == size())
+		return true;
+	// if data have been given on SocketSender construction we have to copy data to send it in an async way now
+	if (!_memcopied && _data == begin()) {
+		_size = _size - _position;
+		UInt8* temp = new UInt8[_size]();
+		memcpy(temp, _data + _position, _size);
+		_data = temp;
+		_position = 0;
+		_memcopied = true;
+	}
+	// remains data to send
+	return false;
+}
 
 } // namespace Mona

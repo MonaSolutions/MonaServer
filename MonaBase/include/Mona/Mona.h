@@ -27,7 +27,7 @@
 
 
 #if defined(POCO_OS_FAMILY_WINDOWS)
-	#define snprintf _snprintf
+	#define sprintf sprintf_s
 	#define timegm _mkgmtime
 #endif
 
@@ -57,7 +57,7 @@
 //
 
 #if defined(POCO_OS_FAMILY_WINDOWS) && defined(_DEBUG)
-	#include <map> // A cause d'un pb avec le nouveau new debug!
+	#include <map> // A cause d'un pb avec le nouveau new debug! TODO enlever?
 	#define new new(_NORMAL_BLOCK, __FILE__, __LINE__)
 #endif
 

@@ -16,48 +16,32 @@
 */
 
 #include "Mona/PoolThread.h"
-#include "Mona/String.h"
+#include "Mona/Logs.h"
+
 
 using namespace std;
-using namespace Poco;
+
 
 namespace Mona {
 
-UInt32 PoolThread::_Id = 0;
-
-PoolThread::PoolThread() : Startable(String::Format(string("PoolThread"), ++_Id))  {
-}
-
-PoolThread::~PoolThread() {
-	clear();
-}
-
-void PoolThread::clear() {
-	stop();
-}
-
-void PoolThread::push(AutoPtr<WorkThread>& pWork) {
+void PoolThread::push(shared_ptr<WorkThread>& pWork) {
 	++_queue;
-	ScopedLock<FastMutex> lock(_mutex);
+	lock_guard<mutex> lock(_mutex);
 	_jobs.push_back(pWork);
 	start();
 	wakeUp();
 }
 
-int PoolThread::queue() const {
-	return _queue.value();
-}
+void PoolThread::run(Exception& ex) {
 
-void PoolThread::run() {
+	while(!ex) {
 
-	for(;;) {
-
-		WakeUpType wakeUpType = sleep(40000); // 40 sec of timeout
+		WakeUpType wakeUpType = sleep(ex,40000); // 40 sec of timeout
 		
-		for(;;) {
+		while(!ex) {
 			WorkThread* pWork;
 			{
-				ScopedLock<FastMutex> lock(_mutex);
+				lock_guard<mutex> lock(_mutex);
 				if(_jobs.empty()) {
 					if(wakeUpType!=WAKEUP) { // STOP or TIMEOUT
 						if(wakeUpType==TIMEOUT)
@@ -66,13 +50,27 @@ void PoolThread::run() {
 					}
 					break;
 				}
-				pWork = _jobs.front();
+				pWork = _jobs.front().get();
 			}
 
-			pWork->run();
-			
+			try {
+				Exception ex;
+				bool success = pWork->run(ex);
+				if (ex) {
+					if (!success)
+						ERROR("Pool thread %s, %s", name().c_str(), ex.error().c_str())
+					else
+						WARN("Pool thread %s, %s", name().c_str(), ex.error().c_str());
+				} else if (!success)
+					ERROR("Pool thread %s, unknown error", name().c_str());
+			} catch (exception& ex) {
+				ERROR("Pool thread %s, %s", name().c_str(), ex.what());
+			} catch (...) {
+				ERROR("Pool thread %s, unknown error", name().c_str());
+			}
+
 			{
-				ScopedLock<FastMutex> lock(_mutex);
+				lock_guard<mutex> lock(_mutex);
 				_jobs.pop_front();
 			}
 			--_queue;

@@ -16,99 +16,95 @@
 */
 
 #include "Mona/UDPSocket.h"
-#include "Mona/Util.h"
 #include "Mona/UDPSender.h"
-#include "Poco/Format.h"
+
 
 using namespace std;
-using namespace Poco;
-using namespace Poco::Net;
+
 
 namespace Mona {
 
 
-UDPSocket::UDPSocket(const SocketManager& manager,bool allowBroadcast) : SocketHandler<DatagramSocket>(manager),_allowBroadcast(allowBroadcast),_bound(false),_connected(false),_buffer(2048) {
-	openSocket(new DatagramSocket())->setBroadcast(_allowBroadcast);
+UDPSocket::UDPSocket(const SocketManager& manager, bool allowBroadcast) : _broadcasting(false), DatagramSocket(manager), _allowBroadcast(allowBroadcast), _buffer(2048) {
+
 }
 
 UDPSocket::~UDPSocket() {
 }
 
-void UDPSocket::onReadable() {
-	UInt32 available = getSocket()->available();
-	if(available==0)
+void UDPSocket::onReadable(Exception& ex) {
+	UInt32 available = DatagramSocket::available(ex);
+	if(ex || available==0)
 		return;
 
 	if(available>_buffer.size())
 		_buffer.resize(available);
 
 	SocketAddress address;
-	onReception(&_buffer[0],getSocket()->receiveFrom(&_buffer[0],available,address),address);
+	int size = receiveFrom(ex, &_buffer[0], available, address);
+	if (ex)
+		return;
+	onReception(ex,&_buffer[0], size, address);
 }
 
 void UDPSocket::close() {
-	if(!_bound && !_connected)
-		return;
-	_error.clear();
-	
-	closeSocket();
-	openSocket(new DatagramSocket())->setBroadcast(_allowBroadcast);
-
-	_connected = false;
-	_bound = false;
+	DatagramSocket::close();
+	_broadcasting = false;
 }
 
-bool UDPSocket::bind(const Poco::Net::SocketAddress & address) {
-	_error.clear();
-	if(_bound) {
- 		if(Util::SameAddress(getSocket()->address(),address))
-			return true;
- 		_error = format("UDPSocket already bound on %s, close the socket before",getSocket()->address().toString());
- 		return false;
- 	}
-	if(_connected) {
-		_error = "Impossible to bind a connected UDPSocket, close the socket before";
+bool UDPSocket::bind(Exception& ex,const string& address) {
+	SocketAddress temp;
+	if (!temp.set(ex, address))
 		return false;
+	bool result = DatagramSocket::bind(ex, temp);
+	if (result && _allowBroadcast && !_broadcasting) {
+		setBroadcast(ex, true);
+		_broadcasting = !ex;
 	}
-	try {
-		getSocket()->bind(address,true);
-		_bound = true;
-	} catch(Poco::Exception& ex) {
-		_error = format("Impossible to bind to %s, %s",address.toString(),ex.displayText());
-	}
-	return _bound;
+		
+	return result;
 }
 
-void UDPSocket::connect(const SocketAddress& address) {
-	_error.clear();
-	_connected = false;
-	if(_bound) {
-		_error = "Impossible to connect a bound UDPSocket, close the socket before";
-		return;
+bool UDPSocket::connect(Exception& ex, const string& address) {
+	SocketAddress temp;
+	if (!temp.set(ex, address))
+		return false;
+	bool result = DatagramSocket::connect(ex, temp);
+	if (result && _allowBroadcast && !_broadcasting) {
+		setBroadcast(ex, true);
+		_broadcasting = !ex;
 	}
-	try {
-		getSocket()->connect(address);
-		_connected = true;
-	} catch(Poco::Exception& ex) {
-		_error = format("Impossible to connect to %s, %s",address.toString(),ex.displayText());
-	}
+	return result;
 }
 
-void UDPSocket::send(const UInt8* data,UInt32 size) {
-	_error.clear();
-	if(!_connected) {
-		_error = "Sending without recipient on a UDPSocket not connected";
-		return;
+bool UDPSocket::send(Exception& ex, const UInt8* data, UInt32 size) {
+	if (size == 0)
+		return true;
+	shared_ptr<UDPSender> pSender(new UDPSender(data, size));
+	DatagramSocket::send(ex, pSender);
+	if (!ex)
+		return false;
+	if (!ex && _allowBroadcast && !_broadcasting) {
+		setBroadcast(ex, true);
+		_broadcasting = !ex;
 	}
-	AutoPtr<UDPSender>(new UDPSender(*this,data,size));
+	return true;
 }
 
-void UDPSocket::send(const UInt8* data,UInt32 size,const SocketAddress& address) {
-	_error.clear();
-	if(size==0)
-		return;
-	AutoPtr<UDPSender> pSender(new UDPSender(*this,data,size));
-	pSender->address = address;
+bool UDPSocket::send(Exception& ex, const UInt8* data, UInt32 size,const string& address) {
+	if (size == 0)
+		return true;
+	shared_ptr<UDPSender> pSender(new UDPSender(data, size));
+	if (!pSender->address.set(ex, address))
+		return false;
+	DatagramSocket::send(ex, pSender);
+	if (!ex)
+		return false;
+	if (!ex && _allowBroadcast && !_broadcasting) {
+		setBroadcast(ex, true);
+		_broadcasting = !ex;
+	}
+	return true;
 }
 
 } // namespace Mona

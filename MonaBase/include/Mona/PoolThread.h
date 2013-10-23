@@ -20,28 +20,31 @@
 #include "Mona/Mona.h"
 #include "Mona/Startable.h"
 #include "Mona/WorkThread.h"
-#include "Poco/AtomicCounter.h"
-#include "Poco/AutoPtr.h"
 #include <list>
+#include <memory>
+#include <mutex>
+#include <atomic>
+
 
 namespace Mona {
 
 class PoolThread : private Startable {
 public:
-	PoolThread();
-	virtual ~PoolThread();
+	PoolThread() : Startable("PoolThread" + std::to_string(++_Id)) {}
+	virtual ~PoolThread() {clear();	}
 
-	void	clear();
-	void	push(Poco::AutoPtr<WorkThread>& pWork);
-	int		queue() const;
+	void	clear() { stop(); }
+	void	push(std::shared_ptr<WorkThread>& pWork);
+	int		queue() const { return _queue; }
 private:
-	void	run();
+	void	run(Exception& ex);
 
-	Poco::FastMutex							_mutex;
-	std::list<Poco::AutoPtr<WorkThread> >	_jobs;
-	Poco::AtomicCounter						_queue;
+	std::mutex								_mutex;
+	std::list<std::shared_ptr<WorkThread>>	_jobs;
+	std::atomic<int>						_queue;
 	
 	static Mona::UInt32						_Id;
+
 };
 
 

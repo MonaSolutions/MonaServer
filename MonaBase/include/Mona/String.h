@@ -22,7 +22,7 @@
 #include <limits>
 
 #undef max
-#pragma warning(disable:4146)
+// TODO? #pragma warning(disable:4146)
 
 #if defined(_MSC_VER) || defined(__MINGW32__)
 	#define I64_FMT "I64"
@@ -50,83 +50,20 @@ class String : Fix {
 public:
 
 	enum SplitOption {
-		TOK_IGNORE_EMPTY = 1, /// ignore empty tokens
-		TOK_TRIM = 2  /// remove leading and trailing whitespace from tokens
+		SPLIT_IGNORE_EMPTY = 1, /// ignore empty tokens
+		SPLIT_TRIM = 2  /// remove leading and trailing whitespace from tokens
 	};
 
-	static void Split(const std::string& value, const std::string& separators, std::vector<std::string>& values,int options = 0);
-	
-	template<typename T>
-	static T ToNumber(Exception& ex,const std::string& value) { return ToNumber<T>(ex,value.c_str()); }
+	enum TrimOption {
+		TRIM_BOTH = 3,
+		TRIM_LEFT = 1,
+		TRIM_RIGHT = 2
+	};
 
-	template<typename T>
-	static T ToNumber(Exception& ex,const char* value) {
-		int digit = 1, comma = 0;
-		bool beginning = true, negative = false;
-		T resultat = 0;
+	static void					Split(const std::string& value, const std::string& separators, std::vector<std::string>& values,int options = 0);
+	static const std::string&   Trim(std::string& value, TrimOption option = TRIM_BOTH);
 
-		if (!value || *value == '\0') {
-			ex.set(Exception::FORMATTING, "Empty string is not a number");
-			return false;
-		}
-		
-
-		T max = numeric_limits<T>::max();
-
-		do {
-			if (resultat >= max) {
-				ex.set(Exception::FORMATTING, value," exceeds maximum number capacity");
-				return false;
-			}
-
-			if (isblank(*value)) {
-				if (beginning)
-					continue;
-				ex.set(Exception::FORMATTING, value, " is not a corect number");
-				return false;
-			}
-
-			if (*value == '-') {
-				if (beginning && !negative) {
-					negative = true;
-					continue;
-				}
-				ex.set(Exception::FORMATTING, value, " is not a corect number");
-				return false;
-			}
-
-			if (beginning)
-				beginning = false;
-
-			if (*value == '.') {
-				if (comma == 0) {
-					comma = 1;
-					continue;
-				}
-				ex.set(Exception::FORMATTING, value, " is not a corect number");
-				return false;
-			}
-
-			if (isdigit(*value) == 0) {
-				ex.set(Exception::FORMATTING, value, " is not a corect number");
-				return false;
-			}
-
-			resultat = resultat * 10 + (*value - '0');
-			comma *= 10;
-		} while ((*++value) != '\0');
-
-		if (comma > 0)
-			resultat /= comma;
-
-
-		if (negative)
-			resultat = -resultat;
-		
-		return resultat;
-	}
-
-	static const std::string& toLower(std::string& str);
+	static const std::string&	ToLower(std::string& str);
 
 	template <typename ...Args>
 	static const std::string& Format(std::string& result, const Args&... args) {
@@ -148,76 +85,109 @@ public:
 		return String::Append(result, args ...);
 	}
 
+	// match le "char" cas
+	template <typename ...Args>
+	static const std::string& Append(std::string& result, char value, const Args&... args) {
+		result.append(1, value);
+		return String::Append(result, args ...);
+	}
+
 	/// \brief match "int" case
 	template <typename ...Args>
 	static const std::string& Append(std::string& result, int value, const Args&... args) {
-		sprintf_s(_Buffer, "%d", value);
-		result.append(_Buffer);
+		char buffer[64];
+		sprintf(buffer, "%d", value);
+		result.append(buffer);
 		return String::Append(result, args ...);
 	}
 
 	/// \brief match "long" case
 	template <typename ...Args>
 	static const std::string& Append(std::string& result, long value, const Args&... args) {
-		sprintf_s(_Buffer, "%ld", value);
-		result.append(_Buffer);
+		char buffer[64];
+		sprintf(buffer, "%ld", value);
+		result.append(buffer);
+		return String::Append(result, args ...);
+	}
+
+	/// \brief match "unsigned char" case
+	template <typename ...Args>
+	static const std::string& Append(std::string& result, unsigned char value, const Args&... args) {
+		char buffer[64];
+		sprintf(buffer, "%hu", value);
+		result.append(buffer);
+		return String::Append(result, args ...);
+	}
+
+	/// \brief match "unsigned short" case
+	template <typename ...Args>
+	static const std::string& Append(std::string& result, unsigned short value, const Args&... args) {
+		char buffer[64];
+		sprintf(buffer, "%hu", value);
+		result.append(buffer);
 		return String::Append(result, args ...);
 	}
 
 	/// \brief match "unsigned int" case
 	template <typename ...Args>
 	static const std::string& Append(std::string& result, unsigned int value, const Args&... args) {
-		sprintf_s(_Buffer, "%u", value);
-		result.append(_Buffer);
+		char buffer[64];
+		sprintf(buffer, "%u", value);
+		result.append(buffer);
 		return String::Append(result, args ...);
 	}
 
 	/// \brief match "unsigned long" case
 	template <typename ...Args>
 	static const std::string& Append(std::string& result, unsigned long value, const Args&... args) {
-		sprintf_s(_Buffer, "%lu", value);
-		result.append(_Buffer);
+		char buffer[64];
+		sprintf(buffer, "%lu", value);
+		result.append(buffer);
 		return String::Append(result, args ...);
 	}
 
 	/// \brief match "Int64" case
 	template <typename ...Args>
 	static const std::string& Append(std::string& result, Int64 value, const Args&... args) {
-		sprintf_s(_Buffer, "%" I64_FMT "d", value);
-		result.append(_Buffer);
+		char buffer[64];
+		sprintf(buffer, "%" I64_FMT "d", value);
+		result.append(buffer);
 		return String::Append(result, args ...);
 	}
 
 	/// \brief match "UInt64" case
 	template <typename ...Args>
 	static const std::string& Append(std::string& result, UInt64 value, const Args&... args) {
-		sprintf_s(_Buffer, "%" I64_FMT "u", value);
-		result.append(_Buffer);
+		char buffer[64];
+		sprintf(buffer, "%" I64_FMT "u", value);
+		result.append(buffer);
 		return String::Append(result, args ...);
 	}
 
 	/// \brief match "float" case
 	template <typename ...Args>
 	static const std::string& Append(std::string& result, float value, const Args&... args) {
-		sprintf_s(_Buffer, "%.8g", value);
-		result.append(_Buffer);
+		char buffer[64];
+		sprintf(buffer, "%.8g", value); // TODO check than with a ToNumber it gives the same thing
+		result.append(buffer);
 		return String::Append(result, args ...);
 	}
 
 	/// \brief match "double" case
 	template <typename ...Args>
 	static const std::string& Append(std::string& result, double value, const Args&... args) {
-		sprintf_s(_Buffer, "%.16g", value);
-		result.append(_Buffer);
+		char buffer[64];
+		sprintf(buffer, "%.16g", value); // TODO check than with a ToNumber it gives the same thing
+		result.append(buffer);
 		return String::Append(result, args ...);
 	}
 
 	/// \brief match pointer case
 	template <typename ...Args>
 	static const std::string& Append(std::string& result, const void* value, const Args&... args)	{
-
-		sprintf_s(_Buffer, "%08lX", (UIntPtr) value);
-		result.append(_Buffer);
+		char buffer[64];
+		sprintf(buffer, "%08lX", (UIntPtr) value);
+		result.append(buffer);
 		return String::Append(result, args ...);
 	}
 
@@ -228,22 +198,96 @@ public:
 	/// \param args Other arguments to append
 	template <class Type, typename ...Args>
 	static const std::string& Append(std::string& result, const Mona::Format<Type>& custom, const Args&... args) {
+		char buffer[64];
 		try {
-			snprintf(_Buffer, sizeof(_Buffer), custom.format, custom.value);
+			sprintf(buffer, sizeof(buffer), custom.format, custom.value);
 		}
 		catch (...) {
 			// TODO remove the loop => ERROR("String formatting error during Append(...)");
 			return result;
 		}
-		result.append(_Buffer);
+		result.append(buffer);
 		return String::Append(result, args ...);
+	}
+
+	template<typename T>
+	static bool ToNumber(const std::string& value, T& result) {
+		Exception ex;
+		ToNumber(ex, value, result);
+		return !ex;
+	}
+
+	template<typename T>
+	static T ToNumber(Exception& ex, const std::string& value, T default=0) {
+		int digit = 1, comma = 0;
+		bool beginning = true, negative = false;
+
+		const char* str(value.c_str());
+
+		if (!str || *str == '\0') {
+			ex.set(Exception::FORMATTING, "Empty string is not a number");
+			return false;
+		}
+
+
+		T max = numeric_limits<T>::max();
+
+		do {
+			if (default >= max) {
+				ex.set(Exception::FORMATTING, str, " exceeds maximum number capacity");
+				return false;
+			}
+
+			if (isblank(*str)) {
+				if (beginning)
+					continue;
+				ex.set(Exception::FORMATTING, str, " is not a corect number");
+				return false;
+			}
+
+			if (*str == '-') {
+				if (beginning && !negative) {
+					negative = true;
+					continue;
+				}
+				ex.set(Exception::FORMATTING, str, " is not a corect number");
+				return false;
+			}
+
+			if (beginning)
+				beginning = false;
+
+			if (*str == '.') {
+				if (comma == 0) {
+					comma = 1;
+					continue;
+				}
+				ex.set(Exception::FORMATTING, str, " is not a corect number");
+				return false;
+			}
+
+			if (isdigit(*str) == 0) {
+				ex.set(Exception::FORMATTING, str, " is not a corect number");
+				return false;
+			}
+
+			default = default * 10 + (*str - '0');
+			comma *= 10;
+		} while ((*++str) != '\0');
+
+		if (comma > 0)
+			default /= comma;
+
+
+		if (negative)
+			default = -default;
+
+		return default;
 	}
 
 private:
 
 	static const std::string& Append(std::string& result) { return result; }
-
-	static char			_Buffer[64];
 };
 
 

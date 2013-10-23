@@ -29,10 +29,10 @@ public:
 	Trigger();
 	virtual ~Trigger();
 
-	bool raise(Exception& ex);
+	UInt16 raise(Exception& ex);
 	void start();
 	void reset();
-	void stop();
+	void stop() { _running = false; }
 private:
 	Mona::Time		_timeInit;
 	Mona::Int8		_cycle;
@@ -41,9 +41,6 @@ private:
 
 };
 
-inline void Trigger::stop() {
-	_running=false;
-}
 
 
 } // namespace Mona

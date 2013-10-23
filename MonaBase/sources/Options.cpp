@@ -17,11 +17,13 @@ This file is a part of Mona.
 
 #include "Mona/Options.h"
 
+
 using namespace Poco;
 using namespace std;
 
 namespace Mona {
 
+Option	Options::_OptionEmpty;
 
 Options::Options() : _pOption(NULL){
 }
@@ -29,48 +31,42 @@ Options::Options() : _pOption(NULL){
 Options::~Options() {
 }
 
-void Options::add(Exception& ex, const Option& option) {
-	if (option.fullName().empty()) {
-		ex.set(Exception::OPTION,"Invalid option (fullName is empty)");
-		return;
-	}
-	if (option.shortName().empty()) {
-		ex.set(Exception::OPTION, "Invalid option (shortName is empty)");
-		return;
-	}
-	auto result = _options.insert(option);
-	if (!result.second) {
-		ex.set(Exception::OPTION, "Option ",option.fullName(), " (", option.shortName() , ") duplicated");
-		return;
-	}
-}
 
-
-const Option& Options::get(Exception& ex, const string& name) const {
-	auto result = _options.find(Option(name, ""));
-	if (result==_options.end())
-		ex.set(Exception::OPTION, "Unknown ",name," option");
+const Option& Options::get(Exception& ex,const string& name) const {
+	auto result = _options.find(Option(name.c_str(), ""));
+	if (result == _options.end()) {
+		ex.set(Exception::OPTION, "Unknown ", name, " option");
+		return _OptionEmpty;
+	}
 	return *result;
 }
 
-void Options::process(Exception& ex, int argc, char* argv[], const function<void(const string&, const string&)>& handler) {
+bool Options::process(Exception& ex, int argc, char* argv[], const function<void(Exception& ex,const string&, const string&)>& handler) {
 	_pOption = NULL;
 	string name, value;
 	set<string> alreadyReaden;
 	for (int i = 1; i < argc; ++i) {
-		if (process(ex, argv[i], name, value, alreadyReaden) && handler)
-			handler(name, value);
+		if (process(ex,argv[i], name, value, alreadyReaden) && !ex && handler)
+			handler(ex,name, value);
+		if (ex)
+			return false;
 	}
 
-	if (_pOption)
+	if (_pOption) {
 		ex.set(Exception::ARGUMENT, _pOption->fullName(), " requires ", _pOption->argumentName());
-	for (const Option& option : _options) {
-		if (option.required() && alreadyReaden.find(option.fullName()) == alreadyReaden.end())
-			ex.set(Exception::OPTION, "Option ", option.fullName(), " required");
+		return false;
 	}
+		
+	for (const Option& option : _options) {
+		if (option.required() && alreadyReaden.find(option.fullName()) == alreadyReaden.end()) {
+			ex.set(Exception::OPTION, "Option ", option.fullName(), " required");
+			return false;
+		}
+	}
+	return true;
 }
 
-bool Options::process(Exception& ex, const string& argument, string& name, string& value, set<string>& alreadyReaden) {
+bool Options::process(Exception& ex,const string& argument, string& name, string& value, set<string>& alreadyReaden) {
 	string::const_iterator it = argument.begin();
 	string::const_iterator end = argument.end();
 
@@ -86,14 +82,19 @@ bool Options::process(Exception& ex, const string& argument, string& name, strin
 		while (itEnd != end && *itEnd != ':' && *itEnd != '=')
 			++itEnd;
 
-		if (it == itEnd)
+		if (it == itEnd) {
 			ex.set(Exception::OPTION, "Empty option");
-
+			return false;
+		}
+			
 		name.assign(it, itEnd);
-		_pOption = &get(ex, name);
+		_pOption = &get(ex,name);
+		if (ex)
+			return false;
 		if (alreadyReaden.find(_pOption->fullName()) != alreadyReaden.end() && !_pOption->repeatable()) {
 			_pOption = NULL;
-			ex.set(Exception::OPTION, "option ", name, " duplicated");
+			ex.set(Exception::OPTION, "Option ", name, " duplicated");
+			return false;
 		}
 		alreadyReaden.insert(_pOption->fullName());
 
@@ -109,6 +110,7 @@ bool Options::process(Exception& ex, const string& argument, string& name, strin
 	if (it == end && _pOption->argumentRequired()) {
 		_pOption = NULL;
 		ex.set(Exception::ARGUMENT, _pOption->fullName(), " requires ", _pOption->argumentName());
+		return false;
 	}
 
 	value.assign(it, end);

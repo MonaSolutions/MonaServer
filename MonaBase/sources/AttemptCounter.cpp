@@ -28,14 +28,13 @@ AttemptCounter::AttemptCounter() {
 
 AttemptCounter::~AttemptCounter() {
 	// delete attempts
-	map<string,Attempt*>::const_iterator it;
-	for(it=_attempts.begin();it!=_attempts.end();++it)
-		delete it->second;
+	for(auto it : _attempts)
+		delete it.second;
 }
 
 
 void AttemptCounter::clearAttempt(const string& tag) {
-	map<string,Attempt*>::iterator it=_attempts.find(tag);
+	auto it=_attempts.find(tag);
 	if(it==_attempts.end())
 		return;
 	delete it->second;
@@ -44,7 +43,7 @@ void AttemptCounter::clearAttempt(const string& tag) {
 
 void AttemptCounter::manage() {
 	// clean obsolete attempts
-	map<string,Attempt*>::iterator it=_attempts.begin();
+	auto it=_attempts.begin();
 	while(it!=_attempts.end()) {
 		if(it->second->obsolete()) {
 			delete it->second;

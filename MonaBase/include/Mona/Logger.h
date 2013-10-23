@@ -19,6 +19,7 @@
 
 #include "Mona/Mona.h"
 #include "Poco/Thread.h"
+#include <mutex>
 
 namespace Mona {
 
@@ -26,8 +27,7 @@ namespace Mona {
 class Logger
 {
 public:
-	enum Priority
-	{
+	enum Priority {
 		PRIO_FATAL = 1,   /// A fatal error. The application will most likely terminate. This is the highest priority.
 		PRIO_CRITIC,    /// A critical error. The application might not be able to continue running successfully.
 		PRIO_ERROR,       /// An error. An operation did not complete successfully, but the application as a whole is not affected.
@@ -38,14 +38,12 @@ public:
 		PRIO_TRACE        /// A tracing message. This is the lowest priority.
 	};
 
-	Logger() {}
-	virtual ~Logger() {}
 
-	virtual void logHandler(Poco::Thread::TID threadId,const std::string& threadName,Priority priority,const char *filePath,long line, const char *text)=0;
-	virtual void dumpHandler(const Mona::UInt8* data,Mona::UInt32 size){}
+	virtual void logHandler(Poco::Thread::TID threadId,const std::string& threadName,Priority priority,const char *filePath,const std::string& shortFilePath,long line, const std::string& message);
+	virtual void dumpHandler(const UInt8* data, UInt32 size);
 
 private:
-	
+	static std::mutex	_Mutex;
 };
 
 } // namespace Mona

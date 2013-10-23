@@ -19,7 +19,7 @@
 
 #include "Mona/Mona.h"
 #include "Poco/BinaryWriter.h"
-#include "Poco/Net/SocketAddress.h"
+#include "Mona/SocketAddress.h"
 
 namespace Mona {
 
@@ -42,7 +42,7 @@ public:
 	void writeString16(const char* value,Mona::UInt16 size);
 	void write7BitValue(Mona::UInt32 value);
 	void write7BitLongValue(Mona::UInt64 value);
-	void writeAddress(const Poco::Net::SocketAddress& address,bool publicFlag);
+	void writeAddress(const SocketAddress& address,bool publicFlag);
 
 	static BinaryWriter Null;
 };

@@ -16,15 +16,12 @@
 */
 
 #include "Mona/SocketManager.h"
-#include "Mona/Logs.h"
 #include "string.h" // for memset
-#if !defined(POCO_OS_FAMILY_WINDOWS)
+#if !defined(_WIN32)
 #include "sys/epoll.h"
 #endif
 
 using namespace std;
-using namespace Poco;
-using namespace Poco::Net;
 
 namespace Mona {
 
@@ -35,35 +32,45 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 }
 #endif
 
-class SocketManaged : public Poco::RefCountedObject {
-public:
-	SocketManaged(SocketHandlerBase& handler):handler(handler),socketCopy(*handler.getSocket()) {}
-	SocketHandlerBase&			handler;
-private:
-	Socket						socketCopy;
-};	
 
-
-SocketManager::SocketManager(PoolThreads& poolThreads,UInt32 bufferSize,const string& name) : poolThreads(poolThreads),_eventFD(0),_eventSystem(0),_bufferSize(bufferSize),Startable(name),Task((TaskHandler&)*this),_currentEvent(0),_currentError(0),_event(false),_pCurrentManaged(NULL) {
+SocketManager::SocketManager(TaskHandler& handler, PoolThreads& poolThreads, UInt32 bufferSize, const string& name) :
+	_fakeSocket(*this), _selfHandler(&handler == this), _poolThreads(poolThreads), _eventFD(0), _sockfd(INVALID_SOCKET), _eventSystem(0), _bufferSize(bufferSize), Startable(name), Task(handler), _currentEvent(0), _currentError(0), _eventInit(false), _ppSocket(NULL) {
+}
+SocketManager::SocketManager(PoolThreads& poolThreads, UInt32 bufferSize, const string& name) :
+	SocketManager((TaskHandler&)*this, poolThreads, bufferSize, name) {
 }
 
-SocketManager::SocketManager(TaskHandler& handler,PoolThreads& poolThreads,UInt32 bufferSize,const string& name) : poolThreads(poolThreads),_eventFD(0),_eventSystem(0),_bufferSize(bufferSize),Startable(name),Task(handler),_currentEvent(0),_currentError(0),_event(false),_pCurrentManaged(NULL) {
+void SocketManager::start() {
+	TaskHandler::start();
+	Startable::start();
+}
+
+void SocketManager::stop() {
+	if (!Startable::running())
+		return;
+	TaskHandler::stop();
+	_eventInit.wait();
+	clear();
+#if defined(POCO_OS_FAMILY_WINDOWS)
+	if (_eventSystem > 0)
+		PostMessage(_eventSystem, WM_QUIT, 0, 0);
+#else
+	if (_eventSystem > 0)
+		::close(_eventFD);
+#endif
+	Startable::stop();
+	_eventInit.reset();
 }
 
 
-SocketManager::~SocketManager() {
-	stop();
-}
 
 void SocketManager::clear() {
-	ScopedLock<FastMutex>	lock(_mutex);
-	map<poco_socket_t,SocketManaged*>::iterator it;
-	for(it=_sockets.begin();it!= _sockets.end();++it) {
-		it->second->release();
+	lock_guard<mutex> lock(_mutex);
+	for(auto it : _sockets) {
 		if(_eventSystem>0) {
 #if defined(POCO_OS_FAMILY_WINDOWS)
-			WSAAsyncSelect(it->first,_eventSystem,0,0);
-			PostMessage(_eventSystem,0,(WPARAM)it->second,0);
+			WSAAsyncSelect(it.first,_eventSystem,0,0);
+			PostMessage(_eventSystem,0,(WPARAM)it.second,0);
 #else
 			write(_eventFD,&it->second,sizeof(it->second));
 #endif
@@ -73,134 +80,113 @@ void SocketManager::clear() {
 	_sockets.clear();
 }
 
-void SocketManager::start() {
-	TaskHandler::start();
-	Startable::start();
-}
 
-void SocketManager::stop() {
-	if(!Startable::running())
-		return;
-	TaskHandler::stop();
-	_event.wait();
-	clear();
-#if defined(POCO_OS_FAMILY_WINDOWS)
-	if(_eventSystem>0)
-		PostMessage(_eventSystem,WM_QUIT,0,0);
-#else
-	if(_eventSystem>0)
-		::close(_eventFD);
-#endif
-	Startable::stop();
-	_event.reset();
-}
-
-
-bool SocketManager::open(SocketHandlerBase& handler) const {
-	handler._pSocketManaged = NULL;
-	if(!Startable::running()) {
-		ERROR("Socket manager is not running")
+bool SocketManager::add(Exception& ex,Socket& socket) const {
+	if (!Startable::running()) {
+		ex.set(Exception::SOCKET, name(), "is not running");
 		return false;
 	}
-	_event.wait();
+
+	_eventInit.wait();
 
 	if(_eventSystem==0) {
-		ERROR("Impossible to manage this socket, the event system hasn't been able to start")
+		ex.set(Exception::SOCKET, name(), " hasn't been able to start, impossible to manage sockets");
 		return false;
 	}
 
-	poco_socket_t fd = handler.getSocket()->impl()->sockfd();
+	SOCKET sockfd = socket._sockfd;
 
-	ScopedLock<FastMutex>	lock(_mutex);
-	map<poco_socket_t,SocketManaged*>::iterator it = _sockets.lower_bound(fd);
-	if(it!=_sockets.end() && it->first==fd) {
-		handler._pSocketManaged = it->second;
-		return true;
-	}
 
-	SocketManaged * pSocketManaged = new SocketManaged(handler);
-	pSocketManaged->duplicate();
+	lock_guard<mutex> lock(_mutex);
 
+	auto it = _sockets.lower_bound(sockfd);
+	if (it != _sockets.end() && it->first == sockfd)
+		return true; // already managed
+	
+	
+	auto ppSocket = new unique_ptr<Socket>(&socket);
 #if defined(POCO_OS_FAMILY_WINDOWS)
-	if(WSAAsyncSelect(fd,_eventSystem,104,FD_ACCEPT | FD_CLOSE | FD_READ)!=0) {
-		delete pSocketManaged;
-		ERROR("Impossible to manage this socket, code error ",WSAGetLastError())
+	int flags = FD_ACCEPT | FD_CLOSE | FD_READ;
+	if (WSAAsyncSelect(sockfd, _eventSystem, 104, flags) != 0) {
+		ppSocket->release();
+		delete ppSocket;
+		Socket::SetError(ex);
 		return false;
 	}
 #else
 	epoll_event event;
-	 event.events = EPOLLIN | EPOLLRDHUP;
-	 event.data.fd = fd;
-	 event.data.ptr = pSocketManaged;
-	 int res = epoll_ctl(_eventSystem, EPOLL_CTL_ADD,fd, &event);
+	event.events = EPOLLIN | EPOLLRDHUP;
+	 event.data.fd = sockfd;
+	 event.data.ptr = ppSocket;
+	 int res = epoll_ctl(_eventSystem, EPOLL_CTL_ADD,sockfd, &event);
 	if(res<0) {
-		try { error(errno);} catch(Exception& ex) {
-			delete pSocketManaged;
-			ERROR("Impossible to manage this socket, ",ex.displayText());
-			return false;
-		}
+		ppSocket->release();
+		delete ppSocket;
+		Socket::SetError(ex);
+		return false;
 	}
 #endif
 
 	++_counter;
-	if(it!=_sockets.begin())
-		--it;
-	_sockets.insert(it,pair<poco_socket_t,SocketManaged*>(fd,pSocketManaged));
-	handler._pSocketManaged = pSocketManaged;
+	socket._ppSocket = _ppSocket;
+	_sockets.emplace_hint(it, sockfd, ppSocket);
 
 	if(_bufferSize>0) {
-		handler.getSocket()->setReceiveBufferSize(_bufferSize);
-		handler.getSocket()->setSendBufferSize(_bufferSize);
+		socket.setReceiveBufferSize(ex, _bufferSize);
+		socket.setSendBufferSize(ex, _bufferSize);
 	}
+
 	return true;
 }
 
-void SocketManager::startWrite(SocketHandlerBase& handler) const {
-#if defined(POCO_OS_FAMILY_WINDOWS)
-	if(WSAAsyncSelect(handler.getSocket()->impl()->sockfd(),_eventSystem,104,FD_ACCEPT | FD_CLOSE | FD_READ | FD_WRITE)!=0)
-		ERROR("Impossible to start writing on this socket, code error ",WSAGetLastError())
+bool SocketManager::startWrite(Exception& ex, Socket& socket) const {
+#if defined(_WIN32)
+	if (WSAAsyncSelect(socket._sockfd, _eventSystem, 104, FD_ACCEPT | FD_CLOSE | FD_READ | FD_WRITE) != 0) {
+		Socket::SetError(ex);
+		return false;
+	}
 #else
 	epoll_event event;
 	event.events = EPOLLIN | EPOLLOUT | EPOLLRDHUP;
-	event.data.fd = fd;
-	event.data.ptr = handler._pSocketManaged;
+	event.data.fd = socket._sockfd;
+	event.data.ptr = socket._ppSocket;
 	int res = epoll_ctl(_eventSystem, EPOLL_CTL_MOD,fd, &event);
 	if(res<0) {
-		try { error(errno);} catch(Exception& ex) {
-			ERROR("Impossible to start writing on this socket, ",ex.displayText());
-		}
+		Socket::SetError(ex);
+		return false;
 	}
 #endif
+	return true;
 }
 
-void SocketManager::stopWrite(SocketHandlerBase& handler) const {
-#if defined(POCO_OS_FAMILY_WINDOWS)
-	if(WSAAsyncSelect(handler.getSocket()->impl()->sockfd(),_eventSystem,104,FD_ACCEPT | FD_CLOSE | FD_READ)!=0)
-		WARN("Stop socket writing, code error ",WSAGetLastError())
+bool SocketManager::stopWrite(Exception& ex, Socket& socket) const {
+#if defined(_WIN32)
+	if (WSAAsyncSelect(socket._sockfd, _eventSystem, 104, FD_ACCEPT | FD_CLOSE | FD_READ) != 0) {
+		Socket::SetError(ex);
+		return false;
+	}
 #else
 	epoll_event event;
 	event.events = EPOLLIN | EPOLLRDHUP;
-	event.data.fd = fd;
-	event.data.ptr = handler._pSocketManaged;
+	event.data.fd = socket._sockfd;
+	event.data.ptr = socket._ppSocket;
 	int res = epoll_ctl(_eventSystem, EPOLL_CTL_MOD,fd, &event);
 	if(res<0) {
-		try { error(errno);} catch(Exception& ex) {
-			WARN("Stop socket writing, ",ex.displayText());
-		}
+		Socket::SetError(ex);
+		return false;
 	}
 #endif
+	return true;
 }
 
 
-void SocketManager::close(SocketHandlerBase& handler) const {
-	ScopedLock<FastMutex>	lock(_mutex);
-	map<poco_socket_t,SocketManaged*>::iterator it = _sockets.find(handler.getSocket()->impl()->sockfd());
+void SocketManager::remove(Socket& socket) const {
+	lock_guard<mutex>	lock(_mutex);
+	auto it = _sockets.find(socket._sockfd);
 	if(it == _sockets.end())
 		return;
 
-	_event.wait();
-
-	it->second->release();
+	_eventInit.wait();
 
 	if(_eventSystem>0) {
 #if defined(POCO_OS_FAMILY_WINDOWS)
@@ -214,53 +200,53 @@ void SocketManager::close(SocketHandlerBase& handler) const {
 	}
 
 	--_counter;
+	socket._ppSocket = NULL;
 	_sockets.erase(it);
 }
 
-void SocketManager::handle() {
-	if(!_error.empty()) {
-		ERROR("Error in SocketManager : " , _error);
-		return;
-		// TODO return Exception&?
-	}
-
-	if(sockfd()==POCO_INVALID_SOCKET) {
-		ERROR(name()," manages an invalid socket")
+void SocketManager::handle(Exception& ex) {
+	if (_ex) {
+		ex.set(_ex);
 		return;
 	}
 
-	SocketManaged* pSocketManaged = _pCurrentManaged;
-	if(!pSocketManaged) {
-		map<poco_socket_t,SocketManaged*>::const_iterator it = _sockets.find(sockfd());
+	Socket* pSocket(NULL);
+	if (_ppSocket)
+		pSocket = _ppSocket->get();
+	if (!pSocket) {
+		auto it = _sockets.find(_sockfd);
 		if(it==_sockets.end())
 			return;
-		pSocketManaged = it->second;
+		pSocket = it->second->get();
 	}
-	if(pSocketManaged->referenceCount()==1)
+	if (!pSocket)
 		return;
+	
 	if(_currentError!=0) {
-		try {
-			error(_currentError);
-		} catch(Poco::Exception& exp) {
-			pSocketManaged->handler.onError(exp.displayText());
-		}
+		Exception curEx;
+		Socket::SetError(curEx, _currentError);
+		pSocket->onError(curEx.error());
 		return;
 	}
-#if defined(POCO_OS_FAMILY_WINDOWS)
-	if(_currentEvent==FD_READ && available()==0) // In the linux case, when _currentEvent==SELECT_READ with 0 bytes it's a ACCEPT event!
+#if defined(_WIN32)
+	if (_currentEvent == FD_READ && _fakeSocket.available(_exSkip) == 0) // In the linux case, when _currentEvent==SELECT_READ with 0 bytes it's a ACCEPT event!
 		return;
 #endif
-	try {
-		pSocketManaged->handler.onReadable();
-	} catch(Poco::Exception& exp) {
-		pSocketManaged->handler.onError(exp.displayText());
-	}
+	Exception curEx;
+	pSocket->onReadable(curEx);
+	if (curEx)
+		pSocket->onError(curEx.error());
 }
 
+void SocketManager::requestHandle() {
+	Exception ex;
+	giveHandle(ex);
+}
 
-void SocketManager::run() {
-#if defined(POCO_OS_FAMILY_WINDOWS)
+void SocketManager::run(Exception& exc) {
+	Exception& ex(_selfHandler ? exc : _ex);
 	const char* name = Startable::name().c_str();
+#if defined(POCO_OS_FAMILY_WINDOWS)
 	WNDCLASSEX wc;
 	memset(&wc, 0, sizeof(wc));
 	wc.cbSize = sizeof(WNDCLASSEX);
@@ -271,7 +257,7 @@ void SocketManager::run() {
 	RegisterClassEx(&wc);
 	_eventSystem = CreateWindow(name, name, WS_EX_LEFT, 0, 0, 0, 0, HWND_MESSAGE, NULL, NULL, NULL);
 	if(_eventSystem==0)
-		_error = "Impossible to create the event system";
+		ex.set(Exception::NETWORK, name, " starting failed, impossible to manage sockets");
 #else
 	int pipefds[2] = {};
     pipe(pipefds);
@@ -281,9 +267,7 @@ void SocketManager::run() {
 		_eventSystem = epoll_create(1); // Argument is ignored, but has to be greater or equal to 1
 	if(_eventFD<=0 || _eventSystem<=0) {
 		_eventSystem = _eventFD = 0;
-		try {error(errno);} catch(Exception& ex) {
-			_error = format("Impossible to create the event system, %s",ex.displayText());
-		}	
+		ex.set(Exception::NETWORK, name, " starting failed, impossible to manage sockets");
 	} else {
 		// Add the event to terminate the epoll_wait!
 		epoll_event event;
@@ -293,36 +277,47 @@ void SocketManager::run() {
 	}
 #endif
 
-	_event.set();
-	if(!_error.empty()) {
+	_eventInit.set();
+	if (ex) {
 		Task::waitHandle();
 		return;
 	}
-	
+
+
+
 #if defined(POCO_OS_FAMILY_WINDOWS)
-	MSG msg;
+	MSG		  msg;
     while(GetMessage(&msg,_eventSystem, 0, 0)) {
 		if(msg.wParam==0)
 			continue;
 		if(msg.message==0) {
-			SocketManaged* pSocketManaged = (SocketManaged*)msg.wParam;
-			pSocketManaged->release();
+			unique_ptr<Socket>* ppSocket = (unique_ptr<Socket>*)msg.wParam;
+			ppSocket->release(); // don't delete the pSocket!
+			delete ppSocket;
 			continue;
 		}
 		_currentEvent = WSAGETSELECTEVENT(msg.lParam);
-		reset(msg.wParam);
+		_fakeSocket._sockfd = _sockfd = msg.wParam;
 		if(_currentEvent == FD_WRITE) {
-			ScopedLock<FastMutex>	lock(_mutex);
-			map<poco_socket_t,SocketManaged*>::const_iterator it = _sockets.find(sockfd());
-			if(it!=_sockets.end())
-				it->second->handler.flushSocket();
-		} else if(_currentEvent!=FD_READ || available()) {
+
+			// protected for _sockets access
+			lock_guard<mutex> lock(_mutex);
+			auto it = _sockets.find(_sockfd);
+			if (it != _sockets.end()) {
+				Socket* pSocket = (*it->second).get();
+				Exception curEx;
+				pSocket->flush(curEx);
+				if (curEx)
+					pSocket->onError(curEx.error());
+			}
+
+		} else if (_currentEvent != FD_READ || _fakeSocket.available(_exSkip)) {
 			_currentError = WSAGETSELECTERROR(msg.lParam);
-			if(_currentError == POCO_ECONNABORTED)
+			if(_currentError == ECONNABORTED)
 				_currentError = 0;
 			Task::waitHandle();
 		}
-		reset();
+		_sockfd = INVALID_SOCKET;
 	}
 	DestroyWindow(_eventSystem);
 
@@ -336,11 +331,9 @@ void SocketManager::run() {
 		int results = epoll_wait(_eventSystem,&events[0],events.size(), -1);
 
 		if(results<0 && errno!=EINTR) {
-			try {error(errno);} catch(Exception& ex) {
-				_error = format("Socket manager error, %s",ex.displayText());
-				waitHandle();
-				break;
-			}
+			SetError(ex);
+			Task::waitHandle();
+			break;
 		}
 
 		// for each ready socket
@@ -348,31 +341,36 @@ void SocketManager::run() {
 		for(i;i<results;++i) {
 			epoll_event event = events[i];
 			if(event.data.fd==readFD) {
-				SocketManaged* pSocketManaged(NULL);
-				read(readFD,&pSocketManaged,sizeof(pSocketManaged));
-				if(!pSocketManaged) {
+				unique_ptr<Socket>* ppSocket(NULL);
+				read(readFD,&ppSocket,sizeof(pSocket));
+				if(!ppSocket) {
 					i=-1; // termination signal!
 					break;
 				}
-				pSocketManaged->release();
+				ppSocket->release(); // don't delete the pSocket!
+				delete ppSocket;
 				continue;		
 			}
-			_pCurrentManaged = (SocketManaged*)event.data.ptr;
-			if(!_pCurrentManaged)
-				continue;
-			reset(_pCurrentManaged->socketCopy.impl()->sockfd());
+		
 			_currentEvent = event.events;
-			if(_pCurrentManaged->referenceCount()>1) {
-				if(_currentEvent&EPOLLERR)
-					_currentError = lastError();
-				if(_currentError==0 && _currentEvent&EPOLLOUT)
-					_pCurrentManaged->handler.flushSocket();
-				else
-					waitHandle();
+			if(_currentEvent&EPOLLERR)
+				_currentError = Socket:LastError();
+			if(_currentError==0 && _currentEvent&EPOLLOUT) {
+				// protected for _ppSocket access access
+				lock_guard<mutex> lock(_mutex);
+				_ppSocket = ((unique_ptr<Socket>*)event.data.ptr;
+				if(_ppSocket->get()) {
+					Exception curEx;
+					(*_ppSocket)->flush(curEx);
+					if (curEx)
+						(*_ppSocket)->onError(curEx.error());
+				}
+			} else {
+				_ppSocket = ((unique_ptr<Socket>*)event.data.ptr;
+				Task::waitHandle();
 			}
 			_currentError = 0;
-			_pCurrentManaged = NULL;
-			reset();
+			_ppSocket = NULL;
 		}
 		if(i==-1)
 			break; // termination signal!

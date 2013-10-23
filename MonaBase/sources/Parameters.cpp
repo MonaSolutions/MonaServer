@@ -26,33 +26,24 @@ namespace Mona {
 
 bool Parameters::getNumber(const string& key, double& value) const {
 	string temp;
-	if (getRaw(key, temp)) {
-		Exception ex;
-		value = String::ToNumber<double>(ex, temp);
-		if (!ex)
-			return true;
-	}
-	return false;
+	if (!getRaw(key, temp))
+		return false;
+	return String::ToNumber<double>(temp,value);
 }
 
 bool Parameters::getNumber(const string& key, int& value) const {
 	string temp;
-	if (getRaw(key, temp)) {
-		Exception ex;
-		value = String::ToNumber<int>(ex, temp);
-		if (!ex)
-			return true;
-	}
-	return false;
+	if (!getRaw(key, temp))
+		return false;
+	return String::ToNumber<int>(temp, value);
 }
 bool Parameters::getBool(const string& key, bool& value) const {
 	string temp;
 	if (!getRaw(key, temp))
 		return false;
-	Exception ex;
-	int n = String::ToNumber<int>(ex, temp);
-	value = !ex && (n > 0); // true if n > 0
-	value |= (stricmp(temp.c_str(), "false") != 0 && stricmp(temp.c_str(), "no") != 0 && stricmp(temp.c_str(), "off") != 0);
+	int number;
+	// true if number !=0 or if not equals to "false", "no" or "off"
+	value = String::ToNumber<int>(temp,number) && (number != 0) || (stricmp(temp.c_str(), "false") != 0 && stricmp(temp.c_str(), "no") != 0 && stricmp(temp.c_str(), "off") != 0);
 	return true;
 }
 

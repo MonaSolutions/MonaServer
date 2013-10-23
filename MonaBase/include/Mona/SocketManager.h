@@ -18,61 +18,72 @@
 #pragma once
 
 #include "Mona.h"
-#include "Mona/Exceptions.h"
 #include "Mona/Startable.h"
 #include "Mona/TaskHandler.h"
 #include "Mona/PoolThreads.h"
-#include "Mona/SocketHandler.h"
+#include "Mona/Socket.h"
 #include <map>
 
 namespace Mona {
 
-class SocketManaged;
-class SocketManager : private Poco::Net::SocketImpl, private Task, private Startable, private TaskHandler {
-	friend class SocketHandlerBase;
+class SocketManager : private Task, private Startable, private TaskHandler, ObjectFix {
+	friend class Socket;
 public:
-	SocketManager(TaskHandler& handler,PoolThreads& poolThreads,Mona::UInt32 bufferSize=0,const std::string& name="SocketManager");
-	SocketManager(PoolThreads& poolThreads,Mona::UInt32 bufferSize=0,const std::string& name="SocketManager");
-	virtual ~SocketManager();
-
-	PoolThreads&			poolThreads;
+	SocketManager(TaskHandler& handler, PoolThreads& poolThreads, UInt32 bufferSize = 0, const std::string& name = "SocketManager");
+	SocketManager(PoolThreads& poolThreads, UInt32 bufferSize = 0, const std::string& name = "SocketManager");
+	virtual ~SocketManager() { stop(); }
 
 	void					start();
 	void					stop();
 
 private:
-	bool open(SocketHandlerBase& handler) const;
-	void close(SocketHandlerBase& handler) const;
-	void startWrite(SocketHandlerBase& handler) const;
-	void stopWrite(SocketHandlerBase& handler) const;
+	class FakeSocket : public Socket {
+	public:
+		FakeSocket(SocketManager& manager) : Socket(manager) {}
+	private:
+		virtual void	onReadable(Exception& ex) {}
+		virtual void	onError(const std::string& error) {}
+	};
+	
+	// add a socket with a valid file descriptor to manage it
+	bool add(Exception& ex,Socket& socket) const;
+
+	// remove a socket with a valid file descriptor to unmanage it
+	void remove(Socket& socket) const;
+
+	bool startWrite(Exception& ex, Socket& socket) const;
+	bool stopWrite(Exception& ex, Socket& socket) const;
 
 	void					requestHandle();
 	void					clear();
-	void					run();
-	void					handle();
+	void					run(Exception& ex);
+	void					handle(Exception& ex);
 
-	Mona::UInt32									_bufferSize;
-	std::string										_error;
+	bool								_selfHandler;
+	Exception							_ex;
+	UInt32								_bufferSize;
+	PoolThreads&						_poolThreads;
 
-	mutable std::map<poco_socket_t,SocketManaged*>	_sockets;
-	mutable Poco::AtomicCounter						_counter;
-	mutable Poco::Event								_event;
-	mutable Poco::FastMutex							_mutex;
+	mutable std::atomic<int>			_counter;
+	mutable Poco::Event					_eventInit;
+	mutable std::mutex					_mutex;
 
-#if defined(POCO_OS_FAMILY_WINDOWS)
-	HWND										_eventSystem;
+	mutable std::map<SOCKET, std::unique_ptr<Socket>*>		_sockets;
+
+#if defined(_WIN32)
+	HWND								_eventSystem;
+	FakeSocket							_fakeSocket;
+	Exception							_exSkip;
 #else
-	int											_eventSystem;
+	int									_eventSystem;
 #endif
+	int									_eventFD; // used just in linux case
+	
+	UInt32								_currentEvent;
+	int									_currentError;
 
-	int											_eventFD; // used just in linux case
-	SocketManaged*								_pCurrentManaged;
-	Mona::UInt32								_currentEvent;
-	int											_currentError;
-};
-
-inline void SocketManager::requestHandle() {
-	giveHandle();
+	std::unique_ptr<Socket>*			_ppSocket;
+	SOCKET								_sockfd;
 };
 
 

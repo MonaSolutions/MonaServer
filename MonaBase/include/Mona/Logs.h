@@ -20,79 +20,79 @@ This file is a part of Mona.
 #include "Mona/Mona.h"
 #include "Mona/Logger.h"
 #include "Mona/String.h"
+#include "Mona/Util.h"
 #include "Mona/MemoryReader.h"
 #include "Mona/MemoryWriter.h"
+#include "Poco/Path.h"
 
 namespace Mona {
 
-class Logs
-{
+class Logs : Fix {
 public:
 	enum DumpMode {
-		NOTHING = 0,
-		EXTERN,
-		INTERN,
-		ALL
+		DUMP_NOTHING = 0,
+		DUMP_EXTERN = 1,
+		DUMP_INTERN = 2,
+		DUMP_ALL = 3
 	};
 
 	static void			SetLogger(Logger& logger) { _PLogger = &logger; }
 	static void			SetLevel(Poco::UInt8 level) { _Level = level; }
+	static UInt8		GetLevel() { return _Level; }
 	static void			SetDump(DumpMode mode) { _DumpMode = mode; }
+	static DumpMode		GetDump() { return _DumpMode; }
 
-	static DumpMode				GetDump() { return _DumpMode; }
-	static Logger*				GetLogger() { return _PLogger; }
-	static Poco::UInt8			GetLevel() { return _Level; }
-	static void					Dump(const Poco::UInt8* data, Poco::UInt32 size, const char* header = NULL);
-	static void					Dump(MemoryReader& packet, const char* header = NULL) { Dump(packet.current(), packet.available(), header); }
-	static void					Dump(MemoryWriter& packet, const char* header = NULL) { Dump(packet.begin(), packet.length(), header); }
-	static void					Dump(MemoryWriter& packet, Poco::UInt16 offset, const char* header = NULL) { Dump(packet.begin() + offset, packet.length() - offset, header); }
+	static void			Dump(const Poco::UInt8* data, Poco::UInt32 size, const char* header = NULL);
+	static void			Dump(MemoryReader& packet, const char* header = NULL) { Dump(packet.current(), packet.available(), header); }
+	static void			Dump(MemoryWriter& packet, const char* header = NULL) { Dump(packet.begin(), packet.length(), header); }
+	static void			Dump(MemoryWriter& packet, Poco::UInt16 offset, const char* header = NULL) { Dump(packet.begin() + offset, packet.length() - offset, header); }
 	
 	template <typename ...Args>
-	static void					Log(Logger::Priority prio, const char* file, long line, const Args&... args) {
+	static void	Log(Logger::Priority prio, const char* file, long line, const Args&... args) {
+		if (!_PLogger || _Level < prio)
+			return;
+		Poco::Path path(file);
+		string shortFile;
+		if (path.depth() > 0)
+			shortFile.assign(path.directory(path.depth() - 1) + "/");
+		shortFile.append(path.getFileName());
+		string message;
+		String::Format(message, args ...);
+		_PLogger->logHandler(Poco::Thread::currentTid(), Poco::Thread::current() ? Poco::Thread::current()->name() : "", prio, file, shortFile, line, message);
+	}
 
-		if (Mona::Logs::GetLogger()) {
-			if (Mona::Logs::GetLevel() >= prio) {
-			
-				String::Format(_logmsg, args ...);
-				Mona::Logs::GetLogger()->logHandler(Poco::Thread::currentTid(), Poco::Thread::current() ? Poco::Thread::current()->name() : "", prio, file, line, _logmsg.c_str());
-			}
-		}
-		else if (Mona::Logs::GetLevel() >= Mona::Logger::PRIO_ERROR) {
-		
-			String::Format(_logmsg, args ...);
-			throw(_logmsg);
-			// TODO delete this part?
-		}
+	template <typename ...Args>
+	static void Dump(const UInt8* data, UInt32 size, const Args&... args) {
+		if (!_PLogger)
+			return;
+		vector<UInt8> out;
+		string header;
+		String::Format(header, args ...);
+		Util::Dump(data, size, out, header);
+		if (out.size() > 0)
+			_PLogger->dumpHandler(&out[0], out.size());
 	}
 
 private:
-	Logs() {}
-	virtual ~Logs() {}
-	
 	static Logger*		_PLogger;
 	static DumpMode		_DumpMode;
-	static Poco::UInt8  _Level;
-	static std::string	_logmsg;
+	static UInt8		_Level;
 };
-
-// Empecher le traitement des chaines si de toute façon le log n'a aucun Logger!
-// Ou si le level est plus détaillé que le loglevel
-#define LOG(PRIO,FILE,LINE, ...) { Mona::Logs::Log(PRIO, FILE, LINE, ## __VA_ARGS__); }
 
 #undef ERROR
 #undef DEBUG
 #undef TRACE
-#define FATAL(...) LOG(Mona::Logger::PRIO_FATAL,__FILE__,__LINE__, ## __VA_ARGS__)
-#define CRITIC(...) LOG(Mona::Logger::PRIO_CRITIC,__FILE__,__LINE__, ## __VA_ARGS__)
-#define ERROR(...) LOG(Mona::Logger::PRIO_ERROR,__FILE__,__LINE__, ## __VA_ARGS__)
-#define WARN(...) LOG(Mona::Logger::PRIO_WARN,__FILE__,__LINE__, ## __VA_ARGS__)
-#define NOTE(...) LOG(Mona::Logger::PRIO_NOTE,__FILE__,__LINE__, ## __VA_ARGS__)
-#define INFO(...) LOG(Mona::Logger::PRIO_INFO,__FILE__,__LINE__, ## __VA_ARGS__)
-#define DEBUG(...) LOG(Mona::Logger::PRIO_DEBUG,__FILE__,__LINE__, ## __VA_ARGS__)
-#define TRACE(...) LOG(Mona::Logger::PRIO_TRACE,__FILE__,__LINE__, ## __VA_ARGS__)
+#define FATAL(...) { Mona::Logs::Log(Mona::Logger::PRIO_FATAL,__FILE__,__LINE__, __VA_ARGS__); }
+#define CRITIC(...) { Mona::Logs::Log(Mona::Logger::PRIO_CRITIC,__FILE__,__LINE__, __VA_ARGS__); }
+#define ERROR(...) { Mona::Logs::Log(Mona::Logger::PRIO_ERROR,__FILE__,__LINE__, __VA_ARGS__); }
+#define WARN(...) { Mona::Logs::Log(Mona::Logger::PRIO_WARN,__FILE__,__LINE__, __VA_ARGS__); }
+#define NOTE(...) { Mona::Logs::Log(Mona::Logger::PRIO_NOTE,__FILE__,__LINE__, __VA_ARGS__); }
+#define INFO(...) { Mona::Logs::Log(Mona::Logger::PRIO_INFO,__FILE__,__LINE__, __VA_ARGS__); }
+#define DEBUG(...) { Mona::Logs::Log(Mona::Logger::PRIO_DEBUG,__FILE__,__LINE__, __VA_ARGS__); }
+#define TRACE(...) { Mona::Logs::Log(Mona::Logger::PRIO_TRACE,__FILE__,__LINE__, __VA_ARGS__); }
 
-#define DUMP_INTERN(...) { if(Mona::Logs::GetLogger() && (Mona::Logs::GetDump()&Mona::Logs::INTERN)) {Mona::Logs::Dump(__VA_ARGS__);} }
-#define DUMP(...) { if(Mona::Logs::GetLogger() && (Mona::Logs::GetDump()&Mona::Logs::EXTERN)) {Mona::Logs::Dump(__VA_ARGS__);} }
+#define DUMP_INTERN(...) { if(Mona::Logs::GetDump()&Mona::Logs::DUMP_INTERN) {Mona::Logs::Dump(__VA_ARGS__);} }
+#define DUMP(...) { if(Mona::Logs::GetDump()&Mona::Logs::DUMP_EXTERN) {Mona::Logs::Dump(__VA_ARGS__);} }
 
 
 } // namespace Mona

@@ -19,64 +19,38 @@
 
 
 #include "Mona/Mona.h"
-#include "Mona/SocketHandler.h"
-#include "Poco/Net/StreamSocket.h"
+#include "Mona/StreamSocket.h"
+#include <vector>
 
 namespace Mona {
 
 
-class TCPClient : protected SocketHandler<Poco::Net::StreamSocket> {
+class TCPClient : protected StreamSocket {
 public:
-	TCPClient(const Poco::Net::StreamSocket& socket,const SocketManager& manager);
 	TCPClient(const SocketManager& manager);
 	virtual ~TCPClient();
 
-	bool					 connect(const Poco::Net::SocketAddress& address);
-	bool					 connected();
-	void					 disconnect();
+	bool					connect(Exception& ex, const std::string& address);
+	bool					connected() { return _connected; }
+	bool					send(Exception& ex, const UInt8* data, UInt32 size);
 
-	bool					 send(const Mona::UInt8* data,Mona::UInt32 size);
+	void					disconnect();
 
-	Poco::Net::SocketAddress address();
-	Poco::Net::SocketAddress peerAddress();
-
-	const char*				 error();
+	const std::string&		address(Exception& ex, std::string& address) { SocketAddress temp; return (address = StreamSocket::address(ex, temp).toString()); }
+	const std::string&		peerAddress(Exception& ex, std::string& address) { SocketAddress temp; return (address = StreamSocket::peerAddress(ex, temp).toString()); }
 
 private:
-	virtual void				onNewData(const Mona::UInt8* data,Mona::UInt32 size){}
-	virtual Mona::UInt32		onReception(const Mona::UInt8* data,Mona::UInt32 size)=0;
-	virtual void				onDisconnection(){}
-	virtual void				onFlush() {}
+	virtual void			onNewData(const UInt8* data,UInt32 size){}
+	virtual UInt32			onReception(const UInt8* data,UInt32 size)=0;
+	virtual void			onDisconnection(){}
 
-	void						onReadable();
-	void						onError(const std::string& error);
+	void					onReadable(Exception& ex);
 
-	void						error(const std::string& error);
+	int						sendIntern(const UInt8* data,UInt32 size);
 
-	int							sendIntern(const Mona::UInt8* data,Mona::UInt32 size);
-
-	std::string					_error;
-	std::vector<Mona::UInt8>	_buffer;
+	std::vector<UInt8>		_buffer;
+	bool					_connected;
 };
 
-inline Poco::Net::SocketAddress	TCPClient::address() {
-	return getSocket() ? getSocket()->address() : Poco::Net::SocketAddress();
-}
-
-inline Poco::Net::SocketAddress	TCPClient::peerAddress() {
-	return getSocket() ? getSocket()->peerAddress() : Poco::Net::SocketAddress();
-}
-
-inline void TCPClient::onError(const std::string& error) {
-	this->error("TCPClient error, " + error);
-}
-
-inline bool TCPClient::connected() {
-	return getSocket() ? true : false;
-}
-
-inline const char* TCPClient::error() {
-	return _error.empty() ? NULL : _error.c_str();
-}
 
 } // namespace Mona

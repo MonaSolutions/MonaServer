@@ -64,13 +64,12 @@ protected:
 	virtual int				main() = 0;
 
 private:
-	virtual void	defineOptions(Options& options) {}
-	virtual void	handleOption(const std::string& name, const std::string& value) {}
+	virtual void	defineOptions(Exception& ex,Options& options) {}
 	
 	virtual	bool	onHelp(HelpFormatter& helpFormatter) { return true; }
 
 
-	void			getApplicationPath(const std::string& command, Poco::Path& path) const;
+	bool			getApplicationPath(Exception& ex,const std::string& command, Poco::Path& path) const;
 
 	std::vector<std::string>    _args;
 	Options						_options;

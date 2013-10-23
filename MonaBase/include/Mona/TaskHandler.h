@@ -26,16 +26,16 @@ namespace Mona {
 
 class TaskHandler {
 public:
-	TaskHandler();
-	~TaskHandler();
+	TaskHandler() : _pTask(NULL), _stop(true) {}
+	virtual ~TaskHandler() {stop(); }
 
 	void waitHandle(Task& task);
 
 protected:
 	void start();
 	void stop();
-	bool running();
-	void giveHandle();
+	bool running() { return !_stop; }
+	void giveHandle(Exception& ex);
 private:
 	virtual void requestHandle()=0;
 
@@ -43,13 +43,9 @@ private:
 	Poco::FastMutex			_mutexWait;
 	Task*					_pTask;
 	Poco::Event				_event;
-	bool					_stop;
+	volatile bool			_stop;
 };
 
-inline bool TaskHandler::running() {
-	Poco::ScopedLock<Poco::Mutex> lock(_mutex);
-	return !_stop;
-}
 
 
 } // namespace Mona

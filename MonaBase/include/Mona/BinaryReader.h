@@ -19,7 +19,6 @@
 
 #include "Mona/Mona.h"
 #include "Poco/BinaryReader.h"
-#include "Poco/Net/SocketAddress.h"
 
 namespace Mona {
 

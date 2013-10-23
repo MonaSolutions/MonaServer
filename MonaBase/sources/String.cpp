@@ -21,13 +21,11 @@ using namespace std;
 
 namespace Mona {
 
-char		String::_Buffer[64];
-
 void String::Split(const std::string& value, const std::string& separators, std::vector<std::string>& values, int options) {
 	string::const_iterator it1 = value.begin(), it2, it3, end = value.end();
 
 	while (it1 != end) {
-		if (options & TOK_TRIM) {
+		if (options & SPLIT_TRIM) {
 			while (it1 != end && isblank(*it1))
 				++it1;
 		}
@@ -35,14 +33,14 @@ void String::Split(const std::string& value, const std::string& separators, std:
 		while (it2 != end && separators.find(*it2) == string::npos)
 			++it2;
 		it3 = it2;
-		if (it3 != it1 && (options & TOK_TRIM)) {
+		if (it3 != it1 && (options & SPLIT_TRIM)) {
 			--it3;
 			while (it3 != it1 && isspace(*it3))
 				--it3;
 			if (!isblank(*it3))
 				++it3;
 		}
-		if (options & TOK_IGNORE_EMPTY) {
+		if (options & SPLIT_IGNORE_EMPTY) {
 			if (it3 != it1)
 				values.emplace_back(it1, it3);
 		} else
@@ -53,12 +51,31 @@ void String::Split(const std::string& value, const std::string& separators, std:
 	}
 }
 
-const string& String::toLower(string& str) {
-	auto it = str.begin();
-	for(it;it<str.end();++it)
+const string& String::ToLower(string& value) {
+	auto it = value.begin();
+	for (it; it < value.end(); ++it)
 		*it = tolower(*it);
-	
-	return str;
+	return value;
 }
+
+const string& String::Trim(string& value, TrimOption option) {
+	int first = 0;
+	int last = value.size() - 1;
+
+	if (option & 1) {
+		while (first <= last && isspace(value[first]))
+			++first;
+	}
+	if (option & 2) {
+		while (last >= first && isspace(value[last]))
+			--last;
+	}
+
+	value.resize(last + 1);
+	value.erase(0, first);
+	return value;
+}
+
+
 
 } // namespace Mona

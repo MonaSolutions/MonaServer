@@ -18,7 +18,6 @@
 #pragma once
 
 #include "Mona/Mona.h"
-#include "Mona/String.h"
 
 namespace Mona {
 
@@ -39,17 +38,19 @@ public:
 		NETWORK,
 		SOCKET,
 		NETADDRESS,
-		ASSERT,
-		FORMATTING
+		FORMATTING,
+		THREAD,
+		MEMORY,
+		SYSTEM,
+		ASSERT
 	};
 
 	Exception() : _code(NIL) {}
 
 	template <typename ...Args>
-	void set(Code code, const Args&... args) {
-		_code = code;
-		String::Append(_error, args ...);
-	}
+	void set(Code code, const Args&... args);
+
+	void set(const Exception& other);
 
 	operator bool() const { return !_error.empty() || _code != Exception::NIL; }
 
@@ -65,6 +66,7 @@ private:
 
 #undef		ASSERT
 #define		ASSERT(CHECK)					if(!(CHECK)) { ex.set(Exception::ASSERT, #CHECK);return;}
-#define		ASSERT_RETURN(CHECK,RETURN)		if(!(CHECK)) { ex.set(Exception::ASSERT, #CHECK);return RETURN;}*/
+#define		ASSERT_RETURN(CHECK,RETURN)		if(!(CHECK)) { ex.set(Exception::ASSERT, #CHECK);return RETURN;}
+
 
 } // namespace Mona
