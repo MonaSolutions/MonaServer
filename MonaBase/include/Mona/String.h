@@ -60,41 +60,41 @@ public:
 		TRIM_RIGHT = 2
 	};
 
-	static void					Split(const std::string& value, const std::string& separators, std::vector<std::string>& values,int options = 0);
-	static const std::string&   Trim(std::string& value, TrimOption option = TRIM_BOTH);
+	static std::vector<std::string>& Split(const std::string& value, const std::string& separators, std::vector<std::string>& values, int options = 0);
+	static std::string& Trim(std::string& value, TrimOption option = TRIM_BOTH);
 
-	static const std::string&	ToLower(std::string& str);
+	static std::string&	ToLower(std::string& str);
 
 	template <typename ...Args>
-	static const std::string& Format(std::string& result, const Args&... args) {
+	static std::string& Format(std::string& result, const Args&... args) {
 		result.clear();
 		return String::Append(result, args ...);
 	}
 	
 	/// \brief match "char*" case
 	template <typename ...Args>
-	static const std::string& Append(std::string& result, const char* value, const Args&... args) {
+	static std::string& Append(std::string& result, const char* value, const Args&... args) {
 		result.append(value);
 		return String::Append(result, args ...);
 	}
 
 	/// \brief match "std::string" case
 	template <typename ...Args>
-	static const std::string& Append(std::string& result, const std::string& value, const Args&... args) {
+	static std::string& Append(std::string& result, const std::string& value, const Args&... args) {
 		result.append(value);
 		return String::Append(result, args ...);
 	}
 
 	// match le "char" cas
 	template <typename ...Args>
-	static const std::string& Append(std::string& result, char value, const Args&... args) {
+	static std::string& Append(std::string& result, char value, const Args&... args) {
 		result.append(1, value);
 		return String::Append(result, args ...);
 	}
 
 	/// \brief match "int" case
 	template <typename ...Args>
-	static const std::string& Append(std::string& result, int value, const Args&... args) {
+	static std::string& Append(std::string& result, int value, const Args&... args) {
 		char buffer[64];
 		sprintf(buffer, "%d", value);
 		result.append(buffer);
@@ -103,7 +103,7 @@ public:
 
 	/// \brief match "long" case
 	template <typename ...Args>
-	static const std::string& Append(std::string& result, long value, const Args&... args) {
+	static std::string& Append(std::string& result, long value, const Args&... args) {
 		char buffer[64];
 		sprintf(buffer, "%ld", value);
 		result.append(buffer);
@@ -112,7 +112,7 @@ public:
 
 	/// \brief match "unsigned char" case
 	template <typename ...Args>
-	static const std::string& Append(std::string& result, unsigned char value, const Args&... args) {
+	static std::string& Append(std::string& result, unsigned char value, const Args&... args) {
 		char buffer[64];
 		sprintf(buffer, "%hu", value);
 		result.append(buffer);
@@ -121,7 +121,7 @@ public:
 
 	/// \brief match "unsigned short" case
 	template <typename ...Args>
-	static const std::string& Append(std::string& result, unsigned short value, const Args&... args) {
+	static std::string& Append(std::string& result, unsigned short value, const Args&... args) {
 		char buffer[64];
 		sprintf(buffer, "%hu", value);
 		result.append(buffer);
@@ -130,7 +130,7 @@ public:
 
 	/// \brief match "unsigned int" case
 	template <typename ...Args>
-	static const std::string& Append(std::string& result, unsigned int value, const Args&... args) {
+	static std::string& Append(std::string& result, unsigned int value, const Args&... args) {
 		char buffer[64];
 		sprintf(buffer, "%u", value);
 		result.append(buffer);
@@ -139,7 +139,7 @@ public:
 
 	/// \brief match "unsigned long" case
 	template <typename ...Args>
-	static const std::string& Append(std::string& result, unsigned long value, const Args&... args) {
+	static std::string& Append(std::string& result, unsigned long value, const Args&... args) {
 		char buffer[64];
 		sprintf(buffer, "%lu", value);
 		result.append(buffer);
@@ -148,7 +148,7 @@ public:
 
 	/// \brief match "Int64" case
 	template <typename ...Args>
-	static const std::string& Append(std::string& result, Int64 value, const Args&... args) {
+	static std::string& Append(std::string& result, Int64 value, const Args&... args) {
 		char buffer[64];
 		sprintf(buffer, "%" I64_FMT "d", value);
 		result.append(buffer);
@@ -157,7 +157,7 @@ public:
 
 	/// \brief match "UInt64" case
 	template <typename ...Args>
-	static const std::string& Append(std::string& result, UInt64 value, const Args&... args) {
+	static std::string& Append(std::string& result, UInt64 value, const Args&... args) {
 		char buffer[64];
 		sprintf(buffer, "%" I64_FMT "u", value);
 		result.append(buffer);
@@ -166,7 +166,7 @@ public:
 
 	/// \brief match "float" case
 	template <typename ...Args>
-	static const std::string& Append(std::string& result, float value, const Args&... args) {
+	static std::string& Append(std::string& result, float value, const Args&... args) {
 		char buffer[64];
 		sprintf(buffer, "%.8g", value); // TODO check than with a ToNumber it gives the same thing
 		result.append(buffer);
@@ -175,7 +175,7 @@ public:
 
 	/// \brief match "double" case
 	template <typename ...Args>
-	static const std::string& Append(std::string& result, double value, const Args&... args) {
+	static std::string& Append(std::string& result, double value, const Args&... args) {
 		char buffer[64];
 		sprintf(buffer, "%.16g", value); // TODO check than with a ToNumber it gives the same thing
 		result.append(buffer);
@@ -184,7 +184,7 @@ public:
 
 	/// \brief match pointer case
 	template <typename ...Args>
-	static const std::string& Append(std::string& result, const void* value, const Args&... args)	{
+	static std::string& Append(std::string& result, const void* value, const Args&... args)	{
 		char buffer[64];
 		sprintf(buffer, "%08lX", (UIntPtr) value);
 		result.append(buffer);
@@ -197,7 +197,7 @@ public:
 	/// \param value A pair of format text associate with value (ex: pair<char*, double>("%.2f", 10))
 	/// \param args Other arguments to append
 	template <class Type, typename ...Args>
-	static const std::string& Append(std::string& result, const Mona::Format<Type>& custom, const Args&... args) {
+	static std::string& Append(std::string& result, const Mona::Format<Type>& custom, const Args&... args) {
 		char buffer[64];
 		try {
 			sprintf(buffer, sizeof(buffer), custom.format, custom.value);
@@ -287,7 +287,7 @@ public:
 
 private:
 
-	static const std::string& Append(std::string& result) { return result; }
+	static std::string& Append(std::string& result) { return result; }
 };
 
 

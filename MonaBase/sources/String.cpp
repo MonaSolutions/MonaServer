@@ -21,7 +21,7 @@ using namespace std;
 
 namespace Mona {
 
-void String::Split(const std::string& value, const std::string& separators, std::vector<std::string>& values, int options) {
+vector<string>& String::Split(const string& value, const string& separators, vector<string>& values, int options) {
 	string::const_iterator it1 = value.begin(), it2, it3, end = value.end();
 
 	while (it1 != end) {
@@ -49,16 +49,17 @@ void String::Split(const std::string& value, const std::string& separators, std:
 		if (it1 != end)
 			++it1;
 	}
+	return values;
 }
 
-const string& String::ToLower(string& value) {
+string& String::ToLower(string& value) {
 	auto it = value.begin();
 	for (it; it < value.end(); ++it)
 		*it = tolower(*it);
 	return value;
 }
 
-const string& String::Trim(string& value, TrimOption option) {
+string& String::Trim(string& value, TrimOption option) {
 	int first = 0;
 	int last = value.size() - 1;
 

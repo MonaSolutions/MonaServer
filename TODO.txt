@@ -9,3 +9,14 @@
 - enlever ApplicationKiller?
 - tester vitesse logs
 - checks waitForTerminationRequest linux et windows!
+- checks thread name durant une session de debug
+- verifier que le détecteur de fuite mémoire marche tjs
+- mettre une extension aux logs (0.log)
+- pour les "error LUA", mettre le path depuis "www" et pas le fullpath!
+- Rendre thread-safe mes nouvelles classes sockets
+- Réécrire l'API de la classe LOGS avec le travail de Thomas
+- Faire en sorte que le comportement par defaut de logs soit un printf et pas un throw (remonté le systeme de MonaServer)
+- Options, case sensitive??
+- Update everywhere with Fix and ObjectFix
+- void AMFReader::readTime(Time& time) -> Time& AMFReader::readTime(Time& time) ??
+- Essayer d'encapsuler les MACRO lua quand possibles (Thomas avait raison!)
