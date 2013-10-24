@@ -110,7 +110,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="sources\ApplicationKiller.h" />
-    <ClInclude Include="sources\FileWatcher.h" />
     <ClInclude Include="sources\MonaServer.h" />
     <ClInclude Include="sources\Script.h" />
     <ClInclude Include="sources\Service.h" />
@@ -138,7 +137,6 @@
     <ClInclude Include="sources\Servers.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="sources\FileWatcher.cpp" />
     <ClCompile Include="sources\main.cpp" />
     <ClCompile Include="sources\MonaServer.cpp" />
     <ClCompile Include="sources\Script.cpp" />

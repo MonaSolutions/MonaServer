@@ -21,7 +21,6 @@ This file is a part of Mona.
 #include "Mona/Event.h"
 
 
-
 namespace Mona {
 
 using namespace std;

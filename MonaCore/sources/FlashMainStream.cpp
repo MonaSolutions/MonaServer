@@ -85,8 +85,7 @@ void FlashMainStream::messageHandler(Exception& ex, const string& name,AMFReader
 						break;
 					case AMFReader::STRING: {
 						string value;
-						message.readString(value);
-						peer.setString(name,value);
+						peer.setString(name, message.readString(value));
 						break;
 					}
 					case AMFReader::TIME: {
@@ -130,11 +129,10 @@ void FlashMainStream::messageHandler(Exception& ex, const string& name,AMFReader
 		peer.addresses.resize(1);
 		string addr;
 		while(message.available()) {
-			message.readString(addr); // private host
-
+	
 			peer.addresses.emplace_back();
 			Exception ex;
-			peer.addresses.back().set(ex,addr);
+			peer.addresses.back().set(ex, message.readString(addr));  // private host
 			if (ex) {
 				ERROR("Bad peer address ",addr,", ",ex.error());
 				peer.addresses.pop_back();

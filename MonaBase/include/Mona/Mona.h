@@ -78,7 +78,9 @@ class Object {
 	Object& operator=(const Object& other) = delete;
 	Object(Object&& other) = delete;
 	Object operator=(Object&& other) = delete;
+public:
 	Object() = default;
+	virtual ~Object() = default;
 };
 
 #if defined(_MSC_VER)

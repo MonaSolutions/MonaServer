@@ -187,27 +187,23 @@ Time& AMFReader::readTime(Time& time) {
 	return time.update((Int64)result * 1000);
 }
 
-void AMFReader::readString(string& value) {
+string& AMFReader::readString(string& value) {
 	Type type = followingType();
 	if(type==NIL) {
 		reader.next(1);
 		value="";
-		return;
+		return value;
 	}
 	if(type!=STRING) {
 		ERROR("Type ",Format<UInt8>("%.2x",(UInt8)type)," is not a AMF String type");
-		return;
+		return value;
 	}
 	reader.next(1);
-	if(_amf3) {
-		readText(value);
-		return;
-	}
-	if(current()==AMF_LONG_STRING) {
-		reader.readRaw(reader.read32(),value);
-		return;
-	}
-	reader.readString16(value);
+	if(_amf3)
+		return readText(value);
+	if(current()==AMF_LONG_STRING)
+		return reader.readRaw(reader.read32(), value);
+	return reader.readString16(value);
 }
 
 bool AMFReader::readMap(UInt32& size,bool& weakKeys) {
@@ -449,8 +445,7 @@ AMFReader::Type AMFReader::readItem(string& name) {
 			name.clear();
 		}
 	} else {
-		readText(name);
-		if(name.empty()) {
+		if (readText(name).empty()) {
 			if(objectDef.arrayType == AMF3_ARRAY) {
 				objectDef.arrayType = AMF_STRICT_ARRAY;
 				return readItem(name);
@@ -480,29 +475,28 @@ AMFReader::Type AMFReader::readItem(string& name) {
 }
 
 
-void AMFReader::readText(string& value) {
-	if(!_amf3) {
-		reader.readString16(value);
-		return;
-	}
+string& AMFReader::readText(string& value) {
+	if(!_amf3)
+		return reader.readString16(value);
+	
 	UInt32 reference = reader.position();
 	UInt32 size = reader.read7BitValue();
 	bool isInline = size&0x01;
 	size >>= 1;
 	if(isInline) {
-		reader.readRaw(size,value);
-		if(!value.empty())
+		if (!reader.readRaw(size, value).empty())
 			_stringReferences.push_back(reference);
 	} else {
 		if(size>_stringReferences.size()) {
 			ERROR("AMF3 string reference not found")
-			return;
+			return value;
 		}
 		UInt32 reset = reader.position();
 		reader.reset(_stringReferences[size]);
 		reader.readRaw(reader.read7BitValue()>>1,value);
 		reader.reset(reset);
 	}
+	return value;
 }
 
 

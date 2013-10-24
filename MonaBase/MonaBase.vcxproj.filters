@@ -5,9 +5,6 @@
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
-    <Filter Include="sources\Streams">
-      <UniqueIdentifier>{b8ef9199-65ab-4084-aec1-dacb203c793c}</UniqueIdentifier>
-    </Filter>
     <Filter Include="sources\Util">
       <UniqueIdentifier>{d9aa40ba-7bc0-4b47-91a8-146a8d3d5c51}</UniqueIdentifier>
     </Filter>
@@ -20,28 +17,34 @@
     <Filter Include="sources\Application">
       <UniqueIdentifier>{60d1e55c-1dc5-4a53-9f14-0592dd0f376e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="sources\File">
+      <UniqueIdentifier>{882ba37b-3eba-42c1-97a2-b6eb4f3bb6bf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="sources\Stream">
+      <UniqueIdentifier>{b8ef9199-65ab-4084-aec1-dacb203c793c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="sources\Mona.cpp">
       <Filter>sources</Filter>
     </ClCompile>
     <ClCompile Include="sources\BinaryReader.cpp">
-      <Filter>sources\Streams</Filter>
+      <Filter>sources\Stream</Filter>
     </ClCompile>
     <ClCompile Include="sources\BinaryStream.cpp">
-      <Filter>sources\Streams</Filter>
+      <Filter>sources\Stream</Filter>
     </ClCompile>
     <ClCompile Include="sources\BinaryWriter.cpp">
-      <Filter>sources\Streams</Filter>
+      <Filter>sources\Stream</Filter>
     </ClCompile>
     <ClCompile Include="sources\MemoryReader.cpp">
-      <Filter>sources\Streams</Filter>
+      <Filter>sources\Stream</Filter>
     </ClCompile>
     <ClCompile Include="sources\MemoryStream.cpp">
-      <Filter>sources\Streams</Filter>
+      <Filter>sources\Stream</Filter>
     </ClCompile>
     <ClCompile Include="sources\MemoryWriter.cpp">
-      <Filter>sources\Streams</Filter>
+      <Filter>sources\Stream</Filter>
     </ClCompile>
     <ClCompile Include="sources\AttemptCounter.cpp">
       <Filter>sources\Util</Filter>
@@ -151,28 +154,31 @@
     <ClCompile Include="sources\Logger.cpp">
       <Filter>sources\Application</Filter>
     </ClCompile>
+    <ClCompile Include="sources\FileWatcher.cpp">
+      <Filter>sources\File</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Mona\Mona.h">
       <Filter>sources</Filter>
     </ClInclude>
     <ClInclude Include="include\Mona\BinaryReader.h">
-      <Filter>sources\Streams</Filter>
+      <Filter>sources\Stream</Filter>
     </ClInclude>
     <ClInclude Include="include\Mona\BinaryStream.h">
-      <Filter>sources\Streams</Filter>
+      <Filter>sources\Stream</Filter>
     </ClInclude>
     <ClInclude Include="include\Mona\BinaryWriter.h">
-      <Filter>sources\Streams</Filter>
+      <Filter>sources\Stream</Filter>
     </ClInclude>
     <ClInclude Include="include\Mona\MemoryReader.h">
-      <Filter>sources\Streams</Filter>
+      <Filter>sources\Stream</Filter>
     </ClInclude>
     <ClInclude Include="include\Mona\MemoryStream.h">
-      <Filter>sources\Streams</Filter>
+      <Filter>sources\Stream</Filter>
     </ClInclude>
     <ClInclude Include="include\Mona\MemoryWriter.h">
-      <Filter>sources\Streams</Filter>
+      <Filter>sources\Stream</Filter>
     </ClInclude>
     <ClInclude Include="include\Mona\AttemptCounter.h">
       <Filter>sources\Util</Filter>
@@ -311,6 +317,9 @@
     </ClInclude>
     <ClInclude Include="include\Mona\Logger.h">
       <Filter>sources\Application</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\FileWatcher.h">
+      <Filter>sources\File</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

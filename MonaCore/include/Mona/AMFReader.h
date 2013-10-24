@@ -31,7 +31,7 @@ public:
 	AMFReader(MemoryReader& reader);
 	virtual ~AMFReader();
 
-	void				readString(std::string& value);
+	std::string&		readString(std::string& value);
 	double				readNumber();
 	bool				readBoolean();
 	const UInt8*		readBytes(UInt32& size);
@@ -44,7 +44,7 @@ public:
 
 	bool			readMap(UInt32& size,bool& weakKeys);
 	Type			readKey();
-	Type			readValue();
+	Type			readValue() { return readKey(); }
 
 	Type			followingType();
 
@@ -54,8 +54,9 @@ public:
 	void			reset();
 
 private:
-	void							readText(std::string& value);
-	UInt8						current();
+	std::string&					readText(std::string& value);
+	UInt8							current() { return *reader.current(); }
+
 	std::list<ObjectDef*>			_objectDefs;
 	std::vector<UInt32>		_stringReferences;
 	std::vector<UInt32>		_classDefReferences;
@@ -65,14 +66,6 @@ private:
 	UInt32					_amf3;
 	bool							_referencing;
 };
-
-inline AMFReader::Type AMFReader::readValue() {
-	return readKey();
-}
-
-inline UInt8 AMFReader::current() {
-	return *reader.current();
-}
 
 inline void AMFReader::startReferencing() {
 	_referencing=true;

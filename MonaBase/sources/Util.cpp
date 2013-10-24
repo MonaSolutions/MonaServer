@@ -21,6 +21,7 @@
 #include "Poco/URI.h"
 #include "Poco/HexBinaryEncoder.h"
 #include "Poco/FileStream.h"
+#include "Poco/Exception.h"
 #include <sstream>
 #include "math.h"
 
@@ -191,7 +192,13 @@ void Util::Dump(const UInt8* in,UInt32 size,vector<UInt8>& out,const string& hea
 
 
 bool Util::ReadIniFile(Exception& ex,const string& path,MapParameters& parameters) {
-	FileInputStream istr(path, ios::in);
+	FileInputStream istr;
+	try {
+		istr.open(path, ios::in);
+	} catch (Poco::Exception& exc) {
+		ex.set(Exception::FILE, "Impossible to open ", path, " file, ",exc.displayText());
+		return false;
+	}
 	if (!istr.good()) {
 		ex.set(Exception::FILE, "Impossible to open ", path, " file");
 		return false;

@@ -77,10 +77,11 @@ Time& JSONReader::readTime(Time& time) {
 	return time.update(_date);
 }
 
-void JSONReader::readString(string& value) {
+string& JSONReader::readString(string& value) {
 	_last=0;
 	value.assign(_text);
 	_text.clear();
+	return value;
 }
 
 double JSONReader::readNumber() {
@@ -183,8 +184,7 @@ JSONReader::Type JSONReader::readItem(string& name) {
 	_bool=false;
 	Type type = followingType();
 	if(type==STRING && _bool) { // is key
-		readString(name);
-		_bool=name=="__raw";
+		_bool = readString(name) == "__raw";
 		type = followingType();
 		_bool = false;
 	}

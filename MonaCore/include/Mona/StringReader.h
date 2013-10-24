@@ -29,7 +29,7 @@ public:
 	StringReader(MemoryReader& reader) : DataReader(reader) {}
 	virtual ~StringReader() {}
 
-	std::string&		readString(std::string& value) { reader.readRaw(reader.available(), value); }
+	std::string&		readString(std::string& value) { return reader.readRaw(reader.available(), value); }
 	double				readNumber() {return 0;}
 	bool				readBoolean() {return false;}
 	Time&				readTime(Time& time) { return time.update(); }

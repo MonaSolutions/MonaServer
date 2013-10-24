@@ -147,7 +147,7 @@ class IPv6Address: public IPAddressCommon {
 public:
 	IPv6Address() : _scope(0) {
 		_toString.reserve(24);
-		memcpy(&_addr, 0, sizeof(_addr));
+		memset(&_addr, 0, sizeof(_addr));
 	}
 	IPv6Address(const void* addr, UInt32 scope=0) : _scope(scope) {
 		_toString.reserve(24);

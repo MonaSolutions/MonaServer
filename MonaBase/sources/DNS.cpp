@@ -18,6 +18,7 @@ This file is a part of Mona.
 
 #include "Mona/DNS.h"
 #include "Mona/SocketAddress.h"
+#include "Mona/Socket.h"
 #include <cstring>
 
 using namespace std;
@@ -52,7 +53,7 @@ bool DNS::HostByName(Exception& ex, const string& hostname, HostEntry& host) {
 	if (he)
 		return host.set(ex,he);
 #endif
-	SetError(ex, LastError(), hostname); // will throw an appropriate exception
+	Socket::SetError(ex, LastError(), hostname); // will throw an appropriate exception
 	return false;
 }
 
@@ -89,7 +90,7 @@ bool DNS::HostByAddress(Exception& ex,const IPAddress& address, HostEntry& host)
 	if (he)
 		return host.set(ex,he);
 #endif
-	SetError(ex,LastError(), address.toString());      // will throw an appropriate exception
+	Socket::SetError(ex, LastError(), address.toString());      // will throw an appropriate exception
 	return false;
 }
 

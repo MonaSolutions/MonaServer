@@ -96,12 +96,9 @@ bool Application::init(int argc, char* argv[]) {
 	if (loadLogFiles(makeAbsolute(logDir), logFileName, _logSizeByFile, _logRotation)) {
 		File(logDir).createDirectory();
 		_logPath = logDir + "/" + logFileName;
-		if (_logRotation > 0) {
+		if (_logRotation > 0)
 			_logPath.append(".");
-			_pLogFile.reset(new File(_logPath + "0"));
-		} else
-			_pLogFile.reset(new File(_logPath));
-		_logStream.open(_pLogFile->path(), ios::in | ios::ate);
+		_logStream.open(_logPath, ios::in | ios::ate);
 	}
 
 	// options
@@ -121,21 +118,20 @@ bool Application::init(int argc, char* argv[]) {
 
 bool Application::loadConfigurations(string& path) {
 	Exception ex;
-	if (Util::ReadIniFile(ex, path, *this)) {
-		DEBUG("Impossible to load configuration file (", ex.error(), ")");
-		return false;
-	}
-	return true;
+	if (Util::ReadIniFile(ex, path, *this))
+		return true;
+	DEBUG("Impossible to load configuration file (", ex.error(), ")");
+	return false;
 }
 
 bool Application::loadLogFiles(string& directory, string& fileName, UInt32& sizeByFile, UInt16& rotation) {
 	getString("logs.directory", directory);
 	getString("logs.name", fileName);
-	int rotate;
+	int rotate(0);
 	getNumber("logs.rotation", rotate);
 	if (rotate < 0)
 		throw exception("Invalid negative logs.rotation value");
-	rotation = true;
+	rotation = rotate;
 	return true;
 }
 
@@ -191,9 +187,9 @@ void Application::dump(const UInt8* data, UInt32 size) {
 }
 
 void Application::manageLogFiles() {
-	if (!_pLogFile || _logSizeByFile == 0)
+	if (!_logStream.good() || _logSizeByFile == 0)
 		return;
-	if (_pLogFile->getSize() > _logSizeByFile) {
+	if (_logStream.tellp() > _logSizeByFile) {
 		_logStream.close();
 		if (_logRotation == 0) {
 			File file(_logPath + "10");
@@ -217,7 +213,7 @@ void Application::manageLogFiles() {
 				file.renameTo(stfile);
 			}
 		}
-		_logStream.open(_pLogFile->path(), ios::in | ios::ate);
+		_logStream.open(_logPath, ios::in | ios::ate);
 	}
 }
 

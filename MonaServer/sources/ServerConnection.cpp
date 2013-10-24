@@ -137,10 +137,9 @@ Mona::UInt32 ServerConnection::onReception(const Mona::UInt8* data, Mona::UInt32
 
 	string handler;
 	Mona::UInt8 handlerSize = reader.read8();
-	if(handlerSize) {
-		reader.readRaw(handlerSize,handler);
-		_receivingRefs[_receivingRefs.size()+1] = handler;
-	} else {
+	if(handlerSize)
+		_receivingRefs[_receivingRefs.size() + 1] = reader.readRaw(handlerSize, handler);
+	else {
 		Mona::UInt32 ref = reader.read7BitEncoded();
 		if(ref>0) {
 			map<Mona::UInt32, string>::const_iterator it = _receivingRefs.find(ref);

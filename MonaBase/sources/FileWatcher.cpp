@@ -15,21 +15,18 @@
 	This file is a part of Mona.
 */
 
-#include "FileWatcher.h"
+#include "Mona/FileWatcher.h"
+
+namespace Mona {
 
 using namespace std;
 using namespace Poco;
-using namespace Mona;
 
 
 FileWatcher::FileWatcher(const string& path) : _file(path), path(path) {
 	_lastModified.update(0);
 }
 
-
-FileWatcher::~FileWatcher() {
-
-}
 
 bool FileWatcher::watch() {
 	bool result=false;
@@ -50,3 +47,5 @@ bool FileWatcher::watch() {
 	}
 	return result;
 }
+
+} // namespace Mona

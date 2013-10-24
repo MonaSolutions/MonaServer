@@ -43,7 +43,7 @@ public:
 		
 	virtual Type				followingType()=0;
 
-	virtual void				readString(std::string& value)=0;
+	virtual std::string&		readString(std::string& value)=0;
 	virtual double				readNumber()=0;
 	virtual bool				readBoolean()=0;
 	virtual const UInt8*		readBytes(UInt32& size)=0;
@@ -82,7 +82,7 @@ public:
 
 	Type followingType() {return END;}
 
-	void						readString(std::string& value){}
+	std::string&				readString(std::string& value) { return value; }
 	virtual double				readNumber(){return 0;}
 	virtual bool				readBoolean(){return false;}
 	virtual const UInt8*		readBytes(UInt32& size){return NULL;}

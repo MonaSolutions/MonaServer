@@ -57,8 +57,6 @@ protected:
 	static int LastError() { return h_errno; }
 #endif
 
-	static void SetError(Exception& ex, int error, const std::string& argument);
-
 	// Set the exception according to the getaddrinfo() error code
 	static void SetAIError(Exception& ex, int error, const std::string& argument);
 };

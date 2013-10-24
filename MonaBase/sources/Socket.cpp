@@ -19,16 +19,15 @@ This file is a part of Mona.
 
 
 #include "Mona/Socket.h"
-#include "Mona/SocketManager.h"
-#include "Mona/SocketSender.h"
 #include "Mona/StreamSocket.h"
+#include "Mona/SocketManager.h"
 
 using namespace std;
 
 namespace Mona {
 
 
-Socket::Socket(const SocketManager& manager, int type) : _pMutex(new mutex()), _type(type), _initialized(false), _managed(false), _manager(manager), _sockfd(INVALID_SOCKET), _writing(false) {}
+Socket::Socket(const SocketManager& manager, int type) : _poolThreads(manager._poolThreads), _pMutex(new mutex()), _type(type), _initialized(false), _managed(false), _manager(manager), _sockfd(INVALID_SOCKET), _writing(false) {}
 
 Socket::~Socket() {
 	close();
@@ -373,47 +372,12 @@ void Socket::SetError(Exception& ex, int error, const string& argument) {
 }
 
 
-///////////////////   ASYNCHRONE MANAGE    ///////////////////////
-template<typename SocketSenderType>
-PoolThread* Socket::send(Exception& ex, shared_ptr<SocketSenderType>& pSender, PoolThread* pThread) {
-	ASSERT_RETURN(_initialized == true, NULL)
-	if (!managed(ex))
-		return NULL;
-
-		// return if no data to send
-	if (!pSender->available())
-		return NULL;
-
-	pSender->_pSocket = this;
-	pSender->_pSocketMutex = _pMutex;
-	pSender->_pThis = pSender;
-	pThread = _manager._poolThreads.enqueue<SocketSender>(pSender, pThread);
-	return pThread;
-}
-
-// Can be called from one other thread than main thread (by the poolthread)
-template<typename SocketSenderType>
-void Socket::send(Exception& ex, shared_ptr<SocketSenderType>& pSender) {
-	ASSERT(_initialized == true) 
-	if (!managed(ex))
-		return;
-
-	// return if no data to send
-	if (!pSender->available())
-		return;
-
-	// We can write immediatly if there are no queue packets to write,
-	// and if it remains some data to write (flush returns false)
-	lock_guard<mutex>	lock(_mutexAsync);
-	if (!_senders.empty() || !pSender->flush(ex, *this)) {
-		_senders.push_back(static_pointer_cast<WorkThread>(pSender));
-		if (!_writing) {
-			_writing = true;
-			_manager.startWrite(ex, *this);
-		}
+void Socket::manageWrite(Exception& ex) {
+	if (!_writing) {
+		_writing = true;
+		_manager.startWrite(ex, *this);
 	}
 }
-
 
 // Can be called from one other thread than main thread (by the manager socket thread)
 void Socket::flush(Exception& ex) {

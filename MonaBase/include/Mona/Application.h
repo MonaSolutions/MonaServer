@@ -97,7 +97,6 @@ private:
 	UInt32						_logSizeByFile;
 	UInt16						_logRotation;
 	std::string					_logPath;
-	std::unique_ptr<Poco::File>	_pLogFile;
 	Poco::FileOutputStream		_logStream;
 	std::mutex					_logMutex;
 

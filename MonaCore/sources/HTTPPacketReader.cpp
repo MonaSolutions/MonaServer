@@ -43,7 +43,7 @@ void HTTPPacketReader::reset() {
 }
 
 
-void HTTPPacketReader::readString(string& value) {
+string& HTTPPacketReader::readString(string& value) {
 	value.assign(_value);
 	_value.clear();
 	_type = MAP;
