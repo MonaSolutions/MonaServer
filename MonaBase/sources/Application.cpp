@@ -77,9 +77,17 @@ bool Application::init(int argc, char* argv[]) {
 	setString("application.name", appPath.getFileName());
 	setString("application.baseName", appPath.getBaseName());
 	setString("application.dir", appPath.parent().toString());
-	setString("application.configDir", appPath.parent().toString());
+	
 
-	loadConfigurations();
+	// configurations
+	string configPath(appPath.parent().toString());
+	configPath.append(appPath.getBaseName());
+	configPath.append(".ini");
+	if (loadConfigurations(configPath)) {
+		Path configPath(configPath);
+		setString("application.configDir", configPath.parent().toString());
+		setString("application.configPath", configPath.toString());
+	}
 
 	// logs
 	Logs::SetLogger(*this);
@@ -111,18 +119,13 @@ bool Application::init(int argc, char* argv[]) {
 	return true;
 }
 
-void Application::loadConfigurations() {
-	string file;
-	if (!getString("application.baseName", file)) {
-		DEBUG("Impossible to load configuration file");
-		return;
-	}
-	// configs Application.ini
-	file.append(".ini");
+bool Application::loadConfigurations(string& path) {
 	Exception ex;
-	Util::ReadIniFile(ex, makeAbsolute(file), *this);
-	if (ex)
+	if (Util::ReadIniFile(ex, path, *this)) {
 		DEBUG("Impossible to load configuration file (", ex.error(), ")");
+		return false;
+	}
+	return true;
 }
 
 bool Application::loadLogFiles(string& directory, string& fileName, UInt32& sizeByFile, UInt16& rotation) {

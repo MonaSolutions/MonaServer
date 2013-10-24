@@ -74,7 +74,7 @@ protected:
 	virtual int				main() = 0;
 
 	virtual bool			loadLogFiles(std::string& directory, std::string& fileName, UInt32& sizeByFile, UInt16& rotation);
-	virtual void			loadConfigurations();
+	virtual bool			loadConfigurations(std::string& path);
 	virtual void			defineOptions(Exception& ex, Options& options);
 
 	virtual void			log(Poco::Thread::TID threadId, const std::string& threadName, Priority priority, const char *filePath, const std::string& shortFilePath, long line, const std::string& message);
