@@ -31,7 +31,7 @@ class ServerApplication : public Application, virtual Object {
 public:
 	ServerApplication();
 
-	bool isInteractive() const;
+	bool isInteractive() const { return _isInteractive; }
 
 #if defined(POCO_OS_FAMILY_UNIX) || (defined(POCO_OS_FAMILY_WINDOWS) && !defined(_WIN32_WCE))
 	int run(int argc, char* argv[]);
@@ -53,6 +53,7 @@ private:
 	};
 
 	Action			_action;
+	bool			_isInteractive;
 
 #if defined(POCO_VXWORKS)
 	static Poco::Event _terminate;

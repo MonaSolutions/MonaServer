@@ -63,21 +63,13 @@ Poco::Event ServerApplication::_terminate;
 ServerApplication* ServerApplication::_This(NULL);
 
 
-ServerApplication::ServerApplication() : _action(SRV_RUN){
+ServerApplication::ServerApplication() : _action(SRV_RUN), _isInteractive(true) {
 	_This = this;
 #if defined(POCO_OS_FAMILY_WINDOWS)
 #if !defined(_WIN32_WCE)
 	memset(&_serviceStatus, 0, sizeof(_serviceStatus));
 #endif
 #endif
-}
-
-bool ServerApplication::isInteractive() const {
-	bool runsInBackground=false;
-	getBool("application.runAsDaemon", runsInBackground);
-	if (!runsInBackground )
-		getBool("application.runAsService", runsInBackground);
-	return !runsInBackground;
 }
 
 
@@ -130,6 +122,7 @@ void ServerApplication::ServiceControlHandler(DWORD control) {
 void ServerApplication::ServiceMain(DWORD argc, LPTSTR* argv) {
 
 	_This->setBool("application.runAsService", true);
+	_This->_isInteractive = false;
 
 	_serviceStatusHandle = RegisterServiceCtrlHandlerA("", ServiceControlHandler);
 
@@ -182,7 +175,7 @@ int ServerApplication::run(int argc, char** argv) {
 		if (!init(argc, argv))
 			return EXIT_OK;
 		Exception ex;
-		if (_action == SRV_REGISTER) {
+		if (hasArgument("registerService")) {
 			if (registerService(ex)) {
 				if (!ex)
 					WARN("%s", ex.error().c_str());
@@ -191,7 +184,7 @@ int ServerApplication::run(int argc, char** argv) {
 				ERROR("%s", ex.error().c_str());
 			return EXIT_OK;
 		}
-		if (_action == SRV_UNREGISTER) {
+		if (hasArgument("unregisterService")) {
 			if (unregisterService(ex)) {
 				if (!ex)
 					WARN("%s", ex.error().c_str());
@@ -259,11 +252,9 @@ bool ServerApplication::unregisterService(Exception& ex) {
 
 void ServerApplication::defineOptions(Exception& ex,Options& options) {
 
-	options.add(ex, "registerService", "r", "Register the application as a service.")
-		.handler([this](const string& value) { _action = SRV_REGISTER; });
+	options.add(ex, "registerService", "r", "Register the application as a service.");
 
-	options.add(ex, "unregisterService", "u", "Unregister the application as a service.")
-		.handler([this](const string& value) { _action = SRV_UNREGISTER; });
+	options.add(ex, "unregisterService", "u", "Unregister the application as a service.");
 
 	options.add(ex, "name", "n", "Specify a display name for the service (only with /registerService).")
 		.argument("name")
@@ -341,9 +332,12 @@ int ServerApplication::run(int argc, char** argv) {
 
 
 bool ServerApplication::isDaemon(int argc, char** argv) {
-	string option("--daemon");
+	string option1("--daemon");
+	string option2("-d");
+	string option3("/daemon");
+	string option4("/d");
 	for (int i = 1; i < argc; ++i) {
-		if (option == argv[i])
+		if (stricmp(option1.c_str(),argv[i])==0 || stricmp(option2.c_str(),argv[i])==0 || stricmp(option3.c_str(),argv[i])==0 || stricmp(option4.c_str(),argv[i])==0)
 			return true;
 	}
 	return false;
@@ -353,7 +347,7 @@ bool ServerApplication::isDaemon(int argc, char** argv) {
 void ServerApplication::beDaemon() {
 	pid_t pid;
 	if ((pid = fork()) < 0)
-		throw SystemException("cannot fork daemon process");
+		throw exception("Cannot fork daemon process");
 	if (pid != 0)
 		exit(0);
 	
@@ -365,11 +359,17 @@ void ServerApplication::beDaemon() {
 	// issues with third party/legacy code writing
 	// stuff to stdout/stderr.
 	FILE* fin  = freopen("/dev/null", "r+", stdin);
-	if (!fin) throw Poco::OpenFileException("Cannot attach stdin to /dev/null");
+	if (!fin)
+		throw exception("Cannot attach stdin to /dev/null");
 	FILE* fout = freopen("/dev/null", "r+", stdout);
-	if (!fout) throw Poco::OpenFileException("Cannot attach stdout to /dev/null");
+	if (!fout)
+		throw exception("Cannot attach stdout to /dev/null");
 	FILE* ferr = freopen("/dev/null", "r+", stderr);
-	if (!ferr) throw Poco::OpenFileException("Cannot attach stderr to /dev/null");
+	if (!ferr)
+		throw exception("Cannot attach stderr to /dev/null");
+
+	setBool("application.runAsDaemon", true);
+	_isInteractive=false;
 }
 
 

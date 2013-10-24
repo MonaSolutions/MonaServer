@@ -59,9 +59,9 @@ public:
 		string message;
 		String::Format(message, args ...);
 		if (_PLogger)
-			_PLogger->logHandler(Poco::Thread::currentTid(), Poco::Thread::current() ? Poco::Thread::current()->name() : "", prio, file, shortFile, line, message);
+			_PLogger->log(Poco::Thread::currentTid(), Poco::Thread::current() ? Poco::Thread::current()->name() : "", prio, file, shortFile, line, message);
 		else
-			_DefaultLogger.logHandler(Poco::Thread::currentTid(), Poco::Thread::current() ? Poco::Thread::current()->name() : "", prio, file, shortFile, line, message);
+			_DefaultLogger.log(Poco::Thread::currentTid(), Poco::Thread::current() ? Poco::Thread::current()->name() : "", prio, file, shortFile, line, message);
 	}
 
 	template <typename ...Args>
@@ -73,9 +73,9 @@ public:
 		if (out.size() == 0)
 			return;
 		if (_PLogger)
-			_PLogger->dumpHandler(&out[0], out.size());
+			_PLogger->dump(&out[0], out.size());
 		else
-			_DefaultLogger.dumpHandler(&out[0], out.size());
+			_DefaultLogger.dump(&out[0], out.size());
 	}
 
 private:

@@ -20,3 +20,4 @@
 - Update everywhere with Fix and ObjectFix
 - void AMFReader::readTime(Time& time) -> Time& AMFReader::readTime(Time& time) ??
 - Essayer d'encapsuler les MACRO lua quand possibles (Thomas avait raison!)
+- supprimer tous les inline!

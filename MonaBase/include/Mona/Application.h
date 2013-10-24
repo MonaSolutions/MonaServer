@@ -21,13 +21,18 @@ This file is a part of Mona.
 #include "Mona/MapParameters.h"
 #include "Mona/Options.h"
 #include "Mona/HelpFormatter.h"
+#include "Mona/Logger.h"
 #include "Poco/Path.h"
+#include "Poco/File.h"
+#include "Poco/FileStream.h"
+#include "Poco/Thread.h"
+#include <memory>
 
 
 namespace Mona {
 
 
-class Application : public MapParameters, virtual Object {
+class Application : public MapParameters, public Logger, virtual Object {
 public:
 	enum ExitCode {
 		EXIT_OK = 0,  /// successful termination
@@ -50,13 +55,16 @@ public:
 
 	const Options&			options() const { return _options; }
 
-	bool					hasArgument(const std::string& key) { return hasKey(key); }
+	bool					hasArgument(const std::string& name) { return hasKey("application."+name); }
+	bool					argument(const std::string& name, std::string& value) { return getRaw("application." + name, value); }
 
 	void					displayHelp();
 
 	int						run(int argc, char* argv[]);
 
 	std::string&			makeAbsolute(std::string& path);
+
+	virtual bool			isInteractive() const { return true; }
 
 protected:
 	Application();
@@ -65,19 +73,33 @@ protected:
 	bool					init(int argc, char* argv[]);
 	virtual int				main() = 0;
 
-
-
+	virtual bool			loadLogFiles(std::string& directory, std::string& fileName, UInt32& sizeByFile, UInt16& rotation);
+	virtual void			loadConfigurations();
 	virtual void			defineOptions(Exception& ex, Options& options);
 
+	virtual void			log(Poco::Thread::TID threadId, const std::string& threadName, Priority priority, const char *filePath, const std::string& shortFilePath, long line, const std::string& message);
+	virtual void			dump(const UInt8* data, UInt32 size);
+	
 private:
+
+
 	
 	virtual	bool	onHelp(HelpFormatter& helpFormatter) { return true; }
 
 
-	bool			getApplicationPath(Exception& ex,const std::string& command, Poco::Path& path) const;
+	void			manageLogFiles();
+	void			getApplicationPath(const std::string& command, Poco::Path& path) const;
 
 	std::vector<std::string>    _args;
 	Options						_options;
+
+	// logs
+	UInt32						_logSizeByFile;
+	UInt16						_logRotation;
+	std::string					_logPath;
+	std::unique_ptr<Poco::File>	_pLogFile;
+	Poco::FileOutputStream		_logStream;
+	std::mutex					_logMutex;
 
 
 #if defined(POCO_OS_FAMILY_UNIX) && !defined(POCO_VXWORKS)
