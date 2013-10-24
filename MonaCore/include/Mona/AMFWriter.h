@@ -31,42 +31,42 @@ public:
 	AMFWriter();
 	virtual ~AMFWriter();
 
-	bool repeat(Mona::UInt32 reference);
+	bool repeat(UInt32 reference);
 	void clear();
 
 	void beginObject(const std::string& type="",bool external=false);
 	void endObject();
 
-	void beginMap(Mona::UInt32 size,bool weakKeys=false);
+	void beginMap(UInt32 size,bool weakKeys=false);
 	void endMap();
 
 	void writePropertyName(const std::string& value);
 
-	void beginArray(Mona::UInt32 size);
-	void beginObjectArray(Mona::UInt32 size);
+	void beginArray(UInt32 size);
+	void beginObjectArray(UInt32 size);
 	void endArray();
 
-	void writeDate(const Mona::Time& date);
+	void writeDate(const Time& date);
 	void writeNumber(double value);
 	void writeString(const std::string& value);
 	void writeBoolean(bool value);
 	void writeNull();
-	void writeBytes(const Mona::UInt8* data,Mona::UInt32 size);
+	void writeBytes(const UInt8* data,UInt32 size);
 
 	bool				amf0Preference;
 
 private:
-	void writeInteger(Mona::Int32 value);
+	void writeInteger(Int32 value);
 	void writeText(const std::string& value);
 
-	std::map<std::string,Mona::UInt32>	_stringReferences;
-	std::vector<Mona::UInt8>			_references;
+	std::map<std::string,UInt32>	_stringReferences;
+	std::vector<UInt8>			_references;
 	bool								_amf3;
 	std::list<ObjectRef*>				_lastObjectReferences;
 };
 
 
-inline void AMFWriter::beginArray(Mona::UInt32 size) {
+inline void AMFWriter::beginArray(UInt32 size) {
 	beginObjectArray(size);
 	endObject();
 }

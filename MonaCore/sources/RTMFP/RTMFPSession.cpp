@@ -488,14 +488,14 @@ void RTMFPSession::packetHandler(MemoryReader& packet) {
 		ERROR("Error during flush in rtmfp packethandler : ", ex.error());
 }
 
-RTMFPWriter* RTMFPSession::writer(Mona::UInt64 id) {
+RTMFPWriter* RTMFPSession::writer(UInt64 id) {
 	map<UInt64,AutoPtr<RTMFPWriter> >::iterator it = _flowWriters.find(id);
 	if(it==_flowWriters.end())
 		return NULL;
 	return it->second.get();
 }
 
-RTMFPFlow& RTMFPSession::flow(Mona::UInt64 id) {
+RTMFPFlow& RTMFPSession::flow(UInt64 id) {
 	map<UInt64,RTMFPFlow*>::const_iterator it = _flows.find(id);
 	if(it==_flows.end()) {
 		WARN("RTMFPFlow ",id," unfound");

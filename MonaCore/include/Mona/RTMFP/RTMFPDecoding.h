@@ -25,7 +25,7 @@ namespace Mona {
 
 class RTMFPDecoding : public Decoding {
 public:
-	RTMFPDecoding(Mona::UInt32 id,TaskHandler& taskHandler,Protocol& protocol,Poco::SharedPtr<Poco::Buffer<Mona::UInt8> >& pBuffer,const Poco::Net::SocketAddress& address): Decoding(id,taskHandler,protocol,pBuffer,address){}
+	RTMFPDecoding(UInt32 id,TaskHandler& taskHandler,Protocol& protocol,Poco::SharedPtr<Poco::Buffer<UInt8> >& pBuffer,const Poco::Net::SocketAddress& address): Decoding(id,taskHandler,protocol,pBuffer,address){}
 	virtual ~RTMFPDecoding(){}
 
 	RTMFPEngine					decoder;

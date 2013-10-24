@@ -37,6 +37,7 @@ bool Parameters::getNumber(const string& key, int& value) const {
 		return false;
 	return String::ToNumber<int>(temp, value);
 }
+
 bool Parameters::getBool(const string& key, bool& value) const {
 	string temp;
 	if (!getRaw(key, temp))

@@ -34,26 +34,26 @@ public:
 
 	AMFWriter	writer;
 	
-	AMFWriter&	write(Mona::UInt32 id,AMF::ContentType type,Mona::UInt32 time=0,Mona::UInt32 streamId=0,MemoryReader* pData=NULL);
+	AMFWriter&	write(UInt32 id,AMF::ContentType type,UInt32 time=0,UInt32 streamId=0,MemoryReader* pData=NULL);
 	
 private:
 
 	void				pack();
 	bool				flush();
-	const Mona::UInt8*	begin(bool displaying=false);
-	Mona::UInt32		size(bool displaying=false);
+	const UInt8*	begin(bool displaying=false);
+	UInt32		size(bool displaying=false);
 
-	Mona::UInt32				_sizePos;
-	Mona::UInt32				_chunkSize;
+	UInt32				_sizePos;
+	UInt32				_chunkSize;
 	RTMPChannel					_channel;
 	Poco::SharedPtr<RC4_KEY>	_pEncryptKey;
 };
 
-inline const Mona::UInt8* RTMPSender::begin(bool displaying) {
+inline const UInt8* RTMPSender::begin(bool displaying) {
 	return writer.stream.data();
 }
 
-inline Mona::UInt32 RTMPSender::size(bool displaying) {
+inline UInt32 RTMPSender::size(bool displaying) {
 	return writer.stream.size();
 }
 

@@ -27,7 +27,7 @@
 namespace Mona {
 
 class Invoker;
-class FlashStream {
+class FlashStream : virtual Object {
 public:
 	FlashStream(UInt32 id,Invoker& invoker,Peer& peer);
 	virtual ~FlashStream();

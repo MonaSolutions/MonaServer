@@ -34,7 +34,7 @@ public:
 	const SocketAddress				serverAddress;
 
 	const std::string				path;
-	const Mona::UInt16				ping;
+	const UInt16				ping;
 	const std::string				protocol;
 	Entities<Client>				turnClients;
 

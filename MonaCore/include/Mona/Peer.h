@@ -81,7 +81,7 @@ public:
 
 	void onManage();
 
-	static Mona::DataReaderNull	DataReaderNull;
+	static DataReaderNull	DataReaderNull;
 private:
 	void onJoinGroup(Group& group);
 	void onUnjoinGroup(std::map<Group*,Member*>::iterator it);

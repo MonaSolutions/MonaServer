@@ -24,7 +24,7 @@
 
 namespace Mona {
 
-class DataReader : ObjectFix {
+class DataReader {
 public:
 	enum Type {
 		NIL=0,

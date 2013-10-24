@@ -63,7 +63,7 @@ namespace Mona {
 #define AMF_MAX_INTEGER		268435455
 
 
-class AMF {
+class AMF : virtual Static {
 public:
 	enum ContentType {
 		EMPTY				=0x00,

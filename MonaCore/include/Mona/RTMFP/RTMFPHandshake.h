@@ -41,10 +41,10 @@ public:
 	virtual ~RTMFPHandshake();
 
 	void		createCookie(Exception& ex, MemoryWriter& writer,HelloAttempt& attempt,const std::string& tag,const std::string& queryUrl);
-	void		commitCookie(const Mona::UInt8* value);
+	void		commitCookie(const UInt8* value);
 	void		manage();
 	void		clear();
-	Session*	createSession(const Mona::UInt8* cookieValue);
+	Session*	createSession(const UInt8* cookieValue);
 
 private:
 
@@ -52,16 +52,16 @@ private:
 	void		flush(Exception& ex, RTMFPEngine::Type type);
 
 	void		packetHandler(MemoryReader& packet);
-	Mona::UInt8	handshakeHandler(Mona::UInt8 id,MemoryReader& request,MemoryWriter& response);
+	UInt8	handshakeHandler(UInt8 id,MemoryReader& request,MemoryWriter& response);
 
 	struct CompareCookies {
-	   bool operator()(const Mona::UInt8* a,const Mona::UInt8* b) const {
+	   bool operator()(const UInt8* a,const UInt8* b) const {
 		   return std::memcmp(a,b,COOKIE_SIZE)<0;
 	   }
 	};
 	
-	std::map<const Mona::UInt8*,RTMFPCookie*,CompareCookies> _cookies; // RTMFPCookie, in waiting of creation session
-	Mona::UInt8											_certificat[77];
+	std::map<const UInt8*,RTMFPCookie*,CompareCookies> _cookies; // RTMFPCookie, in waiting of creation session
+	UInt8											_certificat[77];
 	Gateway&											_gateway;
 };
 

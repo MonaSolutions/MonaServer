@@ -38,7 +38,7 @@ public:
 
 	DataWriter&		writeInvocation(const std::string& name);
 	DataWriter&		writeMessage();
-	void			writeRaw(const Mona::UInt8* data,Mona::UInt32 size);
+	void			writeRaw(const UInt8* data,UInt32 size);
 
 	// TODO ?void			close(int code);
 
@@ -53,7 +53,7 @@ private:
 	std::list<Poco::AutoPtr<HTTPSender>>		_senders;
 };
 
-inline void HTTPWriter::writeRaw(const Mona::UInt8* data,Mona::UInt32 size) {
+inline void HTTPWriter::writeRaw(const UInt8* data,UInt32 size) {
 	newWriter().writer.writeRaw(data,size);
 }
 

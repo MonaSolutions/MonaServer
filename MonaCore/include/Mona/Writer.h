@@ -59,12 +59,12 @@ public:
 	virtual State			state(State value=GET,bool minimal=false);
 	virtual void			close(int code=0);
 
-	virtual bool			writeMedia(MediaType type,Mona::UInt32 time,MemoryReader& data);
+	virtual bool			writeMedia(MediaType type,UInt32 time,MemoryReader& data);
 	virtual void			writeMember(const Peer& peer);
 
 	virtual DataWriter&		writeInvocation(const std::string& name){return DataWriterNull;}
 	virtual DataWriter&		writeMessage(){return DataWriterNull;}
-	virtual void			writeRaw(const Mona::UInt8* data,Mona::UInt32 size){}
+	virtual void			writeRaw(const UInt8* data,UInt32 size){}
 
 	virtual void			flush(bool full=false){}
 
@@ -74,7 +74,7 @@ public:
 
 
 	static Writer				Null;
-	static Mona::DataWriterNull	DataWriterNull;
+	static DataWriterNull	DataWriterNull;
 
 protected:
 	Writer(WriterHandler* pHandler=NULL);

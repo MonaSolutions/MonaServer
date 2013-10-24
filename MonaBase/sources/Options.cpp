@@ -18,7 +18,6 @@ This file is a part of Mona.
 #include "Mona/Options.h"
 
 
-using namespace Poco;
 using namespace std;
 
 namespace Mona {

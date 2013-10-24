@@ -29,29 +29,20 @@ public:
 	StringReader(MemoryReader& reader) : DataReader(reader) {}
 	virtual ~StringReader() {}
 
-	void				readString(std::string& value);
+	std::string&		readString(std::string& value) { reader.readRaw(reader.available(), value); }
 	double				readNumber() {return 0;}
 	bool				readBoolean() {return false;}
 	Time&				readTime(Time& time) { return time.update(); }
 	void				readNull() {}
-	const UInt8*	readBytes(UInt32& size) {return NULL;}
+	const UInt8*		readBytes(UInt32& size) {return NULL;}
 
 	bool				readObject(std::string& type,bool& external) {return false;}
 	bool				readArray(UInt32& size) {return false;}
 	Type				readItem(std::string& name) {return END;}
 	
-	Type				followingType();
+	Type				followingType() { return available() ? STRING : END; }
 
 };
-
-inline StringReader::Type StringReader::followingType() {
-	return available() ? STRING : END;
-}
-
-inline void StringReader::readString(std::string& value) {
-	reader.readRaw(reader.available(),value);
-}
-
 
 
 

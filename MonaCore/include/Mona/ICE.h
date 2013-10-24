@@ -21,7 +21,7 @@
 #include "Mona/SDP.h"
 #include "Mona/Util.h"
 #include "Mona/Time.h"
-#include "Poco/Net/SocketAddress.h"
+#include "Mona/SocketAddress.h"
 #include <list>
 #include <set>
 

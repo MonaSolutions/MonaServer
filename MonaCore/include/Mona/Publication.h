@@ -24,31 +24,31 @@
 
 namespace Mona {
 
-class Publication {
+class Publication : virtual Object {
 public:
 	Publication(const std::string& name);
 	virtual ~Publication();
 
-	const std::string&		name() const;
+	const std::string&		name() const { return _name; }
 
-	Client*					publisher() const;
+	Client*					publisher() const { return _pPublisher; }
 
 	const Listeners			listeners;
 
-	Mona::UInt32			droppedFrames() const;
+	UInt32					droppedFrames() const { return _droppedFrames; }
 
-	const QualityOfService&	videoQOS() const;
-	const QualityOfService&	audioQOS() const;
-	const QualityOfService&	dataQOS() const;
+	const QualityOfService&	videoQOS() const { return _videoQOS; }
+	const QualityOfService&	audioQOS() const { return _audioQOS; }
+	const QualityOfService&	dataQOS() const { return _dataQOS; }
 
-	void					setBufferTime(Mona::UInt32 ms);
+	void					setBufferTime(UInt32 ms);
 
 	void					start(Exception& ex, Peer& peer);
 	void					stop(Peer& peer);
 
-	void					pushAudio(MemoryReader& packet,Mona::UInt32 time=0,Mona::UInt32 numberLostFragments=0);
-	void					pushVideo(MemoryReader& packet,Mona::UInt32 time=0,Mona::UInt32 numberLostFragments=0);
-	void					pushData(DataReader& data,Mona::UInt32 numberLostFragments=0);
+	void					pushAudio(MemoryReader& packet,UInt32 time=0,UInt32 numberLostFragments=0);
+	void					pushVideo(MemoryReader& packet,UInt32 time=0,UInt32 numberLostFragments=0);
+	void					pushData(DataReader& data,UInt32 numberLostFragments=0);
 
 	Listener*				addListener(Exception& ex, Peer& peer,Writer& writer,bool unbuffered);
 	void					removeListener(Peer& peer);
@@ -64,31 +64,8 @@ private:
 	QualityOfService					_audioQOS;
 	QualityOfService					_dataQOS;
 
-	Mona::UInt32						_droppedFrames;
+	UInt32						_droppedFrames;
 };
 
-inline Mona::UInt32 Publication::droppedFrames() const {
-	return _droppedFrames;
-}
-
-inline Client* Publication::publisher() const {
-	return _pPublisher;
-}
-
-inline const QualityOfService& Publication::audioQOS() const {
-	return _audioQOS;
-}
-
-inline const QualityOfService& Publication::videoQOS() const {
-	return _videoQOS;
-}
-
-inline const QualityOfService& Publication::dataQOS() const {
-	return _dataQOS;
-}
-
-inline const std::string& Publication::name() const {
-	return _name;
-}
 
 } // namespace Mona

@@ -43,7 +43,7 @@ RTMPSession::~RTMPSession() {
 		delete it->second;
 }
 
-void RTMPSession::onNewData(const Mona::UInt8* data,Mona::UInt32 size) {
+void RTMPSession::onNewData(const UInt8* data,UInt32 size) {
 	if(!_pDecryptKey.isNull())
 		RC4(_pDecryptKey.get(),size,data,(UInt8*)data); // No useless to thread it (after testing)
 }

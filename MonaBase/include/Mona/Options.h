@@ -56,6 +56,7 @@ public:
 	Iterator		begin() const { return _options.begin(); }
 	Iterator		end() const { return _options.end(); }
 
+	UInt32			count() const { return _options.size(); }
 
 	bool			process(Exception& ex, int argc, char* argv[], const std::function<void(Exception& ex, const std::string&, const std::string&)>& handler = nullptr);
 

@@ -23,32 +23,20 @@
 
 namespace Mona {
 
-class Listeners {
+class Listeners : virtual Object {
 public:
 	Listeners(std::map<Client*,Listener*>&	listeners) : _listeners(listeners) {}
 	virtual ~Listeners() {}
 
 	typedef std::map<Client*,Listener*>::const_iterator Iterator;
 
-	Mona::UInt32 count() const;
-	Iterator begin() const;
-	Iterator end() const;
+	UInt32 count() const { return _listeners.size(); }
+	Iterator begin() const { return _listeners.begin(); }
+	Iterator end() const { return _listeners.end(); }
 
 private:
 	std::map<Client*,Listener*>&	_listeners;
 };
-
-inline Mona::UInt32 Listeners::count() const {
-	return _listeners.size();
-}
-
-inline Listeners::Iterator Listeners::begin() const {
-	return _listeners.begin();
-}
-
-inline Listeners::Iterator Listeners::end() const {
-	return _listeners.end();
-}
 
 
 } // namespace Mona

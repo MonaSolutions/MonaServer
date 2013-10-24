@@ -28,12 +28,12 @@ class RTMFPPacket;
 class RTMFPFragment;
 class RTMFPFlow {
 public:
-	RTMFPFlow(Mona::UInt64 id,const std::string& signature,Peer& peer,Invoker& invoker,BandWriter& band);
+	RTMFPFlow(UInt64 id,const std::string& signature,Peer& peer,Invoker& invoker,BandWriter& band);
 	virtual ~RTMFPFlow();
 
-	const Mona::UInt64		id;
+	const UInt64		id;
 
-	void				fragmentHandler(Mona::UInt64 stage,Mona::UInt64 deltaNAck,MemoryReader& fragment,Mona::UInt8 flags);
+	void				fragmentHandler(UInt64 stage,UInt64 deltaNAck,MemoryReader& fragment,UInt8 flags);
 	
 	void				commit();
 
@@ -43,20 +43,20 @@ public:
 	void				complete();
 	
 private:
-	void				fragmentSortedHandler(Mona::UInt64 stage,MemoryReader& fragment,Mona::UInt8 flags);
+	void				fragmentSortedHandler(UInt64 stage,MemoryReader& fragment,UInt8 flags);
 	
 	AMF::ContentType	unpack(MemoryReader& reader);
 
 	bool						_completed;
 	BandWriter&					_band;
 	Poco::AutoPtr<RTMFPWriter>	_pWriter;
-	const Mona::UInt64			_stage;
+	const UInt64			_stage;
 	Poco::AutoPtr<FlashStream>	_pStream;
 
 	// Receiving
 	RTMFPPacket*								_pPacket;
-	std::map<Mona::UInt64,RTMFPFragment*>	_fragments;
-	Mona::UInt32							_numberLostFragments;
+	std::map<UInt64,RTMFPFragment*>	_fragments;
+	UInt32							_numberLostFragments;
 };
 
 inline bool RTMFPFlow::consumed() {

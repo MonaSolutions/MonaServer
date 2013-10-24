@@ -30,23 +30,23 @@ class GroupIterator {
 	friend class Group;
 public:
 	GroupIterator():_pPeers(NULL){}
-	GroupIterator(std::map<Mona::UInt32,Peer*>& peers,bool end=false) : _pPeers(&peers),_it(end ? peers.end() : peers.begin()) {}
+	GroupIterator(std::map<UInt32,Peer*>& peers,bool end=false) : _pPeers(&peers),_it(end ? peers.end() : peers.begin()) {}
 	bool		  operator !=(const GroupIterator& other) { return _it!=other._it; }
 	bool		  operator ==(const GroupIterator& other) { return _it==other._it; }
     GroupIterator operator ++() { ++_it; return *this; }
     GroupIterator operator --() { --_it; return *this; }
     Client*		  operator *() { if(_pPeers && _it!=_pPeers->end()) return _it->second; return NULL; }
 private:
-	std::map<Mona::UInt32,Peer*>*				_pPeers; 
-	std::map<Mona::UInt32,Peer*>::const_iterator _it;
+	std::map<UInt32,Peer*>*				_pPeers; 
+	std::map<UInt32,Peer*>::const_iterator _it;
 };
 
 
 class Group : public Entity {
 	friend class Peer;
 public:
-	Group(const Mona::UInt8* id) {
-		std::memcpy((Mona::UInt8*)this->id,id,ID_SIZE);
+	Group(const UInt8* id) {
+		std::memcpy((UInt8*)this->id,id,ID_SIZE);
 	}
 	virtual ~Group(){}
 
@@ -54,21 +54,21 @@ public:
 
 	Iterator begin();
 	Iterator end();
-	Mona::UInt32  size();
+	UInt32  size();
 
-	static Mona::UInt32 Distance(Iterator& it0,Iterator& it1);
-	static void Advance(Iterator& it,Mona::UInt32 count);
+	static UInt32 Distance(Iterator& it0,Iterator& it1);
+	static void Advance(Iterator& it,UInt32 count);
 
 private:
-	std::map<Mona::UInt32,Peer*> 	_peers;
+	std::map<UInt32,Peer*> 	_peers;
 };
 
 
-inline Mona::UInt32 Group::Distance(Iterator& it0,Iterator& it1) {
+inline UInt32 Group::Distance(Iterator& it0,Iterator& it1) {
 	return distance(it0._it,it1._it);
 }
  	 
-inline void Group::Advance(Iterator& it,Mona::UInt32 count) {
+inline void Group::Advance(Iterator& it,UInt32 count) {
 	advance(it._it,count);
 }
 
@@ -80,7 +80,7 @@ inline Group::Iterator Group::end() {
 	return GroupIterator(_peers,true);
 }
 
-inline Mona::UInt32 Group::size() {
+inline UInt32 Group::size() {
 	return _peers.size();
 }
 

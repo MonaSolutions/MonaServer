@@ -26,7 +26,7 @@
 
 namespace Mona {
 
-#define RTMFP_SYMETRIC_KEY (Mona::UInt8*)"Adobe Systems 02"
+#define RTMFP_SYMETRIC_KEY (UInt8*)"Adobe Systems 02"
 #define RTMFP_MIN_PACKET_SIZE	12
 #define RTMFP_MAX_PACKET_LENGTH 1192
 #define RTMFP_TIMESTAMP_SCALE	4
@@ -46,7 +46,7 @@ public:
 		SYMMETRIC
 	};
 	RTMFPEngine();
-	RTMFPEngine(const Mona::UInt8* key,Direction direction);
+	RTMFPEngine(const UInt8* key,Direction direction);
 	RTMFPEngine(const RTMFPEngine& other);
 	RTMFPEngine(const RTMFPEngine& other,Type type);
 	virtual ~RTMFPEngine();
@@ -54,7 +54,7 @@ public:
 	RTMFPEngine&  operator=(const RTMFPEngine& other);
 	RTMFPEngine	next(Type type);
 	RTMFPEngine	next();
-	void		process(const Mona::UInt8* in,Mona::UInt8* out,Mona::UInt32 size);
+	void		process(const UInt8* in,UInt8* out,UInt32 size);
 
 	const Type	type;
 private:
@@ -78,8 +78,8 @@ inline RTMFPEngine RTMFPEngine::next(Type type) {
 class RTMFP
 {
 public:
-	static Mona::UInt32				Unpack(MemoryReader& packet);
-	static void						Pack(MemoryWriter& packet,Mona::UInt32 farId);
+	static UInt32				Unpack(MemoryReader& packet);
+	static void						Pack(MemoryWriter& packet,UInt32 farId);
 
 	static bool						ReadCRC(MemoryReader& packet);
 	static void						WriteCRC(MemoryWriter& packet);
@@ -87,17 +87,17 @@ public:
 	static void						Encode(RTMFPEngine& aesEncrypt,MemoryWriter& packet);
 	
 
-	static void						ComputeAsymetricKeys(const Poco::Buffer<Mona::UInt8>& sharedSecret,
-														const Mona::UInt8* initiatorNonce,Mona::UInt16 initNonceSize,
-														const Mona::UInt8* responderNonce,Mona::UInt16 respNonceSize,
-														 Mona::UInt8* requestKey,
-														 Mona::UInt8* responseKey);
+	static void						ComputeAsymetricKeys(const Poco::Buffer<UInt8>& sharedSecret,
+														const UInt8* initiatorNonce,UInt16 initNonceSize,
+														const UInt8* responderNonce,UInt16 respNonceSize,
+														 UInt8* requestKey,
+														 UInt8* responseKey);
 
-	static Mona::UInt16				TimeNow() { return Time(Mona::Time().toInt()); }
-	static Mona::UInt16				Time(Mona::Int64 timeVal);
+	static UInt16				TimeNow() { return Time(Time().toInt()); }
+	static UInt16				Time(Int64 timeVal);
 
 private:
-	static Mona::UInt16				CheckSum(MemoryReader& packet);
+	static UInt16				CheckSum(MemoryReader& packet);
 };
 
 }  // namespace Mona

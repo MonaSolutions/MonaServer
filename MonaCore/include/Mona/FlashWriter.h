@@ -24,48 +24,30 @@
 
 namespace Mona {
 
-class FlashWriter : public Writer {
+class FlashWriter : public Writer, virtual Object {
 public:
 	// For AMF response!
 	double					callbackHandle;
 
-	BinaryWriter&			writeRaw();
-	AMFWriter&				writeMessage();
+	BinaryWriter&			writeRaw() { return write(AMF::RAW).writer; }
+	AMFWriter&				writeMessage() { return writeInvocation("_result"); }
 	AMFWriter&				writeInvocation(const std::string& name);
-	AMFWriter&				writeAMFSuccess(const std::string& code,const std::string& description,bool withoutClosing=false);
-	AMFWriter&				writeAMFStatus(const std::string& code,const std::string& description,bool withoutClosing=false);
-	AMFWriter&				writeAMFError(const std::string& code,const std::string& description,bool withoutClosing=false);
-	bool					writeMedia(MediaType type,Mona::UInt32 time,MemoryReader& data);
+	AMFWriter&				writeAMFSuccess(const std::string& code, const std::string& description, bool withoutClosing = false) { return writeAMFState("_result", code, description, withoutClosing); }
+	AMFWriter&				writeAMFStatus(const std::string& code, const std::string& description, bool withoutClosing = false) { return writeAMFState("onStatus", code, description, withoutClosing); }
+	AMFWriter&				writeAMFError(const std::string& code, const std::string& description, bool withoutClosing = false) { return writeAMFState("_error", code, description, withoutClosing); }
+	bool					writeMedia(MediaType type,UInt32 time,MemoryReader& data);
 
 
-	static Mona::AMFWriterNull	AMFWriterNull;
+	static AMFWriterNull	AMFWriterNull;
 protected:
 	FlashWriter(WriterHandler* pHandler=NULL);
 	FlashWriter(FlashWriter& writer);
 	virtual ~FlashWriter();
 
-	virtual AMFWriter&		write(AMF::ContentType type,Mona::UInt32 time=0,MemoryReader* pData=NULL)=0;
+	virtual AMFWriter&		write(AMF::ContentType type,UInt32 time=0,MemoryReader* pData=NULL)=0;
 
 	AMFWriter&				writeAMFState(const std::string& name,const std::string& code,const std::string& description,bool withoutClosing=false);
 };
-
-inline BinaryWriter& FlashWriter::writeRaw() {
-	return write(AMF::RAW).writer;
-}
-
-inline AMFWriter& FlashWriter::writeMessage() {
-	return writeInvocation("_result");
-}
-
-inline AMFWriter& FlashWriter::writeAMFSuccess(const std::string& code,const std::string& description,bool withoutClosing) {
-	return writeAMFState("_result",code,description,withoutClosing);
-}
-inline AMFWriter& FlashWriter::writeAMFStatus(const  std::string& code,const std::string& description,bool withoutClosing) {
-	return writeAMFState("onStatus",code,description,withoutClosing);
-}
-inline AMFWriter& FlashWriter::writeAMFError(const  std::string& code,const std::string& description,bool withoutClosing) {
-	return writeAMFState("_error",code,description,withoutClosing);
-}
 
 
 

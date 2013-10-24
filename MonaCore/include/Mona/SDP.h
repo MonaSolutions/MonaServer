@@ -31,16 +31,16 @@ namespace Mona {
 struct SDPCandidate {
 	std::string		candidate;
 	std::string		mid;
-	Mona::UInt16	mLineIndex;
+	UInt16	mLineIndex;
 };
 
 class SDPMedia {
 public:
-	SDPMedia(Mona::UInt16 port,const std::string& codec) : codec(codec),port(port) {}
+	SDPMedia(UInt16 port,const std::string& codec) : codec(codec),port(port) {}
 
 	const std::string		codec;
-	const Mona::UInt16		port; // if port==0 the media is rejected!
-	std::list<Mona::UInt8>	formats;
+	const UInt16		port; // if port==0 the media is rejected!
+	std::list<UInt8>	formats;
 };
 
 class Peer;
@@ -52,13 +52,13 @@ public:
 	bool build(Exception& ex, const std::string& text);
 	void build();
 
-	Mona::UInt32			version;
+	UInt32			version;
 	std::string				user;
-	Mona::UInt32			sessionId;
+	UInt32			sessionId;
 	std::string				sessionVersion;
 	std::string				sessionName;
 	std::string				sessionInfos;
-	Poco::Net::IPAddress	unicastAddress;
+	IPAddress				unicastAddress;
 	Poco::URI				uri;
 	std::string				email;
 	std::string				phone;
@@ -75,7 +75,7 @@ public:
 
 	std::map<std::string,std::list<std::string> >	extensions;
 
-	SDPMedia*	addMedia(const std::string& name,Mona::UInt16 port,const std::string& codec);
+	SDPMedia*	addMedia(const std::string& name,UInt16 port,const std::string& codec);
 	void		clearMedias();
 
 	static void SendNewCandidate(Writer& writer,SDPCandidate& candidate);
@@ -84,7 +84,7 @@ private:
 	std::map<std::string,SDPMedia*> _medias;
 };
 
-inline SDPMedia* SDP::addMedia(const std::string& name,Mona::UInt16 port,const std::string& codec) {
+inline SDPMedia* SDP::addMedia(const std::string& name,UInt16 port,const std::string& codec) {
 	return _medias.insert(std::pair<std::string,SDPMedia*>(name,new SDPMedia(port,codec))).first->second;
 }
 

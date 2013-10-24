@@ -33,10 +33,10 @@ public:
 	RTMFPCookieComputing(RTMFPHandshake&	handshake,Invoker& invoker);
 	~RTMFPCookieComputing();
 
-	const Mona::UInt8			value[COOKIE_SIZE];
+	const UInt8			value[COOKIE_SIZE];
 	DiffieHellman				diffieHellman;
-	Poco::Buffer<Mona::UInt8>	initiatorKey;
-	Poco::Buffer<Mona::UInt8>	sharedSecret;
+	Poco::Buffer<UInt8>	initiatorKey;
+	Poco::Buffer<UInt8>	sharedSecret;
 
 
 private:

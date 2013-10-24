@@ -26,12 +26,12 @@ namespace Mona {
 
 class WSUnmasking : public Decoding {
 public:
-	WSUnmasking(Mona::UInt32 id,TaskHandler& taskHandler,Protocol& protocol,Poco::SharedPtr<Poco::Buffer<Mona::UInt8> >& pBuffer,const Poco::Net::SocketAddress& address,Mona::UInt8 type): _type(type),Decoding(id,taskHandler,protocol,pBuffer,address){}
+	WSUnmasking(UInt32 id,TaskHandler& taskHandler,Protocol& protocol,Poco::SharedPtr<Poco::Buffer<UInt8> >& pBuffer,const Poco::Net::SocketAddress& address,UInt8 type): _type(type),Decoding(id,taskHandler,protocol,pBuffer,address){}
 	virtual ~WSUnmasking(){}
 
 private:
 	bool						decode(MemoryReader& packet);
-	Mona::UInt8					_type;
+	UInt8					_type;
 };
 
 inline bool WSUnmasking::decode(MemoryReader& packet) {

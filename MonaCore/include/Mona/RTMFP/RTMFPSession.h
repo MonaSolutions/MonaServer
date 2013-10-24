@@ -32,23 +32,23 @@ public:
 
 	RTMFPSession(RTMFProtocol& protocol,
 			Invoker& invoker,
-			Mona::UInt32 farId,
+			UInt32 farId,
 			const Peer& peer,
-			const Mona::UInt8* decryptKey,
-			const Mona::UInt8* encryptKey,
+			const UInt8* decryptKey,
+			const UInt8* encryptKey,
 			const char* name=NULL);
 
 	virtual ~RTMFPSession();
 
-	void				p2pHandshake(const std::string& tag,const Poco::Net::SocketAddress& address,Mona::UInt32 times,Session* pSession);
+	void				p2pHandshake(const std::string& tag,const Poco::Net::SocketAddress& address,UInt32 times,Session* pSession);
 
 protected:
-	const Mona::UInt32	farId;
+	const UInt32	farId;
 
 	void				flush(Exception& ex, bool echoTime=true);
 	void				flush(Exception& ex, bool echoTime,RTMFPEngine::Type type);
-	void				flush(Exception& ex, Mona::UInt8 marker,bool echoTime);
-	void				flush(Exception& ex, Mona::UInt8 marker,bool echoTime,RTMFPEngine::Type type);
+	void				flush(Exception& ex, UInt8 marker,bool echoTime);
+	void				flush(Exception& ex, UInt8 marker,bool echoTime,RTMFPEngine::Type type);
 
 	template <typename ...Args>
 	void fail(const Args&... args) {
@@ -78,7 +78,7 @@ protected:
 private:
 
 	void				manage();
-	MemoryReader*		decode(Poco::SharedPtr<Poco::Buffer<Mona::UInt8> >& pBuffer,const Poco::Net::SocketAddress& address);
+	MemoryReader*		decode(Poco::SharedPtr<Poco::Buffer<UInt8> >& pBuffer,const Poco::Net::SocketAddress& address);
 	void				packetHandler(MemoryReader& packet);
 
 	// Implementation of BandWriter
@@ -88,29 +88,29 @@ private:
 	void				close();
 	bool				failed() const;
 
-	MemoryWriter&		writeMessage(Exception& ex, Mona::UInt8 type,Mona::UInt16 length,RTMFPWriter* pWriter=NULL);
+	MemoryWriter&		writeMessage(Exception& ex, UInt8 type,UInt16 length,RTMFPWriter* pWriter=NULL);
 
 	RTMFPEngine::Type	prevEngineType();
 	bool				keepAlive();
 	void				kill();
 
-	RTMFPWriter*			writer(Mona::UInt64 id);
-	RTMFPFlow&				flow(Mona::UInt64 id);
-	RTMFPFlow*				createFlow(Mona::UInt64 id,const std::string& signature);
+	RTMFPWriter*			writer(UInt64 id);
+	RTMFPFlow&				flow(UInt64 id);
+	RTMFPFlow*				createFlow(UInt64 id,const std::string& signature);
 
 	void				failSignal();
 
-	Mona::Time				_recvTimestamp; // Protected for Middle session
-	Mona::UInt16				_timeSent; // Protected for Middle session
+	Time				_recvTimestamp; // Protected for Middle session
+	UInt16				_timeSent; // Protected for Middle session
 	
-	Mona::UInt8							_timesFailed;
-	Mona::UInt8							_timesKeepalive;
+	UInt8							_timesFailed;
+	UInt8							_timesKeepalive;
 
-	std::map<Mona::UInt64,RTMFPFlow*>						_flows;
+	std::map<UInt64,RTMFPFlow*>						_flows;
 	RTMFPFlow*												_pFlowNull;
-	std::map<Mona::UInt64,Poco::AutoPtr<RTMFPWriter> >	_flowWriters;
+	std::map<UInt64,Poco::AutoPtr<RTMFPWriter> >	_flowWriters;
 	Writer*												_pLastWriter;
-	Mona::UInt64										_nextRTMFPWriterId;
+	UInt64										_nextRTMFPWriterId;
 
 	RTMFPEngine::Type					_prevEngineType;
 
@@ -129,7 +129,7 @@ inline void RTMFPSession::close() {
 	failSignal();
 }
 
-inline void RTMFPSession::flush(Exception& ex, Mona::UInt8 marker,bool echoTime) {
+inline void RTMFPSession::flush(Exception& ex, UInt8 marker,bool echoTime) {
 	flush(ex, marker,echoTime,prevEngineType());
 }
 

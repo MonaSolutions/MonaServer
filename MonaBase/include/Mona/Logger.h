@@ -38,10 +38,9 @@ public:
 		PRIO_TRACE        /// A tracing message. This is the lowest priority.
 	};
 
-	Logger() {}
 
-	virtual void logHandler(Poco::Thread::TID threadId,const std::string& threadName,Priority priority,const char *filePath,const std::string& shortFilePath,long line, const std::string& message);
-	virtual void dumpHandler(const UInt8* data, UInt32 size);
+	virtual void log(Poco::Thread::TID threadId,const std::string& threadName,Priority priority,const char *filePath,const std::string& shortFilePath,long line, const std::string& message);
+	virtual void dump(const UInt8* data, UInt32 size);
 
 private:
 	static std::mutex	_Mutex;
