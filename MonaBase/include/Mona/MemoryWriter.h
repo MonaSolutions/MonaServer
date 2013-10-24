@@ -23,56 +23,56 @@
 
 namespace Mona {
 
-class MemoryWriter: public BinaryWriter {
+class MemoryWriter: public BinaryWriter, virtual Object {
 public:
-	MemoryWriter(const Mona::UInt8* buffer,Mona::UInt32 size);
-	MemoryWriter(MemoryWriter&);
+	MemoryWriter(const UInt8* buffer,UInt32 size);
+	//MemoryWriter(MemoryWriter&);
 	virtual ~MemoryWriter();
 
-	Mona::UInt8*		begin();
-	Mona::UInt32		length();
-	Mona::UInt32		position();
+	UInt8*		begin();
+	UInt32		length();
+	UInt32		position();
 	
-	Mona::UInt32		available();
+	UInt32		available();
 
 	bool	good();
-	void	clear(Mona::UInt32 pos=0);
-	void	reset(Mona::UInt32 newPos);
-	void	limit(Mona::UInt32 length=0);
+	void	clear(UInt32 pos=0);
+	void	reset(UInt32 newPos);
+	void	limit(UInt32 length=0);
 	void	next(int size=1);
 	void	flush();
-	void	clip(Mona::UInt32 offset);
+	void	clip(UInt32 offset);
 
 private:
 	MemoryOutputStream	_memory;
 	MemoryWriter*		_pOther;
-	Mona::UInt32		_size;
+	UInt32		_size;
 };
 
-inline void MemoryWriter::clip(Mona::UInt32 offset) {
+inline void MemoryWriter::clip(UInt32 offset) {
 	_memory.clip(offset);
 }
-inline Mona::UInt32 MemoryWriter::available() {
+inline UInt32 MemoryWriter::available() {
 	return _memory.available();
 }
 inline bool MemoryWriter::good() {
 	return _memory.good();
 }
-inline Mona::UInt32 MemoryWriter::length() {
+inline UInt32 MemoryWriter::length() {
 	return _memory.written();
 }
-inline Mona::UInt32 MemoryWriter::position() {
+inline UInt32 MemoryWriter::position() {
 	return _memory.current()-(char*)begin();
 }
-inline void MemoryWriter::reset(Mona::UInt32 newPos) {
+inline void MemoryWriter::reset(UInt32 newPos) {
 	_memory.reset(newPos);
 }
 inline void MemoryWriter::next(int size) {
 	return _memory.next(size);
 }
 
-inline Mona::UInt8* MemoryWriter::begin() {
-	return (Mona::UInt8*)_memory.begin();
+inline UInt8* MemoryWriter::begin() {
+	return (UInt8*)_memory.begin();
 }
 
 

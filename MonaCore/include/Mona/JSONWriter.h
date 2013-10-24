@@ -36,15 +36,15 @@ public:
 
 	void writePropertyName(const std::string& value);
 
-	void beginArray(Mona::UInt32 size);
+	void beginArray(UInt32 size);
 	void endArray();
 
-	void writeDate(const Mona::Time& date);
-	void writeNumber(double value);
+	void writeDate(const Time& date);
+	void writeNumber(double value) { writeString(ROUND(value) == value ? Poco::format("%u", (UInt32)value) : Poco::format("%f", value)); }
 	void writeString(const std::string& value);
-	void writeBoolean(bool value);
-	void writeNull();
-	void writeBytes(const Mona::UInt8* data,Mona::UInt32 size);
+	void writeBoolean(bool value) { writeString(value ? "true" : "false"); }
+	void writeNull() { writeString("null"); }
+	void writeBytes(const UInt8* data,UInt32 size);
 
 	void	end();
 	void	clear();
@@ -52,26 +52,8 @@ private:
 
 	bool			_started;
 	bool			_first;
-	Mona::UInt32	_layers;
+	UInt32	_layers;
 };
-
-inline void JSONWriter::writeDate(const Mona::Time& date) {
-	std::string str;
-	date.toString(str, Time::ISO8601_FRAC_FORMAT);
-	writeString(str);
-}
-
-inline void JSONWriter::writeNumber(double value) {
-	writeString(ROUND(value)==value ? Poco::format("%u",(Mona::UInt32)value) : Poco::format("%f",value));
-}
-
-inline void JSONWriter::writeBoolean(bool value) {
-	writeString(value ? "true" : "false");
-}
-
-inline void JSONWriter::writeNull() {
-	writeString("null");
-}
 
 
 

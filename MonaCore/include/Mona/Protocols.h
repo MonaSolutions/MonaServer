@@ -52,8 +52,6 @@ private:
 		}
 	}
 
-	void requestHandle();
-
 	std::list<Protocol*>	_protocols;
 	Invoker&				_invoker;
 };

@@ -27,7 +27,7 @@ This file is a part of Mona.
 
 namespace Mona {
 
-class ServerApplication: public Application {
+class ServerApplication : public Application, virtual Object {
 public:
 	ServerApplication();
 
@@ -42,7 +42,7 @@ public:
 protected:
 	void waitForTerminationRequest();
 #if defined(POCO_OS_FAMILY_UNIX) || (defined(POCO_OS_FAMILY_WINDOWS) && !defined(_WIN32_WCE))
-	void defineOptions(Options& options);
+	void defineOptions(Exception& ex, Options& options);
 #endif
 
 private:
@@ -73,8 +73,8 @@ private:
 	bool hasConsole();
 	bool isService();
 	void beService();
-	void registerService();
-	void unregisterService();
+	bool registerService(Exception& ex);
+	bool unregisterService(Exception& ex);
 
 	std::string _displayName;
 	std::string _description;

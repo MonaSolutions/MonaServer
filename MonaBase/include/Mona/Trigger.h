@@ -24,26 +24,23 @@
 namespace Mona {
 
 
-class Trigger {
+class Trigger : virtual Object{
 public:
 	Trigger();
 	virtual ~Trigger();
 
-	bool raise(Exception& ex);
+	UInt16 raise(Exception& ex);
 	void start();
 	void reset();
-	void stop();
+	void stop() { _running = false; }
 private:
-	Mona::Time		_timeInit;
-	Mona::Int8		_cycle;
-	Mona::UInt8		_time;
+	Time		_timeInit;
+	Int8		_cycle;
+	UInt8		_time;
 	bool			_running;
 
 };
 
-inline void Trigger::stop() {
-	_running=false;
-}
 
 
 } // namespace Mona

@@ -22,7 +22,7 @@
 namespace Mona {
 
 /// A chrono in microseconds
-class Stopwatch {
+class Stopwatch : virtual Object{
 public:
 	Stopwatch() : _start(0), _stop(0), _running(false) {}
 

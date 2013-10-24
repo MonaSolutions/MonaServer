@@ -37,7 +37,7 @@ BinaryBuffer::int_type BinaryBuffer::readFromDevice() {
     return _buf.sbumpc();
 }
 
-Mona::UInt32 BinaryBuffer::size() {
+UInt32 BinaryBuffer::size() {
 	streamoff result = _buf.pubseekoff(0,std::ios_base::cur,std::ios_base::out) - _buf.pubseekoff(0,std::ios_base::cur,std::ios_base::in);
 	if(result<0)
 		result=0;

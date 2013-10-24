@@ -22,7 +22,7 @@ This file is a part of Mona.
 
 namespace Mona {
 
-class Parameters {
+class Parameters : virtual Object {
 public:
 
 	bool getString(const std::string& key, std::string& value) const {return getRaw(key, value);}

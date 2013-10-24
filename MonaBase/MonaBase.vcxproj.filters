@@ -17,6 +17,9 @@
     <Filter Include="sources\Net">
       <UniqueIdentifier>{ff846d05-03a5-4c4f-b4b7-0fb6994681ff}</UniqueIdentifier>
     </Filter>
+    <Filter Include="sources\Application">
+      <UniqueIdentifier>{60d1e55c-1dc5-4a53-9f14-0592dd0f376e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="sources\Mona.cpp">
@@ -46,9 +49,6 @@
     <ClCompile Include="sources\DiffieHellman.cpp">
       <Filter>sources\Util</Filter>
     </ClCompile>
-    <ClCompile Include="sources\Logs.cpp">
-      <Filter>sources\Util</Filter>
-    </ClCompile>
     <ClCompile Include="sources\QualityOfService.cpp">
       <Filter>sources\Util</Filter>
     </ClCompile>
@@ -73,9 +73,6 @@
     <ClCompile Include="sources\TaskHandler.cpp">
       <Filter>sources\Threading</Filter>
     </ClCompile>
-    <ClCompile Include="sources\SocketHandler.cpp">
-      <Filter>sources\Net</Filter>
-    </ClCompile>
     <ClCompile Include="sources\SocketManager.cpp">
       <Filter>sources\Net</Filter>
     </ClCompile>
@@ -94,33 +91,6 @@
     <ClCompile Include="sources\String.cpp">
       <Filter>sources\Util</Filter>
     </ClCompile>
-    <ClCompile Include="sources\Application.cpp">
-      <Filter>sources</Filter>
-    </ClCompile>
-    <ClCompile Include="sources\HelpFormatter.cpp">
-      <Filter>sources</Filter>
-    </ClCompile>
-    <ClCompile Include="sources\MapParameters.cpp">
-      <Filter>sources</Filter>
-    </ClCompile>
-    <ClCompile Include="sources\Option.cpp">
-      <Filter>sources</Filter>
-    </ClCompile>
-    <ClCompile Include="sources\Options.cpp">
-      <Filter>sources</Filter>
-    </ClCompile>
-    <ClCompile Include="sources\Parameters.cpp">
-      <Filter>sources</Filter>
-    </ClCompile>
-    <ClCompile Include="sources\ServerApplication.cpp">
-      <Filter>sources</Filter>
-    </ClCompile>
-    <ClCompile Include="sources\WinRegistryKey.cpp">
-      <Filter>sources</Filter>
-    </ClCompile>
-    <ClCompile Include="sources\WinService.cpp">
-      <Filter>sources</Filter>
-    </ClCompile>
     <ClCompile Include="sources\Time.cpp">
       <Filter>sources\Util</Filter>
     </ClCompile>
@@ -129,6 +99,60 @@
     </ClCompile>
     <ClCompile Include="sources\Exceptions.cpp">
       <Filter>sources\Util</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\Options.cpp">
+      <Filter>sources\Application</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\ServerApplication.cpp">
+      <Filter>sources\Application</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\WinRegistryKey.cpp">
+      <Filter>sources\Application</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\WinService.cpp">
+      <Filter>sources\Application</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\Option.cpp">
+      <Filter>sources\Application</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\HelpFormatter.cpp">
+      <Filter>sources\Application</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\Application.cpp">
+      <Filter>sources\Application</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\MapParameters.cpp">
+      <Filter>sources\Util</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\Parameters.cpp">
+      <Filter>sources\Util</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\DNS.cpp">
+      <Filter>sources\Net</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\Event.cpp">
+      <Filter>sources\Util</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\HostEntry.cpp">
+      <Filter>sources\Net</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\IPAddress.cpp">
+      <Filter>sources\Net</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\Net.cpp">
+      <Filter>sources\Net</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\Socket.cpp">
+      <Filter>sources\Net</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\SocketAddress.cpp">
+      <Filter>sources\Net</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\Logs.cpp">
+      <Filter>sources\Application</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\Logger.cpp">
+      <Filter>sources\Application</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -165,12 +189,6 @@
     <ClInclude Include="include\Mona\Entity.h">
       <Filter>sources\Util</Filter>
     </ClInclude>
-    <ClInclude Include="include\Mona\Logger.h">
-      <Filter>sources\Util</Filter>
-    </ClInclude>
-    <ClInclude Include="include\Mona\Logs.h">
-      <Filter>sources\Util</Filter>
-    </ClInclude>
     <ClInclude Include="include\Mona\QualityOfService.h">
       <Filter>sources\Util</Filter>
     </ClInclude>
@@ -197,9 +215,6 @@
     </ClInclude>
     <ClInclude Include="include\Mona\WorkThread.h">
       <Filter>sources\Threading</Filter>
-    </ClInclude>
-    <ClInclude Include="include\Mona\SocketHandler.h">
-      <Filter>sources\Net</Filter>
     </ClInclude>
     <ClInclude Include="include\Mona\SocketManager.h">
       <Filter>sources\Net</Filter>
@@ -237,32 +252,68 @@
     <ClInclude Include="include\Mona\Exceptions.h">
       <Filter>sources\Util</Filter>
     </ClInclude>
-    <ClInclude Include="include\Mona\Application.h">
-      <Filter>sources</Filter>
-    </ClInclude>
-    <ClInclude Include="include\Mona\HelpFormatter.h">
-      <Filter>sources</Filter>
-    </ClInclude>
-    <ClInclude Include="include\Mona\MapParameters.h">
-      <Filter>sources</Filter>
-    </ClInclude>
-    <ClInclude Include="include\Mona\Option.h">
-      <Filter>sources</Filter>
+    <ClInclude Include="include\Mona\WinService.h">
+      <Filter>sources\Application</Filter>
     </ClInclude>
     <ClInclude Include="include\Mona\Options.h">
-      <Filter>sources</Filter>
-    </ClInclude>
-    <ClInclude Include="include\Mona\Parameters.h">
-      <Filter>sources</Filter>
+      <Filter>sources\Application</Filter>
     </ClInclude>
     <ClInclude Include="include\Mona\ServerApplication.h">
-      <Filter>sources</Filter>
+      <Filter>sources\Application</Filter>
     </ClInclude>
     <ClInclude Include="include\Mona\WinRegistryKey.h">
-      <Filter>sources</Filter>
+      <Filter>sources\Application</Filter>
     </ClInclude>
-    <ClInclude Include="include\Mona\WinService.h">
-      <Filter>sources</Filter>
+    <ClInclude Include="include\Mona\Option.h">
+      <Filter>sources\Application</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\HelpFormatter.h">
+      <Filter>sources\Application</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\Application.h">
+      <Filter>sources\Application</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\MapParameters.h">
+      <Filter>sources\Util</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\Parameters.h">
+      <Filter>sources\Util</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\Event.h">
+      <Filter>sources\Util</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\Net.h">
+      <Filter>sources\Net</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\DatagramSocket.h">
+      <Filter>sources\Net</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\DNS.h">
+      <Filter>sources\Net</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\HostEntry.h">
+      <Filter>sources\Net</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\IPAddress.h">
+      <Filter>sources\Net</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\ServerSocket.h">
+      <Filter>sources\Net</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\Socket.h">
+      <Filter>sources\Net</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\SocketAddress.h">
+      <Filter>sources\Net</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\StreamSocket.h">
+      <Filter>sources\Net</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\Logs.h">
+      <Filter>sources\Application</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\Logger.h">
+      <Filter>sources\Application</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

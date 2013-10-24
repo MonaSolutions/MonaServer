@@ -19,69 +19,39 @@
 
 #include "Mona/Mona.h"
 #include "Mona/Peer.h"
+#include "Mona/DatagramSocket.h"
 #include "Mona/SocketManager.h"
-#include "Mona/UDPSender.h"
-#include "Mona/Util.h"
-#include "Poco/Buffer.h"
-#include "Poco/Net/SocketAddress.h"
 
 namespace Mona {
 
-class RelaySender : public UDPSender {
-public:
-	RelaySender(SocketHandler<Poco::Net::DatagramSocket>& handler) : _pBuffer(NULL),_size(0),UDPSender(handler,true) {}
-	virtual ~RelaySender(){}
-
-	void setBuffer(Poco::SharedPtr<Poco::Buffer<Mona::UInt8> >& pBuffer,Mona::UInt32 size);
-	
-private:
-	const Mona::UInt8*	begin(bool displaying=false);
-	Mona::UInt32		size(bool displaying=false);
-
-	Poco::SharedPtr<Poco::Buffer<Mona::UInt8> >	_pBuffer;
-	Mona::UInt32								_size;
-};
-
-inline void RelaySender::setBuffer(Poco::SharedPtr<Poco::Buffer<Mona::UInt8> >& pBuffer,Mona::UInt32 size) {
-	_pBuffer = pBuffer;_size = size;
-}
-
-inline const Mona::UInt8* RelaySender::begin(bool displaying) {
-	return _pBuffer.isNull() ? NULL : _pBuffer->begin();
-}
-inline Mona::UInt32 RelaySender::size(bool displaying) {
-	return _size;
-}
-
-
 class Relay;
-class RelaySocket : public SocketHandler<Poco::Net::DatagramSocket> {
+class RelaySocket : protected DatagramSocket {
 public:
-	RelaySocket(Mona::UInt16 port,const SocketManager& manager);
-	virtual ~RelaySocket();
+	RelaySocket(const SocketManager& manager);
 
-	typedef std::map<Poco::Net::SocketAddress,Relay*,Util::AddressComparator> Addresses;
 
-	const Mona::UInt16 port;
+	typedef std::map<SocketAddress,Relay*> Addresses;
 
-	Relay&			createRelay(const Peer& peer1,const Poco::Net::SocketAddress& address1,const Peer& peer2,const Poco::Net::SocketAddress& address2,Mona::UInt16 timeout);
-	Mona::UInt32	releaseRelay(Relay& relay);
+	const UInt16 port;
+
+	bool	load(Exception& ex, const SocketAddress& address);
+	Relay&	createRelay(const Peer& peer1,const SocketAddress& address1,const Peer& peer2,const SocketAddress& address2,UInt16 timeout);
+	UInt32	releaseRelay(Relay& relay);
 
 	const Addresses	addresses;
 private:
 	void	onError(const std::string& error);
-	void	onReadable();
+	void	onReadable(Exception& ex);
 
-	
-	Poco::FastMutex	_mutex;
+	std::mutex	_mutex;
 };
 
 class RelayServer {
 public:
-	RelayServer(PoolThreads& poolThreads,Mona::UInt32 bufferSize=0);
+	RelayServer(PoolThreads& poolThreads,UInt32 bufferSize=0);
 	virtual ~RelayServer();
 	
-	Mona::UInt16 add(const Peer& peer1,const Poco::Net::SocketAddress& address1,const Peer& peer2,const Poco::Net::SocketAddress& address2,Mona::UInt16 timeout=120) const;
+	UInt16 add(const Peer& peer1,const SocketAddress& address1,const Peer& peer2,const SocketAddress& address2,UInt16 timeout=120) const;
 	void remove(const Peer& peer) const;
 
 	void manage() const;
@@ -98,16 +68,16 @@ private:
 
 	struct Compare {
 	   bool operator()(RelaySocket* a,RelaySocket* b) const {
-		   return a->getSocket()->address().port() < b->getSocket()->address().port();
+		   return a->port < b->port;
 	   }
 	};
 
-	SocketManager											_manager;
-	mutable Poco::FastMutex									_mutex;
+	SocketManager										_manager;
+	mutable std::mutex									_mutex;
 
-	mutable std::set<Relay*>								_relays;
+	mutable std::set<Relay*>							_relays;
 	mutable std::map<const Peer*,std::set<Relay*> >		_peers;
-	mutable std::set<RelaySocket*,Compare>							_sockets;
+	mutable std::set<RelaySocket*,Compare>				_sockets;
 };
 
 

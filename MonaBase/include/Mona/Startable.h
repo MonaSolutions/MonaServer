@@ -18,13 +18,15 @@
 #pragma once
 
 #include "Mona/Mona.h"
+#include "Mona/Exceptions.h"
+#include "Mona/Event.h"
 #include "Poco/Thread.h"
-#include "Poco/Event.h"
+
 
 namespace Mona {
 
 class Startable;
-class StartableProcess : public Poco::Runnable{
+class StartableProcess : public Poco::Runnable, virtual Object {
 public:
 	StartableProcess(Startable& startable);
 private:
@@ -32,7 +34,7 @@ private:
 	Startable& _startable;
 };
 
-class Startable {
+class Startable : virtual Object {
 	friend class StartableProcess;
 public:
 	enum WakeUpType {
@@ -44,19 +46,19 @@ public:
 	void				start();
 	void				stop();
 
-	WakeUpType			sleep(Mona::UInt32 timeout=0);
-	void				wakeUp();
-	void				setPriority(Poco::Thread::Priority priority);
+	WakeUpType			sleep(Exception& ex,UInt32 millisec = 0);
+	void				wakeUp() { _wakeUpEvent.set(); }
+	void				setPriority(Poco::Thread::Priority priority) { _thread.setPriority(priority); }
 
-	bool				running() const;		
-	const std::string&	name() const;
+	bool				running() const { return !_stop; }
+	const std::string&	name() const { return _name; }
 
 protected:
 	Startable(const std::string& name);
 	virtual ~Startable();
 
-	virtual void	run()=0;
-	virtual void	prerun();
+	virtual void	run(Exception& ex) = 0;
+	virtual void	prerun(Exception& ex);
 
 private:
 	bool					_haveToJoin;
@@ -64,30 +66,10 @@ private:
 	mutable Poco::FastMutex	_mutex;
 	mutable Poco::FastMutex	_mutexStop;
 	volatile bool			_stop;
-	Poco::Event				_wakeUpEvent;
+	Event					_wakeUpEvent;
 	std::string				_name;
 	StartableProcess		_process;
 };
 
-inline bool Startable::running() const {
-	return !_stop;
-}
-
-
-inline void Startable::run() {
-	prerun();
-}
-
-inline void Startable::wakeUp() {
-	_wakeUpEvent.set();
-}
-
-inline void Startable::setPriority(Poco::Thread::Priority priority) {
-	_thread.setPriority(priority);
-}
-
-inline const std::string& Startable::name() const {
-	return _name;
-}
 
 } // namespace Mona

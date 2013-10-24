@@ -30,17 +30,17 @@ namespace Mona {
 class Session;
 class Decoding : public WorkThread, private Task {
 public:
-	Decoding(Mona::UInt32 id,TaskHandler& taskHandler,Protocol& protocol,MemoryReader* pPacket,const Poco::Net::SocketAddress& address);
+	Decoding(Mona::UInt32 id,TaskHandler& taskHandler,Protocol& protocol,MemoryReader* pPacket,const SocketAddress& address);
 	virtual ~Decoding();
 
 	const Mona::UInt32				id;
-	const Poco::Net::SocketAddress	address;
+	const SocketAddress	address;
 
 	MemoryReader&		packet();
 	Session*			session();
 
 protected:
-	Decoding(Mona::UInt32 id,TaskHandler& taskHandler,Protocol& protocol,Poco::SharedPtr<Poco::Buffer<Mona::UInt8> >& pBuffer,const Poco::Net::SocketAddress& address);
+	Decoding(Mona::UInt32 id,TaskHandler& taskHandler,Protocol& protocol,Poco::SharedPtr<Poco::Buffer<Mona::UInt8> >& pBuffer,const SocketAddress& address);
 
 private:
 	virtual bool				decode(MemoryReader& packet){return false;}

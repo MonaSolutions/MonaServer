@@ -157,9 +157,6 @@
     <ClInclude Include="include\Mona\HTTP\HTTP.h">
       <Filter>sources\Protocols\HTTP</Filter>
     </ClInclude>
-    <ClInclude Include="include\Mona\HTTP\HTTPPacketHandler.h">
-      <Filter>sources\Protocols\HTTP</Filter>
-    </ClInclude>
     <ClInclude Include="include\Mona\HTTP\HTTProtocol.h">
       <Filter>sources\Protocols\HTTP</Filter>
     </ClInclude>

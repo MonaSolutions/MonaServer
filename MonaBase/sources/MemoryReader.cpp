@@ -16,10 +16,8 @@
 */
 
 #include "Mona/MemoryReader.h"
-#include "Mona/Logs.h"
 
 using namespace std;
-using namespace Poco;
 
 namespace Mona {
 
@@ -30,18 +28,17 @@ MemoryReader::MemoryReader(const UInt8* buffer,UInt32 size) : _memory((const cha
 
 
 // Consctruction by copy
+/*
 MemoryReader::MemoryReader(MemoryReader& other) : _memory(other._memory),BinaryReader(_memory),fragments(other.fragments) {
-}
+}*/
 
 
 MemoryReader::~MemoryReader() {
 }
 
 void MemoryReader::shrink(UInt32 rest) {
-	if(rest>available()) {
-		WARN("rest ",rest," more upper than available ",available()," bytes");
+	if(rest>available())
 		rest = available();
-	}
 	_memory.resize(position()+rest);
 }
 

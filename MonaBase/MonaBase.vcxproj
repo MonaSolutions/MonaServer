@@ -19,14 +19,14 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='release|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <PlatformToolset>v120</PlatformToolset>
-    <CharacterSet>MultiByte</CharacterSet>
+    <CharacterSet>NotSet</CharacterSet>
     <CLRSupport>false</CLRSupport>
-    <WholeProgramOptimization>false</WholeProgramOptimization>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='debug|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <PlatformToolset>v120</PlatformToolset>
-    <CharacterSet>MultiByte</CharacterSet>
+    <CharacterSet>NotSet</CharacterSet>
     <CLRSupport>false</CLRSupport>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
@@ -111,8 +111,13 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="sources\Application.cpp" />
+    <ClCompile Include="sources\DNS.cpp" />
+    <ClCompile Include="sources\Event.cpp" />
     <ClCompile Include="sources\Exceptions.cpp" />
     <ClCompile Include="sources\HelpFormatter.cpp" />
+    <ClCompile Include="sources\HostEntry.cpp" />
+    <ClCompile Include="sources\IPAddress.cpp" />
+    <ClCompile Include="sources\Logger.cpp" />
     <ClCompile Include="sources\Mona.cpp" />
     <ClCompile Include="sources\BinaryReader.cpp" />
     <ClCompile Include="sources\BinaryStream.cpp" />
@@ -124,6 +129,7 @@
     <ClCompile Include="sources\DiffieHellman.cpp" />
     <ClCompile Include="sources\Logs.cpp" />
     <ClCompile Include="sources\MapParameters.cpp" />
+    <ClCompile Include="sources\Net.cpp" />
     <ClCompile Include="sources\Option.cpp">
       <ExceptionHandling Condition="'$(Configuration)|$(Platform)'=='debug|Win32'">Sync</ExceptionHandling>
     </ClCompile>
@@ -131,6 +137,8 @@
     <ClCompile Include="sources\Parameters.cpp" />
     <ClCompile Include="sources\QualityOfService.cpp" />
     <ClCompile Include="sources\ServerApplication.cpp" />
+    <ClCompile Include="sources\Socket.cpp" />
+    <ClCompile Include="sources\SocketAddress.cpp" />
     <ClCompile Include="sources\String.cpp" />
     <ClCompile Include="sources\Time.cpp" />
     <ClCompile Include="sources\TimeParser.cpp" />
@@ -141,7 +149,6 @@
     <ClCompile Include="sources\Startable.cpp" />
     <ClCompile Include="sources\Task.cpp" />
     <ClCompile Include="sources\TaskHandler.cpp" />
-    <ClCompile Include="sources\SocketHandler.cpp" />
     <ClCompile Include="sources\SocketManager.cpp" />
     <ClCompile Include="sources\SocketSender.cpp" />
     <ClCompile Include="sources\TCPClient.cpp" />
@@ -151,8 +158,14 @@
     <ClCompile Include="sources\WinService.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\Mona\DatagramSocket.h" />
+    <ClInclude Include="include\Mona\DNS.h" />
+    <ClInclude Include="include\Mona\Event.h" />
     <ClInclude Include="include\Mona\Exceptions.h" />
     <ClInclude Include="include\Mona\HelpFormatter.h" />
+    <ClInclude Include="include\Mona\HostEntry.h" />
+    <ClInclude Include="include\Mona\IPAddress.h" />
+    <ClInclude Include="include\Mona\Net.h" />
     <ClInclude Include="include\Mona\Parameters.h" />
     <ClInclude Include="include\Mona\Application.h" />
     <ClInclude Include="include\Mona\Mona.h" />
@@ -174,6 +187,10 @@
     <ClInclude Include="include\Mona\QualityOfService.h" />
     <ClInclude Include="include\Mona\ServerApplication.h" />
     <ClInclude Include="include\Mona\StopWatch.h" />
+    <ClInclude Include="include\Mona\ServerSocket.h" />
+    <ClInclude Include="include\Mona\Socket.h" />
+    <ClInclude Include="include\Mona\SocketAddress.h" />
+    <ClInclude Include="include\Mona\StreamSocket.h" />
     <ClInclude Include="include\Mona\String.h" />
     <ClInclude Include="include\Mona\Time.h" />
     <ClInclude Include="include\Mona\TimeParser.h" />
@@ -187,7 +204,6 @@
     <ClInclude Include="include\Mona\WinRegistryKey.h" />
     <ClInclude Include="include\Mona\WinService.h" />
     <ClInclude Include="include\Mona\WorkThread.h" />
-    <ClInclude Include="include\Mona\SocketHandler.h" />
     <ClInclude Include="include\Mona\SocketManager.h" />
     <ClInclude Include="include\Mona\SocketSender.h" />
     <ClInclude Include="include\Mona\TCPClient.h" />

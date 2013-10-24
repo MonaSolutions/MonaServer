@@ -16,14 +16,14 @@
 */
 
 #include "Mona/PoolThreads.h"
-#include "Poco/Environment.h"
+#include "Mona/Util.h"
 
 using namespace std;
-using namespace Poco;
+
 
 namespace Mona {
 
-PoolThreads::PoolThreads(UInt32 threadsAvailable):_threads(threadsAvailable==0 ? Environment::processorCount() : threadsAvailable)  {
+PoolThreads::PoolThreads(UInt32 threadsAvailable):_threads(threadsAvailable==0 ? Util::ProcessorCount() : threadsAvailable)  {
 	for(UInt16 i=0;i<_threads.size();++i)
 		_threads[i] = new PoolThread();
 }
@@ -40,29 +40,6 @@ void PoolThreads::clear() {
 		(*it)->clear();
 }
 
-PoolThread* PoolThreads::enqueue(Exception& ex, AutoPtr<WorkThread> pWork,PoolThread* pThread) {
-
-	UInt32 queue=0;
-	if(!pThread) {
-		vector<PoolThread*>::const_iterator it;
-		for(it=_threads.begin();it!=_threads.end();++it) {
-			UInt32 newQueue = (*it)->queue();
-			if(!pThread || newQueue<=queue) {
-				pThread = *it;
-				if((queue=newQueue)==0)
-					break;
-			}
-		}
-	}
-
-	if (queue >= 10000) {
-		ex.set(Exception::APPLICATION, "PoolThreads 10000 limit runnable entries for every thread reached");
-		return pThread;
-	}
-
-	pThread->push(pWork);
-	return pThread;
-}
 
 
 } // namespace Mona

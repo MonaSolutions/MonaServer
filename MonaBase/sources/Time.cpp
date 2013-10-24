@@ -59,7 +59,7 @@ const string Time::MONTH_NAMES[] = {
 	"December"
 };
 
-void Time::update(struct tm& tmtime, int milli /* = 0*/, int micro /* = 0*/) {
+Time& Time::update(struct tm& tmtime, int milli /* = 0*/, int micro /* = 0*/) {
 
 	// Convert Local to GMT
 	time_t gmttime = timegm(&tmtime);
@@ -67,6 +67,7 @@ void Time::update(struct tm& tmtime, int milli /* = 0*/, int micro /* = 0*/) {
 	Int64 monatime = (gmttime * 1000000) + (milli * 1000) + (micro);
 
 	_time = chrono::system_clock::time_point(chrono::microseconds(monatime));
+	return *this;
 }
 
 bool Time::isValid(struct tm& tmtime, int milli /* = 0 */, int micro /* = 0 */) {
@@ -106,33 +107,19 @@ Int64 Time::elapsed() const {
 	return dtSinceNow.count();
 }
 
-bool Time::toString(string& out, const string& fmt, int timezone /*= UTC*/) const {
-
+string& Time::toString(const string& fmt, string& out, int timezone /*= UTC*/) const {
 	out.reserve(32);
-
 	struct tm datetm;
-	if (!toGMT(datetm)) 
-		return false;
-
-	formatDate(out, datetm, fmt, timezone);
-
-	return true;
+	return formatDate(toGMT(datetm), fmt, out, timezone);
 }
 
-bool Time::toLocaleString(string& out, const string& fmt, int timezone /*= UTC*/) const {
-
+string& Time::toLocaleString(const string& fmt, string& out, int timezone /*= UTC*/) const {
 	out.reserve(32);
-
 	struct tm datetm;
-	if (!toLocal(datetm))
-		return false;
-
-	formatDate(out, datetm, fmt, timezone);
-
-	return true;
+	return formatDate(toLocal(datetm), fmt, out, timezone);
 }
 
-void Time::formatDate(string& out, const struct tm& datetm, const string& fmt, int timezone /*= UTC*/) const {
+string& Time::formatDate(const struct tm& datetm, const string& fmt, string& out, int timezone /*= UTC*/) const {
 
 	auto it = fmt.begin(), end = fmt.end();
 
@@ -168,8 +155,8 @@ void Time::formatDate(string& out, const struct tm& datetm, const string& fmt, i
 				case 'i': String::Append(out, Format<int>("%03d", millisec())); break;
 				case 'c': String::Append(out, millisec() / 100); break;
 				case 'F': String::Append(out, Format<int>("%06d", millisec() * 1000 + microsec())); break;
-				case 'z': tzFormat(out, timezone); break;
-				case 'Z': tzFormat(out, timezone, false); break;
+				case 'z': tzFormat(timezone,out); break;
+				case 'Z': tzFormat(timezone, out, false); break;
 				default:  out += *it;
 				}
 				++it;
@@ -177,47 +164,34 @@ void Time::formatDate(string& out, const struct tm& datetm, const string& fmt, i
 		}
 		else out += *it++;
 	}
+	return out;
 }
 
-void Time::tzFormat(string& str, int tzDifferential, bool bISO /* = true */) const {
-
-	if (tzDifferential != UTC) {
-
-		int tzd = (tzDifferential < 0)? -tzDifferential : tzDifferential;
-		str += (tzDifferential < 0) ? '-' : '+';
-		String::Append(str, Format<int>("%02d", tzd / 3600));
-		if (bISO) str += ':';
-		String::Append(str, Format<int>("%02d", (tzd % 3600) / 60));
+string& Time::tzFormat(int tzDifferential, string& out, bool bISO /* = true */) const {
+	if (tzDifferential == UTC) {
+		out += (bISO) ? "Z" : "GMT";
+		return out;
 	}
-	else {
-
-		str += (bISO)? "Z" : "GMT";
-	}
+	int tzd = (tzDifferential < 0)? -tzDifferential : tzDifferential;
+	out += (tzDifferential < 0) ? '-' : '+';
+	String::Append(out, Format<int>("%02d", tzd / 3600));
+	if (bISO) out += ':';
+	return String::Append(out, Format<int>("%02d", (tzd % 3600) / 60));
 }
 
 bool Time::fromString(const string &in) {
-
 	int tz = 0;
-
 	return TimeParser::tryParse(in, *this, tz);
 }
 
-bool Time::toLocal(struct tm& tmtime) const {
-
+struct tm& Time::toLocal(struct tm& tmtime) const {
 	time_t date = chrono::system_clock::to_time_t(_time);
-	struct tm * tmp = localtime(&date);
-	tmtime = *tmp;
-
-	return tmp != NULL;
+	return tmtime = *localtime(&date);
 }
 
-bool Time::toGMT(struct tm& tmtime) const {
-
+struct tm& Time::toGMT(struct tm& tmtime) const {
 	time_t date = chrono::system_clock::to_time_t(_time);
-	struct tm * tmp = gmtime(&date);
-	tmtime = *tmp;
-
-	return tmp != NULL;
+	return tmtime = *gmtime(&date);
 }
 
 } // namespace Mona

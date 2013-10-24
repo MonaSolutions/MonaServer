@@ -23,7 +23,7 @@
 
 namespace Mona {
 
-class Time : ObjectFix {
+class Time : virtual Object {
 public:
 
 	// names used by formatter and parser
@@ -58,28 +58,25 @@ public:
 	/// invalid date
 	Time(struct tm& tmtime, int milli = 0, int micro = 0) { update(tmtime, milli, micro); }
 
-	/// \brief Construct the object by copying time's value
-	Time(const Time& time) : _time(time._time) {}
-
 	/// \brief Destructor
-	~Time() { }
+	virtual ~Time() { }
 
 	/// \brief Update the time object with current time
-	void update() { _time = std::chrono::system_clock::now(); }
+	Time& update() { _time = std::chrono::system_clock::now(); return *this; }
 
 	/// \brief Update the time object with time parameter (in msec)
-	void update(Int64 time) { _time = std::chrono::system_clock::time_point(std::chrono::microseconds(time)); }
+	Time& update(Int64 time) { _time = std::chrono::system_clock::time_point(std::chrono::microseconds(time)); return *this; }
 
 	/// \brief Update the time object with the time_point value
-	void update(const std::chrono::system_clock::time_point& tp) { _time = tp; }
+	Time& update(const std::chrono::system_clock::time_point& tp) { _time = tp; return *this;  }
 
 	/// \brief Update the time object with struct tm parameter
 	/// WARN : the tmtime parameter could be modified in case of
 	/// invalid date
-	void update(struct tm& tmtime, int milli = 0, int micro = 0);
+	Time& update(struct tm& tmtime, int milli = 0, int micro = 0);
 
 	/// \brief Update the object by copying time's value
-	void update(const Time& time) { _time = time._time; }
+	Time& update(const Time& time) { _time = time._time; return *this; }
 
 	/// \brief time_point object accessor
 	std::chrono::system_clock::time_point getTimePoint() const { return _time; };
@@ -106,8 +103,8 @@ public:
 	Int64 elapsed() const;
 
 	/// \brief Convert to a string with a particular format
-	bool toString(std::string& out, const std::string& fmt, int timezone = UTC) const;
-	bool toLocaleString(std::string& out, const std::string& fmt, int timezone = UTC) const;
+	std::string& toString(const std::string& fmt, std::string& out, int timezone = UTC) const;
+	std::string& toLocaleString(const std::string& fmt, std::string& out, int timezone = UTC) const;
 
 	/// \brief Try to parse a date string and assign the Time instance
 	bool fromString(const std::string &in);
@@ -121,16 +118,16 @@ public:
 	static bool isValid(struct tm& tmtime, int milli = 0, int micro = 0);
 
 	/// \brief Convert Mona Time to local time
-	bool toLocal(struct tm& tmtime) const;
+	struct tm& toLocal(struct tm& tmtime) const;
 
 	/// \brief Convert Mona Time to time GMT
-	bool toGMT(struct tm& tmtime) const;
+	struct tm& toGMT(struct tm& tmtime) const;
 
 private:
 	std::chrono::system_clock::time_point _time;
 
-	void formatDate(std::string& out, const struct tm& datetm, const std::string& fmt, int timezone = UTC) const;
-	void tzFormat(std::string& str, int tzDifferential, bool bISO = true) const;
+	std::string& formatDate(const struct tm& datetm, const std::string& fmt, std::string& out, int timezone = UTC) const;
+	std::string& tzFormat(int tzDifferential, std::string& out, bool bISO = true) const;
 
 	int hour2AMPM(int hour) const;
 };
@@ -158,11 +155,11 @@ inline bool operator>= (const Time& lhs, const Time& rhs) { return lhs.getTimePo
 
 inline bool operator<= (const Time& lhs, const Time& rhs) { return lhs.getTimePoint() <= rhs.getTimePoint(); }
 
-inline Time	operator+ (const Time& lhs, const Int64 dtn) { return Time(lhs.getTimePoint() + std::chrono::microseconds(dtn)); }
+/* TODO? inline Time	operator+ (const Time& lhs, const Int64 dtn) { return Time(lhs.getTimePoint() + std::chrono::microseconds(dtn)); }
 
 inline Time	operator+ (const Int64 dtn, const Time& rhs) { return Time(std::chrono::microseconds(dtn) + rhs.getTimePoint()); }
 
-inline Time	operator- (const Time& lhs, const Int64 dtn) { return Time(lhs.getTimePoint() - std::chrono::microseconds(dtn)); }
+inline Time	operator- (const Time& lhs, const Int64 dtn) { return Time(lhs.getTimePoint() - std::chrono::microseconds(dtn)); }*/
 
 inline Int64 operator- (const Time& lhs, const Time& rhs) { return std::chrono::duration_cast<std::chrono::microseconds>(lhs.getTimePoint() - rhs.getTimePoint()).count(); }
 

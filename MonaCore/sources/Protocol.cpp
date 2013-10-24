@@ -17,15 +17,12 @@
 
 #include "Mona/Protocol.h"
 #include "Mona/Invoker.h"
+#include "Mona/Logs.h"
 
-using namespace Poco::Net;
 
 namespace Mona {
 
 Protocol::Protocol(const char* name,Invoker& invoker,Gateway& gateway):invoker(invoker),gateway(gateway),name(name) {
-}
-
-Protocol::~Protocol(){
 }
 
 

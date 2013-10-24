@@ -18,62 +18,54 @@
 #pragma once
 
 #include "Mona.h"
-#include "Mona/Exceptions.h"
 #include "Mona/WorkThread.h"
-#include "Mona/SocketHandler.h"
 #include "Mona/PoolThread.h"
-#include "Poco/Net/SocketAddress.h"
+#include "Mona/SocketAddress.h"
+#include <memory>
+
 
 namespace Mona {
 
-class SocketSender : public WorkThread {
+class SocketSender : public WorkThread, virtual Object {
+	friend class Socket;
 public:
-	void			release();
-	virtual bool	flush();
-	virtual bool	available();
-
-	PoolThread*		go(Exception& ex, PoolThread* pThread);
-
+	
 protected:
-	SocketSender(SocketHandlerBase& handler,const Mona::UInt8* data,Mona::UInt32 size,bool dump=false);
-	SocketSender(SocketHandlerBase& handler,bool dump=false);
+	SocketSender(const UInt8* data, UInt32 size, bool dump = false) :
+		_position(0), _data((UInt8*)data), _size(size), _memcopied(false), _dump(dump), _pSocket(NULL) {}
+	SocketSender(bool dump = false) : SocketSender(NULL, 0, dump) {}
 	virtual ~SocketSender();
 
-	void									dump(bool justInDebug=false);
+	void			dump(bool justInDebug=false);
 	
 private:
-	virtual	Mona::UInt32					send(const Mona::UInt8* data,Mona::UInt32 size)=0;
-	virtual const Poco::Net::SocketAddress&	receiver()=0;
-	virtual void							pack(){}
+	// send data
+	bool			flush(Exception& ex,Socket& socket);
 
-	virtual const Mona::UInt8*				begin(bool dumping=false);
-	virtual Mona::UInt32					size(bool dumping=false);
+	// return true if there is few data available to send
+	virtual bool	available() { return begin() && _position < size(); }
 
-	void									run();
+	virtual bool	receiver(std::string& address) { return false; }
 
-	Poco::SharedPtr<bool>		_pSocketClosed;
-	Mona::UInt32				_position;
-	Mona::UInt8*				_data;
-	Mona::UInt32				_size;
+	//// TO OVERLOAD ////////
+
+	virtual	UInt32					send(Exception& ex,Socket& socket,const UInt8* data, UInt32 size) = 0;
+
+	virtual const UInt8*			begin(bool dumping = false) { return _data; }
+	virtual UInt32					size(bool dumping = false) { return _size; }
+
+	bool							run(Exception& ex);
+
+	std::shared_ptr<std::mutex> _pSocketMutex;
+	Socket*						_pSocket;
+	std::weak_ptr<SocketSender>	_pThis;
+
+	UInt32						_position;
+	UInt8*						_data;
+	UInt32						_size;
 	bool						_memcopied;
 	bool						_dump;
-	SocketHandlerBase&			_handler;
-	bool						_wrote;
-	volatile bool				_running;
-	Poco::FastMutex				_mutex;
 };
-
-inline bool SocketSender::available() {
-	return _handler.getSocket() && begin() && _position < size();
-}
-
-inline const Mona::UInt8* SocketSender::begin(bool dumping) {
-	return _data;
-}
-
-inline Mona::UInt32 SocketSender::size(bool dumping) {
-	return _size;
-}
 
 
 } // namespace Mona

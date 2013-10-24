@@ -21,7 +21,7 @@
 #include "Mona/Exceptions.h"
 #include "Mona/Writer.h"
 #include "Poco/URI.h"
-#include "Poco/Net/IPAddress.h"
+#include "Mona/IPAddress.h"
 #include <list>
 #include <map>
 
@@ -46,9 +46,8 @@ public:
 class Peer;
 class SDP {
 public:
-	SDP();
-	SDP(Exception& ex, const std::string& text);
-	virtual ~SDP();
+	SDP() : supportMsId(false), version(0), sessionId(0) {}
+	virtual ~SDP() { clearMedias(); }
 
 	bool build(Exception& ex, const std::string& text);
 	void build();

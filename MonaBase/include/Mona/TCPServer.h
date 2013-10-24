@@ -19,36 +19,30 @@
 
 
 #include "Mona/SocketManager.h"
-#include "Poco/Net/ServerSocket.h"
+#include "Mona/ServerSocket.h"
+
 
 namespace Mona {
 
-class TCPServer : protected SocketHandler<Poco::Net::ServerSocket> {
+class TCPServer : protected ServerSocket, virtual Object {
 public:
 	TCPServer(const SocketManager& manager);
 	virtual ~TCPServer();
 
-	bool			start(Mona::UInt16 port);
-	bool			running();
-	Mona::UInt16	port();
+	bool			start(Exception& ex, UInt16 port);
+	bool			running() { return _port > 0; }
+	UInt16	port() { return _port; }
 	void			stop();
 
 private:
-	virtual void	clientHandler(Poco::Net::StreamSocket& socket)=0;
+	virtual void			 clientHandler(std::shared_ptr<StreamSocket>& pSocket)=0;
 
+	virtual StreamSocket*    newClient() = 0;
 
-	void	onReadable();
-	void	onError(const std::string& error);
+	virtual void	onReadable(Exception& ex);
 
-	Mona::UInt16				_port;
+	UInt16			_port;
 };
 
-inline bool	TCPServer::running() {
-	return _port>0;
-}
-
-inline Mona::UInt16	TCPServer::port() {
-	return _port;
-}
 
 } // namespace Mona

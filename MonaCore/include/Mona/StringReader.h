@@ -32,12 +32,12 @@ public:
 	void				readString(std::string& value);
 	double				readNumber() {return 0;}
 	bool				readBoolean() {return false;}
-	void				readTime(Mona::Time& time) { time.update(); }
+	Time&				readTime(Time& time) { return time.update(); }
 	void				readNull() {}
-	const Mona::UInt8*	readBytes(Mona::UInt32& size) {return NULL;}
+	const UInt8*	readBytes(UInt32& size) {return NULL;}
 
 	bool				readObject(std::string& type,bool& external) {return false;}
-	bool				readArray(Mona::UInt32& size) {return false;}
+	bool				readArray(UInt32& size) {return false;}
 	Type				readItem(std::string& name) {return END;}
 	
 	Type				followingType();

@@ -33,7 +33,7 @@ public:
 	virtual ~Gateway(){}
 	
 	virtual Session*	session(const Mona::UInt8* peerId)=0;
-	virtual Session*	session(const Poco::Net::SocketAddress& address)=0;
+	virtual Session*	session(const SocketAddress& address)=0;
 
 	virtual Session&	registerSession(Session* pSession)=0;
 	virtual void		readable(Protocol& protocol)=0;

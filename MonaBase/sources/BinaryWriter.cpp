@@ -19,8 +19,7 @@
 #include "Mona/Util.h"
 
 using namespace std;
-using namespace Poco;
-using namespace Poco::Net;
+
 
 namespace Mona {
 
@@ -34,7 +33,7 @@ BinaryWriter::~BinaryWriter() {
 	flush();
 }
 
-void BinaryWriter::write24(Mona::UInt32 value) {
+void BinaryWriter::write24(UInt32 value) {
 	write8(value>>16);
 	write16(value);
 }
@@ -60,7 +59,7 @@ void BinaryWriter::writeString16(const string& value) {
 void BinaryWriter::writeAddress(const SocketAddress& address,bool publicFlag) {
 	UInt8 flag = publicFlag ? 0x02 : 0x01;
 	UInt8 size = 4;
-	IPAddress host = address.host();
+	const IPAddress& host = address.host();
 	if(host.family() == IPAddress::IPv6) {
 		flag |= 0x80;
 		size = 16;

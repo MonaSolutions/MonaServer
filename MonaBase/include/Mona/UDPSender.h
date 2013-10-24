@@ -19,32 +19,26 @@
 
 #include "Mona/Mona.h"
 #include "Mona/SocketSender.h"
-#include "Poco/Net/DatagramSocket.h"
+#include "Mona/DatagramSocket.h"
 
 
 namespace Mona {
 
-class UDPSender : public SocketSender {
+class UDPSender : public SocketSender, virtual Object {
 public:
-	UDPSender(SocketHandler<Poco::Net::DatagramSocket>& handler,bool dump=false) : handler(handler),SocketSender(handler,dump),_socket(handler.getSocket() ? *handler.getSocket() : Poco::Net::Socket()) {}
-	UDPSender(SocketHandler<Poco::Net::DatagramSocket>& handler,const Mona::UInt8* data,Mona::UInt32 size,bool dump=false) : handler(handler),SocketSender(handler,data,size,dump),_socket(handler.getSocket() ? *handler.getSocket() : Poco::Net::Socket()) {}
+	UDPSender(bool dump = false) : SocketSender(dump) {}
+	UDPSender(const UInt8* data, UInt32 size, bool dump = false) : SocketSender(data, size, dump) {}
 	virtual ~UDPSender(){}
 
-	SocketHandler<Poco::Net::DatagramSocket>&	handler;
-	Poco::Net::SocketAddress					address;
+	SocketAddress			address;
 private:
-	Mona::UInt32					send(const Mona::UInt8* data,Mona::UInt32 size);
-	const Poco::Net::SocketAddress&	receiver();
+	UInt32					send(Exception& ex, Socket& socket, const UInt8* data, UInt32 size) {
+		return address == SocketAddress::Wildcard() ? ((DatagramSocket&)socket).sendBytes(ex, data, size) : ((DatagramSocket&)socket).sendTo(ex, data, size, address);
+	}
 
-	Poco::Net::DatagramSocket		_socket;
+	virtual bool			receiver(std::string& address) { address.assign(this->address.toString()); return true; }
 };
 
-inline const Poco::Net::SocketAddress& UDPSender::receiver() {
-	return address;
-}
 
-inline Mona::UInt32 UDPSender::send(const Mona::UInt8* data,Mona::UInt32 size) {
-	return address.host().isWildcard() ? _socket.sendBytes(data,size) : _socket.sendTo(data,size,address);
-}
 
 } // namespace Mona

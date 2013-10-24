@@ -24,7 +24,7 @@ namespace Mona {
 
 class Time;
 
-class TimeParser {
+class TimeParser : virtual Object {
 public:
 
 	static bool tryParse(const std::string& in, Time& dateTime, int& tz);

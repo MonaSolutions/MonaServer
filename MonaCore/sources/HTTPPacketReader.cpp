@@ -49,9 +49,9 @@ void HTTPPacketReader::readString(string& value) {
 	_type = MAP;
 }
 
-void HTTPPacketReader::readTime(Time& time) {
+Time& HTTPPacketReader::readTime(Time& time) {
 	_type = MAP;
-	time.update(_date);
+	return time.update(_date);
 }
 
 void HTTPPacketReader::readNull(){

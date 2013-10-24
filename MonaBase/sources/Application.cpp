@@ -24,9 +24,6 @@ This file is a part of Mona.
 #if defined(POCO_OS_FAMILY_UNIX) && !defined(POCO_VXWORKS)
 #include "Poco/SignalHandler.h"
 #endif
-#if defined(POCO_WIN32_UTF8) && !defined(POCO_NO_WSTRING)
-#include "Poco/UnicodeConverter.h"
-#endif
 
 
 using namespace std;
@@ -68,9 +65,11 @@ void Application::displayHelp() {
 
 void Application::init(int argc, char* argv[]) {
 	Path appPath;
-	Exception ex;
 	string command(argv[0]);
-	getApplicationPath(command, appPath);
+	Exception ex;
+	getApplicationPath(ex,command, appPath);
+	if (ex)
+		throw exception(ex.error().c_str());
 	setString("application.command", command);
 	setString("application.path", appPath.toString());
 	setString("application.name", appPath.getFileName());
@@ -79,10 +78,11 @@ void Application::init(int argc, char* argv[]) {
 	setString("application.configDir", appPath.parent().toString());
 
 	// options
-	defineOptions(_options);
-	_options.process(ex, argc, argv, [this](const string& name, const string& value){ setString("application." + name, value); });
-	if(ex)
-		ERROR(ex.error())
+	defineOptions(ex, _options);
+	if (ex)
+		throw exception(ex.error().c_str());
+	if(!_options.process(ex,argc, argv, [this](Exception& ex,const string& name, const string& value){ setString("application." + name, value); }))
+		throw exception(ex.error().c_str());
 }
 
 int Application::run(int argc, char* argv[]) {
@@ -90,7 +90,7 @@ int Application::run(int argc, char* argv[]) {
 		init(argc, argv);
 		return main();
 	} catch (exception& ex) {
-		FATAL(ex.what());
+		FATAL("%s", ex.what());
 		return Application::EXIT_SOFTWARE;
 	} catch (...) {
 		FATAL("Unknown error");
@@ -99,7 +99,7 @@ int Application::run(int argc, char* argv[]) {
 }
 
 
-void Application::getApplicationPath(const string& command,Path& appPath) const {
+bool Application::getApplicationPath(Exception& ex,const string& command,Path& appPath) const {
 #if defined(POCO_OS_FAMILY_UNIX) && !defined(POCO_VXWORKS)
 	if (command.find('/') != string::npos) {
 		Path path(command);
@@ -115,29 +115,18 @@ void Application::getApplicationPath(const string& command,Path& appPath) const 
 		appPath.makeAbsolute();
 	}
 #elif defined(POCO_OS_FAMILY_WINDOWS)
-	#if defined(POCO_WIN32_UTF8) && !defined(POCO_NO_WSTRING)
-		wchar_t path[1024];
-		int n = GetModuleFileNameW(0, path, sizeof(path)/sizeof(wchar_t));
-		if (n > 0) {
-			std::string p;
-			Poco::UnicodeConverter::toUTF8(path, p);
-			appPath = p;
-		}
-		else
-			//TODO ex.set(Exception::APPLICATION,"Impossible to determine the application file name");
-			throw RuntimeException("Impossible to determine the application file name");
-	#else
-		char path[1024];
-		int n = GetModuleFileNameA(0, path, sizeof(path));
-		if (n > 0)
-			appPath = path;
-		else
-			// TODO ex.set(Exception::APPLICATION,"Impossible to determine the application file name");
-			throw RuntimeException("Impossible to determine the application file name");
-	#endif
+	char path[1024];
+	int n = GetModuleFileNameA(0, path, sizeof(path));
+	if (n > 0)
+		appPath = path;
+	else {
+		ex.set(Exception::APPLICATION, "Impossible to determine the application file name");
+		return false;
+	}	
 #else
 	appPath = command;
 #endif
+	return true;
 }
 
 } // namespace Mona

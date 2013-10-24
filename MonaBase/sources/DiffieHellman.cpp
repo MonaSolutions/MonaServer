@@ -81,7 +81,7 @@ void DiffieHellman::computeSecret(const Buffer<UInt8>& farPubKey,Buffer<UInt8>& 
 	int i =BN_num_bits(_pDH->priv_key);
 	sharedSecret.resize(DH_KEY_SIZE);
 	int size = DH_compute_key(sharedSecret.begin(), bnFarPubKey,_pDH);
-	if(size<=0)
+	if (size <= 0)
 		CRITIC("Diffie Hellman exchange failed, dh compute key error")
 	else if(size!=DH_KEY_SIZE)
 		sharedSecret.resize(size);

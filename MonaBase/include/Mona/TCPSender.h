@@ -19,33 +19,21 @@
 
 #include "Mona/Mona.h"
 #include "Mona/SocketSender.h"
-#include "Poco/Net/StreamSocket.h"
+#include "Mona/StreamSocket.h"
 
 namespace Mona {
 
-class TCPSender : public SocketSender {
+class TCPSender : public SocketSender, virtual Object {
 public:
-	TCPSender(SocketHandler<Poco::Net::StreamSocket>& handler,bool dump=false) : handler(handler),SocketSender(handler,dump),_address(handler.getSocket() ? handler.getSocket()->peerAddress() : Poco::Net::SocketAddress()),_socket(handler.getSocket() ? *handler.getSocket() : Poco::Net::Socket()) {}
-	TCPSender(SocketHandler<Poco::Net::StreamSocket>& handler,const Mona::UInt8* data,Mona::UInt32 size,bool dump=false) : handler(handler),SocketSender(handler,data,size,dump),_address(handler.getSocket() ? handler.getSocket()->peerAddress() : Poco::Net::SocketAddress()),_socket(handler.getSocket() ? *handler.getSocket() : Poco::Net::Socket()) {}
+	TCPSender(bool dump = false) : SocketSender(dump) {}
+	TCPSender(const UInt8* data, UInt32 size, bool dump = false) : SocketSender(data, size, dump) {}
 	virtual ~TCPSender(){}
 
-	SocketHandler<Poco::Net::StreamSocket>& handler;
 
 private:
-	Mona::UInt32					send(const Mona::UInt8* data,Mona::UInt32 size);
-	const Poco::Net::SocketAddress&	receiver();
-
-	Poco::Net::StreamSocket			_socket;
-	Poco::Net::SocketAddress		_address;
+	UInt32	send(Exception& ex, Socket& socket, const UInt8* data, UInt32 size) { return ((StreamSocket&)socket).sendBytes(ex,data, (int)size); }
 };
 
-inline const Poco::Net::SocketAddress& TCPSender::receiver() {
-	return _address;
-}
-
-inline Mona::UInt32 TCPSender::send(const Mona::UInt8* data,Mona::UInt32 size) {
-	return _socket.sendBytes(data,(int)size);
-}
 
 
 } // namespace Mona

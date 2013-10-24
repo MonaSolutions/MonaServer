@@ -18,15 +18,16 @@
 #pragma once
 
 #include "Mona/Mona.h"
+#include "Mona/Exceptions.h"
 
 namespace Mona {
 
 class TaskHandler;
-class Task {
+class Task : virtual Object {
 public:
 	Task(TaskHandler& handler);
 
-	virtual void	handle()=0;
+	virtual void	handle(Exception& ex)=0;
 protected:
 	void waitHandle();
 private:

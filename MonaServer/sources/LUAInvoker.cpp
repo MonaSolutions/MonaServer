@@ -30,14 +30,14 @@
 #include "math.h"
 
 using namespace Poco;
-using namespace Poco::Net;
+using namespace Mona;
 using namespace std;
 
-const char*		LUAInvoker::Name="Mona::Invoker";
+const char*		LUAInvoker::Name="Invoker";
 
 
 int	LUAInvoker::Split(lua_State *pState) {
-	SCRIPT_CALLBACK(Mona::Invoker,LUAInvoker,invoker)
+	SCRIPT_CALLBACK(Invoker,LUAInvoker,invoker)
 		string expression = SCRIPT_READ_STRING("");
 		string separator = SCRIPT_READ_STRING("");
 		StringTokenizer split(expression,separator,SCRIPT_READ_UINT(0));
@@ -49,11 +49,11 @@ int	LUAInvoker::Split(lua_State *pState) {
 
 
 int	LUAInvoker::Publish(lua_State *pState) {
-	SCRIPT_CALLBACK(Mona::Invoker,LUAInvoker,invoker)
+	SCRIPT_CALLBACK(Invoker,LUAInvoker,invoker)
 	string name = SCRIPT_READ_STRING("");
-	Mona::Exception ex;
+	Exception ex;
 	
-	SCRIPT_WRITE_PERSISTENT_OBJECT(Mona::Publication,LUAPublication,*invoker.publish(ex, name))
+	SCRIPT_WRITE_PERSISTENT_OBJECT(Publication,LUAPublication,*invoker.publish(ex, name))
 	if (ex) {
 		SCRIPT_ERROR(ex.error().c_str())
 		SCRIPT_WRITE_NIL
@@ -67,13 +67,13 @@ int	LUAInvoker::Publish(lua_State *pState) {
 }
 
 int	LUAInvoker::AbsolutePath(lua_State *pState) {
-	SCRIPT_CALLBACK(Mona::Invoker,LUAInvoker,invoker)
+	SCRIPT_CALLBACK(Invoker,LUAInvoker,invoker)
 		SCRIPT_WRITE_STRING((MonaServer::WWWPath + SCRIPT_READ_STRING("") + "/").c_str())
 	SCRIPT_CALLBACK_RETURN
 }
 
 int	LUAInvoker::CreateUDPSocket(lua_State *pState) {
-	SCRIPT_CALLBACK(Mona::Invoker,LUAInvoker,invoker)
+	SCRIPT_CALLBACK(Invoker,LUAInvoker,invoker)
 		bool allowBroadcast = SCRIPT_READ_BOOL(false);
 		SCRIPT_WRITE_OBJECT(LUAUDPSocket,LUAUDPSocket,*(new LUAUDPSocket(invoker.sockets,allowBroadcast,pState)))
 		SCRIPT_ADD_DESTRUCTOR(&LUAUDPSocket::Destroy)
@@ -81,21 +81,21 @@ int	LUAInvoker::CreateUDPSocket(lua_State *pState) {
 }
 
 int	LUAInvoker::CreateTCPClient(lua_State *pState) {
-	SCRIPT_CALLBACK(Mona::Invoker,LUAInvoker,invoker)
+	SCRIPT_CALLBACK(Invoker,LUAInvoker,invoker)
 		SCRIPT_WRITE_OBJECT(LUATCPClient,LUATCPClient,*(new LUATCPClient(invoker.sockets,pState)))
 		SCRIPT_ADD_DESTRUCTOR(&LUATCPClient::Destroy);
 	SCRIPT_CALLBACK_RETURN
 }
 
 int	LUAInvoker::CreateTCPServer(lua_State *pState) {
-	SCRIPT_CALLBACK(Mona::Invoker,LUAInvoker,invoker)
+	SCRIPT_CALLBACK(Invoker,LUAInvoker,invoker)
 		SCRIPT_WRITE_OBJECT(LUATCPServer,LUATCPServer,*(new LUATCPServer(invoker.sockets,pState)))
 		SCRIPT_ADD_DESTRUCTOR(&LUATCPServer::Destroy);
 	SCRIPT_CALLBACK_RETURN
 }
 
 int	LUAInvoker::Md5(lua_State *pState) {
-	SCRIPT_CALLBACK(Mona::Invoker,LUAInvoker,invoker)
+	SCRIPT_CALLBACK(Invoker,LUAInvoker,invoker)
 		while(SCRIPT_CAN_READ) {
 			SCRIPT_READ_BINARY(data,size)
 			if(data) {
@@ -111,7 +111,7 @@ int	LUAInvoker::Md5(lua_State *pState) {
 }
 
 int	LUAInvoker::Sha256(lua_State *pState) {
-	SCRIPT_CALLBACK(Mona::Invoker,LUAInvoker,invoker)
+	SCRIPT_CALLBACK(Invoker,LUAInvoker,invoker)
 		while(SCRIPT_CAN_READ) {
 			SCRIPT_READ_BINARY(data,size)
 			if(data) {
@@ -127,16 +127,16 @@ int	LUAInvoker::Sha256(lua_State *pState) {
 }
 
 int	LUAInvoker::ToAMF(lua_State *pState) {
-	SCRIPT_CALLBACK(Mona::Invoker,LUAInvoker,invoker)
-		Mona::AMFWriter writer;
+	SCRIPT_CALLBACK(Invoker,LUAInvoker,invoker)
+		AMFWriter writer;
 		SCRIPT_READ_DATA(writer)
 		SCRIPT_WRITE_BINARY(writer.stream.data(),writer.stream.size())
 	SCRIPT_CALLBACK_RETURN
 }
 
 int	LUAInvoker::ToAMF0(lua_State *pState) {
-	SCRIPT_CALLBACK(Mona::Invoker,LUAInvoker,invoker)
-		Mona::AMFWriter writer;
+	SCRIPT_CALLBACK(Invoker,LUAInvoker,invoker)
+		AMFWriter writer;
 		writer.amf0Preference=true;
 		SCRIPT_READ_DATA(writer)
 		SCRIPT_WRITE_BINARY(writer.stream.data(),writer.stream.size())
@@ -144,17 +144,17 @@ int	LUAInvoker::ToAMF0(lua_State *pState) {
 }
 
 int	LUAInvoker::FromAMF(lua_State *pState) {
-	SCRIPT_CALLBACK(Mona::Invoker,LUAInvoker,invoker)
+	SCRIPT_CALLBACK(Invoker,LUAInvoker,invoker)
 		SCRIPT_READ_BINARY(data,size)
-		Mona::MemoryReader packet(data,size);
-		Mona::AMFReader reader(packet);
+		MemoryReader packet(data,size);
+		AMFReader reader(packet);
 		SCRIPT_WRITE_DATA(reader,SCRIPT_READ_UINT(0))
 	SCRIPT_CALLBACK_RETURN
 }
 
 
 int	LUAInvoker::AddToBlacklist(lua_State* pState) {
-	SCRIPT_CALLBACK(Mona::Invoker,LUAInvoker,invoker)	
+	SCRIPT_CALLBACK(Invoker,LUAInvoker,invoker)	
 		while(SCRIPT_CAN_READ) {
 			try {		
 				invoker.addBanned(IPAddress(SCRIPT_READ_STRING("")));
@@ -166,7 +166,7 @@ int	LUAInvoker::AddToBlacklist(lua_State* pState) {
 }
 
 int	LUAInvoker::RemoveFromBlacklist(lua_State* pState) {
-	SCRIPT_CALLBACK(Mona::Invoker,LUAInvoker,invoker)
+	SCRIPT_CALLBACK(Invoker,LUAInvoker,invoker)
 		while(SCRIPT_CAN_READ) {
 			try {
 				invoker.removeBanned(IPAddress(SCRIPT_READ_STRING("")));
@@ -179,16 +179,16 @@ int	LUAInvoker::RemoveFromBlacklist(lua_State* pState) {
 
 
 int LUAInvoker::Get(lua_State *pState) {
-	SCRIPT_CALLBACK(Mona::Invoker,LUAInvoker,invoker)
+	SCRIPT_CALLBACK(Invoker,LUAInvoker,invoker)
 		string name = SCRIPT_READ_STRING("");
 		if(name=="clients") {
-			SCRIPT_WRITE_PERSISTENT_OBJECT(Mona::Clients,LUAClients,invoker.clients)
+			SCRIPT_WRITE_PERSISTENT_OBJECT(Clients,LUAClients,invoker.clients)
 		} else if(name=="host") {
 			SCRIPT_WRITE_STRING(((ServerHandler&)invoker).host().c_str())
 		} else if(name=="groups") {
-			SCRIPT_WRITE_PERSISTENT_OBJECT(Mona::Entities<Mona::Group>,LUAGroups,invoker.groups)
+			SCRIPT_WRITE_PERSISTENT_OBJECT(Entities<Group>,LUAGroups,invoker.groups)
 		} else if(name=="publications") {
-			SCRIPT_WRITE_PERSISTENT_OBJECT(Mona::Publications,LUAPublications,invoker.publications)
+			SCRIPT_WRITE_PERSISTENT_OBJECT(Publications,LUAPublications,invoker.publications)
 		} else if(name=="servers") {
 			SCRIPT_WRITE_PERSISTENT_OBJECT(Servers,LUAServers,((MonaServer&)invoker).servers)
 		} else if(name=="publish") {
@@ -202,7 +202,7 @@ int LUAInvoker::Get(lua_State *pState) {
 		} else if(name=="absolutePath") {
 			SCRIPT_WRITE_FUNCTION(&LUAInvoker::AbsolutePath)
 		} else if(name=="epochTime") {
-			SCRIPT_WRITE_NUMBER(ROUND(Mona::Time().toInt()/1000))
+			SCRIPT_WRITE_NUMBER(ROUND(Time().toInt()/1000))
 		} else if(name=="split") {
 			SCRIPT_WRITE_FUNCTION(&LUAInvoker::Split)
 		} else if(name=="createUDPSocket") {
@@ -226,7 +226,7 @@ int LUAInvoker::Get(lua_State *pState) {
 }
 
 int LUAInvoker::Set(lua_State *pState) {
-	SCRIPT_CALLBACK(Mona::Invoker,LUAInvoker,invoker)
+	SCRIPT_CALLBACK(Invoker,LUAInvoker,invoker)
 		string name = SCRIPT_READ_STRING("");
 		lua_rawset(pState,1); // consumes key and value
 	SCRIPT_CALLBACK_RETURN

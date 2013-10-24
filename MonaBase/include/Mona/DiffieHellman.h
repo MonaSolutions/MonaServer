@@ -25,7 +25,7 @@ namespace Mona {
 
 #define DH_KEY_SIZE				0x80
 
-class DiffieHellman {
+class DiffieHellman : virtual Object {
 public:
 	DiffieHellman();
 	virtual ~DiffieHellman();

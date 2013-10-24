@@ -27,7 +27,7 @@ namespace Mona {
 class Session {
 public:
 
-	const Mona::UInt32	id;
+	const UInt32	id;
 	const std::string	name;
 	const bool			died;
 
@@ -38,8 +38,8 @@ public:
 	virtual ~Session();
 
 	void						receive(MemoryReader& packet);
-	virtual MemoryReader*		decode(Poco::SharedPtr<Poco::Buffer<Mona::UInt8> >& pBuffer,const Poco::Net::SocketAddress& address);
-	virtual void				manage();
+	virtual MemoryReader*		decode(Poco::SharedPtr<Poco::Buffer<UInt8> >& pBuffer, const SocketAddress& address) { return new MemoryReader(pBuffer->begin(), pBuffer->size()); }
+	virtual void				manage() {}
 	virtual void				kill();
 
 protected:
@@ -58,13 +58,6 @@ protected:
 private:	
 	PoolThread*			_pDecodingThread;
 };
-
-inline void	Session::manage(){
-}
-
-inline MemoryReader* Session::decode(Poco::SharedPtr<Poco::Buffer<Mona::UInt8> >& pBuffer,const Poco::Net::SocketAddress& address){
-	return new MemoryReader(pBuffer->begin(),pBuffer->size());
-}
 
 
 } // namespace Mona

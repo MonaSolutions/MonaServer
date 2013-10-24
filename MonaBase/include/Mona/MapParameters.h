@@ -24,38 +24,24 @@ This file is a part of Mona.
 namespace Mona {
 
 
-class MapParameters : public IterableParameters<std::unordered_map<std::string, std::string>::const_iterator> {
+class MapParameters : virtual Object, public IterableParameters<std::unordered_map<std::string, std::string>::const_iterator> {
 public:
 	MapParameters();
 	virtual ~MapParameters();
 
 
-	Iterator	begin() const;
-	Iterator	end() const;
+	Iterator	begin() const { return _map.begin(); }
+	Iterator	end() const { return _map.end(); }
 
-	void		clear();
+	void		clear() { _map.clear(); }
 	
 protected:
 	bool getRaw(const std::string& key, std::string& value) const;
-	void setRaw(const std::string& key, const std::string& value);
+	void setRaw(const std::string& key, const std::string& value) { _map[key] = value; }
 
 private:	
 	std::unordered_map<std::string, std::string> _map;
 };
-
-inline void MapParameters::clear() {
-	_map.clear();
-}
-
-inline void MapParameters::setRaw(const std::string& key, const std::string& value) {
-	_map[key] = value;
-}
-inline MapParameters::Iterator MapParameters::begin() const {
-	return _map.begin();
-}
-inline MapParameters::Iterator MapParameters::end() const {
-	return _map.end();
-}
 
 
 } // namespace Mona

@@ -22,8 +22,6 @@
 #include "Mona/Client.h"
 #include "Mona/DataReader.h"
 #include "Mona/ICE.h"
-#include "Poco/Net/SocketAddress.h"
-#include "Poco/Net/DatagramSocket.h"
 #include <set>
 
 namespace Mona {
@@ -40,11 +38,11 @@ public:
 	Peer(const Peer& peer);
 	virtual ~Peer();
 
-	std::list<Poco::Net::SocketAddress>	addresses;
-	const bool							connected;
+	std::list<SocketAddress>	addresses;
+	const bool					connected;
 
-	Entities<Client>::Map				turnPeers;
-	bool								relayable;
+	Entities<Client>::Map		turnPeers;
+	bool						relayable;
 
 	bool		setName(const std::string& name);
 
@@ -57,11 +55,11 @@ public:
 
 
 // events
-	void onRendezVousUnknown(const Poco::UInt8* peerId,std::set<Poco::Net::SocketAddress,Util::AddressComparator>& addresses);
-	void onHandshake(Poco::UInt32 attempts,std::set<Poco::Net::SocketAddress,Util::AddressComparator>& addresses);
+	void onRendezVousUnknown(const Poco::UInt8* peerId,std::set<SocketAddress>& addresses);
+	void onHandshake(Poco::UInt32 attempts,std::set<SocketAddress>& addresses);
 
-	void onConnection(Exception& ex, Writer& writer);
-	void onConnection(Exception& ex, Writer& writer,DataWriter& response);
+	void onConnection(Exception& ex, Writer& writer) {onConnection(ex, writer,DataReaderNull,Writer::DataWriterNull);}
+	void onConnection(Exception& ex, Writer& writer,DataWriter& response) {onConnection(ex, writer,DataReaderNull,response);}
 	void onConnection(Exception& ex, Writer& writer,DataReader& parameters,DataWriter& response);
 	void onFailed(const std::string& error);
 	void onDisconnection();
@@ -78,7 +76,7 @@ public:
 	bool onSubscribe(const Listener& listener,std::string& error);
 	void onUnsubscribe(const Listener& listener);
 
-	bool onRead(std::string& filePath);
+	bool onRead(std::string& filePath) { return onRead(filePath, MapParameters()); }
 	bool onRead(std::string& filePath,MapParameters& parameters);
 
 	void onManage();
@@ -93,18 +91,5 @@ private:
 	std::map<Group*,Member*>		_groups;
 	std::map<const Peer*,ICE*>		_ices;
 };
-
-inline bool Peer::onRead(std::string& filePath) {
-	return onRead(filePath,MapParameters());
-}
-
-
-inline void Peer::onConnection(Exception& ex, Writer& writer) {
-	onConnection(ex, writer,DataReaderNull,Writer::DataWriterNull);
-}
-
-inline void Peer::onConnection(Exception& ex, Writer& writer,DataWriter& response) {
-	onConnection(ex, writer,DataReaderNull,response);
-}
 
 } // namespace Mona

@@ -32,22 +32,21 @@ public:
 	ServerManager(Server& server);
 	virtual ~ServerManager() {}
 private:
-	void run();
-	void handle();
+	void run(Exception& ex);
+	void handle(Exception& ex) { _server.manage(); }
 	Server& _server;
 };
 
 class Server : private Gateway,protected Handler,private Startable {
 	friend class ServerManager;
 public:
-	Server(Mona::UInt32	bufferSize=0,Mona::UInt32 threads=0);
+	Server(UInt32 bufferSize=0,UInt32 threads=0);
 	virtual ~Server();
 
-	void start();
-	void start(const ServerParams& params);
-	void stop();
-	Mona::UInt16 port();
-	bool running();
+	void	start() { start(params); }
+	void	start(const ServerParams& params);
+	void	stop() { Startable::stop(); }
+	bool	running() { Startable::running(); }
 
 protected:
 	virtual void		manage();
@@ -55,15 +54,15 @@ protected:
 private:
 	virtual void    onStart(){}
 	virtual void    onStop(){}
-	void			requestHandle();
+	void			requestHandle() { wakeUp(); }
 
 	void			receive(Decoding& decoded);
-	void			run();
+	void			run(Exception& ex);
 	
-	Session*		session(const Mona::UInt8* peerId);
-	Session*		session(const Poco::Net::SocketAddress& address);
+	Session*		session(const UInt8* peerId) { return _sessions.find(peerId); }
+	Session*		session(const SocketAddress& address) { return _sessions.find(address); }
 
-	Session&		registerSession(Session* pSession);
+	Session&		registerSession(Session* pSession) { return _sessions.add(pSession); }
 	void			readable(Protocol& protocol);
 
 
@@ -71,38 +70,6 @@ private:
 	Sessions		_sessions;	
 	ServerManager	_manager;
 };
-
-inline void ServerManager::handle() {
-	_server.manage();
-}
-
-inline void Server::start() {
-	start(params);
-}
-
-inline Session* Server::session(const Mona::UInt8* peerId) {
-	return _sessions.find(peerId);
-}
-
-inline Session* Server::session(const Poco::Net::SocketAddress& address) {
-	return _sessions.find(address);
-}
-
-inline Session& Server::registerSession(Session* pSession) {
-	return _sessions.add(pSession);
-}
-
-inline void	Server::requestHandle() {
-	wakeUp();
-}
-
-inline bool Server::running() {
-	return Startable::running();
-}
-
-inline void Server::stop() {
-	Startable::stop();
-}
 
 
 

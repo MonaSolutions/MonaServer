@@ -23,24 +23,24 @@
 namespace Mona {
 
 class Sample;
-class QualityOfService {
+class QualityOfService : virtual Object {
 public:
 	QualityOfService();
 	virtual ~QualityOfService();
 
-	void add(Mona::UInt32 ping,Mona::UInt32 size,Mona::UInt32 success=0,Mona::UInt32 lost=0);
+	void add(UInt32 ping,UInt32 size,UInt32 success=0,UInt32 lost=0);
 	void reset();
 
 	const double		lostRate;
 	const double		byteRate;
-	const Mona::UInt32	latency;
+	const UInt32	latency;
 
 	static QualityOfService Null;
 private:
 	std::list<Sample*>	_samples;
-	Mona::UInt32		_size;
-	Mona::UInt32		_num;
-	Mona::UInt32		_den;
+	UInt32		_size;
+	UInt32		_num;
+	UInt32		_den;
 };
 
 

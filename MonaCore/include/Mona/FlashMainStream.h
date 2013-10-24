@@ -29,13 +29,13 @@ public:
 
 private:
 
-	void	messageHandler(Exception& ex, const std::string& name,AMFReader& message,FlashWriter& writer);
-	void	rawHandler(Mona::UInt8 type,MemoryReader& data,FlashWriter& writer);
+	void	messageHandler(Exception& ex, const std::string& name, AMFReader& message, FlashWriter& writer);
+	void	rawHandler(Exception& ex, UInt8 type, MemoryReader& data, FlashWriter& writer);
 
 	void	close(FlashWriter& writer,const std::string& error,int code=0);
 
-	std::set<Mona::UInt32>	_streams;
-	Group*					_pGroup;
+	std::set<UInt32>	_streams;
+	Group*				_pGroup;
 };
 
 

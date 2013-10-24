@@ -16,10 +16,10 @@
 */
 
 #include "Mona/MemoryWriter.h"
-#include "Mona/Logs.h"
+
 
 using namespace std;
-using namespace Poco;
+
 
 namespace Mona {
 
@@ -27,9 +27,9 @@ MemoryWriter::MemoryWriter(const UInt8* buffer,UInt32 size) : _memory((char*)buf
 }
 
 // Consctruction by copy
-MemoryWriter::MemoryWriter(MemoryWriter& other) : _pOther(&other),_memory(other._memory),BinaryWriter(_memory),_size(other._size) {
+/*MemoryWriter::MemoryWriter(MemoryWriter& other) : _pOther(&other),_memory(other._memory),BinaryWriter(_memory),_size(other._size) {
 	
-}
+}*/
 
 MemoryWriter::~MemoryWriter() {
 	flush();
@@ -38,10 +38,8 @@ MemoryWriter::~MemoryWriter() {
 void MemoryWriter::limit(UInt32 length) {
 	if(length==0)
 		length = _size;
-	if(length>_size) {
-		WARN("Limit '",length,"' more upper than buffer size '",_size,"' bytes");
+	if(length>_size)
 		length = _size;
-	}
 	_memory.resize(length);
 }
 

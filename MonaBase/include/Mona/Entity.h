@@ -24,30 +24,30 @@ namespace Mona {
 
 #define ID_SIZE 0x20
 
-class Entity {
+class Entity : virtual Object{
 public:
 	Entity():id(){}
 	virtual ~Entity(){}
 
 	bool operator==(const Entity& other) const;
-	bool operator==(const Mona::UInt8* id) const;
+	bool operator==(const UInt8* id) const;
 	bool operator!=(const Entity& other) const;
-	bool operator!=(const Mona::UInt8* id) const;
+	bool operator!=(const UInt8* id) const;
 
-	const Mona::UInt8							id[ID_SIZE];
+	const UInt8							id[ID_SIZE];
 };
 
 
 inline bool Entity::operator==(const Entity& other) const {
 	return std::memcmp(id,other.id,ID_SIZE)==0;
 }
-inline bool Entity::operator==(const Mona::UInt8* id) const {
+inline bool Entity::operator==(const UInt8* id) const {
 	return std::memcmp(this->id,id,ID_SIZE)==0;
 }
 inline bool Entity::operator!=(const Entity& other) const {
 	return std::memcmp(id,other.id,ID_SIZE)!=0;
 }
-inline bool Entity::operator!=(const Mona::UInt8* id) const {
+inline bool Entity::operator!=(const UInt8* id) const {
 	return std::memcmp(this->id,id,ID_SIZE)!=0;
 }
 

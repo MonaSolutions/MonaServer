@@ -25,47 +25,27 @@
 namespace Mona {
 
 
-class MemoryReader: public BinaryReader {
+class MemoryReader: public BinaryReader, virtual Object {
 public:
-	MemoryReader(const Mona::UInt8* buffer,Mona::UInt32 size);
-	MemoryReader(MemoryReader&);
+	MemoryReader(const UInt8* buffer,UInt32 size);
+	//MemoryReader(MemoryReader&);
 	virtual ~MemoryReader();
 
-	const Mona::UInt32	fragments;
+	const UInt32	fragments;
 
-	Mona::UInt32	available();
-	Mona::UInt8*	current();
-	Mona::UInt32	position();
+	UInt32	available() { return _memory.available(); }
+	UInt8*	current() { return (UInt8*)_memory.current(); }
+	UInt32	position() { return _memory.current() - _memory.begin(); }
 
-	void			reset(Mona::UInt32 newPos=0);
-	void			shrink(Mona::UInt32 rest);
-	void			next(Mona::UInt32 size=1);
+	void			reset(UInt32 newPos = 0) { _memory.reset(newPos); }
+	void			shrink(UInt32 rest);
+	void			next(UInt32 count = 1) { return _memory.next(count); }
 
 	static MemoryReader Null;
 private:
 	MemoryInputStream _memory;
 	
 };
-
-inline Mona::UInt32 MemoryReader::available() {
-	return _memory.available();
-}
-
-inline Mona::UInt32 MemoryReader::position() {
-	return _memory.current()-_memory.begin();
-}
-
-inline void MemoryReader::reset(Mona::UInt32 newPos) {
-	_memory.reset(newPos);
-}
-
-inline void MemoryReader::next(Mona::UInt32 count) {
-	return _memory.next(count);
-}
-
-inline Mona::UInt8* MemoryReader::current() {
-	return (Mona::UInt8*)_memory.current();
-}
 
 
 } // namespace Mona

@@ -16,11 +16,8 @@ This file is a part of Mona.
 */
 
 #include "Mona/Option.h"
-#include "Mona/Exceptions.h"
-#include "Poco/String.h"
 
 using namespace std;
-using namespace Poco;
 
 namespace Mona {
 
@@ -28,7 +25,7 @@ Option::Option(): _required(false), _repeatable(false), _argRequired(false) {
 }
 
 
-Option::Option(const string& fullName, const string& shortName):
+Option::Option(const char* fullName, const char* shortName) :
 	_shortName(shortName),
 	_fullName(fullName),
 	_required(false),
@@ -37,7 +34,7 @@ Option::Option(const string& fullName, const string& shortName):
 }
 
 
-Option::Option(const string& fullName, const string& shortName, const string& description, bool required):
+Option::Option(const char* fullName, const char* shortName, const string& description, bool required) :
 	_shortName(shortName),
 	_fullName(fullName),
 	_description(description),
@@ -47,7 +44,7 @@ Option::Option(const string& fullName, const string& shortName, const string& de
 }
 
 
-Option::Option(const string& fullName, const string& shortName, const string& description, bool required, const string& argName, bool argRequired):
+Option::Option(const char* fullName, const char* shortName, const string& description, bool required, const string& argName, bool argRequired) :
 	_shortName(shortName),
 	_fullName(fullName),
 	_description(description),

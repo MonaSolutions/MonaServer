@@ -26,17 +26,6 @@ using namespace Poco::Net;
 
 namespace Mona {
 
-SDP::SDP() : supportMsId(false),version(0),sessionId(0) {
-}
-
-SDP::SDP(Exception& ex, const string& text) : supportMsId(false),version(0),sessionId(0) {
-	build(ex, text);
-}
-
-SDP::~SDP() {
-	clearMedias();
-}
-
 void SDP::clearMedias() {
 	map<string,SDPMedia*>::iterator it;
 	for(it=_medias.begin();it!=_medias.end();++it)

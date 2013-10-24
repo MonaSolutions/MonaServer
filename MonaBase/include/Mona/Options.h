@@ -24,15 +24,32 @@ This file is a part of Mona.
 
 namespace Mona {
 
-class Options : ObjectFix {
+class Options : virtual Object {
 public:
 	typedef std::set<Option>::const_iterator Iterator;
 
 	Options();
 	virtual ~Options();
 
-	void			add(Exception& ex, const Option& option);
-	void			remove(const std::string& name) { _options.erase(Option(name, "")); }
+	template <typename ...Args>
+	Option& add(Exception& ex, const char* fullName, const char* shortName, const Args&... args) {
+		if (std::strlen(fullName)==0) {
+			ex.set(Exception::OPTION, "Invalid option (fullName is empty)");
+			return _OptionEmpty;
+		}
+		if (std::strlen(shortName) == 0) {
+			ex.set(Exception::OPTION, "Invalid option (shortName is empty)");
+			return _OptionEmpty;
+		}
+		auto result = _options.emplace(fullName, shortName, args ...);
+		if (!result.second) {
+			ex.set(Exception::OPTION, "Option ", fullName, " (", shortName, ") duplicated");
+			return _OptionEmpty;
+		}
+		return const_cast<Option&>(*result.first);
+	}
+
+	void			remove(const std::string& name) { _options.erase(Option(name.c_str(), "")); }
 
 	const Option&	get(Exception& ex, const std::string& name) const;
 
@@ -40,14 +57,16 @@ public:
 	Iterator		end() const { return _options.end(); }
 
 
-	void process(Exception& ex, int argc, char* argv[], const std::function<void(const std::string&, const std::string&)>& handler = nullptr);
+	bool			process(Exception& ex, int argc, char* argv[], const std::function<void(Exception& ex, const std::string&, const std::string&)>& handler = nullptr);
 
 private:
-	bool process(Exception& ex, const std::string& argument,std::string& name,std::string& value, std::set<std::string>& alreadyReaden);
-	void handleOption(const std::string& name,const std::string& value) {}
+	bool			process(Exception& ex, const std::string& argument, std::string& name, std::string& value, std::set<std::string>& alreadyReaden);
+	void			handleOption(const std::string& name,const std::string& value) {}
 	
 	std::set<Option>	_options;
 	const Option* 		_pOption;
+
+	static Option		_OptionEmpty;
 };
 
 

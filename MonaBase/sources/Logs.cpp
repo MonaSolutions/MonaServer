@@ -23,18 +23,8 @@ using namespace std;
 namespace Mona {
 
 Logger*			Logs::_PLogger(NULL);
-Logs::DumpMode	Logs::_DumpMode(NOTHING);
+Logs::DumpMode	Logs::_DumpMode(DUMP_NOTHING);
 UInt8			Logs::_Level(Logger::PRIO_INFO); // default log level
-string			Logs::_logmsg;
-
-
-void Logs::Dump(const UInt8* data,UInt32 size,const char* header) {
-	if(!GetLogger())
-		return;
-	vector<UInt8> out;
-	Util::Dump(data,size,out,header);
-	if(out.size()>0)
-		GetLogger()->dumpHandler(&out[0],out.size());
-}
+Logger			Logs::_DefaultLogger;
 
 } // namespace Mona

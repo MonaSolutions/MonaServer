@@ -148,50 +148,43 @@ const UInt8* AMFReader::readBytes(UInt32& size) {
 	return result;
 }
 
-void AMFReader::readTime(Mona::Time& time) {
+Time& AMFReader::readTime(Time& time) {
 	Type type = followingType();
 	if(type==NIL) {
 		reader.next(1);
-		time.update(0);
+		return time.update(0);
 	}
-	else if(type!=TIME) {
+	if(type!=TIME) {
 		ERROR("Type ",Format<UInt8>("%.2x",(UInt8)type)," is not a AMF Date type");
-		time.update(0);
+		return time.update(0);
 	}
-	else {
 
-		reader.next(1);
-		double result = 0;
-		if (_amf3) {
-			UInt32 flags = reader.read7BitValue();
-			UInt32 reference = reader.position();
-			bool isInline = flags & 0x01;
-			if (isInline) {
-				if (_referencing)
-					_references.push_back(reference);
-				reader >> result;
-			}
-			else {
-				flags >>= 1;
-				if (flags > _references.size()) {
-					ERROR("AMF3 reference not found")
-					time.update(0);
-					return;
-				}
-				UInt32 reset = reader.position();
-				reader.reset(_references[flags]);
-				reader >> result;
-				reader.reset(reset);
-			}
-
-			time.update((Mona::Int64)result * 1000);
-		}
-		else {
+	reader.next(1);
+	double result = 0;
+	if (_amf3) {
+		UInt32 flags = reader.read7BitValue();
+		UInt32 reference = reader.position();
+		bool isInline = flags & 0x01;
+		if (isInline) {
+			if (_referencing)
+				_references.push_back(reference);
 			reader >> result;
-			reader.next(2); // Timezone, useless
-			time.update((Mona::Int64)result * 1000);
+		} else {
+			flags >>= 1;
+			if (flags > _references.size()) {
+				ERROR("AMF3 reference not found")
+				time.update(0);
+				return;
+			}
+			UInt32 reset = reader.position();
+			reader.reset(_references[flags]);
+			reader >> result;
+			reader.reset(reset);
 		}
-	}
+		return time.update((Int64)result * 1000);
+	reader >> result;
+	reader.next(2); // Timezone, useless
+	return time.update((Int64)result * 1000);
 }
 
 void AMFReader::readString(string& value) {
@@ -464,9 +457,8 @@ AMFReader::Type AMFReader::readItem(string& name) {
 			}
 			end=true;
 		} else if(objectDef.arrayType) {
-			Exception ex;
-			int index = String::ToNumber<int>(ex, name);
-			if(!ex && index>=0)
+			int index = 0;
+			if (String::ToNumber<int>(name, index) && index >= 0)
 				name.clear();
 		}
 	}

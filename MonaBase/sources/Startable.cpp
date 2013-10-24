@@ -29,9 +29,10 @@ StartableProcess::StartableProcess(Startable& startable):_startable(startable){
 
 void StartableProcess::run() {
 	try {
-		_startable.prerun();
-	} catch(Poco::Exception& ex) {
-		 CRITIC("Startable thread ",_startable.name(),", ",ex.displayText());
+		Exception ex;
+		_startable.prerun(ex);
+		if (ex)
+			CRITIC("Startable thread ",_startable.name(),", ",ex.error());
 	} catch(exception& ex) {
 		 CRITIC("Startable thread ",_startable.name(),", ",ex.what());
 	} catch(...) {
@@ -67,21 +68,18 @@ void Startable::start() {
 	}
 }
 
-void Startable::prerun() {
-	run();
+void Startable::prerun(Exception& ex) {
+	run(ex);
 	ScopedLock<FastMutex> lock(_mutexStop);
 	_stop=true;
 }
 
-Startable::WakeUpType Startable::sleep(UInt32 timeout) {
+Startable::WakeUpType Startable::sleep(Exception& ex,UInt32 millisec) {
 	if(_stop)
 		return STOP;
 	 WakeUpType result = WAKEUP;
-	 if(timeout>0) {
-		 if(!_wakeUpEvent.tryWait(timeout))
-			 result = TIMEOUT;
-	 } else
-		 _wakeUpEvent.wait();
+	 if (!_wakeUpEvent.wait(ex, millisec))
+		 result = TIMEOUT;
 	if(_stop)
 		return STOP;
 	return result;

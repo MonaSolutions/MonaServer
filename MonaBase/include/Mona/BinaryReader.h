@@ -19,40 +19,39 @@
 
 #include "Mona/Mona.h"
 #include "Poco/BinaryReader.h"
-#include "Poco/Net/SocketAddress.h"
 
 namespace Mona {
 
 
-class BinaryReader : public Poco::BinaryReader {
+class BinaryReader : public Poco::BinaryReader, virtual Object {
 public:
 	BinaryReader(std::istream& istr);
 	virtual ~BinaryReader();
 
-	Mona::UInt32	read7BitValue();
-	Mona::UInt64	read7BitLongValue();
-	Mona::UInt32	read7BitEncoded();
-	void			readRaw(Mona::UInt8* value,Mona::UInt32 size);
-	void			readRaw(char* value,Mona::UInt32 size);
-	void			readRaw(Mona::UInt32 size,std::string& value);
+	UInt32	read7BitValue();
+	UInt64	read7BitLongValue();
+	UInt32	read7BitEncoded();
+	void			readRaw(UInt8* value,UInt32 size);
+	void			readRaw(char* value,UInt32 size);
+	void			readRaw(UInt32 size,std::string& value);
 	void			readString8(std::string& value);
 	void			readString16(std::string& value);
-	Mona::UInt8		read8();
-	Mona::UInt16	read16();
-	Mona::UInt32	read24();
-	Mona::UInt32	read32();
-	Mona::UInt64	read64();
+	UInt8		read8();
+	UInt16	read16();
+	UInt32	read24();
+	UInt32	read32();
+	UInt64	read64();
 
 	static BinaryReader Null;
 };
 
-inline void BinaryReader::readRaw(Mona::UInt8* value,Mona::UInt32 size) {
+inline void BinaryReader::readRaw(UInt8* value,UInt32 size) {
 	Poco::BinaryReader::readRaw((char*)value,size);
 }
-inline void BinaryReader::readRaw(char* value,Mona::UInt32 size) {
+inline void BinaryReader::readRaw(char* value,UInt32 size) {
 	Poco::BinaryReader::readRaw(value,size);
 }
-inline void BinaryReader::readRaw(Mona::UInt32 size,std::string& value) {
+inline void BinaryReader::readRaw(UInt32 size,std::string& value) {
 	Poco::BinaryReader::readRaw(size,value);
 }
 

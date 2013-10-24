@@ -19,29 +19,39 @@
 
 #include "Mona/Mona.h"
 #include "Mona/PoolThread.h"
-#include "Mona/Exceptions.h"
 #include <vector>
 
 namespace Mona {
 
-class PoolThreads {
+class PoolThreads : virtual Object {
 public:
-	PoolThreads(Mona::UInt32 threadsAvailable=0);
+	PoolThreads(UInt32 threadsAvailable=0);
 	virtual ~PoolThreads();
 
 	void			clear();
-	Mona::UInt32	threadsAvailable();
+	UInt32	threadsAvailable() { return _threads.size(); }
 
-	PoolThread*	enqueue(Exception& ex, Poco::AutoPtr<WorkThread> pWork,PoolThread* pThread=NULL);
+	template<typename WorkThreadType>
+	PoolThread* enqueue(std::shared_ptr<WorkThreadType>& pWork, PoolThread* pThread = NULL) {
+		UInt32 queue = 0;
+		if (!pThread) {
+			for (PoolThread* pPoolThread : _threads) {
+				UInt32 newQueue = pPoolThread->queue();
+				if (!pThread || newQueue <= queue) {
+					pThread = pPoolThread;
+					if ((queue = newQueue) == 0)
+						break;
+				}
+			}
+		}
+		pThread->push(static_pointer_cast<WorkThread>(pWork));
+		return pThread;
+	}
 
 private:
 	std::vector<PoolThread*>	_threads;
 	Poco::FastMutex				_mutex;
 };
-
-inline Mona::UInt32	PoolThreads::threadsAvailable() {
-	return _threads.size();
-}
 
 
 } // namespace Mona

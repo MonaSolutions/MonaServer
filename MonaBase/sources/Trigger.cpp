@@ -16,15 +16,14 @@
 */
 
 #include "Mona/Trigger.h"
-#include "Mona/Logs.h"
 
 
 using namespace std;
-using namespace Poco;
+
 
 namespace Mona {
 
-Trigger::Trigger() : _time(0),_cycle(-1),_running(false) {
+Trigger::Trigger() : _time(1),_cycle(0),_running(false) {
 	
 }
 
@@ -34,8 +33,8 @@ Trigger::~Trigger() {
 
 void Trigger::reset() {
 	_timeInit.update();
-	_time=0;
-	_cycle=-1;
+	_time=1;
+	_cycle=0;
 }
 
 void Trigger::start() {
@@ -45,24 +44,23 @@ void Trigger::start() {
 	_running=true;
 }
 
-bool Trigger::raise(Exception& ex) {
+UInt16 Trigger::raise(Exception& ex) {
 	if(!_running)
-		return false;
+		return 0;
 	// Wait at least 1 sec before to begin the repeat cycle, it means that it will be between 1 and 3 sec in truth (freg mangement is set to 2)
-	if(_time==0 && !_timeInit.isElapsed(1000000))
-		return false;
+	if(_time==1 && !_timeInit.isElapsed(1000000))
+		return 0;
 	++_time;
 	if(_time>=_cycle) {
-		_time=0;
+		_time=1;
 		++_cycle;
-		if(_cycle==7) {
-			ex.set(Exception::APPLICATION, "Repeat trigger failed");
-			return false;
+		if (_cycle == 8) {
+			ex.set(Exception::PROTOCOL, "Repeat trigger failed");
+			return 0;
 		}
-		DEBUG("Repeat trigger cycle ",Format<Int8>("%02x",_cycle+1));
-		return true;
+		return _cycle;
 	}
-	return false;
+	return 0;
 }
 
 

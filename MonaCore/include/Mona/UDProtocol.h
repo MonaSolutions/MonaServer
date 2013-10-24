@@ -26,20 +26,12 @@ namespace Mona {
 
 class UDProtocol : public SocketHandler<Poco::Net::DatagramSocket>,public Protocol {
 protected:
-	UDProtocol(const char* name,Invoker& invoker,Gateway& gateway) : SocketHandler<Poco::Net::DatagramSocket>(invoker.sockets),Protocol(name,invoker,gateway) {}
-	virtual ~UDProtocol(){}
-
+	UDProtocol(const char* name, Invoker& invoker, Gateway& gateway) : SocketHandler<Poco::Net::DatagramSocket>(invoker.sockets), Protocol(name, invoker, gateway) {}
+	
 private:
-	void			onReadable();
-	void			onError(const std::string& error);
+	void			onReadable() { gateway.readable(*this); }
+	void			onError(const std::string& error) { WARN("Protocol %s, %s", error.c_str(), name.c_str()); }
 };
 
-inline void UDProtocol::onError(const std::string& error) {
-	WARN("Protocol ",error,", ",name);
-}
-
-inline void UDProtocol::onReadable() {
-	gateway.readable(*this);
-}
 
 } // namespace Mona

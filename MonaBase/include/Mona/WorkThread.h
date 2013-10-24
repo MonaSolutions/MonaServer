@@ -18,14 +18,18 @@
 #pragma once
 
 #include "Mona/Mona.h"
-#include "Poco/RefCountedObject.h"
+#include "Mona/Exceptions.h"
+
 
 namespace Mona {
 
-class WorkThread : public Poco::RefCountedObject {
+class WorkThread : virtual Object {
 public:
 	WorkThread() {}
-	virtual void run() = 0;
+
+	// If ex is raised, an error is displayed if the operation has returned false
+	// otherwise a warning is displayed
+	virtual bool run(Exception& ex) = 0;
 };
 
 } // namespace Mona

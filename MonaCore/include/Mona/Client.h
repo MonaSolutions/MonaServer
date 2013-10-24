@@ -30,13 +30,13 @@ public:
 	Client(Entities<Client>::Map& turnClients):turnClients(turnClients),_pWriter(NULL),ping(0){}
 	virtual ~Client(){}
 
-	const Poco::Net::SocketAddress				address;
-	const Poco::Net::SocketAddress				serverAddress;
+	const SocketAddress				address;
+	const SocketAddress				serverAddress;
 
-	const std::string							path;
-	const Mona::UInt16							ping;
-	const std::string							protocol;
-	Entities<Client>							turnClients;
+	const std::string				path;
+	const Mona::UInt16				ping;
+	const std::string				protocol;
+	Entities<Client>				turnClients;
 
 	virtual bool		setName(const std::string& name)=0;
 

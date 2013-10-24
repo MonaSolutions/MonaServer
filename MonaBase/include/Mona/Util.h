@@ -16,52 +16,41 @@
 #pragma once
 
 #include "Mona/Mona.h"
-#include "Mona/Exceptions.h"
 #include "Mona/MapParameters.h"
+#include "Mona/SocketAddress.h"
 #include "Poco/NullStream.h"
-#include "Poco/Net/SocketAddress.h"
+#include "Mona/Exceptions.h"
 #include <cstring>
 #include <vector>
-#include <map>
+
 
 
 namespace Mona {
 
-class Util {
+class Util : virtual Static {
 public:
-	struct AddressComparator {
-	   bool operator()(const Poco::Net::SocketAddress& a,const Poco::Net::SocketAddress& b) const {
-		   return a.port()<b.port();
-	   }
-	};
+	static std::string FormatHex(const UInt8* data,UInt32 size);
+	static std::string FormatHex2(const UInt8* data,UInt32 size);
+	static UInt8 Get7BitValueSize(UInt32 value) { return Get7BitValueSize((UInt64)value); }
+	static UInt8 Get7BitValueSize(UInt64 value);
 
-	static bool		   SameAddress(const Poco::Net::SocketAddress& address1,const Poco::Net::SocketAddress& address2);
-	static std::string FormatHex(const Mona::UInt8* data,Mona::UInt32 size);
-	static std::string FormatHex2(const Mona::UInt8* data,Mona::UInt32 size);
-	static Mona::UInt8 Get7BitValueSize(Mona::UInt32 value);
-	static Mona::UInt8 Get7BitValueSize(Mona::UInt64 value);
+	static void Dump(const UInt8* in, UInt32 size, std::vector<UInt8>& out) { std::string header; Dump(in,size,out,header); }
+	static void Dump(const UInt8* in, UInt32 size,std::vector<UInt8>& out,const std::string& header);
 
-	static void Dump(const Mona::UInt8* in, Mona::UInt32 size,std::vector<Mona::UInt8>& out,const char* header=NULL);
-
-	static void UnpackUrl(const std::string& url, std::string& path, MapParameters& properties);
-	static void UnpackUrl(const std::string& url, std::string& path, std::string& file, MapParameters& properties);
-	static void UnpackUrl(const std::string& url, Poco::Net::SocketAddress& address, std::string& path, MapParameters& properties);
-	static void UnpackUrl(const std::string& url, Poco::Net::SocketAddress& address, std::string& path, std::string& file, MapParameters& properties);
+	static bool UnpackUrl(Exception& ex, const std::string& url, std::string& path, MapParameters& properties);
+	static bool UnpackUrl(Exception& ex, const std::string& url, std::string& path, std::string& file, MapParameters& properties);
+	static bool UnpackUrl(Exception& ex, const std::string& url, SocketAddress& address, std::string& path, MapParameters& properties);
+	static bool UnpackUrl(Exception& ex, const std::string& url, SocketAddress& address, std::string& path, std::string& file, MapParameters& properties);
 	
 	static void UnpackQuery(const std::string& query, MapParameters& properties);
 
-	static void ReadIniFile(Exception& ex, const std::string& path, MapParameters& parameters);
+	static bool ReadIniFile(Exception& ex, const std::string& path, MapParameters& parameters);
+
+	static unsigned ProcessorCount();
 
 	static Poco::NullInputStream	NullInputStream;
 	static Poco::NullOutputStream	NullOutputStream;
 };
 
-inline Mona::UInt8 Util::Get7BitValueSize(Mona::UInt32 value) {
-	return Get7BitValueSize((Mona::UInt64)value);
-}
-
-inline bool Util::SameAddress(const Poco::Net::SocketAddress& address1,const Poco::Net::SocketAddress& address2) {
-	return std::memcmp(address1.addr(),address2.addr(),address1.length())==0 && address1.port() == address2.port();
-}
 
 } // namespace Mona

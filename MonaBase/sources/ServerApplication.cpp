@@ -133,9 +133,10 @@ void ServerApplication::ServiceMain(DWORD argc, LPTSTR* argv) {
 
 	_serviceStatusHandle = RegisterServiceCtrlHandlerA("", ServiceControlHandler);
 
-	if (!_serviceStatusHandle)
-		// TODO ex.set(Exception::APPLICATION, "cannot register service control handler")
-		throw SystemException("cannot register service control handler");
+	if (!_serviceStatusHandle) {
+		FATAL("Cannot register service control handler");
+		return;
+	}
 
 	_serviceStatus.dwServiceType             = SERVICE_WIN32; 
 	_serviceStatus.dwCurrentState            = SERVICE_START_PENDING; 
@@ -178,8 +179,14 @@ int ServerApplication::run(int argc, char** argv) {
 		if (!hasConsole() && isService())
 			return 0;
 		init(argc, argv);
+		Exception ex;
 		if (_action == SRV_REGISTER) {
-			registerService();
+			if (registerService(ex)) {
+				if (!ex)
+					WARN("%s", ex.error().c_str());
+				NOTE("The application has been successfully registered as a service");
+			} else
+				ERROR("%s", ex.error().c_str());
 			return EXIT_OK;
 		}
 		if (_action == SRV_HELP) {
@@ -187,7 +194,12 @@ int ServerApplication::run(int argc, char** argv) {
 			return EXIT_OK;
 		}
 		if (_action == SRV_UNREGISTER) {
-			unregisterService();
+			if (unregisterService(ex)) {
+				if (!ex)
+					WARN("%s", ex.error().c_str());
+				NOTE("The application is no more registered as a service");
+			} else
+				ERROR("%s", ex.error().c_str());
 			return EXIT_OK;
 		}
 		return main();
@@ -217,91 +229,58 @@ bool ServerApplication::hasConsole() {
 }
 
 
-void ServerApplication::registerService() {
+bool ServerApplication::registerService(Exception& ex) {
 	string name, path;
 	getString("application.baseName", name);
 	getString("application.path", path);
 	
-	Exception ex;
-	WinService service(ex, name);
-	// TODO managing the exception
-
+	WinService service(name);
 	if (_displayName.empty())
-		service.registerService(ex, path);
+		service.registerService(ex,path);
 	else
-		service.registerService(ex, path,_displayName);
-	// TODO managing the exception
-	
+		service.registerService(ex, path, _displayName);
+	if (ex)
+		return false;
 	if (_startup == "auto")
-		service.setStartup(ex, WinService::AUTO_START);
+		service.setStartup(ex,WinService::AUTO_START);
 	else if (_startup == "manual")
-		service.setStartup(ex, WinService::MANUAL_START);
-	// TODO managing the exception
-
+		service.setStartup(ex,WinService::MANUAL_START);
 	if (!_description.empty())
 		service.setDescription(ex, _description);
-	// TODO managing the exception
-
-	NOTE("The application has been successfully registered as the ",name," service.")
+	return true;
 }
 
 
-void ServerApplication::unregisterService() {
+bool ServerApplication::unregisterService(Exception& ex) {
 	string name;
 	getString("application.baseName", name);
 	
-	Exception ex;
-	WinService service(ex, name);
-	// TODO managing the exception
-
-	service.unregisterService(ex);
-	// TODO managing the exception
-
-	NOTE("The service ",name," has been successfully unregistered")
+	WinService service(name);
+	return service.unregisterService(ex);
 }
 
-void ServerApplication::defineOptions(Options& options) {
+void ServerApplication::defineOptions(Exception& ex,Options& options) {
 
-	Exception ex;
+	options.add(ex,"help", "h", "Displays help information about command-line usage.")
+		.handler([this](const string& value) { _action = SRV_HELP; });
 
-	options.add(ex,
-		Option("help", "h", "Displays help information about command-line usage.")
-		.handler([this](const string& value) { _action = SRV_HELP; })
-	);
-	// TODO managing the exception
+	options.add(ex, "registerService", "r", "Register the application as a service.")
+		.handler([this](const string& value) { _action = SRV_REGISTER; });
 
-	options.add(ex,
-		Option("registerService", "r", "Register the application as a service.")
-		.handler([this](const string& value) { _action = SRV_REGISTER; })
-	);
-	// TODO managing the exception
+	options.add(ex, "unregisterService", "u", "Unregister the application as a service.")
+		.handler([this](const string& value) { _action = SRV_UNREGISTER; });
 
-	options.add(ex,
-		Option("unregisterService", "u", "Unregister the application as a service.")
-		.handler([this](const string& value) { _action = SRV_UNREGISTER; })
-	);
-	// TODO managing the exception
-
-	options.add(ex,
-		Option("name", "n", "Specify a display name for the service (only with /registerService).")
+	options.add(ex, "name", "n", "Specify a display name for the service (only with /registerService).")
 		.argument("name")
-		.handler([this](const string& value) { _displayName = value; })
-	);
-	// TODO managing the exception
+		.handler([this](const string& value) { _displayName = value; });
 
-	options.add(ex,
-		Option("description", "d", "Specify a description for the service (only with /registerService).")
+	options.add(ex, "description", "d", "Specify a description for the service (only with /registerService).")
 		.argument("text")
-		.handler([this](const string& value) { _description = value; })
-	);
-	// TODO managing the exception
+		.handler([this](const string& value) { _description = value; });
 
-	options.add(ex,
-		Option("startup", "s", "Specify the startup mode for the service (only with /registerService).")
+	options.add(ex, "startup", "s", "Specify the startup mode for the service (only with /registerService).")
 		.argument("automatic|manual")
-		.handler([this](const string& value) {_startup = Poco::icompare(value, 4, string("auto")) == 0 ? "auto" : "manual"; })
-	);
-	// TODO managing the exception
+		.handler([this](const string& value) {_startup = Poco::icompare(value, 4, string("auto")) == 0 ? "auto" : "manual"; });
 }
 
 

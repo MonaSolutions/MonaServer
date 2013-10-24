@@ -23,18 +23,18 @@ This file is a part of Mona.
 namespace Mona {
 
 
-class Option {
+class Option : virtual Object {
 	friend class Options;
 public:
 	Option();
 
-	Option(const std::string& fullName, const std::string& shortName);
+	Option(const char* fullName, const char* shortName);
 		/// Creates an option with the given properties.
 
-	Option(const std::string& fullName, const std::string& shortName, const std::string& description, bool required = false);
+	Option(const char* fullName, const char* shortName, const std::string& description, bool required = false);
 		/// Creates an option with the given properties.
 
-	Option(const std::string& fullName, const std::string& shortName, const std::string& description, bool required, const std::string& argName, bool argRequired = false);
+	Option(const char* fullName, const char* shortName, const std::string& description, bool required, const std::string& argName, bool argRequired = false);
 		/// Creates an option with the given properties.
 
 	template<class Function>

@@ -23,7 +23,7 @@ This file is a part of Mona.
 
 namespace Mona {
 
-class HelpFormatter {
+class HelpFormatter : virtual Object {
 public:
 	HelpFormatter(const Options& options) : _options(options), _indent(calcIndent()) {}
 	virtual ~HelpFormatter() {}

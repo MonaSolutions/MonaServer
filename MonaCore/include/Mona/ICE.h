@@ -34,14 +34,14 @@ public:
 	ICE(const Peer& initiator,const Peer& remote,const RelayServer& relay);
 	virtual ~ICE();
 
-	void						setCurrent(Peer& current);
-	Mona::UInt16				mediaIndex;
+	void			setCurrent(Peer& current);
+	UInt16			mediaIndex;
 
 	void			fromSDPLine(const std::string& line,SDPCandidate& publicCandidate);
-	void			fromSDPLine(const std::string& line,SDPCandidate& publicCandidate,std::list<SDPCandidate>& relayCurrentCandidates,std::list<SDPCandidate>& relayRemoteCandidates);
+	void			fromSDPLine(const std::string& line, SDPCandidate& publicCandidate, std::list<SDPCandidate>& relayCurrentCandidates, std::list<SDPCandidate>& relayRemoteCandidates) { fromSDPLine(line, publicCandidate, relayCurrentCandidates, relayRemoteCandidates, true); }
 
 	void			reset();
-	Mona::UInt32	elapsed();
+	UInt32			elapsed() { return (UInt32)_time.elapsed() / 1000; }
 
 	static bool ProcessSDPPacket(DataReader& packet,Peer& current,Writer& currentWriter,Peer& remote,Writer& remoteWriter);
 
@@ -54,10 +54,10 @@ private:
 	void fromSDPLine(const std::string& line,SDPCandidate& publicCandidate,std::list<SDPCandidate>& relayCurrentCandidates,std::list<SDPCandidate>& relayRemoteCandidates,bool relayed);
 	void fromSDPCandidate(const std::string& candidate,SDPCandidate& publicCandidate,std::list<SDPCandidate>& relayCurrentCandidates,std::list<SDPCandidate>& relayRemoteCandidates,bool relayed);
 
-	std::map<Mona::UInt16,std::map<Mona::UInt8,std::set<Poco::Net::SocketAddress,Util::AddressComparator> > >	_initiatorAddresses;
-	std::map<Mona::UInt16,std::map<Mona::UInt8,std::set<Poco::Net::SocketAddress,Util::AddressComparator> > >	_remoteAddresses;
-	std::map<Mona::UInt16, std::map<Mona::UInt8,std::set<Mona::UInt16> > >		_relayPorts;
-	Mona::Time												_time;
+	std::map<UInt16,std::map<UInt8,std::set<SocketAddress> > >	_initiatorAddresses;
+	std::map<UInt16,std::map<UInt8,std::set<SocketAddress> > >	_remoteAddresses;
+	std::map<UInt16, std::map<UInt8,std::set<UInt16> > >		_relayPorts;
+	Time														_time;
 	const RelayServer&											_relay;
 	bool														_first;
 	Type														_type;
@@ -69,14 +69,6 @@ private:
 	const Peer&													_initiator;
 	const Peer&													_remote;
 };
-
-inline void ICE::fromSDPLine(const std::string& line,SDPCandidate& publicCandidate,std::list<SDPCandidate>& relayCurrentCandidates,std::list<SDPCandidate>& relayRemoteCandidates) {
-	fromSDPLine(line,publicCandidate,relayCurrentCandidates,relayRemoteCandidates,true);
-}
-
-inline Mona::UInt32 ICE::elapsed() {
-	return (Mona::UInt32)_time.elapsed()/1000;
-}
 
 
 } // namespace Mona

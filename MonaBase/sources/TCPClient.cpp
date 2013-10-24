@@ -17,33 +17,23 @@
 
 #include "Mona/TCPClient.h"
 #include "Mona/TCPSender.h"
-#include "Mona/Logs.h"
-#include "Poco/Format.h"
 
 using namespace std;
-using namespace Poco;
-using namespace Poco::Net;
+
 
 namespace Mona {
 
-TCPClient::TCPClient(const StreamSocket& socket,const SocketManager& manager) : SocketHandler<StreamSocket>(manager) {
-	openSocket(new StreamSocket(socket));
-}
-
-TCPClient::TCPClient(const SocketManager& manager) : SocketHandler<StreamSocket>(manager) {
+TCPClient::TCPClient(const SocketManager& manager) : _connected(false),StreamSocket(manager) {
 }
 
 TCPClient::~TCPClient() {
 	disconnect();
 }
 
-void TCPClient::error(const string& error) {
-	_error = error;
-	disconnect();
-}
-
-void TCPClient::onReadable() {
-	UInt32 available = getSocket()->available();
+void TCPClient::onReadable(Exception& ex) {
+	UInt32 available = StreamSocket::available(ex);
+	if (ex)
+		return;
 	if(available==0) {
 		disconnect();
 		return;
@@ -52,7 +42,9 @@ void TCPClient::onReadable() {
 	UInt32 size = _buffer.size();
 	_buffer.resize(size+available);
 
-	int received = getSocket()->receiveBytes(&_buffer[size],available);
+	int received = receiveBytes(ex,&_buffer[size],available);
+	if (ex)
+		return;
 	if(received<=0) {
 		disconnect(); // Graceful disconnection
 		return;
@@ -61,57 +53,44 @@ void TCPClient::onReadable() {
 	available = size+received;
 
 	UInt32 rest = available;
-	bool consumed = false;
 	do {
 		available = rest;
 		rest = onReception(&_buffer[0],available);
-		if(rest>available) {
-			WARN("onReception has returned a 'rest' value more important than the available value (",rest,">",available,")");
+		if(rest>available)
 			rest=available;
-		} else if(rest<available)
-			consumed=true;
 		if(_buffer.size()>rest) {
 			if(available>rest)
 				_buffer.erase(_buffer.begin(),_buffer.begin()+(available-rest));
 			_buffer.resize(rest);
 		}
 	} while(rest>0 && rest!=available);
-	if(consumed)
-		onFlush();
 }
 
 
-bool TCPClient::connect(const SocketAddress& address) {
+bool TCPClient::connect(Exception& ex,const string& address) {
 	disconnect();
-	_error.clear();
-	try {
-		openSocket(new StreamSocket(address))->setNoDelay(true); // enabe nodelay per default: OSX really needs that
-	} catch(Poco::Exception& ex) {
-		closeSocket();
-		error(format("Impossible to connect to %s, %s",address.toString(),ex.displayText()));
-	}
-	return connected();
+	SocketAddress temp;
+	if (!temp.set(ex, address))
+		return false;
+	return _connected = StreamSocket::connect(ex, temp);
 }
 
 void TCPClient::disconnect() {
-	if(!getSocket())
+	if(!_connected)
 		return;
-	try {getSocket()->shutdownReceive();} catch(...){}
-	closeSocket();
+	Exception ex;
+	shutdown(ex,Socket::RECV);
+	close();
 	_buffer.clear();
 	onDisconnection();
 }
 
-bool TCPClient::send(const UInt8* data,UInt32 size) {
-	if(!getSocket()) {
-		if(!error())
-			error("TCPClient not connected");
-		return false;
-	}
+bool TCPClient::send(Exception& ex,const UInt8* data,UInt32 size) {
 	if(size==0)
 		return true;
-	AutoPtr<TCPSender>(new TCPSender(*this,data,size));
-	return true;
+	shared_ptr<TCPSender> pSender(new TCPSender(data, size));
+	StreamSocket::send(ex, pSender);
+	return !ex;
 }
 
 } // namespace Mona

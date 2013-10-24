@@ -19,55 +19,35 @@
 
 
 #include "Mona/Mona.h"
-#include "Mona/SocketHandler.h"
-#include "Poco/Net/DatagramSocket.h"
+#include "Mona/DatagramSocket.h"
+#include <vector>
 
 namespace Mona {
 
-class UDPSocket : private SocketHandler<Poco::Net::DatagramSocket> {
+class UDPSocket : protected DatagramSocket, virtual Object {
 public:
 	UDPSocket(const SocketManager& manager,bool allowBroadcast=false);
 	virtual ~UDPSocket();
 
-	bool					 bind(const Poco::Net::SocketAddress & address);
-	void					 connect(const Poco::Net::SocketAddress& address);
-	void					 close();
+	bool					bind(Exception& ex, const std::string& address);
+	bool					connect(Exception& ex, const std::string& address);
+	void					close();
 
-	void					 send(const Mona::UInt8* data,Mona::UInt32 size);
-	void					 send(const Mona::UInt8* data,Mona::UInt32 size,const Poco::Net::SocketAddress& address);
+	bool					send(Exception& ex, const UInt8* data, UInt32 size);
+	bool					send(Exception& ex, const UInt8* data, UInt32 size, const std::string& address);
 
-	Poco::Net::SocketAddress address();
-	Poco::Net::SocketAddress peerAddress();
-
-	const char*				 error();
+	const std::string&		address(Exception& ex, std::string& address) { SocketAddress temp; return (address = DatagramSocket::address(ex, temp).toString()); }
+	const std::string&		peerAddress(Exception& ex, std::string& address) { SocketAddress temp; return (address = DatagramSocket::peerAddress(ex, temp).toString()); }
 
 private:
-	virtual void			onReception(const Mona::UInt8* data,Mona::UInt32 size,const Poco::Net::SocketAddress& address)=0;
+	virtual void			onReception(Exception& ex, const UInt8* data, UInt32 size, const SocketAddress& address) = 0;
+	void					onReadable(Exception& ex);
 
-	void					onReadable();
-	void					onError(const std::string& error);
-
-	std::string					_error;
-	std::vector<Mona::UInt8>	_buffer;
-	bool						_connected;
+	std::vector<UInt8>			_buffer;
 	bool						_allowBroadcast;
-	bool						_bound;
+	bool						_broadcasting;
 };
 
-inline Poco::Net::SocketAddress	UDPSocket::address() {
-	return (_connected || _bound) ? getSocket()->address() : Poco::Net::SocketAddress();
-}
 
-inline Poco::Net::SocketAddress	UDPSocket::peerAddress() {
-	return _connected ? getSocket()->peerAddress() : Poco::Net::SocketAddress();
-}
-
-inline void UDPSocket::onError(const std::string& error) {
-	_error = "UDPSocket error, " + error;
-}
-
-inline const char* UDPSocket::error() {
-	return _error.empty() ? NULL : _error.c_str();
-}
 
 } // namespace Mona

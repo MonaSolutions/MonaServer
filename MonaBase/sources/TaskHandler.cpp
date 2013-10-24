@@ -22,16 +22,12 @@ using namespace Poco;
 
 namespace Mona {
 
-TaskHandler::TaskHandler():_pTask(NULL),_stop(true) {
-}
-TaskHandler::~TaskHandler() {
-	stop();
-}
 
 void TaskHandler::start() {
 	ScopedLock<Mutex> lock(_mutex);
 	_stop=false;
 }
+
 
 void TaskHandler::stop() {
 	ScopedLock<Mutex> lock(_mutex);
@@ -51,11 +47,11 @@ void TaskHandler::waitHandle(Task& task) {
 	_event.wait();
 }
 
-void TaskHandler::giveHandle() {
+void TaskHandler::giveHandle(Exception& ex) {
 	ScopedLock<Mutex> lock(_mutex);
 	if(!_pTask)
 		return;
-	_pTask->handle();
+	_pTask->handle(ex);
 	_pTask=NULL;
 	_event.set();
 }

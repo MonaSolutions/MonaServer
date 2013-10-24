@@ -16,16 +16,14 @@
 */
 
 #include "Mona/TCPServer.h"
-#include "Mona/Logs.h"
-#include "Poco/Net/ServerSocket.h"
+#include "Mona/StreamSocket.h"
 
 using namespace std;
-using namespace Poco;
-using namespace Poco::Net;
+
 
 namespace Mona {
 
-TCPServer::TCPServer(const SocketManager& manager) : _port(0),SocketHandler<ServerSocket>(manager) {
+TCPServer::TCPServer(const SocketManager& manager) : _port(0),ServerSocket(manager) {
 }
 
 
@@ -33,41 +31,30 @@ TCPServer::~TCPServer() {
 	stop();
 }
 
-bool TCPServer::start(UInt16 port) {
+bool TCPServer::start(Exception& ex,UInt16 port) {
 	if(port==0) {
-		ERROR("TCPServer port have to be superior to 0");
+		ex.set(Exception::SOCKET,"TCPServer port have to be superior to 0");
 		return false;
 	}
 	stop();
-	try {
-		openSocket(new ServerSocket(port))->setLinger(false,0);
-	} catch(Poco::Exception& ex) {
-		closeSocket();
-		ERROR("TCPServer starting error, ",ex.displayText())
+	SocketAddress address;
+	address.set(IPAddress::Wildcard(),port);
+	if (!bind(ex, address) || !listen(ex))
 		return false;
-	}
 	_port=port;
 	return true;
 }
 
 void TCPServer::stop() {
-	closeSocket();
+	close();
 	_port=0;
 }
 
-void TCPServer::onReadable() {
-	StreamSocket ss = getSocket()->acceptConnection();
-	// enabe nodelay per default: OSX really needs that
-	ss.setNoDelay(true);
-	clientHandler(ss);
+void TCPServer::onReadable(Exception& ex) {
+	shared_ptr<StreamSocket> pSocket(newClient());
+	if(acceptConnection(ex,pSocket))
+		clientHandler(pSocket);
 }
 
-void TCPServer::onError(const string& error) {
-	ERROR("TCPServer socket, ",error)
-	UInt16 port = _port;
-	stop();
-	if(port>0)
-		start(port);
-}
 
 } // namespace Mona
