@@ -24,7 +24,7 @@ This file is a part of Mona.
 namespace Mona {
 
 
-class Event : ObjectFix {
+class Event : virtual Object {
 public:
 	Event(bool autoReset=true) : _autoReset(autoReset), _set(false) {}
 

@@ -24,7 +24,7 @@
 
 namespace Mona {
 
-class TaskHandler {
+class TaskHandler : virtual Object {
 public:
 	TaskHandler() : _pTask(NULL), _stop(true) {}
 	virtual ~TaskHandler() {stop(); }

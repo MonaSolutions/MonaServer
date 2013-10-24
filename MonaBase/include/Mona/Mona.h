@@ -66,19 +66,19 @@ void DetectMemoryLeak();
 namespace Mona {
 
 // No copy, no move
-class Fix {
-	Fix(const Fix& other) = delete;
-	Fix& operator=(const Fix& other) = delete;
-	Fix(Fix&& other) = delete;
-	Fix& operator=(Fix&& other) = delete;
+class Static {
+	Static(const Static& other) = delete;
+	Static& operator=(const Static& other) = delete;
+	Static(Static&& other) = delete;
+	Static& operator=(Static&& other) = delete;
 };
 
-class ObjectFix {
-	ObjectFix(const ObjectFix& other) = delete;
-	ObjectFix& operator=(const ObjectFix& other) = delete;
-	ObjectFix(ObjectFix&& other) = delete;
-	ObjectFix operator=(ObjectFix&& other) = delete;
-	ObjectFix() = default;
+class Object {
+	Object(const Object& other) = delete;
+	Object& operator=(const Object& other) = delete;
+	Object(Object&& other) = delete;
+	Object operator=(Object&& other) = delete;
+	Object() = default;
 };
 
 #if defined(_MSC_VER)

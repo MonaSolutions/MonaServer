@@ -23,7 +23,7 @@
 
 namespace Mona {
 
-class Time : ObjectFix {
+class Time : virtual Object {
 public:
 
 	// names used by formatter and parser
@@ -58,11 +58,8 @@ public:
 	/// invalid date
 	Time(struct tm& tmtime, int milli = 0, int micro = 0) { update(tmtime, milli, micro); }
 
-	/// \brief Construct the object by copying time's value
-	Time(const Time& time) : _time(time._time) {}
-
 	/// \brief Destructor
-	~Time() { }
+	virtual ~Time() { }
 
 	/// \brief Update the time object with current time
 	Time& update() { _time = std::chrono::system_clock::now(); return *this; }
@@ -158,11 +155,11 @@ inline bool operator>= (const Time& lhs, const Time& rhs) { return lhs.getTimePo
 
 inline bool operator<= (const Time& lhs, const Time& rhs) { return lhs.getTimePoint() <= rhs.getTimePoint(); }
 
-inline Time	operator+ (const Time& lhs, const Int64 dtn) { return Time(lhs.getTimePoint() + std::chrono::microseconds(dtn)); }
+/* TODO? inline Time	operator+ (const Time& lhs, const Int64 dtn) { return Time(lhs.getTimePoint() + std::chrono::microseconds(dtn)); }
 
 inline Time	operator+ (const Int64 dtn, const Time& rhs) { return Time(std::chrono::microseconds(dtn) + rhs.getTimePoint()); }
 
-inline Time	operator- (const Time& lhs, const Int64 dtn) { return Time(lhs.getTimePoint() - std::chrono::microseconds(dtn)); }
+inline Time	operator- (const Time& lhs, const Int64 dtn) { return Time(lhs.getTimePoint() - std::chrono::microseconds(dtn)); }*/
 
 inline Int64 operator- (const Time& lhs, const Time& rhs) { return std::chrono::duration_cast<std::chrono::microseconds>(lhs.getTimePoint() - rhs.getTimePoint()).count(); }
 

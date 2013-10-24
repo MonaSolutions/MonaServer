@@ -24,9 +24,9 @@
 namespace Mona {
 
 
-class Logger
-{
+class Logger : virtual Object {
 public:
+	
 	enum Priority {
 		PRIO_FATAL = 1,   /// A fatal error. The application will most likely terminate. This is the highest priority.
 		PRIO_CRITIC,    /// A critical error. The application might not be able to continue running successfully.
@@ -38,6 +38,7 @@ public:
 		PRIO_TRACE        /// A tracing message. This is the lowest priority.
 	};
 
+	Logger() {}
 
 	virtual void logHandler(Poco::Thread::TID threadId,const std::string& threadName,Priority priority,const char *filePath,const std::string& shortFilePath,long line, const std::string& message);
 	virtual void dumpHandler(const UInt8* data, UInt32 size);

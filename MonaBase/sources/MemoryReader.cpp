@@ -28,8 +28,9 @@ MemoryReader::MemoryReader(const UInt8* buffer,UInt32 size) : _memory((const cha
 
 
 // Consctruction by copy
+/*
 MemoryReader::MemoryReader(MemoryReader& other) : _memory(other._memory),BinaryReader(_memory),fragments(other.fragments) {
-}
+}*/
 
 
 MemoryReader::~MemoryReader() {

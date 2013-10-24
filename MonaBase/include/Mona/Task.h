@@ -23,7 +23,7 @@
 namespace Mona {
 
 class TaskHandler;
-class Task {
+class Task : virtual Object {
 public:
 	Task(TaskHandler& handler);
 

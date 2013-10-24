@@ -26,7 +26,7 @@
 namespace Mona {
 
 class Startable;
-class StartableProcess : public Poco::Runnable{
+class StartableProcess : public Poco::Runnable, virtual Object {
 public:
 	StartableProcess(Startable& startable);
 private:
@@ -34,7 +34,7 @@ private:
 	Startable& _startable;
 };
 
-class Startable {
+class Startable : virtual Object {
 	friend class StartableProcess;
 public:
 	enum WakeUpType {

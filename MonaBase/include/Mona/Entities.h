@@ -24,19 +24,19 @@
 namespace Mona {
 
 template<class EntityType>
-class Entities {
+class Entities : virtual Object {
 public:
 	struct Compare {
-	   bool operator()(const Mona::UInt8* a,const Mona::UInt8* b) const {
+	   bool operator()(const UInt8* a,const UInt8* b) const {
 		   return std::memcmp(a,b,ID_SIZE)<0;
 	   }
 	};
 
-	typedef typename std::map<const Mona::UInt8*,EntityType*,Compare> Map;
+	typedef typename std::map<const UInt8*,EntityType*,Compare> Map;
 	typedef typename Map::const_iterator Iterator;
 
 	Entities(Map& entities) : _entities(entities) {}
-	Entities(const Entities& entities) : _entities(entities._entities) {}
+//	Entities(const Entities& entities) : _entities(entities._entities) {}
 	virtual ~Entities(){}
 
 
@@ -48,11 +48,11 @@ public:
 		return _entities.end();
 	}
 
-	Mona::UInt32 count() const {
+	UInt32 count() const {
 		return _entities.size();
 	}
 
-	EntityType* operator()(const Mona::UInt8* id) const {
+	EntityType* operator()(const UInt8* id) const {
 		Iterator it = _entities.find(id);
 		if(it==_entities.end())
 			return NULL;

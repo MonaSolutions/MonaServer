@@ -25,7 +25,7 @@
 namespace Mona {
 
 
-class TCPClient : protected StreamSocket {
+class TCPClient : protected StreamSocket, virtual Object {
 public:
 	TCPClient(const SocketManager& manager);
 	virtual ~TCPClient();

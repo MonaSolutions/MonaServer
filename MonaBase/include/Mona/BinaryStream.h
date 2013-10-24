@@ -37,8 +37,8 @@ class BinaryBuffer : public Poco::UnbufferedStreamBuf {
 public:
 	BinaryBuffer();
 	~BinaryBuffer();
-	Mona::UInt32		size();
-	const Mona::UInt8*	data();
+	UInt32		size();
+	const UInt8*	data();
 
 private:
 	std::streampos seekpos(std::streampos sp,std::ios_base::openmode which = std::ios_base::in | std::ios_base::out);
@@ -55,8 +55,8 @@ private:
 	StringBuf  _buf;
 };
 
-inline const Mona::UInt8* BinaryBuffer::data() {
-	return (const Mona::UInt8*)_buf.data();
+inline const UInt8* BinaryBuffer::data() {
+	return (const UInt8*)_buf.data();
 }
 
 inline BinaryBuffer::int_type BinaryBuffer::writeToDevice(char_type ch) {
@@ -110,22 +110,22 @@ public:
       BinaryStream();
       ~BinaryStream();
 
-	  Mona::UInt32			size();
-	  const Mona::UInt8*	data();
+	  UInt32			size();
+	  const UInt8*	data();
 
       void            clear();
-	  void            resetReading(Mona::UInt32 position);
-	  void			  resetWriting(Mona::UInt32 position);
-	  void			  next(Mona::UInt32 count);
+	  void            resetReading(UInt32 position);
+	  void			  resetWriting(UInt32 position);
+	  void			  next(UInt32 count);
       bool            empty();
 };
 
-inline Mona::UInt32 BinaryStream::size() {
+inline UInt32 BinaryStream::size() {
       return rdbuf()->size();
 }
 
 
-inline const Mona::UInt8* BinaryStream::data() {
+inline const UInt8* BinaryStream::data() {
 	return rdbuf()->data();
 }
 

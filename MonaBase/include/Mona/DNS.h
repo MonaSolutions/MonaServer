@@ -29,7 +29,7 @@ namespace Mona {
 	///
 	/// An internal DNS cache is used to speed up name lookups.
 
-class DNS : Fix {
+class DNS : virtual Static {
 public:
 
 	// Returns a HostEntry object containing the DNS information for the host with the given name

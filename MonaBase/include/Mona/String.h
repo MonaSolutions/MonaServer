@@ -35,7 +35,7 @@
 namespace Mona {
 
 template<typename Type>
-class Format : ObjectFix {
+class Format : virtual Object {
 public:
 	Format(const char* format, Type value) : value(value), format(format) {}
 	const Type	value;
@@ -45,8 +45,7 @@ public:
 class Exception;
 
 /// Utility class for generation parse of strings
-class String : Fix {
-
+class String : virtual Static{
 public:
 
 	enum SplitOption {

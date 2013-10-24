@@ -27,7 +27,7 @@ namespace Mona {
 
 
 class StreamSocket;
-class Socket : ObjectFix {
+class Socket : virtual Object {
 	friend class SocketManager;
 	friend class SocketSender;
 public:

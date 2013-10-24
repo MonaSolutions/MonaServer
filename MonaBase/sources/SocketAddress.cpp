@@ -31,7 +31,7 @@ namespace Mona {
 // SocketAddressCommon
 //
 
-class SocketAddressCommon : ObjectFix {
+class SocketAddressCommon {
 public:
 	virtual const IPAddress&		host() const = 0;
 	virtual UInt16					port() const = 0;

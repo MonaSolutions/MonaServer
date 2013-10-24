@@ -27,7 +27,7 @@ This file is a part of Mona.
 
 namespace Mona {
 
-class ServerApplication: public Application {
+class ServerApplication : public Application, virtual Object {
 public:
 	ServerApplication();
 

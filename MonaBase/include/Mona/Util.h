@@ -27,7 +27,7 @@
 
 namespace Mona {
 
-class Util {
+class Util : virtual Static {
 public:
 	static std::string FormatHex(const UInt8* data,UInt32 size);
 	static std::string FormatHex2(const UInt8* data,UInt32 size);

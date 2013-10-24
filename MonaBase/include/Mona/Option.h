@@ -23,7 +23,7 @@ This file is a part of Mona.
 namespace Mona {
 
 
-class Option : ObjectFix {
+class Option : virtual Object {
 	friend class Options;
 public:
 	Option();

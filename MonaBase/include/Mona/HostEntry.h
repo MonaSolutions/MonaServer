@@ -28,7 +28,7 @@ namespace Mona {
 	/// This class stores information about a host
 	/// such as host name, alias names and a list
 	/// of IP addresses.
-class HostEntry : ObjectFix {
+class HostEntry : virtual Object {
 public:
 	typedef std::list<std::string> AliasList;
 	typedef std::list<IPAddress>   AddressList;

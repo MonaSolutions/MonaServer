@@ -23,53 +23,53 @@
 
 namespace Mona {
 
-class BinaryWriter : public Poco::BinaryWriter {
+class BinaryWriter : public Poco::BinaryWriter, virtual Object {
 public:
 	BinaryWriter(std::ostream& ostr);
 	virtual ~BinaryWriter();
 
-	void writeRaw(const Mona::UInt8* value,Mona::UInt32 size);
-	void writeRaw(const char* value,Mona::UInt32 size);
+	void writeRaw(const UInt8* value,UInt32 size);
+	void writeRaw(const char* value,UInt32 size);
 	void writeRaw(const std::string& value);
-	void write8(Mona::UInt8 value);
-	void write16(Mona::UInt16 value);
-	void write24(Mona::UInt32 value);
-	void write32(Mona::UInt32 value);
-	void write64(Mona::UInt64 value);
+	void write8(UInt8 value);
+	void write16(UInt16 value);
+	void write24(UInt32 value);
+	void write32(UInt32 value);
+	void write64(UInt64 value);
 	void writeString8(const std::string& value);
-	void writeString8(const char* value,Mona::UInt8 size);
+	void writeString8(const char* value,UInt8 size);
 	void writeString16(const std::string& value);
-	void writeString16(const char* value,Mona::UInt16 size);
-	void write7BitValue(Mona::UInt32 value);
-	void write7BitLongValue(Mona::UInt64 value);
+	void writeString16(const char* value,UInt16 size);
+	void write7BitValue(UInt32 value);
+	void write7BitLongValue(UInt64 value);
 	void writeAddress(const SocketAddress& address,bool publicFlag);
 
 	static BinaryWriter Null;
 };
 
-inline void BinaryWriter::writeRaw(const Mona::UInt8* value,Mona::UInt32 size) {
+inline void BinaryWriter::writeRaw(const UInt8* value,UInt32 size) {
 	Poco::BinaryWriter::writeRaw((char*)value,size);
 }
-inline void BinaryWriter::writeRaw(const char* value,Mona::UInt32 size) {
+inline void BinaryWriter::writeRaw(const char* value,UInt32 size) {
 	Poco::BinaryWriter::writeRaw(value,size);
 }
 inline void BinaryWriter::writeRaw(const std::string& value) {
 	Poco::BinaryWriter::writeRaw(value);
 }
 
-inline void BinaryWriter::write8(Mona::UInt8 value) {
+inline void BinaryWriter::write8(UInt8 value) {
 	(*this) << value;
 }
 
-inline void BinaryWriter::write16(Mona::UInt16 value) {
+inline void BinaryWriter::write16(UInt16 value) {
 	(*this) << value;
 }
 
-inline void BinaryWriter::write32(Mona::UInt32 value) {
+inline void BinaryWriter::write32(UInt32 value) {
 	(*this) << value;
 }
 
-inline void BinaryWriter::write64(Mona::UInt64 value) {
+inline void BinaryWriter::write64(UInt64 value) {
 	(*this) << value;
 }
 

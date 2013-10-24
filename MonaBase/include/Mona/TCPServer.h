@@ -24,14 +24,14 @@
 
 namespace Mona {
 
-class TCPServer : protected ServerSocket {
+class TCPServer : protected ServerSocket, virtual Object {
 public:
 	TCPServer(const SocketManager& manager);
 	virtual ~TCPServer();
 
 	bool			start(Exception& ex, UInt16 port);
 	bool			running() { return _port > 0; }
-	Mona::UInt16	port() { return _port; }
+	UInt16	port() { return _port; }
 	void			stop();
 
 private:

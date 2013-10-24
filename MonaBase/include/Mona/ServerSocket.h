@@ -24,7 +24,7 @@ This file is a part of Mona.
 namespace Mona {
 
 
-class ServerSocket : public Socket {
+class ServerSocket : public Socket, virtual Object {
 public:
 	ServerSocket(const SocketManager& manager) : Socket(manager) {}
 	virtual ~ServerSocket() {}

@@ -23,19 +23,19 @@
 
 namespace Mona {
 
-class Attempt {
+class Attempt : virtual Object {
 public:
 	Attempt() : count(0) {
 	}
 	~Attempt() {
 	}
-	Mona::UInt32	count;
+	UInt32	count;
 
 	bool obsolete() {
 		return _time.isElapsed(120000000); // 2mn
 	}
 private:
-	Mona::Time _time;
+	Time _time;
 };
 
 
@@ -46,7 +46,7 @@ public:
 	
 	void			manage();
 
-	Mona::UInt32	attempt(const std::string& tag);
+	UInt32	attempt(const std::string& tag);
 	void			clearAttempt(const std::string& tag);
 
 	template<class AttemptType>
@@ -66,7 +66,7 @@ private:
 
 };
 
-inline Mona::UInt32	AttemptCounter::attempt(const std::string& tag) {
+inline UInt32	AttemptCounter::attempt(const std::string& tag) {
 	return (attempt<Attempt>(tag)).count;
 }
 

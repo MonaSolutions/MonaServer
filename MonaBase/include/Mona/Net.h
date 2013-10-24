@@ -203,7 +203,7 @@ namespace Mona {
 
 
 
-class Net : Fix {
+class Net : virtual Static {
 public:
 #if defined(_WIN32)
 	static bool InitializeNetwork(Exception& ex);

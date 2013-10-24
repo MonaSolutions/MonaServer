@@ -27,7 +27,7 @@ This file is a part of Mona.
 
 namespace Mona {
 
-class Logs : Fix {
+class Logs : virtual Static {
 public:
 	enum DumpMode {
 		DUMP_NOTHING = 0,
@@ -49,7 +49,7 @@ public:
 	
 	template <typename ...Args>
 	static void	Log(Logger::Priority prio, const char* file, long line, const Args&... args) {
-		if (!_PLogger || _Level < prio)
+		if (_Level < prio)
 			return;
 		Poco::Path path(file);
 		string shortFile;
@@ -58,41 +58,47 @@ public:
 		shortFile.append(path.getFileName());
 		string message;
 		String::Format(message, args ...);
-		_PLogger->logHandler(Poco::Thread::currentTid(), Poco::Thread::current() ? Poco::Thread::current()->name() : "", prio, file, shortFile, line, message);
+		if (_PLogger)
+			_PLogger->logHandler(Poco::Thread::currentTid(), Poco::Thread::current() ? Poco::Thread::current()->name() : "", prio, file, shortFile, line, message);
+		else
+			_DefaultLogger.logHandler(Poco::Thread::currentTid(), Poco::Thread::current() ? Poco::Thread::current()->name() : "", prio, file, shortFile, line, message);
 	}
 
 	template <typename ...Args>
 	static void Dump(const UInt8* data, UInt32 size, const Args&... args) {
-		if (!_PLogger)
-			return;
 		vector<UInt8> out;
 		string header;
 		String::Format(header, args ...);
 		Util::Dump(data, size, out, header);
-		if (out.size() > 0)
+		if (out.size() == 0)
+			return;
+		if (_PLogger)
 			_PLogger->dumpHandler(&out[0], out.size());
+		else
+			_DefaultLogger.dumpHandler(&out[0], out.size());
 	}
 
 private:
 	static Logger*		_PLogger;
 	static DumpMode		_DumpMode;
 	static UInt8		_Level;
+	static Logger		_DefaultLogger;
 };
 
 #undef ERROR
 #undef DEBUG
 #undef TRACE
-#define FATAL(...) { Mona::Logs::Log(Mona::Logger::PRIO_FATAL,__FILE__,__LINE__, __VA_ARGS__); }
-#define CRITIC(...) { Mona::Logs::Log(Mona::Logger::PRIO_CRITIC,__FILE__,__LINE__, __VA_ARGS__); }
-#define ERROR(...) { Mona::Logs::Log(Mona::Logger::PRIO_ERROR,__FILE__,__LINE__, __VA_ARGS__); }
-#define WARN(...) { Mona::Logs::Log(Mona::Logger::PRIO_WARN,__FILE__,__LINE__, __VA_ARGS__); }
-#define NOTE(...) { Mona::Logs::Log(Mona::Logger::PRIO_NOTE,__FILE__,__LINE__, __VA_ARGS__); }
-#define INFO(...) { Mona::Logs::Log(Mona::Logger::PRIO_INFO,__FILE__,__LINE__, __VA_ARGS__); }
-#define DEBUG(...) { Mona::Logs::Log(Mona::Logger::PRIO_DEBUG,__FILE__,__LINE__, __VA_ARGS__); }
-#define TRACE(...) { Mona::Logs::Log(Mona::Logger::PRIO_TRACE,__FILE__,__LINE__, __VA_ARGS__); }
+#define FATAL(...) { Logs::Log(Logger::PRIO_FATAL,__FILE__,__LINE__, __VA_ARGS__); }
+#define CRITIC(...) { Logs::Log(Logger::PRIO_CRITIC,__FILE__,__LINE__, __VA_ARGS__); }
+#define ERROR(...) { Logs::Log(Logger::PRIO_ERROR,__FILE__,__LINE__, __VA_ARGS__); }
+#define WARN(...) { Logs::Log(Logger::PRIO_WARN,__FILE__,__LINE__, __VA_ARGS__); }
+#define NOTE(...) { Logs::Log(Logger::PRIO_NOTE,__FILE__,__LINE__, __VA_ARGS__); }
+#define INFO(...) { Logs::Log(Logger::PRIO_INFO,__FILE__,__LINE__, __VA_ARGS__); }
+#define DEBUG(...) { Logs::Log(Logger::PRIO_DEBUG,__FILE__,__LINE__, __VA_ARGS__); }
+#define TRACE(...) { Logs::Log(Logger::PRIO_TRACE,__FILE__,__LINE__, __VA_ARGS__); }
 
-#define DUMP_INTERN(...) { if(Mona::Logs::GetDump()&Mona::Logs::DUMP_INTERN) {Mona::Logs::Dump(__VA_ARGS__);} }
-#define DUMP(...) { if(Mona::Logs::GetDump()&Mona::Logs::DUMP_EXTERN) {Mona::Logs::Dump(__VA_ARGS__);} }
+#define DUMP_INTERN(...) { if(Logs::GetDump()&Logs::DUMP_INTERN) {Logs::Dump(__VA_ARGS__);} }
+#define DUMP(...) { if(Logs::GetDump()&Logs::DUMP_EXTERN) {Logs::Dump(__VA_ARGS__);} }
 
 
 } // namespace Mona

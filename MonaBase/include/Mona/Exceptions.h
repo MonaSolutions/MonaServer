@@ -22,8 +22,7 @@
 namespace Mona {
 
 
-class Exception : ObjectFix {
-
+class Exception : virtual Object{
 public:
 	enum Code {
 		NIL,

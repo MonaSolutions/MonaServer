@@ -27,7 +27,7 @@ using namespace std;
 
 namespace Mona {
 
-class IPAddressCommon : ObjectFix {
+class IPAddressCommon {
 public:
 	virtual const void* addr() const = 0;
 

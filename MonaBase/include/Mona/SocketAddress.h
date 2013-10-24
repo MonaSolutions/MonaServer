@@ -30,7 +30,7 @@ class SocketAddressCommon;
 /// address. The address can belong either to the
 /// IPv4 or the IPv6 address family and consists of a
 /// host address and a port number.
-class SocketAddress : ObjectFix {
+class SocketAddress : virtual Object {
 public:
 	SocketAddress(IPAddress::Family family = IPAddress::IPv4);
 		/// Creates a wildcard (all zero) IPv4 SocketAddress

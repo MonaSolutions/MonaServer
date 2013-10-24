@@ -27,9 +27,9 @@ MemoryWriter::MemoryWriter(const UInt8* buffer,UInt32 size) : _memory((char*)buf
 }
 
 // Consctruction by copy
-MemoryWriter::MemoryWriter(MemoryWriter& other) : _pOther(&other),_memory(other._memory),BinaryWriter(_memory),_size(other._size) {
+/*MemoryWriter::MemoryWriter(MemoryWriter& other) : _pOther(&other),_memory(other._memory),BinaryWriter(_memory),_size(other._size) {
 	
-}
+}*/
 
 MemoryWriter::~MemoryWriter() {
 	flush();

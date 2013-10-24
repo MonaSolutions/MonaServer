@@ -33,7 +33,7 @@ BinaryWriter::~BinaryWriter() {
 	flush();
 }
 
-void BinaryWriter::write24(Mona::UInt32 value) {
+void BinaryWriter::write24(UInt32 value) {
 	write8(value>>16);
 	write16(value);
 }

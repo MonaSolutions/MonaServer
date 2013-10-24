@@ -23,7 +23,7 @@
 
 namespace Mona {
 
-class WorkThread {
+class WorkThread : virtual Object {
 public:
 	WorkThread() {}
 

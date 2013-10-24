@@ -42,7 +42,7 @@ class IPAddressCommon;
 /// IPv6 addresses are supported only if the target platform
 /// supports IPv6.
 
-class IPAddress : ObjectFix {
+class IPAddress : virtual Object {
 public:
 	enum Family {
 		IPv4=1,

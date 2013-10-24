@@ -24,7 +24,7 @@
 
 namespace Mona {
 
-class UDPSender : public SocketSender {
+class UDPSender : public SocketSender, virtual Object {
 public:
 	UDPSender(bool dump = false) : SocketSender(dump) {}
 	UDPSender(const UInt8* data, UInt32 size, bool dump = false) : SocketSender(data, size, dump) {}

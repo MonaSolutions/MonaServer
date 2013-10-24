@@ -26,7 +26,7 @@
 
 namespace Mona {
 
-class SocketManager : private Task, private Startable, private TaskHandler, ObjectFix {
+class SocketManager : private Task, private Startable, private TaskHandler, virtual Object {
 	friend class Socket;
 public:
 	SocketManager(TaskHandler& handler, PoolThreads& poolThreads, UInt32 bufferSize = 0, const std::string& name = "SocketManager");

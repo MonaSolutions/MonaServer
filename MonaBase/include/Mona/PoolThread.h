@@ -28,7 +28,7 @@
 
 namespace Mona {
 
-class PoolThread : private Startable {
+class PoolThread : private Startable, virtual Object {
 public:
 	PoolThread() : Startable("PoolThread" + std::to_string(++_Id)) {}
 	virtual ~PoolThread() {clear();	}
@@ -43,7 +43,7 @@ private:
 	std::list<std::shared_ptr<WorkThread>>	_jobs;
 	std::atomic<int>						_queue;
 	
-	static Mona::UInt32						_Id;
+	static UInt32						_Id;
 
 };
 

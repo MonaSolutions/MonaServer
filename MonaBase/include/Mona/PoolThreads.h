@@ -23,13 +23,13 @@
 
 namespace Mona {
 
-class PoolThreads {
+class PoolThreads : virtual Object {
 public:
 	PoolThreads(UInt32 threadsAvailable=0);
 	virtual ~PoolThreads();
 
 	void			clear();
-	Mona::UInt32	threadsAvailable() { return _threads.size(); }
+	UInt32	threadsAvailable() { return _threads.size(); }
 
 	template<typename WorkThreadType>
 	PoolThread* enqueue(std::shared_ptr<WorkThreadType>& pWork, PoolThread* pThread = NULL) {

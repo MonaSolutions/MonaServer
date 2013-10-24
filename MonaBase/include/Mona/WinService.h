@@ -24,7 +24,7 @@ This file is a part of Mona.
 namespace Mona {
 
 
-class WinService {
+class WinService : virtual Object {
 public:
 	enum Startup {
 		UNKNOWN,

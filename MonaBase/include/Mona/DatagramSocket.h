@@ -24,7 +24,7 @@ This file is a part of Mona.
 namespace Mona {
 
 
-class DatagramSocket : public Socket {
+class DatagramSocket : public Socket, virtual Object {
 public:
 	DatagramSocket(const SocketManager& manager) : Socket(manager, SOCK_DGRAM) {}
 	virtual ~DatagramSocket() {}

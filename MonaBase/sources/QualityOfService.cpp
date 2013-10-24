@@ -27,7 +27,7 @@ class Sample {
 public:
 	Sample(UInt32 success,UInt32 lost,UInt32 size) : success(success),lost(lost),size(size) {}
 	~Sample() {}
-	const Mona::Time time;
+	const Time time;
 	const UInt32	success;
 	const UInt32	lost;
 	const UInt32	size;
@@ -43,7 +43,7 @@ QualityOfService::~QualityOfService() {
 	reset();
 }
 
-void QualityOfService::add(UInt32 ping,UInt32 size,Mona::UInt32 success,Mona::UInt32 lost) {
+void QualityOfService::add(UInt32 ping,UInt32 size,UInt32 success,UInt32 lost) {
 
 	(UInt32&)latency = ping/2;
 

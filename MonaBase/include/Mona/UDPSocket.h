@@ -24,7 +24,7 @@
 
 namespace Mona {
 
-class UDPSocket : protected DatagramSocket {
+class UDPSocket : protected DatagramSocket, virtual Object {
 public:
 	UDPSocket(const SocketManager& manager,bool allowBroadcast=false);
 	virtual ~UDPSocket();

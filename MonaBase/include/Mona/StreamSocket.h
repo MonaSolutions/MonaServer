@@ -24,7 +24,7 @@ This file is a part of Mona.
 namespace Mona {
 
 
-class StreamSocket : public Socket {
+class StreamSocket : public Socket, virtual Object {
 public:
 	StreamSocket(const SocketManager& manager) : Socket(manager) {}
 	virtual ~StreamSocket() {}
