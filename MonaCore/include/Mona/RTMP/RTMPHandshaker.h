@@ -28,8 +28,8 @@ namespace Mona {
 
 class RTMPHandshaker : public TCPSender {
 public:
-	RTMPHandshaker(const Mona::UInt8* data, Mona::UInt32 size,SocketHandler<Poco::Net::StreamSocket>& handler);
-	RTMPHandshaker(const Mona::UInt8* farPubKey,const Mona::UInt8* challengeKey,bool middle,const Poco::SharedPtr<RC4_KEY>& pDecryptKey,const Poco::SharedPtr<RC4_KEY>& pEncryptKey,SocketHandler<Poco::Net::StreamSocket>& handler);
+	RTMPHandshaker(const UInt8* data, UInt32 size,SocketHandler<Poco::Net::StreamSocket>& handler);
+	RTMPHandshaker(const UInt8* farPubKey,const UInt8* challengeKey,bool middle,const Poco::SharedPtr<RC4_KEY>& pDecryptKey,const Poco::SharedPtr<RC4_KEY>& pEncryptKey,SocketHandler<Poco::Net::StreamSocket>& handler);
 	virtual ~RTMPHandshaker();
 
 private:
@@ -37,23 +37,23 @@ private:
 	bool flush();
 	void flushComplex();
 
-	const Mona::UInt8*	begin(bool displaying=false);
-	Mona::UInt32		size(bool displaying=false);
+	const UInt8*	begin(bool displaying=false);
+	UInt32		size(bool displaying=false);
 
-	Mona::UInt8					_buffer[3073];
+	UInt8					_buffer[3073];
 	MemoryWriter				_writer;
-	Poco::Buffer<Mona::UInt8>	_farPubKey;
-	Mona::UInt8					_challengeKey[HMAC_KEY_SIZE];	
+	Poco::Buffer<UInt8>	_farPubKey;
+	UInt8					_challengeKey[HMAC_KEY_SIZE];	
 	bool						_middle;
 	Poco::SharedPtr<RC4_KEY>	_pEncryptKey;
 	Poco::SharedPtr<RC4_KEY>	_pDecryptKey;
 };
 
-inline const Mona::UInt8* RTMPHandshaker::begin(bool displaying) {
+inline const UInt8* RTMPHandshaker::begin(bool displaying) {
 	return _writer.begin();
 }
 
-inline Mona::UInt32 RTMPHandshaker::size(bool displaying) {
+inline UInt32 RTMPHandshaker::size(bool displaying) {
 	return _writer.length();
 }
 

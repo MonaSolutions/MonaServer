@@ -30,9 +30,9 @@ public:
 	virtual ~RTMFProtocol();
 
 private:
-	Poco::SharedPtr<Poco::Buffer<Mona::UInt8> >	receive(Poco::Net::SocketAddress& address);
-	Mona::UInt32								unpack(MemoryReader& packet);
-	Session*									session(Mona::UInt32 id,MemoryReader& packet);
+	Poco::SharedPtr<Poco::Buffer<UInt8> >	receive(Poco::Net::SocketAddress& address);
+	UInt32								unpack(MemoryReader& packet);
+	Session*									session(UInt32 id,MemoryReader& packet);
 	void										manage();
 	void										check(Session& session);
 
@@ -43,7 +43,7 @@ inline void RTMFProtocol::manage() {
 	_pHandshake->manage();
 }
 
-inline Mona::UInt32 RTMFProtocol::unpack(MemoryReader& packet) {
+inline UInt32 RTMFProtocol::unpack(MemoryReader& packet) {
 	return  RTMFP::Unpack(packet);
 }
 

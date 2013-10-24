@@ -35,43 +35,43 @@ public:
 	RTMFPMessage(std::istream& istr,bool repeatable);
 	virtual ~RTMFPMessage();
 
-	BinaryReader&			reader(Mona::UInt32& size);
-	BinaryReader&			reader(Mona::UInt32 fragment,Mona::UInt32& size);
+	BinaryReader&			reader(UInt32& size);
+	BinaryReader&			reader(UInt32 fragment,UInt32& size);
 
-	virtual Mona::UInt32	length();
-	Mona::UInt32			elapsed();
+	virtual UInt32	length();
+	UInt32			elapsed();
 
-	void					addFragment(Mona::UInt32 size,Mona::UInt64 stage);
+	void					addFragment(UInt32 size,UInt64 stage);
 
-	std::map<Mona::UInt32,Mona::UInt64>		fragments;
+	std::map<UInt32,UInt64>		fragments;
 	const bool								repeatable;
 	bool									canceled;
 	
 private:
-	virtual	Mona::UInt32	init(Mona::UInt32 position)=0;
+	virtual	UInt32	init(UInt32 position)=0;
 	BinaryReader			_reader;
-	Mona::Time			_time;
+	Time			_time;
 };
 
-inline Mona::UInt32 RTMFPMessage::elapsed() {
-	return (Mona::UInt32)(_time.elapsed()/1000);
+inline UInt32 RTMFPMessage::elapsed() {
+	return (UInt32)(_time.elapsed()/1000);
 }
 
 
 class RTMFPMessageUnbuffered : public RTMFPMessage {
 public:
-	RTMFPMessageUnbuffered(const Mona::UInt8* data,Mona::UInt32 size);
+	RTMFPMessageUnbuffered(const UInt8* data,UInt32 size);
 	virtual ~RTMFPMessageUnbuffered();
 
 private:
-	Mona::UInt32				init(Mona::UInt32 position);
-	Mona::UInt32				length();
+	UInt32				init(UInt32 position);
+	UInt32				length();
 
 	MemoryInputStream			_stream;
-	Mona::UInt32				_size;
+	UInt32				_size;
 };
 
-inline Mona::UInt32 RTMFPMessageUnbuffered::length() {
+inline UInt32 RTMFPMessageUnbuffered::length() {
 	return _size;
 }
 
@@ -84,7 +84,7 @@ public:
 	AMFWriter			writer;
 
 private:
-	Mona::UInt32		init(Mona::UInt32 position);
+	UInt32		init(UInt32 position);
 
 };
 

@@ -70,7 +70,7 @@ public:
 	RTMFPFragment(MemoryReader& data,UInt8 flags) : flags(flags),Buffer<UInt8>(data.available()) {
 		data.readRaw(begin(),size());
 	}
-	Mona::UInt8					flags;
+	UInt8					flags;
 };
 
 

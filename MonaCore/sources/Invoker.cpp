@@ -54,15 +54,15 @@ UInt32 Invoker::createFlashStream(Peer& peer) {
 
 Publication* Invoker::publish(Exception& ex, Peer& peer,const string& name) {
 	Publications::Iterator it = createPublication(name);
-	Publication * publication = it->second;
+	Publication* pPublication = it->second;
 	
-	publication->start(ex, peer);
+	pPublication->start(ex, peer);
 	if (ex) {
-		if(!publication->publisher() && publication->listeners.count()==0)
+		if (!pPublication->publisher() && pPublication->listeners.count() == 0)
 			destroyPublication(it);
 		return NULL;
 	}
-	return publication;
+	return pPublication;
 }
 
 void Invoker::unpublish(Peer& peer,const string& name) {

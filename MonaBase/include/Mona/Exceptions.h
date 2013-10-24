@@ -18,6 +18,7 @@
 #pragma once
 
 #include "Mona/Mona.h"
+#include "Mona/String.h"
 
 namespace Mona {
 
@@ -46,10 +47,17 @@ public:
 
 	Exception() : _code(NIL) {}
 
-	template <typename ...Args>
-	void set(Code code, const Args&... args);
 
-	void set(const Exception& other);
+	template <typename ...Args>
+	void set(Code code, const Args&... args) {
+		_code = code;
+		String::Append(_error, args ...);
+	}
+
+	void set(const Exception& other) {
+		_code = other._code;
+		_error = other._error;
+	}
 
 	operator bool() const { return !_error.empty() || _code != Exception::NIL; }
 
@@ -57,7 +65,6 @@ public:
 	Code				code() const { return _code; }
 
 private:
-	void reset();
 
 	Code		_code;
 	std::string	_error;

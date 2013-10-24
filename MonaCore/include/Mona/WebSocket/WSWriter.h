@@ -47,18 +47,18 @@ public:
 	WSWriter(SocketHandler<Poco::Net::StreamSocket>& handler);
 	virtual ~WSWriter();
 
-	Mona::UInt16	ping;
+	UInt16	ping;
 
 	State			state(State value=GET,bool minimal=false);
 	void			flush(bool full=false);
 
 	DataWriter&		writeInvocation(const std::string& name);
 	DataWriter&		writeMessage();
-	void			writeRaw(const Mona::UInt8* data,Mona::UInt32 size);
+	void			writeRaw(const UInt8* data,UInt32 size);
 
 	void			writePing();
-	Mona::UInt16	elapsedSincePing();
-	void			writePong(const Mona::UInt8* data,Mona::UInt32 size);
+	UInt16	elapsedSincePing();
+	void			writePong(const UInt8* data,UInt32 size);
 	void			close(int code);
 
 private:
@@ -66,13 +66,13 @@ private:
 	void			createReader(MemoryReader& reader,Poco::SharedPtr<DataReader>& pReader);
 	void			createWriter(Poco::SharedPtr<DataWriter>& pWriter);
 	bool			hasToConvert(DataReader& reader);
-	bool			writeMedia(MediaType type,Mona::UInt32 time,MemoryReader& data);
+	bool			writeMedia(MediaType type,UInt32 time,MemoryReader& data);
 
-	void			write(Mona::UInt8 type,const Mona::UInt8* data,Mona::UInt32 size);
+	void			write(UInt8 type,const UInt8* data,UInt32 size);
 
 	JSONWriter&		newWriter();
 
-	Mona::UInt32							_sent;
+	UInt32							_sent;
 	SocketHandler<Poco::Net::StreamSocket>&	_handler;
 	std::list<Poco::AutoPtr<WSSender>>		_senders;
 };
@@ -89,7 +89,7 @@ inline void WSWriter::createWriter(Poco::SharedPtr<DataWriter>& pWriter) {
 	pWriter = new JSONWriter();
 }
 
-inline void WSWriter::writeRaw(const Mona::UInt8* data,Mona::UInt32 size) {
+inline void WSWriter::writeRaw(const UInt8* data,UInt32 size) {
 	write(WS_TEXT,data,size);
 }
 
@@ -97,12 +97,12 @@ inline void WSWriter::writePing() {
 	write(WS_PING,NULL,0);
 }
 
-inline void WSWriter::writePong(const Mona::UInt8* data,Mona::UInt32 size) {
+inline void WSWriter::writePong(const UInt8* data,UInt32 size) {
 	write(WS_PONG,data,size);
 }
 
 inline void WSWriter::close(int type) {
-	write(WS_CLOSE,NULL,(Mona::UInt32)type);
+	write(WS_CLOSE,NULL,(UInt32)type);
 	Writer::close(type);
 }
 

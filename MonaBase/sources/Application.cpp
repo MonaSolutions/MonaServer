@@ -37,6 +37,8 @@ Application::Application() {
 		#if !defined(_DEBUG)
 			Poco::SignalHandler::install();
 		#endif
+	#elif defined(_WIN32)
+		DetectMemoryLeak();
 	#endif
 }
 
@@ -63,7 +65,7 @@ void Application::displayHelp() {
 }
 
 
-void Application::init(int argc, char* argv[]) {
+bool Application::init(int argc, char* argv[]) {
 	Path appPath;
 	string command(argv[0]);
 	Exception ex;
@@ -83,18 +85,30 @@ void Application::init(int argc, char* argv[]) {
 		throw exception(ex.error().c_str());
 	if(!_options.process(ex,argc, argv, [this](Exception& ex,const string& name, const string& value){ setString("application." + name, value); }))
 		throw exception(ex.error().c_str());
+
+	if (hasKey("application.help")) {
+		displayHelp();
+		return false;
+	}
+	return true;
+}
+
+void Application::defineOptions(Exception& ex, Options& options) {
+	if (options.count()>0)
+		options.add(ex,"help", "h", "Displays help information about command-line usage.");
 }
 
 int Application::run(int argc, char* argv[]) {
 	try {
-		init(argc, argv);
+		if (!init(argc, argv))
+			return EXIT_OK;
 		return main();
 	} catch (exception& ex) {
-		FATAL("%s", ex.what());
-		return Application::EXIT_SOFTWARE;
+		FATAL(ex.what());
+		return EXIT_SOFTWARE;
 	} catch (...) {
 		FATAL("Unknown error");
-		return Application::EXIT_SOFTWARE;
+		return EXIT_SOFTWARE;
 	}
 }
 

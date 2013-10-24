@@ -148,12 +148,13 @@ void ServerApplication::ServiceMain(DWORD argc, LPTSTR* argv) {
 	SetServiceStatus(_serviceStatusHandle, &_serviceStatus);
 
 	try {
-		_This->init(argc, argv);
-		_serviceStatus.dwCurrentState = SERVICE_RUNNING; 
-		SetServiceStatus(_serviceStatusHandle, &_serviceStatus);
-		int rc = _This->main();
-		_serviceStatus.dwWin32ExitCode           = rc ? ERROR_SERVICE_SPECIFIC_ERROR : 0;
-		_serviceStatus.dwServiceSpecificExitCode = rc;
+		if (_This->init(argc, argv)) {
+			_serviceStatus.dwCurrentState = SERVICE_RUNNING;
+			SetServiceStatus(_serviceStatusHandle, &_serviceStatus);
+			int rc = _This->main();
+			_serviceStatus.dwWin32ExitCode = rc ? ERROR_SERVICE_SPECIFIC_ERROR : 0;
+			_serviceStatus.dwServiceSpecificExitCode = rc;
+		}
 	} catch (exception& ex) {
 		FATAL(ex.what());
 		_serviceStatus.dwWin32ExitCode = ERROR_SERVICE_SPECIFIC_ERROR;
@@ -178,7 +179,8 @@ int ServerApplication::run(int argc, char** argv) {
 	try {
 		if (!hasConsole() && isService())
 			return 0;
-		init(argc, argv);
+		if (!init(argc, argv))
+			return EXIT_OK;
 		Exception ex;
 		if (_action == SRV_REGISTER) {
 			if (registerService(ex)) {
@@ -187,10 +189,6 @@ int ServerApplication::run(int argc, char** argv) {
 				NOTE("The application has been successfully registered as a service");
 			} else
 				ERROR("%s", ex.error().c_str());
-			return EXIT_OK;
-		}
-		if (_action == SRV_HELP) {
-			displayHelp();
 			return EXIT_OK;
 		}
 		if (_action == SRV_UNREGISTER) {
@@ -261,9 +259,6 @@ bool ServerApplication::unregisterService(Exception& ex) {
 
 void ServerApplication::defineOptions(Exception& ex,Options& options) {
 
-	options.add(ex,"help", "h", "Displays help information about command-line usage.")
-		.handler([this](const string& value) { _action = SRV_HELP; });
-
 	options.add(ex, "registerService", "r", "Register the application as a service.")
 		.handler([this](const string& value) { _action = SRV_REGISTER; });
 
@@ -281,6 +276,8 @@ void ServerApplication::defineOptions(Exception& ex,Options& options) {
 	options.add(ex, "startup", "s", "Specify the startup mode for the service (only with /registerService).")
 		.argument("automatic|manual")
 		.handler([this](const string& value) {_startup = Poco::icompare(value, 4, string("auto")) == 0 ? "auto" : "manual"; });
+
+	Application::defineOptions(ex, options);
 }
 
 
@@ -324,11 +321,9 @@ int ServerApplication::run(int argc, char** argv) {
 		bool runAsDaemon = isDaemon(argc, argv);
 		if (runAsDaemon)
 			beDaemon();
-		init(argc, argv);
-		if(_action==SRV_HELP) {
-			displayHelp();
+		if(!init(argc, argv))
 			return EXIT_OK;
-		}
+
 		if (runAsDaemon) {
 			int rc = chdir("/");
 			if (rc != 0)
@@ -379,20 +374,14 @@ void ServerApplication::beDaemon() {
 
 
 void ServerApplication::defineOptions(OptionSet& options) {
-	options.add(
-		Option("daemon", "d", "Run application as a daemon.")
-		.handler([this](const string& value) { setBool("application.runAsDaemon", true) })
-	);
+	options.add("daemon", "d", "Run application as a daemon.")
+		.handler([this](const string& value) { setBool("application.runAsDaemon", true) });
 	
-	options.add(
-		Option("pidfile", "p", "Write the process ID of the application to given file.")
+	options.add("pidfile", "p", "Write the process ID of the application to given file.")
 		.argument("path")
-		.handler(handlePidFile)
-	);
-	options.add(
-		Option("help", "h", "Displays help information about command-line usage.")
-		.handler([this](const string& value) { _action = SRV_HELP; })
-	);
+		.handler(handlePidFile);
+
+	Application::defineOptions(options);
 }
 
 

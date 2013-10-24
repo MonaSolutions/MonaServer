@@ -163,7 +163,7 @@ void RTMFP::ComputeAsymetricKeys(const Buffer<UInt8>& sharedSecret, const UInt8*
 	HMAC(EVP_sha256(),sharedSecret.begin(),sharedSecret.size(),mdp2,HMAC_KEY_SIZE,responseKey,NULL);
 }
 
-UInt16 RTMFP::Time(Mona::Int64 timeVal) {
+UInt16 RTMFP::Time(Int64 timeVal) {
 	return (UInt32)ROUND(timeVal/(1000.0*RTMFP_TIMESTAMP_SCALE));
 }
 

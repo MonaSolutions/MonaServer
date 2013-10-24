@@ -27,7 +27,7 @@ namespace Mona {
 
 class Relay {
 public:
-	Relay(const Peer& peer1,const SocketAddress& address1,const Peer& peer2,const SocketAddress& address2,RelaySocket& socket,Mona::UInt16 timeout):
+	Relay(const Peer& peer1,const SocketAddress& address1,const Peer& peer2,const SocketAddress& address2,RelaySocket& socket,UInt16 timeout):
 	 socket(socket),timeout(timeout*1000000),peer1(peer1),address1(address1),peer2(peer2),address2(address2),received(false) {}
 	const Peer&							peer1;
 	const SocketAddress&				address1;

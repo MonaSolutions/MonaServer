@@ -26,7 +26,7 @@ namespace Mona {
 
 
 class ObjectDef;
-class AMFReader : public DataReader {
+class AMFReader : public DataReader, virtual Object {
 public:
 	AMFReader(MemoryReader& reader);
 	virtual ~AMFReader();

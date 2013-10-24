@@ -184,6 +184,5 @@ private:
 };
 
 int main(int argc, char* argv[]) {
-	DetectMemoryLeak();
 	return ServerMona().run(argc, argv);
 }

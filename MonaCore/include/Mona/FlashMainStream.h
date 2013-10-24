@@ -22,7 +22,7 @@
 
 namespace Mona {
 
-class FlashMainStream : public FlashStream {
+class FlashMainStream : public FlashStream, virtual Object {
 public:
 	FlashMainStream(Invoker& invoker,Peer& peer);
 	virtual ~FlashMainStream();

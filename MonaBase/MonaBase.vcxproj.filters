@@ -97,9 +97,6 @@
     <ClCompile Include="sources\TimeParser.cpp">
       <Filter>sources\Util</Filter>
     </ClCompile>
-    <ClCompile Include="sources\Exceptions.cpp">
-      <Filter>sources\Util</Filter>
-    </ClCompile>
     <ClCompile Include="sources\Options.cpp">
       <Filter>sources\Application</Filter>
     </ClCompile>

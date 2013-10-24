@@ -43,7 +43,7 @@ protected:
 private:
 
 	WSWriter			_writer;
-	Mona::Time		_time;
+	Time		_time;
 	Publication*		_pPublication;
 	Listener*			_pListener;
 	Poco::UInt32		_decoded;

@@ -45,10 +45,12 @@ public:
 		EXIT_TEMPFAIL = 75, /// temp failure; user is invited to retry
 		EXIT_PROTOCOL = 76, /// remote error in protocol
 		EXIT_NOPERM = 77, /// permission denied
-		EXIT_CONFIG = 78  /// configuration error
+		EXIT_CONFIG = 78,  /// configuration error
 	};
 
 	const Options&			options() const { return _options; }
+
+	bool					hasArgument(const std::string& key) { return hasKey(key); }
 
 	void					displayHelp();
 
@@ -60,11 +62,14 @@ protected:
 	Application();
 	virtual ~Application();
 
-	void					init(int argc, char* argv[]);
+	bool					init(int argc, char* argv[]);
 	virtual int				main() = 0;
 
+
+
+	virtual void			defineOptions(Exception& ex, Options& options);
+
 private:
-	virtual void	defineOptions(Exception& ex,Options& options) {}
 	
 	virtual	bool	onHelp(HelpFormatter& helpFormatter) { return true; }
 

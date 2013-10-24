@@ -35,6 +35,8 @@ public:
 	void setNumber(const std::string& key, int value) { std::string val; setRaw(key, String::Format(val, value)); }
 	void setBool(const std::string& key, bool value) {setRaw(key, value ? "true" : "false");}
 
+	bool hasKey(const std::string& key) { std::string value; return getRaw(key, value); }
+
 protected:
 	Parameters() {}
 	virtual ~Parameters() {}

@@ -32,16 +32,16 @@ public:
 	HTTPPacketWriter	writer;
 private:
 
-	const Mona::UInt8*	begin(bool displaying=false);
-	Mona::UInt32		size(bool displaying=false);
+	const UInt8*	begin(bool displaying=false);
+	UInt32		size(bool displaying=false);
 
 };
 
-inline const Mona::UInt8* HTTPSender::begin(bool displaying) {
+inline const UInt8* HTTPSender::begin(bool displaying) {
 	return	writer.stream.data();
 }
 
-inline Mona::UInt32 HTTPSender::size(bool displaying) {
+inline UInt32 HTTPSender::size(bool displaying) {
 	return writer.stream.size();
 }
 

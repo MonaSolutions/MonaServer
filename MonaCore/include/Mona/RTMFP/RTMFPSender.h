@@ -29,24 +29,24 @@ public:
 	virtual ~RTMFPSender();
 
 	RTMFPEngine		encoder;
-	Mona::UInt32	farId;
+	UInt32	farId;
 	MemoryWriter	packet;
 
 private:
-	const Mona::UInt8*	begin(bool displaying);
-	Mona::UInt32		size(bool displaying);
+	const UInt8*	begin(bool displaying);
+	UInt32		size(bool displaying);
 	bool				available();
 	bool				flush();
 
-	Mona::UInt8		_buffer[RTMFP_PACKET_SEND_SIZE];
+	UInt8		_buffer[RTMFP_PACKET_SEND_SIZE];
 	
 };
 
-inline const Mona::UInt8*	RTMFPSender::begin(bool displaying) {
+inline const UInt8*	RTMFPSender::begin(bool displaying) {
 	return displaying ? (packet.begin()+6) : packet.begin();
 }
 
-inline Mona::UInt32 RTMFPSender::size(bool displaying) {
+inline UInt32 RTMFPSender::size(bool displaying) {
 	return displaying ? (packet.length()-6) : packet.length();
 }
 

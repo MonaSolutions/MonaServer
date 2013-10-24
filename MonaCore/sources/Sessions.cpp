@@ -80,7 +80,7 @@ Session* Sessions::find(const SocketAddress& address) {
 }
 
 
-Session* Sessions::find(const Mona::UInt8* peerId) {
+Session* Sessions::find(const UInt8* peerId) {
 	Entities<Session>::Iterator it = _sessionsByPeerId.find(peerId);
 	if(it==_sessionsByPeerId.end())
 		return NULL;

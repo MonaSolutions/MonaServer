@@ -32,7 +32,7 @@ public:
 	Gateway(){}
 	virtual ~Gateway(){}
 	
-	virtual Session*	session(const Mona::UInt8* peerId)=0;
+	virtual Session*	session(const UInt8* peerId)=0;
 	virtual Session*	session(const SocketAddress& address)=0;
 
 	virtual Session&	registerSession(Session* pSession)=0;

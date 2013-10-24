@@ -112,7 +112,7 @@ void JSONWriter::writeDate(const Time& date) {
 }
 
 
-void JSONWriter::writeBytes(const Mona::UInt8* data,Mona::UInt32 size) {
+void JSONWriter::writeBytes(const UInt8* data,UInt32 size) {
 	if(!_started) {
 		_started=true;
 		writer << '[';

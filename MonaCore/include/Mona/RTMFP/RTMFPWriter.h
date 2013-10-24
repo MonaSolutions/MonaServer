@@ -40,9 +40,9 @@ public:
 	RTMFPWriter(const std::string& signature,BandWriter& band,WriterHandler* pHandler=NULL);
 	virtual ~RTMFPWriter();
 
-	const Mona::UInt64		id;
+	const UInt64		id;
 	const bool				critical;
-	const Mona::UInt64		flowId;
+	const UInt64		flowId;
 	const std::string		signature;
 
 	virtual Writer&	newWriter(WriterHandler* pHandler=NULL);
@@ -57,23 +57,23 @@ public:
 	void			close(int code=0);
 	bool			consumed();
 
-	Mona::UInt64	stage();
+	UInt64	stage();
 
 	State			state(State value=GET,bool minimal=false);
 
-	bool			writeMedia(MediaType type,Mona::UInt32 time,MemoryReader& data);
-	void			writeRaw(Exception& ex, const Mona::UInt8* data,Mona::UInt32 size);
+	bool			writeMedia(MediaType type,UInt32 time,MemoryReader& data);
+	void			writeRaw(Exception& ex, const UInt8* data,UInt32 size);
 	void			writeMember(const Peer& peer);
 
 private:
 	RTMFPWriter(RTMFPWriter& writer);
 	
-	Mona::UInt32			headerSize(Mona::UInt64 stage);
-	void					flush(MemoryWriter& writer,Mona::UInt64 stage,Mona::UInt8 flags,bool header,BinaryReader& reader,Mona::UInt16 size);
+	UInt32			headerSize(UInt64 stage);
+	void					flush(MemoryWriter& writer,UInt64 stage,UInt8 flags,bool header,BinaryReader& reader,UInt16 size);
 
 	void					raiseMessage(Exception& ex);
 	RTMFPMessageBuffered&	createBufferedMessage();
-	AMFWriter&				write(AMF::ContentType type,Mona::UInt32 time=0,MemoryReader* pData=NULL);
+	AMFWriter&				write(AMF::ContentType type,UInt32 time=0,MemoryReader* pData=NULL);
 
 	void					createReader(MemoryReader& reader,Poco::SharedPtr<DataReader>& pReader);
 	void					createWriter(Poco::SharedPtr<DataWriter>& pWriter);
@@ -83,15 +83,15 @@ private:
 
 	int			 			_connectedSize;
 	std::list<RTMFPMessage*>		_messages;
-	Mona::UInt64			_stage;
+	UInt64			_stage;
 	std::list<RTMFPMessage*>		_messagesSent;
-	Mona::UInt64			_stageAck;
-	Mona::UInt32			_lostCount;
-	Mona::UInt32			_ackCount;
-	Mona::UInt32			_repeatable;
+	UInt64			_stageAck;
+	UInt32			_lostCount;
+	UInt32			_ackCount;
+	UInt32			_repeatable;
 	BandWriter&				_band;
 
-	Mona::UInt32			_boundCount;
+	UInt32			_boundCount;
 	bool					_reseted;
 
 	static RTMFPMessageNull		_MessageNull;
@@ -114,7 +114,7 @@ inline bool RTMFPWriter::hasToConvert(DataReader& reader) {
 	return dynamic_cast<AMFReader*>(&reader)==NULL;
 }
 
-inline Mona::UInt64 RTMFPWriter::stage() {
+inline UInt64 RTMFPWriter::stage() {
 	return _stage;
 }
 inline bool RTMFPWriter::consumed() {

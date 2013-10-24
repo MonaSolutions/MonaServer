@@ -37,8 +37,8 @@ public:
 
 	static void			ComputeKey(std::string& key);
 	static void		    Unmask(MemoryReader& data);
-	static Mona::UInt8	WriteHeader(Mona::UInt8 type,Mona::UInt32 size,BinaryWriter& writer);
-	static Mona::UInt8	HeaderSize(Mona::UInt32 size);
+	static UInt8	WriteHeader(UInt8 type,UInt32 size,BinaryWriter& writer);
+	static UInt8	HeaderSize(UInt32 size);
 
 	
 };

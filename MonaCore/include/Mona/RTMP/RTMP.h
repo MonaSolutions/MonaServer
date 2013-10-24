@@ -34,10 +34,10 @@ public:
 	RTMPChannel():headerSize(0),time(0),bodySize(0),type(AMF::EMPTY),streamId(0){}
 	virtual ~RTMPChannel(){}
 
-	Mona::UInt16		headerSize;
-	Mona::UInt32		bodySize;
-	Mona::UInt32		time;
-	Mona::UInt32		streamId;
+	UInt16		headerSize;
+	UInt32		bodySize;
+	UInt32		time;
+	UInt32		streamId;
 	AMF::ContentType	type;
 };
 
@@ -45,12 +45,12 @@ public:
 class RTMP {
 public:
 
-	static Mona::UInt32			GetDigestPos(const Mona::UInt8* data,bool middle);
-	static Mona::UInt32			GetDHPos(const Mona::UInt8* data,bool middle);
-	static const Mona::UInt8*	ValidateClient(MemoryReader& packet,bool& middleKey);
-	static const Mona::UInt8*	ValidateClientScheme(MemoryReader& packet,bool middleKey);
-	static void					WriteDigestAndKey(Mona::UInt8* data,const Mona::UInt8* challengeKey,bool middleKey);
-	static void					ComputeRC4Keys(const Mona::UInt8* pubKey,Mona::UInt32 pubKeySize,const Mona::UInt8* farPubKey,Mona::UInt32 farPubKeySize,const Poco::Buffer<Mona::UInt8>& sharedSecret,RC4_KEY& decryptKey,RC4_KEY& encryptKey);
+	static UInt32			GetDigestPos(const UInt8* data,bool middle);
+	static UInt32			GetDHPos(const UInt8* data,bool middle);
+	static const UInt8*	ValidateClient(MemoryReader& packet,bool& middleKey);
+	static const UInt8*	ValidateClientScheme(MemoryReader& packet,bool middleKey);
+	static void					WriteDigestAndKey(UInt8* data,const UInt8* challengeKey,bool middleKey);
+	static void					ComputeRC4Keys(const UInt8* pubKey,UInt32 pubKeySize,const UInt8* farPubKey,UInt32 farPubKeySize,const Poco::Buffer<UInt8>& sharedSecret,RC4_KEY& decryptKey,RC4_KEY& encryptKey);
 
 };
 

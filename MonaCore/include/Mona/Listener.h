@@ -25,7 +25,7 @@
 namespace Mona {
 
 class Publication;
-class Listener {
+class Listener : virtual Object {
 public:
 	Listener(Publication& publication,Client& client,Writer& writer,bool unbuffered);
 	virtual ~Listener();
@@ -33,8 +33,8 @@ public:
 	void startPublishing();
 	void stopPublishing(); 
 
-	void pushAudioPacket(MemoryReader& packet,Mona::UInt32 time=0); 
-	void pushVideoPacket(MemoryReader& packet,Mona::UInt32 time=0);
+	void pushAudioPacket(MemoryReader& packet,UInt32 time=0); 
+	void pushVideoPacket(MemoryReader& packet,UInt32 time=0);
 	void pushDataPacket(DataReader& packet);
 
 	void flush();
@@ -45,44 +45,35 @@ public:
 	const Publication&	publication;
 	Client&				client;
 
-	Mona::UInt32			droppedFrames() const;
+	UInt32			droppedFrames() const { return _droppedFrames; }
 	const QualityOfService&	videoQOS() const;
 	const QualityOfService&	audioQOS() const;
 	const QualityOfService&	dataQOS() const;
 
 	
-	void setBufferTime(Mona::UInt32 ms);
+	void setBufferTime(UInt32 ms) { _bufferTime = ms; }
 
 private:
 	void			init();
 	void			init(Writer** ppWriter,Writer::MediaType type);
-	Mona::UInt32 	computeTime(Mona::UInt32 time);
+	UInt32 	computeTime(UInt32 time);
 
 	bool					_unbuffered;
 	bool					_firstKeyFrame;
 
-	Mona::UInt32 			_deltaTime;
-	Mona::UInt32 			_addingTime;
-	Mona::UInt32 			_time;
-	Mona::UInt32			_bufferTime;
-	Mona::Time			_ts;
+	UInt32 			_deltaTime;
+	UInt32 			_addingTime;
+	UInt32 			_time;
+	UInt32			_bufferTime;
+	Time			_ts;
 	
 	Writer&					_writer;
 	Writer*					_pAudioWriter;
 	Writer*					_pVideoWriter;
 	Writer*					_pDataWriter;
-	Mona::UInt32			_droppedFrames;
+	UInt32			_droppedFrames;
 	MemoryReader			_publicationReader;
 };
-
-
-inline void Listener::setBufferTime(Mona::UInt32 ms) {
-	_bufferTime=ms;
-}
-
-inline Mona::UInt32 Listener::droppedFrames() const {
-	return _droppedFrames;
-}
 
 
 } // namespace Mona

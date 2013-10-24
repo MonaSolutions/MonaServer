@@ -52,12 +52,13 @@ int			LogColors[] = { FATAL_COLOR, CRITIC_COLOR, ERROR_COLOR, WARN_COLOR, NOTE_C
 const char* LogColors[] = { FATAL_COLOR, CRITIC_COLOR, ERROR_COLOR, WARN_COLOR, NOTE_COLOR, INFO_COLOR, DEBUG_COLOR, TRACE_COLOR };
 #endif
 
+mutex Logger::_Mutex;
 
 void Logger::logHandler(Thread::TID threadId, const string& threadName, Priority priority, const char *filePath, const string& shortFilePath, long line, const string& message) {
 	lock_guard<mutex> lock(_Mutex);
 	priority = (Priority)(priority - 1);
 	SET_CONSOLE_TEXT_COLOR(LogColors[priority]);
-	printf("%s[%ld] %s\n", shortFilePath.c_str(), line, message);
+	printf("%s[%ld] %s\n", shortFilePath.c_str(), line, message.c_str());
 	SET_CONSOLE_TEXT_COLOR(LogColors[6]);
 	cout.flush();
 }

@@ -46,12 +46,10 @@ protected:
 #endif
 
 private:
-	enum Action
-	{
+	enum Action {
 		SRV_RUN,
 		SRV_REGISTER,
 		SRV_UNREGISTER,
-		SRV_HELP
 	};
 
 	Action			_action;

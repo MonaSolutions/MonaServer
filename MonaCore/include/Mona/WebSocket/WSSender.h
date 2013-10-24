@@ -33,16 +33,16 @@ public:
 	bool			packaged;
 private:
 
-	const Mona::UInt8*	begin(bool displaying=false);
-	Mona::UInt32		size(bool displaying=false);
+	const UInt8*	begin(bool displaying=false);
+	UInt32		size(bool displaying=false);
 
 };
 
-inline const Mona::UInt8* WSSender::begin(bool displaying) {
+inline const UInt8* WSSender::begin(bool displaying) {
 	return	writer.stream.data();
 }
 
-inline Mona::UInt32 WSSender::size(bool displaying) {
+inline UInt32 WSSender::size(bool displaying) {
 	return writer.stream.size();
 }
 
