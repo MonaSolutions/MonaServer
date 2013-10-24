@@ -2,6 +2,7 @@
 #pragma once
 
 #include "gtest/gtest.h"
+#include "Mona/Exceptions.h"
 
 // The fixture for testing class Foo.
 class StringTest : public ::testing::Test {
@@ -29,8 +30,54 @@ protected:
 		// Code here will be called immediately after each test (right
 		// before the destructor).
 	}
+	template<typename T>
+	static ::testing::AssertionResult ToNumber(const std::string& value, T expected) { return ToNumber<T>(value.c_str(), expected); }
 
-	// Objects declared here can be used by all tests in the test case for Foo.
+
+	template<typename T>
+	static ::testing::AssertionResult ToNumber(const char * value, T expected) {
+
+		Mona::Exception ex;
+		T result = Mona::String::ToNumber<T>(ex, value);
+
+		if (ex)
+			return ::testing::AssertionFailure() << "Exception in ToNumber(" << value << "," << expected << ") : " << ex.error();
+
+		if (result != expected)
+			return ::testing::AssertionFailure() << "Invalid Result in ToNumber(" << value << "," << expected << ") : " << result;
+
+		return ::testing::AssertionSuccess();
+	}
+	
+	/// \brief Use FLT_EPSILON by default
+	template<>
+	static ::testing::AssertionResult ToNumber<float>(const char * value, float expected) { 
+		Mona::Exception ex;
+		float result = Mona::String::ToNumber<float>(ex, value);
+
+		if (ex)
+			return ::testing::AssertionFailure() << "Exception in ToNumber(" << value << "," << expected << ") : " << ex.error();
+
+		if (abs(result -expected) > FLT_EPSILON)
+			return ::testing::AssertionFailure() << "Invalid Result in ToNumber(" << value << "," << expected << ") : " << result;
+
+		return ::testing::AssertionSuccess();
+	}
+
+	template<>
+	static ::testing::AssertionResult ToNumber<double>(const char * value, double expected) { 
+		Mona::Exception ex;
+		double result = Mona::String::ToNumber<double>(ex, value);
+
+		if (ex)
+			return ::testing::AssertionFailure() << "Exception in ToNumber(" << value << "," << expected << ") : " << ex.error();
+
+		if (abs(result -expected) > DBL_EPSILON)
+			return ::testing::AssertionFailure() << "Invalid Result in ToNumber(" << value << "," << expected << ") : " << result;
+
+		return ::testing::AssertionSuccess();
+	}
+
 	std::string str;
 };
 

@@ -1,6 +1,7 @@
 
 #include "StringTest.h"
 #include "Mona/String.h"
+#include "Mona/Exceptions.h"
 
 using namespace Mona;
 
@@ -76,4 +77,31 @@ TEST_F(StringTest, TestMultiple) {
 	
 	float bigf = (float)1234567890123456789.1234567890;
 	EXPECT_EQ(String::Format(str, bigf), "1.2345679e+018");
+
+	EXPECT_TRUE(StringTest::ToNumber<float>(str, bigf));
+}
+
+TEST_F(StringTest, TestToNumber) {
+
+	EXPECT_TRUE(StringTest::ToNumber<int>("123", 123));
+	EXPECT_TRUE(StringTest::ToNumber<int>("-123", -123));
+	EXPECT_TRUE(StringTest::ToNumber<UInt64>("123", 123));
+	EXPECT_FALSE(StringTest::ToNumber<UInt64>("-123", 123));
+	EXPECT_TRUE(StringTest::ToNumber<double>("12.34", 12.34));
+	EXPECT_TRUE(StringTest::ToNumber<float>("12.34", 12.34f));
+
+	// Test of delta epsilon precision
+	EXPECT_TRUE(StringTest::ToNumber<double>("0", DBL_EPSILON));
+	EXPECT_TRUE(StringTest::ToNumber<float>("0", FLT_EPSILON));
+	EXPECT_FALSE(StringTest::ToNumber<double>("0", DBL_EPSILON * 2));
+	EXPECT_FALSE(StringTest::ToNumber<float>("0", FLT_EPSILON * 2));
+
+	EXPECT_FALSE(StringTest::ToNumber<double>("", 0));
+	EXPECT_FALSE(StringTest::ToNumber<double>("asd", 0));
+	EXPECT_FALSE(StringTest::ToNumber<double>("a123", 0));
+	EXPECT_FALSE(StringTest::ToNumber<double>("a123", 0));
+	EXPECT_FALSE(StringTest::ToNumber<double>("z23", 0));
+	EXPECT_FALSE(StringTest::ToNumber<double>("23z", 0));
+	EXPECT_FALSE(StringTest::ToNumber<double>("a12.3", 0));
+	EXPECT_FALSE(StringTest::ToNumber<double>("12.3aa", 0));
 }

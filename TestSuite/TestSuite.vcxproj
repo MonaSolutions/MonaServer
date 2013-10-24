@@ -94,12 +94,14 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="sources\MonaTestSuite.cpp" />
+    <ClCompile Include="sources\OptionsTest.cpp" />
     <ClCompile Include="sources\StopWatchTest.cpp" />
     <ClCompile Include="sources\StringTest.cpp" />
     <ClCompile Include="sources\TimeParseFormatTest.cpp" />
     <ClCompile Include="sources\TimeTest.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="sources\OptionsTest.h" />
     <ClInclude Include="sources\StopWatchTest.h" />
     <ClInclude Include="sources\StringTest.h" />
     <ClInclude Include="sources\TimeParseFormatTest.h" />
