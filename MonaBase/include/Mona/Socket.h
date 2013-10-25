@@ -20,6 +20,8 @@ This file is a part of Mona.
 #include "Mona/Mona.h"
 #include "Mona/SocketAddress.h"
 #include "Mona/PoolThread.h"
+#include "Mona/SocketSender.h"
+#include "Mona/PoolThreads.h"
 #include <memory>
 #include <list>
 
@@ -73,9 +75,41 @@ public:
 	bool getReusePort();
 
 	template<typename SocketSenderType>
-	void		send(Exception& ex, std::shared_ptr<SocketSenderType>& pSender);
+	// Can be called from one other thread than main thread (by the poolthread)
+	void send(Exception& ex, std::shared_ptr<SocketSenderType>& pSender) {
+		ASSERT(_initialized == true)
+		if (!managed(ex))
+			return;
+
+		// return if no data to send
+		if (!pSender->available())
+			return;
+
+		// We can write immediatly if there are no queue packets to write,
+		// and if it remains some data to write (flush returns false)
+		std::lock_guard<std::mutex>	lock(_mutexAsync);
+		if (!_senders.empty() || !pSender->flush(ex, *this)) {
+			_senders.push_back(static_pointer_cast<SocketSender>(pSender));
+			manageWrite(ex);
+		}
+	}
+
 	template<typename SocketSenderType>
-	PoolThread* send(Exception& ex, std::shared_ptr<SocketSenderType>& pSender, PoolThread* pThread);
+	PoolThread* send(Exception& ex, std::shared_ptr<SocketSenderType>& pSender, PoolThread* pThread) {
+		ASSERT_RETURN(_initialized == true, NULL)
+		if (!managed(ex))
+			return NULL;
+
+		// return if no data to send
+		if (!pSender->available())
+			return NULL;
+
+		pSender->_pSocket = this;
+		pSender->_pSocketMutex = _pMutex;
+		pSender->_pThis = pSender;
+		pThread = _poolThreads.enqueue<SocketSenderType>(pSender, pThread);
+		return pThread;
+	}
 
 
 #if defined(_WIN32)
@@ -124,6 +158,7 @@ private:
 	bool    managed(Exception& ex);
 
 	// flush async sending
+	void    manageWrite(Exception& ex);
 	void	flush(Exception& ex);
 
 	template<typename Type>
@@ -146,6 +181,8 @@ private:
 	std::mutex									_mutexAsync;
 	bool										_writing;
 	std::list<std::shared_ptr<SocketSender>>	_senders;
+
+	PoolThreads&								_poolThreads;
 
 	std::mutex				_mutexManaged;
 	volatile bool			_managed;

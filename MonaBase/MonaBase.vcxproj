@@ -113,6 +113,7 @@
     <ClCompile Include="sources\Application.cpp" />
     <ClCompile Include="sources\DNS.cpp" />
     <ClCompile Include="sources\Event.cpp" />
+    <ClCompile Include="sources\FileWatcher.cpp" />
     <ClCompile Include="sources\HelpFormatter.cpp" />
     <ClCompile Include="sources\HostEntry.cpp" />
     <ClCompile Include="sources\IPAddress.cpp" />
@@ -161,6 +162,7 @@
     <ClInclude Include="include\Mona\DNS.h" />
     <ClInclude Include="include\Mona\Event.h" />
     <ClInclude Include="include\Mona\Exceptions.h" />
+    <ClInclude Include="include\Mona\FileWatcher.h" />
     <ClInclude Include="include\Mona\HelpFormatter.h" />
     <ClInclude Include="include\Mona\HostEntry.h" />
     <ClInclude Include="include\Mona\IPAddress.h" />

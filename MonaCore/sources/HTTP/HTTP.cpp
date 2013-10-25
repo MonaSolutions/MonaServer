@@ -145,14 +145,11 @@ void HTTP::ReadHeader(HTTPPacketReader& reader, MapParameters& headers, string& 
 				reader.next();
 				continue;
 			}
-			String::toLower(name);
-			if (name.compare("referer") == 0) {
+			if (String::ToLower(name).compare("referer") == 0) {
 				string referer;
-				reader.readString(referer);
-				Util::UnpackUrl(referer, path, properties);
+				Util::UnpackUrl(reader.readString(referer), path, properties);
 			}
-			reader.readString(value);
-			headers.setString(name, value);
+			headers.setString(name, reader.readString(value));
 		}
 	}
 }

@@ -32,7 +32,7 @@ public:
 
 	static bool			IsValid(MemoryReader& reader);
 
-	void				readString(std::string& value);
+	std::string&		readString(std::string& value);
 	double				readNumber();
 	bool				readBoolean();
 	Time&				readTime(Time& time);

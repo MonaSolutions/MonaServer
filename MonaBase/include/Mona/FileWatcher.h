@@ -20,10 +20,11 @@
 #include "Poco/File.h"
 #include "Mona/Time.h"
 
-class FileWatcher {
+namespace Mona {
+
+class FileWatcher : virtual Object {
 public:
 	FileWatcher(const std::string& path);
-	virtual ~FileWatcher();
 
 	const std::string	path;
 	bool				watch();
@@ -31,6 +32,8 @@ private:
 	virtual void load()=0;
 	virtual void clear()=0;
 
-	Poco::File		_file;
-	Mona::Time _lastModified;
+	Poco::File	_file;
+	Mona::Time	_lastModified;
 };
+
+} // namespace Mona

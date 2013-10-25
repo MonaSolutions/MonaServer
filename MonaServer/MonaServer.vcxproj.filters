@@ -16,9 +16,6 @@
     <ClInclude Include="sources\ApplicationKiller.h">
       <Filter>sources</Filter>
     </ClInclude>
-    <ClInclude Include="sources\FileWatcher.h">
-      <Filter>sources</Filter>
-    </ClInclude>
     <ClInclude Include="sources\Script.h">
       <Filter>sources</Filter>
     </ClInclude>
@@ -78,9 +75,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="sources\FileWatcher.cpp">
-      <Filter>sources</Filter>
-    </ClCompile>
     <ClCompile Include="sources\main.cpp">
       <Filter>sources</Filter>
     </ClCompile>

@@ -68,8 +68,7 @@ void DataReader::read(Type type,DataWriter& writer) {
 			break;
 		case STRING: {
 			string value;
-			readString(value);
-			writer.writeString(value);
+			writer.writeString(readString(value));
 			break;
 		}
 		case TIME: {

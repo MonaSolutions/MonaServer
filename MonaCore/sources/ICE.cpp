@@ -169,8 +169,7 @@ bool ICE::ProcessSDPPacket(DataReader& packet,Peer& current,Writer& currentWrite
 		return false;
 	}
 	string name;
-	packet.readString(name);
-	if(name!="__ice") {
+	if (packet.readString(name) != "__ice") {
 		packet.reset();
 		return false;
 	}
@@ -197,8 +196,7 @@ bool ICE::ProcessSDPPacket(DataReader& packet,Peer& current,Writer& currentWrite
 				writer.writePropertyName(prop);
 
 			if(prop=="sdpMid" && type==DataReader::STRING) {
-				packet.readString(candidate.mid);
-				writer.writeString(candidate.mid);
+				writer.writeString(packet.readString(candidate.mid));
 				continue;
 			} else if(prop=="sdpMLineIndex" && type==DataReader::NUMBER) {
 				candidate.mLineIndex = (UInt32)packet.readNumber();

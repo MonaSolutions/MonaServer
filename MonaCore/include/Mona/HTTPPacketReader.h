@@ -30,7 +30,7 @@ public:
 	HTTPPacketReader(MemoryReader& reader);
 	virtual ~HTTPPacketReader();
 
-	void				readString(std::string& value);
+	std::string&		readString(std::string& value);
 	double				readNumber();
 	bool				readBoolean();
 	Time&				readTime(Time& time);

@@ -31,7 +31,7 @@ namespace Mona {
 // SocketAddressCommon
 //
 
-class SocketAddressCommon {
+class SocketAddressCommon : virtual Object {
 public:
 	virtual const IPAddress&		host() const = 0;
 	virtual UInt16					port() const = 0;
@@ -40,8 +40,7 @@ public:
 };
 
 
-class IPv4SocketAddress : public SocketAddressCommon
-{
+class IPv4SocketAddress : public SocketAddressCommon, virtual Object {
 public:
 	IPv4SocketAddress() {
 		memset(&_addr, 0, sizeof(_addr));
@@ -79,7 +78,7 @@ private:
 };
 
 
-class IPv6SocketAddress: public SocketAddressCommon {
+class IPv6SocketAddress : public SocketAddressCommon, virtual Object {
 public:
 	IPv6SocketAddress() {
 		memset(&_addr, 0, sizeof(_addr));
