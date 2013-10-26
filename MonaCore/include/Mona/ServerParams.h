@@ -22,25 +22,21 @@
 
 namespace Mona {
 
-class ProtocolParams {
-public:
-	ProtocolParams(Poco::UInt16 port) : port(port) {}
-	Poco::UInt16	port;
+struct ProtocolParams {
+	ProtocolParams(UInt16 port) : port(port) {}
+	UInt16	port;
 };
 
-class HTTPParams : public ProtocolParams {
-public:
+struct HTTPParams : ProtocolParams {
 	HTTPParams() : ProtocolParams(80) {}
 };
 
-class RTMPParams : public ProtocolParams {
-public:
+struct RTMPParams : ProtocolParams {
 	RTMPParams() : ProtocolParams(1935) {}
 };
 
 
-class RTMFPParams : public ProtocolParams {
-public:
+struct RTMFPParams : ProtocolParams {
 	RTMFPParams() : ProtocolParams(1935),keepAlivePeer(10),keepAliveServer(15) {}
 
 	Poco::UInt16				keepAlivePeer;
@@ -49,10 +45,8 @@ public:
 
 
 
-class ServerParams {
-public:
+struct ServerParams {
 	ServerParams() : threadPriority(Poco::Thread::PRIO_HIGH) {}
-
 	Poco::Thread::Priority		threadPriority;
 	RTMFPParams					RTMFP;
 	RTMPParams					RTMP;

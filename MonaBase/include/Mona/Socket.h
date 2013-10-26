@@ -28,7 +28,6 @@ This file is a part of Mona.
 namespace Mona {
 
 
-class StreamSocket;
 class Socket : virtual Object {
 	friend class SocketManager;
 	friend class SocketSender;
@@ -46,8 +45,8 @@ public:
 	int		available(Exception& ex) { return ioctl(ex, FIONREAD, 0); }
 	void	close();
 	
-	const SocketAddress& address(Exception& ex, SocketAddress& address) const;
-	const SocketAddress& peerAddress(Exception& ex, SocketAddress& address) const;
+	SocketAddress& address(Exception& ex, SocketAddress& address) const;
+	SocketAddress& peerAddress(Exception& ex, SocketAddress& address) const;
 
 
 	void setSendBufferSize(Exception& ex,int size) { setOption(ex, SOL_SOCKET, SO_SNDBUF, size); }
@@ -127,8 +126,36 @@ protected:
 	// Creates a Socket
 	Socket(const SocketManager& manager, int type = SOCK_STREAM);
 
-	
-	bool acceptConnection(Exception& ex, std::shared_ptr<StreamSocket>& pSocket);
+	template<typename SocketType, typename ...Args>
+	SocketType* acceptConnection(Exception& ex, Args&... args) {
+		ASSERT_RETURN(_initialized == true, NULL)
+
+		char buffer[IPAddress::MAX_ADDRESS_LENGTH];
+		struct sockaddr* pSA = reinterpret_cast<struct sockaddr*>(buffer);
+		SOCKLEN saLen = sizeof(buffer);
+
+		SOCKET sockfd;
+		do {
+			sockfd = ::accept(_sockfd, pSA, &saLen);  // TODO acceptEx?
+		} while (sockfd == INVALID_SOCKET && LastError() == EINTR);
+		if (sockfd == INVALID_SOCKET) {
+			SetError(ex);
+			return NULL;
+		}
+		SocketAddress address;
+		if (!address.set(ex, pSA) || !onConnection(address))
+			return NULL;
+		SocketType* pSocketType = new SocketType(address,args ...);
+		Socket* pSocketBase = reinterpret_cast<Socket*>(pSocketType);
+		std::lock_guard<std::mutex>	lock(pSocketBase->_mutexInit);
+		if (!pSocketBase->init(ex, sockfd)) {
+			delete pSocketType;
+			pSocketType = NULL;
+		}
+		return pSocketType;
+	}
+	void rejectConnection();
+
 	bool connect(Exception& ex, const SocketAddress& address);
 	bool bind(Exception& ex, const SocketAddress& address, bool reuseAddress = true);
 	bool listen(Exception& ex, int backlog = 64);
@@ -147,6 +174,8 @@ protected:
 
 
 private:
+	virtual bool    onConnection(const SocketAddress& address) { return true; }
+	// if ex of onReadable is raised, it's given to onError
 	virtual void	onReadable(Exception& ex) = 0;
 	// Can be called by a separated thread!
 	virtual void	onError(const std::string& error) = 0;

@@ -22,7 +22,7 @@
 
 
 using namespace std;
-using namespace Poco::Net;
+
 
 namespace Mona {
 
@@ -38,7 +38,7 @@ bool SDP::build(Exception& ex, const string& text) {
 	SDPMedia* pMedia = NULL;
 
 	vector<string> lines;
-	String::Split(text, "\r\n", lines, String::TOK_IGNORE_EMPTY | String::TOK_TRIM);
+	String::Split(text, "\r\n", lines, String::SPLIT_IGNORE_EMPTY | String::SPLIT_TRIM);
 	for(string& line : lines) {
 
 		if(line[1] != '=') {
@@ -57,7 +57,7 @@ bool SDP::build(Exception& ex, const string& text) {
 				break;
 			case 'o': { // o=<username> <sess-id> <sess-version> <nettype> <addrtype> <unicast-address>
 				vector<string> fields;
-				String::Split(line," ", fields, String::TOK_IGNORE_EMPTY | String::TOK_TRIM);
+				String::Split(line, " ", fields, String::SPLIT_IGNORE_EMPTY | String::SPLIT_TRIM);
 				if (fields.size()!=6) {
 					ex.set(Exception::PROTOCOL, "fields.size()!=6");
 					break;
@@ -70,12 +70,7 @@ bool SDP::build(Exception& ex, const string& text) {
 				if (ex)
 					break;
 
-				try {
-					unicastAddress = IPAddress(fields[5],fields[4]=="IP6" ? IPAddress::IPv6 : IPAddress::IPv4);
-				} catch(Poco::Exception& exp) {
-					ex.set(Exception::PROTOCOL, exp.displayText());
-				}
-				
+				unicastAddress.set(ex,fields[5],fields[4]=="IP6" ? IPAddress::IPv6 : IPAddress::IPv4);
 				break;
 			}
 			case 's': // s=  (session name)
@@ -97,17 +92,14 @@ bool SDP::build(Exception& ex, const string& text) {
 				break;
 			case 'c': { // c=* (connection information -- not required if included in all media)
 				vector<string> fields;
-				String::Split(line," ", fields, String::TOK_IGNORE_EMPTY | String::TOK_TRIM);
+				String::Split(line, " ", fields, String::SPLIT_IGNORE_EMPTY | String::SPLIT_TRIM);
 				if(fields.size()!=3) {
 					ex.set(Exception::PROTOCOL, "fields.size()!=3");
 					break;
 				}
 
-				try {
-					IPAddress defaultAddress = IPAddress(fields[2],fields[1]=="IP6" ? IPAddress::IPv6 : IPAddress::IPv4); // TODO defaultAddress is useless for what?
-				} catch (Poco::Exception exp) {
-					ex.set(Exception::PROTOCOL, exp.displayText());
-				}
+				IPAddress defaultAddress;  // TODO defaultAddress is useless for what?
+				defaultAddress.set(ex,fields[2], fields[1] == "IP6" ? IPAddress::IPv6 : IPAddress::IPv4);
 				break;
 			}
 			case 'b': // b=* (zero or more bandwidth information lines)
@@ -132,7 +124,7 @@ bool SDP::build(Exception& ex, const string& text) {
 				break;
 			case 'm': { // m=<name> <port> <proto> <fmt>
 				vector<string> values;
-				String::Split(line," ", values, String::TOK_IGNORE_EMPTY | String::TOK_TRIM);
+				String::Split(line, " ", values, String::SPLIT_IGNORE_EMPTY | String::SPLIT_TRIM);
 				if (values.size()<4) {
 					ex.set(Exception::PROTOCOL , "values.size()<4");
 					break;
@@ -160,7 +152,7 @@ bool SDP::build(Exception& ex, const string& text) {
 				// TODO list<UInt32>* pSourceGroupe = NULL;
 
 				vector<string> fields;
-				String::Split(line," ", fields, String::TOK_IGNORE_EMPTY | String::TOK_TRIM);
+				String::Split(line, " ", fields, String::SPLIT_IGNORE_EMPTY | String::SPLIT_TRIM);
 				for(const string& st : fields) {
 					size_t pos = st.find(':');
 					string key,value;

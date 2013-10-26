@@ -22,7 +22,7 @@
 
 using namespace std;
 using namespace Poco;
-using namespace Poco::Net;
+
 
 namespace Mona {
 
@@ -86,7 +86,7 @@ void ICE::fromSDPCandidate(const string& candidate,SDPCandidate& publicCandidate
 	} while(memcmp(end,"\\r",2)==0 || memcmp(end,"\\n",2)==0);
 
 	vector<string> fields;
-	String::Split(candidate, " ", fields, String::TOK_IGNORE_EMPTY | String::TOK_TRIM);
+	String::Split(candidate, " ", fields, String::SPLIT_IGNORE_EMPTY | String::SPLIT_TRIM);
 	UInt8 index=0;
 	string port;
 	const string* pHost=NULL;
@@ -134,14 +134,19 @@ void ICE::fromSDPCandidate(const string& candidate,SDPCandidate& publicCandidate
 			WARN("Invalid candidate address, ",ex.error());
 			return ;
 		}
-		SocketAddress address(_publicHost, valport);
 
+		SocketAddress address;
+		address.set(ex,_publicHost, valport);
+		if (ex) {
+			WARN("Invalid candidate address")
+			return;
+		}
 			
-		set<SocketAddress,Util::AddressComparator>& currentAddresses = _type==INITIATOR ? _initiatorAddresses[mediaIndex][compoment] : _remoteAddresses[mediaIndex][compoment];
-		set<SocketAddress,Util::AddressComparator>& remoteAddresses = _type==INITIATOR ?  _remoteAddresses[mediaIndex][compoment] :_initiatorAddresses[mediaIndex][compoment];
+		set<SocketAddress>& currentAddresses = _type==INITIATOR ? _initiatorAddresses[mediaIndex][compoment] : _remoteAddresses[mediaIndex][compoment];
+		set<SocketAddress>& remoteAddresses = _type==INITIATOR ?  _remoteAddresses[mediaIndex][compoment] :_initiatorAddresses[mediaIndex][compoment];
 
 		if(currentAddresses.insert(address).second) {
-			set<SocketAddress,Util::AddressComparator>::const_iterator it;
+			set<SocketAddress>::const_iterator it;
 			for(it=remoteAddresses.begin();it!=remoteAddresses.end();++it) {
 				UInt16 port = _relay.add(_initiator,*it,_remote,address);
 				if(port==0)

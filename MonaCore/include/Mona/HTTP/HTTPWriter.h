@@ -20,46 +20,37 @@
 #include "Mona/Mona.h"
 #include "Mona/Writer.h"
 #include "Mona/HTTPPacketWriter.h"
-#include "Mona/SocketHandler.h"
 #include "Mona/HTTP/HTTPSender.h"
-#include "Poco/Net/StreamSocket.h"
+#include "Mona/StreamSocket.h"
 
 namespace Mona {
 
 
-class HTTPWriter : public Writer {
+class HTTPWriter : public Writer, virtual Object {
 public:
 
-	HTTPWriter(SocketHandler<Poco::Net::StreamSocket>& handler);
-	virtual ~HTTPWriter();
+	HTTPWriter(StreamSocket& socket);
 
 	State			state(State value=GET,bool minimal=false);
 	void			flush(bool full=false);
 
 	DataWriter&		writeInvocation(const std::string& name);
 	DataWriter&		writeMessage();
-	void			writeRaw(const UInt8* data,UInt32 size);
+	void			writeRaw(const UInt8* data, UInt32 size) { newWriter().writer.writeRaw(data, size); }
 
 	// TODO ?void			close(int code);
 
 
 	
 private:
-	bool				hasToConvert(DataReader& reader);
+	bool				hasToConvert(DataReader& reader) { return dynamic_cast<HTTPPacketWriter*>(&reader) == NULL; }
 	HTTPPacketWriter&	newWriter();
 
 
-	SocketHandler<Poco::Net::StreamSocket>&		_handler;
-	std::list<Poco::AutoPtr<HTTPSender>>		_senders;
+	StreamSocket&								_socket;
+	std::list<std::shared_ptr<HTTPSender>>		_senders;
 };
 
-inline void HTTPWriter::writeRaw(const UInt8* data,UInt32 size) {
-	newWriter().writer.writeRaw(data,size);
-}
-
-inline bool HTTPWriter::hasToConvert(DataReader& reader) {
-	return dynamic_cast<HTTPPacketWriter*>(&reader)==NULL;
-}
 
 
 } // namespace Mona

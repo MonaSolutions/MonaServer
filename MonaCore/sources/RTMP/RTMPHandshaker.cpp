@@ -25,11 +25,11 @@
 
 using namespace std;
 using namespace Poco;
-using namespace Poco::Net;
+
 
 namespace Mona {
 
-RTMPHandshaker::RTMPHandshaker(const UInt8* data, UInt32 size,SocketHandler<StreamSocket>& handler): TCPSender(handler,NULL,true),_middle(false),_writer(_buffer,sizeof(_buffer)),_farPubKey(0) {
+RTMPHandshaker::RTMPHandshaker(const UInt8* data, UInt32 size): TCPSender(NULL,true),_middle(false),_writer(_buffer,sizeof(_buffer)),_farPubKey(0) {
 	_writer.write8(3);
 	//generate random data
 	RandomInputStream().read((char*)_writer.begin()+_writer.position(),1536);
@@ -37,24 +37,20 @@ RTMPHandshaker::RTMPHandshaker(const UInt8* data, UInt32 size,SocketHandler<Stre
 	_writer.writeRaw(data,size);
 }
 
-RTMPHandshaker::RTMPHandshaker(const UInt8* farPubKey,const UInt8* challengeKey,bool middle,const Poco::SharedPtr<RC4_KEY>& pDecryptKey,const Poco::SharedPtr<RC4_KEY>& pEncryptKey,SocketHandler<StreamSocket>& handler): TCPSender(handler,NULL,true),_pDecryptKey(pDecryptKey),_pEncryptKey(pEncryptKey),_middle(middle),_writer(_buffer,sizeof(_buffer)),_farPubKey(DH_KEY_SIZE) {
-	memcpy(_farPubKey.begin(),farPubKey,_farPubKey.size());
+RTMPHandshaker::RTMPHandshaker(const UInt8* farPubKey,const UInt8* challengeKey,bool middle,const Poco::SharedPtr<RC4_KEY>& pDecryptKey,const Poco::SharedPtr<RC4_KEY>& pEncryptKey): TCPSender(NULL,true),_pDecryptKey(pDecryptKey),_pEncryptKey(pEncryptKey),_middle(middle),_writer(_buffer,sizeof(_buffer)),_farPubKey(DH_KEY_SIZE) {
+	memcpy(_farPubKey.data(),farPubKey,_farPubKey.size());
 	memcpy(_challengeKey,challengeKey,sizeof(_challengeKey));
 }
 
-RTMPHandshaker::~RTMPHandshaker() {
 
-}
-
-
-bool RTMPHandshaker::flush() {
+bool RTMPHandshaker::run(Exception& ex) {
 	if(_writer.length()==0)
-		flushComplex();
+		runComplex();
 	dump(true);
-	return TCPSender::flush();
+	return run(ex);
 }
 
-void RTMPHandshaker::flushComplex() {
+void RTMPHandshaker::runComplex() {
 
 	bool encrypted = (!_pDecryptKey.isNull() && !_pEncryptKey.isNull());
 
@@ -62,7 +58,7 @@ void RTMPHandshaker::flushComplex() {
 	_writer.write8(encrypted ? 6 : 3);
 
 	//timestamp
-	_writer.write32((UInt32)Time().toInt());
+	_writer.write32((UInt32)Time());
 
 	//version
 	_writer.write32(0);
@@ -87,13 +83,12 @@ void RTMPHandshaker::flushComplex() {
 		
 		dh.writePublicKey(_writer.begin()+serverDHPos);
 
-		RTMP::ComputeRC4Keys(_writer.begin()+serverDHPos,dh.publicKeySize(),_farPubKey.begin(),_farPubKey.size(),secret,*_pDecryptKey,*_pEncryptKey);
+		RTMP::ComputeRC4Keys(_writer.begin()+serverDHPos,dh.publicKeySize(),_farPubKey.data(),_farPubKey.size(),secret,*_pDecryptKey,*_pEncryptKey);
 	}
 
 	//generate the digest
 	RTMP::WriteDigestAndKey(_writer.begin(),_challengeKey,_middle);
 }
-
 
 
 } // namespace Mona

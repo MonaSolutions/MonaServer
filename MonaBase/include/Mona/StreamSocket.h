@@ -27,8 +27,7 @@ namespace Mona {
 class StreamSocket : public Socket, virtual Object {
 public:
 	StreamSocket(const SocketManager& manager) : Socket(manager) {}
-	virtual ~StreamSocket() {}
-
+	
 	bool connect(Exception& ex, const SocketAddress& address) { if (!Socket::connect(ex, address)) return false; setNoDelay(ex, true) /* enabe nodelay per default: OSX really needs that */; return true; }
 	
 	void shutdown(Exception& ex, ShutdownType type = BOTH) { return Socket::shutdown(ex, type); }

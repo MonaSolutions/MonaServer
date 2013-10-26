@@ -23,13 +23,13 @@
 
 namespace Mona {
 
-class Clients : public Entities<Client> {
+class Clients : public Entities<Client>, virtual Object {
 public:
 	
 	Clients(Map& clients,std::map<std::string,Client*>& clientsByName):Entities<Client>(clients),_clientsByName(clientsByName) {}
 	virtual ~Clients(){}
 
-	Client* operator()(const UInt8* id) const;
+	Client* operator()(const UInt8* id) const { return Entities<Client>::operator()(id); }
 
 	Client* operator()(const std::string& name) const {
 		std::map<std::string,Client*>::const_iterator it = _clientsByName.find(name);
@@ -41,9 +41,6 @@ private:
 	std::map<std::string,Client*>&	_clientsByName;
 };
 
-inline Client* Clients::operator()(const UInt8* id) const {
-	return Entities<Client>::operator()(id);
-}
 
 
 } // namespace Mona

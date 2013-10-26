@@ -21,7 +21,7 @@
 #include "Mona/MemoryReader.h"
 #include "Mona/MemoryWriter.h"
 #include "Mona/Time.h"
-#include "Poco/Buffer.h"
+#include "Mona/Buffer.h"
 #include <openssl/aes.h>
 
 namespace Mona {
@@ -33,8 +33,7 @@ namespace Mona {
 #define RTMFP_PACKET_RECV_SIZE	2048	
 #define RTMFP_PACKET_SEND_SIZE	1215
 
-class RTMFPEngine
-{
+class RTMFPEngine : virtual Object {
 public:
 	enum Direction {
 		DECRYPT=0,
@@ -52,8 +51,8 @@ public:
 	virtual ~RTMFPEngine();
 
 	RTMFPEngine&  operator=(const RTMFPEngine& other);
-	RTMFPEngine	next(Type type);
-	RTMFPEngine	next();
+	RTMFPEngine	next(Type type) { return RTMFPEngine(*this, type); }
+	RTMFPEngine	next() { return RTMFPEngine(*this); }
 	void		process(const UInt8* in,UInt8* out,UInt32 size);
 
 	const Type	type;
@@ -66,35 +65,26 @@ private:
 	
 };
 
-inline RTMFPEngine RTMFPEngine::next() {
-	return RTMFPEngine(*this);
-}
 
-inline RTMFPEngine RTMFPEngine::next(Type type) {
-	return RTMFPEngine(*this,type);
-}
-
-
-class RTMFP
-{
+class RTMFP : virtual Static {
 public:
 	static UInt32				Unpack(MemoryReader& packet);
-	static void						Pack(MemoryWriter& packet,UInt32 farId);
+	static void					Pack(MemoryWriter& packet,UInt32 farId);
 
-	static bool						ReadCRC(MemoryReader& packet);
-	static void						WriteCRC(MemoryWriter& packet);
-	static bool						Decode(RTMFPEngine& aesDecrypt,MemoryReader& packet);
-	static void						Encode(RTMFPEngine& aesEncrypt,MemoryWriter& packet);
+	static bool					ReadCRC(MemoryReader& packet);
+	static void					WriteCRC(MemoryWriter& packet);
+	static bool					Decode(RTMFPEngine& aesDecrypt,MemoryReader& packet);
+	static void					Encode(RTMFPEngine& aesEncrypt,MemoryWriter& packet);
 	
 
-	static void						ComputeAsymetricKeys(const Poco::Buffer<UInt8>& sharedSecret,
+	static void					ComputeAsymetricKeys(const Buffer<UInt8>& sharedSecret,
 														const UInt8* initiatorNonce,UInt16 initNonceSize,
 														const UInt8* responderNonce,UInt16 respNonceSize,
 														 UInt8* requestKey,
 														 UInt8* responseKey);
 
-	static UInt16				TimeNow() { return Time(Time().toInt()); }
-	static UInt16				Time(Int64 timeVal);
+	static UInt16				TimeNow() { return Time(Mona::Time()); }
+	static UInt16				Time(Int64 timeVal) { return (UInt32)ROUND(timeVal / (1000.0*RTMFP_TIMESTAMP_SCALE)); }
 
 private:
 	static UInt16				CheckSum(MemoryReader& packet);

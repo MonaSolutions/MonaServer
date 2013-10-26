@@ -25,7 +25,7 @@
 namespace Mona {
 
 class Relay;
-class RelaySocket : protected DatagramSocket {
+class RelaySocket : protected DatagramSocket, virtual Object {
 public:
 	RelaySocket(const SocketManager& manager);
 
@@ -46,7 +46,7 @@ private:
 	std::mutex	_mutex;
 };
 
-class RelayServer {
+class RelayServer : virtual Object {
 public:
 	RelayServer(PoolThreads& poolThreads,UInt32 bufferSize=0);
 	virtual ~RelayServer();

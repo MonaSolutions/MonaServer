@@ -31,7 +31,7 @@
 
 namespace Mona {
 
-class Invoker : public Entity,public TaskHandler {
+class Invoker : public Entity,public TaskHandler, virtual Object {
 	friend class Peer; // Peer manage _clients,_clientsByName and _groups list!
 public:
 	// invocations
@@ -42,9 +42,9 @@ public:
 	const RelayServer		relay;
 	PoolThreads				poolThreads;
 
-	UInt32					createFlashStream(Peer& peer);
-	bool					getFlashStream(UInt32 id, std::shared_ptr<FlashStream>& pStream) { return (pStream=_streams[id]) ? true : false; }
-	void					 destroyFlashStream(UInt32 id) { _streams.erase(id); }
+	UInt32							createFlashStream(Peer& peer);
+	std::shared_ptr<FlashStream>	getFlashStream(UInt32 id) { return _streams[id]; }
+	void							destroyFlashStream(UInt32 id) { _streams.erase(id); }
 
 	Publication*			publish(Exception& ex,const std::string& name) { return publish(ex,myself(), name); }
 	void					unpublish(const std::string& name) { unpublish(myself(), name); }
@@ -54,10 +54,10 @@ public:
 	Listener*				subscribe(Exception& ex,Peer& peer,const std::string& name,Writer& writer,double start=-2000);
 	void					unsubscribe(Peer& peer,const std::string& name);
 
-	/* TODO void					addBanned(const IPAddress& ip) { _bannedList.insert(ip); }
+	void					addBanned(const IPAddress& ip) { _bannedList.insert(ip); }
 	void					removeBanned(const IPAddress& ip) { _bannedList.erase(ip); }
 	void					clearBannedList() { _bannedList.clear(); }
-	bool					isBanned(const IPAddress& ip) { return _bannedList.find(ip) != _bannedList.end(); }*/
+	bool					isBanned(const IPAddress& ip) { return _bannedList.find(ip) != _bannedList.end(); }
 
 	const ServerParams		params;
 
@@ -74,7 +74,7 @@ private:
 	Entities<Group>::Map								_groups;
 	Entities<Client>::Map								_clients;
 	std::map<std::string,Client*>						_clientsByName;
-	// TODO std::set<IPAddress>						    _bannedList;
+	std::set<IPAddress>						    _bannedList;
 	UInt32										_nextId;
 	std::map<UInt32,std::shared_ptr<FlashStream> >	_streams;
 };

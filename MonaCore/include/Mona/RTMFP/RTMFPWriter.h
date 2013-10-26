@@ -35,90 +35,68 @@
 namespace Mona {
 
 class Invoker;
-class RTMFPWriter : public FlashWriter, public Poco::RefCountedObject {
+class RTMFPWriter : public FlashWriter, virtual Object {
 public:
-	RTMFPWriter(const std::string& signature,BandWriter& band,WriterHandler* pHandler=NULL);
+	RTMFPWriter(const std::string& signature, BandWriter& band, WriterHandler* pHandler) : RTMFPWriter(signature, band, std::shared_ptr<RTMFPWriter>(), pHandler) {}
+	RTMFPWriter(const std::string& signature,BandWriter& band,std::shared_ptr<RTMFPWriter>& pThis,WriterHandler* pHandler=NULL);
 	virtual ~RTMFPWriter();
 
 	const UInt64		id;
-	const bool				critical;
+	const bool			critical;
 	const UInt64		flowId;
-	const std::string		signature;
+	const std::string	signature;
 
-	virtual Writer&	newWriter(WriterHandler* pHandler=NULL);
+	virtual Writer&		newWriter(WriterHandler* pHandler = NULL) { return *(new RTMFPWriter(signature, _band, pHandler)); }
 
-	void			flush(Exception& ex, bool full=false);
+	void				flush(Exception& ex, bool full=false);
 
-	void			acknowledgment(MemoryReader& reader);
-	void			manage(Exception& ex, Invoker& invoker);
+	void				acknowledgment(MemoryReader& reader);
+	void				manage(Exception& ex, Invoker& invoker);
 
-	void			fail(const std::string& error);
-	void			clear();
-	void			close(int code=0);
-	bool			consumed();
+	void				fail(const std::string& error);
+	void				clear();
+	void				close(int code=0);
+	bool				consumed() { return _messages.empty() && state() == CLOSED; }
 
-	UInt64	stage();
+	UInt64				stage() { return _stage; }
 
-	State			state(State value=GET,bool minimal=false);
+	State				state(State value=GET,bool minimal=false);
 
-	bool			writeMedia(MediaType type,UInt32 time,MemoryReader& data);
-	void			writeRaw(Exception& ex, const UInt8* data,UInt32 size);
-	void			writeMember(const Peer& peer);
+	bool				writeMedia(MediaType type,UInt32 time,MemoryReader& data);
+	void				writeRaw(Exception& ex, const UInt8* data,UInt32 size);
+	void				writeMember(const Peer& peer);
 
 private:
 	RTMFPWriter(RTMFPWriter& writer);
 	
-	UInt32			headerSize(UInt64 stage);
+	UInt32					headerSize(UInt64 stage);
 	void					flush(MemoryWriter& writer,UInt64 stage,UInt8 flags,bool header,BinaryReader& reader,UInt16 size);
 
 	void					raiseMessage(Exception& ex);
 	RTMFPMessageBuffered&	createBufferedMessage();
 	AMFWriter&				write(AMF::ContentType type,UInt32 time=0,MemoryReader* pData=NULL);
 
-	void					createReader(MemoryReader& reader,Poco::SharedPtr<DataReader>& pReader);
-	void					createWriter(Poco::SharedPtr<DataWriter>& pWriter);
-	bool					hasToConvert(DataReader& reader);
+	void					createReader(MemoryReader& reader, Poco::SharedPtr<DataReader>& pReader) { pReader = new AMFReader(reader); }
+	void					createWriter(Poco::SharedPtr<DataWriter>& pWriter) { (pWriter = new AMFWriter())->stream.next(6); }
+	bool					hasToConvert(DataReader& reader) { return dynamic_cast<AMFReader*>(&reader) == NULL; }
 
-	Trigger					_trigger;
+	Trigger						_trigger;
 
-	int			 			_connectedSize;
-	std::list<RTMFPMessage*>		_messages;
-	UInt64			_stage;
-	std::list<RTMFPMessage*>		_messagesSent;
-	UInt64			_stageAck;
-	UInt32			_lostCount;
-	UInt32			_ackCount;
-	UInt32			_repeatable;
-	BandWriter&				_band;
+	int			 				_connectedSize;
+	std::list<RTMFPMessage*>	_messages;
+	UInt64						_stage;
+	std::list<RTMFPMessage*>	_messagesSent;
+	UInt64						_stageAck;
+	UInt32						_lostCount;
+	UInt32						_ackCount;
+	UInt32						_repeatable;
+	BandWriter&					_band;
 
-	UInt32			_boundCount;
-	bool					_reseted;
+	UInt32						_boundCount;
+	bool						_reseted;
 
 	static RTMFPMessageNull		_MessageNull;
 };
 
-inline Writer& RTMFPWriter::newWriter(WriterHandler* pHandler) {
-	return *(new RTMFPWriter(signature,_band,pHandler));
-}
-
-inline void RTMFPWriter::createWriter(Poco::SharedPtr<DataWriter>& pWriter) {
-	pWriter = new AMFWriter();
-	pWriter->stream.next(6);
-}
-
-inline void RTMFPWriter::createReader(MemoryReader& reader,Poco::SharedPtr<DataReader>& pReader) {
-	pReader = new AMFReader(reader);
-}
-
-inline bool RTMFPWriter::hasToConvert(DataReader& reader) {
-	return dynamic_cast<AMFReader*>(&reader)==NULL;
-}
-
-inline UInt64 RTMFPWriter::stage() {
-	return _stage;
-}
-inline bool RTMFPWriter::consumed() {
-	return _messages.empty() && state()==CLOSED;
-}
 
 } // namespace Mona

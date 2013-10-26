@@ -28,34 +28,33 @@ namespace Mona {
 
 
 class Session;
-class Decoding : public WorkThread, private Task {
+class Decoding : public WorkThread, private Task, virtual Object {
 public:
 	Decoding(UInt32 id,TaskHandler& taskHandler,Protocol& protocol,MemoryReader* pPacket,const SocketAddress& address);
 	virtual ~Decoding();
 
-	const UInt32				id;
-	const SocketAddress	address;
+	const UInt32		 id;
+	const SocketAddress	 address;
 
-	MemoryReader&		packet();
-	Session*			session();
+	MemoryReader&		packet() { return *_pPacket; }
+	Session*			session() { return _protocol.session(id, *_pPacket); }
 
 protected:
-	Decoding(UInt32 id,TaskHandler& taskHandler,Protocol& protocol,Poco::SharedPtr<Poco::Buffer<UInt8> >& pBuffer,const SocketAddress& address);
+	Decoding(UInt32 id,TaskHandler& taskHandler,Protocol& protocol,Poco::SharedPtr<Buffer<UInt8> >& pBuffer,const SocketAddress& address);
 
 private:
-	virtual bool				decode(MemoryReader& packet){return false;}
+	// If ex is raised, an error is displayed if the operation has returned false
+	// otherwise a warning is displayed
+	virtual bool				decode(Exception& ex,MemoryReader& packet){return false;}
 
-	void						handle();
-	void						run();
+	void						handle(Exception& ex) { _protocol.receive(*this); }
+	bool						run(Exception& ex);
 
-	MemoryReader*								_pPacket;
-	Poco::SharedPtr<Poco::Buffer<UInt8> >	_pBuffer;
-	Protocol&									_protocol;
+	MemoryReader*					_pPacket;
+	Poco::SharedPtr<Buffer<UInt8> >	_pBuffer;
+	Protocol&						_protocol;
 };
 
-inline MemoryReader& Decoding::packet() {
-	return *_pPacket;
-}
 
 
 } // namespace Mona

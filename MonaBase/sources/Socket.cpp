@@ -19,7 +19,6 @@ This file is a part of Mona.
 
 
 #include "Mona/Socket.h"
-#include "Mona/StreamSocket.h"
 #include "Mona/SocketManager.h"
 
 using namespace std;
@@ -100,25 +99,6 @@ bool Socket::managed(Exception& ex) {
 }
 
 
-bool Socket::acceptConnection(Exception& ex,shared_ptr<StreamSocket>& pSocket) {
-	ASSERT_RETURN(_initialized==true, false)
-
-	lock_guard<mutex>	lock(pSocket->_mutexInit);
-	ASSERT_RETURN(pSocket->_initialized == false, false)
-	
-	SOCKET sockfd;
-	do {
-		sockfd = ::accept(_sockfd, NULL, 0);  // TODO acceptEx?
-	} while (sockfd == INVALID_SOCKET && LastError() == EINTR);
-	if (sockfd == INVALID_SOCKET) {
-		SetError(ex);
-		return false;
-	}
-	return pSocket->init(ex, sockfd);
-}
-
-
-
 bool Socket::connect(Exception& ex, const SocketAddress& address) {
 	if (!_initialized && !init(ex, address.family()))
 		return false;
@@ -178,6 +158,16 @@ bool Socket::listen(Exception& ex, int backlog) {
 	return true;
 }
 
+void Socket::rejectConnection() {
+	if (!_initialized)
+		return;
+	SOCKET sockfd;
+	do {
+		sockfd = ::accept(_sockfd, NULL, 0);  // TODO acceptEx?
+	} while (sockfd == INVALID_SOCKET && LastError() == EINTR);
+	if (sockfd != INVALID_SOCKET)
+		closesocket(sockfd);
+}
 
 void Socket::shutdown(Exception& ex,ShutdownType type) {
 	ASSERT(_initialized == true)
@@ -254,7 +244,7 @@ int Socket::receiveFrom(Exception& ex, void* buffer, int length, SocketAddress& 
 	return rc;
 }
 
-const SocketAddress& Socket::address(Exception& ex, SocketAddress& address) const {
+SocketAddress& Socket::address(Exception& ex, SocketAddress& address) const {
 	ASSERT_RETURN(_initialized == true, address)
 	char	addressBuffer[IPAddress::MAX_ADDRESS_LENGTH];
 	struct sockaddr* pSA = reinterpret_cast<struct sockaddr*>(addressBuffer);
@@ -268,7 +258,7 @@ const SocketAddress& Socket::address(Exception& ex, SocketAddress& address) cons
 }
 
 	
-const SocketAddress& Socket::peerAddress(Exception& ex, SocketAddress& address) const {
+SocketAddress& Socket::peerAddress(Exception& ex, SocketAddress& address) const {
 	ASSERT_RETURN(_initialized == true, address)
 		char	addressBuffer[IPAddress::MAX_ADDRESS_LENGTH];
 	struct sockaddr* pSA = reinterpret_cast<struct sockaddr*>(addressBuffer);

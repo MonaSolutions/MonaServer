@@ -25,10 +25,10 @@
 namespace Mona {
 
 
-class HTTPPacketReader : public DataReader {
+class HTTPPacketReader : public DataReader, virtual Object {
 public:
 	HTTPPacketReader(MemoryReader& reader);
-	virtual ~HTTPPacketReader();
+
 
 	std::string&		readString(std::string& value);
 	double				readNumber();
@@ -36,7 +36,7 @@ public:
 	Time&				readTime(Time& time);
 	void				readNull();
 
-	bool				readObject(std::string& type,bool& external);
+	bool				readObject(std::string& type, bool& external) { return true; }
 	Type				readItem(std::string& name);
 	
 	Type				followingType();
@@ -53,12 +53,9 @@ private:
 	double				_number;
 	std::string			_value;
 	std::string			_name;
-	Time			_date;
+	Time				_date;
 };
 
-inline bool HTTPPacketReader::readObject(std::string& type,bool& external) {
-	return true;
-}
 
 
 } // namespace Mona

@@ -27,12 +27,12 @@ namespace Mona {
 
 // Error id
 
-class Handler : public Invoker {
+class Handler : public Invoker, virtual Object {
 public:
 	//events	
 	virtual	void			onRendezVousUnknown(const std::string& protocol,const Poco::UInt8* id,std::set<SocketAddress>& addresses){}
 	virtual void			onHandshake(const std::string& protocol,const SocketAddress& address,const std::string& path,const MapParameters& properties,Poco::UInt32 attempts,std::set<SocketAddress>& addresses){}
-	virtual void			onConnection(Client& client,DataReader& parameters,DataWriter& response){} // ERROR_NOTFOUND, ERROR_APPLICATION
+	virtual void			onConnection(Exception& ex,Client& client,DataReader& parameters,DataWriter& response){} // ERROR_NOTFOUND, ERROR_APPLICATION
 	virtual void			onFailed(const Client& client,const std::string& error){}
 	virtual void			onDisconnection(const Client& client){}
 	virtual void			onMessage(Exception& ex, Client& client,const std::string& name,DataReader& reader){} // ERROR_NOTFOUND, ERROR_APPLICATION
@@ -61,13 +61,9 @@ protected:
 	}
 	virtual ~Handler(){}
 private:
-	Peer&					myself();
+	Peer&					myself() { return _myself; }
 	Peer					_myself;
 };
-
-inline Peer& Handler::myself() {
-	return _myself;
-}
 
 
 

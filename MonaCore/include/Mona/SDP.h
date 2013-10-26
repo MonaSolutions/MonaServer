@@ -34,7 +34,7 @@ struct SDPCandidate {
 	UInt16	mLineIndex;
 };
 
-class SDPMedia {
+class SDPMedia : virtual Object {
 public:
 	SDPMedia(UInt16 port,const std::string& codec) : codec(codec),port(port) {}
 
@@ -44,7 +44,7 @@ public:
 };
 
 class Peer;
-class SDP {
+class SDP : virtual Object {
 public:
 	SDP() : supportMsId(false), version(0), sessionId(0) {}
 	virtual ~SDP() { clearMedias(); }
@@ -52,7 +52,7 @@ public:
 	bool build(Exception& ex, const std::string& text);
 	void build();
 
-	UInt32			version;
+	int				version;
 	std::string				user;
 	UInt32			sessionId;
 	std::string				sessionVersion;
@@ -75,7 +75,7 @@ public:
 
 	std::map<std::string,std::list<std::string> >	extensions;
 
-	SDPMedia*	addMedia(const std::string& name,UInt16 port,const std::string& codec);
+	SDPMedia*	addMedia(const std::string& name, UInt16 port, const std::string& codec) { return _medias.insert(std::pair<std::string, SDPMedia*>(name, new SDPMedia(port, codec))).first->second; }
 	void		clearMedias();
 
 	static void SendNewCandidate(Writer& writer,SDPCandidate& candidate);
@@ -83,10 +83,6 @@ public:
 private:
 	std::map<std::string,SDPMedia*> _medias;
 };
-
-inline SDPMedia* SDP::addMedia(const std::string& name,UInt16 port,const std::string& codec) {
-	return _medias.insert(std::pair<std::string,SDPMedia*>(name,new SDPMedia(port,codec))).first->second;
-}
 
 
 } // namespace Mona

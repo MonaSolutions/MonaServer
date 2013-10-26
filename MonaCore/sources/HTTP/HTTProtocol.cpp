@@ -19,23 +19,15 @@
 #include "Mona/HTTP/HTTPSession.h"
 
 using namespace Poco;
-using namespace Poco::Net;
 
 namespace Mona {
 
-HTTProtocol::HTTProtocol(const char* name,const HTTPParams& params,Gateway& gateway,Invoker& invoker) : TCPServer(invoker.sockets),Protocol(name,invoker,gateway) {
-	start(params.port);
-}
-
-HTTProtocol::~HTTProtocol() {
-	stop();
-}
-
-void HTTProtocol::clientHandler(StreamSocket& socket) {
-	if(!auth(socket.address()))
+void HTTProtocol::onClientRequest(Exception& ex) {
+	HTTPSession* pSession = acceptClient<HTTPSession>(ex, *this, invoker);
+	if (!pSession)
 		return;
 	// Create session!
-	gateway.registerSession(new HTTPSession(socket,*this,invoker));
+	gateway.registerSession(pSession);
 }
 
 

@@ -19,6 +19,7 @@ This file is a part of Mona.
 
 #include "Mona/Mona.h"
 #include "Mona/Net.h"
+#include <memory>
 
 
 namespace Mona {
@@ -51,7 +52,7 @@ public:
 	
 	// Creates a wildcard (zero) IPv4 IPAddress.
 	IPAddress(Family family=IPv4);
-	virtual ~IPAddress();
+	IPAddress(const IPAddress& other);
 
 	// Set an IPAddress from a native internet address. A pointer to a in_addr or a in6_addr structure may be  passed. Additionally, for an IPv6 address, a scope ID may be specified.
 	bool set(Exception& ex, const void* addr, UInt32 scope=0);
@@ -157,10 +158,10 @@ public:
 
 private:
 
-	IPAddressCommon*	_pIPAddress;
+	std::shared_ptr<IPAddressCommon>	_pIPAddress;
 
-	static IPAddress	_IPv4Wildcard;
-	static IPAddress	_IPv6Wildcard;
+	static IPAddress					_IPv4Wildcard;
+	static IPAddress					_IPv6Wildcard;
 };
 
 

@@ -25,7 +25,7 @@
 
 namespace Mona {
 
-class Protocols {
+class Protocols : virtual Object {
 public:
 	Protocols(Invoker& invoker);
 	virtual ~Protocols();
@@ -40,11 +40,12 @@ private:
 		if(params.port==0)
 			return;
 		try {
-			Protocol* pProtocol = new ProtocolType(name,params,gateway,_invoker);
-			_protocols.push_back(pProtocol);
-			NOTE(pProtocol->name," server starts on ",params.port," ",dynamic_cast<UDProtocol*>(pProtocol) ? "UDP" : "TCP"," port");
-		} catch(Poco::Exception& ex) {
-			ERROR(name," server, ",ex.displayText());
+			Protocol* pProtocol = new ProtocolType(name, _invoker,gateway);
+			Exception ex;
+			bool success = false;
+			EXCEPTION_TO_LOG(success=pProtocol->load(ex, (ParamsType&)params), name, " server")
+			if (success)
+				NOTE(name, " server starts on ", params.port, " ", dynamic_cast<UDProtocol*>(pProtocol) ? "UDP" : "TCP", " port");
 		} catch (std::exception& ex) {
 			ERROR(name," server, ",ex.what());
 		} catch (...) {

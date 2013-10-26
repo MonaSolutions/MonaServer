@@ -18,32 +18,25 @@
 #pragma once
 
 #include "Mona/Mona.h"
-#include "Mona/DataReader.h"
-
+#include "Mona/Protocol.h"
+#include "Mona/TCPServer.h"
+#include "Mona/Logs.h"
 
 namespace Mona {
 
 
-class StringReader : public DataReader, virtual Object {
-public:
-	StringReader(MemoryReader& reader) : DataReader(reader) {}
-	virtual ~StringReader() {}
+class TCProtocol :public Protocol, protected TCPServer , virtual Object {
+protected:
+	TCProtocol(const char* name, Invoker& invoker, Gateway& gateway) : TCPServer(invoker.sockets), Protocol(name, invoker, gateway) {}
+	virtual ~TCProtocol() {stop();}
 
-	std::string&		readString(std::string& value) { return reader.readRaw(reader.available(), value); }
-	double				readNumber() {return 0;}
-	bool				readBoolean() {return false;}
-	Time&				readTime(Time& time) { return time.update(); }
-	void				readNull() {}
-	const UInt8*		readBytes(UInt32& size) {return NULL;}
+private:
+	bool	load(Exception& ex, const ProtocolParams& params) { return start(ex, params.port); }
 
-	bool				readObject(std::string& type,bool& external) {return false;}
-	bool				readArray(UInt32& size) {return false;}
-	Type				readItem(std::string& name) {return END;}
-	
-	Type				followingType() { return available() ? STRING : END; }
+	void	onError(const std::string& error) { WARN("Protocol ", name, ", ", error); }
 
+	bool    onConnection(const SocketAddress& address) { return auth(address); }
 };
-
 
 
 } // namespace Mona

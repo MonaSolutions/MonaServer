@@ -28,11 +28,10 @@
 namespace Mona {
 
 
-class Protocol {
+class Protocol : virtual Object {
 public:
-	virtual ~Protocol();
-
-	virtual Poco::SharedPtr<Poco::Buffer<UInt8> >		receive(SocketAddress& address);
+	virtual bool										load(Exception& ex, const ProtocolParams& params) { return true; }
+	virtual Poco::SharedPtr<Buffer<UInt8> >		receive(Exception& ex,SocketAddress& address);
 	virtual UInt32										unpack(MemoryReader& packet){return 0;}
 	virtual Session*									session(UInt32 id,MemoryReader& packet){return NULL;}
 	void												receive(Decoding& decoding) { gateway.receive(decoding); }

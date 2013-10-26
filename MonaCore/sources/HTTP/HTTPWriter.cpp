@@ -20,22 +20,17 @@
 #include "Mona/String.h"
 
 using namespace std;
-using namespace Poco::Net;
 
 namespace Mona {
 
-HTTPWriter::HTTPWriter(SocketHandler<StreamSocket>& handler) :_handler(handler) {
+HTTPWriter::HTTPWriter(StreamSocket& socket) : _socket(socket) {
 	
 }
 
-HTTPWriter::~HTTPWriter() {
-
-}
 
 HTTPPacketWriter& HTTPWriter::newWriter() {
-	_senders.resize(_senders.size()+1);
-	HTTPSender* pSender = new HTTPSender(_handler);
-	_senders.back() = pSender;
+	HTTPSender* pSender = new HTTPSender();
+	_senders.emplace_back(pSender);
 	return pSender->writer;
 }
 
@@ -43,18 +38,14 @@ void HTTPWriter::flush(bool full) {
 	if(_senders.empty())
 		return;
 	// TODO _qos.add(ping,_sent);
-	_senders.clear();
+	FLUSH_SENDERS("HTTPSender flush", HTTPSender, _senders)
 }
 
 
 HTTPWriter::State HTTPWriter::state(State value,bool minimal) {
 	State state = Writer::state(value,minimal);
-	if(state==CONNECTED && minimal) {
-		list<Poco::AutoPtr<HTTPSender>>::iterator it;
-		for(it=_senders.begin();it!=_senders.end();++it)
-			(*it)->writer.clear();
+	if(state==CONNECTED && minimal)
 		_senders.clear();
-	}
 	return state;
 }
 
@@ -64,8 +55,8 @@ DataWriter& HTTPWriter::writeInvocation(const std::string& name) {
 	DataWriter& writer = writeMessage();
 	string header("HTTP/1.1 ");
 	Exception ex;
-	UInt16 code = String::ToNumber<UInt16>(ex, name);
-	if(!ex) {
+	UInt16 code(0);
+	if (String::ToNumber<UInt16>(name, code)) {
 		string message;
 		header.append(name);
 		header.append(" ");

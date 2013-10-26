@@ -73,9 +73,6 @@
     <ClInclude Include="include\Mona\ServerParams.h">
       <Filter>sources</Filter>
     </ClInclude>
-    <ClInclude Include="include\Mona\UDProtocol.h">
-      <Filter>sources</Filter>
-    </ClInclude>
     <ClInclude Include="include\Mona\Writer.h">
       <Filter>sources</Filter>
     </ClInclude>
@@ -228,6 +225,12 @@
     </ClInclude>
     <ClInclude Include="include\Mona\FlashWriter.h">
       <Filter>sources\Flash</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\UDProtocol.h">
+      <Filter>sources\Protocols</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\TCProtocol.h">
+      <Filter>sources\Protocols</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

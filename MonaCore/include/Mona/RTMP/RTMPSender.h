@@ -26,37 +26,26 @@
 
 namespace Mona {
 
-class RTMPSender : public TCPSender {
+class RTMPSender : public TCPSender, virtual Object {
 public:
-	RTMPSender(const Poco::SharedPtr<RC4_KEY>& pEncryptKey,SocketHandler<Poco::Net::StreamSocket>& handler);
+	RTMPSender(const Poco::SharedPtr<RC4_KEY>& pEncryptKey);
 	RTMPSender(const RTMPSender& sender);
-	virtual ~RTMPSender();
 
 	AMFWriter	writer;
 	
 	AMFWriter&	write(UInt32 id,AMF::ContentType type,UInt32 time=0,UInt32 streamId=0,MemoryReader* pData=NULL);
 	
 private:
-
+	bool				run(Exception& ex);
 	void				pack();
-	bool				flush();
-	const UInt8*	begin(bool displaying=false);
-	UInt32		size(bool displaying=false);
+	const UInt8*		begin(bool displaying = false) { return writer.stream.data(); }
+	UInt32				size(bool displaying = false) { return writer.stream.size(); }
 
-	UInt32				_sizePos;
-	UInt32				_chunkSize;
+	UInt32						_sizePos;
+	UInt32						_chunkSize;
 	RTMPChannel					_channel;
 	Poco::SharedPtr<RC4_KEY>	_pEncryptKey;
 };
-
-inline const UInt8* RTMPSender::begin(bool displaying) {
-	return writer.stream.data();
-}
-
-inline UInt32 RTMPSender::size(bool displaying) {
-	return writer.stream.size();
-}
-
 
 
 } // namespace Mona

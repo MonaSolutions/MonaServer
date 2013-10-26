@@ -25,10 +25,9 @@
 namespace Mona {
 
 
-class JSONReader : public DataReader {
+class JSONReader : public DataReader, virtual Object {
 public:
 	JSONReader(MemoryReader& reader);
-	virtual ~JSONReader();
 
 	static bool			IsValid(MemoryReader& reader);
 

@@ -78,17 +78,14 @@ public:
 	/// \brief Update the object by copying time's value
 	Time& update(const Time& time) { _time = time._time; return *this; }
 
-	/// \brief time_point object accessor
-	std::chrono::system_clock::time_point getTimePoint() const { return _time; };
-
 	/// \brief Time in Microseconds since epoch
-	Int64 toInt() const { return std::chrono::duration_cast<std::chrono::microseconds>(_time.time_since_epoch()).count(); }
+	operator Int64() const { return std::chrono::duration_cast<std::chrono::microseconds>(_time.time_since_epoch()).count(); }
 
 	/// \brief Return milliseconds of the time object
-	Int16 millisec() const { return ((toInt() / 1000) % 1000); }
+	Int16 millisec() const { return ((*this / 1000) % 1000); }
 
 	/// \brief Return microseconds of the time object
-	Int16 microsec() const { return (toInt() % 1000); }
+	Int16 microsec() const { return (*this % 1000); }
 
 	/// \brief add µsec to the Mona time instance
 	Time& operator+= (Int64 time) { _time += std::chrono::microseconds(time); return *this; }
@@ -109,20 +106,19 @@ public:
 	/// \brief Try to parse a date string and assign the Time instance
 	bool fromString(const std::string &in);
 
-	/// \brief Is this time valid?
-	/// WARN : the tmtime parameter could be modified in case of invalid date
-	/// Valid params are :
-	/// - A tmtime between the 1/1/1970 and the 1/1/3001
-	/// - 0 <= milli < 1000
-	/// - 0 <= micro < 1000
-	static bool isValid(struct tm& tmtime, int milli = 0, int micro = 0);
-
 	/// \brief Convert Mona Time to local time
 	struct tm& toLocal(struct tm& tmtime) const;
 
 	/// \brief Convert Mona Time to time GMT
 	struct tm& toGMT(struct tm& tmtime) const;
 
+	/// \brief Is this time valid?
+	/// WARN : the tmtime parameter could be modified in case of invalid date
+	/// Valid params are :
+	/// - A tmtime between the 1/1/1970 and the 1/1/3001
+	/// - 0 <= milli < 1000
+	/// - 0 <= micro < 1000
+	static bool IsValid(struct tm& tmtime, int milli = 0, int micro = 0);
 private:
 	std::chrono::system_clock::time_point _time;
 
@@ -131,37 +127,6 @@ private:
 
 	int hour2AMPM(int hour) const;
 };
-
-inline int Time::hour2AMPM(int hour) const {
-
-	if (hour < 1)
-		return 12;
-	else if (hour > 12)
-		return hour - 12;
-	
-	return hour;
-}
-
-// Operators definition for class Time
-inline bool operator== (const Time& lhs, const Time& rhs) { return lhs.getTimePoint() == rhs.getTimePoint(); }
-
-inline bool operator!= (const Time& lhs, const Time& rhs) { return lhs.getTimePoint() != rhs.getTimePoint(); }
-
-inline bool operator<  (const Time& lhs, const Time& rhs) { return lhs.getTimePoint() < rhs.getTimePoint(); }
-
-inline bool operator>  (const Time& lhs, const Time& rhs) { return lhs.getTimePoint() > rhs.getTimePoint(); }
-
-inline bool operator>= (const Time& lhs, const Time& rhs) { return lhs.getTimePoint() >= rhs.getTimePoint(); }
-
-inline bool operator<= (const Time& lhs, const Time& rhs) { return lhs.getTimePoint() <= rhs.getTimePoint(); }
-
-/* TODO? inline Time	operator+ (const Time& lhs, const Int64 dtn) { return Time(lhs.getTimePoint() + std::chrono::microseconds(dtn)); }
-
-inline Time	operator+ (const Int64 dtn, const Time& rhs) { return Time(std::chrono::microseconds(dtn) + rhs.getTimePoint()); }
-
-inline Time	operator- (const Time& lhs, const Int64 dtn) { return Time(lhs.getTimePoint() - std::chrono::microseconds(dtn)); }*/
-
-inline Int64 operator- (const Time& lhs, const Time& rhs) { return std::chrono::duration_cast<std::chrono::microseconds>(lhs.getTimePoint() - rhs.getTimePoint()).count(); }
 
 } // namespace Mona
 

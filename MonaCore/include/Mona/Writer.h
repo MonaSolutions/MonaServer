@@ -21,18 +21,21 @@
 #include "Mona/DataReader.h"
 #include "Mona/QualityOfService.h"
 #include "Mona/MemoryReader.h"
+#include "Mona/Logs.h"
 #include "Poco/SharedPtr.h"
 
 namespace Mona {
 
+#define FLUSH_SENDERS(ERROR_HEADER,SENDERTYPE,SENDERS) { Exception __ex; for (std::shared_ptr<SENDERTYPE>& pSender : SENDERS) { _socket.send<SENDERTYPE>(__ex, pSender); if (__ex) ERROR(ERROR_HEADER,", ",__ex.error()); } SENDERS.clear();}
+
 class Writer;
-class WriterHandler {	
+class WriterHandler : virtual Object {	
 public:
 	virtual void	close(Writer& writer,int code){}
 };
 
 class Peer;
-class Writer {
+class Writer : virtual Object {
 public:
 	enum MediaType {
 		INIT=0,
@@ -51,10 +54,10 @@ public:
 
 	bool					reliable;
 
-	const QualityOfService&	qos();
+	const QualityOfService&	qos() { return _qos; }
 
 
-	virtual Writer&			newWriter(WriterHandler* pHandler=NULL);
+	virtual Writer&			newWriter(WriterHandler* pHandler = NULL) { return *this; }
 
 	virtual State			state(State value=GET,bool minimal=false);
 	virtual void			close(int code=0);
@@ -86,19 +89,6 @@ protected:
 	State					_state;
 };
 
-inline Writer::State Writer::state(Writer::State value,bool minimal) {
-	if(value==GET)
-		return _state;
-	return _state=value;
-}
-
-inline Writer& Writer::newWriter(WriterHandler* pHandler) {
-	return *this;
-}
-
-inline const QualityOfService& Writer::qos() {
-	return _qos;
-}
 
 
 } // namespace Mona

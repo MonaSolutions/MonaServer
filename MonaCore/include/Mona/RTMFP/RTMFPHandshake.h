@@ -26,21 +26,19 @@
 
 namespace Mona {
 
-class HelloAttempt : public Attempt {
+class HelloAttempt : public Attempt, virtual Object {
 public:
 	HelloAttempt() : pCookie(NULL) {
-	}
-	~HelloAttempt() {
 	}
 	RTMFPCookie*		pCookie;
 };
 
-class RTMFPHandshake : public RTMFPSession, private AttemptCounter {
+class RTMFPHandshake : public RTMFPSession, private AttemptCounter, virtual Object {
 public:
 	RTMFPHandshake(RTMFProtocol& protocol,Gateway& gateway,Invoker& invoker);
 	virtual ~RTMFPHandshake();
 
-	void		createCookie(Exception& ex, MemoryWriter& writer,HelloAttempt& attempt,const std::string& tag,const std::string& queryUrl);
+	void		createCookie(MemoryWriter& writer,HelloAttempt& attempt,const std::string& tag,const std::string& queryUrl);
 	void		commitCookie(const UInt8* value);
 	void		manage();
 	void		clear();
@@ -48,8 +46,8 @@ public:
 
 private:
 
-	void		flush(Exception& ex);
-	void		flush(Exception& ex, RTMFPEngine::Type type);
+	void		flush(Exception& ex) { RTMFPSession::flush(ex, 0x0b, false); }
+	void		flush(Exception& ex, RTMFPEngine::Type type) { RTMFPSession::flush(ex, 0x0b, false, type); }
 
 	void		packetHandler(MemoryReader& packet);
 	UInt8	handshakeHandler(UInt8 id,MemoryReader& request,MemoryWriter& response);
@@ -60,18 +58,11 @@ private:
 	   }
 	};
 	
-	std::map<const UInt8*,RTMFPCookie*,CompareCookies> _cookies; // RTMFPCookie, in waiting of creation session
-	UInt8											_certificat[77];
+	std::map<const UInt8*,RTMFPCookie*,CompareCookies>  _cookies; // RTMFPCookie, in waiting of creation session
+	UInt8												_certificat[77];
 	Gateway&											_gateway;
 };
 
-inline void RTMFPHandshake::flush(Exception& ex) {
-	RTMFPSession::flush(ex, 0x0b,false);
-}
-
-inline void RTMFPHandshake::flush(Exception& ex, RTMFPEngine::Type type) {
-	RTMFPSession::flush(ex, 0x0b,false,type);
-}
 
 
 } // namespace Mona

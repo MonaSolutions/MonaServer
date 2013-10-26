@@ -16,14 +16,14 @@
 */
 
 #include "Mona/TCPServer.h"
-#include "Mona/StreamSocket.h"
+
 
 using namespace std;
 
 
 namespace Mona {
 
-TCPServer::TCPServer(const SocketManager& manager) : _port(0),ServerSocket(manager) {
+TCPServer::TCPServer(const SocketManager& manager) : _hasToAccept(false),_port(0), ServerSocket(manager) {
 }
 
 
@@ -51,9 +51,12 @@ void TCPServer::stop() {
 }
 
 void TCPServer::onReadable(Exception& ex) {
-	shared_ptr<StreamSocket> pSocket(newClient());
-	if(acceptConnection(ex,pSocket))
-		clientHandler(pSocket);
+	_hasToAccept = true;
+	onClientRequest(ex);
+	if (_hasToAccept) {
+		rejectConnection();
+		_hasToAccept = false;
+	}
 }
 
 

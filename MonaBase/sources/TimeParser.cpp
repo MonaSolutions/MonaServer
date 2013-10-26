@@ -185,7 +185,7 @@ bool TimeParser::parse(const string& fmt, const string& in, Time& dateTime, int&
 	tmtime.tm_min = minute;
 	tmtime.tm_sec = second;
 
-	if (Time::isValid(tmtime, millis, micros))
+	if (Time::IsValid(tmtime, millis, micros))
 		dateTime.update(tmtime, millis, micros);
 	else {
 

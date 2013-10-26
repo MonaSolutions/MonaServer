@@ -23,37 +23,30 @@
 
 namespace Mona {
 
-class TCPSession : public Session, protected TCPClient {
+class TCPSession : public Session, protected TCPClient, virtual Object {
 protected:
-	TCPSession(Poco::Net::StreamSocket& socket,Protocol& protocol,Invoker& invoker);
+	TCPSession(const SocketAddress& address,Protocol& protocol,Invoker& invoker);
 	virtual ~TCPSession();
 
-	void							decode(Decoding* pDecoding);
+	template<typename DecodingType>
+	void decode(std::shared_ptr<DecodingType>& pDecoding) {
+		_decoding = true;
+		Session::decode<DecodingType>(pDecoding);
+	}
+
 private:
-	void							receive(MemoryReader& packet);
-	virtual bool					buildPacket(MemoryReader& data,Poco::UInt32& packetSize)=0;
-	virtual void					packetHandler(MemoryReader& packet)=0;
+	void			receive(MemoryReader& packet) { packetHandler(packet); }
+	virtual bool	buildPacket(MemoryReader& data,Poco::UInt32& packetSize)=0;
+	virtual void	packetHandler(MemoryReader& packet)=0;
 
 	// TCPClient implementation
-	Poco::UInt32	onReception(const Poco::UInt8* data,Poco::UInt32 size);
-	void			onDisconnection();
+	UInt32			onReception(const Poco::UInt8* data,Poco::UInt32 size);
+	void			onError(const std::string& error) { ERROR("Protocol ", protocol.name, ", ", error); }
+	void			onDisconnection() { kill(); }
 
-	bool							_decoding;
+	bool			_decoding;
 };
 
-
-inline void TCPSession::decode(Decoding* pDecoding) {
-	_decoding=true;
-	Session::decode(pDecoding);
-}
-
-inline void TCPSession::receive(MemoryReader& packet) {
-	packetHandler(packet);
-}
-
-inline void TCPSession::onDisconnection(){
-	kill();
-}
 
 
 } // namespace Mona

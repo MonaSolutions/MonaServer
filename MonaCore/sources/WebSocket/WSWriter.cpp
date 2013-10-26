@@ -17,25 +17,26 @@
 
 #include "Mona/WebSocket/WSWriter.h"
 
+
 using namespace std;
 using namespace Poco;
-using namespace Poco::Net;
 
 namespace Mona {
 
-WSWriter::WSWriter(SocketHandler<StreamSocket>& handler) : ping(0),_handler(handler),_sent(0) {
+WSWriter::WSWriter(StreamSocket& socket) : ping(0),_socket(socket),_sent(0) {
 	
 }
 
-WSWriter::~WSWriter() {
-
+void WSWriter::close(int type) {
+	write(WS_CLOSE, NULL, (UInt32)type);
+	Writer::close(type);
 }
+
 
 JSONWriter& WSWriter::newWriter() {
 	pack();
-	_senders.resize(_senders.size()+1);
-	WSSender* pSender = new WSSender(_handler);
-	_senders.back() = pSender;
+	WSSender* pSender = new WSSender();
+	_senders.emplace_back(pSender);
 	pSender->writer.stream.next(10); // header
 	return pSender->writer;
 }
@@ -64,28 +65,23 @@ void WSWriter::flush(bool full) {
 	pack();
 	_qos.add(ping,_sent);
 	_sent=0;
-	_senders.clear();
+	FLUSH_SENDERS("WSSender flush", WSSender, _senders)
 }
 
 
 WSWriter::State WSWriter::state(State value,bool minimal) {
 	State state = Writer::state(value,minimal);
-	if(state==CONNECTED && minimal) {
-		list<AutoPtr<WSSender>>::iterator it;
-		for(it=_senders.begin();it!=_senders.end();++it)
-			(*it)->writer.clear();
+	if(state==CONNECTED && minimal)
 		_senders.clear();
-	}
 	return state;
 }
 
 void WSWriter::write(UInt8 type,const UInt8* data,UInt32 size) {
 	if(state()==CLOSED)
 		return;
-	_senders.resize(_senders.size()+1);
-	WSSender* pSender = new WSSender(_handler);
+	WSSender* pSender = new WSSender();
 	pSender->packaged = true;
-	_senders.back() = pSender;
+	_senders.emplace_back(pSender);
 	BinaryWriter& writer = pSender->writer.writer;
 	if(type==WS_CLOSE) {
 		// here size is the code!

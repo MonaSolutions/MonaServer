@@ -28,20 +28,19 @@ namespace Mona {
 #define COOKIE_SIZE 0x40
 
 class RTMFPHandshake;
-class RTMFPCookieComputing : public WorkThread, private Task {
+class RTMFPCookieComputing : public WorkThread, private Task, virtual Object {
 public:
 	RTMFPCookieComputing(RTMFPHandshake&	handshake,Invoker& invoker);
-	~RTMFPCookieComputing();
-
-	const UInt8			value[COOKIE_SIZE];
-	DiffieHellman				diffieHellman;
-	Poco::Buffer<UInt8>	initiatorKey;
-	Poco::Buffer<UInt8>	sharedSecret;
-
+	
+	const UInt8							value[COOKIE_SIZE];
+	DiffieHellman						diffieHellman;
+	Buffer<UInt8>					initiatorKey;
+	Buffer<UInt8>					sharedSecret;
+	std::weak_ptr<RTMFPCookieComputing> weak;
 
 private:
-	void						run();
-	void						handle();
+	bool						run(Exception& ex);
+	void						handle(Exception& ex);
 
 	RTMFPHandshake&				_handshake;
 };

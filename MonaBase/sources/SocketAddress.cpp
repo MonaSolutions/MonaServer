@@ -125,17 +125,27 @@ SocketAddress SocketAddress::_Addressv6Wildcard(IPAddress::IPv6);
 SocketAddress::SocketAddress(IPAddress::Family family) : _pAddress(family == IPAddress::IPv6 ? (SocketAddressCommon*)new IPv4SocketAddress() : (SocketAddressCommon*)new IPv6SocketAddress()) {
 }
 
+SocketAddress::SocketAddress(const IPAddress& host, UInt16 port) {
+	if (host.family() == IPAddress::IPv6)
+		_pAddress.reset(new IPv6SocketAddress(host.addr(), htons(port), host.scope()));
+	else
+		_pAddress.reset(new IPv4SocketAddress(host.addr(), htons(port)));
+}
 
-SocketAddress::~SocketAddress() {
-	delete _pAddress;
+SocketAddress::SocketAddress(const SocketAddress& other) : _pAddress(other._pAddress), _toString(other._toString) {
+}
+
+void SocketAddress::set(const SocketAddress& other) {
+	_toString = other._toString;
+	_pAddress = other._pAddress;
 }
 
 void SocketAddress::set(const IPAddress& host, UInt16 port) {
-	delete _pAddress;
+
 	if (host.family() == IPAddress::IPv6)
-		_pAddress = new IPv6SocketAddress(host.addr(), htons(port), host.scope());
+		_pAddress.reset(new IPv6SocketAddress(host.addr(), htons(port), host.scope()));
 	else
-		_pAddress = new IPv4SocketAddress(host.addr(), htons(port));
+		_pAddress.reset(new IPv4SocketAddress(host.addr(), htons(port)));
 	lock_guard<mutex>	lock(_mutex);
 	_toString.clear();
 }
@@ -151,8 +161,7 @@ bool SocketAddress::set(Exception& ex,const struct sockaddr* addr) {
 		ex.set(Exception::NETADDRESS, "Invalid socket address");
 		return false;
 	}
-	delete _pAddress;
-	_pAddress = pAddress;
+	_pAddress.reset(pAddress);
 	lock_guard<mutex>	lock(_mutex);
 	_toString.clear();
 	return true;

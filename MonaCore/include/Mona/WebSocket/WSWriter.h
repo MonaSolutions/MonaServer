@@ -23,7 +23,6 @@
 #include "Mona/JSONReader.h"
 #include "Mona/WebSocket/WS.h"
 #include "Mona/WebSocket/WSSender.h"
-#include "Poco/Net/StreamSocket.h"
 
 namespace Mona {
 
@@ -41,70 +40,41 @@ namespace Mona {
 #define WS_UNEXPECTED_CONDITION		1011
 
 
-class WSWriter : public Writer {
+class WSWriter : public Writer, virtual Object {
 public:
 
-	WSWriter(SocketHandler<Poco::Net::StreamSocket>& handler);
+	WSWriter(StreamSocket& socket);
 	virtual ~WSWriter();
 
-	UInt16	ping;
+	UInt16			ping;
 
 	State			state(State value=GET,bool minimal=false);
 	void			flush(bool full=false);
 
 	DataWriter&		writeInvocation(const std::string& name);
 	DataWriter&		writeMessage();
-	void			writeRaw(const UInt8* data,UInt32 size);
+	void			writeRaw(const UInt8* data, UInt32 size) { write(WS_TEXT, data, size); }
 
-	void			writePing();
-	UInt16	elapsedSincePing();
-	void			writePong(const UInt8* data,UInt32 size);
+	void			writePing() { write(WS_PING, NULL, 0); }
+	UInt16			elapsedSincePing();
+	void			writePong(const UInt8* data, UInt32 size) { write(WS_PONG, data, size); }
 	void			close(int code);
 
 private:
 	void			pack();
-	void			createReader(MemoryReader& reader,Poco::SharedPtr<DataReader>& pReader);
-	void			createWriter(Poco::SharedPtr<DataWriter>& pWriter);
-	bool			hasToConvert(DataReader& reader);
+	void			createReader(MemoryReader& reader, Poco::SharedPtr<DataReader>& pReader) { pReader = new JSONReader(reader); }
+	void			createWriter(Poco::SharedPtr<DataWriter>& pWriter) { pWriter = new JSONWriter(); }
+	bool			hasToConvert(DataReader& reader) { return dynamic_cast<JSONReader*>(&reader) == NULL; }
 	bool			writeMedia(MediaType type,UInt32 time,MemoryReader& data);
 
 	void			write(UInt8 type,const UInt8* data,UInt32 size);
 
 	JSONWriter&		newWriter();
 
-	UInt32							_sent;
-	SocketHandler<Poco::Net::StreamSocket>&	_handler;
-	std::list<Poco::AutoPtr<WSSender>>		_senders;
+	UInt32									_sent;
+	StreamSocket&							_socket;
+	std::list<std::shared_ptr<WSSender>>	_senders;
 };
-
-inline bool WSWriter::hasToConvert(DataReader& reader) {
-	return dynamic_cast<JSONReader*>(&reader)==NULL;
-}
-
-inline void WSWriter::createReader(MemoryReader& reader,Poco::SharedPtr<DataReader>& pReader) {
-	pReader = new JSONReader(reader);
-}
-
-inline void WSWriter::createWriter(Poco::SharedPtr<DataWriter>& pWriter) {
-	pWriter = new JSONWriter();
-}
-
-inline void WSWriter::writeRaw(const UInt8* data,UInt32 size) {
-	write(WS_TEXT,data,size);
-}
-
-inline void WSWriter::writePing() {
-	write(WS_PING,NULL,0);
-}
-
-inline void WSWriter::writePong(const UInt8* data,UInt32 size) {
-	write(WS_PONG,data,size);
-}
-
-inline void WSWriter::close(int type) {
-	write(WS_CLOSE,NULL,(UInt32)type);
-	Writer::close(type);
-}
 
 
 

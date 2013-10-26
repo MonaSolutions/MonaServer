@@ -19,25 +19,18 @@
 #include "Mona/RTMP/RTMPSession.h"
 
 using namespace Poco;
-using namespace Poco::Net;
+
 
 namespace Mona {
 
-RTMProtocol::RTMProtocol(const char* name,const RTMPParams& params,Gateway& gateway,Invoker& invoker) : TCPServer(invoker.sockets),Protocol(name,invoker,gateway) {
-	start(params.port);
-}
 
-RTMProtocol::~RTMProtocol() {
-	stop();
-}
-
-void RTMProtocol::clientHandler(StreamSocket& socket) {
-	if(!auth(socket.address()))
+void RTMProtocol::onClientRequest(Exception& ex) {
+	RTMPSession* pSession = acceptClient<RTMPSession>(ex, *this, invoker);
+	if (!pSession)
 		return;
 	// Create session!
-	gateway.registerSession(new RTMPSession(socket,*this,invoker));
+	gateway.registerSession(pSession);
 }
-
 
 
 

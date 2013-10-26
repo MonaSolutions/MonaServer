@@ -24,10 +24,10 @@
 
 namespace Mona {
 
-class RTMPSession : public TCPSession {
+class RTMPSession : public TCPSession, virtual Object {
 public:
 
-	RTMPSession(Poco::Net::StreamSocket& socket,Protocol& protocol,Invoker& invoker);
+	RTMPSession(const SocketAddress& address, Protocol& protocol, Invoker& invoker);
 	virtual ~RTMPSession();
 
 private:

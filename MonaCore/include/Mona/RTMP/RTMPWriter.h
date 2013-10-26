@@ -25,13 +25,12 @@ namespace Mona {
 
 
 
-class RTMPWriter : public FlashWriter {
+class RTMPWriter : public FlashWriter, virtual Object {
 public:
-	RTMPWriter(UInt8 id,const Poco::SharedPtr<RC4_KEY>& pEncryptKey,SocketHandler<Poco::Net::StreamSocket>& handler);
-	virtual ~RTMPWriter();
+	RTMPWriter(UInt8 id,const Poco::SharedPtr<RC4_KEY>& pEncryptKey,StreamSocket& socket);
 
-	const UInt8	id;
-	RTMPChannel			channel;
+	const UInt8		id;
+	RTMPChannel		channel;
 
 
 	State			state(State value=GET,bool minimal=false);
@@ -45,7 +44,9 @@ public:
 private:
 	AMFWriter&		write(AMF::ContentType type,UInt32 time=0,MemoryReader* pData=NULL);
 
-	Poco::AutoPtr<RTMPSender>	_pSender; // TODO change with WSWriter model, and solve the _pSender->run(pThread) pb!!!
+	std::shared_ptr<RTMPSender>	_pSender;
+	StreamSocket&				_socket;
+	PoolThread*					_pThread;
 };
 
 

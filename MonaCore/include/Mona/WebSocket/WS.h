@@ -32,7 +32,7 @@ namespace Mona {
 #define WS_PING		0x09 /// Ping frame.
 #define WS_PONG		0x0a /// Pong frame.
 
-class WS {
+class WS : virtual Static {
 public:
 
 	static void			ComputeKey(std::string& key);

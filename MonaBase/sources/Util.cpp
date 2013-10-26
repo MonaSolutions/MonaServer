@@ -144,7 +144,7 @@ void Util::UnpackQuery(const string& query, MapParameters& properties) {
 }
 
 
-void Util::Dump(const UInt8* in,UInt32 size,vector<UInt8>& out,const string& header) {
+void Util::Dump(const UInt8* in,UInt32 size,Buffer<UInt8>& out,const string& header) {
 	UInt32 len = 0;
 	UInt32 i = 0;
 	UInt32 c = 0;

@@ -20,7 +20,7 @@
 
 #include "Mona/Mona.h"
 #include "Mona/StreamSocket.h"
-#include <vector>
+#include "Mona/Buffer.h"
 
 namespace Mona {
 
@@ -28,11 +28,21 @@ namespace Mona {
 class TCPClient : protected StreamSocket, virtual Object {
 public:
 	TCPClient(const SocketManager& manager);
+	TCPClient(const SocketManager& manager, const SocketAddress& peerAddress);
 	virtual ~TCPClient();
 
 	bool					connect(Exception& ex, const std::string& address);
 	bool					connected() { return _connected; }
 	bool					send(Exception& ex, const UInt8* data, UInt32 size);
+
+	template<typename SenderType>
+	void send(Exception& ex, std::shared_ptr<SenderType>& pSender) {
+		StreamSocket::send<SenderType>(ex, pSender);
+	}
+	template<typename SenderType>
+	PoolThread*	send(Exception& ex, std::shared_ptr<SenderType>& pSender, PoolThread* pThread) {
+		return StreamSocket::send<SenderType>(ex, pSender, pThread);
+	}
 
 	void					disconnect();
 
@@ -48,7 +58,8 @@ private:
 
 	int						sendIntern(const UInt8* data,UInt32 size);
 
-	std::vector<UInt8>		_buffer;
+	Buffer<UInt8>			_buffer;
+	UInt32					_rest;
 	bool					_connected;
 };
 

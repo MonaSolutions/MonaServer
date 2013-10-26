@@ -66,6 +66,7 @@
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <SDLCheck>false</SDLCheck>
     </ClCompile>
     <Lib>
       <OutputFile>$(OutDir)$(ProjectName)d.lib</OutputFile>
@@ -89,6 +90,7 @@
       <DebugInformationFormat />
       <Optimization>Full</Optimization>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <SDLCheck>true</SDLCheck>
     </ClCompile>
     <Lib>
       <OutputFile>$(OutDir)$(ProjectName).lib</OutputFile>
@@ -158,6 +160,7 @@
     <ClCompile Include="sources\WinService.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\Mona\Buffer.h" />
     <ClInclude Include="include\Mona\DatagramSocket.h" />
     <ClInclude Include="include\Mona\DNS.h" />
     <ClInclude Include="include\Mona\Event.h" />

@@ -29,7 +29,7 @@
 namespace Mona {
 
 
-class RTMFPMessage {
+class RTMFPMessage : virtual Object {
 public:
 
 	RTMFPMessage(std::istream& istr,bool repeatable);
@@ -38,48 +38,39 @@ public:
 	BinaryReader&			reader(UInt32& size);
 	BinaryReader&			reader(UInt32 fragment,UInt32& size);
 
-	virtual UInt32	length();
-	UInt32			elapsed();
+	virtual UInt32			length();
+	UInt32					elapsed() { return (UInt32)(_time.elapsed() / 1000); }
 
 	void					addFragment(UInt32 size,UInt64 stage);
 
 	std::map<UInt32,UInt64>		fragments;
-	const bool								repeatable;
-	bool									canceled;
+	const bool					repeatable;
+	bool						canceled;
 	
 private:
 	virtual	UInt32	init(UInt32 position)=0;
-	BinaryReader			_reader;
+	BinaryReader	_reader;
 	Time			_time;
 };
 
-inline UInt32 RTMFPMessage::elapsed() {
-	return (UInt32)(_time.elapsed()/1000);
-}
 
 
-class RTMFPMessageUnbuffered : public RTMFPMessage {
+class RTMFPMessageUnbuffered : public RTMFPMessage, virtual Object {
 public:
 	RTMFPMessageUnbuffered(const UInt8* data,UInt32 size);
-	virtual ~RTMFPMessageUnbuffered();
-
+	
 private:
 	UInt32				init(UInt32 position);
-	UInt32				length();
+	UInt32				length() { return _size; }
 
-	MemoryInputStream			_stream;
+	MemoryInputStream	_stream;
 	UInt32				_size;
 };
 
-inline UInt32 RTMFPMessageUnbuffered::length() {
-	return _size;
-}
 
-
-class RTMFPMessageBuffered : public RTMFPMessage {
+class RTMFPMessageBuffered : public RTMFPMessage, virtual Object {
 public:
 	RTMFPMessageBuffered(bool repeatable=true);
-	virtual ~RTMFPMessageBuffered();
 
 	AMFWriter			writer;
 

@@ -29,19 +29,30 @@ public:
 	TCPServer(const SocketManager& manager);
 	virtual ~TCPServer();
 
-	bool			start(Exception& ex, UInt16 port);
-	bool			running() { return _port > 0; }
-	UInt16	port() { return _port; }
-	void			stop();
+	bool		start(Exception& ex, UInt16 port);
+	bool		running() { return _port > 0; }
+	UInt16		port() { return _port; }
+	void		stop();
+
+	template <typename ClientType,typename ...Args>
+	ClientType* acceptClient(Exception& ex, Args&... args) {
+		ASSERT_RETURN(_hasToAccept == true, NULL)
+		ClientType* pClient = acceptConnection<ClientType>(ex, args ...);
+		_hasToAccept = false;
+		return pClient;
+	}
 
 private:
-	virtual void			 clientHandler(std::shared_ptr<StreamSocket>& pSocket)=0;
+	enum ReceptionState {
+		NOTHING,
+		REQUESTING
+	};
 
-	virtual StreamSocket*    newClient() = 0;
-
+	virtual void	onClientRequest(Exception& ex) = 0;
 	virtual void	onReadable(Exception& ex);
 
 	UInt16			_port;
+	bool		  _hasToAccept;
 };
 
 

@@ -24,28 +24,20 @@
 
 namespace Mona {
 
-class RTMFProtocol : public UDProtocol  {
+class RTMFProtocol : public UDProtocol, virtual Object  {
 public:
-	RTMFProtocol(const char* name,const RTMFPParams& params,Gateway& gateway,Invoker& invoker);
-	virtual ~RTMFProtocol();
-
+	RTMFProtocol(const char* name, Invoker& invoker, Gateway& gateway) : UDProtocol(name, invoker, gateway) {}
+	
 private:
-	Poco::SharedPtr<Poco::Buffer<UInt8> >	receive(Poco::Net::SocketAddress& address);
-	UInt32								unpack(MemoryReader& packet);
+	Poco::SharedPtr<Buffer<UInt8> >		receive(Exception& ex,SocketAddress& address);
+	UInt32										unpack(MemoryReader& packet) { return  RTMFP::Unpack(packet); }
 	Session*									session(UInt32 id,MemoryReader& packet);
-	void										manage();
+	void										manage() { _pHandshake->manage(); }
 	void										check(Session& session);
+	virtual bool								load(Exception& ex, const RTMFPParams& params);
 
-	RTMFPHandshake*								_pHandshake;
+	std::unique_ptr<RTMFPHandshake>				_pHandshake;
 };
-
-inline void RTMFProtocol::manage() {
-	_pHandshake->manage();
-}
-
-inline UInt32 RTMFProtocol::unpack(MemoryReader& packet) {
-	return  RTMFP::Unpack(packet);
-}
 
 
 } // namespace Mona

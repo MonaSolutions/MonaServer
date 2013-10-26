@@ -21,3 +21,8 @@
 - void AMFReader::readTime(Time& time) -> Time& AMFReader::readTime(Time& time) ??
 - Essayer d'encapsuler les MACRO lua quand possibles (Thomas avait raison!)
 - supprimer tous les inline!
+- Gérer l'exposant dans ToNumber
+- Controler les "isBanned" depuis les scripts lua!
+- faire le tour des insert pour essayer de les remplacer par des emplace
+- Replacer les NULL et EMPTY (option) element par notre systeme
+- Ecrire la macro ASSERT_FATAL et remplacer les derniers throw

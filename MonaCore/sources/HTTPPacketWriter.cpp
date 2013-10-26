@@ -23,10 +23,6 @@ using namespace Poco;
 namespace Mona {
 
 
-HTTPPacketWriter::HTTPPacketWriter() {
-}
-
-HTTPPacketWriter::~HTTPPacketWriter() {}
 
 void HTTPPacketWriter::writeDate(const Time& date) {
 	string str;

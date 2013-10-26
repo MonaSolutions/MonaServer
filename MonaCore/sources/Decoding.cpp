@@ -19,11 +19,11 @@
 #include "Mona/Logs.h"
 
 using namespace Poco;
-using namespace Poco::Net;
+
 
 namespace Mona {
 
-Decoding::Decoding(UInt32 id,TaskHandler& taskHandler,Protocol& protocol,SharedPtr<Buffer<UInt8> >& pBuffer,const SocketAddress& address): id(id),address(address),Task(taskHandler),_pBuffer(pBuffer),_protocol(protocol),_pPacket(new MemoryReader(pBuffer->begin(),pBuffer->size())) {
+Decoding::Decoding(UInt32 id,TaskHandler& taskHandler,Protocol& protocol,SharedPtr<Buffer<UInt8> >& pBuffer,const SocketAddress& address): id(id),address(address),Task(taskHandler),_pBuffer(pBuffer),_protocol(protocol),_pPacket(new MemoryReader(pBuffer->data(),pBuffer->size())) {
 
 }
 
@@ -35,19 +35,13 @@ Decoding::~Decoding() {
 	delete _pPacket;
 }
 
-void Decoding::run() {
-	if(decode(*_pPacket))
+bool Decoding::run(Exception& ex) {
+	bool result = decode(ex, *_pPacket);
+	if (result)
 		waitHandle();
-	else
-		ERROR("Decoding error on session ",id);
-}
-
-void Decoding::handle() {
-	_protocol.receive(*this);
-}
-
-Session* Decoding::session() {
-	return _protocol.session(id,*_pPacket);
+	if(ex)
+		ex.set(ex.code(), "Decoding on session ",id," (",ex.error(),")");
+	return result;
 }
 
 

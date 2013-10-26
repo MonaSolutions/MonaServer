@@ -20,15 +20,11 @@
 
 using namespace std;
 using namespace Poco;
-using namespace Poco::Net;
 
 namespace Mona {
 
-RTMPWriter::RTMPWriter(UInt8 id,const SharedPtr<RC4_KEY>& pEncryptKey,SocketHandler<StreamSocket>& handler) : id(id),_pSender(new RTMPSender(pEncryptKey,handler)) {
+RTMPWriter::RTMPWriter(UInt8 id, const SharedPtr<RC4_KEY>& pEncryptKey, StreamSocket& socket) : id(id), _pThread(NULL), _socket(socket), _pSender(new RTMPSender(pEncryptKey)) {
 	// TODO _qos.add
-}
-
-RTMPWriter::~RTMPWriter() {
 }
 
 
@@ -51,7 +47,11 @@ void RTMPWriter::flush(bool full) {
 	}
 	if(!_pSender->available())
 		return;
-	_pSender = new RTMPSender(*_pSender);
+	Exception ex;
+	_pThread = _socket.send<RTMPSender>(ex, _pSender, _pThread);
+	if (ex)
+		ERROR("RTMPWriter flush, ", ex.error())
+	_pSender.reset(new RTMPSender(*_pSender));
 }
 
 

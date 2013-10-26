@@ -66,6 +66,7 @@
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <SDLCheck>true</SDLCheck>
     </ClCompile>
     <Lib>
       <OutputFile>$(OutDir)$(ProjectName)d.lib</OutputFile>
@@ -89,6 +90,7 @@
       <DebugInformationFormat />
       <Optimization>Full</Optimization>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <SDLCheck>true</SDLCheck>
     </ClCompile>
     <Lib>
       <OutputFile>$(OutDir)$(ProjectName).lib</OutputFile>
@@ -123,6 +125,7 @@
     <ClInclude Include="include\Mona\SDP.h" />
     <ClInclude Include="include\Mona\Server.h" />
     <ClInclude Include="include\Mona\ServerParams.h" />
+    <ClInclude Include="include\Mona\TCProtocol.h" />
     <ClInclude Include="include\Mona\UDProtocol.h" />
     <ClInclude Include="include\Mona\Writer.h" />
     <ClInclude Include="include\Mona\Protocol.h" />

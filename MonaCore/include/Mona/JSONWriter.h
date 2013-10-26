@@ -26,10 +26,9 @@
 namespace Mona {
 
 
-class JSONWriter : public DataWriter {
+class JSONWriter : public DataWriter, virtual Object {
 public:
 	JSONWriter();
-	virtual ~JSONWriter();
 
 	void beginObject(const std::string& type="",bool external=false);
 	void endObject();
@@ -50,8 +49,8 @@ public:
 	void	clear();
 private:
 
-	bool			_started;
-	bool			_first;
+	bool	_started;
+	bool	_first;
 	UInt32	_layers;
 };
 

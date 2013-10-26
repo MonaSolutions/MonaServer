@@ -19,19 +19,30 @@
 
 #include "Mona/Mona.h"
 #include "Mona/Protocol.h"
-#include "Mona/SocketHandler.h"
+#include "Mona/DatagramSocket.h"
+#include "Mona/Logs.h"
 
 namespace Mona {
 
-
-class UDProtocol : public SocketHandler<Poco::Net::DatagramSocket>,public Protocol {
+class UDProtocol : public Protocol, public DatagramSocket, virtual Object {
 protected:
-	UDProtocol(const char* name, Invoker& invoker, Gateway& gateway) : SocketHandler<Poco::Net::DatagramSocket>(invoker.sockets), Protocol(name, invoker, gateway) {}
+	UDProtocol(const char* name, Invoker& invoker, Gateway& gateway) : DatagramSocket(invoker.sockets), Protocol(name, invoker, gateway) {}
 	
+	virtual bool load(Exception& ex, const ProtocolParams& params);
 private:
-	void			onReadable() { gateway.readable(*this); }
-	void			onError(const std::string& error) { WARN("Protocol %s, %s", error.c_str(), name.c_str()); }
+	void			onReadable(Exception& ex) { gateway.readable(ex,*this); }
+	void			onError(const std::string& error) { WARN("Protocol ",name,", ", error); }
 };
+
+inline bool UDProtocol::load(Exception& ex, const ProtocolParams& params) {
+	SocketAddress address;
+	address.set(IPAddress::Wildcard(), params.port);
+	if (!bind(ex, address))
+		return false;
+	if (!listen(ex))
+		return false;
+	return true;
+}
 
 
 } // namespace Mona

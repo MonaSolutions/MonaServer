@@ -16,17 +16,16 @@
 */
 
 #include "Mona/TCPSession.h"
-#include "Poco/Format.h"
+#include "Mona/Logs.h"
 
 using namespace std;
 using namespace Poco;
-using namespace Poco::Net;
 
 namespace Mona {
 
-TCPSession::TCPSession(StreamSocket& socket,Protocol& protocol,Invoker& invoker) : _decoding(false),TCPClient(socket,invoker.sockets),Session(protocol,invoker) {
-	(SocketAddress&)peer.address = peerAddress();
-	(*peer.addresses.begin()) = peerAddress();
+TCPSession::TCPSession(const SocketAddress& peerAddress, Protocol& protocol, Invoker& invoker) : _decoding(false), TCPClient(invoker.sockets, peerAddress), Session(protocol, invoker) {
+	((SocketAddress&)peer.address).set(peerAddress);
+	peer.addresses.begin()->set(peerAddress);
 	protocol.check(*this);
 }
 
@@ -34,6 +33,7 @@ TCPSession::TCPSession(StreamSocket& socket,Protocol& protocol,Invoker& invoker)
 TCPSession::~TCPSession() {
 	
 }
+
 
 UInt32 TCPSession::onReception(const UInt8* data,UInt32 size) {
 	if(!checked) {
@@ -53,7 +53,7 @@ UInt32 TCPSession::onReception(const UInt8* data,UInt32 size) {
 	UInt32 pos = packet.position();
 	packet.reset();
 	packet.shrink(length);
-	DUMP(packet,format("Request from %s",peerAddress().toString()).c_str())
+	DUMP(packet, "Request from ", peer.address.toString());
 	packet.next(pos);
 	packetHandler(packet);
 	return size-length;

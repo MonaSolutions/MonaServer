@@ -29,9 +29,6 @@ JSONWriter::JSONWriter() : _first(true),_started(false),_layers(0) {
 	
 }
 
-JSONWriter::~JSONWriter() {
-}
-
 void JSONWriter::clear() {
 	_first=true;
 	_started=false;

@@ -32,7 +32,7 @@ class Handler;
 class Publication;
 class Listener;
 class Member;
-class Peer : public Client {
+class Peer : public Client, virtual Object {
 public:
 	Peer(Handler& handler);
 	Peer(const Peer& peer);

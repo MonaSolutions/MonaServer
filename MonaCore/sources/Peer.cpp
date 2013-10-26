@@ -24,13 +24,13 @@
 
 using namespace std;
 using namespace Poco;
-using namespace Poco::Net;
+
 
 namespace Mona {
 
 DataReaderNull	Peer::DataReaderNull;
 
-class Member {
+class Member : virtual Object {
 public:
 	Member(Poco::UInt32	index,Writer* pWriter) : index(index),pWriter(pWriter){}
 	const Poco::UInt32	index;
@@ -189,11 +189,11 @@ ICE& Peer::ice(const Peer& peer) {
 /// EVENTS ////////
 
 
-void Peer::onHandshake(Poco::UInt32 attempts,set<SocketAddress,Util::AddressComparator>& addresses) {
+void Peer::onHandshake(Poco::UInt32 attempts,set<SocketAddress>& addresses) {
 	_handler.onHandshake(protocol,address,path,*this,attempts,addresses);
 }
 
-void Peer::onRendezVousUnknown(const UInt8* peerId,set<SocketAddress,Util::AddressComparator>& addresses) {
+void Peer::onRendezVousUnknown(const UInt8* peerId,set<SocketAddress>& addresses) {
 	if(connected)
 		_handler.onRendezVousUnknown(protocol,id,addresses);
 	else

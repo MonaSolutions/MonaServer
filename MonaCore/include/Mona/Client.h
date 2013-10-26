@@ -25,29 +25,29 @@
 
 namespace Mona {
 
-class Client : public Entity, public MapParameters {
+class Client : public Entity, public MapParameters, virtual Object {
 public:
 	Client(Entities<Client>::Map& turnClients):turnClients(turnClients),_pWriter(NULL),ping(0){}
-	virtual ~Client(){}
+	Client(const Client& o) :
+		address(o.address), serverAddress(o.serverAddress),
+		path(o.path), ping(o.ping), protocol(o.protocol), turnClients(o.turnClients), _pWriter(o._pWriter) {
+	}
+
 
 	const SocketAddress				address;
 	const SocketAddress				serverAddress;
 
 	const std::string				path;
-	const UInt16				ping;
+	const UInt16					ping;
 	const std::string				protocol;
 	Entities<Client>				turnClients;
 
 	virtual bool		setName(const std::string& name)=0;
 
-	Writer&										writer();			
+	Writer&										writer() { return _pWriter ? *_pWriter : Writer::Null; }
 protected:
 	Writer*										_pWriter;
 };
-
-inline Writer&	Client::writer() {
-	return _pWriter ? *_pWriter : Writer::Null;
-}
 
 
 } // namespace Mona

@@ -24,7 +24,7 @@ using namespace Poco;
 
 namespace Mona {
 
-class ObjectRef {
+class ObjectRef : virtual Object {
 public:
 	ObjectRef(UInt32 reference,bool isObject) : reference(reference),isObject(isObject) {}
 
@@ -134,7 +134,7 @@ void AMFWriter::writeDate(const Time& date){
 	if(!_amf3) {
 		if(amf0Preference) {
 			writer.write8(AMF_DATE);
-			writer << ((double)date.toInt()/1000);
+			writer << ((double)date/1000);
 			writer.write16(0); // Timezone, useless in AMF0 format (always equals 0)
 			return;
 		}
@@ -142,7 +142,7 @@ void AMFWriter::writeDate(const Time& date){
 	}
 	writer.write8(AMF3_DATE);
 	writer.write8(0x01);
-	writer << ((double)date.toInt()/1000);
+	writer << ((double)date/1000);
 	_references.push_back(AMF3_DATE);
 	_lastReference=_references.size();
 }

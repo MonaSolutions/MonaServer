@@ -57,7 +57,8 @@ bool Options::process(Exception& ex, int argc, char* argv[], const function<void
 	}
 		
 	for (const Option& option : _options) {
-		if (option.required() && alreadyReaden.find(option.fullName()) == alreadyReaden.end()) {
+		string lowerName;
+		if (option.required() && alreadyReaden.find(String::ToLower(lowerName)) == alreadyReaden.end()) {
 			ex.set(Exception::OPTION, "Option ", option.fullName(), " required");
 			return false;
 		}
@@ -90,12 +91,13 @@ bool Options::process(Exception& ex,const string& argument, string& name, string
 		_pOption = &get(ex,name);
 		if (ex)
 			return false;
-		if (alreadyReaden.find(_pOption->fullName()) != alreadyReaden.end() && !_pOption->repeatable()) {
+		string lowerName(_pOption->fullName());
+		if (alreadyReaden.find(String::ToLower(lowerName)) != alreadyReaden.end() && !_pOption->repeatable()) {
 			_pOption = NULL;
 			ex.set(Exception::OPTION, "Option ", name, " duplicated");
 			return false;
 		}
-		alreadyReaden.insert(_pOption->fullName());
+		alreadyReaden.insert(lowerName);
 
 		if(itEnd!=end)
 			++itEnd;
