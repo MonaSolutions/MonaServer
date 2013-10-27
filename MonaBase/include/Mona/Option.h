@@ -61,36 +61,36 @@ public:
 	Option& noArgument();
 		/// Specifies that the option does not take an argument (default).
 
-	const std::string& shortName() const;
+	const std::string& shortName() const { return _shortName; }
 		/// Returns the short name of the option.
 		
-	const std::string& fullName() const;
+	const std::string& fullName() const { return _fullName; }
 		/// Returns the full name of the option.
 		
-	const std::string& description() const;
+	const std::string& description() const { return _description; }
 		/// Returns the description of the option.
 		
-	bool required() const;
+	bool required() const { return _required; }
 		/// Returns true if the option is required, false if not.
 	
-	bool repeatable() const;
+	bool repeatable() const { return _repeatable; }
 		/// Returns true if the option can be specified more than
 		/// once, or false if at most once.
 	
-	bool takesArgument() const;
+	bool takesArgument() const { return !_argName.empty(); }
 		/// Returns true if the options takes an (optional) argument.
 		
-	bool argumentRequired() const;
+	bool argumentRequired() const { return _argRequired; }
 		/// Returns true if the argument is required.
 
-	const std::string& argumentName() const;
+	const std::string& argumentName() const { return _argName; }
 		/// Returns the argument name, if specified.
 
 
-	bool operator==(const Option& other) const;
-	bool operator!=(const Option& other) const;
-	bool operator<(const Option& other) const;
-	bool operator>(const Option& other) const;
+	bool operator==(const Option& other) const { return stricmp(_fullName.c_str(), other._fullName.c_str()) == 0 || stricmp(_shortName.c_str(), other._shortName.c_str()) == 0; }
+	bool operator!=(const Option& other) const { return !operator==(other); }
+	bool operator<(const Option& other) const { return _fullName < other._fullName; }
+	bool operator>(const Option& other) const { return _fullName > other._fullName; }
 
 private:
 	std::string		_shortName;
@@ -105,47 +105,6 @@ private:
 };
 
 
-//
-// inlines
-//
-
-inline bool Option::operator==(const Option& other) const {
-	return _fullName == other._fullName || _shortName == other._shortName;
-}
-inline bool Option::operator!=(const Option& other) const {
-	return _fullName != other._fullName && _shortName != other._shortName;
-}
-inline bool Option::operator<(const Option& other) const {
-	return _fullName < other._fullName;
-}
-inline bool Option::operator>(const Option& other) const {
-	return _fullName > other._fullName;
-}
-
-inline const std::string& Option::shortName() const {
-	return _shortName;
-}
-inline const std::string& Option::fullName() const {
-	return _fullName;
-}
-inline const std::string& Option::description() const {
-	return _description;
-}
-inline bool Option::required() const {
-	return _required;
-}
-inline bool Option::repeatable() const {
-	return _repeatable;
-}
-inline bool Option::takesArgument() const {
-	return !_argName.empty();
-}	
-inline bool Option::argumentRequired() const {
-	return _argRequired;
-}
-inline const std::string& Option::argumentName() const {
-	return _argName;
-}
 
 
 } // namespace Mona

@@ -20,7 +20,7 @@
 #include "Mona/Mona.h"
 #include "Mona/MemoryReader.h"
 #include "Mona/AMF.h"
-#include "Poco/Buffer.h"
+#include "Mona/Buffer.h"
 #include <openssl/rc4.h>
 
 
@@ -29,7 +29,7 @@ namespace Mona {
 #define DEFAULT_CHUNKSIZE	128
 
 
-class RTMPChannel {
+class RTMPChannel : virtual Object {
 public:
 	RTMPChannel():headerSize(0),time(0),bodySize(0),type(AMF::EMPTY),streamId(0){}
 	virtual ~RTMPChannel(){}
@@ -42,15 +42,15 @@ public:
 };
 
 
-class RTMP {
+class RTMP : virtual Static {
 public:
 
 	static UInt32			GetDigestPos(const UInt8* data,bool middle);
 	static UInt32			GetDHPos(const UInt8* data,bool middle);
-	static const UInt8*	ValidateClient(MemoryReader& packet,bool& middleKey);
-	static const UInt8*	ValidateClientScheme(MemoryReader& packet,bool middleKey);
-	static void					WriteDigestAndKey(UInt8* data,const UInt8* challengeKey,bool middleKey);
-	static void					ComputeRC4Keys(const UInt8* pubKey,UInt32 pubKeySize,const UInt8* farPubKey,UInt32 farPubKeySize,const Poco::Buffer<UInt8>& sharedSecret,RC4_KEY& decryptKey,RC4_KEY& encryptKey);
+	static const UInt8*		ValidateClient(MemoryReader& packet,bool& middleKey);
+	static const UInt8*		ValidateClientScheme(MemoryReader& packet,bool middleKey);
+	static void				WriteDigestAndKey(UInt8* data,const UInt8* challengeKey,bool middleKey);
+	static void				ComputeRC4Keys(const UInt8* pubKey,UInt32 pubKeySize,const UInt8* farPubKey,UInt32 farPubKeySize,const Buffer<UInt8>& sharedSecret,RC4_KEY& decryptKey,RC4_KEY& encryptKey);
 
 };
 

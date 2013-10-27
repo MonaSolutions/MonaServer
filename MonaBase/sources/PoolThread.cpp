@@ -55,18 +55,11 @@ void PoolThread::run(Exception& ex) {
 
 			try {
 				Exception ex;
-				bool success = pWork->run(ex);
-				if (ex) {
-					if (!success)
-						ERROR("Pool thread %s, %s", name().c_str(), ex.error().c_str())
-					else
-						WARN("Pool thread %s, %s", name().c_str(), ex.error().c_str());
-				} else if (!success)
-					ERROR("Pool thread %s, unknown error", name().c_str());
+				EXCEPTION_TO_LOG(pWork->run(ex), "Pool thread ", name());
 			} catch (exception& ex) {
-				ERROR("Pool thread %s, %s", name().c_str(), ex.what());
+				ERROR("Pool thread ",name(),", ",ex.what());
 			} catch (...) {
-				ERROR("Pool thread %s, unknown error", name().c_str());
+				ERROR("Pool thread ", name(),", unknown error");
 			}
 
 			{

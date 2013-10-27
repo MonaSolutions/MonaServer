@@ -23,22 +23,16 @@
 namespace Mona {
 
 
-class RTMFPDecoding : public Decoding {
+class RTMFPDecoding : public Decoding, virtual Object {
 public:
-	RTMFPDecoding(UInt32 id,TaskHandler& taskHandler,Protocol& protocol,Poco::SharedPtr<Poco::Buffer<UInt8> >& pBuffer,const Poco::Net::SocketAddress& address): Decoding(id,taskHandler,protocol,pBuffer,address){}
-	virtual ~RTMFPDecoding(){}
+	RTMFPDecoding(UInt32 id,TaskHandler& taskHandler,Protocol& protocol,Poco::SharedPtr<Buffer<UInt8> >& pBuffer,const SocketAddress& address): Decoding(id,taskHandler,protocol,pBuffer,address){}
 
-	RTMFPEngine					decoder;
+	RTMFPEngine	  decoder;
 
 private:
-	bool						decode(MemoryReader& packet);
+	bool		  decode(Exception& ex,MemoryReader& packet) { packet.next(4); return RTMFP::Decode(decoder, packet); }
 
 };
-
-inline bool RTMFPDecoding::decode(MemoryReader& packet) {
-	packet.next(4);
-	return RTMFP::Decode(decoder,packet);
-}
 
 
 

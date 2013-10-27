@@ -17,7 +17,7 @@
 #pragma once
 
 #include "Mona/Mona.h"
-#include "Poco/Buffer.h"
+#include "Mona/Buffer.h"
 #include <openssl/dh.h>
 
 
@@ -31,42 +31,17 @@ public:
 	virtual ~DiffieHellman();
 
 	bool	initialize(bool reset=false);
-	int		publicKeySize();
-	int		privateKeySize();
-	void	writePublicKey(Poco::UInt8* pubKey);
-	void	writePrivateKey(Poco::UInt8* privKey);
-	void	computeSecret(const Poco::Buffer<Poco::UInt8>& farPubKey,Poco::Buffer<Poco::UInt8>& sharedSecret);
+	int		publicKeySize() { initialize(); return BN_num_bytes(_pDH->pub_key); }
+	int		privateKeySize() { initialize();  return BN_num_bytes(_pDH->priv_key); }
+	void	writePublicKey(Poco::UInt8* pubKey) { initialize(); writeKey(_pDH->pub_key, pubKey); }
+	void	writePrivateKey(Poco::UInt8* privKey) { initialize();  writeKey(_pDH->priv_key, privKey); }
+	void	computeSecret(const Buffer<UInt8>& farPubKey,Buffer<UInt8>& sharedSecret);
 
 private:
-	void	writeKey(BIGNUM *pKey,Poco::UInt8* key);
+	void	writeKey(BIGNUM *pKey, UInt8* key) { BN_bn2bin(pKey, key); }
 
 	DH*			_pDH;
 };
-
-inline int DiffieHellman::privateKeySize() {
-	initialize();
-	return BN_num_bytes(_pDH->priv_key);
-}
-
-inline int DiffieHellman::publicKeySize() {
-	initialize();
-	return BN_num_bytes(_pDH->pub_key);
-}
-
-inline void DiffieHellman::writePublicKey(Poco::UInt8* pubKey) {
-	initialize();
-	writeKey(_pDH->pub_key,pubKey);
-}
-
-inline void DiffieHellman::writePrivateKey(Poco::UInt8* privKey) {
-	initialize();
-	writeKey(_pDH->priv_key, privKey);
-}
-
-inline void DiffieHellman::writeKey(BIGNUM *pKey,Poco::UInt8* key) {
-	BN_bn2bin(pKey,key);
-}
-
 
 
 } // namespace Mona

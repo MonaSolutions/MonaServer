@@ -21,26 +21,14 @@
 
 using namespace std;
 using namespace Poco;
-using namespace Poco::Net;
+
 
 namespace Mona {
 
-RTMPSender::RTMPSender(const SharedPtr<RC4_KEY>& pEncryptKey,SocketHandler<StreamSocket>& handler): TCPSender(handler,true),_pEncryptKey(pEncryptKey),_chunkSize(DEFAULT_CHUNKSIZE),_sizePos(0) {
+RTMPSender::RTMPSender(const SharedPtr<RC4_KEY>& pEncryptKey): TCPSender(true),_pEncryptKey(pEncryptKey),_chunkSize(DEFAULT_CHUNKSIZE),_sizePos(0) {
 }
 
-RTMPSender::RTMPSender(const RTMPSender& sender): TCPSender(sender.handler,true),_pEncryptKey(sender._pEncryptKey),_chunkSize(DEFAULT_CHUNKSIZE),_sizePos(0) {
-}
-
-RTMPSender::~RTMPSender() {
-
-}
-
-bool RTMPSender::flush() {
-	pack();
-	dump();
-	if(!_pEncryptKey.isNull())
-		RC4(_pEncryptKey.get(),size(),begin(),(UInt8*)begin());
-	return TCPSender::flush();
+RTMPSender::RTMPSender(const RTMPSender& sender): TCPSender(true),_pEncryptKey(sender._pEncryptKey),_chunkSize(DEFAULT_CHUNKSIZE),_sizePos(0) {
 }
 
 void RTMPSender::pack() {
@@ -56,6 +44,14 @@ void RTMPSender::pack() {
 		writer.stream.resetWriting(_sizePos-4+_channel.headerSize+_channel.bodySize);
 		_sizePos=0;
 	}
+}
+
+bool RTMPSender::run(Exception& ex) {
+	pack();
+	dump();
+	if (!_pEncryptKey.isNull())
+		RC4(_pEncryptKey.get(), size(), begin(), (UInt8*)begin());
+	return TCPSender::run(ex);
 }
 
 AMFWriter& RTMPSender::write(UInt32 id,AMF::ContentType type,UInt32 time,UInt32 streamId,MemoryReader* pData) {

@@ -24,27 +24,17 @@
 
 namespace Mona {
 
-class HTTPSender : public TCPSender {
+class HTTPSender : public TCPSender, virtual Object {
 public:
-	HTTPSender(SocketHandler<Poco::Net::StreamSocket>& handler) : TCPSender(handler,true) {}
-	virtual ~HTTPSender() {}
-	
+	HTTPSender() : TCPSender(true) {}
+
 	HTTPPacketWriter	writer;
 private:
 
-	const UInt8*	begin(bool displaying=false);
-	UInt32		size(bool displaying=false);
+	const UInt8*	begin(bool displaying = false) { return	writer.stream.data(); }
+	UInt32			size(bool displaying = false) { return writer.stream.size(); }
 
 };
-
-inline const UInt8* HTTPSender::begin(bool displaying) {
-	return	writer.stream.data();
-}
-
-inline UInt32 HTTPSender::size(bool displaying) {
-	return writer.stream.size();
-}
-
 
 
 } // namespace Mona

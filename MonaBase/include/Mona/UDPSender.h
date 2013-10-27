@@ -28,7 +28,6 @@ class UDPSender : public SocketSender, virtual Object {
 public:
 	UDPSender(bool dump = false) : SocketSender(dump) {}
 	UDPSender(const UInt8* data, UInt32 size, bool dump = false) : SocketSender(data, size, dump) {}
-	virtual ~UDPSender(){}
 
 	SocketAddress			address;
 private:

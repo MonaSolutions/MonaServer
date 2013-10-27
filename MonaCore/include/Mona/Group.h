@@ -26,10 +26,11 @@
 namespace Mona {
 
 
-class GroupIterator {
+class GroupIterator : virtual Object {
 	friend class Group;
 public:
 	GroupIterator():_pPeers(NULL){}
+	GroupIterator(const GroupIterator& other) :_pPeers(other._pPeers),_it(other._it) {}
 	GroupIterator(std::map<UInt32,Peer*>& peers,bool end=false) : _pPeers(&peers),_it(end ? peers.end() : peers.begin()) {}
 	bool		  operator !=(const GroupIterator& other) { return _it!=other._it; }
 	bool		  operator ==(const GroupIterator& other) { return _it==other._it; }
@@ -42,7 +43,7 @@ private:
 };
 
 
-class Group : public Entity {
+class Group : public Entity, virtual Object {
 	friend class Peer;
 public:
 	Group(const UInt8* id) {
@@ -52,37 +53,17 @@ public:
 
 	typedef GroupIterator Iterator;
 
-	Iterator begin();
-	Iterator end();
-	UInt32  size();
+	Iterator begin() { return GroupIterator(_peers); }
+	Iterator end() { return GroupIterator(_peers, true); }
+	UInt32  size() { return _peers.size(); }
 
-	static UInt32 Distance(Iterator& it0,Iterator& it1);
-	static void Advance(Iterator& it,UInt32 count);
+	static UInt32 Distance(Iterator& it0, Iterator& it1) { return distance(it0._it, it1._it); }
+	static void Advance(Iterator& it, UInt32 count) { advance(it._it, count); }
 
 private:
 	std::map<UInt32,Peer*> 	_peers;
 };
 
-
-inline UInt32 Group::Distance(Iterator& it0,Iterator& it1) {
-	return distance(it0._it,it1._it);
-}
- 	 
-inline void Group::Advance(Iterator& it,UInt32 count) {
-	advance(it._it,count);
-}
-
-inline Group::Iterator Group::begin() {
-	return GroupIterator(_peers);
-}
-
-inline Group::Iterator Group::end() {
-	return GroupIterator(_peers,true);
-}
-
-inline UInt32 Group::size() {
-	return _peers.size();
-}
 
 
 } // namespace Mona

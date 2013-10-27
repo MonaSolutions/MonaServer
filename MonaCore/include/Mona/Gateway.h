@@ -19,7 +19,6 @@
 
 #include "Mona/Mona.h"
 #include "Mona/Peer.h"
-#include "Poco/Net/SocketAddress.h"
 #include <set>
 
 namespace Mona {
@@ -27,16 +26,14 @@ namespace Mona {
 class Session;
 class Decoding;
 class Protocol;
-class Gateway {
+class Gateway : virtual Object {
 public:
-	Gateway(){}
-	virtual ~Gateway(){}
-	
+
 	virtual Session*	session(const UInt8* peerId)=0;
 	virtual Session*	session(const SocketAddress& address)=0;
 
 	virtual Session&	registerSession(Session* pSession)=0;
-	virtual void		readable(Protocol& protocol)=0;
+	virtual void		readable(Exception& ex,Protocol& protocol)=0;
 	virtual void		receive(Decoding& decoded)=0;
 };
 

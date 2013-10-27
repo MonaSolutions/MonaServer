@@ -27,7 +27,6 @@ namespace Mona {
 class DatagramSocket : public Socket, virtual Object {
 public:
 	DatagramSocket(const SocketManager& manager) : Socket(manager, SOCK_DGRAM) {}
-	virtual ~DatagramSocket() {}
 
 	bool bind(Exception& ex, const SocketAddress& address, bool reuseAddress = true) { return Socket::bind(ex, address, reuseAddress); }
 	bool connect(Exception& ex, const SocketAddress& address) { return Socket::connect(ex, address); }

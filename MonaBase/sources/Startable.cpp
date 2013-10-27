@@ -45,8 +45,6 @@ Startable::Startable(const string& name) : _name(name),_thread(name),_stop(true)
 }
 
 Startable::~Startable() {
-	if(running())
-		WARN("Startable::stop should be called by the child class");
 	stop();
 }
 

@@ -20,42 +20,33 @@
 #include "Mona/Mona.h"
 #include "Mona/TCPSender.h"
 #include "Mona/MemoryWriter.h"
-#include "Poco/Buffer.h"
+#include "Mona/Buffer.h"
 #include "Poco/SharedPtr.h"
 #include <openssl/rc4.h>
 
 namespace Mona {
 
-class RTMPHandshaker : public TCPSender {
+class RTMPHandshaker : public TCPSender, virtual Object {
 public:
-	RTMPHandshaker(const UInt8* data, UInt32 size,SocketHandler<Poco::Net::StreamSocket>& handler);
-	RTMPHandshaker(const UInt8* farPubKey,const UInt8* challengeKey,bool middle,const Poco::SharedPtr<RC4_KEY>& pDecryptKey,const Poco::SharedPtr<RC4_KEY>& pEncryptKey,SocketHandler<Poco::Net::StreamSocket>& handler);
-	virtual ~RTMPHandshaker();
+	RTMPHandshaker(const UInt8* data, UInt32 size);
+	RTMPHandshaker(const UInt8* farPubKey,const UInt8* challengeKey,bool middle,const Poco::SharedPtr<RC4_KEY>& pDecryptKey,const Poco::SharedPtr<RC4_KEY>& pEncryptKey);
 
 private:
 	
-	bool flush();
-	void flushComplex();
+	bool run(Exception& ex);
+	void runComplex();
 
-	const UInt8*	begin(bool displaying=false);
-	UInt32		size(bool displaying=false);
+	const UInt8*	begin(bool displaying = false) { return _writer.begin(); }
+	UInt32			size(bool displaying = false) { return _writer.length(); }
 
 	UInt8					_buffer[3073];
-	MemoryWriter				_writer;
-	Poco::Buffer<UInt8>	_farPubKey;
+	MemoryWriter			_writer;
+	Buffer<UInt8>		_farPubKey;
 	UInt8					_challengeKey[HMAC_KEY_SIZE];	
 	bool						_middle;
 	Poco::SharedPtr<RC4_KEY>	_pEncryptKey;
 	Poco::SharedPtr<RC4_KEY>	_pDecryptKey;
 };
-
-inline const UInt8* RTMPHandshaker::begin(bool displaying) {
-	return _writer.begin();
-}
-
-inline UInt32 RTMPHandshaker::size(bool displaying) {
-	return _writer.length();
-}
 
 
 } // namespace Mona

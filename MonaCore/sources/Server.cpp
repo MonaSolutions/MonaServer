@@ -17,16 +17,15 @@
 
 #include "Mona/Server.h"
 #include "Mona/Decoding.h"
-#include "Mona/Util.h"
 #include "Poco/Format.h"
 
 
 using namespace std;
 using namespace Poco;
-using namespace Poco::Net;
 
 
 namespace Mona {
+
 
 ServerManager::ServerManager(Server& server):_server(server),Task(server),Startable("ServerManager"){
 }
@@ -105,17 +104,17 @@ void Server::run(Exception& exc) {
 }
 
 
-void Server::readable(Protocol& protocol) {
+void Server::readable(Exception& ex,Protocol& protocol) {
 
 	if(!TaskHandler::running()) // If terminad it means that sessions have been deleted: no more reception!
 		return;
 
 	SocketAddress address;
-	SharedPtr<Buffer<UInt8> > pBuffer = protocol.receive(address);
-	if(pBuffer.isNull() || !protocol.auth(address))
+	SharedPtr<Buffer<UInt8> > pBuffer = protocol.receive(ex,address);
+	if(ex || pBuffer.isNull() || !protocol.auth(address))
 		return;
 
-	MemoryReader reader(pBuffer->begin(),pBuffer->size());
+	MemoryReader reader(pBuffer->data(),pBuffer->size());
 
 	UInt32 id = protocol.unpack(reader);
 	Session* pSession = protocol.session(id,reader);
@@ -141,9 +140,10 @@ void Server::receive(Decoding& decoded) {
 	if(!pSession)
 		return; // No warn because can have been deleted during decoding threading process
 
-	if(!Util::SameAddress(decoded.address,pSession->peer.address)) {
-		SocketAddress oldAddress = pSession->peer.address;
-		(*pSession->peer.addresses.begin()) = (SocketAddress&)pSession->peer.address = decoded.address;
+	if(decoded.address != pSession->peer.address) {
+		SocketAddress oldAddress(pSession->peer.address);
+		((SocketAddress&)pSession->peer.address).set(decoded.address);
+		pSession->peer.addresses.begin()->set(decoded.address);
 		if(pSession->id!=0) // If session is managed by _sessions! (register with Gateway::registerSession)
 			_sessions.changeAddress(oldAddress,*pSession);
 	}

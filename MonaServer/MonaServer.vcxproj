@@ -65,6 +65,7 @@
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <ExceptionHandling>Sync</ExceptionHandling>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <SDLCheck>true</SDLCheck>
     </ClCompile>
     <Link>
       <AdditionalDependencies>lua51.lib;MonaBased.lib;MonaCored.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -95,6 +96,7 @@
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <SDLCheck>true</SDLCheck>
     </ClCompile>
     <Link>
       <AdditionalDependencies>lua51.lib;MonaBase.lib;MonaCore.lib;%(AdditionalDependencies)</AdditionalDependencies>

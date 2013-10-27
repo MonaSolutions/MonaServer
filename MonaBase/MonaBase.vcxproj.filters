@@ -321,5 +321,8 @@
     <ClInclude Include="include\Mona\FileWatcher.h">
       <Filter>sources\File</Filter>
     </ClInclude>
+    <ClInclude Include="include\Mona\Buffer.h">
+      <Filter>sources\Util</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

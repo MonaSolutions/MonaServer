@@ -70,7 +70,7 @@ Time& Time::update(struct tm& tmtime, int milli /* = 0*/, int micro /* = 0*/) {
 	return *this;
 }
 
-bool Time::isValid(struct tm& tmtime, int milli /* = 0 */, int micro /* = 0 */) {
+bool Time::IsValid(struct tm& tmtime, int milli /* = 0 */, int micro /* = 0 */) {
 
 	// Does it can be converted?
 	if (timegm(&tmtime) == -1)
@@ -186,12 +186,23 @@ bool Time::fromString(const string &in) {
 
 struct tm& Time::toLocal(struct tm& tmtime) const {
 	time_t date = chrono::system_clock::to_time_t(_time);
-	return tmtime = *localtime(&date);
+	LOCALTIME(date, tmtime);
+	return tmtime;
 }
 
 struct tm& Time::toGMT(struct tm& tmtime) const {
 	time_t date = chrono::system_clock::to_time_t(_time);
-	return tmtime = *gmtime(&date);
+	GMTIME(date, tmtime);
+	return tmtime;
+}
+
+
+int Time::hour2AMPM(int hour) const {
+	if (hour < 1)
+		return 12;
+	else if (hour > 12)
+		return hour - 12;
+	return hour;
 }
 
 } // namespace Mona

@@ -42,21 +42,17 @@ public:
 	static void			SetDump(DumpMode mode) { _DumpMode = mode; }
 	static DumpMode		GetDump() { return _DumpMode; }
 
-	static void			Dump(const Poco::UInt8* data, Poco::UInt32 size, const char* header = NULL);
-	static void			Dump(MemoryReader& packet, const char* header = NULL) { Dump(packet.current(), packet.available(), header); }
-	static void			Dump(MemoryWriter& packet, const char* header = NULL) { Dump(packet.begin(), packet.length(), header); }
-	static void			Dump(MemoryWriter& packet, Poco::UInt16 offset, const char* header = NULL) { Dump(packet.begin() + offset, packet.length() - offset, header); }
-	
+
 	template <typename ...Args>
 	static void	Log(Logger::Priority prio, const char* file, long line, const Args&... args) {
 		if (_Level < prio)
 			return;
 		Poco::Path path(file);
-		string shortFile;
+		std::string shortFile;
 		if (path.depth() > 0)
 			shortFile.assign(path.directory(path.depth() - 1) + "/");
 		shortFile.append(path.getFileName());
-		string message;
+		std::string message;
 		String::Format(message, args ...);
 		if (_PLogger)
 			_PLogger->log(Poco::Thread::currentTid(), Poco::Thread::current() ? Poco::Thread::current()->name() : "", prio, file, shortFile, line, message);
@@ -66,8 +62,8 @@ public:
 
 	template <typename ...Args>
 	static void Dump(const UInt8* data, UInt32 size, const Args&... args) {
-		vector<UInt8> out;
-		string header;
+		Buffer<UInt8> out;
+		std::string header;
 		String::Format(header, args ...);
 		Util::Dump(data, size, out, header);
 		if (out.size() == 0)
@@ -77,6 +73,13 @@ public:
 		else
 			_DefaultLogger.dump(&out[0], out.size());
 	}
+	template <typename ...Args>
+	static void	Dump(MemoryReader& packet, const Args&... args) { Dump(packet.current(), packet.available(), args ...);	}
+	template <typename ...Args>
+	static void	Dump(MemoryWriter& packet, const Args&... args) { Dump(packet.begin(), packet.length(), args ...); }
+	template <typename ...Args>
+	static void	Dump(MemoryWriter& packet, UInt16 offset, const Args&... args) { Dump(packet.begin() + offset, packet.length() - offset, args ...); }
+
 
 private:
 	static Logger*		_PLogger;

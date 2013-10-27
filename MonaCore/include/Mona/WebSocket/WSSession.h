@@ -25,10 +25,10 @@
 namespace Mona {
 
 
-class WSSession : public TCPSession {
+class WSSession : public TCPSession, virtual Object {
 public:
 
-	WSSession(Poco::Net::StreamSocket& socket,Protocol& protocol,Invoker& invoker);
+	WSSession(const SocketAddress& address, Protocol& protocol, Invoker& invoker);
 	virtual ~WSSession();
 
 
@@ -37,22 +37,17 @@ public:
 	void			manage();
 
 protected:
-	WSWriter&		wsWriter();
+	WSWriter&		wsWriter() { return _writer; }
 	void			kill();
 	
 private:
 
 	WSWriter			_writer;
-	Time		_time;
+	Time				_time;
 	Publication*		_pPublication;
 	Listener*			_pListener;
 	Poco::UInt32		_decoded;
 };
-
-inline WSWriter& WSSession::wsWriter() {
-	return _writer;
-}
-	
 
 
 } // namespace Mona

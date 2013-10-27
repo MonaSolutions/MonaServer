@@ -31,8 +31,6 @@ namespace Mona {
 HTTPPacketReader::HTTPPacketReader(MemoryReader& reader):DataReader(reader),_number(0),_type(MAP) {
 }
 
-HTTPPacketReader::~HTTPPacketReader() {
-}
 
 void HTTPPacketReader::reset() {
 	DataReader::reset();
@@ -47,6 +45,7 @@ string& HTTPPacketReader::readString(string& value) {
 	value.assign(_value);
 	_value.clear();
 	_type = MAP;
+	return value;
 }
 
 Time& HTTPPacketReader::readTime(Time& time) {

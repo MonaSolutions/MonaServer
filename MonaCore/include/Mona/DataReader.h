@@ -24,7 +24,7 @@
 
 namespace Mona {
 
-class DataReader {
+class DataReader : virtual Object {
 public:
 	enum Type {
 		NIL=0,
@@ -72,11 +72,11 @@ protected:
 private:
 	void						read(Type type,DataWriter& writer);
 
-	UInt32				_pos;
+	UInt32						_pos;
 };
 
 
-class DataReaderNull : public DataReader {
+class DataReaderNull : public DataReader, virtual Object {
 public:
 	DataReaderNull() : DataReader(MemoryReader::Null) {}
 

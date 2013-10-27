@@ -19,6 +19,7 @@
 #include "Mona/MapParameters.h"
 #include "Mona/SocketAddress.h"
 #include "Poco/NullStream.h"
+#include "Mona/Buffer.h"
 #include "Mona/Exceptions.h"
 #include <cstring>
 #include <vector>
@@ -34,8 +35,8 @@ public:
 	static UInt8 Get7BitValueSize(UInt32 value) { return Get7BitValueSize((UInt64)value); }
 	static UInt8 Get7BitValueSize(UInt64 value);
 
-	static void Dump(const UInt8* in, UInt32 size, std::vector<UInt8>& out) { std::string header; Dump(in,size,out,header); }
-	static void Dump(const UInt8* in, UInt32 size,std::vector<UInt8>& out,const std::string& header);
+	static void Dump(const UInt8* in, UInt32 size, Buffer<UInt8>& out) { std::string header; Dump(in, size, out, header); }
+	static void Dump(const UInt8* in, UInt32 size, Buffer<UInt8>& out, const std::string& header);
 
 	static bool UnpackUrl(Exception& ex, const std::string& url, std::string& path, MapParameters& properties);
 	static bool UnpackUrl(Exception& ex, const std::string& url, std::string& path, std::string& file, MapParameters& properties);

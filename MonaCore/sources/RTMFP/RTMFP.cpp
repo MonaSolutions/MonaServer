@@ -57,9 +57,6 @@ RTMFPEngine& RTMFPEngine::operator=(const RTMFPEngine& engine) {
 }
 
 
-RTMFPEngine::~RTMFPEngine() {
-}
-
 void RTMFPEngine::process(const UInt8* in,UInt8* out,UInt32 size) {
 	if(type==EMPTY)
 		return;
@@ -159,14 +156,9 @@ void RTMFP::ComputeAsymetricKeys(const Buffer<UInt8>& sharedSecret, const UInt8*
 	HMAC(EVP_sha256(),initiatorNonce,initNonceSize,responderNonce,respNonceSize,mdp2,NULL);
 
 	// now doing HMAC-sha256 of both result with the shared secret DH key
-	HMAC(EVP_sha256(),sharedSecret.begin(),sharedSecret.size(),mdp1,HMAC_KEY_SIZE,requestKey,NULL);
-	HMAC(EVP_sha256(),sharedSecret.begin(),sharedSecret.size(),mdp2,HMAC_KEY_SIZE,responseKey,NULL);
+	HMAC(EVP_sha256(),&sharedSecret[0],sharedSecret.size(),mdp1,HMAC_KEY_SIZE,requestKey,NULL);
+	HMAC(EVP_sha256(),&sharedSecret[0],sharedSecret.size(),mdp2,HMAC_KEY_SIZE,responseKey,NULL);
 }
-
-UInt16 RTMFP::Time(Int64 timeVal) {
-	return (UInt32)ROUND(timeVal/(1000.0*RTMFP_TIMESTAMP_SCALE));
-}
-
 
 
 

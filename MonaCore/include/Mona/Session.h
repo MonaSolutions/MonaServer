@@ -24,7 +24,7 @@
 
 namespace Mona {
 
-class Session {
+class Session : virtual Object {
 public:
 
 	const UInt32	id;
@@ -38,7 +38,7 @@ public:
 	virtual ~Session();
 
 	void						receive(MemoryReader& packet);
-	virtual MemoryReader*		decode(Poco::SharedPtr<Poco::Buffer<UInt8> >& pBuffer, const SocketAddress& address) { return new MemoryReader(pBuffer->begin(), pBuffer->size()); }
+	virtual MemoryReader*		decode(Poco::SharedPtr<Buffer<UInt8> >& pBuffer, const SocketAddress& address) { return new MemoryReader(pBuffer->data(), pBuffer->size()); }
 	virtual void				manage() {}
 	virtual void				kill();
 
@@ -49,7 +49,8 @@ protected:
 	Invoker&			invoker;
 	Protocol&			protocol;
 
-	void decode(Decoding* pDecoding);
+	template<typename DecodingType>
+	void decode(std::shared_ptr<DecodingType>& pDecoding) { _pDecodingThread = invoker.poolThreads.enqueue<DecodingType>(pDecoding, _pDecodingThread); }
 
 	const std::string& reference();
 

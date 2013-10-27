@@ -48,8 +48,8 @@ public:
 
 	Type			followingType();
 
-	void			startReferencing();
-	void			stopReferencing();
+	void			startReferencing() { _referencing = true; }
+	void			stopReferencing() { _referencing = false; }
 
 	void			reset();
 
@@ -64,16 +64,8 @@ private:
 	std::vector<UInt32>		_amf0References;
 	UInt32					_amf0Reset;
 	UInt32					_amf3;
-	bool							_referencing;
+	bool					_referencing;
 };
-
-inline void AMFReader::startReferencing() {
-	_referencing=true;
-}
-
-inline void	AMFReader::stopReferencing() {
-	_referencing=false;
-}
 
 
 

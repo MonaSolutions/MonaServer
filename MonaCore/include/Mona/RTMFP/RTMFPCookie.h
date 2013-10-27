@@ -25,53 +25,39 @@
 
 namespace Mona {
 
-class RTMFPCookie {
+class RTMFPCookie : virtual Object {
 public:
-	RTMFPCookie(Exception& ex, RTMFPHandshake& handshake,Invoker& invoker,const std::string& tag,const std::string& queryUrl); // For normal cookie
-	virtual ~RTMFPCookie();
-
-	const UInt32				id;
-	const UInt32				farId;
-	const std::string				tag;
-	const std::string				queryUrl;
+	RTMFPCookie(RTMFPHandshake& handshake,Invoker& invoker,const std::string& tag,const std::string& queryUrl); // For normal cookie
+	
+	const UInt32			id;
+	const UInt32			farId;
+	const std::string		tag;
+	const std::string		queryUrl;
 
 	const UInt8				peerId[ID_SIZE];
-	const Poco::Net::SocketAddress	peerAddress;
+	const SocketAddress		peerAddress;
 
-	const UInt8*				value();
+	const UInt8*			value() { return _pCookieComputing->value; }
 	const UInt8				decryptKey[HMAC_KEY_SIZE];
 	const UInt8				encryptKey[HMAC_KEY_SIZE];
 	
-	void							computeSecret(Exception& ex, const UInt8* initiatorKey,UInt32 sizeKey,const UInt8* initiatorNonce,UInt32 sizeNonce);
-	void							finalize();
+	void					computeSecret(Exception& ex, const UInt8* initiatorKey,UInt32 sizeKey,const UInt8* initiatorNonce,UInt32 sizeNonce);
+	void					finalize();
 
-	bool							obsolete();
+	bool					obsolete() { return _createdTimestamp.isElapsed(120000000);}  // after 2 mn
 
-	UInt16					length();
+	UInt16					length() { return _writer.length() + 4; }
 	UInt16					read(MemoryWriter& writer);
 private:
-	PoolThread*						_pComputingThread;
-	Poco::AutoPtr<RTMFPCookieComputing>	_pCookieComputing;
-	Time					_createdTimestamp;
+	PoolThread*								_pComputingThread;
+	std::shared_ptr<RTMFPCookieComputing>	_pCookieComputing;
+	Time									_createdTimestamp;
 
-	UInt8						_buffer[256];
-	MemoryWriter					_writer;
-	Invoker&						_invoker;
-	Poco::Buffer<UInt8>		_initiatorNonce;
+	UInt8									_buffer[256];
+	MemoryWriter							_writer;
+	Invoker&								_invoker;
+	Buffer<UInt8>						_initiatorNonce;
 };
-
-inline const UInt8* RTMFPCookie::value() {
-	return _pCookieComputing->value;
-}
-
-inline UInt16	RTMFPCookie::length() {
-	return _writer.length()+4;
-}
-
-inline bool RTMFPCookie::obsolete() {
-	return _createdTimestamp.isElapsed(120000000); // after 2 mn
-}
-
 
 
 } // namespace Mona

@@ -18,19 +18,17 @@
 #pragma once
 
 #include "Mona/Mona.h"
-#include "Mona/Protocol.h"
-#include "Mona/TCPServer.h"
+#include "Mona/TCProtocol.h"
 
 namespace Mona {
 
-class HTTProtocol : public Protocol, private TCPServer {
+class HTTProtocol : public TCProtocol, virtual Object {
 public:
-	HTTProtocol(const char* name,const HTTPParams& params,Gateway& gateway,Invoker& invoker);
-	virtual ~HTTProtocol();
+	HTTProtocol(const char* name, Invoker& invoker, Gateway& gateway) : TCProtocol(name, invoker, gateway) {}
 
 private:
 	// TCPServer implementation
-	void	clientHandler(Poco::Net::StreamSocket& socket);
+	void	onClientRequest(Exception& ex);
 };
 
 

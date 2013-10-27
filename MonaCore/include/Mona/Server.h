@@ -21,19 +21,17 @@
 #include "Mona/Sessions.h"
 #include "Mona/Handler.h"
 #include "Mona/Protocols.h"
-#include "Poco/Net/SocketAddress.h"
-
 
 namespace Mona {
 
 class Server;
-class ServerManager : private Task, public Startable {
+class ServerManager : private Task, public Startable, virtual Object {
 public:
 	ServerManager(Server& server);
 	virtual ~ServerManager() {}
 private:
 	void run(Exception& ex);
-	void handle(Exception& ex) { _server.manage(); }
+	void handle(Exception& ex);
 	Server& _server;
 };
 
@@ -46,7 +44,7 @@ public:
 	void	start() { start(params); }
 	void	start(const ServerParams& params);
 	void	stop() { Startable::stop(); }
-	bool	running() { Startable::running(); }
+	bool	running() { return Startable::running(); }
 
 protected:
 	virtual void		manage();
@@ -63,7 +61,7 @@ private:
 	Session*		session(const SocketAddress& address) { return _sessions.find(address); }
 
 	Session&		registerSession(Session* pSession) { return _sessions.add(pSession); }
-	void			readable(Protocol& protocol);
+	void			readable(Exception& ex,Protocol& protocol);
 
 
 	Protocols		_protocols;
@@ -71,6 +69,8 @@ private:
 	ServerManager	_manager;
 };
 
+
+inline void ServerManager::handle(Exception& ex) { _server.manage(); }
 
 
 } // namespace Mona

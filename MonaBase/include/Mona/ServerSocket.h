@@ -27,11 +27,13 @@ namespace Mona {
 class ServerSocket : public Socket, virtual Object {
 public:
 	ServerSocket(const SocketManager& manager) : Socket(manager) {}
-	virtual ~ServerSocket() {}
 
 	bool bind(Exception& ex, const SocketAddress& address, bool reuseAddress = true) { return Socket::bind(ex, address, reuseAddress); }
 	bool listen(Exception& ex, int backlog = 64) { if (!Socket::listen(ex, backlog)) return false; setLinger(ex, false, 0); return true; }
-	bool acceptConnection(Exception& ex, std::shared_ptr<StreamSocket>& pSocket) { return Socket::acceptConnection(ex, pSocket); }
+	
+	template<typename SocketType, typename ...Args>
+	SocketType* acceptConnection(Exception& ex, Args&... args) { return Socket::acceptConnection<SocketType>(ex, args ...); }
+	void rejectConnection() { Socket::rejectConnection(); }
 };
 
 

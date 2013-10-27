@@ -51,9 +51,6 @@ JSONReader::JSONReader(MemoryReader& reader) : DataReader(reader),_bool(false),_
 }
 
 
-JSONReader::~JSONReader() {
-}
-
 void JSONReader::reset() {
 	reader.reset(_pos);
 	_text.clear();

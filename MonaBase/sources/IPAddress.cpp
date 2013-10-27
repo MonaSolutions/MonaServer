@@ -27,7 +27,7 @@ using namespace std;
 
 namespace Mona {
 
-class IPAddressCommon {
+class IPAddressCommon : virtual Object {
 public:
 	virtual const void* addr() const = 0;
 
@@ -52,7 +52,7 @@ public:
 };
 
 
-class IPv4Address : public IPAddressCommon {
+class IPv4Address : public IPAddressCommon, virtual Object {
 public:
 	IPv4Address() {
 		_toString.reserve(16);
@@ -129,11 +129,11 @@ public:
 	}
 	
 	void mask(Exception& ex, const IPAddressCommon* pMask, const IPAddressCommon* pSet) {
+		lock_guard<mutex> lock(_mutex);
 		ASSERT(pMask != NULL && pSet!=NULL)
 		ASSERT(pMask->family() == IPAddress::IPv4 && pSet->family() == IPAddress::IPv4)
 		_addr.s_addr &= static_cast<const IPv4Address*>(pMask)->_addr.s_addr;
 		_addr.s_addr |= static_cast<const IPv4Address*>(pSet)->_addr.s_addr & ~static_cast<const IPv4Address*>(pMask)->_addr.s_addr;
-		lock_guard<mutex> lock(_mutex);
 		_toString.clear();
 	}
 
@@ -143,7 +143,7 @@ private:
 	mutable std::mutex	_mutex;
 };
 
-class IPv6Address: public IPAddressCommon {
+class IPv6Address : public IPAddressCommon, virtual Object {
 public:
 	IPv6Address() : _scope(0) {
 		_toString.reserve(24);
@@ -335,9 +335,10 @@ IPAddress IPAddress::_IPv6Wildcard(IPv6);
 IPAddress::IPAddress(Family family) : _pIPAddress(family == IPv6 ? (IPAddressCommon*)new IPv6Address() : (IPAddressCommon*)new IPv4Address()) {
 }
 
-IPAddress::~IPAddress() {
-	delete _pIPAddress;
+
+IPAddress::IPAddress(const IPAddress& other) : _pIPAddress(other._pIPAddress) {
 }
+
 
 bool IPAddress::set(Exception& ex, const string& addr) {
 	IPAddressCommon* pIPAddress = IPv4Address::Parse(ex, addr);
@@ -347,8 +348,7 @@ bool IPAddress::set(Exception& ex, const string& addr) {
 		ex.set(Exception::NETADDRESS, "Invalid IPAddress ", addr);
 		return false;
 	}
-	delete _pIPAddress;
-	_pIPAddress = pIPAddress;
+	_pIPAddress.reset(pIPAddress);
 	return true;
 }
 
@@ -362,8 +362,7 @@ bool IPAddress::set(Exception& ex, const string& addr, Family family) {
 		ex.set(Exception::NETADDRESS, "Invalid IPAddress ", addr);
 		return false;
 	}
-	delete _pIPAddress;
-	_pIPAddress = pIPAddress;
+	_pIPAddress.reset(pIPAddress);
 	return true;
 }
 
@@ -378,19 +377,18 @@ bool IPAddress::set(Exception& ex,const void* addr, UInt32 scope) {
 		ex.set(Exception::NETADDRESS, "Invalid socket address length ", sizeof(addr));
 		return false;
 	}
-	delete _pIPAddress;
-	_pIPAddress = pIPAddress;
+	_pIPAddress.reset(pIPAddress);
 	return true;
 }
 
 void IPAddress::mask(Exception& ex, const IPAddress& mask) {
 	IPAddress null;
-	_pIPAddress->mask(ex, mask._pIPAddress, null._pIPAddress);
+	_pIPAddress->mask(ex, mask._pIPAddress.get(), null._pIPAddress.get());
 }
 
 
 void IPAddress::mask(Exception& ex, const IPAddress& mask, const IPAddress& set) {
-	_pIPAddress->mask(ex, mask._pIPAddress, set._pIPAddress);
+	_pIPAddress->mask(ex, mask._pIPAddress.get(), set._pIPAddress.get());
 }
 
 IPAddress::Family IPAddress::family() const {

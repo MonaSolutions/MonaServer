@@ -124,10 +124,10 @@ void RTMP::WriteDigestAndKey(UInt8* data,const UInt8* challengeKey,bool middleKe
 void RTMP::ComputeRC4Keys(const UInt8* pubKey,UInt32 pubKeySize,const UInt8* farPubKey,UInt32 farPubKeySize,const Buffer<UInt8>& sharedSecret,RC4_KEY& decryptKey,RC4_KEY& encryptKey) {
 
 	UInt8 hash[HMAC_KEY_SIZE];
-	HMAC(EVP_sha256(),sharedSecret.begin(),sharedSecret.size(),pubKey,pubKeySize,hash,NULL);
+	HMAC(EVP_sha256(),&sharedSecret[0],sharedSecret.size(),pubKey,pubKeySize,hash,NULL);
 	RC4_set_key(&decryptKey, 16, hash);
 
-	HMAC(EVP_sha256(),sharedSecret.begin(),sharedSecret.size(),farPubKey,farPubKeySize,hash,NULL);
+	HMAC(EVP_sha256(),&sharedSecret[0],sharedSecret.size(),farPubKey,farPubKeySize,hash,NULL);
 	RC4_set_key(&encryptKey, 16, hash);
 
 	//bring the keys to correct cursor

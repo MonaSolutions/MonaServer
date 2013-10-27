@@ -29,9 +29,6 @@ UDPSocket::UDPSocket(const SocketManager& manager, bool allowBroadcast) : _broad
 
 }
 
-UDPSocket::~UDPSocket() {
-}
-
 void UDPSocket::onReadable(Exception& ex) {
 	UInt32 available = DatagramSocket::available(ex);
 	if(ex || available==0)

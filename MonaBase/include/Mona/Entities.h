@@ -36,9 +36,8 @@ public:
 	typedef typename Map::const_iterator Iterator;
 
 	Entities(Map& entities) : _entities(entities) {}
-//	Entities(const Entities& entities) : _entities(entities._entities) {}
-	virtual ~Entities(){}
-
+	Entities(const Entities& entities) : _entities(entities._entities) {}
+	
 
 	Iterator		begin() const {
 		return _entities.begin();

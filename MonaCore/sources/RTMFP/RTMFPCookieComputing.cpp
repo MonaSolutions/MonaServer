@@ -30,28 +30,26 @@ RTMFPCookieComputing::RTMFPCookieComputing(RTMFPHandshake& handshake,Invoker& in
 	RandomInputStream().read((char*)value,COOKIE_SIZE);
 }
 
-RTMFPCookieComputing::~RTMFPCookieComputing() {
-}
-
-void RTMFPCookieComputing::run() {
+bool RTMFPCookieComputing::run(Exception& ex) {
 	// First execution is for the DH computing if pDH == null, else it's to compute Diffie-Hellman keys
 	if(diffieHellman.initialize())
-		return;
+		return true;
 
 	// Compute Diffie-Hellman secret
 	diffieHellman.computeSecret(initiatorKey,sharedSecret);
 
-	DEBUG("Shared Secret : ",Util::FormatHex(sharedSecret.begin(),sharedSecret.size()));
+	DEBUG("Shared Secret : ",Util::FormatHex(sharedSecret.data(),sharedSecret.size()));
 	
 	waitHandle();
+	return true;
 }
 
-void RTMFPCookieComputing::handle() {
+void RTMFPCookieComputing::handle(Exception& ex) {
 	Session* pSession = _handshake.createSession(value);
-	if(pSession) {
-		duplicate();
+	if (pSession)
 		pSession->peer.setNumber("&RTMFPCookieComputing", (double)reinterpret_cast<unsigned>(this));
-	}
+	else
+		weak.reset();
 }
 
 

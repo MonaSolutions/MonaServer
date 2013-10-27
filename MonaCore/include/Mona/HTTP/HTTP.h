@@ -20,7 +20,7 @@
 #include "Mona/Mona.h"
 #include "Mona/HTTPPacketReader.h"
 #include "Mona/MapParameters.h"
-#include <map>
+
 
 namespace Mona {
 
@@ -94,14 +94,12 @@ namespace Mona {
 #define HTTP_CODE_520	"Web server is returning an unknown error"
 
 
-class HTTP {
+class HTTP : virtual Static {
 public:
 	static void 	MIMEType(const std::string& extension,std::string& type);
 	static void 	CodeToMessage(Poco::UInt16 code,std::string& message);
 	static void 	ReadHeader(HTTPPacketReader& reader, MapParameters& headers, std::string& cmd, std::string& path, std::string& file, MapParameters& properties);
 
-private:
-	static std::map<Poco::UInt16,std::string>	_CodeMessages;
 };
 
 

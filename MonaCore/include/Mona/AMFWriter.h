@@ -26,7 +26,7 @@
 namespace Mona {
 
 class ObjectRef;
-class AMFWriter : public DataWriter {
+class AMFWriter : public DataWriter, virtual Object {
 public:
 	AMFWriter();
 	virtual ~AMFWriter();
@@ -38,13 +38,13 @@ public:
 	void endObject();
 
 	void beginMap(UInt32 size,bool weakKeys=false);
-	void endMap();
+	void endMap() { endObject(); }
 
 	void writePropertyName(const std::string& value);
 
-	void beginArray(UInt32 size);
+	void beginArray(UInt32 size) { beginObjectArray(size); endObject(); }
 	void beginObjectArray(UInt32 size);
-	void endArray();
+	void endArray() { endObject(); }
 
 	void writeDate(const Time& date);
 	void writeNumber(double value);
@@ -60,24 +60,10 @@ private:
 	void writeText(const std::string& value);
 
 	std::map<std::string,UInt32>	_stringReferences;
-	std::vector<UInt8>			_references;
-	bool								_amf3;
-	std::list<ObjectRef*>				_lastObjectReferences;
+	std::vector<UInt8>				_references;
+	bool							_amf3;
+	std::list<ObjectRef*>			_lastObjectReferences;
 };
-
-
-inline void AMFWriter::beginArray(UInt32 size) {
-	beginObjectArray(size);
-	endObject();
-}
-
-inline void AMFWriter::endArray() {
-	endObject();
-}
-
-inline void AMFWriter::endMap() {
-	endObject();
-}
 
 
 class AMFWriterNull : public AMFWriter {

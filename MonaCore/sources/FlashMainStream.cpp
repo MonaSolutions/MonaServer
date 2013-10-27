@@ -20,6 +20,7 @@
 #include "Mona/Util.h"
 #include "Mona/Exceptions.h"
 #include "Mona/Logs.h"
+#include "Mona/Buffer.h"
 #include "Poco/Format.h"
 #include <openssl/evp.h>
 
@@ -90,7 +91,7 @@ void FlashMainStream::messageHandler(Exception& ex, const string& name,AMFReader
 					}
 					case AMFReader::TIME: {
 						Time time;
-						peer.setNumber(name, (double)(message.readTime(time).toInt() / 1000));
+						peer.setNumber(name, (double)(message.readTime(time) / 1000));
 						break;
 					}
 					default:
@@ -175,7 +176,7 @@ void FlashMainStream::rawHandler(Exception& ex,UInt8 type,MemoryReader& data,Fla
 			UInt8 groupId[ID_SIZE];
 
 			if(flag==0x10) {
-				vector<UInt8> groupIdVar(size);
+				Buffer<UInt8> groupIdVar(size);
 				data.readRaw(&groupIdVar[0],size);
 				EVP_Digest(&groupIdVar[0],groupIdVar.size(),(unsigned char *)groupId,NULL,EVP_sha256(),NULL);
 			} else
@@ -197,8 +198,8 @@ void FlashMainStream::rawHandler(Exception& ex,UInt8 type,MemoryReader& data,Fla
 				setBufferTime(data.read32());
 				return;
 			}
-			shared_ptr<FlashStream> pStream;
-			if (!invoker.getFlashStream(streamId, pStream)) {
+			shared_ptr<FlashStream> pStream = invoker.getFlashStream(streamId);
+			if (!pStream) {
 				ERROR("setBufferTime message for a unknown ",streamId," stream")
 				return;
 			}

@@ -26,7 +26,7 @@ namespace Mona {
 
 class RTMFPPacket;
 class RTMFPFragment;
-class RTMFPFlow {
+class RTMFPFlow : virtual Object {
 public:
 	RTMFPFlow(UInt64 id,const std::string& signature,Peer& peer,Invoker& invoker,BandWriter& band);
 	virtual ~RTMFPFlow();
@@ -39,7 +39,7 @@ public:
 
 	void				fail(const std::string& error);
 
-	bool				consumed();
+	bool				consumed() { return _completed; }
 	void				complete();
 	
 private:
@@ -47,21 +47,17 @@ private:
 	
 	AMF::ContentType	unpack(MemoryReader& reader);
 
-	bool						_completed;
-	BandWriter&					_band;
-	Poco::AutoPtr<RTMFPWriter>	_pWriter;
-	const UInt64			_stage;
-	Poco::AutoPtr<FlashStream>	_pStream;
+	bool							_completed;
+	BandWriter&						_band;
+	std::shared_ptr<RTMFPWriter>	_pWriter;
+	const UInt64					_stage;
+	std::shared_ptr<FlashStream>	_pStream;
 
 	// Receiving
-	RTMFPPacket*								_pPacket;
+	RTMFPPacket*					_pPacket;
 	std::map<UInt64,RTMFPFragment*>	_fragments;
 	UInt32							_numberLostFragments;
 };
-
-inline bool RTMFPFlow::consumed() {
-	return _completed;
-}
 
 
 } // namespace Mona

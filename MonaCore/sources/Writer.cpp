@@ -36,6 +36,13 @@ Writer::~Writer(){
 	close();
 }
 
+Writer::State Writer::state(State value, bool minimal) {
+	if (value == GET)
+		return _state;
+	return _state = value;
+}
+
+
 void Writer::close(int code) {
 	if(_state==CLOSED)
 		return;

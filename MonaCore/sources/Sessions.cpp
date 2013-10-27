@@ -20,7 +20,7 @@
 
 using namespace std;
 using namespace Poco;
-using namespace Poco::Net;
+
 
 namespace Mona {
 
@@ -73,7 +73,7 @@ void Sessions::changeAddress(const SocketAddress& oldAddress,Session& session) {
 }
 
 Session* Sessions::find(const SocketAddress& address) {
-	map<SocketAddress,Session*,Util::AddressComparator>::const_iterator it = _sessionsByAddress.find(address);
+	map<SocketAddress,Session*>::const_iterator it = _sessionsByAddress.find(address);
 	if(it==_sessionsByAddress.end())
 		return NULL;
 	return it->second;

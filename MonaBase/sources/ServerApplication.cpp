@@ -178,19 +178,19 @@ int ServerApplication::run(int argc, char** argv) {
 		if (hasArgument("registerService")) {
 			if (registerService(ex)) {
 				if (!ex)
-					WARN("%s", ex.error().c_str());
+					WARN(ex.error());
 				NOTE("The application has been successfully registered as a service");
 			} else
-				ERROR("%s", ex.error().c_str());
+				ERROR(ex.error());
 			return EXIT_OK;
 		}
 		if (hasArgument("unregisterService")) {
 			if (unregisterService(ex)) {
 				if (!ex)
-					WARN("%s", ex.error().c_str());
+					WARN(ex.error());
 				NOTE("The application is no more registered as a service");
 			} else
-				ERROR("%s", ex.error().c_str());
+				ERROR(ex.error());
 			return EXIT_OK;
 		}
 		return main();

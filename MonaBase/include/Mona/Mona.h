@@ -26,12 +26,26 @@
 #include <stdio.h>
 
 
+
 #if defined(POCO_OS_FAMILY_WINDOWS)
 	#define sprintf sprintf_s
 	#define timegm _mkgmtime
+	#define GMTIME(VALUE,RESULT) gmtime_s(&RESULT,&VALUE);
+	#define LOCALTIME(VALUE,RESULT) localtime_s(&RESULT,&VALUE);
+#elif
+	#define GMTIME(VALUE,RESULT) gmtime_r(&VALUE,&RESULT)
+	#define LOCALTIME(VALUE,RESULT) localtime_r(&VALUE,&RESULT)
 #endif
 
+// Usefull macros
+
+#define STRINGIZE(x) STRINGIZE2(x)
+#define STRINGIZE2(x) #x
+#define LINE_STRING STRINGIZE(__LINE__)
 #define HMAC_KEY_SIZE	0x20
+#define ROUND(val) floor( val + 0.5 )
+
+
 
 //
 // Automatically link Base library.
@@ -47,10 +61,6 @@
 		#endif
 	#endif
 #endif
-
-// Fonctions round
-
-#define ROUND(val) floor( val + 0.5 )
 
 //
 // Memory Leak
@@ -72,7 +82,7 @@ class Static {
 	Static(Static&& other) = delete;
 	Static& operator=(Static&& other) = delete;
 };
-
+ 
 class Object {
 	Object(const Object& other) = delete;
 	Object& operator=(const Object& other) = delete;
@@ -81,6 +91,12 @@ class Object {
 public:
 	Object() = default;
 	virtual ~Object() = default;
+};
+
+class ObjectNullable : virtual Object {
+	bool _isNull;
+public:
+	ObjectNullable(bool isNull = false) : _isNull(isNull) {}
 };
 
 #if defined(_MSC_VER)

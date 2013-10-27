@@ -20,7 +20,7 @@
 
 using namespace std;
 using namespace Poco;
-using namespace Poco::Net;
+
 
 namespace Mona {
 
@@ -28,10 +28,6 @@ RTMFPMessage::RTMFPMessage(istream& istr,bool repeatable) : _reader(istr),repeat
 	
 }
 
-
-RTMFPMessage::~RTMFPMessage() {
-
-}
 
 BinaryReader& RTMFPMessage::reader(UInt32& size) {
 	map<UInt32,UInt64>::const_iterator it = fragments.begin();
@@ -56,12 +52,6 @@ UInt32 RTMFPMessage::length() {
 }
 
 RTMFPMessageBuffered::RTMFPMessageBuffered(bool repeatable) : RTMFPMessage(writer.stream,repeatable) {
-	
-}
-
-
-RTMFPMessageBuffered::~RTMFPMessageBuffered() {
-
 }
 
 
@@ -71,10 +61,6 @@ UInt32 RTMFPMessageBuffered::init(UInt32 position) {
 }
 
 RTMFPMessageUnbuffered::RTMFPMessageUnbuffered(const UInt8* data,UInt32 size) : _stream((const char*)data,size),RTMFPMessage(_stream,false),_size(size) {
-}
-
-
-RTMFPMessageUnbuffered::~RTMFPMessageUnbuffered() {
 }
 
 UInt32 RTMFPMessageUnbuffered::init(UInt32 position) {

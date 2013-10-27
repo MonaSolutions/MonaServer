@@ -29,7 +29,7 @@ using namespace Poco;
 namespace Mona {
 
 
-class RTMFPPacket {
+class RTMFPPacket : virtual Object {
 public:
 	RTMFPPacket(MemoryReader& fragment) : fragments(1),_pMessage(NULL),_buffer((string::size_type)fragment.available()) {
 		if(_buffer.size()>0)
@@ -60,39 +60,42 @@ public:
 
 	const UInt32	fragments;
 private:
-	vector<UInt8>	_buffer;
+	Buffer<UInt8>	_buffer;
 	MemoryReader*  _pMessage;
 };
 
 
-class RTMFPFragment : public Buffer<UInt8> {
+class RTMFPFragment : public Buffer<UInt8>, virtual Object{
 public:
 	RTMFPFragment(MemoryReader& data,UInt8 flags) : flags(flags),Buffer<UInt8>(data.available()) {
-		data.readRaw(begin(),size());
+		data.readRaw(this->data(),size());
 	}
 	UInt8					flags;
 };
 
 
-RTMFPFlow::RTMFPFlow(UInt64 id,const string& signature,Peer& peer,Invoker& invoker,BandWriter& band) : _numberLostFragments(0),id(id),_stage(0),_completed(false),_pPacket(NULL),_pStream(NULL),_band(band),_pWriter(new RTMFPWriter(signature,band),true) {
+RTMFPFlow::RTMFPFlow(UInt64 id,const string& signature,Peer& peer,Invoker& invoker,BandWriter& band) : _numberLostFragments(0),id(id),_stage(0),_completed(false),_pPacket(NULL),_pStream(NULL),_band(band) {
+	
+	RTMFPWriter* pWriter = new RTMFPWriter(signature, band, _pWriter);
+
 	if(signature.empty())
 		return;
 
-	if(_pWriter->flowId==0)
-		((UInt64&)_pWriter->flowId)=id;
+	if (pWriter->flowId == 0)
+		((UInt64&)pWriter->flowId) = id;
 
 	// create code prefix for a possible response
 	// get flash stream process engine
 
 	if(signature.size()>4 && signature.compare(0,5,"\x00\x54\x43\x04\x00",5)==0)
-		(bool&)_pWriter->critical = true; // NetConnection
+		(bool&)pWriter->critical = true; // NetConnection
 	else if(signature.size()>3 && signature.compare(0,4,"\x00\x54\x43\x04",4)==0)
 		_pStream = invoker.getFlashStream(MemoryReader((const UInt8*)signature.c_str()+4,signature.length()-4).read7BitValue()); // NetStream
 	else if(signature.size()>2 && signature.compare(0,3,"\x00\x47\x43",3)==0)
-		(UInt64&)_pWriter->flowId = id; // NetGroup
+		(UInt64&)pWriter->flowId = id; // NetGroup
 	
-	if(_pStream.isNull())
-		_pStream = new FlashMainStream(invoker,peer);
+	if(!_pStream)
+		_pStream.reset(new FlashMainStream(invoker,peer));
 }
 
 RTMFPFlow::~RTMFPFlow() {
@@ -104,7 +107,7 @@ void RTMFPFlow::complete() {
 	if(_completed)
 		return;
 
-	if(!_pStream.isNull()) // FlowNull instance, not display the message in FullNull case
+	if(!_pStream) // FlowNull instance, not display the message in FullNull case
 		DEBUG("RTMFPFlow ",id," consumed");
 
 	// delete fragments
@@ -184,8 +187,8 @@ void RTMFPFlow::commit() {
 	}
 
 	UInt32 bufferSize = _pPacket ? ((_pPacket->fragments>0x3F00) ? 0 : (0x3F00-_pPacket->fragments)) : 0x7F;
-	if(_pStream.isNull())
-		bufferSize=0;
+	if(!_pStream)
+		bufferSize=0; // not proceed a packet sur FlowNull
 
 	Exception ex;
 	MemoryWriter& ack = _band.writeMessage(ex, 0x51,Util::Get7BitValueSize(id)+Util::Get7BitValueSize(bufferSize)+Util::Get7BitValueSize(_stage)+size);
@@ -201,7 +204,7 @@ void RTMFPFlow::commit() {
 	for(it2=lost.begin();it2!=lost.end();++it2)
 		ack.write7BitLongValue(*it2);
 
-	if(!_pStream.isNull())
+	if(_pStream)
 		_pStream->flush();
 
 	Exception exf;
@@ -213,7 +216,7 @@ void RTMFPFlow::fragmentHandler(UInt64 _stage,UInt64 deltaNAck,MemoryReader& fra
 	if(_completed)
 		return;
 
-	if(_pStream.isNull()) { // if this==FlowNull
+	if(!_pStream) { // if this==FlowNull
 		fail("RTMFPMessage received for a RTMFPFlow unknown");
 		(UInt64&)this->_stage = _stage;
 		return;
@@ -239,7 +242,7 @@ void RTMFPFlow::fragmentHandler(UInt64 _stage,UInt64 deltaNAck,MemoryReader& fra
 			if( it->first > _stage) 
 				break;
 			// leave all stages <= _stage
-			MemoryReader reader(it->second->begin(),it->second->size());
+			MemoryReader reader(it->second->data(),it->second->size());
 			fragmentSortedHandler(it->first,reader,it->second->flags);
 			if(it->second->flags&MESSAGE_END) {
 				complete();
@@ -271,7 +274,7 @@ void RTMFPFlow::fragmentHandler(UInt64 _stage,UInt64 deltaNAck,MemoryReader& fra
 		while(it!=_fragments.end()) {
 			if( it->first > nextStage)
 				break;
-			MemoryReader reader(it->second->begin(),it->second->size());
+			MemoryReader reader(it->second->data(), it->second->size());
 			fragmentSortedHandler(nextStage++,reader,it->second->flags);
 			if(it->second->flags&MESSAGE_END) {
 				complete();

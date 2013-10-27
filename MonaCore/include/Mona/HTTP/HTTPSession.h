@@ -28,7 +28,7 @@ namespace Mona {
 class HTTPSession :  public WSSession {
 public:
 
-	HTTPSession(Poco::Net::StreamSocket& socket,Protocol& protocol,Invoker& invoker);
+	HTTPSession(const SocketAddress& address, Protocol& protocol, Invoker& invoker);
 	virtual ~HTTPSession();
 	
 private:

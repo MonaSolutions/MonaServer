@@ -18,24 +18,25 @@
 #include "Mona/RTMFP/RTMFProtocol.h"
 
 using namespace Poco;
-using namespace Poco::Net;
+
 
 namespace Mona {
 
-RTMFProtocol::RTMFProtocol(const char* name,const RTMFPParams& params,Gateway& gateway,Invoker& invoker) : UDProtocol(name,invoker,gateway) {
+
+bool RTMFProtocol::load(Exception& ex, const RTMFPParams& params) {
+	if (!load(ex, params))
+		return false;
 	(UInt16&)params.keepAliveServer *= 1000;
 	(UInt16&)params.keepAlivePeer *= 1000;
-	openSocket(new DatagramSocket(SocketAddress("0.0.0.0",params.port)));
-	_pHandshake = new RTMFPHandshake(*this,gateway,invoker);
+	_pHandshake.reset(new RTMFPHandshake(*this, gateway, invoker));
+	return true;
 }
 
-RTMFProtocol::~RTMFProtocol() {
-	delete _pHandshake;
-}
-
-SharedPtr<Buffer<UInt8> > RTMFProtocol::receive(SocketAddress& address) {
+SharedPtr<Buffer<UInt8> > RTMFProtocol::receive(Exception& ex,SocketAddress& address) {
 	SharedPtr<Buffer<UInt8> >  pBuffer(new Buffer<UInt8>(RTMFP_PACKET_RECV_SIZE));
-	int size = getSocket()->receiveFrom(pBuffer->begin(),pBuffer->size(),address);
+	int size = receiveFrom(ex,pBuffer->data(),pBuffer->size(),address);
+	if (ex)
+		return NULL;
 	if(size<RTMFP_MIN_PACKET_SIZE) {
 		ERROR("Invalid RTMFP packet");
 		return NULL;
@@ -46,7 +47,7 @@ SharedPtr<Buffer<UInt8> > RTMFProtocol::receive(SocketAddress& address) {
 
 Session* RTMFProtocol::session(UInt32 id,MemoryReader& packet) {
 	if(id==0)
-		return _pHandshake;
+		return _pHandshake.get();
 	return NULL;
 }
 
@@ -58,8 +59,8 @@ void RTMFProtocol::check(Session& session) {
 	if(!pCookieComputing)
 		return;
 	_pHandshake->commitCookie(pCookieComputing->value);
-	pCookieComputing->release();
 	session.peer.setNumber("&RTMFPCookieComputing",0.);
+	delete pCookieComputing;
 }
 
 

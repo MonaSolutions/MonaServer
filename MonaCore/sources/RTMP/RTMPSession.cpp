@@ -25,12 +25,11 @@
 
 using namespace std;
 using namespace Poco;
-using namespace Poco::Net;
 
 namespace Mona {
 
 
-RTMPSession::RTMPSession(StreamSocket& socket,Protocol& protocol,Invoker& invoker) : _mainStream(invoker,peer),_chunkSize(DEFAULT_CHUNKSIZE),_handshaking(0),_pWriter(NULL),TCPSession(socket,protocol,invoker) {
+RTMPSession::RTMPSession(const SocketAddress& address, Protocol& protocol, Invoker& invoker) : _mainStream(invoker, peer), _chunkSize(DEFAULT_CHUNKSIZE), _handshaking(0), _pWriter(NULL), TCPSession(address,protocol, invoker) {
 }
 
 
@@ -190,20 +189,25 @@ void RTMPSession::manage() {
 bool RTMPSession::performHandshake(MemoryReader& packet, bool encrypted) {
 	bool middle;
 	const UInt8* challengeKey = RTMP::ValidateClient(packet,middle);
-	AutoPtr<RTMPHandshaker> pHandshaker;
+	shared_ptr<RTMPHandshaker> pHandshaker;
 	if (challengeKey) {
 		if(encrypted) {
 			_pDecryptKey = new RC4_KEY;
 			_pEncryptKey = new RC4_KEY;
 		}
 		packet.reset();
-		pHandshaker = new RTMPHandshaker(packet.current()+RTMP::GetDHPos(packet.current(), middle),challengeKey,middle,_pDecryptKey,_pEncryptKey,*this);
+		pHandshaker.reset(new RTMPHandshaker(packet.current() + RTMP::GetDHPos(packet.current(), middle), challengeKey, middle, _pDecryptKey, _pEncryptKey));
 	} else if (encrypted) {
 		ERROR("Unable to validate client");
 		return false;
 	} else // Simple handshake!
-		pHandshaker = new RTMPHandshaker(packet.current(),packet.available(),*this);
-	return true;
+		pHandshaker.reset(new RTMPHandshaker(packet.current(), packet.available()));
+
+	Exception ex;
+	send<RTMPHandshaker>(ex,pHandshaker);
+	if (ex)
+		ERROR("Handshake RTMP client file, ",ex.error());
+	return !ex;
 }
 
 

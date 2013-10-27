@@ -30,12 +30,11 @@
 
 using namespace std;
 using namespace Poco;
-using namespace Poco::Net;
 
 namespace Mona {
 
 
-HTTPSession::HTTPSession(StreamSocket& socket,Protocol& protocol,Invoker& invoker) : WSSession(socket,protocol,invoker),_isWS(false),_writer(*this){
+HTTPSession::HTTPSession(const SocketAddress& address, Protocol& protocol, Invoker& invoker) : WSSession(address, protocol, invoker), _isWS(false), _writer(*this) {
 
 }
 
@@ -77,12 +76,14 @@ void HTTPSession::packetHandler(MemoryReader& packet) {
 	HTTP::ReadHeader(request, headers, cmd, (string&)peer.path, file, peer);
 	string temp = "127.0.0.1"; // TODO?
 	headers.getString("host", temp);
-	(Poco::Net::SocketAddress&)peer.serverAddress = SocketAddress(temp, invoker.params.HTTP.port);
-		
+	Exception ex;
+	((SocketAddress&)peer.serverAddress).set(ex,temp, invoker.params.HTTP.port);
+	if (ex)
+		WARN("serverAddress of HTTPSession ",id," impossible to determinate with the host ",temp)
+
 	if(peer.connected && icompare(oldPath,peer.path)!=0)
 		peer.onDisconnection();
 
-	Exception ex;
 	if (icompare(cmd, "GET") == 0) {
 		bool connectionHasUpgrade = false;
 		if (headers.getString("connection", temp)) {
@@ -168,8 +169,7 @@ void HTTPSession::packetHandler(MemoryReader& packet) {
 		response.writeString(firstLine);
 		response.beginObject();
 		string stDate;
-		Time().toString(stDate, Time::HTTP_FORMAT);
-		response.writeStringProperty("Date", stDate);
+		response.writeStringProperty("Date", Time().toString(Time::HTTP_FORMAT, stDate));
 		response.writeStringProperty("Server","Mona");
 		response.writeStringProperty("Connection","Close");
 		response.endObject();
@@ -227,8 +227,7 @@ void HTTPSession::processGet(Exception& ex, const string& fileName) {
 	response.writeString("HTTP/1.1 200 OK");
 	response.beginObject();
 	string stDate;
-	Time().toString(stDate, Time::HTTP_FORMAT);
-	response.writeStringProperty("Date", stDate);
+	response.writeStringProperty("Date", Time().toString(Time::HTTP_FORMAT, stDate));
 	response.writeStringProperty("Server","Mona");
 	//response.writeStringProperty("Connection","close"); // TODO support keep-alive?
 	

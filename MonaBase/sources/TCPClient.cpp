@@ -23,7 +23,10 @@ using namespace std;
 
 namespace Mona {
 
-TCPClient::TCPClient(const SocketManager& manager) : _connected(false),StreamSocket(manager) {
+TCPClient::TCPClient(const SocketManager& manager) : _connected(false), StreamSocket(manager), _rest(0){
+}
+
+TCPClient::TCPClient(const SocketManager& manager, const SocketAddress& peerAddress) : _connected(true), _rest(0), StreamSocket(manager) {
 }
 
 TCPClient::~TCPClient() {
@@ -39,31 +42,29 @@ void TCPClient::onReadable(Exception& ex) {
 		return;
 	}
 
-	UInt32 size = _buffer.size();
-	_buffer.resize(size+available);
+	if (available > (_buffer.size() - _rest))
+		_buffer.resize(available + _rest);
 
-	int received = receiveBytes(ex,&_buffer[size],available);
+	int received = receiveBytes(ex, &_buffer[_rest], available);
 	if (ex)
 		return;
-	if(received<=0) {
+	if (received <= 0) {
 		disconnect(); // Graceful disconnection
 		return;
 	}
-	onNewData(&_buffer[size],received);
-	available = size+received;
+	onNewData(&_buffer[_rest], received);
+	_rest += received;
 
-	UInt32 rest = available;
-	do {
-		available = rest;
-		rest = onReception(&_buffer[0],available);
-		if(rest>available)
-			rest=available;
-		if(_buffer.size()>rest) {
-			if(available>rest)
-				_buffer.erase(_buffer.begin(),_buffer.begin()+(available-rest));
-			_buffer.resize(rest);
-		}
-	} while(rest>0 && rest!=available);
+	while (_rest > 0) {
+		UInt32 rest = onReception(&_buffer[0], _rest);
+		if (rest > _rest)
+			rest = _rest;
+		if (rest < _rest) {
+			memcpy(&_buffer[0], &_buffer[_rest - rest], rest);
+			_rest = rest;
+		} else
+			break; // nothing to do, waiting new data
+	}
 }
 
 
@@ -81,7 +82,7 @@ void TCPClient::disconnect() {
 	Exception ex;
 	shutdown(ex,Socket::RECV);
 	close();
-	_buffer.clear();
+	_rest = 0;
 	onDisconnection();
 }
 

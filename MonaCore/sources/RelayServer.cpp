@@ -25,7 +25,7 @@ using namespace std;
 
 namespace Mona {
 
-class Relay {
+class Relay : virtual Object {
 public:
 	Relay(const Peer& peer1,const SocketAddress& address1,const Peer& peer2,const SocketAddress& address2,RelaySocket& socket,UInt16 timeout):
 	 socket(socket),timeout(timeout*1000000),peer1(peer1),address1(address1),peer2(peer2),address2(address2),received(false) {}
@@ -34,18 +34,18 @@ public:
 	const Peer&							peer2;
 	const SocketAddress&				address2;
 	bool								received;
-	Poco::Timestamp						lastTime;
-	Poco::Timestamp::TimeDiff			timeout;
+	Time								lastTime;
+	Int64								timeout;
 	RelaySocket&						socket;
 };
 
 
-class RelaySender : public UDPSender {
+class RelaySender : public UDPSender, virtual Object {
 public:
-	RelaySender(UInt32 available) : data(available),UDPSender(true) {}
-	std::vector<UInt8> data;
+	RelaySender(UInt32 available) : data(available), UDPSender(true) {}
+	Buffer<UInt8> data;
 
-	const UInt8*	begin(bool displaying = false) { return data.empty() ? NULL : &data[0]; }
+	const UInt8*	begin(bool displaying = false) { return data.size()==0 ? NULL : &data[0]; }
 	UInt32			size(bool displaying = false) { return data.size(); }
 };
 
@@ -64,8 +64,8 @@ bool RelaySocket::load(Exception& ex,const SocketAddress& address) {
 
 Relay& RelaySocket::createRelay(const Peer& peer1,const SocketAddress& address1,const Peer& peer2,const SocketAddress& address2,UInt16 timeout) {
 	lock_guard<mutex> lock(_mutex);
-	Addresses::iterator it1 = ((Addresses&)addresses).insert(pair<SocketAddress,Relay*>(address1,NULL)).first;
-	Addresses::iterator it2 = ((Addresses&)addresses).insert(pair<SocketAddress,Relay*>(address2,NULL)).first;
+	Addresses::iterator it1 = ((Addresses&)addresses).emplace(address1,nullptr).first;
+	Addresses::iterator it2 = ((Addresses&)addresses).emplace(address2, nullptr).first;
 	return *(it1->second = it2->second = new Relay(peer1,it1->first,peer2,it2->first,*this,timeout));
 }
 
@@ -115,7 +115,7 @@ void RelaySocket::onReadable(Exception& ex) {
 		((Peer&)relay.peer2).turnPeers[relay.peer1.id] = (Peer*)&relay.peer1;
 	}
 
-	pSender->address = relay.address1==address ? relay.address2 : relay.address1;
+	pSender->address.set(relay.address1==address ? relay.address2 : relay.address1);
 
 	DUMP(pSender->begin(), pSender->size(), Poco::format("Request from %s", address.toString()).c_str())
 

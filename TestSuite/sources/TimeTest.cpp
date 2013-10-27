@@ -22,11 +22,11 @@ TEST_F(TimeTest, TestTimestamp) {
 	EXPECT_TRUE(!(t2 != t3));
 	EXPECT_TRUE(t2 >= t3);
 	EXPECT_TRUE(t2 <= t3);
-	Int64 d = (t2.toInt() - t1.toInt());
+	Int64 d = (t2 - t1);
 	EXPECT_TRUE(d >= 180000 && d <= 300000);
 
 	Time epoch(0);
-	Int64 tEpoch = epoch.toInt();
+	Int64 tEpoch = epoch;
 	EXPECT_TRUE(tEpoch == 0);
 
 	Time now;
@@ -38,9 +38,9 @@ TEST_F(TimeTest, TestTimestamp) {
 	Time t4;
 	Time t4Copy(t4);
 	t4 += 200;
-	EXPECT_TRUE(t4.toInt() == (t4Copy.toInt()+200));
+	EXPECT_TRUE(t4 == (t4Copy+200));
 	t4 -= 200;
-	EXPECT_TRUE(t4.toInt() == t4Copy.toInt());
+	EXPECT_TRUE(t4 == t4Copy);
 }
 
 TEST_F(TimeTest, TestTimeFormat) {
@@ -56,83 +56,75 @@ TEST_F(TimeTest, TestTimeFormat) {
 	int milli = 123;
 	int micro = 456;
 	
-	EXPECT_TRUE(Time::isValid(tminit, milli, micro));
+	EXPECT_TRUE(Time::IsValid(tminit, milli, micro));
 	Time time(tminit, milli, micro);
 
 	// Convert Mona Time to GMT time
 	struct tm datetm;
-	bool bRes = time.toGMT(datetm);
+	time.toGMT(datetm);
 
-	EXPECT_TRUE(bRes == true);
-	if (bRes == true) {
-		EXPECT_EQ(tminit.tm_year, datetm.tm_year);
-		EXPECT_EQ(tminit.tm_mon, datetm.tm_mon);
-		EXPECT_EQ(tminit.tm_mday, datetm.tm_mday);
-		EXPECT_EQ(tminit.tm_yday, datetm.tm_yday);
-		EXPECT_EQ(tminit.tm_wday, datetm.tm_wday);
-		EXPECT_EQ(tminit.tm_hour, datetm.tm_hour);
-		EXPECT_EQ(tminit.tm_min, datetm.tm_min);
-		EXPECT_EQ(tminit.tm_sec, datetm.tm_sec);
-		EXPECT_EQ(milli, time.millisec());
-		EXPECT_EQ(micro, time.microsec());
-	}
+	EXPECT_EQ(tminit.tm_year, datetm.tm_year);
+	EXPECT_EQ(tminit.tm_mon, datetm.tm_mon);
+	EXPECT_EQ(tminit.tm_mday, datetm.tm_mday);
+	EXPECT_EQ(tminit.tm_yday, datetm.tm_yday);
+	EXPECT_EQ(tminit.tm_wday, datetm.tm_wday);
+	EXPECT_EQ(tminit.tm_hour, datetm.tm_hour);
+	EXPECT_EQ(tminit.tm_min, datetm.tm_min);
+	EXPECT_EQ(tminit.tm_sec, datetm.tm_sec);
+	EXPECT_EQ(milli, time.millisec());
+	EXPECT_EQ(micro, time.microsec());
+
 
 	// Convert Mona Time to Local time
-	bRes = time.toLocal(datetm);
+	time.toLocal(datetm);
 
 	// Convert init time to local time
 	time_t utcint = timegm(&tminit);
 	tminit = *localtime(&utcint);
 
-	EXPECT_TRUE(bRes == true);
-	if (bRes == true) {
-		EXPECT_EQ(tminit.tm_year, datetm.tm_year);
-		EXPECT_EQ(tminit.tm_mon, datetm.tm_mon);
-		EXPECT_EQ(tminit.tm_mday, datetm.tm_mday);
-		EXPECT_EQ(tminit.tm_yday, datetm.tm_yday);
-		EXPECT_EQ(tminit.tm_wday, datetm.tm_wday);
-		EXPECT_EQ(tminit.tm_hour, datetm.tm_hour);
-		EXPECT_EQ(tminit.tm_min, datetm.tm_min);
-		EXPECT_EQ(tminit.tm_sec, datetm.tm_sec);
-		EXPECT_EQ(milli, time.millisec());
-		EXPECT_EQ(micro, time.microsec());
-	}
+	EXPECT_EQ(tminit.tm_year, datetm.tm_year);
+	EXPECT_EQ(tminit.tm_mon, datetm.tm_mon);
+	EXPECT_EQ(tminit.tm_mday, datetm.tm_mday);
+	EXPECT_EQ(tminit.tm_yday, datetm.tm_yday);
+	EXPECT_EQ(tminit.tm_wday, datetm.tm_wday);
+	EXPECT_EQ(tminit.tm_hour, datetm.tm_hour);
+	EXPECT_EQ(tminit.tm_min, datetm.tm_min);
+	EXPECT_EQ(tminit.tm_sec, datetm.tm_sec);
+	EXPECT_EQ(milli, time.millisec());
+	EXPECT_EQ(micro, time.microsec());
+
 }
 
 TEST_F(TimeTest, TestDateTime) {
 
 	Time ts(0); // Unix epoch 1970-01-01 00:00:00 Thursday
 	struct tm tmdate;
-	bool bRes = ts.toGMT(tmdate);
-	EXPECT_TRUE(bRes);
+	ts.toGMT(tmdate);
 
-	if (bRes) {
-		EXPECT_EQ(tmdate.tm_year, 70);
-		EXPECT_EQ(tmdate.tm_mon, 0);
-		EXPECT_EQ(tmdate.tm_mday, 1);
-		EXPECT_EQ(tmdate.tm_hour, 0);
-		EXPECT_EQ(tmdate.tm_min, 0);
-		EXPECT_EQ(tmdate.tm_sec, 0);
-		EXPECT_EQ(ts.millisec(), 0);
-		EXPECT_EQ(tmdate.tm_wday, 4);
-		EXPECT_EQ(ts.toInt(), 0);
-	}
+
+	EXPECT_EQ(tmdate.tm_year, 70);
+	EXPECT_EQ(tmdate.tm_mon, 0);
+	EXPECT_EQ(tmdate.tm_mday, 1);
+	EXPECT_EQ(tmdate.tm_hour, 0);
+	EXPECT_EQ(tmdate.tm_min, 0);
+	EXPECT_EQ(tmdate.tm_sec, 0);
+	EXPECT_EQ(ts.millisec(), 0);
+	EXPECT_EQ(tmdate.tm_wday, 4);
+	EXPECT_EQ(ts, 0);
 
 	ts += 1000000000000000; // 2001-09-09 01:46:40 Sunday
-	bRes = ts.toGMT(tmdate);
-	EXPECT_TRUE(bRes);
+	 ts.toGMT(tmdate);
 
-	if (bRes) {
-		EXPECT_EQ(tmdate.tm_year, 101);
-		EXPECT_EQ(tmdate.tm_mon, 8);
-		EXPECT_EQ(tmdate.tm_mday, 9);
-		EXPECT_EQ(tmdate.tm_hour, 1);
-		EXPECT_EQ(tmdate.tm_min, 46);
-		EXPECT_EQ(tmdate.tm_sec, 40);
-		EXPECT_EQ(ts.millisec(), 0);
-		EXPECT_EQ(tmdate.tm_wday, 0);
-		EXPECT_EQ(ts.toInt(), 1000000000000000);
-	}
+	EXPECT_EQ(tmdate.tm_year, 101);
+	EXPECT_EQ(tmdate.tm_mon, 8);
+	EXPECT_EQ(tmdate.tm_mday, 9);
+	EXPECT_EQ(tmdate.tm_hour, 1);
+	EXPECT_EQ(tmdate.tm_min, 46);
+	EXPECT_EQ(tmdate.tm_sec, 40);
+	EXPECT_EQ(ts.millisec(), 0);
+	EXPECT_EQ(tmdate.tm_wday, 0);
+	EXPECT_EQ(ts, 1000000000000000);
+
 }
 
 
@@ -163,7 +155,7 @@ TEST_F(TimeTest, TestArithmetics) {
 }
 
 ::testing::AssertionResult IsValid(struct tm& time, int msec, int microsec, bool exp ) {
-	if (Time::isValid(time, msec, microsec) == exp)
+	if (Time::IsValid(time, msec, microsec) == exp)
 		return ::testing::AssertionSuccess();
 	else
 		return ::testing::AssertionFailure() << (time.tm_year + 1900) << "," << (time.tm_mon + 1) << "," << time.tm_mday << "," << time.tm_hour 

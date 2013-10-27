@@ -23,36 +23,25 @@
 
 namespace Mona {
 
-class RTMFPSender : public UDPSender {
+class RTMFPSender : public UDPSender, virtual Object {
 public:
-	RTMFPSender(SocketHandler<Poco::Net::DatagramSocket>& handler);
-	virtual ~RTMFPSender();
-
+	RTMFPSender();
+	
 	RTMFPEngine		encoder;
-	UInt32	farId;
+	UInt32			farId;
 	MemoryWriter	packet;
 
-private:
-	const UInt8*	begin(bool displaying);
-	UInt32		size(bool displaying);
-	bool				available();
-	bool				flush();
+	bool			available() { return UDPSender::available() && packet.length() >= RTMFP_MIN_PACKET_SIZE; }
 
-	UInt8		_buffer[RTMFP_PACKET_SEND_SIZE];
+private:
+	const UInt8*	begin(bool displaying) { return displaying ? (packet.begin() + 6) : packet.begin(); }
+	UInt32			size(bool displaying) { return displaying ? (packet.length() - 6) : packet.length(); }
+	
+	bool			run(Exception& ex);
+
+	UInt8			_buffer[RTMFP_PACKET_SEND_SIZE];
 	
 };
-
-inline const UInt8*	RTMFPSender::begin(bool displaying) {
-	return displaying ? (packet.begin()+6) : packet.begin();
-}
-
-inline UInt32 RTMFPSender::size(bool displaying) {
-	return displaying ? (packet.length()-6) : packet.length();
-}
-
-inline bool RTMFPSender::available() {
-	return UDPSender::available() && packet.length()>=RTMFP_MIN_PACKET_SIZE;
-}
 
 
 

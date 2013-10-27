@@ -25,7 +25,7 @@
 namespace Mona {
 
 
-class DataWriter {
+class DataWriter : virtual Object {
 public:
 	virtual ~DataWriter(){}
 
@@ -45,46 +45,29 @@ public:
 	virtual void writeBytes(const UInt8* data,UInt32 size)=0;
 
 
-	virtual void			beginObjectArray(UInt32 size);
+	virtual void beginObjectArray(UInt32 size) { beginArray(size); beginObject(); }
 
-	virtual void			beginMap(UInt32 size,bool weakKeys=false);
-	virtual void			endMap();
+	virtual void beginMap(UInt32 size, bool weakKeys = false) { beginObject(); }
+	virtual void endMap() { endObject(); }
 
-	virtual bool			repeat(UInt32 reference);
-	virtual void			clear();
+	virtual bool repeat(UInt32 reference) { return false; }
+	virtual void clear();
 
-	UInt32	lastReference();
+	UInt32		 lastReference() { return _lastReference; }
 
-	void			writeNullProperty(const std::string& name);
-	void			writeDateProperty(const std::string& name,const Time& date);
-	void			writeNumberProperty(const std::string& name,double value);
-	void			writeBooleanProperty(const std::string& name,bool value);
-	void			writeStringProperty(const std::string& name,const std::string& value);
-	
-	BinaryWriter			writer;
-	BinaryStream			stream;
+	void		 writeNullProperty(const std::string& name);
+	void		 writeDateProperty(const std::string& name,const Time& date);
+	void		 writeNumberProperty(const std::string& name,double value);
+	void		 writeBooleanProperty(const std::string& name,bool value);
+	void		 writeStringProperty(const std::string& name,const std::string& value);
+		
+	BinaryWriter writer;
+	BinaryStream stream;
 protected:
 	DataWriter():writer(stream),_lastReference(0){}
 
 	UInt32	_lastReference;
 };
-
-inline UInt32	DataWriter::lastReference() {
-	return _lastReference;
-}
-
-inline void DataWriter::beginMap(UInt32 count,bool weakKeys) {
-	beginObject();
-}
-inline void DataWriter::endMap() {
-	endObject();
-}
-inline void DataWriter::beginObjectArray(UInt32 size) {
-	beginArray(size);beginObject();
-}
-inline bool DataWriter::repeat(UInt32 reference) {
-	return false;
-}
 
 
 inline void	DataWriter::writeNullProperty(const std::string& name) {
@@ -113,7 +96,7 @@ inline void	DataWriter::clear() {
 }
 
 
-class DataWriterNull : public DataWriter {
+class DataWriterNull : public DataWriter, virtual Object {
 public:
 	DataWriterNull() {stream.setstate(std::ios_base::eofbit);}
 

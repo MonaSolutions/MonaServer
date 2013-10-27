@@ -25,7 +25,7 @@
 
 namespace Mona {
 
-class Sessions : ObjectFix {
+class Sessions : virtual Object {
 public:
 	typedef std::map<UInt32,Session*>::const_iterator Iterator;
 

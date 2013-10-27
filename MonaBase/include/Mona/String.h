@@ -212,7 +212,7 @@ public:
 	template<typename T>
 	static bool ToNumber(const std::string& value, T& result) {
 		Exception ex;
-		ToNumber(ex, value, result);
+		ToNumber<T>(ex, value, result);
 		return !ex;
 	}
 
@@ -228,7 +228,7 @@ public:
 			return false;
 		}
 
-
+		bool isSigned = numeric_limits<T>::is_signed;
 		T max = numeric_limits<T>::max();
 
 		do {
@@ -240,33 +240,33 @@ public:
 			if (isblank(*str)) {
 				if (beginning)
 					continue;
-				ex.set(Exception::FORMATTING, str, " is not a corect number");
+				ex.set(Exception::FORMATTING, str, " is not a correct number");
 				return false;
 			}
 
 			if (*str == '-') {
-				if (beginning && !negative) {
+				if (isSigned && beginning && !negative) {
 					negative = true;
 					continue;
 				}
-				ex.set(Exception::FORMATTING, str, " is not a corect number");
+				ex.set(Exception::FORMATTING, str, " is not a correct number");
+				return false;
+			}
+
+			if (*str == '.') {
+				if (comma == 0 && !beginning) {
+					comma = 1;
+					continue;
+				}
+				ex.set(Exception::FORMATTING, str, " is not a correct number");
 				return false;
 			}
 
 			if (beginning)
 				beginning = false;
 
-			if (*str == '.') {
-				if (comma == 0) {
-					comma = 1;
-					continue;
-				}
-				ex.set(Exception::FORMATTING, str, " is not a corect number");
-				return false;
-			}
-
 			if (isdigit(*str) == 0) {
-				ex.set(Exception::FORMATTING, str, " is not a corect number");
+				ex.set(Exception::FORMATTING, str, " is not a correct number");
 				return false;
 			}
 
@@ -279,7 +279,7 @@ public:
 
 
 		if (negative)
-			default = -default;
+			default *= -1;
 
 		return default;
 	}

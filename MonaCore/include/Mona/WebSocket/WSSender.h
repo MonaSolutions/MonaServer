@@ -24,27 +24,19 @@
 
 namespace Mona {
 
-class WSSender : public TCPSender {
+class WSSender : public TCPSender, virtual Object {
 public:
-	WSSender(SocketHandler<Poco::Net::StreamSocket>& handler) : TCPSender(handler,true),packaged(false) {}
-	virtual ~WSSender() {}
+	WSSender() : TCPSender(true),packaged(false) {}
 	
 	JSONWriter		writer;
 	bool			packaged;
 private:
 
-	const UInt8*	begin(bool displaying=false);
-	UInt32		size(bool displaying=false);
+	const UInt8*	begin(bool displaying = false) { return	writer.stream.data(); }
+	UInt32			size(bool displaying = false) { return writer.stream.size(); }
 
 };
 
-inline const UInt8* WSSender::begin(bool displaying) {
-	return	writer.stream.data();
-}
-
-inline UInt32 WSSender::size(bool displaying) {
-	return writer.stream.size();
-}
 
 
 } // namespace Mona

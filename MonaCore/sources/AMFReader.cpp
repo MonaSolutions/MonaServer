@@ -23,7 +23,7 @@ using namespace std;
 
 namespace Mona {
 
-class ObjectDef {
+class ObjectDef : virtual Object {
 public:
 	ObjectDef(UInt32 amf3,UInt8 arrayType=0) : amf3(amf3),reset(0),dynamic(false),externalizable(false),count(0),arrayType(arrayType) {}
 
@@ -173,8 +173,7 @@ Time& AMFReader::readTime(Time& time) {
 			flags >>= 1;
 			if (flags > _references.size()) {
 				ERROR("AMF3 reference not found")
-				time.update(0);
-				return;
+				return time.update(0);
 			}
 			UInt32 reset = reader.position();
 			reader.reset(_references[flags]);
@@ -182,6 +181,7 @@ Time& AMFReader::readTime(Time& time) {
 			reader.reset(reset);
 		}
 		return time.update((Int64)result * 1000);
+	}
 	reader >> result;
 	reader.next(2); // Timezone, useless
 	return time.update((Int64)result * 1000);

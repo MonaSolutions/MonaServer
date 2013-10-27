@@ -28,7 +28,6 @@ namespace Mona {
 class HTTPPacketWriter : public DataWriter {
 public:
 	HTTPPacketWriter();
-	virtual ~HTTPPacketWriter();
 
 	void beginObject(const std::string& type = "", bool external = false) {}
 	void endObject() { writer.writeRaw("\r\n", 2); }

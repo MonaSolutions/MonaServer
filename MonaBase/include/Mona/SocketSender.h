@@ -29,21 +29,23 @@ namespace Mona {
 class SocketSender : public WorkThread, virtual Object {
 	friend class Socket;
 public:
-	
+	// return true if there is few data available to send
+	virtual bool	available() { return begin() && _position < size(); }
+
 protected:
-	SocketSender(const UInt8* data, UInt32 size, bool dump = false) :
-		_position(0), _data((UInt8*)data), _size(size), _memcopied(false), _dump(dump), _pSocket(NULL) {}
+	SocketSender(const UInt8* data, UInt32 size, bool dump = false);
 	SocketSender(bool dump = false) : SocketSender(NULL, 0, dump) {}
 	virtual ~SocketSender();
 
 	void			dump(bool justInDebug=false);
+
+
+	// if return true and ex==true it will display a warning, otherwise return false == failed
+	bool							run(Exception& ex);
 	
 private:
 	// send data
 	bool			flush(Exception& ex,Socket& socket);
-
-	// return true if there is few data available to send
-	virtual bool	available() { return begin() && _position < size(); }
 
 	virtual bool	receiver(std::string& address) { return false; }
 
@@ -54,7 +56,6 @@ private:
 	virtual const UInt8*			begin(bool dumping = false) { return _data; }
 	virtual UInt32					size(bool dumping = false) { return _size; }
 
-	bool							run(Exception& ex);
 
 	std::shared_ptr<std::mutex> _pSocketMutex;
 	Socket*						_pSocket;

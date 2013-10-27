@@ -24,13 +24,13 @@
 
 using namespace std;
 using namespace Poco;
-using namespace Poco::Net;
+
 
 namespace Mona {
 
 Session::Session(Protocol& protocol,Invoker& invoker, const Peer& peer,const char* name) :
 	protocol(protocol),name(name ? name : ""),invoker(invoker),_pDecodingThread(NULL),died(false),checked(false),failed(false),id(0),peer(peer) {
-	(*this->peer.addresses.begin())= peer.address;
+	this->peer.addresses.begin()->set(peer.address);
 	(string&)this->peer.protocol = protocol.name;
 	if(memcmp(this->peer.id,"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",ID_SIZE)==0)
 		RandomInputStream().read((char*)this->peer.id,ID_SIZE);
@@ -63,14 +63,6 @@ void Session::kill() {
 	(bool&)died=true;
 }
 
-void Session::decode(Decoding* pDecoding) {
-	
-	Exception ex;
-	_pDecodingThread = invoker.poolThreads.enqueue(ex, pDecoding,_pDecodingThread);
-	if (ex) {
-		WARN("Decoding message impossible on session ",reference(),", ",ex.error());
-	}
-}
 
 void Session::receive(MemoryReader& packet) {
 	if(!checked) {

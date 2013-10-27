@@ -26,7 +26,7 @@
 
 using namespace std;
 using namespace Poco;
-using namespace Poco::Net;
+
 
 namespace Mona {
 
@@ -36,7 +36,7 @@ RTMFPSession::RTMFPSession(RTMFProtocol& protocol,
 				const Peer& peer,
 				const UInt8* decryptKey,
 				const UInt8* encryptKey,
-				const char* name) : _pThread(NULL),_pSender(new RTMFPSender(protocol)),farId(farId),Session(protocol,invoker,peer,name),_decrypt(decryptKey,RTMFPEngine::DECRYPT),_encrypt(encryptKey,RTMFPEngine::ENCRYPT),_timesFailed(0),_timeSent(0),_nextRTMFPWriterId(0),_timesKeepalive(0),_pLastWriter(NULL),_prevEngineType(RTMFPEngine::DEFAULT) {
+				const char* name) : _pThread(NULL), _socket(protocol),_pSender(new RTMFPSender()), farId(farId), Session(protocol, invoker, peer, name), _decrypt(decryptKey, RTMFPEngine::DECRYPT), _encrypt(encryptKey, RTMFPEngine::ENCRYPT), _timesFailed(0), _timeSent(0), _nextRTMFPWriterId(0), _timesKeepalive(0), _pLastWriter(NULL), _prevEngineType(RTMFPEngine::DEFAULT) {
 	_pFlowNull = new RTMFPFlow(0,"",this->peer,invoker,*this);
 }
 
@@ -47,8 +47,8 @@ RTMFPSession::~RTMFPSession() {
 		if (peer.getNumber("&RTMFPCookieComputing", ptr)) {
 			RTMFPCookieComputing* pCookieComputing = reinterpret_cast<RTMFPCookieComputing*>(static_cast<unsigned>(ptr));
 			if (pCookieComputing) {
-				pCookieComputing->release();
 				peer.setNumber("&RTMFPCookieComputing", 0.);
+				delete pCookieComputing;
 			}
 		}
 	}
@@ -86,9 +86,8 @@ void RTMFPSession::kill() {
 	peer.unsubscribeGroups();
 
 	// delete flows
-	map<UInt64,RTMFPFlow*>::const_iterator it1;
-	for(it1=_flows.begin();it1!=_flows.end();++it1)
-		delete it1->second;
+	for(auto& it : _flows)
+		delete it.second;
 	_flows.clear();
 	delete _pFlowNull;
 	
@@ -120,22 +119,22 @@ void RTMFPSession::manage() {
 		return;
 
 	// Raise RTMFPWriter
-	map<UInt64,AutoPtr<RTMFPWriter> >::iterator it2=_flowWriters.begin();
-	while(it2!=_flowWriters.end()) {
+	auto it=_flowWriters.begin();
+	while (it != _flowWriters.end()) {
 		Exception ex;
-		it2->second->manage(ex, invoker);
+		it->second->manage(ex, invoker);
 		if (ex) {
-			if(it2->second->critical) {
+			if (it->second->critical) {
 				fail(ex.error());
 				break;
 			}
 			continue;
 		}
-		if(it2->second->consumed()) {
-			_flowWriters.erase(it2++);
+		if (it->second->consumed()) {
+			_flowWriters.erase(it++);
 			continue;
 		}
-		++it2;
+		++it;
 	}
 
 	if(!failed())
@@ -186,7 +185,7 @@ void RTMFPSession::p2pHandshake(const string& tag,const SocketAddress& address,U
 			++times;
 
 		index=times%pSession->peer.addresses.size();
-		list<SocketAddress>::const_iterator it=pSession->peer.addresses.begin();
+		auto it =pSession->peer.addresses.begin();
 		advance(it,index);
 		pAddress = &(*it);
 	}
@@ -216,10 +215,10 @@ void RTMFPSession::p2pHandshake(const string& tag,const SocketAddress& address,U
 }
 
 MemoryReader* RTMFPSession::decode(SharedPtr<Buffer<UInt8> >& pBuffer,const SocketAddress& address) {
-	RTMFPDecoding* pDecoding = new RTMFPDecoding(id,invoker,protocol,pBuffer,address);
+	shared_ptr<RTMFPDecoding> pDecoding(new RTMFPDecoding(id,invoker,protocol,pBuffer,address));
 	pDecoding->decoder = _decrypt.next(farId==0 ? RTMFPEngine::SYMMETRIC : RTMFPEngine::DEFAULT);
 	_prevEngineType = pDecoding->decoder.type;
-	Session::decode(pDecoding);
+	Session::decode<RTMFPDecoding>(pDecoding);
 	return NULL;
 }
 
@@ -250,11 +249,11 @@ void RTMFPSession::flush(Exception& ex, UInt8 marker,bool echoTime,RTMFPEngine::
 		
 		_pSender->farId = farId;
 		_pSender->encoder = _encrypt.next(type);
-		_pSender->address = peer.address;
-		_pThread = _pSender->go(ex, _pThread);
+		_pSender->address.set(peer.address);
+		_pThread = _socket.send<RTMFPSender>(ex, _pSender,_pThread);
 		if (ex)
 			return;
-		_pSender = new RTMFPSender(_pSender->handler);
+		_pSender.reset(new RTMFPSender());
 	}
 }
 
@@ -489,7 +488,7 @@ void RTMFPSession::packetHandler(MemoryReader& packet) {
 }
 
 RTMFPWriter* RTMFPSession::writer(UInt64 id) {
-	map<UInt64,AutoPtr<RTMFPWriter> >::iterator it = _flowWriters.find(id);
+	auto it = _flowWriters.find(id);
 	if(it==_flowWriters.end())
 		return NULL;
 	return it->second.get();
@@ -521,14 +520,25 @@ RTMFPFlow* RTMFPSession::createFlow(UInt64 id,const string& signature) {
 	return _flows.insert(it,pair<UInt64,RTMFPFlow*>(id,new RTMFPFlow(id,signature,peer,invoker,*this)))->second;
 }
 
-void RTMFPSession::initWriter(RTMFPWriter& writer) {
-	while(++_nextRTMFPWriterId==0 || _flowWriters.find(_nextRTMFPWriterId)!=_flowWriters.end());
-	(UInt64&)writer.id = _nextRTMFPWriterId;
-	if(_flows.begin()!=_flows.end())
-		(UInt64&)writer.flowId = _flows.begin()->second->id;
-	_flowWriters[_nextRTMFPWriterId] = &writer;
-	if(!writer.signature.empty())
-		DEBUG("New writer ",writer.id," on session ",this->id);
+void RTMFPSession::initWriter(shared_ptr<RTMFPWriter>& pWriter) {
+	while (++_nextRTMFPWriterId == 0 || !_flowWriters.emplace(_nextRTMFPWriterId, pWriter).second);
+	(UInt64&)pWriter->id = _nextRTMFPWriterId;
+	if (!_flows.empty())
+		(UInt64&)pWriter->flowId = _flows.begin()->second->id;
+	if (!pWriter->signature.empty())
+		DEBUG("New writer ", pWriter->id, " on session ", this->id);
+}
+
+
+inline shared_ptr<RTMFPWriter> RTMFPSession::changeWriter(RTMFPWriter& writer) {
+	auto it = _flowWriters.find(writer.id);
+	if (it == _flowWriters.end()) {
+		ERROR("RTMFPWriter ",writer.id," change impossible on session ",this->id)
+		return shared_ptr<RTMFPWriter>(&writer);
+	}
+	shared_ptr<RTMFPWriter> pWriter(it->second);
+	it->second.reset(&writer);
+	return pWriter;
 }
 
 

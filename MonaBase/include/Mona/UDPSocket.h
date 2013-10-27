@@ -20,14 +20,13 @@
 
 #include "Mona/Mona.h"
 #include "Mona/DatagramSocket.h"
-#include <vector>
+#include "Mona/Buffer.h"
 
 namespace Mona {
 
 class UDPSocket : protected DatagramSocket, virtual Object {
 public:
 	UDPSocket(const SocketManager& manager,bool allowBroadcast=false);
-	virtual ~UDPSocket();
 
 	bool					bind(Exception& ex, const std::string& address);
 	bool					connect(Exception& ex, const std::string& address);
@@ -43,9 +42,9 @@ private:
 	virtual void			onReception(Exception& ex, const UInt8* data, UInt32 size, const SocketAddress& address) = 0;
 	void					onReadable(Exception& ex);
 
-	std::vector<UInt8>			_buffer;
-	bool						_allowBroadcast;
-	bool						_broadcasting;
+	Buffer<UInt8>			_buffer;
+	bool					_allowBroadcast;
+	bool					_broadcasting;
 };
 
 

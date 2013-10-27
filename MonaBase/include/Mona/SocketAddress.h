@@ -32,18 +32,19 @@ class SocketAddressCommon;
 /// host address and a port number.
 class SocketAddress : virtual Object {
 public:
+	/// Creates a wildcard (all zero) IPv4 SocketAddress
 	SocketAddress(IPAddress::Family family = IPAddress::IPv4);
-		/// Creates a wildcard (all zero) IPv4 SocketAddress
+		
+	SocketAddress(const IPAddress& host, UInt16 port);
+	SocketAddress(const SocketAddress& other);
 
-	virtual ~SocketAddress();
-		/// Destroys the SocketAddress.
-
+	void set(const SocketAddress& other);
 
 	/// Creates a SocketAddress from an IP address and a port number.
-	void set(const IPAddress& host, Poco::UInt16 port);
+	void set(const IPAddress& host, UInt16 port);
 
 	/// set SocketAddress from an IP address and a port number.
-	bool set(Exception& ex,const std::string& host, Poco::UInt16 port);
+	bool set(Exception& ex,const std::string& host, UInt16 port);
 
 	/// set SocketAddress from an IP address and a service name or port number
 	bool set(Exception& ex, const std::string& host, const std::string& port) { set(ex, host, resolveService(ex,port)); }
@@ -74,7 +75,7 @@ public:
 private:
 	UInt16 resolveService(Exception& ex, const std::string& service);
 
-	SocketAddressCommon*	_pAddress;
+	std::shared_ptr<SocketAddressCommon>	_pAddress;
 
 	mutable std::mutex		_mutex;
 	mutable std::string		_toString;

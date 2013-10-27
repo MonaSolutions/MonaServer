@@ -16,6 +16,7 @@
 	*/
 
 #include "Mona/HTTP/HTTP.h"
+#include "Mona/Logs.h"
 #include "Mona/Util.h"
 
 using namespace std;
@@ -24,7 +25,7 @@ using namespace Poco;
 
 namespace Mona {
 
-map<UInt16, string> HTTP::_CodeMessages({
+map<UInt16, string> CodeMessages({
 	{ 100, HTTP_CODE_100 },
 	{ 101, HTTP_CODE_101 },
 	{ 102, HTTP_CODE_102 },
@@ -109,6 +110,7 @@ void HTTP::MIMEType(const string& extension, string& type) {
 void HTTP::ReadHeader(HTTPPacketReader& reader, MapParameters& headers, string& cmd, string& path, string& file, MapParameters& properties) {
 	HTTPPacketReader::Type type;
 	bool first = true;
+	Exception ex;
 	while ((type = reader.followingType()) != HTTPPacketReader::END) {
 		if (type == HTTPPacketReader::STRING) {
 			string value;
@@ -116,11 +118,10 @@ void HTTP::ReadHeader(HTTPPacketReader& reader, MapParameters& headers, string& 
 			if (first) {
 				first = false;
 				vector<string> fields;
-				String::Split(value, " ", fields, String::TOK_IGNORE_EMPTY | String::TOK_TRIM);
+				String::Split(value, " ", fields, String::SPLIT_IGNORE_EMPTY | String::SPLIT_TRIM);
 				if (fields.size() > 0) {
 					cmd = fields[0];
-					if (fields.size() > 1) {
-						Util::UnpackUrl(fields[1], path, file, properties);
+					if (fields.size() > 1 && Util::UnpackUrl(ex,fields[1], path, file, properties)) {
 						if (fields.size() > 2) {
 							unsigned found = fields[2].find_last_of("/");
 							Exception ex;
@@ -129,6 +130,8 @@ void HTTP::ReadHeader(HTTPPacketReader& reader, MapParameters& headers, string& 
 								properties.setNumber("HTTPVersion", value); // TODO check how is named for AMF
 						}
 					}
+					if (ex)
+						WARN("HTTPHeader malformed, ", ex.error())
 				}
 			}
 			continue;
@@ -147,7 +150,9 @@ void HTTP::ReadHeader(HTTPPacketReader& reader, MapParameters& headers, string& 
 			}
 			if (String::ToLower(name).compare("referer") == 0) {
 				string referer;
-				Util::UnpackUrl(reader.readString(referer), path, properties);
+				Util::UnpackUrl(ex,reader.readString(referer), path, properties);
+				if (ex)
+					WARN("HTTPHeader malformed, ", ex.error())
 			}
 			headers.setString(name, reader.readString(value));
 		}
@@ -156,8 +161,8 @@ void HTTP::ReadHeader(HTTPPacketReader& reader, MapParameters& headers, string& 
 
 
 void HTTP::CodeToMessage(Poco::UInt16 code, std::string& message) {
-	auto found = _CodeMessages.find(code);
-	if (found != _CodeMessages.end())
+	auto found = CodeMessages.find(code);
+	if (found != CodeMessages.end())
 		message = found->second;
 }
 

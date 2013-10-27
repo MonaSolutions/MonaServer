@@ -25,13 +25,13 @@
 
 using namespace std;
 using namespace Poco;
-using namespace Poco::Net;
+
 
 
 namespace Mona {
 
 
-WSSession::WSSession(StreamSocket& socket,Protocol& protocol,Invoker& invoker) : TCPSession(socket,protocol,invoker),_writer(*this),_pListener(NULL),_pPublication(NULL),_decoded(0) {
+WSSession::WSSession(const SocketAddress& address, Protocol& protocol, Invoker& invoker) : TCPSession(address, protocol, invoker), _writer(*this), _pListener(NULL), _pPublication(NULL), _decoded(0) {
 }
 
 
@@ -78,8 +78,9 @@ bool WSSession::buildPacket(MemoryReader& data,UInt32& packetSize) {
 
 	if (lengthByte & 0x80) {
 		SharedPtr<Buffer<UInt8> > pBuffer(new Buffer<UInt8>(size));
-		memcpy(pBuffer->begin(),data.current(),size);
-		decode(new WSUnmasking(id,invoker,protocol,pBuffer,peer.address,type));
+		memcpy(pBuffer->data(),data.current(),size);
+		shared_ptr<WSUnmasking> pUnmasking(new WSUnmasking(id, invoker, protocol, pBuffer, peer.address, type));
+		decode<WSUnmasking>(pUnmasking);
 		++_decoded;
 	}
 
