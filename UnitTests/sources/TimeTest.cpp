@@ -1,17 +1,19 @@
 
 #include "TimeTest.h"
 #include "Mona/Time.h"
+#include "Mona/Exceptions.h"
+#include "Mona/Logs.h"
 
 using namespace Mona;
 using namespace std::chrono;
 
 // Test 
-TEST_F(TimeTest, TestTimestamp) {
+ADD_TEST(TimeTest, TestTimestamp) {
 
 	Time t1;
 	_sleep(200);
 	Time t2;
-	Time t3(t2);
+	Time t3((Int64)t2);
 	EXPECT_TRUE(t1 != t2);
 	EXPECT_TRUE(!(t1 == t2));
 	EXPECT_TRUE(t2 > t1);
@@ -36,14 +38,15 @@ TEST_F(TimeTest, TestTimestamp) {
 	EXPECT_TRUE(!now.isElapsed(2000000));
 
 	Time t4;
-	Time t4Copy(t4);
+	Time t4Copy((Int64)t4);
 	t4 += 200;
 	EXPECT_TRUE(t4 == (t4Copy+200));
+	EXPECT_TRUE(t4 == (200+t4Copy));
 	t4 -= 200;
 	EXPECT_TRUE(t4 == t4Copy);
 }
 
-TEST_F(TimeTest, TestTimeFormat) {
+ADD_TEST(TimeTest, TestTimeFormat) {
 
 	// GMT time
 	struct tm tminit;
@@ -63,17 +66,16 @@ TEST_F(TimeTest, TestTimeFormat) {
 	struct tm datetm;
 	time.toGMT(datetm);
 
-	EXPECT_EQ(tminit.tm_year, datetm.tm_year);
-	EXPECT_EQ(tminit.tm_mon, datetm.tm_mon);
-	EXPECT_EQ(tminit.tm_mday, datetm.tm_mday);
-	EXPECT_EQ(tminit.tm_yday, datetm.tm_yday);
-	EXPECT_EQ(tminit.tm_wday, datetm.tm_wday);
-	EXPECT_EQ(tminit.tm_hour, datetm.tm_hour);
-	EXPECT_EQ(tminit.tm_min, datetm.tm_min);
-	EXPECT_EQ(tminit.tm_sec, datetm.tm_sec);
-	EXPECT_EQ(milli, time.millisec());
-	EXPECT_EQ(micro, time.microsec());
-
+	EXPECT_TRUE(tminit.tm_year == datetm.tm_year);
+	EXPECT_TRUE(tminit.tm_mon == datetm.tm_mon);
+	EXPECT_TRUE(tminit.tm_mday == datetm.tm_mday);
+	EXPECT_TRUE(tminit.tm_yday == datetm.tm_yday);
+	EXPECT_TRUE(tminit.tm_wday == datetm.tm_wday);
+	EXPECT_TRUE(tminit.tm_hour == datetm.tm_hour);
+	EXPECT_TRUE(tminit.tm_min == datetm.tm_min);
+	EXPECT_TRUE(tminit.tm_sec == datetm.tm_sec);
+	EXPECT_TRUE(milli == time.millisec());
+	EXPECT_TRUE(micro == time.microsec());
 
 	// Convert Mona Time to Local time
 	time.toLocal(datetm);
@@ -82,53 +84,50 @@ TEST_F(TimeTest, TestTimeFormat) {
 	time_t utcint = timegm(&tminit);
 	tminit = *localtime(&utcint);
 
-	EXPECT_EQ(tminit.tm_year, datetm.tm_year);
-	EXPECT_EQ(tminit.tm_mon, datetm.tm_mon);
-	EXPECT_EQ(tminit.tm_mday, datetm.tm_mday);
-	EXPECT_EQ(tminit.tm_yday, datetm.tm_yday);
-	EXPECT_EQ(tminit.tm_wday, datetm.tm_wday);
-	EXPECT_EQ(tminit.tm_hour, datetm.tm_hour);
-	EXPECT_EQ(tminit.tm_min, datetm.tm_min);
-	EXPECT_EQ(tminit.tm_sec, datetm.tm_sec);
-	EXPECT_EQ(milli, time.millisec());
-	EXPECT_EQ(micro, time.microsec());
-
+	EXPECT_TRUE(tminit.tm_year == datetm.tm_year);
+	EXPECT_TRUE(tminit.tm_mon == datetm.tm_mon);
+	EXPECT_TRUE(tminit.tm_mday == datetm.tm_mday);
+	EXPECT_TRUE(tminit.tm_yday == datetm.tm_yday);
+	EXPECT_TRUE(tminit.tm_wday == datetm.tm_wday);
+	EXPECT_TRUE(tminit.tm_hour == datetm.tm_hour);
+	EXPECT_TRUE(tminit.tm_min == datetm.tm_min);
+	EXPECT_TRUE(tminit.tm_sec == datetm.tm_sec);
+	EXPECT_TRUE(milli == time.millisec());
+	EXPECT_TRUE(micro == time.microsec());
 }
 
-TEST_F(TimeTest, TestDateTime) {
+ADD_TEST(TimeTest, TestDateTime) {
 
 	Time ts(0); // Unix epoch 1970-01-01 00:00:00 Thursday
 	struct tm tmdate;
 	ts.toGMT(tmdate);
-
-
-	EXPECT_EQ(tmdate.tm_year, 70);
-	EXPECT_EQ(tmdate.tm_mon, 0);
-	EXPECT_EQ(tmdate.tm_mday, 1);
-	EXPECT_EQ(tmdate.tm_hour, 0);
-	EXPECT_EQ(tmdate.tm_min, 0);
-	EXPECT_EQ(tmdate.tm_sec, 0);
-	EXPECT_EQ(ts.millisec(), 0);
-	EXPECT_EQ(tmdate.tm_wday, 4);
-	EXPECT_EQ(ts, 0);
+	
+	EXPECT_TRUE(tmdate.tm_year == 70);
+	EXPECT_TRUE(tmdate.tm_mon == 0);
+	EXPECT_TRUE(tmdate.tm_mday == 1);
+	EXPECT_TRUE(tmdate.tm_hour == 0);
+	EXPECT_TRUE(tmdate.tm_min == 0);
+	EXPECT_TRUE(tmdate.tm_sec == 0);
+	EXPECT_TRUE(ts.millisec() == 0);
+	EXPECT_TRUE(tmdate.tm_wday == 4);
+	EXPECT_TRUE(ts == 0);
 
 	ts += 1000000000000000; // 2001-09-09 01:46:40 Sunday
-	 ts.toGMT(tmdate);
+	ts.toGMT(tmdate);
 
-	EXPECT_EQ(tmdate.tm_year, 101);
-	EXPECT_EQ(tmdate.tm_mon, 8);
-	EXPECT_EQ(tmdate.tm_mday, 9);
-	EXPECT_EQ(tmdate.tm_hour, 1);
-	EXPECT_EQ(tmdate.tm_min, 46);
-	EXPECT_EQ(tmdate.tm_sec, 40);
-	EXPECT_EQ(ts.millisec(), 0);
-	EXPECT_EQ(tmdate.tm_wday, 0);
-	EXPECT_EQ(ts, 1000000000000000);
-
+	EXPECT_TRUE(tmdate.tm_year == 101);
+	EXPECT_TRUE(tmdate.tm_mon == 8);
+	EXPECT_TRUE(tmdate.tm_mday == 9);
+	EXPECT_TRUE(tmdate.tm_hour == 1);
+	EXPECT_TRUE(tmdate.tm_min == 46);
+	EXPECT_TRUE(tmdate.tm_sec == 40);
+	EXPECT_TRUE(ts.millisec() == 0);
+	EXPECT_TRUE(tmdate.tm_wday == 0);
+	EXPECT_TRUE(ts == 1000000000000000);
 }
 
 
-TEST_F(TimeTest, TestArithmetics) {
+ADD_TEST(TimeTest, TestArithmetics) {
 
 	struct tm tmdate;
 	tmdate.tm_year = 105;
@@ -143,26 +142,28 @@ TEST_F(TimeTest, TestArithmetics) {
 	Time dt2(tmdate);
 
 	Int64 microsec = dt2 - dt1;
-	EXPECT_EQ(microsec, duration_cast<microseconds>(hours(24)).count());
+	EXPECT_TRUE(microsec == duration_cast<microseconds>(hours(24)).count());
 
 	Time dt3(dt1 + microsec);
-	EXPECT_EQ(dt3, dt2);
+	EXPECT_TRUE(dt3 == dt2);
 
 	dt3 -= microsec;
-	EXPECT_EQ(dt3, dt1);
+	EXPECT_TRUE(dt3 == dt1);
 	dt1 += microsec;
-	EXPECT_EQ(dt1, dt2);
+	EXPECT_TRUE(dt1 == dt2);
 }
 
-::testing::AssertionResult IsValid(struct tm& time, int msec, int microsec, bool exp ) {
+bool IsValid(struct tm& time, int msec, int microsec, bool exp ) {
 	if (Time::IsValid(time, msec, microsec) == exp)
-		return ::testing::AssertionSuccess();
-	else
-		return ::testing::AssertionFailure() << (time.tm_year + 1900) << "," << (time.tm_mon + 1) << "," << time.tm_mday << "," << time.tm_hour 
-				<< "," << time.tm_min << "," << time.tm_sec << "," << msec << "," << microsec << " is not " << ((exp)? "true" : "false");
+		return true;
+	else {
+		ERROR((time.tm_year + 1900),",",(time.tm_mon + 1),",",time.tm_mday,",",time.tm_hour 
+				,",",time.tm_min,",",time.tm_sec,",",msec,",",microsec," is not ",((exp)? "true" : "false"));
+		return false;
+	}
 }
 
-TEST_F(TimeTest, TestIsValid) {
+ADD_TEST(TimeTest, TestIsValid) {
 
 	const struct stTime {
 
