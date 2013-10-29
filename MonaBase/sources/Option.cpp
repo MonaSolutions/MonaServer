@@ -21,7 +21,13 @@ using namespace std;
 
 namespace Mona {
 
-Option::Option(): _required(false), _repeatable(false), _argRequired(false) {
+Option Option::Null(true);
+
+Option::Option():Option(false) {
+}
+
+Option::Option(bool isNull) : _required(false), _repeatable(false), _argRequired(false), ObjectNullable(isNull) {
+
 }
 
 

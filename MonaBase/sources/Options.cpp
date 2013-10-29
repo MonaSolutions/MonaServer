@@ -22,12 +22,8 @@ using namespace std;
 
 namespace Mona {
 
-Option	Options::_OptionEmpty;
 
 Options::Options() : _pOption(NULL){
-}
-
-Options::~Options() {
 }
 
 
@@ -35,7 +31,7 @@ const Option& Options::get(Exception& ex,const string& name) const {
 	auto result = _options.find(Option(name.c_str(), ""));
 	if (result == _options.end()) {
 		ex.set(Exception::OPTION, "Unknown ", name, " option");
-		return _OptionEmpty;
+		return Option::Null;
 	}
 	return *result;
 }
@@ -88,9 +84,18 @@ bool Options::process(Exception& ex,const string& argument, string& name, string
 		}
 			
 		name.assign(it, itEnd);
-		_pOption = &get(ex,name);
-		if (ex)
-			return false;
+
+		auto itOption = _options.find(Option(name.c_str(),""));
+		if (itOption == _options.end()) {
+			itOption = _options.find(Option("", name.c_str()));
+			if (itOption == _options.end()) {
+				ex.set(Exception::OPTION, "Unknown ", name, " option");
+				return false;
+			}
+			name.assign(itOption->fullName());
+		}
+
+		_pOption = &*itOption;
 		string lowerName(_pOption->fullName());
 		if (alreadyReaden.find(String::ToLower(lowerName)) != alreadyReaden.end() && !_pOption->repeatable()) {
 			_pOption = NULL;
