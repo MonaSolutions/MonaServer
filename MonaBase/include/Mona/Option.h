@@ -23,7 +23,7 @@ This file is a part of Mona.
 namespace Mona {
 
 
-class Option : virtual Object {
+class Option : virtual ObjectNullable {
 	friend class Options;
 public:
 	Option();
@@ -89,10 +89,12 @@ public:
 
 	bool operator==(const Option& other) const { return stricmp(_fullName.c_str(), other._fullName.c_str()) == 0 || stricmp(_shortName.c_str(), other._shortName.c_str()) == 0; }
 	bool operator!=(const Option& other) const { return !operator==(other); }
-	bool operator<(const Option& other) const { return _fullName < other._fullName; }
-	bool operator>(const Option& other) const { return _fullName > other._fullName; }
+	bool operator<(const Option& other) const { return _fullName.empty() || other._fullName.empty() ? _shortName < other._shortName : _fullName < other._fullName; }
+	bool operator>(const Option& other) const { return _fullName.empty() || other._fullName.empty() ? _shortName < other._shortName : _fullName < other._fullName; }
 
+	static Option Null;
 private:
+	Option(bool isNull);
 	std::string		_shortName;
 	std::string		_fullName;
 	std::string		_description;

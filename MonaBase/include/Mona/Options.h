@@ -29,22 +29,21 @@ public:
 	typedef std::set<Option>::const_iterator Iterator;
 
 	Options();
-	virtual ~Options();
 
 	template <typename ...Args>
 	Option& add(Exception& ex, const char* fullName, const char* shortName, const Args&... args) {
 		if (std::strlen(fullName)==0) {
 			ex.set(Exception::OPTION, "Invalid option (fullName is empty)");
-			return _OptionEmpty;
+			return Option::Null;
 		}
 		if (std::strlen(shortName) == 0) {
 			ex.set(Exception::OPTION, "Invalid option (shortName is empty)");
-			return _OptionEmpty;
+			return Option::Null;
 		}
 		auto result = _options.emplace(fullName, shortName, args ...);
 		if (!result.second) {
 			ex.set(Exception::OPTION, "Option ", fullName, " (", shortName, ") duplicated");
-			return _OptionEmpty;
+			return Option::Null;
 		}
 		return const_cast<Option&>(*result.first);
 	}
@@ -66,8 +65,6 @@ private:
 	
 	std::set<Option>	_options;
 	const Option* 		_pOption;
-
-	static Option		_OptionEmpty;
 };
 
 
