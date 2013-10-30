@@ -64,6 +64,11 @@ public:
 
 	static std::string&	ToLower(std::string& str);
 
+	static int ICompare(const char* value1, const char* value2, int size = -1);
+	static int ICompare(const std::string& value1, const std::string& value2, int size = -1) { return ICompare(value1.empty() ? NULL : &value1[0], value2.empty() ? NULL : &value2[0], size); }
+	static int ICompare(const std::string& value1, const char* value2, int size = -1) { return ICompare(value1.empty() ? NULL : &value1[0], value2, size); }
+	static int ICompare(const char* value1, const std::string& value2, int size = -1) { return ICompare(value1, value2.empty() ? NULL : &value2[0], size); }
+
 	template <typename ...Args>
 	static std::string& Format(std::string& result, const Args&... args) {
 		result.clear();

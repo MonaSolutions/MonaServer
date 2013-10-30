@@ -17,6 +17,7 @@
 
 #include "Mona/Logger.h"
 #include "Poco/Path.h"
+#include <iostream>
 
 using namespace std;
 using namespace Poco;

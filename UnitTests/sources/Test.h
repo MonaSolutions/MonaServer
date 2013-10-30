@@ -3,6 +3,7 @@
 
 #include "Mona/Exceptions.h"
 #include <memory>
+#include <map>
 
 /// \brief The fixture for testing class Foo.
 class Test : virtual Mona::Object {
@@ -29,9 +30,6 @@ class PoolTest : virtual Mona::Object {
 
 public:
 
-	virtual ~PoolTest(){}
-		/// \brief destructor of PoolTest
-
 	template<class TestClass>
 	bool makeAndRegister(const char * className, const char * testName) 
 		/// \brief create the test and add it to the PoolTest
@@ -49,16 +47,20 @@ public:
 
 	void run(const std::string& mod);
 		/// \brief Run the test with 'mod' name
-	
-	static PoolTest _PoolTestInstance;
-		/// TODO Must be defined in the Main cpp to initiate properly
+
+	static PoolTest& PoolTestInstance();
+		/// \brief PoolTest Instance accessor
 
 private:
-	PoolTest(){}
-		/// PoolTest Constructor
-
 	std::multimap<const std::string, std::shared_ptr<Test>> _mapTests;
 		/// multimap of Test name to Tests functions
+			
+	PoolTest(){}
+		/// \brief PoolTest Constructor
+
+	virtual ~PoolTest(){}
+		/// \brief destructor of PoolTest
+
 };
 
 /// Macro for assert true function
@@ -73,5 +75,5 @@ public: \
 private:\
 	static const bool _TestCreated;\
 };\
-const bool CLASSNAME ## TESTNAME::_TestCreated = PoolTest::_PoolTestInstance.makeAndRegister<CLASSNAME ## TESTNAME>(#CLASSNAME, #CLASSNAME ## #TESTNAME);\
+const bool CLASSNAME ## TESTNAME::_TestCreated = PoolTest::PoolTestInstance().makeAndRegister<CLASSNAME ## TESTNAME>(#CLASSNAME, #CLASSNAME ## #TESTNAME);\
 void CLASSNAME ## TESTNAME::TestFunction()

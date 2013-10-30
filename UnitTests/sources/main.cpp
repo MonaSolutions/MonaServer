@@ -29,8 +29,7 @@ private:
 	{
 
 		options.add(ex, "mod", "m", "Specify the module to run.")
-			.argument("module")
-			.handler([this](const string& value) { _module = value; });
+			.argument("module");
 
 		// defines here your options applications
 		Application::defineOptions(ex,options);
@@ -41,7 +40,7 @@ private:
 	{
 
 		vector<const std::string> lTests;
-		PoolTest::_PoolTestInstance.getListTests(lTests);
+		PoolTest::PoolTestInstance().getListTests(lTests);
 
 		// Print The list
 		int index = 0;
@@ -60,10 +59,10 @@ private:
 		
 		if (*val == 'a') {
 
-			PoolTest::_PoolTestInstance.runAll();
+			PoolTest::PoolTestInstance().runAll();
 		} else if (!ex && (number >= 0) && (number < lTests.size())) {
 			
-			PoolTest::_PoolTestInstance.run(lTests.at(number));
+			PoolTest::PoolTestInstance().run(lTests.at(number));
 		}
 	}
 
@@ -72,13 +71,14 @@ private:
 
 		try {
 
-			if (_module.empty()) {
+			string module;
+			if (!argument("module", module)) {
 				runSelectedModule();
 			}
-			else if (_module=="all")
-				PoolTest::_PoolTestInstance.runAll();
+			else if (module=="all")
+				PoolTest::PoolTestInstance().runAll();
 			else
-				PoolTest::_PoolTestInstance.run(_module);
+				PoolTest::PoolTestInstance().run(module);
 		}
 		catch (exception ex) {
 			FATAL(ex.what())
@@ -88,12 +88,7 @@ private:
 
 		return EXIT_OK;
 	}
-
-private:
-	string _module;
 };
-
-PoolTest PoolTest::_PoolTestInstance;
 
 int main(int argc, char* argv[]) {
 	return TestApp().run(argc, argv);

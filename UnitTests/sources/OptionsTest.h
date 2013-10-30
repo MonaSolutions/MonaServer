@@ -23,6 +23,8 @@ protected:
 
 	bool GetOption(const std::string& fullName);
 
+	bool ProcessArg(char* arg, const std::function<void(Mona::Exception& ex, const std::string&, const std::string&)>& handler = nullptr);
+
 	// Objects declared here can be used by all tests in the test case for Foo.
 	Mona::Options opts;
 };

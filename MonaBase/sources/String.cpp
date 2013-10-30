@@ -16,6 +16,7 @@
 */
 
 #include "Mona/String.h"
+#include <cctype>
 
 using namespace std;
 
@@ -26,7 +27,7 @@ vector<string>& String::Split(const string& value, const string& separators, vec
 
 	while (it1 != end) {
 		if (options & SPLIT_TRIM) {
-			while (it1 != end && isblank(*it1))
+			while (it1 != end && isspace(*it1))
 				++it1;
 		}
 		it2 = it1;
@@ -37,7 +38,7 @@ vector<string>& String::Split(const string& value, const string& separators, vec
 			--it3;
 			while (it3 != it1 && isspace(*it3))
 				--it3;
-			if (!isblank(*it3))
+			if (!isspace(*it3))
 				++it3;
 		}
 		if (options & SPLIT_IGNORE_EMPTY) {
@@ -75,6 +76,29 @@ string& String::Trim(string& value, TrimOption option) {
 	value.resize(last + 1);
 	value.erase(0, first);
 	return value;
+}
+
+int String::ICompare(const char* value1, const char* value2, int size) {
+	if (value1 == value2)
+		return 0;
+	if (value1 == NULL)
+		return -1;
+	if (value2 == NULL)
+		return 1;
+
+	int f(0), l(0);
+	do {
+		if (size == 0)
+			return f - l;
+		if (((f = (unsigned char)(*(value1++))) >= 'A') && (f <= 'Z'))
+			f -= 'A' - 'a';
+		if (((l = (unsigned char)(*(value2++))) >= 'A') && (l <= 'Z'))
+			l -= 'A' - 'a';
+		if (size > 0)
+			--size;
+	} while (f && (f == l));
+
+	return(f - l);
 }
 
 

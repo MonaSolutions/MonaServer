@@ -8,7 +8,7 @@ using namespace std;
 void PoolTest::runAll() {
 	for(auto itTest : _mapTests) {
 		itTest.second->TestFunction();
-		NOTE("Test ", itTest.first, " OK");
+		NOTE("Test ", itTest.second->name(), " OK");
 	}
 }
 
@@ -31,4 +31,9 @@ void PoolTest::getListTests(vector<const string>& lTests) {
 	for(auto itTest = _mapTests.begin(), end = _mapTests.end(); itTest != end ; itTest = _mapTests.upper_bound(itTest->first)) {
 		lTests.push_back(itTest->first);
 	}
+}
+
+PoolTest& PoolTest::PoolTestInstance () {
+	static PoolTest ptest;
+	return ptest;
 }

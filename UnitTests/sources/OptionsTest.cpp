@@ -10,7 +10,13 @@ bool OptionsTest::AddOption(const string& fullName, const string& shortName, con
 		bool required, bool repeatable, const string& argName, bool argRequired) {
 
 	Exception ex;
-	opts.add(ex, fullName.c_str(), shortName.c_str());
+	Option& opt = opts.add(ex, fullName.c_str(), shortName.c_str())
+		.description(description)
+		.required(required)
+		.repeatable(repeatable);
+	
+	if (!argName.empty())
+		opt.argument(argName, argRequired);
 
 	if (ex) {
 		DEBUG("Exception : ", ex.error());
@@ -31,6 +37,13 @@ bool OptionsTest::GetOption(const string& fullName) {
 	}
 
 	return true;
+}
+
+bool OptionsTest::ProcessArg(char* arg, const function<void(Exception& ex, const std::string&, const std::string&)>& handler) {
+	char* argv[] = {"", arg};
+	
+	Exception ex;
+	return opts.process(ex, 2, argv, handler) && !ex;
 }
 
 ADD_TEST(OptionsTest, TestOption) {
@@ -121,194 +134,65 @@ ADD_TEST(OptionsTest, TestOptionsAdd) {
 	EXPECT_TRUE(OptionsTest::GetOption("help"));
 	EXPECT_TRUE(!OptionsTest::GetOption("helpe"));
 	EXPECT_TRUE(OptionsTest::GetOption("helper"));
+
+	opts.remove("include-dir");
+	EXPECT_TRUE(!OptionsTest::GetOption("include-dir"));
 }
 
 
-/*ADD_TEST(OptionsTest, TestProcess) {
-
-	//removeAllOptions();
+ADD_TEST(OptionsTest, TestProcess) {
 
 	Exception ex;
-	opts.add(ex,
-			 Option("include-dir", "I", "specify an include search path")
-		.required(false)
-		.repeatable(true)
-		.argument("path"));
+	EXPECT_TRUE(OptionsTest::AddOption("include-dir", "I", "specify an include search path", false, true, "path", true));
 
-	string arg[] = {"Iinclude",
-					"I/usr/include",
-					"include:/usr/local/include",
-					"include=/proj/include",
-					"include-dir=/usr/include",
-	};
-	opts.process(ex, );
-	EXPECT_TRUE(arg == "include");
-	incOpt.process("I/usr/include", arg);
-	EXPECT_TRUE(arg == "/usr/include");
-	incOpt.process("include:/usr/local/include", arg);
-	EXPECT_TRUE(arg == "/usr/local/include");
-	incOpt.process("include=/proj/include", arg);
-	EXPECT_TRUE(arg == "/proj/include");
-	incOpt.process("include-dir=/usr/include", arg);
-	EXPECT_TRUE(arg == "/usr/include");
-	incOpt.process("Include-dir:/proj/include", arg);
-	EXPECT_TRUE(arg == "/proj/include");
-	
-	try
-	{
-		incOpt.process("I", arg);
-		fail("argument required - must throw");
-	}
-	catch (Poco::Util::MissingArgumentException&)
-	{
-	}
+	char* arg[] = { "row for path",
+					"/I:include",
+					"-I=/usr/include",
+					"/include-dir:/usr/local/include",
+					"-include-dir=/proj/include",
+					"/include-dir=/usr/include"};
 
-	try
-	{
-		incOpt.process("Include", arg);
-		fail("argument required - must throw");
-	}
-	catch (Poco::Util::MissingArgumentException&)
-	{
-	}
-	
-	try
-	{
-		incOpt.process("Llib", arg);
-		fail("wrong option - must throw");
-	}
-	catch (Poco::Util::UnknownOptionException&)
-	{
-	}
-	
-	Option vrbOpt = Option("verbose", "v")
-		.description("enable verbose mode")
-		.required(false)
-		.repeatable(false);
-	
-	vrbOpt.process("v", arg);
-	EXPECT_TRUE(arg.empty());
-	vrbOpt.process("verbose", arg);
-	EXPECT_TRUE(arg.empty());
-	
-	try
-	{
-		vrbOpt.process("v2", arg);
-		fail("no argument expected - must throw");
-	}
-	catch (Poco::Util::UnexpectedArgumentException&)
-	{
-	}
+	char* res[] = { "", // not read
+					"include",
+					"/usr/include",
+					"/usr/local/include",
+					"/proj/include",
+					"/usr/include"};
 
-	try
-	{
-		vrbOpt.process("verbose:2", arg);
-		fail("no argument expected - must throw");
-	}
-	catch (Poco::Util::UnexpectedArgumentException&)
-	{
-	}
+	int cpt = 1;
+	EXPECT_TRUE(opts.process(ex, (sizeof(arg)/sizeof(char *)), arg, 
+		[&cpt, &res](Exception& ex, const string& name, const string& value){ EXPECT_TRUE(value == res[cpt++]); }));
+
+	EXPECT_TRUE(!ProcessArg("/I"));
 	
-	Option optOpt = Option("optimize", "O")
-		.description("enable optimization")
-		.required(false)
-		.repeatable(false)
-		.argument("level", false);
-		
-	optOpt.process("O", arg);
-	EXPECT_TRUE(arg.empty());
-	optOpt.process("O2", arg);
-	EXPECT_TRUE(arg == "2");
-	optOpt.process("optimize:1", arg);
-	EXPECT_TRUE(arg == "1");
-	optOpt.process("opt", arg);
-	EXPECT_TRUE(arg.empty());
-	optOpt.process("opt=3", arg);
-	EXPECT_TRUE(arg == "3");
-	optOpt.process("opt=", arg);
-	EXPECT_TRUE(arg.empty());
+	EXPECT_TRUE(!ProcessArg("/include-dir"));
+
+	EXPECT_TRUE(!ProcessArg("/Llib"));
+	
+	EXPECT_TRUE(OptionsTest::AddOption("verbose", "v", "enable verbose mode", false, false));
+	
+	EXPECT_TRUE(ProcessArg("/v", 
+		[](Exception& ex, const string& name, const string& value){ EXPECT_TRUE(value.empty()); }));
+	
+	EXPECT_TRUE(ProcessArg("/verbose", 
+		[](Exception& ex, const string& name, const string& value){ EXPECT_TRUE(value.empty()); }));
+
+	EXPECT_TRUE(!ProcessArg("/v2"));
+
+	// TODO If argument specified but not expected => must be false
+	//EXPECT_TRUE(!ProcessArg("/verbose:2"));
+
+	EXPECT_TRUE(OptionsTest::AddOption("optimize", "O", "enable optimization", false, false, "level", false));
+	
+	EXPECT_TRUE(ProcessArg("/O", 
+		[](Exception& ex, const string& name, const string& value){ EXPECT_TRUE(value.empty()); }));
+
+	EXPECT_TRUE(ProcessArg("/O=2", 
+		[](Exception& ex, const string& name, const string& value){ EXPECT_TRUE(value == "2"); }));
+
+	EXPECT_TRUE(ProcessArg("-optimize:1", 
+		[](Exception& ex, const string& name, const string& value){ EXPECT_TRUE(value == "1"); }));
+
+	EXPECT_TRUE(ProcessArg("-optimize=", 
+		[](Exception& ex, const string& name, const string& value){ EXPECT_TRUE(value.empty()); }));
 }
-
-
-void OptionTest::testProcess2()
-{
-	Option incOpt = Option("include-dir", "", "specify an include search path")
-		.required(false)
-		.repeatable(true)
-		.argument("path");
-
-	string arg;
-	incOpt.process("include:/usr/local/include", arg);
-	EXPECT_TRUE(arg == "/usr/local/include");
-	incOpt.process("include=/proj/include", arg);
-	EXPECT_TRUE(arg == "/proj/include");
-	incOpt.process("include-dir=/usr/include", arg);
-	EXPECT_TRUE(arg == "/usr/include");
-	incOpt.process("Include-dir:/proj/include", arg);
-	EXPECT_TRUE(arg == "/proj/include");
-	
-	try
-	{
-		incOpt.process("Iinclude", arg);
-		fail("unknown option - must throw");
-	}
-	catch (Poco::Util::UnknownOptionException&)
-	{
-	}
-	
-	try
-	{
-		incOpt.process("I", arg);
-		fail("argument required - must throw");
-	}
-	catch (Poco::Util::MissingArgumentException&)
-	{
-	}
-
-	try
-	{
-		incOpt.process("Include", arg);
-		fail("argument required - must throw");
-	}
-	catch (Poco::Util::MissingArgumentException&)
-	{
-	}
-	
-	try
-	{
-		incOpt.process("Llib", arg);
-		fail("wrong option - must throw");
-	}
-	catch (Poco::Util::UnknownOptionException&)
-	{
-	}
-	
-	Option vrbOpt = Option("verbose", "")
-		.description("enable verbose mode")
-		.required(false)
-		.repeatable(false);
-	
-	vrbOpt.process("v", arg);
-	EXPECT_TRUE(arg.empty());
-	vrbOpt.process("verbose", arg);
-	EXPECT_TRUE(arg.empty());
-	
-	try
-	{
-		vrbOpt.process("v2", arg);
-		fail("no argument expected - must throw");
-	}
-	catch (Poco::Util::UnknownOptionException&)
-	{
-	}
-
-	try
-	{
-		vrbOpt.process("verbose:2", arg);
-		fail("no argument expected - must throw");
-	}
-	catch (Poco::Util::UnexpectedArgumentException&)
-	{
-	}
-}
-*/

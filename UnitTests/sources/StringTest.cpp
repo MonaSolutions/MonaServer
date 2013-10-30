@@ -52,7 +52,7 @@ ADD_TEST(StringTest, TestFormat0) {
 
 ADD_TEST(StringTest, TestFloat) {
 
-	std::string s(String::Format(str, 1.0f));
+	string s(String::Format(str, 1.0f));
 	EXPECT_TRUE(s == "1");
 	s = String::Format(str, 0.1f);
 	EXPECT_TRUE(s == "0.1");
@@ -105,4 +105,86 @@ ADD_TEST(StringTest, TestToNumber) {
 	EXPECT_TRUE(!StringTest::ToNumber<double>("23z", 0));
 	EXPECT_TRUE(!StringTest::ToNumber<double>("a12.3", 0));
 	EXPECT_TRUE(!StringTest::ToNumber<double>("12.3aa", 0));
+}
+
+ADD_TEST(StringTest, TrimLeft) {
+
+	string s = "abc";
+	EXPECT_TRUE(String::Trim(s, String::TRIM_LEFT) == "abc");
+	
+	s = " abc ";
+	EXPECT_TRUE(String::Trim(s, String::TRIM_LEFT) == "abc ");
+	
+	s = "  ab c ";
+	EXPECT_TRUE(String::Trim(s, String::TRIM_LEFT) == "ab c ");
+}
+
+
+ADD_TEST(StringTest, TrimRight) {
+
+	string s = "abc";
+	EXPECT_TRUE(String::Trim(s, String::TRIM_RIGHT) == "abc");
+	
+	s = " abc ";
+	EXPECT_TRUE(String::Trim(s, String::TRIM_RIGHT) == " abc");
+
+	s = "  ab c  ";
+	EXPECT_TRUE(String::Trim(s, String::TRIM_RIGHT) == "  ab c");
+}
+
+ADD_TEST(StringTest, Trim) {
+
+	string s = "abc";
+	EXPECT_TRUE(String::Trim(s, String::TRIM_BOTH) == "abc");
+	
+	s = "abc ";
+	EXPECT_TRUE(String::Trim(s, String::TRIM_BOTH) == "abc");
+	
+	s = "  ab c  ";
+	EXPECT_TRUE(String::Trim(s, String::TRIM_BOTH) == "ab c");
+}
+
+ADD_TEST(StringTest, ToLower) {
+
+	string s = "ABC";
+	EXPECT_TRUE(String::ToLower(s) == "abc");
+	
+	s = "aBC";
+	EXPECT_TRUE(String::ToLower(s) == "abc");
+}
+
+ADD_TEST(StringTest, ICompare) {
+
+	string s1 = "AAA";
+	string s2 = "aaa";
+	string s3 = "bbb";
+	string s4 = "cCcCc";
+	string s5;
+	EXPECT_TRUE(String::ICompare(s1, s2) == 0);
+	EXPECT_TRUE(String::ICompare(s1, s3) < 0);
+	EXPECT_TRUE(String::ICompare(s1, s4) < 0);
+	EXPECT_TRUE(String::ICompare(s3, s1) > 0);
+	EXPECT_TRUE(String::ICompare(s4, s2) > 0);
+	EXPECT_TRUE(String::ICompare(s2, s4) < 0);
+	EXPECT_TRUE(String::ICompare(s1, s5) > 0);
+	EXPECT_TRUE(String::ICompare(s5, s4) < 0);
+
+	string ss1 = "AAAzz";
+	string ss2 = "aaaX";
+	string ss3 = "bbbX";
+	EXPECT_TRUE(String::ICompare(ss1, ss2, 3) == 0);
+	EXPECT_TRUE(String::ICompare(ss1, ss3, 3) < 0);
+	
+	EXPECT_TRUE(String::ICompare(s1, s2.c_str()) == 0);
+	EXPECT_TRUE(String::ICompare(s1, s3.c_str()) < 0);
+	EXPECT_TRUE(String::ICompare(s1, s4.c_str()) < 0);
+	EXPECT_TRUE(String::ICompare(s3, s1.c_str()) > 0);
+	EXPECT_TRUE(String::ICompare(s4, s2.c_str()) > 0);
+	EXPECT_TRUE(String::ICompare(s2, s4.c_str()) < 0);
+	EXPECT_TRUE(String::ICompare(s1, s5.c_str()) > 0);
+	EXPECT_TRUE(String::ICompare(s5, s4.c_str()) < 0);
+	
+	EXPECT_TRUE(String::ICompare(ss1, "aaa", 3) == 0);
+	EXPECT_TRUE(String::ICompare(ss1, "AAA", 3) == 0);
+	EXPECT_TRUE(String::ICompare(ss1, "bb", 2) < 0);
 }
