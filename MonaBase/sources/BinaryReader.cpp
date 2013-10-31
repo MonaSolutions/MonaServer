@@ -16,55 +16,69 @@
 */
 
 #include "Mona/BinaryReader.h"
+#include "Mona/Binary.h"
 #include "Mona/Util.h"
 
 using namespace std;
 
 namespace Mona {
 
-BinaryReader BinaryReader::Null(Util::NullInputStream);
 
-BinaryReader::BinaryReader(istream& istr) : Poco::BinaryReader(istr,BinaryReader::NETWORK_BYTE_ORDER) {
+BinaryReader::BinaryReader(istream& istr, ByteOrder byteOrder) : _istr(istr) {
+#if defined(_ARCH_BIG_ENDIAN)
+	_flipBytes = byteOrder == LITTLE_ENDIAN;
+#else
+	_flipBytes = byteOrder == BIG_ENDIAN;;
+#endif
 }
 
-
-BinaryReader::~BinaryReader() {
-}
 
 UInt32 BinaryReader::read7BitEncoded() {
-	UInt32 id;
-	Poco::BinaryReader::read7BitEncoded(id);
-	return id;
-}
-
-UInt8 BinaryReader::read8() {
-	UInt8 c;
-	(*this) >> c;
-	return c;
+	char c;
+	UInt32 value = 0;
+	int s = 0;
+	do {
+		c = 0;
+		_istr.read(&c, 1);
+		UInt32 x = (c & 0x7F);
+		x <<= s;
+		value += x;
+		s += 7;
+	} while (c & 0x80);
+	return value;
 }
 
 UInt16 BinaryReader::read16() {
-	UInt16 c;
-	(*this) >> c;
-	return c;
+	UInt16 value;
+	_istr.read((char*)&value, sizeof(value));
+	if (_flipBytes)
+		return Binary::Flip16(value);
+	return value;
 }
 
 UInt32 BinaryReader::read24() {
-	UInt16 c;
-	(*this) >> c;
-	return (c << 8) + read8();
+	UInt32 value;
+	_istr.read((char*)&value, 3);
+	if (_flipBytes)
+		return Binary::Flip24(value);
+	return value;
 }
 
 UInt32 BinaryReader::read32() {
-	UInt32 c;
-	(*this) >> c;
-	return c;
+	UInt32 value;
+	_istr.read((char*)&value, sizeof(value));
+	if (_flipBytes)
+		return Binary::Flip32(value);
+	return value;
 }
 
+
 UInt64 BinaryReader::read64() {
-	UInt64 c;
-	(*this) >> c;
-	return c;
+	UInt64 value;
+	_istr.read((char*)&value, sizeof(value));
+	if (_flipBytes)
+		return Binary::Flip64(value);
+	return value;
 }
 
 UInt32 BinaryReader::read7BitValue() {
@@ -95,6 +109,12 @@ UInt64 BinaryReader::read7BitLongValue() {
     result <<= ((n<8) ? 7 : 8); // Use all 8 bits from the 4th byte
     result |= b;
 	return result;
+}
+
+string& BinaryReader::readRaw(UInt32 size, string& value) {
+	value.resize(size);
+	_istr.read(&value[0], size);
+	return value;
 }
 
 

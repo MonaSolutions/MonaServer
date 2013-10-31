@@ -18,15 +18,13 @@
 #include "Mona/QualityOfService.h"
 #include "Mona/Time.h"
 
-using namespace Poco;
 using namespace std;
 
 namespace Mona {
 
-class Sample {
+class Sample : virtual Object {
 public:
 	Sample(UInt32 success,UInt32 lost,UInt32 size) : success(success),lost(lost),size(size) {}
-	~Sample() {}
 	const Time time;
 	const UInt32	success;
 	const UInt32	lost;

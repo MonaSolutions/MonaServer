@@ -18,6 +18,7 @@ This file is a part of Mona.
 #pragma once
 
 #include "Mona/Mona.h"
+#include "Mona/String.h"
 #include <functional>
 
 namespace Mona {
@@ -87,10 +88,10 @@ public:
 		/// Returns the argument name, if specified.
 
 
-	bool operator==(const Option& other) const { return stricmp(_fullName.c_str(), other._fullName.c_str()) == 0 || stricmp(_shortName.c_str(), other._shortName.c_str()) == 0; }
+	bool operator==(const Option& other) const { return String::ICompare(_fullName, other._fullName) == 0 || String::ICompare(_shortName, other._shortName) == 0; }
 	bool operator!=(const Option& other) const { return !operator==(other); }
 	bool operator<(const Option& other) const { return _fullName.empty() || other._fullName.empty() ? _shortName < other._shortName : _fullName < other._fullName; }
-	bool operator>(const Option& other) const { return _fullName.empty() || other._fullName.empty() ? _shortName < other._shortName : _fullName < other._fullName; }
+	bool operator>(const Option& other) const { return _fullName.empty() || other._fullName.empty() ? _shortName > other._shortName : _fullName > other._fullName; }
 
 	static Option Null;
 private:

@@ -50,7 +50,7 @@ public:
 
 	void			remove(const std::string& name) { _options.erase(Option(name.c_str(), "")); }
 
-	const Option&	get(Exception& ex, const std::string& name) const;
+	const Option&	get(const std::string& name) const;
 
 	Iterator		begin() const { return _options.begin(); }
 	Iterator		end() const { return _options.end(); }

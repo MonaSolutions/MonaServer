@@ -130,9 +130,6 @@
     <ClCompile Include="sources\DNS.cpp">
       <Filter>sources\Net</Filter>
     </ClCompile>
-    <ClCompile Include="sources\Event.cpp">
-      <Filter>sources\Util</Filter>
-    </ClCompile>
     <ClCompile Include="sources\HostEntry.cpp">
       <Filter>sources\Net</Filter>
     </ClCompile>
@@ -156,6 +153,12 @@
     </ClCompile>
     <ClCompile Include="sources\FileWatcher.cpp">
       <Filter>sources\File</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\FileSystem.cpp">
+      <Filter>sources\File</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\Event.cpp">
+      <Filter>sources\Threading</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -282,9 +285,6 @@
     <ClInclude Include="include\Mona\Parameters.h">
       <Filter>sources\Util</Filter>
     </ClInclude>
-    <ClInclude Include="include\Mona\Event.h">
-      <Filter>sources\Util</Filter>
-    </ClInclude>
     <ClInclude Include="include\Mona\Net.h">
       <Filter>sources\Net</Filter>
     </ClInclude>
@@ -322,6 +322,18 @@
       <Filter>sources\File</Filter>
     </ClInclude>
     <ClInclude Include="include\Mona\Buffer.h">
+      <Filter>sources\Util</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\FileSystem.h">
+      <Filter>sources\File</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\Binary.h">
+      <Filter>sources\Stream</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\Event.h">
+      <Filter>sources\Threading</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\Process.h">
       <Filter>sources\Util</Filter>
     </ClInclude>
   </ItemGroup>

@@ -30,15 +30,15 @@ public:
 	DiffieHellman();
 	virtual ~DiffieHellman();
 
-	bool	initialize(bool reset=false);
-	int		publicKeySize() { initialize(); return BN_num_bytes(_pDH->pub_key); }
-	int		privateKeySize() { initialize();  return BN_num_bytes(_pDH->priv_key); }
-	void	writePublicKey(Poco::UInt8* pubKey) { initialize(); writeKey(_pDH->pub_key, pubKey); }
-	void	writePrivateKey(Poco::UInt8* privKey) { initialize();  writeKey(_pDH->priv_key, privKey); }
-	void	computeSecret(const Buffer<UInt8>& farPubKey,Buffer<UInt8>& sharedSecret);
+	bool	initialize(Exception& ex,bool reset=false);
+	int		publicKeySize(Exception& ex) { initialize(ex); return BN_num_bytes(_pDH->pub_key); }
+	int		privateKeySize(Exception& ex) { initialize(ex);  return BN_num_bytes(_pDH->priv_key); }
+	UInt8*	readPublicKey(Exception& ex, UInt8* pubKey) { initialize(ex); readKey(_pDH->pub_key, pubKey); return pubKey; }
+	UInt8*	readPrivateKey(Exception& ex, UInt8* privKey) { initialize(ex);  readKey(_pDH->priv_key, privKey); return privKey; }
+	Buffer<UInt8>&	computeSecret(Exception& ex, const Buffer<UInt8>& farPubKey, Buffer<UInt8>& sharedSecret);
 
 private:
-	void	writeKey(BIGNUM *pKey, UInt8* key) { BN_bn2bin(pKey, key); }
+	void	readKey(BIGNUM *pKey, UInt8* key) { BN_bn2bin(pKey, key); }
 
 	DH*			_pDH;
 };

@@ -15,46 +15,24 @@
 	This file is a part of Mona.
 */
 
-#include "Mona/TaskHandler.h"
+#pragma once
 
-using namespace std;
-
+#include "Mona/Mona.h"
+#if defined(_WIN32)
+#include "Windows.h"
+#endif
 
 namespace Mona {
 
+class Process : virtual Static {
+public:
+#if defined(_WIN32)
+	static int Id() { return GetCurrentProcessId(); }
+#else
+	static pid_t Id() { return getpid(); }
+#endif
+};
 
-void TaskHandler::start() {
-	lock_guard<recursive_mutex> lock(_mutex);
-	_stop=false;
-}
-
-
-void TaskHandler::stop() {
-	lock_guard<recursive_mutex> lock(_mutex);
-	_stop=true;
-	_event.set();
-}
-
-void TaskHandler::waitHandle(Task& task) {
-	lock_guard<mutex> lockWait(_mutexWait);
-	{
-		lock_guard<recursive_mutex> lock(_mutex);
-		if(_stop)
-			return;
-		_pTask = &task;
-	}
-	requestHandle();
-	_event.wait();
-}
-
-void TaskHandler::giveHandle(Exception& ex) {
-	lock_guard<recursive_mutex> lock(_mutex);
-	if(!_pTask)
-		return;
-	_pTask->handle(ex);
-	_pTask=NULL;
-	_event.set();
-}
 
 
 } // namespace Mona

@@ -20,89 +20,123 @@
 #include "Mona/Logs.h"
 
 using namespace std;
-using namespace Poco;
 
 namespace Mona {
 
-StartableProcess::StartableProcess(Startable& startable):_startable(startable){
+ThreadPriority::ThreadPriority(thread& thread) : _thread(thread) {
+#if !defined(_WIN32)
+	_min = sched_get_priority_min(SCHED_FIFO);
+	_max = sched_get_priority_max(SCHED_FIFO);
+	// set SCHED_FIFO policy!
+	struct sched_param params;
+	params.sched_priority = _min + (_max - _min) / 2;
+	pthread_setschedparam(threadHandle, SCHED_FIFO, &params);
+#endif
 }
 
-void StartableProcess::run() {
-	try {
-		Exception ex;
-		_startable.prerun(ex);
-		if (ex)
-			CRITIC("Startable thread ",_startable.name(),", ",ex.error());
-	} catch(exception& ex) {
-		 CRITIC("Startable thread ",_startable.name(),", ",ex.what());
-	} catch(...) {
-		 CRITIC("Startable thread ",_startable.name(),", error unknown");
-	}
+bool ThreadPriority::set(Priority priority) {
+	if (priority == _priority)
+		return true;
+#if defined(_WIN32)
+	if (SetThreadPriority(_thread.native_handle(), priority) == 0)
+		return false;
+#else
+	struct sched_param params;
+	if(priority==PRIO_LOWEST)
+		params.sched_priority = _min;
+	else if(priority==PRIO_LOW)
+		params.sched_priority = _min + (_max - _min) / 4;
+	else if(priority==PRIO_NORMAL)
+		params.sched_priority = _min + (_max - _min) / 2;
+	else if (priority == PRIO_HIGH)
+		params.sched_priority = _min + (_max - _min) / 4;
+	else if (priority == PRIO_HIGHEST)
+		params.sched_priority = _max;
+
+	if (pthread_setschedparam(_thread.native_handle(), SCHED_FIFO, &params))
+		return false;
+#endif
+	_priority = priority;
+	return true;
 }
 
-Startable::Startable(const string& name) : _name(name),_thread(name),_stop(true),_haveToJoin(false),_process(*this) {
 
+
+Startable::Startable(const string& name) : _name(name), _stop(true) {
+	
 }
 
 Startable::~Startable() {
 	stop();
 }
 
-void Startable::start() {
-	if(!_stop) // if running
-		return;
-	ScopedLock<FastMutex> lock(_mutex);
-	if(_haveToJoin) {
-		_thread.join();
-		_haveToJoin=false;
-	}
+void Startable::process() {
+	Util::SetThreadName(_thread.get_id(), _name);
 	try {
-		ScopedLock<FastMutex> lock(_mutexStop);
-		_thread.start(_process);
-		_haveToJoin = true;
-		_stop=false;
-	} catch (Poco::Exception& ex) {
-		ERROR("Impossible to start the thread, ",ex.displayText());
+		ThreadPriority priority(_thread);
+		Exception ex;
+		run(ex, priority);
+		if (ex)
+			CRITIC("Startable thread ", _name, ", ", ex.error());
+	} catch (exception& ex) {
+		CRITIC("Startable thread ", _name, ", ", ex.what());
+	} catch (...) {
+		CRITIC("Startable thread ", _name, ", error unknown");
 	}
+	lock_guard<mutex> lock(_mutexStop);
+	_stop = true;
 }
 
-void Startable::prerun(Exception& ex) {
-	run(ex);
-	ScopedLock<FastMutex> lock(_mutexStop);
-	_stop=true;
-}
-
-Startable::WakeUpType Startable::sleep(Exception& ex,UInt32 millisec) {
-	if(_stop)
+// Caller is usually the _thread
+Startable::WakeUpType Startable::sleep(UInt32 millisec) {
+	if (_stop)
 		return STOP;
 	 WakeUpType result = WAKEUP;
-	 if (!_wakeUpEvent.wait(ex, millisec))
+	 if (!_wakeUpEvent.wait(millisec))
 		 result = TIMEOUT;
 	if(_stop)
 		return STOP;
 	return result;
 }
 
+// caller is usually the thread controller of _thread
+bool Startable::start(Exception& ex) {
+	if (!_stop)  // if running
+		return true;
+	lock_guard<mutex> lock(_mutex);
+	if (_thread.get_id() == this_thread::get_id()) {
+		ex.set(Exception::THREAD,"Startable::start method can't be called from the running thread");
+		return false;
+	}
+	if (_thread.joinable())
+		_thread.join();
+	try {
+		lock_guard<mutex> lock(_mutexStop);
+		_thread = thread(&Startable::process, ref(*this)); // start the thread
+		_wakeUpEvent.reset();
+		_stop = false;
+	} catch (exception& exc) {
+		ex.set(Exception::THREAD, "Impossible to start the thread of ", _name, ", ", exc.what());
+		return false;
+	}
+	return true;
+}
+
+// caller is usually the thread controller of _thread
 void Startable::stop() {
-	ScopedLock<FastMutex> lock(_mutex);
+	lock_guard<mutex> lock(_mutex);
 	{
-		ScopedLock<FastMutex> lock(_mutexStop);
-		if(_stop) {
-			if(_haveToJoin) {
+		lock_guard<mutex> lock(_mutexStop);
+		if (_stop) {
+			if (_thread.get_id() != this_thread::get_id() && _thread.joinable())
 				_thread.join();
-				_haveToJoin=false;
-			}
 			return;
 		}
-		_stop=true;
-		Thread* pThread = Thread::current();
-		if(pThread && pThread->id() == _thread.id())
-			return;
+		_stop = true;
 	}
 	_wakeUpEvent.set();
-	// Attendre la fin!
-	_thread.join();
-	_haveToJoin=false;
+	if (_thread.get_id() != this_thread::get_id() && _thread.joinable())
+		_thread.join();
 }
 
 

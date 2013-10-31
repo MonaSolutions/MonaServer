@@ -19,8 +19,9 @@
 
 #include "Mona/Mona.h"
 #include "Mona/Task.h"
-#include "Poco/Mutex.h"
-#include "Poco/Event.h"
+#include "Mona/Event.h"
+#include <mutex>
+
 
 namespace Mona {
 
@@ -39,10 +40,10 @@ protected:
 private:
 	virtual void requestHandle()=0;
 
-	Poco::Mutex				_mutex;
-	Poco::FastMutex			_mutexWait;
+	std::recursive_mutex	_mutex;
+	std::mutex				_mutexWait;
 	Task*					_pTask;
-	Poco::Event				_event;
+	Event					_event;
 	volatile bool			_stop;
 };
 

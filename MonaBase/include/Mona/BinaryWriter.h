@@ -18,59 +18,43 @@
 #pragma once
 
 #include "Mona/Mona.h"
-#include "Poco/BinaryWriter.h"
 #include "Mona/SocketAddress.h"
+#include <ostream>
 
 namespace Mona {
 
-class BinaryWriter : public Poco::BinaryWriter, virtual Object {
+class BinaryWriter : virtual Object {
 public:
-	BinaryWriter(std::ostream& ostr);
+	enum ByteOrder {
+		BIG_ENDIAN,
+		LITTLE_ENDIAN
+	};
+	BinaryWriter(std::ostream& ostr, ByteOrder byteOrder = BIG_ENDIAN); // BIG_ENDIAN==NETWORK_ENDIAN
 	virtual ~BinaryWriter();
 
-	void writeRaw(const UInt8* value,UInt32 size);
-	void writeRaw(const char* value,UInt32 size);
-	void writeRaw(const std::string& value);
-	void write8(UInt8 value);
+	void flush() { _ostr.flush(); }
+
+	void writeRaw(const UInt8* value, UInt32 size) { _ostr.write((const char*)value, size); }
+	void writeRaw(const char* value, UInt32 size) { _ostr.write(value, size); }
+	void writeRaw(const std::string& value) { _ostr.write(value.c_str(), value.size()); }
+	void write8(UInt8 value) { _ostr.put(value); }
 	void write16(UInt16 value);
 	void write24(UInt32 value);
 	void write32(UInt32 value);
 	void write64(UInt64 value);
-	void writeString8(const std::string& value);
-	void writeString8(const char* value,UInt8 size);
-	void writeString16(const std::string& value);
-	void writeString16(const char* value,UInt16 size);
+	void writeString8(const std::string& value) { write8(value.size()); writeRaw(value); }
+	void writeString8(const char* value, UInt8 size) { write8(size); writeRaw(value, size); }
+	void writeString16(const std::string& value) { write16(value.size()); writeRaw(value); }
+	void writeString16(const char* value, UInt16 size) { write16(size); writeRaw(value, size); }
 	void write7BitValue(UInt32 value);
 	void write7BitLongValue(UInt64 value);
 	void writeAddress(const SocketAddress& address,bool publicFlag);
 
-	static BinaryWriter Null;
+private:
+	bool			_flipBytes;
+	std::ostream&   _ostr;
 };
 
-inline void BinaryWriter::writeRaw(const UInt8* value,UInt32 size) {
-	Poco::BinaryWriter::writeRaw((char*)value,size);
-}
-inline void BinaryWriter::writeRaw(const char* value,UInt32 size) {
-	Poco::BinaryWriter::writeRaw(value,size);
-}
-inline void BinaryWriter::writeRaw(const std::string& value) {
-	Poco::BinaryWriter::writeRaw(value);
-}
 
-inline void BinaryWriter::write8(UInt8 value) {
-	(*this) << value;
-}
-
-inline void BinaryWriter::write16(UInt16 value) {
-	(*this) << value;
-}
-
-inline void BinaryWriter::write32(UInt32 value) {
-	(*this) << value;
-}
-
-inline void BinaryWriter::write64(UInt64 value) {
-	(*this) << value;
-}
 
 } // namespace Mona

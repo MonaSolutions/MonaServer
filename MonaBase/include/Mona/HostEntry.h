@@ -39,14 +39,9 @@ public:
 	// Creates the HostEntry from the data in a hostent structure.
 	bool set(Exception& ex, const struct hostent* entry);
 
-#if defined(POCO_HAVE_ADDRINFO)
 	// Creates the HostEntry from the data in an addrinfo structure.
 	bool set(Exception& ex, struct addrinfo* info);
-#endif
 
-#if defined(POCO_VXWORKS)
-	bool set(Exception& ex,const std::string& name, const void* addr);
-#endif
 
 	// Returns the canonical host name.
 	const std::string& name() const {return _name;}

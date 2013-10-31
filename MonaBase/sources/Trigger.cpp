@@ -27,10 +27,6 @@ Trigger::Trigger() : _time(1),_cycle(0),_running(false) {
 	
 }
 
-
-Trigger::~Trigger() {
-}
-
 void Trigger::reset() {
 	_timeInit.update();
 	_time=1;

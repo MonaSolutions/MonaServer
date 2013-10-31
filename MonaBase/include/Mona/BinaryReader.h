@@ -18,31 +18,37 @@
 #pragma once
 
 #include "Mona/Mona.h"
-#include "Poco/BinaryReader.h"
+#include <istream>
 
 namespace Mona {
 
 
-class BinaryReader : public Poco::BinaryReader, virtual Object {
+class BinaryReader : virtual Object {
 public:
-	BinaryReader(std::istream& istr);
-	virtual ~BinaryReader();
+	enum ByteOrder {
+		BIG_ENDIAN,
+		LITTLE_ENDIAN
+	};
+	BinaryReader(std::istream& istr,ByteOrder byteOrder=BIG_ENDIAN); // BIG_ENDIAN==NETWORK_ENDIAN
 
 	UInt32			read7BitValue();
 	UInt64			read7BitLongValue();
 	UInt32			read7BitEncoded();
-	UInt8*			readRaw(UInt8* value, UInt32 size) { Poco::BinaryReader::readRaw((char*)value, size); return value; }
-	char*			readRaw(char* value, UInt32 size) { Poco::BinaryReader::readRaw(value, size); return value; }
-	std::string&	readRaw(UInt32 size, std::string& value) { Poco::BinaryReader::readRaw(size, value); return value; }
+	UInt8*			readRaw(UInt8* value, UInt32 size) { _istr.read((char*)value, size); return value; }
+	char*			readRaw(char* value, UInt32 size) { _istr.read(value, size); return value; }
+	std::string&	readRaw(UInt32 size, std::string& value);
 	std::string&	readString8(std::string& value) { return readRaw(read8(), value);}
 	std::string&	readString16(std::string& value) { return readRaw(read16(), value); }
-	UInt8			read8();
+	UInt8			read8() { return (UInt8)_istr.get(); }
 	UInt16			read16();
 	UInt32			read24();
 	UInt32			read32();
 	UInt64			read64();
 
-	static BinaryReader Null;
+private:
+
+	bool			_flipBytes;
+	std::istream&   _istr;
 };
 
 

@@ -25,15 +25,10 @@ namespace Mona {
 
 class Attempt : virtual Object {
 public:
-	Attempt() : count(0) {
-	}
-	~Attempt() {
-	}
+	Attempt() : count(0) {}
 	UInt32	count;
 
-	bool obsolete() {
-		return _time.isElapsed(120000000); // 2mn
-	}
+	bool obsolete() { return _time.isElapsed(120000000); } // 2mn
 private:
 	Time _time;
 };
@@ -46,8 +41,8 @@ public:
 	
 	void			manage();
 
-	UInt32	attempt(const std::string& tag);
-	void			clearAttempt(const std::string& tag);
+	UInt32	attempt(const std::string& tag) { return (attempt<Attempt>(tag)).count; }
+	void	clearAttempt(const std::string& tag);
 
 	template<class AttemptType>
 	AttemptType&	attempt(const std::string& tag) {
@@ -65,10 +60,6 @@ private:
 	std::map<std::string,Attempt*>		_attempts;
 
 };
-
-inline UInt32	AttemptCounter::attempt(const std::string& tag) {
-	return (attempt<Attempt>(tag)).count;
-}
 
 
 } // namespace Mona

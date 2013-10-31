@@ -31,7 +31,6 @@ bool DNS::HostByName(Exception& ex, const string& hostname, HostEntry& host) {
 	if (!Net::InitializeNetwork(ex))
 		return false;
 
-#if defined(POCO_HAVE_ADDRINFO)
 	struct addrinfo* pAI;
 	struct addrinfo hints;
 	memset(&hints, 0, sizeof(hints));
@@ -44,25 +43,12 @@ bool DNS::HostByName(Exception& ex, const string& hostname, HostEntry& host) {
 	}
 	SetAIError(ex,rc, hostname);
 	return false;
-#elif defined(POCO_VXWORKS)
-	int addr = hostGetByName(const_cast<char*>(hostname.c_str()));
-	if (addr != ERROR)
-		return host.set(ex,hostname,&addr);
-#else
-	struct hostent* he = gethostbyname(hostname.c_str());
-	if (he)
-		return host.set(ex,he);
-#endif
-	Socket::SetError(ex, LastError(), hostname); // will throw an appropriate exception
-	return false;
 }
 
 
 bool DNS::HostByAddress(Exception& ex,const IPAddress& address, HostEntry& host) {
 	if (!Net::InitializeNetwork(ex))
 		return false;
-
-#if defined(POCO_HAVE_ADDRINFO)
 	SocketAddress sa;
 	sa.set(address, 0);
 	static char fqname[1024];
@@ -80,17 +66,6 @@ bool DNS::HostByAddress(Exception& ex,const IPAddress& address, HostEntry& host)
 		}
 	}
 	SetAIError(ex, rc, address.toString());
-	return false;
-#elif defined(POCO_VXWORKS)
-	char name[MAXHOSTNAMELEN + 1];
-	if (hostGetByAddr(*reinterpret_cast<const int*>(address.addr()), name) == OK)
-		return host.set(ex,string(name), address);
-#else
-	struct hostent* he = gethostbyaddr(reinterpret_cast<const char*>(address.addr()), address.length(), address.af());
-	if (he)
-		return host.set(ex,he);
-#endif
-	Socket::SetError(ex, LastError(), address.toString());      // will throw an appropriate exception
 	return false;
 }
 

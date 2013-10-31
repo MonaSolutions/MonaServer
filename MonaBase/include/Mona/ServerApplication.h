@@ -19,55 +19,54 @@ This file is a part of Mona.
 
 #include "Mona/Mona.h"
 #include "Mona/Application.h"
-#include "Poco/Event.h"
-#if defined(POCO_OS_FAMILY_WINDOWS)
-#include "Poco/NamedEvent.h"
-#endif
+#include "Mona/Event.h"
 #include <iostream>
+#if defined(_WIN32)
+#include "Windows.h"
+#endif
 
 namespace Mona {
 
-class ServerApplication : public Application, virtual Object {
+class TerminateSignal : virtual Object {
+	friend class ServerApplication;
 public:
-	ServerApplication();
-
-	bool isInteractive() const { return _isInteractive; }
-
-#if defined(POCO_OS_FAMILY_UNIX) || (defined(POCO_OS_FAMILY_WINDOWS) && !defined(_WIN32_WCE))
-	int run(int argc, char* argv[]);
-#endif
-
-	static void terminate();
-		
-protected:
-	void waitForTerminationRequest();
-#if defined(POCO_OS_FAMILY_UNIX) || (defined(POCO_OS_FAMILY_WINDOWS) && !defined(_WIN32_WCE))
-	void defineOptions(Exception& ex, Options& options);
-#endif
-
+	TerminateSignal();
+	void wait();
 private:
-	enum Action {
-		SRV_RUN,
-		SRV_REGISTER,
-		SRV_UNREGISTER,
-	};
-
-	Action			_action;
-	bool			_isInteractive;
-
-#if defined(POCO_VXWORKS)
-	static Poco::Event _terminate;
-#elif defined(POCO_OS_FAMILY_UNIX)
-	void handlePidFile(const std::string& value);
-	bool isDaemon(int argc, char** argv);
-	void beDaemon();
-#elif defined(POCO_OS_FAMILY_WINDOWS)
-#if !defined(_WIN32_WCE)
-	
+#if defined(_WIN32)
 	static BOOL __stdcall ConsoleCtrlHandler(DWORD ctrlType);
 	static void __stdcall ServiceControlHandler(DWORD control);
-	static void __stdcall ServiceMain(DWORD argc, LPTSTR* argv);
 
+	static Event					_Terminate;
+	static SERVICE_STATUS			_ServiceStatus;
+	static SERVICE_STATUS_HANDLE	_ServiceStatusHandle;
+
+#else
+	sigset_t _signalSet;
+#endif
+};
+
+
+class ServerApplication : public Application, virtual Object {
+public:
+	ServerApplication() : _isInteractive(true) { _PThis = this; }
+
+	bool	isInteractive() const { return _isInteractive; }
+
+	int		run(int argc, char* argv[]);
+
+protected:
+	void defineOptions(Exception& ex, Options& options);
+
+private:
+	virtual int main(TerminateSignal& serverTerminateSignal) = 0;
+	int			main() {}
+
+	bool		_isInteractive;
+
+#if defined(_WIN32)
+
+	static void __stdcall ServiceMain(DWORD argc, LPTSTR* argv);
 
 	bool hasConsole();
 	bool isService();
@@ -79,13 +78,14 @@ private:
 	std::string _description;
 	std::string _startup;
 
+	static ServerApplication*	 _PThis;
+	static SERVICE_STATUS        _ServiceStatus;
+	static SERVICE_STATUS_HANDLE _ServiceStatusHandle;
 
-	static ServerApplication*	 _This;
-	static Poco::Event           _terminated;
-	static SERVICE_STATUS        _serviceStatus; 
-	static SERVICE_STATUS_HANDLE _serviceStatusHandle; 
-#endif // _WIN32_WCE
-	static Poco::NamedEvent      _terminate;
+#else
+	void handlePidFile(const std::string& value);
+	bool isDaemon(int argc, char** argv);
+	void beDaemon();
 #endif
 };
 

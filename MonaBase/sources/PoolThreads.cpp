@@ -23,7 +23,7 @@ using namespace std;
 
 namespace Mona {
 
-PoolThreads::PoolThreads(UInt32 threadsAvailable):_threads(threadsAvailable==0 ? Util::ProcessorCount() : threadsAvailable)  {
+PoolThreads::PoolThreads(UInt32 threadsAvailable) : _threads(threadsAvailable == 0 ? Util::ProcessorCount() : threadsAvailable) {
 	for(UInt16 i=0;i<_threads.size();++i)
 		_threads[i] = new PoolThread();
 }

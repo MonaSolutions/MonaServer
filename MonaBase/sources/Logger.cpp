@@ -16,15 +16,18 @@
 */
 
 #include "Mona/Logger.h"
-#include "Poco/Path.h"
+#include <iostream>
+#if defined(_WIN32)
+#include <windows.h>
+#endif
+
 
 using namespace std;
-using namespace Poco;
 
 
 namespace Mona {
 
-#if defined(POCO_OS_FAMILY_WINDOWS)
+#if defined(_WIN32)
 #define FATAL_COLOR 12
 #define CRITIC_COLOR 12
 #define ERROR_COLOR 13
@@ -54,7 +57,7 @@ const char* LogColors[] = { FATAL_COLOR, CRITIC_COLOR, ERROR_COLOR, WARN_COLOR, 
 
 mutex Logger::_Mutex;
 
-void Logger::log(Thread::TID threadId, const string& threadName, Priority priority, const char *filePath, const string& shortFilePath, long line, const string& message) {
+void Logger::log(std::thread::id threadId, const string& threadName, Priority priority, char *filePath, string& shortFilePath, long line, string& message) {
 	lock_guard<mutex> lock(_Mutex);
 	priority = (Priority)(priority - 1);
 	SET_CONSOLE_TEXT_COLOR(LogColors[priority]);

@@ -16,36 +16,31 @@
 */
 
 #include "Mona/FileWatcher.h"
+#include "Mona/FileSystem.h"
 
 namespace Mona {
 
 using namespace std;
-using namespace Poco;
 
 
-FileWatcher::FileWatcher(const string& path) : _file(path), path(path) {
-	_lastModified.update(0);
+FileWatcher::FileWatcher(const string& path) : path(path), _lastModified(0){
+	
 }
 
 
 bool FileWatcher::watch() {
-	bool result=false;
-	if(_lastModified>0) {
-		Int64 lastModif = _file.getLastModified().epochMicroseconds();
-		if (!_file.exists() || !_file.isFile() || lastModif > _lastModified) {
-			_lastModified.update(lastModif);
+	Time lastModified;
+	FileSystem::GetLastModified(path, lastModified); // if path doesn't exist lastModified==0
+	if (lastModified != _lastModified) {
+		if (_lastModified>0)
 			clear();
-			if(_lastModified>0) {
-				load();
-				result=true;
-			}
+		_lastModified.update(lastModified);
+		if (lastModified > 0) {
+			load();
+			return true;
 		}
-	} else if(_file.exists() && _file.isFile()) {
-		_lastModified.update(_file.getLastModified().epochMicroseconds());
-		load();
-		result=true;
 	}
-	return result;
+	return false;
 }
 
 } // namespace Mona

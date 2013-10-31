@@ -26,7 +26,7 @@ using namespace std;
 namespace Mona {
 
 
-#if defined(POCO_OS_FAMILY_WINDOWS)
+#if defined(_WIN32)
 LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 	return DefWindowProc(hwnd, uMsg, wParam, lParam);
 }
@@ -40,9 +40,9 @@ SocketManager::SocketManager(PoolThreads& poolThreads, UInt32 bufferSize, const 
 	SocketManager((TaskHandler&)*this, poolThreads, bufferSize, name) {
 }
 
-void SocketManager::start() {
+void SocketManager::start(Exception& ex) {
 	TaskHandler::start();
-	Startable::start();
+	Startable::start(ex);
 }
 
 void SocketManager::stop() {
@@ -51,7 +51,7 @@ void SocketManager::stop() {
 	TaskHandler::stop();
 	_eventInit.wait();
 	clear();
-#if defined(POCO_OS_FAMILY_WINDOWS)
+#if defined(_WIN32)
 	if (_eventSystem > 0)
 		PostMessage(_eventSystem, WM_QUIT, 0, 0);
 #else
@@ -68,7 +68,7 @@ void SocketManager::clear() {
 	lock_guard<mutex> lock(_mutex);
 	for(auto it : _sockets) {
 		if(_eventSystem>0) {
-#if defined(POCO_OS_FAMILY_WINDOWS)
+#if defined(_WIN32)
 			WSAAsyncSelect(it.first,_eventSystem,0,0);
 			PostMessage(_eventSystem,0,(WPARAM)it.second,0);
 #else
@@ -105,7 +105,7 @@ bool SocketManager::add(Exception& ex,Socket& socket) const {
 	
 	
 	auto ppSocket = new unique_ptr<Socket>(&socket);
-#if defined(POCO_OS_FAMILY_WINDOWS)
+#if defined(_WIN32)
 	int flags = FD_ACCEPT | FD_CLOSE | FD_READ;
 	if (WSAAsyncSelect(sockfd, _eventSystem, 104, flags) != 0) {
 		ppSocket->release();
@@ -189,7 +189,7 @@ void SocketManager::remove(Socket& socket) const {
 	_eventInit.wait();
 
 	if(_eventSystem>0) {
-#if defined(POCO_OS_FAMILY_WINDOWS)
+#if defined(_WIN32)
 		WSAAsyncSelect(it->first,_eventSystem,0,0);
 		PostMessage(_eventSystem,0,(WPARAM)it->second,0);
 #else
@@ -246,7 +246,7 @@ void SocketManager::requestHandle() {
 void SocketManager::run(Exception& exc) {
 	Exception& ex(_selfHandler ? exc : _ex);
 	const char* name = Startable::name().c_str();
-#if defined(POCO_OS_FAMILY_WINDOWS)
+#if defined(_WIN32)
 	WNDCLASSEX wc;
 	memset(&wc, 0, sizeof(wc));
 	wc.cbSize = sizeof(WNDCLASSEX);
@@ -285,7 +285,7 @@ void SocketManager::run(Exception& exc) {
 
 
 
-#if defined(POCO_OS_FAMILY_WINDOWS)
+#if defined(_WIN32)
 	MSG		  msg;
     while(GetMessage(&msg,_eventSystem, 0, 0)) {
 		if(msg.wParam==0)

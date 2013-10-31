@@ -134,11 +134,11 @@ protected:
 		struct sockaddr* pSA = reinterpret_cast<struct sockaddr*>(buffer);
 		SOCKLEN saLen = sizeof(buffer);
 
-		SOCKET sockfd;
+		NET_SOCKET sockfd;
 		do {
 			sockfd = ::accept(_sockfd, pSA, &saLen);  // TODO acceptEx?
-		} while (sockfd == INVALID_SOCKET && LastError() == EINTR);
-		if (sockfd == INVALID_SOCKET) {
+		} while (sockfd == NET_INVALID_SOCKET && LastError() == EINTR);
+		if (sockfd == NET_INVALID_SOCKET) {
 			SetError(ex);
 			return NULL;
 		}
@@ -182,7 +182,7 @@ private:
 
 	// Creates the underlying native socket
 	bool	init(Exception& ex, IPAddress::Family family);
-	bool	init(Exception& ex, SOCKET sockfd);
+	bool	init(Exception& ex, NET_SOCKET sockfd);
 
 	bool    managed(Exception& ex);
 
@@ -199,7 +199,7 @@ private:
 	void	setOption(Exception& ex, int level, int option, int value) { setOption<int>(ex, level, option, value); }
 
 	// A wrapper for the ioctl system call
-	int		ioctl(Exception& ex,IOCTL_REQUEST request,int value);
+	int		ioctl(Exception& ex,NET_IOCTLREQUEST request,int value);
 
 
 
@@ -217,10 +217,10 @@ private:
 	volatile bool			_managed;
 	const SocketManager&	_manager;
 
-	SOCKET				_sockfd;
-	std::mutex			_mutexInit;
-	volatile bool		_initialized;
-	int					_type;
+	NET_SOCKET				_sockfd;
+	std::mutex				_mutexInit;
+	volatile bool			_initialized;
+	int						_type;
 };
 
 

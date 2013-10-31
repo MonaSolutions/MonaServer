@@ -18,17 +18,18 @@
 #include "Mona/Mona.h"
 
 
-#if defined(POCO_OS_FAMILY_WINDOWS) && defined(_DEBUG)
+#if defined(_WIN32) && defined(_DEBUG)
 
 #include <windows.h>
 
 #define FALSE   0
 #define TRUE    1
  
+namespace Mona {
+
 _CRT_REPORT_HOOK prevHook;
  
-int reportingHook(int reportType, char* userMessage, int* retVal)
-{
+int reportingHook(int reportType, char* userMessage, int* retVal) {
   // This function is called several times for each memory leak.
   // Each time a part of the error message is supplied.
   // This holds number of subsequent detail messages after
@@ -85,3 +86,5 @@ void DetectMemoryLeak() {
 #else
 void DetectMemoryLeak() {}
 #endif
+
+} // namespace Mona

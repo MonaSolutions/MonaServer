@@ -48,7 +48,7 @@ void MemoryWriter::clear(UInt32 pos) {
 	_memory.written(pos);
 }
 
-void MemoryWriter::flush() {
+void MemoryWriter::flush() { // TODO usefull?
 	if(_pOther && _memory.written()>_pOther->_memory.written())
 		_pOther->_memory.written(_memory.written());
 	BinaryWriter::flush();

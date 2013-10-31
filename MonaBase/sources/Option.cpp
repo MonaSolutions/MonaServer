@@ -30,7 +30,6 @@ Option::Option(bool isNull) : _required(false), _repeatable(false), _argRequired
 
 }
 
-
 Option::Option(const char* fullName, const char* shortName) :
 	_shortName(shortName),
 	_fullName(fullName),

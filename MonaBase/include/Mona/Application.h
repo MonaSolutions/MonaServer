@@ -22,11 +22,8 @@ This file is a part of Mona.
 #include "Mona/Options.h"
 #include "Mona/HelpFormatter.h"
 #include "Mona/Logger.h"
-#include "Poco/Path.h"
-#include "Poco/File.h"
-#include "Poco/FileStream.h"
-#include "Poco/Thread.h"
 #include <memory>
+#include <fstream>
 
 
 namespace Mona {
@@ -62,13 +59,10 @@ public:
 
 	int						run(int argc, char* argv[]);
 
-	std::string&			makeAbsolute(std::string& path);
-
 	virtual bool			isInteractive() const { return true; }
 
 protected:
 	Application();
-	virtual ~Application();
 
 	bool					init(int argc, char* argv[]);
 	virtual int				main() = 0;
@@ -77,10 +71,13 @@ protected:
 	virtual bool			loadConfigurations(std::string& path);
 	virtual void			defineOptions(Exception& ex, Options& options);
 
-	virtual void			log(Poco::Thread::TID threadId, const std::string& threadName, Priority priority, const char *filePath, const std::string& shortFilePath, long line, const std::string& message);
+	virtual void			log(std::thread::id threadId, const std::string& threadName, Priority priority, char *filePath, std::string& shortFilePath, long line, std::string& message);
 	virtual void			dump(const UInt8* data, UInt32 size);
 	
 private:
+#if defined(_OS_UNIX)
+	static void HandleSignal(int sig);
+#endif
 
 
 	
@@ -88,7 +85,7 @@ private:
 
 
 	void			manageLogFiles();
-	void			getApplicationPath(const std::string& command, Poco::Path& path) const;
+	void			initApplicationPaths(const char* command);
 
 	std::vector<std::string>    _args;
 	Options						_options;
@@ -97,13 +94,8 @@ private:
 	UInt32						_logSizeByFile;
 	UInt16						_logRotation;
 	std::string					_logPath;
-	Poco::FileOutputStream		_logStream;
+	std::ofstream				_logStream;
 	std::mutex					_logMutex;
-
-
-#if defined(POCO_OS_FAMILY_UNIX) && !defined(POCO_VXWORKS)
-	std::string					_workingDirAtLaunch;
-#endif
 };
 
 

@@ -16,26 +16,53 @@
 */
 
 #pragma once
-
 #include "Mona/Mona.h"
 #include "Mona/Exceptions.h"
 #include "Mona/Event.h"
-#include "Poco/Thread.h"
+#include <thread>
+#if defined(_WIN32)
+#include <windows.h>
+#endif
 
 
 namespace Mona {
 
-class Startable;
-class StartableProcess : public Poco::Runnable, virtual Object {
+
+class ThreadPriority : virtual Object {
+	friend class Startable;
 public:
-	StartableProcess(Startable& startable);
+	enum Priority {
+#if defined(_WIN32)
+		LOWEST =	THREAD_PRIORITY_LOWEST,
+		LOW =		THREAD_PRIORITY_BELOW_NORMAL,
+		NORMAL =	THREAD_PRIORITY_NORMAL,
+		HIGH =		THREAD_PRIORITY_ABOVE_NORMAL,
+		HIGHEST =	THREAD_PRIORITY_HIGHEST
+#else
+		LOWEST,
+		LOW,
+		NORMAL,
+		HIGH,
+		HIGHEST
+#endif
+	};
+
+
+	bool set(Priority priority);
+
 private:
-	void run();
-	Startable& _startable;
+	ThreadPriority(std::thread& thread);
+
+	std::thread&	_thread;
+	Priority		_priority;
+#if !defined(_WIN32)
+	int				_min;
+	int				_max;
+#endif
 };
 
+
 class Startable : virtual Object {
-	friend class StartableProcess;
 public:
 	enum WakeUpType {
 		WAKEUP=0,
@@ -43,12 +70,12 @@ public:
 		STOP
 	};
 
-	void				start();
+	bool				start(Exception& ex);
 	void				stop();
 
-	WakeUpType			sleep(Exception& ex,UInt32 millisec = 0);
+	WakeUpType			sleep(UInt32 millisec = 0);
 	void				wakeUp() { _wakeUpEvent.set(); }
-	void				setPriority(Poco::Thread::Priority priority) { _thread.setPriority(priority); }
+	
 
 	bool				running() const { return !_stop; }
 	const std::string&	name() const { return _name; }
@@ -57,18 +84,18 @@ protected:
 	Startable(const std::string& name);
 	virtual ~Startable();
 
-	virtual void	run(Exception& ex) = 0;
-	virtual void	prerun(Exception& ex);
+	virtual void	run(Exception& ex,ThreadPriority& priority) = 0;
 
 private:
-	bool					_haveToJoin;
-	Poco::Thread			_thread;
-	mutable Poco::FastMutex	_mutex;
-	mutable Poco::FastMutex	_mutexStop;
+	void			process();
+
+
+	std::thread				_thread;
+	std::mutex				_mutex;
+	std::mutex				_mutexStop;
 	volatile bool			_stop;
 	Event					_wakeUpEvent;
 	std::string				_name;
-	StartableProcess		_process;
 };
 
 

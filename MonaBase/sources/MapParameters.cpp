@@ -20,18 +20,9 @@ This file is a part of Mona.
 #include <set>
 
 using namespace std;
-using namespace Poco;
+
 
 namespace Mona {
-
-
-MapParameters::MapParameters() {
-}
-
-
-MapParameters::~MapParameters() {
-}
-
 
 
 bool MapParameters::getRaw(const string& key, string& value) const {

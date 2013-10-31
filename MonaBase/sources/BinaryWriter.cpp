@@ -16,6 +16,7 @@
 */
 
 #include "Mona/BinaryWriter.h"
+#include "Mona/Binary.h"
 #include "Mona/Util.h"
 
 using namespace std;
@@ -23,37 +24,43 @@ using namespace std;
 
 namespace Mona {
 
-BinaryWriter BinaryWriter::Null(Util::NullOutputStream);
 
-BinaryWriter::BinaryWriter(ostream& ostr) : Poco::BinaryWriter(ostr,BinaryWriter::NETWORK_BYTE_ORDER) {
+BinaryWriter::BinaryWriter(ostream& ostr,ByteOrder byteOrder) : _ostr(ostr) {
+#if defined(_ARCH_BIG_ENDIAN)
+	_flipBytes = byteOrder == LITTLE_ENDIAN;
+#else
+	_flipBytes = byteOrder == BIG_ENDIAN;;
+#endif
 }
 
 
 BinaryWriter::~BinaryWriter() {
-	flush();
+	_ostr.flush();
+}
+
+
+void BinaryWriter::write16(UInt16 value) {
+	if (_flipBytes)
+		value = Binary::Flip16(value);
+	_ostr.write((const char*)&value, sizeof(value));
 }
 
 void BinaryWriter::write24(UInt32 value) {
-	write8(value>>16);
-	write16(value);
+	if (_flipBytes)
+		value = Binary::Flip24(value);
+	_ostr.write((const char*)&value, sizeof(value));
 }
 
+void BinaryWriter::write32(UInt32 value) {
+	if (_flipBytes)
+		value = Binary::Flip32(value);
+	_ostr.write((const char*)&value, sizeof(value));
+}
 
-void BinaryWriter::writeString8(const char* value,UInt8 size) {
-	write8(size);
-	writeRaw(value,size);
-}
-void BinaryWriter::writeString8(const string& value) {
-	write8(value.size());
-	writeRaw(value);
-}
-void BinaryWriter::writeString16(const char* value,UInt16 size) {
-	write16(size);
-	writeRaw(value,size);
-}
-void BinaryWriter::writeString16(const string& value) {
-	write16(value.size());
-	writeRaw(value);
+void BinaryWriter::write64(UInt64 value) {
+	if (_flipBytes)
+		value = Binary::Flip64(value);
+	_ostr.write((const char*)&value, sizeof(value));
 }
 
 void BinaryWriter::writeAddress(const SocketAddress& address,bool publicFlag) {

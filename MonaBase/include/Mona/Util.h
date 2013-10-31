@@ -18,22 +18,24 @@
 #include "Mona/Mona.h"
 #include "Mona/MapParameters.h"
 #include "Mona/SocketAddress.h"
-#include "Poco/NullStream.h"
 #include "Mona/Buffer.h"
 #include "Mona/Exceptions.h"
-#include <cstring>
 #include <vector>
-
+#include <map>
+#include <thread>
 
 
 namespace Mona {
 
 class Util : virtual Static {
 public:
-	static std::string FormatHex(const UInt8* data,UInt32 size);
-	static std::string FormatHex2(const UInt8* data,UInt32 size);
+	static std::string& FormatHex(const UInt8* data,UInt32 size,std::string& result);
+	static std::string& FormatHex2(const UInt8* data, UInt32 size, std::string& result);
 	static UInt8 Get7BitValueSize(UInt32 value) { return Get7BitValueSize((UInt64)value); }
 	static UInt8 Get7BitValueSize(UInt64 value);
+
+	static const std::string&	GetThreadName(std::thread::id id);
+	static void					SetThreadName(std::thread::id id,const std::string& name);
 
 	static void Dump(const UInt8* in, UInt32 size, Buffer<UInt8>& out) { std::string header; Dump(in, size, out, header); }
 	static void Dump(const UInt8* in, UInt32 size, Buffer<UInt8>& out, const std::string& header);
@@ -45,12 +47,18 @@ public:
 	
 	static void UnpackQuery(const std::string& query, MapParameters& properties);
 
+	static std::string& DecodeURI(std::string& uri);
+
 	static bool ReadIniFile(Exception& ex, const std::string& path, MapParameters& parameters);
 
-	static unsigned ProcessorCount();
-
-	static Poco::NullInputStream	NullInputStream;
-	static Poco::NullOutputStream	NullOutputStream;
+	static unsigned ProcessorCount() { unsigned result(std::thread::hardware_concurrency());  return result > 0 ? result : 1; }
+	static const MapParameters& Environment();
+private:
+	static MapParameters	_Environment;
+	static std::mutex		_MutexEnvironment;
+	
+	static std::map<std::thread::id, std::string>	_ThreadNames;
+	static std::mutex								_MutexThreadNames;
 };
 
 

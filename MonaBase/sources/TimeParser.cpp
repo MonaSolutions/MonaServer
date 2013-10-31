@@ -17,7 +17,7 @@
 
 #include "Mona/TimeParser.h"
 #include "Mona/Time.h"
-#include "Mona/Logs.h"
+
 
 using namespace std;
 
@@ -38,29 +38,29 @@ namespace Mona {
 #define PARSE_FRACTIONAL_N(var, n) \
 	{ int i = 0; while (i < n && it != end && isdigit(*it)) { var = var * 10 + ((*it++) - '0'); i++; } while (i++ < n) var *= 10; }
 
-bool TimeParser::tryParse(const string& in, Time& dateTime, int& tz) {
+bool TimeParser::TryParse(const string& in, Time& dateTime, int& tz) {
 	
 	if (in.length() < 4) return false;
 
 	if (in[3] == ',')
-		return parse("%w, %e %b %r %H:%M:%S %Z", in, dateTime, tz);
+		return Parse("%w, %e %b %r %H:%M:%S %Z", in, dateTime, tz);
 	else if (in[3] == ' ')
-		return parse(Time::ASCTIME_FORMAT, in, dateTime, tz);
+		return Parse(Time::ASCTIME_FORMAT, in, dateTime, tz);
 	else if (in.find(',') < 10)
-		return parse("%W, %e %b %r %H:%M:%S %Z", in, dateTime, tz);
+		return Parse("%W, %e %b %r %H:%M:%S %Z", in, dateTime, tz);
 	else if (isdigit(in[0])) {
 
 		if (in.find(' ') != string::npos || in.length() == 10)
-			return parse(Time::SORTABLE_FORMAT, in, dateTime, tz);
+			return Parse(Time::SORTABLE_FORMAT, in, dateTime, tz);
 		else if (in.find('.') != string::npos || in.find(',') != string::npos)
-			return parse(Time::ISO8601_FRAC_FORMAT, in, dateTime, tz);
+			return Parse(Time::ISO8601_FRAC_FORMAT, in, dateTime, tz);
 		else
-			return parse(Time::ISO8601_FORMAT, in, dateTime, tz);
+			return Parse(Time::ISO8601_FORMAT, in, dateTime, tz);
 	}
 	else return false;
 }
 
-bool TimeParser::parse(const string& fmt, const string& in, Time& dateTime, int& tzdifferencial) {
+bool TimeParser::Parse(const string& fmt, const string& in, Time& dateTime, int& tzdifferencial) {
 
 	int year = 0, month = 0, day = 0, hour = 0;
 	int minute = 0, second = 0, millis = 0, micros = 0;
@@ -83,7 +83,7 @@ bool TimeParser::parse(const string& fmt, const string& in, Time& dateTime, int&
 					break;
 				case 'b':
 				case 'B':
-					parseMonth(it, end, month);
+					ParseMonth(it, end, month);
 					break;
 				case 'd':
 				case 'e':
@@ -127,7 +127,7 @@ bool TimeParser::parse(const string& fmt, const string& in, Time& dateTime, int&
 					break;
 				case 'a':
 				case 'A':
-					parseAMPM(it, end, hour);
+					ParseAMPM(it, end, hour);
 					break;
 				case 'M':
 					SKIP_JUNK();
@@ -165,7 +165,7 @@ bool TimeParser::parse(const string& fmt, const string& in, Time& dateTime, int&
 					break;
 				case 'z':
 				case 'Z':
-					parseTZD(it, end, tzdifferencial);
+					ParseTZD(it, end, tzdifferencial);
 					break;
 				}
 				++itf;
@@ -185,18 +185,14 @@ bool TimeParser::parse(const string& fmt, const string& in, Time& dateTime, int&
 	tmtime.tm_min = minute;
 	tmtime.tm_sec = second;
 
-	if (Time::IsValid(tmtime, millis, micros))
+	if (Time::IsValid(tmtime, millis, micros)) {
 		dateTime.update(tmtime, millis, micros);
-	else {
-
-		ERROR("Date/time component out of range (", in, ")");
-		return false;
+		return true;
 	}
-
-	return true;
+	return false;
 }
 
-bool TimeParser::parseTZD(string::const_iterator& it, const string::const_iterator& end, int& result) {
+void TimeParser::ParseTZD(string::const_iterator& it, const string::const_iterator& end, int& result) {
 
 	struct Zone
 	{
@@ -276,11 +272,10 @@ bool TimeParser::parseTZD(string::const_iterator& it, const string::const_iterat
 	}
 
 	result = tzd;
-	return true;
 }
 
 
-bool TimeParser::parseMonth(string::const_iterator& it, const string::const_iterator& end, int& result) {
+bool TimeParser::ParseMonth(string::const_iterator& it, const string::const_iterator& end, int& result) {
 
 	string month;
 	while (it != end && (isspace(*it) || ispunct(*it))) ++it;
@@ -292,26 +287,20 @@ bool TimeParser::parseMonth(string::const_iterator& it, const string::const_iter
 		else month += tolower(ch);
 	}
 
-	if (month.length() < 3) {
-		
-		WARN("Month name must be at least three characters long (", month, ")");
+	if (month.length() < 3)
 		return false;
-	}
 
 	for (int i = 0; i < 12; ++i) {
-
 		if (Time::MONTH_NAMES[i].find(month) == 0) {
 			result = i + 1;
 			return true;
 		}
 	}
-	
-	WARN("Not a valid month name (", month, ")");
 	return false;
 }
 
 
-bool TimeParser::parseAMPM(string::const_iterator& it, const string::const_iterator& end, int& result) {
+bool TimeParser::ParseAMPM(string::const_iterator& it, const string::const_iterator& end, int& result) {
 
 	string ampm;
 	while (it != end && (isspace(*it) || ispunct(*it))) ++it;
@@ -333,8 +322,7 @@ bool TimeParser::parseAMPM(string::const_iterator& it, const string::const_itera
 			result += 12;
 		return true;
 	}
-	
-	WARN("Not a valid AM/PM designator (", ampm, ")");
+
 	return false;
 }
 

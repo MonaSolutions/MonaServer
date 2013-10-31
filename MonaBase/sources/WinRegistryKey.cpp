@@ -16,6 +16,7 @@ This file is a part of Mona.
 */
 
 #include "Mona/WinRegistryKey.h"
+#include <map>
 
 
 #if !defined(_WIN32_WCE)

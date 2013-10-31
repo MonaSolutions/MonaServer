@@ -43,12 +43,12 @@ public:
 	ElementType* data() { return _size > 0 ? &_pBuffer[0] : NULL; }
 
 	ElementType& operator [] (UInt32 index) {
-		ASSERT_FATAL(index < _size)
+		FATAL_ASSERT(index < _size)
 		return _pBuffer[index];
 	}
 
 	const ElementType& operator [] (UInt32 index) const {
-		ASSERT_FATAL(index < _size)
+		FATAL_ASSERT(index < _size)
 		return _pBuffer[index];
 	}
 

@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include "Poco/File.h"
+#include "Mona/Mona.h"
 #include "Mona/Time.h"
 
 namespace Mona {
@@ -32,7 +32,6 @@ private:
 	virtual void load()=0;
 	virtual void clear()=0;
 
-	Poco::File	_file;
 	Mona::Time	_lastModified;
 };
 

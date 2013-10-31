@@ -33,7 +33,7 @@ public:
 	SocketManager(PoolThreads& poolThreads, UInt32 bufferSize = 0, const std::string& name = "SocketManager");
 	virtual ~SocketManager() { stop(); }
 
-	void					start();
+	void					start(Exception& ex);
 	void					stop();
 
 private:
@@ -65,7 +65,7 @@ private:
 	PoolThreads&						_poolThreads;
 
 	mutable std::atomic<int>			_counter;
-	mutable Poco::Event					_eventInit;
+	mutable Event						_eventInit;
 	mutable std::mutex					_mutex;
 
 	mutable std::map<SOCKET, std::unique_ptr<Socket>*>		_sockets;

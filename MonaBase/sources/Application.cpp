@@ -19,42 +19,50 @@ This file is a part of Mona.
 #include "Mona/Logs.h"
 #include "Mona/Exceptions.h"
 #include "Mona/Time.h"
-#if defined(POCO_OS_FAMILY_WINDOWS)
-#include "Poco/UnWindows.h"
-#endif
-#if defined(POCO_OS_FAMILY_UNIX) && !defined(POCO_VXWORKS)
-#include "Poco/SignalHandler.h"
-#endif
+#include "Mona/FileSystem.h"
+#include <sstream>
 
 
 using namespace std;
-using namespace Poco;
+
 
 namespace Mona {
 
 const char* LogPriorities[] = { "FATAL", "CRITIC", "ERROR", "WARN", "NOTE", "INFO", "DEBUG", "TRACE" };
 
 Application::Application() : _logSizeByFile(1000000), _logRotation(10) {
-	#if defined(POCO_OS_FAMILY_UNIX) && !defined(POCO_VXWORKS)
-		_workingDirAtLaunch = Path::current();
-		#if !defined(_DEBUG)
-			Poco::SignalHandler::install();
-		#endif
-	#elif defined(_WIN32)
-		DetectMemoryLeak();
-	#endif
+#if defined(_DEBUG)
+#if defined(_WIN32)
+	DetectMemoryLeak();
+#else
+	struct sigaction sa;
+	sa.sa_handler = handleSignal;
+	sa.sa_flags   = 0;
+	sigemptyset(&sa.sa_mask);
+	sigaction(SIGILL, &sa, 0);
+	sigaction(SIGBUS, &sa, 0);
+	sigaction(SIGSEGV, &sa, 0);
+	sigaction(SIGSYS, &sa, 0);
+#endif
+#endif
 }
 
-Application::~Application() {
+#if defined(_OS_UNIX)
+void Application::HandleSignal(int sig) {
+	switch (sig) {
+		case SIGILL:
+			FATAL_THROW("Illegal instruction");
+		case SIGBUS:
+			FATAL_THROW("Bus error");
+		case SIGSEGV:
+			FATAL_THROW("Segmentation violation");
+		case SIGSYS:
+			FATAL_THROW("Invalid system call")
+		default:
+			FATAL_THROW("Error code ",sig)
+	}
 }
-
-string& Application::makeAbsolute(string& path) {
-	string temp = std::move(path);
-	getString("application.dir", path);
-	path.append(temp);
-	return path;
-}
-
+#endif
 
 void Application::displayHelp() {
 	HelpFormatter helpFormatter(options());
@@ -69,36 +77,43 @@ void Application::displayHelp() {
 
 
 bool Application::init(int argc, char* argv[]) {
-	Path appPath;
-	string command(argv[0]);
-	getApplicationPath(command, appPath);
-	setString("application.command", command);
-	setString("application.path", appPath.toString());
-	setString("application.name", appPath.getFileName());
-	setString("application.baseName", appPath.getBaseName());
-	setString("application.dir", appPath.parent().toString());
+
+
+	initApplicationPaths(argv[0]);
 	
 
 	// configurations
-	string configPath(appPath.parent().toString());
-	configPath.append(appPath.getBaseName());
+	string dir;
+	getString("application.dir", dir);
+	string  name("configs");
+	getString("application.baseName", name);
+	string configPath(dir);
+	configPath.append(name);
 	configPath.append(".ini");
 	if (loadConfigurations(configPath)) {
-		Path configPath(configPath);
-		setString("application.configDir", configPath.parent().toString());
-		setString("application.configPath", configPath.toString());
+		vector<string> values;
+		FileSystem::Unpack(configPath, values);
+		setString("application.configDir", values.size() < 2 ? "/" : FileSystem::MakeDirectory(configPath));
+		// normalize
+		FileSystem::Pack(values, configPath);
+		setString("application.configPath", configPath);
 	}
 
 	// logs
 	Logs::SetLogger(*this);
 
-	string logDir("logs"), logFileName("log");
-	if (loadLogFiles(makeAbsolute(logDir), logFileName, _logSizeByFile, _logRotation)) {
-		File(logDir).createDirectory();
+	string logDir(dir);
+	logDir.append("logs");
+	string logFileName("log");
+
+	if (loadLogFiles(logDir, logFileName, _logSizeByFile, _logRotation)) {
+		FileSystem::CreateDirectory(logDir);
 		_logPath = logDir + "/" + logFileName;
-		if (_logRotation > 0)
+		if (_logRotation > 0) {
 			_logPath.append(".");
-		_logStream.open(_logPath, ios::in | ios::ate);
+			_logStream.open(_logPath + "0", ios::in | ios::binary | ios::ate);
+		}  else
+			_logStream.open(_logPath, ios::in | ios::binary | ios::ate);
 	}
 
 	// options
@@ -142,7 +157,7 @@ void Application::defineOptions(Exception& ex, Options& options) {
 
 	options.add(ex, "dump", "d", "Enables packet traces in logs. Optional arguments are 'intern' or 'all' respectively to displays just intern packet exchanged (between servers) or all packet process. If no argument is given, just outside packet process will be dumped.")
 		.argument("intern|all", false)
-		.handler([](const string& value) { Logs::SetDump(value == "all" ? Logs::DUMP_ALL : (value == "intern" ? Logs::DUMP_INTERN : Logs::DUMP_EXTERN)); });
+		.handler([this](const string& value) { Logs::SetDump(value == "all" ? Logs::DUMP_ALL : (value == "intern" ? Logs::DUMP_INTERN : Logs::DUMP_EXTERN)); });
 	
 	options.add(ex,"help", "h", "Displays help information about command-line usage.");
 }
@@ -161,12 +176,12 @@ int Application::run(int argc, char* argv[]) {
 	}
 }
 
-void Application::log(Thread::TID threadId, const string& threadName, Priority priority, const char *filePath, const string& shortFilePath, long line, const string& message) {
+void Application::log(thread::id threadId, const string& threadName, Priority priority, char *filePath, string& shortFilePath, long line, string& message) {
 	if (isInteractive())
 		Logger::log(threadId, threadName, priority, filePath, shortFilePath, line, message);
+	lock_guard<mutex> lock(_logMutex);
 	if (!_logStream.good())
 		return;
-	lock_guard<mutex> lock(_logMutex);
 	string stDate;
 	_logStream << Time().toLocaleString("%d/%m %H:%M:%S.%c  ", stDate)
 		<< LogPriorities[priority] << '\t' << threadName << '(' << threadId << ")\t"
@@ -191,58 +206,63 @@ void Application::manageLogFiles() {
 		return;
 	if (_logStream.tellp() > _logSizeByFile) {
 		_logStream.close();
-		if (_logRotation == 0) {
-			File file(_logPath + "10");
-			if (file.exists())
-				file.remove();
-		}
 		int num = _logRotation;
-		string path;
+		string path(_logPath);
 		if (num > 0)
 			String::Append(path,num);
-		File file(path);
-		if(file.exists())
-			file.remove();
-
-		string stfile;
+		if (!FileSystem::Remove(path))
+			WARN("Impossible to remove the " + path + " log file");
 		// rotate
-		while(--num>=0) {
-			file = String::Format(stfile, _logPath, num);
-			if(file.exists()) {
-				String::Format(stfile, _logPath, num+1);
-				file.renameTo(stfile);
-			}
-		}
+		string newPath;
+		while(--num>=0)
+			FileSystem::Rename(String::Format(path, _logPath, num), String::Format(newPath, _logPath, num + 1));
 		_logStream.open(_logPath, ios::in | ios::ate);
 	}
 }
 
 
-void Application::getApplicationPath(const string& command,Path& appPath) const {
-#if defined(POCO_OS_FAMILY_UNIX) && !defined(POCO_VXWORKS)
+// TODO test linux/windows (service too)
+void Application::initApplicationPaths(const char* command) {
+	if (hasKey("application.command"))
+		return; // already done!
+
+	string path(command);
+
+#if defined(_WIN32)
+	char buffer[1024];
+	int n = GetModuleFileNameA(0, buffer, sizeof(buffer));
+	if (n <= 0)
+		FATAL_THROW("Impossible to determine application paths")
+	path.assign(buffer);
+#else
 	if (command.find('/') != string::npos) {
-		Path path(command);
-		if (path.isAbsolute()) {
-			appPath = path;
-		} else {
-			appPath = _workingDirAtLaunch;
-			appPath.append(path);
+		if (!FileSystem::IsAbsolute(path)) {
+			string temp = move(path);
+			path.assign(FileSystem::Current());
+			path.append(temp);
 		}
 	} else {
-		if (!Path::find(Environment::get("PATH"), command, appPath))
-			appPath = Path(_workingDirAtLaunch, command);
-		appPath.makeAbsolute();
+		string paths;
+		if (!Util::Environment().getString("PATH", paths) || !FileSystem::ResolveFileWithPaths(paths, path)) {
+			string temp = move(path);
+			path.assign(FileSystem::Current());
+			path.append(temp);
+		}
 	}
-#elif defined(POCO_OS_FAMILY_WINDOWS)
-	char path[1024];
-	int n = GetModuleFileNameA(0, path, sizeof(path));
-	if (n > 0)
-		appPath = path;
-	else
-		throw exception("Impossible to determine the application file name");
-#else
-	appPath = command;
 #endif
+
+	setString("application.command", path);
+
+	vector<string> values;
+	FileSystem::Unpack(path, values);
+	// normalize path
+	FileSystem::Pack(values, path);
+	
+	setString("application.path", path);
+	setString("application.name", values.empty() ? "" : values.back());
+	string baseName;
+	setString("application.baseName", values.empty() ? "" : FileSystem::GetBaseName(values.back(),baseName));
+	setString("application.dir", FileSystem::MakeDirectory(path));
 }
 
 } // namespace Mona

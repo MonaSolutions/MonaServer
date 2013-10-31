@@ -39,7 +39,6 @@ public:
 
 protected:
 	Parameters() {}
-	virtual ~Parameters() {}
 
 private:
 	virtual bool getRaw(const std::string& key, std::string& value) const = 0;
@@ -47,7 +46,7 @@ private:
 };
 
 template<class IteratorType>
-class IterableParameters : public Parameters {
+class IterableParameters : public Parameters, virtual Object {
 public:
 	typedef IteratorType Iterator;
 
@@ -55,7 +54,6 @@ public:
 	virtual Iterator end() const = 0;
 protected:
 	IterableParameters() {}
-	virtual ~IterableParameters() {}
 };
 
 

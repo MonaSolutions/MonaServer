@@ -181,7 +181,7 @@ string& Time::tzFormat(int tzDifferential, string& out, bool bISO /* = true */) 
 
 bool Time::fromString(const string &in) {
 	int tz = 0;
-	return TimeParser::tryParse(in, *this, tz);
+	return TimeParser::TryParse(in, *this, tz);
 }
 
 struct tm& Time::toLocal(struct tm& tmtime) const {

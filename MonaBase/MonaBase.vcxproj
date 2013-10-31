@@ -115,6 +115,7 @@
     <ClCompile Include="sources\Application.cpp" />
     <ClCompile Include="sources\DNS.cpp" />
     <ClCompile Include="sources\Event.cpp" />
+    <ClCompile Include="sources\FileSystem.cpp" />
     <ClCompile Include="sources\FileWatcher.cpp" />
     <ClCompile Include="sources\HelpFormatter.cpp" />
     <ClCompile Include="sources\HostEntry.cpp" />
@@ -122,10 +123,14 @@
     <ClCompile Include="sources\Logger.cpp" />
     <ClCompile Include="sources\Mona.cpp" />
     <ClCompile Include="sources\BinaryReader.cpp" />
-    <ClCompile Include="sources\BinaryStream.cpp" />
+    <ClCompile Include="sources\BinaryStream.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug|Win32'">false</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="sources\BinaryWriter.cpp" />
     <ClCompile Include="sources\MemoryReader.cpp" />
-    <ClCompile Include="sources\MemoryStream.cpp" />
+    <ClCompile Include="sources\MemoryStream.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug|Win32'">false</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="sources\MemoryWriter.cpp" />
     <ClCompile Include="sources\AttemptCounter.cpp" />
     <ClCompile Include="sources\DiffieHellman.cpp" />
@@ -138,7 +143,9 @@
     <ClCompile Include="sources\Options.cpp" />
     <ClCompile Include="sources\Parameters.cpp" />
     <ClCompile Include="sources\QualityOfService.cpp" />
-    <ClCompile Include="sources\ServerApplication.cpp" />
+    <ClCompile Include="sources\ServerApplication.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug|Win32'">false</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="sources\Socket.cpp" />
     <ClCompile Include="sources\SocketAddress.cpp" />
     <ClCompile Include="sources\String.cpp" />
@@ -160,11 +167,13 @@
     <ClCompile Include="sources\WinService.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\Mona\Binary.h" />
     <ClInclude Include="include\Mona\Buffer.h" />
     <ClInclude Include="include\Mona\DatagramSocket.h" />
     <ClInclude Include="include\Mona\DNS.h" />
     <ClInclude Include="include\Mona\Event.h" />
     <ClInclude Include="include\Mona\Exceptions.h" />
+    <ClInclude Include="include\Mona\FileSystem.h" />
     <ClInclude Include="include\Mona\FileWatcher.h" />
     <ClInclude Include="include\Mona\HelpFormatter.h" />
     <ClInclude Include="include\Mona\HostEntry.h" />
@@ -188,6 +197,7 @@
     <ClInclude Include="include\Mona\MapParameters.h" />
     <ClInclude Include="include\Mona\Option.h" />
     <ClInclude Include="include\Mona\Options.h" />
+    <ClInclude Include="include\Mona\Process.h" />
     <ClInclude Include="include\Mona\QualityOfService.h" />
     <ClInclude Include="include\Mona\ServerApplication.h" />
     <ClInclude Include="include\Mona\StopWatch.h" />

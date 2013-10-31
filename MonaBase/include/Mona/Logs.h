@@ -23,7 +23,6 @@ This file is a part of Mona.
 #include "Mona/Util.h"
 #include "Mona/MemoryReader.h"
 #include "Mona/MemoryWriter.h"
-#include "Poco/Path.h"
 
 namespace Mona {
 
@@ -37,27 +36,30 @@ public:
 	};
 
 	static void			SetLogger(Logger& logger) { _PLogger = &logger; }
-	static void			SetLevel(Poco::UInt8 level) { _Level = level; }
+	static void			SetLevel(UInt8 level) { _Level = level; }
 	static UInt8		GetLevel() { return _Level; }
 	static void			SetDump(DumpMode mode) { _DumpMode = mode; }
 	static DumpMode		GetDump() { return _DumpMode; }
 
 
 	template <typename ...Args>
-	static void	Log(Logger::Priority prio, const char* file, long line, const Args&... args) {
+	static void	Log(Logger::Priority prio, char* file, long line, const Args&... args) {
 		if (_Level < prio)
 			return;
-		Poco::Path path(file);
-		std::string shortFile;
-		if (path.depth() > 0)
-			shortFile.assign(path.directory(path.depth() - 1) + "/");
-		shortFile.append(path.getFileName());
+		std::string shortFile(file);
+		auto found = shortFile.find_last_of("\\/");
+		if (found != string::npos) {
+			found = shortFile.find_last_of("\\/", found - 1);
+			if (found != string::npos)
+				shortFile.erase(0,found+1);
+		}
+			
 		std::string message;
 		String::Format(message, args ...);
 		if (_PLogger)
-			_PLogger->log(Poco::Thread::currentTid(), Poco::Thread::current() ? Poco::Thread::current()->name() : "", prio, file, shortFile, line, message);
+			_PLogger->log(std::this_thread::get_id(), Util::GetThreadName(std::this_thread::get_id()), prio, file, shortFile, line, message);
 		else
-			_DefaultLogger.log(Poco::Thread::currentTid(), Poco::Thread::current() ? Poco::Thread::current()->name() : "", prio, file, shortFile, line, message);
+			_DefaultLogger.log(std::this_thread::get_id(), Util::GetThreadName(std::this_thread::get_id()), prio, file, shortFile, line, message);
 	}
 
 	template <typename ...Args>

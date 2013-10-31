@@ -76,7 +76,7 @@ public:
 	Family family() const;
 	
 	// Returns the IPv6 scope identifier of the address. Returns 0 if the address is an IPv4 address
-	Poco::UInt32 scope() const;
+	UInt32 scope() const;
 
 	// Returns a string containing a representation of the address in presentation format
 	const std::string& toString() const;

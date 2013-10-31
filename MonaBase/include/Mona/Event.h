@@ -18,7 +18,6 @@ This file is a part of Mona.
 #pragma once
 
 #include "Mona/Mona.h"
-#include "Mona/Exceptions.h"
 #include <condition_variable>
 
 namespace Mona {
@@ -31,7 +30,7 @@ public:
 	void set();
 
 	// return true if the event has been set
-	bool wait(Exception& ex, UInt32 millisec = 0);
+	bool wait(UInt32 millisec = 0);
 
 	void reset();
 	

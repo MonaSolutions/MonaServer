@@ -51,8 +51,6 @@ protected:
 
 #if defined(_WIN32)
 	static int LastError() { return GetLastError(); }
-#elif defined(POCO_VXWORKS)
-	static int LastError() { return errno; }
 #else
 	static int LastError() { return h_errno; }
 #endif

@@ -16,73 +16,26 @@
 */
 
 #include "Mona/BinaryStream.h"
-#include "Mona/Util.h"
-#include "Poco/StreamCopier.h"
 
 using namespace std;
-using namespace Poco;
 
 namespace Mona {
 
 
-BinaryBuffer::BinaryBuffer() {
-}
-BinaryBuffer::~BinaryBuffer() {
-}
-
-
-BinaryBuffer::int_type BinaryBuffer::readFromDevice() {
-    if(size()==0)
-		return EOF;
-    return _buf.sbumpc();
-}
-
-UInt32 BinaryBuffer::size() {
-	streamoff result = _buf.pubseekoff(0,std::ios_base::cur,std::ios_base::out) - _buf.pubseekoff(0,std::ios_base::cur,std::ios_base::in);
-	if(result<0)
-		result=0;
+UInt32 BinaryStream::size() {
+	streamoff result = _buffer.pubseekoff(0, ios_base::cur, ios_base::out) - _buffer.pubseekoff(0, ios_base::cur, ios_base::in);
+	if (result < 0)
+		result = 0;
 	return (UInt32)result;
 }
 
-BinaryIOS::BinaryIOS() {
-	poco_ios_init(&_buf);
-}
-BinaryIOS::~BinaryIOS() {
-}
-
-
-BinaryStream::BinaryStream() : iostream(rdbuf()) {
-}
-
-BinaryStream::~BinaryStream() {
-       
-}
-
-void BinaryStream::clear() {
-    // vider le stream buf
-	StreamCopier::copyStream(*this,Util::NullOutputStream);
-    rdbuf()->pubseekoff(0,ios::beg);
-	iostream::clear();
-}
-
-void BinaryStream::resetReading(UInt32 position) {
-	rdbuf()->pubseekoff(position,ios::beg,ios_base::in);
-    iostream::clear();
-}
-
-void BinaryStream::resetWriting(UInt32 position) {
-	rdbuf()->pubseekoff(position,ios::beg,ios_base::out);
-    iostream::clear();
-}
-
 void BinaryStream::next(UInt32 count) {
-	if(count==0)
+	if (count == 0)
 		return;
 	streamsize before = width(count);
 	(*this) << 'z';
 	width(before);
 }
-
 
 
 } // namespace Mona

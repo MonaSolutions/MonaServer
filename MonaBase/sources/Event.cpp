@@ -19,13 +19,14 @@ This file is a part of Mona.
 
 
 #include "Mona/Event.h"
+#include "Mona/Exceptions.h"
 
 
 namespace Mona {
 
 using namespace std;
 
-bool Event::wait(Exception& ex,UInt32 millisec) {
+bool Event::wait(UInt32 millisec) {
 	cv_status result(cv_status::timeout);
 	unique_lock<mutex> lock(_mutex);
 	try {
@@ -38,9 +39,9 @@ bool Event::wait(Exception& ex,UInt32 millisec) {
 			}	
 		}
 	} catch (exception& exc) {
-		ex.set(Exception::SYSTEM, "Wait event failed, ",exc.what());
+		FATAL_THROW("Wait event failed, ", exc.what());
 	} catch (...) {
-		ex.set(Exception::SYSTEM, "Wait event failed, unknown error");
+		FATAL_THROW("Wait event failed, unknown error");
 	}
 	if (_autoReset && _set)
 		_set = false;

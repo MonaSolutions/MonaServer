@@ -22,110 +22,63 @@ This file is a part of Mona.
 #include <mutex>
 
 #if defined(_WIN32)
-
 #include <winsock2.h>
 #include <ws2tcpip.h>
-#define SOCKLEN       		 int
-#define IOCTL_REQUEST 		 int
-#define CLOSESOCKET(s)  	 closesocket(s)
-#undef EINTR
-#define EINTR           	 WSAEINTR
-#undef EACCES
-#define EACCES          	 WSAEACCES
-#undef EFAULT
-#define EFAULT          	 WSAEFAULT
-#undef EINVAL
-#define EINVAL         		 WSAEINVAL
-#undef EMFILE
-#define EMFILE          	 WSAEMFILE
-#undef EAGAIN
-#define EAGAIN               WSAEWOULDBLOCK
-#undef EWOULDBLOCK
-#define EWOULDBLOCK     	 WSAEWOULDBLOCK
-#undef EINPROGRESS
-#define EINPROGRESS     	 WSAEINPROGRESS
-#undef EALREADY
-#define EALREADY        	 WSAEALREADY
-#undef ENOTSOCK
-#define ENOTSOCK        	 WSAENOTSOCK
-#undef EDESTADDRREQ
-#define EDESTADDRREQ    	 WSAEDESTADDRREQ
-#undef EMSGSIZE
-#define EMSGSIZE        	 WSAEMSGSIZE
-#undef EPROTOTYPE
-#define EPROTOTYPE      	 WSAEPROTOTYPE
-#undef ENOPROTOOPT
-#define ENOPROTOOPT     	 WSAENOPROTOOPT
-#undef EPROTONOSUPPORT
-#define EPROTONOSUPPORT 	 WSAEPROTONOSUPPORT
-#define ESOCKTNOSUPPORT 	 WSAESOCKTNOSUPPORT
-#undef ENOTSUP
-#define ENOTSUP         	 WSAEOPNOTSUPP
-#define EPFNOSUPPORT    	 WSAEPFNOSUPPORT
-#undef EAFNOSUPPORT
-#define EAFNOSUPPORT    	 WSAEAFNOSUPPORT
-#undef EADDRINUSE
-#define EADDRINUSE      	 WSAEADDRINUSE
-#undef EADDRNOTAVAIL
-#define EADDRNOTAVAIL   	 WSAEADDRNOTAVAIL
-#undef ENETDOWN
-#define ENETDOWN        	 WSAENETDOWN
-#undef ENETUNREACH
-#define ENETUNREACH     	 WSAENETUNREACH
-#undef ENETRESET
-#define ENETRESET       	 WSAENETRESET
-#undef ECONNABORTED
-#define ECONNABORTED    	 WSAECONNABORTED
-#undef ECONNRESET
-#define ECONNRESET     	     WSAECONNRESET
-#undef ENOBUFS
-#define ENOBUFS         	 WSAENOBUFS
-#undef EISCONN
-#define EISCONN         	 WSAEISCONN
-#undef ENOTCONN
-#define ENOTCONN        	 WSAENOTCONN
-#define ESHUTDOWN       	 WSAESHUTDOWN
-#undef ETIMEDOUT
-#define ETIMEDOUT       	 WSAETIMEDOUT
-#undef ECONNREFUSED
-#define ECONNREFUSED    	 WSAECONNREFUSED
-#define EHOSTDOWN       	 WSAEHOSTDOWN
-#undef EHOSTUNREACH
-#define EHOSTUNREACH    	 WSAEHOSTUNREACH
-#define ESYSNOTREADY    	 WSASYSNOTREADY
-#define ENOTINIT        	 WSANOTINITIALISED
-#define HOST_NOT_FOUND  	 WSAHOST_NOT_FOUND
-#define TRY_AGAIN       	 WSATRY_AGAIN
-#define NO_RECOVERY     	 WSANO_RECOVERY
-#define NO_DATA        	 	 WSANO_DATA
-
-#elif defined(POCO_VXWORKS)
-
-#include <hostLib.h>
-#include <ifLib.h>
-#include <inetLib.h>
-#include <ioLib.h>
-#include <resolvLib.h>
-#include <types.h>
-#include <socket.h>
-#include <netinet/tcp.h>
-#define INVALID_SOCKET  	 -1
-#define SOCKET		         int
-#define SOCKLEN	         	 int
-#define IOCTL_REQUEST 		 int
-#define CLOSESOCKET(s)  	 ::close(s)
-
-#elif defined(POCO_OS_FAMILY_UNIX) || defined(POCO_OS_FAMILY_VMS)
-
+#define NET_INVALID_SOCKET  INVALID_SOCKET
+#define NET_SOCKET		    SOCKET
+#define NET_SOCKLEN			int
+#define NET_IOCTLREQUEST	int
+#define NET_CLOSESOCKET(s)  closesocket(s)
+#define NET_EINTR           WSAEINTR
+#define NET_EACCES          WSAEACCES
+#define NET_EFAULT          WSAEFAULT
+#define NET_EINVAL          WSAEINVAL
+#define NET_EMFILE          WSAEMFILE
+#define NET_EAGAIN          WSAEWOULDBLOCK
+#define NET_EWOULDBLOCK     WSAEWOULDBLOCK
+#define NET_EINPROGRESS     WSAEINPROGRESS
+#define NET_EALREADY        WSAEALREADY
+#define NET_ENOTSOCK        WSAENOTSOCK
+#define NET_EDESTADDRREQ    WSAEDESTADDRREQ
+#define NET_EMSGSIZE        WSAEMSGSIZE
+#define NET_EPROTOTYPE      WSAEPROTOTYPE
+#define NET_ENOPROTOOPT     WSAENOPROTOOPT
+#define NET_EPROTONOSUPPORT WSAEPROTONOSUPPORT
+#define NET_ESOCKTNOSUPPORT WSAESOCKTNOSUPPORT
+#define NET_ENOTSUP         WSAEOPNOTSUPP
+#define NET_EPFNOSUPPORT    WSAEPFNOSUPPORT
+#define NET_EAFNOSUPPORT    WSAEAFNOSUPPORT
+#define NET_EADDRINUSE      WSAEADDRINUSE
+#define NET_EADDRNOTAVAIL   WSAEADDRNOTAVAIL
+#define NET_ENETDOWN        WSAENETDOWN
+#define NET_ENETUNREACH     WSAENETUNREACH
+#define NET_ENETRESET       WSAENETRESET
+#define NET_ECONNABORTED    WSAECONNABORTED
+#define NET_ECONNRESET      WSAECONNRESET
+#define NET_ENOBUFS         WSAENOBUFS
+#define NET_EISCONN         WSAEISCONN
+#define NET_ENOTCONN        WSAENOTCONN
+#define NET_ESHUTDOWN       WSAESHUTDOWN
+#define NET_ETIMEDOUT       WSAETIMEDOUT
+#define NET_ECONNREFUSED    WSAECONNREFUSED
+#define NET_EHOSTDOWN       WSAEHOSTDOWN
+#define NET_EHOSTUNREACH    WSAEHOSTUNREACH
+#define NET_ESYSNOTREADY    WSASYSNOTREADY
+#define NET_ENOTINIT        WSANOTINITIALISED
+#define NET_HOST_NOT_FOUND  WSAHOST_NOT_FOUND
+#define NET_TRY_AGAIN       WSATRY_AGAIN
+#define NET_NO_RECOVERY     WSANO_RECOVERY
+#define NET_NO_DATA         WSANO_DATA
+#else
 #include <unistd.h>
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-#if POCO_OS != POCO_OS_HPUX
+#if _OS != _OS_HPUX
 #include <sys/select.h>
 #endif
 #include <sys/ioctl.h>
-#if defined(POCO_OS_FAMILY_VMS)
+#if defined(_OS_FAMILY_VMS)
 #include <inet.h>
 #else
 #include <arpa/inet.h>
@@ -133,58 +86,89 @@ This file is a part of Mona.
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <netdb.h>
-#if defined(POCO_OS_FAMILY_UNIX)
+#if defined(_OS_FAMILY_UNIX)
 #include <net/if.h>
 #endif
 #if defined(sun) || defined(__APPLE__)
 #include <sys/sockio.h>
 #include <sys/filio.h>
 #endif
-
-#define INVALID_SOCKET  	 -1
-#define SOCKET		         int
-#define SOCKLEN       		 socklen_t
-#if defined(POCO_OS_FAMILY_BSD)
-#define IOCTL_REQUEST 		 unsigned long
+#define NET_INVALID_SOCKET  -1
+#define NET_SOCKET           int
+#define NET_SOCKLEN          socklen_t
+#if defined(_OS_FAMILY_BSD)
+#define NET_IOCTLREQUEST     unsigned long
 #else
-#define IOCTL_REQUEST 		 int
+#define NET_IOCTLREQUEST     int
 #endif
-#define CLOSESOCKET(s)  	 ::close(s)
-#if !defined(ESOCKTNOSUPPORT)
-#define POCO_ESOCKTNOSUPPORT -1
+#define NET_CLOSESOCKET(s)  ::close(s)
+#define NET_EINTR           EINTR
+#define NET_EACCES          EACCES
+#define NET_EFAULT          EFAULT
+#define NET_EINVAL          EINVAL
+#define NET_EMFILE          EMFILE
+#define NET_EAGAIN          EAGAIN
+#define NET_EWOULDBLOCK     EWOULDBLOCK
+#define NET_EINPROGRESS     EINPROGRESS
+#define NET_EALREADY        EALREADY
+#define NET_ENOTSOCK        ENOTSOCK
+#define NET_EDESTADDRREQ    EDESTADDRREQ
+#define NET_EMSGSIZE        EMSGSIZE
+#define NET_EPROTOTYPE      EPROTOTYPE
+#define NET_ENOPROTOOPT     ENOPROTOOPT
+#define NET_EPROTONOSUPPORT EPROTONOSUPPORT
+#if defined(ESOCKTNOSUPPORT)
+#define NET_ESOCKTNOSUPPORT ESOCKTNOSUPPORT
+#else
+#define NET_ESOCKTNOSUPPORT -1
 #endif
-#if !defined(ESHUTDOWN)
-#define POCO_ESHUTDOWN       -2
+#define NET_ENOTSUP         ENOTSUP
+#define NET_EPFNOSUPPORT    EPFNOSUPPORT
+#define NET_EAFNOSUPPORT    EAFNOSUPPORT
+#define NET_EADDRINUSE      EADDRINUSE
+#define NET_EADDRNOTAVAIL   EADDRNOTAVAIL
+#define NET_ENETDOWN        ENETDOWN
+#define NET_ENETUNREACH     ENETUNREACH
+#define NET_ENETRESET       ENETRESET
+#define NET_ECONNABORTED    ECONNABORTED
+#define NET_ECONNRESET      ECONNRESET
+#define NET_ENOBUFS         ENOBUFS
+#define NET_EISCONN         EISCONN
+#define NET_ENOTCONN        ENOTCONN
+#if defined(ESHUTDOWN)
+#define NET_ESHUTDOWN       ESHUTDOWN
+#else
+#define NET_ESHUTDOWN       -2
 #endif
-#if !defined(EHOSTDOWN)
-#define POCO_EHOSTDOWN       -3
+#define NET_ETIMEDOUT       ETIMEDOUT
+#define NET_ECONNREFUSED    ECONNREFUSED
+#if defined(EHOSTDOWN)
+#define NET_EHOSTDOWN       EHOSTDOWN
+#else
+#define NET_EHOSTDOWN       -3
 #endif
-#define ESYSNOTREADY    	 -4
-#define ENOTINIT        	 -5
-
-#endif
-
-
-
-#if defined(POCO_OS_FAMILY_BSD) || (POCO_OS == POCO_OS_TRU64) || (POCO_OS == POCO_OS_AIX) || (POCO_OS == POCO_OS_IRIX) || (POCO_OS == POCO_OS_QNX) || (POCO_OS == POCO_OS_VXWORKS)
-#define POCO_HAVE_SALEN      1
-#endif
-
-
-#if POCO_OS != POCO_OS_VXWORKS && !defined(POCO_NET_NO_ADDRINFO)
-#define POCO_HAVE_ADDRINFO   1
+#define NET_EHOSTUNREACH    EHOSTUNREACH
+#define NET_ESYSNOTREADY    -4
+#define NET_ENOTINIT        -5
+#define NET_HOST_NOT_FOUND  HOST_NOT_FOUND
+#define NET_TRY_AGAIN       TRY_AGAIN
+#define NET_NO_RECOVERY     NO_RECOVERY
+#define NET_NO_DATA         NO_DATA
 #endif
 
+#if defined(_OS_FAMILY_BSD) || ( _OS == _OS_TRU64) || (_OS ==  _OS_AIX) || ( _OS ==  _OS_IRIX) || (_OS == _OS_QNX) || (_OS == _OS_VXWORKS)
+#define NET_HAVE_SALEN      1
+#endif
 
-#if defined(POCO_HAVE_ADDRINFO)
+
 #if !defined(AI_ADDRCONFIG)
 #define AI_ADDRCONFIG 0
 #endif
-#endif
 
 
-#if defined(POCO_HAVE_SALEN)
-#define set_sa_len(pSA, len) (pSA)->sa_len   = (len)
+
+#if defined(NET_HAVE_SALEN)
+#define	set_sa_len(pSA, len) (pSA)->sa_len   = (len)
 #define set_sin_len(pSA)     (pSA)->sin_len  = sizeof(struct sockaddr_in)
 #define set_sin6_len(pSA)    (pSA)->sin6_len = sizeof(struct sockaddr_in6)
 #else
@@ -198,6 +182,13 @@ This file is a part of Mona.
 #define INADDR_NONE 0xFFFFFFFF
 #endif
 
+
+//
+// Automatically link Base library.
+//
+#if defined(_MSC_VER)
+#pragma comment(lib, "ws2_32.lib")
+#endif
 
 namespace Mona {
 

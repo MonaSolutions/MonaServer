@@ -20,153 +20,113 @@ This file is a part of Mona.
 #include "Mona/Logs.h"
 #include "Mona/Exceptions.h"
 #include "Mona/HelpFormatter.h"
-#if !defined(POCO_VXWORKS)
-#include "Poco/Process.h"
-#include "Poco/NamedEvent.h"
-#endif
-#include "Poco/String.h"
-#if defined(POCO_OS_FAMILY_UNIX) && !defined(POCO_VXWORKS)
-#include "Poco/TemporaryFile.h"
+#if defined(_WIN32)
+#include "Mona/WinService.h"
+#include "Mona/WinRegistryKey.h"
+#else
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <signal.h>
 #include <sys/stat.h>
 #include <fstream>
-#elif defined(POCO_OS_FAMILY_WINDOWS)
-#if !defined(_WIN32_WCE)
-#include "Mona/WinService.h"
-#include "Mona/WinRegistryKey.h"
-#endif
-#include "Poco/UnWindows.h"
-#include <cstring>
 #endif
 
 
 using namespace std;
-using namespace Poco;
 
 namespace Mona {
 
 
-#if defined(POCO_OS_FAMILY_WINDOWS)
-Poco::NamedEvent      ServerApplication::_terminate(Poco::ProcessImpl::terminationEventName(Poco::Process::id()));
-#if !defined(_WIN32_WCE)
-Poco::Event           ServerApplication::_terminated;
-SERVICE_STATUS        ServerApplication::_serviceStatus; 
-SERVICE_STATUS_HANDLE ServerApplication::_serviceStatusHandle = 0; 
+
+#if defined(_WIN32)
+Event					TerminateSignal::_Terminate;
+SERVICE_STATUS			TerminateSignal::_ServiceStatus;
+SERVICE_STATUS_HANDLE	TerminateSignal::_ServiceStatusHandle = 0;
 #endif
-#endif
-#if defined(POCO_VXWORKS)
-Poco::Event ServerApplication::_terminate;
-#endif
-ServerApplication* ServerApplication::_This(NULL);
+
+ServerApplication*		ServerApplication::_PThis(NULL);
 
 
-ServerApplication::ServerApplication() : _action(SRV_RUN), _isInteractive(true) {
-	_This = this;
-#if defined(POCO_OS_FAMILY_WINDOWS)
-#if !defined(_WIN32_WCE)
-	memset(&_serviceStatus, 0, sizeof(_serviceStatus));
-#endif
-#endif
-}
+#if defined(_WIN32)
 
-
-void ServerApplication::terminate() {
-#if defined(POCO_OS_FAMILY_WINDOWS)
-	_terminate.set();
-#elif defined(POCO_VXWORKS)
-	_terminate.set();
-#else
-	Poco::Process::requestTermination(Process::id());
-#endif
-}
-
-
-#if defined(POCO_OS_FAMILY_WINDOWS)
-#if !defined(_WIN32_WCE)
-
-
-//
-// Windows specific code
-//
-BOOL ServerApplication::ConsoleCtrlHandler(DWORD ctrlType) {
-	switch (ctrlType)  { 
-		case CTRL_C_EVENT: 
-		case CTRL_CLOSE_EVENT: 
-		case CTRL_BREAK_EVENT:
-			terminate();
-			return _terminated.tryWait(10000) ? TRUE : FALSE;
-		default: 
-			return FALSE; 
+BOOL TerminateSignal::ConsoleCtrlHandler(DWORD ctrlType) {
+	switch (ctrlType) {
+	case CTRL_C_EVENT:
+	case CTRL_CLOSE_EVENT:
+	case CTRL_BREAK_EVENT:
+		_Terminate.set();
+		return TRUE;
+	default:
+		return FALSE;
 	}
 }
 
-
-void ServerApplication::ServiceControlHandler(DWORD control) {
-	switch (control) { 
-		case SERVICE_CONTROL_STOP:
-		case SERVICE_CONTROL_SHUTDOWN:
-			terminate();
-			_serviceStatus.dwCurrentState = SERVICE_STOP_PENDING;
-			break;
-		case SERVICE_CONTROL_INTERROGATE: 
-			break; 
-	} 
-	SetServiceStatus(_serviceStatusHandle,  &_serviceStatus);
+void TerminateSignal::ServiceControlHandler(DWORD control) {
+	switch (control) {
+	case SERVICE_CONTROL_STOP:
+	case SERVICE_CONTROL_SHUTDOWN:
+		_ServiceStatus.dwCurrentState = SERVICE_STOP_PENDING;
+		SetServiceStatus(_ServiceStatusHandle, &_ServiceStatus);
+		_Terminate.set();
+		return;
+	case SERVICE_CONTROL_INTERROGATE:
+		break;
+	}
+	SetServiceStatus(_ServiceStatusHandle, &_ServiceStatus);
 }
 
+void TerminateSignal::wait() {
+	SetConsoleCtrlHandler(ConsoleCtrlHandler, TRUE);
+	_Terminate.wait();
+}
+
+TerminateSignal::TerminateSignal() {
+	memset(&_ServiceStatus, 0, sizeof(_ServiceStatus));
+	_ServiceStatusHandle = RegisterServiceCtrlHandlerA("", ServiceControlHandler);
+	if (!_ServiceStatusHandle) {
+		FATAL_THROW("Cannot register service control handler");
+		return;
+	}
+	_ServiceStatus.dwServiceType = SERVICE_WIN32;
+	_ServiceStatus.dwCurrentState = SERVICE_START_PENDING;
+	_ServiceStatus.dwControlsAccepted = SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_SHUTDOWN;
+	_ServiceStatus.dwWin32ExitCode = 0;
+	_ServiceStatus.dwServiceSpecificExitCode = 0;
+	_ServiceStatus.dwCheckPoint = 0;
+	_ServiceStatus.dwWaitHint = 0;
+	SetServiceStatus(_ServiceStatusHandle, &_ServiceStatus);
+}
 
 
 void ServerApplication::ServiceMain(DWORD argc, LPTSTR* argv) {
 
-	_This->setBool("application.runAsService", true);
-	_This->_isInteractive = false;
+	_PThis->setBool("application.runAsService", true);
+	_PThis->_isInteractive = false;
 
-	_serviceStatusHandle = RegisterServiceCtrlHandlerA("", ServiceControlHandler);
-
-	if (!_serviceStatusHandle) {
-		FATAL("Cannot register service control handler");
-		return;
-	}
-
-	_serviceStatus.dwServiceType             = SERVICE_WIN32; 
-	_serviceStatus.dwCurrentState            = SERVICE_START_PENDING; 
-	_serviceStatus.dwControlsAccepted        = SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_SHUTDOWN;
-	_serviceStatus.dwWin32ExitCode           = 0; 
-	_serviceStatus.dwServiceSpecificExitCode = 0; 
-	_serviceStatus.dwCheckPoint              = 0; 
-	_serviceStatus.dwWaitHint                = 0; 
-	SetServiceStatus(_serviceStatusHandle, &_serviceStatus);
+	TerminateSignal terminateSignal;
 
 	try {
-		if (_This->init(argc, argv)) {
-			_serviceStatus.dwCurrentState = SERVICE_RUNNING;
-			SetServiceStatus(_serviceStatusHandle, &_serviceStatus);
-			int rc = _This->main();
-			_serviceStatus.dwWin32ExitCode = rc ? ERROR_SERVICE_SPECIFIC_ERROR : 0;
-			_serviceStatus.dwServiceSpecificExitCode = rc;
+		if (_PThis->init(argc, argv)) {
+			TerminateSignal::_ServiceStatus.dwCurrentState = SERVICE_RUNNING;
+			SetServiceStatus(TerminateSignal::_ServiceStatusHandle, &TerminateSignal::_ServiceStatus);
+			int rc = _PThis->main(terminateSignal);
+			TerminateSignal::_ServiceStatus.dwWin32ExitCode = rc ? ERROR_SERVICE_SPECIFIC_ERROR : 0;
+			TerminateSignal::_ServiceStatus.dwServiceSpecificExitCode = rc;
 		}
 	} catch (exception& ex) {
 		FATAL(ex.what());
-		_serviceStatus.dwWin32ExitCode = ERROR_SERVICE_SPECIFIC_ERROR;
-		_serviceStatus.dwServiceSpecificExitCode = EXIT_SOFTWARE;
+		TerminateSignal::_ServiceStatus.dwWin32ExitCode = ERROR_SERVICE_SPECIFIC_ERROR;
+		TerminateSignal::_ServiceStatus.dwServiceSpecificExitCode = EXIT_SOFTWARE;
 	} catch (...) {
 		FATAL("Unknown error");
-		_serviceStatus.dwWin32ExitCode = ERROR_SERVICE_SPECIFIC_ERROR;
-		_serviceStatus.dwServiceSpecificExitCode = EXIT_SOFTWARE;
+		TerminateSignal::_ServiceStatus.dwWin32ExitCode = ERROR_SERVICE_SPECIFIC_ERROR;
+		TerminateSignal::_ServiceStatus.dwServiceSpecificExitCode = EXIT_SOFTWARE;
 	}
-	_serviceStatus.dwCurrentState = SERVICE_STOPPED;
-	SetServiceStatus(_serviceStatusHandle, &_serviceStatus);
+	TerminateSignal::_ServiceStatus.dwCurrentState = SERVICE_STOPPED;
+	SetServiceStatus(TerminateSignal::_ServiceStatusHandle, &TerminateSignal::_ServiceStatus);
 }
 
-
-void ServerApplication::waitForTerminationRequest() {
-	SetConsoleCtrlHandler(ConsoleCtrlHandler, TRUE);
-	_terminate.wait();
-	_terminated.set();
-}
 
 int ServerApplication::run(int argc, char** argv) {
 	try {
@@ -176,24 +136,21 @@ int ServerApplication::run(int argc, char** argv) {
 			return EXIT_OK;
 		Exception ex;
 		if (hasArgument("registerService")) {
-			if (registerService(ex)) {
-				if (!ex)
-					WARN(ex.error());
+			bool success = false;
+			EXCEPTION_TO_LOG(success = registerService(ex), "RegisterService")
+			if (success)
 				NOTE("The application has been successfully registered as a service");
-			} else
-				ERROR(ex.error());
 			return EXIT_OK;
 		}
 		if (hasArgument("unregisterService")) {
-			if (unregisterService(ex)) {
-				if (!ex)
-					WARN(ex.error());
+			bool success = false;
+			EXCEPTION_TO_LOG(success = unregisterService(ex), "UnregisterService")
+			if (success)
 				NOTE("The application is no more registered as a service");
-			} else
-				ERROR(ex.error());
 			return EXIT_OK;
 		}
-		return main();
+		TerminateSignal terminateSignal;
+		return main(terminateSignal);
 	} catch (exception& ex) {
 		FATAL(ex.what());
 		return EXIT_SOFTWARE;
@@ -266,28 +223,25 @@ void ServerApplication::defineOptions(Exception& ex,Options& options) {
 
 	options.add(ex, "startup", "s", "Specify the startup mode for the service (only with /registerService).")
 		.argument("automatic|manual")
-		.handler([this](const string& value) {_startup = Poco::icompare(value, 4, string("auto")) == 0 ? "auto" : "manual"; });
+		.handler([this](const string& value) {_startup = String::ICompare(value, "auto", 4) == 0 ? "auto" : "manual"; });
 
 	Application::defineOptions(ex, options);
 }
 
+#else
 
-#else // _WIN32_WCE
-void ServerApplication::waitForTerminationRequest() {
-	_terminate.wait();
+TerminateSignal::TerminateSignal() {
+	sigemptyset(&_signalSet);
+	sigaddset(&_signalSet, SIGINT);
+	sigaddset(&_signalSet, SIGQUIT);
+	sigaddset(&_signalSet, SIGTERM);
+	sigprocmask(SIG_BLOCK, &_signalSet, NULL);
 }
 
-#endif // _WIN32_WCE
-#elif defined(POCO_VXWORKS)
-//
-// VxWorks specific code
-//
-void ServerApplication::waitForTerminationRequest() {
-	_terminate.wait();
+void TerminateSignal::wait() {
+	int signal;
+	sigwait(&_signalSet, &signal);
 }
-
-#elif defined(POCO_OS_FAMILY_UNIX)
-
 
 //
 // Unix specific code
@@ -295,10 +249,7 @@ void ServerApplication::waitForTerminationRequest() {
 void ServerApplication::waitForTerminationRequest() {
 	sigset_t sset;
 	sigemptyset(&sset);
-	if (!getenv("POCO_ENABLE_DEBUGGER"))
-	{
-		sigaddset(&sset, SIGINT);
-	}
+	sigaddset(&sset, SIGINT);
 	sigaddset(&sset, SIGQUIT);
 	sigaddset(&sset, SIGTERM);
 	sigprocmask(SIG_BLOCK, &sset, NULL);
@@ -320,7 +271,9 @@ int ServerApplication::run(int argc, char** argv) {
 			if (rc != 0)
 				return EXIT_OSERR;
 		}
-		return main();
+
+		TerminateSignal terminateSignal;
+		return main(terminateSignal);
 	} catch (exception& ex) {
 		FATAL( ex.what());
 		return EXIT_SOFTWARE;
@@ -337,7 +290,7 @@ bool ServerApplication::isDaemon(int argc, char** argv) {
 	string option3("/daemon");
 	string option4("/d");
 	for (int i = 1; i < argc; ++i) {
-		if (stricmp(option1.c_str(),argv[i])==0 || stricmp(option2.c_str(),argv[i])==0 || stricmp(option3.c_str(),argv[i])==0 || stricmp(option4.c_str(),argv[i])==0)
+		if (String::ICompare(option1,argv[i])==0 || String::ICompare(option2,argv[i])==0 || String::ICompare(option3,argv[i])==0 || String::ICompare(option4,argv[i])==0)
 			return true;
 	}
 	return false;
@@ -388,59 +341,10 @@ void ServerApplication::defineOptions(OptionSet& options) {
 void ServerApplication::handlePidFile(const string& value) {
 	ofstream ostr(value.c_str());
 	if (!ostr.good())
-		throw Exception(Exception::APPLICATION,"Cannot write PID to file ",value);
-	ostr << Poco::Process::id() << endl;
-	Poco::TemporaryFile::registerForDeletion(value);
+		FATAL_THROW("Cannot write PID to file ",value);
+	ostr << Process::id() << endl;
+	FileSystem::RegisterForDeletion(value);
 }
-
-
-#elif defined(POCO_OS_FAMILY_VMS)
-
-
-//
-// VMS specific code
-//
-namespace
-{
-	static void handleSignal(int sig) {
-		ServerApplication::terminate();
-	}
-}
-
-
-void ServerApplication::waitForTerminationRequest() {
-	struct sigaction handler;
-	handler.sa_handler = handleSignal;
-	handler.sa_flags   = 0;
-	sigemptyset(&handler.sa_mask);
-	sigaction(SIGINT, &handler, NULL);
-	sigaction(SIGQUIT, &handler, NULL);                                       
-
-	long ctrlY = LIB$M_CLI_CTRLY;
-	unsigned short ioChan;
-	$DESCRIPTOR(ttDsc, "TT:");
-
-	lib$disable_ctrl(&ctrlY);
-	sys$assign(&ttDsc, &ioChan, 0, 0);
-	sys$qiow(0, ioChan, IO$_SETMODE | IO$M_CTRLYAST, 0, 0, 0, terminate, 0, 0, 0, 0, 0);
-	sys$qiow(0, ioChan, IO$_SETMODE | IO$M_CTRLCAST, 0, 0, 0, terminate, 0, 0, 0, 0, 0);
-
-	string evName("POCOTRM");
-	String::Append(evName, Format<UInt64>("%08" I64_FMT "X", Poco::Process::id()));
-	Poco::NamedEvent ev(evName);
-	try
-	{
-		ev.wait();
-    }
-	catch (...)
-	{
-		// CTRL-C will cause an exception to be raised
-	}
-	sys$dassgn(ioChan);
-	lib$enable_ctrl(&ctrlY);
-}
-
-
 
 #endif
 

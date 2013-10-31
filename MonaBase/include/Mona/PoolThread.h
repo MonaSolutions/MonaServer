@@ -22,7 +22,6 @@
 #include "Mona/WorkThread.h"
 #include <list>
 #include <memory>
-#include <mutex>
 #include <atomic>
 
 
@@ -34,16 +33,16 @@ public:
 	virtual ~PoolThread() {clear();	}
 
 	void	clear() { stop(); }
-	void	push(std::shared_ptr<WorkThread>& pWork);
+	bool	push(Exception& ex,std::shared_ptr<WorkThread>& pWork);
 	int		queue() const { return _queue; }
 private:
-	void	run(Exception& ex);
+	void	run(Exception& ex, ThreadPriority& priority);
 
 	std::mutex								_mutex;
 	std::list<std::shared_ptr<WorkThread>>	_jobs;
 	std::atomic<int>						_queue;
 	
-	static UInt32						_Id;
+	static UInt32							_Id;
 
 };
 

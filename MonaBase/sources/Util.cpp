@@ -18,38 +18,46 @@
 #include "Mona/Util.h"
 #include "Mona/Exceptions.h"
 #include "Mona/String.h"
-#include "Poco/URI.h"
-#include "Poco/HexBinaryEncoder.h"
-#include "Poco/FileStream.h"
-#include "Poco/Exception.h"
-#include <sstream>
-#include "math.h"
+#include <fstream>
+
+#if !defined(_WIN32)
+extern "C" char **environ; // TODO test it on linux!
+#endif
 
 using namespace std;
-using namespace Poco;
-
 
 namespace Mona {
 
-NullInputStream		Util::NullInputStream;
-NullOutputStream	Util::NullOutputStream;
+
+MapParameters	Util::_Environment;
+mutex			Util::_MutexEnvironment;
+
+map<thread::id, string>	Util::_ThreadNames;
+mutex					Util::_MutexThreadNames;
 
 
-string Util::FormatHex(const UInt8* data,UInt32 size) {
-	ostringstream oss;
-	HexBinaryEncoder(oss).write((const char*)data,size);
-	return oss.str();
+const string& Util::GetThreadName(thread::id id) {
+	lock_guard<mutex> lock(_MutexThreadNames);
+	return _ThreadNames[id];
 }
 
-string Util::FormatHex2(const UInt8* data,UInt32 size) {
-	ostringstream oss;
-	HexBinaryEncoder hex(oss);
-	UInt32 i;
-	for(i=0;i<size;++i) {
-		oss << "\\x";
-		hex << data[i];
-	}
-	return oss.str();
+void Util::SetThreadName(thread::id id, const string& name) {
+	lock_guard<mutex> lock(_MutexThreadNames);
+	_ThreadNames[id] = name;
+}
+
+string& Util::FormatHex(const UInt8* data,UInt32 size,string& result) {
+	result.clear();
+	for (int i = 0; i < size;++i)
+		String::Append(result,Format<UInt8>("%X",data[i]));
+	return result;
+}
+
+string& Util::FormatHex2(const UInt8* data, UInt32 size, string& result) {
+	result.clear();
+	for (int i = 0; i < size; ++i)
+		String::Append(result, Format<UInt8>("\\x%X", data[i]));
+	return result;
 }
 
 UInt8 Util::Get7BitValueSize(UInt64 value) {
@@ -61,6 +69,27 @@ UInt8 Util::Get7BitValueSize(UInt64 value) {
 	}
 	return result;
 }
+
+// environment variables (TODO test on service windows!!)
+const MapParameters& Util::Environment() {
+	lock_guard<mutex> lock(_MutexEnvironment);
+	if (_Environment.count() > 0)
+		return _Environment;
+	char *s = *environ;
+	for (int i = 0; s = *(environ + i); ++i) {
+		const char* temp = strchr(s, '=');
+		string name;
+		string value;
+		if (temp) {
+			name.assign(s, temp - s);
+			value.assign(temp + 1);
+		} else
+			name.assign(s);
+		_Environment.setString(name, value);
+	}
+	return _Environment;
+}
+
 
 bool Util::UnpackUrl(Exception& ex, const string& url, string& path, MapParameters& properties) {
 	SocketAddress address;
@@ -77,70 +106,159 @@ bool Util::UnpackUrl(Exception& ex, const string& url, SocketAddress& address, s
 	string file;
 	return UnpackUrl(ex, url, address, path, file, properties);
 }
-
+// TODO check unitest
 bool Util::UnpackUrl(Exception& ex,const string& url, SocketAddress& address, string& path, string& file, MapParameters& properties) {
-	URI uri;
-	try {
-		uri = url;
-	} catch (...) {
-		ex.set(Exception::FORMATTING,"Unpack url ", url, " impossible");
-		return false;
-	}
-	uri.normalize();
-	path = uri.getPath();
-	// normalize path "/like/that"
-	size_t found = path.rfind('/');
-	while(found!= string::npos && found==(path.size()-1)) {
-		path.erase(found);
-		found = path.rfind('/');
-	}
-	// file?
-	size_t punctFound = path.rfind('.');
-	if(punctFound!=string::npos && punctFound>found) {
-		if(found==string::npos) {
-			file=path;
-			path.clear();
-		} else {
-			file=path.substr(found+1);
-			path.erase(found);
+	
+	auto it = url.begin();
+	auto end = url.end();
+	while (it != end) {
+		if (isspace(*it)) {
+			ex.set(Exception::FORMATTING, "URL ", url, " malformed, space character");
+			return false;
 		}
+		if (*it == '/' || *it == '\\') // no address!
+			break;
+		if (*it == ':') {
+			// protocol
+			while (it != end && (*it == '/' || *it == '\\'))
+				++it;
+			if (it == end)
+				break;
+			++it;
+			if (it == end) // no address, no path, just "scheme://"
+				return true;
+			auto itEnd(it);
+			while (itEnd != end && (*it == '/' || *it == '\\'))
+				++itEnd;
+			address.set(ex, string(it, itEnd));
+			break;
+		}
+		++it;
 	}
-	address.set(ex,uri.getHost(),uri.getPort());
-	if (ex)
-		return false;
-	UnpackQuery(uri.getRawQuery(),properties);
+	if (ex || it == end)
+		return !ex;
+
+	// Normalize path => replace // by / and \ by / AND remove the last '/'
+	path.assign(it,end);
+	it = path.begin();
+	auto itFile = it;
+	end = path.end();
+	bool hasFile(false);
+	string query;
+	while (it != end) {
+		if (isspace(*it)) {
+			ex.set(Exception::FORMATTING, "URL ", url, " malformed, space character");
+			return false;
+		}
+		if (*it == '?') {
+			// query now!
+			// file?
+			if (hasFile)
+				file.assign(itFile, it);
+			// query
+			UnpackQuery(string(++it, end),properties);
+			// trunk the path
+			if (hasFile)
+				path.erase(--itFile, end);
+			else
+				path.erase(--it, end);
+			return true;
+		}
+		if (*it == '/' || *it == '\\') {
+			++it;
+			while (it != end && (*it == '/' || *it == '\\')) 
+				path.erase(it++); // erase multiple slashes
+			if (it == end) {
+				hasFile = false;
+				// remove the last /
+				path.erase(--it);
+				break;
+			}
+			itFile = it;
+		}
+		if (*it == '.')
+			hasFile = true;
+		++it;
+	}
+
+
+	// file?
+	if (hasFile) {
+		file.assign(itFile, end);
+		path.erase(--itFile, end); // trunk the path if file (no query here)
+	}
 	return true;
 }
-
+// TODO check unitest
 void Util::UnpackQuery(const string& query, MapParameters& properties) {
-	istringstream istr(query);
-	static const int eof = char_traits<char>::eof();
+	
+	string myQuery(query);
 
-	int ch = istr.get();
-	while (ch != eof) {
+	string::iterator it = myQuery.begin();
+	auto end = myQuery.end();
+	while (it != end) {
+
+		// name
 		string name;
+		auto itEnd(it);
+		while (itEnd != end && *itEnd != '=' && *itEnd != '&') {
+			if (*itEnd == '+')
+				*itEnd = ' ';
+			++itEnd;
+		};
+		name.assign(it, itEnd);
+		it = itEnd;
 		string value;
-		while (ch != eof && ch != '=' && ch != '&') {
-			if (ch == '+') ch = ' ';
-			name += (char) ch;
-			ch = istr.get();
+		if (it!=end && *it != '&') { // if it's '='
+			++it;
+			// value
+			auto itEnd(it);
+			while (itEnd != end && *itEnd != '&') {
+				if (*itEnd == '+')
+					*itEnd = ' ';
+				++itEnd;
+			};
+			value.assign(it, itEnd);
+			it = itEnd;
 		}
-		if (ch == '=') {
-			ch = istr.get();
-			while (ch != eof && ch != '&')
-			{
-				if (ch == '+') ch = ' ';
-				value += (char) ch;
-				ch = istr.get();
-			}
-		}
-		string decodedName;
-		string decodedValue;
-		URI::decode(name, decodedName);
-		URI::decode(value, decodedValue);
-		properties.setString(decodedName,decodedValue);
-		if (ch == '&') ch = istr.get();
+		properties.setString(DecodeURI(name), DecodeURI(value));
 	}
+}
+
+// TODO check unitest
+string& Util::DecodeURI(string& uri) {
+	auto it = uri.begin();
+	auto end = uri.end();
+	while (it != end) {
+		char c = *it++;
+		if (c != '%' || it == end)
+			continue;
+		auto itDecode(it);
+		char hi = *it++;
+		if (it == end)
+			return uri;
+		char lo = *it++;
+		if (hi >= '0' && hi <= '9')
+			c = hi - '0';
+		else if (hi >= 'A' && hi <= 'F')
+			c = hi - 'A' + 10;
+		else if (hi >= 'a' && hi <= 'f')
+			c = hi - 'a' + 10;
+		else
+			return uri; // syntax error
+		c *= 16;
+		if (lo >= '0' && lo <= '9')
+			c += lo - '0';
+		else if (lo >= 'A' && lo <= 'F')
+			c += lo - 'A' + 10;
+		else if (lo >= 'a' && lo <= 'f')
+			c += lo - 'a' + 10;
+		else
+			return uri; // syntax error
+		*itDecode = c;
+		uri.erase(++itDecode, it);
+	}
+	return uri;
 }
 
 
@@ -169,7 +287,7 @@ void Util::Dump(const UInt8* in,UInt32 size,Buffer<UInt8>& out,const string& hea
 			++c;
 		}
 		while (c++ < 16) {
-			strcpy((char*)&out[len],"   ");
+			memcpy((char*)&out[len],"   \0",4);
 			len += 3;
 		}
 		out[len++] = ' ';
@@ -192,13 +310,7 @@ void Util::Dump(const UInt8* in,UInt32 size,Buffer<UInt8>& out,const string& hea
 
 
 bool Util::ReadIniFile(Exception& ex,const string& path,MapParameters& parameters) {
-	FileInputStream istr;
-	try {
-		istr.open(path, ios::in);
-	} catch (Poco::Exception& exc) {
-		ex.set(Exception::FILE, "Impossible to open ", path, " file, ",exc.displayText());
-		return false;
-	}
+	ifstream istr(path, ios::in | ios::binary);
 	if (!istr.good()) {
 		ex.set(Exception::FILE, "Impossible to open ", path, " file");
 		return false;
@@ -250,56 +362,6 @@ bool Util::ReadIniFile(Exception& ex,const string& path,MapParameters& parameter
 		}
 	}
 	return true;
-}
-
-
-
-
-unsigned Util::ProcessorCount() {
-
-#if defined(_WIN32)
-	SYSTEM_INFO si;
-	GetSystemInfo(&si);
-	return si.dwNumberOfProcessors;
-
-#elif defined(POCO_OS_FAMILY_BSD)
-	unsigned count;
-	std::size_t size = sizeof(count);
-	if (sysctlbyname("hw.ncpu", &count, &size, 0, 0))
-		return 1;
-	return count;
-
-#elif POCO_OS == POCO_OS_HPUX
-	return pthread_num_processors_np();
-
-#elif defined(_SC_NPROCESSORS_ONLN)
-	int count = sysconf(_SC_NPROCESSORS_ONLN);
-	if (count <= 0) count = 1;
-	return static_cast<int>(count);
-
-#elif defined(POCO_OS_FAMILY_VMS)
-
-#pragma pointer_size save
-#pragma pointer_size 32
-
-	Poco::UInt32 count(1);
-	unsigned short length;
-
-	ILE3 items[2];
-	items[0].ile3$w_code = SYI$_ACTIVECPU_CNT;
-	items[0].ile3$w_length = sizeof(count);
-	items[0].ile3$ps_bufaddr = &count;
-	items[0].ile3$ps_retlen_addr = &length;
-	items[1].ile3$w_code = 0;
-	items[1].ile3$w_length = 0;
-
-	sys$getsyiw(0, 0, 0, items, 0, 0, 0);
-	return count;
-#pragma pointer_size restore
-
-#else
-	return 1;
-#endif
 }
 
 

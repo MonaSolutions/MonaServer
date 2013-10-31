@@ -19,10 +19,9 @@
 
 
 #include "Mona/DiffieHellman.h"
-#include "Mona/Logs.h"
+
 
 using namespace std;
-using namespace Poco;
 
 namespace Mona {
 
@@ -55,7 +54,7 @@ DiffieHellman::~DiffieHellman() {
 		DH_free(_pDH);
 }
 
-bool DiffieHellman::initialize(bool reset) {
+bool DiffieHellman::initialize(Exception& ex,bool reset) {
 	if(!reset && _pDH)
 		return false;
 	if(_pDH)
@@ -70,22 +69,25 @@ bool DiffieHellman::initialize(bool reset) {
 
 	//4. Generate private and public key
 	if(!DH_generate_key(_pDH))
-		CRITIC("Generation DH key failed!");
-	return true;
+		ex.set(Exception::MATH,"Generation DH key failed");
+	return !ex;
 }
 
 
-void DiffieHellman::computeSecret(const Buffer<UInt8>& farPubKey,Buffer<UInt8>& sharedSecret) {
-	initialize();
+Buffer<UInt8>& DiffieHellman::computeSecret(Exception& ex, const Buffer<UInt8>& farPubKey, Buffer<UInt8>& sharedSecret) {
+	initialize(ex);
+	if (ex)
+		return sharedSecret;
 	BIGNUM *bnFarPubKey = BN_bin2bn(&farPubKey[0],farPubKey.size(),NULL);
 	int i =BN_num_bits(_pDH->priv_key);
 	sharedSecret.resize(DH_KEY_SIZE);
 	int size = DH_compute_key(&sharedSecret[0], bnFarPubKey, _pDH);
 	if (size <= 0)
-		CRITIC("Diffie Hellman exchange failed, dh compute key error")
+		ex.set(Exception::MATH, "Diffie Hellman exchange failed, dh compute key error");
 	else if(size!=DH_KEY_SIZE)
 		sharedSecret.resize(size);
 	BN_free(bnFarPubKey);
+	return sharedSecret;
 }
 
 

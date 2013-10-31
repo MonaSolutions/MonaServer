@@ -27,8 +27,7 @@ namespace Mona {
 class Trigger : virtual Object{
 public:
 	Trigger();
-	virtual ~Trigger();
-
+	
 	UInt16 raise(Exception& ex);
 	void start();
 	void reset();
@@ -37,7 +36,7 @@ private:
 	Time		_timeInit;
 	Int8		_cycle;
 	UInt8		_time;
-	bool			_running;
+	bool		_running;
 
 };
 

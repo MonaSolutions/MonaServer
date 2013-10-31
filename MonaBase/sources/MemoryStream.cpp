@@ -19,7 +19,7 @@
 
 
 using namespace std;
-using namespace Poco;
+
 
 namespace Mona {
 
@@ -44,10 +44,6 @@ MemoryStreamBuf::MemoryStreamBuf(MemoryStreamBuf& other): _pBuffer(other._pBuffe
 	setg(_pBuffer,other.gCurrent(),_pBuffer + _bufferSize);
 	setp(_pBuffer,_pBuffer + _bufferSize);
 	pbump((int)(other.pCurrent()-_pBuffer));
-}
-
-
-MemoryStreamBuf::~MemoryStreamBuf() {
 }
 
 void MemoryStreamBuf::clip(Int32 offset) {
@@ -120,16 +116,6 @@ UInt32 MemoryStreamBuf::written() {
 	return _written;
 }
 
-MemoryIOS::MemoryIOS(char* pBuffer, UInt32 bufferSize):_buf(pBuffer, bufferSize) {
-	poco_ios_init(&_buf);
-}
-MemoryIOS::MemoryIOS(MemoryIOS& other):_buf(other._buf) {
-	poco_ios_init(&_buf);
-}
-
-MemoryIOS::~MemoryIOS() {
-}
-
 void MemoryIOS::reset(UInt32 newPos) {
 	if(newPos>=0)
 		rdbuf()->position(newPos);
@@ -141,30 +127,6 @@ UInt32 MemoryIOS::available() {
 	if(result<0)
 		return 0;
 	return (UInt32)result;
-}
-
-
-
-MemoryInputStream::MemoryInputStream(const char* pBuffer, UInt32 bufferSize): 
-	MemoryIOS(const_cast<char*>(pBuffer), bufferSize), istream(rdbuf()) {
-}
-
-MemoryInputStream::MemoryInputStream(MemoryInputStream& other):
-	MemoryIOS(other), istream(rdbuf()) {
-}
-
-MemoryInputStream::~MemoryInputStream() {
-}
-
-
-MemoryOutputStream::MemoryOutputStream(char* pBuffer, UInt32 bufferSize): 
-	MemoryIOS(pBuffer, bufferSize), ostream(rdbuf()) {
-}
-MemoryOutputStream::MemoryOutputStream(MemoryOutputStream& other):
-	MemoryIOS(other), ostream(rdbuf()) {
-}
-
-MemoryOutputStream::~MemoryOutputStream(){
 }
 
 

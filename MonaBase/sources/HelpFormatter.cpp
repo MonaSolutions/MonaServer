@@ -22,19 +22,19 @@
 #include "Mona/Logs.h"
 
 using namespace std;
-using namespace Poco;
+
 
 namespace Mona {
 
 #define TAB_WIDTH		4
 #define WIDTH			78
 
-#if defined(POCO_OS_FAMILY_UNIX)
-#define LONG_PREFIX		"--"
-#define SHORT_PREFIX	"-"
-#else
+#if defined(_WIN32)
 #define LONG_PREFIX		"/"
 #define SHORT_PREFIX	"/"
+#else
+#define LONG_PREFIX		"--"
+#define SHORT_PREFIX	"-"
 #endif
 
 
@@ -44,7 +44,7 @@ int HelpFormatter::calcIndent() const {
 		int shortLen = option.shortName().length();
 		int fullLen = option.fullName().length();
 		int n = 0;
-#ifdef POCO_OS_FAMILY_UNIX
+#ifdef _OS_UNIX
 		n += shortLen + _ShortPrefix.length() + 2;
 		if (option.takesArgument())
 			n += option.argumentName().length() + (option.argumentRequired() ? 0 : 2);
@@ -94,7 +94,7 @@ void HelpFormatter::formatOption(ostream& ostr, const Option& option) const
 
 	int n = 0;
 
-#ifdef POCO_OS_FAMILY_UNIX
+#ifdef _OS_UNIX
 	ostr << _ShortPrefix << option.shortName();
 	n += _ShortPrefix.length() + option.shortName().length()+2;
 	if (option.takesArgument()) {

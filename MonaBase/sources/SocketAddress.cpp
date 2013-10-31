@@ -275,17 +275,12 @@ UInt16 SocketAddress::resolveService(Exception& ex,const string& service) {
 	UInt16 port = String::ToNumber<UInt16>(ex, service);
 	if (!ex)
 		return port;
-
-#if defined(POCO_VXWORKS)
-	ex.set(Exception::NETADDRESS, "Service ", service, " unknown");
-#else
 	if (!Net::InitializeNetwork(ex))
 		return 0;
 	struct servent* se = getservbyname(service.c_str(), NULL);
 	if (se)
 		return ntohs(se->s_port);
 	ex.set(Exception::NETADDRESS, "Service ", service, " unknown");
-#endif
 	return 0;
 }
 

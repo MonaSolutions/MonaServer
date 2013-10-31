@@ -24,28 +24,29 @@ using namespace std;
 
 namespace Mona {
 
-void PoolThread::push(shared_ptr<WorkThread>& pWork) {
-	++_queue;
+bool PoolThread::push(Exception& ex,shared_ptr<WorkThread>& pWork) {
 	lock_guard<mutex> lock(_mutex);
-	_jobs.push_back(pWork);
-	start();
+	if (!running() && !start(ex))
+		return false;
+	++_queue;
+	_jobs.emplace_back(pWork);
 	wakeUp();
+	return true;
 }
 
-void PoolThread::run(Exception& ex) {
+void PoolThread::run(Exception& ex,ThreadPriority& priority) {
 
-	while(!ex) {
+	for(;;) {
 
-		WakeUpType wakeUpType = sleep(ex,40000); // 40 sec of timeout
+		WakeUpType wakeUpType = sleep(40000); // 40 sec of timeout
 		
-		while(!ex) {
+		for (;;) {
 			WorkThread* pWork;
 			{
 				lock_guard<mutex> lock(_mutex);
 				if(_jobs.empty()) {
-					if(wakeUpType!=WAKEUP) { // STOP or TIMEOUT
-						if(wakeUpType==TIMEOUT)
-							stop();
+					if (wakeUpType != WAKEUP) { // STOP or TIMEOUT
+						stop(); // to set running=false!
 						return;
 					}
 					break;

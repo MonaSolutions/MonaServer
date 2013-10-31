@@ -44,7 +44,7 @@ bool Parameters::getBool(const string& key, bool& value) const {
 		return false;
 	int number;
 	// true if number !=0 or if not equals to "false", "no" or "off"
-	value = String::ToNumber<int>(temp,number) && (number != 0) || (stricmp(temp.c_str(), "false") != 0 && stricmp(temp.c_str(), "no") != 0 && stricmp(temp.c_str(), "off") != 0);
+	value = String::ToNumber<int>(temp, number) && (number != 0) || (String::ICompare(temp, "false") != 0 && String::ICompare(temp, "no") != 0 && String::ICompare(temp, "off") != 0);
 	return true;
 }
 

@@ -27,12 +27,10 @@ Options::Options() : _pOption(NULL){
 }
 
 
-const Option& Options::get(Exception& ex,const string& name) const {
+const Option& Options::get(const string& name) const {
 	auto result = _options.find(Option(name.c_str(), ""));
-	if (result == _options.end()) {
-		ex.set(Exception::OPTION, "Unknown ", name, " option");
+	if (result == _options.end())
 		return Option::Null;
-	}
 	return *result;
 }
 

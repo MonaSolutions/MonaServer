@@ -22,12 +22,12 @@ using namespace std;
 namespace Mona {
 
 #if defined(_WIN32)
-volatile bool	_Initialized(false);
-mutex			_Mutex;
+static volatile bool	Initialized(false);
+static mutex			Mutex;
 
 bool Net::InitializeNetwork(Exception& ex) {
-	lock_guard<mutex> lock(_Mutex);
-	if (_Initialized)
+	lock_guard<mutex> lock(Mutex);
+	if (Initialized)
 		return true;
 	WORD    version = MAKEWORD(2, 2);
 	WSADATA data;
@@ -35,13 +35,13 @@ bool Net::InitializeNetwork(Exception& ex) {
 		ex.set(Exception::NETWORK, "Failed to initialize network subsystem");
 		return false;
 	}
-	return _Initialized = true;
+	return Initialized = true;
 }
 
 class NetUninitializer {
 public:
 	~NetUninitializer() {
-		if (!_Initialized)
+		if (!Initialized)
 			return;
 		WSACleanup();
 	}

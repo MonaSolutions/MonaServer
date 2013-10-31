@@ -53,9 +53,6 @@ bool HostEntry::set(Exception& ex,const struct hostent* entry) {
 }
 
 
-#if defined(POCO_HAVE_ADDRINFO)
-
-
 bool HostEntry::set(Exception& ex, struct addrinfo* ainfo) {
 	ASSERT_RETURN(ainfo != NULL,false)
 	for (struct addrinfo* ai = ainfo; ai; ai = ai->ai_next) {
@@ -77,24 +74,6 @@ bool HostEntry::set(Exception& ex, struct addrinfo* ainfo) {
 	}
 	return true;
 }
-
-
-#endif // POCO_HAVE_ADDRINFO
-
-
-#if defined(POCO_VXWORKS)
-
-bool HostEntry::set(Exception& ex,const string& name, const void* addr):_name(name) {
-	_addresses.emplace_back();
-	_addresses.back().set(ex, &addr);
-	if (ex) {
-		_addresses.pop_back();
-		return false;
-	}
-	return true;
-}
-
-#endif // POCO_VXWORKS
 
 
 

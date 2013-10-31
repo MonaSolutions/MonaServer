@@ -110,21 +110,11 @@ public:
 		ia.s_addr = inet_addr(addr.c_str());
 		if (ia.s_addr == INADDR_NONE && addr != "255.255.255.255")
 			return 0;
-		else
-			return new IPv4Address(&ia);
-#else
-#if defined(POCO_VXWORKS)
-		ia.s_addr = inet_addr(const_cast<char*>(addr.c_str()));
-		if (ia.s_addr == INADDR_NONE && addr != "255.255.255.255")
-			return 0;
-		else
-			return new IPv4Address(&ia);
+		return new IPv4Address(&ia);
 #else
 		if (inet_aton(addr.c_str(), &ia))
 			return new IPv4Address(&ia);
-		else
-			return 0;
-#endif
+		return 0;
 #endif
 	}
 	
@@ -447,48 +437,48 @@ bool IPAddress::isGlobalMC() const {
 }
 
 bool IPAddress::operator == (const IPAddress& a) const {
-	SOCKLEN l1 = sizeof(addr());
-	SOCKLEN l2 = sizeof(a.addr());
+	NET_SOCKLEN l1 = sizeof(addr());
+	NET_SOCKLEN l2 = sizeof(a.addr());
 	if (l1 == l2)
 		return memcmp(addr(), a.addr(), l1) == 0;
 	return false;
 }
 
 bool IPAddress::operator != (const IPAddress& a) const {
-	SOCKLEN l1 = sizeof(addr());
-	SOCKLEN l2 = sizeof(a.addr());
+	NET_SOCKLEN l1 = sizeof(addr());
+	NET_SOCKLEN l2 = sizeof(a.addr());
 	if (l1 == l2)
 		return memcmp(addr(), a.addr(), l1) != 0;
 	return true;
 }
 
 bool IPAddress::operator < (const IPAddress& a) const {
-	SOCKLEN l1 = sizeof(addr());
-	SOCKLEN l2 = sizeof(a.addr());
+	NET_SOCKLEN l1 = sizeof(addr());
+	NET_SOCKLEN l2 = sizeof(a.addr());
 	if (l1 == l2)
 		return memcmp(addr(), a.addr(), l1) < 0;
 	return l1 < l2;
 }
 
 bool IPAddress::operator <= (const IPAddress& a) const {
-	SOCKLEN l1 = sizeof(addr());
-	SOCKLEN l2 = sizeof(a.addr());
+	NET_SOCKLEN l1 = sizeof(addr());
+	NET_SOCKLEN l2 = sizeof(a.addr());
 	if (l1 == l2)
 		return memcmp(addr(), a.addr(), l1) <= 0;
 	return l1 < l2;
 }
 
 bool IPAddress::operator > (const IPAddress& a) const {
-	SOCKLEN l1 = sizeof(addr());
-	SOCKLEN l2 = sizeof(a.addr());
+	NET_SOCKLEN l1 = sizeof(addr());
+	NET_SOCKLEN l2 = sizeof(a.addr());
 	if (l1 == l2)
 		return memcmp(addr(), a.addr(), l1) > 0;
 	return l1 > l2;
 }
 
 bool IPAddress::operator >= (const IPAddress& a) const {
-	SOCKLEN l1 = sizeof(addr());
-	SOCKLEN l2 = sizeof(a.addr());
+	NET_SOCKLEN l1 = sizeof(addr());
+	NET_SOCKLEN l2 = sizeof(a.addr());
 	if (l1 == l2)
 		return memcmp(addr(), a.addr(), l1) >= 0;
 	return l1 > l2;

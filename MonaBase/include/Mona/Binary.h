@@ -15,46 +15,20 @@
 	This file is a part of Mona.
 */
 
-#include "Mona/TaskHandler.h"
+#pragma once
 
-using namespace std;
-
+#include "Mona/Mona.h"
 
 namespace Mona {
 
+class Binary : virtual Static {
+public:
+	static UInt32	Flip16(UInt16 value) { return ((value >> 8) & 0x00FF) | ((value << 8) & 0xFF00); }
+	static UInt32	Flip24(UInt32 value) { return ((value >> 16) & 0x000000FF) | (value & 0x0000FF00) | ((value << 16) & 0x00FF0000); }
+	static UInt32	Flip32(UInt32 value) { return ((value >> 24) & 0x000000FF) | ((value >> 8) & 0x0000FF00) | ((value << 8) & 0x00FF0000) | ((value << 24) & 0xFF000000); }
+	static UInt32	Flip64(UInt64 value) { UInt32 hi = UInt32(value >> 32); UInt32 lo = UInt32(value & 0xFFFFFFFF); return UInt64(Flip32(hi)) | (UInt64(Flip32(lo)) << 32); }
 
-void TaskHandler::start() {
-	lock_guard<recursive_mutex> lock(_mutex);
-	_stop=false;
-}
-
-
-void TaskHandler::stop() {
-	lock_guard<recursive_mutex> lock(_mutex);
-	_stop=true;
-	_event.set();
-}
-
-void TaskHandler::waitHandle(Task& task) {
-	lock_guard<mutex> lockWait(_mutexWait);
-	{
-		lock_guard<recursive_mutex> lock(_mutex);
-		if(_stop)
-			return;
-		_pTask = &task;
-	}
-	requestHandle();
-	_event.wait();
-}
-
-void TaskHandler::giveHandle(Exception& ex) {
-	lock_guard<recursive_mutex> lock(_mutex);
-	if(!_pTask)
-		return;
-	_pTask->handle(ex);
-	_pTask=NULL;
-	_event.set();
-}
+};
 
 
 } // namespace Mona

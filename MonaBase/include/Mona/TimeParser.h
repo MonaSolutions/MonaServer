@@ -24,17 +24,17 @@ namespace Mona {
 
 class Time;
 
-class TimeParser : virtual Object {
+class TimeParser : virtual Static {
 public:
 
-	static bool tryParse(const std::string& in, Time& dateTime, int& tz);
-	static bool parse(const std::string& fmt, const std::string& in, Time& time, int& tzdifferencial);
+	static bool TryParse(const std::string& in, Time& dateTime, int& tz);
+	static bool Parse(const std::string& fmt, const std::string& in, Time& time, int& tzdifferencial);
 	
 private:
 
-	static bool parseTZD(std::string::const_iterator& it, const std::string::const_iterator& end, int& result);
-	static bool parseMonth(std::string::const_iterator& it, const std::string::const_iterator& end, int& result);
-	static bool parseAMPM(std::string::const_iterator& it, const std::string::const_iterator& end, int& result);
+	static void ParseTZD(std::string::const_iterator& it, const std::string::const_iterator& end, int& result);
+	static bool ParseMonth(std::string::const_iterator& it, const std::string::const_iterator& end, int& result);
+	static bool ParseAMPM(std::string::const_iterator& it, const std::string::const_iterator& end, int& result);
 };
 
 } // namespace Mona

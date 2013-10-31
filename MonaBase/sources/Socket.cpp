@@ -26,12 +26,12 @@ using namespace std;
 namespace Mona {
 
 
-Socket::Socket(const SocketManager& manager, int type) : _poolThreads(manager._poolThreads), _pMutex(new mutex()), _type(type), _initialized(false), _managed(false), _manager(manager), _sockfd(INVALID_SOCKET), _writing(false) {}
+Socket::Socket(const SocketManager& manager, int type) : _poolThreads(manager._poolThreads), _pMutex(new mutex()), _type(type), _initialized(false), _managed(false), _manager(manager), _sockfd(NET_INVALID_SOCKET), _writing(false) {}
 
 Socket::~Socket() {
 	close();
 	if (_initialized)
-		CLOSESOCKET(_sockfd);
+		NET_CLOSESOCKET(_sockfd);
 	lock_guard<mutex>	lock(*_pMutex); // prevent deletion for SocketSender
 }
 
@@ -49,11 +49,11 @@ bool Socket::init(Exception& ex, IPAddress::Family family) {
 	lock_guard<mutex>	lock(_mutexInit);
 	if (_initialized)
 		return true;
-	ASSERT_RETURN(_sockfd == INVALID_SOCKET,false)
+	ASSERT_RETURN(_sockfd == NET_INVALID_SOCKET,false)
 	if (!Net::InitializeNetwork(ex))
 		return false;
 	_sockfd = ::socket(family == IPAddress::IPv6 ? AF_INET6 : AF_INET, _type, 0);
-	if (_sockfd == INVALID_SOCKET) {
+	if (_sockfd == NET_INVALID_SOCKET) {
 		SetError(ex);
 		return false;
 	}
@@ -61,8 +61,8 @@ bool Socket::init(Exception& ex, IPAddress::Family family) {
 	// always in non-blocking mode!
 	ioctl(ex,FIONBIO, 1); 
 	if (ex || !managed(ex)) {
-		CLOSESOCKET(_sockfd);
-		_sockfd = INVALID_SOCKET;
+		NET_CLOSESOCKET(_sockfd);
+		_sockfd = NET_INVALID_SOCKET;
 		return false;
 	}
 
@@ -70,7 +70,7 @@ bool Socket::init(Exception& ex, IPAddress::Family family) {
 	// SIGPIPE sends a signal that if unhandled (which is the default)
 	// will crash the process. This only happens on UNIX, and not Linux.
 	//
-	// In order to have POCO sockets behave the same across platforms, it is
+	// In order to have sockets behave the same across platforms, it is
 	// best to just ignore SIGPIPE all together.
 	setOption(ex,SOL_SOCKET, SO_NOSIGPIPE, 1);
 #endif
@@ -78,14 +78,14 @@ bool Socket::init(Exception& ex, IPAddress::Family family) {
 	return _initialized=true;
 }
 
-bool Socket::init(Exception& ex,SOCKET sockfd) {
+bool Socket::init(Exception& ex, NET_SOCKET sockfd) {
 	_sockfd = sockfd;
 	_initialized = true;
 	// always in non-blocking mode!
 	ioctl(ex, FIONBIO, 1);
 	if (ex || !managed(ex)) {
-		CLOSESOCKET(_sockfd);
-		_sockfd = INVALID_SOCKET;
+		NET_CLOSESOCKET(_sockfd);
+		_sockfd = NET_INVALID_SOCKET;
 		return false;
 	}
 	return managed(ex);
@@ -102,17 +102,12 @@ bool Socket::managed(Exception& ex) {
 bool Socket::connect(Exception& ex, const SocketAddress& address) {
 	if (!_initialized && !init(ex, address.family()))
 		return false;
-	if (managed(ex))
+	if (!managed(ex))
 		return false;
-
-#if defined(POCO_VXWORKS)
-	int rc = ::connect(_sockfd, (sockaddr*) address.addr(), sizeof(address.addr()));
-#else
 	int rc = ::connect(_sockfd, address.addr(), sizeof(address.addr()));
-#endif
 	if (rc) {
 		int err = LastError();
-		if (err != EINPROGRESS && err != EWOULDBLOCK) {
+		if (err != NET_EINPROGRESS && err != NET_EWOULDBLOCK) {
 			SetError(ex, err, address.toString());
 			return false;
 		}	
@@ -124,7 +119,7 @@ bool Socket::connect(Exception& ex, const SocketAddress& address) {
 bool Socket::bind(Exception& ex, const SocketAddress& address, bool reuseAddress) {
 	if (!_initialized && !init(ex, address.family()))
 		return false;
-	if (managed(ex))
+	if (!managed(ex))
 		return false;
 
 	// TODO? if (address.family() == IPAddress::IPv6)
@@ -133,11 +128,7 @@ bool Socket::bind(Exception& ex, const SocketAddress& address, bool reuseAddress
 		setReuseAddress(ex,true);
 		setReusePort(true);
 	}
-#if defined(POCO_VXWORKS)
-	int rc = ::bind(_sockfd, (sockaddr*) address.addr(), sizeof(address.addr()));
-#else
 	int rc = ::bind(_sockfd, address.addr(), sizeof(address.addr()));
-#endif
 	if (rc != 0) {
 		SetError(ex, LastError(), address.toString());
 		return false;
@@ -148,7 +139,7 @@ bool Socket::bind(Exception& ex, const SocketAddress& address, bool reuseAddress
 	
 bool Socket::listen(Exception& ex, int backlog) {
 	ASSERT_RETURN(_initialized==true, false)
-	if (managed(ex))
+	if (!managed(ex))
 		return false;
 
 	if (::listen(_sockfd, backlog) != 0) {
@@ -161,11 +152,11 @@ bool Socket::listen(Exception& ex, int backlog) {
 void Socket::rejectConnection() {
 	if (!_initialized)
 		return;
-	SOCKET sockfd;
+	NET_SOCKET sockfd;
 	do {
 		sockfd = ::accept(_sockfd, NULL, 0);  // TODO acceptEx?
-	} while (sockfd == INVALID_SOCKET && LastError() == EINTR);
-	if (sockfd != INVALID_SOCKET)
+	} while (sockfd == NET_INVALID_SOCKET && LastError() == NET_EINTR);
+	if (sockfd != NET_INVALID_SOCKET)
 		closesocket(sockfd);
 }
 
@@ -181,7 +172,7 @@ int Socket::sendBytes(Exception& ex, const void* buffer, int length, int flags) 
 	do {
 		ASSERT_RETURN(_initialized == true, 0)
 		rc = ::send(_sockfd, reinterpret_cast<const char*>(buffer), length, flags);
-	} while (rc < 0 && LastError() == EINTR);
+	} while (rc < 0 && LastError() == NET_EINTR);
 	CheckError(ex);
 	return rc;
 }
@@ -192,10 +183,10 @@ int Socket::receiveBytes(Exception& ex, void* buffer, int length, int flags) {
 	do {
 		ASSERT_RETURN(_initialized == true, 0)
 		rc = ::recv(_sockfd, reinterpret_cast<char*>(buffer), length, flags);
-	} while (rc < 0 && LastError() == EINTR);
+	} while (rc < 0 && LastError() == NET_EINTR);
 	if (rc < 0) {
 		int err = LastError();
-		if (err == EAGAIN)
+		if (err == NET_EAGAIN)
 			return 0;
 		SetError(ex, err);
 	}
@@ -212,13 +203,9 @@ int Socket::sendTo(Exception& ex, const void* buffer, int length, const SocketAd
 	int rc;
 	do {
 		ASSERT_RETURN(_initialized == true, 0)
-#if defined(POCO_VXWORKS)
-		rc = ::sendto(_sockfd, (char*) buffer, length, flags, (sockaddr*) address.addr(), sizeof(address.addr()));
-#else
 		rc = ::sendto(_sockfd, reinterpret_cast<const char*>(buffer), length, flags, address.addr(), sizeof(address.addr()));
-#endif
 	}
-	while (rc < 0 && LastError() == EINTR);
+	while (rc < 0 && LastError() == NET_EINTR);
 	CheckError(ex);
 	return rc;
 }
@@ -232,12 +219,12 @@ int Socket::receiveFrom(Exception& ex, void* buffer, int length, SocketAddress& 
 
 	char abuffer[IPAddress::MAX_ADDRESS_LENGTH];
 	struct sockaddr* pSA = reinterpret_cast<struct sockaddr*>(abuffer);
-	SOCKLEN saLen = sizeof(abuffer);
+	NET_SOCKLEN saLen = sizeof(abuffer);
 	int rc;
 	do {
 		ASSERT_RETURN(_initialized == true, 0)
 		rc = ::recvfrom(_sockfd, reinterpret_cast<char*>(buffer), length, flags, pSA, &saLen);
-	} while (rc < 0 && LastError() == EINTR);
+	} while (rc < 0 && LastError() == NET_EINTR);
 	if (rc < 0)
 		SetError(ex, LastError());
 	address.set(ex, pSA);
@@ -248,7 +235,7 @@ SocketAddress& Socket::address(Exception& ex, SocketAddress& address) const {
 	ASSERT_RETURN(_initialized == true, address)
 	char	addressBuffer[IPAddress::MAX_ADDRESS_LENGTH];
 	struct sockaddr* pSA = reinterpret_cast<struct sockaddr*>(addressBuffer);
-	SOCKLEN saLen = sizeof(addressBuffer);
+	NET_SOCKLEN saLen = sizeof(addressBuffer);
 	if (::getsockname(_sockfd, pSA, &saLen) == 0) {
 		address.set(ex, pSA);
 		return address;
@@ -262,7 +249,7 @@ SocketAddress& Socket::peerAddress(Exception& ex, SocketAddress& address) const 
 	ASSERT_RETURN(_initialized == true, address)
 		char	addressBuffer[IPAddress::MAX_ADDRESS_LENGTH];
 	struct sockaddr* pSA = reinterpret_cast<struct sockaddr*>(addressBuffer);
-	SOCKLEN saLen = sizeof(addressBuffer);
+	NET_SOCKLEN saLen = sizeof(addressBuffer);
 	if (::getpeername(_sockfd, pSA, &saLen) == 0) {
 		address.set(ex, pSA);
 		return address;
@@ -275,12 +262,7 @@ template<typename Type>
 void Socket::setOption(Exception& ex, int level, int option, const Type& value) {
 	ASSERT(_initialized == true)
 	int length(sizeof(value));
-#if defined(POCO_VXWORKS)
-	int rc = ::setsockopt(_sockfd, level, option, (char*) &value, length);
-#else	
-	int rc = ::setsockopt(_sockfd, level, option, reinterpret_cast<const char*>(&value), length);
-#endif
-	if (rc == -1)
+	if (::setsockopt(_sockfd, level, option, reinterpret_cast<const char*>(&value), length) == -1)
 		SetError(ex);
 }
 
@@ -327,12 +309,10 @@ bool Socket::getReusePort() {
 #endif
 }
 
-int Socket::ioctl(Exception& ex,IOCTL_REQUEST request,int value) {
+int Socket::ioctl(Exception& ex,NET_IOCTLREQUEST request,int value) {
 	ASSERT_RETURN(_initialized == true, value)
 #if defined(_WIN32)
 	int rc = ioctlsocket(_sockfd, request, reinterpret_cast<u_long*>(&value));
-#elif defined(POCO_VXWORKS)
-	int rc = ::ioctl(_sockfd, request, (int) &value);
 #else
 	int rc = ::ioctl(_sockfd, request, &value);
 #endif
@@ -352,7 +332,8 @@ bool Socket::CheckError(Exception& ex) {
 }
 
 void Socket::SetError(Exception& ex, int error, const string& argument) {
-	string message(strerror(error)); // TODO tester!!!
+	string message;
+	STRERROR(error, message)// TODO à tester
 	if (!argument.empty()) {
 		message.append(" (");
 		message.append(argument);
