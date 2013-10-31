@@ -38,7 +38,7 @@ Decoding::~Decoding() {
 bool Decoding::run(Exception& ex) {
 	bool result = decode(ex, *_pPacket);
 	if (result)
-		waitHandle();
+		waitHandle(ex);
 	if(ex)
 		ex.set(ex.code(), "Decoding on session ",id," (",ex.error(),")");
 	return result;

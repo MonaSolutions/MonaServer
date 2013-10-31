@@ -21,7 +21,7 @@
 #include <cstring>
 
 using namespace std;
-using namespace Poco;
+
 
 namespace Mona {
 

@@ -23,7 +23,6 @@
 #include "Mona/BinaryStream.h"
 #include "Mona/BinaryReader.h"
 #include "Mona/MemoryStream.h"
-#include "Poco/Buffer.h"
 #include <list>
 
 namespace Mona {

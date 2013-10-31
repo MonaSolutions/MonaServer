@@ -40,7 +40,7 @@ bool RTMFPCookieComputing::run(Exception& ex) {
 
 	DEBUG("Shared Secret : ",Util::FormatHex(sharedSecret.data(),sharedSecret.size()));
 	
-	waitHandle();
+	waitHandle(ex);
 	return true;
 }
 

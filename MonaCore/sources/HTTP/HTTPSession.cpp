@@ -79,7 +79,7 @@ void HTTPSession::packetHandler(MemoryReader& packet) {
 	Exception ex;
 	((SocketAddress&)peer.serverAddress).set(ex,temp, invoker.params.HTTP.port);
 	if (ex)
-		WARN("serverAddress of HTTPSession ",id," impossible to determinate with the host ",temp)
+		WARN("serverAddress of HTTPSession ",id," impossible to determine with the host ",temp)
 
 	if(peer.connected && icompare(oldPath,peer.path)!=0)
 		peer.onDisconnection();

@@ -26,3 +26,7 @@
 - faire le tour des insert pour essayer de les remplacer par des emplace
 - Replacer les NULL et EMPTY (option) element par notre systeme
 - Ecrire la macro ASSERT_FATAL et remplacer les derniers throw
+- Obtenir le nom des threads dans le debugguer de windows
+- Paralléliser les logs? (pour diminuer l'occupation du thread principale, du coup avec un threadpools dans Application, et le partager avec Mona::Server
+- FileSystem::UnpackPath & FileSystem::PackPath, vérifier leurs utilité!!
+- Vérifier les parametres de build des projets, et pourquoi mon projet console2 m averti pour les sprintf => _sprintf et pas Mona!

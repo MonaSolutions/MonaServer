@@ -84,6 +84,8 @@ void MonaServer::start(Mona::MapParameters& parameters) {
 	// WebSocket
 	CONFIG_PROTOCOL_NUMBER(HTTP, port);
 
+	Util::Environment;
+
 	SCRIPT_BEGIN(_pState)
 		SCRIPT_CREATE_PERSISTENT_OBJECT(Invoker,LUAInvoker,*this)
 		readNextParameter(_pState, parameters, "");

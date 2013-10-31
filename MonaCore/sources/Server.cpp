@@ -30,16 +30,17 @@ namespace Mona {
 ServerManager::ServerManager(Server& server):_server(server),Task(server),Startable("ServerManager"){
 }
 
-void ServerManager::run(Exception& ex) {
-	setPriority(Thread::PRIO_LOW);
+void ServerManager::run(Exception& ex, ThreadPriority& priority) {
+	if(!priority.set(ThreadPriority::LOW))
+		WARN("Impossible to change the ServerManager thread to low priority")
 	do {
 		waitHandle();
 		_server.relay.manage();
-	} while (sleep(ex, 2000) != STOP && !ex);
+	} while (sleep(2000) != STOP);
 }
 
 Server::Server(UInt32 bufferSize,UInt32 threads) : Startable("Server"),Handler(bufferSize,threads),_protocols(*this),_manager(*this) {
-#ifndef POCO_OS_FAMILY_WINDOWS
+#ifndef _WIN32
 //	static const char rnd_seed[] = "string to make the random number generator think it has entropy";
 //	RAND_seed(rnd_seed, sizeof(rnd_seed));
 #endif
@@ -58,12 +59,12 @@ void Server::start(const ServerParams& params) {
 	Startable::start();
 }
 
-void Server::run(Exception& exc) {
+void Server::run(Exception& exc,ThreadPriority& priority) {
 	Exception ex;
 	ServerManager manager(*this);
+	if (!priority.set(params.threadPriority))
+		WARN("Impossible to change the Server thread to ", params.threadPriority," priority")
 	try {
-		setPriority(params.threadPriority);
-
 		TaskHandler::start();
 		((SocketManager&)sockets).start();
 		((RelayServer&)relay).start();
@@ -72,8 +73,8 @@ void Server::run(Exception& exc) {
 		
 		onStart();
 
-		_manager.start();
-		while (!ex && sleep(ex) != STOP && !ex)
+		_manager.start(ex);
+		while (!ex && sleep() != STOP)
 			giveHandle(ex);
 		if (ex)
 			FATAL("Server, %s", ex.error().c_str());

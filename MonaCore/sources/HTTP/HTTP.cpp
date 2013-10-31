@@ -20,12 +20,11 @@
 #include "Mona/Util.h"
 
 using namespace std;
-using namespace Poco;
 
 
 namespace Mona {
 
-map<UInt16, string> CodeMessages({
+static map<UInt16, string> CodeMessages({
 	{ 100, HTTP_CODE_100 },
 	{ 101, HTTP_CODE_101 },
 	{ 102, HTTP_CODE_102 },
@@ -98,9 +97,9 @@ map<UInt16, string> CodeMessages({
 });
 
 void HTTP::MIMEType(const string& extension, string& type) {
-	if (stricmp(extension.c_str(), "svg") == 0)
+	if (String::ICompare(extension, "svg") == 0)
 		type = "image/svg+xml";
-	else if (stricmp(extension.c_str(), "js") == 0)
+	else if (String::ICompare(extension, "js") == 0)
 		type = "application/javascript";
 	else {
 		String::Format(type, "text/", extension);
@@ -121,7 +120,7 @@ void HTTP::ReadHeader(HTTPPacketReader& reader, MapParameters& headers, string& 
 				String::Split(value, " ", fields, String::SPLIT_IGNORE_EMPTY | String::SPLIT_TRIM);
 				if (fields.size() > 0) {
 					cmd = fields[0];
-					if (fields.size() > 1 && Util::UnpackUrl(ex,fields[1], path, file, properties)) {
+					if (fields.size() > 1 && Util::UnpackQuery(ex,fields[1], path, file, properties)) {
 						if (fields.size() > 2) {
 							unsigned found = fields[2].find_last_of("/");
 							Exception ex;

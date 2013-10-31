@@ -141,7 +141,7 @@ Session* RTMFPHandshake::createSession(const UInt8* cookieValue) {
 	Exception ex;
 	Util::UnpackUrl(ex,cookie.queryUrl,(SocketAddress&)peer.serverAddress,(string&)peer.path,peer);
 	if (ex)
-		WARN("serverAddress of RTMFP ", id, " impossible to determinate from url ", cookie.queryUrl)
+		WARN("serverAddress of RTMFP ", id, " impossible to determine from url ", cookie.queryUrl)
 
 	(UInt32&)farId = cookie.farId;
 	((SocketAddress&)peer.address).set(cookie.peerAddress);
@@ -244,7 +244,7 @@ UInt8 RTMFPHandshake::handshakeHandler(UInt8 id,MemoryReader& request,MemoryWrit
 				Exception ex;
 				Util::UnpackUrl(ex,epd,(SocketAddress&)peer.serverAddress,(string&)peer.path,peer);
 				if (ex)
-					WARN("serverAddress of RTMFP ", id, " impossible to determinate from url ", epd)
+					WARN("serverAddress of RTMFP ", id, " impossible to determine from url ", epd)
 				set<SocketAddress> addresses;
 				peer.onHandshake(attempt.count+1,addresses);
 				if(!addresses.empty()) {

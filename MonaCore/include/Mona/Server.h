@@ -30,7 +30,7 @@ public:
 	ServerManager(Server& server);
 	virtual ~ServerManager() {}
 private:
-	void run(Exception& ex);
+	void run(Exception& ex, ThreadPriority& priority);
 	void handle(Exception& ex);
 	Server& _server;
 };
@@ -55,7 +55,7 @@ private:
 	void			requestHandle() { wakeUp(); }
 
 	void			receive(Decoding& decoded);
-	void			run(Exception& ex);
+	void			run(Exception& ex, ThreadPriority& priority);
 	
 	Session*		session(const UInt8* peerId) { return _sessions.find(peerId); }
 	Session*		session(const SocketAddress& address) { return _sessions.find(address); }

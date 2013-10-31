@@ -100,7 +100,7 @@ void ICE::fromSDPCandidate(const string& candidate,SDPCandidate& publicCandidate
 			Exception ex;
 			compoment = String::ToNumber<UInt32>(ex, st);
 			content += st;
-		} else if(index==3 && stricmp(st.c_str(), "tcp")==0) {
+		} else if (index == 3 && String::ICompare(st, "tcp") == 0) {
 			isTCP = true;
 			content += st;
 		} else if(index==4)
@@ -111,7 +111,7 @@ void ICE::fromSDPCandidate(const string& candidate,SDPCandidate& publicCandidate
 		} else if(index==6) {
 			content += st;
 			port = st; // port	
-		} else if(index==8 && stricmp(st.c_str(),"host")!=0) {
+		} else if(index==8 && String::ICompare(st,"host")!=0) {
 			content.clear();
 			return;
 		} else

@@ -25,7 +25,6 @@
 #endif
 
 using namespace Mona;
-using namespace Poco;
 using namespace std;
 
 
