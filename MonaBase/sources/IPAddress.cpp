@@ -313,7 +313,7 @@ public:
 		struct in_addr ia;
 		ia.s_addr = INADDR_NONE;
 		Exception ex;
-		set(ex, &ia, sizeof(ia));  // will never throw!
+		copy(ex, &ia, sizeof(ia));  // will never throw!
 	}
 };
 
@@ -357,7 +357,7 @@ bool IPAddress::set(Exception& ex, const string& addr, Family family) {
 }
 
 
-bool IPAddress::set(Exception& ex,const void* addr, UInt32 scope) {
+bool IPAddress::copy(Exception& ex,const void* addr, UInt32 scope) {
 	IPAddressCommon* pIPAddress(NULL);
 	if (sizeof(addr) == sizeof(struct in_addr))
 		pIPAddress = new IPv4Address(addr);

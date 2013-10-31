@@ -93,17 +93,17 @@ private:
 #undef ERROR
 #undef DEBUG
 #undef TRACE
-#define FATAL(...) { Logs::Log(Logger::PRIO_FATAL,__FILE__,__LINE__, __VA_ARGS__); }
-#define CRITIC(...) { Logs::Log(Logger::PRIO_CRITIC,__FILE__,__LINE__, __VA_ARGS__); }
-#define ERROR(...) { Logs::Log(Logger::PRIO_ERROR,__FILE__,__LINE__, __VA_ARGS__); }
-#define WARN(...) { Logs::Log(Logger::PRIO_WARN,__FILE__,__LINE__, __VA_ARGS__); }
-#define NOTE(...) { Logs::Log(Logger::PRIO_NOTE,__FILE__,__LINE__, __VA_ARGS__); }
-#define INFO(...) { Logs::Log(Logger::PRIO_INFO,__FILE__,__LINE__, __VA_ARGS__); }
-#define DEBUG(...) { Logs::Log(Logger::PRIO_DEBUG,__FILE__,__LINE__, __VA_ARGS__); }
-#define TRACE(...) { Logs::Log(Logger::PRIO_TRACE,__FILE__,__LINE__, __VA_ARGS__); }
+#define FATAL(...) { Mona::Logs::Log(Mona::Logger::PRIO_FATAL,__FILE__,__LINE__, __VA_ARGS__); }
+#define CRITIC(...) { Mona::Logs::Log(Mona::Logger::PRIO_CRITIC,__FILE__,__LINE__, __VA_ARGS__); }
+#define ERROR(...) { Mona::Logs::Log(Mona::Logger::PRIO_ERROR,__FILE__,__LINE__, __VA_ARGS__); }
+#define WARN(...) { Mona::Logs::Log(Mona::Logger::PRIO_WARN,__FILE__,__LINE__, __VA_ARGS__); }
+#define NOTE(...) { Mona::Logs::Log(Mona::Logger::PRIO_NOTE,__FILE__,__LINE__, __VA_ARGS__); }
+#define INFO(...) { Mona::Logs::Log(Mona::Logger::PRIO_INFO,__FILE__,__LINE__, __VA_ARGS__); }
+#define DEBUG(...) { Mona::Logs::Log(Mona::Logger::PRIO_DEBUG,__FILE__,__LINE__, __VA_ARGS__); }
+#define TRACE(...) { Mona::Logs::Log(Mona::Logger::PRIO_TRACE,__FILE__,__LINE__, __VA_ARGS__); }
 
-#define DUMP_INTERN(...) { if(Logs::GetDump()&Logs::DUMP_INTERN) {Logs::Dump(__VA_ARGS__);} }
-#define DUMP(...) { if(Logs::GetDump()&Logs::DUMP_EXTERN) {Logs::Dump(__VA_ARGS__);} }
+#define DUMP_INTERN(...) { if(Mona::Logs::GetDump()&Mona::Logs::DUMP_INTERN) {Mona::Logs::Dump(__VA_ARGS__);} }
+#define DUMP(...) { if(Mona::Logs::GetDump()&Mona::Logs::DUMP_EXTERN) {Mona::Logs::Dump(__VA_ARGS__);} }
 
 
 } // namespace Mona

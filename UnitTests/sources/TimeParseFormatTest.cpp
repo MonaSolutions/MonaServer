@@ -1,64 +1,67 @@
 
 #include "Mona/TimeParser.h"
 #include "TimeParseFormatTest.h"
+#include "Mona/Logs.h"
 
 using namespace Mona;
 using namespace std;
 
-char * TimeParseFormatTest::_datestring = NULL;
-Time TimeParseFormatTest::_time;
-
 string& TimeParseFormatTest::ToString(const string& fmt, int tzd /*= Time::UTC*/) {
 	
 	_out.clear();
-	_time.toString(_out, fmt, tzd);
+	_time.toString(fmt, _out, tzd);
 	
 	return _out;
 }
 
-::testing::AssertionResult TimeParseFormatTest::IsParseOk(const char * fmt, const char * stDate, int year, int month,
+bool TimeParseFormatTest::IsParseOk(const char * fmt, const char * stDate, int year, int month,
 	int day, int hour, int min, int sec, int msec, int microsec) {
 
 	// Parsing
 	int tzd = 0;
 	bool bIsParseOk = TimeParser::parse(fmt, stDate, _time, tzd);
-	if (!bIsParseOk)
-		return ::testing::AssertionFailure() << "Error during parsing of date (" << stDate << ")";
+	if (!bIsParseOk) {
+		DEBUG("Error during parsing of date (", stDate, ")");
+		return false;
+	}
 
 	struct tm tmdate;
 	if (TimeParseFormatTest::VerifyParsing(stDate, year, month, day, hour, min, sec, msec, microsec, tmdate))
-		return ::testing::AssertionSuccess();
-	else
-		return ::testing::AssertionFailure() << (tmdate.tm_year + 1900) << "," << (tmdate.tm_mon + 1) << "," << tmdate.tm_mday << "," << tmdate.tm_hour
-		<< "," << tmdate.tm_min << "," << tmdate.tm_sec << "," << _time.millisec() << "," << _time.microsec() << " does not correspond to " << stDate << " (" << fmt << ")";
-
+		return true;
+	else {
+		DEBUG((tmdate.tm_year + 1900),",",(tmdate.tm_mon + 1),",",tmdate.tm_mday,",",tmdate.tm_hour
+			,",", tmdate.tm_min, ",", tmdate.tm_sec, ",", _time.millisec(), ",", _time.microsec(), " does not correspond to ", stDate, " (", fmt, ")");
+		return false;
+	}
 }
 
-::testing::AssertionResult TimeParseFormatTest::IsParseOk(const char * stDate, int year, int month, 
+bool TimeParseFormatTest::IsParseOk(const char * stDate, int year, int month, 
 	int day, int hour, int min, int sec, int msec, int microsec) {
 
 	// Parsing
 	bool bIsParseOk = _time.fromString(stDate);
-	if (!bIsParseOk)
-		return ::testing::AssertionFailure() << "Error during parsing of date (" << stDate << ")";
+	if (!bIsParseOk) {
+		DEBUG("Error during parsing of date (", stDate, ")");
+		return false;
+	}
 
 	struct tm tmdate;
 	if (TimeParseFormatTest::VerifyParsing(stDate, year, month, day, hour, min, sec, msec, microsec, tmdate))
-		return ::testing::AssertionSuccess();
-	else
-		return ::testing::AssertionFailure() << (tmdate.tm_year + 1900) << "," << (tmdate.tm_mon + 1) << "," << tmdate.tm_mday << "," << tmdate.tm_hour
-		<< "," << tmdate.tm_min << "," << tmdate.tm_sec << "," << _time.millisec() << "," << _time.microsec() << " does not correspond to " << stDate;
+		return true;
+	else {
+		DEBUG((tmdate.tm_year + 1900), ",", (tmdate.tm_mon + 1), ",", tmdate.tm_mday, ",", tmdate.tm_hour
+			,",", tmdate.tm_min, ",", tmdate.tm_sec, ",", _time.millisec(), ",", _time.microsec(), " does not correspond to ", stDate);
+		return false;
+	}
 }
 
 bool TimeParseFormatTest::VerifyParsing(const char * stDate, int year, int month,
 	int day, int hour, int min, int sec, int msec, int microsec, struct tm& tmdate) {
 
 	// Conversion to struct tm
-	bool bIsParseOk = _time.toGMT(tmdate);
-	if (!bIsParseOk)
-		return ::testing::AssertionFailure() << "The date is not valid for timestamp (" << stDate << ")";
+	_time.toGMT(tmdate);
 
-	if (bIsParseOk) bIsParseOk = (tmdate.tm_year + 1900) == year;
+	bool bIsParseOk = (tmdate.tm_year + 1900) == year;
 	if (bIsParseOk) bIsParseOk = (tmdate.tm_mon + 1) == month;
 	if (bIsParseOk) bIsParseOk = tmdate.tm_mday == day;
 	if (bIsParseOk) bIsParseOk = tmdate.tm_hour == hour;
@@ -70,23 +73,23 @@ bool TimeParseFormatTest::VerifyParsing(const char * stDate, int year, int month
 	return bIsParseOk;
 }
 
-TEST_F(TimeParseFormatTest, TestISO8601) {
+ADD_TEST(TimeParseFormatTest, TestISO8601) {
 
 	EXPECT_TRUE(IsParseOk("2005-01-08T12:30:00Z", 2005, 1, 8, 12, 30, 0, 0, 0));
-	EXPECT_EQ(ToString(Time::ISO8601_FORMAT), "2005-01-08T12:30:00Z");
+	EXPECT_TRUE(ToString(Time::ISO8601_FORMAT) == "2005-01-08T12:30:00Z");
 
 	EXPECT_TRUE(IsParseOk("2005-01-08T12:30:00+01:00", 2005, 1, 8, 12, 30, 0, 0, 0));
-	EXPECT_EQ(ToString(Time::ISO8601_FORMAT, 3600), "2005-01-08T12:30:00+01:00");
+	EXPECT_TRUE(ToString(Time::ISO8601_FORMAT, 3600) == "2005-01-08T12:30:00+01:00");
 
 	EXPECT_TRUE(IsParseOk("2005-01-08T12:30:00-01:00", 2005, 1, 8, 12, 30, 0, 0, 0));
-	EXPECT_EQ(ToString(Time::ISO8601_FORMAT, -3600), "2005-01-08T12:30:00-01:00");
+	EXPECT_TRUE(ToString(Time::ISO8601_FORMAT, -3600) == "2005-01-08T12:30:00-01:00");
 
 	EXPECT_TRUE(IsParseOk("2005-01-08T12:30:00", 2005, 1, 8, 12, 30, 0, 0, 0));
 	
 	EXPECT_TRUE(IsParseOk("2005-01-08", 2005, 1, 8, 0, 0, 0, 0, 0));
 }
 
-TEST_F(TimeParseFormatTest, TestISO8601Frac) {
+ADD_TEST(TimeParseFormatTest, TestISO8601Frac) {
 	
 	EXPECT_TRUE(IsParseOk("2005-01-08T12:30:00.1Z", 2005, 1, 8, 12, 30, 0, 100, 0));
 	
@@ -99,104 +102,104 @@ TEST_F(TimeParseFormatTest, TestISO8601Frac) {
 	EXPECT_TRUE(IsParseOk("2005-01-08T12:30:00.123456", 2005, 1, 8, 12, 30, 0, 123, 456));
 
 	EXPECT_TRUE(IsParseOk("2005-01-08T12:30:00.012034", 2005, 1, 8, 12, 30, 0, 12, 34));
-	EXPECT_EQ(ToString(Time::ISO8601_FRAC_FORMAT, 3600), "2005-01-08T12:30:00.012034+01:00");
-	EXPECT_EQ(ToString(Time::ISO8601_FRAC_FORMAT, -3600), "2005-01-08T12:30:00.012034-01:00");
+	EXPECT_TRUE(ToString(Time::ISO8601_FRAC_FORMAT, 3600) == "2005-01-08T12:30:00.012034+01:00");
+	EXPECT_TRUE(ToString(Time::ISO8601_FRAC_FORMAT, -3600) == "2005-01-08T12:30:00.012034-01:00");
 }
 
 
-TEST_F(TimeParseFormatTest, TestRFC822) {
+ADD_TEST(TimeParseFormatTest, TestRFC822) {
 
 	EXPECT_TRUE(IsParseOk("Sat, 8 Jan 05 12:30:00 GMT", 2005, 1, 8, 12, 30, 0, 0, 0));
-	EXPECT_EQ(ToString(Time::RFC822_FORMAT), "Sat, 8 Jan 05 12:30:00 GMT");
+	EXPECT_TRUE(ToString(Time::RFC822_FORMAT) == "Sat, 8 Jan 05 12:30:00 GMT");
 
 	EXPECT_TRUE(IsParseOk("Sat, 8 Jan 05 12:30:00 +0100", 2005, 1, 8, 12, 30, 0, 0, 0));
-	EXPECT_EQ(ToString(Time::RFC822_FORMAT, 3600), "Sat, 8 Jan 05 12:30:00 +0100");
+	EXPECT_TRUE(ToString(Time::RFC822_FORMAT, 3600) == "Sat, 8 Jan 05 12:30:00 +0100");
 
 	EXPECT_TRUE(IsParseOk("Sat, 8 Jan 05 12:30:00 -0100", 2005, 1, 8, 12, 30, 0, 0, 0));
-	EXPECT_EQ(ToString(Time::RFC822_FORMAT, -3600), "Sat, 8 Jan 05 12:30:00 -0100");
+	EXPECT_TRUE(ToString(Time::RFC822_FORMAT, -3600) == "Sat, 8 Jan 05 12:30:00 -0100");
 
 	EXPECT_TRUE(IsParseOk("Tue, 18 Jan 05 12:30:00 CET", 2005, 1, 18, 12, 30, 0, 0, 0));
 
 	EXPECT_TRUE(IsParseOk("Wed, 12 Sep 73 02:01:12 CEST", 1973, 9, 12, 2, 1, 12, 0, 0));
 
-	EXPECT_FALSE(IsParseOk("12 Sep 73 02:01:12 CEST", 1973, 9, 12, 2, 1, 12, 0, 0));
+	EXPECT_TRUE(!IsParseOk("12 Sep 73 02:01:12 CEST", 1973, 9, 12, 2, 1, 12, 0, 0));
 	EXPECT_TRUE(IsParseOk(Time::RFC822_FORMAT.c_str() , "12 Sep 73 02:01:12 CEST", 1973, 9, 12, 2, 1, 12, 0, 0));
 }
 
 
-TEST_F(TimeParseFormatTest, TestRFC1123) {
+ADD_TEST(TimeParseFormatTest, TestRFC1123) {
 
 	EXPECT_TRUE(IsParseOk("Sat, 8 Jan 2005 12:30:00 GMT", 2005, 1, 8, 12, 30, 0, 0, 0));
-	EXPECT_EQ(ToString(Time::RFC1123_FORMAT), "Sat, 8 Jan 2005 12:30:00 GMT");
+	EXPECT_TRUE(ToString(Time::RFC1123_FORMAT) == "Sat, 8 Jan 2005 12:30:00 GMT");
 
 	EXPECT_TRUE(IsParseOk("Sat, 8 Jan 2005 12:30:00 +0100", 2005, 1, 8, 12, 30, 0, 0, 0));
-	EXPECT_EQ(ToString(Time::RFC1123_FORMAT, 3600), "Sat, 8 Jan 2005 12:30:00 +0100");
+	EXPECT_TRUE(ToString(Time::RFC1123_FORMAT, 3600) == "Sat, 8 Jan 2005 12:30:00 +0100");
 
 	EXPECT_TRUE(IsParseOk("Sat, 8 Jan 2005 12:30:00 -0100", 2005, 1, 8, 12, 30, 0, 0, 0));
-	EXPECT_EQ(ToString(Time::RFC1123_FORMAT, -3600), "Sat, 8 Jan 2005 12:30:00 -0100");
+	EXPECT_TRUE(ToString(Time::RFC1123_FORMAT, -3600) == "Sat, 8 Jan 2005 12:30:00 -0100");
 
-	EXPECT_FALSE(IsParseOk("Sun, 20 Jul 1969 16:17:30 EDT", 1969, 7, 20, 16, 17, 30, 0, 0)); // Year invalid
+	EXPECT_TRUE(!IsParseOk("Sun, 20 Jul 1969 16:17:30 EDT", 1969, 7, 20, 16, 17, 30, 0, 0)); // Year invalid
 
-	EXPECT_FALSE(IsParseOk("Sun, 20 Jul 1969 16:17:30 GMT+01:00", 1969, 7, 20, 16, 17, 30, 0, 0));  // Year invalid
+	EXPECT_TRUE(!IsParseOk("Sun, 20 Jul 1969 16:17:30 GMT+01:00", 1969, 7, 20, 16, 17, 30, 0, 0));  // Year invalid
 }
 
 
-TEST_F(TimeParseFormatTest, TestHTTP) {
+ADD_TEST(TimeParseFormatTest, TestHTTP) {
 
 	EXPECT_TRUE(IsParseOk("Sat, 08 Jan 2005 12:30:00 GMT", 2005, 1, 8, 12, 30, 0, 0, 0));
-	EXPECT_EQ(ToString(Time::HTTP_FORMAT), "Sat, 08 Jan 2005 12:30:00 GMT");
+	EXPECT_TRUE(ToString(Time::HTTP_FORMAT) == "Sat, 08 Jan 2005 12:30:00 GMT");
 
 	EXPECT_TRUE(IsParseOk("Sat, 08 Jan 2005 12:30:00 +0100", 2005, 1, 8, 12, 30, 0, 0, 0));
-	EXPECT_EQ(ToString(Time::HTTP_FORMAT, 3600), "Sat, 08 Jan 2005 12:30:00 +0100");
+	EXPECT_TRUE(ToString(Time::HTTP_FORMAT, 3600) == "Sat, 08 Jan 2005 12:30:00 +0100");
 
 	EXPECT_TRUE(IsParseOk("Sat, 08 Jan 2005 12:30:00 -0100", 2005, 1, 8, 12, 30, 0, 0, 0));
-	EXPECT_EQ(ToString(Time::HTTP_FORMAT, -3600), "Sat, 08 Jan 2005 12:30:00 -0100");
+	EXPECT_TRUE(ToString(Time::HTTP_FORMAT, -3600) == "Sat, 08 Jan 2005 12:30:00 -0100");
 }
 
 
-TEST_F(TimeParseFormatTest, TestRFC850) {
+ADD_TEST(TimeParseFormatTest, TestRFC850) {
 
 	EXPECT_TRUE(IsParseOk("Saturday, 8-Jan-05 12:30:00 GMT", 2005, 1, 8, 12, 30, 0, 0, 0));
-	EXPECT_EQ(ToString(Time::RFC850_FORMAT), "Saturday, 8-Jan-05 12:30:00 GMT");
+	EXPECT_TRUE(ToString(Time::RFC850_FORMAT) == "Saturday, 8-Jan-05 12:30:00 GMT");
 
 	EXPECT_TRUE(IsParseOk("Saturday, 8-Jan-05 12:30:00 +0100", 2005, 1, 8, 12, 30, 0, 0, 0));
-	EXPECT_EQ(ToString(Time::RFC850_FORMAT, 3600), "Saturday, 8-Jan-05 12:30:00 +0100");
+	EXPECT_TRUE(ToString(Time::RFC850_FORMAT, 3600) == "Saturday, 8-Jan-05 12:30:00 +0100");
 
 	EXPECT_TRUE(IsParseOk("Saturday, 8-Jan-05 12:30:00 -0100", 2005, 1, 8, 12, 30, 0, 0, 0));
-	EXPECT_EQ(ToString(Time::RFC850_FORMAT, -3600), "Saturday, 8-Jan-05 12:30:00 -0100");
+	EXPECT_TRUE(ToString(Time::RFC850_FORMAT, -3600) == "Saturday, 8-Jan-05 12:30:00 -0100");
 
 	EXPECT_TRUE(IsParseOk("Wed, 12-Sep-73 02:01:12 CEST", 1973, 9, 12, 2, 1, 12, 0, 0));
 }
 
 
-TEST_F(TimeParseFormatTest, TestRFC1036) {
+ADD_TEST(TimeParseFormatTest, TestRFC1036) {
 
 	EXPECT_TRUE(IsParseOk("Saturday, 8 Jan 05 12:30:00 GMT", 2005, 1, 8, 12, 30, 0, 0, 0));
-	EXPECT_EQ(ToString(Time::RFC1036_FORMAT), "Saturday, 8 Jan 05 12:30:00 GMT");
+	EXPECT_TRUE(ToString(Time::RFC1036_FORMAT) == "Saturday, 8 Jan 05 12:30:00 GMT");
 
 	EXPECT_TRUE(IsParseOk("Saturday, 8 Jan 05 12:30:00 +0100", 2005, 1, 8, 12, 30, 0, 0, 0));
-	EXPECT_EQ(ToString(Time::RFC1036_FORMAT, 3600), "Saturday, 8 Jan 05 12:30:00 +0100");
+	EXPECT_TRUE(ToString(Time::RFC1036_FORMAT, 3600) == "Saturday, 8 Jan 05 12:30:00 +0100");
 
 	EXPECT_TRUE(IsParseOk("Saturday, 8 Jan 05 12:30:00 -0100", 2005, 1, 8, 12, 30, 0, 0, 0));
-	EXPECT_EQ(ToString(Time::RFC1036_FORMAT, -3600), "Saturday, 8 Jan 05 12:30:00 -0100");
+	EXPECT_TRUE(ToString(Time::RFC1036_FORMAT, -3600) == "Saturday, 8 Jan 05 12:30:00 -0100");
 }
 
 
-TEST_F(TimeParseFormatTest, TestASCTIME) {
+ADD_TEST(TimeParseFormatTest, TestASCTIME) {
 
 	EXPECT_TRUE(IsParseOk("Sat Jan  8 12:30:00 2005", 2005, 1, 8, 12, 30, 0, 0, 0));
-	EXPECT_EQ(ToString(Time::ASCTIME_FORMAT), "Sat Jan  8 12:30:00 2005");
+	EXPECT_TRUE(ToString(Time::ASCTIME_FORMAT) == "Sat Jan  8 12:30:00 2005");
 }
 
 
-TEST_F(TimeParseFormatTest, TestSORTABLE) {
+ADD_TEST(TimeParseFormatTest, TestSORTABLE) {
 
 	EXPECT_TRUE(IsParseOk("2005-01-08 12:30:00", 2005, 1, 8, 12, 30, 0, 0, 0));
-	EXPECT_EQ(ToString(Time::SORTABLE_FORMAT), "2005-01-08 12:30:00");
+	EXPECT_TRUE(ToString(Time::SORTABLE_FORMAT) == "2005-01-08 12:30:00");
 }
 
 
-TEST_F(TimeParseFormatTest, TestCustom){
+ADD_TEST(TimeParseFormatTest, TestCustom){
 
 	EXPECT_TRUE(IsParseOk("%d-%b-%Y", "18-Jan-2005", 2005, 1, 18, 0, 0, 0, 0, 0));
 	
@@ -208,12 +211,12 @@ TEST_F(TimeParseFormatTest, TestCustom){
 
 	EXPECT_TRUE(IsParseOk("%w/%B/%d/%Y/%h/%A/%M/%S/%F/%Z/%%",
 		"Sat/January/08/2005/12/PM/30/00/250000/GMT/%", 2005, 1, 8, 12, 30, 0, 250, 0));
-	EXPECT_EQ(ToString("%w/%W/%b/%B/%d/%e/%f/%m/%n/%o/%y/%Y/%H/%h/%a/%A/%M/%S/%i/%c/%z/%Z/%%"), 
+	EXPECT_TRUE(ToString("%w/%W/%b/%B/%d/%e/%f/%m/%n/%o/%y/%Y/%H/%h/%a/%A/%M/%S/%i/%c/%z/%Z/%%") == 
 		"Sat/Saturday/Jan/January/08/8/ 8/01/1/ 1/05/2005/12/12/pm/PM/30/00/250/2/Z/GMT/%");
 }
 
 
-TEST_F(TimeParseFormatTest, TestGuess) {
+ADD_TEST(TimeParseFormatTest, TestGuess) {
 
 	EXPECT_TRUE(IsParseOk("2005-01-08T12:30:00Z", 2005, 1, 8, 12, 30, 0, 0, 0));
 

@@ -41,7 +41,7 @@ bool HostEntry::set(Exception& ex,const struct hostent* entry) {
 	if (address) {
 		while (*address) {
 			_addresses.emplace_back();
-			_addresses.back().set(ex, *address, entry->h_length);
+			_addresses.back().copy(ex, *address, entry->h_length);
 			if (ex) {
 				_addresses.pop_back();
 				return false;
@@ -61,9 +61,9 @@ bool HostEntry::set(Exception& ex, struct addrinfo* ainfo) {
 		if (ai->ai_addrlen && ai->ai_addr) {
 			_addresses.emplace_back();
 			if (ai->ai_addr->sa_family == AF_INET6)
-				_addresses.back().set(ex, &reinterpret_cast<struct sockaddr_in6*>(ai->ai_addr)->sin6_addr, reinterpret_cast<struct sockaddr_in6*>(ai->ai_addr)->sin6_scope_id);
+				_addresses.back().copy(ex, &reinterpret_cast<struct sockaddr_in6*>(ai->ai_addr)->sin6_addr, reinterpret_cast<struct sockaddr_in6*>(ai->ai_addr)->sin6_scope_id);
 			else if (ai->ai_addr->sa_family == AF_INET)
-				_addresses.back().set(ex, &reinterpret_cast<struct sockaddr_in*>(ai->ai_addr)->sin_addr);
+				_addresses.back().copy(ex, &reinterpret_cast<struct sockaddr_in*>(ai->ai_addr)->sin_addr);
 			else
 				ex.set(Exception::NETADDRESS, "Unknown address family ", ai->ai_addr->sa_family);
 			if (ex) {
