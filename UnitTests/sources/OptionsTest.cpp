@@ -28,11 +28,9 @@ bool OptionsTest::AddOption(const string& fullName, const string& shortName, con
 
 bool OptionsTest::GetOption(const string& fullName) {
 	
-	Exception ex;
-	opts.get(ex, fullName);
+	const Option& opt = opts.get(fullName);
 	
-	if (ex) {
-		DEBUG("Exception : ", ex.error());
+	if (opt == Option::Null) {
 		return false;
 	}
 
