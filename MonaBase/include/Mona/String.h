@@ -190,7 +190,13 @@ public:
 	template <typename ...Args>
 	static std::string& Append(std::string& result, const void* value, const Args&... args)	{
 		char buffer[64];
-		sprintf(buffer, "%08lX", (UIntPtr) value);
+		
+		#if defined(MONA_PTR_IS_64_BIT)
+			std::sprintf(buffer, "%016" I64_FMT "X", (UIntPtr) value);
+		#else
+			std::sprintf(buffer, "%08lX", (UIntPtr) value);
+		#endif
+
 		result.append(buffer);
 		return String::Append(result, args ...);
 	}

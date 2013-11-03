@@ -233,6 +233,14 @@ void DetectMemoryLeak();
 	typedef unsigned int           UInt32;
 	typedef signed __int64         Int64;
 	typedef unsigned __int64       UInt64;
+	#if defined(_WIN64)
+		#define MONA_PTR_IS_64_BIT 1
+		typedef signed __int64     IntPtr;
+		typedef unsigned __int64   UIntPtr;
+	#else
+		typedef signed long        IntPtr;
+		typedef unsigned long      UIntPtr;
+	#endif
 
 #elif defined(__GNUC__) || defined(__clang__)
 	//
@@ -244,7 +252,10 @@ void DetectMemoryLeak();
 	typedef unsigned short         UInt16;
 	typedef signed int             Int32;
 	typedef unsigned int           UInt32;
+	typedef signed long            IntPtr;
+	typedef unsigned long          UIntPtr;
 #if defined(__LP64__)
+	#define MONA_PTR_IS_64_BIT 1
 	typedef signed long        Int64;
 	typedef unsigned long      UInt64;
 #else
@@ -265,6 +276,7 @@ void DetectMemoryLeak();
 	typedef signed long            IntPtr;
 	typedef unsigned long          UIntPtr;
 #if defined(__64BIT__)
+	#define MONA_PTR_IS_64_BIT 1
 	typedef signed long        Int64;
 	typedef unsigned long      UInt64;
 #else

@@ -91,6 +91,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="sources\BinaryReaderWriterTest.cpp" />
     <ClCompile Include="sources\IPAddressTest.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
     </ClCompile>
@@ -111,6 +112,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="sources\BinaryReaderWriterTest.h" />
     <ClInclude Include="sources\IPAddressTest.h" />
     <ClInclude Include="sources\OptionsTest.h" />
     <ClInclude Include="sources\StopWatchTest.h" />
