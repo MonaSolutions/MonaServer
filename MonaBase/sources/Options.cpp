@@ -85,7 +85,11 @@ bool Options::process(Exception& ex,const string& argument, string& name, string
 
 		auto itOption = _options.find(Option(name.c_str(),""));
 		if (itOption == _options.end()) {
-			itOption = _options.find(Option("", name.c_str()));
+			Option shortOption("", name.c_str());
+			for (itOption = _options.begin(); itOption != _options.end(); ++itOption) {
+				if (*itOption == shortOption)
+					break;
+			}
 			if (itOption == _options.end()) {
 				ex.set(Exception::OPTION, "Unknown ", name, " option");
 				return false;

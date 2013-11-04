@@ -1,5 +1,5 @@
 
-#include "DNSTest.h"
+#include "Test.h"
 #include "Mona/DNS.h"
 
 using namespace std;

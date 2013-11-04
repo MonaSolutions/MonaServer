@@ -62,9 +62,9 @@ private:
 #define EXPECT_TRUE(CHECK) FATAL_ASSERT(CHECK)
 
 /// Macro for adding new tests in a Test cpp
-#define ADD_TEST(CLASSNAME, TESTNAME) class CLASSNAME ## TESTNAME : public CLASSNAME { \
+#define ADD_TEST(CLASSNAME, TESTNAME) class CLASSNAME ## TESTNAME : public Test { \
 public: \
-	CLASSNAME ## TESTNAME(const char * testName) : CLASSNAME(testName) {}\
+	CLASSNAME ## TESTNAME(const char * testName) : Test(testName) {}\
 	virtual ~CLASSNAME ## TESTNAME() {}\
 	virtual void TestFunction();\
 private:\

@@ -1,5 +1,5 @@
 
-#include "StopWatchTest.h"
+#include "Test.h"
 #include "Mona/StopWatch.h"
 #include <thread>
 

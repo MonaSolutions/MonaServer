@@ -1,11 +1,12 @@
 
-#include "IPAddressTest.h"
+#include "Test.h"
+#include "Mona/IPAddress.h"
 #include "Mona/Exceptions.h"
 
 using namespace Mona;
 using namespace std;
 
-IPAddress	IPAddressTest::_IpAddress;
+IPAddress	_IpAddress;
 
 ADD_TEST(IPAddressTest, StringConv) {
 	

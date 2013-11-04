@@ -49,6 +49,7 @@ public:
 	}
 
 	void			remove(const std::string& name) { _options.erase(Option(name.c_str(), "")); }
+	void			clear(const std::string& name) { _options.clear(); }
 
 	const Option&	get(const std::string& name) const;
 

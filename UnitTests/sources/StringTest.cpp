@@ -1,110 +1,173 @@
 
-#include "StringTest.h"
+#include "Test.h"
 #include "Mona/String.h"
 #include "Mona/Exceptions.h"
+#include "Mona/Logs.h"
 
 using namespace Mona;
 
 using namespace std;
 
+template<typename T>
+static bool ToNumber(const std::string& value, T expected) { return ToNumber<T>(value.c_str(), expected); }
+
+
+template<typename T>
+static bool ToNumber(const char * value, T expected) {
+
+	Exception ex;
+	T result = String::ToNumber<T>(ex, value);
+
+	if (ex) {
+		DEBUG("Exception in ToNumber(", value, ",", expected, ") : ", ex.error());
+		return false;
+	}
+
+	if (result != expected) {
+		DEBUG("Invalid Result in ToNumber(", value, ",", expected, ") : ", result);
+		return false;
+	}
+
+	return true;
+}
+
+/// \brief Use FLT_EPSILON by default
+template<>
+static bool ToNumber<float>(const char * value, float expected) {
+	Exception ex;
+	float result = String::ToNumber<float>(ex, value);
+
+	if (ex) {
+		DEBUG("Exception in ToNumber(", value, ",", expected, ") : ", ex.error());
+		return false;
+	}
+
+	if (abs(result - expected) > FLT_EPSILON) {
+		DEBUG("Invalid Result in ToNumber(", value, ",", expected, ") : ", result);
+		return false;
+	}
+
+	return true;
+}
+
+template<>
+static bool ToNumber<double>(const char * value, double expected) {
+	Exception ex;
+	double result = String::ToNumber<double>(ex, value);
+
+	if (ex) {
+		DEBUG("Exception in ToNumber(", value, ",", expected, ") : ", ex.error());
+		return false;
+	}
+
+	if (abs(result - expected) > DBL_EPSILON) {
+		DEBUG("Invalid Result in ToNumber(", value, ",", expected, ") : ", result);
+		return false;
+	}
+
+	return true;
+}
+
+string _Str;
+
 ADD_TEST(StringTest, TestFormat) {
 
-	EXPECT_TRUE(String::Format(str, 123) == "123");
-	EXPECT_TRUE(String::Format(str, -123) == "-123");
-	EXPECT_TRUE(String::Format(str, Format<int>("%5d", -123)) == " -123");
+	EXPECT_TRUE(String::Format(_Str, 123) == "123");
+	EXPECT_TRUE(String::Format(_Str, -123) == "-123");
+	EXPECT_TRUE(String::Format(_Str, Format<int>("%5d", -123)) == " -123");
 
-	EXPECT_TRUE(String::Format(str, (unsigned int)123) == "123");
-	EXPECT_TRUE(String::Format(str, Format<unsigned int>("%5d", 123)) == "  123");
-	EXPECT_TRUE(String::Format(str, Format<unsigned int>("%05d", 123)) == "00123");
+	EXPECT_TRUE(String::Format(_Str, (unsigned int)123) == "123");
+	EXPECT_TRUE(String::Format(_Str, Format<unsigned int>("%5d", 123)) == "  123");
+	EXPECT_TRUE(String::Format(_Str, Format<unsigned int>("%05d", 123)) == "00123");
 
-	EXPECT_TRUE(String::Format(str, (long)123) == "123");
-	EXPECT_TRUE(String::Format(str, (long)-123) == "-123");
-	EXPECT_TRUE(String::Format(str, Format<long>("%5ld", -123)) == " -123");
+	EXPECT_TRUE(String::Format(_Str, (long)123) == "123");
+	EXPECT_TRUE(String::Format(_Str, (long)-123) == "-123");
+	EXPECT_TRUE(String::Format(_Str, Format<long>("%5ld", -123)) == " -123");
 
-	EXPECT_TRUE(String::Format(str, (unsigned long)123) == "123");
-	EXPECT_TRUE(String::Format(str, Format<unsigned long>("%5lu", 123)) == "  123");
+	EXPECT_TRUE(String::Format(_Str, (unsigned long)123) == "123");
+	EXPECT_TRUE(String::Format(_Str, Format<unsigned long>("%5lu", 123)) == "  123");
 
-	EXPECT_TRUE(String::Format(str, (Int64)123) == "123");
-	EXPECT_TRUE(String::Format(str, (Int64)-123) == "-123");
-	EXPECT_TRUE(String::Format(str, Format<Int64>("%5" I64_FMT "d", -123)) == " -123");
+	EXPECT_TRUE(String::Format(_Str, (Int64)123) == "123");
+	EXPECT_TRUE(String::Format(_Str, (Int64)-123) == "-123");
+	EXPECT_TRUE(String::Format(_Str, Format<Int64>("%5" I64_FMT "d", -123)) == " -123");
 
-	EXPECT_TRUE(String::Format(str, (UInt64)123) == "123");
-	EXPECT_TRUE(String::Format(str, Format<UInt64>("%5" I64_FMT "u", 123)) == "  123");
+	EXPECT_TRUE(String::Format(_Str, (UInt64)123) == "123");
+	EXPECT_TRUE(String::Format(_Str, Format<UInt64>("%5" I64_FMT "u", 123)) == "  123");
 
-	EXPECT_TRUE(String::Format(str, 12.25) == "12.25");
-	EXPECT_TRUE(String::Format(str, Format<double>("%.4f", 12.25)) == "12.2500");
-	EXPECT_TRUE(String::Format(str, Format<double>("%8.4f", 12.25)) == " 12.2500");
+	EXPECT_TRUE(String::Format(_Str, 12.25) == "12.25");
+	EXPECT_TRUE(String::Format(_Str, Format<double>("%.4f", 12.25)) == "12.2500");
+	EXPECT_TRUE(String::Format(_Str, Format<double>("%8.4f", 12.25)) == " 12.2500");
 }
 
 
 ADD_TEST(StringTest, TestFormat0) {
 
-	EXPECT_TRUE(String::Format(str, Format<int>("%05d", 123)) == "00123");
-	EXPECT_TRUE(String::Format(str, Format<int>("%05d", -123)) == "-0123");
-	EXPECT_TRUE(String::Format(str, Format<long>("%05d", 123)) == "00123");
-	EXPECT_TRUE(String::Format(str, Format<long>("%05d", -123)) == "-0123");
-	EXPECT_TRUE(String::Format(str, Format<unsigned long>("%05d", 123)) == "00123");
+	EXPECT_TRUE(String::Format(_Str, Format<int>("%05d", 123)) == "00123");
+	EXPECT_TRUE(String::Format(_Str, Format<int>("%05d", -123)) == "-0123");
+	EXPECT_TRUE(String::Format(_Str, Format<long>("%05d", 123)) == "00123");
+	EXPECT_TRUE(String::Format(_Str, Format<long>("%05d", -123)) == "-0123");
+	EXPECT_TRUE(String::Format(_Str, Format<unsigned long>("%05d", 123)) == "00123");
 
-	EXPECT_TRUE(String::Format(str, Format<Int64>("%05d", 123)) == "00123");
-	EXPECT_TRUE(String::Format(str, Format<Int64>("%05d", -123)) == "-0123");
-	EXPECT_TRUE(String::Format(str, Format<UInt64>("%05d", 123)) == "00123");
+	EXPECT_TRUE(String::Format(_Str, Format<Int64>("%05d", 123)) == "00123");
+	EXPECT_TRUE(String::Format(_Str, Format<Int64>("%05d", -123)) == "-0123");
+	EXPECT_TRUE(String::Format(_Str, Format<UInt64>("%05d", 123)) == "00123");
 }
 
 ADD_TEST(StringTest, TestFloat) {
 
-	string s(String::Format(str, 1.0f));
+	string s(String::Format(_Str, 1.0f));
 	EXPECT_TRUE(s == "1");
-	s = String::Format(str, 0.1f);
+	s = String::Format(_Str, 0.1f);
 	EXPECT_TRUE(s == "0.1");
 
-	s = String::Format(str, 1.0);
+	s = String::Format(_Str, 1.0);
 	EXPECT_TRUE(s == "1");
-	s = String::Format(str, 0.1);
+	s = String::Format(_Str, 0.1);
 	EXPECT_TRUE(s == "0.1");
 }
 
 ADD_TEST(StringTest, TestMultiple) {
 
 	double pi = 3.1415926535897;
-	EXPECT_TRUE(String::Format(str, "Pi ~= ", Format<double>("%.2f", pi), " (", pi, ")") == "Pi ~= 3.14 (3.1415926535897)");
+	EXPECT_TRUE(String::Format(_Str, "Pi ~= ", Format<double>("%.2f", pi), " (", pi, ")") == "Pi ~= 3.14 (3.1415926535897)");
 	float pif = (float)3.1415926535897;
-	EXPECT_TRUE(String::Format(str, "Pi ~= ", Format<double>("%.2f", pi), " (", pif, ")") == "Pi ~= 3.14 (3.1415927)");
-	EXPECT_TRUE(String::Format(str, 18.0, "*", -2.0, " = ", 18.0*-2.0) == "18*-2 = -36");
+	EXPECT_TRUE(String::Format(_Str, "Pi ~= ", Format<double>("%.2f", pi), " (", pif, ")") == "Pi ~= 3.14 (3.1415927)");
+	EXPECT_TRUE(String::Format(_Str, 18.0, "*", -2.0, " = ", 18.0*-2.0) == "18*-2 = -36");
 
 
 	double big = 1234567890123456789.1234567890;
-	EXPECT_TRUE(String::Format(str, big) == "1.234567890123457e+018");
+	EXPECT_TRUE(String::Format(_Str, big) == "1.234567890123457e+018");
 	
 	float bigf = (float)1234567890123456789.1234567890;
-	EXPECT_TRUE(String::Format(str, bigf) == "1.2345679e+018");
+	EXPECT_TRUE(String::Format(_Str, bigf) == "1.2345679e+018");
 
 	// TODO
-	//EXPECT_TRUE(StringTest::ToNumber<float>(str, bigf));
+	//EXPECT_TRUE(ToNumber<float>(_Str, bigf));
 }
 
 ADD_TEST(StringTest, TestToNumber) {
 
-	EXPECT_TRUE(StringTest::ToNumber<int>("123", 123));
-	EXPECT_TRUE(StringTest::ToNumber<int>("-123", -123));
-	EXPECT_TRUE(StringTest::ToNumber<UInt64>("123", 123));
-	EXPECT_TRUE(!StringTest::ToNumber<UInt64>("-123", 123));
-	EXPECT_TRUE(StringTest::ToNumber<double>("12.34", 12.34));
-	EXPECT_TRUE(StringTest::ToNumber<float>("12.34", 12.34f));
+	EXPECT_TRUE(ToNumber<int>("123", 123));
+	EXPECT_TRUE(ToNumber<int>("-123", -123));
+	EXPECT_TRUE(ToNumber<UInt64>("123", 123));
+	EXPECT_TRUE(!ToNumber<UInt64>("-123", 123));
+	EXPECT_TRUE(ToNumber<double>("12.34", 12.34));
+	EXPECT_TRUE(ToNumber<float>("12.34", 12.34f));
 
 	// Test of delta epsilon precision
-	EXPECT_TRUE(StringTest::ToNumber<double>("0", DBL_EPSILON));
-	EXPECT_TRUE(StringTest::ToNumber<float>("0", FLT_EPSILON));
-	EXPECT_TRUE(!StringTest::ToNumber<double>("0", DBL_EPSILON * 2));
-	EXPECT_TRUE(!StringTest::ToNumber<float>("0", FLT_EPSILON * 2));
+	EXPECT_TRUE(ToNumber<double>("0", DBL_EPSILON));
+	EXPECT_TRUE(ToNumber<float>("0", FLT_EPSILON));
+	EXPECT_TRUE(!ToNumber<double>("0", DBL_EPSILON * 2));
+	EXPECT_TRUE(!ToNumber<float>("0", FLT_EPSILON * 2));
 
-	EXPECT_TRUE(!StringTest::ToNumber<double>("", 0));
-	EXPECT_TRUE(!StringTest::ToNumber<double>("asd", 0));
-	EXPECT_TRUE(!StringTest::ToNumber<double>("a123", 0));
-	EXPECT_TRUE(!StringTest::ToNumber<double>("a123", 0));
-	EXPECT_TRUE(!StringTest::ToNumber<double>("z23", 0));
-	EXPECT_TRUE(!StringTest::ToNumber<double>("23z", 0));
-	EXPECT_TRUE(!StringTest::ToNumber<double>("a12.3", 0));
-	EXPECT_TRUE(!StringTest::ToNumber<double>("12.3aa", 0));
+	EXPECT_TRUE(!ToNumber<double>("", 0));
+	EXPECT_TRUE(!ToNumber<double>("asd", 0));
+	EXPECT_TRUE(!ToNumber<double>("a123", 0));
+	EXPECT_TRUE(!ToNumber<double>("a123", 0));
+	EXPECT_TRUE(!ToNumber<double>("z23", 0));
+	EXPECT_TRUE(!ToNumber<double>("23z", 0));
+	EXPECT_TRUE(!ToNumber<double>("a12.3", 0));
+	EXPECT_TRUE(!ToNumber<double>("12.3aa", 0));
 }
 
 ADD_TEST(StringTest, TrimLeft) {
