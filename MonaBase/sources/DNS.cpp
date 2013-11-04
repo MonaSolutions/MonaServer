@@ -52,7 +52,9 @@ bool DNS::HostByAddress(Exception& ex,const IPAddress& address, HostEntry& host)
 	SocketAddress sa;
 	sa.set(address, 0);
 	static char fqname[1024];
-	int rc = getnameinfo(sa.addr(), sizeof(sa.addr()), fqname, sizeof(fqname), NULL, 0, NI_NAMEREQD);
+	const sockaddr* pAddr = sa.addr();
+	int length = sizeof(sa.addr());
+	int rc = getnameinfo(pAddr, length, fqname, sizeof(fqname), NULL, 0, NI_NAMEREQD);
 	if (rc == 0) {
 		struct addrinfo* pAI;
 		struct addrinfo hints;

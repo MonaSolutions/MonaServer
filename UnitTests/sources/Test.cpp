@@ -14,6 +14,8 @@ void PoolTest::runAll() {
 
 void PoolTest::run(const string& mod) {
 	auto itTest = _mapTests.equal_range(mod);
+	if (itTest.first == itTest.second) 
+		itTest = _mapTests.equal_range(mod + "Test");
 	if (itTest.first == itTest.second) {
 		ERROR("Module ",mod," does not exist.");
 		return;
