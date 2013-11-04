@@ -100,7 +100,7 @@ bool Socket::connect(Exception& ex, const SocketAddress& address) {
 		return false;
 	if (!managed(ex))
 		return false;
-	int rc = ::connect(_sockfd, address.addr(), sizeof(address.addr()));
+	int rc = ::connect(_sockfd, &address.addr(), sizeof(address.addr()));
 	if (rc) {
 		int err = LastError();
 		if (err != NET_EINPROGRESS && err != NET_EWOULDBLOCK) {
@@ -124,7 +124,7 @@ bool Socket::bind(Exception& ex, const SocketAddress& address, bool reuseAddress
 		setReuseAddress(ex,true);
 		setReusePort(true);
 	}
-	int rc = ::bind(_sockfd, address.addr(), sizeof(address.addr()));
+	int rc = ::bind(_sockfd, &address.addr(), sizeof(address.addr()));
 	if (rc != 0) {
 		SetError(ex, LastError(), address.toString());
 		return false;
@@ -199,7 +199,7 @@ int Socket::sendTo(Exception& ex, const void* buffer, int length, const SocketAd
 	int rc;
 	do {
 		ASSERT_RETURN(_initialized == true, 0)
-		rc = ::sendto(_sockfd, reinterpret_cast<const char*>(buffer), length, flags, address.addr(), sizeof(address.addr()));
+		rc = ::sendto(_sockfd, reinterpret_cast<const char*>(buffer), length, flags, &address.addr(), sizeof(address.addr()));
 	}
 	while (rc < 0 && LastError() == NET_EINTR);
 	CheckError(ex);
@@ -223,7 +223,7 @@ int Socket::receiveFrom(Exception& ex, void* buffer, int length, SocketAddress& 
 	} while (rc < 0 && LastError() == NET_EINTR);
 	if (rc < 0)
 		SetError(ex, LastError());
-	address.set(ex, pSA);
+	address.set(ex, *pSA);
 	return rc;
 }
 
@@ -233,7 +233,7 @@ SocketAddress& Socket::address(Exception& ex, SocketAddress& address) const {
 	struct sockaddr* pSA = reinterpret_cast<struct sockaddr*>(addressBuffer);
 	NET_SOCKLEN saLen = sizeof(addressBuffer);
 	if (::getsockname(_sockfd, pSA, &saLen) == 0) {
-		address.set(ex, pSA);
+		address.set(ex, *pSA);
 		return address;
 	}
 	SetError(ex);
@@ -247,7 +247,7 @@ SocketAddress& Socket::peerAddress(Exception& ex, SocketAddress& address) const 
 	struct sockaddr* pSA = reinterpret_cast<struct sockaddr*>(addressBuffer);
 	NET_SOCKLEN saLen = sizeof(addressBuffer);
 	if (::getpeername(_sockfd, pSA, &saLen) == 0) {
-		address.set(ex, pSA);
+		address.set(ex,*pSA);
 		return address;
 	}
 	SetError(ex);

@@ -55,7 +55,7 @@ public:
 	bool set(Exception& ex, const std::string& hostAndPort);
 	
 	/// set SocketAddress from a native socket address
-	bool set(Exception& ex, const struct sockaddr* addr);
+	bool set(Exception& ex, const struct sockaddr& addr);
 
 	const IPAddress&		host() const;
 	UInt16					port() const;
@@ -65,7 +65,7 @@ public:
 	const std::string&		toString() const;
 	
 	// Native socket address
-	const struct sockaddr*	addr() const;
+	const struct sockaddr&	addr() const;
 	
 	bool operator < (const SocketAddress& address) const;
 	bool operator == (const SocketAddress& address) const { return host() == address.host() && port() == address.port(); }

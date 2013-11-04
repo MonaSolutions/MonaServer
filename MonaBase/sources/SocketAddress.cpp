@@ -35,7 +35,7 @@ class SocketAddressCommon : virtual Object {
 public:
 	virtual const IPAddress&		host() const = 0;
 	virtual UInt16					port() const = 0;
-	virtual const struct sockaddr*  addr() const = 0;
+	virtual const struct sockaddr&  addr() const = 0;
 	virtual IPAddress::Family		family() const = 0;
 };
 
@@ -54,10 +54,11 @@ public:
 		_host.set(_addr.sin_addr);
 	}
 
-	IPv4SocketAddress(const void* addr, UInt16 port) {
+	IPv4SocketAddress(const IPAddress& host, UInt16 port) {
 		memset(&_addr, 0, sizeof(_addr));
 		_addr.sin_family = AF_INET;
-		memcpy(&_addr.sin_addr, addr, sizeof(_addr.sin_addr));
+		NET_SOCKLEN size(0);
+		memcpy(&_addr.sin_addr, host.addr(size), sizeof(_addr.sin_addr));
 		_addr.sin_port = port;
 		_host.set(_addr.sin_addr);
 	}
@@ -67,7 +68,7 @@ public:
 	const IPAddress& host() const { return _host;}
 
 	UInt16					port() const { return _addr.sin_port;}
-	const struct sockaddr*	addr() const { return reinterpret_cast<const struct sockaddr*>(&_addr);}
+	const struct sockaddr&	addr() const { return *reinterpret_cast<const struct sockaddr*>(&_addr);}
 
 private:
 	struct sockaddr_in		_addr;
@@ -87,11 +88,12 @@ public:
 		memcpy(&_addr, addr, sizeof(_addr));
 		_host.set(_addr.sin6_addr, _addr.sin6_scope_id);
 	}
-	IPv6SocketAddress(const void* addr, UInt16 port, UInt32 scope = 0) {
+	IPv6SocketAddress(const IPAddress& host, UInt16 port, UInt32 scope = 0) {
 		memset(&_addr, 0, sizeof(_addr));
 		_addr.sin6_family = AF_INET6;
 		set_sin6_len(&_addr);
-		memcpy(&_addr.sin6_addr, addr, sizeof(_addr.sin6_addr));
+		NET_SOCKLEN size(0);
+		memcpy(&_addr.sin6_addr, host.addr(size), sizeof(_addr.sin6_addr));
 		_addr.sin6_port = port;
 		_addr.sin6_scope_id = scope;
 		_host.set(_addr.sin6_addr, _addr.sin6_scope_id);
@@ -102,7 +104,7 @@ public:
 	const IPAddress& host() const { return _host;}
 
 	UInt16					port() const { return _addr.sin6_port; }
-	const struct sockaddr*	addr() const { return reinterpret_cast<const struct sockaddr*>(&_addr); }
+	const struct sockaddr&	addr() const { return *reinterpret_cast<const struct sockaddr*>(&_addr); }
 
 private:
 	struct sockaddr_in6		_addr;
@@ -121,9 +123,9 @@ SocketAddress::SocketAddress(IPAddress::Family family) : _pAddress(family == IPA
 
 SocketAddress::SocketAddress(const IPAddress& host, UInt16 port) {
 	if (host.family() == IPAddress::IPv6)
-		_pAddress.reset(new IPv6SocketAddress(host.addr(), htons(port), host.scope()));
+		_pAddress.reset(new IPv6SocketAddress(host, htons(port), host.scope()));
 	else
-		_pAddress.reset(new IPv4SocketAddress(host.addr(), htons(port)));
+		_pAddress.reset(new IPv4SocketAddress(host, htons(port)));
 }
 
 SocketAddress::SocketAddress(const SocketAddress& other) : _pAddress(other._pAddress), _toString(other._toString) {
@@ -143,20 +145,19 @@ void SocketAddress::set(const SocketAddress& other) {
 void SocketAddress::set(const IPAddress& host, UInt16 port) {
 
 	if (host.family() == IPAddress::IPv6)
-		_pAddress.reset(new IPv6SocketAddress(host.addr(), htons(port), host.scope()));
+		_pAddress.reset(new IPv6SocketAddress(host, htons(port), host.scope()));
 	else
-		_pAddress.reset(new IPv4SocketAddress(host.addr(), htons(port)));
+		_pAddress.reset(new IPv4SocketAddress(host, htons(port)));
 	lock_guard<mutex>	lock(_mutex);
 	_toString.clear();
 }
 
-bool SocketAddress::set(Exception& ex,const struct sockaddr* addr) {
-	ASSERT_RETURN(addr!=NULL,false)
+bool SocketAddress::set(Exception& ex,const struct sockaddr& addr) {
 	SocketAddressCommon* pAddress(NULL);
 	if (sizeof(addr) == sizeof(struct sockaddr_in))
-		pAddress = new IPv4SocketAddress(reinterpret_cast<const struct sockaddr_in*>(addr));
+		pAddress = new IPv4SocketAddress(reinterpret_cast<const struct sockaddr_in*>(&addr));
 	else if (sizeof(addr) == sizeof(struct sockaddr_in6))
-		pAddress = new IPv6SocketAddress(reinterpret_cast<const struct sockaddr_in6*>(addr));
+		pAddress = new IPv6SocketAddress(reinterpret_cast<const struct sockaddr_in6*>(&addr));
 	else {
 		ex.set(Exception::NETADDRESS, "Invalid socket address");
 		return false;
@@ -248,7 +249,7 @@ IPAddress::Family SocketAddress::family() const {
 	return _pAddress->family();
 }
 
-const struct sockaddr* SocketAddress::addr() const {
+const struct sockaddr& SocketAddress::addr() const {
 	return _pAddress->addr();
 }
 

@@ -29,7 +29,7 @@ namespace Mona {
 
 class IPAddressCommon : virtual Object {
 public:
-	virtual const void* addr() const = 0;
+	virtual const void* addr(NET_SOCKLEN& size) const = 0;
 
 	virtual const string& toString() const = 0;
 	virtual IPAddress::Family family() const = 0;
@@ -72,7 +72,7 @@ public:
 		return String::Format(_toString, bytes[0], '.', bytes[1], '.', bytes[2], '.', bytes[3]);
 	}
 
-	const void*			addr() const {return &_addr;}
+	const void*			addr(NET_SOCKLEN& size) const { size = sizeof(_addr); return &_addr; }
 	IPAddress::Family	family() const {return IPAddress::IPv4;}
 
 	UInt32	scope() const { return 0; }
@@ -190,7 +190,7 @@ public:
 
 	IPAddress::Family	family() const {return IPAddress::IPv6;}
 
-	const void*			addr() const {return &_addr;}
+	const void*			addr(NET_SOCKLEN& size) const { size = sizeof(_addr); return &_addr; }
 	UInt32				scope() const {return _scope;}
 	bool				isBroadcast() const {return false;}
 
@@ -430,55 +430,27 @@ bool IPAddress::isGlobalMC() const {
 }
 
 bool IPAddress::operator == (const IPAddress& a) const {
-	NET_SOCKLEN l1 = sizeof(addr());
-	NET_SOCKLEN l2 = sizeof(a.addr());
-	if (l1 == l2)
-		return memcmp(addr(), a.addr(), l1) == 0;
+	NET_SOCKLEN size1;
+	const void* pAddr1 = addr(size1);
+	NET_SOCKLEN size2;
+	const void* pAddr2 = addr(size2);
+	if (size1 == size2)
+		return memcmp(pAddr1, pAddr2, size1) == 0;
 	return false;
 }
 
-bool IPAddress::operator != (const IPAddress& a) const {
-	NET_SOCKLEN l1 = sizeof(addr());
-	NET_SOCKLEN l2 = sizeof(a.addr());
-	if (l1 == l2)
-		return memcmp(addr(), a.addr(), l1) != 0;
-	return true;
-}
-
 bool IPAddress::operator < (const IPAddress& a) const {
-	NET_SOCKLEN l1 = sizeof(addr());
-	NET_SOCKLEN l2 = sizeof(a.addr());
-	if (l1 == l2)
-		return memcmp(addr(), a.addr(), l1) < 0;
-	return l1 < l2;
+	NET_SOCKLEN size1;
+	const void* pAddr1 = addr(size1);
+	NET_SOCKLEN size2;
+	const void* pAddr2 = addr(size2);
+	if (size1 == size2)
+		return memcmp(pAddr1, pAddr2, size1) < 0;
+	return size1<size2;
 }
 
-bool IPAddress::operator <= (const IPAddress& a) const {
-	NET_SOCKLEN l1 = sizeof(addr());
-	NET_SOCKLEN l2 = sizeof(a.addr());
-	if (l1 == l2)
-		return memcmp(addr(), a.addr(), l1) <= 0;
-	return l1 < l2;
-}
-
-bool IPAddress::operator > (const IPAddress& a) const {
-	NET_SOCKLEN l1 = sizeof(addr());
-	NET_SOCKLEN l2 = sizeof(a.addr());
-	if (l1 == l2)
-		return memcmp(addr(), a.addr(), l1) > 0;
-	return l1 > l2;
-}
-
-bool IPAddress::operator >= (const IPAddress& a) const {
-	NET_SOCKLEN l1 = sizeof(addr());
-	NET_SOCKLEN l2 = sizeof(a.addr());
-	if (l1 == l2)
-		return memcmp(addr(), a.addr(), l1) >= 0;
-	return l1 > l2;
-}
-
-const void* IPAddress::addr() const {
-	return _pIPAddress->addr();
+const void* IPAddress::addr(NET_SOCKLEN& size) const {
+	return _pIPAddress->addr(size);
 }
 
 const IPAddress& IPAddress::Broadcast() {

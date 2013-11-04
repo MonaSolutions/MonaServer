@@ -138,14 +138,14 @@ public:
 	bool isGlobalMC() const;
 	
 	bool operator == (const IPAddress& addr) const;	
-	bool operator != (const IPAddress& addr) const;
+	bool operator != (const IPAddress& addr) const { return !operator==(addr); }
 	bool operator <  (const IPAddress& addr) const;
-	bool operator <= (const IPAddress& addr) const;
-	bool operator >  (const IPAddress& addr) const;
-	bool operator >= (const IPAddress& addr) const;
+	bool operator <= (const IPAddress& addr) const { return operator==(addr) || operator<(addr); }
+	bool operator >  (const IPAddress& addr) const { return !operator<=(addr); }
+	bool operator >= (const IPAddress& addr) const { return operator==(addr) || operator>(addr); }
 	
 	// Returns the internal address structure
-	const void* addr() const;
+	const void* addr(NET_SOCKLEN& size) const;
 
 	// Returns a wildcard IPv4 or IPv6 address (0.0.0.0)
 	static const IPAddress& Wildcard(Family family = IPv4) { return family == IPv6 ? _IPv6Wildcard : _IPv4Wildcard; }

@@ -6,10 +6,9 @@ using namespace std;
 using namespace Mona;
 
 
-HostEntry hostEntry;
-
 ADD_TEST(DNSTest, HostByName) {
 	Exception ex;
+	HostEntry hostEntry;
 
 	DNS::HostByName(ex, "aliastest.appinf.com", hostEntry);
 	EXPECT_TRUE(!ex)
@@ -25,6 +24,7 @@ ADD_TEST(DNSTest, HostByName) {
 
 ADD_TEST(DNSTest, HostByAddress) {
 	Exception ex;
+	HostEntry hostEntry;
 
 	IPAddress ip;
 	ip.set(ex, "80.122.195.86");

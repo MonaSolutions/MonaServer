@@ -45,14 +45,14 @@ bool DNS::HostByName(Exception& ex, const string& hostname, HostEntry& host) {
 	return false;
 }
 
-
+// BEWARE blocking method!!
 bool DNS::HostByAddress(Exception& ex,const IPAddress& address, HostEntry& host) {
 	if (!Net::InitializeNetwork(ex))
 		return false;
 	SocketAddress sa;
 	sa.set(address, 0);
 	static char fqname[1024];
-	int rc = getnameinfo(sa.addr(), sizeof(*sa.addr()), fqname, sizeof(fqname), NULL, 0, NI_NAMEREQD);
+	int rc = getnameinfo(&sa.addr(), sizeof(sa.addr()), fqname, sizeof(fqname), NULL, 0, NI_NAMEREQD);
 	if (rc == 0) {
 		struct addrinfo* pAI;
 		struct addrinfo hints;

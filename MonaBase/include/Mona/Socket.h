@@ -143,7 +143,7 @@ protected:
 			return NULL;
 		}
 		SocketAddress address;
-		if (!address.set(ex, pSA) || !onConnection(address))
+		if (!address.set(ex, *pSA) || !onConnection(address))
 			return NULL;
 		SocketType* pSocketType = new SocketType(address,args ...);
 		Socket* pSocketBase = reinterpret_cast<Socket*>(pSocketType);

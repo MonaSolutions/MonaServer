@@ -74,13 +74,11 @@ void BinaryWriter::write64(UInt64 value) {
 
 void BinaryWriter::writeAddress(const SocketAddress& address,bool publicFlag) {
 	UInt8 flag = publicFlag ? 0x02 : 0x01;
-	UInt8 size = 4;
 	const IPAddress& host = address.host();
-	if(host.family() == IPAddress::IPv6) {
+	if (host.family() == IPAddress::IPv6)
 		flag |= 0x80;
-		size = 16;
-	}
-	const UInt8* bytes = reinterpret_cast<const UInt8*>(host.addr());
+	NET_SOCKLEN size;
+	const UInt8* bytes = reinterpret_cast<const UInt8*>(host.addr(size));
 	write8(flag);
 	for(int i=0;i<size;++i)
 		write8(bytes[i]);
