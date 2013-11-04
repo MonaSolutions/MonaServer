@@ -20,6 +20,7 @@ This file is a part of Mona.
 #include "Mona/Mona.h"
 #include "Mona/Option.h"
 #include "Mona/Exceptions.h"
+#include "string.h"
 #include <set>
 
 namespace Mona {
@@ -32,11 +33,11 @@ public:
 
 	template <typename ...Args>
 	Option& add(Exception& ex, const char* fullName, const char* shortName, const Args&... args) {
-		if (std::strlen(fullName)==0) {
+        if (strlen(fullName)==0) {
 			ex.set(Exception::OPTION, "Invalid option (fullName is empty)");
 			return Option::Null;
 		}
-		if (std::strlen(shortName) == 0) {
+        if (strlen(shortName) == 0) {
 			ex.set(Exception::OPTION, "Invalid option (shortName is empty)");
 			return Option::Null;
 		}

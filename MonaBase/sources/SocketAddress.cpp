@@ -272,7 +272,7 @@ const string& SocketAddress::toString() const {
 
 
 UInt16 SocketAddress::resolveService(Exception& ex,const string& service) {
-	UInt16 port = String::ToNumber<UInt16>(ex, service);
+    UInt16 port = String::ToNumber<UInt16>(ex, service);
 	if (!ex)
 		return port;
 	if (!Net::InitializeNetwork(ex))

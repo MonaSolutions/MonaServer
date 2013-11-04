@@ -15,13 +15,13 @@ details (or else see http://www.gnu.org/licenses/).
 This file is a part of Mona.
 */
 
-#pragma once
-
 #include "Mona/Util.h"
 #include <sys/stat.h>
 #include <cctype>
 #if defined(_WIN32)
 #include "windows.h"
+#else
+#include "pwd.h"
 #endif
 #include "Mona/FileSystem.h"
 #include <set>
@@ -88,8 +88,8 @@ bool FileSystem::CreateDirectory(const string& path) {
 		return true;
 #if defined(_WIN32)
 	return CreateDirectoryA(path.c_str(), 0) != 0;
-#elif
-	return (mkdir(_path.c_str(), S_IRWXU | S_IRWXG | S_IRWXO) == 0)
+#else
+    return (mkdir(path.c_str(), S_IRWXU | S_IRWXG | S_IRWXO) == 0);
 #endif
 }
 
@@ -151,7 +151,7 @@ string& FileSystem::MakeDirectory(string& path) {
 		path.assign("C:\\");
 	else if (n > 0 && (path[n - 1] != '\\' || path[n - 1] != '/'))
 		path.append("\\");
-#elif
+#else
 	if (n > 0 && path[n - 1] != '/')
 		path.append("/");
 #endif
@@ -268,7 +268,7 @@ bool FileSystem::GetHome(string& path) {
 bool FileSystem::IsAbsolute(const string& path) {
 #if defined(_WIN32)
 	return !path.empty() && isalpha(path[0]) && (path.size()<2 || path[1]==':');
-#elif
+#else
 	if (path.empty())
 		return false;
 	if (path[0] == '/')

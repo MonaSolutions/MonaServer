@@ -26,10 +26,10 @@ namespace Mona {
 class BinaryWriter : virtual Object {
 public:
 	enum ByteOrder {
-		BIG_ENDIAN,
-		LITTLE_ENDIAN
+        BIG_ENDIAN_ORDER,
+        LITTLE_ENDIAN_ORDER
 	};
-	BinaryWriter(std::ostream& ostr, ByteOrder byteOrder = BIG_ENDIAN); // BIG_ENDIAN==NETWORK_ENDIAN
+    BinaryWriter(std::ostream& ostr, ByteOrder byteOrder = BIG_ENDIAN_ORDER); // BIG_ENDIAN_ORDER==NETWORK_ENDIAN
 	virtual ~BinaryWriter();
 
 	void flush() { _ostr.flush(); }

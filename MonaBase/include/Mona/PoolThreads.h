@@ -44,7 +44,7 @@ public:
 				}
 			}
 		}
-		pThread->push(ex,static_pointer_cast<WorkThread>(pWork));
+        pThread->push(ex,std::static_pointer_cast<WorkThread>(pWork));
 		return pThread;
 	}
 

@@ -20,7 +20,7 @@ This file is a part of Mona.
 #include "Mona/IPAddress.h"
 #include "Mona/String.h"
 #include <cstring>
-
+#include <net/if.h>
 
 using namespace std;
 
@@ -176,11 +176,11 @@ public:
 #if defined(_WIN32)
 			String::Append(_toString, _scope);
 #else
-			char buffer[IFNAMSIZ];
-			if (if_indextoname(_scope, buffer))
-				_toString.append(buffer);
-			else
-				String::Append(_toString, _scope);
+            char buffer[IFNAMSIZ];
+            if (if_indextoname(_scope, buffer))
+                _toString.append(buffer);
+            else
+                String::Append(_toString, _scope);
 #endif
 		}
 		return _toString;

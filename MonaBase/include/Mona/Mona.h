@@ -19,6 +19,7 @@
 
 #include <stdio.h>
 #include <string>
+#include "string.h"
 
 /////  Usefull macros and patchs   //////
 
@@ -31,12 +32,13 @@
 #if defined(_WIN32)
 #define _WINSOCKAPI_    // stops windows.h including winsock.h
 #define sprintf sprintf_s
+#define snprintf sprintf_s
 #define timegm _mkgmtime
 #define GMTIME(VALUE,RESULT) gmtime_s(&RESULT,&VALUE);
 #define LOCALTIME(VALUE,RESULT) localtime_s(&RESULT,&VALUE);
 #define STRERROR(CODE,ERROR) {ERROR.resize(100);strerror_s(&ERROR[0],(std::size_t)100,CODE);}
-#elif
-#define STRERROR(CODE,ERROR) {error.resize(100);strerror_r(CODE,&ERROR[0],100);}
+#else
+#define STRERROR(CODE,ERROR) {ERROR.resize(100);strerror_r(CODE,&ERROR[0],100);}
 #define GMTIME(VALUE,RESULT) gmtime_r(&VALUE,&RESULT)
 #define LOCALTIME(VALUE,RESULT) localtime_r(&VALUE,&RESULT)
 #endif

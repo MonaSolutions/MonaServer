@@ -19,10 +19,6 @@
 
 #include "Mona/Mona.h"
 #include <vector>
-#include <limits>
-
-#undef max
-// TODO? #pragma warning(disable:4146)
 
 #if defined(_MSC_VER) || defined(__MINGW32__)
 	#define I64_FMT "I64"
@@ -41,8 +37,6 @@ public:
 	const Type	value;
 	const char* format;
 };
-
-class Exception;
 
 /// Utility class for generation parse of strings
 class String : virtual Static{
@@ -192,9 +186,9 @@ public:
 		char buffer[64];
 		
 		#if defined(MONA_PTR_IS_64_BIT)
-			std::sprintf(buffer, "%016" I64_FMT "X", (UIntPtr) value);
+            sprintf(buffer, "%016" I64_FMT "X", (UIntPtr) value);
 		#else
-			std::sprintf(buffer, "%08lX", (UIntPtr) value);
+            sprintf(buffer, "%08lX", (UIntPtr) value);
 		#endif
 
 		result.append(buffer);
@@ -210,7 +204,7 @@ public:
 	static std::string& Append(std::string& result, const Mona::Format<Type>& custom, const Args&... args) {
 		char buffer[64];
 		try {
-			sprintf(buffer, sizeof(buffer), custom.format, custom.value);
+            snprintf(buffer, sizeof(buffer), custom.format, custom.value);
 		}
 		catch (...) {
 			// TODO remove the loop => ERROR("String formatting error during Append(...)");
@@ -218,81 +212,6 @@ public:
 		}
 		result.append(buffer);
 		return String::Append(result, args ...);
-	}
-
-	template<typename T>
-	static bool ToNumber(const std::string& value, T& result) {
-		Exception ex;
-		ToNumber<T>(ex, value, result);
-		return !ex;
-	}
-
-	template<typename T>
-	static T ToNumber(Exception& ex, const std::string& value, T default=0) {
-		int digit = 1, comma = 0;
-		bool beginning = true, negative = false;
-
-		const char* str(value.c_str());
-
-		if (!str || *str == '\0') {
-			ex.set(Exception::FORMATTING, "Empty string is not a number");
-			return false;
-		}
-
-		bool isSigned = numeric_limits<T>::is_signed;
-		T max = numeric_limits<T>::max();
-
-		do {
-			if (default >= max) {
-				ex.set(Exception::FORMATTING, str, " exceeds maximum number capacity");
-				return false;
-			}
-
-			if (isblank(*str)) {
-				if (beginning)
-					continue;
-				ex.set(Exception::FORMATTING, str, " is not a correct number");
-				return false;
-			}
-
-			if (*str == '-') {
-				if (isSigned && beginning && !negative) {
-					negative = true;
-					continue;
-				}
-				ex.set(Exception::FORMATTING, str, " is not a correct number");
-				return false;
-			}
-
-			if (*str == '.') {
-				if (comma == 0 && !beginning) {
-					comma = 1;
-					continue;
-				}
-				ex.set(Exception::FORMATTING, str, " is not a correct number");
-				return false;
-			}
-
-			if (beginning)
-				beginning = false;
-
-			if (isdigit(*str) == 0) {
-				ex.set(Exception::FORMATTING, str, " is not a correct number");
-				return false;
-			}
-
-			default = default * 10 + (*str - '0');
-			comma *= 10;
-		} while ((*++str) != '\0');
-
-		if (comma > 0)
-			default /= comma;
-
-
-		if (negative)
-			default *= -1;
-
-		return default;
 	}
 
 private:

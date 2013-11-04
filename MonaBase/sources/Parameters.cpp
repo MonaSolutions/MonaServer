@@ -17,7 +17,7 @@ This file is a part of Mona.
 */
 
 #include "Mona/Parameters.h"
-#include "Mona/String.h"
+#include "Mona/String.h""
 #include "Mona/Exceptions.h"
 
 using namespace std;
@@ -28,14 +28,14 @@ bool Parameters::getNumber(const string& key, double& value) const {
 	string temp;
 	if (!getRaw(key, temp))
 		return false;
-	return String::ToNumber<double>(temp,value);
+    return String::ToNumber<double>(temp,value);
 }
 
 bool Parameters::getNumber(const string& key, int& value) const {
 	string temp;
 	if (!getRaw(key, temp))
 		return false;
-	return String::ToNumber<int>(temp, value);
+    return String::ToNumber<int>(temp, value);
 }
 
 bool Parameters::getBool(const string& key, bool& value) const {
@@ -44,7 +44,7 @@ bool Parameters::getBool(const string& key, bool& value) const {
 		return false;
 	int number;
 	// true if number !=0 or if not equals to "false", "no" or "off"
-	value = String::ToNumber<int>(temp, number) && (number != 0) || (String::ICompare(temp, "false") != 0 && String::ICompare(temp, "no") != 0 && String::ICompare(temp, "off") != 0);
+    value = String::ToNumber<int>(temp, number) && (number != 0) || (String::ICompare(temp, "false") != 0 && String::ICompare(temp, "no") != 0 && String::ICompare(temp, "off") != 0);
 	return true;
 }
 

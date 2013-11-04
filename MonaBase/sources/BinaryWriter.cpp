@@ -29,7 +29,7 @@ BinaryWriter::BinaryWriter(ostream& ostr,ByteOrder byteOrder) : _ostr(ostr) {
 #if defined(_ARCH_BIG_ENDIAN)
 	_flipBytes = byteOrder == LITTLE_ENDIAN;
 #else
-	_flipBytes = byteOrder == BIG_ENDIAN;;
+    _flipBytes = byteOrder == BIG_ENDIAN_ORDER;;
 #endif
 }
 

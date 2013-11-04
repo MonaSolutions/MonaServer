@@ -21,6 +21,7 @@
 #include "Mona/WorkThread.h"
 #include "Mona/PoolThread.h"
 #include "Mona/SocketAddress.h"
+#include "Mona/Socket.h"
 #include <memory>
 
 

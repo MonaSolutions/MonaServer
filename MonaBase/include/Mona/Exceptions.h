@@ -75,8 +75,8 @@ private:
 #define		ASSERT(CHECK)					if(!(CHECK)) { ex.set(Exception::ASSERT, #CHECK);return;}
 #define		ASSERT_RETURN(CHECK,RETURN)		if(!(CHECK)) { ex.set(Exception::ASSERT, #CHECK);return RETURN;}
 
-#define		FATAL_ASSERT(CHECK)				if(!(CHECK)) {throw std::exception( #CHECK ", "__FILE__"["LINE_STRING"]");}
-#define		FATAL_THROW(...)				{string __error; throw std::exception( Mona::String::Format(__error,## __VA_ARGS__,", "__FILE__"["LINE_STRING"]").c_str());}
+#define		FATAL_ASSERT(CHECK)				if(!(CHECK)) {throw ( #CHECK ", " __FILE__ "[" LINE_STRING "]");}
+#define		FATAL_THROW(...)				{string __error; throw std::exception( Mona::String::Format(__error,## __VA_ARGS__,", " __FILE__ "[" LINE_STRING "]").c_str());}
 
 #define		EXCEPTION_TO_LOG(CALL,...)		{ bool __success = CALL; if (ex) { if (!__success) ERROR(## __VA_ARGS__,", ",ex.error()) else WARN(## __VA_ARGS__,", ", ex.error()); } else if (!__success) ERROR(## __VA_ARGS__,", unknown error"); }
 
