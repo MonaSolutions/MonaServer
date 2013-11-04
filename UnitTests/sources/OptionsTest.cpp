@@ -26,19 +26,6 @@ bool OptionsTest::AddOption(const string& fullName, const string& shortName, con
 	return true;
 }
 
-bool OptionsTest::GetOption(const string& fullName) {
-	
-	Exception ex;
-	opts.get(ex, fullName);
-	
-	if (ex) {
-		DEBUG("Exception : ", ex.error());
-		return false;
-	}
-
-	return true;
-}
-
 bool OptionsTest::ProcessArg(char* arg, const function<void(Exception& ex, const std::string&, const std::string&)>& handler) {
 	char* argv[] = {"", arg};
 	

@@ -21,7 +21,7 @@
 #include "Mona/Invoker.h"
 #include "Mona/MemoryWriter.h"
 #include "Mona/RTMFP/RTMFPCookieComputing.h"
-#include "Poco/Buffer.h"
+
 
 namespace Mona {
 
@@ -34,15 +34,18 @@ public:
 	const std::string		tag;
 	const std::string		queryUrl;
 
-	const UInt8				peerId[ID_SIZE];
+	UInt8					peerId[ID_SIZE];
 	const SocketAddress		peerAddress;
 
+
+	bool run(Exception& ex) { _pComputingThread = _invoker.poolThreads.enqueue<RTMFPCookieComputing>(ex, _pCookieComputing, _pComputingThread); return !ex; }
+
 	const UInt8*			value() { return _pCookieComputing->value; }
-	const UInt8				decryptKey[HMAC_KEY_SIZE];
-	const UInt8				encryptKey[HMAC_KEY_SIZE];
+	UInt8					decryptKey[HMAC_KEY_SIZE];
+	UInt8					encryptKey[HMAC_KEY_SIZE];
 	
-	void					computeSecret(Exception& ex, const UInt8* initiatorKey,UInt32 sizeKey,const UInt8* initiatorNonce,UInt32 sizeNonce);
-	void					finalize();
+	bool					computeSecret(Exception& ex, const UInt8* initiatorKey,UInt32 sizeKey,const UInt8* initiatorNonce,UInt32 sizeNonce);
+	bool					finalize(Exception& ex);
 
 	bool					obsolete() { return _createdTimestamp.isElapsed(120000000);}  // after 2 mn
 
@@ -56,7 +59,7 @@ private:
 	UInt8									_buffer[256];
 	MemoryWriter							_writer;
 	Invoker&								_invoker;
-	Buffer<UInt8>						_initiatorNonce;
+	Buffer<UInt8>							_initiatorNonce;
 };
 
 

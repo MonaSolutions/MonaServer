@@ -23,44 +23,6 @@ using namespace std;
 
 namespace Mona {
 
-ThreadPriority::ThreadPriority(thread& thread) : _thread(thread) {
-#if !defined(_WIN32)
-	_min = sched_get_priority_min(SCHED_FIFO);
-	_max = sched_get_priority_max(SCHED_FIFO);
-	// set SCHED_FIFO policy!
-	struct sched_param params;
-	params.sched_priority = _min + (_max - _min) / 2;
-	pthread_setschedparam(threadHandle, SCHED_FIFO, &params);
-#endif
-}
-
-bool ThreadPriority::set(Priority priority) {
-	if (priority == _priority)
-		return true;
-#if defined(_WIN32)
-	if (SetThreadPriority(_thread.native_handle(), priority) == 0)
-		return false;
-#else
-	struct sched_param params;
-	if(priority==PRIO_LOWEST)
-		params.sched_priority = _min;
-	else if(priority==PRIO_LOW)
-		params.sched_priority = _min + (_max - _min) / 4;
-	else if(priority==PRIO_NORMAL)
-		params.sched_priority = _min + (_max - _min) / 2;
-	else if (priority == PRIO_HIGH)
-		params.sched_priority = _min + (_max - _min) / 4;
-	else if (priority == PRIO_HIGHEST)
-		params.sched_priority = _max;
-
-	if (pthread_setschedparam(_thread.native_handle(), SCHED_FIFO, &params))
-		return false;
-#endif
-	_priority = priority;
-	return true;
-}
-
-
 
 Startable::Startable(const string& name) : _name(name), _stop(true) {
 	
@@ -71,11 +33,10 @@ Startable::~Startable() {
 }
 
 void Startable::process() {
-	Util::SetThreadName(_thread.get_id(), _name);
+	
 	try {
-		ThreadPriority priority(_thread);
 		Exception ex;
-		run(ex, priority);
+		run(ex);
 		if (ex)
 			CRITIC("Startable thread ", _name, ", ", ex.error());
 	} catch (exception& ex) {
@@ -100,7 +61,7 @@ Startable::WakeUpType Startable::sleep(UInt32 millisec) {
 }
 
 // caller is usually the thread controller of _thread
-bool Startable::start(Exception& ex) {
+bool Startable::start(Exception& ex, Priority priority) {
 	if (!_stop)  // if running
 		return true;
 	lock_guard<mutex> lock(_mutex);
@@ -114,6 +75,7 @@ bool Startable::start(Exception& ex) {
 		lock_guard<mutex> lock(_mutexStop);
 		_thread = thread(&Startable::process, ref(*this)); // start the thread
 		_wakeUpEvent.reset();
+		initThread(ex, _thread, priority);
 		_stop = false;
 	} catch (exception& exc) {
 		ex.set(Exception::THREAD, "Impossible to start the thread of ", _name, ", ", exc.what());
@@ -121,6 +83,29 @@ bool Startable::start(Exception& ex) {
 	}
 	return true;
 }
+
+
+void Startable::initThread(Exception& ex,thread& thread,Priority priority) {
+	Util::SetThreadName(thread.get_id(), _name);
+
+#if !defined(_WIN32)
+	static int Min = sched_get_priority_min(SCHED_FIFO);
+	static int Max = sched_get_priority_max(SCHED_FIFO);
+	static int Priorities[] = {Min,Min + (Max - Min) / 4,Min + (Max - Min) / 2,Min + (Max - Min) / 4,Max};
+#endif
+
+#if defined(_WIN32)
+	if (priority == PRIORITY_NORMAL || SetThreadPriority(_thread.native_handle(), priority) != 0)
+		return;
+#else
+	struct sched_param params;
+	params.sched_priority = Priorities[priority];
+	if (!pthread_setschedparam(_thread.native_handle(), SCHED_FIFO, &params))
+		return;
+#endif
+	ex.set(Exception::THREAD, "Impossible to change the thread ", _name, " priority to ", priority);
+}
+
 
 // caller is usually the thread controller of _thread
 void Startable::stop() {

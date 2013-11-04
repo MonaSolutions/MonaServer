@@ -24,20 +24,6 @@ using namespace std;
 
 namespace Mona {
 
-bool Parameters::getNumber(const string& key, double& value) const {
-	string temp;
-	if (!getRaw(key, temp))
-		return false;
-	return String::ToNumber<double>(temp,value);
-}
-
-bool Parameters::getNumber(const string& key, int& value) const {
-	string temp;
-	if (!getRaw(key, temp))
-		return false;
-	return String::ToNumber<int>(temp, value);
-}
-
 bool Parameters::getBool(const string& key, bool& value) const {
 	string temp;
 	if (!getRaw(key, temp))

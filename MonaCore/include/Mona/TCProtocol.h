@@ -31,7 +31,12 @@ protected:
 	virtual ~TCProtocol() {stop();}
 
 private:
-	bool	load(Exception& ex, const ProtocolParams& params) { return start(ex, params.port); }
+	bool	load(Exception& ex, const ProtocolParams& params) {
+		SocketAddress address;
+		if (!address.set(ex, params.host, params.port))
+			return false;
+		return start(ex, address);
+	}
 
 	void	onError(const std::string& error) { WARN("Protocol ", name, ", ", error); }
 

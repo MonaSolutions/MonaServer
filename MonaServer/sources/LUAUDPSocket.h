@@ -34,7 +34,8 @@ public:
 
 private:
 	virtual ~LUAUDPSocket();
-	void	onReception(const Mona::UInt8* data,Mona::UInt32 size,const Poco::Net::SocketAddress& address);
+	void	onReception(const Mona::UInt8* data,Mona::UInt32 size,const Mona::SocketAddress& address);
+	void	onError(const std::string& error);
 
 	static int	Bind(lua_State* pState);
 	static int  Connect(lua_State* pState);

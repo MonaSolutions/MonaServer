@@ -46,14 +46,12 @@ public:
 		memset(&_addr, 0, sizeof(_addr));
 		_addr.sin_family = AF_INET;
 		set_sin_len(&_addr);
-		Exception ex; // will never throw!
-		_host.copy(ex, &_addr.sin_addr);
+		_host.set(_addr.sin_addr);
 	}
 
 	IPv4SocketAddress(const struct sockaddr_in* addr) {
 		memcpy(&_addr, addr, sizeof(_addr));
-		Exception ex; // will never throw!
-		_host.copy(ex, &_addr.sin_addr);
+		_host.set(_addr.sin_addr);
 	}
 
 	IPv4SocketAddress(const void* addr, UInt16 port) {
@@ -61,8 +59,7 @@ public:
 		_addr.sin_family = AF_INET;
 		memcpy(&_addr.sin_addr, addr, sizeof(_addr.sin_addr));
 		_addr.sin_port = port;
-		Exception ex; // will never throw!
-		_host.copy(ex, &_addr.sin_addr);
+		_host.set(_addr.sin_addr);
 	}
 
 	IPAddress::Family family() const { return IPAddress::IPv4; }
@@ -84,13 +81,11 @@ public:
 		memset(&_addr, 0, sizeof(_addr));
 		_addr.sin6_family = AF_INET6;
 		set_sin6_len(&_addr);
-		Exception ex; // will never throw!
-		_host.copy(ex,&_addr.sin6_addr);
+		_host.set(_addr.sin6_addr);
 	}
 	IPv6SocketAddress(const struct sockaddr_in6* addr) {
 		memcpy(&_addr, addr, sizeof(_addr));
-		Exception ex; // will never throw!
-		_host.copy(ex, &_addr.sin6_addr, _addr.sin6_scope_id);
+		_host.set(_addr.sin6_addr, _addr.sin6_scope_id);
 	}
 	IPv6SocketAddress(const void* addr, UInt16 port, UInt32 scope = 0) {
 		memset(&_addr, 0, sizeof(_addr));
@@ -99,8 +94,7 @@ public:
 		memcpy(&_addr.sin6_addr, addr, sizeof(_addr.sin6_addr));
 		_addr.sin6_port = port;
 		_addr.sin6_scope_id = scope;
-		Exception ex; // will never throw!
-		_host.copy(ex, &_addr.sin6_addr, _addr.sin6_scope_id);
+		_host.set(_addr.sin6_addr, _addr.sin6_scope_id);
 	}
 
 	IPAddress::Family family() const { return IPAddress::IPv6; }
@@ -133,6 +127,12 @@ SocketAddress::SocketAddress(const IPAddress& host, UInt16 port) {
 }
 
 SocketAddress::SocketAddress(const SocketAddress& other) : _pAddress(other._pAddress), _toString(other._toString) {
+}
+
+void SocketAddress::clear() {
+	lock_guard<mutex>	lock(_mutex);
+	_toString.clear();
+	_pAddress.reset(family() == IPAddress::IPv6 ? (SocketAddressCommon*)new IPv4SocketAddress() : (SocketAddressCommon*)new IPv6SocketAddress());
 }
 
 void SocketAddress::set(const SocketAddress& other) {

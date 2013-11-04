@@ -31,10 +31,9 @@ int LUAPublications::Pairs(lua_State* pState) {
 			SCRIPT_ERROR("'next' should be a LUA function, it should not be overloaded")
 		else {
 			lua_newtable(pState);
-			Publications::Iterator it;
-			for(it=publications.begin();it!=publications.end();++it) {
-				SCRIPT_WRITE_PERSISTENT_OBJECT(Publication,LUAPublication,*it->second)
-				lua_setfield(pState,-2,it->first.c_str());
+			for(auto it : publications) {
+				SCRIPT_WRITE_PERSISTENT_OBJECT(Publication,LUAPublication,*it.second)
+				lua_setfield(pState,-2,it.first.c_str());
 			}
 		}
 	SCRIPT_CALLBACK_RETURN

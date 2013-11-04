@@ -17,16 +17,21 @@
 
 #include "Service.h"
 #include "MonaServer.h"
-#include "Poco/Path.h"
+#include "Mona/String.h"
+#include "Mona/FileSystem.h"
+
 
 using namespace std;
-using namespace Poco;
+using namespace Mona;
 
 
-Thread* Service::_PVolatileObjectsThreadRecording(NULL);
-bool	Service::_VolatileObjectsRecording(false);
+thread::id	Service::_VolatileObjectsThreadRecording;
+bool		Service::_VolatileObjectsRecording(false);
 
-Service::Service(lua_State* pState, const string& path, ServiceRegistry& registry) : path(path), _registry(registry), _pState(pState), FileWatcher(MonaServer::WWWPath + path + "/main.lua"), _packages("www" + path, "/", StringTokenizer::TOK_IGNORE_EMPTY | StringTokenizer::TOK_TRIM), _running(false), _deleting(false), count(0) {
+Service::Service(lua_State* pState, const string& path, ServiceRegistry& registry) : path(path), _registry(registry), _pState(pState), FileWatcher(MonaServer::WWWPath + path + "/main.lua"), _running(false), _deleting(false), count(0) {
+	
+	String::Split("www" + path, "/", _packages, String::SPLIT_IGNORE_EMPTY | String::SPLIT_TRIM);
+
 	if(!refresh()) {
 		open(true); // open even if no file
 		lua_pop(_pState,1);
@@ -62,8 +67,10 @@ Service* Service::get(const string& path) {
 	name = name.substr(0,pos);
 	
 	// Folder exists?
-	File file(Path(FileWatcher::path).parent().toString()+name);
-	bool exists = (file.exists() && file.isDirectory());
+	string directory(FileWatcher::path);
+	FileSystem::MakeDirectory(directory);
+	directory.append(name);
+	bool exists = FileSystem::IsDirectory(directory) && FileSystem::Exists(directory);
 
 	map<string,Service*>::iterator it = _services.lower_bound(name);
 	
@@ -149,7 +156,7 @@ int Service::NewIndex(lua_State *pState) {
 			}
 			lua_pop(pState,1);
 		}
-		if(_VolatileObjectsRecording && _PVolatileObjectsThreadRecording==Thread::current()) {
+		if (_VolatileObjectsRecording && _VolatileObjectsThreadRecording == std::this_thread::get_id()) {
 			if(lua_getmetatable(pState,3)!=0) { // stay
 				// Is Mona object?
 				lua_getfield(pState,-1,"__this"); // stay
@@ -195,7 +202,7 @@ int Service::NewIndex(lua_State *pState) {
 
 void Service::StartVolatileObjectsRecording(lua_State* pState) {
 	_VolatileObjectsRecording = true;
-	_PVolatileObjectsThreadRecording = Poco::Thread::current();
+	_VolatileObjectsThreadRecording = this_thread::get_id();
 	InitGlobalTable(pState,true);
 	lua_newtable(pState);
 	lua_setfield(pState,-2,"//volatileObjects");
@@ -268,14 +275,13 @@ lua_State* Service::open() {
 bool Service::open(bool create) {
 
 	lua_pushvalue(_pState,LUA_GLOBALSINDEX); // _G
-	StringTokenizer::Iterator it;
 	const char* precPackage=NULL;
 
-	for(it=_packages.begin();it!=_packages.end();++it) {
+	for (const string& value : _packages) {
 		
 		lua_getmetatable(_pState,-1);
 
-		const char* package = (*it).c_str();
+		const char* package = value.c_str();
 
 		lua_getfield(_pState,-1,package);
 		if(!lua_istable(_pState,-1)) {
@@ -422,7 +428,7 @@ void Service::clear() {
 			if(!lua_isnil(_pState,-1)) {
 				lua_getmetatable(_pState,-1);
 				lua_pushnil(_pState);
-				lua_setfield(_pState,-2,(*(_packages.begin()+(_packages.count()-1))).c_str());
+				lua_setfield(_pState,-2,(*(_packages.begin()+(_packages.size()-1))).c_str());
 				lua_pop(_pState,1);
 			}
 			lua_pop(_pState,2);

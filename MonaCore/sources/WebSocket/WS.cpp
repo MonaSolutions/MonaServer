@@ -17,12 +17,11 @@
 
 #include "Mona/WebSocket/WS.h"
 #include "Mona/Logs.h"
-#include "Poco/Base64Encoder.h"
 #include <openssl/evp.h>
 #include <sstream>
 
 using namespace std;
-using namespace Poco;
+
 
 
 namespace Mona {
@@ -31,9 +30,10 @@ void WS::ComputeKey(string& key) {
 	key.append("258EAFA5-E914-47DA-95CA-C5AB0DC85B11"); // WEBSOCKET_GUID
 	UInt8 temp[20];
 	EVP_Digest(key.c_str(),key.size(),temp,NULL,EVP_sha1(),NULL);
-	ostringstream ostr;
-	Base64Encoder(ostr).write((const char*)temp, sizeof(temp));
-	key.assign(ostr.str());
+
+	Buffer<UInt8> buffer; //  TODO remove this temporary variable?
+	Util::ToBase64(temp, sizeof(temp), buffer); 
+	key.assign((const char*)buffer.data(),buffer.size());
 }
 
 

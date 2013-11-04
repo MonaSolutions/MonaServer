@@ -22,7 +22,7 @@
 
 using namespace std;
 using namespace Mona;
-using namespace Poco;
+
 
 const char*		LUAGroup::Name="Mona::Group";
 
@@ -34,10 +34,9 @@ int LUAGroup::IPairs(lua_State* pState) {
 			SCRIPT_ERROR("'next' should be a LUA function, it should not be overloaded")
 		else {
 			lua_newtable(pState);
-			GroupIterator it;
-			Mona::UInt32 index=0;
-			for(it=group.begin();it!=group.end();++it) {
-				SCRIPT_WRITE_PERSISTENT_OBJECT(Client,LUAClient,**it)
+			UInt32 index=0;
+			for(Client* pClient : group) {
+				SCRIPT_WRITE_PERSISTENT_OBJECT(Client, LUAClient, *pClient)
 				lua_rawseti(pState,-2,++index);
 			}
 		}
@@ -48,7 +47,8 @@ int LUAGroup::Get(lua_State *pState) {
 	SCRIPT_CALLBACK(Group,LUAGroup,group)
 		string name = SCRIPT_READ_STRING("");
 		if(name=="id") {
-			SCRIPT_WRITE_STRING(Mona::Util::FormatHex(group.id,ID_SIZE).c_str());
+			string hex;
+			SCRIPT_WRITE_STRING(Mona::Util::FormatHex(group.id, ID_SIZE, hex).c_str());
 		} else if(name=="rawId") {
 			SCRIPT_WRITE_BINARY(group.id,ID_SIZE);
 		} else if(name=="size") {

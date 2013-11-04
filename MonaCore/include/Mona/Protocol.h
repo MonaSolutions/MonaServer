@@ -22,24 +22,22 @@
 #include "Mona/SocketManager.h"
 #include "Mona/ServerParams.h"
 #include "Mona/Invoker.h"
-#include "Poco/Buffer.h"
-#include "Poco/SharedPtr.h"
 
 namespace Mona {
 
 
 class Protocol : virtual Object {
 public:
-	virtual bool										load(Exception& ex, const ProtocolParams& params) { return true; }
-	virtual Poco::SharedPtr<Buffer<UInt8> >		receive(Exception& ex,SocketAddress& address);
-	virtual UInt32										unpack(MemoryReader& packet){return 0;}
-	virtual Session*									session(UInt32 id,MemoryReader& packet){return NULL;}
-	void												receive(Decoding& decoding) { gateway.receive(decoding); }
-	virtual void										check(Session& session){}
-	virtual void										manage(){}
-	bool												auth(const SocketAddress& address);
+	virtual bool		load(Exception& ex, const ProtocolParams& params) { return true; }
+	virtual bool		receive(Exception& ex, std::shared_ptr<Buffer<UInt8>>& pBuffer ,SocketAddress& address);
+	virtual UInt32		unpack(MemoryReader& packet){return 0;}
+	virtual Session*	session(UInt32 id,MemoryReader& packet){return NULL;}
+	void				receive(Decoding& decoding) { gateway.receive(decoding); }
+	virtual void		check(Session& session){}
+	virtual void		manage(){}
+	bool				auth(const SocketAddress& address);
 	
-	const std::string		name;
+	const std::string	name;
 protected:
 	Protocol(const char* name,Invoker& invoker,Gateway& gateway);
 	

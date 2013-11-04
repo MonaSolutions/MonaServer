@@ -40,9 +40,9 @@ SocketManager::SocketManager(PoolThreads& poolThreads, UInt32 bufferSize, const 
 	SocketManager((TaskHandler&)*this, poolThreads, bufferSize, name) {
 }
 
-void SocketManager::start(Exception& ex) {
+bool SocketManager::start(Exception& ex) {
 	TaskHandler::start();
-	Startable::start(ex);
+	return Startable::start(ex);
 }
 
 void SocketManager::stop() {

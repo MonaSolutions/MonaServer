@@ -17,13 +17,12 @@
 
 #include "Mona/HTTPPacketReader.h"
 #include "Mona/Logs.h"
-#include "Poco/String.h"
 #include "Mona/TimeParser.h"
 #include "Mona/Exceptions.h"
 
 
 using namespace std;
-using namespace Poco;
+
 
 namespace Mona {
 
@@ -95,7 +94,7 @@ void HTTPPacketReader::readLine() {
 
 	_name.assign((char*)reader.current(),cur-reader.current());
 	reader.next(_name.size());
-	trimInPlace(_name);
+	String::Trim(_name);
 
 	_type = STRING;
 	if(*cur==':') {
@@ -126,7 +125,7 @@ void HTTPPacketReader::readLine() {
 	if(_type==OBJECT) {
 		_value.assign((char*)reader.current(),cur-reader.current());
 		reader.next(_value.size());
-		trimInPlace(_value);
+		String::Trim(_value);
 	}
 
 	if(available>0) { // '\r\n' case
@@ -152,10 +151,10 @@ HTTPPacketReader::Type HTTPPacketReader::readItem(string& name) {
 	name.assign(_name);
 
 	_type = STRING;
-	if(icompare(_value,"TRUE")== 0) {
+	if(String::ICompare(_value,"TRUE")== 0) {
 		_number = 1;
 		_type = BOOLEAN;
-	} else if(icompare(_value,"FALSE") == 0){
+	} else if (String::ICompare(_value, "FALSE") == 0) {
 		_number = 0;
 		_type = BOOLEAN;
 	} else if(_value == "null")

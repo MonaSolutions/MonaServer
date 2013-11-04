@@ -46,10 +46,22 @@ public:
 	void writeString8(const char* value, UInt8 size) { write8(size); writeRaw(value, size); }
 	void writeString16(const std::string& value) { write16(value.size()); writeRaw(value); }
 	void writeString16(const char* value, UInt16 size) { write16(size); writeRaw(value, size); }
+	void writeString(const std::string& value) { write7BitEncoded(value.size()); writeRaw(value); }
+	void write7BitEncoded(UInt32 value);
 	void write7BitValue(UInt32 value);
 	void write7BitLongValue(UInt64 value);
 	void writeAddress(const SocketAddress& address,bool publicFlag);
-
+	void writeBool(bool value) { _ostr.put(value ? 1 : 0); }
+	template<typename NumberType>
+	void writeNumber(NumberType value) {
+		if (_flipBytes) {
+			const char* ptr = (const char*)&value;
+			ptr += sizeof(value);
+			for (unsigned i = 0; i < sizeof(value); ++i)
+				_ostr.write(--ptr, 1);
+		} else
+			_ostr.write((const char*)&value, sizeof(value));
+	}
 private:
 	bool			_flipBytes;
 	std::ostream&   _ostr;

@@ -21,7 +21,6 @@
 #include "Mona/TCPSender.h"
 #include "Mona/MemoryWriter.h"
 #include "Mona/Buffer.h"
-#include "Poco/SharedPtr.h"
 #include <openssl/rc4.h>
 
 namespace Mona {
@@ -29,12 +28,12 @@ namespace Mona {
 class RTMPHandshaker : public TCPSender, virtual Object {
 public:
 	RTMPHandshaker(const UInt8* data, UInt32 size);
-	RTMPHandshaker(const UInt8* farPubKey,const UInt8* challengeKey,bool middle,const Poco::SharedPtr<RC4_KEY>& pDecryptKey,const Poco::SharedPtr<RC4_KEY>& pEncryptKey);
+	RTMPHandshaker(const UInt8* farPubKey, const UInt8* challengeKey, bool middle, const std::shared_ptr<RC4_KEY>& pDecryptKey, const std::shared_ptr<RC4_KEY>& pEncryptKey);
 
 private:
 	
 	bool run(Exception& ex);
-	void runComplex();
+	bool runComplex(Exception& ex);
 
 	const UInt8*	begin(bool displaying = false) { return _writer.begin(); }
 	UInt32			size(bool displaying = false) { return _writer.length(); }
@@ -44,8 +43,8 @@ private:
 	Buffer<UInt8>		_farPubKey;
 	UInt8					_challengeKey[HMAC_KEY_SIZE];	
 	bool						_middle;
-	Poco::SharedPtr<RC4_KEY>	_pEncryptKey;
-	Poco::SharedPtr<RC4_KEY>	_pDecryptKey;
+	std::shared_ptr<RC4_KEY>	_pEncryptKey;
+	std::shared_ptr<RC4_KEY>	_pDecryptKey;
 };
 
 

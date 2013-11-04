@@ -20,10 +20,9 @@
 #include "Mona/Handler.h"
 #include "Mona/Util.h"
 #include "Mona/Logs.h"
-#include "Poco/Format.h"
+
 
 using namespace std;
-using namespace Poco;
 
 
 namespace Mona {
@@ -32,8 +31,8 @@ DataReaderNull	Peer::DataReaderNull;
 
 class Member : virtual Object {
 public:
-	Member(Poco::UInt32	index,Writer* pWriter) : index(index),pWriter(pWriter){}
-	const Poco::UInt32	index;
+	Member(UInt32	index,Writer* pWriter) : index(index),pWriter(pWriter){}
+	const UInt32	index;
 	Writer*			pWriter;
 };
 
@@ -189,7 +188,7 @@ ICE& Peer::ice(const Peer& peer) {
 /// EVENTS ////////
 
 
-void Peer::onHandshake(Poco::UInt32 attempts,set<SocketAddress>& addresses) {
+void Peer::onHandshake(UInt32 attempts,set<SocketAddress>& addresses) {
 	_handler.onHandshake(protocol,address,path,*this,attempts,addresses);
 }
 
@@ -220,10 +219,14 @@ void Peer::onConnection(Exception& ex, Writer& writer,DataReader& parameters,Dat
 			}
 		}
 		(bool&)connected = true;
-		if(!_handler._clients.insert(pair<const UInt8*,Client*>(id,this)).second)
-			ERROR("Client ",Util::FormatHex(id,ID_SIZE)," seems already connected!")
-	} else
-		ERROR("Client ",Util::FormatHex(id,ID_SIZE)," seems already connected!")
+		if (!_handler._clients.insert(pair<const UInt8*, Client*>(id, this)).second) {
+			string hex;
+			ERROR("Client ", Util::FormatHex(id, ID_SIZE, hex), " seems already connected!")
+		}
+	} else {
+		string hex;
+		ERROR("Client ", Util::FormatHex(id, ID_SIZE, hex), " seems already connected!")
+	}
 }
 
 void Peer::onFailed(const string& error) {
@@ -240,8 +243,10 @@ void Peer::onDisconnection() {
 		string name;
 		if (getString("name", name))
 			_handler._clientsByName.erase(name);
-		if(_handler._clients.erase(id)==0)
-			ERROR("Client ",Util::FormatHex(id,ID_SIZE)," seems already disconnected!")
+		if (_handler._clients.erase(id) == 0) {
+			string hex;
+			ERROR("Client ",Util::FormatHex(id,ID_SIZE,hex)," seems already disconnected!")
+		}
 		_handler.onDisconnection(*this);
 	}
 }
@@ -337,7 +342,7 @@ void Peer::onDataPacket(const Publication& publication,DataReader& packet) {
 	WARN("DataPacket client before connection")
 }
 
-void Peer::onAudioPacket(const Publication& publication,Poco::UInt32 time,MemoryReader& packet) {
+void Peer::onAudioPacket(const Publication& publication,UInt32 time,MemoryReader& packet) {
 	if(connected) {
 		_handler.onAudioPacket(*this,publication,time,packet);
 		return;
@@ -345,7 +350,7 @@ void Peer::onAudioPacket(const Publication& publication,Poco::UInt32 time,Memory
 	WARN("AudioPacket client before connection")
 }
 
-void Peer::onVideoPacket(const Publication& publication,Poco::UInt32 time,MemoryReader& packet) {
+void Peer::onVideoPacket(const Publication& publication,UInt32 time,MemoryReader& packet) {
 	if(connected) {
 		_handler.onVideoPacket(*this,publication,time,packet);
 		return;

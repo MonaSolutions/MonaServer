@@ -30,8 +30,8 @@ FileWatcher::FileWatcher(const string& path) : path(path), _lastModified(0){
 
 bool FileWatcher::watch() {
 	Time lastModified;
-	FileSystem::GetLastModified(path, lastModified); // if path doesn't exist lastModified==0
-	if (lastModified != _lastModified) {
+	Exception ex;
+	if (FileSystem::GetLastModified(ex, path, lastModified) != _lastModified) { // if path doesn't exist lastModified==0
 		if (_lastModified>0)
 			clear();
 		_lastModified.update(lastModified);

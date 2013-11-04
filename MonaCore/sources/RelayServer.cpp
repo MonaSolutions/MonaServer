@@ -18,7 +18,7 @@
 #include "Mona/RelayServer.h"
 #include "Mona/UDPSender.h"
 #include "Mona/Logs.h"
-#include "Poco/Format.h"
+
 
 using namespace std;
 
@@ -117,10 +117,10 @@ void RelaySocket::onReadable(Exception& ex) {
 
 	pSender->address.set(relay.address1==address ? relay.address2 : relay.address1);
 
-	DUMP(pSender->begin(), pSender->size(), Poco::format("Request from %s", address.toString()).c_str())
+	DUMP(pSender->begin(), pSender->size(), "Request from ", address.toString())
 
 	relay.lastTime.update();
-	DEBUG("Relay packet (size=%u) from %s to %s on %hu", pSender->size(), address.toString().c_str(), pSender->address.toString().c_str(), port)
+	DEBUG("Relay packet (size=", pSender->size(), ") from ", address.toString(), " to ", pSender->address.toString()," on ",port)
 }
 
 
@@ -133,9 +133,6 @@ RelayServer::~RelayServer() {
 	stop();
 }
 
-void RelayServer::start() {
-	_manager.start();
-};
 void RelayServer::stop() {
 	clear();
 	_manager.stop();

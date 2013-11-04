@@ -38,6 +38,8 @@ public:
 	SocketAddress(const IPAddress& host, UInt16 port);
 	SocketAddress(const SocketAddress& other);
 
+	void clear();
+
 	void set(const SocketAddress& other);
 
 	/// Creates a SocketAddress from an IP address and a port number.

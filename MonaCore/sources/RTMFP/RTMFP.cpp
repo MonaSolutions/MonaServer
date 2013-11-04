@@ -21,7 +21,7 @@
 #include "string.h" // for memset
 
 using namespace std;
-using namespace Poco;
+
 
 namespace Mona {
 
@@ -124,7 +124,8 @@ void RTMFP::WriteCRC(MemoryWriter& packet) {
 	MemoryReader reader(packet.begin(),packet.length());
 	reader.next(6);
 	UInt16 sum = CheckSum(reader);
-	packet.reset(4);packet << sum;
+	packet.reset(4);
+	packet.write16(sum);
 }
 
 UInt32 RTMFP::Unpack(MemoryReader& packet) {

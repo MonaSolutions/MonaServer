@@ -20,8 +20,7 @@
 
 using namespace std;
 using namespace Mona;
-using namespace Poco;
-using namespace Poco::Net;
+
 
 
 const char*		LUAUDPSocket::Name="LUAUDPSocket";
@@ -33,7 +32,11 @@ LUAUDPSocket::LUAUDPSocket(const SocketManager& manager,bool allowBroadcast,lua_
 LUAUDPSocket::~LUAUDPSocket() {
 }
 
-void LUAUDPSocket::onReception(const Mona::UInt8* data,Mona::UInt32 size,const SocketAddress& address){
+void LUAUDPSocket::onError(const string& error) {
+	WARN("LUAUDPSocket, ", error);
+}
+
+void LUAUDPSocket::onReception(const UInt8* data,UInt32 size,const SocketAddress& address){
 	SCRIPT_BEGIN(_pState)
 		SCRIPT_MEMBER_FUNCTION_BEGIN(LUAUDPSocket,LUAUDPSocket,*this,"onReception")
 			SCRIPT_WRITE_BINARY(data,size)
@@ -57,35 +60,40 @@ int	LUAUDPSocket::Close(lua_State* pState) {
 
 int	LUAUDPSocket::Connect(lua_State* pState) {
 	SCRIPT_CALLBACK(LUAUDPSocket,LUAUDPSocket,udp)
-		const char* address = SCRIPT_READ_STRING(NULL);
-		if(address) {
-			try {
-				SocketAddress addr(address);
-				udp.connect(addr);
-				if(udp.error())
-					SCRIPT_ERROR(udp.error())
-			} catch(Poco::Exception& ex) {
-				SCRIPT_ERROR("Understandable address, ",ex.displayText())
-			}
-		} else
-			SCRIPT_ERROR("UDPSocket::connect takes a valid address in first argument");
+		string host("127.0.0.1");
+		if (SCRIPT_NEXT_TYPE == LUA_TSTRING)
+			host = SCRIPT_READ_STRING("127.0.0.1");
+		UInt16 port = SCRIPT_READ_UINT(0);
+		Exception ex;
+		SocketAddress address;
+		if (port == 0)
+			address.set(ex, host);
+		else
+			address.set(ex, host, port);
+		if (!ex)
+			udp.connect(ex, address);
+		if (ex)
+			SCRIPT_WRITE_STRING(ex.error().c_str())
 	SCRIPT_CALLBACK_RETURN
 }
 
 
 int	LUAUDPSocket::Bind(lua_State* pState) {
 	SCRIPT_CALLBACK(LUAUDPSocket,LUAUDPSocket,udp)
-		const char* address = SCRIPT_READ_STRING(NULL);
-		if(address) {
-			try {
-				SocketAddress addr(address);
-				if(!udp.bind(addr))
-					SCRIPT_WRITE_STRING(udp.error())
-			} catch(Poco::Exception& ex) {
-				SCRIPT_WRITE_STRING(format("Understandable address, %s",ex.displayText()).c_str())
-			}
-		} else
-			SCRIPT_WRITE_STRING("UDPSocket::bind takes a valid address in first argument");
+		string host("0.0.0.0");
+		if (SCRIPT_NEXT_TYPE == LUA_TSTRING)
+			host = SCRIPT_READ_STRING("0.0.0.0");
+		UInt16 port = SCRIPT_READ_UINT(0);
+		Exception ex;
+		SocketAddress address;
+		if (port == 0)
+			address.set(ex, host);
+		else
+			address.set(ex, host, port);
+		if (!ex)
+			udp.bind(ex, address);
+		if (ex)
+			SCRIPT_WRITE_STRING(ex.error().c_str())
 	SCRIPT_CALLBACK_RETURN
 }
 
@@ -93,19 +101,24 @@ int	LUAUDPSocket::Bind(lua_State* pState) {
 int	LUAUDPSocket::Send(lua_State* pState) {
 	SCRIPT_CALLBACK(LUAUDPSocket,LUAUDPSocket,udp)
 		SCRIPT_READ_BINARY(data,size)
-		const char* address = SCRIPT_READ_STRING(NULL);
-		try {
-			if(address) {
-				SocketAddress addr(address);
-				udp.send(data,size,addr);
-			} else {
-				udp.send(data,size);
-			}
-			if(udp.error())
-				SCRIPT_ERROR(udp.error())
-		} catch(Poco::Exception& ex) {
-			SCRIPT_ERROR("Understandable address, ",ex.displayText())
-		}
+
+		Exception ex;
+		string host("127.0.0.1");
+		if (SCRIPT_NEXT_TYPE == LUA_TSTRING)
+			host = SCRIPT_READ_STRING("127.0.0.1");
+		if (SCRIPT_CAN_READ) {
+			UInt16 port = SCRIPT_READ_UINT(0);
+			SocketAddress address;
+			if (port == 0)
+				address.set(ex, host);
+			else
+				address.set(ex, host, port);
+			if (!ex)
+				udp.send(ex, data,size,address);
+		} else
+			udp.send(ex,data, size);
+		if (ex)
+			SCRIPT_WRITE_STRING(ex.error().c_str())
 	SCRIPT_CALLBACK_RETURN
 }
 

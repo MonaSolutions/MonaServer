@@ -8,7 +8,7 @@ using namespace std;
 void PoolTest::runAll() {
 	for(auto itTest : _mapTests) {
 		itTest.second->TestFunction();
-		NOTE("Test ", itTest.second->name(), " OK");
+		NOTE(itTest.second->name(), " OK");
 	}
 }
 
@@ -22,7 +22,7 @@ void PoolTest::run(const string& mod) {
 	// Run all tests of the module
 	for(auto it = itTest.first; it != itTest.second; it++) {
 		it->second->TestFunction();
-		NOTE("Test ", it->second->name(), " OK");
+		NOTE(it->second->name(), " OK");
 	}
 }
 

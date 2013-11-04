@@ -24,15 +24,14 @@ class Broadcaster {
 	friend class Servers;
 public:
 	Broadcaster(){}
-	virtual ~Broadcaster(){}
-	
+
 	typedef std::set<ServerConnection*>::const_iterator Iterator;
 	
-	Iterator begin() const;
-	Iterator end() const;
+	Iterator begin() const { return _connections.begin(); }
+	Iterator end() const { return _connections.end(); }
 	ServerConnection* operator[](Mona::UInt32 index);
 	ServerConnection* operator[](const std::string& address);
-	Mona::UInt32 count() const;
+	Mona::UInt32 count() const { return _connections.size(); }
 	
 	void broadcast(const std::string& handler,ServerMessage& message);
 
@@ -40,22 +39,11 @@ private:
 	std::set<ServerConnection*>				_connections;
 };
 
-inline Broadcaster::Iterator Broadcaster::begin() const {
-	return _connections.begin();
-}
-
-inline Mona::UInt32 Broadcaster::count() const {
-	return _connections.size();
-}
-
-inline Broadcaster::Iterator Broadcaster::end() const {
-	return _connections.end();
-}
 
 inline ServerConnection* Broadcaster::operator[](const std::string& address) {
 	Iterator it;
 	for(it=begin();it!=end();++it) {
-		if((*it)->address==address || (*it)->host==address)
+		if((*it)->address.toString()==address || (*it)->host==address)
 			return *it;
 	}
 	return *it;

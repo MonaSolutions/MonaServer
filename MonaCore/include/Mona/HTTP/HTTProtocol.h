@@ -19,6 +19,7 @@
 
 #include "Mona/Mona.h"
 #include "Mona/TCProtocol.h"
+#include "Mona/HTTP/HTTPSession.h"
 
 namespace Mona {
 
@@ -28,7 +29,13 @@ public:
 
 private:
 	// TCPServer implementation
-	void	onClientRequest(Exception& ex);
+	void	onConnectionRequest(Exception& ex) {
+		HTTPSession* pSession = acceptClient<HTTPSession>(ex, *this, invoker);
+		if (!pSession)
+			return;
+		// Create session!
+		gateway.registerSession(pSession);
+	}
 };
 
 

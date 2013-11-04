@@ -20,7 +20,7 @@
 #include "Mona/Mona.h"
 #include "Mona/FlashStream.h"
 #include "Mona/RTMFP/RTMFPWriter.h"
-#include "Poco/AutoPtr.h"
+
 
 namespace Mona {
 

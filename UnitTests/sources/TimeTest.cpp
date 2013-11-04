@@ -3,15 +3,17 @@
 #include "Mona/Time.h"
 #include "Mona/Exceptions.h"
 #include "Mona/Logs.h"
+#include <thread>
 
 using namespace Mona;
+using namespace std;
 using namespace std::chrono;
 
 // Test 
 ADD_TEST(TimeTest, TestTimestamp) {
 
 	Time t1;
-	_sleep(200);
+	this_thread::sleep_for(milliseconds(200));
 	Time t2;
 	Time t3((Int64)t2);
 	EXPECT_TRUE(t1 != t2);
@@ -32,7 +34,7 @@ ADD_TEST(TimeTest, TestTimestamp) {
 	EXPECT_TRUE(tEpoch == 0);
 
 	Time now;
-	_sleep(201);
+	this_thread::sleep_for(milliseconds(200));
 	EXPECT_TRUE(now.elapsed() >= 200000);
 	EXPECT_TRUE(now.isElapsed(200000));
 	EXPECT_TRUE(!now.isElapsed(2000000));
@@ -82,7 +84,7 @@ ADD_TEST(TimeTest, TestTimeFormat) {
 
 	// Convert init time to local time
 	time_t utcint = timegm(&tminit);
-	tminit = *localtime(&utcint);
+	LOCALTIME(utcint, tminit);
 
 	EXPECT_TRUE(tminit.tm_year == datetm.tm_year);
 	EXPECT_TRUE(tminit.tm_mon == datetm.tm_mon);

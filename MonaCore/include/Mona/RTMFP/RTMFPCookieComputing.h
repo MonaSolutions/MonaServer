@@ -20,7 +20,7 @@
 #include "Mona/Mona.h"
 #include "Mona/Invoker.h"
 #include "Mona/DiffieHellman.h"
-#include "Poco/Buffer.h"
+
 
 
 namespace Mona {
@@ -32,10 +32,10 @@ class RTMFPCookieComputing : public WorkThread, private Task, virtual Object {
 public:
 	RTMFPCookieComputing(RTMFPHandshake&	handshake,Invoker& invoker);
 	
-	const UInt8							value[COOKIE_SIZE];
+	UInt8								value[COOKIE_SIZE];
 	DiffieHellman						diffieHellman;
-	Buffer<UInt8>					initiatorKey;
-	Buffer<UInt8>					sharedSecret;
+	Buffer<UInt8>						initiatorKey;
+	Buffer<UInt8>						sharedSecret;
 	std::weak_ptr<RTMFPCookieComputing> weak;
 
 private:

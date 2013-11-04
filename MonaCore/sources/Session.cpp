@@ -19,11 +19,9 @@
 #include "Mona/Decoding.h"
 #include "Mona/Util.h"
 #include "Mona/Logs.h"
-#include "Poco/Format.h"
-#include "Poco/RandomStream.h"
 
 using namespace std;
-using namespace Poco;
+
 
 
 namespace Mona {
@@ -33,16 +31,18 @@ Session::Session(Protocol& protocol,Invoker& invoker, const Peer& peer,const cha
 	this->peer.addresses.begin()->set(peer.address);
 	(string&)this->peer.protocol = protocol.name;
 	if(memcmp(this->peer.id,"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",ID_SIZE)==0)
-		RandomInputStream().read((char*)this->peer.id,ID_SIZE);
-	DEBUG("peer.id: ",Util::FormatHex(this->peer.id,ID_SIZE));
+		Util::Random(this->peer.id,ID_SIZE);
+	string hex;
+	DEBUG("peer.id: ", Util::FormatHex(this->peer.id, ID_SIZE, hex));
 }
 	
 Session::Session(Protocol& protocol,Invoker& invoker, const char* name) :
 	protocol(protocol),name(name ? name : ""),invoker(invoker),_pDecodingThread(NULL),died(false),checked(false),failed(false),id(0),peer((Handler&)invoker) {
 	(string&)peer.protocol = protocol.name;
 	if(memcmp(peer.id,"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",ID_SIZE)==0)
-		RandomInputStream().read((char*)peer.id,ID_SIZE);
-	DEBUG("peer.id: ",Util::FormatHex(this->peer.id,ID_SIZE));
+		Util::Random(this->peer.id, ID_SIZE);
+	string hex;
+	DEBUG("peer.id: ", Util::FormatHex(this->peer.id, ID_SIZE, hex));
 }
 
 
@@ -71,7 +71,7 @@ void Session::receive(MemoryReader& packet) {
 	}
 	if(died)
 		return;
-	DUMP(packet,format("Request from %s",peer.address.toString()).c_str())
+	DUMP(packet,"Request from ",peer.address.toString())
 	packetHandler(packet);
 }
 

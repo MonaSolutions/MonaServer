@@ -21,7 +21,7 @@
 #include <openssl/hmac.h>
 #include <cstring>
 
-using namespace Poco;
+
 
 namespace Mona {
 

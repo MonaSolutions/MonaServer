@@ -190,7 +190,7 @@ public:
 	template <typename ...Args>
 	static std::string& Append(std::string& result, const void* value, const Args&... args)	{
 		char buffer[64];
-		sprintf(buffer, "%08lX", (UIntPtr) value);
+		sprintf(buffer, "%08lX", value);
 		result.append(buffer);
 		return String::Append(result, args ...);
 	}

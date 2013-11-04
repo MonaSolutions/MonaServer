@@ -40,9 +40,10 @@ int LUAMember::Release(lua_State* pState) {
 int LUAMember::Get(lua_State *pState) {
 	SCRIPT_CALLBACK(Peer,LUAMember,member)
 		string name = SCRIPT_READ_STRING("");
-		if(name=="id")
-			SCRIPT_WRITE_STRING(Util::FormatHex(member.id,ID_SIZE).c_str())
-		else if(name=="rawId")
+		if (name == "id") {
+			string hex;
+			SCRIPT_WRITE_STRING(Util::FormatHex(member.id,ID_SIZE,hex).c_str())
+		} else if (name == "rawId")
 			SCRIPT_WRITE_BINARY(member.id,ID_SIZE)
 		else if(name=="release")
 			SCRIPT_WRITE_FUNCTION(&LUAMember::Release);

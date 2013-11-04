@@ -29,21 +29,21 @@
 #include <openssl/evp.h>
 #include "math.h"
 
-using namespace Poco;
-using namespace Mona;
-using namespace std;
 
-const char*		LUAInvoker::Name="Invoker";
+using namespace std;
+using namespace Mona;
+
+const char*		LUAInvoker::Name="Mona::Invoker";
 
 
 int	LUAInvoker::Split(lua_State *pState) {
 	SCRIPT_CALLBACK(Invoker,LUAInvoker,invoker)
 		string expression = SCRIPT_READ_STRING("");
 		string separator = SCRIPT_READ_STRING("");
-		StringTokenizer split(expression,separator,SCRIPT_READ_UINT(0));
-		StringTokenizer::Iterator it;
-		for(it=split.begin();it!=split.end();++it)
-			SCRIPT_WRITE_STRING(it->c_str())
+		vector<string> values;
+		String::Split(expression, separator, values,SCRIPT_READ_UINT(0));
+		for(string& value : values)
+			SCRIPT_WRITE_STRING(value.c_str())
 	SCRIPT_CALLBACK_RETURN
 }
 
@@ -156,11 +156,12 @@ int	LUAInvoker::FromAMF(lua_State *pState) {
 int	LUAInvoker::AddToBlacklist(lua_State* pState) {
 	SCRIPT_CALLBACK(Invoker,LUAInvoker,invoker)	
 		while(SCRIPT_CAN_READ) {
-			try {		
-				invoker.addBanned(IPAddress(SCRIPT_READ_STRING("")));
-			} catch(Exception& ex) {
-				SCRIPT_ERROR("Incomprehensible blacklist entry, ",ex.displayText());
-			}
+			IPAddress address;
+			Exception ex;
+			bool success;
+			EXCEPTION_TO_LOG(success=address.set(ex, SCRIPT_READ_STRING("")), "Blacklist entry")
+			if (success)
+				invoker.addBanned(address);
 		}
 	SCRIPT_CALLBACK_RETURN
 }
@@ -168,11 +169,12 @@ int	LUAInvoker::AddToBlacklist(lua_State* pState) {
 int	LUAInvoker::RemoveFromBlacklist(lua_State* pState) {
 	SCRIPT_CALLBACK(Invoker,LUAInvoker,invoker)
 		while(SCRIPT_CAN_READ) {
-			try {
-				invoker.removeBanned(IPAddress(SCRIPT_READ_STRING("")));
-			} catch(Exception& ex) {
-				SCRIPT_ERROR("Incomprehensible blacklist entry, ",ex.displayText());
-			}
+			IPAddress address;
+			Exception ex;
+			bool success;
+			EXCEPTION_TO_LOG(success = address.set(ex, SCRIPT_READ_STRING("")), "Blacklist entry")
+			if (success)
+				invoker.removeBanned(address);
 		}
 	SCRIPT_CALLBACK_RETURN
 }
@@ -202,7 +204,7 @@ int LUAInvoker::Get(lua_State *pState) {
 		} else if(name=="absolutePath") {
 			SCRIPT_WRITE_FUNCTION(&LUAInvoker::AbsolutePath)
 		} else if(name=="epochTime") {
-			SCRIPT_WRITE_NUMBER(ROUND(Time().toInt()/1000))
+			SCRIPT_WRITE_NUMBER(round(Time()/1000))
 		} else if(name=="split") {
 			SCRIPT_WRITE_FUNCTION(&LUAInvoker::Split)
 		} else if(name=="createUDPSocket") {

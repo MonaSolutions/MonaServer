@@ -17,25 +17,15 @@
 
 #include "ServerConnection.h"
 #include "Mona/Util.h"
-#include "Mona/Logs.h"
-#include "Poco/Format.h"
+
 
 using namespace std;
 using namespace Mona;
-using namespace Poco;
-using namespace Poco::Net;
 
 
-ServerConnection::ServerConnection(const string& target,const SocketManager& manager,ServerHandler& handler,ServersHandler& serversHandler) : address(target),_size(0),_handler(handler),TCPClient(manager),_connected(false),_serversHandler(serversHandler),isTarget(true) {
-	size_t found = target.find("?");
-	if(found!=string::npos) {
-		Mona::Util::UnpackQuery(target.substr(found+1),*this);
-		((string&)address).assign(target.substr(0,found));
-	}
-}
-
-ServerConnection::ServerConnection(const StreamSocket& socket,const SocketManager& manager,ServerHandler& handler,ServersHandler& serversHandler) : address(socket.peerAddress().toString()),_size(0),_handler(handler),TCPClient(socket,manager),_connected(false),_serversHandler(serversHandler),isTarget(false) {
-	sendPublicAddress();
+ServerConnection::ServerConnection(const SocketAddress& peerAddress, const SocketManager& manager, ServerHandler& handler, ServersHandler& serversHandler,const bool& alreadyConnected) : address(peerAddress), _size(0), _handler(handler), TCPClient(manager, peerAddress), _connected(false), _serversHandler(serversHandler), isTarget(false) {
+	if (alreadyConnected)
+		sendPublicAddress();
 }
 
 
@@ -43,8 +33,8 @@ ServerConnection::~ServerConnection() {
 	
 }
 
-Mona::UInt16 ServerConnection::port(const string& protocol) {
-	map<string, Mona::UInt16>::const_iterator it = _ports.find(protocol);
+UInt16 ServerConnection::port(const string& protocol) {
+	map<string, UInt16>::const_iterator it = _ports.find(protocol);
 	if(it==_ports.end())
 		return 0;
 	return it->second;
@@ -52,17 +42,17 @@ Mona::UInt16 ServerConnection::port(const string& protocol) {
 
 void ServerConnection::sendPublicAddress() {
 	ServerMessage message;
-	Mona::BinaryWriter& writer = message.writer;
-	writer << _handler.host();
+	BinaryWriter& writer = message.writer;
+	writer.writeString(_handler.host());
 	writer.write8(_handler.ports().size());
-	map<string, Mona::UInt16>::const_iterator it0;
+	map<string, UInt16>::const_iterator it0;
 	for(it0=_handler.ports().begin();it0!=_handler.ports().end();++it0) {
-		writer << it0->first;
+		writer.writeString(it0->first);
 		writer.write16(it0->second);
 	}
 	for(auto& it: *this) {
-		writer << it.first;
-		writer << it.second;
+		writer.writeString(it.first);
+		writer.writeString(it.second);
 	}
 	send("",message);
 }
@@ -70,9 +60,12 @@ void ServerConnection::sendPublicAddress() {
 void ServerConnection::connect() {
 	if(connected())
 		return;
-	INFO("Attempt to join ",address," server")
-	TCPClient::connect(SocketAddress(address));
-	sendPublicAddress();
+	INFO("Attempt to join ", address.toString(), " server")
+	Exception ex;
+	bool success = false;
+	EXCEPTION_TO_LOG(success=TCPClient::connect(ex, address),"ServerConnection")
+	if (success)
+		sendPublicAddress();
 }
 
 void ServerConnection::send(const string& handler,ServerMessage& message) {
@@ -83,10 +76,10 @@ void ServerConnection::send(const string& handler,ServerMessage& message) {
 	}
 
 	// Search handler!
-	Mona::UInt32 handlerRef = 0;
+	UInt32 handlerRef = 0;
 	bool   writeRef = false;
 	if(!handlerName.empty()) {
-		map<string, Mona::UInt32>::iterator it = _sendingRefs.lower_bound(handlerName);
+		map<string, UInt32>::iterator it = _sendingRefs.lower_bound(handlerName);
 		if(it!=_sendingRefs.end() && it->first==handlerName) {
 			handlerRef = it->second;
 			handlerName.clear();
@@ -95,17 +88,17 @@ void ServerConnection::send(const string& handler,ServerMessage& message) {
 			if(it!=_sendingRefs.begin())
 				--it;
 			handlerRef = _sendingRefs.size()+1;
-			_sendingRefs.insert(it, pair<string, Mona::UInt32>(handlerName, handlerRef));
+			_sendingRefs.insert(it, pair<string, UInt32>(handlerName, handlerRef));
 		}
 	}
 
-	Mona::UInt16 shift = handlerName.empty() ? Mona::Util::Get7BitValueSize(handlerRef) : handlerName.size();
+	UInt16 shift = handlerName.empty() ? Util::Get7BitValueSize(handlerRef) : handlerName.size();
 	shift = 300-(shift+5);
 
 	BinaryStream& stream = message.stream;
-	Mona::BinaryWriter& writer = message.writer;
+	BinaryWriter& writer = message.writer;
 	stream.resetReading(shift);
-	Mona::UInt32 size = stream.size();
+	UInt32 size = stream.size();
 	stream.resetWriting(shift);
 	writer.write32(size-4);
 	writer.writeString8(handlerName);
@@ -115,12 +108,13 @@ void ServerConnection::send(const string& handler,ServerMessage& message) {
 		writer.write8(0);
 	stream.resetWriting(size+shift);
 
-	DUMP_INTERN(stream.data()+4,stream.size()-4,format("To %s server",address).c_str());
-	TCPClient::send(stream.data(),stream.size());
+	DUMP_INTERN(stream.data() + 4, stream.size() - 4, "To ", address.toString()," server");
+	Exception ex;
+	EXCEPTION_TO_LOG(TCPClient::send(ex,stream.data(),stream.size()),"Server ",address.toString());
 }
 
 
-Mona::UInt32 ServerConnection::onReception(const Mona::UInt8* data, Mona::UInt32 size) {
+UInt32 ServerConnection::onReception(const UInt8* data, UInt32 size) {
 	if(_size==0 && size<4)
 		return size;
 
@@ -133,18 +127,18 @@ Mona::UInt32 ServerConnection::onReception(const Mona::UInt8* data, Mona::UInt32
 	size = reader.available()-_size;
 	reader.shrink(_size);
 	
-	DUMP_INTERN(reader,format("From %s server",address).c_str());
+	DUMP_INTERN(reader, "From ", address.toString(), " server");
 
 	string handler;
-	Mona::UInt8 handlerSize = reader.read8();
+	UInt8 handlerSize = reader.read8();
 	if(handlerSize)
 		_receivingRefs[_receivingRefs.size() + 1] = reader.readRaw(handlerSize, handler);
 	else {
-		Mona::UInt32 ref = reader.read7BitEncoded();
+		UInt32 ref = reader.read7BitEncoded();
 		if(ref>0) {
-			map<Mona::UInt32, string>::const_iterator it = _receivingRefs.find(ref);
+			map<UInt32, string>::const_iterator it = _receivingRefs.find(ref);
 			if(it==_receivingRefs.end())
-				ERROR("Impossible to find the ",ref," handler reference for the server ",peerAddress().toString())
+				ERROR("Impossible to find the ", ref, " handler reference for the server ", address.toString())
 			else
 				handler.assign(it->second);
 		}
@@ -152,20 +146,21 @@ Mona::UInt32 ServerConnection::onReception(const Mona::UInt8* data, Mona::UInt32
 
 	_size=0;
 	if(handler.empty()) {
-		reader >> ((string&)host);
+		reader.readString((string&)host);
+
 		if(host.empty())
-			((string&)host) = peerAddress().host().toString();
-		Mona::UInt8 ports = reader.read8();
+			((string&)host) = address.host().toString();
+		UInt8 ports = reader.read8();
 		string protocol;
 		while(ports>0) {
-			reader >> protocol;
+			reader.readString(protocol);
 			_ports[protocol] = reader.read16();
 			--ports;
 		}
 		while(reader.available()) {
 			string key,value;
-			reader >> key;
-			reader >> value;
+			reader.readString(key);
+			reader.readString(value);
 			setRaw(key,value);
 		}
 		if(!_connected) {
@@ -185,10 +180,11 @@ void ServerConnection::onDisconnection(){
 	if(_connected) {
 		_connected=false;
 		bool autoDelete = _serversHandler.disconnection(*this);
-		_handler.disconnection(*this,error());
+		_handler.disconnection(*this, _error);
 		_ports.clear();
 		((string&)host).clear();
 		if(autoDelete)
 			delete this;
 	}
+	_error.clear();
 }

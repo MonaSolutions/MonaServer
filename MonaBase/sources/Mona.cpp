@@ -17,6 +17,7 @@
 
 #include "Mona/Mona.h"
 
+namespace Mona {
 
 #if defined(_WIN32) && defined(_DEBUG)
 
@@ -24,8 +25,7 @@
 
 #define FALSE   0
 #define TRUE    1
- 
-namespace Mona {
+
 
 _CRT_REPORT_HOOK prevHook;
  

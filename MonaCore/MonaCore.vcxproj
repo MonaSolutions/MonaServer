@@ -56,7 +56,7 @@
       <AdditionalOptions>/MP %(AdditionalOptions)</AdditionalOptions>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>../External/include;../MonaBase/include;include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;_DEBUG;STATIC;MONA_LOGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <MinimalRebuild>false</MinimalRebuild>
       <ExceptionHandling>Sync</ExceptionHandling>
@@ -80,7 +80,7 @@
       <OmitFramePointers>true</OmitFramePointers>
       <WholeProgramOptimization>true</WholeProgramOptimization>
       <AdditionalIncludeDirectories>include;../External/include;../MonaBase/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;NDEBUG;STATIC;MONA_LOGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <ExceptionHandling>Sync</ExceptionHandling>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -90,7 +90,8 @@
       <DebugInformationFormat />
       <Optimization>Full</Optimization>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <SDLCheck>true</SDLCheck>
+      <SDLCheck>
+      </SDLCheck>
     </ClCompile>
     <Lib>
       <OutputFile>$(OutDir)$(ProjectName).lib</OutputFile>
@@ -202,7 +203,6 @@
     <ClCompile Include="sources\RTMFP\RTMFPWriter.cpp" />
     <ClCompile Include="sources\RTMP\RTMP.cpp" />
     <ClCompile Include="sources\RTMP\RTMPHandshaker.cpp" />
-    <ClCompile Include="sources\RTMP\RTMProtocol.cpp" />
     <ClCompile Include="sources\RTMP\RTMPSender.cpp" />
     <ClCompile Include="sources\RTMP\RTMPSession.cpp" />
     <ClCompile Include="sources\RTMP\RTMPWriter.cpp" />
@@ -210,7 +210,6 @@
     <ClCompile Include="sources\WebSocket\WSSession.cpp" />
     <ClCompile Include="sources\WebSocket\WSWriter.cpp" />
     <ClCompile Include="sources\HTTP\HTTP.cpp" />
-    <ClCompile Include="sources\HTTP\HTTProtocol.cpp" />
     <ClCompile Include="sources\HTTP\HTTPSession.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug|Win32'">false</ExcludedFromBuild>
     </ClCompile>

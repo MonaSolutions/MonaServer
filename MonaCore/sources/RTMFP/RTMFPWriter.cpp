@@ -18,11 +18,10 @@
 #include "Mona/RTMFP/RTMFPWriter.h"
 #include "Mona/Peer.h"
 #include "Mona/Util.h"
-#include "Mona/Logs.h"
 #include <cstring>
 
 using namespace std;
-using namespace Poco;
+
 
 namespace Mona {
 
@@ -73,17 +72,6 @@ void RTMFPWriter::clear() {
 		ERROR("Error in RTMFPWriter 'clear' function trying to flush : ", ex.error());
 		_trigger.stop();
 	}
-}
-
-void RTMFPWriter::fail(const string& error) {
-	if(state()==CLOSED)
-		return;
-	WARN("RTMFPWriter ",id," has failed : ",error);
-	clear();
-	_stage=_stageAck=_lostCount=_ackCount=0;
-	_band.initWriter(_band.changeWriter(*new RTMFPWriter(*this)));
-	_qos.reset();
-	_reseted=true;
 }
 
 void RTMFPWriter::close(int code) {

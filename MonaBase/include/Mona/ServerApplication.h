@@ -19,32 +19,10 @@ This file is a part of Mona.
 
 #include "Mona/Mona.h"
 #include "Mona/Application.h"
-#include "Mona/Event.h"
+#include "Mona/TerminateSignal.h"
 #include <iostream>
-#if defined(_WIN32)
-#include "Windows.h"
-#endif
 
 namespace Mona {
-
-class TerminateSignal : virtual Object {
-	friend class ServerApplication;
-public:
-	TerminateSignal();
-	void wait();
-private:
-#if defined(_WIN32)
-	static BOOL __stdcall ConsoleCtrlHandler(DWORD ctrlType);
-	static void __stdcall ServiceControlHandler(DWORD control);
-
-	static Event					_Terminate;
-	static SERVICE_STATUS			_ServiceStatus;
-	static SERVICE_STATUS_HANDLE	_ServiceStatusHandle;
-
-#else
-	sigset_t _signalSet;
-#endif
-};
 
 
 class ServerApplication : public Application, virtual Object {
@@ -59,8 +37,8 @@ protected:
 	void defineOptions(Exception& ex, Options& options);
 
 private:
-	virtual int main(TerminateSignal& serverTerminateSignal) = 0;
-	int			main() {}
+	virtual int main(TerminateSignal& terminateSignal) = 0;
+	int			main() { return Application::EXIT_OK; }
 
 	bool		_isInteractive;
 
@@ -79,8 +57,6 @@ private:
 	std::string _startup;
 
 	static ServerApplication*	 _PThis;
-	static SERVICE_STATUS        _ServiceStatus;
-	static SERVICE_STATUS_HANDLE _ServiceStatusHandle;
 
 #else
 	void handlePidFile(const std::string& value);

@@ -20,11 +20,10 @@
 #include "LUAMember.h"
 #include "Mona/Invoker.h"
 #include "Mona/Util.h"
-#include "Poco/HexBinaryDecoder.h"
 #include <sstream>
 
 using namespace Mona;
-using namespace Poco;
+
 using namespace std;
 
 const char*		LUAGroups::Name="Mona::Entities<Group>";
@@ -36,11 +35,11 @@ int LUAGroups::Pairs(lua_State* pState) {
 		if(!lua_iscfunction(pState,-1))
 			SCRIPT_ERROR("'next' should be a LUA function, it should not be overloaded")
 		else {
+			string hex;
 			lua_newtable(pState);
-			Entities<Group>::Iterator it;
-			for(it=groups.begin();it!=groups.end();++it) {
-				SCRIPT_WRITE_PERSISTENT_OBJECT(Group,LUAGroup,*it->second)
-				lua_setfield(pState,-2,Mona::Util::FormatHex(it->second->id,ID_SIZE).c_str());
+			for (auto it : groups) {
+				SCRIPT_WRITE_PERSISTENT_OBJECT(Group,LUAGroup,*it.second)
+				lua_setfield(pState, -2, Util::FormatHex(it.second->id, ID_SIZE, hex).c_str());
 			}
 		}
 	SCRIPT_CALLBACK_RETURN
@@ -61,29 +60,27 @@ int LUAGroups::Join(lua_State* pState) {
 
 		if(pHandler) {
 			SCRIPT_READ_BINARY(peerId,size)
-			if(size==(ID_SIZE*2)) {
-				stringstream ss;
-				ss.write((const char*)peerId,size);
-				HexBinaryDecoder(ss).read((char*)peerId,ID_SIZE);
-			} else if(size!=ID_SIZE) {
+			if(size==(ID_SIZE*2))
+				Util::UnformatHex((UInt8*)peerId, size);
+			else if(size!=ID_SIZE) {
 				pHandler=NULL;
-				if(peerId)
-					SCRIPT_ERROR("Bad member format id ",Mona::Util::FormatHex(peerId,size))
-				else
+				if (peerId) {
+					string hex;
+					SCRIPT_ERROR("Bad member format id ", Util::FormatHex(peerId, size, hex))
+				}  else
 					SCRIPT_ERROR("Member id argument missing")
 			}
 
 			if(pHandler) {
 				SCRIPT_READ_BINARY(groupId,size)
-				if(size==(ID_SIZE*2)) {
-					stringstream ss;
-					ss.write((const char*)groupId,size);
-					HexBinaryDecoder(ss).read((char*)groupId,ID_SIZE);
-				} else if(size!=ID_SIZE) {
+				if(size==(ID_SIZE*2))
+					Util::UnformatHex((UInt8*)groupId, size);
+				else if(size!=ID_SIZE) {
 					pHandler=NULL;
-					if(groupId)
-						SCRIPT_ERROR("Bad group format id ",Mona::Util::FormatHex(groupId,size))
-					else
+					if (groupId) {
+						string hex;
+						SCRIPT_ERROR("Bad group format id ", Util::FormatHex(groupId, size, hex))
+					} else
 						SCRIPT_ERROR("Group id argument missing")
 				}
 
@@ -116,14 +113,12 @@ int LUAGroups::Get(lua_State *pState) {
 			Group* pGroup = NULL;
 			if(size==ID_SIZE)
 				pGroup = groups(id);
-			else if(size==(ID_SIZE*2)) {
-				stringstream ss;
-				ss.write((const char*)id,size);
-				HexBinaryDecoder(ss).read((char*)id,ID_SIZE);
-				pGroup = groups(id);
-			} else if(id)
-				SCRIPT_ERROR("Bad group format id ",Mona::Util::FormatHex(id,size))
-			else
+			else if(size==(ID_SIZE*2))
+				pGroup = groups(Util::UnformatHex((UInt8*)id, size));
+			else if (id) {
+				string hex;
+				SCRIPT_ERROR("Bad group format id ", Util::FormatHex(id, size, hex))
+			}  else
 				SCRIPT_ERROR("Group id argument missing")
 			if(pGroup)
 				SCRIPT_WRITE_PERSISTENT_OBJECT(Group,LUAGroup,*pGroup)

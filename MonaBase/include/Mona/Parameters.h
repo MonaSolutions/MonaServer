@@ -26,13 +26,21 @@ class Parameters : virtual Object {
 public:
 
 	bool getString(const std::string& key, std::string& value) const {return getRaw(key, value);}
-	bool getNumber(const std::string& key, double& value) const;
-	bool getNumber(const std::string& key, int& value) const;
+	template<typename NumberType>
+	bool getNumber(const std::string& key, NumberType& value) const {
+		std::string temp;
+		if (!getRaw(key, temp))
+			return false;
+		return String::ToNumber<NumberType>(temp, value);
+	}
 	bool getBool(const std::string& key, bool& value) const;
 
 	void setString(const std::string& key, const std::string& value) {setRaw(key, value);}
-	void setNumber(const std::string& key, double value) { std::string val; setRaw(key, String::Format(val, value)); }
-	void setNumber(const std::string& key, int value) { std::string val; setRaw(key, String::Format(val, value)); }
+	template<typename NumberType>
+	void setNumber(const std::string& key, NumberType value) {
+		std::string val;
+		setRaw(key, String::Format(val, value));
+	}
 	void setBool(const std::string& key, bool value) {setRaw(key, value ? "true" : "false");}
 
 	bool hasKey(const std::string& key) { std::string value; return getRaw(key, value); }

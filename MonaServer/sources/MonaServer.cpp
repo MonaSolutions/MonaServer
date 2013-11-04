@@ -17,7 +17,7 @@
 
 #include "MonaServer.h"
 #include "Mona/Exceptions.h"
-#include "Poco/String.h"
+#include "Mona/FileSystem.h"
 #include "LUAClient.h"
 #include "LUAPublication.h"
 #include "LUAPublications.h"
@@ -35,33 +35,37 @@
 #define CONFIG_PROTOCOL_NUMBER(PROTOCOL,NAME) parameters.getNumber(#PROTOCOL"."#NAME,(double&)params.PROTOCOL.NAME);parameters.setNumber(#PROTOCOL"."#NAME,(double&)params.PROTOCOL.NAME);if(#NAME=="port" && params.PROTOCOL.NAME>0) _ports[#PROTOCOL] = params.PROTOCOL.NAME;
 
 using namespace std;
-using namespace Poco;
-using namespace Poco::Net;
+using namespace Mona;
 
 
 const string MonaServer::WWWPath("./");
 
-MonaServer::MonaServer(ApplicationKiller& applicationKiller, UInt32 bufferSize, UInt32 threads, UInt16 serversPort, const string& serversTarget) :
-	Mona::Server(bufferSize, threads), servers(serversPort,*this,sockets, serversTarget), _applicationKiller(applicationKiller), _pService(NULL) {
+MonaServer::MonaServer(TerminateSignal& terminateSignal, UInt32 bufferSize, UInt32 threads, UInt16 serversPort, const string& serversTarget) :
+Server(bufferSize, threads), servers(serversPort, *this, sockets, serversTarget), _terminateSignal(terminateSignal), _pService(NULL) {
 }
 
 
-void MonaServer::start(Mona::MapParameters& parameters) {
+bool MonaServer::start(MapParameters& parameters) {
 	if(running()) {
 		ERROR("Server is already running, call stop method before");
-		return;
+		return false;
 	}
 	parameters.getString("host", _host);
 
 	string pathApp;
 	parameters.getString("application.dir", pathApp);
 	(string&)WWWPath = pathApp + "www";
-	File(WWWPath).createDirectory();
+
+
+	if (!FileSystem::CreateDirectory(WWWPath)) {
+		ERROR("Impossible to create application directory ", WWWPath);
+		return false;
+	}
 
 	_pState = Script::CreateState();
 	Service::InitGlobalTable(_pState);
 
-	Mona::ServerParams	params;
+	ServerParams	params;
 
 	// RTMFP
 	parameters.getNumber("RTMFP.keepAliveServer",(double&)params.RTMFP.keepAliveServer);
@@ -84,21 +88,22 @@ void MonaServer::start(Mona::MapParameters& parameters) {
 	// WebSocket
 	CONFIG_PROTOCOL_NUMBER(HTTP, port);
 
-	Util::Environment;
 
 	SCRIPT_BEGIN(_pState)
 		SCRIPT_CREATE_PERSISTENT_OBJECT(Invoker,LUAInvoker,*this)
 		readNextParameter(_pState, parameters, "");
 		lua_setglobal(_pState,"mona.configs");
+		readNextParameter(_pState, Util::Environment(), "");
+		lua_setglobal(_pState, "mona.environments");
 	SCRIPT_END
 
-	Mona::Server::start(params);
+	return Server::start(params);
 }
 
-bool MonaServer::readNextParameter(lua_State* pState, const Mona::MapParameters& parameters, const string& root) {
+bool MonaServer::readNextParameter(lua_State* pState, const MapParameters& parameters, const string& root) {
 	lua_newtable(pState);
 	for (auto& it : parameters) {
-		if (icompare(it.second, "false") == 0 || icompare(it.second, "nil") == 0)
+		if (String::ICompare(it.second, "false") == 0 || String::ICompare(it.second, "nil") == 0)
 			lua_pushboolean(_pState, 0);
 		else
 			lua_pushlstring(_pState, it.second.c_str(), it.second.size());
@@ -117,7 +122,7 @@ void MonaServer::startService(Service& service) {
 	_servicesRunning.insert(&service);
 	// Send running information for all connected servers
 	ServerMessage message;
-	message.writer << service.path;
+	message.writer.writeString(service.path);
 	servers.broadcast(".",message);
 	
 	SCRIPT_BEGIN(_pState)
@@ -163,12 +168,12 @@ void MonaServer::onStop() {
 	servers.stop();
 	Script::CloseState(_pState);
 	_ports.clear();
-	_applicationKiller.kill();
+	_terminateSignal.set();
 }
 
 
 void MonaServer::manage() {
-	Mona::Server::manage();
+	Server::manage();
 	_pService->refresh();
 	set<Service*>& events = _scriptEvents["onManage"];
 	set<Service*>::const_iterator it;
@@ -182,7 +187,7 @@ void MonaServer::manage() {
 	servers.manage();
 }
 
-void MonaServer::readLUAAddresses(const string& protocol,set<SocketAddress,Mona::Util::AddressComparator>& addresses) {
+void MonaServer::readLUAAddresses(const string& protocol,set<SocketAddress>& addresses) {
 	lua_pushnil(_pState);  // first key 
 	while (lua_next(_pState, -2) != 0) {
 		// uses 'key' (at index -2) and 'value' (at index -1) 
@@ -192,45 +197,66 @@ void MonaServer::readLUAAddresses(const string& protocol,set<SocketAddress,Mona:
 }
 
 
-void MonaServer::readLUAAddress(const string& protocol,set<SocketAddress,Mona::Util::AddressComparator>& addresses) {
+void MonaServer::readLUAAddress(const string& protocol,set<SocketAddress>& addresses) {
 	int type = lua_type(_pState,-1);
-	try {
-		if(type==LUA_TTABLE) {
-			bool isConst;
-			Broadcaster* pBroadcaster = Script::ToObject<Broadcaster,LUAServers>(_pState,isConst);
-			if(!pBroadcaster)
-				 pBroadcaster = Script::ToObject<Broadcaster,LUABroadcaster>(_pState,isConst);
-			if(pBroadcaster) {
-				Broadcaster::Iterator it;
-				for(it=pBroadcaster->begin();it!=pBroadcaster->end();++it) {
-					UInt16 port = (*it)->port(protocol);
-					if(port>0)
-						addresses.insert(SocketAddress((*it)->host,port));
-				}
-				return;
-			}
-			ServerConnection* pServer = Script::ToObject<ServerConnection,LUAServer>(_pState,isConst);
-			if(pServer) {
+	
+	Exception ex;
+
+	if(type==LUA_TTABLE) {
+		bool isConst;
+		Broadcaster* pBroadcaster = Script::ToObject<Broadcaster,LUAServers>(_pState,isConst);
+		if(!pBroadcaster)
+				pBroadcaster = Script::ToObject<Broadcaster,LUABroadcaster>(_pState,isConst);
+		if(pBroadcaster) {
+			for (ServerConnection* pServer : *pBroadcaster) {
 				UInt16 port = pServer->port(protocol);
-				if(port>0)
-					addresses.insert(SocketAddress(pServer->host,port));
-				return;
+				if (port > 0) {
+					IPAddress host;
+					if (host.set(ex, pServer->host))
+						addresses.emplace(host, port);
+					else if (ex)
+						goto EX;
+				}
 			}
-			readLUAAddresses(protocol,addresses);
-		} else {
-			const char* addr = lua_tostring(_pState,-1);
-			if(addr)
-				addresses.insert(SocketAddress(strcmp(addr,"myself")==0 ? "0.0.0.0" : addr));
+			return;
 		}
-	} catch(Exception& ex) {
-		SCRIPT_BEGIN(_pState)
-			SCRIPT_ERROR("Invalid address, ",ex.displayText());
-		SCRIPT_END
+		ServerConnection* pServer = Script::ToObject<ServerConnection,LUAServer>(_pState,isConst);
+		if(pServer) {
+			UInt16 port = pServer->port(protocol);
+			if (port > 0) {
+				IPAddress host;
+				if (host.set(ex, pServer->host))
+					addresses.emplace(host, port);
+				else if (ex)
+					goto EX;
+			}
+			return;
+		}
+		readLUAAddresses(protocol,addresses);
+	} else {
+		const char* addr = lua_tostring(_pState,-1);
+		if (addr) {
+			if (String::ICompare(addr, "myself") == 0)
+				addresses.emplace(); // wilcard, will be changed to the server public address by the caller
+			else {
+				SocketAddress address;
+				if(address.set(ex,addr))
+					addresses.emplace(address);
+				else if (ex)
+					goto EX;
+			}
+			
+		}
 	}
+	return;
+EX:
+	SCRIPT_BEGIN(_pState)
+		SCRIPT_ERROR("Invalid address, ",ex.error());
+	SCRIPT_END
 }
 
 
-void MonaServer::onRendezVousUnknown(const string& protocol,const UInt8* id,set<SocketAddress,Mona::Util::AddressComparator>& addresses) {
+void MonaServer::onRendezVousUnknown(const string& protocol,const UInt8* id,set<SocketAddress>& addresses) {
 	set<Service*>& events = _scriptEvents["onRendezVousUnknown"];
 	set<Service*>::const_iterator it;
 	for(it=events.begin();it!=events.end();++it) {
@@ -248,7 +274,7 @@ void MonaServer::onRendezVousUnknown(const string& protocol,const UInt8* id,set<
 	}
 }
 
-void MonaServer::onHandshake(const string& protocol,const SocketAddress& address,const string& path,const map<string,string>& properties,UInt32 attempts,set<SocketAddress,Mona::Util::AddressComparator>& addresses) {
+void MonaServer::onHandshake(const string& protocol,const SocketAddress& address,const string& path,const map<string,string>& properties,UInt32 attempts,set<SocketAddress>& addresses) {
 	Service* pService = _pService->get(path);
 	if(!pService)
 		return;
@@ -275,18 +301,18 @@ void MonaServer::onHandshake(const string& protocol,const SocketAddress& address
 
 
 //// CLIENT_HANDLER /////
-void MonaServer::onConnection(Mona::Exception& ex, Mona::Client& client,Mona::DataReader& parameters,Mona::DataWriter& response) {
+void MonaServer::onConnection(Exception& ex, Client& client,DataReader& parameters,DataWriter& response) {
 	// Here you can read custom client http parameters in reading "client.parameters".
 	Service* pService = _pService->get(client.path); 
 	if(!pService) {
-		ex.set(Mona::Exception::APPLICATION, "Applicaton ", client.path, " doesn't exist");
+		ex.set(Exception::APPLICATION, "Applicaton ", client.path, " doesn't exist");
 		return;
 	}
 
 	string error;
 	SCRIPT_BEGIN(pService->open())
 		SCRIPT_FUNCTION_BEGIN("onConnection")
-			SCRIPT_WRITE_PERSISTENT_OBJECT(Mona::Client,LUAClient,client)
+			SCRIPT_WRITE_PERSISTENT_OBJECT(Client,LUAClient,client)
 			SCRIPT_WRITE_DATA(parameters,0)
 			SCRIPT_FUNCTION_CALL_WITHOUT_LOG
 			if(SCRIPT_CAN_READ) {
@@ -311,13 +337,13 @@ void MonaServer::onConnection(Mona::Exception& ex, Mona::Client& client,Mona::Da
 	SCRIPT_END
 
 	if(!error.empty()) {
-		ex.set(Mona::Exception::SOFTWARE, error);
+		ex.set(Exception::SOFTWARE, error);
 		return;
 	}
 
 	// build error!
 	if(!pService->lastError.empty()) {
-		ex.set(Mona::Exception::SOFTWARE, pService->lastError);
+		ex.set(Exception::SOFTWARE, pService->lastError);
 		return;
 	}
 
@@ -326,7 +352,7 @@ void MonaServer::onConnection(Mona::Exception& ex, Mona::Client& client,Mona::Da
 }
 
 // TODO keeping onFailed??
-void MonaServer::onFailed(const Mona::Client& client,const string& error) {
+void MonaServer::onFailed(const Client& client,const string& error) {
 	WARN("Client failed: ",error);
 	double ptr = 0;
 	if (!client.getNumber("&Service", ptr))
@@ -334,21 +360,21 @@ void MonaServer::onFailed(const Mona::Client& client,const string& error) {
 	Service* pService = reinterpret_cast<Service*>(static_cast<unsigned>(ptr));
 	SCRIPT_BEGIN(pService->open())
 		SCRIPT_FUNCTION_BEGIN("onFailed")
-			SCRIPT_WRITE_PERSISTENT_OBJECT(Mona::Client,LUAClient,client)
+			SCRIPT_WRITE_PERSISTENT_OBJECT(Client,LUAClient,client)
 			SCRIPT_WRITE_STRING(error.c_str())
 			SCRIPT_FUNCTION_CALL
 		SCRIPT_FUNCTION_END
 	SCRIPT_END
 }
 
-void MonaServer::onDisconnection(const Mona::Client& client) {
+void MonaServer::onDisconnection(const Client& client) {
 	double ptr = 0;
 	if (!client.getNumber("&Service", ptr))
 		return;
 	Service* pService = reinterpret_cast<Service*>(static_cast<unsigned>(ptr));
 	SCRIPT_BEGIN(pService->open())
 		SCRIPT_FUNCTION_BEGIN("onDisconnection")
-			SCRIPT_WRITE_PERSISTENT_OBJECT(Mona::Client,LUAClient,client)
+			SCRIPT_WRITE_PERSISTENT_OBJECT(Client,LUAClient,client)
 			SCRIPT_FUNCTION_CALL
 		SCRIPT_FUNCTION_END
 	SCRIPT_END
@@ -356,16 +382,16 @@ void MonaServer::onDisconnection(const Mona::Client& client) {
 	--pService->count;
 }
 
-void MonaServer::onMessage(Mona::Exception& ex, Mona::Client& client,const string& name,Mona::DataReader& reader) {
+void MonaServer::onMessage(Exception& ex, Client& client,const string& name,DataReader& reader) {
 	string error("Method '" + name + "' not found");
 	double ptr = 0;
 	if (!client.getNumber("&Service", ptr)) {
-		ex.set(Mona::Exception::APPLICATION, error);
+		ex.set(Exception::APPLICATION, error);
 		return;
 	}
 	Service* pService = reinterpret_cast<Service*>(static_cast<unsigned>(ptr));
 	SCRIPT_BEGIN(pService->open())
-		SCRIPT_MEMBER_FUNCTION_BEGIN(Mona::Client,LUAClient,client,name.c_str())
+		SCRIPT_MEMBER_FUNCTION_BEGIN(Client,LUAClient,client,name.c_str())
 			SCRIPT_WRITE_DATA(reader,0)
 			error.clear();
 			SCRIPT_FUNCTION_CALL_WITHOUT_LOG
@@ -375,18 +401,18 @@ void MonaServer::onMessage(Mona::Exception& ex, Mona::Client& client,const strin
 			}
 		SCRIPT_FUNCTION_END
 		if(SCRIPT_LAST_ERROR) {
-			ex.set(Mona::Exception::APPLICATION,SCRIPT_LAST_ERROR);
+			ex.set(Exception::APPLICATION,SCRIPT_LAST_ERROR);
 			return;
 		}
 	SCRIPT_END
 	if(!error.empty()) {
 		ERROR(error);
-		ex.set(Mona::Exception::APPLICATION, error);
+		ex.set(Exception::APPLICATION, error);
 		return;
 	}
 }
 
-bool MonaServer::onRead(Mona::Exception& ex, Mona::Client& client,string& filePath,Mona::DataReader& parameters) { 
+bool MonaServer::onRead(Exception& ex, Client& client,string& filePath,DataReader& parameters) { 
 	bool result = true;
 	double ptr = 0;
 	if (!client.getNumber("&Service", ptr))
@@ -394,7 +420,7 @@ bool MonaServer::onRead(Mona::Exception& ex, Mona::Client& client,string& filePa
 	Service* pService = reinterpret_cast<Service*>(static_cast<unsigned>(ptr));
 	filePath = WWWPath + filePath;
 	SCRIPT_BEGIN(pService->open())
-		SCRIPT_MEMBER_FUNCTION_BEGIN(Mona::Client,LUAClient,client,"onRead")
+		SCRIPT_MEMBER_FUNCTION_BEGIN(Client,LUAClient,client,"onRead")
 			SCRIPT_WRITE_STRING(filePath.c_str())
 			SCRIPT_WRITE_DATA(parameters,0)
 			SCRIPT_FUNCTION_CALL
@@ -406,7 +432,7 @@ bool MonaServer::onRead(Mona::Exception& ex, Mona::Client& client,string& filePa
 			}
 		SCRIPT_FUNCTION_END
 		if (SCRIPT_LAST_ERROR) {
-			ex.set(Mona::Exception::SOFTWARE, SCRIPT_LAST_ERROR);
+			ex.set(Exception::SOFTWARE, SCRIPT_LAST_ERROR);
 			return false;
 		}
 	SCRIPT_END
@@ -415,7 +441,7 @@ bool MonaServer::onRead(Mona::Exception& ex, Mona::Client& client,string& filePa
 
 
 //// PUBLICATION_HANDLER /////
-bool MonaServer::onPublish(Mona::Client& client,const Mona::Publication& publication,string& error) {
+bool MonaServer::onPublish(Client& client,const Publication& publication,string& error) {
 	if(client == this->id)
 		return true;
 	bool result=true;
@@ -425,8 +451,8 @@ bool MonaServer::onPublish(Mona::Client& client,const Mona::Publication& publica
 	Service* pService = reinterpret_cast<Service*>(static_cast<unsigned>(ptr));
 	SCRIPT_BEGIN(pService->open())
 		SCRIPT_FUNCTION_BEGIN("onPublish")
-			SCRIPT_WRITE_PERSISTENT_OBJECT(Mona::Client,LUAClient,client)
-			SCRIPT_WRITE_PERSISTENT_OBJECT(Mona::Publication,LUAPublication,publication)
+			SCRIPT_WRITE_PERSISTENT_OBJECT(Client,LUAClient,client)
+			SCRIPT_WRITE_PERSISTENT_OBJECT(Publication,LUAPublication,publication)
 			SCRIPT_FUNCTION_CALL
 			if(SCRIPT_CAN_READ)
 				result = SCRIPT_READ_BOOL(true);
@@ -441,7 +467,7 @@ bool MonaServer::onPublish(Mona::Client& client,const Mona::Publication& publica
 	return result;
 }
 
-void MonaServer::onUnpublish(Mona::Client& client,const Mona::Publication& publication) {
+void MonaServer::onUnpublish(Client& client,const Publication& publication) {
 	double ptr = 0;
 	if (client.getNumber("&Service", ptr))
 		return;
@@ -449,8 +475,8 @@ void MonaServer::onUnpublish(Mona::Client& client,const Mona::Publication& publi
 		Service* pService = reinterpret_cast<Service*>(static_cast<unsigned>(ptr));
 		SCRIPT_BEGIN(pService->open())
 			SCRIPT_FUNCTION_BEGIN("onUnpublish")
-				SCRIPT_WRITE_PERSISTENT_OBJECT(Mona::Client, LUAClient, client)
-				SCRIPT_WRITE_PERSISTENT_OBJECT(Mona::Publication, LUAPublication, publication)
+				SCRIPT_WRITE_PERSISTENT_OBJECT(Client, LUAClient, client)
+				SCRIPT_WRITE_PERSISTENT_OBJECT(Publication, LUAPublication, publication)
 				SCRIPT_FUNCTION_CALL
 			SCRIPT_FUNCTION_END
 		SCRIPT_END
@@ -459,7 +485,7 @@ void MonaServer::onUnpublish(Mona::Client& client,const Mona::Publication& publi
 		LUAPublication::Clear(_pState,publication);
 }
 
-bool MonaServer::onSubscribe(Mona::Client& client,const Mona::Listener& listener,string& error) { 
+bool MonaServer::onSubscribe(Client& client,const Listener& listener,string& error) { 
 	bool result=true;
 	double ptr = 0;
 	if (!client.getNumber("&Service", ptr))
@@ -467,8 +493,8 @@ bool MonaServer::onSubscribe(Mona::Client& client,const Mona::Listener& listener
 	Service* pService = reinterpret_cast<Service*>(static_cast<unsigned>(ptr));
 	SCRIPT_BEGIN(pService->open())
 		SCRIPT_FUNCTION_BEGIN("onSubscribe")
-			SCRIPT_WRITE_PERSISTENT_OBJECT(Mona::Client,LUAClient,client)
-			SCRIPT_WRITE_PERSISTENT_OBJECT(Mona::Listener,LUAListener,listener)
+			SCRIPT_WRITE_PERSISTENT_OBJECT(Client,LUAClient,client)
+			SCRIPT_WRITE_PERSISTENT_OBJECT(Listener,LUAListener,listener)
 			SCRIPT_FUNCTION_CALL
 			if(SCRIPT_CAN_READ)
 				result = SCRIPT_READ_BOOL(true);
@@ -483,15 +509,15 @@ bool MonaServer::onSubscribe(Mona::Client& client,const Mona::Listener& listener
 	return result;
 }
 
-void MonaServer::onUnsubscribe(Mona::Client& client,const Mona::Listener& listener) {
+void MonaServer::onUnsubscribe(Client& client,const Listener& listener) {
 	double ptr = 0;
 	if (!client.getNumber("&Service", ptr))
 		return;
 	Service* pService = reinterpret_cast<Service*>(static_cast<unsigned>(ptr));
 	SCRIPT_BEGIN(pService->open())
 		SCRIPT_FUNCTION_BEGIN("onUnsubscribe")
-			SCRIPT_WRITE_PERSISTENT_OBJECT(Mona::Client,LUAClient,client)
-			SCRIPT_WRITE_PERSISTENT_OBJECT(Mona::Listener,LUAListener,listener)
+			SCRIPT_WRITE_PERSISTENT_OBJECT(Client,LUAClient,client)
+			SCRIPT_WRITE_PERSISTENT_OBJECT(Listener,LUAListener,listener)
 			SCRIPT_FUNCTION_CALL
 		SCRIPT_FUNCTION_END
 	SCRIPT_END
@@ -500,11 +526,11 @@ void MonaServer::onUnsubscribe(Mona::Client& client,const Mona::Listener& listen
 	LUAListener::Clear(_pState,listener);
 }
 
-void MonaServer::onAudioPacket(Mona::Client& client,const Mona::Publication& publication,UInt32 time,Mona::MemoryReader& packet) {
+void MonaServer::onAudioPacket(Client& client,const Publication& publication,UInt32 time,MemoryReader& packet) {
 	if(client == this->id)
 		return;
 	SCRIPT_BEGIN(_pState)
-		SCRIPT_MEMBER_FUNCTION_BEGIN(Mona::Publication,LUAPublication,publication,"onAudio")
+		SCRIPT_MEMBER_FUNCTION_BEGIN(Publication,LUAPublication,publication,"onAudio")
 			SCRIPT_WRITE_NUMBER(time)
 			SCRIPT_WRITE_BINARY(packet.current(),packet.available())
 			SCRIPT_FUNCTION_CALL
@@ -512,11 +538,11 @@ void MonaServer::onAudioPacket(Mona::Client& client,const Mona::Publication& pub
 	SCRIPT_END
 }
 
-void MonaServer::onVideoPacket(Mona::Client& client,const Mona::Publication& publication,UInt32 time,Mona::MemoryReader& packet) {
+void MonaServer::onVideoPacket(Client& client,const Publication& publication,UInt32 time,MemoryReader& packet) {
 	if(client == this->id)
 		return;
 	SCRIPT_BEGIN(_pState)
-		SCRIPT_MEMBER_FUNCTION_BEGIN(Mona::Publication,LUAPublication,publication,"onVideo")
+		SCRIPT_MEMBER_FUNCTION_BEGIN(Publication,LUAPublication,publication,"onVideo")
 			SCRIPT_WRITE_NUMBER(time)
 			SCRIPT_WRITE_BINARY(packet.current(),packet.available())
 			SCRIPT_FUNCTION_CALL
@@ -524,65 +550,65 @@ void MonaServer::onVideoPacket(Mona::Client& client,const Mona::Publication& pub
 	SCRIPT_END
 }
 
-void MonaServer::onDataPacket(Mona::Client& client,const Mona::Publication& publication,Mona::DataReader& packet) {
+void MonaServer::onDataPacket(Client& client,const Publication& publication,DataReader& packet) {
 	if(client == this->id)
 		return;
 	SCRIPT_BEGIN(_pState)
-		SCRIPT_MEMBER_FUNCTION_BEGIN(Mona::Publication,LUAPublication,publication,"onData")
+		SCRIPT_MEMBER_FUNCTION_BEGIN(Publication,LUAPublication,publication,"onData")
 			SCRIPT_WRITE_DATA(packet,0)
 			SCRIPT_FUNCTION_CALL
 		SCRIPT_FUNCTION_END
 	SCRIPT_END
 }
 
-void MonaServer::onFlushPackets(Mona::Client& client,const Mona::Publication& publication) {
+void MonaServer::onFlushPackets(Client& client,const Publication& publication) {
 	if(client == this->id)
 		return;
 	SCRIPT_BEGIN(_pState)
-		SCRIPT_MEMBER_FUNCTION_BEGIN(Mona::Publication,LUAPublication,publication,"onFlush")
+		SCRIPT_MEMBER_FUNCTION_BEGIN(Publication,LUAPublication,publication,"onFlush")
 			SCRIPT_FUNCTION_CALL
 		SCRIPT_FUNCTION_END
 	SCRIPT_END
 }
 
 
-void MonaServer::onJoinGroup(Mona::Client& client,Mona::Group& group) {
+void MonaServer::onJoinGroup(Client& client,Group& group) {
 	double ptr = 0;
 	if (!client.getNumber("&Service", ptr))
 		return;
 	Service* pService = reinterpret_cast<Service*>(static_cast<unsigned>(ptr));
 	SCRIPT_BEGIN(pService->open())
 		SCRIPT_FUNCTION_BEGIN("onJoinGroup")
-			SCRIPT_WRITE_PERSISTENT_OBJECT(Mona::Client,LUAClient,client)
-			SCRIPT_WRITE_PERSISTENT_OBJECT(Mona::Group,LUAGroup,group)
+			SCRIPT_WRITE_PERSISTENT_OBJECT(Client,LUAClient,client)
+			SCRIPT_WRITE_PERSISTENT_OBJECT(Group,LUAGroup,group)
 			SCRIPT_FUNCTION_CALL
 		SCRIPT_FUNCTION_END
 	SCRIPT_END
 }
 
-void MonaServer::onUnjoinGroup(Mona::Client& client,Mona::Group& group) {
+void MonaServer::onUnjoinGroup(Client& client,Group& group) {
 	double ptr = 0;
 	if (!client.getNumber("&Service", ptr))
 		return;
 	Service* pService = reinterpret_cast<Service*>(static_cast<unsigned>(ptr));
 	SCRIPT_BEGIN(pService->open())
 		SCRIPT_FUNCTION_BEGIN("onUnjoinGroup")
-			SCRIPT_WRITE_PERSISTENT_OBJECT(Mona::Client,LUAClient,client)
-			SCRIPT_WRITE_PERSISTENT_OBJECT(Mona::Group,LUAGroup,group)
+			SCRIPT_WRITE_PERSISTENT_OBJECT(Client,LUAClient,client)
+			SCRIPT_WRITE_PERSISTENT_OBJECT(Group,LUAGroup,group)
 			SCRIPT_FUNCTION_CALL
 		SCRIPT_FUNCTION_END
 	SCRIPT_END
 	if(group.size()==0)
-		Script::ClearPersistentObject<Mona::Group,LUAGroup>(_pState,group);
+		Script::ClearPersistentObject<Group,LUAGroup>(_pState,group);
 }
 
-void MonaServer::onManage(Mona::Client& client) {
+void MonaServer::onManage(Client& client) {
 	double ptr = 0;
 	if (!client.getNumber("&Service", ptr))
 		return;
 	Service* pService = reinterpret_cast<Service*>(static_cast<unsigned>(ptr));
 	SCRIPT_BEGIN(pService->open())
-		SCRIPT_MEMBER_FUNCTION_BEGIN(Mona::Client,LUAClient,client,"onManage")
+		SCRIPT_MEMBER_FUNCTION_BEGIN(Client,LUAClient,client,"onManage")
 			SCRIPT_FUNCTION_CALL
 		SCRIPT_FUNCTION_END
 	SCRIPT_END
@@ -591,10 +617,9 @@ void MonaServer::onManage(Mona::Client& client) {
 
 void MonaServer::connection(ServerConnection& server) {
 	// sends actual services online to every connected servers
-	set<Service*>::const_iterator it;
 	ServerMessage message;
-	for(it=_servicesRunning.begin();it!=_servicesRunning.end();++it)
-		message.writer << (*it)->path;
+	for(const Service* pService : _servicesRunning)
+		message.writer.writeString(pService->path);
 	servers.broadcast(".",message);
 
 	set<Service*>& events = _scriptEvents["onServerConnection"];
@@ -609,28 +634,25 @@ void MonaServer::connection(ServerConnection& server) {
 	}
 }
 
-void MonaServer::message(ServerConnection& server,const std::string& handler,Mona::MemoryReader& reader) {
+void MonaServer::message(ServerConnection& server,const std::string& handler,MemoryReader& reader) {
 	if(handler==".") {
 		while(reader.available()) {
 			string path;
-			reader >> path;
+			reader.readString(path);
 			_pService->get(path);
 		}
 		return;
 	}
 	SCRIPT_BEGIN(_pState)
 		SCRIPT_MEMBER_FUNCTION_BEGIN(ServerConnection,LUAServer,server,handler.c_str())
-			Mona::AMFReader amf(reader);
+			AMFReader amf(reader);
 			SCRIPT_WRITE_DATA(amf,0)
 			SCRIPT_FUNCTION_CALL
 		SCRIPT_FUNCTION_END
 	SCRIPT_END
 }
 
-void MonaServer::disconnection(const ServerConnection& server,const char* error) {
-	if(error)
-		ERROR("Servers error, ",error)
-
+void MonaServer::disconnection(const ServerConnection& server,const string& error) {
 	set<Service*>& events = _scriptEvents["onServerDisconnection"];
 	set<Service*>::const_iterator it;
 	for(it=events.begin();it!=events.end();++it) {

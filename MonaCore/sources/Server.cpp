@@ -17,11 +17,10 @@
 
 #include "Mona/Server.h"
 #include "Mona/Decoding.h"
-#include "Poco/Format.h"
 
 
 using namespace std;
-using namespace Poco;
+
 
 
 namespace Mona {
@@ -30,9 +29,7 @@ namespace Mona {
 ServerManager::ServerManager(Server& server):_server(server),Task(server),Startable("ServerManager"){
 }
 
-void ServerManager::run(Exception& ex, ThreadPriority& priority) {
-	if(!priority.set(ThreadPriority::LOW))
-		WARN("Impossible to change the ServerManager thread to low priority")
+void ServerManager::run(Exception& ex) {
 	do {
 		waitHandle();
 		_server.relay.manage();
@@ -50,34 +47,44 @@ Server::~Server() {
 	stop();
 }
 
-void Server::start(const ServerParams& params) {
+bool Server::start(const ServerParams& params) {
 	if(running()) {
 		ERROR("Server is already running, call stop method before");
-		return;
+		return false;
 	}
 	(ServerParams&)this->params = params;
-	Startable::start();
+	Exception ex;
+	bool result;
+	EXCEPTION_TO_LOG(result = Startable::start(ex, params.threadPriority), "Server");
+	return result;
 }
 
-void Server::run(Exception& exc,ThreadPriority& priority) {
+void Server::run(Exception& exc) {
 	Exception ex;
 	ServerManager manager(*this);
-	if (!priority.set(params.threadPriority))
-		WARN("Impossible to change the Server thread to ", params.threadPriority," priority")
 	try {
 		TaskHandler::start();
-		((SocketManager&)sockets).start();
-		((RelayServer&)relay).start();
-		
-		_protocols.load(*this);
-		
-		onStart();
 
-		_manager.start(ex);
-		while (!ex && sleep() != STOP)
-			giveHandle(ex);
+		Exception exWarn;
+		if (((SocketManager&)sockets).start(exWarn) && ((RelayServer&)relay).start(exWarn)) {
+			if (exWarn)
+				WARN(exWarn.error());
+
+			_protocols.load(*this);
+
+			onStart();
+
+			if (!_manager.start(exWarn, Startable::PRIORITY_LOW))
+				ex.set(exWarn);
+			else if (exWarn)
+				WARN(exWarn.error());
+			while (!ex && sleep() != STOP)
+				giveHandle(ex);
+		} else
+			ex.set(exWarn);
 		if (ex)
 			FATAL("Server, %s", ex.error().c_str());
+		
 	} catch (exception& ex) {
 		FATAL("Server, ",ex.what());
 	} catch (...) {
@@ -111,8 +118,10 @@ void Server::readable(Exception& ex,Protocol& protocol) {
 		return;
 
 	SocketAddress address;
-	SharedPtr<Buffer<UInt8> > pBuffer = protocol.receive(ex,address);
-	if(ex || pBuffer.isNull() || !protocol.auth(address))
+	shared_ptr<Buffer<UInt8> > pBuffer;
+	if (!protocol.receive(ex, pBuffer, address))
+		return;
+	if (ex || !pBuffer || !protocol.auth(address))
 		return;
 
 	MemoryReader reader(pBuffer->data(),pBuffer->size());
@@ -126,9 +135,9 @@ void Server::readable(Exception& ex,Protocol& protocol) {
 			return;
 		}
 	}
-	MemoryReader* pPacket = pSession->decode(pBuffer,address);
-	if(pPacket) {
-		Decoding decoded(id,*this,protocol,pPacket,address);
+	shared_ptr<MemoryReader> pReader;
+	if (pSession->decode(pBuffer, address, pReader) && pReader) {
+		Decoding decoded(id, *this, protocol, pReader, address);
 		receive(decoded);
 	}
 }
@@ -149,7 +158,7 @@ void Server::receive(Decoding& decoded) {
 			_sessions.changeAddress(oldAddress,*pSession);
 	}
 	
-	pSession->receive(decoded.packet());
+	pSession->receive(decoded.reader());
 }
 
 void Server::manage() {

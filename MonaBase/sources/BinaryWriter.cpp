@@ -38,6 +38,15 @@ BinaryWriter::~BinaryWriter() {
 	_ostr.flush();
 }
 
+void BinaryWriter::write7BitEncoded(UInt32 value) {
+	do {
+		unsigned char c = (unsigned char)(value & 0x7F);
+		value >>= 7;
+		if (value)
+			c |= 0x80;
+		_ostr.put(c);
+	} while (value);
+}
 
 void BinaryWriter::write16(UInt16 value) {
 	if (_flipBytes)

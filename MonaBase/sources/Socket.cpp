@@ -26,7 +26,7 @@ using namespace std;
 namespace Mona {
 
 
-Socket::Socket(const SocketManager& manager, int type) : _poolThreads(manager._poolThreads), _pMutex(new mutex()), _type(type), _initialized(false), _managed(false), _manager(manager), _sockfd(NET_INVALID_SOCKET), _writing(false) {}
+Socket::Socket(const SocketManager& manager, int type) : _poolThreads(manager._poolThreads), _pMutex(new mutex()), _type(type), _initialized(false), _managed(false), manager(manager), _sockfd(NET_INVALID_SOCKET), _writing(false) {}
 
 Socket::~Socket() {
 	close();
@@ -41,7 +41,7 @@ void Socket::close() {
 	if (!_managed)
 		return;
 	_managed = false;
-	_manager.remove(*this);
+	manager.remove(*this);
 	_senders.clear();
 }
 
@@ -58,8 +58,6 @@ bool Socket::init(Exception& ex, IPAddress::Family family) {
 		return false;
 	}
 
-	// always in non-blocking mode!
-	ioctl(ex,FIONBIO, 1); 
 	if (ex || !managed(ex)) {
 		NET_CLOSESOCKET(_sockfd);
 		_sockfd = NET_INVALID_SOCKET;
@@ -81,8 +79,6 @@ bool Socket::init(Exception& ex, IPAddress::Family family) {
 bool Socket::init(Exception& ex, NET_SOCKET sockfd) {
 	_sockfd = sockfd;
 	_initialized = true;
-	// always in non-blocking mode!
-	ioctl(ex, FIONBIO, 1);
 	if (ex || !managed(ex)) {
 		NET_CLOSESOCKET(_sockfd);
 		_sockfd = NET_INVALID_SOCKET;
@@ -95,7 +91,7 @@ bool Socket::managed(Exception& ex) {
 	lock_guard<mutex>	lock(_mutexManaged);
 	if (_managed)
 		return true;
-	return _managed = _manager.add(ex, *this);
+	return _managed = manager.add(ex, *this);
 }
 
 
@@ -346,7 +342,7 @@ void Socket::SetError(Exception& ex, int error, const string& argument) {
 void Socket::manageWrite(Exception& ex) {
 	if (!_writing) {
 		_writing = true;
-		_manager.startWrite(ex, *this);
+		manager.startWrite(ex, *this);
 	}
 }
 
@@ -356,13 +352,13 @@ void Socket::flush(Exception& ex) {
 	while (!_senders.empty()) {
 		if (!_senders.front()->flush(ex,*this)) {
 			if (!_writing)
-				_writing = _manager.startWrite(ex,*this);
+				_writing = manager.startWrite(ex,*this);
 			return;
 		}
 		_senders.pop_front();
 	}
 	if (_writing && _senders.empty())
-		_writing = !_manager.stopWrite(ex, *this);
+		_writing = !manager.stopWrite(ex, *this);
 }
 
 

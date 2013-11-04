@@ -37,6 +37,7 @@ public:
 	UInt8*			readRaw(UInt8* value, UInt32 size) { _istr.read((char*)value, size); return value; }
 	char*			readRaw(char* value, UInt32 size) { _istr.read(value, size); return value; }
 	std::string&	readRaw(UInt32 size, std::string& value);
+	std::string&	readString(std::string& value) { return readRaw(read7BitEncoded(),value); }
 	std::string&	readString8(std::string& value) { return readRaw(read8(), value);}
 	std::string&	readString16(std::string& value) { return readRaw(read16(), value); }
 	UInt8			read8() { return (UInt8)_istr.get(); }
@@ -44,6 +45,19 @@ public:
 	UInt32			read24();
 	UInt32			read32();
 	UInt64			read64();
+	bool			readBool() { return _istr.get() != 0; }
+	template<typename NumberType>
+	NumberType		readNumber() {
+		NumberType value;
+		if (_flipBytes) {
+			char* ptr = (char*)&value;
+			ptr += sizeof(value);
+			for (unsigned i = 0; i < sizeof(value); ++i)
+				_istr.read(--ptr, 1);
+		} else
+			_istr.read((char*)&value, sizeof(value));
+		return value;
+	}
 
 private:
 

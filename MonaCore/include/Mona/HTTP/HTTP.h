@@ -97,7 +97,7 @@ namespace Mona {
 class HTTP : virtual Static {
 public:
 	static void 	MIMEType(const std::string& extension,std::string& type);
-	static void 	CodeToMessage(Poco::UInt16 code,std::string& message);
+	static void 	CodeToMessage(UInt16 code,std::string& message);
 	static void 	ReadHeader(HTTPPacketReader& reader, MapParameters& headers, std::string& cmd, std::string& path, std::string& file, MapParameters& properties);
 
 };

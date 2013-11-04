@@ -32,7 +32,7 @@ public:
 	UInt32	threadsAvailable() { return _threads.size(); }
 
 	template<typename WorkThreadType>
-	PoolThread* enqueue(Exception& ex,std::shared_ptr<WorkThreadType>& pWork, PoolThread* pThread = NULL) {
+	PoolThread* enqueue(Exception& ex,const std::shared_ptr<WorkThreadType>& pWork, PoolThread* pThread = NULL) {
 		UInt32 queue = 0;
 		if (!pThread) {
 			for (PoolThread* pPoolThread : _threads) {
@@ -44,7 +44,7 @@ public:
 				}
 			}
 		}
-		pThread->push(ex,static_pointer_cast<WorkThread>(pWork));
+		pThread->push(ex, std::static_pointer_cast<WorkThread>(pWork));
 		return pThread;
 	}
 

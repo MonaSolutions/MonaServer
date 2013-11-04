@@ -21,6 +21,7 @@
 #include "Mona/TCPClient.h"
 #include "Mona/MemoryReader.h"
 #include "Mona/MapParameters.h"
+#include "Mona/Logs.h"
 
 
 class ServerConnection;
@@ -30,7 +31,7 @@ public:
 	virtual const std::map<std::string,Mona::UInt16>& ports()=0;
 	virtual void connection(ServerConnection& server)=0;
 	virtual void message(ServerConnection& server,const std::string& handler,Mona::MemoryReader& reader)=0;
-	virtual void disconnection(const ServerConnection& server,const char* error)=0;
+	virtual void disconnection(const ServerConnection& server,const std::string& error)=0;
 };
 
 class ServersHandler {
@@ -42,12 +43,11 @@ public:
 
 class ServerConnection : private Mona::TCPClient, public Mona::MapParameters  {
 public:
-	ServerConnection(const std::string& target,const Mona::SocketManager& manager,ServerHandler& handler,ServersHandler& serversHandler);
-	ServerConnection(const Poco::Net::StreamSocket& socket,const Mona::SocketManager& manager,ServerHandler& handler,ServersHandler& serversHandler);
+	ServerConnection(const Mona::SocketAddress& peerAddress, const Mona::SocketManager& manager, ServerHandler& handler, ServersHandler& serversHandler,const bool& alreadyConnected=false);
 	virtual ~ServerConnection();
 
 	const std::string							host;
-	const std::string							address;
+	const Mona::SocketAddress					address;
 	const bool									isTarget;
 	Mona::UInt16								port(const std::string& protocol);
 
@@ -58,6 +58,7 @@ public:
 private:
 	void			sendPublicAddress();
 
+	void			onError(const std::string& error) { ERROR("Server ", address.toString(), ", ", error); _error = error; }
 	Mona::UInt32	onReception(const Mona::UInt8* data,Mona::UInt32 size);
 	void			onDisconnection();
 
@@ -69,5 +70,6 @@ private:
 	Mona::UInt32						_size;
 	bool								_connected;
 	std::map<std::string,Mona::UInt16>	_ports;
+	std::string							_error;
 };
 

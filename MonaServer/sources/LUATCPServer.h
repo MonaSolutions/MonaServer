@@ -35,8 +35,8 @@ public:
 	static int	Destroy(lua_State* pState);
 private:
 	virtual ~LUATCPServer();
-
-	void		clientHandler(Poco::Net::StreamSocket& socket);
+	void		onError(const std::string& error);
+	void		onConnectionRequest(Mona::Exception& ex);
 
 	static int	Start(lua_State* pState);
 	static int  Stop(lua_State* pState);

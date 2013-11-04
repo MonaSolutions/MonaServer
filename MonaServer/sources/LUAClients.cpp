@@ -19,11 +19,9 @@
 #include "LUAClient.h"
 #include "Mona/Invoker.h"
 #include "Mona/Util.h"
-#include "Poco/HexBinaryDecoder.h"
-#include <sstream>
+
 
 using namespace Mona;
-using namespace Poco;
 using namespace std;
 
 const char*		LUAClients::Name="Mona::Clients";
@@ -34,11 +32,11 @@ int LUAClients::Pairs(lua_State* pState) {
 		if(!lua_iscfunction(pState,-1))
 			SCRIPT_ERROR("'next' should be a LUA function, it should not be overloaded")
 		else {
+			string hex;
 			lua_newtable(pState);
-			Entities<Client>::Iterator it;
-			for(it=clients.begin();it!=clients.end();++it) {
-				SCRIPT_WRITE_PERSISTENT_OBJECT(Client,LUAClient,*it->second)
-				lua_setfield(pState,-2,Mona::Util::FormatHex(it->second->id,ID_SIZE).c_str());
+			for(auto it : clients) {
+				SCRIPT_WRITE_PERSISTENT_OBJECT(Client,LUAClient,*it.second)
+				lua_setfield(pState, -2, Mona::Util::FormatHex(it.first, ID_SIZE, hex).c_str());
 			}
 		}
 	SCRIPT_CALLBACK_RETURN
@@ -56,12 +54,9 @@ int LUAClients::Get(lua_State *pState) {
 			Client* pClient = NULL;
 			if(size==ID_SIZE)
 				pClient = clients(id);
-			else if(size==(ID_SIZE*2)) {
-				stringstream ss;
-				ss.write((const char*)id,size);
-				HexBinaryDecoder(ss).read((char*)id,ID_SIZE);
-				pClient = clients(id);
-			} else if(!id)
+			else if(size==(ID_SIZE*2))
+				pClient = clients(Util::UnformatHex((UInt8*)id, size));
+			else if(!id)
 				SCRIPT_ERROR("Client id argument missing")
 			if(!pClient) {
 				name.assign((const char*)id,size);

@@ -22,7 +22,7 @@
 #include <cstring>
 
 using namespace std;
-using namespace Poco;
+
 
 namespace Mona {
 
@@ -43,7 +43,7 @@ AMFWriter& FlashWriter::writeInvocation(const string& name) {
 	BinaryWriter& writer = amf.writer;
 	writer.write8(AMF_STRING);writer.writeString16(name);
 	writer.write8(AMF_NUMBER);
-	writer << callbackHandle;
+	writer.writeNumber<double>(callbackHandle);
 	writer.write8(AMF_NULL);
 	return amf;
 }

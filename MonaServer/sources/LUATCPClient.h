@@ -23,8 +23,9 @@
 
 class LUATCPClient : private Mona::TCPClient {
 public:
-	LUATCPClient(const Poco::Net::StreamSocket& socket,const Mona::SocketManager& manager,lua_State* pState);
+	LUATCPClient(const Mona::SocketAddress& peerAddress,const Mona::SocketManager& manager, lua_State* pState);
 	LUATCPClient(const Mona::SocketManager& manager,lua_State* pState);
+	virtual ~LUATCPClient();
 
 	static const char* Name;
 
@@ -35,7 +36,7 @@ public:
 	static int	Destroy(lua_State* pState);
 
 private:
-	virtual ~LUATCPClient();
+	void			onError(const std::string& error);
 	Mona::UInt32	onReception(const Mona::UInt8* data,Mona::UInt32 size);
 	void			onDisconnection();
 
@@ -44,4 +45,5 @@ private:
 	static int  Disconnect(lua_State* pState);
 
 	lua_State*			_pState;
+	std::string			_error;
 };

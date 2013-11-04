@@ -19,11 +19,11 @@
 #include "Mona/Logs.h"
 
 using namespace std;
-using namespace Poco;
+
 
 namespace Mona {
 
-RTMPWriter::RTMPWriter(UInt8 id, const SharedPtr<RC4_KEY>& pEncryptKey, StreamSocket& socket) : id(id), _pThread(NULL), _socket(socket), _pSender(new RTMPSender(pEncryptKey)) {
+RTMPWriter::RTMPWriter(UInt8 id, const shared_ptr<RC4_KEY>& pEncryptKey, StreamSocket& socket) : id(id), _pThread(NULL), _socket(socket), _pSender(new RTMPSender(pEncryptKey)) {
 	// TODO _qos.add
 }
 

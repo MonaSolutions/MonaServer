@@ -24,6 +24,8 @@ using namespace std;
 
 namespace Mona {
 
+UInt32	PoolThread::_Id(0);
+
 bool PoolThread::push(Exception& ex,shared_ptr<WorkThread>& pWork) {
 	lock_guard<mutex> lock(_mutex);
 	if (!running() && !start(ex))
@@ -34,7 +36,7 @@ bool PoolThread::push(Exception& ex,shared_ptr<WorkThread>& pWork) {
 	return true;
 }
 
-void PoolThread::run(Exception& ex,ThreadPriority& priority) {
+void PoolThread::run(Exception& ex) {
 
 	for(;;) {
 

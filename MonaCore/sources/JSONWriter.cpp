@@ -17,10 +17,10 @@
 
 #include "Mona/JSONWriter.h"
 #include "Mona/Logs.h"
-#include "Poco/Base64Encoder.h"
+
 
 using namespace std;
-using namespace Poco;
+
 
 namespace Mona {
 
@@ -39,13 +39,13 @@ void JSONWriter::clear() {
 void JSONWriter::beginObject(const string& type,bool external) {
 	if(!_started) {
 		_started=true;
-		writer << '[';
+		writer.write8('[');
 	}	
 	if(!_first)
-		writer << ',';
+		writer.write8(',');
 	_first=true;
 	++_layers;
-	writer << '{';
+	writer.write8('{');
 	if(type.empty())
 		return;
 	writePropertyName("__type");
@@ -57,20 +57,20 @@ void JSONWriter::endObject() {
 		WARN("JSON object already finished")
 		return;
 	}
-	writer << '}';
+	writer.write8('}');
 	--_layers;
 }
 
 void JSONWriter::beginArray(UInt32 size) {
 	if(!_started) {
 		_started=true;
-		writer << '[';
+		writer.write8('[');
 	}	
 	if(!_first)
-		writer << ',';
+		writer.write8(',');
 	_first=true;
 	++_layers;
-	writer << '[';
+	writer.write8('[');
 }
 
 void JSONWriter::endArray() {
@@ -78,28 +78,28 @@ void JSONWriter::endArray() {
 		WARN("JSON array already finished")
 		return;
 	}
-	writer << ']';
+	writer.write8(']');
 	--_layers;
 }
 
 
 void JSONWriter::writePropertyName(const string& value) {
 	writeString(value);
-	writer << ':';
+	writer.write8(':');
 	_first=true;
 }
 
 void JSONWriter::writeString(const string& value) {
 	if(!_started) {
 		_started=true;
-		writer << '[';
+		writer.write8('[');
 	}
 	if(!_first)
-		writer << ',';
+		writer.write8(',');
 	_first=false;
-	writer << '"';
+	writer.write8('"');
 	writer.writeRaw(value);
-	writer << '"';
+	writer.write8('"');
 }
 
 
@@ -112,15 +112,16 @@ void JSONWriter::writeDate(const Time& date) {
 void JSONWriter::writeBytes(const UInt8* data,UInt32 size) {
 	if(!_started) {
 		_started=true;
-		writer << '[';
+		writer.write8('[');
 	}
 	if(!_first)
-		writer << ',';
+		writer.write8(',');
 	_first=false;
 	writer.writeRaw("{__raw:\"",8);
-	ostringstream ostr;
-	Base64Encoder(ostr).write((const char*)data,size);
-	writer.writeRaw(ostr.str());
+
+	Buffer<UInt8> result;
+	Util::ToBase64(data, size, result);
+	writer.writeRaw(result.data(),result.size());
 	writer.writeRaw("\"}",2);
 }
 
@@ -130,7 +131,7 @@ void JSONWriter::end() {
 		return;
 	}
 	if(_started)
-		writer << ']';
+		writer.write8(']');
 }
 
 

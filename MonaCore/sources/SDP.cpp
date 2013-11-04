@@ -18,7 +18,6 @@
 #include "Mona/SDP.h"
 #include "Mona/Peer.h"
 #include "Mona/Logs.h"
-#include "Poco/String.h"
 
 
 using namespace std;
@@ -48,7 +47,7 @@ bool SDP::build(Exception& ex, const string& text) {
 	
 		UInt8 type = line[0];
 		line.erase(0,2);
-		Poco::trimLeftInPlace(line);
+		String::Trim(line, String::TRIM_LEFT);
 
 		// RFC 4566
 		switch(type) {

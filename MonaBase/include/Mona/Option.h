@@ -24,7 +24,7 @@ This file is a part of Mona.
 namespace Mona {
 
 
-class Option : virtual ObjectNullable {
+class Option : public virtual ObjectNullable {
 	friend class Options;
 public:
 	Option();

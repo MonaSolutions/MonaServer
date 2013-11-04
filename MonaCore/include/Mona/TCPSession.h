@@ -29,18 +29,18 @@ protected:
 	virtual ~TCPSession();
 
 	template<typename DecodingType>
-	void decode(std::shared_ptr<DecodingType>& pDecoding) {
+	bool decode(const std::shared_ptr<DecodingType>& pDecoding) {
 		_decoding = true;
-		Session::decode<DecodingType>(pDecoding);
+		return Session::decode<DecodingType>(pDecoding);
 	}
 
 private:
 	void			receive(MemoryReader& packet) { packetHandler(packet); }
-	virtual bool	buildPacket(MemoryReader& data,Poco::UInt32& packetSize)=0;
+	virtual bool	buildPacket(MemoryReader& data,UInt32& packetSize)=0;
 	virtual void	packetHandler(MemoryReader& packet)=0;
 
 	// TCPClient implementation
-	UInt32			onReception(const Poco::UInt8* data,Poco::UInt32 size);
+	UInt32			onReception(const UInt8* data,UInt32 size);
 	void			onError(const std::string& error) { ERROR("Protocol ", protocol.name, ", ", error); }
 	void			onDisconnection() { kill(); }
 

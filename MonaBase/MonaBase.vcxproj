@@ -56,7 +56,7 @@
       <AdditionalOptions>/MP %(AdditionalOptions)</AdditionalOptions>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>../External/include;include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;_DEBUG;STATIC;MONA_LOGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <MinimalRebuild>false</MinimalRebuild>
       <ExceptionHandling>Sync</ExceptionHandling>
@@ -80,7 +80,7 @@
       <OmitFramePointers>true</OmitFramePointers>
       <WholeProgramOptimization>true</WholeProgramOptimization>
       <AdditionalIncludeDirectories>../External/include;include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;NDEBUG;STATIC;MONA_LOGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <ExceptionHandling>Sync</ExceptionHandling>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -90,7 +90,6 @@
       <DebugInformationFormat />
       <Optimization>Full</Optimization>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <SDLCheck>true</SDLCheck>
     </ClCompile>
     <Lib>
       <OutputFile>$(OutDir)$(ProjectName).lib</OutputFile>
@@ -149,6 +148,7 @@
     <ClCompile Include="sources\Socket.cpp" />
     <ClCompile Include="sources\SocketAddress.cpp" />
     <ClCompile Include="sources\String.cpp" />
+    <ClCompile Include="sources\TerminateSignal.cpp" />
     <ClCompile Include="sources\Time.cpp" />
     <ClCompile Include="sources\TimeParser.cpp" />
     <ClCompile Include="sources\Trigger.cpp" />
@@ -206,6 +206,7 @@
     <ClInclude Include="include\Mona\SocketAddress.h" />
     <ClInclude Include="include\Mona\StreamSocket.h" />
     <ClInclude Include="include\Mona\String.h" />
+    <ClInclude Include="include\Mona\TerminateSignal.h" />
     <ClInclude Include="include\Mona\Time.h" />
     <ClInclude Include="include\Mona\TimeParser.h" />
     <ClInclude Include="include\Mona\Trigger.h" />

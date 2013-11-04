@@ -56,7 +56,7 @@ DiffieHellman::~DiffieHellman() {
 
 bool DiffieHellman::initialize(Exception& ex,bool reset) {
 	if(!reset && _pDH)
-		return false;
+		return true;
 	if(_pDH)
 		DH_free(_pDH);
 	_pDH = DH_new();
@@ -68,15 +68,16 @@ bool DiffieHellman::initialize(Exception& ex,bool reset) {
 	BN_bin2bn(DH1024p,DH_KEY_SIZE,_pDH->p); //prime number
 
 	//4. Generate private and public key
-	if(!DH_generate_key(_pDH))
+	if (!DH_generate_key(_pDH)) {
 		ex.set(Exception::MATH,"Generation DH key failed");
+		DH_free(_pDH);
+	}
 	return !ex;
 }
 
 
 Buffer<UInt8>& DiffieHellman::computeSecret(Exception& ex, const Buffer<UInt8>& farPubKey, Buffer<UInt8>& sharedSecret) {
-	initialize(ex);
-	if (ex)
+	if (!initialize(ex))
 		return sharedSecret;
 	BIGNUM *bnFarPubKey = BN_bin2bn(&farPubKey[0],farPubKey.size(),NULL);
 	int i =BN_num_bits(_pDH->priv_key);

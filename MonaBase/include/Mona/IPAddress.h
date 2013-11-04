@@ -55,7 +55,8 @@ public:
 	IPAddress(const IPAddress& other);
 
 	// Set an IPAddress from a native internet address. A pointer to a in_addr or a in6_addr structure may be  passed. Additionally, for an IPv6 address, a scope ID may be specified.
-	bool copy(Exception& ex, const void* addr, UInt32 scope=0);
+	void set(const in_addr& addr);
+	void set(const in6_addr& addr, UInt32 scope = 0);
 
 	// Set an IPAddress from the string containing an IP address in presentation format (dotted decimal for IPv4, hex string for IPv6).
 	bool set(Exception& ex, const std::string& addr);

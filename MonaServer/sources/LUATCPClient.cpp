@@ -20,13 +20,12 @@
 
 using namespace std;
 using namespace Mona;
-using namespace Poco;
-using namespace Poco::Net;
+
 
 
 const char*		LUATCPClient::Name="LUATCPClient";
 
-LUATCPClient::LUATCPClient(const StreamSocket& socket,const SocketManager& manager,lua_State* pState) : _pState(pState),TCPClient(socket,manager) {
+LUATCPClient::LUATCPClient(const SocketAddress& peerAddress,const SocketManager& manager, lua_State* pState) : _pState(pState), TCPClient(manager, peerAddress) {
 }
 
 LUATCPClient::LUATCPClient(const SocketManager& manager,lua_State* pState) : _pState(pState),TCPClient(manager) {
@@ -35,8 +34,14 @@ LUATCPClient::LUATCPClient(const SocketManager& manager,lua_State* pState) : _pS
 LUATCPClient::~LUATCPClient() {
 }
 
-Mona::UInt32 LUATCPClient::onReception(const Mona::UInt8* data,Mona::UInt32 size){
-	Mona::UInt32 rest=0;
+void LUATCPClient::onError(const std::string& error) {
+	_error = error;
+	ERROR("LUATCPClient, ", error);
+}
+
+
+UInt32 LUATCPClient::onReception(const UInt8* data,UInt32 size){
+	UInt32 rest=0;
 	SCRIPT_BEGIN(_pState)
 		SCRIPT_MEMBER_FUNCTION_BEGIN(LUATCPClient,LUATCPClient,*this,"onReception")
 			SCRIPT_WRITE_BINARY(data,size)
@@ -50,9 +55,12 @@ Mona::UInt32 LUATCPClient::onReception(const Mona::UInt8* data,Mona::UInt32 size
 void LUATCPClient::onDisconnection(){
 	SCRIPT_BEGIN(_pState)
 		SCRIPT_MEMBER_FUNCTION_BEGIN(LUATCPClient,LUATCPClient,*this,"onDisconnection")
+			if (!_error.empty())
+				SCRIPT_WRITE_STRING(_error.c_str())
 			SCRIPT_FUNCTION_CALL
 		SCRIPT_FUNCTION_END
 	SCRIPT_END
+	_error.clear();
 }
 
 int	LUATCPClient::Destroy(lua_State* pState) {
@@ -63,16 +71,20 @@ int	LUATCPClient::Destroy(lua_State* pState) {
 
 int	LUATCPClient::Connect(lua_State* pState) {
 	SCRIPT_CALLBACK(LUATCPClient,LUATCPClient,client)
-		string host = SCRIPT_READ_STRING("");
-		Mona::UInt16 port = SCRIPT_READ_UINT(0);
-		try {
-			SocketAddress address(host,port);
-			client.connect(address);
-			if(client.error())
-				SCRIPT_WRITE_STRING(client.error())
-		} catch(Poco::Exception& ex) {
-			SCRIPT_WRITE_STRING(format("Understandable TCPClient address, %s",ex.displayText()).c_str())
-		}
+		string host("127.0.0.1");
+		if (SCRIPT_NEXT_TYPE == LUA_TSTRING)
+			host = SCRIPT_READ_STRING("127.0.0.1");
+		UInt16 port = SCRIPT_READ_UINT(0);
+		Exception ex;
+		SocketAddress address;
+		if (port == 0)
+			address.set(ex,host);
+		else
+			address.set(ex, host, port);
+		if (!ex)
+			client.connect(ex, address);
+		if (ex)
+			SCRIPT_WRITE_STRING(ex.error().c_str())
 	SCRIPT_CALLBACK_RETURN
 }
 
@@ -86,13 +98,10 @@ int	LUATCPClient::Disconnect(lua_State* pState) {
 int	LUATCPClient::Send(lua_State* pState) {
 	SCRIPT_CALLBACK(LUATCPClient,LUATCPClient,client)
 		SCRIPT_READ_BINARY(data,size)
-		if(!client.connected()) {
-			SCRIPT_ERROR("TCPClient not connected");
-		} else {
-			client.send(data,size);
-			if(client.error())
-				SCRIPT_WRITE_STRING(client.error())
-		}
+		Exception ex;
+		client.send(ex,data, size);
+		if (ex)
+			SCRIPT_WRITE_STRING(ex.error().c_str())
 	SCRIPT_CALLBACK_RETURN
 }
 
@@ -113,11 +122,6 @@ int LUATCPClient::Get(lua_State* pState) {
 		} else if(name=="peerAddress") {
 			if(client.connected())
 				SCRIPT_WRITE_STRING(client.peerAddress().toString().c_str())
-			else
-				SCRIPT_WRITE_NIL
-		} else if(name=="error") {
-			if(client.error())
-				SCRIPT_WRITE_STRING(client.error())
 			else
 				SCRIPT_WRITE_NIL
 		} else if(name=="connected")

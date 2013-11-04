@@ -29,10 +29,10 @@ public:
 	TCPServer(const SocketManager& manager);
 	virtual ~TCPServer();
 
-	bool		start(Exception& ex, UInt16 port);
-	bool		running() { return _port > 0; }
-	UInt16		port() { return _port; }
-	void		stop();
+	bool					start(Exception& ex, const SocketAddress& address);
+	bool					running() { return _running;  }
+	const SocketAddress&	address() { return _address; }
+	void					stop();
 
 	template <typename ClientType,typename ...Args>
 	ClientType* acceptClient(Exception& ex, Args&... args) {
@@ -43,16 +43,14 @@ public:
 	}
 
 private:
-	enum ReceptionState {
-		NOTHING,
-		REQUESTING
-	};
 
-	virtual void	onClientRequest(Exception& ex) = 0;
-	virtual void	onReadable(Exception& ex);
+	virtual void	onConnectionRequest(Exception& ex) = 0;
 
-	UInt16			_port;
-	bool		  _hasToAccept;
+	void			onReadable(Exception& ex);
+
+	SocketAddress	_address;
+	bool			_hasToAccept;
+	volatile bool	_running;
 };
 
 

@@ -20,7 +20,6 @@
 #include "Mona/Mona.h"
 #include "Mona/Exceptions.h"
 #include "Mona/Writer.h"
-#include "Poco/URI.h"
 #include "Mona/IPAddress.h"
 #include <list>
 #include <map>
@@ -59,7 +58,7 @@ public:
 	std::string				sessionName;
 	std::string				sessionInfos;
 	IPAddress				unicastAddress;
-	Poco::URI				uri;
+	std::string				uri;
 	std::string				email;
 	std::string				phone;
 	std::string				encryptKey;

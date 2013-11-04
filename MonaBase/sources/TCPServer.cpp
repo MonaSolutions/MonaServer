@@ -23,7 +23,7 @@ using namespace std;
 
 namespace Mona {
 
-TCPServer::TCPServer(const SocketManager& manager) : _hasToAccept(false),_port(0), ServerSocket(manager) {
+TCPServer::TCPServer(const SocketManager& manager) : _hasToAccept(false), _running(false),ServerSocket(manager) {
 }
 
 
@@ -31,28 +31,25 @@ TCPServer::~TCPServer() {
 	stop();
 }
 
-bool TCPServer::start(Exception& ex,UInt16 port) {
-	if(port==0) {
-		ex.set(Exception::SOCKET,"TCPServer port have to be superior to 0");
-		return false;
-	}
+bool TCPServer::start(Exception& ex,const SocketAddress& address) {
 	stop();
-	SocketAddress address;
-	address.set(IPAddress::Wildcard(),port);
 	if (!bind(ex, address) || !listen(ex))
 		return false;
-	_port=port;
-	return true;
+	_address.set(address);
+	return _running=true;
 }
 
 void TCPServer::stop() {
+	if (!_running)
+		_running;
 	close();
-	_port=0;
+	_address.clear();
+	_running = false;
 }
 
 void TCPServer::onReadable(Exception& ex) {
 	_hasToAccept = true;
-	onClientRequest(ex);
+	onConnectionRequest(ex);
 	if (_hasToAccept) {
 		rejectConnection();
 		_hasToAccept = false;

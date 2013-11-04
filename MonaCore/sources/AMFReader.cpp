@@ -91,9 +91,7 @@ double AMFReader::readNumber() {
 			value-=(1<<29);
 		return value;
 	}
-	double result;
-	reader >> result;
-	return result;
+	return reader.readNumber<double>();
 }
 
 bool AMFReader::readBoolean() {
@@ -168,7 +166,7 @@ Time& AMFReader::readTime(Time& time) {
 		if (isInline) {
 			if (_referencing)
 				_references.push_back(reference);
-			reader >> result;
+			result = reader.readNumber<double>();
 		} else {
 			flags >>= 1;
 			if (flags > _references.size()) {
@@ -177,12 +175,12 @@ Time& AMFReader::readTime(Time& time) {
 			}
 			UInt32 reset = reader.position();
 			reader.reset(_references[flags]);
-			reader >> result;
+			result = reader.readNumber<double>();
 			reader.reset(reset);
 		}
 		return time.update((Int64)result * 1000);
 	}
-	reader >> result;
+	result = reader.readNumber<double>();
 	reader.next(2); // Timezone, useless
 	return time.update((Int64)result * 1000);
 }

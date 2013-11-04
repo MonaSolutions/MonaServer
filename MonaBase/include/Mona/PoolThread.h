@@ -36,7 +36,7 @@ public:
 	bool	push(Exception& ex,std::shared_ptr<WorkThread>& pWork);
 	int		queue() const { return _queue; }
 private:
-	void	run(Exception& ex, ThreadPriority& priority);
+	void	run(Exception& ex);
 
 	std::mutex								_mutex;
 	std::list<std::shared_ptr<WorkThread>>	_jobs;

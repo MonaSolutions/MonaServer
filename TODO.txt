@@ -30,3 +30,5 @@
 - Paralléliser les logs? (pour diminuer l'occupation du thread principale, du coup avec un threadpools dans Application, et le partager avec Mona::Server
 - FileSystem::UnpackPath & FileSystem::PackPath, vérifier leurs utilité!!
 - Vérifier les parametres de build des projets, et pourquoi mon projet console2 m averti pour les sprintf => _sprintf et pas Mona!
+- Supprimer onFailed event!
+- onServerConnection doit être disponible que sur la root application, et sur "error" doit rejeter la connection serveur

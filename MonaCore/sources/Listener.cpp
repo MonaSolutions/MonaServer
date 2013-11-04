@@ -19,7 +19,7 @@
 #include "Mona/Publication.h"
 #include "Mona/Logs.h"
 
-using namespace Poco;
+
 using namespace std;
 
 namespace Mona {
@@ -124,9 +124,9 @@ void Listener::pushDataPacket(DataReader& packet) {
 		return;
 	}
 
-	SharedPtr<DataWriter> pWriter;
+	shared_ptr<DataWriter> pWriter;
 	_pDataWriter->createWriter(pWriter);
-	if(pWriter.isNull()) {
+	if (!pWriter) {
 		if(!_pDataWriter->writeMedia(Writer::DATA,0,packet.reader))
 			init();
 		return;

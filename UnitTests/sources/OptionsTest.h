@@ -21,7 +21,7 @@ protected:
 	bool AddOption(const std::string& fullName, const std::string& shortName, const std::string& description, 
 			bool required = false, bool repeatable = false, const std::string& argName = "", bool argRequired = false);
 
-	bool GetOption(const std::string& fullName);
+	bool GetOption(const std::string& fullName) { return opts.get(fullName) ? true : false; }
 
 	bool ProcessArg(char* arg, const std::function<void(Mona::Exception& ex, const std::string&, const std::string&)>& handler = nullptr);
 

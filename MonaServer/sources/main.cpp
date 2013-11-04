@@ -16,45 +16,19 @@
 */
 
 #include "MonaServer.h"
-#include "ApplicationKiller.h"
 #include "Mona/ServerApplication.h"
 
 
-#if defined(POCO_OS_FAMILY_UNIX)
-#include <signal.h>
-#endif
-
-using namespace Mona;
 using namespace std;
+using namespace Mona;
 
 
-
-class ServerMona : public ServerApplication, private Logger, private ApplicationKiller  {
-public:
-	ServerMona() {
-	}
+class ServerMona : public ServerApplication  {
 
 private:
 
-	void kill() {
-		terminate();
-	}
-
-
-
 ///// MAIN
-	int main() {
-
-#if defined(POCO_OS_FAMILY_UNIX) // TODO remonter d'un niveau?
-		sigset_t sset;
-		sigemptyset(&sset);
-		if (!getenv("POCO_ENABLE_DEBUGGER"))
-			sigaddset(&sset, SIGINT);
-		sigaddset(&sset, SIGQUIT);
-		sigaddset(&sset, SIGTERM);
-		sigprocmask(SIG_BLOCK, &sset, NULL);
-#endif
-
+	int main(TerminateSignal& terminateSignal) {
 		// starts the server
 		int bufferSize(0), threads(0), serversPort(0);
 		getNumber("bufferSize", bufferSize);
@@ -62,19 +36,12 @@ private:
 		string serversTargets;
 		getNumber("servers.port", serversPort);
 		getString("servers.targets", serversTargets);
-		MonaServer server(*this, bufferSize, threads, serversPort, serversTargets);
-		server.start(*this);
-
-		// wait for CTRL-C or kill
-#if defined(POCO_OS_FAMILY_UNIX)
-		int sig;
-		sigwait(&sset, &sig);		
-#else
-		waitForTerminationRequest();
-#endif
-
-		// Stop the server
-		server.stop();
+		MonaServer server(terminateSignal, bufferSize, threads, serversPort, serversTargets);
+		if (server.start(*this)) {
+			terminateSignal.wait();
+			// Stop the server
+			server.stop();
+		}
 		return Application::EXIT_OK;
 	}
 

@@ -32,7 +32,6 @@ class RTMFPMessage : virtual Object {
 public:
 
 	RTMFPMessage(std::istream& istr,bool repeatable);
-	virtual ~RTMFPMessage();
 
 	BinaryReader&			reader(UInt32& size);
 	BinaryReader&			reader(UInt32 fragment,UInt32& size);

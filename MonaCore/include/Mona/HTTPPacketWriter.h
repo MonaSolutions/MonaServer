@@ -19,7 +19,6 @@
 
 #include "Mona/Mona.h"
 #include "Mona/DataWriter.h"
-#include "Poco/Format.h"
 #include "math.h"
 
 namespace Mona {
@@ -27,7 +26,7 @@ namespace Mona {
 
 class HTTPPacketWriter : public DataWriter {
 public:
-	HTTPPacketWriter();
+	HTTPPacketWriter() {}
 
 	void beginObject(const std::string& type = "", bool external = false) {}
 	void endObject() { writer.writeRaw("\r\n", 2); }
@@ -38,7 +37,7 @@ public:
 	void endArray() {}
 
 	void writeDate(const Time& date);
-	void writeNumber(double value) { writeString(ROUND(value) == value ? Poco::format("%u", (UInt32)value) : Poco::format("%f", value)); }
+	void writeNumber(double value) { std::string text; writeString(String::Format(text)); }
 	void writeString(const std::string& value);
 	void writeBoolean(bool value);
 	void writeNull() { writer.writeRaw("null\r\n", 6); }

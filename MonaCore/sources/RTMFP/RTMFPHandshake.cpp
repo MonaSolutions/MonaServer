@@ -18,13 +18,11 @@
 #include "Mona/RTMFP/RTMFPHandshake.h"
 #include "Mona/RTMFP/RTMFProtocol.h"
 #include "Mona/Util.h"
-#include "Poco/RandomStream.h"
-#include "Poco/Format.h"
 #include <openssl/evp.h>
 #include <cstring>
 
 using namespace std;
-using namespace Poco;
+
 
 
 namespace Mona {
@@ -33,7 +31,7 @@ RTMFPHandshake::RTMFPHandshake(RTMFProtocol& protocol,Gateway& gateway,Invoker& 
 	_gateway(gateway) {
 
 	memcpy(_certificat,"\x01\x0A\x41\x0E",4);
-	RandomInputStream().read((char*)&_certificat[4],64);
+	Util::Random(&_certificat[4],64);
 	memcpy(&_certificat[68],"\x02\x15\x02\x02\x15\x05\x02\x15\x0E",9);
 }
 
@@ -47,11 +45,12 @@ void RTMFPHandshake::manage() {
 	AttemptCounter::manage();
 
 	// delete obsolete cookie
-	map<const UInt8*,RTMFPCookie*,CompareCookies>::iterator it=_cookies.begin();
+	auto it=_cookies.begin();
 	while(it!=_cookies.end()) {
 		if(it->second->obsolete()) {
 			clearAttempt(it->second->tag);
-			DEBUG("Obsolete cookie : ",Util::FormatHex(it->first,COOKIE_SIZE));
+			string hex;
+			DEBUG("Obsolete cookie, ", Util::FormatHex(it->first, COOKIE_SIZE, hex));
 			delete it->second;
 			_cookies.erase(it++);
 		} else
@@ -60,9 +59,10 @@ void RTMFPHandshake::manage() {
 }
 
 void RTMFPHandshake::commitCookie(const UInt8* value) {
-	map<const UInt8*,RTMFPCookie*,CompareCookies>::iterator it = _cookies.find(value);
+	auto it = _cookies.find(value);
 	if(it==_cookies.end()) {
-		WARN("RTMFPCookie ",Util::FormatHex(value,COOKIE_SIZE)," not found, maybe becoming obsolete before commiting (congestion?)");
+		string hex;
+		WARN("RTMFPCookie ", Util::FormatHex(value, COOKIE_SIZE, hex), " not found, maybe becoming obsolete before commiting (congestion?)");
 		return;
 	}
 	clearAttempt(it->second->tag);
@@ -81,16 +81,21 @@ void RTMFPHandshake::clear() {
 	_cookies.clear();
 }
 
-void RTMFPHandshake::createCookie(MemoryWriter& writer,HelloAttempt& attempt,const string& tag,const string& queryUrl) {
+bool RTMFPHandshake::createCookie(Exception& ex,MemoryWriter& writer,HelloAttempt& attempt,const string& tag,const string& queryUrl) {
 	// New RTMFPCookie
 	RTMFPCookie* pCookie = attempt.pCookie;
 	if(!pCookie) {
 		pCookie = new RTMFPCookie(*this,invoker,tag,queryUrl);
+		if (!pCookie->run(ex)) {
+			delete pCookie;
+			return false;
+		}
 		_cookies[pCookie->value()] =  pCookie;
 		attempt.pCookie = pCookie;
 	}
 	writer.write8(COOKIE_SIZE);
 	writer.writeRaw(pCookie->value(),COOKIE_SIZE);
+	return true;
 }
 
 
@@ -128,17 +133,23 @@ void RTMFPHandshake::packetHandler(MemoryReader& packet) {
 Session* RTMFPHandshake::createSession(const UInt8* cookieValue) {
 	map<const UInt8*,RTMFPCookie*,CompareCookies>::iterator itCookie = _cookies.find(cookieValue);
 	if(itCookie==_cookies.end()) {
-		WARN("Creating session for an unknown cookie '",Util::FormatHex(cookieValue,COOKIE_SIZE),"' (CPU congestion?)");
+		string hex;
+		WARN("Creating session for an unknown cookie '", Util::FormatHex(cookieValue, COOKIE_SIZE, hex), "' (CPU congestion?)");
 		return NULL;
 	}
 
 	RTMFPCookie& cookie(*itCookie->second);
+	Exception ex;
+	if (!cookie.finalize(ex)) {
+		WARN("RTMFP Cookie finalization, ", ex.error());
+		return NULL;
+	}
 
 	// Fill peer infos
 	peer.clear();
 	memcpy((void*)peer.id,cookie.peerId,ID_SIZE);
 
-	Exception ex;
+	
 	Util::UnpackUrl(ex,cookie.queryUrl,(SocketAddress&)peer.serverAddress,(string&)peer.path,peer);
 	if (ex)
 		WARN("serverAddress of RTMFP ", id, " impossible to determine from url ", cookie.queryUrl)
@@ -146,7 +157,6 @@ Session* RTMFPHandshake::createSession(const UInt8* cookieValue) {
 	(UInt32&)farId = cookie.farId;
 	((SocketAddress&)peer.address).set(cookie.peerAddress);
 
-	cookie.finalize();
 
 	// Create session
 	Session& session = _gateway.registerSession(new RTMFPSession((RTMFProtocol&)protocol,invoker,cookie.farId,peer,cookie.decryptKey,cookie.encryptKey));
@@ -220,7 +230,8 @@ UInt8 RTMFPHandshake::handshakeHandler(UInt8 id,MemoryReader& request,MemoryWrit
 					return 0x71;
 				}
 
-				DEBUG("UDP Hole punching : session ",Util::FormatHex(peerId,ID_SIZE)," wanted not found")
+				string hex;
+				DEBUG("UDP Hole punching, session ", Util::FormatHex(peerId, ID_SIZE, hex), " wanted not found")
 				set<SocketAddress> addresses;
 				peer.onRendezVousUnknown(peerId,addresses);
 				set<SocketAddress>::const_iterator it;
@@ -259,7 +270,10 @@ UInt8 RTMFPHandshake::handshakeHandler(UInt8 id,MemoryReader& request,MemoryWrit
 				}
 
 				// New RTMFPCookie
-				createCookie(response,attempt,tag,epd);
+				if (!createCookie(ex, response, attempt, tag, epd)) {
+					ERROR("RTMFPCookie creation, ",ex.error())
+					return 0;
+				}
 		
 				// instance id (certificat in the middle)
 				response.writeRaw(_certificat,sizeof(_certificat));
@@ -272,13 +286,15 @@ UInt8 RTMFPHandshake::handshakeHandler(UInt8 id,MemoryReader& request,MemoryWrit
 			(UInt32&)farId = request.read32();
 
 			if(request.read7BitLongValue()!=COOKIE_SIZE) {
-				ERROR("Bad handshake cookie '",Util::FormatHex(request.current(),COOKIE_SIZE),"': its size should be 64 bytes");
+				string hex;
+				ERROR("Bad handshake cookie '", Util::FormatHex(request.current(), COOKIE_SIZE, hex), "': its size should be 64 bytes");
 				return 0;
 			}
 	
 			map<const UInt8*,RTMFPCookie*,CompareCookies>::iterator itCookie = _cookies.find(request.current());
 			if(itCookie==_cookies.end()) {
-				WARN("RTMFPCookie '",Util::FormatHex(request.current(),COOKIE_SIZE),"' unknown, maybe already connected (udpBuffer congested?)");
+				string hex;
+				WARN("RTMFPCookie '", Util::FormatHex(request.current(), COOKIE_SIZE, hex), "' unknown, maybe already connected (udpBuffer congested?)");
 				return 0;
 			}
 
@@ -291,7 +307,7 @@ UInt8 RTMFPHandshake::handshakeHandler(UInt8 id,MemoryReader& request,MemoryWrit
 
 				size_t size = (size_t)request.read7BitLongValue();
 				// peerId = SHA256(farPubKey)
-				EVP_Digest(request.current(),size,(UInt8*)cookie.peerId,NULL,EVP_sha256(),NULL);
+				EVP_Digest(request.current(),size,cookie.peerId,NULL,EVP_sha256(),NULL);
 
 				UInt32 sizeKey = request.read7BitValue()-2;
 				request.next(2); // unknown
@@ -302,7 +318,7 @@ UInt8 RTMFPHandshake::handshakeHandler(UInt8 id,MemoryReader& request,MemoryWrit
 				Exception ex;
 				cookie.computeSecret(ex, initiatorKey,sizeKey,request.current(),sizeNonce);
 				if (ex)
-					ERROR("Error during computeSecret in RTMFP handshakeHandler : ", ex.error());
+					ERROR("RTMFP compute secret, ", ex.error());
 			} else if(cookie.id>0) {
 				// Repeat cookie reponse!
 				cookie.read(response);

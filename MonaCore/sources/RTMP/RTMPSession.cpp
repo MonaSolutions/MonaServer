@@ -24,7 +24,7 @@
 
 
 using namespace std;
-using namespace Poco;
+
 
 namespace Mona {
 
@@ -43,7 +43,7 @@ RTMPSession::~RTMPSession() {
 }
 
 void RTMPSession::onNewData(const UInt8* data,UInt32 size) {
-	if(!_pDecryptKey.isNull())
+	if(_pDecryptKey)
 		RC4(_pDecryptKey.get(),size,data,(UInt8*)data); // No useless to thread it (after testing)
 }
 
@@ -192,8 +192,8 @@ bool RTMPSession::performHandshake(MemoryReader& packet, bool encrypted) {
 	shared_ptr<RTMPHandshaker> pHandshaker;
 	if (challengeKey) {
 		if(encrypted) {
-			_pDecryptKey = new RC4_KEY;
-			_pEncryptKey = new RC4_KEY;
+			_pDecryptKey.reset(new RC4_KEY);
+			_pEncryptKey.reset(new RC4_KEY);
 		}
 		packet.reset();
 		pHandshaker.reset(new RTMPHandshaker(packet.current() + RTMP::GetDHPos(packet.current(), middle), challengeKey, middle, _pDecryptKey, _pEncryptKey));

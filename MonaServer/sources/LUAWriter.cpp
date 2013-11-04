@@ -21,7 +21,7 @@
 
 using namespace std;
 using namespace Mona;
-using namespace Poco;
+
 
 
 LUAWriter::LUAWriter(lua_State* pState,Writer& writer):writer(writer.newWriter(this)),_pState(pState) {

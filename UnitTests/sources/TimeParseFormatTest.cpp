@@ -19,7 +19,7 @@ bool TimeParseFormatTest::IsParseOk(const char * fmt, const char * stDate, int y
 
 	// Parsing
 	int tzd = 0;
-	bool bIsParseOk = TimeParser::parse(fmt, stDate, _time, tzd);
+	bool bIsParseOk = TimeParser::Parse(fmt, stDate, _time, tzd);
 	if (!bIsParseOk) {
 		DEBUG("Error during parsing of date (", stDate, ")");
 		return false;

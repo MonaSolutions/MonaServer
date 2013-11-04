@@ -20,12 +20,12 @@
 #include "Mona/Logs.h"
 
 using namespace std;
-using namespace Poco;
+
 
 
 namespace Mona {
 
-RTMPSender::RTMPSender(const SharedPtr<RC4_KEY>& pEncryptKey): TCPSender(true),_pEncryptKey(pEncryptKey),_chunkSize(DEFAULT_CHUNKSIZE),_sizePos(0) {
+RTMPSender::RTMPSender(const shared_ptr<RC4_KEY>& pEncryptKey): TCPSender(true),_pEncryptKey(pEncryptKey),_chunkSize(DEFAULT_CHUNKSIZE),_sizePos(0) {
 }
 
 RTMPSender::RTMPSender(const RTMPSender& sender): TCPSender(true),_pEncryptKey(sender._pEncryptKey),_chunkSize(DEFAULT_CHUNKSIZE),_sizePos(0) {
@@ -49,7 +49,7 @@ void RTMPSender::pack() {
 bool RTMPSender::run(Exception& ex) {
 	pack();
 	dump();
-	if (!_pEncryptKey.isNull())
+	if (_pEncryptKey)
 		RC4(_pEncryptKey.get(), size(), begin(), (UInt8*)begin());
 	return TCPSender::run(ex);
 }

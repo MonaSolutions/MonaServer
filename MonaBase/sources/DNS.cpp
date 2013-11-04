@@ -37,9 +37,9 @@ bool DNS::HostByName(Exception& ex, const string& hostname, HostEntry& host) {
 	hints.ai_flags = AI_CANONNAME | AI_ADDRCONFIG;
 	int rc = getaddrinfo(hostname.c_str(), NULL, &hints, &pAI); 
 	if (rc == 0) {
-		bool result = host.set(ex, pAI);
+		host.set(ex,pAI);
 		freeaddrinfo(pAI);
-		return result;
+		return true;
 	}
 	SetAIError(ex,rc, hostname);
 	return false;
@@ -60,9 +60,9 @@ bool DNS::HostByAddress(Exception& ex,const IPAddress& address, HostEntry& host)
 		hints.ai_flags = AI_CANONNAME | AI_ADDRCONFIG;
 		rc = getaddrinfo(fqname, NULL, &hints, &pAI);
 		if (rc == 0) {
-			bool result = host.set(ex, pAI);
+			host.set(ex, pAI);
 			freeaddrinfo(pAI);
-			return result;
+			return true;
 		}
 	}
 	SetAIError(ex, rc, address.toString());

@@ -95,18 +95,18 @@ public:
 
 	template<typename SocketSenderType>
 	PoolThread* send(Exception& ex, std::shared_ptr<SocketSenderType>& pSender, PoolThread* pThread) {
-		ASSERT_RETURN(_initialized == true, NULL)
+		ASSERT_RETURN(_initialized == true, pThread)
 		if (!managed(ex))
-			return NULL;
+			return pThread;
 
 		// return if no data to send
 		if (!pSender->available())
-			return NULL;
+			return pThread;
 
 		pSender->_pSocket = this;
 		pSender->_pSocketMutex = _pMutex;
 		pSender->_pThis = pSender;
-		pThread = _poolThreads.enqueue<SocketSenderType>(pSender, pThread);
+		pThread = _poolThreads.enqueue<SocketSenderType>(ex,pSender, pThread);
 		return pThread;
 	}
 
@@ -132,7 +132,7 @@ protected:
 
 		char buffer[IPAddress::MAX_ADDRESS_LENGTH];
 		struct sockaddr* pSA = reinterpret_cast<struct sockaddr*>(buffer);
-		SOCKLEN saLen = sizeof(buffer);
+		NET_SOCKLEN saLen = sizeof(buffer);
 
 		NET_SOCKET sockfd;
 		do {
@@ -172,13 +172,15 @@ protected:
 	void setBroadcast(Exception& ex, bool flag) { setOption(ex, SOL_SOCKET, SO_BROADCAST, flag ? 1 : 0); }
 	bool getBroadcast(Exception& ex) { return getOption(ex, SOL_SOCKET, SO_BROADCAST) != 0; }
 
+	const SocketManager&	manager;
 
+	// Can be called by a separated thread!
+	virtual void	onError(const std::string& error) = 0;
 private:
 	virtual bool    onConnection(const SocketAddress& address) { return true; }
 	// if ex of onReadable is raised, it's given to onError
 	virtual void	onReadable(Exception& ex) = 0;
-	// Can be called by a separated thread!
-	virtual void	onError(const std::string& error) = 0;
+	
 
 	// Creates the underlying native socket
 	bool	init(Exception& ex, IPAddress::Family family);
@@ -215,7 +217,6 @@ private:
 
 	std::mutex				_mutexManaged;
 	volatile bool			_managed;
-	const SocketManager&	_manager;
 
 	NET_SOCKET				_sockfd;
 	std::mutex				_mutexInit;

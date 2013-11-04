@@ -58,9 +58,9 @@ public:
 		_toString.reserve(16);
 		memset(&_addr, 0, sizeof(_addr));
 	}
-	IPv4Address(const void* addr) {
+	IPv4Address(const in_addr& addr) {
 		_toString.reserve(16);
-		memcpy(&_addr, addr, sizeof(_addr));
+		memcpy(&_addr, &addr, sizeof(_addr));
 	}
 
 	
@@ -110,7 +110,7 @@ public:
 		ia.s_addr = inet_addr(addr.c_str());
 		if (ia.s_addr == INADDR_NONE && addr != "255.255.255.255")
 			return 0;
-		return new IPv4Address(&ia);
+		return new IPv4Address(ia);
 #else
 		if (inet_aton(addr.c_str(), &ia))
 			return new IPv4Address(&ia);
@@ -139,9 +139,9 @@ public:
 		_toString.reserve(24);
 		memset(&_addr, 0, sizeof(_addr));
 	}
-	IPv6Address(const void* addr, UInt32 scope=0) : _scope(scope) {
+	IPv6Address(const in6_addr& addr, UInt32 scope = 0) : _scope(scope) {
 		_toString.reserve(24);
-		memcpy(&_addr, addr, sizeof(_addr));
+		memcpy(&_addr, &addr, sizeof(_addr));
 	}
 
 	const string& toString() const {
@@ -259,7 +259,7 @@ public:
 		hints.ai_flags = AI_NUMERICHOST;
 		int rc = getaddrinfo(addr.c_str(), NULL, &hints, &pAI);
 		if (rc == 0) {
-			IPv6Address* pResult = new IPv6Address(&reinterpret_cast<struct sockaddr_in6*>(pAI->ai_addr)->sin6_addr, static_cast<int>(reinterpret_cast<struct sockaddr_in6*>(pAI->ai_addr)->sin6_scope_id));
+			IPv6Address* pResult = new IPv6Address(reinterpret_cast<struct sockaddr_in6*>(pAI->ai_addr)->sin6_addr, static_cast<int>(reinterpret_cast<struct sockaddr_in6*>(pAI->ai_addr)->sin6_scope_id));
 			freeaddrinfo(pAI);
 			return pResult;
 		}
@@ -312,8 +312,7 @@ public:
 	IPBroadcaster() {
 		struct in_addr ia;
 		ia.s_addr = INADDR_NONE;
-		Exception ex;
-		copy(ex, &ia, sizeof(ia));  // will never throw!
+		set(ia);
 	}
 };
 
@@ -357,18 +356,12 @@ bool IPAddress::set(Exception& ex, const string& addr, Family family) {
 }
 
 
-bool IPAddress::copy(Exception& ex,const void* addr, UInt32 scope) {
-	IPAddressCommon* pIPAddress(NULL);
-	if (sizeof(addr) == sizeof(struct in_addr))
-		pIPAddress = new IPv4Address(addr);
-	else if (sizeof(addr) == sizeof(struct in6_addr))
-		pIPAddress = new IPv6Address(addr, scope);
-	else {
-		ex.set(Exception::NETADDRESS, "Invalid socket address length ", sizeof(addr));
-		return false;
-	}
-	_pIPAddress.reset(pIPAddress);
-	return true;
+void IPAddress::set(const in_addr& addr) {
+	_pIPAddress.reset(new IPv4Address(addr));
+}
+
+void IPAddress::set(const in6_addr& addr, UInt32 scope) {
+	_pIPAddress.reset(new IPv6Address(addr, scope));
 }
 
 void IPAddress::mask(Exception& ex, const IPAddress& mask) {

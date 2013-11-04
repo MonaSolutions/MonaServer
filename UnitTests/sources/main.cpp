@@ -28,7 +28,7 @@ private:
 		/// \brief define options of TestApp
 	{
 
-		options.add(ex, "mod", "m", "Specify the module to run.")
+		options.add(ex, "module", "m", "Specify the module to run.")
 			.argument("module");
 
 		// defines here your options applications
@@ -45,25 +45,25 @@ private:
 		// Print The list
 		int index = 0;
 		string tmp;
-		cout << String::Format(tmp, "a - Run all tests") << endl;
-		for(const string& test : lTests) {
+		for(const string& test : lTests)
 			cout << String::Format(tmp, index++, " - ", test) << endl;
-		}
 
 		// Ask for the index
-		cout << endl << "Choose the index of the test to run : ";
-		char val[255];
-		cin >> val;
+		cout << endl << "Choose the index of the test to run (or type enter to run all) : ";
+		string input;
+		getline(cin, input);
 		Exception ex;
-		int number = String::ToNumber<int>(ex, val);
 		
-		if (*val == 'a') {
-
-			PoolTest::PoolTestInstance().runAll();
-		} else if (!ex && (number >= 0) && (number < lTests.size())) {
-			
-			PoolTest::PoolTestInstance().run(lTests.at(number));
+		int number(0);
+		if (!input.empty()) {
+			number = String::ToNumber<int>(ex, input);
+			if (!ex) {
+				PoolTest::PoolTestInstance().run(lTests.at(number));
+				return;
+			}
+			WARN("Unvalid test index, all tests will run")
 		}
+		PoolTest::PoolTestInstance().runAll();
 	}
 
 ///// MAIN
@@ -72,9 +72,8 @@ private:
 		try {
 
 			string module;
-			if (!argument("module", module)) {
+			if (!argument("module", module))
 				runSelectedModule();
-			}
 			else if (module=="all")
 				PoolTest::PoolTestInstance().runAll();
 			else

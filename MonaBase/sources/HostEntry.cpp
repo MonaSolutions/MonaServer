@@ -22,14 +22,11 @@ using namespace std;
 
 namespace Mona {
 
-HostEntry::HostEntry() {
-}
+	
+void HostEntry::set(Exception& ex,const struct hostent* entry) {
+	ASSERT(entry != NULL)
 
-	
-bool HostEntry::set(Exception& ex,const struct hostent* entry) {
-	ASSERT_RETURN(entry != NULL,false)
-	
-	_name = entry->h_name;	
+	_name = entry->h_name;
 	char** alias = entry->h_aliases;
 	if (alias) {
 		while (*alias) {
@@ -37,42 +34,42 @@ bool HostEntry::set(Exception& ex,const struct hostent* entry) {
 			++alias;
 		}
 	}
+
 	char** address = entry->h_addr_list;
 	if (address) {
 		while (*address) {
 			_addresses.emplace_back();
-			_addresses.back().copy(ex, *address, entry->h_length);
-			if (ex) {
+			if (entry->h_length == sizeof(struct in_addr))
+				_addresses.back().set(*reinterpret_cast<struct in_addr*>(*address));
+			else if (entry->h_length == sizeof(struct in6_addr))
+				_addresses.back().set(*reinterpret_cast<struct in6_addr*>(*address));
+			else {
 				_addresses.pop_back();
-				return false;
+				ex.set(Exception::NETADDRESS, "Unvalid host address entry");
 			}
 			++address;
 		}
 	}
-	return true;
 }
 
 
-bool HostEntry::set(Exception& ex, struct addrinfo* ainfo) {
-	ASSERT_RETURN(ainfo != NULL,false)
+void HostEntry::set(Exception& ex, struct addrinfo* ainfo) {
+	ASSERT(ainfo != NULL)
 	for (struct addrinfo* ai = ainfo; ai; ai = ai->ai_next) {
 		if (ai->ai_canonname)
 			_name.assign(ai->ai_canonname);
 		if (ai->ai_addrlen && ai->ai_addr) {
 			_addresses.emplace_back();
 			if (ai->ai_addr->sa_family == AF_INET6)
-				_addresses.back().copy(ex, &reinterpret_cast<struct sockaddr_in6*>(ai->ai_addr)->sin6_addr, reinterpret_cast<struct sockaddr_in6*>(ai->ai_addr)->sin6_scope_id);
+				_addresses.back().set(reinterpret_cast<struct sockaddr_in6*>(ai->ai_addr)->sin6_addr, reinterpret_cast<struct sockaddr_in6*>(ai->ai_addr)->sin6_scope_id);
 			else if (ai->ai_addr->sa_family == AF_INET)
-				_addresses.back().copy(ex, &reinterpret_cast<struct sockaddr_in*>(ai->ai_addr)->sin_addr);
-			else
-				ex.set(Exception::NETADDRESS, "Unknown address family ", ai->ai_addr->sa_family);
-			if (ex) {
+				_addresses.back().set(reinterpret_cast<struct sockaddr_in*>(ai->ai_addr)->sin_addr);
+			else {
 				_addresses.pop_back();
-				return false;
+				ex.set(Exception::NETADDRESS, "Unknown address family ", ai->ai_addr->sa_family);
 			}
 		}
 	}
-	return true;
 }
 
 

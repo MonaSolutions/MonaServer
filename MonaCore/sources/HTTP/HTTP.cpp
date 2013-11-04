@@ -120,7 +120,7 @@ void HTTP::ReadHeader(HTTPPacketReader& reader, MapParameters& headers, string& 
 				String::Split(value, " ", fields, String::SPLIT_IGNORE_EMPTY | String::SPLIT_TRIM);
 				if (fields.size() > 0) {
 					cmd = fields[0];
-					if (fields.size() > 1 && Util::UnpackQuery(ex,fields[1], path, file, properties)) {
+					if (fields.size() > 1 && Util::UnpackUrl(ex,fields[1], path, file, properties)) {
 						if (fields.size() > 2) {
 							unsigned found = fields[2].find_last_of("/");
 							Exception ex;
@@ -159,7 +159,7 @@ void HTTP::ReadHeader(HTTPPacketReader& reader, MapParameters& headers, string& 
 }
 
 
-void HTTP::CodeToMessage(Poco::UInt16 code, std::string& message) {
+void HTTP::CodeToMessage(UInt16 code, std::string& message) {
 	auto found = CodeMessages.find(code);
 	if (found != CodeMessages.end())
 		message = found->second;

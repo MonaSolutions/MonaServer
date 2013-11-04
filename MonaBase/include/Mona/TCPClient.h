@@ -31,7 +31,7 @@ public:
 	TCPClient(const SocketManager& manager, const SocketAddress& peerAddress);
 	virtual ~TCPClient();
 
-	bool					connect(Exception& ex, const std::string& address);
+	bool					connect(Exception& ex, const SocketAddress& address);
 	bool					connected() { return _connected; }
 	bool					send(Exception& ex, const UInt8* data, UInt32 size);
 
@@ -46,8 +46,8 @@ public:
 
 	void					disconnect();
 
-	const std::string&		address(Exception& ex, std::string& address) { SocketAddress temp; return (address = StreamSocket::address(ex, temp).toString()); }
-	const std::string&		peerAddress(Exception& ex, std::string& address) { SocketAddress temp; return (address = StreamSocket::peerAddress(ex, temp).toString()); }
+	const SocketAddress&	address();
+	const SocketAddress&	peerAddress();
 
 private:
 	virtual void			onNewData(const UInt8* data,UInt32 size){}
@@ -61,6 +61,9 @@ private:
 	Buffer<UInt8>			_buffer;
 	UInt32					_rest;
 	bool					_connected;
+
+	SocketAddress			_address;
+	SocketAddress			_peerAddress;
 };
 
 

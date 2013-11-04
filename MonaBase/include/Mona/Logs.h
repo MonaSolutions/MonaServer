@@ -48,9 +48,9 @@ public:
 			return;
 		std::string shortFile(file);
 		auto found = shortFile.find_last_of("\\/");
-		if (found != string::npos) {
+		if (found != std::string::npos) {
 			found = shortFile.find_last_of("\\/", found - 1);
-			if (found != string::npos)
+			if (found != std::string::npos)
 				shortFile.erase(0,found+1);
 		}
 			

@@ -20,6 +20,7 @@ This file is a part of Mona.
 #include "Mona/Mona.h"
 #include "Mona/MapParameters.h"
 #include "Mona/Time.h"
+#include "Mona/Exceptions.h"
 #include <vector>
 #undef CreateDirectory
 
@@ -31,10 +32,11 @@ public:
 
 	static bool			Exists(const std::string& path);
 	static bool			IsFile(const std::string& path);
+	static bool			IsDirectory(const std::string& path) { return !IsFile(path); }
 	static bool			IsAbsolute(const std::string& path);
 	
-	static UInt32		GetSize(const std::string& path);
-	static Time&		GetLastModified(const std::string& path, Time& time);
+	static UInt32		GetSize(Exception& ex,const std::string& path);
+	static Time&		GetLastModified(Exception& ex,const std::string& path, Time& time);
 
 	static std::string& GetName(const std::string& path, std::string& value);
 	static std::string& GetBaseName(const std::string& path, std::string& value);

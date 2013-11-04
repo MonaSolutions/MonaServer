@@ -56,7 +56,7 @@ public:
 
 	void manage() const;
 
-	void start();
+	bool start(Exception& ex) { return _manager.start(ex); }
 	void stop();
 
 private:

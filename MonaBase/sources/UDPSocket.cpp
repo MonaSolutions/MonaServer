@@ -29,6 +29,27 @@ UDPSocket::UDPSocket(const SocketManager& manager, bool allowBroadcast) : _broad
 
 }
 
+
+const SocketAddress& UDPSocket::address() {
+	if (!_address.host().isWildcard())
+		return _address;
+	Exception ex;
+	DatagramSocket::address(ex, _address);
+	if (ex)
+		onError(ex.error());
+	return _address;
+}
+
+const SocketAddress& UDPSocket::peerAddress() {
+	if (!_peerAddress.host().isWildcard())
+		return _peerAddress;
+	Exception ex;
+	DatagramSocket::peerAddress(ex, _peerAddress);
+	if (ex)
+		onError(ex.error());
+	return _peerAddress;
+}
+
 void UDPSocket::onReadable(Exception& ex) {
 	UInt32 available = DatagramSocket::available(ex);
 	if(ex || available==0)
@@ -41,32 +62,27 @@ void UDPSocket::onReadable(Exception& ex) {
 	int size = receiveFrom(ex, &_buffer[0], available, address);
 	if (ex)
 		return;
-	onReception(ex,&_buffer[0], size, address);
+	onReception(&_buffer[0], size, address);
 }
 
 void UDPSocket::close() {
 	DatagramSocket::close();
 	_broadcasting = false;
+	_address.clear();
+	_peerAddress.clear();
 }
 
-bool UDPSocket::bind(Exception& ex,const string& address) {
-	SocketAddress temp;
-	if (!temp.set(ex, address))
-		return false;
-	bool result = DatagramSocket::bind(ex, temp);
+bool UDPSocket::bind(Exception& ex,const SocketAddress& address) {
+	bool result = DatagramSocket::bind(ex, address);
 	if (result && _allowBroadcast && !_broadcasting) {
 		setBroadcast(ex, true);
 		_broadcasting = !ex;
 	}
-		
 	return result;
 }
 
-bool UDPSocket::connect(Exception& ex, const string& address) {
-	SocketAddress temp;
-	if (!temp.set(ex, address))
-		return false;
-	bool result = DatagramSocket::connect(ex, temp);
+bool UDPSocket::connect(Exception& ex, const SocketAddress& address) {
+	bool result = DatagramSocket::connect(ex, address);
 	if (result && _allowBroadcast && !_broadcasting) {
 		setBroadcast(ex, true);
 		_broadcasting = !ex;
@@ -88,12 +104,11 @@ bool UDPSocket::send(Exception& ex, const UInt8* data, UInt32 size) {
 	return true;
 }
 
-bool UDPSocket::send(Exception& ex, const UInt8* data, UInt32 size,const string& address) {
+bool UDPSocket::send(Exception& ex, const UInt8* data, UInt32 size,const SocketAddress& address) {
 	if (size == 0)
 		return true;
 	shared_ptr<UDPSender> pSender(new UDPSender(data, size));
-	if (!pSender->address.set(ex, address))
-		return false;
+	pSender->address.set(address);
 	DatagramSocket::send(ex, pSender);
 	if (!ex)
 		return false;

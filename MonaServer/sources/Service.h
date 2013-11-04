@@ -17,9 +17,8 @@
 
 #pragma once
 
-#include "FileWatcher.h"
+#include "Mona/FileWatcher.h"
 #include "Script.h"
-#include "Poco/StringTokenizer.h"
 
 class Service;
 class ServiceRegistry {
@@ -31,7 +30,7 @@ public:
 };
 
 
-class Service : public FileWatcher {
+class Service : public Mona::FileWatcher {
 public:
 	Service(lua_State* pState,const std::string& path,ServiceRegistry& registry);
 	virtual ~Service();
@@ -58,16 +57,16 @@ private:
 	static int	Index(lua_State* pState);
 	static int  NewIndex(lua_State* pState);
 
-	bool					_running;
-	lua_State*				_pState;
-	bool					_deleting;
-	Poco::StringTokenizer	_packages;
+	bool						_running;
+	lua_State*					_pState;
+	bool						_deleting;
+	std::vector<std::string>	_packages;
 
 	std::map<std::string,Service*>	_services;
 	ServiceRegistry&				_registry;
 
 	static bool						_VolatileObjectsRecording;
-	static Poco::Thread*			_PVolatileObjectsThreadRecording;
+	static std::thread::id			_VolatileObjectsThreadRecording;
 };
 
 inline void Service::InitGlobalTable(lua_State* pState) {

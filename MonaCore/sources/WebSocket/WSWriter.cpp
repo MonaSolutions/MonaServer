@@ -19,7 +19,7 @@
 
 
 using namespace std;
-using namespace Poco;
+
 
 namespace Mona {
 
@@ -125,9 +125,9 @@ bool WSWriter::writeMedia(MediaType type,UInt32 time,MemoryReader& data) {
 			break;
 		case DATA: {
 			JSONWriter& writer = newWriter();
-			writer.writer << '[';
+			writer.writer.write8('[');
 			writer.writer.writeRaw(data.current(),data.available());
-			writer.writer << ']';
+			writer.writer.write8(']');
 			break;
 		}
 		case INIT:
