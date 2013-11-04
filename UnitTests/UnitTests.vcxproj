@@ -97,8 +97,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="sources\BinaryReaderWriterTest.cpp" />
     <ClCompile Include="sources\DNSTest.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="sources\IPAddressTest.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
@@ -121,6 +122,7 @@
     <ClCompile Include="sources\UtilTest.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="sources\BinaryReaderWriterTest.h" />
     <ClInclude Include="sources\DNSTest.h" />
     <ClInclude Include="sources\IPAddressTest.h" />
     <ClInclude Include="sources\OptionsTest.h" />

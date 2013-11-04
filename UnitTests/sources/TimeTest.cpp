@@ -8,6 +8,7 @@
 using namespace Mona;
 using namespace std;
 using namespace std::chrono;
+using namespace std;
 
 // Test 
 ADD_TEST(TimeTest, TestTimestamp) {
@@ -34,7 +35,7 @@ ADD_TEST(TimeTest, TestTimestamp) {
 	EXPECT_TRUE(tEpoch == 0);
 
 	Time now;
-	this_thread::sleep_for(milliseconds(200));
+	this_thread::sleep_for(milliseconds(201));
 	EXPECT_TRUE(now.elapsed() >= 200000);
 	EXPECT_TRUE(now.isElapsed(200000));
 	EXPECT_TRUE(!now.isElapsed(2000000));
@@ -84,16 +85,17 @@ ADD_TEST(TimeTest, TestTimeFormat) {
 
 	// Convert init time to local time
 	time_t utcint = timegm(&tminit);
-	LOCALTIME(utcint, tminit);
+	struct tm tmlocal;
+	LOCALTIME(utcint, tmlocal);
 
-	EXPECT_TRUE(tminit.tm_year == datetm.tm_year);
-	EXPECT_TRUE(tminit.tm_mon == datetm.tm_mon);
-	EXPECT_TRUE(tminit.tm_mday == datetm.tm_mday);
-	EXPECT_TRUE(tminit.tm_yday == datetm.tm_yday);
-	EXPECT_TRUE(tminit.tm_wday == datetm.tm_wday);
-	EXPECT_TRUE(tminit.tm_hour == datetm.tm_hour);
-	EXPECT_TRUE(tminit.tm_min == datetm.tm_min);
-	EXPECT_TRUE(tminit.tm_sec == datetm.tm_sec);
+	EXPECT_TRUE(tmlocal.tm_year == datetm.tm_year);
+	EXPECT_TRUE(tmlocal.tm_mon == datetm.tm_mon);
+	EXPECT_TRUE(tmlocal.tm_mday == datetm.tm_mday);
+	EXPECT_TRUE(tmlocal.tm_yday == datetm.tm_yday);
+	EXPECT_TRUE(tmlocal.tm_wday == datetm.tm_wday);
+	EXPECT_TRUE(tmlocal.tm_hour == datetm.tm_hour);
+	EXPECT_TRUE(tmlocal.tm_min == datetm.tm_min);
+	EXPECT_TRUE(tmlocal.tm_sec == datetm.tm_sec);
 	EXPECT_TRUE(milli == time.millisec());
 	EXPECT_TRUE(micro == time.microsec());
 }
