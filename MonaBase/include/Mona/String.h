@@ -215,79 +215,10 @@ public:
 	}
 
 	template<typename T>
-	static bool ToNumber(const std::string& value, T& result) {
-		Exception ex;
-		ToNumber<T>(ex, value, result);
-		return !ex;
-	}
+	static bool ToNumber(const std::string& value, T& result);
 
 	template<typename T>
-	static T ToNumber(Exception& ex, const std::string& value, T default=0) {
-		int digit = 1, comma = 0;
-		bool beginning = true, negative = false;
-
-		const char* str(value.c_str());
-
-		if (!str || *str == '\0') {
-			ex.set(Exception::FORMATTING, "Empty string is not a number");
-			return false;
-		}
-
-		bool isSigned = numeric_limits<T>::is_signed;
-		T max = numeric_limits<T>::max();
-
-		do {
-			if (default >= max) {
-				ex.set(Exception::FORMATTING, str, " exceeds maximum number capacity");
-				return false;
-			}
-
-			if (isblank(*str)) {
-				if (beginning)
-					continue;
-				ex.set(Exception::FORMATTING, str, " is not a correct number");
-				return false;
-			}
-
-			if (*str == '-') {
-				if (isSigned && beginning && !negative) {
-					negative = true;
-					continue;
-				}
-				ex.set(Exception::FORMATTING, str, " is not a correct number");
-				return false;
-			}
-
-			if (*str == '.') {
-				if (comma == 0 && !beginning) {
-					comma = 1;
-					continue;
-				}
-				ex.set(Exception::FORMATTING, str, " is not a correct number");
-				return false;
-			}
-
-			if (beginning)
-				beginning = false;
-
-			if (isdigit(*str) == 0) {
-				ex.set(Exception::FORMATTING, str, " is not a correct number");
-				return false;
-			}
-
-			default = default * 10 + (*str - '0');
-			comma *= 10;
-		} while ((*++str) != '\0');
-
-		if (comma > 0)
-			default /= comma;
-
-
-		if (negative)
-			default *= -1;
-
-		return default;
-	}
+	static T ToNumber(Exception& ex, const std::string& value, T result=0);
 
 private:
 

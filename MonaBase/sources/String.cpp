@@ -16,6 +16,7 @@
 */
 
 #include "Mona/String.h"
+#include "Mona/Exceptions.h"
 #include <cctype>
 
 using namespace std;
@@ -101,6 +102,98 @@ int String::ICompare(const char* value1, const char* value2, int size) {
 	return(f - l);
 }
 
+template<typename T> bool String::ToNumber(const std::string& value, T& result) {
+	Exception ex;
+	ToNumber<T>(ex, value, result);
+	return !ex;
+}
 
+template<typename T> T String::ToNumber(Exception& ex, const std::string& value, T result) {
+	int digit = 1, comma = 0;
+	bool beginning = true, negative = false;
+
+	const char* str(value.c_str());
+
+	if (!str || *str == '\0') {
+		ex.set(Exception::FORMATTING, "Empty string is not a number");
+		return false;
+	}
+
+	bool isSigned = numeric_limits<T>::is_signed;
+	T max = numeric_limits<T>::max();
+
+	do {
+		if (result >= max) {
+			ex.set(Exception::FORMATTING, str, " exceeds maximum number capacity");
+			return false;
+		}
+
+		if (isblank(*str)) {
+			if (beginning)
+				continue;
+			ex.set(Exception::FORMATTING, str, " is not a correct number");
+			return false;
+		}
+
+		if (*str == '-') {
+			if (isSigned && beginning && !negative) {
+				negative = true;
+				continue;
+			}
+			ex.set(Exception::FORMATTING, str, " is not a correct number");
+			return false;
+		}
+
+		if (*str == '.') {
+			if (comma == 0 && !beginning) {
+				comma = 1;
+				continue;
+			}
+			ex.set(Exception::FORMATTING, str, " is not a correct number");
+			return false;
+		}
+
+		if (beginning)
+			beginning = false;
+
+		if (isdigit(*str) == 0) {
+			ex.set(Exception::FORMATTING, str, " is not a correct number");
+			return false;
+		}
+
+		result = result * 10 + (*str - '0');
+		comma *= 10;
+	} while ((*++str) != '\0');
+
+	if (comma > 0)
+		result /= comma;
+
+
+	if (negative)
+		result *= -1;
+
+	return result;
+}
+
+template bool String::ToNumber(const std::string& value, int& result);
+template int String::ToNumber(Exception& ex, const std::string& value, int result);
+
+template bool String::ToNumber(const std::string& value, float& result);
+template float String::ToNumber(Exception& ex, const std::string& value, float result);
+
+template bool String::ToNumber(const std::string& value, double& result);
+template double String::ToNumber(Exception& ex, const std::string& value, double result);
+
+template bool String::ToNumber(const std::string& value, UInt8& result);
+template UInt8 String::ToNumber(Exception& ex, const std::string& value, UInt8 result);
+
+template bool String::ToNumber(const std::string& value, UInt16& result);
+template UInt16 String::ToNumber(Exception& ex, const std::string& value, UInt16 result);
+
+template bool String::ToNumber(const std::string& value, UInt32& result);
+template UInt32 String::ToNumber(Exception& ex, const std::string& value, UInt32 result);
+
+template bool String::ToNumber(const std::string& value, UInt64& result);
+template UInt64 String::ToNumber(Exception& ex, const std::string& value, UInt64 result);
 
 } // namespace Mona
