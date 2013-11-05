@@ -433,7 +433,7 @@ bool IPAddress::operator == (const IPAddress& a) const {
 	NET_SOCKLEN size1;
 	const void* pAddr1 = addr(size1);
 	NET_SOCKLEN size2;
-	const void* pAddr2 = addr(size2);
+	const void* pAddr2 = a.addr(size2);
 	if (size1 == size2)
 		return memcmp(pAddr1, pAddr2, size1) == 0;
 	return false;
@@ -443,7 +443,7 @@ bool IPAddress::operator < (const IPAddress& a) const {
 	NET_SOCKLEN size1;
 	const void* pAddr1 = addr(size1);
 	NET_SOCKLEN size2;
-	const void* pAddr2 = addr(size2);
+	const void* pAddr2 = a.addr(size2);
 	if (size1 == size2)
 		return memcmp(pAddr1, pAddr2, size1) < 0;
 	return size1<size2;
