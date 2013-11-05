@@ -131,6 +131,33 @@ ADD_TEST(OptionsTest, TestOptionsAdd) {
 	EXPECT_TRUE(!GetOption("include-dir"));
 }
 
+void TestProcessInclude(Exception& ex, const string& name, const string& value) {
+	EXPECT_TRUE(name == "include-dir");
+	static int i = 0;
+	static char* res[] = {
+		"include",
+		"/usr/include",
+		"/usr/local/include",
+		"/proj/include",
+		"/usr/include" };
+	EXPECT_TRUE(value == res[i++]);
+}
+
+void TestProcessVerbose(Exception& ex, const string& name, const string& value) {
+	EXPECT_TRUE(name == "verbose");
+	EXPECT_TRUE(value.empty());
+}
+
+void TestProcessOptimize(Exception& ex, const string& name, const string& value) {
+	EXPECT_TRUE(name == "optimize");
+	static int counter = 0;
+	if (++counter < 3)
+		EXPECT_TRUE(value.empty())
+	else if (counter == 3)
+		EXPECT_TRUE(value == "1")
+	else
+		EXPECT_TRUE(value == "2")
+}
 
 ADD_TEST(OptionsTest, TestProcess) {
 	//_Options.clear();
@@ -144,16 +171,7 @@ ADD_TEST(OptionsTest, TestProcess) {
 					"-include-dir=/proj/include",
 					"/include-dir=/usr/include"};
 
-	char* res[] = { "", // not read
-					"include",
-					"/usr/include",
-					"/usr/local/include",
-					"/proj/include",
-					"/usr/include"};
-
-	int cpt = 1;
-	EXPECT_TRUE(_Options.process(ex, (sizeof(arg)/sizeof(char *)), arg, 
-		[&cpt, &res](Exception& ex, const string& name, const string& value){ EXPECT_TRUE(value == res[cpt++]); }));
+	EXPECT_TRUE(_Options.process(ex, (sizeof(arg) / sizeof(char *)), arg, TestProcessInclude));
 
 	EXPECT_TRUE(!ProcessArg("/I"));
 	
@@ -163,11 +181,9 @@ ADD_TEST(OptionsTest, TestProcess) {
 	
 	EXPECT_TRUE(AddOption("verbose", "v", "enable verbose mode", false, false));
 	
-	EXPECT_TRUE(ProcessArg("/v", 
-		[](Exception& ex, const string& name, const string& value){ EXPECT_TRUE(value.empty()); }));
+	EXPECT_TRUE(ProcessArg("/v", TestProcessVerbose));
 	
-	EXPECT_TRUE(ProcessArg("/verbose", 
-		[](Exception& ex, const string& name, const string& value){ EXPECT_TRUE(value.empty()); }));
+	EXPECT_TRUE(ProcessArg("/verbose", TestProcessVerbose));
 
 	EXPECT_TRUE(!ProcessArg("/v2"));
 
@@ -176,15 +192,10 @@ ADD_TEST(OptionsTest, TestProcess) {
 
 	EXPECT_TRUE(AddOption("optimize", "O", "enable optimization", false, false, "level", false));
 	
-	EXPECT_TRUE(ProcessArg("/O", 
-		[](Exception& ex, const string& name, const string& value){ EXPECT_TRUE(value.empty()); }));
+	EXPECT_TRUE(ProcessArg("/O", TestProcessOptimize));
+	EXPECT_TRUE(ProcessArg("-optimize=", TestProcessOptimize));
 
-	EXPECT_TRUE(ProcessArg("/O=2", 
-		[](Exception& ex, const string& name, const string& value){ EXPECT_TRUE(value == "2"); }));
-
-	EXPECT_TRUE(ProcessArg("-optimize:1", 
-		[](Exception& ex, const string& name, const string& value){ EXPECT_TRUE(value == "1"); }));
-
-	EXPECT_TRUE(ProcessArg("-optimize=", 
-		[](Exception& ex, const string& name, const string& value){ EXPECT_TRUE(value.empty()); }));
+	EXPECT_TRUE(ProcessArg("-optimize:1", TestProcessOptimize));
+	EXPECT_TRUE(ProcessArg("/O=2", TestProcessOptimize));
+	
 }

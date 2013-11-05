@@ -54,7 +54,7 @@ public:
 		memset(&_ServiceStatus, 0, sizeof(_ServiceStatus));
 		_ServiceStatusHandle = RegisterServiceCtrlHandlerA("", ServiceControlHandler);
 		if (!_ServiceStatusHandle) {
-			FATAL_THROW("Cannot register service control handler");
+			FATAL_ERROR("Cannot register service control handler");
 			return;
 		}
 		_ServiceStatus.dwServiceType = SERVICE_WIN32;
@@ -97,7 +97,7 @@ void ServerApplication::ServiceMain(DWORD argc, LPTSTR* argv) {
 	memset(&_ServiceStatus, 0, sizeof(_ServiceStatus));
 	_ServiceStatusHandle = RegisterServiceCtrlHandlerA("", ServiceTerminateSignal::ServiceControlHandler);
 	if (!_ServiceStatusHandle) {
-		FATAL_THROW("Cannot register service control handler");
+		FATAL_ERROR("Cannot register service control handler");
 		return;
 	}
 	_ServiceStatus.dwServiceType = SERVICE_WIN32;

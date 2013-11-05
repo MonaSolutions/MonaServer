@@ -20,67 +20,76 @@
 #include "Mona/Mona.h"
 #include "Mona/String.h"
 
+
 namespace Mona {
 
 
-class Exception : virtual Object{
-public:
-	enum Code {
-		NIL,
-		APPLICATION = 1,
-		SOFTWARE,
-		FILE,
-		ARGUMENT,
-		OPTION,
-		SERVICE,
-		REGISTRY,
-		PROTOCOL,
-		NETWORK,
-		SOCKET,
-		NETADDRESS,
-		FORMATTING,
-		THREAD,
-		MEMORY,
-		SYSTEM,
-		MATH,
-		ASSERT
+	class Exception : virtual Object {
+	public:
+		enum Code {
+			NIL,
+			APPLICATION = 1,
+			SOFTWARE,
+			FILE,
+			ARGUMENT,
+			OPTION,
+			SERVICE,
+			REGISTRY,
+			PROTOCOL,
+			NETWORK,
+			SOCKET,
+			NETADDRESS,
+			FORMATTING,
+			THREAD,
+			MEMORY,
+			SYSTEM,
+			MATH,
+			ASSERT
+		};
+
+		Exception() : _code(NIL) {}
+
+
+		template <typename ...Args>
+		void set(Code code, const Args&... args) {
+			_code = code;
+			String::Append(_error, args ...);
+		}
+
+		void set(const Exception& other) {
+			_code = other._code;
+			_error = other._error;
+		}
+
+		operator bool() const { return !_error.empty() || _code != Exception::NIL; }
+
+		const std::string&	error() const { return _error; }
+		Code				code() const { return _code; }
+
+	private:
+
+		Code		_code;
+		std::string	_error;
 	};
-
-	Exception() : _code(NIL) {}
-
-
-	template <typename ...Args>
-	void set(Code code, const Args&... args) {
-		_code = code;
-		String::Append(_error, args ...);
-	}
-
-	void set(const Exception& other) {
-		_code = other._code;
-		_error = other._error;
-	}
-
-	operator bool() const { return !_error.empty() || _code != Exception::NIL; }
-
-	const std::string&	error() const { return _error; }
-	Code				code() const { return _code; }
-
-private:
-
-	Code		_code;
-	std::string	_error;
-};
 
 #undef		ASSERT
 #define		ASSERT(CHECK)					if(!(CHECK)) { ex.set(Exception::ASSERT, #CHECK);return;}
 #define		ASSERT_RETURN(CHECK,RETURN)		if(!(CHECK)) { ex.set(Exception::ASSERT, #CHECK);return RETURN;}
 
 #if defined(_DEBUG)
-#define		FATAL_ASSERT(CHECK)				if(!(CHECK)) {delete [] &#CHECK;}
-#define		FATAL_THROW(...)				{string __error; delete &Mona::String::Format(__error,## __VA_ARGS__);}
+#if defined(_WIN32)
+#define		FATAL_ASSERT(CHECK)				{_ASSERTE(CHECK);}
 #else
-#define		FATAL_ASSERT(CHECK)				if(!(CHECK)) {throw std::exception( #CHECK ", "__FILE__"["LINE_STRING"]");}
-#define		FATAL_THROW(...)				{string __error; throw std::exception( Mona::String::Format(__error,## __VA_ARGS__,", "__FILE__"["LINE_STRING"]").c_str());}
+#define		FATAL_ASSERT(CHECK)				if(!(CHECK)) {raise(SIGTRAP);} // TODO test on linux
+#endif
+#if defined(_WIN32)
+#define		FATAL_ERROR(...)				{string __error;_ASSERTE(!Mona::String::Format(__error,## __VA_ARGS__).c_str());}
+#else
+#define		FATAL_ERROR(...)				{raise(SIGTRAP);} // TODO test on linux
+#endif
+#else
+#define		FATAL_ASSERT(CHECK)				if(!(CHECK)) {throw std::exception( #CHECK ", "__FILE__"[" LINE_STRING "]");}
+#define		FATAL_ERROR(...)				{string __error; throw std::exception( Mona::String::Format(__error,## __VA_ARGS__,", "__FILE__"[" LINE_STRING "]").c_str());}
 #endif
 
 #define		EXCEPTION_TO_LOG(CALL,...)		{ bool __success = CALL; if (ex) { if (!__success) ERROR(## __VA_ARGS__,", ",ex.error()) else WARN(## __VA_ARGS__,", ", ex.error()); } else if (!__success) ERROR(## __VA_ARGS__,", unknown error"); }
