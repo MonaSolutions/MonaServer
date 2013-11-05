@@ -37,11 +37,7 @@ private:
 inline bool UDProtocol::load(Exception& ex, const ProtocolParams& params) {
 	SocketAddress address;
 	address.set(IPAddress::Wildcard(), params.port);
-	if (!bind(ex, address))
-		return false;
-	if (!listen(ex))
-		return false;
-	return true;
+	return bind(ex, address);
 }
 
 

@@ -102,13 +102,15 @@ int String::ICompare(const char* value1, const char* value2, int size) {
 	return(f - l);
 }
 
-template<typename T> bool String::ToNumber(const std::string& value, T& result) {
+template<typename T>
+bool String::ToNumber(const std::string& value, T& result) {
 	Exception ex;
-	ToNumber<T>(ex, value, result);
+	result = ToNumber<T>(ex, value, result);
 	return !ex;
 }
 
-template<typename T> T String::ToNumber(Exception& ex, const std::string& value, T result) {
+template<typename T>
+T String::ToNumber(Exception& ex, const std::string& value, T result) {
 	int digit = 1, comma = 0;
 	bool beginning = true, negative = false;
 
