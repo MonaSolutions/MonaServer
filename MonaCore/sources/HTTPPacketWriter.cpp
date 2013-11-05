@@ -18,7 +18,7 @@
 #include "Mona/HTTPPacketWriter.h"
 
 using namespace std;
-using namespace Poco;
+
 
 namespace Mona {
 

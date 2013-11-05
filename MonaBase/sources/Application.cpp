@@ -36,7 +36,7 @@ Application::Application() : _logSizeByFile(1000000), _logRotation(10) {
 	DetectMemoryLeak();
 #else
 	struct sigaction sa;
-	sa.sa_handler = handleSignal;
+	sa.sa_handler = HandleSignal;
 	sa.sa_flags   = 0;
 	sigemptyset(&sa.sa_mask);
 	sigaction(SIGILL, &sa, 0);
@@ -111,9 +111,9 @@ bool Application::init(int argc, char* argv[]) {
 		_logPath = logDir + "/" + logFileName;
 		if (_logRotation > 0) {
 			_logPath.append(".");
-			_logStream.open(_logPath + "0", ios::in | ios::binary | ios::ate);
+			_logStream.open(_logPath + "0", ios::out | ios::binary | ios::ate);
 		}  else
-			_logStream.open(_logPath, ios::in | ios::binary | ios::ate);
+			_logStream.open(_logPath, ios::out | ios::binary | ios::ate);
 	}
 
 	// options
@@ -142,11 +142,7 @@ bool Application::loadConfigurations(string& path) {
 bool Application::loadLogFiles(string& directory, string& fileName, UInt32& sizeByFile, UInt16& rotation) {
 	getString("logs.directory", directory);
 	getString("logs.name", fileName);
-	int rotate(0);
-	getNumber("logs.rotation", rotate);
-	if (rotate < 0)
-		throw exception("Invalid negative logs.rotation value");
-	rotation = rotate;
+	getNumber("logs.rotation", rotation);
 	return true;
 }
 
@@ -202,7 +198,7 @@ void Application::dump(const UInt8* data, UInt32 size) {
 }
 
 void Application::manageLogFiles() {
-	if (!_logStream.good() || _logSizeByFile == 0)
+	if (_logSizeByFile == 0)
 		return;
 	if (_logStream.tellp() > _logSizeByFile) {
 		_logStream.close();

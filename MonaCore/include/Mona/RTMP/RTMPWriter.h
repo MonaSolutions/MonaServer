@@ -27,7 +27,7 @@ namespace Mona {
 
 class RTMPWriter : public FlashWriter, virtual Object {
 public:
-	RTMPWriter(UInt8 id,const Poco::SharedPtr<RC4_KEY>& pEncryptKey,StreamSocket& socket);
+	RTMPWriter(UInt8 id,const std::shared_ptr<RC4_KEY>& pEncryptKey,StreamSocket& socket);
 
 	const UInt8		id;
 	RTMPChannel		channel;

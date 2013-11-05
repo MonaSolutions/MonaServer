@@ -33,7 +33,7 @@ public:
 	SocketManager(PoolThreads& poolThreads, UInt32 bufferSize = 0, const std::string& name = "SocketManager");
 	virtual ~SocketManager() { stop(); }
 
-	void					start(Exception& ex);
+	bool					start(Exception& ex);
 	void					stop();
 
 private:

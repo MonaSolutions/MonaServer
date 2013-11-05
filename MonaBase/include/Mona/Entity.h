@@ -26,15 +26,15 @@ namespace Mona {
 
 class Entity : virtual Object {
 public:
-	Entity():id(){}
-	virtual ~Entity(){}
+	Entity() {}
+	virtual ~Entity() {}
 
 	bool operator==(const Entity& other) const { return std::memcmp(id, other.id, ID_SIZE) == 0; }
 	bool operator==(const UInt8* id) const { return std::memcmp(this->id, id, ID_SIZE) == 0; }
 	bool operator!=(const Entity& other) const { return std::memcmp(id, other.id, ID_SIZE) != 0; }
 	bool operator!=(const UInt8* id) const { return std::memcmp(this->id, id, ID_SIZE) != 0; }
 
-	const UInt8							id[ID_SIZE];
+	UInt8 id[ID_SIZE];
 };
 
 

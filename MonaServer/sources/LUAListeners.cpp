@@ -33,10 +33,9 @@ int LUAListeners::Pairs(lua_State* pState) {
 			SCRIPT_ERROR("'next' should be a LUA function, it should not be overloaded")
 		else {
 			lua_newtable(pState);
-			Listeners::Iterator it;
-			for(it=listeners.begin();it!=listeners.end();++it) {
-				SCRIPT_WRITE_PERSISTENT_OBJECT(Listener,LUAListener,*it->second)
-				SCRIPT_WRITE_PERSISTENT_OBJECT(Client,LUAClient,*it->first)
+			for (auto it : listeners) {
+				SCRIPT_WRITE_PERSISTENT_OBJECT(Listener,LUAListener,*it.second)
+				SCRIPT_WRITE_PERSISTENT_OBJECT(Client,LUAClient,*it.first)
 				lua_rawset(pState,-3);
 			}
 		}

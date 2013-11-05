@@ -37,22 +37,22 @@ bool DNS::HostByName(Exception& ex, const string& hostname, HostEntry& host) {
 	hints.ai_flags = AI_CANONNAME | AI_ADDRCONFIG;
 	int rc = getaddrinfo(hostname.c_str(), NULL, &hints, &pAI); 
 	if (rc == 0) {
-		bool result = host.set(ex, pAI);
+		host.set(ex,pAI);
 		freeaddrinfo(pAI);
-		return result;
+		return true;
 	}
 	SetAIError(ex,rc, hostname);
 	return false;
 }
 
-
+// BEWARE blocking method!!
 bool DNS::HostByAddress(Exception& ex,const IPAddress& address, HostEntry& host) {
 	if (!Net::InitializeNetwork(ex))
 		return false;
 	SocketAddress sa;
 	sa.set(address, 0);
 	static char fqname[1024];
-	int rc = getnameinfo(sa.addr(), sizeof(sa.addr()), fqname, sizeof(fqname), NULL, 0, NI_NAMEREQD);
+	int rc = getnameinfo(&sa.addr(), sizeof(sa.addr()), fqname, sizeof(fqname), NULL, 0, NI_NAMEREQD);
 	if (rc == 0) {
 		struct addrinfo* pAI;
 		struct addrinfo hints;
@@ -60,9 +60,9 @@ bool DNS::HostByAddress(Exception& ex,const IPAddress& address, HostEntry& host)
 		hints.ai_flags = AI_CANONNAME | AI_ADDRCONFIG;
 		rc = getaddrinfo(fqname, NULL, &hints, &pAI);
 		if (rc == 0) {
-			bool result = host.set(ex, pAI);
+			host.set(ex, pAI);
 			freeaddrinfo(pAI);
-			return result;
+			return true;
 		}
 	}
 	SetAIError(ex, rc, address.toString());

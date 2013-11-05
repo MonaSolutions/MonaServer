@@ -27,34 +27,29 @@ namespace Mona {
 
 class Protocols : virtual Object {
 public:
-	Protocols(Invoker& invoker);
-	virtual ~Protocols();
+	Protocols(Invoker& invoker) : _invoker(invoker) {}
 
 	void load(Gateway& gateway);
-	void unload();
-	void manage();
+	void unload() { _protocols.clear(); }
+	void manage() { for (std::shared_ptr<Protocol>& pProtocol : _protocols) pProtocol->manage(); }
 
 private:
 	template<class ProtocolType, class ParamsType>
 	void loadProtocol(const char* name,const ParamsType& params,Gateway& gateway) {
 		if(params.port==0)
 			return;
-		try {
-			Protocol* pProtocol = new ProtocolType(name, _invoker,gateway);
-			Exception ex;
-			bool success = false;
-			EXCEPTION_TO_LOG(success=pProtocol->load(ex, (ParamsType&)params), name, " server")
-			if (success)
-				NOTE(name, " server starts on ", params.port, " ", dynamic_cast<UDProtocol*>(pProtocol) ? "UDP" : "TCP", " port");
-		} catch (std::exception& ex) {
-			ERROR(name," server, ",ex.what());
-		} catch (...) {
-			ERROR(name," server, unknown error");
+		std::shared_ptr<Protocol> pProtocol(new ProtocolType(name, _invoker,gateway));
+		Exception ex;
+		bool success = false;
+		EXCEPTION_TO_LOG(success=pProtocol->load(ex, (ParamsType&)params), name, " server")
+		if (success) {
+			_protocols.emplace_back(pProtocol);
+			NOTE(name, " server starts on ", params.port, " ", dynamic_cast<UDProtocol*>(pProtocol.get()) ? "UDP" : "TCP", " port");
 		}
 	}
 
-	std::list<Protocol*>	_protocols;
-	Invoker&				_invoker;
+	std::list<std::shared_ptr<Protocol>>	_protocols;
+	Invoker&								_invoker;
 };
 
 

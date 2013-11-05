@@ -18,18 +18,14 @@
 #include "Mona/HTTP/HTTPSession.h"
 #include "Mona/HTTP/HTTP.h"
 #include "Mona/HTTPPacketReader.h"
+#include "Mona/FileSystem.h"
 #include "Mona/Exceptions.h"
-#include "Poco/String.h"
-#include "Poco/Format.h"
-#include "Poco/File.h"
-#include "Poco/Path.h"
-#include "Poco/FileStream.h"
-#include "Poco/StringTokenizer.h"
 #include <cstring> // for memcmp
+#include <fstream>
 
 
 using namespace std;
-using namespace Poco;
+
 
 namespace Mona {
 
@@ -81,14 +77,15 @@ void HTTPSession::packetHandler(MemoryReader& packet) {
 	if (ex)
 		WARN("serverAddress of HTTPSession ",id," impossible to determine with the host ",temp)
 
-	if(peer.connected && icompare(oldPath,peer.path)!=0)
+	if(peer.connected && String::ICompare(oldPath,peer.path)!=0)
 		peer.onDisconnection();
 
-	if (icompare(cmd, "GET") == 0) {
+	if (String::ICompare(cmd, "GET") == 0) {
 		bool connectionHasUpgrade = false;
 		if (headers.getString("connection", temp)) {
-			for (const string& field : StringTokenizer(temp, ",", StringTokenizer::TOK_IGNORE_EMPTY | StringTokenizer::TOK_TRIM)) {
-				if (icompare(field, "upgrade") == 0) {
+			vector<string> fields;
+			for (const string& field : String::Split(temp, ",", fields, String::SPLIT_IGNORE_EMPTY | String::SPLIT_TRIM)) {
+				if (String::ICompare(field, "upgrade") == 0) {
 					connectionHasUpgrade = true;
 					break;
 				}
@@ -96,7 +93,7 @@ void HTTPSession::packetHandler(MemoryReader& packet) {
 		}
 				
 		if(connectionHasUpgrade) {
-			if (headers.getString("upgrade", temp) && icompare(temp, "websocket") == 0) {
+			if (headers.getString("upgrade", temp) && String::ICompare(temp, "websocket") == 0) {
 				peer.onDisconnection();
 				_isWS=true;
 				((string&)peer.protocol) = "WebSocket";
@@ -240,25 +237,28 @@ void HTTPSession::processGet(Exception& ex, const string& fileName) {
 		filePath.append(fileName);
 
 	if(peer.onRead(filePath)) {
-		File file(filePath);
-		if (!file.exists()) {
+		auto size = FileSystem::GetSize(ex,filePath);
+		if (ex) {
 			response.clear();
-			ex.set(Exception::FILE,"File ", filePath, " doesn't exist");
 			return;
 		}
-		auto size = file.getSize();
-
-		Path path(filePath);
-		
+		ifstream ifile(filePath, ios::in | ios::binary);
+		if (!ifile.good()) {
+			ex.set(Exception::FILE, "Impossible to open ", filePath, " file");
+			response.clear();
+			return;
+		}
+		string extension;
 		string type("text/plain");
-		HTTP::MIMEType(path.getExtension(), type);
+		HTTP::MIMEType(FileSystem::GetExtension(filePath, extension), type);
 		response.writeStringProperty("Content-Type", type);
 		response.writeNumberProperty("Content-Length", (double)size);
 		response.endObject();
 
 		UInt32 pos = response.stream.size();
 		response.stream.next((UInt32)size);
-		FileInputStream(filePath).read((char*)response.stream.data() + pos, size); // TODO copy, what about peformance? multhreaded?
+		
+		ifile.read((char*)response.stream.data() + pos, size); // TODO copy, what about peformance? multhreaded?
 	} else
 		response.clear();// TODO else??
 }

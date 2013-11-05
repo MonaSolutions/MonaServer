@@ -52,7 +52,7 @@ int LUAServer::Get(lua_State* pState) {
 		} else if(name=="isTarget") {
 			SCRIPT_WRITE_BOOL(server.isTarget)
 		} else if(name=="address") {
-			SCRIPT_WRITE_STRING(server.address.c_str())
+			SCRIPT_WRITE_STRING(server.address.toString().c_str())
 		} else if(name=="port") {
 			SCRIPT_WRITE_FUNCTION(&LUAServer::Port)
 		} else {

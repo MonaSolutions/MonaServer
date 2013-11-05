@@ -1,76 +1,80 @@
 
+#include "Test.h"
+#include "Mona/Time.h"
 #include "Mona/TimeParser.h"
-#include "TimeParseFormatTest.h"
 #include "Mona/Logs.h"
 
 using namespace Mona;
 using namespace std;
 
-string& TimeParseFormatTest::ToString(const string& fmt, int tzd /*= Time::UTC*/) {
-	
-	_out.clear();
-	_time.toString(fmt, _out, tzd);
-	
-	return _out;
+string		_Out;
+Time		_Time;
+
+string& ToString(const string& fmt, int tzd = Time::UTC) {
+	_Out.clear();
+	_Time.toString(fmt, _Out, tzd);
+	return _Out;
 }
 
-bool TimeParseFormatTest::IsParseOk(const char * fmt, const char * stDate, int year, int month,
+
+bool VerifyParsing(const char * stDate, int year, int month,
+	int day, int hour, int min, int sec, int msec, int microsec, struct tm& tmdate) {
+
+		// Conversion to struct tm
+		_Time.toGMT(tmdate);
+
+		bool bIsParseOk = (tmdate.tm_year + 1900) == year;
+		if (bIsParseOk) bIsParseOk = (tmdate.tm_mon + 1) == month;
+		if (bIsParseOk) bIsParseOk = tmdate.tm_mday == day;
+		if (bIsParseOk) bIsParseOk = tmdate.tm_hour == hour;
+		if (bIsParseOk) bIsParseOk = tmdate.tm_min == min;
+		if (bIsParseOk) bIsParseOk = tmdate.tm_sec == sec;
+		if (bIsParseOk) bIsParseOk = _Time.millisec() == msec;
+		if (bIsParseOk) bIsParseOk = _Time.microsec() == microsec;
+
+		return bIsParseOk;
+}
+
+
+bool IsParseOk(const char * fmt, const char * stDate, int year, int month,
 	int day, int hour, int min, int sec, int msec, int microsec) {
 
 	// Parsing
 	int tzd = 0;
-	bool bIsParseOk = TimeParser::Parse(fmt, stDate, _time, tzd);
+	bool bIsParseOk = TimeParser::Parse(fmt, stDate, _Time, tzd);
 	if (!bIsParseOk) {
 		DEBUG("Error during parsing of date (", stDate, ")");
 		return false;
 	}
 
 	struct tm tmdate;
-	if (TimeParseFormatTest::VerifyParsing(stDate, year, month, day, hour, min, sec, msec, microsec, tmdate))
+	if (VerifyParsing(stDate, year, month, day, hour, min, sec, msec, microsec, tmdate))
 		return true;
 	else {
 		DEBUG((tmdate.tm_year + 1900),",",(tmdate.tm_mon + 1),",",tmdate.tm_mday,",",tmdate.tm_hour
-			,",", tmdate.tm_min, ",", tmdate.tm_sec, ",", _time.millisec(), ",", _time.microsec(), " does not correspond to ", stDate, " (", fmt, ")");
+			,",", tmdate.tm_min, ",", tmdate.tm_sec, ",", _Time.millisec(), ",", _Time.microsec(), " does not correspond to ", stDate, " (", fmt, ")");
 		return false;
 	}
 }
 
-bool TimeParseFormatTest::IsParseOk(const char * stDate, int year, int month, 
+bool IsParseOk(const char * stDate, int year, int month, 
 	int day, int hour, int min, int sec, int msec, int microsec) {
 
 	// Parsing
-	bool bIsParseOk = _time.fromString(stDate);
+	bool bIsParseOk = _Time.fromString(stDate);
 	if (!bIsParseOk) {
 		DEBUG("Error during parsing of date (", stDate, ")");
 		return false;
 	}
 
 	struct tm tmdate;
-	if (TimeParseFormatTest::VerifyParsing(stDate, year, month, day, hour, min, sec, msec, microsec, tmdate))
+	if (VerifyParsing(stDate, year, month, day, hour, min, sec, msec, microsec, tmdate))
 		return true;
 	else {
 		DEBUG((tmdate.tm_year + 1900), ",", (tmdate.tm_mon + 1), ",", tmdate.tm_mday, ",", tmdate.tm_hour
-			,",", tmdate.tm_min, ",", tmdate.tm_sec, ",", _time.millisec(), ",", _time.microsec(), " does not correspond to ", stDate);
+			,",", tmdate.tm_min, ",", tmdate.tm_sec, ",", _Time.millisec(), ",", _Time.microsec(), " does not correspond to ", stDate);
 		return false;
 	}
-}
-
-bool TimeParseFormatTest::VerifyParsing(const char * stDate, int year, int month,
-	int day, int hour, int min, int sec, int msec, int microsec, struct tm& tmdate) {
-
-	// Conversion to struct tm
-	_time.toGMT(tmdate);
-
-	bool bIsParseOk = (tmdate.tm_year + 1900) == year;
-	if (bIsParseOk) bIsParseOk = (tmdate.tm_mon + 1) == month;
-	if (bIsParseOk) bIsParseOk = tmdate.tm_mday == day;
-	if (bIsParseOk) bIsParseOk = tmdate.tm_hour == hour;
-	if (bIsParseOk) bIsParseOk = tmdate.tm_min == min;
-	if (bIsParseOk) bIsParseOk = tmdate.tm_sec == sec;
-	if (bIsParseOk) bIsParseOk = _time.millisec() == msec;
-	if (bIsParseOk) bIsParseOk = _time.microsec() == microsec;
-
-	return bIsParseOk;
 }
 
 ADD_TEST(TimeParseFormatTest, TestISO8601) {

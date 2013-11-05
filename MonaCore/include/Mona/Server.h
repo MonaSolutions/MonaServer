@@ -30,7 +30,7 @@ public:
 	ServerManager(Server& server);
 	virtual ~ServerManager() {}
 private:
-	void run(Exception& ex, ThreadPriority& priority);
+	void run(Exception& ex);
 	void handle(Exception& ex);
 	Server& _server;
 };
@@ -41,8 +41,8 @@ public:
 	Server(UInt32 bufferSize=0,UInt32 threads=0);
 	virtual ~Server();
 
-	void	start() { start(params); }
-	void	start(const ServerParams& params);
+	bool	start() { return start(params); }
+	bool	start(const ServerParams& params);
 	void	stop() { Startable::stop(); }
 	bool	running() { return Startable::running(); }
 
@@ -55,7 +55,7 @@ private:
 	void			requestHandle() { wakeUp(); }
 
 	void			receive(Decoding& decoded);
-	void			run(Exception& ex, ThreadPriority& priority);
+	void			run(Exception& ex);
 	
 	Session*		session(const UInt8* peerId) { return _sessions.find(peerId); }
 	Session*		session(const SocketAddress& address) { return _sessions.find(address); }

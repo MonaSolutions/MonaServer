@@ -29,7 +29,7 @@ namespace Mona {
 
 class IPAddressCommon : virtual Object {
 public:
-	virtual const void* addr() const = 0;
+	virtual const void* addr(NET_SOCKLEN& size) const = 0;
 
 	virtual const string& toString() const = 0;
 	virtual IPAddress::Family family() const = 0;
@@ -58,9 +58,9 @@ public:
 		_toString.reserve(16);
 		memset(&_addr, 0, sizeof(_addr));
 	}
-	IPv4Address(const void* addr) {
+	IPv4Address(const in_addr& addr) {
 		_toString.reserve(16);
-		memcpy(&_addr, addr, sizeof(_addr));
+		memcpy(&_addr, &addr, sizeof(_addr));
 	}
 
 	
@@ -72,7 +72,7 @@ public:
 		return String::Format(_toString, bytes[0], '.', bytes[1], '.', bytes[2], '.', bytes[3]);
 	}
 
-	const void*			addr() const {return &_addr;}
+	const void*			addr(NET_SOCKLEN& size) const { size = sizeof(_addr); return &_addr; }
 	IPAddress::Family	family() const {return IPAddress::IPv4;}
 
 	UInt32	scope() const { return 0; }
@@ -110,7 +110,7 @@ public:
 		ia.s_addr = inet_addr(addr.c_str());
 		if (ia.s_addr == INADDR_NONE && addr != "255.255.255.255")
 			return 0;
-		return new IPv4Address(&ia);
+		return new IPv4Address(ia);
 #else
 		if (inet_aton(addr.c_str(), &ia))
 			return new IPv4Address(&ia);
@@ -139,9 +139,9 @@ public:
 		_toString.reserve(24);
 		memset(&_addr, 0, sizeof(_addr));
 	}
-	IPv6Address(const void* addr, UInt32 scope=0) : _scope(scope) {
+	IPv6Address(const in6_addr& addr, UInt32 scope = 0) : _scope(scope) {
 		_toString.reserve(24);
-		memcpy(&_addr, addr, sizeof(_addr));
+		memcpy(&_addr, &addr, sizeof(_addr));
 	}
 
 	const string& toString() const {
@@ -190,7 +190,7 @@ public:
 
 	IPAddress::Family	family() const {return IPAddress::IPv6;}
 
-	const void*			addr() const {return &_addr;}
+	const void*			addr(NET_SOCKLEN& size) const { size = sizeof(_addr); return &_addr; }
 	UInt32				scope() const {return _scope;}
 	bool				isBroadcast() const {return false;}
 
@@ -259,7 +259,7 @@ public:
 		hints.ai_flags = AI_NUMERICHOST;
 		int rc = getaddrinfo(addr.c_str(), NULL, &hints, &pAI);
 		if (rc == 0) {
-			IPv6Address* pResult = new IPv6Address(&reinterpret_cast<struct sockaddr_in6*>(pAI->ai_addr)->sin6_addr, static_cast<int>(reinterpret_cast<struct sockaddr_in6*>(pAI->ai_addr)->sin6_scope_id));
+			IPv6Address* pResult = new IPv6Address(reinterpret_cast<struct sockaddr_in6*>(pAI->ai_addr)->sin6_addr, static_cast<int>(reinterpret_cast<struct sockaddr_in6*>(pAI->ai_addr)->sin6_scope_id));
 			freeaddrinfo(pAI);
 			return pResult;
 		}
@@ -312,8 +312,7 @@ public:
 	IPBroadcaster() {
 		struct in_addr ia;
 		ia.s_addr = INADDR_NONE;
-		Exception ex;
-		copy(ex, &ia, sizeof(ia));  // will never throw!
+		set(ia);
 	}
 };
 
@@ -357,18 +356,12 @@ bool IPAddress::set(Exception& ex, const string& addr, Family family) {
 }
 
 
-bool IPAddress::copy(Exception& ex,const void* addr, UInt32 scope) {
-	IPAddressCommon* pIPAddress(NULL);
-	if (sizeof(addr) == sizeof(struct in_addr))
-		pIPAddress = new IPv4Address(addr);
-	else if (sizeof(addr) == sizeof(struct in6_addr))
-		pIPAddress = new IPv6Address(addr, scope);
-	else {
-		ex.set(Exception::NETADDRESS, "Invalid socket address length ", sizeof(addr));
-		return false;
-	}
-	_pIPAddress.reset(pIPAddress);
-	return true;
+void IPAddress::set(const in_addr& addr) {
+	_pIPAddress.reset(new IPv4Address(addr));
+}
+
+void IPAddress::set(const in6_addr& addr, UInt32 scope) {
+	_pIPAddress.reset(new IPv6Address(addr, scope));
 }
 
 void IPAddress::mask(Exception& ex, const IPAddress& mask) {
@@ -437,55 +430,27 @@ bool IPAddress::isGlobalMC() const {
 }
 
 bool IPAddress::operator == (const IPAddress& a) const {
-	NET_SOCKLEN l1 = sizeof(addr());
-	NET_SOCKLEN l2 = sizeof(a.addr());
-	if (l1 == l2)
-		return memcmp(addr(), a.addr(), l1) == 0;
+	NET_SOCKLEN size1;
+	const void* pAddr1 = addr(size1);
+	NET_SOCKLEN size2;
+	const void* pAddr2 = addr(size2);
+	if (size1 == size2)
+		return memcmp(pAddr1, pAddr2, size1) == 0;
 	return false;
 }
 
-bool IPAddress::operator != (const IPAddress& a) const {
-	NET_SOCKLEN l1 = sizeof(addr());
-	NET_SOCKLEN l2 = sizeof(a.addr());
-	if (l1 == l2)
-		return memcmp(addr(), a.addr(), l1) != 0;
-	return true;
-}
-
 bool IPAddress::operator < (const IPAddress& a) const {
-	NET_SOCKLEN l1 = sizeof(addr());
-	NET_SOCKLEN l2 = sizeof(a.addr());
-	if (l1 == l2)
-		return memcmp(addr(), a.addr(), l1) < 0;
-	return l1 < l2;
+	NET_SOCKLEN size1;
+	const void* pAddr1 = addr(size1);
+	NET_SOCKLEN size2;
+	const void* pAddr2 = addr(size2);
+	if (size1 == size2)
+		return memcmp(pAddr1, pAddr2, size1) < 0;
+	return size1<size2;
 }
 
-bool IPAddress::operator <= (const IPAddress& a) const {
-	NET_SOCKLEN l1 = sizeof(addr());
-	NET_SOCKLEN l2 = sizeof(a.addr());
-	if (l1 == l2)
-		return memcmp(addr(), a.addr(), l1) <= 0;
-	return l1 < l2;
-}
-
-bool IPAddress::operator > (const IPAddress& a) const {
-	NET_SOCKLEN l1 = sizeof(addr());
-	NET_SOCKLEN l2 = sizeof(a.addr());
-	if (l1 == l2)
-		return memcmp(addr(), a.addr(), l1) > 0;
-	return l1 > l2;
-}
-
-bool IPAddress::operator >= (const IPAddress& a) const {
-	NET_SOCKLEN l1 = sizeof(addr());
-	NET_SOCKLEN l2 = sizeof(a.addr());
-	if (l1 == l2)
-		return memcmp(addr(), a.addr(), l1) >= 0;
-	return l1 > l2;
-}
-
-const void* IPAddress::addr() const {
-	return _pIPAddress->addr();
+const void* IPAddress::addr(NET_SOCKLEN& size) const {
+	return _pIPAddress->addr(size);
 }
 
 const IPAddress& IPAddress::Broadcast() {

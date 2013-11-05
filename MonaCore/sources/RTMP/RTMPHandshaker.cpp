@@ -19,12 +19,12 @@
 #include "Mona/DiffieHellman.h"
 #include "Mona/Logs.h"
 #include "Mona/RTMP/RTMP.h"
-#include "Poco/RandomStream.h"
+#include "Mona/Util.h"
 #include "Mona/Time.h"
 #include <cstring>
 
 using namespace std;
-using namespace Poco;
+
 
 
 namespace Mona {
@@ -32,27 +32,29 @@ namespace Mona {
 RTMPHandshaker::RTMPHandshaker(const UInt8* data, UInt32 size): TCPSender(NULL,true),_middle(false),_writer(_buffer,sizeof(_buffer)),_farPubKey(0) {
 	_writer.write8(3);
 	//generate random data
-	RandomInputStream().read((char*)_writer.begin()+_writer.position(),1536);
+	Util::Random(_writer.begin() + _writer.position(), 1536);
 	_writer.next(1536);
 	_writer.writeRaw(data,size);
 }
 
-RTMPHandshaker::RTMPHandshaker(const UInt8* farPubKey,const UInt8* challengeKey,bool middle,const Poco::SharedPtr<RC4_KEY>& pDecryptKey,const Poco::SharedPtr<RC4_KEY>& pEncryptKey): TCPSender(NULL,true),_pDecryptKey(pDecryptKey),_pEncryptKey(pEncryptKey),_middle(middle),_writer(_buffer,sizeof(_buffer)),_farPubKey(DH_KEY_SIZE) {
+RTMPHandshaker::RTMPHandshaker(const UInt8* farPubKey, const UInt8* challengeKey, bool middle, const std::shared_ptr<RC4_KEY>& pDecryptKey, const std::shared_ptr<RC4_KEY>& pEncryptKey) : TCPSender(NULL, true), _pDecryptKey(pDecryptKey), _pEncryptKey(pEncryptKey), _middle(middle), _writer(_buffer, sizeof(_buffer)), _farPubKey(DH_KEY_SIZE) {
 	memcpy(_farPubKey.data(),farPubKey,_farPubKey.size());
 	memcpy(_challengeKey,challengeKey,sizeof(_challengeKey));
 }
 
 
 bool RTMPHandshaker::run(Exception& ex) {
-	if(_writer.length()==0)
-		runComplex();
+	if (_writer.length() == 0) {
+		if (!runComplex(ex))
+			return false;
+	}
 	dump(true);
 	return run(ex);
 }
 
-void RTMPHandshaker::runComplex() {
+bool RTMPHandshaker::runComplex(Exception& ex) {
 
-	bool encrypted = (!_pDecryptKey.isNull() && !_pEncryptKey.isNull());
+	bool encrypted = (_pDecryptKey && _pEncryptKey);
 
 	// encrypted flag
 	_writer.write8(encrypted ? 6 : 3);
@@ -64,7 +66,7 @@ void RTMPHandshaker::runComplex() {
 	_writer.write32(0);
 
 	//generate random data
-	RandomInputStream().read((char*)_writer.begin()+_writer.position(),3064);
+	Util::Random(_writer.begin() + _writer.position(), 3064);
 	_writer.clear(3073);
 
 	
@@ -76,18 +78,26 @@ void RTMPHandshaker::runComplex() {
 		Buffer<UInt8> secret(0);
 		//generate DH key
 		DiffieHellman dh;
+		int publicKeySize;
 		do {
-			dh.initialize(true);
-			dh.computeSecret(_farPubKey,secret);
-		} while(secret.size()!=DH_KEY_SIZE || dh.privateKeySize()!=DH_KEY_SIZE || dh.publicKeySize()!=DH_KEY_SIZE);
+			if (!ex || !dh.initialize(ex, true))
+				return false;
+			dh.computeSecret(ex, _farPubKey, secret);
+		} while (!ex && (secret.size() != DH_KEY_SIZE || dh.privateKeySize(ex) != DH_KEY_SIZE || (publicKeySize=dh.publicKeySize(ex)) != DH_KEY_SIZE));
 		
-		dh.writePublicKey(_writer.begin()+serverDHPos);
+		if (ex)
+			return false;
 
-		RTMP::ComputeRC4Keys(_writer.begin()+serverDHPos,dh.publicKeySize(),_farPubKey.data(),_farPubKey.size(),secret,*_pDecryptKey,*_pEncryptKey);
+		dh.readPublicKey(ex, _writer.begin() + serverDHPos);
+		if (ex)
+			return false;
+
+		RTMP::ComputeRC4Keys(_writer.begin() + serverDHPos, publicKeySize, _farPubKey.data(), _farPubKey.size(), secret, *_pDecryptKey, *_pEncryptKey);
 	}
 
 	//generate the digest
 	RTMP::WriteDigestAndKey(_writer.begin(),_challengeKey,_middle);
+	return true;
 }
 
 

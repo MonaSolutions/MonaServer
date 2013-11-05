@@ -19,7 +19,6 @@
 #include "Service.h"
 #include "Mona/Logs.h"
 #include "Mona/Util.h"
-#include "Poco/Timezone.h"
 #include <math.h>
 extern "C" {
 	#include "luajit-2.0/lualib.h"
@@ -195,7 +194,7 @@ void Script::WriteData(lua_State *pState,DataReader::Type type,DataReader& reade
 			struct tm datetm;
 			reader.readTime(time).toGMT(datetm);
 			lua_newtable(pState);
-			lua_pushnumber(pState, (double)(time.toInt() / 1000));
+			lua_pushnumber(pState, (double)(time / 1000.0));
 			lua_setfield(pState, -2, "__time");
 			lua_pushnumber(pState, datetm.tm_year + 1900);
 			lua_setfield(pState, -2, "year");

@@ -29,8 +29,7 @@ namespace Mona {
 
 class Util : virtual Static {
 public:
-	static std::string& FormatHex(const UInt8* data,UInt32 size,std::string& result);
-	static std::string& FormatHex2(const UInt8* data, UInt32 size, std::string& result);
+	
 	static UInt8 Get7BitValueSize(UInt32 value) { return Get7BitValueSize((UInt64)value); }
 	static UInt8 Get7BitValueSize(UInt64 value);
 
@@ -49,10 +48,19 @@ public:
 
 	static std::string& DecodeURI(std::string& uri);
 
+	static UInt8*			UnformatHex(UInt8* data,UInt32& size);
+	static std::string&		FormatHex(const UInt8* data, UInt32 size, std::string& result);
+	static std::string&		FormatHexCpp(const UInt8* data, UInt32 size, std::string& result);
+	static bool				FromBase64(const UInt8* data, UInt32 size, Buffer<UInt8>& result);
+	static Buffer<UInt8>&	ToBase64(const UInt8* data, UInt32 size, Buffer<UInt8>& result);
+	
+
 	static bool ReadIniFile(Exception& ex, const std::string& path, MapParameters& parameters);
 
 	static unsigned ProcessorCount() { unsigned result(std::thread::hardware_concurrency());  return result > 0 ? result : 1; }
 	static const MapParameters& Environment();
+
+	static void Random(UInt8* data, UInt32 size);
 private:
 	static MapParameters	_Environment;
 	static std::mutex		_MutexEnvironment;

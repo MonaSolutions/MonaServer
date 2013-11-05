@@ -28,23 +28,26 @@ class UDPSocket : protected DatagramSocket, virtual Object {
 public:
 	UDPSocket(const SocketManager& manager,bool allowBroadcast=false);
 
-	bool					bind(Exception& ex, const std::string& address);
-	bool					connect(Exception& ex, const std::string& address);
+	bool					bind(Exception& ex, const SocketAddress& address);
+	bool					connect(Exception& ex, const SocketAddress& address);
 	void					close();
 
 	bool					send(Exception& ex, const UInt8* data, UInt32 size);
-	bool					send(Exception& ex, const UInt8* data, UInt32 size, const std::string& address);
+	bool					send(Exception& ex, const UInt8* data, UInt32 size, const SocketAddress& address);
 
-	const std::string&		address(Exception& ex, std::string& address) { SocketAddress temp; return (address = DatagramSocket::address(ex, temp).toString()); }
-	const std::string&		peerAddress(Exception& ex, std::string& address) { SocketAddress temp; return (address = DatagramSocket::peerAddress(ex, temp).toString()); }
+	const SocketAddress&	address();
+	const SocketAddress&	peerAddress();
 
 private:
-	virtual void			onReception(Exception& ex, const UInt8* data, UInt32 size, const SocketAddress& address) = 0;
+	virtual void			onReception(const UInt8* data, UInt32 size, const SocketAddress& address) = 0;
 	void					onReadable(Exception& ex);
 
 	Buffer<UInt8>			_buffer;
 	bool					_allowBroadcast;
 	bool					_broadcasting;
+
+	SocketAddress			_address;
+	SocketAddress			_peerAddress;
 };
 
 

@@ -33,5 +33,10 @@ bool Protocol::auth(const SocketAddress& address) {
 	return auth;
 }
 
+bool Protocol::receive(Exception& ex, std::shared_ptr < Buffer < UInt8 >> &pBuffer, SocketAddress& address) {
+	ERROR("Protocol::receive called without treatment for ", name);
+	return false;
+}
+
 
 } // namespace Mona

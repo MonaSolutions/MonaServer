@@ -48,7 +48,6 @@ public:
 	RTMFPEngine(const UInt8* key,Direction direction);
 	RTMFPEngine(const RTMFPEngine& other);
 	RTMFPEngine(const RTMFPEngine& other,Type type);
-	virtual ~RTMFPEngine();
 
 	RTMFPEngine&  operator=(const RTMFPEngine& other);
 	RTMFPEngine	next(Type type) { return RTMFPEngine(*this, type); }
@@ -84,7 +83,7 @@ public:
 														 UInt8* responseKey);
 
 	static UInt16				TimeNow() { return Time(Mona::Time()); }
-	static UInt16				Time(Int64 timeVal) { return (UInt32)ROUND(timeVal / (1000.0*RTMFP_TIMESTAMP_SCALE)); }
+	static UInt16				Time(Int64 timeVal) { return (UInt32)round(timeVal / (1000.0*RTMFP_TIMESTAMP_SCALE)); }
 
 private:
 	static UInt16				CheckSum(MemoryReader& packet);

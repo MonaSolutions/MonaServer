@@ -24,7 +24,7 @@ This file is a part of Mona.
 namespace Mona {
 
 
-class Option : virtual ObjectNullable {
+class Option : public virtual ObjectNullable {
 	friend class Options;
 public:
 	Option();
@@ -90,8 +90,8 @@ public:
 
 	bool operator==(const Option& other) const { return String::ICompare(_fullName, other._fullName) == 0 || String::ICompare(_shortName, other._shortName) == 0; }
 	bool operator!=(const Option& other) const { return !operator==(other); }
-	bool operator<(const Option& other) const { return _fullName.empty() || other._fullName.empty() ? _shortName < other._shortName : _fullName < other._fullName; }
-	bool operator>(const Option& other) const { return _fullName.empty() || other._fullName.empty() ? _shortName > other._shortName : _fullName > other._fullName; }
+	bool operator<(const Option& other) const { return _fullName < other._fullName; }
+	bool operator>(const Option& other) const { return _fullName > other._fullName; }
 
 	static Option Null;
 private:

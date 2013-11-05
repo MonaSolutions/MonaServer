@@ -17,21 +17,20 @@
 
 #pragma once
 
-#include "Mona/Exceptions.h"
-#include "ApplicationKiller.h"
 #include "Service.h"
 #include "Servers.h"
 #include "Mona/Server.h"
+#include "Mona/TerminateSignal.h"
 
 
 class MonaServer : public Mona::Server, private ServiceRegistry, private ServerHandler {
 public:
-	MonaServer(ApplicationKiller& applicationKiller, Poco::UInt32 bufferSize, Poco::UInt32 threads, Poco::UInt16 serversPort, const std::string& serversTarget);
+	MonaServer(Mona::TerminateSignal& terminateSignal, Mona::UInt32 bufferSize, Mona::UInt32 threads, Mona::UInt16 serversPort, const std::string& serversTarget);
 
 	static const std::string				WWWPath;
 	Servers									servers;
 
-	void					start(Mona::MapParameters& parameters);
+	bool					start(Mona::MapParameters& parameters);
 
 private:
 	void					manage();
@@ -41,8 +40,8 @@ private:
 	void					onStart();
 	void					onStop();
 
-	void					onRendezVousUnknown(const std::string& protocol,const Poco::UInt8* id,std::set<Poco::Net::SocketAddress,Mona::Util::AddressComparator>& addresses);
-	void					onHandshake(const std::string& protocol,const Poco::Net::SocketAddress& address,const std::string& path,const std::map<std::string,std::string>& properties,Poco::UInt32 attempts,std::set<Poco::Net::SocketAddress,Mona::Util::AddressComparator>& addresses);
+	void					onRendezVousUnknown(const std::string& protocol, const Mona::UInt8* id, std::set<Mona::SocketAddress>& addresses);
+	void					onHandshake(const std::string& protocol, const Mona::SocketAddress& address, const std::string& path, const std::map<std::string, std::string>& properties, Mona::UInt32 attempts, std::set<Mona::SocketAddress>& addresses);
 
 	void					onConnection(Mona::Exception& ex, Mona::Client& client,Mona::DataReader& parameters,Mona::DataWriter& response);
 	void					onFailed(const Mona::Client& client,const std::string& error);
@@ -56,8 +55,8 @@ private:
 	bool					onPublish(Mona::Client& client,const Mona::Publication& publication,std::string& error);
 	void					onUnpublish(Mona::Client& client,const Mona::Publication& publication);
 
-	void					onAudioPacket(Mona::Client& client,const Mona::Publication& publication,Poco::UInt32 time,Mona::MemoryReader& packet);
-	void					onVideoPacket(Mona::Client& client,const Mona::Publication& publication,Poco::UInt32 time,Mona::MemoryReader& packet);
+	void					onAudioPacket(Mona::Client& client, const Mona::Publication& publication, Mona::UInt32 time, Mona::MemoryReader& packet);
+	void					onVideoPacket(Mona::Client& client, const Mona::Publication& publication, Mona::UInt32 time, Mona::MemoryReader& packet);
 	void					onDataPacket(Mona::Client& client,const Mona::Publication& publication,Mona::DataReader& packet);
 	void					onFlushPackets(Mona::Client& client,const Mona::Publication& publication);
 
@@ -75,28 +74,21 @@ private:
 	// ServerHandler implementation
 	void										connection(ServerConnection& server);
 	void										message(ServerConnection& server,const std::string& handler,Mona::MemoryReader& reader);
-	void										disconnection(const ServerConnection& server,const char* error);
-	const std::string&							host();
-	const std::map<std::string,Poco::UInt16>&	ports();
+	void										disconnection(const ServerConnection& server,const std::string& error);
+	const std::string&							host() { return _host; }
+	const std::map<std::string, Mona::UInt16>&		ports() { return _ports; }
 
 
-	void					readLUAAddress(const std::string& protocol,std::set<Poco::Net::SocketAddress,Mona::Util::AddressComparator>& addresses);
-	void					readLUAAddresses(const std::string& protocol,std::set<Poco::Net::SocketAddress,Mona::Util::AddressComparator>& addresses);
+	void					readLUAAddress(const std::string& protocol, std::set<Mona::SocketAddress> & addresses);
+	void					readLUAAddresses(const std::string& protocol,std::set<Mona::SocketAddress>& addresses);
 
 	lua_State*				_pState;
-	ApplicationKiller&		_applicationKiller;
+	Mona::TerminateSignal&	_terminateSignal;
 	Service*				_pService;
 
 	std::set<Service*>							_servicesRunning;
 	std::map<std::string,std::set<Service*> >	_scriptEvents;
-	std::map<std::string,Poco::UInt16>			_ports;
+	std::map<std::string, Mona::UInt16>				_ports;
 	std::string									_host;
 };
 
-inline const std::string& MonaServer::host() {
-	return _host;
-}
-
-inline const std::map<std::string, Poco::UInt16>& MonaServer::ports() {
-	return _ports;
-}

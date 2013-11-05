@@ -30,11 +30,12 @@ public:
 	DiffieHellman();
 	virtual ~DiffieHellman();
 
+	bool	initialized() { return _pDH != NULL; }
 	bool	initialize(Exception& ex,bool reset=false);
-	int		publicKeySize(Exception& ex) { initialize(ex); return BN_num_bytes(_pDH->pub_key); }
-	int		privateKeySize(Exception& ex) { initialize(ex);  return BN_num_bytes(_pDH->priv_key); }
-	UInt8*	readPublicKey(Exception& ex, UInt8* pubKey) { initialize(ex); readKey(_pDH->pub_key, pubKey); return pubKey; }
-	UInt8*	readPrivateKey(Exception& ex, UInt8* privKey) { initialize(ex);  readKey(_pDH->priv_key, privKey); return privKey; }
+	int		publicKeySize(Exception& ex) { if (!initialize(ex)) return -1; return BN_num_bytes(_pDH->pub_key); }
+	int		privateKeySize(Exception& ex) { if (!initialize(ex)) return -1;  return BN_num_bytes(_pDH->priv_key); }
+	UInt8*	readPublicKey(Exception& ex, UInt8* pubKey) { if (!initialize(ex)) return NULL; readKey(_pDH->pub_key, pubKey); return pubKey; }
+	UInt8*	readPrivateKey(Exception& ex, UInt8* privKey) { if (!initialize(ex)) return NULL;  readKey(_pDH->priv_key, privKey); return privKey; }
 	Buffer<UInt8>&	computeSecret(Exception& ex, const Buffer<UInt8>& farPubKey, Buffer<UInt8>& sharedSecret);
 
 private:

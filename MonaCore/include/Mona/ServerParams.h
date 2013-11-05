@@ -18,13 +18,14 @@
 #pragma once
 
 #include "Mona/Mona.h"
-#include "Poco/Thread.h"
+#include "Mona/Startable.h"
 
 namespace Mona {
 
 struct ProtocolParams {
-	ProtocolParams(UInt16 port) : port(port) {}
-	UInt16	port;
+	ProtocolParams(UInt16 port) : host("0.0.0.0"),port(port) {}
+	UInt16		port;
+	std::string host;
 };
 
 struct HTTPParams : ProtocolParams {
@@ -39,15 +40,15 @@ struct RTMPParams : ProtocolParams {
 struct RTMFPParams : ProtocolParams {
 	RTMFPParams() : ProtocolParams(1935),keepAlivePeer(10),keepAliveServer(15) {}
 
-	Poco::UInt16				keepAlivePeer;
-	Poco::UInt16				keepAliveServer;
+	UInt16				keepAlivePeer;
+	UInt16				keepAliveServer;
 };
 
 
 
 struct ServerParams {
-	ServerParams() : threadPriority(Poco::Thread::PRIO_HIGH) {}
-	Poco::Thread::Priority		threadPriority;
+	ServerParams() : threadPriority(Startable::PRIORITY_HIGH) {}
+	Startable::Priority			threadPriority;
 	RTMFPParams					RTMFP;
 	RTMPParams					RTMP;
 	HTTPParams					HTTP;

@@ -31,27 +31,27 @@ public:
 	virtual ~RTMPSession();
 
 private:
-	void			onNewData(const Poco::UInt8* data,Poco::UInt32 size);
-	bool			buildPacket(MemoryReader& data,Poco::UInt32& packetSize);
+	void			onNewData(const UInt8* data,UInt32 size);
+	bool			buildPacket(MemoryReader& data,UInt32& packetSize);
 	void			packetHandler(MemoryReader& packet);
 
 	bool			performHandshake(MemoryReader& packet, bool encrypted);
-	void			performComplexHandshake(const Poco::UInt8* farPubKey,const Poco::UInt8* challengeKey, bool encrypted);
+	void			performComplexHandshake(const UInt8* farPubKey,const UInt8* challengeKey, bool encrypted);
 	void			performSimpleHandshake(MemoryReader& packet);
 
 
 	void			manage();
 
 
-	Poco::UInt8							_handshaking;
+	UInt8							_handshaking;
 		
-	Poco::UInt16						_chunkSize;
+	UInt16						_chunkSize;
 
-	std::map<Poco::UInt8,RTMPWriter*>	_writers;
+	std::map<UInt8,RTMPWriter*>	_writers;
 	RTMPWriter*							_pWriter;
 
-	Poco::SharedPtr<RC4_KEY>			_pDecryptKey;
-	Poco::SharedPtr<RC4_KEY>			_pEncryptKey;
+	std::shared_ptr<RC4_KEY>			_pDecryptKey;
+	std::shared_ptr<RC4_KEY>			_pEncryptKey;
 
 	FlashMainStream						_mainStream;
 };

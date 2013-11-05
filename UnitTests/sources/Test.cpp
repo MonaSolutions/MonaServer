@@ -8,12 +8,14 @@ using namespace std;
 void PoolTest::runAll() {
 	for(auto itTest : _mapTests) {
 		itTest.second->TestFunction();
-		NOTE("Test ", itTest.second->name(), " OK");
+		NOTE(itTest.second->name(), " OK");
 	}
 }
 
 void PoolTest::run(const string& mod) {
 	auto itTest = _mapTests.equal_range(mod);
+	if (itTest.first == itTest.second) 
+		itTest = _mapTests.equal_range(mod + "Test");
 	if (itTest.first == itTest.second) {
 		ERROR("Module ",mod," does not exist.");
 		return;
@@ -22,7 +24,7 @@ void PoolTest::run(const string& mod) {
 	// Run all tests of the module
 	for(auto it = itTest.first; it != itTest.second; it++) {
 		it->second->TestFunction();
-		NOTE("Test ", it->second->name(), " OK");
+		NOTE(it->second->name(), " OK");
 	}
 }
 

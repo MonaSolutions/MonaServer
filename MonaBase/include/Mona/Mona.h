@@ -27,7 +27,6 @@
 #define STRINGIZE2(x) #x
 #define LINE_STRING STRINGIZE(__LINE__)
 #define HMAC_KEY_SIZE	0x20
-#define ROUND(val) floor( val + 0.5 )
 
 #if defined(_WIN32)
 #define _WINSOCKAPI_    // stops windows.h including winsock.h
@@ -235,14 +234,6 @@ void DetectMemoryLeak();
 	typedef unsigned int           UInt32;
 	typedef signed __int64         Int64;
 	typedef unsigned __int64       UInt64;
-	#if defined(_WIN64)
-		#define MONA_PTR_IS_64_BIT 1
-		typedef signed __int64     IntPtr;
-		typedef unsigned __int64   UIntPtr;
-	#else
-		typedef signed long        IntPtr;
-		typedef unsigned long      UIntPtr;
-	#endif
 
 #elif defined(__GNUC__) || defined(__clang__)
 	//
@@ -257,7 +248,6 @@ void DetectMemoryLeak();
 	typedef signed long            IntPtr;
 	typedef unsigned long          UIntPtr;
 #if defined(__LP64__)
-	#define MONA_PTR_IS_64_BIT 1
 	typedef signed long        Int64;
 	typedef unsigned long      UInt64;
 #else
@@ -275,8 +265,6 @@ void DetectMemoryLeak();
 	typedef unsigned short         UInt16;
 	typedef signed int             Int32;
 	typedef unsigned int           UInt32;
-	typedef signed long            IntPtr;
-	typedef unsigned long          UIntPtr;
 #if defined(__64BIT__)
 	#define MONA_PTR_IS_64_BIT 1
 	typedef signed long        Int64;
@@ -313,6 +301,8 @@ class ObjectNullable : virtual Object {
 	bool _isNull;
 public:
 	ObjectNullable(bool isNull = false) : _isNull(isNull) {}
+
+	operator bool() const { return !_isNull; }
 };
 
 

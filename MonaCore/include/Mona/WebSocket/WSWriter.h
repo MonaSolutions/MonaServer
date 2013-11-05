@@ -44,8 +44,7 @@ class WSWriter : public Writer, virtual Object {
 public:
 
 	WSWriter(StreamSocket& socket);
-	virtual ~WSWriter();
-
+	
 	UInt16			ping;
 
 	State			state(State value=GET,bool minimal=false);
@@ -62,8 +61,8 @@ public:
 
 private:
 	void			pack();
-	void			createReader(MemoryReader& reader, Poco::SharedPtr<DataReader>& pReader) { pReader = new JSONReader(reader); }
-	void			createWriter(Poco::SharedPtr<DataWriter>& pWriter) { pWriter = new JSONWriter(); }
+	void			createReader(MemoryReader& reader, std::shared_ptr<DataReader>& pReader) { pReader.reset(new JSONReader(reader)); }
+	void			createWriter(std::shared_ptr<DataWriter>& pWriter) { pWriter.reset(new JSONWriter()); }
 	bool			hasToConvert(DataReader& reader) { return dynamic_cast<JSONReader*>(&reader) == NULL; }
 	bool			writeMedia(MediaType type,UInt32 time,MemoryReader& data);
 

@@ -26,12 +26,34 @@ namespace Mona {
 TCPClient::TCPClient(const SocketManager& manager) : _connected(false), StreamSocket(manager), _rest(0){
 }
 
-TCPClient::TCPClient(const SocketManager& manager, const SocketAddress& peerAddress) : _connected(true), _rest(0), StreamSocket(manager) {
+TCPClient::TCPClient(const SocketManager& manager, const SocketAddress& peerAddress) : _peerAddress(peerAddress),_connected(true), _rest(0), StreamSocket(manager) {
+
 }
 
 TCPClient::~TCPClient() {
 	disconnect();
 }
+
+const SocketAddress& TCPClient::address() {
+	if (!_address.host().isWildcard())
+		return _address;
+	Exception ex;
+	StreamSocket::address(ex, _address);
+	if (ex)
+		onError(ex.error());
+	return _address;
+}
+
+const SocketAddress& TCPClient::peerAddress() {
+	if (!_peerAddress.host().isWildcard())
+		return _peerAddress;
+	Exception ex;
+	StreamSocket::peerAddress(ex, _peerAddress);
+	if (ex)
+		onError(ex.error());
+	return _peerAddress;
+}
+
 
 void TCPClient::onReadable(Exception& ex) {
 	UInt32 available = StreamSocket::available(ex);
@@ -68,13 +90,11 @@ void TCPClient::onReadable(Exception& ex) {
 }
 
 
-bool TCPClient::connect(Exception& ex,const string& address) {
+bool TCPClient::connect(Exception& ex,const SocketAddress& address) {
 	disconnect();
-	SocketAddress temp;
-	if (!temp.set(ex, address))
-		return false;
-	return _connected = StreamSocket::connect(ex, temp);
+	return _connected = StreamSocket::connect(ex, address);
 }
+
 
 void TCPClient::disconnect() {
 	if(!_connected)
@@ -83,6 +103,8 @@ void TCPClient::disconnect() {
 	shutdown(ex,Socket::RECV);
 	close();
 	_rest = 0;
+	_address.clear();
+	_peerAddress.clear();
 	onDisconnection();
 }
 

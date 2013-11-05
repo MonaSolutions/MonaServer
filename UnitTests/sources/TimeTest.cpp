@@ -1,11 +1,12 @@
 
-#include "TimeTest.h"
+#include "Test.h"
 #include "Mona/Time.h"
 #include "Mona/Exceptions.h"
 #include "Mona/Logs.h"
 #include <thread>
 
 using namespace Mona;
+using namespace std;
 using namespace std::chrono;
 using namespace std;
 
@@ -85,7 +86,7 @@ ADD_TEST(TimeTest, TestTimeFormat) {
 	// Convert init time to local time
 	time_t utcint = timegm(&tminit);
 	struct tm tmlocal;
-	localtime_s(&tmlocal, &utcint);
+	LOCALTIME(utcint, tmlocal);
 
 	EXPECT_TRUE(tmlocal.tm_year == datetm.tm_year);
 	EXPECT_TRUE(tmlocal.tm_mon == datetm.tm_mon);

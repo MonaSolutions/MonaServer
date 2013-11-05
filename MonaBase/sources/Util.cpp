@@ -18,7 +18,9 @@
 #include "Mona/Util.h"
 #include "Mona/Exceptions.h"
 #include "Mona/String.h"
+#include "Mona/Time.h"
 #include <fstream>
+#include <random>
 
 #if !defined(_WIN32)
 extern "C" char **environ; // TODO test it on linux!
@@ -36,6 +38,23 @@ map<thread::id, string>	Util::_ThreadNames;
 mutex					Util::_MutexThreadNames;
 
 
+static const char B64Table[65] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+static const char ReverseB64Table[128] = {
+	64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64,
+	64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64,
+	64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 62, 64, 64, 64, 63,
+	52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 64, 64, 64, 64, 64, 64,
+	64, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+	15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 64, 64, 64, 64, 64,
+	64, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40,
+	41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 64, 64, 64, 64, 64
+};
+
+static default_random_engine RandomGenerator((UInt32)Time());
+
+
+
 const string& Util::GetThreadName(thread::id id) {
 	lock_guard<mutex> lock(_MutexThreadNames);
 	return _ThreadNames[id];
@@ -44,20 +63,6 @@ const string& Util::GetThreadName(thread::id id) {
 void Util::SetThreadName(thread::id id, const string& name) {
 	lock_guard<mutex> lock(_MutexThreadNames);
 	_ThreadNames[id] = name;
-}
-
-string& Util::FormatHex(const UInt8* data,UInt32 size,string& result) {
-	result.clear();
-	for (int i = 0; i < size;++i)
-		String::Append(result,Format<UInt8>("%X",data[i]));
-	return result;
-}
-
-string& Util::FormatHex2(const UInt8* data, UInt32 size, string& result) {
-	result.clear();
-	for (int i = 0; i < size; ++i)
-		String::Append(result, Format<UInt8>("\\x%X", data[i]));
-	return result;
 }
 
 UInt8 Util::Get7BitValueSize(UInt64 value) {
@@ -362,6 +367,88 @@ bool Util::ReadIniFile(Exception& ex,const string& path,MapParameters& parameter
 		}
 	}
 	return true;
+}
+
+UInt8* Util::UnformatHex(UInt8* data,UInt32& size) {
+	UInt32 sizeResult = (UInt32)ceil(size/ 2.0);
+	int j = 0;
+	for (int i = 0; i < sizeResult; ++i) {
+		const char first = data[j++];
+		const char second = j == size ? '0' : data[j++];
+		data[i] = ((first - (isdigit(first) ? '0' : '7')) << 4) | ((second - (isdigit(second) ? '0' : '7')) & 0x0F);
+	}
+	size = sizeResult;
+	return data;
+}
+
+string& Util::FormatHex(const UInt8* data, UInt32 size, string& result) {
+	result.clear();
+	for (int i = 0; i < size; ++i)
+		String::Append(result, Format<UInt8>("%.2X", data[i]));
+	return result;
+}
+
+string& Util::FormatHexCpp(const UInt8* data, UInt32 size, string& result) {
+	result.clear();
+	for (int i = 0; i < size; ++i)
+		String::Append(result, Format<UInt8>("\\x%.2X", data[i]));
+	return result;
+}
+
+
+Buffer<UInt8>& Util::ToBase64(const UInt8* data, UInt32 size, Buffer<UInt8>& result) {
+	int i = 0;
+	int j = 0;
+	UInt32 accumulator = 0;
+	UInt32 bits = 0;
+	result.resize((UInt32)ceil(size/3.0)*4);
+
+	for (i = 0; i < size;++i) {
+		accumulator = (accumulator << 8) | (data[i] & 0xFFu);
+		bits += 8;
+		while (bits >= 6) {
+			bits -= 6;
+			result[j++] = B64Table[(accumulator >> bits) & 0x3Fu];
+		}
+	}
+	if (bits > 0) { // Any trailing bits that are missing.
+		accumulator <<= 6 - bits;
+		result[j++] = B64Table[accumulator & 0x3Fu];
+	}
+	while (result.size() > j) // padding with '='
+		result[j++] = '=';
+	return result;
+}
+
+bool Util::FromBase64(const UInt8* data, UInt32 size, Buffer<UInt8>& result) {
+	UInt32 bits = 0;
+	UInt32 accumulator = 0;
+	result.resize(size/4 * 3);
+	int j = 0;
+
+	for (int i = 0; i < size; ++i) {
+		const int c = data[i];
+		if (isspace(c) || c == '=')
+			continue;
+
+		if ((c > 127) || (c < 0) || (ReverseB64Table[c] > 63))
+			return false;
+		
+		accumulator = (accumulator << 6) | ReverseB64Table[c];
+		bits += 6;
+		if (bits >= 8) {
+			bits -= 8;
+			result[j++] = ((accumulator >> bits) & 0xFFu);
+		}
+	}
+	result.resize(j);
+	return true;
+}
+
+void Util::Random(UInt8* data, UInt32 size) {
+	static const uniform_int_distribution<short> Distribution(0,255);
+	for (UInt32 i = 0; i < size;++i)
+		data[i] = (UInt8)Distribution(RandomGenerator);
 }
 
 

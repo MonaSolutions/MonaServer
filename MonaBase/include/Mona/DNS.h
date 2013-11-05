@@ -36,6 +36,7 @@ public:
 	static bool HostByName(Exception& ex, const std::string& hostname, HostEntry& host);
 		
 	// Returns a HostEntry object containing the DNS information for the host with the given IP address
+	// BEWARE blocking method!!
 	static bool HostByAddress(Exception& ex, const IPAddress& address, HostEntry& host);
 
 	// Returns a HostEntry object containing the DNS information for the host with the given IP address or host name

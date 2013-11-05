@@ -19,28 +19,30 @@
 #include "Mona/RTMFP/RTMFPHandshake.h"
 #include "Mona/Util.h"
 #include "Mona/Logs.h"
-#include "Poco/RandomStream.h"
 
 using namespace std;
-using namespace Poco;
+
 
 namespace Mona {
 
-RTMFPCookieComputing::RTMFPCookieComputing(RTMFPHandshake& handshake,Invoker& invoker): _handshake(handshake),value(),Task(invoker),initiatorKey(0),sharedSecret(0) {
-	RandomInputStream().read((char*)value,COOKIE_SIZE);
+RTMFPCookieComputing::RTMFPCookieComputing(RTMFPHandshake& handshake,Invoker& invoker): _handshake(handshake),Task(invoker),initiatorKey(0),sharedSecret(0) {
+	Util::Random(value, COOKIE_SIZE);
 }
 
 bool RTMFPCookieComputing::run(Exception& ex) {
 	// First execution is for the DH computing if pDH == null, else it's to compute Diffie-Hellman keys
-	if(diffieHellman.initialize())
-		return true;
+	if (!diffieHellman.initialized() && !diffieHellman.initialize(ex))
+		return false;
 
 	// Compute Diffie-Hellman secret
-	diffieHellman.computeSecret(initiatorKey,sharedSecret);
+	diffieHellman.computeSecret(ex,initiatorKey,sharedSecret);
+	if (ex)
+		return false;
 
-	DEBUG("Shared Secret : ",Util::FormatHex(sharedSecret.data(),sharedSecret.size()));
+	string hex;
+	DEBUG("Shared Secret : ", Util::FormatHex(sharedSecret.data(), sharedSecret.size(), hex));
 	
-	waitHandle(ex);
+	waitHandle();
 	return true;
 }
 

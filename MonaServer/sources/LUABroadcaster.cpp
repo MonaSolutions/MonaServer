@@ -21,7 +21,7 @@
 
 using namespace std;
 using namespace Mona;
-using namespace Poco;
+
 
 const char*		LUABroadcaster::Name="LUABroadcaster";
 
@@ -32,10 +32,9 @@ int LUABroadcaster::IPairs(lua_State* pState) {
 			SCRIPT_ERROR("'next' should be a LUA function, it should not be overloaded")
 		else {
 			lua_newtable(pState);
-			Broadcaster::Iterator it;
-			Mona::UInt32 i=0;
-			for(it=broadcaster.begin();it!=broadcaster.end();++it) {
-				SCRIPT_WRITE_PERSISTENT_OBJECT(ServerConnection,LUAServer,(**it))
+			UInt32 i=0;
+			for(ServerConnection* pServer : broadcaster) {
+				SCRIPT_WRITE_PERSISTENT_OBJECT(ServerConnection, LUAServer, (*pServer))
 				lua_rawseti(pState,-2,++i);
 			}
 		}
@@ -67,7 +66,7 @@ int LUABroadcaster::Get(lua_State *pState) {
 		else if(name=="(") {
 			ServerConnection* pServer = NULL;
 			if(SCRIPT_NEXT_TYPE==LUA_TNUMBER) {
-				Mona::UInt32 index = SCRIPT_READ_UINT(0);
+				UInt32 index = SCRIPT_READ_UINT(0);
 				if(index>0)
 					pServer = broadcaster[--index];
 			} else

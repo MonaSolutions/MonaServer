@@ -1,4 +1,3 @@
-//
 /*
 Copyright 2013 Mona - mathieu.poux[a]gmail.com
 
@@ -16,22 +15,33 @@ details (or else see http://www.gnu.org/licenses/).
 This file is a part of Mona.
 */
 
-#include "Mona/Parameters.h"
-#include "Mona/String.h"
-#include "Mona/Exceptions.h"
+#pragma once
 
-using namespace std;
+#include "Mona/Mona.h"
+#include "Mona/Event.h"
+#if defined(_WIN32)
+#include "Windows.h"
+#endif
 
 namespace Mona {
 
-bool Parameters::getBool(const string& key, bool& value) const {
-	string temp;
-	if (!getRaw(key, temp))
-		return false;
-	int number;
-	// true if number !=0 or if not equals to "false", "no" or "off"
-	value = String::ToNumber<int>(temp, number) && (number != 0) || (String::ICompare(temp, "false") != 0 && String::ICompare(temp, "no") != 0 && String::ICompare(temp, "off") != 0);
-	return true;
-}
+
+class TerminateSignal : virtual Object {
+public:
+	TerminateSignal();
+	virtual void wait();
+	void set() { _Terminate.set(); }
+protected:
+#if defined(_WIN32)
+	static BOOL __stdcall	ConsoleCtrlHandler(DWORD ctrlType);
+
+	static Event			_Terminate;
+#else
+	sigset_t				_signalSet;
+#endif
+	};
+
+
+
 
 } // namespace Mona

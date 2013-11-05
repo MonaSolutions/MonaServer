@@ -38,7 +38,7 @@ public:
 	RTMFPHandshake(RTMFProtocol& protocol,Gateway& gateway,Invoker& invoker);
 	virtual ~RTMFPHandshake();
 
-	void		createCookie(MemoryWriter& writer,HelloAttempt& attempt,const std::string& tag,const std::string& queryUrl);
+	bool		createCookie(Exception& ex, MemoryWriter& writer, HelloAttempt& attempt, const std::string& tag, const std::string& queryUrl);
 	void		commitCookie(const UInt8* value);
 	void		manage();
 	void		clear();

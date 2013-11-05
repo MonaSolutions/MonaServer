@@ -60,7 +60,6 @@ protected:
 			return;
 
 		// Here no new sending must happen except "failSignal"
-		map<UInt64,AutoPtr<RTMFPWriter> >::iterator it;
 		for (auto& it : _flowWriters)
 			it.second->clear();
 
@@ -79,7 +78,7 @@ protected:
 private:
 
 	void							manage();
-	MemoryReader*					decode(Poco::SharedPtr<Buffer<UInt8> >& pBuffer,const SocketAddress& address);
+	bool							decode(std::shared_ptr < Buffer < UInt8 >> &pBuffer, const SocketAddress& address, std::shared_ptr<MemoryReader> &pReader);
 	void							packetHandler(MemoryReader& packet);
 
 	// Implementation of BandWriter

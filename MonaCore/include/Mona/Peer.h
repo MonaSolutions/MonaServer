@@ -50,13 +50,13 @@ public:
 
 	void unsubscribeGroups();
 	void joinGroup(Group& group,Writer* pWriter);
-	Group& joinGroup(const Poco::UInt8* id,Writer* pWriter);
+	Group& joinGroup(const UInt8* id,Writer* pWriter);
 	void unjoinGroup(Group& group);
 
 
 // events
-	void onRendezVousUnknown(const Poco::UInt8* peerId,std::set<SocketAddress>& addresses);
-	void onHandshake(Poco::UInt32 attempts,std::set<SocketAddress>& addresses);
+	void onRendezVousUnknown(const UInt8* peerId,std::set<SocketAddress>& addresses);
+	void onHandshake(UInt32 attempts,std::set<SocketAddress>& addresses);
 
 	void onConnection(Exception& ex, Writer& writer) {onConnection(ex, writer,DataReaderNull,Writer::DataWriterNull);}
 	void onConnection(Exception& ex, Writer& writer,DataWriter& response) {onConnection(ex, writer,DataReaderNull,response);}
@@ -69,8 +69,8 @@ public:
 	void onUnpublish(const Publication& publication);
 
 	void onDataPacket(const Publication& publication,DataReader& packet);
-	void onAudioPacket(const Publication& publication,Poco::UInt32 time,MemoryReader& packet);
-	void onVideoPacket(const Publication& publication,Poco::UInt32 time,MemoryReader& packet);
+	void onAudioPacket(const Publication& publication,UInt32 time,MemoryReader& packet);
+	void onVideoPacket(const Publication& publication,UInt32 time,MemoryReader& packet);
 	void onFlushPackets(const Publication& publication);
 
 	bool onSubscribe(const Listener& listener,std::string& error);

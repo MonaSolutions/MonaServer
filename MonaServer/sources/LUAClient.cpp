@@ -37,7 +37,8 @@ int LUAClient::Get(lua_State *pState) {
 			SCRIPT_CALLBACK_NOTCONST_CHECK
 			SCRIPT_WRITE_PERSISTENT_OBJECT(Writer,LUAWriter,client.writer())
 		} else if(name=="id") {
-			SCRIPT_WRITE_STRING(Util::FormatHex(client.id,ID_SIZE).c_str())
+			string hex;
+			SCRIPT_WRITE_STRING(Util::FormatHex(client.id, ID_SIZE, hex).c_str())
 		} else if(name=="rawId") {
 			SCRIPT_WRITE_BINARY(client.id,ID_SIZE);
 		} else if(name=="protocol") {

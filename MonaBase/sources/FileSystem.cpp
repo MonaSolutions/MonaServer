@@ -62,18 +62,20 @@ void FileSystem::RegisterForDeletion(const string& path) {
 	Temps.add(path);
 }
 
-Time& FileSystem::GetLastModified(const string& path,Time& time) {
+Time& FileSystem::GetLastModified(Exception& ex, const string& path, Time& time) {
 	struct stat status;
 	status.st_mtime = 0;
-	stat(path.c_str(), &status);
+	if (stat(path.c_str(), &status) != 0)
+		ex.set(Exception::FILE, "File ", path, " doesn't exist");
 	time.update(chrono::system_clock::from_time_t(status.st_mtime));
 	return time;
 }
 
-UInt32 FileSystem::GetSize(const string& path) {
+UInt32 FileSystem::GetSize(Exception& ex,const string& path) {
 	struct stat status;
 	status.st_size = 0;
-	stat(path.c_str(), &status);
+	if (stat(path.c_str(), &status) != 0)
+		ex.set(Exception::FILE, "File ", path, " doesn't exist");
 	return (UInt32)status.st_size;
 }
 
@@ -124,6 +126,7 @@ bool FileSystem::IsFile(const string& path) {
 		return true;
 	return false;
 }
+
 
 // TODO test with TestUnits
 string& FileSystem::GetExtension(const string& path, string& value) {

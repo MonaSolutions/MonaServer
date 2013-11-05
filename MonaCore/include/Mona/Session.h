@@ -22,12 +22,13 @@
 #include "Mona/Protocol.h"
 #include "Mona/Invoker.h"
 
+
 namespace Mona {
 
 class Session : virtual Object {
 public:
 
-	const UInt32	id;
+	const UInt32		id;
 	const std::string	name;
 	const bool			died;
 
@@ -38,7 +39,7 @@ public:
 	virtual ~Session();
 
 	void						receive(MemoryReader& packet);
-	virtual MemoryReader*		decode(Poco::SharedPtr<Buffer<UInt8> >& pBuffer, const SocketAddress& address) { return new MemoryReader(pBuffer->data(), pBuffer->size()); }
+	virtual bool				decode(const std::shared_ptr < Buffer < UInt8 >> &pBuffer, const SocketAddress& address, std::shared_ptr <MemoryReader>& pReader) { pReader.reset(new MemoryReader(pBuffer->data(), pBuffer->size())); return true; }
 	virtual void				manage() {}
 	virtual void				kill();
 
@@ -50,7 +51,13 @@ protected:
 	Protocol&			protocol;
 
 	template<typename DecodingType>
-	void decode(std::shared_ptr<DecodingType>& pDecoding) { _pDecodingThread = invoker.poolThreads.enqueue<DecodingType>(pDecoding, _pDecodingThread); }
+	bool decode(const std::shared_ptr<DecodingType>& pDecoding) {
+		Exception ex;
+		_pDecodingThread = invoker.poolThreads.enqueue<DecodingType>(ex,pDecoding, _pDecodingThread);
+		if (ex)
+			ERROR("Impossible to decode packet of protocol ", protocol.name, " on session ", id, ", ", ex.error());
+		return !ex;
+	}
 
 	const std::string& reference();
 

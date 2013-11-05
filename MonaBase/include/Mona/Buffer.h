@@ -31,10 +31,12 @@ public:
 
 	UInt32 size() const { return _size; }
 	void   resize(UInt32 size,bool preserveContent = true) {
+		if (size == _size)
+			return;
 		ElementType* pBuffer = new ElementType[size]();
 		if (preserveContent)
 			std::memcpy(pBuffer, _pBuffer, size > _size ? _size : size);
-		delete [] pBuffer;
+		delete [] _pBuffer;
 		_pBuffer = pBuffer;
 		_size = size;
 	}

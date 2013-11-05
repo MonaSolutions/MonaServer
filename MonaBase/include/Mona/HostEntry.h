@@ -34,13 +34,13 @@ public:
 	typedef std::list<IPAddress>   AddressList;
 	
 	// Creates an empty HostEntry.
-	HostEntry();
+	HostEntry() {}
 
 	// Creates the HostEntry from the data in a hostent structure.
-	bool set(Exception& ex, const struct hostent* entry);
+	void set(Exception& ex, const struct hostent* entry);
 
 	// Creates the HostEntry from the data in an addrinfo structure.
-	bool set(Exception& ex, struct addrinfo* info);
+	void set(Exception& ex, struct addrinfo* info);
 
 
 	// Returns the canonical host name.

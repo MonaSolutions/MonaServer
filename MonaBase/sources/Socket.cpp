@@ -25,7 +25,7 @@ using namespace std;
 namespace Mona {
 
 
-Socket::Socket(const SocketManager& manager, int type) : _poolThreads(manager._poolThreads), _pMutex(new mutex()), _type(type), _initialized(false), _managed(false), _manager(manager), _sockfd(NET_INVALID_SOCKET), _writing(false) {}
+Socket::Socket(const SocketManager& manager, int type) : _poolThreads(manager._poolThreads), _pMutex(new mutex()), _type(type), _initialized(false), _managed(false), manager(manager), _sockfd(NET_INVALID_SOCKET), _writing(false) {}
 
 Socket::~Socket() {
 	close();
@@ -40,7 +40,7 @@ void Socket::close() {
 	if (!_managed)
 		return;
 	_managed = false;
-	_manager.remove(*this);
+	manager.remove(*this);
 	_senders.clear();
 }
 
@@ -57,8 +57,6 @@ bool Socket::init(Exception& ex, IPAddress::Family family) {
 		return false;
 	}
 
-	// always in non-blocking mode!
-	ioctl(ex,FIONBIO, 1); 
 	if (ex || !managed(ex)) {
 		NET_CLOSESOCKET(_sockfd);
 		_sockfd = NET_INVALID_SOCKET;
@@ -80,8 +78,6 @@ bool Socket::init(Exception& ex, IPAddress::Family family) {
 bool Socket::init(Exception& ex, NET_SOCKET sockfd) {
 	_sockfd = sockfd;
 	_initialized = true;
-	// always in non-blocking mode!
-	ioctl(ex, FIONBIO, 1);
 	if (ex || !managed(ex)) {
 		NET_CLOSESOCKET(_sockfd);
 		_sockfd = NET_INVALID_SOCKET;
@@ -94,7 +90,7 @@ bool Socket::managed(Exception& ex) {
 	lock_guard<mutex>	lock(_mutexManaged);
 	if (_managed)
 		return true;
-	return _managed = _manager.add(ex, *this);
+	return _managed = manager.add(ex, *this);
 }
 
 
@@ -103,7 +99,7 @@ bool Socket::connect(Exception& ex, const SocketAddress& address) {
 		return false;
 	if (!managed(ex))
 		return false;
-	int rc = ::connect(_sockfd, address.addr(), sizeof(address.addr()));
+	int rc = ::connect(_sockfd, &address.addr(), sizeof(address.addr()));
 	if (rc) {
 		int err = LastError();
 		if (err != NET_EINPROGRESS && err != NET_EWOULDBLOCK) {
@@ -127,7 +123,7 @@ bool Socket::bind(Exception& ex, const SocketAddress& address, bool reuseAddress
 		setReuseAddress(ex,true);
 		setReusePort(true);
 	}
-	int rc = ::bind(_sockfd, address.addr(), sizeof(address.addr()));
+	int rc = ::bind(_sockfd, &address.addr(), sizeof(address.addr()));
 	if (rc != 0) {
 		SetError(ex, LastError(), address.toString());
 		return false;
@@ -202,7 +198,7 @@ int Socket::sendTo(Exception& ex, const void* buffer, int length, const SocketAd
 	int rc;
 	do {
 		ASSERT_RETURN(_initialized == true, 0)
-		rc = ::sendto(_sockfd, reinterpret_cast<const char*>(buffer), length, flags, address.addr(), sizeof(address.addr()));
+		rc = ::sendto(_sockfd, reinterpret_cast<const char*>(buffer), length, flags, &address.addr(), sizeof(address.addr()));
 	}
 	while (rc < 0 && LastError() == NET_EINTR);
 	CheckError(ex);
@@ -226,7 +222,7 @@ int Socket::receiveFrom(Exception& ex, void* buffer, int length, SocketAddress& 
 	} while (rc < 0 && LastError() == NET_EINTR);
 	if (rc < 0)
 		SetError(ex, LastError());
-	address.set(ex, pSA);
+	address.set(ex, *pSA);
 	return rc;
 }
 
@@ -236,7 +232,7 @@ SocketAddress& Socket::address(Exception& ex, SocketAddress& address) const {
 	struct sockaddr* pSA = reinterpret_cast<struct sockaddr*>(addressBuffer);
 	NET_SOCKLEN saLen = sizeof(addressBuffer);
 	if (::getsockname(_sockfd, pSA, &saLen) == 0) {
-		address.set(ex, pSA);
+		address.set(ex, *pSA);
 		return address;
 	}
 	SetError(ex);
@@ -250,7 +246,7 @@ SocketAddress& Socket::peerAddress(Exception& ex, SocketAddress& address) const 
 	struct sockaddr* pSA = reinterpret_cast<struct sockaddr*>(addressBuffer);
 	NET_SOCKLEN saLen = sizeof(addressBuffer);
 	if (::getpeername(_sockfd, pSA, &saLen) == 0) {
-		address.set(ex, pSA);
+		address.set(ex,*pSA);
 		return address;
 	}
 	SetError(ex);
@@ -345,7 +341,7 @@ void Socket::SetError(Exception& ex, int error, const string& argument) {
 void Socket::manageWrite(Exception& ex) {
 	if (!_writing) {
 		_writing = true;
-		_manager.startWrite(ex, *this);
+		manager.startWrite(ex, *this);
 	}
 }
 
@@ -355,13 +351,13 @@ void Socket::flush(Exception& ex) {
 	while (!_senders.empty()) {
 		if (!_senders.front()->flush(ex,*this)) {
 			if (!_writing)
-				_writing = _manager.startWrite(ex,*this);
+				_writing = manager.startWrite(ex,*this);
 			return;
 		}
 		_senders.pop_front();
 	}
 	if (_writing && _senders.empty())
-		_writing = !_manager.stopWrite(ex, *this);
+		_writing = !manager.stopWrite(ex, *this);
 }
 
 

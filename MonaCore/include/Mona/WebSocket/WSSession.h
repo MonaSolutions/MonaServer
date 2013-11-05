@@ -32,7 +32,7 @@ public:
 	virtual ~WSSession();
 
 
-	bool			buildPacket(MemoryReader& data,Poco::UInt32& packetSize);
+	bool			buildPacket(MemoryReader& data,UInt32& packetSize);
 	void			packetHandler(MemoryReader& packet);
 	void			manage();
 
@@ -42,11 +42,11 @@ protected:
 	
 private:
 
-	WSWriter			_writer;
-	Time				_time;
-	Publication*		_pPublication;
-	Listener*			_pListener;
-	Poco::UInt32		_decoded;
+	WSWriter		_writer;
+	Time			_time;
+	Publication*	_pPublication;
+	Listener*		_pListener;
+	UInt32			_decoded;
 };
 
 

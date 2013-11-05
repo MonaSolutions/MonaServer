@@ -34,7 +34,7 @@ public:
 private:
 	void			manage();
 
-	bool			buildPacket(MemoryReader& data,Poco::UInt32& packetSize);
+	bool			buildPacket(MemoryReader& data,UInt32& packetSize);
 	void			packetHandler(MemoryReader& packet);
 
 	void			processGet(Exception& ex, const std::string& fileName);

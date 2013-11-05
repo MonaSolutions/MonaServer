@@ -20,7 +20,6 @@
 #include "Mona/Mona.h"
 #include "Mona/Exceptions.h"
 #include "Mona/Invoker.h"
-#include "Poco/RandomStream.h"
 #include <cstring>
 
 namespace Mona {
@@ -30,8 +29,8 @@ namespace Mona {
 class Handler : public Invoker, virtual Object {
 public:
 	//events	
-	virtual	void			onRendezVousUnknown(const std::string& protocol,const Poco::UInt8* id,std::set<SocketAddress>& addresses){}
-	virtual void			onHandshake(const std::string& protocol,const SocketAddress& address,const std::string& path,const MapParameters& properties,Poco::UInt32 attempts,std::set<SocketAddress>& addresses){}
+	virtual	void			onRendezVousUnknown(const std::string& protocol,const UInt8* id,std::set<SocketAddress>& addresses){}
+	virtual void			onHandshake(const std::string& protocol,const SocketAddress& address,const std::string& path,const MapParameters& properties,UInt32 attempts,std::set<SocketAddress>& addresses){}
 	virtual void			onConnection(Exception& ex,Client& client,DataReader& parameters,DataWriter& response){} // ERROR_NOTFOUND, ERROR_APPLICATION
 	virtual void			onFailed(const Client& client,const std::string& error){}
 	virtual void			onDisconnection(const Client& client){}
@@ -45,8 +44,8 @@ public:
 	virtual void			onUnpublish(Client& client,const Publication& publication){}
 
 	virtual void			onDataPacket(Client& client,const Publication& publication,DataReader& packet){}
-	virtual void			onAudioPacket(Client& client,const Publication& publication,Poco::UInt32 time,MemoryReader& packet){}
-	virtual void			onVideoPacket(Client& client,const Publication& publication,Poco::UInt32 time,MemoryReader& packet){}
+	virtual void			onAudioPacket(Client& client,const Publication& publication,UInt32 time,MemoryReader& packet){}
+	virtual void			onVideoPacket(Client& client,const Publication& publication,UInt32 time,MemoryReader& packet){}
 	virtual void			onFlushPackets(Client& client,const Publication& publication){}
 
 	virtual bool			onSubscribe(Client& client,const Listener& listener,std::string& error){return true;}
@@ -54,10 +53,10 @@ public:
 
 	virtual void			onManage(Client& client){}
 protected:
-	Handler(Poco::UInt32 bufferSize,Poco::UInt32 threads):_myself(*this),Invoker(bufferSize,threads) {
-		Poco::RandomInputStream().read((char*)id,ID_SIZE); // Allow to publish in intern (Invoker is the publisher)
+	Handler(UInt32 bufferSize,UInt32 threads):_myself(*this),Invoker(bufferSize,threads) {
+		Util::Random(id, ID_SIZE); // Allow to publish in intern (Invoker is the publisher)
 		(bool&)_myself.connected=true;
-		std::memcpy((Poco::UInt8*)myself().id,id,ID_SIZE);
+		std::memcpy((UInt8*)myself().id,id,ID_SIZE);
 	}
 	virtual ~Handler(){}
 private:

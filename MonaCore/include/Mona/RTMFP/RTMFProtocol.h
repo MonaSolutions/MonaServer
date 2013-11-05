@@ -29,14 +29,14 @@ public:
 	RTMFProtocol(const char* name, Invoker& invoker, Gateway& gateway) : UDProtocol(name, invoker, gateway) {}
 	
 private:
-	Poco::SharedPtr<Buffer<UInt8> >		receive(Exception& ex,SocketAddress& address);
-	UInt32										unpack(MemoryReader& packet) { return  RTMFP::Unpack(packet); }
-	Session*									session(UInt32 id,MemoryReader& packet);
-	void										manage() { _pHandshake->manage(); }
-	void										check(Session& session);
-	virtual bool								load(Exception& ex, const RTMFPParams& params);
+	bool							receive(Exception& ex,std::shared_ptr<Buffer<UInt8>>& pBuffer,SocketAddress& address);
+	UInt32							unpack(MemoryReader& packet) { return  RTMFP::Unpack(packet); }
+	Session*						session(UInt32 id,MemoryReader& packet);
+	void							manage() { _pHandshake->manage(); }
+	void							check(Session& session);
+	virtual bool					load(Exception& ex, const RTMFPParams& params);
 
-	std::unique_ptr<RTMFPHandshake>				_pHandshake;
+	std::unique_ptr<RTMFPHandshake>	_pHandshake;
 };
 
 

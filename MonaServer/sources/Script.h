@@ -21,7 +21,6 @@
 #include "Mona/DataReader.h"
 #include "Mona/DataWriter.h"
 #include "Mona/Logs.h"
-#include "Poco/Format.h"
 #include <cstring>
 #include <map>
 
@@ -43,11 +42,11 @@ extern "C" {
 													} else { \
 															Mona::Logs::Log(PRIO, SCRIPT_FILE(FILE), SCRIPT_LINE(LINE), "(", Script::LuaDebug.name, ") ", ## __VA_ARGS__); \
 													} \
-												} else \
-													Mona::Logs::Log(PRIO, SCRIPT_FILE(FILE), SCRIPT_LINE(LINE), ## __VA_ARGS__); \
-												Script::LuaDebug.name = Script::LuaDebug.namewhat = NULL; \
-												if(Script::LuaDebug.short_src) Script::LuaDebug.short_src[0]='\0'; \
-												Script::LuaDebug.currentline=0;}
+											} else \
+												Mona::Logs::Log(PRIO, SCRIPT_FILE(FILE), SCRIPT_LINE(LINE), ## __VA_ARGS__); \
+											Script::LuaDebug.name = Script::LuaDebug.namewhat = NULL; \
+											if(Script::LuaDebug.short_src) Script::LuaDebug.short_src[0]='\0'; \
+											Script::LuaDebug.currentline=0;}
 
 #define SCRIPT_LOG_NAME_DISABLED	false
 #define SCRIPT_FATAL(...)		SCRIPT_LOG(Mona::Logger::PRIO_FATAL,__FILE__,__LINE__, ## __VA_ARGS__)

@@ -26,17 +26,17 @@ namespace Mona {
 
 class WSUnmasking : public Decoding, virtual Object {
 public:
-	WSUnmasking(UInt32 id,TaskHandler& taskHandler,Protocol& protocol,Poco::SharedPtr<Buffer<UInt8> >& pBuffer,const SocketAddress& address,UInt8 type): _type(type),Decoding(id,taskHandler,protocol,pBuffer,address){}
+	WSUnmasking(UInt32 id,TaskHandler& taskHandler,Protocol& protocol,const std::shared_ptr<Buffer<UInt8>>& pBuffer,const SocketAddress& address,UInt8 type): _type(type),Decoding(id,taskHandler,protocol,pBuffer,address){}
 	
 private:
-	bool					decode(Exception& ex,MemoryReader& packet);
+	bool					decode(Exception& ex, MemoryReader& reader);
 	UInt8					_type;
 };
 
-inline bool WSUnmasking::decode(Exception& ex, MemoryReader& packet) {
-	WS::Unmask(packet);
-	packet.reset(3);
-	(*packet.current()) = _type;
+inline bool WSUnmasking::decode(Exception& ex, MemoryReader& reader) {
+	WS::Unmask(reader);
+	reader.reset(3);
+	(*reader.current()) = _type;
 	return true;
 }
 

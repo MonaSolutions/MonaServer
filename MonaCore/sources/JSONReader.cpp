@@ -17,7 +17,6 @@
 
 #include "Mona/JSONReader.h"
 #include "Mona/Logs.h"
-#include "Poco/Base64Decoder.h"
 #include "Mona/Util.h"
 #include <sstream>
 #include <cstring>
@@ -225,9 +224,9 @@ JSONReader::Type JSONReader::followingType() {
 		reader.reset(pos);
 		reader.readRaw(size,_text);
 		if(_bool) {
-			stringstream ss;
-			ss.write(_text.c_str(),size);
-			_text.assign(static_cast<stringstream const&>(ss << Poco::Base64Decoder(ss).rdbuf()).str());
+			Buffer<UInt8> result;
+			Util::FromBase64((const UInt8*)_text.c_str(), size, result);
+			_text.assign((const char*)result.data(),result.size());
 		}
 		reader.next(1); // skip the second '"'
 		cur = current();

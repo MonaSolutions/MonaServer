@@ -1,16 +1,21 @@
 
-#include "OptionsTest.h"
+#include "Test.h"
+#include "Mona/Options.h"
 #include "Mona/Logs.h"
 #include <vector>
 
 using namespace Mona;
 using namespace std;
 
-bool OptionsTest::AddOption(const string& fullName, const string& shortName, const string& description, 
-		bool required, bool repeatable, const string& argName, bool argRequired) {
+Options _Options;
+
+bool GetOption(const string& fullName) { return _Options.get(fullName) ? true : false; }
+
+bool AddOption(const string& fullName, const string& shortName, const string& description, 
+		bool required=false, bool repeatable=false, const string& argName="", bool argRequired=false) {
 
 	Exception ex;
-	Option& opt = opts.add(ex, fullName.c_str(), shortName.c_str())
+	Option& opt = _Options.add(ex, fullName.c_str(), shortName.c_str())
 		.description(description)
 		.required(required)
 		.repeatable(repeatable);
@@ -26,22 +31,11 @@ bool OptionsTest::AddOption(const string& fullName, const string& shortName, con
 	return true;
 }
 
-bool OptionsTest::GetOption(const string& fullName) {
-	
-	const Option& opt = opts.get(fullName);
-	
-	if (opt == Option::Null) {
-		return false;
-	}
-
-	return true;
-}
-
-bool OptionsTest::ProcessArg(char* arg, const function<void(Exception& ex, const std::string&, const std::string&)>& handler) {
+bool ProcessArg(char* arg, const function<void(Exception& ex, const std::string&, const std::string&)>& handler=nullptr) {
 	char* argv[] = {"", arg};
 	
 	Exception ex;
-	return opts.process(ex, 2, argv, handler) && !ex;
+	return _Options.process(ex, 2, argv, handler) && !ex;
 }
 
 ADD_TEST(OptionsTest, TestOption) {
@@ -113,35 +107,35 @@ ADD_TEST(OptionsTest, TestOptionsAdd) {
 
 	//removeAllOptions();
 
-	EXPECT_TRUE(OptionsTest::AddOption("helper", "H", "start helper"));
-	EXPECT_TRUE(OptionsTest::AddOption("help", "h", "print help text"));
-	EXPECT_TRUE(OptionsTest::AddOption("include-dir", "I", "specify a search path for locating header files", false, true, "path"));
-	EXPECT_TRUE(OptionsTest::AddOption("library-dir", "L", "specify a search path for locating library files", false, true, "path"));
-	EXPECT_TRUE(OptionsTest::AddOption("insert", "it", "insert something", false, true, "path"));
-	EXPECT_TRUE(!OptionsTest::AddOption("item", "", "insert something", false, true, "path"));
-	EXPECT_TRUE(OptionsTest::AddOption("include", "J", "specify a search path for locating header files", false, true, "path"));
-	EXPECT_TRUE(!OptionsTest::AddOption("include", "J", "specify a search path for locating header files"));
+	EXPECT_TRUE(AddOption("helper", "H", "start helper"));
+	EXPECT_TRUE(AddOption("help", "h", "print help text"));
+	EXPECT_TRUE(AddOption("include-dir", "I", "specify a search path for locating header files", false, true, "path"));
+	EXPECT_TRUE(AddOption("library-dir", "L", "specify a search path for locating library files", false, true, "path"));
+	EXPECT_TRUE(AddOption("insert", "it", "insert something", false, true, "path"));
+	EXPECT_TRUE(!AddOption("item", "", "insert something", false, true, "path"));
+	EXPECT_TRUE(AddOption("include", "J", "specify a search path for locating header files", false, true, "path"));
+	EXPECT_TRUE(!AddOption("include", "J", "specify a search path for locating header files"));
 
-	EXPECT_TRUE(OptionsTest::GetOption("include"));
-	EXPECT_TRUE(OptionsTest::GetOption("insert"));
-	EXPECT_TRUE(!OptionsTest::GetOption("Insert"));
-	EXPECT_TRUE(!OptionsTest::GetOption("item"));
-	EXPECT_TRUE(!OptionsTest::GetOption("i"));
-	EXPECT_TRUE(!OptionsTest::GetOption("he"));
-	EXPECT_TRUE(!OptionsTest::GetOption("in"));
-	EXPECT_TRUE(OptionsTest::GetOption("help"));
-	EXPECT_TRUE(!OptionsTest::GetOption("helpe"));
-	EXPECT_TRUE(OptionsTest::GetOption("helper"));
+	EXPECT_TRUE(GetOption("include"));
+	EXPECT_TRUE(GetOption("insert"));
+	EXPECT_TRUE(!GetOption("Insert"));
+	EXPECT_TRUE(!GetOption("item"));
+	EXPECT_TRUE(!GetOption("i"));
+	EXPECT_TRUE(!GetOption("he"));
+	EXPECT_TRUE(!GetOption("in"));
+	EXPECT_TRUE(GetOption("help"));
+	EXPECT_TRUE(!GetOption("helpe"));
+	EXPECT_TRUE(GetOption("helper"));
 
-	opts.remove("include-dir");
-	EXPECT_TRUE(!OptionsTest::GetOption("include-dir"));
+	_Options.remove("include-dir");
+	EXPECT_TRUE(!GetOption("include-dir"));
 }
 
 
 ADD_TEST(OptionsTest, TestProcess) {
-
+	//_Options.clear();
 	Exception ex;
-	EXPECT_TRUE(OptionsTest::AddOption("include-dir", "I", "specify an include search path", false, true, "path", true));
+	EXPECT_TRUE(AddOption("include-dir", "I", "specify an include search path", false, true, "path", true));
 
 	char* arg[] = { "row for path",
 					"/I:include",
@@ -158,7 +152,7 @@ ADD_TEST(OptionsTest, TestProcess) {
 					"/usr/include"};
 
 	int cpt = 1;
-	EXPECT_TRUE(opts.process(ex, (sizeof(arg)/sizeof(char *)), arg, 
+	EXPECT_TRUE(_Options.process(ex, (sizeof(arg)/sizeof(char *)), arg, 
 		[&cpt, &res](Exception& ex, const string& name, const string& value){ EXPECT_TRUE(value == res[cpt++]); }));
 
 	EXPECT_TRUE(!ProcessArg("/I"));
@@ -167,7 +161,7 @@ ADD_TEST(OptionsTest, TestProcess) {
 
 	EXPECT_TRUE(!ProcessArg("/Llib"));
 	
-	EXPECT_TRUE(OptionsTest::AddOption("verbose", "v", "enable verbose mode", false, false));
+	EXPECT_TRUE(AddOption("verbose", "v", "enable verbose mode", false, false));
 	
 	EXPECT_TRUE(ProcessArg("/v", 
 		[](Exception& ex, const string& name, const string& value){ EXPECT_TRUE(value.empty()); }));
@@ -180,7 +174,7 @@ ADD_TEST(OptionsTest, TestProcess) {
 	// TODO If argument specified but not expected => must be false
 	//EXPECT_TRUE(!ProcessArg("/verbose:2"));
 
-	EXPECT_TRUE(OptionsTest::AddOption("optimize", "O", "enable optimization", false, false, "level", false));
+	EXPECT_TRUE(AddOption("optimize", "O", "enable optimization", false, false, "level", false));
 	
 	EXPECT_TRUE(ProcessArg("/O", 
 		[](Exception& ex, const string& name, const string& value){ EXPECT_TRUE(value.empty()); }));

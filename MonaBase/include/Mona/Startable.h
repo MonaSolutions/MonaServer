@@ -28,49 +28,32 @@
 namespace Mona {
 
 
-class ThreadPriority : virtual Object {
-	friend class Startable;
-public:
-	enum Priority {
-#if defined(_WIN32)
-		LOWEST =	THREAD_PRIORITY_LOWEST,
-		LOW =		THREAD_PRIORITY_BELOW_NORMAL,
-		NORMAL =	THREAD_PRIORITY_NORMAL,
-		HIGH =		THREAD_PRIORITY_ABOVE_NORMAL,
-		HIGHEST =	THREAD_PRIORITY_HIGHEST
-#else
-		LOWEST,
-		LOW,
-		NORMAL,
-		HIGH,
-		HIGHEST
-#endif
-	};
-
-
-	bool set(Priority priority);
-
-private:
-	ThreadPriority(std::thread& thread);
-
-	std::thread&	_thread;
-	Priority		_priority;
-#if !defined(_WIN32)
-	int				_min;
-	int				_max;
-#endif
-};
-
 
 class Startable : virtual Object {
 public:
+	enum Priority {
+#if defined(_WIN32)
+		PRIORITY_LOWEST = THREAD_PRIORITY_LOWEST,
+		PRIORITY_LOW = THREAD_PRIORITY_BELOW_NORMAL,
+		PRIORITY_NORMAL = THREAD_PRIORITY_NORMAL,
+		PRIORITY_HIGH = THREAD_PRIORITY_ABOVE_NORMAL,
+		PRIORITY_HIGHEST = THREAD_PRIORITY_HIGHEST
+#else
+		PRIORITY_LOWEST=0,
+		PRIORITY_LOW,
+		PRIORITY_NORMAL,
+		PRIORITY_HIGH,
+		PRIORITY_HIGHEST
+#endif
+	};
+
 	enum WakeUpType {
 		WAKEUP=0,
 		TIMEOUT,
 		STOP
 	};
 
-	bool				start(Exception& ex);
+	bool				start(Exception& ex, Priority priority = PRIORITY_NORMAL);
 	void				stop();
 
 	WakeUpType			sleep(UInt32 millisec = 0);
@@ -84,11 +67,12 @@ protected:
 	Startable(const std::string& name);
 	virtual ~Startable();
 
-	virtual void	run(Exception& ex,ThreadPriority& priority) = 0;
+	virtual void	run(Exception& ex) = 0;
 
 private:
+	void			initThread(Exception& ex, std::thread& thread, Priority priority);
 	void			process();
-
+	
 
 	std::thread				_thread;
 	std::mutex				_mutex;

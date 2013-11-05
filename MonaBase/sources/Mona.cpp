@@ -17,17 +17,16 @@
 
 #include "Mona/Mona.h"
 
+namespace Mona {
 
 #if defined(_WIN32) && defined(_DEBUG)
+
 #include <windows.h>
-#endif
 
 #define FALSE   0
 #define TRUE    1
 
-namespace Mona {
 
-#if defined(_WIN32) && defined(_DEBUG)
 _CRT_REPORT_HOOK prevHook;
  
 int reportingHook(int reportType, char* userMessage, int* retVal) {
@@ -77,7 +76,7 @@ int reportingHook(int reportType, char* userMessage, int* retVal) {
 
   
 };
-
+ 
 void DetectMemoryLeak() {
 	_CrtSetDbgFlag ( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
   //change the report function to only report memory leaks from program code

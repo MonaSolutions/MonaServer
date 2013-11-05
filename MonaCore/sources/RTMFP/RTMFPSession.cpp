@@ -22,10 +22,9 @@
 #include "Mona/RTMFP/RTMFProtocol.h"
 #include "Mona/Util.h"
 #include "Mona/Logs.h"
-#include "Poco/Format.h"
+
 
 using namespace std;
-using namespace Poco;
 
 
 namespace Mona {
@@ -214,12 +213,12 @@ void RTMFPSession::p2pHandshake(const string& tag,const SocketAddress& address,U
 		ERROR("Error during flushing in rtmfp handshake : ", ex.error());
 }
 
-MemoryReader* RTMFPSession::decode(SharedPtr<Buffer<UInt8> >& pBuffer,const SocketAddress& address) {
+bool RTMFPSession::decode(shared_ptr<Buffer<UInt8> >& pBuffer, const SocketAddress& address, shared_ptr<MemoryReader>& pReader) {
 	shared_ptr<RTMFPDecoding> pDecoding(new RTMFPDecoding(id,invoker,protocol,pBuffer,address));
 	pDecoding->decoder = _decrypt.next(farId==0 ? RTMFPEngine::SYMMETRIC : RTMFPEngine::DEFAULT);
 	_prevEngineType = pDecoding->decoder.type;
 	Session::decode<RTMFPDecoding>(pDecoding);
-	return NULL;
+	return false;
 }
 
 void RTMFPSession::flush(Exception& ex, UInt8 marker,bool echoTime,RTMFPEngine::Type type) {
@@ -371,7 +370,7 @@ void RTMFPSession::packetHandler(MemoryReader& packet) {
 				
 				RTMFPWriter* pRTMFPWriter = writer(id);
 				if(pRTMFPWriter)
-					pRTMFPWriter->fail(format("writer rejected on session %u",this->id));
+					pRTMFPWriter->fail("Writer rejected on session ",this->id);
 				else
 					WARN("RTMFPWriter ",id," unfound for failed signal on session ",this->id);
 				break;

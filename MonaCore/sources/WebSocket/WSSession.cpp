@@ -20,11 +20,10 @@
 #include "Mona/WebSocket/WSUnmasking.h"
 #include "Mona/JSONReader.h"
 #include "Mona/StringReader.h"
-#include "Poco/Format.h"
 
 
 using namespace std;
-using namespace Poco;
+
 
 
 
@@ -77,11 +76,11 @@ bool WSSession::buildPacket(MemoryReader& data,UInt32& packetSize) {
 		return false;
 
 	if (lengthByte & 0x80) {
-		SharedPtr<Buffer<UInt8> > pBuffer(new Buffer<UInt8>(size));
+		shared_ptr<Buffer<UInt8> > pBuffer(new Buffer<UInt8>(size));
 		memcpy(pBuffer->data(),data.current(),size);
 		shared_ptr<WSUnmasking> pUnmasking(new WSUnmasking(id, invoker, protocol, pBuffer, peer.address, type));
-		decode<WSUnmasking>(pUnmasking);
-		++_decoded;
+		if(decode<WSUnmasking>(pUnmasking))
+			++_decoded;
 	}
 
 	packetSize = data.position()+size;

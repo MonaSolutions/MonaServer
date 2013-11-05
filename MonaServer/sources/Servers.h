@@ -18,6 +18,7 @@
 #pragma once
 
 #include "Mona/TCPServer.h"
+#include "Mona/Logs.h"
 #include "Broadcaster.h"
 
 class Servers : private Mona::TCPServer, private ServersHandler, public Broadcaster {
@@ -36,7 +37,9 @@ private:
 	Mona::UInt32		flush(const std::string& handler);
 	Mona::UInt32		flush(Mona::UInt32 handlerRef);
 
-	void				clientHandler(Poco::Net::StreamSocket& socket);
+	void				onConnectionRequest(Mona::Exception& ex);
+	void				onError(const std::string& error) { WARN("Servers, ", error); }
+
 	void				connection(ServerConnection& server);
 	bool				disconnection(ServerConnection& server);
 
@@ -50,6 +53,3 @@ private:
 	Mona::UInt16							_port;
 };
 
-inline void Servers::clientHandler(Poco::Net::StreamSocket& socket){
-	_clients.insert(new ServerConnection(socket,manager,_handler,*this));
-}

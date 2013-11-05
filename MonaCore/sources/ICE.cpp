@@ -21,7 +21,7 @@
 #include "Mona/String.h"
 
 using namespace std;
-using namespace Poco;
+
 
 
 namespace Mona {

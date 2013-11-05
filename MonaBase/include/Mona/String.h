@@ -19,6 +19,10 @@
 
 #include "Mona/Mona.h"
 #include <vector>
+#include <limits>
+
+#undef max
+// TODO? #pragma warning(disable:4146)
 
 #if defined(_MSC_VER) || defined(__MINGW32__)
 	#define I64_FMT "I64"
@@ -37,6 +41,8 @@ public:
 	const Type	value;
 	const char* format;
 };
+
+class Exception;
 
 /// Utility class for generation parse of strings
 class String : virtual Static{
@@ -213,6 +219,12 @@ public:
 		result.append(buffer);
 		return String::Append(result, args ...);
 	}
+
+	template<typename T>
+	static bool ToNumber(const std::string& value, T& result);
+
+	template<typename T>
+	static T ToNumber(Exception& ex, const std::string& value, T result=0);
 
 private:
 

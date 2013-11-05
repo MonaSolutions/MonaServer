@@ -55,7 +55,8 @@ public:
 	IPAddress(const IPAddress& other);
 
 	// Set an IPAddress from a native internet address. A pointer to a in_addr or a in6_addr structure may be  passed. Additionally, for an IPv6 address, a scope ID may be specified.
-	bool copy(Exception& ex, const void* addr, UInt32 scope=0);
+	void set(const in_addr& addr);
+	void set(const in6_addr& addr, UInt32 scope = 0);
 
 	// Set an IPAddress from the string containing an IP address in presentation format (dotted decimal for IPv4, hex string for IPv6).
 	bool set(Exception& ex, const std::string& addr);
@@ -137,14 +138,14 @@ public:
 	bool isGlobalMC() const;
 	
 	bool operator == (const IPAddress& addr) const;	
-	bool operator != (const IPAddress& addr) const;
+	bool operator != (const IPAddress& addr) const { return !operator==(addr); }
 	bool operator <  (const IPAddress& addr) const;
-	bool operator <= (const IPAddress& addr) const;
-	bool operator >  (const IPAddress& addr) const;
-	bool operator >= (const IPAddress& addr) const;
+	bool operator <= (const IPAddress& addr) const { return operator==(addr) || operator<(addr); }
+	bool operator >  (const IPAddress& addr) const { return !operator<=(addr); }
+	bool operator >= (const IPAddress& addr) const { return operator==(addr) || operator>(addr); }
 	
 	// Returns the internal address structure
-	const void* addr() const;
+	const void* addr(NET_SOCKLEN& size) const;
 
 	// Returns a wildcard IPv4 or IPv6 address (0.0.0.0)
 	static const IPAddress& Wildcard(Family family = IPv4) { return family == IPv6 ? _IPv6Wildcard : _IPv4Wildcard; }

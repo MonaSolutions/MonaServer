@@ -28,16 +28,11 @@ private:
 /// \class Container of Test classes
 class PoolTest : virtual Mona::Object {
 
-public:
+public:	
 
 	template<class TestClass>
-	bool makeAndRegister(const char * className, const char * testName) 
+	bool makeAndRegister(const char * className, const char * testName) { _mapTests.emplace(className, std::make_shared<TestClass>(testName)); return true; }
 		/// \brief create the test and add it to the PoolTest
-	{
-		std::shared_ptr<Test> testInstance = std::make_shared<TestClass>(testName);
-		_mapTests.insert(std::pair<const std::string, std::shared_ptr<Test>>(className, testInstance));
-		return true;
-	}
 
 	void getListTests(std::vector<const std::string>& lTests);
 		/// \brief get a list of test module names
@@ -67,13 +62,13 @@ private:
 #define EXPECT_TRUE(CHECK) FATAL_ASSERT(CHECK)
 
 /// Macro for adding new tests in a Test cpp
-#define ADD_TEST(CLASSNAME, TESTNAME) class CLASSNAME ## TESTNAME : public CLASSNAME { \
+#define ADD_TEST(CLASSNAME, TESTNAME) class CLASSNAME ## TESTNAME : public Test { \
 public: \
-	CLASSNAME ## TESTNAME(const char * testName) : CLASSNAME(testName) {}\
+	CLASSNAME ## TESTNAME(const char * testName) : Test(testName) {}\
 	virtual ~CLASSNAME ## TESTNAME() {}\
 	virtual void TestFunction();\
 private:\
 	static const bool _TestCreated;\
 };\
-const bool CLASSNAME ## TESTNAME::_TestCreated = PoolTest::PoolTestInstance().makeAndRegister<CLASSNAME ## TESTNAME>(#CLASSNAME, #CLASSNAME ## #TESTNAME);\
+const bool CLASSNAME ## TESTNAME::_TestCreated = PoolTest::PoolTestInstance().makeAndRegister<CLASSNAME ## TESTNAME>(#CLASSNAME, #CLASSNAME "::" #TESTNAME);\
 void CLASSNAME ## TESTNAME::TestFunction()

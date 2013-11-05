@@ -17,7 +17,8 @@
 
 #include "Mona/RTMFP/RTMFProtocol.h"
 
-using namespace Poco;
+
+using namespace std;
 
 
 namespace Mona {
@@ -32,17 +33,17 @@ bool RTMFProtocol::load(Exception& ex, const RTMFPParams& params) {
 	return true;
 }
 
-SharedPtr<Buffer<UInt8> > RTMFProtocol::receive(Exception& ex,SocketAddress& address) {
-	SharedPtr<Buffer<UInt8> >  pBuffer(new Buffer<UInt8>(RTMFP_PACKET_RECV_SIZE));
+bool RTMFProtocol::receive(Exception& ex,shared_ptr<Buffer<UInt8>> &pBuffer,SocketAddress& address) {
+	pBuffer.reset(new Buffer<UInt8>(RTMFP_PACKET_RECV_SIZE));
 	int size = receiveFrom(ex,pBuffer->data(),pBuffer->size(),address);
 	if (ex)
-		return NULL;
+		return false;
 	if(size<RTMFP_MIN_PACKET_SIZE) {
 		ERROR("Invalid RTMFP packet");
-		return NULL;
+		return false;
 	}
 	pBuffer->resize(size);
-	return pBuffer;
+	return true;
 }
 
 Session* RTMFProtocol::session(UInt32 id,MemoryReader& packet) {

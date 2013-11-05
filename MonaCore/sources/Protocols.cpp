@@ -16,25 +16,14 @@
 */
 
 #include "Mona/Protocols.h"
-#include "Mona/Logs.h"
 
 #include "Mona/RTMP/RTMProtocol.h"
 #include "Mona/RTMFP/RTMFProtocol.h"
 #include "Mona/HTTP/HTTProtocol.h"
 
 
-using namespace std;
-using namespace Poco;
-
-
 namespace Mona {
 
-Protocols::Protocols(Invoker& invoker) : _invoker(invoker) {
-}
-
-Protocols::~Protocols(){
-	unload();
-}
 
 void Protocols::load(Gateway& gateway) {
 	loadProtocol<RTMFProtocol,RTMFPParams>("RTMFP",_invoker.params.RTMFP,gateway);
@@ -42,20 +31,6 @@ void Protocols::load(Gateway& gateway) {
 	loadProtocol<HTTProtocol,HTTPParams>("HTTP",_invoker.params.HTTP,gateway);
 }
 
-void Protocols::unload() {
-	// delete sockets
-	list<Protocol*>::const_iterator it;
-	for(it=_protocols.begin();it!=_protocols.end();++it)
-		delete *it;
-	_protocols.clear();
-}
-
-void Protocols::manage() {
-	// manage sockets
-	list<Protocol*>::const_iterator it;
-	for(it=_protocols.begin();it!=_protocols.end();++it)
-		(*it)->manage();
-}
 
 
 } // namespace Mona

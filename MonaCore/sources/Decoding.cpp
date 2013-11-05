@@ -18,27 +18,27 @@
 #include "Mona/Decoding.h"
 #include "Mona/Logs.h"
 
-using namespace Poco;
 
+using namespace std;
 
 namespace Mona {
 
-Decoding::Decoding(UInt32 id,TaskHandler& taskHandler,Protocol& protocol,SharedPtr<Buffer<UInt8> >& pBuffer,const SocketAddress& address): id(id),address(address),Task(taskHandler),_pBuffer(pBuffer),_protocol(protocol),_pPacket(new MemoryReader(pBuffer->data(),pBuffer->size())) {
+Decoding::Decoding(UInt32 id, TaskHandler& taskHandler, Protocol& protocol, const shared_ptr < Buffer < UInt8 >> &pBuffer, const SocketAddress& address) : id(id), address(address), Task(taskHandler), _pBuffer(pBuffer), _protocol(protocol), _pReader(new MemoryReader(pBuffer->data(), pBuffer->size())) {
 
 }
 
-Decoding::Decoding(UInt32 id,TaskHandler& taskHandler,Protocol& protocol,MemoryReader* pPacket,const SocketAddress& address): id(id),address(address),Task(taskHandler),_protocol(protocol),_pPacket(pPacket) {
+Decoding::Decoding(UInt32 id, TaskHandler& taskHandler, Protocol& protocol, const shared_ptr<MemoryReader>& pReader, const SocketAddress& address) : id(id), address(address), Task(taskHandler), _protocol(protocol), _pReader(pReader) {
 
 }
-
+ 
 Decoding::~Decoding() {
-	delete _pPacket;
+
 }
 
 bool Decoding::run(Exception& ex) {
-	bool result = decode(ex, *_pPacket);
+	bool result = decode(ex, *_pReader);
 	if (result)
-		waitHandle(ex);
+		waitHandle();
 	if(ex)
 		ex.set(ex.code(), "Decoding on session ",id," (",ex.error(),")");
 	return result;

@@ -17,7 +17,7 @@
 
 #include "Mona/AMFWriter.h"
 #include "Mona/Logs.h"
-#include "math.h"
+
 
 using namespace std;
 
@@ -124,7 +124,7 @@ void AMFWriter::writeBoolean(bool value){
 	_lastReference=0;
 	if(!_amf3) {
 		writer.write8(AMF_BOOLEAN); // marker
-		writer << value;
+		writer.writeBool(value);
 	} else
 		writer.write8(value ? AMF3_TRUE : AMF3_FALSE);
 }
@@ -134,7 +134,7 @@ void AMFWriter::writeDate(const Time& date){
 	if(!_amf3) {
 		if(amf0Preference) {
 			writer.write8(AMF_DATE);
-			writer << ((double)date/1000);
+			writer.writeNumber<double>((double)date/1000);
 			writer.write16(0); // Timezone, useless in AMF0 format (always equals 0)
 			return;
 		}
@@ -142,19 +142,19 @@ void AMFWriter::writeDate(const Time& date){
 	}
 	writer.write8(AMF3_DATE);
 	writer.write8(0x01);
-	writer << ((double)date/1000);
+	writer.writeNumber<double>((double)date / 1000);
 	_references.push_back(AMF3_DATE);
 	_lastReference=_references.size();
 }
 
 void AMFWriter::writeNumber(double value){
 	_lastReference=0;
-	if(!amf0Preference && value<=AMF_MAX_INTEGER && ROUND(value) == value) {
+	if(!amf0Preference && value<=AMF_MAX_INTEGER && round(value) == value) {
 		writeInteger((Int32)value);
 		return;
 	}
 	writer.write8(_amf3 ? AMF3_NUMBER : AMF_NUMBER); // marker
-	writer << value;
+	writer.writeNumber<double>(value);
 }
 
 void AMFWriter::writeInteger(Int32 value){

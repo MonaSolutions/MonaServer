@@ -38,52 +38,64 @@ using namespace std;
 namespace Mona {
 
 
-
-#if defined(_WIN32)
-Event					TerminateSignal::_Terminate;
-SERVICE_STATUS			TerminateSignal::_ServiceStatus;
-SERVICE_STATUS_HANDLE	TerminateSignal::_ServiceStatusHandle = 0;
-#endif
-
 ServerApplication*		ServerApplication::_PThis(NULL);
 
 
 #if defined(_WIN32)
 
-BOOL TerminateSignal::ConsoleCtrlHandler(DWORD ctrlType) {
-	switch (ctrlType) {
-	case CTRL_C_EVENT:
-	case CTRL_CLOSE_EVENT:
-	case CTRL_BREAK_EVENT:
-		_Terminate.set();
-		return TRUE;
-	default:
-		return FALSE;
-	}
-}
 
-void TerminateSignal::ServiceControlHandler(DWORD control) {
-	switch (control) {
-	case SERVICE_CONTROL_STOP:
-	case SERVICE_CONTROL_SHUTDOWN:
-		_ServiceStatus.dwCurrentState = SERVICE_STOP_PENDING;
+static SERVICE_STATUS			_ServiceStatus;
+static SERVICE_STATUS_HANDLE	_ServiceStatusHandle(0);
+
+
+class ServiceTerminateSignal : virtual Object, public TerminateSignal {
+public:
+	ServiceTerminateSignal() {
+		memset(&_ServiceStatus, 0, sizeof(_ServiceStatus));
+		_ServiceStatusHandle = RegisterServiceCtrlHandlerA("", ServiceControlHandler);
+		if (!_ServiceStatusHandle) {
+			FATAL_THROW("Cannot register service control handler");
+			return;
+		}
+		_ServiceStatus.dwServiceType = SERVICE_WIN32;
+		_ServiceStatus.dwCurrentState = SERVICE_START_PENDING;
+		_ServiceStatus.dwControlsAccepted = SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_SHUTDOWN;
+		_ServiceStatus.dwWin32ExitCode = 0;
+		_ServiceStatus.dwServiceSpecificExitCode = 0;
+		_ServiceStatus.dwCheckPoint = 0;
+		_ServiceStatus.dwWaitHint = 0;
 		SetServiceStatus(_ServiceStatusHandle, &_ServiceStatus);
-		_Terminate.set();
-		return;
-	case SERVICE_CONTROL_INTERROGATE:
-		break;
 	}
-	SetServiceStatus(_ServiceStatusHandle, &_ServiceStatus);
-}
 
-void TerminateSignal::wait() {
-	SetConsoleCtrlHandler(ConsoleCtrlHandler, TRUE);
-	_Terminate.wait();
-}
+	void wait() {
+		_Terminate.wait();
+	}
 
-TerminateSignal::TerminateSignal() {
+	static void __stdcall ServiceControlHandler(DWORD control) {
+		switch (control) {
+		case SERVICE_CONTROL_STOP:
+		case SERVICE_CONTROL_SHUTDOWN:
+			_ServiceStatus.dwCurrentState = SERVICE_STOP_PENDING;
+			SetServiceStatus(_ServiceStatusHandle, &_ServiceStatus);
+			_Terminate.set();
+			return;
+		case SERVICE_CONTROL_INTERROGATE:
+			break;
+		}
+		SetServiceStatus(_ServiceStatusHandle, &_ServiceStatus);
+	}
+
+};
+
+
+
+void ServerApplication::ServiceMain(DWORD argc, LPTSTR* argv) {
+
+	_PThis->setBool("application.runAsService", true);
+	_PThis->_isInteractive = false;
+
 	memset(&_ServiceStatus, 0, sizeof(_ServiceStatus));
-	_ServiceStatusHandle = RegisterServiceCtrlHandlerA("", ServiceControlHandler);
+	_ServiceStatusHandle = RegisterServiceCtrlHandlerA("", ServiceTerminateSignal::ServiceControlHandler);
 	if (!_ServiceStatusHandle) {
 		FATAL_THROW("Cannot register service control handler");
 		return;
@@ -96,35 +108,26 @@ TerminateSignal::TerminateSignal() {
 	_ServiceStatus.dwCheckPoint = 0;
 	_ServiceStatus.dwWaitHint = 0;
 	SetServiceStatus(_ServiceStatusHandle, &_ServiceStatus);
-}
-
-
-void ServerApplication::ServiceMain(DWORD argc, LPTSTR* argv) {
-
-	_PThis->setBool("application.runAsService", true);
-	_PThis->_isInteractive = false;
-
-	TerminateSignal terminateSignal;
 
 	try {
 		if (_PThis->init(argc, argv)) {
-			TerminateSignal::_ServiceStatus.dwCurrentState = SERVICE_RUNNING;
-			SetServiceStatus(TerminateSignal::_ServiceStatusHandle, &TerminateSignal::_ServiceStatus);
-			int rc = _PThis->main(terminateSignal);
-			TerminateSignal::_ServiceStatus.dwWin32ExitCode = rc ? ERROR_SERVICE_SPECIFIC_ERROR : 0;
-			TerminateSignal::_ServiceStatus.dwServiceSpecificExitCode = rc;
+			_ServiceStatus.dwCurrentState = SERVICE_RUNNING;
+			SetServiceStatus(_ServiceStatusHandle, &_ServiceStatus);
+			int rc = _PThis->main(ServiceTerminateSignal());
+			_ServiceStatus.dwWin32ExitCode = rc ? ERROR_SERVICE_SPECIFIC_ERROR : 0;
+			_ServiceStatus.dwServiceSpecificExitCode = rc;
 		}
 	} catch (exception& ex) {
 		FATAL(ex.what());
-		TerminateSignal::_ServiceStatus.dwWin32ExitCode = ERROR_SERVICE_SPECIFIC_ERROR;
-		TerminateSignal::_ServiceStatus.dwServiceSpecificExitCode = EXIT_SOFTWARE;
+		_ServiceStatus.dwWin32ExitCode = ERROR_SERVICE_SPECIFIC_ERROR;
+		_ServiceStatus.dwServiceSpecificExitCode = EXIT_SOFTWARE;
 	} catch (...) {
 		FATAL("Unknown error");
-		TerminateSignal::_ServiceStatus.dwWin32ExitCode = ERROR_SERVICE_SPECIFIC_ERROR;
-		TerminateSignal::_ServiceStatus.dwServiceSpecificExitCode = EXIT_SOFTWARE;
+		_ServiceStatus.dwWin32ExitCode = ERROR_SERVICE_SPECIFIC_ERROR;
+		_ServiceStatus.dwServiceSpecificExitCode = EXIT_SOFTWARE;
 	}
-	TerminateSignal::_ServiceStatus.dwCurrentState = SERVICE_STOPPED;
-	SetServiceStatus(TerminateSignal::_ServiceStatusHandle, &TerminateSignal::_ServiceStatus);
+	_ServiceStatus.dwCurrentState = SERVICE_STOPPED;
+	SetServiceStatus(_ServiceStatusHandle, &_ServiceStatus);
 }
 
 
@@ -149,8 +152,7 @@ int ServerApplication::run(int argc, char** argv) {
 				NOTE("The application is no more registered as a service");
 			return EXIT_OK;
 		}
-		TerminateSignal terminateSignal;
-		return main(terminateSignal);
+		return main(TerminateSignal());
 	} catch (exception& ex) {
 		FATAL(ex.what());
 		return EXIT_SOFTWARE;
@@ -230,19 +232,6 @@ void ServerApplication::defineOptions(Exception& ex,Options& options) {
 
 #else
 
-TerminateSignal::TerminateSignal() {
-	sigemptyset(&_signalSet);
-	sigaddset(&_signalSet, SIGINT);
-	sigaddset(&_signalSet, SIGQUIT);
-	sigaddset(&_signalSet, SIGTERM);
-	sigprocmask(SIG_BLOCK, &_signalSet, NULL);
-}
-
-void TerminateSignal::wait() {
-	int signal;
-	sigwait(&_signalSet, &signal);
-}
-
 //
 // Unix specific code
 //
@@ -272,8 +261,7 @@ int ServerApplication::run(int argc, char** argv) {
 				return EXIT_OSERR;
 		}
 
-		TerminateSignal terminateSignal;
-		return main(terminateSignal);
+		return main(TerminateSignal());
 	} catch (exception& ex) {
 		FATAL( ex.what());
 		return EXIT_SOFTWARE;
@@ -339,7 +327,7 @@ void ServerApplication::defineOptions(OptionSet& options) {
 
 
 void ServerApplication::handlePidFile(const string& value) {
-	ofstream ostr(value.c_str());
+	ofstream ostr(value.c_str(), ios::out | ios::binary);
 	if (!ostr.good())
 		FATAL_THROW("Cannot write PID to file ",value);
 	ostr << Process::id() << endl;

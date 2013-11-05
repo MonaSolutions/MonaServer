@@ -21,12 +21,11 @@
 #include "Mona/Exceptions.h"
 #include "Mona/Logs.h"
 #include "Mona/Buffer.h"
-#include "Poco/Format.h"
 #include <openssl/evp.h>
 
 
 using namespace std;
-using namespace Poco;
+
 
 namespace Mona {
 

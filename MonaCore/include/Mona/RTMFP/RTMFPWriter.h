@@ -22,9 +22,10 @@
 #include "Mona/MemoryReader.h"
 #include "Mona/Trigger.h"
 #include "Mona/AMFReader.h"
+#include "Mona/Logs.h"
 #include "Mona/RTMFP/BandWriter.h"
 #include "Mona/RTMFP/RTMFPMessage.h"
-#include "Poco/RefCountedObject.h"
+
 
 #define MESSAGE_HEADER			0x80
 #define MESSAGE_WITH_AFTERPART  0x10 
@@ -53,7 +54,18 @@ public:
 	void				acknowledgment(MemoryReader& reader);
 	void				manage(Exception& ex, Invoker& invoker);
 
-	void				fail(const std::string& error);
+	template <typename ...Args>
+	void fail(const Args&... args) {
+		if (state() == CLOSED)
+			return;
+		WARN("RTMFPWriter ", id, " has failed, ", args ...);
+		clear();
+		_stage = _stageAck = _lostCount = _ackCount = 0;
+		_band.initWriter(_band.changeWriter(*new RTMFPWriter(*this)));
+		_qos.reset();
+		_reseted = true;
+	}
+
 	void				clear();
 	void				close(int code=0);
 	bool				consumed() { return _messages.empty() && state() == CLOSED; }
@@ -76,8 +88,8 @@ private:
 	RTMFPMessageBuffered&	createBufferedMessage();
 	AMFWriter&				write(AMF::ContentType type,UInt32 time=0,MemoryReader* pData=NULL);
 
-	void					createReader(MemoryReader& reader, Poco::SharedPtr<DataReader>& pReader) { pReader = new AMFReader(reader); }
-	void					createWriter(Poco::SharedPtr<DataWriter>& pWriter) { (pWriter = new AMFWriter())->stream.next(6); }
+	void					createReader(MemoryReader& reader, std::shared_ptr<DataReader>& pReader) { pReader.reset(new AMFReader(reader)); }
+	void					createWriter(std::shared_ptr<DataWriter>& pWriter) { pWriter.reset(new AMFWriter());pWriter->stream.next(6); }
 	bool					hasToConvert(DataReader& reader) { return dynamic_cast<AMFReader*>(&reader) == NULL; }
 
 	Trigger						_trigger;

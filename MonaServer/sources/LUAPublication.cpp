@@ -24,9 +24,9 @@
 
 using namespace std;
 using namespace Mona;
-using namespace Poco;
 
-const char*		LUAPublication::Name="Publication";
+
+const char*		LUAPublication::Name="Mona::Publication";
 
 void LUAPublication::Clear(lua_State* pState,const Publication& publication){
 	Script::ClearPersistentObject<QualityOfService,LUAQualityOfService>(pState,publication.dataQOS());
@@ -81,16 +81,16 @@ int	LUAPublication::PushData(lua_State *pState) {
 	SCRIPT_CALLBACK(Publication,LUAPublication,publication)
 		Client* pPublisher = publication.publisher();
 		if(pPublisher) {
-			SharedPtr<DataWriter> pWriter;
+			shared_ptr<DataWriter> pWriter;
 			pPublisher->writer().createWriter(pWriter);
-			if(!pWriter.isNull()) {
+			if(pWriter) {
 				UInt32 offset = pWriter->stream.size();
 				SCRIPT_READ_DATA(*pWriter)
 				MemoryReader reader(pWriter->stream.data(),pWriter->stream.size());
 				reader.next(offset);
-				SharedPtr<DataReader> pReader;
+				shared_ptr<DataReader> pReader;
 				pPublisher->writer().createReader(reader,pReader);
-				if(!pReader.isNull())
+				if(pReader)
 					publication.pushData(*pReader);
 				else
 					SCRIPT_ERROR("The publisher of ",publication.name()," publication has no reader type to push data, use a typed pushData version rather");

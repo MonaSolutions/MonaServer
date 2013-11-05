@@ -22,13 +22,13 @@
 #include "Mona/AMFWriter.h"
 #include "Mona/MemoryReader.h"
 #include "Mona/RTMP/RTMP.h"
-#include "Poco/SharedPtr.h"
+
 
 namespace Mona {
 
 class RTMPSender : public TCPSender, virtual Object {
 public:
-	RTMPSender(const Poco::SharedPtr<RC4_KEY>& pEncryptKey);
+	RTMPSender(const std::shared_ptr<RC4_KEY>& pEncryptKey);
 	RTMPSender(const RTMPSender& sender);
 
 	AMFWriter	writer;
@@ -44,7 +44,7 @@ private:
 	UInt32						_sizePos;
 	UInt32						_chunkSize;
 	RTMPChannel					_channel;
-	Poco::SharedPtr<RC4_KEY>	_pEncryptKey;
+	std::shared_ptr<RC4_KEY>	_pEncryptKey;
 };
 
 

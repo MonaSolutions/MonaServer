@@ -44,8 +44,8 @@ public:
 	void				reset();
 
 private:
-	bool				readArray(Poco::UInt32& size) {return false;}
-	const Poco::UInt8*	readBytes(Poco::UInt32& size);
+	bool				readArray(UInt32& size) {return false;}
+	const UInt8*		readBytes(UInt32& size);
 	
 	void				readLine();
 

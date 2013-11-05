@@ -19,7 +19,6 @@
 
 #include "Mona/Mona.h"
 #include "Mona/DataWriter.h"
-#include "Poco/Format.h"
 #include "math.h"
 #include <list>
 
@@ -39,7 +38,7 @@ public:
 	void endArray();
 
 	void writeDate(const Time& date);
-	void writeNumber(double value) { writeString(ROUND(value) == value ? Poco::format("%u", (UInt32)value) : Poco::format("%f", value)); }
+	void writeNumber(double value) { std::string text; writeString(String::Format(text)); }
 	void writeString(const std::string& value);
 	void writeBoolean(bool value) { writeString(value ? "true" : "false"); }
 	void writeNull() { writeString("null"); }

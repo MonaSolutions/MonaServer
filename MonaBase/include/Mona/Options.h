@@ -43,13 +43,14 @@ public:
 		}
 		auto result = _options.emplace(fullName, shortName, args ...);
 		if (!result.second) {
-			ex.set(Exception::OPTION, "Option ", fullName, " (", shortName, ") duplicated");
+			ex.set(Exception::OPTION, "Option ", fullName, " (", shortName, ") duplicated with ", result.first->fullName(), " (", result.first->shortName(), ")");
 			return Option::Null;
 		}
 		return const_cast<Option&>(*result.first);
 	}
 
 	void			remove(const std::string& name) { _options.erase(Option(name.c_str(), "")); }
+	void			clear(const std::string& name) { _options.clear(); }
 
 	const Option&	get(const std::string& name) const;
 

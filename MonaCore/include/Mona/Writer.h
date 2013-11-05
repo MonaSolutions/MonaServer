@@ -22,7 +22,6 @@
 #include "Mona/QualityOfService.h"
 #include "Mona/MemoryReader.h"
 #include "Mona/Logs.h"
-#include "Poco/SharedPtr.h"
 
 namespace Mona {
 
@@ -71,8 +70,8 @@ public:
 
 	virtual void			flush(bool full=false){}
 
-	virtual void			createReader(MemoryReader& reader,Poco::SharedPtr<DataReader>& pReader) {}
-	virtual void			createWriter(Poco::SharedPtr<DataWriter>& pWriter) {}
+	virtual void			createReader(MemoryReader& reader,std::shared_ptr<DataReader>& pReader) {}
+	virtual void			createWriter(std::shared_ptr<DataWriter>& pWriter) {}
 	virtual bool			hasToConvert(DataReader& reader) {return false;}
 
 
