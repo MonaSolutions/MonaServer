@@ -48,6 +48,7 @@ void TCPServer::stop() {
 }
 
 void TCPServer::onReadable(Exception& ex) {
+	int test = available(ex);
 	_hasToAccept = true;
 	onConnectionRequest(ex);
 	if (_hasToAccept) {

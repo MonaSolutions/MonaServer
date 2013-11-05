@@ -34,7 +34,7 @@ public:
 
 protected:
 	SocketSender(const UInt8* data, UInt32 size, bool dump = false);
-	SocketSender(bool dump = false) : SocketSender(NULL, 0, dump) {}
+	SocketSender(bool dump = false);
 	virtual ~SocketSender();
 
 	void			dump(bool justInDebug=false);

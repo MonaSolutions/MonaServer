@@ -30,6 +30,9 @@ namespace Mona {
 
 class Socket : virtual Object {
 	friend class SocketManager;
+	friend class DatagramSocket;
+	friend class StreamSocket;
+	friend class ServerSocket;
 	friend class SocketSender;
 public:
 
@@ -43,7 +46,6 @@ public:
 	};
 
 	int		available(Exception& ex) { return ioctl(ex, FIONREAD, 0); }
-	void	close();
 	
 	SocketAddress& address(Exception& ex, SocketAddress& address) const;
 	SocketAddress& peerAddress(Exception& ex, SocketAddress& address) const;
@@ -76,12 +78,12 @@ public:
 	template<typename SocketSenderType>
 	// Can be called from one other thread than main thread (by the poolthread)
 	void send(Exception& ex, std::shared_ptr<SocketSenderType>& pSender) {
-		ASSERT(_initialized == true)
-		if (!managed(ex))
-			return;
-
 		// return if no data to send
 		if (!pSender->available())
+			return;
+
+		ASSERT(_initialized == true)
+		if (!managed(ex))
 			return;
 
 		// We can write immediatly if there are no queue packets to write,
@@ -123,6 +125,12 @@ public:
 	static void SetError(Exception& ex, int error, const std::string& argument);
 
 protected:
+	// Can be called by a separated thread!
+	virtual void	onError(const std::string& error) = 0;
+
+	const SocketManager&	manager;
+	void					close();
+private:
 	// Creates a Socket
 	Socket(const SocketManager& manager, int type = SOCK_STREAM);
 
@@ -146,7 +154,7 @@ protected:
 		if (!address.set(ex, *pSA) || !onConnection(address))
 			return NULL;
 		SocketType* pSocketType = new SocketType(address,args ...);
-		Socket* pSocketBase = reinterpret_cast<Socket*>(pSocketType);
+		Socket* pSocketBase = (Socket*)pSocketType;
 		std::lock_guard<std::mutex>	lock(pSocketBase->_mutexInit);
 		if (!pSocketBase->init(ex, sockfd)) {
 			delete pSocketType;
@@ -172,14 +180,12 @@ protected:
 	void setBroadcast(Exception& ex, bool flag) { setOption(ex, SOL_SOCKET, SO_BROADCAST, flag ? 1 : 0); }
 	bool getBroadcast(Exception& ex) { return getOption(ex, SOL_SOCKET, SO_BROADCAST) != 0; }
 
-	const SocketManager&	manager;
+	
 
-	// Can be called by a separated thread!
-	virtual void	onError(const std::string& error) = 0;
-private:
 	virtual bool    onConnection(const SocketAddress& address) { return true; }
 	// if ex of onReadable is raised, it's given to onError
 	virtual void	onReadable(Exception& ex) = 0;
+	
 	
 
 	// Creates the underlying native socket

@@ -25,6 +25,10 @@ using namespace std;
 
 namespace Mona {
 
+SocketSender::SocketSender(bool dump) :
+	_position(0), _data(NULL), _size(0), _memcopied(false), _dump(dump), _pSocket(NULL) {
+}
+
 SocketSender::SocketSender(const UInt8* data, UInt32 size, bool dump) :
 	_position(0), _data((UInt8*)data), _size(size), _memcopied(false), _dump(dump), _pSocket(NULL) {
 }

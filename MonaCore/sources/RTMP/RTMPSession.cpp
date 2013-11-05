@@ -60,11 +60,8 @@ bool RTMPSession::buildPacket(MemoryReader& data,UInt32& packetSize) {
 
 	UInt8 idWriter = headerSize & 0x3F;
 	map<UInt8,RTMPWriter*>::iterator it = _writers.lower_bound(idWriter);
-	if(it==_writers.end() || it->first!=idWriter) {
-		if(it!=_writers.begin())
-			--it;
-		it = _writers.insert(it,pair<UInt8,RTMPWriter*>(idWriter,new RTMPWriter(idWriter,_pEncryptKey,*this)));
-	}
+	if(it==_writers.end() || it->first!=idWriter)
+		it = _writers.emplace_hint(it,idWriter,new RTMPWriter(idWriter,_pEncryptKey,*this));
 	_pWriter = it->second;
 
 	headerSize = 12 - (headerSize&0xC0)*4;

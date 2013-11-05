@@ -82,7 +82,8 @@ void TCPClient::onReadable(Exception& ex) {
 		if (rest > _rest)
 			rest = _rest;
 		if (rest < _rest) {
-			memcpy(&_buffer[0], &_buffer[_rest - rest], rest);
+			if (rest>0)
+				memcpy(&_buffer[0], &_buffer[_rest - rest], rest); // move to the beginning
 			_rest = rest;
 		} else
 			break; // nothing to do, waiting new data

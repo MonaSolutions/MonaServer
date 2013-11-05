@@ -58,7 +58,7 @@ bool Socket::init(Exception& ex, IPAddress::Family family) {
 		return false;
 	}
 
-	if (ex || !managed(ex)) {
+	if (!managed(ex)) {
 		NET_CLOSESOCKET(_sockfd);
 		_sockfd = NET_INVALID_SOCKET;
 		return false;
@@ -79,12 +79,13 @@ bool Socket::init(Exception& ex, IPAddress::Family family) {
 bool Socket::init(Exception& ex, NET_SOCKET sockfd) {
 	_sockfd = sockfd;
 	_initialized = true;
-	if (ex || !managed(ex)) {
+	bool managed = false;
+	if (!this->managed(ex)) {
 		NET_CLOSESOCKET(_sockfd);
 		_sockfd = NET_INVALID_SOCKET;
 		return false;
 	}
-	return managed(ex);
+	return true;
 }
 
 bool Socket::managed(Exception& ex) {

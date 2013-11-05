@@ -27,7 +27,6 @@ namespace Mona {
 
 class DataWriter : virtual Object {
 public:
-	virtual ~DataWriter(){}
 
 	virtual void beginObject(const std::string& type="",bool external=false)=0;
 	virtual void endObject()=0;
