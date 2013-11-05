@@ -39,9 +39,9 @@ bool Event::wait(UInt32 millisec) {
 			}	
 		}
 	} catch (exception& exc) {
-		FATAL_THROW("Wait event failed, ", exc.what());
+		FATAL_ERROR("Wait event failed, ", exc.what());
 	} catch (...) {
-		FATAL_THROW("Wait event failed, unknown error");
+		FATAL_ERROR("Wait event failed, unknown error");
 	}
 	if (_autoReset && _set)
 		_set = false;

@@ -228,7 +228,7 @@ void Application::initApplicationPaths(const char* command) {
 	char buffer[1024];
 	int n = GetModuleFileNameA(0, buffer, sizeof(buffer));
 	if (n <= 0)
-		FATAL_THROW("Impossible to determine application paths")
+		FATAL_ERROR("Impossible to determine application paths")
 	path.assign(buffer);
 #else
 	if (command.find('/') != string::npos) {
