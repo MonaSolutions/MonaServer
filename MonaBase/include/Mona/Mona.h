@@ -19,7 +19,9 @@
 
 #include <stdio.h>
 #include <string>
-#include "string.h"
+#if !defined(WIN32)
+	#include "string.h"
+#endif
 
 /////  Usefull macros and patchs   //////
 

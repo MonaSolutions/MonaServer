@@ -311,14 +311,14 @@ string& FileSystem::GetCurrent(string& path) {
 #if defined(_WIN32)
     int len = GetCurrentDirectoryW(0, NULL);
     if (len > 0) {
-        Buffer<char *> buff(len);
-        len = GetModuleFileNameA(0, buff.begin());
+        char buff[1024];
+        len = GetModuleFileNameA(0, buff, len);
+		if (len > 0)
+			path.assign(buff);
     }
 
     if (len <= 0)
         FATAL_ERROR("cannot get current directory");
-
-    path.assign(buffer.data());
 #else
     char cwd[PATH_MAX];
     if (getcwd(cwd, sizeof(cwd)))

@@ -229,6 +229,9 @@ public:
 private:
 
 	static std::string& Append(std::string& result) { return result; }
+#if defined(WIN32)
+	static int output_exp_old_format; // for setting number of exponent digits to 2
+#endif
 };
 
 

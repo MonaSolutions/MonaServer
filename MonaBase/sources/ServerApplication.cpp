@@ -112,7 +112,7 @@ void ServerApplication::ServiceMain(DWORD argc, LPTSTR* argv) {
 	SetServiceStatus(_ServiceStatusHandle, &_ServiceStatus);
 
 	try {
-		if (_PThis->init(argc, argv)) {
+		if (_PThis->init(argc, const_cast<LPCSTR*>(argv))) {
 			_ServiceStatus.dwCurrentState = SERVICE_RUNNING;
 			SetServiceStatus(_ServiceStatusHandle, &_ServiceStatus);
 			int rc = _PThis->main(ServiceTerminateSignal());

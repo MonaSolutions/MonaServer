@@ -23,6 +23,10 @@ using namespace std;
 
 namespace Mona {
 
+#if defined(WIN32)
+	int String::output_exp_old_format = _set_output_format(_TWO_DIGIT_EXPONENT);
+#endif
+
 vector<string>& String::Split(const string& value, const string& separators, vector<string>& values, int options) {
 	string::const_iterator it1 = value.begin(), it2, it3, end = value.end();
 

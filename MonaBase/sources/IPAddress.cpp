@@ -20,7 +20,9 @@ This file is a part of Mona.
 #include "Mona/IPAddress.h"
 #include "Mona/String.h"
 #include <cstring>
-#include <net/if.h>
+#if !defined(WIN32)
+	#include <net/if.h>
+#endif
 
 using namespace std;
 
