@@ -3,17 +3,19 @@
 #include "Mona/String.h"
 #include "Mona/Exceptions.h"
 #include "Mona/Logs.h"
+#include "math.h"
+#include "float.h"
 
 using namespace Mona;
 
 using namespace std;
 
 template<typename T>
-static bool ToNumber(const std::string& value, T expected) { return ToNumber<T>(value.c_str(), expected); }
+bool tryToNumber(const std::string& value, T expected) { return tryToNumber<T>(value.c_str(), expected); }
 
 
 template<typename T>
-static bool ToNumber(const char * value, T expected) {
+bool tryToNumber(const char * value, T expected) {
 
 	Exception ex;
 	T result = String::ToNumber<T>(ex, value);
@@ -33,7 +35,7 @@ static bool ToNumber(const char * value, T expected) {
 
 /// \brief Use FLT_EPSILON by default
 template<>
-static bool ToNumber<float>(const char * value, float expected) {
+bool tryToNumber<float>(const char * value, float expected) {
 	Exception ex;
 	float result = String::ToNumber<float>(ex, value);
 
@@ -42,7 +44,7 @@ static bool ToNumber<float>(const char * value, float expected) {
 		return false;
 	}
 
-	if (abs(result - expected) > FLT_EPSILON) {
+    if (fabs(result - expected) > FLT_EPSILON) {
 		DEBUG("Invalid Result in ToNumber(", value, ",", expected, ") : ", result);
 		return false;
 	}
@@ -51,7 +53,7 @@ static bool ToNumber<float>(const char * value, float expected) {
 }
 
 template<>
-static bool ToNumber<double>(const char * value, double expected) {
+bool tryToNumber<double>(const char * value, double expected) {
 	Exception ex;
 	double result = String::ToNumber<double>(ex, value);
 
@@ -60,7 +62,7 @@ static bool ToNumber<double>(const char * value, double expected) {
 		return false;
 	}
 
-	if (abs(result - expected) > DBL_EPSILON) {
+    if (fabs(result - expected) > DBL_EPSILON) {
 		DEBUG("Invalid Result in ToNumber(", value, ",", expected, ") : ", result);
 		return false;
 	}
@@ -135,39 +137,39 @@ ADD_TEST(StringTest, TestMultiple) {
 	EXPECT_TRUE(String::Format(_Str, 18.0, "*", -2.0, " = ", 18.0*-2.0) == "18*-2 = -36");
 
 
-	double big = 1234567890123456789.1234567890;
-	EXPECT_TRUE(String::Format(_Str, big) == "1.234567890123457e+018");
+    double big = 1234567890123456789.1234567890;
+    EXPECT_TRUE(String::Format(_Str, big) == "1.234567890123457e+18");
 	
-	float bigf = (float)1234567890123456789.1234567890;
-	EXPECT_TRUE(String::Format(_Str, bigf) == "1.2345679e+018");
+    float bigf = 1234567890123456789.1234567890f;
+    EXPECT_TRUE(String::Format(_Str, bigf) == "1.2345679e+18");
 
 	// TODO
-	//EXPECT_TRUE(ToNumber<float>(_Str, bigf));
+    //EXPECT_TRUE(tryToNumber<float>(_Str, bigf));
 }
 
 ADD_TEST(StringTest, TestToNumber) {
 
-	EXPECT_TRUE(ToNumber<int>("123", 123));
-	EXPECT_TRUE(ToNumber<int>("-123", -123));
-	EXPECT_TRUE(ToNumber<UInt64>("123", 123));
-	EXPECT_TRUE(!ToNumber<UInt64>("-123", 123));
-	EXPECT_TRUE(ToNumber<double>("12.34", 12.34));
-	EXPECT_TRUE(ToNumber<float>("12.34", 12.34f));
+    EXPECT_TRUE(tryToNumber<int>("123", 123));
+    EXPECT_TRUE(tryToNumber<int>("-123", -123));
+    EXPECT_TRUE(tryToNumber<UInt64>("123", 123));
+    EXPECT_TRUE(!tryToNumber<UInt64>("-123", 123));
+    EXPECT_TRUE(tryToNumber<double>("12.34", 12.34));
+    EXPECT_TRUE(tryToNumber<float>("12.34", 12.34f));
 
 	// Test of delta epsilon precision
-	EXPECT_TRUE(ToNumber<double>("0", DBL_EPSILON));
-	EXPECT_TRUE(ToNumber<float>("0", FLT_EPSILON));
-	EXPECT_TRUE(!ToNumber<double>("0", DBL_EPSILON * 2));
-	EXPECT_TRUE(!ToNumber<float>("0", FLT_EPSILON * 2));
+    EXPECT_TRUE(tryToNumber<double>("0", DBL_EPSILON));
+    EXPECT_TRUE(tryToNumber<float>("0", FLT_EPSILON));
+    EXPECT_TRUE(!tryToNumber<double>("0", DBL_EPSILON * 2));
+    EXPECT_TRUE(!tryToNumber<float>("0", FLT_EPSILON * 2));
 
-	EXPECT_TRUE(!ToNumber<double>("", 0));
-	EXPECT_TRUE(!ToNumber<double>("asd", 0));
-	EXPECT_TRUE(!ToNumber<double>("a123", 0));
-	EXPECT_TRUE(!ToNumber<double>("a123", 0));
-	EXPECT_TRUE(!ToNumber<double>("z23", 0));
-	EXPECT_TRUE(!ToNumber<double>("23z", 0));
-	EXPECT_TRUE(!ToNumber<double>("a12.3", 0));
-	EXPECT_TRUE(!ToNumber<double>("12.3aa", 0));
+    EXPECT_TRUE(!tryToNumber<double>("", 0));
+    EXPECT_TRUE(!tryToNumber<double>("asd", 0));
+    EXPECT_TRUE(!tryToNumber<double>("a123", 0));
+    EXPECT_TRUE(!tryToNumber<double>("a123", 0));
+    EXPECT_TRUE(!tryToNumber<double>("z23", 0));
+    EXPECT_TRUE(!tryToNumber<double>("23z", 0));
+    EXPECT_TRUE(!tryToNumber<double>("a12.3", 0));
+    EXPECT_TRUE(!tryToNumber<double>("12.3aa", 0));
 }
 
 ADD_TEST(StringTest, TrimLeft) {

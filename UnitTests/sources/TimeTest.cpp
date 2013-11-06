@@ -169,7 +169,7 @@ bool IsValid(struct tm& time, int msec, int microsec, bool exp ) {
 
 ADD_TEST(TimeTest, TestIsValid) {
 
-	const struct stTime {
+    struct stTime {
 
 		int  d_year;     // year under test
 		int  d_month;    // month under test
@@ -180,7 +180,7 @@ ADD_TEST(TimeTest, TestIsValid) {
 		int  d_msec;		
 		int  d_microsec;
 		bool d_exp;      // expected value
-	};
+    };
 	static stTime data[] = {
 		// A valid date is a date between 1/1/1970 and 31/12/3000
 		//year   month   day   hour   min   sec   msec   µsec    expected value

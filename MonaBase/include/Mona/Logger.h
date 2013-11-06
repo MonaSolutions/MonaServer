@@ -39,7 +39,7 @@ public:
 	};
 
 
-	virtual void log(std::thread::id threadId, const std::string& threadName, Priority priority, char *filePath, std::string& shortFilePath, long line, std::string& message);
+    virtual void log(std::thread::id threadId, const std::string& threadName, Priority priority, const char *filePath, std::string& shortFilePath, long line, std::string& message);
 	virtual void dump(const UInt8* data, UInt32 size);
 
 private:

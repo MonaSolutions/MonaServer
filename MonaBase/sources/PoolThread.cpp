@@ -56,11 +56,11 @@ void PoolThread::run(Exception& ex) {
 				pWork = _jobs.front().get();
 			}
 
-			try {
-				Exception ex;
-				EXCEPTION_TO_LOG(pWork->run(ex), "Pool thread ", name());
-			} catch (exception& ex) {
-				ERROR("Pool thread ",name(),", ",ex.what());
+            try {
+                Exception ex1;
+                EXCEPTION_TO_LOG(pWork->run(ex1), "Pool thread ", name());
+            } catch (exception& ex2) {
+                ERROR("Pool thread ",name(),", ",ex2.what());
 			} catch (...) {
 				ERROR("Pool thread ", name(),", unknown error");
 			}

@@ -145,52 +145,52 @@ bool Util::UnpackUrl(Exception& ex,const string& url, SocketAddress& address, st
 
 	// Normalize path => replace // by / and \ by / AND remove the last '/'
 	path.assign(it,end);
-	it = path.begin();
-	auto itFile = it;
-	end = path.end();
+    auto itPath = path.begin();
+    auto itFile = itPath;
+    auto endPath = path.end();
 	bool hasFile(false);
 	string query;
-	while (it != end) {
-		if (isspace(*it)) {
+    while (itPath != endPath) {
+        if (isspace(*itPath)) {
 			ex.set(Exception::FORMATTING, "URL ", url, " malformed, space character");
 			return false;
 		}
-		if (*it == '?') {
+        if (*itPath == '?') {
 			// query now!
 			// file?
 			if (hasFile)
-				file.assign(itFile, it);
+                file.assign(itFile, itPath);
 			// query
-			UnpackQuery(string(++it, end),properties);
+            UnpackQuery(string(++itPath, endPath),properties);
 			// trunk the path
 			if (hasFile)
-				path.erase(--itFile, end);
+                path.erase(--itFile, endPath);
 			else
-				path.erase(--it, end);
+                path.erase(--itPath, endPath);
 			return true;
 		}
-		if (*it == '/' || *it == '\\') {
-			++it;
-			while (it != end && (*it == '/' || *it == '\\')) 
-				path.erase(it++); // erase multiple slashes
-			if (it == end) {
+        if (*itPath == '/' || *itPath == '\\') {
+            ++itPath;
+            while (itPath != endPath && (*itPath == '/' || *itPath == '\\'))
+                path.erase(itPath++); // erase multiple slashes
+            if (itPath == endPath) {
 				hasFile = false;
 				// remove the last /
-				path.erase(--it);
+                path.erase(--itPath);
 				break;
 			}
-			itFile = it;
+            itFile = itPath;
 		}
-		if (*it == '.')
+        if (*itPath == '.')
 			hasFile = true;
-		++it;
+        ++itPath;
 	}
 
 
 	// file?
 	if (hasFile) {
-		file.assign(itFile, end);
-		path.erase(--itFile, end); // trunk the path if file (no query here)
+        file.assign(itFile, endPath);
+        path.erase(--itFile, endPath); // trunk the path if file (no query here)
 	}
 	return true;
 }
@@ -287,7 +287,7 @@ void Util::Dump(const UInt8* in,UInt32 size,Buffer<UInt8>& out,const string& hea
 		out[len++] = '\t';
 		while ( (c < 16) && (i+c < size) ) {
 			b = in[i+c];
-			sprintf((char*)&out[len],out.size()-len,"%X%X ",b>>4, b & 0x0f );
+            snprintf((char*)&out[len],out.size()-len,"%X%X ",b>>4, b & 0x0f );
 			len += 3;
 			++c;
 		}
@@ -446,9 +446,9 @@ bool Util::FromBase64(const UInt8* data, UInt32 size, Buffer<UInt8>& result) {
 }
 
 void Util::Random(UInt8* data, UInt32 size) {
-	static const uniform_int_distribution<short> Distribution(0,255);
+    uniform_int_distribution<short> distribution(0,255);
 	for (UInt32 i = 0; i < size;++i)
-		data[i] = (UInt8)Distribution(RandomGenerator);
+        data[i] = (UInt8)distribution(RandomGenerator);
 }
 
 

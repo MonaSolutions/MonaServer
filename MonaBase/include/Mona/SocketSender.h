@@ -21,11 +21,12 @@
 #include "Mona/WorkThread.h"
 #include "Mona/PoolThread.h"
 #include "Mona/SocketAddress.h"
-#include "Mona/Socket.h"
 #include <memory>
 
 
 namespace Mona {
+
+class Socket;
 
 class SocketSender : public WorkThread, virtual Object {
 	friend class Socket;

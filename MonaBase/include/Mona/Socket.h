@@ -20,7 +20,6 @@ This file is a part of Mona.
 #include "Mona/Mona.h"
 #include "Mona/SocketAddress.h"
 #include "Mona/PoolThread.h"
-#include "Mona/SocketSender.h"
 #include "Mona/PoolThreads.h"
 #include <memory>
 #include <list>

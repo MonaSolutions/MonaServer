@@ -34,7 +34,7 @@ const Option& Options::get(const string& name) const {
 	return *result;
 }
 
-bool Options::process(Exception& ex, int argc, char* argv[], const function<void(Exception& ex,const string&, const string&)>& handler) {
+bool Options::process(Exception& ex, int argc, const char* argv[], const function<void(Exception& ex,const string&, const string&)>& handler) {
 	_pOption = NULL;
 	string name, value;
 	set<string> alreadyReaden;

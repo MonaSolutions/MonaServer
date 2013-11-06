@@ -24,6 +24,8 @@ This file is a part of Mona.
 #include "Mona/WinService.h"
 #include "Mona/WinRegistryKey.h"
 #else
+#include "Mona/Process.h"
+#include "Mona/FileSystem.h"
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -131,7 +133,7 @@ void ServerApplication::ServiceMain(DWORD argc, LPTSTR* argv) {
 }
 
 
-int ServerApplication::run(int argc, char** argv) {
+int ServerApplication::run(int argc, const char** argv) {
 	try {
 		if (!hasConsole() && isService())
 			return 0;
@@ -247,12 +249,12 @@ void ServerApplication::waitForTerminationRequest() {
 }
 
 
-int ServerApplication::run(int argc, char** argv) {
+int ServerApplication::run(int argc, const char** argv) {
 	try {
 		bool runAsDaemon = isDaemon(argc, argv);
 		if (runAsDaemon)
 			beDaemon();
-		if(!init(argc, argv))
+        if(!init(argc, argv))
 			return EXIT_OK;
 
 		if (runAsDaemon) {
@@ -261,7 +263,8 @@ int ServerApplication::run(int argc, char** argv) {
 				return EXIT_OSERR;
 		}
 
-		return main(TerminateSignal());
+        TerminateSignal test;
+        return main(test);
 	} catch (exception& ex) {
 		FATAL( ex.what());
 		return EXIT_SOFTWARE;
@@ -272,7 +275,7 @@ int ServerApplication::run(int argc, char** argv) {
 }
 
 
-bool ServerApplication::isDaemon(int argc, char** argv) {
+bool ServerApplication::isDaemon(int argc, const char** argv) {
 	string option1("--daemon");
 	string option2("-d");
 	string option3("/daemon");
@@ -288,7 +291,7 @@ bool ServerApplication::isDaemon(int argc, char** argv) {
 void ServerApplication::beDaemon() {
 	pid_t pid;
 	if ((pid = fork()) < 0)
-		throw exception("Cannot fork daemon process");
+        FATAL_ERROR("Cannot fork daemon process");
 	if (pid != 0)
 		exit(0);
 	
@@ -301,36 +304,36 @@ void ServerApplication::beDaemon() {
 	// stuff to stdout/stderr.
 	FILE* fin  = freopen("/dev/null", "r+", stdin);
 	if (!fin)
-		throw exception("Cannot attach stdin to /dev/null");
+        FATAL_ERROR("Cannot attach stdin to /dev/null");
 	FILE* fout = freopen("/dev/null", "r+", stdout);
 	if (!fout)
-		throw exception("Cannot attach stdout to /dev/null");
+        FATAL_ERROR("Cannot attach stdout to /dev/null");
 	FILE* ferr = freopen("/dev/null", "r+", stderr);
 	if (!ferr)
-		throw exception("Cannot attach stderr to /dev/null");
+        FATAL_ERROR("Cannot attach stderr to /dev/null");
 
 	setBool("application.runAsDaemon", true);
 	_isInteractive=false;
 }
 
 
-void ServerApplication::defineOptions(OptionSet& options) {
-	options.add("daemon", "d", "Run application as a daemon.")
-		.handler([this](const string& value) { setBool("application.runAsDaemon", true) });
-	
-	options.add("pidfile", "p", "Write the process ID of the application to given file.")
-		.argument("path")
-		.handler(handlePidFile);
+void ServerApplication::defineOptions(Exception& ex, Options& options) {
+    options.add(ex, "daemon", "d", "Run application as a daemon.")
+        .handler([this](const string& value) { setBool("application.runAsDaemon", true); });
 
-	Application::defineOptions(options);
+    options.add(ex, "pidfile", "p", "Write the process ID of the application to given file.")
+		.argument("path")
+        .handler([this](const string& value) { handlePidFile(value); } );
+
+    Application::defineOptions(ex, options);
 }
 
 
 void ServerApplication::handlePidFile(const string& value) {
 	ofstream ostr(value.c_str(), ios::out | ios::binary);
 	if (!ostr.good())
-		FATAL_THROW("Cannot write PID to file ",value);
-	ostr << Process::id() << endl;
+        FATAL_ERROR("Cannot write PID to file ",value);
+    ostr << Process::Id() << endl;
 	FileSystem::RegisterForDeletion(value);
 }
 

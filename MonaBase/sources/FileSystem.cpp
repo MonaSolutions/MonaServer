@@ -19,9 +19,10 @@ This file is a part of Mona.
 #include <sys/stat.h>
 #include <cctype>
 #if defined(_WIN32)
-#include "windows.h"
+    #include "windows.h"
 #else
-#include "pwd.h"
+    #include "limits.h"
+    #include "pwd.h"
 #endif
 #include "Mona/FileSystem.h"
 #include <set>
@@ -305,5 +306,28 @@ bool FileSystem::ResolveFileWithPaths(const string& paths, string& file) {
 	return false;
 }
 
+string& FileSystem::GetCurrent(string& path) {
+
+#if defined(_WIN32)
+    int len = GetCurrentDirectoryW(0, NULL);
+    if (len > 0) {
+        Buffer<char *> buff(len);
+        len = GetModuleFileNameA(0, buff.begin());
+    }
+
+    if (len <= 0)
+        FATAL_ERROR("cannot get current directory");
+
+    path.assign(buffer.data());
+#else
+    char cwd[PATH_MAX];
+    if (getcwd(cwd, sizeof(cwd)))
+        path.assign(cwd);
+    else
+        FATAL_ERROR("cannot get current directory");
+#endif
+
+    return path;
+}
 
 } // namespace Mona

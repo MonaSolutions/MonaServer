@@ -59,7 +59,7 @@ public:
 
 	UInt32			count() const { return _options.size(); }
 
-	bool			process(Exception& ex, int argc, char* argv[], const std::function<void(Exception& ex, const std::string&, const std::string&)>& handler = nullptr);
+    bool			process(Exception& ex, int argc, const char* argv[], const std::function<void(Exception& ex, const std::string&, const std::string&)>& handler = nullptr);
 
 private:
 	bool			process(Exception& ex, const std::string& argument, std::string& name, std::string& value, std::set<std::string>& alreadyReaden);

@@ -144,8 +144,8 @@ ADD_TEST(BinaryReaderWriterTest, Native) {
 ADD_TEST(BinaryReaderWriterTest, BigEndian) {
 
 	std::stringstream sstream;
-	BinaryWriter writer(sstream, BinaryWriter::BIG_ENDIAN);
-	BinaryReader reader(sstream, BinaryReader::BIG_ENDIAN);
+    BinaryWriter writer(sstream, BinaryWriter::BIG_ENDIAN_ORDER);
+    BinaryReader reader(sstream, BinaryReader::BIG_ENDIAN_ORDER);
 	
 	Write(writer);
 	Read(reader);
@@ -154,8 +154,8 @@ ADD_TEST(BinaryReaderWriterTest, BigEndian) {
 ADD_TEST(BinaryReaderWriterTest, LittleEndian) {
 
 	std::stringstream sstream;
-	BinaryWriter writer(sstream, BinaryWriter::LITTLE_ENDIAN);
-	BinaryReader reader(sstream, BinaryReader::LITTLE_ENDIAN);
+    BinaryWriter writer(sstream, BinaryWriter::LITTLE_ENDIAN_ORDER);
+    BinaryReader reader(sstream, BinaryReader::LITTLE_ENDIAN_ORDER);
 	
 	Write(writer);
 	Read(reader);

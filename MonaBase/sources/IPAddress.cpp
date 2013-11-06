@@ -113,7 +113,7 @@ public:
 		return new IPv4Address(ia);
 #else
 		if (inet_aton(addr.c_str(), &ia))
-			return new IPv4Address(&ia);
+            return new IPv4Address(ia);
 		return 0;
 #endif
 	}
@@ -276,14 +276,14 @@ public:
 			if (!(scopeId = if_nametoindex(scope.c_str())))
 				return 0;
 			if (inet_pton(AF_INET6, unscopedAddr.c_str(), &ia) == 1)
-				return new IPv6Address(&ia, scopeId);
+                return new IPv6Address(ia, scopeId);
 			else
 				return 0;
 		}
 		else
 		{
 			if (inet_pton(AF_INET6, addr.c_str(), &ia) == 1)
-				return new IPv6Address(&ia);
+                return new IPv6Address(ia);
 			else
 				return 0;
 		}

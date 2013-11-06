@@ -74,7 +74,7 @@ public:
 		/// Returns the string value (REG_SZ) with the given name.
 		/// An empty name denotes the default value.
 		///
-		/// Throws a NotFoundException if the value does not exist.
+        /// Throws an exception if the value does not exist.
 
 	bool setStringExpand(Exception& ex,const std::string& name, const std::string& value);
 		/// Sets the expandable string value (REG_EXPAND_SZ) with the given name.
@@ -86,7 +86,7 @@ public:
 		/// All references to environment variables (%VAR%) in the string
 		/// are expanded.
 		///
-		/// Throws a NotFoundException if the value does not exist.
+        /// Throws an exception if the value does not exist.
 
 	bool setInt(Exception& ex, const std::string& name, int value);
 		/// Sets the numeric (REG_DWORD) value with the given name.
@@ -96,12 +96,12 @@ public:
 		/// Returns the numeric value (REG_DWORD) with the given name.
 		/// An empty name denotes the default value.
 		///
-		/// Throws a NotFoundException if the value does not exist.
+        /// Throws an exception if the value does not exist.
 
 	void deleteValue(const std::string& name);
 		/// Deletes the value with the given name.
 		///
-		/// Throws a NotFoundException if the value does not exist.
+        /// Throws an exception if the value does not exist.
 
 	void deleteKey();
 		/// Recursively deletes the key and all subkeys.

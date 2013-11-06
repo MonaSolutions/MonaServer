@@ -31,16 +31,18 @@ public:
 
 	bool	isInteractive() const { return _isInteractive; }
 
-	int		run(int argc, char* argv[]);
+    int		run(int argc, const char* argv[]);
 
 protected:
 	void defineOptions(Exception& ex, Options& options);
 
 private:
-	virtual int main(TerminateSignal& terminateSignal) = 0;
+    virtual int main(TerminateSignal& terminateSignal) = 0;
 	int			main() { return Application::EXIT_OK; }
 
 	bool		_isInteractive;
+
+    static ServerApplication*	 _PThis;
 
 #if defined(_WIN32)
 
@@ -56,11 +58,10 @@ private:
 	std::string _description;
 	std::string _startup;
 
-	static ServerApplication*	 _PThis;
-
 #else
+    void waitForTerminationRequest();
 	void handlePidFile(const std::string& value);
-	bool isDaemon(int argc, char** argv);
+    bool isDaemon(int argc, const char** argv);
 	void beDaemon();
 #endif
 };

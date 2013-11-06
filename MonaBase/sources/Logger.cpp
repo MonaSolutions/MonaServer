@@ -58,7 +58,7 @@ const char* LogColors[] = { FATAL_COLOR, CRITIC_COLOR, ERROR_COLOR, WARN_COLOR, 
 
 mutex Logger::_Mutex;
 
-void Logger::log(std::thread::id threadId, const string& threadName, Priority priority, char *filePath, string& shortFilePath, long line, string& message) {
+void Logger::log(std::thread::id threadId, const string& threadName, Priority priority, const char *filePath, string& shortFilePath, long line, string& message) {
 	lock_guard<mutex> lock(_Mutex);
 	priority = (Priority)(priority - 1);
 	SET_CONSOLE_TEXT_COLOR(LogColors[priority]);

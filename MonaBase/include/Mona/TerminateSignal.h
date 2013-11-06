@@ -32,10 +32,9 @@ public:
 	virtual void wait();
 	void set() { _Terminate.set(); }
 protected:
+    static Event			_Terminate;
 #if defined(_WIN32)
 	static BOOL __stdcall	ConsoleCtrlHandler(DWORD ctrlType);
-
-	static Event			_Terminate;
 #else
 	sigset_t				_signalSet;
 #endif

@@ -19,7 +19,7 @@
 
 #include "Mona/Mona.h"
 #include "Mona/String.h"
-
+#include <stdexcept>
 
 namespace Mona {
 
@@ -88,11 +88,13 @@ namespace Mona {
 #define		FATAL_ERROR(...)				{raise(SIGTRAP);} // TODO test on linux
 #endif
 #else
-#define		FATAL_ASSERT(CHECK)				if(!(CHECK)) {throw std::exception( #CHECK ", "__FILE__"[" LINE_STRING "]");}
-#define		FATAL_ERROR(...)				{string __error; throw std::exception( Mona::String::Format(__error,## __VA_ARGS__,", "__FILE__"[" LINE_STRING "]").c_str());}
+#define		FATAL_ASSERT(CHECK)				if(!(CHECK)) {throw std::runtime_error( #CHECK ", " __FILE__ "[" LINE_STRING "]");}
+#define		FATAL_ERROR(...)				{string __error; throw std::runtime_error(Mona::String::Format(__error,## __VA_ARGS__,", " __FILE__ "[" LINE_STRING "]"));}
 #endif
 
-#define		EXCEPTION_TO_LOG(CALL,...)		{ bool __success = CALL; if (ex) { if (!__success) ERROR(## __VA_ARGS__,", ",ex.error()) else WARN(## __VA_ARGS__,", ", ex.error()); } else if (!__success) ERROR(## __VA_ARGS__,", unknown error"); }
-
+#define		EXCEPTION_TO_LOG(CALL,...)		{ \
+    bool __success = CALL; \
+    if (ex) { if (!__success) ERROR( __VA_ARGS__,", ",ex.error()) else WARN( __VA_ARGS__,", ", ex.error()); } \
+    else if (!__success) ERROR( __VA_ARGS__,", unknown error"); }
 
 } // namespace Mona

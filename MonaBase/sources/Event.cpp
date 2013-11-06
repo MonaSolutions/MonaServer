@@ -15,9 +15,6 @@ details (or else see http://www.gnu.org/licenses/).
 This file is a part of Mona.
 */
 
-#pragma once
-
-
 #include "Mona/Event.h"
 #include "Mona/Exceptions.h"
 

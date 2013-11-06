@@ -31,8 +31,8 @@ bool AddOption(const string& fullName, const string& shortName, const string& de
 	return true;
 }
 
-bool ProcessArg(char* arg, const function<void(Exception& ex, const std::string&, const std::string&)>& handler=nullptr) {
-	char* argv[] = {"", arg};
+bool ProcessArg(const char* arg, const function<void(Exception& ex, const std::string&, const std::string&)>& handler=nullptr) {
+    const char* argv[] = {"", arg};
 	
 	Exception ex;
 	return _Options.process(ex, 2, argv, handler) && !ex;
@@ -134,7 +134,7 @@ ADD_TEST(OptionsTest, TestOptionsAdd) {
 void TestProcessInclude(Exception& ex, const string& name, const string& value) {
 	EXPECT_TRUE(name == "include-dir");
 	static int i = 0;
-	static char* res[] = {
+    static const char* res[] = {
 		"include",
 		"/usr/include",
 		"/usr/local/include",
@@ -164,7 +164,7 @@ ADD_TEST(OptionsTest, TestProcess) {
 	Exception ex;
 	EXPECT_TRUE(AddOption("include-dir", "I", "specify an include search path", false, true, "path", true));
 
-	char* arg[] = { "row for path",
+    const char* arg[] = { "row for path",
 					"/I:include",
 					"-I=/usr/include",
 					"/include-dir:/usr/local/include",
