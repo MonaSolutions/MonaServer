@@ -192,9 +192,9 @@ public:
 		char buffer[64];
 		
 		#if defined(MONA_PTR_IS_64_BIT)
-            sprintf(buffer, "%016" I64_FMT "X", (UIntPtr) value);
+            sprintf(buffer, "%016" I64_FMT "X", value);
 		#else
-            sprintf(buffer, "%08lX", (UIntPtr) value);
+            sprintf(buffer, "%08lX", value);
 		#endif
 
 		result.append(buffer);
