@@ -64,7 +64,7 @@ Time& Time::update(struct tm& tmtime, int milli /* = 0*/, int micro /* = 0*/) {
 	// Convert Local to GMT
 	time_t gmttime = timegm(&tmtime);
 
-	Int64 monatime = (gmttime * 1000000) + (milli * 1000) + (micro);
+    Int64 monatime = (gmttime * 1000000ll) + (milli * 1000ll) + (micro);
 
 	_time = chrono::system_clock::time_point(chrono::microseconds(monatime));
 	return *this;

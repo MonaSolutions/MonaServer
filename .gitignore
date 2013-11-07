@@ -19,10 +19,16 @@ Debug
 /Mona.sdf
 
 /MonaBase/MonaBase.vcxproj.user
+/MonaBase/MonaBase.creator
+/MonaBase/MonaBase.creator.user
+/MonaBase/MonaBase.files
 
 /MonaServer/release
 
 /UnitTests/UnitTests.vcxproj.filters
 /UnitTests/UnitTests.vcxproj.user
+/UnitTests/UnitTests.creator
+/UnitTests/UnitTests.creator.user
+/UnitTests/UnitTests.files
 
 /UnitTests/Release
