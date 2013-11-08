@@ -29,7 +29,7 @@ protected:
 	virtual ~TCPSession();
 
 	template<typename DecodingType>
-	bool decode(const std::shared_ptr<DecodingType>& pDecoding) {
+	bool decode(std::shared_ptr<DecodingType>& pDecoding) {
 		_decoding = true;
 		return Session::decode<DecodingType>(pDecoding);
 	}

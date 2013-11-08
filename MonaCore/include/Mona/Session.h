@@ -51,7 +51,7 @@ protected:
 	Protocol&			protocol;
 
 	template<typename DecodingType>
-	bool decode(const std::shared_ptr<DecodingType>& pDecoding) {
+	bool decode(std::shared_ptr<DecodingType>& pDecoding) {
 		Exception ex;
 		_pDecodingThread = invoker.poolThreads.enqueue<DecodingType>(ex,pDecoding, _pDecodingThread);
 		if (ex)

@@ -27,8 +27,8 @@ namespace Mona {
 
 RTMFPMessageNull RTMFPWriter::_MessageNull;
 
-RTMFPWriter(const string& signature, BandWriter& band, WriterHandler* pHandler)  : FlashWriter(pHandler), id(0), _band(band), _reseted(true), critical(false), _stage(0), _stageAck(0), _boundCount(0), flowId(0), signature(signature), _repeatable(0), _lostCount(0), _ackCount(0), _connectedSize(-1) {
-    _band.initWriter(shared_ptr<RTPMFPWriter>(this));
+RTMFPWriter::RTMFPWriter(const string& signature, BandWriter& band, WriterHandler* pHandler)  : FlashWriter(pHandler), id(0), _band(band), _reseted(true), critical(false), _stage(0), _stageAck(0), _boundCount(0), flowId(0), signature(signature), _repeatable(0), _lostCount(0), _ackCount(0), _connectedSize(-1) {
+    _band.initWriter(shared_ptr<RTMFPWriter>(this));
 }
 
 RTMFPWriter::RTMFPWriter(const string& signature, BandWriter& band, shared_ptr<RTMFPWriter>& pThis, WriterHandler* pHandler) : FlashWriter(pHandler), id(0), _band(band), _reseted(true), critical(false), _stage(0), _stageAck(0), _boundCount(0), flowId(0), signature(signature), _repeatable(0), _lostCount(0), _ackCount(0), _connectedSize(-1) {
