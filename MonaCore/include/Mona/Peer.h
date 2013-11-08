@@ -58,8 +58,8 @@ public:
 	void onRendezVousUnknown(const UInt8* peerId,std::set<SocketAddress>& addresses);
 	void onHandshake(UInt32 attempts,std::set<SocketAddress>& addresses);
 
-	void onConnection(Exception& ex, Writer& writer) {onConnection(ex, writer,DataReaderNull,Writer::DataWriterNull);}
-	void onConnection(Exception& ex, Writer& writer,DataWriter& response) {onConnection(ex, writer,DataReaderNull,response);}
+    void onConnection(Exception& ex, Writer& writer) {onConnection(ex, writer,DataReader::Null, DataWriter::Null);}
+    void onConnection(Exception& ex, Writer& writer,DataWriter& response) {onConnection(ex, writer,DataReader::Null,response);}
 	void onConnection(Exception& ex, Writer& writer,DataReader& parameters,DataWriter& response);
 	void onFailed(const std::string& error);
 	void onDisconnection();
@@ -76,12 +76,10 @@ public:
 	bool onSubscribe(const Listener& listener,std::string& error);
 	void onUnsubscribe(const Listener& listener);
 
-	bool onRead(std::string& filePath) { return onRead(filePath, MapParameters()); }
-	bool onRead(std::string& filePath,MapParameters& parameters);
+    bool onRead(std::string& filePath) { MapParameters parameters; return onRead(filePath, parameters); }
+    bool onRead(std::string& filePath, MapParameters& parameters);
 
 	void onManage();
-
-	static DataReaderNull	DataReaderNull;
 private:
 	void onJoinGroup(Group& group);
 	void onUnjoinGroup(std::map<Group*,Member*>::iterator it);

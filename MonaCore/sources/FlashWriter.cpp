@@ -26,8 +26,6 @@ using namespace std;
 
 namespace Mona {
 
-AMFWriterNull	FlashWriter::AMFWriterNull;
-	 
 
 FlashWriter::FlashWriter(WriterHandler* pHandler) : callbackHandle(0),Writer(pHandler) {
 }

@@ -107,7 +107,7 @@ AMFWriter& RTMPSender::write(UInt32 id,AMF::ContentType type,UInt32 time,UInt32 
 	if(pData) {
 		data.writeRaw(pData->current(),pData->available());
 		pack();
-		return FlashWriter::AMFWriterNull;
+        return AMFWriter::Null;
 	}
 	return writer;
 }

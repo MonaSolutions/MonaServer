@@ -34,7 +34,9 @@ public:
 };
 
 class Peer;
-class Writer : virtual Object {
+class WriterNull;
+
+class Writer : virtual ObjectNullable {
 public:
 	enum MediaType {
 		INIT=0,
@@ -64,8 +66,8 @@ public:
 	virtual bool			writeMedia(MediaType type,UInt32 time,MemoryReader& data);
 	virtual void			writeMember(const Peer& peer);
 
-	virtual DataWriter&		writeInvocation(const std::string& name){return DataWriterNull;}
-	virtual DataWriter&		writeMessage(){return DataWriterNull;}
+    virtual DataWriter&		writeInvocation(const std::string& name){return DataWriter::Null;}
+    virtual DataWriter&		writeMessage(){return DataWriter::Null;}
 	virtual void			writeRaw(const UInt8* data,UInt32 size){}
 
 	virtual void			flush(bool full=false){}
@@ -74,9 +76,7 @@ public:
 	virtual void			createWriter(std::shared_ptr<DataWriter>& pWriter) {}
 	virtual bool			hasToConvert(DataReader& reader) {return false;}
 
-
-	static Writer				Null;
-	static DataWriterNull	DataWriterNull;
+    static WriterNull		Null;
 
 protected:
 	Writer(WriterHandler* pHandler=NULL);
@@ -88,6 +88,10 @@ protected:
 	State					_state;
 };
 
+class WriterNull : public Writer, virtual ObjectNullable {
+public:
+    WriterNull() : ObjectNullable(true), Writer(NULL) {}
+};
 
 
 } // namespace Mona

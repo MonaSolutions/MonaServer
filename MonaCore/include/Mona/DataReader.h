@@ -24,6 +24,8 @@
 
 namespace Mona {
 
+class DataReaderNull;
+
 class DataReader : virtual Object {
 public:
 	enum Type {
@@ -67,6 +69,8 @@ public:
 
 	MemoryReader&				reader;
 
+    static DataReaderNull       Null;
+
 protected:
 	DataReader(MemoryReader& reader);
 private:
@@ -76,9 +80,9 @@ private:
 };
 
 
-class DataReaderNull : public DataReader, virtual Object {
+class DataReaderNull : public DataReader, virtual ObjectNullable {
 public:
-	DataReaderNull() : DataReader(MemoryReader::Null) {}
+    DataReaderNull() : ObjectNullable(true), DataReader(MemoryReader::Null) {}
 
 	Type followingType() {return END;}
 

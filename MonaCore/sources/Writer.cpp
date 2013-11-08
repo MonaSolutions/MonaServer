@@ -23,8 +23,8 @@ using namespace std;
 
 namespace Mona {
 
-DataWriterNull	Writer::DataWriterNull;
-Writer			Writer::Null;
+DataWriterNull      DataWriter::Null;
+WriterNull          Writer::Null;
 
 Writer::Writer(WriterHandler* pHandler) : reliable(true),_pHandler(pHandler),_state(CONNECTED) {
 }

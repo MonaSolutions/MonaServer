@@ -38,7 +38,7 @@ namespace Mona {
 class Invoker;
 class RTMFPWriter : public FlashWriter, virtual Object {
 public:
-	RTMFPWriter(const std::string& signature, BandWriter& band, WriterHandler* pHandler) : RTMFPWriter(signature, band, std::shared_ptr<RTMFPWriter>(), pHandler) {}
+    RTMFPWriter(const std::string& signature, BandWriter& band, WriterHandler* pHandler);
 	RTMFPWriter(const std::string& signature,BandWriter& band,std::shared_ptr<RTMFPWriter>& pThis,WriterHandler* pHandler=NULL);
 	virtual ~RTMFPWriter();
 
@@ -61,7 +61,8 @@ public:
 		WARN("RTMFPWriter ", id, " has failed, ", args ...);
 		clear();
 		_stage = _stageAck = _lostCount = _ackCount = 0;
-		_band.initWriter(_band.changeWriter(*new RTMFPWriter(*this)));
+        std::shared_ptr<RTMFPWriter>& pWriter = _band.changeWriter(*new RTMFPWriter(*this));
+        _band.initWriter(pWriter);
 		_qos.reset();
 		_reseted = true;
 	}

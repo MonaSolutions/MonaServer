@@ -17,12 +17,14 @@
 
 #include "Mona/AMFWriter.h"
 #include "Mona/Logs.h"
-
+#include <math.h>
 
 using namespace std;
 
 
 namespace Mona {
+
+AMFWriterNull   AMFWriter::Null;
 
 class ObjectRef : virtual Object {
 public:

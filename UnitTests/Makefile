@@ -22,13 +22,13 @@ OBJECTD = $(SOURCES:sources/%.cpp=tmp/Debug/%.o)
 
 release:	
 	mkdir -p tmp/Release/
-	@make $(OBJECT)
+	@make -k $(OBJECT)
 	@echo creating executable $(EXEC)
 	@$(CC) $(CFLAGS) $(LDFLAGS) $(LIBDIR) -o $(EXEC) $(OBJECT) $(LIBS)
 
 debug:	
 	mkdir -p tmp/Debug/
-	@make $(OBJECTD)
+	@make -k $(OBJECTD)
 	@echo creating debugging executable $(EXEC)
 	@$(CC) -g $(CFLAGS) $(LDFLAGS) $(LIBDIR) -o $(EXEC) $(OBJECTD) $(LIBS)
 

@@ -25,6 +25,7 @@ Debug
 
 /MonaServer/release
 
+/UnitTests/UnitTests
 /UnitTests/UnitTests.vcxproj.filters
 /UnitTests/UnitTests.vcxproj.user
 /UnitTests/UnitTests.creator
@@ -32,3 +33,9 @@ Debug
 /UnitTests/UnitTests.files
 
 /UnitTests/Release
+
+/MonaCore/MonaCore.config
+/MonaCore/MonaCore.creator
+/MonaCore/MonaCore.creator.user
+/MonaCore/MonaCore.files
+/MonaCore/MonaCore.includes

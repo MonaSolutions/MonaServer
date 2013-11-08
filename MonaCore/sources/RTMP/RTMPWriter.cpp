@@ -64,7 +64,7 @@ RTMPWriter::State RTMPWriter::state(State value,bool minimal) {
 
 AMFWriter& RTMPWriter::write(AMF::ContentType type,UInt32 time,MemoryReader* pData) {
 	if(state()==CLOSED)
-		return AMFWriterNull;
+        return AMFWriter::Null;
 	return _pSender->write(id,type,time,channel.streamId,pData);
 }
 

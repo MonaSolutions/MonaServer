@@ -23,6 +23,8 @@ using namespace std;
 
 namespace Mona {
 
+DataReaderNull      DataReader::Null;
+
 DataReader::DataReader(MemoryReader& reader): reader(reader),_pos(reader.position()) {
 }
 
