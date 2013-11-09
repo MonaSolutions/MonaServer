@@ -11,9 +11,9 @@ INCLUDES=-I/usr/local/include/ -I./../MonaBase/include/ -I./include/
 LIBDIR=-L/usr/local/lib/ -L./../MonaBase/lib/
 LIBS ?= -lMonaBase -lcrypto -lssl
 
-SOURCES = $(wildcard $(SRCDIR)*/*.cpp)
-OBJECT = $(SOURCES:sources/%.cpp=tmp/Release/%.o)
-OBJECTD = $(SOURCES:sources/%.cpp=tmp/Debug/%.o)
+SOURCES = $(wildcard sources/*.cpp sources/*/*.cpp)
+OBJECT = $(addprefix tmp/Release/,$(notdir $(SOURCES:%.cpp=%.o)))
+OBJECTD = $(addprefix tmp/Debug/,$(notdir $(SOURCES:%.cpp=%.o)))
 
 release:
 	mkdir -p tmp/Release
@@ -30,14 +30,14 @@ debug:
 	@$(CC) -g $(CFLAGS) $(LIBDIR) -fPIC $(SHARED) -o $(LIB) $(OBJECTD) $(LIBS)
 
 $(OBJECT):
-	@echo compiling $(@:tmp/Release/%.o=sources/%.cpp)
-	@$(CC) $(CFLAGS) -fpic $(INCLUDES) -c -o $(@) $(@:tmp/Release/%.o=sources/%.cpp)
+	@echo compiling $(filter %/$(subst .o,.cpp,$(notdir $(@))),$(SOURCES))
+	@$(CC) $(CFLAGS) -fpic $(INCLUDES) -c -o $(@) $(filter %/$(subst .o,.cpp,$(notdir $(@))),$(SOURCES))
 
 $(OBJECTD):
-	@echo compiling $(@:tmp/Debug/%.o=sources/%.cpp)
-	@$(CC) -g $(CFLAGS) -fpic $(INCLUDES) -c -o $(@) $(@:tmp/Debug/%.o=sources/%.cpp)
+	@echo compiling $(filter %/$(subst .o,.cpp,$(notdir $(@))),$(SOURCES))
+	@$(CC) -g $(CFLAGS) -fpic $(INCLUDES) -c -o $(@) $(filter %/$(subst .o,.cpp,$(notdir $(@))),$(SOURCES))
 
 clean:
-	@echo cleaning project MonaBase
+	@echo cleaning project MonaCore
 	@rm -f $(OBJECT) $(LIB)
 	@rm -f $(OBJECTD) $(LIB)

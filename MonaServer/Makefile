@@ -1,10 +1,11 @@
 
 CC=g++
+CFLAGS=-std=c++11
 EXEC=MonaServer
 INCLUDES=-I/usr/local/include/ -I./../MonaBase/include/ -I./../MonaCore/include/
-LIBDIR=-L/usr/local/lib/ -L./../MonaBase/ -L./../MonaCore/
-LDFLAGS+="-Wl,-rpath,./../MonaBase/,-rpath,./../MonaCore/,-rpath,/usr/local/lib/"
-LIBS ?= -lMonaBase -lMonaCore -lPocoFoundation -lPocoXML -lPocoUtil -lPocoNet -lcrypto -lssl -lluajit-5.1
+LIBDIR=-L/usr/local/lib/ -L./../MonaBase/lib/ -L./../MonaCore/lib/
+LDFLAGS+="-Wl,-rpath,./../MonaBase/lib/,-rpath,./../MonaCore/lib/,-rpath,/usr/local/lib/"
+LIBS ?= -lMonaBase -lMonaCore -lcrypto -lssl -lluajit-5.1
 
 OS := $(shell uname)
 ifeq ($(OS),Darwin)
@@ -15,16 +16,31 @@ ifeq ($(OS),Darwin)
 	endif
 endif
 
-OBJECTS = $(wildcard $(SRCDIR)sources/*.cpp)
-OBJECT = $(OBJECTS:%.cpp=%.o)
+SOURCES = $(wildcard $(SRCDIR)*/*.cpp)
+OBJECT = $(SOURCES:sources/%.cpp=tmp/Release/%.o)
+OBJECTD = $(SOURCES:sources/%.cpp=tmp/Debug/%.o)
 
-main: $(OBJECT)
-	@echo creating MonaServer executable $(EXEC)
-	@$(CC) $(LDFLAGS) $(LIBDIR) -o $(EXEC) $(OBJECT) $(LIBS)
+release:	
+	mkdir -p tmp/Release/
+	@make -k $(OBJECT)
+	@echo creating executable $(EXEC)
+	@$(CC) $(CFLAGS) $(LDFLAGS) $(LIBDIR) -o $(EXEC) $(OBJECT) $(LIBS)
+
+debug:	
+	mkdir -p tmp/Debug/
+	@make -k $(OBJECTD)
+	@echo creating debugging executable $(EXEC)
+	@$(CC) -g $(CFLAGS) $(LDFLAGS) $(LIBDIR) -o $(EXEC) $(OBJECTD) $(LIBS)
 
 $(OBJECT): 
-	@echo compiling $(@:%.o=%.cpp)
-	@$(CC) $(INCLUDES) -c -o $(@) $(SOURCES)$(@:%.o=%.cpp)
+	@echo compiling $(@:tmp/Release/%.o=sources/%.cpp)
+	@$(CC) $(CFLAGS) $(INCLUDES) -c -o $(@) $(@:tmp/Release/%.o=sources/%.cpp)
+
+$(OBJECTD):
+	@echo compiling $(@:tmp/Debug/%.o=sources/%.cpp)
+	@$(CC) -g $(CFLAGS) $(INCLUDES) -c -o $(@) $(@:tmp/Debug/%.o=sources/%.cpp)
 
 clean:
-	rm -f $(OBJECT) $(EXEC)
+	@echo cleaning project $(EXEC)
+	@rm -f $(OBJECT) $(EXEC)
+	@rm -f $(OBJECTD) $(EXEC)

@@ -69,6 +69,7 @@ const UInt8* RTMP::ValidateClient(MemoryReader& packet,bool& middleKey) {
 	UInt32 position = packet.position();
 	if (packet.read32() == 0) {
 		WARN("This version of player doesn't support validation");
+        // TODO fix the return value warning
 		return false;
 	}
 	
