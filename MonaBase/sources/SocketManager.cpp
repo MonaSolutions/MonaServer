@@ -35,11 +35,11 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
 
 SocketManager::SocketManager(TaskHandler& handler, PoolThreads& poolThreads, UInt32 bufferSize, const string& name) :
-	_fakeSocket(*this), _selfHandler(false), _poolThreads(poolThreads), _eventFD(0), _sockfd(INVALID_SOCKET), _eventSystem(0), _bufferSize(bufferSize), Startable(name), Task(handler), _currentEvent(0), _currentError(0), _eventInit(false), _ppSocket(NULL) {
+    _fakeSocket(*this), _selfHandler(false), _poolThreads(poolThreads), _eventFD(0), _sockfd(NET_INVALID_SOCKET), _eventSystem(0), _bufferSize(bufferSize), Startable(name), Task(handler), _currentEvent(0), _currentError(0), _eventInit(false), _ppSocket(NULL) {
 	_fakeSocket._initialized = true;
 }
 SocketManager::SocketManager(PoolThreads& poolThreads, UInt32 bufferSize, const string& name) :
-	_fakeSocket(*this), _selfHandler(true), _poolThreads(poolThreads), _eventFD(0), _sockfd(INVALID_SOCKET), _eventSystem(0), _bufferSize(bufferSize), Startable(name), Task((TaskHandler&)*this), _currentEvent(0), _currentError(0), _eventInit(false), _ppSocket(NULL) {
+    _fakeSocket(*this), _selfHandler(true), _poolThreads(poolThreads), _eventFD(0), _sockfd(NET_INVALID_SOCKET), _eventSystem(0), _bufferSize(bufferSize), Startable(name), Task((TaskHandler&)*this), _currentEvent(0), _currentError(0), _eventInit(false), _ppSocket(NULL) {
 	_fakeSocket._initialized = true;
 }
 
@@ -75,7 +75,7 @@ void SocketManager::clear() {
 			WSAAsyncSelect(it.first,_eventSystem,0,0);
 			PostMessage(_eventSystem,0,(WPARAM)it.second,0);
 #else
-			write(_eventFD,&it->second,sizeof(it->second));
+            write(_eventFD,&it.second,sizeof(it.second));
 #endif
 		}
 	}
@@ -97,7 +97,7 @@ bool SocketManager::add(Exception& ex,Socket& socket) const {
 		return false;
 	}
 
-	SOCKET sockfd = socket._sockfd;
+    NET_SOCKET sockfd = socket._sockfd;
 
 
 	lock_guard<mutex> lock(_mutex);
@@ -153,7 +153,7 @@ bool SocketManager::startWrite(Exception& ex, Socket& socket) const {
 	event.events = EPOLLIN | EPOLLOUT | EPOLLRDHUP;
 	event.data.fd = socket._sockfd;
 	event.data.ptr = socket._ppSocket;
-	int res = epoll_ctl(_eventSystem, EPOLL_CTL_MOD,fd, &event);
+    int res = epoll_ctl(_eventSystem, EPOLL_CTL_MOD, event.data.fd, &event);
 	if(res<0) {
 		Socket::SetError(ex);
 		return false;
@@ -173,7 +173,7 @@ bool SocketManager::stopWrite(Exception& ex, Socket& socket) const {
 	event.events = EPOLLIN | EPOLLRDHUP;
 	event.data.fd = socket._sockfd;
 	event.data.ptr = socket._ppSocket;
-	int res = epoll_ctl(_eventSystem, EPOLL_CTL_MOD,fd, &event);
+    int res = epoll_ctl(_eventSystem, EPOLL_CTL_MOD, event.data.fd, &event);
 	if(res<0) {
 		Socket::SetError(ex);
 		return false;
@@ -328,7 +328,7 @@ void SocketManager::run(Exception& exc) {
 
 #else
 
-	int count = _counter.value()+1;
+    int count = _counter+1;
 	vector<epoll_event> events(count);
 
 	for(;;) {
@@ -347,7 +347,7 @@ void SocketManager::run(Exception& exc) {
 			epoll_event event = events[i];
 			if(event.data.fd==readFD) {
 				unique_ptr<Socket>* ppSocket(NULL);
-				read(readFD,&ppSocket,sizeof(pSocket));
+                read(readFD,&ppSocket,sizeof(ppSocket));
 				if(!ppSocket) {
 					i=-1; // termination signal!
 					break;
@@ -363,7 +363,7 @@ void SocketManager::run(Exception& exc) {
 			if(_currentError==0 && _currentEvent&EPOLLOUT) {
 				// protected for _ppSocket access access
 				lock_guard<mutex> lock(_mutex);
-				_ppSocket = ((unique_ptr<Socket>*)event.data.ptr;
+                _ppSocket = (unique_ptr<Socket>*)event.data.ptr;
 				if(_ppSocket->get()) {
 					Exception curEx;
 					(*_ppSocket)->flush(curEx);
@@ -371,7 +371,7 @@ void SocketManager::run(Exception& exc) {
 						(*_ppSocket)->onError(curEx.error());
 				}
 			} else {
-				_ppSocket = ((unique_ptr<Socket>*)event.data.ptr;
+                _ppSocket = (unique_ptr<Socket>*)event.data.ptr;
 				Task::waitHandle();
 			}
 			_currentError = 0;
@@ -379,7 +379,7 @@ void SocketManager::run(Exception& exc) {
 		}
 		if(i==-1)
 			break; // termination signal!
-		count = _counter.value()+1;
+        count = _counter+1;
 		if(count!=events.size())
 			events.resize(count);
 	}

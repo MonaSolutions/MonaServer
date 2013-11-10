@@ -25,6 +25,10 @@ namespace Mona {
 
 const string String::Empty;
 
+#if defined(WIN32)
+	int String::output_exp_old_format = _set_output_format(_TWO_DIGIT_EXPONENT);
+#endif
+
 vector<string>& String::Split(const string& value, const string& separators, vector<string>& values, int options) {
 	string::const_iterator it1 = value.begin(), it2, it3, end = value.end();
 
@@ -117,7 +121,7 @@ T String::ToNumber(Exception& ex, const std::string& value, T result) {
 	bool beginning = true, negative = false;
 
 	const char* str(value.c_str());
-	UInt64 current(0);
+	long double current(0);
 
 	if (!str || *str == '\0') {
 		ex.set(Exception::FORMATTING, "Empty string is not a number");
@@ -144,7 +148,7 @@ T String::ToNumber(Exception& ex, const std::string& value, T result) {
 			return false;
 		}
 
-		if (*str == '.') {
+		if (*str == '.' || *str == ',') {
 			if (comma == 0 && !beginning) {
 				comma = 1;
 				continue;

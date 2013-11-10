@@ -35,7 +35,7 @@ public:
 };
 
 class Peer;
-class Writer : virtual Object {
+class Writer : virtual NullableObject {
 public:
 	enum MediaType {
 		INIT=0,
@@ -68,8 +68,8 @@ public:
 	virtual bool			writeMedia(MediaType type,UInt32 time,MemoryReader& data);
 	virtual void			writeMember(const Peer& peer);
 
-	virtual DataWriter&		writeInvocation(const std::string& name){return DataWriterNull;}
-	virtual DataWriter&		writeMessage(){return DataWriterNull;}
+    virtual DataWriter&		writeInvocation(const std::string& name){return DataWriter::Null;}
+    virtual DataWriter&		writeMessage(){return DataWriter::Null;}
 	virtual void			writeRaw(const UInt8* data,UInt32 size){}
 
 	virtual void			flush(bool full=false){}
@@ -78,20 +78,20 @@ public:
 	virtual void			createWriter(std::shared_ptr<DataWriter>& pWriter) {}
 	virtual bool			hasToConvert(DataReader& reader) {return false;}
 
-
-	static Writer			Null;
-	static DataWriterNull	DataWriterNull;
+    static Writer			Null;
 
 protected:
 	Writer(WriterHandler* pHandler=NULL);
 	Writer(Writer& writer);
+	Writer(bool isNull);
 	virtual ~Writer();
 
 	QualityOfService		_qos;
 	WriterHandler*			_pHandler;
+
+private:
 	State					_state;
 };
-
 
 
 } // namespace Mona

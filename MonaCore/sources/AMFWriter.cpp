@@ -17,12 +17,14 @@
 
 #include "Mona/AMFWriter.h"
 #include "Mona/Logs.h"
-
+#include <math.h>
 
 using namespace std;
 
 
 namespace Mona {
+
+AMFWriter   AMFWriter::Null;
 
 class ObjectRef : virtual Object {
 public:
@@ -34,6 +36,10 @@ public:
 
 AMFWriter::AMFWriter() : _amf3(false),amf0Preference(false) {
 
+}
+
+AMFWriter::AMFWriter(bool isNull) : NullableObject(isNull),_amf3(false), amf0Preference(false) {
+	stream.setstate(std::ios_base::eofbit);
 }
 
 AMFWriter::~AMFWriter() {

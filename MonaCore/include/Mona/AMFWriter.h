@@ -26,7 +26,8 @@
 namespace Mona {
 
 class ObjectRef;
-class AMFWriter : public DataWriter, virtual Object {
+
+class AMFWriter : public DataWriter, virtual NullableObject {
 public:
 	AMFWriter();
 	virtual ~AMFWriter();
@@ -55,7 +56,10 @@ public:
 
 	bool				amf0Preference;
 
+    static AMFWriter    Null;
+
 private:
+	AMFWriter(bool isNull);
 	void writeInteger(Int32 value);
 	void writeText(const std::string& value);
 
@@ -63,12 +67,6 @@ private:
 	std::vector<UInt8>				_references;
 	bool							_amf3;
 	std::list<ObjectRef*>			_lastObjectReferences;
-};
-
-
-class AMFWriterNull : public AMFWriter {
-public:
-	AMFWriterNull() {stream.setstate(std::ios_base::eofbit);}
 };
 
 

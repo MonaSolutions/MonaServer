@@ -20,7 +20,6 @@ This file is a part of Mona.
 #include "Mona/Mona.h"
 #include "Mona/SocketAddress.h"
 #include "Mona/PoolThread.h"
-#include "Mona/SocketSender.h"
 #include "Mona/PoolThreads.h"
 #include "Mona/Expirable.h"
 #include <memory>
@@ -28,6 +27,8 @@ This file is a part of Mona.
 
 namespace Mona {
 
+class SocketManager;
+class SocketSender;
 
 class Socket : virtual Object,Expirable<Socket> {
 	friend class SocketManager;
@@ -90,7 +91,7 @@ public:
 		// and if it remains some data to write (flush returns false)
 		std::lock_guard<std::mutex>	lock(_mutexAsync);
 		if (!_senders.empty() || !pSender->flush(ex, *this)) {
-			_senders.push_back(static_pointer_cast<SocketSender>(pSender));
+            _senders.push_back(std::static_pointer_cast<SocketSender>(pSender));
 			manageWrite(ex);
 		}
 	}

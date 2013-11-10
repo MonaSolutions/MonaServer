@@ -25,6 +25,7 @@
 
 namespace Mona {
 
+class UDProtocol;
 class Protocols : virtual Object {
 public:
 	Protocols(Invoker& invoker) : _invoker(invoker) {}
@@ -44,7 +45,7 @@ private:
 		EXCEPTION_TO_LOG(success = ((ProtocolType*)pProtocol.get())->load(ex, params), name, " server")
 		if (success) {
 			_protocols.emplace_back(pProtocol);
-			NOTE(name, " server starts on ", params.port, " ", dynamic_cast<UDProtocol*>(pProtocol.get()) ? "UDP" : "TCP", " port");
+            NOTE(name, " server starts on ", params.port, " ", dynamic_cast<UDProtocol*>(pProtocol.get()) ? "UDP" : "TCP", " port");
 		}
 	}
 

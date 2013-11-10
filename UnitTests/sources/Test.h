@@ -31,10 +31,10 @@ class PoolTest : virtual Mona::Object {
 public:	
 
 	template<class TestClass>
-	bool makeAndRegister(const char * className, const char * testName) { _mapTests.emplace(className, std::make_shared<TestClass>(testName)); return true; }
+    bool makeAndRegister(const char * className, const char * testName) { _mapTests.emplace(className, std::unique_ptr<TestClass>(new TestClass(testName))); return true; }
 		/// \brief create the test and add it to the PoolTest
 
-	void getListTests(std::vector<const std::string>& lTests);
+    void getListTests(std::vector<std::string>& lTests);
 		/// \brief get a list of test module names
 
 	void runAll();
@@ -47,7 +47,7 @@ public:
 		/// \brief PoolTest Instance accessor
 
 private:
-	std::multimap<const std::string, std::shared_ptr<Test>> _mapTests;
+    std::multimap<const std::string, std::unique_ptr<Test>> _mapTests;
 		/// multimap of Test name to Tests functions
 			
 	PoolTest(){}

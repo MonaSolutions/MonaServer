@@ -27,6 +27,8 @@
 
 namespace Mona {
 
+class Socket;
+
 class SocketSender : public WorkThread, virtual Object {
 	friend class Socket;
 public:

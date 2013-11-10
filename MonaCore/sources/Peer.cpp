@@ -21,13 +21,10 @@
 #include "Mona/Util.h"
 #include "Mona/Logs.h"
 
-
 using namespace std;
 
 
 namespace Mona {
-
-DataReaderNull	Peer::DataReaderNull;
 
 class Member : virtual Object {
 public:

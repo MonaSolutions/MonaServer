@@ -45,7 +45,7 @@ int HelpFormatter::calcIndent() const {
 		int fullLen = option.fullName().length();
 		int n = 0;
 #ifdef _OS_UNIX
-		n += shortLen + _ShortPrefix.length() + 2;
+        n += shortLen + sizeof(SHORT_PREFIX) + 2;
 		if (option.takesArgument())
 			n += option.argumentName().length() + (option.argumentRequired() ? 0 : 2);
 #endif
@@ -95,8 +95,8 @@ void HelpFormatter::formatOption(ostream& ostr, const Option& option) const
 	int n = 0;
 
 #ifdef _OS_UNIX
-	ostr << _ShortPrefix << option.shortName();
-	n += _ShortPrefix.length() + option.shortName().length()+2;
+    ostr << SHORT_PREFIX << option.shortName();
+    n += sizeof(SHORT_PREFIX) + option.shortName().length()+2;
 	if (option.takesArgument()) {
 		if (!option.argumentRequired()) {
 			ostr << '[';

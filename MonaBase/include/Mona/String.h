@@ -172,7 +172,7 @@ public:
 	template <typename ...Args>
 	static std::string& Append(std::string& result, float value, Args&&... args) {
 		char buffer[64];
-		sprintf(buffer, "%.8g", value); // TODO check than with a ToNumber it gives the same thing
+		sprintf(buffer, "%.8g", value);
 		result.append(buffer);
 		return String::Append(result, args ...);
 	}
@@ -181,7 +181,7 @@ public:
 	template <typename ...Args>
 	static std::string& Append(std::string& result, double value, Args&&... args) {
 		char buffer[64];
-		sprintf(buffer, "%.16g", value); // TODO check than with a ToNumber it gives the same thing
+		sprintf(buffer, "%.16g", value);
 		result.append(buffer);
 		return String::Append(result, args ...);
 	}
@@ -190,7 +190,13 @@ public:
 	template <typename ...Args>
 	static std::string& Append(std::string& result, const void* value, Args&&... args)	{
 		char buffer[64];
-		sprintf(buffer, "%08lX", value);
+		
+		#if defined(MONA_PTR_IS_64_BIT)
+            sprintf(buffer, "%016" I64_FMT "X", value);
+		#else
+            sprintf(buffer, "%08lX", value);
+		#endif
+
 		result.append(buffer);
 		return String::Append(result, args ...);
 	}
@@ -204,7 +210,7 @@ public:
 	static std::string& Append(std::string& result, const Mona::Format<Type>& custom, Args&&... args) {
 		char buffer[64];
 		try {
-			sprintf(buffer, sizeof(buffer), custom.format, custom.value);
+            snprintf(buffer, sizeof(buffer), custom.format, custom.value);
 		}
 		catch (...) {
 			// TODO remove the loop => ERROR("String formatting error during Append(...)");
@@ -224,6 +230,9 @@ public:
 private:
 
 	static std::string& Append(std::string& result) { return result; }
+#if defined(WIN32)
+	static int output_exp_old_format; // for setting number of exponent digits to 2
+#endif
 };
 
 

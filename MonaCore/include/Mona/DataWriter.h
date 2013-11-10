@@ -24,6 +24,7 @@
 
 namespace Mona {
 
+class DataWriterNull;
 
 class DataWriter : virtual Object {
 public:
@@ -62,6 +63,8 @@ public:
 		
 	BinaryWriter writer;
 	BinaryStream stream;
+
+    static DataWriterNull Null;
 protected:
 	DataWriter():writer(stream),_lastReference(0){}
 
@@ -95,25 +98,25 @@ inline void	DataWriter::clear() {
 }
 
 
-class DataWriterNull : public DataWriter, virtual Object {
+class DataWriterNull : public DataWriter, virtual NullableObject {
 public:
-	DataWriterNull() {stream.setstate(std::ios_base::eofbit);}
+	DataWriterNull() : NullableObject(true) { stream.setstate(std::ios_base::eofbit); }
 
 private:
-	void beginObject(const std::string& type="",bool external=false){}
-	void endObject(){}
+    void beginObject(const std::string& type="",bool external=false){}
+    void endObject(){}
 
-	void writePropertyName(const std::string& value){}
+    void writePropertyName(const std::string& value){}
 
-	void beginArray(UInt32 size){}
-	void endArray(){}
+    void beginArray(UInt32 size){}
+    void endArray(){}
 
-	void writeDate(const Time& date){}
-	void writeNumber(double value){}
-	void writeString(const std::string& value){}
-	void writeBoolean(bool value){}
-	void writeNull(){}
-	void writeBytes(const UInt8* data,UInt32 size){}
+    void writeDate(const Time& date){}
+    void writeNumber(double value){}
+    void writeString(const std::string& value){}
+    void writeBoolean(bool value){}
+    void writeNull(){}
+    void writeBytes(const UInt8* data,UInt32 size){}
 };
 
 

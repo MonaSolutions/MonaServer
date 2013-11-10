@@ -71,7 +71,7 @@ DataWriter& HTTPWriter::writeInvocation(const std::string& name) {
 
 DataWriter& HTTPWriter::writeMessage() {
 	if(state()==CLOSED)
-		return DataWriterNull;
+        return DataWriter::Null;
 	return newWriter();
 }
 

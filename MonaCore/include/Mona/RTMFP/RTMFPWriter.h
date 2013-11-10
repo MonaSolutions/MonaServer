@@ -61,7 +61,8 @@ public:
 		WARN("RTMFPWriter ", id, " has failed, ", args ...);
 		clear();
 		_stage = _stageAck = _lostCount = _ackCount = 0;
-		_band.initWriter(_band.changeWriter(*new RTMFPWriter(*this)));
+        std::shared_ptr<RTMFPWriter> pWriter = _band.changeWriter(*new RTMFPWriter(*this));
+        _band.initWriter(pWriter);
 		_qos.reset();
 		_reseted = true;
 	}

@@ -49,12 +49,12 @@ public:
 		/// Creates a Windows service with the executable specified by path
 		/// and the given displayName.
 		///
-		/// Throws a ExistsException if the service has already been registered.
+        /// Throws an exception if the service has already been registered.
 		
 	bool unregisterService(Exception& ex);
 		/// Deletes the Windows service. 
 		///
-		/// Throws a NotFoundException if the service has not been registered.
+        /// Throws an exception if the service has not been registered.
 
 	bool registered(Exception& ex) const;
 		/// Returns true if the service has been registered with the Service Control Manager.
@@ -66,13 +66,13 @@ public:
 		/// Starts the service.
 		/// Does nothing if the service is already running.
 		///
-		/// Throws a NotFoundException if the service has not been registered.
+        /// Throws an exception if the service has not been registered.
 
 	bool stop(Exception& ex);
 		/// Stops the service.
 		/// Does nothing if the service is not running.
 		///
-		/// Throws a NotFoundException if the service has not been registered.
+        /// Throws an exception if the service has not been registered.
 
 	bool setStartup(Exception& ex, Startup startup);
 		/// Sets the startup mode for the service.

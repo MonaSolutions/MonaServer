@@ -43,7 +43,7 @@ public:
 
 
 	template <typename ...Args>
-	static void	Log(Logger::Priority prio, char* file, long line, Args&&... args) {
+    static void	Log(Logger::Priority prio, const char* file, long line, Args&&... args) {
 		if (_Level < prio)
 			return;
 		std::string shortFile(file);
@@ -57,9 +57,9 @@ public:
 		std::string message;
 		String::Format(message, args ...);
 		if (_PLogger)
-			_PLogger->log(std::this_thread::get_id(), Util::GetThreadName(std::this_thread::get_id()), prio, file, shortFile, line, message);
+            _PLogger->log(std::this_thread::get_id(), Util::GetThreadName(std::this_thread::get_id()), prio, file, shortFile, line, message);
 		else
-			_DefaultLogger.log(std::this_thread::get_id(), Util::GetThreadName(std::this_thread::get_id()), prio, file, shortFile, line, message);
+            _DefaultLogger.log(std::this_thread::get_id(), Util::GetThreadName(std::this_thread::get_id()), prio, file, shortFile, line, message);
 	}
 
 	template <typename ...Args>

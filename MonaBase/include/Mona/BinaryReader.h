@@ -25,11 +25,11 @@ namespace Mona {
 
 class BinaryReader : virtual Object {
 public:
-	enum ByteOrder {
-		BIG_ENDIAN,
-		LITTLE_ENDIAN
-	};
-	BinaryReader(std::istream& istr,ByteOrder byteOrder=BIG_ENDIAN); // BIG_ENDIAN==NETWORK_ENDIAN
+    enum ByteOrder {
+        BIG_ENDIAN_ORDER,
+        LITTLE_ENDIAN_ORDER
+    };
+    BinaryReader(std::istream& istr,ByteOrder byteOrder=BIG_ENDIAN_ORDER); // BIG_ENDIAN_ORDER==NETWORK_ENDIAN
 
 	UInt32			read7BitValue();
 	UInt64			read7BitLongValue();

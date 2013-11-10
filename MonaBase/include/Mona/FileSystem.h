@@ -53,6 +53,8 @@ public:
 	static bool							ResolveFileWithPaths(const std::string& paths, std::string& file);
 	static std::vector<std::string>&	Unpack(const std::string& path, std::vector<std::string>& values);
 	static std::string&					Pack(const std::vector<std::string>& values, std::string& path);
+
+    static std::string& GetCurrent(std::string& path);
 	
 private:
 	static const std::string _PathSeparator;

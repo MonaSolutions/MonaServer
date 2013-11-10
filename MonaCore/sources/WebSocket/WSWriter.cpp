@@ -100,7 +100,7 @@ void WSWriter::write(UInt8 type,const UInt8* data,UInt32 size) {
 
 DataWriter& WSWriter::writeInvocation(const std::string& name) {
 	if(state()==CLOSED)
-		return DataWriterNull;
+        return DataWriter::Null;
 	DataWriter& invocation = newWriter();
 	invocation.writeString(name);
 	return invocation;
@@ -108,7 +108,7 @@ DataWriter& WSWriter::writeInvocation(const std::string& name) {
 
 DataWriter& WSWriter::writeMessage() {
 	if(state()==CLOSED)
-		return DataWriterNull;
+        return DataWriter::Null;
 	return newWriter();
 }
 

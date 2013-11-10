@@ -1,11 +1,11 @@
 
 CC=g++
 CFLAGS=-std=c++11
-EXEC=MonaServer
-INCLUDES=-I/usr/local/include/ -I./../MonaBase/include/ -I./../MonaCore/include/
-LIBDIR=-L/usr/local/lib/ -L./../MonaBase/lib/ -L./../MonaCore/lib/
-LDFLAGS+="-Wl,-rpath,./../MonaBase/lib/,-rpath,./../MonaCore/lib/,-rpath,/usr/local/lib/"
-LIBS ?= -lMonaBase -lMonaCore -lcrypto -lssl -lluajit-5.1
+EXEC=UnitTests
+INCLUDES=-I/usr/local/include/ -I./../MonaBase/include/
+LIBDIR=-L/usr/local/lib/ -L./../MonaBase/lib/
+LDFLAGS+="-Wl,-rpath,./../MonaBase/lib/,-rpath,/usr/local/lib/"
+LIBS ?= -lMonaBase -lcrypto -lssl
 
 OS := $(shell uname)
 ifeq ($(OS),Darwin)

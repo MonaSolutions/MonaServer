@@ -15,11 +15,11 @@ details (or else see http://www.gnu.org/licenses/).
 This file is a part of Mona.
 */
 
-#pragma once
-
 
 #include "Mona/TerminateSignal.h"
-
+#if !defined(_WIN32)
+    #include "signal.h"
+#endif
 
 namespace Mona {
 

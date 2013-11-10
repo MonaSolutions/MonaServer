@@ -21,7 +21,9 @@ This file is a part of Mona.
 #include "Mona/Time.h"
 #include "Mona/FileSystem.h"
 #include <sstream>
-
+#if !defined(_WIN32)
+    #include <signal.h>
+#endif
 
 using namespace std;
 
@@ -51,15 +53,15 @@ Application::Application() : _logSizeByFile(1000000), _logRotation(10) {
 void Application::HandleSignal(int sig) {
 	switch (sig) {
 		case SIGILL:
-			FATAL_THROW("Illegal instruction");
+            FATAL_ERROR("Illegal instruction");
 		case SIGBUS:
-			FATAL_THROW("Bus error");
+            FATAL_ERROR("Bus error");
 		case SIGSEGV:
-			FATAL_THROW("Segmentation violation");
+            FATAL_ERROR("Segmentation violation");
 		case SIGSYS:
-			FATAL_THROW("Invalid system call")
+            FATAL_ERROR("Invalid system call");
 		default:
-			FATAL_THROW("Error code ",sig)
+            FATAL_ERROR("Error code ",sig)
 	}
 }
 #endif
@@ -76,7 +78,7 @@ void Application::displayHelp() {
 }
 
 
-bool Application::init(int argc, char* argv[]) {
+bool Application::init(int argc, const char* argv[]) {
 
 
 	initApplicationPaths(argv[0]);
@@ -120,9 +122,9 @@ bool Application::init(int argc, char* argv[]) {
 	Exception ex;
 	defineOptions(ex, _options);
 	if (ex)
-		throw exception(ex.error().c_str());
+        FATAL_ERROR(ex.error());
 	if(!_options.process(ex,argc, argv, [this](Exception& ex,const string& name, const string& value){ setString("application." + name, value); }))
-		throw exception(ex.error().c_str());
+        FATAL_ERROR(ex.error());
 
 	if (hasArgument("help")) {
 		displayHelp();
@@ -159,7 +161,7 @@ void Application::defineOptions(Exception& ex, Options& options) {
 	options.add(ex,"help", "h", "Displays help information about command-line usage.");
 }
 
-int Application::run(int argc, char* argv[]) {
+int Application::run(int argc, const char* argv[]) {
 	try {
 		if (!init(argc, argv))
 			return EXIT_OK;
@@ -226,23 +228,19 @@ void Application::initApplicationPaths(const char* command) {
 	string path(command);
 
 #if defined(_WIN32)
-	char buffer[1024];
-	int n = GetModuleFileNameA(0, buffer, sizeof(buffer));
-	if (n <= 0)
-		FATAL_ERROR("Impossible to determine application paths")
-	path.assign(buffer);
+    FileSystem::GetCurrent(path);
 #else
-	if (command.find('/') != string::npos) {
+    if (path.find('/') != string::npos) {
 		if (!FileSystem::IsAbsolute(path)) {
 			string temp = move(path);
-			path.assign(FileSystem::Current());
+            FileSystem::GetCurrent(path);
 			path.append(temp);
 		}
 	} else {
 		string paths;
 		if (!Util::Environment().getString("PATH", paths) || !FileSystem::ResolveFileWithPaths(paths, path)) {
 			string temp = move(path);
-			path.assign(FileSystem::Current());
+            FileSystem::GetCurrent(path);
 			path.append(temp);
 		}
 	}

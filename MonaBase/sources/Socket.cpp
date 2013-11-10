@@ -15,11 +15,10 @@ details (or else see http://www.gnu.org/licenses/).
 This file is a part of Mona.
 */
 
-#pragma once
-
 
 #include "Mona/Socket.h"
 #include "Mona/SocketManager.h"
+#include "Mona/SocketSender.h"
 
 using namespace std;
 
@@ -156,7 +155,7 @@ void Socket::rejectConnection() {
 		sockfd = ::accept(_sockfd, NULL, 0);  // TODO acceptEx?
 	} while (sockfd == NET_INVALID_SOCKET && Net::LastError() == NET_EINTR);
 	if (sockfd != NET_INVALID_SOCKET)
-		closesocket(sockfd);
+        NET_CLOSESOCKET(sockfd);
 }
 
 void Socket::shutdown(Exception& ex,ShutdownType type) {

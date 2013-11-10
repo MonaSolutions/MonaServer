@@ -68,12 +68,12 @@ private:
 	mutable Event						_eventInit;
 	mutable std::mutex					_mutex;
 
-	mutable std::map<SOCKET, std::unique_ptr<Socket>*>		_sockets;
+    mutable std::map<NET_SOCKET, std::unique_ptr<Socket>*>		_sockets;
 
+    FakeSocket							_fakeSocket;
+    Exception							_exSkip;
 #if defined(_WIN32)
-	HWND								_eventSystem;
-	FakeSocket							_fakeSocket;
-	Exception							_exSkip;
+    HWND								_eventSystem;
 #else
 	int									_eventSystem;
 #endif
@@ -83,7 +83,7 @@ private:
 	int									_currentError;
 
 	std::unique_ptr<Socket>*			_ppSocket;
-	SOCKET								_sockfd;
+    NET_SOCKET							_sockfd;
 };
 
 

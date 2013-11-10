@@ -37,8 +37,6 @@ public:
 	AMFWriter&				writeAMFError(const std::string& code, const std::string& description, bool withoutClosing = false) { return writeAMFState("_error", code, description, withoutClosing); }
 	bool					writeMedia(MediaType type,UInt32 time,MemoryReader& data);
 
-
-	static AMFWriterNull	AMFWriterNull;
 protected:
 	FlashWriter(WriterHandler* pHandler=NULL);
 	FlashWriter(FlashWriter& writer);

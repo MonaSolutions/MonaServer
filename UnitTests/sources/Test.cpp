@@ -6,9 +6,9 @@ using namespace Mona;
 using namespace std;
 
 void PoolTest::runAll() {
-	for(auto itTest : _mapTests) {
-		itTest.second->TestFunction();
-		NOTE(itTest.second->name(), " OK");
+    for(auto& itTest : _mapTests) {
+        itTest.second->TestFunction();
+        NOTE(itTest.second->name(), " OK");
 	}
 }
 
@@ -23,15 +23,15 @@ void PoolTest::run(const string& mod) {
 
 	// Run all tests of the module
 	for(auto it = itTest.first; it != itTest.second; it++) {
-		it->second->TestFunction();
-		NOTE(it->second->name(), " OK");
+        it->second->TestFunction();
+        NOTE(it->second->name(), " OK");
 	}
 }
 
-void PoolTest::getListTests(vector<const string>& lTests) {
+void PoolTest::getListTests(vector<string>& lTests) {
 
 	for(auto itTest = _mapTests.begin(), end = _mapTests.end(); itTest != end ; itTest = _mapTests.upper_bound(itTest->first)) {
-		lTests.push_back(itTest->first);
+        lTests.push_back(itTest->first);
 	}
 }
 

@@ -169,7 +169,7 @@ bool IsValid(struct tm& time, int msec, int microsec, bool exp ) {
 
 ADD_TEST(TimeTest, TestIsValid) {
 
-	const struct stTime {
+    struct stTime {
 
 		int  d_year;     // year under test
 		int  d_month;    // month under test
@@ -180,7 +180,7 @@ ADD_TEST(TimeTest, TestIsValid) {
 		int  d_msec;		
 		int  d_microsec;
 		bool d_exp;      // expected value
-	};
+    };
 	static stTime data[] = {
 		// A valid date is a date between 1/1/1970 and 31/12/3000
 		//year   month   day   hour   min   sec   msec   µsec    expected value
@@ -205,7 +205,10 @@ ADD_TEST(TimeTest, TestIsValid) {
 		{ 2014, 5, 23, 0, 0, 0, 0, 0, true },
 		{ 1970, 2, 29, 0, 0, 0, 0, 0, true },
 		{ 2000, 2, 29, 0, 0, 0, 0, 0, true },
-		{ 2100, 2, 29, 0, 0, 0, 0, 0, true },
+#if defined(WIN32)
+        { 2100, 2, 29, 0, 0, 0, 0, 0, true },
+#endif
+        { 2036, 2, 29, 0, 0, 0, 0, 0, true },
 		{ 2001, 3, 18, 16, 30, 15, 900, 890, true },
 		{ 2001, 3, 18, 16, 30, 15, 900, 1890, false },
 		{ 2001, 3, 18, 16, 30, 15, 900, -1, false },
@@ -214,7 +217,11 @@ ADD_TEST(TimeTest, TestIsValid) {
 		{ 2001, 3, 18, 16, 30, 15, -2, 0, false },
 		{ 2001, 14, 18, 16, 30, 15, 0, 0, true },
 		{ 2001, 14, 18, 25, 90, 78, 0, 0, true },
+#if defined(WIN32)
 		{ 1969, 1, 1, 0, 0, 0, 0, 0, false },
+#else
+        { 1903, 1, 1, 0, 0, 0, 0, 0, true },
+#endif
 		{ 3001, 1, 2, 0, 0, 0, 0, 0, false },
 	};
 

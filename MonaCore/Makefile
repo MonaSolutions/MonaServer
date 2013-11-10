@@ -1,23 +1,43 @@
 ifeq ($(shell uname -s),Darwin)
-    LIB=libMonaCore.dylib
+    LIB=lib/libMonaCore.dylib
 	SHARED=-dynamiclib -install_name ./../MonaCore/$(LIB)
 else
-	LIB=libMonaCore.so
+	LIB=lib/libMonaCore.so
 	SHARED=-shared
 endif
 CC=g++
-LIBS ?= -L/usr/local/lib/ -lMonaBase -lPocoFoundation -lPocoXML -lPocoUtil -lPocoNet -lcrypto -lssl
-INCLUDES = -I/usr/local/include/ -I./../MonaBase/include/ -I./include/
-OBJECTS = $(wildcard $(SRCDIR)sources/*.cpp $(SRCDIR)sources/*/*.cpp)
-OBJECT = $(OBJECTS:%.cpp=%.o)
+CFLAGS=-std=c++11
+INCLUDES=-I/usr/local/include/ -I./../MonaBase/include/ -I./include/
+LIBDIR=-L/usr/local/lib/ -L./../MonaBase/lib/
+LIBS ?= -lMonaBase -lcrypto -lssl
 
-main:   $(OBJECT)
+SOURCES = $(wildcard sources/*.cpp sources/*/*.cpp)
+OBJECT = $(addprefix tmp/Release/,$(notdir $(SOURCES:%.cpp=%.o)))
+OBJECTD = $(addprefix tmp/Debug/,$(notdir $(SOURCES:%.cpp=%.o)))
+
+release:
+	mkdir -p tmp/Release
+	mkdir -p lib
+	@make -k $(OBJECT)
 	@echo creating dynamic lib $(LIB)
-	@$(CC) -fPIC $(SHARED) $(OBJECT) -o $(LIB) $(LIBS)
+	@$(CC) $(CFLAGS) $(LIBDIR) -fPIC $(SHARED) -o $(LIB) $(OBJECT) $(LIBS)
+
+debug:
+	mkdir -p tmp/Debug
+	mkdir -p lib
+	@make -k $(OBJECTD)
+	@echo creating dynamic debug lib $(LIB)
+	@$(CC) -g $(CFLAGS) $(LIBDIR) -fPIC $(SHARED) -o $(LIB) $(OBJECTD) $(LIBS)
 
 $(OBJECT):
-	@echo compiling $(@:%.o=%.cpp)
-	@$(CC) -fpic $(INCLUDES) -c -o $(@) $(@:%.o=%.cpp)
+	@echo compiling $(filter %/$(subst .o,.cpp,$(notdir $(@))),$(SOURCES))
+	@$(CC) $(CFLAGS) -fpic $(INCLUDES) -c -o $(@) $(filter %/$(subst .o,.cpp,$(notdir $(@))),$(SOURCES))
+
+$(OBJECTD):
+	@echo compiling $(filter %/$(subst .o,.cpp,$(notdir $(@))),$(SOURCES))
+	@$(CC) -g $(CFLAGS) -fpic $(INCLUDES) -c -o $(@) $(filter %/$(subst .o,.cpp,$(notdir $(@))),$(SOURCES))
 
 clean:
-	rm -f $(OBJECT) $(LIB)
+	@echo cleaning project MonaCore
+	@rm -f $(OBJECT) $(LIB)
+	@rm -f $(OBJECTD) $(LIB)

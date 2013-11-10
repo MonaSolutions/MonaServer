@@ -19,6 +19,9 @@
 
 #include <stdio.h>
 #include <string>
+#if !defined(WIN32)
+	#include "string.h"
+#endif
 
 /////  Usefull macros and patchs   //////
 
@@ -30,10 +33,11 @@
 #if defined(_WIN32)
 #define _WINSOCKAPI_    // stops windows.h including winsock.h
 #define sprintf sprintf_s
+#define snprintf sprintf_s
 #define timegm _mkgmtime
 #define GMTIME(VALUE,RESULT) gmtime_s(&RESULT,&VALUE);
 #define LOCALTIME(VALUE,RESULT) localtime_s(&RESULT,&VALUE);
-#elif
+#else
 #define GMTIME(VALUE,RESULT) gmtime_r(&VALUE,&RESULT)
 #define LOCALTIME(VALUE,RESULT) localtime_r(&VALUE,&RESULT)
 #endif

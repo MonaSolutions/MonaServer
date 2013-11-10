@@ -23,6 +23,7 @@
 #include "Mona/Time.h"
 #include "Mona/Buffer.h"
 #include <openssl/aes.h>
+#include <math.h>
 
 namespace Mona {
 

@@ -57,14 +57,14 @@ public:
 
 	void					displayHelp();
 
-	int						run(int argc, char* argv[]);
+    int						run(int argc, const char* argv[]);
 
 	virtual bool			isInteractive() const { return true; }
 
 protected:
 	Application();
 
-	bool					init(int argc, char* argv[]);
+    bool					init(int argc, const char* argv[]);
 	virtual int				main() = 0;
 
 	virtual bool			loadLogFiles(std::string& directory, std::string& fileName, UInt32& sizeByFile, UInt16& rotation);
