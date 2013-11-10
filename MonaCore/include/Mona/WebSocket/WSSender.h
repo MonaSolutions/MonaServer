@@ -26,14 +26,13 @@ namespace Mona {
 
 class WSSender : public TCPSender, virtual Object {
 public:
-	WSSender() : TCPSender(true),packaged(false) {}
+	WSSender() : packaged(false) {}
 	
 	JSONWriter		writer;
 	bool			packaged;
-private:
 
-	const UInt8*	begin(bool displaying = false) { return	writer.stream.data(); }
-	UInt32			size(bool displaying = false) { return writer.stream.size(); }
+	const UInt8*	begin() { return writer.stream.data(); }
+	UInt32			size() { return writer.stream.size(); }
 
 };
 

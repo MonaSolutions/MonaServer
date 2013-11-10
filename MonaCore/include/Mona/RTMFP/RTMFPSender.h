@@ -34,8 +34,8 @@ public:
 	bool			available() { return UDPSender::available() && packet.length() >= RTMFP_MIN_PACKET_SIZE; }
 
 private:
-	const UInt8*	begin(bool displaying) { return displaying ? (packet.begin() + 6) : packet.begin(); }
-	UInt32			size(bool displaying) { return displaying ? (packet.length() - 6) : packet.length(); }
+	const UInt8*	begin() { return packet.begin(); }
+	UInt32			size() { return packet.length(); }
 	
 	bool			run(Exception& ex);
 

@@ -18,7 +18,6 @@
 #pragma once
 
 #include "Mona/Mona.h"
-#include "Mona/Sessions.h"
 #include "Mona/Handler.h"
 #include "Mona/Protocols.h"
 
@@ -35,7 +34,7 @@ private:
 	Server& _server;
 };
 
-class Server : private Gateway,protected Handler,private Startable {
+class Server : protected Handler,private Startable {
 	friend class ServerManager;
 public:
 	Server(UInt32 bufferSize=0,UInt32 threads=0);
@@ -54,23 +53,13 @@ private:
 	virtual void    onStop(){}
 	void			requestHandle() { wakeUp(); }
 
-	void			receive(Decoding& decoded);
 	void			run(Exception& ex);
 	
-	Session*		session(const UInt8* peerId) { return _sessions.find(peerId); }
-	Session*		session(const SocketAddress& address) { return _sessions.find(address); }
-
-	Session&		registerSession(Session* pSession) { return _sessions.add(pSession); }
-	void			readable(Exception& ex,Protocol& protocol);
-
-
-	Protocols		_protocols;
-	Sessions		_sessions;	
-	ServerManager	_manager;
+	Protocols					_protocols;
+	std::unique_ptr<Sessions>	_pSessions;	
+	ServerManager				_manager;
 };
 
-
-inline void ServerManager::handle(Exception& ex) { _server.manage(); }
 
 
 } // namespace Mona

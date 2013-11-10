@@ -49,7 +49,7 @@ public:
 	bool set(Exception& ex,const std::string& host, UInt16 port);
 
 	/// set SocketAddress from an IP address and a service name or port number
-	bool set(Exception& ex, const std::string& host, const std::string& port) { set(ex, host, resolveService(ex,port)); }
+	bool set(Exception& ex, const std::string& host, const std::string& port) { return set(ex, host, resolveService(ex,port)); }
 
 	/// set SocketAddress from an IP address or host name and a port number/service name
 	bool set(Exception& ex, const std::string& hostAndPort);

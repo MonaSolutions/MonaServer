@@ -38,3 +38,4 @@ DataWriter::writeString
 DataReader::readString
 Refactoriser UDPProtocol?
 - Elminer tous les constructeurs de délégation
+- Protéger les accès âralleles aux variables d'instances de Logs

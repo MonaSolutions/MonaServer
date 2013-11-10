@@ -118,7 +118,7 @@ private:
 SocketAddress SocketAddress::_Addressv4Wildcard;
 SocketAddress SocketAddress::_Addressv6Wildcard(IPAddress::IPv6);
 
-SocketAddress::SocketAddress(IPAddress::Family family) : _pAddress(family == IPAddress::IPv6 ? (SocketAddressCommon*)new IPv4SocketAddress() : (SocketAddressCommon*)new IPv6SocketAddress()) {
+SocketAddress::SocketAddress(IPAddress::Family family) : _pAddress(family == IPAddress::IPv6 ? (SocketAddressCommon*)new IPv6SocketAddress() : (SocketAddressCommon*)new IPv4SocketAddress()) {
 }
 
 SocketAddress::SocketAddress(const IPAddress& host, UInt16 port) {
@@ -134,7 +134,7 @@ SocketAddress::SocketAddress(const SocketAddress& other) : _pAddress(other._pAdd
 void SocketAddress::clear() {
 	lock_guard<mutex>	lock(_mutex);
 	_toString.clear();
-	_pAddress.reset(family() == IPAddress::IPv6 ? (SocketAddressCommon*)new IPv4SocketAddress() : (SocketAddressCommon*)new IPv6SocketAddress());
+	_pAddress.reset(family() == IPAddress::IPv6 ? (SocketAddressCommon*)new IPv6SocketAddress() : (SocketAddressCommon*)new IPv4SocketAddress());
 }
 
 void SocketAddress::set(const SocketAddress& other) {
@@ -273,8 +273,8 @@ const string& SocketAddress::toString() const {
 
 
 UInt16 SocketAddress::resolveService(Exception& ex,const string& service) {
-	UInt16 port = String::ToNumber<UInt16>(ex, service);
-	if (!ex)
+	UInt16 port=0;
+	if (String::ToNumber<UInt16>(service,port))
 		return port;
 	if (!Net::InitializeNetwork(ex))
 		return 0;

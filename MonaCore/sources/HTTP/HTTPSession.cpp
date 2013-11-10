@@ -19,6 +19,7 @@
 #include "Mona/HTTP/HTTP.h"
 #include "Mona/HTTPPacketReader.h"
 #include "Mona/FileSystem.h"
+#include "Mona/Protocol.h"
 #include "Mona/Exceptions.h"
 #include <cstring> // for memcmp
 #include <fstream>
@@ -43,13 +44,13 @@ HTTPSession::~HTTPSession() {
 	}
 }
 
-bool HTTPSession::buildPacket(MemoryReader& data,UInt32& packetSize) {
+
+bool HTTPSession::buildPacket(const shared_ptr<Buffer<UInt8>>& pData, MemoryReader& packet) {
 	if(_isWS)
-		return WSSession::buildPacket(data,packetSize);
-	const UInt8* end = data.current()+data.available()-4;
+		return WSSession::buildPacket(pData, packet);
+	const UInt8* end = packet.current() + packet.available() - 4;
 	if(memcmp(end,"\r\n\r\n",4)!=0)
 		return false;
-	packetSize = data.available();
 	return true;
 }
 
@@ -75,7 +76,7 @@ void HTTPSession::packetHandler(MemoryReader& packet) {
 	Exception ex;
 	((SocketAddress&)peer.serverAddress).set(ex,temp, invoker.params.HTTP.port);
 	if (ex)
-		WARN("serverAddress of HTTPSession ",id," impossible to determine with the host ",temp)
+		WARN("serverAddress of HTTPSession ",name()," impossible to determine with the host ",temp)
 
 	if(peer.connected && String::ICompare(oldPath,peer.path)!=0)
 		peer.onDisconnection();
@@ -96,8 +97,8 @@ void HTTPSession::packetHandler(MemoryReader& packet) {
 			if (headers.getString("upgrade", temp) && String::ICompare(temp, "websocket") == 0) {
 				peer.onDisconnection();
 				_isWS=true;
-				((string&)peer.protocol) = "WebSocket";
-				((string&)protocol.name) = "WebSocket";
+				peer.setString("protocol", "WebSocket");
+				((string&)protocol().name) = "WebSocket";
 				DataWriter& response = _writer.writeMessage();
 				response.writeString("HTTP/1.1 101 Switching Protocols");
 				response.beginObject();

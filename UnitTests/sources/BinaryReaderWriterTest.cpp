@@ -56,79 +56,79 @@ void Read(BinaryReader& reader) {
 
 	bool b;
 	reader.readRaw((char*)&b, sizeof(b));
-	EXPECT_TRUE(b);
+	CHECK(b);
 	reader.readRaw((char*)&b, sizeof(b));
-	EXPECT_TRUE(!b);
+	CHECK(!b);
 
 	char c = reader.read8();
-	EXPECT_TRUE(c == 'a');
+	CHECK(c == 'a');
 
 	short shortv = reader.read16();
-	EXPECT_TRUE(shortv == -100);
+	CHECK(shortv == -100);
 
 	unsigned short ushortv = reader.read16();
-	EXPECT_TRUE(ushortv == 50000);
+	CHECK(ushortv == 50000);
 
 	int intv = reader.read32();
-	EXPECT_TRUE(intv == -123456);
+	CHECK(intv == -123456);
 
 	unsigned uintv = reader.read32();
-	EXPECT_TRUE(uintv == 123456);
+	CHECK(uintv == 123456);
 
 	long longv = reader.read32();
-	EXPECT_TRUE(longv == -1234567890);
+	CHECK(longv == -1234567890);
 
 	unsigned long ulongv = reader.read32();
-	EXPECT_TRUE(ulongv == 1234567890);
+	CHECK(ulongv == 1234567890);
 
 	Int64 int64v = reader.read64();
-	EXPECT_TRUE(int64v == -1234567890);
+	CHECK(int64v == -1234567890);
 
 	UInt64 uint64v = reader.read64();
-	EXPECT_TRUE(uint64v == 1234567890);
+	CHECK(uint64v == 1234567890);
 
 	float floatv;
 	reader.readRaw((char *)&floatv, sizeof(floatv));
-	EXPECT_TRUE(floatv == 1.5);
+	CHECK(floatv == 1.5);
 
 	double doublev;
 	reader.readRaw((char *)&doublev, sizeof(doublev));
-	EXPECT_TRUE(doublev == -1.5);
+	CHECK(doublev == -1.5);
 
 	std::string str;
 	reader.readString8(str);
-	EXPECT_TRUE(str == "foo");
+	CHECK(str == "foo");
 	reader.readString8(str);
-	EXPECT_TRUE(str == "");
+	CHECK(str == "");
 	reader.readString8(str);
-	EXPECT_TRUE(str == "bar");
+	CHECK(str == "bar");
 	reader.readString8(str);
-	EXPECT_TRUE(str == "");
+	CHECK(str == "");
 
 	UInt32 uint32v = reader.read7BitValue();
-	EXPECT_TRUE(uint32v == 100);
+	CHECK(uint32v == 100);
 	uint32v = reader.read7BitValue();
-	EXPECT_TRUE(uint32v == 1000);
+	CHECK(uint32v == 1000);
 	uint32v = reader.read7BitValue();
-	EXPECT_TRUE(uint32v == 10000);
+	CHECK(uint32v == 10000);
 	uint32v = reader.read7BitValue();
-	EXPECT_TRUE(uint32v == 100000);
+	CHECK(uint32v == 100000);
 	uint32v = reader.read7BitValue();
-	EXPECT_TRUE(uint32v == 1000000);
+	CHECK(uint32v == 1000000);
 
 	uint64v = reader.read7BitLongValue();
-	EXPECT_TRUE(uint64v == 100);
+	CHECK(uint64v == 100);
 	uint64v = reader.read7BitLongValue();
-	EXPECT_TRUE(uint64v == 1000);
+	CHECK(uint64v == 1000);
 	uint64v = reader.read7BitLongValue();
-	EXPECT_TRUE(uint64v == 10000);
+	CHECK(uint64v == 10000);
 	uint64v = reader.read7BitLongValue();
-	EXPECT_TRUE(uint64v == 100000);
+	CHECK(uint64v == 100000);
 	uint64v = reader.read7BitLongValue();
-	EXPECT_TRUE(uint64v == 1000000);
+	CHECK(uint64v == 1000000);
 
 	reader.readRaw(3, str);
-	EXPECT_TRUE(str == "RAW");
+	CHECK(str == "RAW");
 }
 
 

@@ -16,7 +16,7 @@
 */
 
 #include "Mona/TCPSession.h"
-#include "Mona/Logs.h"
+#include "Mona/Protocol.h"
 
 using namespace std;
 
@@ -26,38 +26,46 @@ namespace Mona {
 TCPSession::TCPSession(const SocketAddress& peerAddress, Protocol& protocol, Invoker& invoker) : _decoding(false), TCPClient(invoker.sockets, peerAddress), Session(protocol, invoker) {
 	((SocketAddress&)peer.address).set(peerAddress);
 	peer.addresses.begin()->set(peerAddress);
-	protocol.check(*this);
 }
 
-
-TCPSession::~TCPSession() {
-	
+void TCPSession::onError(const string& error) {
+	ERROR("Protocol ", protocol().name, ", ", error);
 }
 
+UInt32 TCPSession::onReception(const shared_ptr<Buffer<UInt8>>& pData) {
+	UInt32 size = pData->size();
+	onData(pData);
+	if (pData->size() >= size)
+		return false;
+	// has consumed few data
+	endReception();
+	return size - pData->size();
+}
 
-UInt32 TCPSession::onReception(const UInt8* data,UInt32 size) {
-	if(!checked) {
-		protocol.check(*this);
-		(bool&)checked = true;
-	}
-	if(died)
-		return size;
+void TCPSession::onData(const shared_ptr<Buffer<UInt8>>& pData) {
+	if (died)
+		return;
 	_decoding=false;
-	MemoryReader packet(data,size);
-	UInt32 length=0;
-	bool built = buildPacket(packet,length);
-	if(!built || size<length)
-		return size;
-	if(_decoding)
-		return size-length;
-	UInt32 pos = packet.position();
-	packet.reset();
-	packet.shrink(length);
-	DUMP(packet, "Request from ", peer.address.toString());
-	packet.next(pos);
-	packetHandler(packet);
-	return size-length;
+	MemoryReader packet(pData->data(), pData->size());
+	if (!buildPacket(pData, packet))
+		return;
+	UInt32 length = packet.position() + packet.available();
+	if (!_decoding) {
+		UInt32 pos = packet.position();
+		packet.reset();
+		if (!dumpJustInDebug || (dumpJustInDebug && Logs::GetLevel() >= 7))
+			DUMP(packet, "Request from ", peer.address.toString());
+		packet.next(pos);
+		packetHandler(packet);
+	}
+	UInt32 rest = pData->size() - length;
+	if (rest == 0)
+		return;
+	memcpy(pData->data(), pData->data() + (pData->size() - rest), rest); // move the rest to the beginning
+	pData->resize(rest);
+	onData(pData);
 }
+
 
 
 } // namespace Mona

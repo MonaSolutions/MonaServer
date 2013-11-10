@@ -23,10 +23,10 @@ using namespace std;
 
 namespace Mona {
 
-TCPClient::TCPClient(const SocketManager& manager) : _connected(false), StreamSocket(manager), _rest(0){
+TCPClient::TCPClient(const SocketManager& manager) : _pBuffer(new Buffer<UInt8>()), _connected(false), StreamSocket(manager), _rest(0) {
 }
 
-TCPClient::TCPClient(const SocketManager& manager, const SocketAddress& peerAddress) : _peerAddress(peerAddress),_connected(true), _rest(0), StreamSocket(manager) {
+TCPClient::TCPClient(const SocketManager& manager, const SocketAddress& peerAddress) : _pBuffer(new Buffer<UInt8>()),_peerAddress(peerAddress), _connected(true), _rest(0), StreamSocket(manager) {
 
 }
 
@@ -64,29 +64,38 @@ void TCPClient::onReadable(Exception& ex) {
 		return;
 	}
 
-	if (available > (_buffer.size() - _rest))
-		_buffer.resize(available + _rest);
+	if (available > (_pBuffer->size() - _rest))
+		_pBuffer->resize(available + _rest);
 
-	int received = receiveBytes(ex, &_buffer[_rest], available);
+	int received = receiveBytes(ex, _pBuffer->data()+_rest, available);
 	if (ex)
 		return;
+
 	if (received <= 0) {
 		disconnect(); // Graceful disconnection
 		return;
 	}
-	onNewData(&_buffer[_rest], received);
 	_rest += received;
 
 	while (_rest > 0) {
-		UInt32 rest = onReception(&_buffer[0], _rest);
+
+		UInt32 originSize = _pBuffer->size();
+		_pBuffer->resize(_rest);
+		UInt32 rest = onReception(_pBuffer);
+
 		if (rest > _rest)
 			rest = _rest;
-		if (rest < _rest) {
-			if (rest>0)
-				memcpy(&_buffer[0], &_buffer[_rest - rest], rest); // move to the beginning
-			_rest = rest;
-		} else
-			break; // nothing to do, waiting new data
+
+		shared_ptr<Buffer<UInt8>> pOldBuffer(_pBuffer);
+		if (_pBuffer.use_count() > 2)
+			_pBuffer.reset(new Buffer<UInt8>(originSize));
+		else
+			_pBuffer->resetSize();
+	
+		// rest <= _rest, has consumed 0 or few bytes
+		if (rest>0 && (_rest != rest || !_pBuffer.unique())) // has consumed few bytes or buffer has changed
+			memcpy(_pBuffer->data(), pOldBuffer->data() + (_rest - rest), rest); // move to the beginning
+		_rest = rest;
 	}
 }
 

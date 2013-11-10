@@ -25,10 +25,10 @@ using namespace std;
 
 namespace Mona {
 
-RTMPSender::RTMPSender(const shared_ptr<RC4_KEY>& pEncryptKey): TCPSender(true),_pEncryptKey(pEncryptKey),_chunkSize(DEFAULT_CHUNKSIZE),_sizePos(0) {
+RTMPSender::RTMPSender(const SocketAddress& address, const shared_ptr<RC4_KEY>& pEncryptKey) : _address(address),_pEncryptKey(pEncryptKey), _chunkSize(DEFAULT_CHUNKSIZE), _sizePos(0) {
 }
 
-RTMPSender::RTMPSender(const RTMPSender& sender): TCPSender(true),_pEncryptKey(sender._pEncryptKey),_chunkSize(DEFAULT_CHUNKSIZE),_sizePos(0) {
+RTMPSender::RTMPSender(const RTMPSender& sender) : _address(sender._address),_pEncryptKey(sender._pEncryptKey), _chunkSize(DEFAULT_CHUNKSIZE), _sizePos(0) {
 }
 
 void RTMPSender::pack() {
@@ -48,7 +48,7 @@ void RTMPSender::pack() {
 
 bool RTMPSender::run(Exception& ex) {
 	pack();
-	dump();
+	Writer::DumpResponse(begin(),size(),_address);
 	if (_pEncryptKey)
 		RC4(_pEncryptKey.get(), size(), begin(), (UInt8*)begin());
 	return TCPSender::run(ex);

@@ -26,25 +26,35 @@ namespace Mona {
 class TCPSession : public Session, protected TCPClient, virtual Object {
 protected:
 	TCPSession(const SocketAddress& address,Protocol& protocol,Invoker& invoker);
-	virtual ~TCPSession();
 
 	template<typename DecodingType>
-	bool decode(const std::shared_ptr<DecodingType>& pDecoding) {
+	void decode(const std::shared_ptr<DecodingType>& pDecoding) {
 		_decoding = true;
-		return Session::decode<DecodingType>(pDecoding);
+		Session::decode<DecodingType>(pDecoding);
+	}
+
+	template<typename DecodingType>
+	bool decode(const std::shared_ptr<DecodingType>& pDecoding,const SocketAddress& address) {
+		WARN("TCP Session ", name(), " cannot updated its address (TCP session is in a connected way");
+		decode<DecodingType>(pDecoding);
 	}
 
 private:
 	void			receive(MemoryReader& packet) { packetHandler(packet); }
-	virtual bool	buildPacket(MemoryReader& data,UInt32& packetSize)=0;
+
+	virtual bool	buildPacket(const std::shared_ptr<Buffer<UInt8>>& pData, MemoryReader& packet) = 0;
 	virtual void	packetHandler(MemoryReader& packet)=0;
+	virtual void	endReception() {}
+
+	void			onData(const std::shared_ptr<Buffer<UInt8>>& pData);
 
 	// TCPClient implementation
-	UInt32			onReception(const UInt8* data,UInt32 size);
-	void			onError(const std::string& error) { ERROR("Protocol ", protocol.name, ", ", error); }
+	UInt32			onReception(const std::shared_ptr<Buffer<UInt8>>& pData);
+	void			onError(const std::string& error);
 	void			onDisconnection() { kill(); }
 
 	bool			_decoding;
+	bool			_gotten;
 };
 
 

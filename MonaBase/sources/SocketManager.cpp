@@ -16,6 +16,7 @@
 */
 
 #include "Mona/SocketManager.h"
+#include "Mona/Logs.h"
 #include "string.h" // for memset
 #if !defined(_WIN32)
 #include "sys/epoll.h"
@@ -112,7 +113,7 @@ bool SocketManager::add(Exception& ex,Socket& socket) const {
 	if (WSAAsyncSelect(sockfd, _eventSystem, 104, flags) != 0) {
 		ppSocket->release();
 		delete ppSocket;
-		Socket::SetError(ex);
+		Net::SetError(ex);
 		return false;
 	}
 #else
@@ -144,7 +145,7 @@ bool SocketManager::add(Exception& ex,Socket& socket) const {
 bool SocketManager::startWrite(Exception& ex, Socket& socket) const {
 #if defined(_WIN32)
 	if (WSAAsyncSelect(socket._sockfd, _eventSystem, 104, FD_ACCEPT | FD_CLOSE | FD_READ | FD_WRITE) != 0) {
-		Socket::SetError(ex);
+		Net::SetError(ex);
 		return false;
 	}
 #else
@@ -164,7 +165,7 @@ bool SocketManager::startWrite(Exception& ex, Socket& socket) const {
 bool SocketManager::stopWrite(Exception& ex, Socket& socket) const {
 #if defined(_WIN32)
 	if (WSAAsyncSelect(socket._sockfd, _eventSystem, 104, FD_ACCEPT | FD_CLOSE | FD_READ) != 0) {
-		Socket::SetError(ex);
+		Net::SetError(ex);
 		return false;
 	}
 #else
@@ -226,7 +227,7 @@ void SocketManager::handle(Exception& ex) {
 	
 	if(_currentError!=0) {
 		Exception curEx;
-		Socket::SetError(curEx, _currentError);
+		Net::SetError(curEx, _currentError);
 		pSocket->onError(curEx.error());
 		return;
 	}
@@ -317,8 +318,10 @@ void SocketManager::run(Exception& exc) {
 			_currentError = WSAGETSELECTERROR(msg.lParam);
 			if(_currentError == ECONNABORTED)
 				_currentError = 0;
+			// TRACE("SocketManager::waitHandle()")
 			Task::waitHandle();
 		}
+
 		_sockfd = INVALID_SOCKET;
 	}
 	DestroyWindow(_eventSystem);
@@ -333,7 +336,7 @@ void SocketManager::run(Exception& exc) {
 		int results = epoll_wait(_eventSystem,&events[0],events.size(), -1);
 
 		if(results<0 && errno!=EINTR) {
-			SetError(ex);
+			Net::SetError(ex);
 			Task::waitHandle();
 			break;
 		}
@@ -356,7 +359,7 @@ void SocketManager::run(Exception& exc) {
 		
 			_currentEvent = event.events;
 			if(_currentEvent&EPOLLERR)
-				_currentError = Socket:LastError();
+				_currentError = Net:LastError();
 			if(_currentError==0 && _currentEvent&EPOLLOUT) {
 				// protected for _ppSocket access access
 				lock_guard<mutex> lock(_mutex);

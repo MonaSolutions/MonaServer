@@ -43,7 +43,7 @@ public:
 
 
 	template <typename ...Args>
-	static void	Log(Logger::Priority prio, char* file, long line, const Args&... args) {
+	static void	Log(Logger::Priority prio, char* file, long line, Args&&... args) {
 		if (_Level < prio)
 			return;
 		std::string shortFile(file);
@@ -63,7 +63,7 @@ public:
 	}
 
 	template <typename ...Args>
-	static void Dump(const UInt8* data, UInt32 size, const Args&... args) {
+	static void Dump(const UInt8* data, UInt32 size, Args&&... args) {
 		Buffer<UInt8> out;
 		std::string header;
 		String::Format(header, args ...);
@@ -76,11 +76,11 @@ public:
 			_DefaultLogger.dump(&out[0], out.size());
 	}
 	template <typename ...Args>
-	static void	Dump(MemoryReader& packet, const Args&... args) { Dump(packet.current(), packet.available(), args ...);	}
+	static void	Dump(MemoryReader& packet, Args&&... args) { Dump(packet.current(), packet.available(), args ...);	}
 	template <typename ...Args>
-	static void	Dump(MemoryWriter& packet, const Args&... args) { Dump(packet.begin(), packet.length(), args ...); }
+	static void	Dump(MemoryWriter& packet, Args&&... args) { Dump(packet.begin(), packet.length(), args ...); }
 	template <typename ...Args>
-	static void	Dump(MemoryWriter& packet, UInt16 offset, const Args&... args) { Dump(packet.begin() + offset, packet.length() - offset, args ...); }
+	static void	Dump(MemoryWriter& packet, UInt16 offset, Args&&... args) { Dump(packet.begin() + offset, packet.length() - offset, args ...); }
 
 
 private:

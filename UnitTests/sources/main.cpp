@@ -68,7 +68,6 @@ private:
 
 ///// MAIN
 	int main() {
-
 		try {
 
 			string module;
@@ -79,7 +78,7 @@ private:
 			else
 				PoolTest::PoolTestInstance().run(module);
 		}
-		catch (exception ex) {
+		catch (exception& ex) {
 			FATAL(ex.what())
 		}
 		NOTE("END OF TESTS");

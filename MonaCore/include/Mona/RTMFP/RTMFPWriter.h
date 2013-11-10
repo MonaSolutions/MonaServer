@@ -38,7 +38,7 @@ namespace Mona {
 class Invoker;
 class RTMFPWriter : public FlashWriter, virtual Object {
 public:
-	RTMFPWriter(const std::string& signature, BandWriter& band, WriterHandler* pHandler) : RTMFPWriter(signature, band, std::shared_ptr<RTMFPWriter>(), pHandler) {}
+	RTMFPWriter(const std::string& signature, BandWriter& band, WriterHandler* pHandler = NULL);
 	RTMFPWriter(const std::string& signature,BandWriter& band,std::shared_ptr<RTMFPWriter>& pThis,WriterHandler* pHandler=NULL);
 	virtual ~RTMFPWriter();
 
@@ -49,13 +49,13 @@ public:
 
 	virtual Writer&		newWriter(WriterHandler* pHandler = NULL) { return *(new RTMFPWriter(signature, _band, pHandler)); }
 
-	void				flush(Exception& ex, bool full=false);
+	void				flush(bool full=false);
 
 	void				acknowledgment(MemoryReader& reader);
 	void				manage(Exception& ex, Invoker& invoker);
 
 	template <typename ...Args>
-	void fail(const Args&... args) {
+	void fail(Args&&... args) {
 		if (state() == CLOSED)
 			return;
 		WARN("RTMFPWriter ", id, " has failed, ", args ...);
@@ -75,7 +75,7 @@ public:
 	State				state(State value=GET,bool minimal=false);
 
 	bool				writeMedia(MediaType type,UInt32 time,MemoryReader& data);
-	void				writeRaw(Exception& ex, const UInt8* data,UInt32 size);
+	void				writeRaw(const UInt8* data,UInt32 size);
 	void				writeMember(const Peer& peer);
 
 private:
@@ -84,7 +84,7 @@ private:
 	UInt32					headerSize(UInt64 stage);
 	void					flush(MemoryWriter& writer,UInt64 stage,UInt8 flags,bool header,BinaryReader& reader,UInt16 size);
 
-	void					raiseMessage(Exception& ex);
+	void					raiseMessage();
 	RTMFPMessageBuffered&	createBufferedMessage();
 	AMFWriter&				write(AMF::ContentType type,UInt32 time=0,MemoryReader* pData=NULL);
 

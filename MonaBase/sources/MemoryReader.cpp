@@ -26,16 +26,6 @@ MemoryReader MemoryReader::Null(NULL,0);
 MemoryReader::MemoryReader(const UInt8* buffer,UInt32 size) : _memory((const char*)buffer,size),BinaryReader(_memory),fragments(1) {
 }
 
-
-// Consctruction by copy
-/*
-MemoryReader::MemoryReader(MemoryReader& other) : _memory(other._memory),BinaryReader(_memory),fragments(other.fragments) {
-}*/
-
-
-MemoryReader::~MemoryReader() {
-}
-
 void MemoryReader::shrink(UInt32 rest) {
 	if(rest>available())
 		rest = available();

@@ -28,9 +28,7 @@ namespace Mona {
 class MemoryReader: public BinaryReader, virtual Object {
 public:
 	MemoryReader(const UInt8* buffer,UInt32 size);
-	//MemoryReader(MemoryReader&);
-	virtual ~MemoryReader();
-
+	
 	const UInt32	fragments;
 
 	UInt32	available() { return _memory.available(); }

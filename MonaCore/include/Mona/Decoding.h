@@ -20,40 +20,34 @@
 #include "Mona/Mona.h"
 #include "Mona/Task.h"
 #include "Mona/WorkThread.h"
-#include "Mona/Protocol.h"
+#include "Mona/MemoryReader.h"
+#include "Mona/Buffer.h"
+#include "Mona/Expirable.h"
+#include "Mona/SocketAddress.h"
+#include <memory>
+
 
 
 namespace Mona {
 
 
-class Session;
 class Decoding : public WorkThread, private Task, virtual Object {
+	friend class Session;
 public:
-	Decoding(UInt32 id, TaskHandler& taskHandler, Protocol& protocol, const std::shared_ptr<MemoryReader>& pReader, const SocketAddress& address);
-	virtual ~Decoding();
-
-	const UInt32		 id;
-	const SocketAddress	 address;
-
-	MemoryReader&		reader() { return *_pReader; };
-	Session*			session() { return _protocol.session(id, *_pReader); }
-
-protected:
-	Decoding(UInt32 id,TaskHandler& taskHandler,Protocol& protocol,const std::shared_ptr<Buffer<UInt8>>& pBuffer,const SocketAddress& address);
-
+	Decoding(const std::shared_ptr<Buffer<UInt8>> &pBuffer, TaskHandler& taskHandler, UInt32 offset = 0);
 private:
 	// If ex is raised, an error is displayed if the operation has returned false
 	// otherwise a warning is displayed
-	virtual bool				decode(Exception& ex,MemoryReader& reader){return false;}
+	virtual bool	decode(Exception& ex,MemoryReader& reader){return false;}
 
-	void						handle(Exception& ex) { _protocol.receive(*this); }
-	bool						run(Exception& ex);
+	bool			run(Exception& ex);
+	void			handle(Exception& ex);
 
-	std::shared_ptr<MemoryReader>	_pReader;
-	std::shared_ptr<Buffer<UInt8> >	_pBuffer;
-	Protocol&						_protocol;
+	const std::shared_ptr<Buffer<UInt8>>	_pBuffer;
+	Expirable<Session>						_expirableSession;
+	MemoryReader							_reader;
+	SocketAddress							_address;
 };
-
 
 
 } // namespace Mona

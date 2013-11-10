@@ -16,7 +16,6 @@
 */
 
 #include "Mona/RTMFP/RTMFPSession.h"
-#include "Mona/RTMFP/RTMFPCookieComputing.h"
 #include "Mona/RTMFP/RTMFPDecoding.h"
 #include "Mona/RTMFP/RTMFPFlow.h"
 #include "Mona/RTMFP/RTMFProtocol.h"
@@ -35,29 +34,18 @@ RTMFPSession::RTMFPSession(RTMFProtocol& protocol,
 				const Peer& peer,
 				const UInt8* decryptKey,
 				const UInt8* encryptKey,
-				const char* name) : _pThread(NULL), _socket(protocol),_pSender(new RTMFPSender()), farId(farId), Session(protocol, invoker, peer, name), _decrypt(decryptKey, RTMFPEngine::DECRYPT), _encrypt(encryptKey, RTMFPEngine::ENCRYPT), _timesFailed(0), _timeSent(0), _nextRTMFPWriterId(0), _timesKeepalive(0), _pLastWriter(NULL), _prevEngineType(RTMFPEngine::DEFAULT) {
+				const char* name) : _failed(false),_pThread(NULL), _socket(protocol), _pSender(new RTMFPSender()), farId(farId), Session(protocol, invoker, peer, name), _decrypt(decryptKey, RTMFPEngine::DECRYPT), _encrypt(encryptKey, RTMFPEngine::ENCRYPT), _timesFailed(0), _timeSent(0), _nextRTMFPWriterId(0), _timesKeepalive(0), _pLastWriter(NULL), _prevEngineType(RTMFPEngine::DEFAULT) {
 	_pFlowNull = new RTMFPFlow(0,"",this->peer,invoker,*this);
 }
 
 
 RTMFPSession::~RTMFPSession() {
-	if(!checked) {
-		double ptr = 0;
-		if (peer.getNumber("&RTMFPCookieComputing", ptr)) {
-			RTMFPCookieComputing* pCookieComputing = reinterpret_cast<RTMFPCookieComputing*>(static_cast<unsigned>(ptr));
-			if (pCookieComputing) {
-				peer.setNumber("&RTMFPCookieComputing", 0.);
-				delete pCookieComputing;
-			}
-		}
-	}
-
 	kill();
 }
 
 
 void RTMFPSession::failSignal() {
-	Session::failed=true;
+	_failed = true;
 	if(died)
 		return;
 	++_timesFailed;
@@ -65,10 +53,7 @@ void RTMFPSession::failSignal() {
 	writer.clear(11); // no other message, just fail message, so I erase all data in first
 	writer.write8(0x0C);
 	writer.write16(0);
-	Exception ex;
-	flush(ex, false); // We send immediatly the fail message
-	if (ex)
-		ERROR("Error during sending of the fail message : ",ex.error());
+	flush(false); // We send immediatly the fail message
 
 	// After 6 mn we can considerated that the session is died!
 	if(_timesFailed==10 || _recvTimestamp.isElapsed(360000000))
@@ -76,7 +61,7 @@ void RTMFPSession::failSignal() {
 }
 
 void RTMFPSession::kill() {
-	if(!failed())
+	if(!_failed)
 		failSignal();
 	if(died)
 		return;
@@ -102,7 +87,7 @@ void RTMFPSession::manage() {
 
 	Session::manage();
 
-	if(failed()) {
+	if (_failed) {
 		failSignal();
 		return;
 	}
@@ -114,7 +99,7 @@ void RTMFPSession::manage() {
 	}
 
 	// To accelerate the deletion of peer ghost (mainly for netgroup efficient), starts a keepalive server after 2 mn
-	if(_recvTimestamp.isElapsed(120000000) && !keepAlive())
+	if(_recvTimestamp.isElapsed(120000000) && !keepAlive()) // TODO check it!
 		return;
 
 	// Raise RTMFPWriter
@@ -136,13 +121,10 @@ void RTMFPSession::manage() {
 		++it;
 	}
 
-	if(!failed())
+	if (!_failed)
 		peer.onManage();
 
-	Exception exflush;
-	flush(exflush);
-	if (exflush)
-		ERROR("Error during flushing rtmfp session : ", exflush.error());
+	flush();
 }
 
 bool RTMFPSession::keepAlive() {
@@ -156,23 +138,16 @@ bool RTMFPSession::keepAlive() {
 		return false;
 	}
 	++_timesKeepalive;
-	
-	Exception ex;
-	writeMessage(ex, 0x01,0);
-	if (ex) {
-		fail("Error of writing in keepAlive : ", ex.error());
-		return false;
-	}
-
+	writeMessage(0x01,0);
 	return true;
 }
 
 
 void RTMFPSession::p2pHandshake(const string& tag,const SocketAddress& address,UInt32 times,Session* pSession) {
-	if(failed())
+	if (_failed)
 		return;
 
-	DEBUG("Peer newcomer address send to peer ",id," connected");
+	DEBUG("Peer newcomer address send to peer ",name()," connected");
 	
 	UInt16 size = 0x36;
 	UInt8 index=0;
@@ -190,12 +165,8 @@ void RTMFPSession::p2pHandshake(const string& tag,const SocketAddress& address,U
 	}
 	size += (pAddress->host().family() == IPAddress::IPv6 ? 16 : 4);
 
-	Exception ex;
-	MemoryWriter& writer = writeMessage(ex, 0x0F,size);
-	if (ex) {
-		fail("Error trying to write p2phandshake : ", ex.error());
-		return;
-	}
+
+	MemoryWriter& writer = writeMessage(0x0F,size);
 
 	writer.write8(0x22);
 	writer.write8(0x21);
@@ -208,20 +179,18 @@ void RTMFPSession::p2pHandshake(const string& tag,const SocketAddress& address,U
 
 	writer.writeRaw(tag);
 
-	flush(ex);
-	if (ex)
-		ERROR("Error during flushing in rtmfp handshake : ", ex.error());
+	flush();
 }
 
-bool RTMFPSession::decode(shared_ptr<Buffer<UInt8> >& pBuffer, const SocketAddress& address, shared_ptr<MemoryReader>& pReader) {
-	shared_ptr<RTMFPDecoding> pDecoding(new RTMFPDecoding(id,invoker,protocol,pBuffer,address));
+bool RTMFPSession::decode(const shared_ptr<Buffer<UInt8> >& pBuffer, const SocketAddress& address) {
+	shared_ptr<RTMFPDecoding> pDecoding(new RTMFPDecoding(pBuffer,invoker));
 	pDecoding->decoder = _decrypt.next(farId==0 ? RTMFPEngine::SYMMETRIC : RTMFPEngine::DEFAULT);
 	_prevEngineType = pDecoding->decoder.type;
-	Session::decode<RTMFPDecoding>(pDecoding);
+	Session::decode<RTMFPDecoding>(pDecoding,address);
 	return false;
 }
 
-void RTMFPSession::flush(Exception& ex, UInt8 marker,bool echoTime,RTMFPEngine::Type type) {
+void RTMFPSession::flush(UInt8 marker,bool echoTime,RTMFPEngine::Type type) {
 	_pLastWriter=NULL;
 	if(died)
 		return;
@@ -249,9 +218,13 @@ void RTMFPSession::flush(Exception& ex, UInt8 marker,bool echoTime,RTMFPEngine::
 		_pSender->farId = farId;
 		_pSender->encoder = _encrypt.next(type);
 		_pSender->address.set(peer.address);
+
+		dumpResponse(_pSender->packet.begin() + 6, _pSender->packet.length() - 6);
+
+		Exception ex;
 		_pThread = _socket.send<RTMFPSender>(ex, _pSender,_pThread);
 		if (ex)
-			return;
+			ERROR("RTMFP flush, ", ex.error());
 		_pSender.reset(new RTMFPSender());
 	}
 }
@@ -259,18 +232,18 @@ void RTMFPSession::flush(Exception& ex, UInt8 marker,bool echoTime,RTMFPEngine::
 MemoryWriter& RTMFPSession::writer() {
 	MemoryWriter& writer = _pSender->packet;
 	if(!writer.good()) {
-		if(!failed())
-			WARN("Writing packet failed : the writer has certainly exceeded the size set");
+		if (!_failed)
+			WARN("Writing packet failed, the writer has certainly exceeded the size set");
 		writer.reset(11);
 	}
 	writer.limit(RTMFP_MAX_PACKET_LENGTH);
 	return writer;
 }
 
-MemoryWriter& RTMFPSession::writeMessage(Exception& ex, UInt8 type,UInt16 length,RTMFPWriter* pWriter) {
+MemoryWriter& RTMFPSession::writeMessage(UInt8 type, UInt16 length, RTMFPWriter* pWriter) {
 
 	// No sending formated message for a failed session!
-	if(failed()) {
+	if (_failed) {
 		_pSender->packet.clear(11);
 		_pSender->packet.limit(11);
 		return _pSender->packet;
@@ -281,10 +254,10 @@ MemoryWriter& RTMFPSession::writeMessage(Exception& ex, UInt8 type,UInt16 length
 	UInt16 size = length + 3; // for type and size
 
 	if(size>_pSender->packet.available()) {
-		flush(ex, false); // send packet (and without time echo)
+		flush(false); // send packet (and without time echo)
 		
 		if(size > _pSender->packet.available()) {
-			CRITIC("RTMFPMessage truncated because exceeds maximum UDP packet size on session ",id);
+			CRITIC("RTMFPMessage truncated because exceeds maximum UDP packet size on session ",name());
 			size = _pSender->packet.available();
 		}
 		_pLastWriter=NULL;
@@ -346,7 +319,7 @@ void RTMFPSession::packetHandler(MemoryReader& packet) {
 
 			case 0x4c :
 				/// Session death!
-				Session::failed=true; // to avoid the fail signal!!
+				_failed = true; // to avoid the fail signal!!
 				kill();
 				return;
 
@@ -354,12 +327,8 @@ void RTMFPSession::packetHandler(MemoryReader& packet) {
 			case 0x01 :
 				if(!peer.connected)
 					fail("Timeout connection client");
-				else {
-					Exception ex;
-					writeMessage(ex, 0x41,0);
-					if (ex)
-						fail("Error of writing in RTMFPSession packethandler : ", ex.error());
-				}
+				else
+					writeMessage(0x41,0);
 			case 0x41 :
 				_timesKeepalive=0;
 				break;
@@ -370,9 +339,9 @@ void RTMFPSession::packetHandler(MemoryReader& packet) {
 				
 				RTMFPWriter* pRTMFPWriter = writer(id);
 				if(pRTMFPWriter)
-					pRTMFPWriter->fail("Writer rejected on session ",this->id);
+					pRTMFPWriter->fail("Writer rejected on session ",name());
 				else
-					WARN("RTMFPWriter ",id," unfound for failed signal on session ",this->id);
+					WARN("RTMFPWriter ", id, " unfound for failed signal on session ", name());
 				break;
 
 			}
@@ -393,7 +362,7 @@ void RTMFPSession::packetHandler(MemoryReader& packet) {
 				if(pRTMFPWriter)
 					pRTMFPWriter->acknowledgment(message);
 				else
-					WARN("RTMFPWriter ",id," unfound for acknowledgment on session ",this->id);
+					WARN("RTMFPWriter ",id," unfound for acknowledgment on session ",name());
 				break;
 			}
 			/// Request
@@ -405,7 +374,7 @@ void RTMFPSession::packetHandler(MemoryReader& packet) {
 				stage = message.read7BitLongValue()-1;
 				deltaNAck = message.read7BitLongValue()-1;
 				
-				if(failed())
+				if (_failed)
 					break;
 
 				map<UInt64,RTMFPFlow*>::const_iterator it = _flows.find(idFlow);
@@ -456,8 +425,11 @@ void RTMFPSession::packetHandler(MemoryReader& packet) {
 					flags = message.read8();
 
 				// Process request
-				if(pFlow)
-					pFlow->fragmentHandler(stage,deltaNAck,message,flags);
+				if (pFlow) {
+					pFlow->fragmentHandler(stage, deltaNAck, message, flags);
+					if (peer.serverAddress.port() == 0)
+						((SocketAddress&)peer.serverAddress).set(peer.serverAddress.host(), invoker.params.RTMFP.port);
+				}
 
 				break;
 			}
@@ -480,10 +452,7 @@ void RTMFPSession::packetHandler(MemoryReader& packet) {
 		}
 	}
 
-	Exception ex;
-	flush(ex);
-	if (ex)
-		ERROR("Error during flush in rtmfp packethandler : ", ex.error());
+	flush();
 }
 
 RTMFPWriter* RTMFPSession::writer(UInt64 id) {
@@ -505,7 +474,7 @@ RTMFPFlow& RTMFPSession::flow(UInt64 id) {
 
 RTMFPFlow* RTMFPSession::createFlow(UInt64 id,const string& signature) {
 	if(died) {
-		ERROR("Session ",this->id," is died, no more RTMFPFlow creation possible");
+		ERROR("Session ", name(), " is died, no more RTMFPFlow creation possible");
 		return NULL;
 	}
 
@@ -519,20 +488,20 @@ RTMFPFlow* RTMFPSession::createFlow(UInt64 id,const string& signature) {
 	return _flows.insert(it,pair<UInt64,RTMFPFlow*>(id,new RTMFPFlow(id,signature,peer,invoker,*this)))->second;
 }
 
-void RTMFPSession::initWriter(shared_ptr<RTMFPWriter>& pWriter) {
+void RTMFPSession::initWriter(const shared_ptr<RTMFPWriter>& pWriter) {
 	while (++_nextRTMFPWriterId == 0 || !_flowWriters.emplace(_nextRTMFPWriterId, pWriter).second);
 	(UInt64&)pWriter->id = _nextRTMFPWriterId;
 	if (!_flows.empty())
 		(UInt64&)pWriter->flowId = _flows.begin()->second->id;
 	if (!pWriter->signature.empty())
-		DEBUG("New writer ", pWriter->id, " on session ", this->id);
+		DEBUG("New writer ", pWriter->id, " on session ", name());
 }
 
 
 inline shared_ptr<RTMFPWriter> RTMFPSession::changeWriter(RTMFPWriter& writer) {
 	auto it = _flowWriters.find(writer.id);
 	if (it == _flowWriters.end()) {
-		ERROR("RTMFPWriter ",writer.id," change impossible on session ",this->id)
+		ERROR("RTMFPWriter ", writer.id, " change impossible on session ", name())
 		return shared_ptr<RTMFPWriter>(&writer);
 	}
 	shared_ptr<RTMFPWriter> pWriter(it->second);

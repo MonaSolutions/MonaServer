@@ -26,37 +26,45 @@ namespace Mona {
 template<typename ElementType>
 class Buffer : virtual Object {
 public:
-	Buffer(UInt32 size=0) : _pBuffer(new ElementType[size]()), _size(size){}
+	Buffer(UInt32 size = 0) : _pBuffer(new ElementType[size]()), _size(size),_originalSize(size) {}
 	virtual ~Buffer() { delete [] _pBuffer; }
 
-	UInt32 size() const { return _size; }
-	void   resize(UInt32 size,bool preserveContent = true) {
-		if (size == _size)
+	UInt32	size() const { return _size; }
+
+	void resetSize() { _size = _originalSize; }
+
+	void resize(UInt32 size,bool preserveContent = true) {
+		if (size == _originalSize)
 			return;
+		if (size<_originalSize) {
+			_size = size;
+			return;
+		}
 		ElementType* pBuffer = new ElementType[size]();
 		if (preserveContent)
-			std::memcpy(pBuffer, _pBuffer, size > _size ? _size : size);
+			std::memcpy(pBuffer, _pBuffer, size > _originalSize ? _originalSize : size);
 		delete [] _pBuffer;
 		_pBuffer = pBuffer;
-		_size = size;
+		_originalSize = _size = size;
 	}
 
-	const ElementType* data() const { return _size > 0 ? &_pBuffer[0] : NULL; }
-	ElementType* data() { return _size > 0 ? &_pBuffer[0] : NULL; }
+	const ElementType* data() const { return _originalSize > 0 ? &_pBuffer[0] : NULL; }
+	ElementType* data() { return _originalSize > 0 ? &_pBuffer[0] : NULL; }
 
 	ElementType& operator [] (UInt32 index) {
-		FATAL_ASSERT(index < _size)
+		FATAL_ASSERT(index < _originalSize)
 		return _pBuffer[index];
 	}
 
 	const ElementType& operator [] (UInt32 index) const {
-		FATAL_ASSERT(index < _size)
+		FATAL_ASSERT(index < _originalSize)
 		return _pBuffer[index];
 	}
 
 private:
 	ElementType*	_pBuffer;
 	UInt32			_size;
+	UInt32			_originalSize;
 };
 
 

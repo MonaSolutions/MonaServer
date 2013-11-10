@@ -26,22 +26,27 @@ namespace Mona {
 
 
 class TCProtocol :public Protocol, protected TCPServer , virtual Object {
+public:
+	bool load(Exception& ex, const ProtocolParams& params);
+
 protected:
-	TCProtocol(const char* name, Invoker& invoker, Gateway& gateway) : TCPServer(invoker.sockets), Protocol(name, invoker, gateway) {}
+	TCProtocol(const char* name, Invoker& invoker, Sessions& sessions) : TCPServer(invoker.sockets), Protocol(name, invoker, sessions) {}
 	virtual ~TCProtocol() {stop();}
 
+
 private:
-	bool	load(Exception& ex, const ProtocolParams& params) {
-		SocketAddress address;
-		if (!address.set(ex, params.host, params.port))
-			return false;
-		return start(ex, address);
-	}
 
 	void	onError(const std::string& error) { WARN("Protocol ", name, ", ", error); }
 
 	bool    onConnection(const SocketAddress& address) { return auth(address); }
 };
+
+inline bool TCProtocol::load(Exception& ex, const ProtocolParams& params) {
+	SocketAddress address;
+	if (!address.set(ex, params.host, params.port))
+		return false;
+	return start(ex, address);
+}
 
 
 } // namespace Mona

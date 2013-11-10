@@ -26,7 +26,7 @@ Option Option::Null(true);
 Option::Option():Option(false) {
 }
 
-Option::Option(bool isNull) : _required(false), _repeatable(false), _argRequired(false), ObjectNullable(isNull) {
+Option::Option(bool isNull) : _required(false), _repeatable(false), _argRequired(false), NullableObject(isNull) {
 
 }
 
@@ -59,7 +59,11 @@ Option::Option(const char* fullName, const char* shortName, const string& descri
 	_argRequired(argRequired) {
 }
 
-	
+Option& Option::handler(const function<void(Exception& ex,const string& value)>& function) {
+	_handler = function;
+	return *this;
+}
+
 Option& Option::description(const string& text) {
 	_description = text;
 	return *this;

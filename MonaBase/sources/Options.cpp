@@ -123,9 +123,9 @@ bool Options::process(Exception& ex,const string& argument, string& name, string
 
 	value.assign(it, end);
 	if (_pOption->_handler)
-		_pOption->_handler(value);
+		_pOption->_handler(ex, value);
 	_pOption = NULL;
-	return true;
+	return !ex;
 }
 
 

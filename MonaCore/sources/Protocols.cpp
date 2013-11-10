@@ -25,10 +25,10 @@
 namespace Mona {
 
 
-void Protocols::load(Gateway& gateway) {
-	loadProtocol<RTMFProtocol,RTMFPParams>("RTMFP",_invoker.params.RTMFP,gateway);
-	loadProtocol<RTMProtocol,RTMPParams>("RTMP",_invoker.params.RTMP,gateway);
-	loadProtocol<HTTProtocol,HTTPParams>("HTTP",_invoker.params.HTTP,gateway);
+void Protocols::load(Sessions& sessions) {
+	loadProtocol<RTMFProtocol, RTMFPParams>("RTMFP", _invoker.params.RTMFP, sessions);
+	loadProtocol<RTMProtocol, RTMPParams>("RTMP", _invoker.params.RTMP, sessions);
+	loadProtocol<HTTProtocol, HTTPParams>("HTTP", _invoker.params.HTTP, sessions);
 }
 
 

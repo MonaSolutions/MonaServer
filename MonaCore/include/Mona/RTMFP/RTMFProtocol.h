@@ -26,15 +26,14 @@ namespace Mona {
 
 class RTMFProtocol : public UDProtocol, virtual Object  {
 public:
-	RTMFProtocol(const char* name, Invoker& invoker, Gateway& gateway) : UDProtocol(name, invoker, gateway) {}
+	RTMFProtocol(const char* name, Invoker& invoker, Sessions& sessions) : UDProtocol(name, invoker, sessions) {}
 	
+	bool		load(Exception& ex, const RTMFPParams& params);
+
 private:
-	bool							receive(Exception& ex,std::shared_ptr<Buffer<UInt8>>& pBuffer,SocketAddress& address);
-	UInt32							unpack(MemoryReader& packet) { return  RTMFP::Unpack(packet); }
-	Session*						session(UInt32 id,MemoryReader& packet);
-	void							manage() { if (_pHandshake) _pHandshake->manage(); }
-	void							check(Session& session);
-	virtual bool					load(Exception& ex, const RTMFPParams& params);
+	void		manage() { if (_pHandshake) _pHandshake->manage(); }
+	
+	void		onPacket(const std::shared_ptr<Buffer<UInt8>>& pData, const SocketAddress& address);
 
 	std::unique_ptr<RTMFPHandshake>	_pHandshake;
 };

@@ -22,18 +22,18 @@ This file is a part of Mona.
 #include "Mona/PoolThread.h"
 #include "Mona/SocketSender.h"
 #include "Mona/PoolThreads.h"
+#include "Mona/Expirable.h"
 #include <memory>
 #include <list>
 
 namespace Mona {
 
 
-class Socket : virtual Object {
+class Socket : virtual Object,Expirable<Socket> {
 	friend class SocketManager;
 	friend class DatagramSocket;
 	friend class StreamSocket;
 	friend class ServerSocket;
-	friend class SocketSender;
 public:
 
 	// Destroys the Socket (Closes the socket if it is still open)
@@ -101,28 +101,13 @@ public:
 		if (!managed(ex))
 			return pThread;
 
-		// return if no data to send
-		if (!pSender->available())
+		if (!shareThis(ex,pSender->_expirableSocket))
 			return pThread;
 
-		pSender->_pSocket = this;
-		pSender->_pSocketMutex = _pMutex;
 		pSender->_pThis = pSender;
 		pThread = _poolThreads.enqueue<SocketSenderType>(ex,pSender, pThread);
 		return pThread;
 	}
-
-
-#if defined(_WIN32)
-	static int  LastError() { return WSAGetLastError(); }
-#else
-	static int  LastError() { return errno; }
-#endif
-
-	static bool CheckError(Exception& ex);
-	static void SetError(Exception& ex) { SetError(ex, LastError(), std::string()); }
-	static void SetError(Exception& ex, int error) { SetError(ex, error, std::string()); }
-	static void SetError(Exception& ex, int error, const std::string& argument);
 
 protected:
 	// Can be called by a separated thread!
@@ -135,7 +120,7 @@ private:
 	Socket(const SocketManager& manager, int type = SOCK_STREAM);
 
 	template<typename SocketType, typename ...Args>
-	SocketType* acceptConnection(Exception& ex, Args&... args) {
+	SocketType* acceptConnection(Exception& ex, Args&&... args) {
 		ASSERT_RETURN(_initialized == true, NULL)
 
 		char buffer[IPAddress::MAX_ADDRESS_LENGTH];
@@ -145,9 +130,9 @@ private:
 		NET_SOCKET sockfd;
 		do {
 			sockfd = ::accept(_sockfd, pSA, &saLen);  // TODO acceptEx?
-		} while (sockfd == NET_INVALID_SOCKET && LastError() == EINTR);
+		} while (sockfd == NET_INVALID_SOCKET && Net::LastError() == EINTR);
 		if (sockfd == NET_INVALID_SOCKET) {
-			SetError(ex);
+			Net::SetError(ex);
 			return NULL;
 		}
 		SocketAddress address;
@@ -199,19 +184,26 @@ private:
 	void	flush(Exception& ex);
 
 	template<typename Type>
-	Type&	getOption(Exception& ex, int level, int option, Type& value);
+	Type& getOption(Exception& ex, int level, int option, Type& value) {
+		ASSERT_RETURN(_initialized == true, value)
+			int length(sizeof(value));
+		if (::getsockopt(_sockfd, level, option, reinterpret_cast<char*>(&value), &length) == -1)
+			Net::SetError(ex);
+		return value;
+	}
 	int		getOption(Exception& ex, int level, int option) { int value; return getOption<int>(ex, level, option, value); }
 
 	template<typename Type>
-	void	setOption(Exception& ex, int level, int option, const Type& value);
+	void setOption(Exception& ex, int level, int option, const Type& value) {
+		ASSERT(_initialized == true)
+			int length(sizeof(value));
+		if (::setsockopt(_sockfd, level, option, reinterpret_cast<const char*>(&value), length) == -1)
+			Net::SetError(ex);
+	}
 	void	setOption(Exception& ex, int level, int option, int value) { setOption<int>(ex, level, option, value); }
 
 	// A wrapper for the ioctl system call
 	int		ioctl(Exception& ex,NET_IOCTLREQUEST request,int value);
-
-
-
-	std::shared_ptr<std::mutex>					_pMutex; // used by SocketSender
 
 	std::unique_ptr<Socket>*					_ppSocket; // deleted by the socketmanager, and exists when managed!
 

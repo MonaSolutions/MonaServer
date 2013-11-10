@@ -59,7 +59,7 @@ private:
 };
 
 /// Macro for assert true function
-#define EXPECT_TRUE(CHECK) FATAL_ASSERT(CHECK)
+#define CHECK(CONDITION) FATAL_ASSERT(CONDITION)
 
 /// Macro for adding new tests in a Test cpp
 #define ADD_TEST(CLASSNAME, TESTNAME) class CLASSNAME ## TESTNAME : public Test { \

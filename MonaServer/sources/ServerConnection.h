@@ -43,7 +43,7 @@ public:
 
 class ServerConnection : private Mona::TCPClient, public Mona::MapParameters  {
 public:
-	ServerConnection(const Mona::SocketAddress& peerAddress, const Mona::SocketManager& manager, ServerHandler& handler, ServersHandler& serversHandler,const bool& alreadyConnected=false);
+	ServerConnection(const Mona::SocketAddress& peerAddress, const Mona::SocketManager& manager, ServerHandler& handler, ServersHandler& serversHandler,bool alreadyConnected=false);
 	virtual ~ServerConnection();
 
 	const std::string							host;
@@ -59,7 +59,7 @@ private:
 	void			sendPublicAddress();
 
 	void			onError(const std::string& error) { ERROR("Server ", address.toString(), ", ", error); _error = error; }
-	Mona::UInt32	onReception(const Mona::UInt8* data,Mona::UInt32 size);
+	Mona::UInt32	onReception(const std::shared_ptr<Mona::Buffer<Mona::UInt8>>& pData);
 	void			onDisconnection();
 
 	ServerHandler&						_handler;

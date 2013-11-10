@@ -25,12 +25,12 @@ namespace Mona {
 
 class RTMFPDecoding : public Decoding, virtual Object {
 public:
-	RTMFPDecoding(UInt32 id, TaskHandler& taskHandler, Protocol& protocol,std::shared_ptr<Buffer<UInt8> >& pBuffer, const SocketAddress& address) : Decoding(id, taskHandler, protocol, pBuffer, address) {}
+	RTMFPDecoding(const std::shared_ptr<Buffer<UInt8> >& pBuffer, TaskHandler& taskHandler) : Decoding(pBuffer, taskHandler) {}
 
 	RTMFPEngine	  decoder;
 
 private:
-	bool		  decode(Exception& ex, MemoryReader& reader) { reader.next(4); return RTMFP::Decode(decoder, reader); }
+	bool		  decode(Exception& ex, MemoryReader& reader) { reader.next(4); return RTMFP::Decode(ex,decoder, reader); }
 
 };
 

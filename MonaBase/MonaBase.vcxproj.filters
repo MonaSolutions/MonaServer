@@ -334,5 +334,8 @@
       <Filter>Application</Filter>
     </ClInclude>
     <ClInclude Include="include\Mona\Mona.h" />
+    <ClInclude Include="include\Mona\Expirable.h">
+      <Filter>Util</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

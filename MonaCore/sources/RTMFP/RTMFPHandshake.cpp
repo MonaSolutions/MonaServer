@@ -27,8 +27,8 @@ using namespace std;
 
 namespace Mona {
 
-RTMFPHandshake::RTMFPHandshake(RTMFProtocol& protocol,Gateway& gateway,Invoker& invoker) : RTMFPSession(protocol,invoker,0,Peer((Handler&)invoker),RTMFP_SYMETRIC_KEY,RTMFP_SYMETRIC_KEY,"RTMFPHandshake"),
-	_gateway(gateway) {
+RTMFPHandshake::RTMFPHandshake(RTMFProtocol& protocol, Sessions& sessions, Invoker& invoker) : RTMFPSession(protocol, invoker, 0, Peer((Handler&)invoker), RTMFP_SYMETRIC_KEY, RTMFP_SYMETRIC_KEY, "RTMFPHandshake"),
+	_sessions(sessions) {
 
 	memcpy(_certificat,"\x01\x0A\x41\x0E",4);
 	Util::Random(&_certificat[4],64);
@@ -90,7 +90,7 @@ bool RTMFPHandshake::createCookie(Exception& ex,MemoryWriter& writer,HelloAttemp
 			delete pCookie;
 			return false;
 		}
-		_cookies[pCookie->value()] =  pCookie;
+		_cookies.emplace(pCookie->value(),pCookie);
 		attempt.pCookie = pCookie;
 	}
 	writer.write8(COOKIE_SIZE);
@@ -119,10 +119,7 @@ void RTMFPHandshake::packetHandler(MemoryReader& packet) {
 	if(idResponse>0) {
 		response.write8(idResponse);
 		response.write16(response.length()-response.position()-2);
-		Exception ex;
-		flush(ex);
-		if (ex)
-			ERROR("Error during flush in packetHandler of RTMFPHandshake : ", ex.error());
+		flush();
 	} else
 		response.clear(pos);
 
@@ -130,7 +127,7 @@ void RTMFPHandshake::packetHandler(MemoryReader& packet) {
 	(UInt32&)farId=0;
 }
 
-Session* RTMFPHandshake::createSession(const UInt8* cookieValue) {
+RTMFPSession* RTMFPHandshake::createSession(const UInt8* cookieValue) {
 	map<const UInt8*,RTMFPCookie*,CompareCookies>::iterator itCookie = _cookies.find(cookieValue);
 	if(itCookie==_cookies.end()) {
 		string hex;
@@ -152,30 +149,25 @@ Session* RTMFPHandshake::createSession(const UInt8* cookieValue) {
 	
 	Util::UnpackUrl(ex,cookie.queryUrl,(SocketAddress&)peer.serverAddress,(string&)peer.path,peer);
 	if (ex)
-		WARN("serverAddress of RTMFP ", id, " impossible to determine from url ", cookie.queryUrl)
+		WARN("RTMFP peer.serverAddress impossible to determine from url ", cookie.queryUrl)
 
 	(UInt32&)farId = cookie.farId;
 	((SocketAddress&)peer.address).set(cookie.peerAddress);
 
-
 	// Create session
-	Session& session = _gateway.registerSession(new RTMFPSession((RTMFProtocol&)protocol,invoker,cookie.farId,peer,cookie.decryptKey,cookie.encryptKey));
-	(UInt32&)cookie.id = session.id;
+	RTMFPSession* pSession = &_sessions.add<RTMFPSession>(*new RTMFPSession(protocol<RTMFProtocol>(), invoker, cookie.farId, peer, cookie.decryptKey, cookie.encryptKey));
+	(UInt32&)cookie.id = pSession->id();
 		
 	// response!
 	MemoryWriter& response(writer());
 	response.write8(0x78);
 	response.write16(cookie.length());
 	cookie.read(response);
-	Exception ex2;
-	flush(ex2);
-	if (ex2)
-		ERROR("Error during flush in RTMFP createSession : ", ex2.error());
+	flush();
 
 	(UInt32&)farId=0; // reset farid to 0!
-	return &session;
+	return pSession;
 }
-
 
 
 UInt8 RTMFPHandshake::handshakeHandler(UInt8 id,MemoryReader& request,MemoryWriter& response) {
@@ -199,14 +191,14 @@ UInt8 RTMFPHandshake::handshakeHandler(UInt8 id,MemoryReader& request,MemoryWrit
 
 				const UInt8* peerId = (const UInt8*)epd.c_str();
 				
-				RTMFPSession* pSessionWanted = dynamic_cast<RTMFPSession*>(_gateway.session(peerId));
+				RTMFPSession* pSessionWanted = _sessions.find<RTMFPSession>(peerId);
 				if(pSessionWanted) {
-					if(((Session*)pSessionWanted)->failed)
+					if(pSessionWanted->failed())
 						return 0x00; // TODO no way in RTMFP to tell "died!"
 					/// Udp hole punching
 					UInt32 times = attempt(tag);
 
-					RTMFPSession* pSession = (times>0 || peer.address.host()==pSessionWanted->peer.address.host()) ? dynamic_cast<RTMFPSession*>(_gateway.session(peer.address)) : NULL;
+					RTMFPSession* pSession = (times>0 || peer.address.host() == pSessionWanted->peer.address.host()) ? _sessions.find<RTMFPSession>(peer.address) : NULL;
 					
 					if(pSession) {
 						UInt16 port = invoker.relay.add(pSession->peer,pSession->peer.address,pSessionWanted->peer,pSessionWanted->peer.address);
@@ -252,10 +244,12 @@ UInt8 RTMFPHandshake::handshakeHandler(UInt8 id,MemoryReader& request,MemoryWrit
 
 				// Fill peer infos
 				peer.clear();
-				Exception ex;
-				Util::UnpackUrl(ex,epd,(SocketAddress&)peer.serverAddress,(string&)peer.path,peer);
-				if (ex)
-					WARN("serverAddress of RTMFP ", id, " impossible to determine from url ", epd)
+				Exception exWarn;
+				Util::UnpackUrl(exWarn, epd, (SocketAddress&)peer.serverAddress, (string&)peer.path, peer);
+				if (exWarn)
+					WARN("serverAddress of RTMFP impossible to determine from url ", epd)
+				if (peer.serverAddress.port() == 0)
+					((SocketAddress&)peer.serverAddress).set(peer.serverAddress.host(), invoker.params.RTMFP.port);
 				set<SocketAddress> addresses;
 				peer.onHandshake(attempt.count+1,addresses);
 				if(!addresses.empty()) {
@@ -270,6 +264,7 @@ UInt8 RTMFPHandshake::handshakeHandler(UInt8 id,MemoryReader& request,MemoryWrit
 				}
 
 				// New RTMFPCookie
+				Exception ex;
 				if (!createCookie(ex, response, attempt, tag, epd)) {
 					ERROR("RTMFPCookie creation, ",ex.error())
 					return 0;

@@ -19,25 +19,41 @@
 
 #include "Mona/Mona.h"
 #include "Mona/Protocol.h"
-#include "Mona/DatagramSocket.h"
+#include "Mona/UDPSocket.h"
 #include "Mona/Logs.h"
 
 namespace Mona {
 
-class UDProtocol : public Protocol, public DatagramSocket, virtual Object {
+class UDProtocol : public Protocol, public UDPSocket, virtual Object {
+public:
+	bool load(Exception& ex, const ProtocolParams& params);
+
 protected:
-	UDProtocol(const char* name, Invoker& invoker, Gateway& gateway) : DatagramSocket(invoker.sockets), Protocol(name, invoker, gateway) {}
+	UDProtocol(const char* name, Invoker& invoker, Sessions& sessions) : UDPSocket(invoker.sockets), Protocol(name, invoker, sessions) {}
 	
-	virtual bool load(Exception& ex, const ProtocolParams& params);
 private:
-	void			onReadable(Exception& ex) { gateway.readable(ex,*this); }
-	void			onError(const std::string& error) { WARN("Protocol ",name,", ", error); }
+	void		onReception(const std::shared_ptr<Buffer<UInt8>>& pData, const SocketAddress& address);
+	void		onError(const std::string& error) { WARN("Protocol ",name,", ", error); }
+
+	virtual void onPacket(const std::shared_ptr<Buffer<UInt8>>& pData, const SocketAddress& address) = 0;
 };
 
 inline bool UDProtocol::load(Exception& ex, const ProtocolParams& params) {
 	SocketAddress address;
-	address.set(IPAddress::Wildcard(), params.port);
+	if (!address.set(ex, params.host, params.port))
+		return false;
 	return bind(ex, address);
+}
+
+
+inline void	UDProtocol::onReception(const std::shared_ptr<Buffer<UInt8>>& pData, const SocketAddress& address) {
+	if (!pData) {
+		WARN("Protocol ", name, ", onReception of null data");
+		return;
+	}
+	if(!auth(address))
+		return;
+	onPacket(pData, address);
 }
 
 

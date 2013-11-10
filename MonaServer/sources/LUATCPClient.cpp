@@ -40,11 +40,11 @@ void LUATCPClient::onError(const std::string& error) {
 }
 
 
-UInt32 LUATCPClient::onReception(const UInt8* data,UInt32 size){
-	UInt32 rest=0;
+UInt32 LUATCPClient::onReception(const shared_ptr<Buffer<UInt8>>& pData) {
+	UInt32 rest(0);
 	SCRIPT_BEGIN(_pState)
 		SCRIPT_MEMBER_FUNCTION_BEGIN(LUATCPClient,LUATCPClient,*this,"onReception")
-			SCRIPT_WRITE_BINARY(data,size)
+			SCRIPT_WRITE_BINARY(pData->data(),pData->size())
 			SCRIPT_FUNCTION_CALL
 			rest = SCRIPT_READ_UINT(0);
 		SCRIPT_FUNCTION_END

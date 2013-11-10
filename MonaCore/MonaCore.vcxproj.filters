@@ -189,7 +189,6 @@
     <ClInclude Include="include\Mona\Client.h" />
     <ClInclude Include="include\Mona\Clients.h" />
     <ClInclude Include="include\Mona\Decoding.h" />
-    <ClInclude Include="include\Mona\Gateway.h" />
     <ClInclude Include="include\Mona\Group.h" />
     <ClInclude Include="include\Mona\Handler.h" />
     <ClInclude Include="include\Mona\ICE.h" />
@@ -202,9 +201,6 @@
     <ClInclude Include="include\Mona\Writer.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="sources\Protocol.cpp">
-      <Filter>Protocols</Filter>
-    </ClCompile>
     <ClCompile Include="sources\Protocols.cpp">
       <Filter>Protocols</Filter>
     </ClCompile>

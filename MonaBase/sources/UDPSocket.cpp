@@ -25,7 +25,7 @@ using namespace std;
 namespace Mona {
 
 
-UDPSocket::UDPSocket(const SocketManager& manager, bool allowBroadcast) : _broadcasting(false), DatagramSocket(manager), _allowBroadcast(allowBroadcast), _buffer(2048) {
+UDPSocket::UDPSocket(const SocketManager& manager, bool allowBroadcast) : _broadcasting(false), DatagramSocket(manager), _allowBroadcast(allowBroadcast) {
 
 }
 
@@ -55,14 +55,22 @@ void UDPSocket::onReadable(Exception& ex) {
 	if(ex || available==0)
 		return;
 
-	if(available>_buffer.size())
-		_buffer.resize(available);
+	if (!_pBuffer)
+		_pBuffer.reset(new Buffer<UInt8>(available));
+	else if (available>_pBuffer->size())
+		_pBuffer->resize(available,false);
 
 	SocketAddress address;
-	int size = receiveFrom(ex, &_buffer[0], available, address);
+	int size = receiveFrom(ex, _pBuffer->data(), available, address);
 	if (ex)
 		return;
-	onReception(&_buffer[0], size, address);
+	UInt32 originSize = _pBuffer->size();
+	_pBuffer->resize(size);
+	onReception(_pBuffer,address);
+	if (!_pBuffer.unique())
+		_pBuffer.reset(new Buffer<UInt8>(originSize));
+	else
+		_pBuffer->resetSize();
 }
 
 void UDPSocket::close() {
@@ -70,6 +78,7 @@ void UDPSocket::close() {
 	_broadcasting = false;
 	_address.clear();
 	_peerAddress.clear();
+	_pBuffer.reset();
 }
 
 bool UDPSocket::bind(Exception& ex,const SocketAddress& address) {

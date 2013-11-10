@@ -36,10 +36,10 @@ public:
 	Writer*			pWriter;
 };
 
-Peer::Peer(Handler& handler):Client(turnPeers),_handler(handler),connected(false),addresses(1),relayable(false) {
+Peer::Peer(Handler& handler) :Client(turnPeers), _handler(handler), connected(false), addresses(1), relayable(false) {
 }
 
-Peer::Peer(const Peer& peer):Client(peer),turnPeers(peer.turnPeers),_handler(peer._handler),connected(peer.connected),relayable(false),addresses(peer.addresses) {
+Peer::Peer(const Peer& peer) : Client(peer), turnPeers(peer.turnPeers), _handler(peer._handler), connected(peer.connected), relayable(false), addresses(peer.addresses) {
 	for(auto& it: peer)
 		setRaw(it.first,it.second);
 }
@@ -189,13 +189,17 @@ ICE& Peer::ice(const Peer& peer) {
 
 
 void Peer::onHandshake(UInt32 attempts,set<SocketAddress>& addresses) {
-	_handler.onHandshake(protocol,address,path,*this,attempts,addresses);
+	string protocol;
+	getString("protocol", protocol);
+	_handler.onHandshake(protocol, address, path, *this, attempts, addresses);
 }
 
 void Peer::onRendezVousUnknown(const UInt8* peerId,set<SocketAddress>& addresses) {
-	if(connected)
-		_handler.onRendezVousUnknown(protocol,id,addresses);
-	else
+	if (connected) {
+		string protocol;
+		getString("protocol", protocol);
+		_handler.onRendezVousUnknown(protocol, id, addresses);
+	} else
 		WARN("Rendez-vous using before connection");
 }
 

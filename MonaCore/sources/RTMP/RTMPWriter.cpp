@@ -23,8 +23,12 @@ using namespace std;
 
 namespace Mona {
 
-RTMPWriter::RTMPWriter(UInt8 id, const shared_ptr<RC4_KEY>& pEncryptKey, StreamSocket& socket) : id(id), _pThread(NULL), _socket(socket), _pSender(new RTMPSender(pEncryptKey)) {
+RTMPWriter::RTMPWriter(UInt8 id, const shared_ptr<RC4_KEY>& pEncryptKey, StreamSocket& socket) : id(id), _pThread(NULL), _socket(socket) {
 	// TODO _qos.add
+	SocketAddress address;
+	Exception ex; // ignore
+	socket.peerAddress(ex, address);
+	_pSender.reset(new RTMPSender(address,pEncryptKey));
 }
 
 
@@ -47,6 +51,7 @@ void RTMPWriter::flush(bool full) {
 	}
 	if(!_pSender->available())
 		return;
+	DumpResponse(_pSender->begin(), _pSender->size(), _socket);
 	Exception ex;
 	_pThread = _socket.send<RTMPSender>(ex, _pSender, _pThread);
 	if (ex)

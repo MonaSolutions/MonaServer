@@ -29,19 +29,19 @@ class Protocols : virtual Object {
 public:
 	Protocols(Invoker& invoker) : _invoker(invoker) {}
 
-	void load(Gateway& gateway);
+	void load(Sessions& sessions);
 	void unload() { _protocols.clear(); }
 	void manage() { for (std::shared_ptr<Protocol>& pProtocol : _protocols) pProtocol->manage(); }
 
 private:
-	template<class ProtocolType, class ParamsType>
-	void loadProtocol(const char* name,const ParamsType& params,Gateway& gateway) {
+	template<class ProtocolType, class ParamsType,typename ...Args >
+	void loadProtocol(const char* name, const ParamsType& params, Sessions& sessions, Args&&... args) {
 		if(params.port==0)
 			return;
-		std::shared_ptr<Protocol> pProtocol(new ProtocolType(name, _invoker,gateway));
+		std::shared_ptr<Protocol> pProtocol(new ProtocolType(name, _invoker, sessions, args ...));
 		Exception ex;
 		bool success = false;
-		EXCEPTION_TO_LOG(success=pProtocol->load(ex, (ParamsType&)params), name, " server")
+		EXCEPTION_TO_LOG(success = ((ProtocolType*)pProtocol.get())->load(ex, params), name, " server")
 		if (success) {
 			_protocols.emplace_back(pProtocol);
 			NOTE(name, " server starts on ", params.port, " ", dynamic_cast<UDProtocol*>(pProtocol.get()) ? "UDP" : "TCP", " port");

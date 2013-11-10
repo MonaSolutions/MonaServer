@@ -63,76 +63,76 @@ ADD_TEST(OptionsTest, TestOption) {
 		.repeatable(false)
 		.argument("level", false);
 		
-	EXPECT_TRUE(incOpt.shortName() == "I");
-	EXPECT_TRUE(incOpt.fullName() == "include-dir");
-	EXPECT_TRUE(incOpt.repeatable());
-	EXPECT_TRUE(!incOpt.required());
-	EXPECT_TRUE(incOpt.argumentName() == "path");
-	EXPECT_TRUE(incOpt.argumentRequired());
-	EXPECT_TRUE(incOpt.takesArgument());
+	CHECK(incOpt.shortName() == "I");
+	CHECK(incOpt.fullName() == "include-dir");
+	CHECK(incOpt.repeatable());
+	CHECK(!incOpt.required());
+	CHECK(incOpt.argumentName() == "path");
+	CHECK(incOpt.argumentRequired());
+	CHECK(incOpt.takesArgument());
 		
-	EXPECT_TRUE(libOpt.shortName() == "L");
-	EXPECT_TRUE(libOpt.fullName() == "library-dir");
-	EXPECT_TRUE(libOpt.repeatable());
-	EXPECT_TRUE(!libOpt.required());
-	EXPECT_TRUE(libOpt.argumentName() == "path");
-	EXPECT_TRUE(libOpt.argumentRequired());
-	EXPECT_TRUE(incOpt.takesArgument());
+	CHECK(libOpt.shortName() == "L");
+	CHECK(libOpt.fullName() == "library-dir");
+	CHECK(libOpt.repeatable());
+	CHECK(!libOpt.required());
+	CHECK(libOpt.argumentName() == "path");
+	CHECK(libOpt.argumentRequired());
+	CHECK(incOpt.takesArgument());
 
-	EXPECT_TRUE(outOpt.shortName() == "o");
-	EXPECT_TRUE(outOpt.fullName() == "output");
-	EXPECT_TRUE(!outOpt.repeatable());
-	EXPECT_TRUE(outOpt.required());
-	EXPECT_TRUE(outOpt.argumentName() == "file");
-	EXPECT_TRUE(outOpt.argumentRequired());
-	EXPECT_TRUE(incOpt.takesArgument());
+	CHECK(outOpt.shortName() == "o");
+	CHECK(outOpt.fullName() == "output");
+	CHECK(!outOpt.repeatable());
+	CHECK(outOpt.required());
+	CHECK(outOpt.argumentName() == "file");
+	CHECK(outOpt.argumentRequired());
+	CHECK(incOpt.takesArgument());
 
-	EXPECT_TRUE(vrbOpt.shortName() == "v");
-	EXPECT_TRUE(vrbOpt.fullName() == "verbose");
-	EXPECT_TRUE(!vrbOpt.repeatable());
-	EXPECT_TRUE(!vrbOpt.required());
-	EXPECT_TRUE(!vrbOpt.argumentRequired());
-	EXPECT_TRUE(!vrbOpt.takesArgument());
+	CHECK(vrbOpt.shortName() == "v");
+	CHECK(vrbOpt.fullName() == "verbose");
+	CHECK(!vrbOpt.repeatable());
+	CHECK(!vrbOpt.required());
+	CHECK(!vrbOpt.argumentRequired());
+	CHECK(!vrbOpt.takesArgument());
 
-	EXPECT_TRUE(optOpt.shortName() == "O");
-	EXPECT_TRUE(optOpt.fullName() == "optimize");
-	EXPECT_TRUE(!optOpt.repeatable());
-	EXPECT_TRUE(!optOpt.required());
-	EXPECT_TRUE(optOpt.argumentName() == "level");
-	EXPECT_TRUE(optOpt.takesArgument());
-	EXPECT_TRUE(!optOpt.argumentRequired());
+	CHECK(optOpt.shortName() == "O");
+	CHECK(optOpt.fullName() == "optimize");
+	CHECK(!optOpt.repeatable());
+	CHECK(!optOpt.required());
+	CHECK(optOpt.argumentName() == "level");
+	CHECK(optOpt.takesArgument());
+	CHECK(!optOpt.argumentRequired());
 }
 
 ADD_TEST(OptionsTest, TestOptionsAdd) {
 
 	//removeAllOptions();
 
-	EXPECT_TRUE(AddOption("helper", "H", "start helper"));
-	EXPECT_TRUE(AddOption("help", "h", "print help text"));
-	EXPECT_TRUE(AddOption("include-dir", "I", "specify a search path for locating header files", false, true, "path"));
-	EXPECT_TRUE(AddOption("library-dir", "L", "specify a search path for locating library files", false, true, "path"));
-	EXPECT_TRUE(AddOption("insert", "it", "insert something", false, true, "path"));
-	EXPECT_TRUE(!AddOption("item", "", "insert something", false, true, "path"));
-	EXPECT_TRUE(AddOption("include", "J", "specify a search path for locating header files", false, true, "path"));
-	EXPECT_TRUE(!AddOption("include", "J", "specify a search path for locating header files"));
+	CHECK(AddOption("helper", "H", "start helper"));
+	CHECK(AddOption("help", "h", "print help text"));
+	CHECK(AddOption("include-dir", "I", "specify a search path for locating header files", false, true, "path"));
+	CHECK(AddOption("library-dir", "L", "specify a search path for locating library files", false, true, "path"));
+	CHECK(AddOption("insert", "it", "insert something", false, true, "path"));
+	CHECK(!AddOption("item", "", "insert something", false, true, "path"));
+	CHECK(AddOption("include", "J", "specify a search path for locating header files", false, true, "path"));
+	CHECK(!AddOption("include", "J", "specify a search path for locating header files"));
 
-	EXPECT_TRUE(GetOption("include"));
-	EXPECT_TRUE(GetOption("insert"));
-	EXPECT_TRUE(!GetOption("Insert"));
-	EXPECT_TRUE(!GetOption("item"));
-	EXPECT_TRUE(!GetOption("i"));
-	EXPECT_TRUE(!GetOption("he"));
-	EXPECT_TRUE(!GetOption("in"));
-	EXPECT_TRUE(GetOption("help"));
-	EXPECT_TRUE(!GetOption("helpe"));
-	EXPECT_TRUE(GetOption("helper"));
+	CHECK(GetOption("include"));
+	CHECK(GetOption("insert"));
+	CHECK(!GetOption("Insert"));
+	CHECK(!GetOption("item"));
+	CHECK(!GetOption("i"));
+	CHECK(!GetOption("he"));
+	CHECK(!GetOption("in"));
+	CHECK(GetOption("help"));
+	CHECK(!GetOption("helpe"));
+	CHECK(GetOption("helper"));
 
 	_Options.remove("include-dir");
-	EXPECT_TRUE(!GetOption("include-dir"));
+	CHECK(!GetOption("include-dir"));
 }
 
 void TestProcessInclude(Exception& ex, const string& name, const string& value) {
-	EXPECT_TRUE(name == "include-dir");
+	CHECK(name == "include-dir");
 	static int i = 0;
 	static char* res[] = {
 		"include",
@@ -140,29 +140,29 @@ void TestProcessInclude(Exception& ex, const string& name, const string& value) 
 		"/usr/local/include",
 		"/proj/include",
 		"/usr/include" };
-	EXPECT_TRUE(value == res[i++]);
+	CHECK(value == res[i++]);
 }
 
 void TestProcessVerbose(Exception& ex, const string& name, const string& value) {
-	EXPECT_TRUE(name == "verbose");
-	EXPECT_TRUE(value.empty());
+	CHECK(name == "verbose");
+	CHECK(value.empty());
 }
 
 void TestProcessOptimize(Exception& ex, const string& name, const string& value) {
-	EXPECT_TRUE(name == "optimize");
+	CHECK(name == "optimize");
 	static int counter = 0;
 	if (++counter < 3)
-		EXPECT_TRUE(value.empty())
+		CHECK(value.empty())
 	else if (counter == 3)
-		EXPECT_TRUE(value == "1")
+		CHECK(value == "1")
 	else
-		EXPECT_TRUE(value == "2")
+		CHECK(value == "2")
 }
 
 ADD_TEST(OptionsTest, TestProcess) {
 	//_Options.clear();
 	Exception ex;
-	EXPECT_TRUE(AddOption("include-dir", "I", "specify an include search path", false, true, "path", true));
+	CHECK(AddOption("include-dir", "I", "specify an include search path", false, true, "path", true));
 
 	char* arg[] = { "row for path",
 					"/I:include",
@@ -171,31 +171,31 @@ ADD_TEST(OptionsTest, TestProcess) {
 					"-include-dir=/proj/include",
 					"/include-dir=/usr/include"};
 
-	EXPECT_TRUE(_Options.process(ex, (sizeof(arg) / sizeof(char *)), arg, TestProcessInclude));
+	CHECK(_Options.process(ex, (sizeof(arg) / sizeof(char *)), arg, TestProcessInclude));
 
-	EXPECT_TRUE(!ProcessArg("/I"));
+	CHECK(!ProcessArg("/I"));
 	
-	EXPECT_TRUE(!ProcessArg("/include-dir"));
+	CHECK(!ProcessArg("/include-dir"));
 
-	EXPECT_TRUE(!ProcessArg("/Llib"));
+	CHECK(!ProcessArg("/Llib"));
 	
-	EXPECT_TRUE(AddOption("verbose", "v", "enable verbose mode", false, false));
+	CHECK(AddOption("verbose", "v", "enable verbose mode", false, false));
 	
-	EXPECT_TRUE(ProcessArg("/v", TestProcessVerbose));
+	CHECK(ProcessArg("/v", TestProcessVerbose));
 	
-	EXPECT_TRUE(ProcessArg("/verbose", TestProcessVerbose));
+	CHECK(ProcessArg("/verbose", TestProcessVerbose));
 
-	EXPECT_TRUE(!ProcessArg("/v2"));
+	CHECK(!ProcessArg("/v2"));
 
 	// TODO If argument specified but not expected => must be false
-	//EXPECT_TRUE(!ProcessArg("/verbose:2"));
+	//CHECK(!ProcessArg("/verbose:2"));
 
-	EXPECT_TRUE(AddOption("optimize", "O", "enable optimization", false, false, "level", false));
+	CHECK(AddOption("optimize", "O", "enable optimization", false, false, "level", false));
 	
-	EXPECT_TRUE(ProcessArg("/O", TestProcessOptimize));
-	EXPECT_TRUE(ProcessArg("-optimize=", TestProcessOptimize));
+	CHECK(ProcessArg("/O", TestProcessOptimize));
+	CHECK(ProcessArg("-optimize=", TestProcessOptimize));
 
-	EXPECT_TRUE(ProcessArg("-optimize:1", TestProcessOptimize));
-	EXPECT_TRUE(ProcessArg("/O=2", TestProcessOptimize));
+	CHECK(ProcessArg("-optimize:1", TestProcessOptimize));
+	CHECK(ProcessArg("/O=2", TestProcessOptimize));
 	
 }

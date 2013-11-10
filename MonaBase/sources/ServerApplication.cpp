@@ -217,15 +217,15 @@ void ServerApplication::defineOptions(Exception& ex,Options& options) {
 
 	options.add(ex, "name", "n", "Specify a display name for the service (only with /registerService).")
 		.argument("name")
-		.handler([this](const string& value) { _displayName = value; });
+		.handler([this](Exception& ex,const string& value) { _displayName = value; });
 
 	options.add(ex, "description", "d", "Specify a description for the service (only with /registerService).")
 		.argument("text")
-		.handler([this](const string& value) { _description = value; });
+		.handler([this](Exception& ex, const string& value) { _description = value; });
 
 	options.add(ex, "startup", "s", "Specify the startup mode for the service (only with /registerService).")
 		.argument("automatic|manual")
-		.handler([this](const string& value) {_startup = String::ICompare(value, "auto", 4) == 0 ? "auto" : "manual"; });
+		.handler([this](Exception& ex, const string& value) {_startup = String::ICompare(value, "auto", 4) == 0 ? "auto" : "manual"; });
 
 	Application::defineOptions(ex, options);
 }
@@ -326,10 +326,12 @@ void ServerApplication::defineOptions(OptionSet& options) {
 }
 
 
-void ServerApplication::handlePidFile(const string& value) {
+void ServerApplication::handlePidFile(Exception& ex,const string& value) {
 	ofstream ostr(value.c_str(), ios::out | ios::binary);
-	if (!ostr.good())
-		FATAL_THROW("Cannot write PID to file ",value);
+	if (!ostr.good()) {
+		ex.set(Exception::FILE,"Cannot write PID to file ",value);
+		return;
+	}
 	ostr << Process::id() << endl;
 	FileSystem::RegisterForDeletion(value);
 }

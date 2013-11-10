@@ -18,14 +18,14 @@
 #pragma once
 
 #include "Mona/Mona.h"
-#include "Mona/Session.h"
 #include "Mona/Entities.h"
 #include "Mona/Util.h"
 #include <cstddef>
 
 namespace Mona {
 
-class Sessions : virtual Object {
+class Session;
+class Sessions {
 public:
 	typedef std::map<UInt32,Session*>::const_iterator Iterator;
 
@@ -34,20 +34,55 @@ public:
 
 	UInt32	count() const { return _sessions.size(); }
 
-	Session* find(UInt32 id);
-	Session* find(const UInt8* peerId);
-	Session* find(const SocketAddress& address);
-	
-	void	 changeAddress(const SocketAddress& oldAddress,Session& session);
-	Session& add(Session* pSession);
+	void	 updateAddress(Session& session, const SocketAddress& oldAddress);
 
 	Iterator begin() const { return _sessions.begin(); }
 	Iterator end() const { return _sessions.end(); }
-	
+
 	void		manage();
-	void		clear();
+
+	template<typename SessionType=Session>
+	SessionType* find(const SocketAddress& address) {
+		auto it = _sessionsByAddress.find(address);
+		if (it == _sessionsByAddress.end())
+			return NULL;
+		return dynamic_cast<SessionType*>(it->second);
+	}
+
+
+	template<typename SessionType = Session>
+	SessionType* find(const UInt8* peerId) {
+		auto it = _sessionsByPeerId.find(peerId);
+		if (it == _sessionsByPeerId.end())
+			return NULL;
+		return dynamic_cast<SessionType*>(it->second);
+	}
+
+
+	template<typename SessionType = Session>
+	SessionType* find(UInt32 id) {
+		auto it = _sessions.find(id);
+		if (it == _sessions.end())
+			return NULL;
+		return dynamic_cast<SessionType*>(it->second);
+	}
+	
+
+	template<typename SessionType>
+	SessionType& add(SessionType& session) {
+		session._id = _nextId;
+		_sessions[_nextId] = &session;
+		_sessionsByPeerId[session.peer.id] = &session;
+		_sessionsByAddress[session.peer.address] = &session;
+		DEBUG("Session ", _nextId, " created");
+		do {
+			++_nextId;
+		} while (_nextId == 0 && find(_nextId));
+		return session;
+	}
 
 private:
+
 	void    remove(std::map<UInt32,Session*>::iterator it);
 
 	UInt32									_nextId;

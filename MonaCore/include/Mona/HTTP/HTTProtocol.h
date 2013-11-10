@@ -25,7 +25,7 @@ namespace Mona {
 
 class HTTProtocol : public TCProtocol, virtual Object {
 public:
-	HTTProtocol(const char* name, Invoker& invoker, Gateway& gateway) : TCProtocol(name, invoker, gateway) {}
+	HTTProtocol(const char* name, Invoker& invoker, Sessions& sessions) : TCProtocol(name, invoker, sessions) {}
 
 private:
 	// TCPServer implementation
@@ -34,7 +34,7 @@ private:
 		if (!pSession)
 			return;
 		// Create session!
-		gateway.registerSession(pSession);
+		sessions.add(*pSession);
 	}
 };
 

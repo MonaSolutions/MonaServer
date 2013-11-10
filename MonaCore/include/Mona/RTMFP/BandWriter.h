@@ -18,7 +18,6 @@
 #pragma once
 
 #include "Mona/Mona.h"
-#include "Mona/Exceptions.h"
 #include "Mona/MemoryWriter.h"
 
 namespace Mona {
@@ -26,15 +25,15 @@ namespace Mona {
 class RTMFPWriter;
 class BandWriter : virtual Object {
 public:
-	virtual void							initWriter(std::shared_ptr<RTMFPWriter>& pWriter)=0;
+	virtual void							initWriter(const std::shared_ptr<RTMFPWriter>& pWriter)=0;
 	virtual std::shared_ptr<RTMFPWriter>	changeWriter(RTMFPWriter& writer) = 0;
 	virtual void							close()=0;
 
 	virtual bool						failed() const = 0;
 	virtual bool						canWriteFollowing(RTMFPWriter& writer)=0;
 	virtual MemoryWriter&				writer()=0;
-	virtual MemoryWriter&				writeMessage(Exception& ex, UInt8 type,UInt16 length,RTMFPWriter* pWriter=NULL)=0;
-	virtual void						flush(Exception& ex, bool full=true)=0;
+	virtual MemoryWriter&				writeMessage(UInt8 type,UInt16 length,RTMFPWriter* pWriter=NULL)=0;
+	virtual void						flush(bool full=true)=0;
 	
 };
 

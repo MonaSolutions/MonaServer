@@ -125,15 +125,12 @@ void RTMFPFlow::complete() {
 }
 
 void RTMFPFlow::fail(const string& error) {
-	ERROR("RTMFPFlow ",id," failed : ",error);
-	if(!_completed) {
-		Exception ex;
-		BinaryWriter& writer = _band.writeMessage(ex, 0x5e,Util::Get7BitValueSize(id)+1);
-		if (ex)
-			ERROR("Error during fail : ", ex.error());
-		writer.write7BitLongValue(id);
-		writer.write8(0); // unknown
-	}
+	ERROR("RTMFPFlow ",id," failed, ",error);
+	if (_completed)
+		return;
+	BinaryWriter& writer = _band.writeMessage(0x5e,Util::Get7BitValueSize(id)+1);
+	writer.write7BitLongValue(id);
+	writer.write8(0); // unknown
 }
 
 AMF::ContentType RTMFPFlow::unpack(MemoryReader& reader) {
@@ -189,10 +186,7 @@ void RTMFPFlow::commit() {
 	if(!_pStream)
 		bufferSize=0; // not proceed a packet sur FlowNull
 
-	Exception ex;
-	MemoryWriter& ack = _band.writeMessage(ex, 0x51,Util::Get7BitValueSize(id)+Util::Get7BitValueSize(bufferSize)+Util::Get7BitValueSize(_stage)+size);
-	if (ex)
-		ERROR("Error while trying to write message : ", ex.error());
+	MemoryWriter& ack = _band.writeMessage(0x51,Util::Get7BitValueSize(id)+Util::Get7BitValueSize(bufferSize)+Util::Get7BitValueSize(_stage)+size);
 
 	UInt32 pos = ack.position();
 	ack.write7BitLongValue(id);
@@ -205,10 +199,7 @@ void RTMFPFlow::commit() {
 
 	if(_pStream)
 		_pStream->flush();
-
-	Exception exf;
-	_pWriter->flush(exf);
-	ERROR("Error while trying to flush message : ", ex.error());
+	_pWriter->flush();
 }
 
 void RTMFPFlow::fragmentHandler(UInt64 _stage,UInt64 deltaNAck,MemoryReader& fragment,UInt8 flags) {

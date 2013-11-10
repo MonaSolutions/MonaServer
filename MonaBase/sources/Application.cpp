@@ -111,9 +111,9 @@ bool Application::init(int argc, char* argv[]) {
 		_logPath = logDir + "/" + logFileName;
 		if (_logRotation > 0) {
 			_logPath.append(".");
-			_logStream.open(_logPath + "0", ios::out | ios::binary | ios::ate);
+			_logStream.open(_logPath + "0", ios::out | ios::binary | ios::app);
 		}  else
-			_logStream.open(_logPath, ios::out | ios::binary | ios::ate);
+			_logStream.open(_logPath, ios::out | ios::binary | ios::app);
 	}
 
 	// options
@@ -149,11 +149,12 @@ bool Application::loadLogFiles(string& directory, string& fileName, UInt32& size
 void Application::defineOptions(Exception& ex, Options& options) {
 
 	options.add(ex, "log", "l", "Log level argument, must be beetween 0 and 8 : nothing, fatal, critic, error, warn, note, info, debug, trace. Default value is 6 (info), all logs until info level are displayed.")
-		.argument("level");
+		.argument("level")
+		.handler([this](Exception& ex, const string& value) { Exception exWarn; UInt8 level(6); Logs::SetLevel(String::ToNumber<UInt8>(exWarn, value,level)); if (exWarn) WARN("Bad level ",value," has to be a numeric value between 0 and 8 (see help)") });
 
 	options.add(ex, "dump", "d", "Enables packet traces in logs. Optional arguments are 'intern' or 'all' respectively to displays just intern packet exchanged (between servers) or all packet process. If no argument is given, just outside packet process will be dumped.")
 		.argument("intern|all", false)
-		.handler([this](const string& value) { Logs::SetDump(value == "all" ? Logs::DUMP_ALL : (value == "intern" ? Logs::DUMP_INTERN : Logs::DUMP_EXTERN)); });
+		.handler([this](Exception& ex, const string& value) { Logs::SetDump(value == "all" ? Logs::DUMP_ALL : (value == "intern" ? Logs::DUMP_INTERN : Logs::DUMP_EXTERN)); });
 	
 	options.add(ex,"help", "h", "Displays help information about command-line usage.");
 }
@@ -180,7 +181,7 @@ void Application::log(thread::id threadId, const string& threadName, Priority pr
 		return;
 	string stDate;
 	_logStream << Time().toLocaleString("%d/%m %H:%M:%S.%c  ", stDate)
-		<< LogPriorities[priority] << '\t' << threadName << '(' << threadId << ")\t"
+		<< LogPriorities[priority-1] << '\t' << threadName << '(' << threadId << ")\t"
 		<< shortFilePath << '[' << line << "]  " << message << std::endl;
 	_logStream.flush();
 	manageLogFiles();

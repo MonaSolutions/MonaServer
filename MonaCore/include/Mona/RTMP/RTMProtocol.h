@@ -25,7 +25,7 @@ namespace Mona {
 
 class RTMProtocol : public TCProtocol, virtual Object {
 public:
-	RTMProtocol(const char* name, Invoker& invoker, Gateway& gateway) : TCProtocol(name, invoker, gateway) {}
+	RTMProtocol(const char* name, Invoker& invoker, Sessions& sessions) : TCProtocol(name, invoker, sessions) {}
 
 private:
 	// TCPServer implementation
@@ -34,7 +34,7 @@ private:
 		if (!pSession)
 			return;
 		// Create session!
-		gateway.registerSession(pSession);
+		sessions.add(*pSession);
 	}
 };
 

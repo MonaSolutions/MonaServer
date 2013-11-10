@@ -34,8 +34,9 @@ public:
 private:
 	void			manage();
 
-	bool			buildPacket(MemoryReader& data,UInt32& packetSize);
+	bool			buildPacket(const std::shared_ptr<Buffer<UInt8>>& pData, MemoryReader& packet);
 	void			packetHandler(MemoryReader& packet);
+	void			endReception() { if (_isWS) WSSession::endReception(); }
 
 	void			processGet(Exception& ex, const std::string& fileName);
 

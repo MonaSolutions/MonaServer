@@ -197,6 +197,16 @@ namespace Mona {
 class Net : virtual Static {
 public:
 #if defined(_WIN32)
+	static int  LastError() { return WSAGetLastError(); }
+#else
+	static int  LastError() { return errno; }
+#endif
+	static bool CheckError(Exception& ex);
+	static void SetError(Exception& ex) { SetError(ex, LastError(), std::string()); }
+	static void SetError(Exception& ex, int error) { SetError(ex, error, std::string()); }
+	static void SetError(Exception& ex, int error, const std::string& argument);
+
+#if defined(_WIN32)
 	static bool InitializeNetwork(Exception& ex);
 #else
 	static bool InitializeNetwork(Exception& ex) {return true;}

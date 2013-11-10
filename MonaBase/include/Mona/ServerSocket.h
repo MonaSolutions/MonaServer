@@ -32,7 +32,7 @@ public:
 	bool listen(Exception& ex, int backlog = 64) { if (!Socket::listen(ex, backlog)) return false; setLinger(ex, false, 0); return true; }
 	
 	template<typename SocketType, typename ...Args>
-	SocketType* acceptConnection(Exception& ex, Args&... args) { return Socket::acceptConnection<SocketType>(ex, args ...); }
+	SocketType* acceptConnection(Exception& ex, Args&&... args) { return Socket::acceptConnection<SocketType>(ex, args ...); }
 	void rejectConnection() { Socket::rejectConnection(); }
 };
 

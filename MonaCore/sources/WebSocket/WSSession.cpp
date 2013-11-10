@@ -25,12 +25,10 @@
 using namespace std;
 
 
-
-
 namespace Mona {
 
 
-WSSession::WSSession(const SocketAddress& address, Protocol& protocol, Invoker& invoker) : TCPSession(address, protocol, invoker), _writer(*this), _pListener(NULL), _pPublication(NULL), _decoded(0) {
+WSSession::WSSession(const SocketAddress& address, Protocol& protocol, Invoker& invoker) : TCPSession(address, protocol, invoker), _writer(*this), _pListener(NULL), _pPublication(NULL) {
 }
 
 
@@ -52,38 +50,38 @@ void WSSession::kill(){
 }
 
 
-bool WSSession::buildPacket(MemoryReader& data,UInt32& packetSize) {
-	if(data.available()<2)
+bool WSSession::buildPacket(const shared_ptr<Buffer<UInt8>>& pData, MemoryReader& packet) {
+	if (pData->size()<2)
 		return false;
-	UInt8 type = data.read8()&0x0F;
-	UInt8 lengthByte = data.read8();
+	UInt8 type = packet.read8() & 0x0F;
+	UInt8 lengthByte = packet.read8();
 
 	UInt32 size=lengthByte&0x7f;
 	if (size==127) {
-		if(data.available()<8)
+		if (packet.available()<8)
 			return false;
-		size = (UInt32)data.read64();
+		size = (UInt32)packet.read64();
 	} else if (size==126) {
-		if(data.available()<2)
+		if (packet.available()<2)
 			return false;
-		size = data.read16();
+		size = packet.read16();
 	}
 
 	if(lengthByte&0x80)
 		size += 4;
 
-	if(data.available()<size)
+	if (packet.available()<size)
 		return false;
 
 	if (lengthByte & 0x80) {
-		shared_ptr<Buffer<UInt8> > pBuffer(new Buffer<UInt8>(size));
-		memcpy(pBuffer->data(),data.current(),size);
-		shared_ptr<WSUnmasking> pUnmasking(new WSUnmasking(id, invoker, protocol, pBuffer, peer.address, type));
-		if(decode<WSUnmasking>(pUnmasking))
-			++_decoded;
+		shared_ptr<WSUnmasking> pUnmasking(new WSUnmasking(pData, type, invoker,packet.position()));
+		decode<WSUnmasking>(pUnmasking);
+	} else {
+		packet.reset(packet.position()-1);
+		*packet.current() = type;
 	}
 
-	packetSize = data.position()+size;
+	packet.shrink(size);
 	return true;
 }
 
@@ -177,10 +175,6 @@ void WSSession::packetHandler(MemoryReader& packet) {
 				_writer.close(WS_PROTOCOL_ERROR); // onMessage displays already the error!
 		}
 		
-		if(_decoded>0) {
-			if((--_decoded==0) && _pPublication)
-				_pPublication->flush();
-		}
 	}
 
 	if(!peer.connected || type==WS_CLOSE)
@@ -188,6 +182,7 @@ void WSSession::packetHandler(MemoryReader& packet) {
 	else
 		_writer.flush();
 }
+
 
 void WSSession::manage() {
 	if(peer.connected && _time.elapsed()>60000000) {

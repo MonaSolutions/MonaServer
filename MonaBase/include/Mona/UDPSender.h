@@ -26,8 +26,8 @@ namespace Mona {
 
 class UDPSender : public SocketSender, virtual Object {
 public:
-	UDPSender(bool dump = false) : SocketSender(dump) {}
-	UDPSender(const UInt8* data, UInt32 size, bool dump = false) : SocketSender(data, size, dump) {}
+	UDPSender(bool dump = false) {}
+	UDPSender(const UInt8* data, UInt32 size) : SocketSender(data, size) {}
 
 	SocketAddress			address;
 private:
@@ -35,7 +35,6 @@ private:
 		return address == SocketAddress::Wildcard() ? ((DatagramSocket&)socket).sendBytes(ex, data, size) : ((DatagramSocket&)socket).sendTo(ex, data, size, address);
 	}
 
-	virtual bool			receiver(std::string& address) { address.assign(this->address.toString()); return true; }
 };
 
 

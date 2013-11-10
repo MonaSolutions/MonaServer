@@ -25,12 +25,12 @@ using namespace std;
 
 namespace Mona {
 
-SocketSender::SocketSender(bool dump) :
-	_position(0), _data(NULL), _size(0), _memcopied(false), _dump(dump), _pSocket(NULL) {
+SocketSender::SocketSender() :
+	_position(0), _data(NULL), _size(0), _memcopied(false) {
 }
 
-SocketSender::SocketSender(const UInt8* data, UInt32 size, bool dump) :
-	_position(0), _data((UInt8*)data), _size(size), _memcopied(false), _dump(dump), _pSocket(NULL) {
+SocketSender::SocketSender(const UInt8* data, UInt32 size) :
+	_position(0), _data((UInt8*)data), _size(size), _memcopied(false) {
 }
 
 SocketSender::~SocketSender() {
@@ -39,42 +39,25 @@ SocketSender::~SocketSender() {
 }
 
 bool SocketSender::run(Exception& ex) {
-	if (!_pSocketMutex || !_pSocket || _pThis.expired()) {
-		ex.set(Exception::SOCKET, "SocketSender failure, its associated socket is null");
-		return false;
-	}
+	unique_lock<mutex> lock;
+	Socket* pSocket = _expirableSocket.safeThis(lock);
+	if (!pSocket)
+		return true;
 
-	lock_guard<mutex> lock(*_pSocketMutex); // prevent socket deletion and socket close
-	if (_pSocketMutex.unique()) // socket is deleted
-		return true;
-	if (!_pSocket->_managed) // socket no more managed
-		return true;
+	// send
+	Exception exc;
 	shared_ptr<SocketSender> pThis(_pThis);
-	_pSocket->send(ex, pThis);
+	pSocket->send(exc, pThis);
+	if (exc.code() != Exception::ASSERT)
+		ex.set(exc);
 	return true;
 }
 
-void SocketSender::dump(bool justInDebug) {
-	if(!_dump)
-		return;
-	if (!justInDebug || justInDebug&&Logs::GetLevel() >= 7) {
-		string address;
-		if (receiver(address) && _pSocket) {
-			SocketAddress address;
-			Exception ex;
-			DUMP(begin(true), size(true), "Response to ", _pSocket->peerAddress(ex, address).toString())
-		} else
-			DUMP(begin(true), size(true), "Response to ", address)
-		
-	}
-	_dump=false;
-}
 
 bool SocketSender::flush(Exception& ex,Socket& socket) {
 	if(!available())
 		return true;
-	dump();
-
+	
 	_position += send(ex,socket,begin() + _position, size() - _position);
 	if (ex) {
 		// terminate the sender

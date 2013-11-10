@@ -94,7 +94,7 @@ void FlashMainStream::messageHandler(Exception& ex, const string& name,AMFReader
 						break;
 					}
 					default:
-						ex.set(Exception::PROTOCOL, "Type ",type," not acceptable for a connection message");
+						message.next();
 						return;
 				}
 			}
@@ -102,8 +102,23 @@ void FlashMainStream::messageHandler(Exception& ex, const string& name,AMFReader
 		message.startReferencing();
 
 		string tcUrl;
-		if (peer.path.empty() && peer.getString("tcUrl", tcUrl) && Util::UnpackUrl(ex, tcUrl, (SocketAddress&)peer.serverAddress, (string&)peer.path, peer))
-			return;
+		Exception exWarn;
+		if (peer.path.empty() && peer.getString("tcUrl", tcUrl))
+			Util::UnpackUrl(exWarn, tcUrl, (SocketAddress&)peer.serverAddress, (string&)peer.path, peer);
+		if (exWarn)
+			WARN("serverAddress impossible to determine from url ", tcUrl);
+		if (peer.serverAddress.port() == 0) {
+			string protocol;
+			if (peer.getString("protocol", protocol)) {
+				if (protocol == "RTMP")
+					((SocketAddress&)peer.serverAddress).set(peer.serverAddress.host(), invoker.params.RTMP.port);
+				else if (protocol == "RTMFP")
+					((SocketAddress&)peer.serverAddress).set(peer.serverAddress.host(), invoker.params.RTMFP.port);
+				else
+					WARN("Impossible to determine the serverAddress port from unknown ",protocol," protocol")
+			}
+		}
+
 	
 		// Don't support AMF0 forced on NetConnection object because AMFWriter writes in AMF3 format
 		// But it's not a pb because NetConnection RTMFP works since flash player 10.0 only (which supports AMF3)

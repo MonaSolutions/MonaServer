@@ -102,13 +102,11 @@ bool DNS::HostName(Exception& ex,string& host) {
 
 
 void DNS::SetAIError(Exception& ex, int error, const string& argument) {
-	string message(gai_strerror(error)); // TODO tester!!!
-	if (!argument.empty()) {
-		message.append(" (");
-		message.append(argument);
-		message.append(")");
-	}
-	ex.set(Exception::NETADDRESS, message);
+	// TODO tester!!!
+	if (argument.empty())
+		ex.set(Exception::NETADDRESS, gai_strerror(error));
+	else
+		ex.set(Exception::NETADDRESS, gai_strerror(error), " (", argument, ")");
 }
 
 } // namespace Mona

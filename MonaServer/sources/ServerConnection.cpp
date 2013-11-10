@@ -23,7 +23,7 @@ using namespace std;
 using namespace Mona;
 
 
-ServerConnection::ServerConnection(const SocketAddress& peerAddress, const SocketManager& manager, ServerHandler& handler, ServersHandler& serversHandler,const bool& alreadyConnected) : address(peerAddress), _size(0), _handler(handler), TCPClient(manager, peerAddress), _connected(false), _serversHandler(serversHandler), isTarget(false) {
+ServerConnection::ServerConnection(const SocketAddress& peerAddress, const SocketManager& manager, ServerHandler& handler, ServersHandler& serversHandler,bool alreadyConnected) : address(peerAddress), _size(0), _handler(handler), TCPClient(manager, peerAddress), _connected(false), _serversHandler(serversHandler), isTarget(false) {
 	if (alreadyConnected)
 		sendPublicAddress();
 }
@@ -114,17 +114,17 @@ void ServerConnection::send(const string& handler,ServerMessage& message) {
 }
 
 
-UInt32 ServerConnection::onReception(const UInt8* data, UInt32 size) {
-	if(_size==0 && size<4)
-		return size;
+UInt32 ServerConnection::onReception(const shared_ptr<Buffer<UInt8>>& pData) {
+	if (_size == 0 && pData->size() < 4)
+		return pData->size();
 
-	MemoryReader reader(data,size);
+	MemoryReader reader(pData->data(), pData->size());
 	if(_size==0)
 		_size = reader.read32();
-	if(reader.available()<_size)
-		return reader.available();
+	if (reader.available() < _size)
+		return pData->size();
 
-	size = reader.available()-_size;
+	UInt32 rest = reader.available() - _size;
 	reader.shrink(_size);
 	
 	DUMP_INTERN(reader, "From ", address.toString(), " server");
@@ -171,7 +171,7 @@ UInt32 ServerConnection::onReception(const UInt8* data, UInt32 size) {
 	} else
 		_handler.message(*this,handler,reader);
 
-	return size;
+	return rest;
 }
 
 void ServerConnection::onDisconnection(){

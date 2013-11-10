@@ -31,7 +31,7 @@ public:
 	Options();
 
 	template <typename ...Args>
-	Option& add(Exception& ex, const char* fullName, const char* shortName, const Args&... args) {
+	Option& add(Exception& ex, const char* fullName, const char* shortName, Args&&... args) {
 		if (std::strlen(fullName)==0) {
 			ex.set(Exception::OPTION, "Invalid option (fullName is empty)");
 			return Option::Null;

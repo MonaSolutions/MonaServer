@@ -25,46 +25,41 @@ namespace Mona {
 
 
 bool RTMFProtocol::load(Exception& ex, const RTMFPParams& params) {
-	if (!load(ex, params))
+	if (!UDProtocol::load(ex, params))
 		return false;
 	(UInt16&)params.keepAliveServer *= 1000;
 	(UInt16&)params.keepAlivePeer *= 1000;
-	_pHandshake.reset(new RTMFPHandshake(*this, gateway, invoker));
+	_pHandshake.reset(new RTMFPHandshake(*this, sessions, invoker));
 	return true;
 }
 
-bool RTMFProtocol::receive(Exception& ex,shared_ptr<Buffer<UInt8>> &pBuffer,SocketAddress& address) {
-	pBuffer.reset(new Buffer<UInt8>(RTMFP_PACKET_RECV_SIZE));
-	int size = receiveFrom(ex,pBuffer->data(),pBuffer->size(),address);
-	if (ex)
-		return false;
-	if(size<RTMFP_MIN_PACKET_SIZE) {
+void RTMFProtocol::onPacket(const shared_ptr<Buffer<UInt8>>& pData, const SocketAddress& address) {
+
+	if (pData->size()<RTMFP_MIN_PACKET_SIZE) {
 		ERROR("Invalid RTMFP packet");
-		return false;
+		return;
 	}
-	pBuffer->resize(size);
-	return true;
-}
 
-Session* RTMFProtocol::session(UInt32 id,MemoryReader& packet) {
-	if(id==0)
-		return _pHandshake.get();
-	return NULL;
-}
+	MemoryReader reader(pData->data(),pData->size());
 
-void RTMFProtocol::check(Session& session) {
-	double ptr = 0;
-	if (!session.peer.getNumber("&RTMFPCookieComputing", ptr))
+	UInt32 id = RTMFP::Unpack(reader);
+
+	TRACE("RTMFP Session ",id);
+
+	RTMFPSession* pSession = id == 0 ? _pHandshake.get() : sessions.find<RTMFPSession>(id);
+
+	if (!pSession) {
+		WARN("Unknown RTMFP session ", id);
 		return;
-	RTMFPCookieComputing* pCookieComputing = reinterpret_cast<RTMFPCookieComputing*>(static_cast<unsigned>(ptr));
-	if(!pCookieComputing)
-		return;
-	_pHandshake->commitCookie(pCookieComputing->value);
-	session.peer.setNumber("&RTMFPCookieComputing",0.);
-	delete pCookieComputing;
+	}
+	
+	if (pSession->pRTMFPCookieComputing) {
+		_pHandshake->commitCookie(pSession->pRTMFPCookieComputing->value);
+		pSession->pRTMFPCookieComputing.reset();
+	}
+
+	pSession->decode(pData, address);
 }
-
-
 
 
 } // namespace Mona

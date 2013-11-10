@@ -31,8 +31,7 @@ public:
 	virtual ~RTMPSession();
 
 private:
-	void			onNewData(const UInt8* data,UInt32 size);
-	bool			buildPacket(MemoryReader& data,UInt32& packetSize);
+	bool			buildPacket(const std::shared_ptr<Buffer<UInt8>>& pData, MemoryReader& packet);
 	void			packetHandler(MemoryReader& packet);
 
 	bool			performHandshake(MemoryReader& packet, bool encrypted);
@@ -49,6 +48,7 @@ private:
 
 	std::map<UInt8,RTMPWriter*>	_writers;
 	RTMPWriter*							_pWriter;
+	PoolThread*							_pThread;
 
 	std::shared_ptr<RC4_KEY>			_pDecryptKey;
 	std::shared_ptr<RC4_KEY>			_pEncryptKey;

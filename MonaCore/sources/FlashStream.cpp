@@ -63,6 +63,7 @@ void FlashStream::process(AMF::ContentType type,MemoryReader& data,FlashWriter& 
 	
 	writer.callbackHandle = 0;
 	Exception ex;
+	// if exception, it closes the connection, and print an ERROR message
 	switch(type) {
 		case AMF::INVOCATION: {
 			string name;

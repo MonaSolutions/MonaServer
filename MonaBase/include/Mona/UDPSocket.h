@@ -35,14 +35,23 @@ public:
 	bool					send(Exception& ex, const UInt8* data, UInt32 size);
 	bool					send(Exception& ex, const UInt8* data, UInt32 size, const SocketAddress& address);
 
+	template<typename SenderType>
+	void send(Exception& ex, std::shared_ptr<SenderType>& pSender) {
+		DatagramSocket::send<SenderType>(ex, pSender);
+	}
+	template<typename SenderType>
+	PoolThread*	send(Exception& ex, std::shared_ptr<SenderType>& pSender, PoolThread* pThread) {
+		return DatagramSocket::send<SenderType>(ex, pSender, pThread);
+	}
+
 	const SocketAddress&	address();
 	const SocketAddress&	peerAddress();
 
 private:
-	virtual void			onReception(const UInt8* data, UInt32 size, const SocketAddress& address) = 0;
+	virtual void			onReception(const std::shared_ptr<Buffer<UInt8>>& pData, const SocketAddress& address) = 0;
 	void					onReadable(Exception& ex);
 
-	Buffer<UInt8>			_buffer;
+	std::shared_ptr<Buffer<UInt8>>			_pBuffer;
 	bool					_allowBroadcast;
 	bool					_broadcasting;
 

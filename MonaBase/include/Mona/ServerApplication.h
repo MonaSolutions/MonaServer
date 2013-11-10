@@ -59,7 +59,7 @@ private:
 	static ServerApplication*	 _PThis;
 
 #else
-	void handlePidFile(const std::string& value);
+	void handlePidFile(Exception& ex,const std::string& value);
 	bool isDaemon(int argc, char** argv);
 	void beDaemon();
 #endif

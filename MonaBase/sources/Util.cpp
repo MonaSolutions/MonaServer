@@ -124,18 +124,24 @@ bool Util::UnpackUrl(Exception& ex,const string& url, SocketAddress& address, st
 		if (*it == '/' || *it == '\\') // no address!
 			break;
 		if (*it == ':') {
-			// protocol
+			// address
+			++it;
 			while (it != end && (*it == '/' || *it == '\\'))
 				++it;
 			if (it == end)
-				break;
-			++it;
-			if (it == end) // no address, no path, just "scheme://"
-				return true;
+				return true; // no address, no path, just "scheme://"
 			auto itEnd(it);
-			while (itEnd != end && (*it == '/' || *it == '\\'))
+			string::const_iterator itPort=end;
+			while (itEnd != end && *itEnd != '/' && *itEnd != '\\') {
+				if (*itEnd == ':')
+					itPort = itEnd;
 				++itEnd;
-			address.set(ex, string(it, itEnd));
+			}
+			if (itPort == end)
+				address.set(ex, string(it, itEnd),0);
+			else
+				address.set(ex, string(it, itPort), string(itPort, itEnd));
+			it = itEnd;
 			break;
 		}
 		++it;

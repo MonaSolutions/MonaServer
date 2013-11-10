@@ -32,8 +32,9 @@ public:
 	virtual ~WSSession();
 
 
-	bool			buildPacket(MemoryReader& data,UInt32& packetSize);
+	bool			buildPacket(const std::shared_ptr<Buffer<UInt8>>& pData, MemoryReader& packet);
 	void			packetHandler(MemoryReader& packet);
+	void			endReception() { if (_pPublication) _pPublication->flush(); }
 	void			manage();
 
 protected:
@@ -41,12 +42,10 @@ protected:
 	void			kill();
 	
 private:
-
 	WSWriter		_writer;
 	Time			_time;
 	Publication*	_pPublication;
 	Listener*		_pListener;
-	UInt32			_decoded;
 };
 
 

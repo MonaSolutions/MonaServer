@@ -25,6 +25,141 @@ namespace Mona {
 static volatile bool	Initialized(false);
 static mutex			Mutex;
 
+
+bool Net::CheckError(Exception& ex) {
+	int error = LastError();
+	if (error) {
+		SetError(ex, error);
+		return true;
+	}
+	return false;
+}
+
+
+void Net::SetError(Exception& ex, int error, const string& argument) {
+	string message;
+	switch (error) {
+	case NET_ESYSNOTREADY:
+		message.assign("Net subsystem not ready");
+		break;
+	case NET_ENOTINIT:
+		message.assign("Net subsystem not initialized");
+		break;
+	case NET_EINTR:
+		message.assign("Interrupted");
+		break;
+	case NET_EACCES:
+		message.assign("Permission denied");
+		break;
+	case NET_EFAULT:
+		message.assign("Bad address");
+		break;
+	case NET_EINVAL:
+		message.assign("Invalid argument");
+		break;
+	case NET_EMFILE:
+		message.assign("Too many open files");
+		break;
+	case NET_EWOULDBLOCK:
+		message.assign("Operation would block");
+		break;
+	case NET_EINPROGRESS:
+		message.assign("Operation now in progress");
+		break;
+	case NET_EALREADY:
+		message.assign("Operation already in progress");
+		break;
+	case NET_ENOTSOCK:
+		message.assign("Socket operation attempted on non-socket");
+		break;
+	case NET_EDESTADDRREQ:
+		message.assign("Destination address required");
+		break;
+	case NET_EMSGSIZE:
+		message.assign("Message too long");
+		break;
+	case NET_EPROTOTYPE:
+		message.assign("Wrong protocol type");
+		break;
+	case NET_ENOPROTOOPT:
+		message.assign("Protocol not available");
+		break;
+	case NET_EPROTONOSUPPORT:
+		message.assign("Protocol not supported");
+		break;
+	case NET_ESOCKTNOSUPPORT:
+		message.assign("Socket type not supported");
+		break;
+	case NET_ENOTSUP:
+		message.assign("Operation not supported");
+		break;
+	case NET_EPFNOSUPPORT:
+		message.assign("Protocol family not supported");
+		break;
+	case NET_EAFNOSUPPORT:
+		message.assign("Address family not supported");
+		break;
+	case NET_EADDRINUSE:
+		message.assign("Address already in use");
+		break;
+	case NET_EADDRNOTAVAIL:
+		message.assign("Cannot assign requested address");
+		break;
+	case NET_ENETDOWN:
+		message.assign("Network is down");
+		break;
+	case NET_ENETUNREACH:
+		message.assign("Network is unreachable");
+		break;
+	case NET_ENETRESET:
+		message.assign("Network dropped connection on reset");
+		break;
+	case NET_ECONNABORTED:
+		message.assign("Connection aborted");
+		break;
+	case NET_ECONNRESET:
+		message.assign("Connection reseted");
+		break;
+	case NET_ENOBUFS:
+		message.assign("No buffer space available");
+		break;
+	case NET_EISCONN:
+		message.assign("Socket is already connected");
+		break;
+	case NET_ENOTCONN:
+		message.assign("Socket is not connected");
+		break;
+	case NET_ESHUTDOWN:
+		message.assign("Cannot send after socket shutdown");
+		break;
+	case NET_ETIMEDOUT:
+		message.assign("Timeout");
+		break;
+	case NET_ECONNREFUSED:
+		message.assign("Connection refused");
+		break;
+	case NET_EHOSTDOWN:
+		message.assign("Host is down");
+		break;
+	case NET_EHOSTUNREACH:
+		message.assign("No route to host");
+		break;
+#if !defined(_WIN32)
+	case EPIPE:
+		message.assign("Broken pipe");
+		break;
+#endif
+	default:
+		message.assign("I/O error");
+	}
+
+	if (argument.empty())
+		ex.set(Exception::SOCKET, message);
+	else
+		ex.set(Exception::SOCKET, message, " (", argument, ")");
+}
+
+
 bool Net::InitializeNetwork(Exception& ex) {
 	lock_guard<mutex> lock(Mutex);
 	if (Initialized)

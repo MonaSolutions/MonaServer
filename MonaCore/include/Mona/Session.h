@@ -19,52 +19,68 @@
 
 #include "Mona/Mona.h"
 #include "Mona/Peer.h"
-#include "Mona/Protocol.h"
 #include "Mona/Invoker.h"
-
 
 namespace Mona {
 
-class Session : virtual Object {
+class Sessions;
+class Protocol;
+class Session : virtual Object, Expirable<Session> {
+	friend class Sessions;
 public:
-
-	const UInt32		id;
-	const std::string	name;
-	const bool			died;
-
-	Peer				peer;
-	const bool			checked;
-	bool				failed;
-
 	virtual ~Session();
 
-	void						receive(MemoryReader& packet);
-	virtual bool				decode(const std::shared_ptr < Buffer < UInt8 >> &pBuffer, const SocketAddress& address, std::shared_ptr <MemoryReader>& pReader) { pReader.reset(new MemoryReader(pBuffer->data(), pBuffer->size())); return true; }
-	virtual void				manage() {}
-	virtual void				kill();
+	UInt32				id()	const { return _id; }
+	const std::string&	name()	const;
+	
+	template<typename ProtocolType = Protocol>
+	ProtocolType& protocol() { return (ProtocolType&)_protocol; }
+
+	mutable Peer		peer;
+
+	bool				dumpJustInDebug;
+
+	const bool			died;
+
+	void dumpResponse(const UInt8* data, UInt32 size, bool justInDebug=false) { Writer::DumpResponse(data, size, peer.address, justInDebug); }
+
+	template<typename DecodingType>
+	void decode(const std::shared_ptr<DecodingType>& pDecoding) {
+		Exception ex;
+		if(shareThis(ex, pDecoding->_expirableSession))
+			_pDecodingThread = invoker.poolThreads.enqueue<DecodingType>(ex, pDecoding, _pDecodingThread);
+		if (ex)
+			ERROR("Impossible to decode packet of protocol ", protocolName(), " on session ", name(), ", ", ex.error());
+	}
+	template<typename DecodingType>
+	void decode(const std::shared_ptr<DecodingType>& pDecoding, const SocketAddress& address) {
+		pDecoding->_address.set(address);
+		decode<DecodingType>(pDecoding);
+	}
+
+	void				receive(MemoryReader& packet);
+	void				receive(MemoryReader& packet, const SocketAddress& address);
+
+	virtual void		manage() {}
+	virtual void		kill();
 
 protected:
 	Session(Protocol& protocol,Invoker& invoker, const char* name=NULL);
-	Session(Protocol& protocol,Invoker& invoker, const Peer& peer,const char* name=NULL);
+	Session(Protocol& protocol, Invoker& invoker, const Peer& peer, const char* name = NULL);
 
 	Invoker&			invoker;
-	Protocol&			protocol;
-
-	template<typename DecodingType>
-	bool decode(const std::shared_ptr<DecodingType>& pDecoding) {
-		Exception ex;
-		_pDecodingThread = invoker.poolThreads.enqueue<DecodingType>(ex,pDecoding, _pDecodingThread);
-		if (ex)
-			ERROR("Impossible to decode packet of protocol ", protocol.name, " on session ", id, ", ", ex.error());
-		return !ex;
-	}
-
-	const std::string& reference();
 
 	virtual void		packetHandler(MemoryReader& packet)=0;
 
 private:	
+	void				checkAddress(const SocketAddress& address);
+	const std::string&  protocolName();
+
 	PoolThread*			_pDecodingThread;
+	mutable std::string	_name;
+	UInt32				_id;
+	Sessions*			_pSessions;
+	Protocol&			_protocol;
 };
 
 

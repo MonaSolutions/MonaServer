@@ -19,14 +19,13 @@
 
 namespace Mona {
 
-RTMFPSender::RTMFPSender(): UDPSender(true),packet(_buffer,sizeof(_buffer)),farId(0) {
+RTMFPSender::RTMFPSender(): packet(_buffer,sizeof(_buffer)),farId(0) {
 	packet.clear(11);
 	packet.limit(RTMFP_MAX_PACKET_LENGTH); // set normal limit
 }
 
 
 bool RTMFPSender::run(Exception& ex) {
-	dump();
 	packet.limit(); // no limit for sending!
 	RTMFP::Encode(encoder,packet);
 	RTMFP::Pack(packet,farId);

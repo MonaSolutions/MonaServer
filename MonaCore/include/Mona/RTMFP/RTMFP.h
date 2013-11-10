@@ -30,7 +30,6 @@ namespace Mona {
 #define RTMFP_MIN_PACKET_SIZE	12
 #define RTMFP_MAX_PACKET_LENGTH 1192
 #define RTMFP_TIMESTAMP_SCALE	4
-#define RTMFP_PACKET_RECV_SIZE	2048	
 #define RTMFP_PACKET_SEND_SIZE	1215
 
 class RTMFPEngine : virtual Object {
@@ -72,7 +71,7 @@ public:
 
 	static bool					ReadCRC(MemoryReader& packet);
 	static void					WriteCRC(MemoryWriter& packet);
-	static bool					Decode(RTMFPEngine& aesDecrypt,MemoryReader& packet);
+	static bool					Decode(Exception& ex,RTMFPEngine& aesDecrypt,MemoryReader& packet);
 	static void					Encode(RTMFPEngine& aesEncrypt,MemoryWriter& packet);
 	
 

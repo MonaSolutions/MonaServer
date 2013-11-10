@@ -17,6 +17,7 @@
 
 #include "Mona/RTMP/RTMPHandshaker.h"
 #include "Mona/DiffieHellman.h"
+#include "Mona/Writer.h"
 #include "Mona/Logs.h"
 #include "Mona/RTMP/RTMP.h"
 #include "Mona/Util.h"
@@ -29,7 +30,7 @@ using namespace std;
 
 namespace Mona {
 
-RTMPHandshaker::RTMPHandshaker(const UInt8* data, UInt32 size): TCPSender(NULL,true),_middle(false),_writer(_buffer,sizeof(_buffer)),_farPubKey(0) {
+RTMPHandshaker::RTMPHandshaker(const SocketAddress& address, const UInt8* data, UInt32 size) : _address(address), _middle(false), _writer(_buffer, sizeof(_buffer)), _farPubKey(0) {
 	_writer.write8(3);
 	//generate random data
 	Util::Random(_writer.begin() + _writer.position(), 1536);
@@ -37,7 +38,7 @@ RTMPHandshaker::RTMPHandshaker(const UInt8* data, UInt32 size): TCPSender(NULL,t
 	_writer.writeRaw(data,size);
 }
 
-RTMPHandshaker::RTMPHandshaker(const UInt8* farPubKey, const UInt8* challengeKey, bool middle, const std::shared_ptr<RC4_KEY>& pDecryptKey, const std::shared_ptr<RC4_KEY>& pEncryptKey) : TCPSender(NULL, true), _pDecryptKey(pDecryptKey), _pEncryptKey(pEncryptKey), _middle(middle), _writer(_buffer, sizeof(_buffer)), _farPubKey(DH_KEY_SIZE) {
+RTMPHandshaker::RTMPHandshaker(const SocketAddress& address, const UInt8* farPubKey, const UInt8* challengeKey, bool middle, const std::shared_ptr<RC4_KEY>& pDecryptKey, const std::shared_ptr<RC4_KEY>& pEncryptKey) : _address(address), _pDecryptKey(pDecryptKey), _pEncryptKey(pEncryptKey), _middle(middle), _writer(_buffer, sizeof(_buffer)), _farPubKey(DH_KEY_SIZE) {
 	memcpy(_farPubKey.data(),farPubKey,_farPubKey.size());
 	memcpy(_challengeKey,challengeKey,sizeof(_challengeKey));
 }
@@ -48,8 +49,8 @@ bool RTMPHandshaker::run(Exception& ex) {
 		if (!runComplex(ex))
 			return false;
 	}
-	dump(true);
-	return run(ex);
+	Writer::DumpResponse(begin(), size(), _address);
+	return TCPSender::run(ex);
 }
 
 bool RTMPHandshaker::runComplex(Exception& ex) {

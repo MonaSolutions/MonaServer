@@ -44,6 +44,7 @@ namespace Mona {
 			MEMORY,
 			SYSTEM,
 			MATH,
+			CRYPTO,
 			ASSERT
 		};
 
@@ -51,9 +52,9 @@ namespace Mona {
 
 
 		template <typename ...Args>
-		void set(Code code, const Args&... args) {
+		void set(Code code, Args&&... args) {
 			_code = code;
-			String::Append(_error, args ...);
+			String::Format(_error, args ...);
 		}
 
 		void set(const Exception& other) {
@@ -73,14 +74,14 @@ namespace Mona {
 	};
 
 #undef		ASSERT
-#define		ASSERT(CHECK)					if(!(CHECK)) { ex.set(Exception::ASSERT, #CHECK);return;}
-#define		ASSERT_RETURN(CHECK,RETURN)		if(!(CHECK)) { ex.set(Exception::ASSERT, #CHECK);return RETURN;}
+#define		ASSERT(CONDITION)					if(!(CONDITION)) { ex.set(Exception::ASSERT, #CONDITION);return;}
+#define		ASSERT_RETURN(CONDITION,RETURN)		if(!(CONDITION)) { ex.set(Exception::ASSERT, #CONDITION);return RETURN;}
 
 #if defined(_DEBUG)
 #if defined(_WIN32)
-#define		FATAL_ASSERT(CHECK)				{_ASSERTE(CHECK);}
+#define		FATAL_ASSERT(CONDITION)				{_ASSERTE(CONDITION);}
 #else
-#define		FATAL_ASSERT(CHECK)				if(!(CHECK)) {raise(SIGTRAP);} // TODO test on linux
+#define		FATAL_ASSERT(CONDITION)				if(!(CONDITION)) {raise(SIGTRAP);} // TODO test on linux
 #endif
 #if defined(_WIN32)
 #define		FATAL_ERROR(...)				{string __error;_ASSERTE(!Mona::String::Format(__error,## __VA_ARGS__).c_str());}
@@ -88,7 +89,7 @@ namespace Mona {
 #define		FATAL_ERROR(...)				{raise(SIGTRAP);} // TODO test on linux
 #endif
 #else
-#define		FATAL_ASSERT(CHECK)				if(!(CHECK)) {throw std::exception( #CHECK ", "__FILE__"[" LINE_STRING "]");}
+#define		FATAL_ASSERT(CONDITION)				if(!(CONDITION)) {throw std::exception( #CONDITION ", "__FILE__"[" LINE_STRING "]");}
 #define		FATAL_ERROR(...)				{string __error; throw std::exception( Mona::String::Format(__error,## __VA_ARGS__,", "__FILE__"[" LINE_STRING "]").c_str());}
 #endif
 

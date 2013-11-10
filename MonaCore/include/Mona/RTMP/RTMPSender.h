@@ -28,23 +28,25 @@ namespace Mona {
 
 class RTMPSender : public TCPSender, virtual Object {
 public:
-	RTMPSender(const std::shared_ptr<RC4_KEY>& pEncryptKey);
+	RTMPSender(const SocketAddress& address,const std::shared_ptr<RC4_KEY>& pEncryptKey);
 	RTMPSender(const RTMPSender& sender);
 
 	AMFWriter	writer;
 	
 	AMFWriter&	write(UInt32 id,AMF::ContentType type,UInt32 time=0,UInt32 streamId=0,MemoryReader* pData=NULL);
 	
+	const UInt8*		begin() { return writer.stream.data(); }
+	UInt32				size() { return writer.stream.size(); }
+
 private:
 	bool				run(Exception& ex);
-	void				pack();
-	const UInt8*		begin(bool displaying = false) { return writer.stream.data(); }
-	UInt32				size(bool displaying = false) { return writer.stream.size(); }
+	void				pack(); // TODO remove??
 
 	UInt32						_sizePos;
 	UInt32						_chunkSize;
-	RTMPChannel					_channel;
+	RTMPChannel					_channel; // TODO not copied on RTMPSender(const RTMPSender& sender); ?
 	std::shared_ptr<RC4_KEY>	_pEncryptKey;
+	SocketAddress				_address;
 };
 
 

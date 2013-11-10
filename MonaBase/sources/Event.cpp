@@ -27,16 +27,14 @@ namespace Mona {
 using namespace std;
 
 bool Event::wait(UInt32 millisec) {
-	cv_status result(cv_status::timeout);
+	cv_status result(cv_status::no_timeout);
 	unique_lock<mutex> lock(_mutex);
 	try {
-		while (!_set) {
-			if (millisec>0)
+		while (!_set && result == cv_status::no_timeout) {
+			if (millisec > 0)
 				result = _condition.wait_for(lock, std::chrono::milliseconds(millisec));
-			else {
+			else
 				_condition.wait(lock);
-				result = cv_status::no_timeout;
-			}	
 		}
 	} catch (exception& exc) {
 		FATAL_ERROR("Wait event failed, ", exc.what());

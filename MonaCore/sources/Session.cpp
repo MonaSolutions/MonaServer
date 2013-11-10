@@ -17,28 +17,29 @@
 
 #include "Mona/Session.h"
 #include "Mona/Decoding.h"
+#include "Mona/Protocol.h"
+#include "Mona/Sessions.h"
 #include "Mona/Util.h"
 #include "Mona/Logs.h"
 
 using namespace std;
 
 
-
 namespace Mona {
 
-Session::Session(Protocol& protocol,Invoker& invoker, const Peer& peer,const char* name) :
-	protocol(protocol),name(name ? name : ""),invoker(invoker),_pDecodingThread(NULL),died(false),checked(false),failed(false),id(0),peer(peer) {
+Session::Session(Protocol& protocol, Invoker& invoker, const Peer& peer, const char* name) : _pSessions(NULL), dumpJustInDebug(false),
+	Expirable(this), _protocol(protocol), _name(name ? name : ""), invoker(invoker), _pDecodingThread(NULL), died(false), _id(0), peer(peer) {
+	this->peer.setString("protocol", protocol.name);
 	this->peer.addresses.begin()->set(peer.address);
-	(string&)this->peer.protocol = protocol.name;
 	if(memcmp(this->peer.id,"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",ID_SIZE)==0)
 		Util::Random(this->peer.id,ID_SIZE);
 	string hex;
 	DEBUG("peer.id: ", Util::FormatHex(this->peer.id, ID_SIZE, hex));
 }
 	
-Session::Session(Protocol& protocol,Invoker& invoker, const char* name) :
-	protocol(protocol),name(name ? name : ""),invoker(invoker),_pDecodingThread(NULL),died(false),checked(false),failed(false),id(0),peer((Handler&)invoker) {
-	(string&)peer.protocol = protocol.name;
+Session::Session(Protocol& protocol, Invoker& invoker, const char* name) : dumpJustInDebug(false), _pSessions(NULL),
+	Expirable(this),_protocol(protocol),_name(name ? name : ""), invoker(invoker), _pDecodingThread(NULL), died(false), _id(0), peer((Handler&)invoker) {
+	peer.setString("protocol", protocol.name);
 	if(memcmp(peer.id,"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",ID_SIZE)==0)
 		Util::Random(this->peer.id, ID_SIZE);
 	string hex;
@@ -48,12 +49,13 @@ Session::Session(Protocol& protocol,Invoker& invoker, const char* name) :
 
 Session::~Session() {
 	kill();
+	expire();
 }
 
-const string& Session::reference() {
-	if(name.empty())
-		String::Format((string&)name, id);
-	return name;
+const string& Session::name() const {
+	if(_name.empty())
+		String::Format(_name, _id);
+	return _name;
 }
 
 void Session::kill() {
@@ -65,17 +67,28 @@ void Session::kill() {
 
 
 void Session::receive(MemoryReader& packet) {
-	if(!checked) {
-		protocol.check(*this);
-		(bool&)checked = true;
-	}
 	if(died)
 		return;
-	DUMP(packet,"Request from ",peer.address.toString())
+	if (!dumpJustInDebug || (dumpJustInDebug && Logs::GetLevel()>=7))
+		DUMP(packet,"Request from ",peer.address.toString())
 	packetHandler(packet);
 }
 
+void Session::receive(MemoryReader& packet, const SocketAddress& address) {
+	// if address  has changed (possible in UDP), update it
+	if (address != peer.address) {
+		SocketAddress oldAddress(peer.address);
+		((SocketAddress&)peer.address).set(address);
+		peer.addresses.begin()->set(address);
+		if (_pSessions && id() != 0) // id!=0 if session is managed by _sessions
+			_pSessions->updateAddress(*this, oldAddress);
+	}
+	receive(packet);
+}
 
+const string&  Session::protocolName() {
+	return _protocol.name;
+}
 
 
 } // namespace Mona

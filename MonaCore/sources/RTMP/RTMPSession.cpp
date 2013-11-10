@@ -29,7 +29,8 @@ using namespace std;
 namespace Mona {
 
 
-RTMPSession::RTMPSession(const SocketAddress& address, Protocol& protocol, Invoker& invoker) : _mainStream(invoker, peer), _chunkSize(DEFAULT_CHUNKSIZE), _handshaking(0), _pWriter(NULL), TCPSession(address,protocol, invoker) {
+RTMPSession::RTMPSession(const SocketAddress& address, Protocol& protocol, Invoker& invoker) : _pThread(NULL),_mainStream(invoker, peer), _chunkSize(DEFAULT_CHUNKSIZE), _handshaking(0), _pWriter(NULL), TCPSession(address, protocol, invoker) {
+	dumpJustInDebug = true;
 }
 
 
@@ -42,21 +43,24 @@ RTMPSession::~RTMPSession() {
 		delete it->second;
 }
 
+/* TODO replace!!!
 void RTMPSession::onNewData(const UInt8* data,UInt32 size) {
 	if(_pDecryptKey)
-		RC4(_pDecryptKey.get(),size,data,(UInt8*)data); // No useless to thread it (after testing)
+		RC4(_pDecryptKey.get(),size,data,(UInt8*)data); // TODO use a thread to decode?
 }
+*/
 
-bool RTMPSession::buildPacket(MemoryReader& data,UInt32& packetSize) {
+bool RTMPSession::buildPacket(const shared_ptr<Buffer<UInt8>>& pData, MemoryReader& packet) {
 	switch(_handshaking) {
 		case 0:
-			packetSize = 1537;
+			return packet.available() >= 1537;
 		case 1:
-			packetSize = 1536;
-			return true;
+			return packet.available() >= 1536;
 	}
 
-	UInt8 headerSize = data.read8();
+	dumpJustInDebug = false;
+
+	UInt8 headerSize = packet.read8();
 
 	UInt8 idWriter = headerSize & 0x3F;
 	map<UInt8,RTMPWriter*>::iterator it = _writers.lower_bound(idWriter);
@@ -74,35 +78,35 @@ bool RTMPSession::buildPacket(MemoryReader& data,UInt32& packetSize) {
 		channel.headerSize = headerSize;
 	
 	UInt32 total = channel.bodySize+channel.headerSize;
-	if(data.available()<total)
+	if (packet.available()<total)
 		return false;
 
 	UInt32 time=0;
 
 	if(channel.headerSize>=4) {
 		// TIME
-		time = data.read24();
+		time = packet.read24();
 	
 		if(channel.headerSize>=8) {
 			// SIZE
-			channel.bodySize = data.read24();
+			channel.bodySize = packet.read24();
 			channel.headerSize += (UInt16)floor(double(channel.bodySize/_chunkSize)); 
 			// TYPE
-			channel.type = (AMF::ContentType)data.read8();
+			channel.type = (AMF::ContentType)packet.read8();
 			if(channel.headerSize>=12) {
 				// STREAM
-				channel.streamId = data.read8();
-				channel.streamId += data.read8()<<8;
-				channel.streamId += data.read8()<<16;
-				channel.streamId += data.read8()<<24;
+				channel.streamId = packet.read8();
+				channel.streamId += packet.read8() << 8;
+				channel.streamId += packet.read8() << 16;
+				channel.streamId += packet.read8() << 24;
 			}
 		}
 	}
 
 	if(time==0xFFFFFF) {
 		channel.headerSize += 4;
-		if(data.available()>4)
-			time = data.read32();
+		if (packet.available()>4)
+			time = packet.read32();
 	}
 	if(channel.headerSize>=12)
 		channel.time = time;
@@ -112,7 +116,7 @@ bool RTMPSession::buildPacket(MemoryReader& data,UInt32& packetSize) {
 	// TODO?
 	// 	if stream.typeRecv == 0x11 then headerSize = headerSize+1 end
 
-	packetSize = channel.headerSize+channel.bodySize;
+	packet.shrink(channel.headerSize+channel.bodySize-packet.position());
 	return true;
 }
 
@@ -137,7 +141,7 @@ void RTMPSession::packetHandler(MemoryReader& packet) {
 	}
 	
 	if(!_pWriter) {
-		ERROR("Packet received on session ",id," without channel indication");
+		ERROR("Packet received on session ",name()," without channel indication");
 		return;
 	}
 
@@ -193,15 +197,15 @@ bool RTMPSession::performHandshake(MemoryReader& packet, bool encrypted) {
 			_pEncryptKey.reset(new RC4_KEY);
 		}
 		packet.reset();
-		pHandshaker.reset(new RTMPHandshaker(packet.current() + RTMP::GetDHPos(packet.current(), middle), challengeKey, middle, _pDecryptKey, _pEncryptKey));
+		pHandshaker.reset(new RTMPHandshaker(peerAddress(),packet.current() + RTMP::GetDHPos(packet.current(), middle), challengeKey, middle, _pDecryptKey, _pEncryptKey));
 	} else if (encrypted) {
 		ERROR("Unable to validate client");
 		return false;
 	} else // Simple handshake!
-		pHandshaker.reset(new RTMPHandshaker(packet.current(), packet.available()));
+		pHandshaker.reset(new RTMPHandshaker(peerAddress(), packet.current(), packet.available()));
 
 	Exception ex;
-	send<RTMPHandshaker>(ex,pHandshaker);
+	_pThread = send<RTMPHandshaker>(ex, pHandshaker, _pThread);
 	if (ex)
 		ERROR("Handshake RTMP client file, ",ex.error());
 	return !ex;

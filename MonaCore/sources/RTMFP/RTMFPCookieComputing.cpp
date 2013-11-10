@@ -31,8 +31,8 @@ RTMFPCookieComputing::RTMFPCookieComputing(RTMFPHandshake& handshake,Invoker& in
 
 bool RTMFPCookieComputing::run(Exception& ex) {
 	// First execution is for the DH computing if pDH == null, else it's to compute Diffie-Hellman keys
-	if (!diffieHellman.initialized() && !diffieHellman.initialize(ex))
-		return false;
+	if (!diffieHellman.initialized())
+		return diffieHellman.initialize(ex);
 
 	// Compute Diffie-Hellman secret
 	diffieHellman.computeSecret(ex,initiatorKey,sharedSecret);
@@ -47,11 +47,9 @@ bool RTMFPCookieComputing::run(Exception& ex) {
 }
 
 void RTMFPCookieComputing::handle(Exception& ex) {
-	Session* pSession = _handshake.createSession(value);
+	RTMFPSession* pSession = _handshake.createSession(value);
 	if (pSession)
-		pSession->peer.setNumber("&RTMFPCookieComputing", (double)reinterpret_cast<unsigned>(this));
-	else
-		weak.reset();
+		pSession->pRTMFPCookieComputing = weak.lock();
 }
 
 

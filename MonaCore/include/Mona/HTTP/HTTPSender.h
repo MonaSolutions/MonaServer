@@ -26,13 +26,12 @@ namespace Mona {
 
 class HTTPSender : public TCPSender, virtual Object {
 public:
-	HTTPSender() : TCPSender(true) {}
+	HTTPSender() {}
 
 	HTTPPacketWriter	writer;
-private:
 
-	const UInt8*	begin(bool displaying = false) { return	writer.stream.data(); }
-	UInt32			size(bool displaying = false) { return writer.stream.size(); }
+	const UInt8*	begin() { return	writer.stream.data(); }
+	UInt32			size() { return writer.stream.size(); }
 
 };
 

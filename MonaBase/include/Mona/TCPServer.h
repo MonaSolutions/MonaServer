@@ -35,7 +35,7 @@ public:
 	void					stop();
 
 	template <typename ClientType,typename ...Args>
-	ClientType* acceptClient(Exception& ex, Args&... args) {
+	ClientType* acceptClient(Exception& ex, Args&&... args) {
 		ASSERT_RETURN(_hasToAccept == true, NULL)
 		ClientType* pClient = acceptConnection<ClientType>(ex, args ...);
 		_hasToAccept = false;

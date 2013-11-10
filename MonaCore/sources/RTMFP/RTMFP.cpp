@@ -89,10 +89,13 @@ UInt16 RTMFP::CheckSum(MemoryReader& packet) {
 }
 
 
-bool RTMFP::Decode(RTMFPEngine& aesDecrypt,MemoryReader& packet) {
+bool RTMFP::Decode(Exception& ex,RTMFPEngine& aesDecrypt,MemoryReader& packet) {
 	// Decrypt
 	aesDecrypt.process(packet.current(),packet.current(),packet.available());
-	return ReadCRC(packet);
+	bool result = ReadCRC(packet);
+	if (!result)
+		ex.set(Exception::CRYPTO, "Bad RTMFP CRC sum computing");
+	return result;
 }
 
 bool RTMFP::ReadCRC(MemoryReader& packet) {

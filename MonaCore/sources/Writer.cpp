@@ -26,6 +26,23 @@ namespace Mona {
 DataWriterNull	Writer::DataWriterNull;
 Writer			Writer::Null;
 
+
+
+void Writer::DumpResponse(const UInt8* data, UInt32 size, const Socket& socket, bool justInDebug) {
+	if (Logs::GetDump()&Logs::DUMP_EXTERN && (!justInDebug || (justInDebug&&Logs::GetLevel() >= 7))) {
+		// executed just in debug mode, or in dump mode
+		SocketAddress address;
+		Exception ex;
+		DumpResponse(data, size, socket.peerAddress(ex, address), justInDebug);
+	}
+}
+
+void Writer::DumpResponse(const UInt8* data, UInt32 size, const SocketAddress& address, bool justInDebug) {
+	// executed just in debug mode, or in dump mode
+	if (Logs::GetDump()&Logs::DUMP_EXTERN && (!justInDebug || (justInDebug&&Logs::GetLevel() >= 7)))
+		DUMP(data, size, "Response to ", address.toString())
+}
+
 Writer::Writer(WriterHandler* pHandler) : reliable(true),_pHandler(pHandler),_state(CONNECTED) {
 }
 

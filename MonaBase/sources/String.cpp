@@ -23,6 +23,8 @@ using namespace std;
 
 namespace Mona {
 
+const string String::Empty;
+
 vector<string>& String::Split(const string& value, const string& separators, vector<string>& values, int options) {
 	string::const_iterator it1 = value.begin(), it2, it3, end = value.end();
 
@@ -115,6 +117,7 @@ T String::ToNumber(Exception& ex, const std::string& value, T result) {
 	bool beginning = true, negative = false;
 
 	const char* str(value.c_str());
+	UInt64 current(0);
 
 	if (!str || *str == '\0') {
 		ex.set(Exception::FORMATTING, "Empty string is not a number");
@@ -125,11 +128,6 @@ T String::ToNumber(Exception& ex, const std::string& value, T result) {
 	T max = numeric_limits<T>::max();
 
 	do {
-		if (result >= max) {
-			ex.set(Exception::FORMATTING, str, " exceeds maximum number capacity");
-			return false;
-		}
-
 		if (isblank(*str)) {
 			if (beginning)
 				continue;
@@ -163,19 +161,24 @@ T String::ToNumber(Exception& ex, const std::string& value, T result) {
 			return false;
 		}
 
-		result = result * 10 + (*str - '0');
+		current = current * 10 + (*str - '0');
 		comma *= 10;
 	} while ((*++str) != '\0');
 
 	if (comma > 0)
-		result /= comma;
+		current /= comma;
 
+	if (current >= max) {
+		ex.set(Exception::FORMATTING, str, " exceeds maximum number capacity");
+		return false;
+	}
 
 	if (negative)
-		result *= -1;
+		current *= -1;
 
-	return result;
+	return result = (T)current;
 }
+
 
 template bool String::ToNumber(const std::string& value, int& result);
 template int String::ToNumber(Exception& ex, const std::string& value, int result);

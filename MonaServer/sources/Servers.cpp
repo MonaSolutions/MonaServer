@@ -91,8 +91,7 @@ void Servers::stop() {
 }
 
 void Servers::onConnectionRequest(Exception& ex) { 
-	bool alreadyConnected = true;
-	ServerConnection* pServer = acceptClient<ServerConnection>(ex, manager, _handler, (ServersHandler&)*this, alreadyConnected);
+	ServerConnection* pServer = acceptClient<ServerConnection>(ex, manager, _handler, (ServersHandler&)*this, true);
 	if (!pServer)
 		return;
 	_clients.insert(pServer);

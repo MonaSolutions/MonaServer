@@ -17,6 +17,7 @@
 
 #include "Mona/Server.h"
 #include "Mona/Decoding.h"
+#include "Mona/Sessions.h"
 
 
 using namespace std;
@@ -32,8 +33,12 @@ ServerManager::ServerManager(Server& server):_server(server),Task(server),Starta
 void ServerManager::run(Exception& ex) {
 	do {
 		waitHandle();
-		_server.relay.manage();
 	} while (sleep(2000) != STOP);
+}
+
+void ServerManager::handle(Exception& ex) {
+	_server.manage();
+	_server.relay.manage();
 }
 
 Server::Server(UInt32 bufferSize,UInt32 threads) : Startable("Server"),Handler(bufferSize,threads),_protocols(*this),_manager(*this) {
@@ -61,7 +66,6 @@ bool Server::start(const ServerParams& params) {
 
 void Server::run(Exception& exc) {
 	Exception ex;
-	ServerManager manager(*this);
 	try {
 		TaskHandler::start();
 
@@ -70,7 +74,9 @@ void Server::run(Exception& exc) {
 			if (exWarn)
 				WARN(exWarn.error());
 
-			_protocols.load(*this);
+			_pSessions.reset(new Sessions());
+
+			_protocols.load(*_pSessions);
 
 			onStart();
 
@@ -100,7 +106,8 @@ void Server::run(Exception& exc) {
 	_manager.stop();
 
 	// clean sessions, and send died message if need
-	_sessions.clear();
+	if (_pSessions)
+		_pSessions.reset();
 
 	// stop receiving and sending engine (it waits the end of sending last session messages)
 	poolThreads.clear();
@@ -111,59 +118,10 @@ void Server::run(Exception& exc) {
 	NOTE("Server stopped");
 }
 
-
-void Server::readable(Exception& ex,Protocol& protocol) {
-
-	if(!TaskHandler::running()) // If terminad it means that sessions have been deleted: no more reception!
-		return;
-
-	SocketAddress address;
-	shared_ptr<Buffer<UInt8> > pBuffer;
-	if (!protocol.receive(ex, pBuffer, address))
-		return;
-	if (ex || !pBuffer || !protocol.auth(address))
-		return;
-
-	MemoryReader reader(pBuffer->data(),pBuffer->size());
-
-	UInt32 id = protocol.unpack(reader);
-	Session* pSession = protocol.session(id,reader);
-	if(!pSession) {
-		pSession = _sessions.find(id);
-		if(!pSession) {
-			WARN("Unknown session ",id);
-			return;
-		}
-	}
-	shared_ptr<MemoryReader> pReader;
-	if (pSession->decode(pBuffer, address, pReader) && pReader) {
-		Decoding decoded(id, *this, protocol, pReader, address);
-		receive(decoded);
-	}
-}
-
-void Server::receive(Decoding& decoded) {
-	// Process packet
-	Session* pSession = decoded.session();
-	if(!pSession)
-		pSession = _sessions.find(decoded.id);
-	if(!pSession)
-		return; // No warn because can have been deleted during decoding threading process
-
-	if(decoded.address != pSession->peer.address) {
-		SocketAddress oldAddress(pSession->peer.address);
-		((SocketAddress&)pSession->peer.address).set(decoded.address);
-		pSession->peer.addresses.begin()->set(decoded.address);
-		if(pSession->id!=0) // If session is managed by _sessions! (register with Gateway::registerSession)
-			_sessions.changeAddress(oldAddress,*pSession);
-	}
-	
-	pSession->receive(decoded.reader());
-}
-
 void Server::manage() {
 	_protocols.manage();
-	_sessions.manage();
+	if (_pSessions)
+		_pSessions->manage();
 }
 
 

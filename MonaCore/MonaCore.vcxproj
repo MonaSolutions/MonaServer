@@ -116,7 +116,6 @@
     <ClInclude Include="include\Mona\Client.h" />
     <ClInclude Include="include\Mona\Clients.h" />
     <ClInclude Include="include\Mona\Decoding.h" />
-    <ClInclude Include="include\Mona\Gateway.h" />
     <ClInclude Include="include\Mona\Group.h" />
     <ClInclude Include="include\Mona\Handler.h" />
     <ClInclude Include="include\Mona\ICE.h" />
@@ -189,7 +188,6 @@
     <ClCompile Include="sources\SDP.cpp" />
     <ClCompile Include="sources\Server.cpp" />
     <ClCompile Include="sources\Writer.cpp" />
-    <ClCompile Include="sources\Protocol.cpp" />
     <ClCompile Include="sources\Protocols.cpp" />
     <ClCompile Include="sources\RTMFP\RTMFP.cpp" />
     <ClCompile Include="sources\RTMFP\RTMFPCookie.cpp" />

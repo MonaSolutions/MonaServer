@@ -21,6 +21,7 @@
 #include "Mona/WorkThread.h"
 #include "Mona/PoolThread.h"
 #include "Mona/SocketAddress.h"
+#include "Mona/Expirable.h"
 #include <memory>
 
 
@@ -32,40 +33,34 @@ public:
 	// return true if there is few data available to send
 	virtual bool	available() { return begin() && _position < size(); }
 
-protected:
-	SocketSender(const UInt8* data, UInt32 size, bool dump = false);
-	SocketSender(bool dump = false);
-	virtual ~SocketSender();
+	virtual const UInt8*	begin() { return _data; }
+	virtual UInt32			size() { return _size; }
 
-	void			dump(bool justInDebug=false);
+protected:
+	SocketSender();
+	SocketSender(const UInt8* data, UInt32 size);
+	virtual ~SocketSender();
 
 
 	// if return true and ex==true it will display a warning, otherwise return false == failed
 	bool							run(Exception& ex);
-	
+
 private:
 	// send data
-	bool			flush(Exception& ex,Socket& socket);
+	bool							flush(Exception& ex,Socket& socket);
 
-	virtual bool	receiver(std::string& address) { return false; }
 
 	//// TO OVERLOAD ////////
 
 	virtual	UInt32					send(Exception& ex,Socket& socket,const UInt8* data, UInt32 size) = 0;
 
-	virtual const UInt8*			begin(bool dumping = false) { return _data; }
-	virtual UInt32					size(bool dumping = false) { return _size; }
-
-
-	std::shared_ptr<std::mutex> _pSocketMutex;
-	Socket*						_pSocket;
+	Expirable<Socket>			_expirableSocket;
 	std::weak_ptr<SocketSender>	_pThis;
 
 	UInt32						_position;
 	UInt8*						_data;
 	UInt32						_size;
 	bool						_memcopied;
-	bool						_dump;
 };
 
 

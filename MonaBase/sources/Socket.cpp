@@ -26,18 +26,17 @@ using namespace std;
 namespace Mona {
 
 
-Socket::Socket(const SocketManager& manager, int type) : _poolThreads(manager._poolThreads), _pMutex(new mutex()), _type(type), _initialized(false), _managed(false), manager(manager), _sockfd(NET_INVALID_SOCKET), _writing(false) {}
+Socket::Socket(const SocketManager& manager, int type) : Expirable<Socket>(this),_poolThreads(manager._poolThreads), _type(type), _initialized(false), _managed(false), manager(manager), _sockfd(NET_INVALID_SOCKET), _writing(false) {}
 
 Socket::~Socket() {
 	close();
 	if (_initialized)
 		NET_CLOSESOCKET(_sockfd);
-	lock_guard<mutex>	lock(*_pMutex); // prevent deletion for SocketSender
+	expire(); // prevent deletion for SocketSender
 }
 
 void Socket::close() {
 	lock_guard<mutex>	lock(_mutexManaged);
-	lock_guard<mutex>	lock2(*_pMutex);  // prevent close for SocketSender
 	if (!_managed)
 		return;
 	_managed = false;
@@ -54,11 +53,14 @@ bool Socket::init(Exception& ex, IPAddress::Family family) {
 		return false;
 	_sockfd = ::socket(family == IPAddress::IPv6 ? AF_INET6 : AF_INET, _type, 0);
 	if (_sockfd == NET_INVALID_SOCKET) {
-		SetError(ex);
+		Net::SetError(ex);
 		return false;
 	}
 
+	_initialized = true;
+
 	if (!managed(ex)) {
+		_initialized = false;
 		NET_CLOSESOCKET(_sockfd);
 		_sockfd = NET_INVALID_SOCKET;
 		return false;
@@ -73,7 +75,7 @@ bool Socket::init(Exception& ex, IPAddress::Family family) {
 	setOption(ex,SOL_SOCKET, SO_NOSIGPIPE, 1);
 #endif
 
-	return _initialized=true;
+	return true;
 }
 
 bool Socket::init(Exception& ex, NET_SOCKET sockfd) {
@@ -103,9 +105,9 @@ bool Socket::connect(Exception& ex, const SocketAddress& address) {
 		return false;
 	int rc = ::connect(_sockfd, &address.addr(), sizeof(address.addr()));
 	if (rc) {
-		int err = LastError();
+		int err = Net::LastError();
 		if (err != NET_EINPROGRESS && err != NET_EWOULDBLOCK) {
-			SetError(ex, err, address.toString());
+			Net::SetError(ex, err, address.toString());
 			return false;
 		}	
 	}
@@ -127,7 +129,7 @@ bool Socket::bind(Exception& ex, const SocketAddress& address, bool reuseAddress
 	}
 	int rc = ::bind(_sockfd, &address.addr(), sizeof(address.addr()));
 	if (rc != 0) {
-		SetError(ex, LastError(), address.toString());
+		Net::SetError(ex, Net::LastError(), address.toString());
 		return false;
 	}
 	return true;
@@ -140,7 +142,7 @@ bool Socket::listen(Exception& ex, int backlog) {
 		return false;
 
 	if (::listen(_sockfd, backlog) != 0) {
-		SetError(ex);
+		Net::SetError(ex);
 		return false;
 	}
 	return true;
@@ -152,7 +154,7 @@ void Socket::rejectConnection() {
 	NET_SOCKET sockfd;
 	do {
 		sockfd = ::accept(_sockfd, NULL, 0);  // TODO acceptEx?
-	} while (sockfd == NET_INVALID_SOCKET && LastError() == NET_EINTR);
+	} while (sockfd == NET_INVALID_SOCKET && Net::LastError() == NET_EINTR);
 	if (sockfd != NET_INVALID_SOCKET)
 		closesocket(sockfd);
 }
@@ -160,7 +162,7 @@ void Socket::rejectConnection() {
 void Socket::shutdown(Exception& ex,ShutdownType type) {
 	ASSERT(_initialized == true)
 	if (::shutdown(_sockfd, type) != 0)
-		SetError(ex);
+		Net::SetError(ex);
 }
 
 
@@ -169,8 +171,8 @@ int Socket::sendBytes(Exception& ex, const void* buffer, int length, int flags) 
 	do {
 		ASSERT_RETURN(_initialized == true, 0)
 		rc = ::send(_sockfd, reinterpret_cast<const char*>(buffer), length, flags);
-	} while (rc < 0 && LastError() == NET_EINTR);
-	CheckError(ex);
+	} while (rc < 0 && Net::LastError() == NET_EINTR);
+	Net::CheckError(ex);
 	return rc;
 }
 
@@ -180,12 +182,12 @@ int Socket::receiveBytes(Exception& ex, void* buffer, int length, int flags) {
 	do {
 		ASSERT_RETURN(_initialized == true, 0)
 		rc = ::recv(_sockfd, reinterpret_cast<char*>(buffer), length, flags);
-	} while (rc < 0 && LastError() == NET_EINTR);
+	} while (rc < 0 && Net::LastError() == NET_EINTR);
 	if (rc < 0) {
-		int err = LastError();
+		int err = Net::LastError();
 		if (err == NET_EAGAIN)
 			return 0;
-		SetError(ex, err);
+		Net::SetError(ex, err);
 	}
 	return rc;
 }
@@ -202,8 +204,8 @@ int Socket::sendTo(Exception& ex, const void* buffer, int length, const SocketAd
 		ASSERT_RETURN(_initialized == true, 0)
 		rc = ::sendto(_sockfd, reinterpret_cast<const char*>(buffer), length, flags, &address.addr(), sizeof(address.addr()));
 	}
-	while (rc < 0 && LastError() == NET_EINTR);
-	CheckError(ex);
+	while (rc < 0 && Net::LastError() == NET_EINTR);
+	Net::CheckError(ex);
 	return rc;
 }
 
@@ -221,9 +223,9 @@ int Socket::receiveFrom(Exception& ex, void* buffer, int length, SocketAddress& 
 	do {
 		ASSERT_RETURN(_initialized == true, 0)
 		rc = ::recvfrom(_sockfd, reinterpret_cast<char*>(buffer), length, flags, pSA, &saLen);
-	} while (rc < 0 && LastError() == NET_EINTR);
+	} while (rc < 0 && Net::LastError() == NET_EINTR);
 	if (rc < 0)
-		SetError(ex, LastError());
+		Net::SetError(ex, Net::LastError());
 	address.set(ex, *pSA);
 	return rc;
 }
@@ -237,7 +239,7 @@ SocketAddress& Socket::address(Exception& ex, SocketAddress& address) const {
 		address.set(ex, *pSA);
 		return address;
 	}
-	SetError(ex);
+	Net::SetError(ex);
 	return address;
 }
 
@@ -251,27 +253,9 @@ SocketAddress& Socket::peerAddress(Exception& ex, SocketAddress& address) const 
 		address.set(ex,*pSA);
 		return address;
 	}
-	SetError(ex);
+	Net::SetError(ex);
 	return address;
 }
-
-template<typename Type>
-void Socket::setOption(Exception& ex, int level, int option, const Type& value) {
-	ASSERT(_initialized == true)
-	int length(sizeof(value));
-	if (::setsockopt(_sockfd, level, option, reinterpret_cast<const char*>(&value), length) == -1)
-		SetError(ex);
-}
-
-template<typename Type>
-Type& Socket::getOption(Exception& ex, int level, int option,Type& value) {
-	ASSERT_RETURN(_initialized == true, value)
-	int length(sizeof(value));
-	if (::getsockopt(_sockfd, level, option, reinterpret_cast<char*>(&value), &length) == -1)
-		SetError(ex);
-	return value;
-}
-
 
 void Socket::setLinger(Exception& ex,bool on, int seconds) {
 	struct linger l;
@@ -314,31 +298,9 @@ int Socket::ioctl(Exception& ex,NET_IOCTLREQUEST request,int value) {
 	int rc = ::ioctl(_sockfd, request, &value);
 #endif
 	if (rc != 0)
-		SetError(ex);
+		Net::SetError(ex);
 	return value;
 }
-
-
-bool Socket::CheckError(Exception& ex) {
-	int error = LastError();
-	if (error) {
-		SetError(ex, error);
-		return true;
-	}
-	return false;
-}
-
-void Socket::SetError(Exception& ex, int error, const string& argument) {
-	string message;
-	STRERROR(error, message)// TODO à tester
-	if (!argument.empty()) {
-		message.append(" (");
-		message.append(argument);
-		message.append(")");
-	}
-	ex.set(Exception::SOCKET, message);
-}
-
 
 void Socket::manageWrite(Exception& ex) {
 	if (!_writing) {

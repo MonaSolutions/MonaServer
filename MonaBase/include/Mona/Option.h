@@ -24,7 +24,7 @@ This file is a part of Mona.
 namespace Mona {
 
 
-class Option : public virtual ObjectNullable {
+class Option : public virtual NullableObject {
 	friend class Options;
 public:
 	Option();
@@ -38,11 +38,9 @@ public:
 	Option(const char* fullName, const char* shortName, const std::string& description, bool required, const std::string& argName, bool argRequired = false);
 		/// Creates an option with the given properties.
 
-	template<class Function>
-	Option& handler(const Function& function) {
-		_handler = function;
-		return *this;
-	}
+
+	Option& handler(const std::function<void(Exception& ex,const std::string& value)>& function);
+		/// Sets the handler option
 	
 	Option& description(const std::string& text);
 		/// Sets the description of the option.
@@ -104,7 +102,7 @@ private:
 	std::string		_argName;
 	bool			_argRequired;
 
-	std::function<void(const std::string& value)>	_handler;
+	std::function<void(Exception& ex,const std::string& value)>	_handler;
 };
 
 

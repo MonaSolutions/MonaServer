@@ -49,21 +49,24 @@ public:
 	const SocketAddress&	address();
 	const SocketAddress&	peerAddress();
 
+protected:
+
+	virtual UInt32			onReception(const std::shared_ptr<Buffer<UInt8>>& pData) = 0; // in protected to allow a circular call (to process all data on one time!)
+
 private:
-	virtual void			onNewData(const UInt8* data,UInt32 size){}
-	virtual UInt32			onReception(const UInt8* data,UInt32 size)=0;
-	virtual void			onDisconnection(){}
+	virtual void			onDisconnection() {}
+
 
 	void					onReadable(Exception& ex);
-
+	
 	int						sendIntern(const UInt8* data,UInt32 size);
 
-	Buffer<UInt8>			_buffer;
-	UInt32					_rest;
-	bool					_connected;
+	std::shared_ptr<Buffer<UInt8>>	_pBuffer;
+	UInt32							_rest;
+	bool							_connected;
 
-	SocketAddress			_address;
-	SocketAddress			_peerAddress;
+	SocketAddress					_address;
+	SocketAddress					_peerAddress;
 };
 
 

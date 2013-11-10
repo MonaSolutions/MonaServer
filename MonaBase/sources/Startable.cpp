@@ -18,6 +18,10 @@
 
 #include "Mona/Startable.h"
 #include "Mona/Logs.h"
+#if !defined(_WIN32)
+#include <sys/prctl.h> // for thread name
+#endif
+
 
 using namespace std;
 
@@ -32,8 +36,35 @@ Startable::~Startable() {
 	stop();
 }
 
+void Startable::setDebugThreadName() {
+#if defined(_DEBUG)
+#if defined(_WIN32)
+	typedef struct tagTHREADNAME_INFO {
+		DWORD dwType; // Must be 0x1000.
+		LPCSTR szName; // Pointer to name (in user addr space).
+		DWORD dwThreadID; // Thread ID (-1=caller thread).
+		DWORD dwFlags; // Reserved for future use, must be zero.
+	} THREADNAME_INFO;
+
+	THREADNAME_INFO info;
+	info.dwType = 0x1000;
+	info.szName = _name.c_str();
+	info.dwThreadID = GetCurrentThreadId();
+	info.dwFlags = 0;
+
+	__try {
+		RaiseException(0x406D1388, 0, sizeof(info) / sizeof(ULONG_PTR), (ULONG_PTR*)&info);
+	} __except (EXCEPTION_EXECUTE_HANDLER) {
+	}
+
+#else
+	prctl(PR_SET_NAME, name.c_str(), 0, 0, 0);
+#endif
+#endif
+}
+
 void Startable::process() {
-	
+	setDebugThreadName();
 	try {
 		Exception ex;
 		run(ex);
@@ -73,10 +104,10 @@ bool Startable::start(Exception& ex, Priority priority) {
 		_thread.join();
 	try {
 		lock_guard<mutex> lock(_mutexStop);
-		_thread = thread(&Startable::process, ref(*this)); // start the thread
 		_wakeUpEvent.reset();
-		initThread(ex, _thread, priority);
 		_stop = false;
+		_thread = thread(&Startable::process, ref(*this)); // start the thread
+		initThread(ex, _thread, priority);
 	} catch (exception& exc) {
 		ex.set(Exception::THREAD, "Impossible to start the thread of ", _name, ", ", exc.what());
 		return false;
@@ -87,17 +118,14 @@ bool Startable::start(Exception& ex, Priority priority) {
 
 void Startable::initThread(Exception& ex,thread& thread,Priority priority) {
 	Util::SetThreadName(thread.get_id(), _name);
-
-#if !defined(_WIN32)
-	static int Min = sched_get_priority_min(SCHED_FIFO);
-	static int Max = sched_get_priority_max(SCHED_FIFO);
-	static int Priorities[] = {Min,Min + (Max - Min) / 4,Min + (Max - Min) / 2,Min + (Max - Min) / 4,Max};
-#endif
-
 #if defined(_WIN32)
 	if (priority == PRIORITY_NORMAL || SetThreadPriority(_thread.native_handle(), priority) != 0)
 		return;
 #else
+	static int Min = sched_get_priority_min(SCHED_FIFO);
+	static int Max = sched_get_priority_max(SCHED_FIFO);
+	static int Priorities[] = {Min,Min + (Max - Min) / 4,Min + (Max - Min) / 2,Min + (Max - Min) / 4,Max};
+
 	struct sched_param params;
 	params.sched_priority = Priorities[priority];
 	if (!pthread_setschedparam(_thread.native_handle(), SCHED_FIFO, &params))

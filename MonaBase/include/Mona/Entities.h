@@ -18,6 +18,7 @@
 #pragma once
 
 #include "Mona/Mona.h"
+#include "Mona/Entity.h"
 #include <cstring>
 #include <map>
 

@@ -33,9 +33,7 @@
 #define timegm _mkgmtime
 #define GMTIME(VALUE,RESULT) gmtime_s(&RESULT,&VALUE);
 #define LOCALTIME(VALUE,RESULT) localtime_s(&RESULT,&VALUE);
-#define STRERROR(CODE,ERROR) {ERROR.resize(100);strerror_s(&ERROR[0],(std::size_t)100,CODE);}
 #elif
-#define STRERROR(CODE,ERROR) {error.resize(100);strerror_r(CODE,&ERROR[0],100);}
 #define GMTIME(VALUE,RESULT) gmtime_r(&VALUE,&RESULT)
 #define LOCALTIME(VALUE,RESULT) localtime_r(&VALUE,&RESULT)
 #endif
@@ -264,7 +262,6 @@ void DetectMemoryLeak();
 	typedef signed int             Int32;
 	typedef unsigned int           UInt32;
 #if defined(__64BIT__)
-	#define MONA_PTR_IS_64_BIT 1
 	typedef signed long        Int64;
 	typedef unsigned long      UInt64;
 #else
@@ -295,10 +292,10 @@ public:
 	virtual ~Object() = default;
 };
 
-class ObjectNullable : virtual Object {
+class NullableObject : virtual Object {
 	bool _isNull;
 public:
-	ObjectNullable(bool isNull = false) : _isNull(isNull) {}
+	NullableObject(bool isNull = false) : _isNull(isNull) {}
 
 	operator bool() const { return !_isNull; }
 };

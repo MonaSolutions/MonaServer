@@ -41,8 +41,6 @@ int LUAClient::Get(lua_State *pState) {
 			SCRIPT_WRITE_STRING(Util::FormatHex(client.id, ID_SIZE, hex).c_str())
 		} else if(name=="rawId") {
 			SCRIPT_WRITE_BINARY(client.id,ID_SIZE);
-		} else if(name=="protocol") {
-			SCRIPT_WRITE_STRING(client.protocol.c_str());
 		} else if(name=="path") {
 			SCRIPT_WRITE_STRING(client.path.c_str())
 		} else if(name=="address") {

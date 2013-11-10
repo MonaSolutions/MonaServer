@@ -16,32 +16,37 @@
 */
 
 #include "Mona/Decoding.h"
-#include "Mona/Logs.h"
+#include "Mona/Session.h"
 
 
 using namespace std;
 
 namespace Mona {
 
-Decoding::Decoding(UInt32 id, TaskHandler& taskHandler, Protocol& protocol, const shared_ptr < Buffer < UInt8 >> &pBuffer, const SocketAddress& address) : id(id), address(address), Task(taskHandler), _pBuffer(pBuffer), _protocol(protocol), _pReader(new MemoryReader(pBuffer->data(), pBuffer->size())) {
-
+Decoding::Decoding(const shared_ptr<Buffer<UInt8>> &pBuffer, TaskHandler& taskHandler, UInt32 offset) :
+	Task(taskHandler), _pBuffer(pBuffer), _reader(pBuffer->data(), pBuffer->size()) {
+	if (offset)
+		_reader.next(offset);
 }
 
-Decoding::Decoding(UInt32 id, TaskHandler& taskHandler, Protocol& protocol, const shared_ptr<MemoryReader>& pReader, const SocketAddress& address) : id(id), address(address), Task(taskHandler), _protocol(protocol), _pReader(pReader) {
-
-}
- 
-Decoding::~Decoding() {
-
-}
-
-bool Decoding::run(Exception& ex) {
-	bool result = decode(ex, *_pReader);
-	if (result)
+bool Decoding::run(Exception& exc) {
+	Exception ex;
+	bool success = false;
+	EXCEPTION_TO_LOG(success=decode(ex, _reader), "Decoding")
+	if (success)
 		waitHandle();
-	if(ex)
-		ex.set(ex.code(), "Decoding on session ",id," (",ex.error(),")");
-	return result;
+	return true;
+}
+
+void Decoding::handle(Exception& ex) {
+	unique_lock<mutex> lock;
+	Session* pSession = _expirableSession.safeThis(lock);
+	if (!pSession)
+		return;
+	if (_address.host().isWildcard())
+		pSession->receive(_reader);
+	else
+		pSession->receive(_reader, _address);
 }
 
 

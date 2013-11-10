@@ -21,11 +21,12 @@
 #include "Mona/DataReader.h"
 #include "Mona/QualityOfService.h"
 #include "Mona/MemoryReader.h"
+#include "Mona/Socket.h"
 #include "Mona/Logs.h"
 
 namespace Mona {
 
-#define FLUSH_SENDERS(ERROR_HEADER,SENDERTYPE,SENDERS) { Exception __ex; for (std::shared_ptr<SENDERTYPE>& pSender : SENDERS) { _socket.send<SENDERTYPE>(__ex, pSender); if (__ex) ERROR(ERROR_HEADER,", ",__ex.error()); } SENDERS.clear();}
+#define FLUSH_SENDERS(ERROR_HEADER,SENDERTYPE,SENDERS) { Exception __ex; for (std::shared_ptr<SENDERTYPE>& pSender : SENDERS) { Writer::DumpResponse(pSender->begin(),pSender->size(),_socket);_socket.send<SENDERTYPE>(__ex, pSender); if (__ex) ERROR(ERROR_HEADER,", ",__ex.error()); } SENDERS.clear();}
 
 class Writer;
 class WriterHandler : virtual Object {	
@@ -51,6 +52,9 @@ public:
 		CLOSED
 	};
 
+	static void DumpResponse(const UInt8* data, UInt32 size, const Socket& socket, bool justInDebug = false);
+	static void DumpResponse(const UInt8* data, UInt32 size, const SocketAddress& address, bool justInDebug = false);
+
 	bool					reliable;
 
 	const QualityOfService&	qos() { return _qos; }
@@ -75,7 +79,7 @@ public:
 	virtual bool			hasToConvert(DataReader& reader) {return false;}
 
 
-	static Writer				Null;
+	static Writer			Null;
 	static DataWriterNull	DataWriterNull;
 
 protected:

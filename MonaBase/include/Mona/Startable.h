@@ -70,6 +70,7 @@ protected:
 	virtual void	run(Exception& ex) = 0;
 
 private:
+	void			setDebugThreadName();
 	void			initThread(Exception& ex, std::thread& thread, Priority priority);
 	void			process();
 	

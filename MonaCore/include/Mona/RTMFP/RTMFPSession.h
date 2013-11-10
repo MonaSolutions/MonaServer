@@ -19,9 +19,11 @@
 
 #include "Mona/Mona.h"
 #include "Mona/Session.h"
+#include "Mona/UDPSocket.h"
 #include "Mona/RTMFP/RTMFPFlow.h"
 #include "Mona/RTMFP/RTMFPWriter.h"
 #include "Mona/RTMFP/RTMFPSender.h"
+#include "Mona/RTMFP/RTMFPCookieComputing.h"
 #include "Mona/Time.h"
 
 namespace Mona {
@@ -42,21 +44,27 @@ public:
 
 	void				p2pHandshake(const std::string& tag,const SocketAddress& address,UInt32 times,Session* pSession);
 
+	std::shared_ptr<RTMFPCookieComputing>	pRTMFPCookieComputing;
+
+	bool				decode(const std::shared_ptr < Buffer < UInt8 >> &pBuffer, const SocketAddress& address);
+
+	bool				failed() const { return _failed; }
+
 protected:
 	const UInt32		farId;
 
-	void				flush(Exception& ex, bool echoTime = true) { flush(ex, 0x4a, echoTime, prevEngineType()); }
-	void				flush(Exception& ex, bool echoTime, RTMFPEngine::Type type) { flush(ex, 0x4a, echoTime, type); }
-	void				flush(Exception& ex, UInt8 marker, bool echoTime) { flush(ex, marker, echoTime, prevEngineType()); }
-	void				flush(Exception& ex, UInt8 marker,bool echoTime,RTMFPEngine::Type type);
+	void				flush(bool echoTime = true) { flush(0x4a, echoTime, prevEngineType()); }
+	void				flush(bool echoTime, RTMFPEngine::Type type) { flush(0x4a, echoTime, type); }
+	void				flush(UInt8 marker, bool echoTime) { flush(marker, echoTime, prevEngineType()); }
+	void				flush(UInt8 marker,bool echoTime,RTMFPEngine::Type type);
 
 
 	template <typename ...Args>
-	void fail(const Args&... args) {
+	void fail(Args&&... args) {
 		std::string error;
 		String::Format(error, args ...);
 
-		if(failed())
+		if (_failed)
 			return;
 
 		// Here no new sending must happen except "failSignal"
@@ -66,7 +74,7 @@ protected:
 		// unsubscribe peer for its groups
 		peer.unsubscribeGroups();
 
-		Session::failed=true;
+		_failed = true;
 		if(!error.empty()) {
 			peer.onFailed(error);
 			failSignal();
@@ -78,17 +86,15 @@ protected:
 private:
 
 	void							manage();
-	bool							decode(std::shared_ptr < Buffer < UInt8 >> &pBuffer, const SocketAddress& address, std::shared_ptr<MemoryReader> &pReader);
 	void							packetHandler(MemoryReader& packet);
 
 	// Implementation of BandWriter
-	void							initWriter(std::shared_ptr<RTMFPWriter>& pWriter);
+	void							initWriter(const std::shared_ptr<RTMFPWriter>& pWriter);
 	std::shared_ptr<RTMFPWriter>	changeWriter(RTMFPWriter& writer);
 	bool							canWriteFollowing(RTMFPWriter& writer) { return _pLastWriter == &writer; }
 	void							close() { failSignal(); }
-	bool							failed() const { return Session::failed; }
 
-	MemoryWriter&					writeMessage(Exception& ex, UInt8 type,UInt16 length,RTMFPWriter* pWriter=NULL);
+	MemoryWriter&					writeMessage(UInt8 type,UInt16 length,RTMFPWriter* pWriter=NULL);
 
 	RTMFPEngine::Type				prevEngineType() { return _prevEngineType; }
 	bool							keepAlive();
@@ -103,6 +109,7 @@ private:
 	Time											_recvTimestamp;
 	UInt16											_timeSent;
 	
+	bool											_failed;
 	UInt8											_timesFailed;
 	UInt8											_timesKeepalive;
 
@@ -115,7 +122,7 @@ private:
 	RTMFPEngine::Type								_prevEngineType;
 
 	std::shared_ptr<RTMFPSender>					_pSender;
-	DatagramSocket&									_socket;
+	UDPSocket&										_socket;
 
 	RTMFPEngine										_decrypt;
 	RTMFPEngine										_encrypt;

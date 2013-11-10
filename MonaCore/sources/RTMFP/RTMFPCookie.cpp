@@ -71,7 +71,6 @@ bool RTMFPCookie::computeSecret(Exception& ex, const UInt8* initiatorKey,UInt32 
 	memcpy(&_pCookieComputing->initiatorKey[0],initiatorKey,sizeKey);
 	_initiatorNonce.resize(sizeNonce);
 	memcpy(&_initiatorNonce[0],initiatorNonce,sizeNonce);
-
 	_pCookieComputing->weak = _pCookieComputing;
 	_pComputingThread = _invoker.poolThreads.enqueue<RTMFPCookieComputing>(ex,_pCookieComputing, _pComputingThread);
 	return !ex;
