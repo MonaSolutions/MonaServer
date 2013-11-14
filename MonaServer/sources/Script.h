@@ -34,29 +34,15 @@ extern "C" {
 #define SCRIPT_FILE(DEFAULT)					(strlen(Script::LuaDebug.short_src)>0 && strcmp(Script::LuaDebug.short_src,"[C]")!=0) ? Script::LuaDebug.short_src : DEFAULT
 #define SCRIPT_LINE(DEFAULT)					Script::LuaDebug.currentline>0 ? Script::LuaDebug.currentline : DEFAULT
 
-#define SCRIPT_LOG(PRIO,FILE,LINE, ...)		{ if(lua_getstack(__pState,0,&Script::LuaDebug)==1) lua_getinfo(__pState, "n", &Script::LuaDebug); \
-											if(lua_getstack(__pState,1,&Script::LuaDebug)==1) lua_getinfo(__pState, "Sl", &Script::LuaDebug); \
-											if(!SCRIPT_LOG_NAME_DISABLED && Script::LuaDebug.name) { \
-												 if(Script::LuaDebug.namewhat) { \
-														Mona::Logs::Log(PRIO, SCRIPT_FILE(FILE), SCRIPT_LINE(LINE), "(", Script::LuaDebug.namewhat, " '", Script::LuaDebug.name, "') ", ## __VA_ARGS__); \
-													} else { \
-															Mona::Logs::Log(PRIO, SCRIPT_FILE(FILE), SCRIPT_LINE(LINE), "(", Script::LuaDebug.name, ") ", ## __VA_ARGS__); \
-													} \
-											} else \
-												Mona::Logs::Log(PRIO, SCRIPT_FILE(FILE), SCRIPT_LINE(LINE), ## __VA_ARGS__); \
-											Script::LuaDebug.name = Script::LuaDebug.namewhat = NULL; \
-											if(Script::LuaDebug.short_src) Script::LuaDebug.short_src[0]='\0'; \
-											Script::LuaDebug.currentline=0;}
-
 #define SCRIPT_LOG_NAME_DISABLED	false
-#define SCRIPT_FATAL(...)		SCRIPT_LOG(Mona::Logger::PRIO_FATAL,__FILE__,__LINE__, ## __VA_ARGS__)
-#define SCRIPT_CRITIC(...)		SCRIPT_LOG(Mona::Logger::PRIO_CRITIC,__FILE__,__LINE__, ## __VA_ARGS__)
-#define SCRIPT_ERROR(...)		SCRIPT_LOG(Mona::Logger::PRIO_ERROR,__FILE__,__LINE__, ## __VA_ARGS__)
-#define SCRIPT_WARN(...)		SCRIPT_LOG(Mona::Logger::PRIO_WARN,__FILE__,__LINE__, ## __VA_ARGS__)
-#define SCRIPT_NOTE(...)		SCRIPT_LOG(Mona::Logger::PRIO_NOTE,__FILE__,__LINE__, ## __VA_ARGS__)
-#define SCRIPT_INFO(...)		SCRIPT_LOG(Mona::Logger::PRIO_INFO,__FILE__,__LINE__, ## __VA_ARGS__)
-#define SCRIPT_DEBUG(...)		SCRIPT_LOG(Mona::Logger::PRIO_DEBUG,__FILE__,__LINE__, ## __VA_ARGS__)
-#define SCRIPT_TRACE(...)		SCRIPT_LOG(Mona::Logger::PRIO_TRACE,__FILE__,__LINE__, ## __VA_ARGS__)
+#define SCRIPT_FATAL(...)		{Script::Log(__pState,Mona::Logger::PRIO_FATAL,__FILE__,__LINE__, ## __VA_ARGS__);}
+#define SCRIPT_CRITIC(...)		{Script::Log(__pState,Mona::Logger::PRIO_CRITIC,__FILE__,__LINE__, ## __VA_ARGS__);}
+#define SCRIPT_ERROR(...)		{Script::Log(__pState,Mona::Logger::PRIO_ERROR,__FILE__,__LINE__, ## __VA_ARGS__);}
+#define SCRIPT_WARN(...)		{Script::Log(__pState,Mona::Logger::PRIO_WARN,__FILE__,__LINE__, ## __VA_ARGS__);}
+#define SCRIPT_NOTE(...)		{Script::Log(__pState,Mona::Logger::PRIO_NOTE,__FILE__,__LINE__, ## __VA_ARGS__);}
+#define SCRIPT_INFO(...)		{Script::Log(__pState,Mona::Logger::PRIO_INFO,__FILE__,__LINE__, ## __VA_ARGS__);}
+#define SCRIPT_DEBUG(...)		{Script::Log(__pState,Mona::Logger::PRIO_DEBUG,__FILE__,__LINE__, ## __VA_ARGS__);}
+#define SCRIPT_TRACE(...)		{Script::Log(__pState,Mona::Logger::PRIO_TRACE,__FILE__,__LINE__, ## __VA_ARGS__);}
 
 #define SCRIPT_CALLBACK(TYPE,LUATYPE,OBJ)						{int __args=1;lua_State* __pState = pState; bool __destructor=false; bool __thisIsConst=false; TYPE* pObj = Script::ToObject<TYPE,LUATYPE>(__pState,__thisIsConst,true);if(!pObj) return 0; TYPE& OBJ = *pObj;int __results=lua_gettop(__pState);
 #define SCRIPT_DESTRUCTOR_CALLBACK(TYPE,LUATYPE,OBJ)			{int __args=1;lua_State* __pState = pState; bool __destructor=true; TYPE* pObj = Script::DestructorCallback<TYPE,LUATYPE>(__pState);if(!pObj) return 0;TYPE& OBJ = *pObj;int __results=lua_gettop(__pState);
@@ -308,6 +294,26 @@ public:
 		lua_pop(pState,2);
 
 		return pThis;
+	}
+
+
+	template <typename ...Args>
+	static void Log(lua_State* pState, Mona::Logger::Priority priority, const char* file, long line, Args&&... args) {
+		if (lua_getstack(pState, 0, &Script::LuaDebug) == 1)
+			lua_getinfo(pState, "n", &Script::LuaDebug);
+		if (lua_getstack(pState, 1, &Script::LuaDebug) == 1)
+			lua_getinfo(pState, "Sl", &Script::LuaDebug);
+		if (!SCRIPT_LOG_NAME_DISABLED && Script::LuaDebug.name) {
+			if (Script::LuaDebug.namewhat)
+				Mona::Logs::Log(priority, SCRIPT_FILE(file), SCRIPT_LINE(line), "(", Script::LuaDebug.namewhat, " '", Script::LuaDebug.name, "') ", args ...);
+			else
+				Mona::Logs::Log(priority, SCRIPT_FILE(file), SCRIPT_LINE(line), "(", Script::LuaDebug.name, ") ", args ...);
+		} else
+			Mona::Logs::Log(priority, SCRIPT_FILE(file), SCRIPT_LINE(line), args ...);
+		Script::LuaDebug.name = Script::LuaDebug.namewhat = NULL;
+		if (Script::LuaDebug.short_src)
+			Script::LuaDebug.short_src[0] = '\0';
+		Script::LuaDebug.currentline = 0;
 	}
 
 	static lua_Debug	LuaDebug;

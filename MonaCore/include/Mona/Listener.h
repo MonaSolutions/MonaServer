@@ -71,7 +71,7 @@ private:
 	Writer*					_pAudioWriter;
 	Writer*					_pVideoWriter;
 	Writer*					_pDataWriter;
-	UInt32			_droppedFrames;
+	UInt32					_droppedFrames;
 	MemoryReader			_publicationReader;
 };
 

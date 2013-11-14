@@ -39,3 +39,7 @@ DataReader::readString
 Refactoriser UDPProtocol?
 - Elminer tous les constructeurs de délégation
 - Protéger les accès âralleles aux variables d'instances de Logs
+- Check que un LUa object publication create with cumulus::publish closes on nil assignation
+NetStream.Play.Reset vraiment utile?
+- Prendre les modifs du dernier commit de Cumulus + LUA::Set éviter la conversion inutile vers string!
+- TCPSession -> memoryreader.set ?

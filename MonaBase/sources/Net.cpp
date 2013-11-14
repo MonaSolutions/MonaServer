@@ -21,10 +21,6 @@ using namespace std;
 
 namespace Mona {
 
-#if defined(_WIN32)
-static volatile bool	Initialized(false);
-static mutex			Mutex;
-
 
 bool Net::CheckError(Exception& ex) {
 	int error = LastError();
@@ -159,6 +155,9 @@ void Net::SetError(Exception& ex, int error, const string& argument) {
 		ex.set(Exception::SOCKET, message, " (", argument, ")");
 }
 
+#if defined(_WIN32)
+static volatile bool	Initialized(false);
+static mutex			Mutex;
 
 bool Net::InitializeNetwork(Exception& ex) {
 	lock_guard<mutex> lock(Mutex);

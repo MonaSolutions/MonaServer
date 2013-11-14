@@ -41,7 +41,7 @@ public:
 	static std::string& GetName(const std::string& path, std::string& value);
 	static std::string& GetBaseName(const std::string& path, std::string& value);
 	static std::string& GetExtension(const std::string& path,std::string& value);
-	
+	static bool			GetCurrent(std::string& path);
 	static bool			GetHome(std::string& path);
 
 	static void			RegisterForDeletion(const std::string& path);
@@ -54,7 +54,6 @@ public:
 	static std::vector<std::string>&	Unpack(const std::string& path, std::vector<std::string>& values);
 	static std::string&					Pack(const std::vector<std::string>& values, std::string& path);
 
-    static std::string& GetCurrent(std::string& path);
 	
 private:
 	static const std::string _PathSeparator;

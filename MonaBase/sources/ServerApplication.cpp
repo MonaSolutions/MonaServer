@@ -237,17 +237,6 @@ void ServerApplication::defineOptions(Exception& ex,Options& options) {
 //
 // Unix specific code
 //
-void ServerApplication::waitForTerminationRequest() {
-	sigset_t sset;
-	sigemptyset(&sset);
-	sigaddset(&sset, SIGINT);
-	sigaddset(&sset, SIGQUIT);
-	sigaddset(&sset, SIGTERM);
-	sigprocmask(SIG_BLOCK, &sset, NULL);
-	int sig;
-	sigwait(&sset, &sig);
-}
-
 
 int ServerApplication::run(int argc, const char** argv) {
 	try {

@@ -107,9 +107,10 @@ bool SocketManager::add(Exception& ex,Socket& socket) const {
 		return true; // already managed
 	
 	
-	auto ppSocket = new unique_ptr<Socket>(&socket);
+	unique_ptr<Socket>* ppSocket = new unique_ptr<Socket>(&socket);
 #if defined(_WIN32)
 	int flags = FD_ACCEPT | FD_CLOSE | FD_READ;
+	TRACE("ADD SOCKET ",reinterpret_cast<u_int>(ppSocket))
 	if (WSAAsyncSelect(sockfd, _eventSystem, 104, flags) != 0) {
 		ppSocket->release();
 		delete ppSocket;
@@ -131,7 +132,7 @@ bool SocketManager::add(Exception& ex,Socket& socket) const {
 #endif
 
 	++_counter;
-	socket._ppSocket = _ppSocket;
+	socket._ppSocket = ppSocket;
 	_sockets.emplace_hint(it, sockfd, ppSocket);
 
 	if(_bufferSize>0) {
@@ -224,21 +225,32 @@ void SocketManager::handle(Exception& ex) {
 	}
 	if (!pSocket)
 		return;
-	
+
 	if(_currentError!=0) {
 		Exception curEx;
 		Net::SetError(curEx, _currentError);
 		pSocket->onError(curEx.error());
 		return;
 	}
+	/// now, read or accept event!
+
+	bool acceptEvent = false;
 #if defined(_WIN32)
-	if (_currentEvent == FD_READ && _fakeSocket.available(_exSkip) == 0) // In the linux case, when _currentEvent==SELECT_READ with 0 bytes it's a ACCEPT event!
-		return;
+	if (_currentEvent == FD_ACCEPT)
+		acceptEvent = true;
+#else
+	if (_currentEvent&EPOLLIN && pSocket->available(_exSkip)==0)
+		acceptEvent = true;
 #endif
 	Exception curEx;
-	pSocket->onReadable(curEx);
-	if (curEx)
-		pSocket->onError(curEx.error());
+	while (acceptEvent || pSocket->available(curEx)) {
+		if (!curEx)
+			pSocket->onReadable(curEx);
+		if (curEx)
+			pSocket->onError(curEx.error());
+		if (curEx || acceptEvent)
+			break;
+	}
 }
 
 void SocketManager::requestHandle() {
@@ -291,6 +303,7 @@ void SocketManager::run(Exception& exc) {
 #if defined(_WIN32)
 	MSG		  msg;
     while(GetMessage(&msg,_eventSystem, 0, 0)) {
+		TRACE(msg.lParam)
 		if(msg.wParam==0)
 			continue;
 		if(msg.message==0) {

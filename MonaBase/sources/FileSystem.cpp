@@ -306,28 +306,25 @@ bool FileSystem::ResolveFileWithPaths(const string& paths, string& file) {
 	return false;
 }
 
-string& FileSystem::GetCurrent(string& path) {
-
+bool FileSystem::GetCurrent(string& path) {
+	string::size_type size = path.size();
 #if defined(_WIN32)
-    int len = GetCurrentDirectoryW(0, NULL);
-    if (len > 0) {
-        char buff[1024];
-        len = GetModuleFileNameA(0, buff, len);
-		if (len > 0)
-			path.assign(buff);
-    }
-
-    if (len <= 0)
-        FATAL_ERROR("cannot get current directory");
+	path.resize(MAX_PATH);
+	int len = GetCurrentDirectoryA(MAX_PATH, &path[0]);
+	if (len <= 0) {
+		path.resize(size);
+		return false;
+	}
+	path.resize(len);
 #else
-    char cwd[PATH_MAX];
-    if (getcwd(cwd, sizeof(cwd)))
-        path.assign(cwd);
-    else
-        FATAL_ERROR("cannot get current directory");
+	path.resize(PATH_MAX);
+	if (!getcwd(&path[0], PATH_MAX)) {
+		path.resize(size);
+		return false;
+	}
+	path.resize(strlen(path.c_str()));
 #endif
-
-    return path;
+	return true;
 }
 
 } // namespace Mona

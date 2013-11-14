@@ -228,7 +228,11 @@ void Application::initApplicationPaths(const char* command) {
 	string path(command);
 
 #if defined(_WIN32)
-    FileSystem::GetCurrent(path);
+	path.resize(MAX_PATH);
+	int n = GetModuleFileNameA(0, &path[0], MAX_PATH);
+	if (n <= 0)
+		FATAL_ERROR("Impossible to determine application paths")
+	path.resize(n);
 #else
     if (path.find('/') != string::npos) {
 		if (!FileSystem::IsAbsolute(path)) {
