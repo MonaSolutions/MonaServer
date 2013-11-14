@@ -202,8 +202,8 @@ public:
 	static int  LastError() { return errno; }
 #endif
 	static bool CheckError(Exception& ex);
-	static void SetError(Exception& ex) { SetError(ex, LastError(), std::string()); }
-	static void SetError(Exception& ex, int error) { SetError(ex, error, std::string()); }
+    static void SetError(Exception& ex) { std::string message; SetError(ex, LastError(), message); }
+    static void SetError(Exception& ex, int error) { std::string message; SetError(ex, error, message); }
 	static void SetError(Exception& ex, int error, const std::string& argument);
 
 #if defined(_WIN32)

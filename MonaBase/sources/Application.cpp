@@ -225,27 +225,8 @@ void Application::initApplicationPaths(const char* command) {
 	if (hasKey("application.command"))
 		return; // already done!
 
-	string path(command);
-
-#if defined(_WIN32)
+    string path;
     FileSystem::GetCurrent(path);
-#else
-    if (path.find('/') != string::npos) {
-		if (!FileSystem::IsAbsolute(path)) {
-			string temp = move(path);
-            FileSystem::GetCurrent(path);
-			path.append(temp);
-		}
-	} else {
-		string paths;
-		if (!Util::Environment().getString("PATH", paths) || !FileSystem::ResolveFileWithPaths(paths, path)) {
-			string temp = move(path);
-            FileSystem::GetCurrent(path);
-			path.append(temp);
-		}
-	}
-#endif
-
 	setString("application.command", path);
 
 	vector<string> values;

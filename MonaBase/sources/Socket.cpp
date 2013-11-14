@@ -106,7 +106,8 @@ bool Socket::connect(Exception& ex, const SocketAddress& address) {
 	if (rc) {
 		int err = Net::LastError();
 		if (err != NET_EINPROGRESS && err != NET_EWOULDBLOCK) {
-			Net::SetError(ex, err, address.toString());
+            string add = address.toString();
+            Net::SetError(ex, err, add);
 			return false;
 		}	
 	}
@@ -128,7 +129,8 @@ bool Socket::bind(Exception& ex, const SocketAddress& address, bool reuseAddress
 	}
 	int rc = ::bind(_sockfd, &address.addr(), sizeof(address.addr()));
 	if (rc != 0) {
-		Net::SetError(ex, Net::LastError(), address.toString());
+        string add = address.toString();
+        Net::SetError(ex, Net::LastError(), add);
 		return false;
 	}
 	return true;

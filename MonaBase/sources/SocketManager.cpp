@@ -125,7 +125,7 @@ bool SocketManager::add(Exception& ex,Socket& socket) const {
 	if(res<0) {
 		ppSocket->release();
 		delete ppSocket;
-		Socket::SetError(ex);
+        Net::SetError(ex);
 		return false;
 	}
 #endif
@@ -155,7 +155,7 @@ bool SocketManager::startWrite(Exception& ex, Socket& socket) const {
 	event.data.ptr = socket._ppSocket;
     int res = epoll_ctl(_eventSystem, EPOLL_CTL_MOD, event.data.fd, &event);
 	if(res<0) {
-		Socket::SetError(ex);
+        Net::SetError(ex);
 		return false;
 	}
 #endif
@@ -175,7 +175,7 @@ bool SocketManager::stopWrite(Exception& ex, Socket& socket) const {
 	event.data.ptr = socket._ppSocket;
     int res = epoll_ctl(_eventSystem, EPOLL_CTL_MOD, event.data.fd, &event);
 	if(res<0) {
-		Socket::SetError(ex);
+        Net::SetError(ex);
 		return false;
 	}
 #endif
@@ -359,7 +359,7 @@ void SocketManager::run(Exception& exc) {
 		
 			_currentEvent = event.events;
 			if(_currentEvent&EPOLLERR)
-				_currentError = Net:LastError();
+                _currentError = Net::LastError();
 			if(_currentError==0 && _currentEvent&EPOLLOUT) {
 				// protected for _ppSocket access access
 				lock_guard<mutex> lock(_mutex);
