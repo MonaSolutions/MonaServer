@@ -30,6 +30,7 @@
 
 namespace Mona {
 
+class Session;
 
 class Decoding : public WorkThread, private Task, virtual Object {
 	friend class Session;

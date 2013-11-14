@@ -308,11 +308,11 @@ void ServerApplication::beDaemon() {
 
 void ServerApplication::defineOptions(Exception& ex, Options& options) {
     options.add(ex, "daemon", "d", "Run application as a daemon.")
-        .handler([this](const string& value) { setBool("application.runAsDaemon", true); });
+        .handler([this](Exception& ex, const string& value) { setBool("application.runAsDaemon", true); });
 
     options.add(ex, "pidfile", "p", "Write the process ID of the application to given file.")
 		.argument("path")
-        .handler([this](const string& value) { handlePidFile(value); } );
+        .handler([this](Exception& ex, const string& value) { handlePidFile(ex, value); } );
 
     Application::defineOptions(ex, options);
 }
@@ -324,7 +324,7 @@ void ServerApplication::handlePidFile(Exception& ex,const string& value) {
 		ex.set(Exception::FILE,"Cannot write PID to file ",value);
 		return;
 	}
-	ostr << Process::id() << endl;
+    ostr << Process::Id() << endl;
 	FileSystem::RegisterForDeletion(value);
 }
 

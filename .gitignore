@@ -43,6 +43,6 @@ Debug
 /MonaServer/MonaServer
 /MonaServer/MonaServer.config
 /MonaServer/MonaServer.creator
-/MonaServer/MonaServer.creator.user
+/MonaServer/MonaServer.creator.user*
 /MonaServer/MonaServer.files
 /MonaServer/MonaServer.includes

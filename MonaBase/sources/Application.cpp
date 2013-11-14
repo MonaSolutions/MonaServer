@@ -234,17 +234,17 @@ void Application::initApplicationPaths(const char* command) {
 		FATAL_ERROR("Impossible to determine application paths")
 	path.resize(n);
 #else
-    if (path.find('/') != string::npos) {
+	if (command.find('/') != string::npos) {
 		if (!FileSystem::IsAbsolute(path)) {
 			string temp = move(path);
-            FileSystem::GetCurrent(path);
+			path.assign(FileSystem::Current());
 			path.append(temp);
 		}
 	} else {
 		string paths;
 		if (!Util::Environment().getString("PATH", paths) || !FileSystem::ResolveFileWithPaths(paths, path)) {
 			string temp = move(path);
-            FileSystem::GetCurrent(path);
+			path.assign(FileSystem::Current());
 			path.append(temp);
 		}
 	}

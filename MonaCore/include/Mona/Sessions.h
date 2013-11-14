@@ -20,6 +20,7 @@
 #include "Mona/Mona.h"
 #include "Mona/Entities.h"
 #include "Mona/Util.h"
+#include "Mona/Logs.h"
 #include <cstddef>
 
 namespace Mona {

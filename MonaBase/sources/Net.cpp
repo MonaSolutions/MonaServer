@@ -183,6 +183,6 @@ public:
 
 
 NetUninitializer uninitializer;
-#endif 
+#endif
 
 } // namespace Mona
