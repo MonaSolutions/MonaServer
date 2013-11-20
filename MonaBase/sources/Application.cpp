@@ -234,17 +234,17 @@ void Application::initApplicationPaths(const char* command) {
 		FATAL_ERROR("Impossible to determine application paths")
 	path.resize(n);
 #else
-	if (command.find('/') != string::npos) {
+    if (path.find('/') != string::npos) {
 		if (!FileSystem::IsAbsolute(path)) {
 			string temp = move(path);
-			path.assign(FileSystem::Current());
+            FileSystem::GetCurrent(path);
 			path.append(temp);
 		}
 	} else {
 		string paths;
 		if (!Util::Environment().getString("PATH", paths) || !FileSystem::ResolveFileWithPaths(paths, path)) {
 			string temp = move(path);
-			path.assign(FileSystem::Current());
+            FileSystem::GetCurrent(path);
 			path.append(temp);
 		}
 	}
@@ -261,7 +261,13 @@ void Application::initApplicationPaths(const char* command) {
 	setString("application.name", values.empty() ? "" : values.back());
 	string baseName;
 	setString("application.baseName", values.empty() ? "" : FileSystem::GetBaseName(values.back(),baseName));
-	setString("application.dir", FileSystem::MakeDirectory(path));
+#if !defined(WIN32)
+    // remove the executable part
+    auto exe = path.find_last_of('/');
+    if ((exe != string::npos) && exe<(path.size()-1))
+        path.resize(exe + 1);
+#endif
+    setString("application.dir", FileSystem::MakeDirectory(path));
 }
 
 } // namespace Mona
