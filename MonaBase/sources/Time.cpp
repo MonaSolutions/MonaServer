@@ -108,12 +108,14 @@ Int64 Time::elapsed() const {
 }
 
 string& Time::toString(const string& fmt, string& out, int timezone /*= UTC*/) const {
+	out.assign("");
 	out.reserve(32);
 	struct tm datetm;
 	return formatDate(toGMT(datetm), fmt, out, timezone);
 }
 
 string& Time::toLocaleString(const string& fmt, string& out, int timezone /*= UTC*/) const {
+	out.assign("");
 	out.reserve(32);
 	struct tm datetm;
 	return formatDate(toLocal(datetm), fmt, out, timezone);

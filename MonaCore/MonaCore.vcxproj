@@ -125,6 +125,8 @@
     <ClInclude Include="include\Mona\SDP.h" />
     <ClInclude Include="include\Mona\Server.h" />
     <ClInclude Include="include\Mona\ServerParams.h" />
+    <ClInclude Include="include\Mona\SOAPReader.h" />
+    <ClInclude Include="include\Mona\SOAPWriter.h" />
     <ClInclude Include="include\Mona\TCProtocol.h" />
     <ClInclude Include="include\Mona\UDProtocol.h" />
     <ClInclude Include="include\Mona\Writer.h" />
@@ -178,6 +180,8 @@
     <ClInclude Include="include\Mona\FlashMainStream.h" />
     <ClInclude Include="include\Mona\FlashStream.h" />
     <ClInclude Include="include\Mona\FlashWriter.h" />
+    <ClInclude Include="include\Mona\XMLReader.h" />
+    <ClInclude Include="include\Mona\XMLWriter.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="sources\Decoding.cpp" />
@@ -187,6 +191,8 @@
     <ClCompile Include="sources\RelayServer.cpp" />
     <ClCompile Include="sources\SDP.cpp" />
     <ClCompile Include="sources\Server.cpp" />
+    <ClCompile Include="sources\SOAPReader.cpp" />
+    <ClCompile Include="sources\SOAPWriter.cpp" />
     <ClCompile Include="sources\Writer.cpp" />
     <ClCompile Include="sources\Protocols.cpp" />
     <ClCompile Include="sources\RTMFP\RTMFP.cpp" />
@@ -227,6 +233,8 @@
     <ClCompile Include="sources\FlashMainStream.cpp" />
     <ClCompile Include="sources\FlashStream.cpp" />
     <ClCompile Include="sources\FlashWriter.cpp" />
+    <ClCompile Include="sources\XMLReader.cpp" />
+    <ClCompile Include="sources\XMLWriter.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\MonaBase\MonaBase.vcxproj">

@@ -46,7 +46,7 @@ private:
 	void					onConnection(Mona::Exception& ex, Mona::Client& client,Mona::DataReader& parameters,Mona::DataWriter& response);
 	void					onFailed(const Mona::Client& client,const std::string& error);
 	void					onDisconnection(const Mona::Client& client);
-	void					onMessage(Mona::Exception& ex, Mona::Client& client,const std::string& name,Mona::DataReader& reader);
+	void					onMessage(Mona::Exception& ex, Mona::Client& client,const std::string& name,Mona::DataReader& reader,Mona::DataWriter& writer);
 	bool					onRead(Mona::Exception& ex, Mona::Client& client, std::string& filePath, Mona::DataReader& parameters);
 
 	void					onJoinGroup(Mona::Client& client,Mona::Group& group);

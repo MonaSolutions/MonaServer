@@ -164,10 +164,6 @@ HTTPPacketReader::Type HTTPPacketReader::readItem(string& name) {
 		_number = String::ToNumber<double>(ex, _value);
 		if(!ex)
 			_type = NUMBER;
-		else {
-			if (_value.size() > 18 && _value.size() < 34 && _date.fromString(_value))
-				_type = TIME;
-		}
 	}
 	return _type;
 }

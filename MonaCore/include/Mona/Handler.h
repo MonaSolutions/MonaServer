@@ -34,8 +34,8 @@ public:
 	virtual void			onConnection(Exception& ex,Client& client,DataReader& parameters,DataWriter& response){} // ERROR_NOTFOUND, ERROR_APPLICATION
 	virtual void			onFailed(const Client& client,const std::string& error){}
 	virtual void			onDisconnection(const Client& client){}
-	virtual void			onMessage(Exception& ex, Client& client,const std::string& name,DataReader& reader){} // ERROR_NOTFOUND, ERROR_APPLICATION
-	virtual bool			onRead(Client& client,std::string& filePath,MapParameters& parameters){return true;}  // ERROR_APPLICATION
+	virtual void			onMessage(Exception& ex, Client& client,const std::string& name,DataReader& reader,Mona::DataWriter& writer){} // ERROR_NOTFOUND, ERROR_APPLICATION
+	virtual bool			onRead(Exception& ex, Client& client,std::string& filePath,DataReader& parameters){return true;}  // ERROR_APPLICATION
 
 	virtual void			onJoinGroup(Client& client,Group& group){}
 	virtual void			onUnjoinGroup(Client& client,Group& group){}

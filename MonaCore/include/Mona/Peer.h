@@ -63,7 +63,7 @@ public:
 	void onConnection(Exception& ex, Writer& writer,DataReader& parameters,DataWriter& response);
 	void onFailed(const std::string& error);
 	void onDisconnection();
-	void onMessage(Exception& ex, const std::string& name,DataReader& reader);
+	void onMessage(Exception& ex, const std::string& name,DataReader& reader, Mona::DataWriter& writer = Mona::DataWriter::Null);
 
 	bool onPublish(const Publication& publication,std::string& error);
 	void onUnpublish(const Publication& publication);
@@ -76,8 +76,8 @@ public:
 	bool onSubscribe(const Listener& listener,std::string& error);
 	void onUnsubscribe(const Listener& listener);
 
-    bool onRead(std::string& filePath) { MapParameters parameters; return onRead(filePath, parameters); }
-    bool onRead(std::string& filePath, MapParameters& parameters);
+    bool onRead(Exception& ex, std::string& filePath) { return onRead(ex, filePath, DataReader::Null); }
+    bool onRead(Exception& ex, std::string& filePath, DataReader& parameters);
 
 	void onManage();
 private:

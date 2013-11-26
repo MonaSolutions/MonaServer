@@ -18,30 +18,19 @@
 #pragma once
 
 #include "Mona/Mona.h"
-#include "Mona/DataWriter.h"
-#include "math.h"
+#include "Mona/XMLReader.h"
+
 
 namespace Mona {
 
-
-class HTTPPacketWriter : public DataWriter {
+class SOAPReader : public XMLReader, virtual Object {
 public:
-	HTTPPacketWriter() {}
+	SOAPReader(MemoryReader& reader);
 
-	void beginObject(const std::string& type = "", bool external = false) {}
-	void endObject() { writer.writeRaw("\r\n", 2); }
+	virtual Type				followingType();
 
-	void writePropertyName(const std::string& value);
-
-	void beginArray(UInt32 size) {}
-	void endArray() {}
-
-	void writeDate(const Time& date);
-	void writeNumber(double value) { std::string text; writeString(String::Format(text, value)); }
-	void writeString(const std::string& value);
-	void writeBoolean(bool value);
-	void writeNull() { writer.writeRaw("null\r\n", 6); }
-	void writeBytes(const UInt8* data, UInt32 size) { writer.writeRaw(data, size); }
+private:
+	bool	_body;
 };
 
 

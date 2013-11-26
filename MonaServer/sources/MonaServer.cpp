@@ -382,7 +382,7 @@ void MonaServer::onDisconnection(const Client& client) {
 	--pService->count;
 }
 
-void MonaServer::onMessage(Exception& ex, Client& client,const string& name,DataReader& reader) {
+void MonaServer::onMessage(Exception& ex, Client& client,const string& name,DataReader& reader, DataWriter& writer) {
 	string error("Method '" + name + "' not found");
 	double ptr = 0;
 	if (!client.getNumber("&Service", ptr)) {
@@ -396,7 +396,10 @@ void MonaServer::onMessage(Exception& ex, Client& client,const string& name,Data
 			error.clear();
 			SCRIPT_FUNCTION_CALL_WITHOUT_LOG
 			if(SCRIPT_CAN_READ) {
-				Script::ReadData(_pState,client.writer().writeMessage(),1);
+				if (writer)
+					Script::ReadData(_pState,writer,1);
+				else
+					Script::ReadData(_pState,client.writer().writeMessage(),1);
 				++__args;
 			}
 		SCRIPT_FUNCTION_END

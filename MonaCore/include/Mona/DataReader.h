@@ -26,7 +26,7 @@ namespace Mona {
 
 class DataReaderNull;
 
-class DataReader : virtual Object {
+class DataReader : public virtual NullableObject {
 public:
 	enum Type {
 		NIL=0,
@@ -80,7 +80,7 @@ private:
 };
 
 
-class DataReaderNull : public DataReader, virtual NullableObject {
+class DataReaderNull : public DataReader {
 public:
 	DataReaderNull() : NullableObject(true), DataReader(MemoryReader::Null) {}
 
