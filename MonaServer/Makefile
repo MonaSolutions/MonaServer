@@ -1,6 +1,6 @@
 
 CC=g++
-CFLAGS=-std=c++11
+CFLAGS+=-std=c++0x
 EXEC=MonaServer
 INCLUDES=-I/usr/local/include/ -I./../MonaBase/include/ -I./../MonaCore/include/
 LIBDIR=-L/usr/local/lib/ -L./../MonaBase/lib/ -L./../MonaCore/lib/

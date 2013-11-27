@@ -1,18 +1,20 @@
-/* 
-	Copyright 2013 Mona - mathieu.poux[a]gmail.com
- 
-	This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+/*
+Copyright 2014 Mona
+mathieu.poux[a]gmail.com
+jammetthomas[a]gmail.com
 
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License received along this program for more
-	details (or else see http://www.gnu.org/licenses/).
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-	This file is a part of Mona.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License received along this program for more
+details (or else see http://www.gnu.org/licenses/).
+
+This file is a part of Mona.
 */
 
 #pragma once
@@ -61,7 +63,6 @@ public:
     void onConnection(Exception& ex, Writer& writer) {onConnection(ex, writer,DataReader::Null, DataWriter::Null);}
     void onConnection(Exception& ex, Writer& writer,DataWriter& response) {onConnection(ex, writer,DataReader::Null,response);}
 	void onConnection(Exception& ex, Writer& writer,DataReader& parameters,DataWriter& response);
-	void onFailed(const std::string& error);
 	void onDisconnection();
 	void onMessage(Exception& ex, const std::string& name,DataReader& reader);
 
@@ -76,10 +77,9 @@ public:
 	bool onSubscribe(const Listener& listener,std::string& error);
 	void onUnsubscribe(const Listener& listener);
 
-    bool onRead(std::string& filePath) { MapParameters parameters; return onRead(filePath, parameters); }
-    bool onRead(std::string& filePath, MapParameters& parameters);
+	bool onRead(Exception& ex, std::string& filePath) { MapParameters parameters; return onRead(ex,filePath, parameters); }
+	bool onRead(Exception& ex, std::string& filePath, MapParameters& parameters);
 
-	void onManage();
 private:
 	void onJoinGroup(Group& group);
 	void onUnjoinGroup(std::map<Group*,Member*>::iterator it);

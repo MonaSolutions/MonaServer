@@ -112,51 +112,42 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="sources\LUADataTable.h" />
     <ClInclude Include="sources\MonaServer.h" />
     <ClInclude Include="sources\Script.h" />
     <ClInclude Include="sources\Service.h" />
     <ClInclude Include="sources\LUABroadcaster.h" />
     <ClInclude Include="sources\LUAClient.h" />
-    <CustomBuild Include="sources\LUAClients.h" />
     <ClInclude Include="sources\LUAGroup.h" />
-    <ClInclude Include="sources\LUAGroups.h" />
     <ClInclude Include="sources\LUAInvoker.h" />
     <CustomBuild Include="sources\LUAListener.h" />
-    <CustomBuild Include="sources\LUAListeners.h" />
     <ClInclude Include="sources\LUAMember.h" />
     <CustomBuild Include="sources\LUAPublication.h" />
-    <CustomBuild Include="sources\LUAPublications.h" />
     <CustomBuild Include="sources\LUAQualityOfService.h" />
     <ClInclude Include="sources\LUAServer.h" />
-    <ClInclude Include="sources\LUAServers.h" />
     <ClInclude Include="sources\LUATCPClient.h" />
     <ClInclude Include="sources\LUATCPServer.h" />
     <ClInclude Include="sources\LUAUDPSocket.h" />
     <ClInclude Include="sources\LUAWriter.h" />
     <ClInclude Include="sources\Broadcaster.h" />
     <ClInclude Include="sources\ServerConnection.h" />
-    <ClInclude Include="sources\ServerMessage.h" />
     <ClInclude Include="sources\Servers.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="sources\LUADataTable.cpp" />
     <ClCompile Include="sources\main.cpp" />
     <ClCompile Include="sources\MonaServer.cpp" />
     <ClCompile Include="sources\Script.cpp" />
     <ClCompile Include="sources\Service.cpp" />
     <ClCompile Include="sources\LUABroadcaster.cpp" />
     <ClCompile Include="sources\LUAClient.cpp" />
-    <ClCompile Include="sources\LUAClients.cpp" />
     <ClCompile Include="sources\LUAGroup.cpp" />
-    <ClCompile Include="sources\LUAGroups.cpp" />
     <ClCompile Include="sources\LUAInvoker.cpp" />
     <ClCompile Include="sources\LUAListener.cpp" />
-    <ClCompile Include="sources\LUAListeners.cpp" />
     <ClCompile Include="sources\LUAMember.cpp" />
     <ClCompile Include="sources\LUAPublication.cpp" />
-    <ClCompile Include="sources\LUAPublications.cpp" />
     <ClCompile Include="sources\LUAQualityOfService.cpp" />
     <ClCompile Include="sources\LUAServer.cpp" />
-    <ClCompile Include="sources\LUAServers.cpp" />
     <ClCompile Include="sources\LUATCPClient.cpp" />
     <ClCompile Include="sources\LUATCPServer.cpp" />
     <ClCompile Include="sources\LUAUDPSocket.cpp" />

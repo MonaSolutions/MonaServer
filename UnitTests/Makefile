@@ -1,6 +1,6 @@
 
 CC=g++
-CFLAGS=-std=c++11
+CFLAGS+=-std=c++0x
 EXEC=UnitTests
 INCLUDES=-I/usr/local/include/ -I./../MonaBase/include/
 LIBDIR=-L/usr/local/lib/ -L./../MonaBase/lib/

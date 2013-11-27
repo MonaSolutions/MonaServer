@@ -157,6 +157,12 @@
       <Filter>Application</Filter>
     </ClCompile>
     <ClCompile Include="sources\Mona.cpp" />
+    <ClCompile Include="sources\Files.cpp">
+      <Filter>File</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\Database.cpp">
+      <Filter>File</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Mona\BinaryReader.h">
@@ -336,6 +342,12 @@
     <ClInclude Include="include\Mona\Mona.h" />
     <ClInclude Include="include\Mona\Expirable.h">
       <Filter>Util</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\Files.h">
+      <Filter>File</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\Database.h">
+      <Filter>File</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

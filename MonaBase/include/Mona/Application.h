@@ -1,5 +1,7 @@
 /*
-Copyright 2013 Mona - mathieu.poux[a]gmail.com
+Copyright 2014 Mona
+mathieu.poux[a]gmail.com
+jammetthomas[a]gmail.com
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -71,7 +73,7 @@ protected:
 	virtual bool			loadConfigurations(std::string& path);
 	virtual void			defineOptions(Exception& ex, Options& options);
 
-	virtual void			log(std::thread::id threadId, const std::string& threadName, Priority priority, char *filePath, std::string& shortFilePath, long line, std::string& message);
+	virtual void			log(std::thread::id threadId, const std::string& threadName, Priority priority, const char *filePath, std::string& shortFilePath, long line, std::string& message);
 	virtual void			dump(const UInt8* data, UInt32 size);
 	
 private:

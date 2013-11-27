@@ -1,27 +1,26 @@
-/* 
-	Copyright 2013 Mona - mathieu.poux[a]gmail.com
- 
-	This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+/*
+Copyright 2014 Mona
+mathieu.poux[a]gmail.com
+jammetthomas[a]gmail.com
 
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License received along this program for more
-	details (or else see http://www.gnu.org/licenses/).
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-	This file is a part of Mona.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License received along this program for more
+details (or else see http://www.gnu.org/licenses/).
+
+This file is a part of Mona.
 */
 
 #pragma once
 
 #include <stdio.h>
 #include <string>
-#if !defined(WIN32)
-	#include "string.h"
-#endif
 
 /////  Usefull macros and patchs   //////
 
@@ -34,10 +33,13 @@
 #define _WINSOCKAPI_    // stops windows.h including winsock.h
 #define sprintf sprintf_s
 #define snprintf sprintf_s
+#define memicmp _memicmp
 #define timegm _mkgmtime
 #define GMTIME(VALUE,RESULT) gmtime_s(&RESULT,&VALUE);
 #define LOCALTIME(VALUE,RESULT) localtime_s(&RESULT,&VALUE);
+#define STRERROR(CODE,ERROR) {ERROR.resize(100);strerror_s(&ERROR[0],(std::size_t)100,CODE);ERROR.resize(strlen(ERROR.c_str()));}
 #else
+#define STRERROR(CODE,ERROR) {ERROR.resize(100);strerror_r(CODE,&ERROR[0],100);ERROR.resize(strlen(ERROR.c_str()));}
 #define GMTIME(VALUE,RESULT) gmtime_r(&VALUE,&RESULT)
 #define LOCALTIME(VALUE,RESULT) localtime_r(&VALUE,&RESULT)
 #endif
@@ -307,3 +309,5 @@ public:
 
 
 } // namespace Mona
+
+#include "string.h"

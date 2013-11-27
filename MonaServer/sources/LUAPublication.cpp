@@ -1,171 +1,97 @@
-/* 
-	Copyright 2013 Mona - mathieu.poux[a]gmail.com
- 
-	This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+/*
+Copyright 2014 Mona
+mathieu.poux[a]gmail.com
+jammetthomas[a]gmail.com
 
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License received along this program for more
-	details (or else see http://www.gnu.org/licenses/).
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-	This file is a part of Mona.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License received along this program for more
+details (or else see http://www.gnu.org/licenses/).
+
+This file is a part of Mona.
 */
 
+
 #include "LUAPublication.h"
-#include "LUAListeners.h"
-#include "LUAQualityOfService.h"
-#include "LUAClient.h"
-#include "Mona/JSONWriter.h"
-#include "Mona/JSONReader.h"
 
 using namespace std;
 using namespace Mona;
 
 
-const char*		LUAPublication::Name="Mona::Publication";
-
-void LUAPublication::Clear(lua_State* pState,const Publication& publication){
-	Script::ClearPersistentObject<QualityOfService,LUAQualityOfService>(pState,publication.dataQOS());
-	Script::ClearPersistentObject<QualityOfService,LUAQualityOfService>(pState,publication.audioQOS());
-	Script::ClearPersistentObject<QualityOfService,LUAQualityOfService>(pState,publication.videoQOS());
-	Script::ClearPersistentObject<Listeners,LUAListeners>(pState,publication.listeners);
-	Script::ClearPersistentObject<Publication,LUAPublication>(pState,publication);
+void LUAPublicationBase::Clear(lua_State* pState, const Mona::Publication& publication) {
+	Script::ClearObject<QualityOfService, LUAQualityOfService>(pState, publication.dataQOS());
+	Script::ClearObject<QualityOfService, LUAQualityOfService>(pState, publication.audioQOS());
+	Script::ClearObject<QualityOfService, LUAQualityOfService>(pState, publication.videoQOS());
 }
 
-int	LUAPublication::Close(lua_State *pState) {
-	SCRIPT_CALLBACK(Publication,LUAPublication,publication)
-		lua_getmetatable(pState,1);
-		lua_getfield(pState,-1,"__invoker");
-		lua_replace(pState,-2);
-		if(lua_islightuserdata(pState,-1))
-			((Invoker*)lua_touserdata(pState,-1))->unpublish(publication.name());
-		else
-			SCRIPT_ERROR("You have not the handle on publication ",publication.name(),", you can't close it")
-		lua_pop(pState,1);
-	SCRIPT_CALLBACK_RETURN
+void LUAPublicationBase::AddListener(lua_State* pState, const Listener& listener, int indexListener, int indexClient) {
+	if (Script::FromObject<Mona::Publication>(pState, listener.publication)) {
+		Script::Collection(pState, -1, "listeners", listener.publication.listeners.count() + 1);
+		lua_pushvalue(pState, indexListener);
+		lua_pushvalue(pState, indexClient);
+		lua_rawset(pState, -3); // rawset cause NewIndexProhibited
+		lua_pop(pState, 2);
+	}
 }
 
-int	LUAPublication::Flush(lua_State *pState) {
-	SCRIPT_CALLBACK(Publication,LUAPublication,publication)
-		publication.flush();
-	SCRIPT_CALLBACK_RETURN
+void LUAPublicationBase::RemoveListener(lua_State* pState, const Listener& listener, int indexListener) {
+	if (Script::FromObject<Mona::Publication>(pState, listener.publication)) {
+		Script::Collection(pState, -1, "listeners", listener.publication.listeners.count() - 1);
+		lua_pushvalue(pState, indexListener);
+		lua_pushnil(pState);
+		lua_rawset(pState, -3); // rawset cause NewIndexProhibited
+		lua_pop(pState, 3);
+	}
 }
 
-int	LUAPublication::PushAudio(lua_State *pState) {
-	SCRIPT_CALLBACK(Publication,LUAPublication,publication)
-		SCRIPT_READ_BINARY(pData,size)
-		UInt32 time = SCRIPT_READ_UINT(0);
-		if(pData) {
-			MemoryReader reader(pData,size);
-			publication.pushAudio(reader,time,SCRIPT_READ_UINT(0));
+Mona::Publication* LUAPublicationBase::Publication(LUAMyPublication& luaPublication) {
+	if (luaPublication.closed)
+		return NULL;
+	return &luaPublication.publication;
+}
+
+void LUAPublicationBase::Close(lua_State *pState, Mona::Publication& publication) {
+	SCRIPT_BEGIN(pState)
+		SCRIPT_ERROR("You have not the handle on publication ", publication.name(), ", you can't close it")
+	SCRIPT_END
+}
+
+void LUAPublicationBase::Close(lua_State *pState, LUAMyPublication& luaPublication) {
+	if (luaPublication.closed)
+		return;
+	luaPublication.invoker.unpublish(luaPublication.publication.name());
+	luaPublication.closed = true;
+}
+
+int LUAPublicationBase::Item(lua_State *pState) {
+	// 1 => publications table
+	// 2 => parameter
+	Invoker* pInvoker = Script::GetCollector<Invoker>(pState, 1);
+	if (!pInvoker)
+		return 0;
+	int result(0);
+	SCRIPT_BEGIN(pState)
+	if (lua_isstring(pState, 2)) {
+		auto it = pInvoker->publications(lua_tostring(pState,2));
+		if (it != pInvoker->publications.end()) {
+			SCRIPT_ADD_OBJECT(Mona::Publication, LUAPublication<>, *it->second);
+			++result;
 		}
-	SCRIPT_CALLBACK_RETURN
+	}
+	SCRIPT_END
+	return result;
 }
 
-int	LUAPublication::PushVideo(lua_State *pState) {
-	SCRIPT_CALLBACK(Publication,LUAPublication,publication)
-		SCRIPT_READ_BINARY(pData,size)
-		UInt32 time = SCRIPT_READ_UINT(0);
-		if(pData) {
-			MemoryReader reader(pData,size);
-			publication.pushVideo(reader,time,SCRIPT_READ_UINT(0));
-		}
+int LUAMyPublication::Destroy(lua_State* pState) {
+	SCRIPT_DESTRUCTOR_CALLBACK(LUAMyPublication, publication)
+	if (!publication.closed)
+		publication.invoker.unpublish(publication.publication.name());
+	delete &publication;
 	SCRIPT_CALLBACK_RETURN
 }
-
-int	LUAPublication::PushData(lua_State *pState) {
-	SCRIPT_CALLBACK(Publication,LUAPublication,publication)
-		Client* pPublisher = publication.publisher();
-		if(pPublisher) {
-			shared_ptr<DataWriter> pWriter;
-			pPublisher->writer().createWriter(pWriter);
-			if(pWriter) {
-				UInt32 offset = pWriter->stream.size();
-				SCRIPT_READ_DATA(*pWriter)
-				MemoryReader reader(pWriter->stream.data(),pWriter->stream.size());
-				reader.next(offset);
-				shared_ptr<DataReader> pReader;
-				pPublisher->writer().createReader(reader,pReader);
-				if(pReader)
-					publication.pushData(*pReader);
-				else
-					SCRIPT_ERROR("The publisher of ",publication.name()," publication has no reader type to push data, use a typed pushData version rather");
-			} else
-				SCRIPT_ERROR("The publisher of ",publication.name()," publication has no writer type to push data, use a typed pushData version rather");
-		} else
-			SCRIPT_ERROR("No data can be pushed on the ",publication.name()," publication without a publisher")
-	SCRIPT_CALLBACK_RETURN
-}
-
-int	LUAPublication::PushJSONData(lua_State *pState) {
-	SCRIPT_CALLBACK(Publication,LUAPublication,publication)
-		JSONWriter writer;
-		UInt32 offset = writer.stream.size();
-		SCRIPT_READ_DATA(writer)
-		MemoryReader reader(writer.stream.data(),writer.stream.size());
-		reader.next(offset);
-		JSONReader data(reader);
-		publication.pushData(data);
-	SCRIPT_CALLBACK_RETURN
-}
-
-int	LUAPublication::PushAMFData(lua_State *pState) {
-	SCRIPT_CALLBACK(Publication,LUAPublication,publication)
-		AMFWriter writer;
-		UInt32 offset = writer.stream.size();
-		SCRIPT_READ_DATA(writer)
-		MemoryReader reader(writer.stream.data(),writer.stream.size());
-		reader.next(offset);
-		AMFReader data(reader);
-		publication.pushData(data);
-	SCRIPT_CALLBACK_RETURN
-}
-
-
-int LUAPublication::Get(lua_State *pState) {
-	SCRIPT_CALLBACK(Publication,LUAPublication,publication)
-		string name = SCRIPT_READ_STRING("");
-		if(name=="publisher") {
-			if(publication.publisher())
-				SCRIPT_WRITE_PERSISTENT_OBJECT(Client,LUAClient,*publication.publisher())
-		} else if(name=="name") {
-			SCRIPT_WRITE_STRING(publication.name().c_str())
-		} else if(name=="listeners") {
-			SCRIPT_WRITE_PERSISTENT_OBJECT(Listeners,LUAListeners,publication.listeners)
-		} else if(name=="droppedFrames") {
-			SCRIPT_WRITE_NUMBER(publication.droppedFrames())
-		} else if(name=="audioQOS") {
-			SCRIPT_WRITE_PERSISTENT_OBJECT(QualityOfService,LUAQualityOfService,publication.audioQOS())
-		} else if(name=="videoQOS") {
-			SCRIPT_WRITE_PERSISTENT_OBJECT(QualityOfService,LUAQualityOfService,publication.videoQOS())
-		} else if(name=="dataQOS") {
-			SCRIPT_WRITE_PERSISTENT_OBJECT(QualityOfService,LUAQualityOfService,publication.dataQOS())
-		} else if(name=="close") {
-			SCRIPT_WRITE_FUNCTION(&LUAPublication::Close)
-		} else if(name=="pushAudio") {
-			SCRIPT_WRITE_FUNCTION(&LUAPublication::PushAudio)
-		} else if(name=="flush") {
-			SCRIPT_WRITE_FUNCTION(&LUAPublication::Flush)
-		} else if(name=="pushVideo") {
-			SCRIPT_WRITE_FUNCTION(&LUAPublication::PushVideo)
-		} else if(name=="pushData") {
-			SCRIPT_WRITE_FUNCTION(&LUAPublication::PushData)
-		} else if(name=="pushAMFData") {
-			SCRIPT_WRITE_FUNCTION(&LUAPublication::PushAMFData)
-		} else if(name=="pushJSONData") {
-			SCRIPT_WRITE_FUNCTION(&LUAPublication::PushJSONData)
-		}
-	SCRIPT_CALLBACK_RETURN
-}
-
-int LUAPublication::Set(lua_State *pState) {
-	SCRIPT_CALLBACK(Publication,LUAPublication,publication)
-		string name = SCRIPT_READ_STRING("");
-		lua_rawset(pState,1); // consumes key and value
-	SCRIPT_CALLBACK_RETURN
-}
-

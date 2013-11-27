@@ -1,18 +1,20 @@
-/* 
-	Copyright 2013 Mona - mathieu.poux[a]gmail.com
- 
-	This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+/*
+Copyright 2014 Mona
+mathieu.poux[a]gmail.com
+jammetthomas[a]gmail.com
 
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License received along this program for more
-	details (or else see http://www.gnu.org/licenses/).
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-	This file is a part of Mona.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License received along this program for more
+details (or else see http://www.gnu.org/licenses/).
+
+This file is a part of Mona.
 */
 
 #include "Mona/RelayServer.h"
@@ -73,7 +75,7 @@ UInt32 RelaySocket::releaseRelay(Relay& relay) {
 	lock_guard<mutex> lock(_mutex);
 	//remove turnPeers
 	if(relay.received) {
-		INFO("Turn finishing from %s to %s on %hu relayed port", relay.address1.toString().c_str(), relay.address2.toString().c_str(), port)
+		INFO("Turn finishing from ", relay.address1.toString(), " to ", relay.address2.toString(), " on ", port, " relayed port")
 		((Peer&)relay.peer1).turnPeers.erase(relay.peer2.id);
 		((Peer&)relay.peer2).turnPeers.erase(relay.peer1.id);
 	}
@@ -85,7 +87,7 @@ UInt32 RelaySocket::releaseRelay(Relay& relay) {
 
 // executed in a parallel thread!
 void RelaySocket::onError(const string& error) {
-	DEBUG("Relay socket %hu, %s",port,error.c_str());
+	DEBUG("Relay socket ", port, ", error");
 }
 
 // executed in a parallel thread!
@@ -103,14 +105,14 @@ void RelaySocket::onReadable(Exception& ex) {
 	lock_guard<mutex> lock(_mutex);
 	Addresses::const_iterator itAddress = addresses.find(address);
 	if(itAddress==addresses.end()) {
-		DEBUG("Unknown relay %s address",address.toString().c_str())
+		DEBUG("Unknown relay ", address.toString()," address")
 		return;
 	}
 
 	Relay& relay = *itAddress->second;
 	if(!relay.received) {
 		relay.received=true;
-		INFO("Turn starting from %s to %s on %hu relayed port", relay.address1.toString().c_str(), relay.address2.toString().c_str(), port)
+		INFO("Turn starting from ",relay.address1.toString()," to ",relay.address2.toString()," on ",port," relayed port")
 		((Peer&)relay.peer1).turnPeers[relay.peer2.id] = (Peer*)&relay.peer2;
 		((Peer&)relay.peer2).turnPeers[relay.peer1.id] = (Peer*)&relay.peer1;
 	}
@@ -174,7 +176,7 @@ UInt16 RelayServer::add(const Peer& peer1,const SocketAddress& address1,const Pe
 		SocketAddress address;
 		Exception ex;
 		if (!address.set(ex, "0.0.0.0", port)) {
-			DEBUG("Turn listening impossible on port %hu, %s", port, ex.error().c_str())
+			DEBUG("Turn listening impossible on ",port," port, ", ex.error())
 			continue;
 		}
 
@@ -182,11 +184,11 @@ UInt16 RelayServer::add(const Peer& peer1,const SocketAddress& address1,const Pe
 		if (!pSocket->load(ex, address)) {
 			delete pSocket;
 			pSocket = NULL;
-			DEBUG("Turn listening impossible on port %hu, %s", port, ex.error().c_str())
+			DEBUG("Turn listening impossible on ", port, " port, ", ex.error())
 			continue;
 		}
 
-		INFO("Turn server listening on %hu port", port)
+		INFO("Turn server listening on ", port," port")
 
 		if (_sockets.empty())
 			it = _sockets.begin();
@@ -202,7 +204,7 @@ UInt16 RelayServer::add(const Peer& peer1,const SocketAddress& address1,const Pe
 	((Peer&)peer1).relayable = true;
 	((Peer&)peer2).relayable = true;
 
-	DEBUG("Relay between %s and %s on %hu port",address1.toString().c_str(),address2.toString().c_str(),port)
+	DEBUG("Relay between ", address1.toString(), " and ", address2.toString(), " on ,",port," port")
 
 	return port;
 }

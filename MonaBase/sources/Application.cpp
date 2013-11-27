@@ -1,5 +1,7 @@
 /*
-Copyright 2013 Mona - mathieu.poux[a]gmail.com
+Copyright 2014 Mona
+mathieu.poux[a]gmail.com
+jammetthomas[a]gmail.com
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -93,12 +95,14 @@ bool Application::init(int argc, const char* argv[]) {
 	configPath.append(name);
 	configPath.append(".ini");
 	if (loadConfigurations(configPath)) {
+		setString("application.configPath", configPath);
 		vector<string> values;
 		FileSystem::Unpack(configPath, values);
-		setString("application.configDir", values.size() < 2 ? "/" : FileSystem::MakeDirectory(configPath));
-		// normalize
+		if (!values.empty())
+			values.resize(values.size() - 1);
 		FileSystem::Pack(values, configPath);
-		setString("application.configPath", configPath);
+		setString("application.configDir", configPath);
+		
 	}
 
 	// logs
@@ -175,7 +179,7 @@ int Application::run(int argc, const char* argv[]) {
 	}
 }
 
-void Application::log(thread::id threadId, const string& threadName, Priority priority, char *filePath, string& shortFilePath, long line, string& message) {
+void Application::log(thread::id threadId, const string& threadName, Priority priority, const char *filePath, string& shortFilePath, long line, string& message) {
 	if (isInteractive())
 		Logger::log(threadId, threadName, priority, filePath, shortFilePath, line, message);
 	lock_guard<mutex> lock(_logMutex);
@@ -215,7 +219,7 @@ void Application::manageLogFiles() {
 		string newPath;
 		while(--num>=0)
 			FileSystem::Rename(String::Format(path, _logPath, num), String::Format(newPath, _logPath, num + 1));
-		_logStream.open(_logPath, ios::in | ios::ate);
+		_logStream.open(_logPath, ios::out | ios::binary | ios::app);
 	}
 }
 
@@ -254,13 +258,15 @@ void Application::initApplicationPaths(const char* command) {
 
 	vector<string> values;
 	FileSystem::Unpack(path, values);
-	// normalize path
-	FileSystem::Pack(values, path);
-	
+
 	setString("application.path", path);
 	setString("application.name", values.empty() ? "" : values.back());
 	string baseName;
 	setString("application.baseName", values.empty() ? "" : FileSystem::GetBaseName(values.back(),baseName));
+
+	if (!values.empty())
+		values.resize(values.size() - 1);
+	FileSystem::Pack(values, path);
 	setString("application.dir", FileSystem::MakeDirectory(path));
 }
 

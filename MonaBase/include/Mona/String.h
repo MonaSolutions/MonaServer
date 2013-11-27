@@ -1,18 +1,20 @@
-/* 
-	Copyright 2013 Mona - mathieu.poux[a]gmail.com
- 
-	This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+/*
+Copyright 2014 Mona
+mathieu.poux[a]gmail.com
+jammetthomas[a]gmail.com
 
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License received along this program for more
-	details (or else see http://www.gnu.org/licenses/).
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-	This file is a part of Mona.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License received along this program for more
+details (or else see http://www.gnu.org/licenses/).
+
+This file is a part of Mona.
 */
 
 #pragma once
@@ -45,7 +47,7 @@ public:
 class Exception;
 
 /// Utility class for generation parse of strings
-class String : virtual Static{
+class String : virtual Static {
 public:
 
 	enum SplitOption {
@@ -186,12 +188,19 @@ public:
 		return String::Append(result, args ...);
 	}
 
+	/// \brief match "bool" case
+	template <typename ...Args>
+	static std::string& Append(std::string& result, bool value, Args&&... args) {
+		result.append(value ? "true" : "false");
+		return String::Append(result, args ...);
+	}
+
 	/// \brief match pointer case
 	template <typename ...Args>
 	static std::string& Append(std::string& result, const void* value, Args&&... args)	{
 		char buffer[64];
 		
-		#if defined(MONA_PTR_IS_64_BIT)
+		#if defined(MONA_PTR_IS_64_BIT) // TODO!!!
             sprintf(buffer, "%016" I64_FMT "X", value);
 		#else
             sprintf(buffer, "%08lX", value);

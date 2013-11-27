@@ -6,7 +6,7 @@ else
 	SHARED=-shared
 endif
 CC=g++
-CFLAGS=-std=c++11
+CFLAGS+=-std=c++0x
 INCLUDES=-I/usr/local/include/ -I./include/
 LIBDIR=-L/usr/local/lib/
 LIBS ?= -lcrypto -lssl

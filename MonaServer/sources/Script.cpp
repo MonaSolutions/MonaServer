@@ -1,22 +1,23 @@
-/* 
-	Copyright 2013 Mona - mathieu.poux[a]gmail.com
- 
-	This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+/*
+Copyright 2014 Mona
+mathieu.poux[a]gmail.com
+jammetthomas[a]gmail.com
 
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License received along this program for more
-	details (or else see http://www.gnu.org/licenses/).
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-	This file is a part of Mona.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License received along this program for more
+details (or else see http://www.gnu.org/licenses/).
+
+This file is a part of Mona.
 */
 
 #include "Script.h"
-#include "Service.h"
 #include "Mona/Logs.h"
 #include "Mona/Util.h"
 #include <math.h>
@@ -28,65 +29,64 @@ using namespace std;
 using namespace Mona;
 
 lua_Debug	Script::LuaDebug;
+bool		Script::_NextLogCallerDisabled(false);
 
 const char* Script::LastError(lua_State *pState) {
-	const char* error = lua_tostring(pState,-1);
-	if(error)
-		lua_pop(pState,1);
+	int top = lua_gettop(pState);
+	if (top == 0)
+		return "Unknown error";
+	const char* error = lua_tostring(pState, -1);
+	lua_pop(pState, 1);
+	if (!error)
+		return "Unknown error";
 	return error;
 }
 
 int Script::Error(lua_State *pState) {
-#undef SCRIPT_LOG_NAME_DISABLED
-#define SCRIPT_LOG_NAME_DISABLED true
+	_NextLogCallerDisabled = true;
 	SCRIPT_BEGIN(pState)
 		string msg;
-		SCRIPT_ERROR(ToString(pState,msg));
+		SCRIPT_ERROR(ToPrint(pState,msg));
 	SCRIPT_END
 	return 0;
 }
 int Script::Warn(lua_State *pState) {
-#undef SCRIPT_LOG_NAME_DISABLED
-#define SCRIPT_LOG_NAME_DISABLED true
+	_NextLogCallerDisabled = true;
 	SCRIPT_BEGIN(pState)
 		string msg;
-		SCRIPT_WARN(ToString(pState,msg));
+		SCRIPT_WARN(ToPrint(pState, msg));
 	SCRIPT_END
 	return 0;
 }
 int Script::Note(lua_State *pState) {
-#undef SCRIPT_LOG_NAME_DISABLED
-#define SCRIPT_LOG_NAME_DISABLED true
+	_NextLogCallerDisabled = true;
 	SCRIPT_BEGIN(pState)
 		string msg;
-		SCRIPT_NOTE(ToString(pState,msg));
+		SCRIPT_NOTE(ToPrint(pState,msg));
 	SCRIPT_END
 	return 0;
 }
 int Script::Info(lua_State *pState) {
-#undef SCRIPT_LOG_NAME_DISABLED
-#define SCRIPT_LOG_NAME_DISABLED true
+	_NextLogCallerDisabled = true;
 	SCRIPT_BEGIN(pState)
 		string msg;
-		SCRIPT_INFO(ToString(pState,msg));
+		SCRIPT_INFO(ToPrint(pState,msg));
 	SCRIPT_END
 	return 0;
 }
 int Script::Debug(lua_State *pState) {
-#undef SCRIPT_LOG_NAME_DISABLED
-#define SCRIPT_LOG_NAME_DISABLED true
+	_NextLogCallerDisabled = true;
 	SCRIPT_BEGIN(pState)
 		string msg;
-		SCRIPT_DEBUG(ToString(pState,msg));
+		SCRIPT_DEBUG(ToPrint(pState,msg));
 	SCRIPT_END
 	return 0;
 }
 int Script::Trace(lua_State *pState) {
-#undef SCRIPT_LOG_NAME_DISABLED
-#define SCRIPT_LOG_NAME_DISABLED true
+	_NextLogCallerDisabled = true;
 	SCRIPT_BEGIN(pState)
 		string msg;
-		SCRIPT_TRACE(ToString(pState,msg));
+		SCRIPT_TRACE(ToPrint(pState,msg));
 	SCRIPT_END
 	return 0;
 }
@@ -95,7 +95,7 @@ int Script::Trace(lua_State *pState) {
 int Script::Panic(lua_State *pState) {
 	SCRIPT_BEGIN(pState)
 		string msg;
-		SCRIPT_FATAL(ToString(pState,msg));
+		SCRIPT_FATAL(ToPrint(pState,msg));
 	SCRIPT_END
 	return 1;
 }
@@ -118,6 +118,12 @@ lua_State* Script::CreateState() {
 	lua_pushcfunction(pState,&Script::Trace);
 	lua_setglobal(pState,"TRACE");
 
+	// set global metatable
+	lua_newtable(pState);
+	lua_pushstring(pState, "change metatable of global environment is prohibited");
+	lua_setfield(pState, -2, "__metatable");
+	lua_setmetatable(pState, LUA_GLOBALSINDEX);
+
 	return pState;
 }
 
@@ -126,34 +132,38 @@ void Script::CloseState(lua_State* pState) {
 		lua_close(pState);
 }
 
+int Script::Pairs(lua_State* pState) {
+	lua_getglobal(pState, "next");
+	if (lua_getmetatable(pState, 1)) {
+		lua_getfield(pState, -1, "|items");
+		if (!lua_istable(pState, -1)) {
+			lua_pop(pState, 1);
+			lua_pushvalue(pState, 1);
+		}
+		lua_replace(pState, -2);
+	} else
+		lua_pushvalue(pState, 1);
+	return 2;
+}
 
-void Script::Test(lua_State* pState) {
-    int i; 
-    int top = lua_gettop(pState);
- 
-    printf("total in stack %d\n",top);
- 
-    for (i = 1; i <= top; i++)
-    {  /* repeat for each level */
-        int t = lua_type(pState, i);
-        switch (t) {
-            case LUA_TSTRING:  /* strings */
-                printf("string: '%s'\n", lua_tostring(pState, i));
-                break;
-            case LUA_TBOOLEAN:  /* booleans */
-                printf("boolean %s\n",lua_toboolean(pState, i) ? "true" : "false");
-                break;
-            case LUA_TNUMBER:  /* numbers */
-                printf("number: %g\n", lua_tonumber(pState, i));
-                break;
-            default:  /* other values */
-                printf("%s\n", lua_typename(pState, t));
-                break;
-        }
-        printf("  ");  /* put a separator */
-    }
-    printf("\n");  /* end the listing */
-
+int Script::Len(lua_State* pState) {
+	if (lua_getmetatable(pState, -1)) {
+		lua_getfield(pState, -1, "|count");
+		if (!lua_isnumber(pState, -1)) {
+			lua_pop(pState, 1);
+			lua_getfield(pState, -1, "|items");
+			if (!lua_istable(pState, -1)) {
+				lua_pop(pState, 1);
+				lua_objlen(pState, 1);
+			} else {
+				lua_replace(pState, -2);
+				Len(pState);
+			}
+		}
+		lua_replace(pState, -2);
+	} else
+		lua_objlen(pState, -1);
+	return 1;
 }
 
 
@@ -295,14 +305,12 @@ void Script::WriteData(lua_State *pState,DataReader::Type type,DataReader& reade
 					lua_pushvalue(pState,-2);
 					// reader
 					SCRIPT_WRITE_BINARY(reader.reader.current(),reader.reader.available())
-					Service::StartVolatileObjectsRecording(pState);
 					if(lua_pcall(pState,2,1,0)!=0)
 						SCRIPT_ERROR(Script::LastError(pState))
 					else {
 						reader.reader.next((int)lua_tonumber(pState,-1));
 						lua_pop(pState,1);
 					}
-					Service::StopVolatileObjectsRecording(pState);
 					break;
 				} else if(external)
 					SCRIPT_ERROR("Impossible to deserialize the external type '",objectType,"' without a __readExternal method")
@@ -427,14 +435,12 @@ void Script::ReadData(lua_State* pState,DataWriter& writer,UInt32 count,map<UInt
 						writer.beginObject(objectType,true);
 						// self argument
 						lua_pushvalue(pState,args);
-						Service::StartVolatileObjectsRecording(pState);
 						if(lua_pcall(pState,2,1,0)!=0)
 							SCRIPT_ERROR(Script::LastError(pState))
 						else {
 							writer.writer.writeRaw(lua_tostring(pState,-1),lua_objlen(pState,-1));
 							lua_pop(pState,1);
 						}
-						Service::StopVolatileObjectsRecording(pState);
 						writer.endObject();
 						it->second = writer.lastReference();
 						lua_pop(pState,1);
@@ -524,11 +530,10 @@ void Script::ReadData(lua_State* pState,DataWriter& writer,UInt32 count,map<UInt
 	SCRIPT_END
 }
 
-const char* Script::ToString(lua_State* pState,string& out) {
+const char* Script::ToPrint(lua_State* pState, string& out) {
 	int top = lua_gettop(pState);
 	int args = 0;
 	while(args++<top) {
-		int type = lua_type(pState, args);
 		string pointer;
 		switch (lua_type(pState, args)) {
 			case LUA_TLIGHTUSERDATA:
@@ -565,31 +570,31 @@ const char* Script::ToString(lua_State* pState,string& out) {
 }
 
 
-void Script::AddObjectDestructor(lua_State *pState,lua_CFunction destructor) {
-	if(lua_istable(pState,-1)==0) {
-		SCRIPT_BEGIN(pState)
-			SCRIPT_ERROR("Add destructor impossible, bad object (not table)");
-		SCRIPT_END
-		return;
+void Script::Test(lua_State* pState) {
+	int i;
+	int top = lua_gettop(pState);
+
+	printf("total in stack %d\n", top);
+
+	for (i = 1; i <= top; i++) {  /* repeat for each level */
+		int t = lua_type(pState, i);
+		switch (t) {
+		case LUA_TSTRING:  /* strings */
+			printf("string: '%s'\n", lua_tostring(pState, i));
+			break;
+		case LUA_TBOOLEAN:  /* booleans */
+			printf("boolean %s\n", lua_toboolean(pState, i) ? "true" : "false");
+			break;
+		case LUA_TNUMBER:  /* numbers */
+			printf("number: %g\n", lua_tonumber(pState, i));
+			break;
+		default:  /* other values */
+			printf("%s\n", lua_typename(pState, t));
+			break;
+		}
+		printf("  ");  /* put a separator */
 	}
+	printf("\n");  /* end the listing */
 
-	if(lua_getmetatable(pState,-1)==0) {
-		SCRIPT_BEGIN(pState)
-			SCRIPT_ERROR("Add destructor impossible, bad object (without metatable)");
-		SCRIPT_END
-		return;
-	}
-
-	// user data
-	lua_newuserdata(pState,sizeof(void*));
-
-	lua_pushvalue(pState,-2); // metatable
-	lua_setmetatable(pState,-2); // metatable of user data
-
-	lua_pushcfunction(pState,destructor);
-	lua_setfield(pState,-3,"__gc"); // function in metatable
-
-	lua_setfield(pState, -2, "__gcThis"); // userdata in metatable
-
-	lua_pop(pState,1);
 }
+

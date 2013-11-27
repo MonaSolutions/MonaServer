@@ -1,18 +1,20 @@
-/* 
-	Copyright 2013 Mona - mathieu.poux[a]gmail.com
- 
-	This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+/*
+Copyright 2014 Mona
+mathieu.poux[a]gmail.com
+jammetthomas[a]gmail.com
 
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License received along this program for more
-	details (or else see http://www.gnu.org/licenses/).
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-	This file is a part of Mona.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License received along this program for more
+details (or else see http://www.gnu.org/licenses/).
+
+This file is a part of Mona.
 */
 
 #include "Mona/Peer.h"
@@ -230,13 +232,6 @@ void Peer::onConnection(Exception& ex, Writer& writer,DataReader& parameters,Dat
 	}
 }
 
-void Peer::onFailed(const string& error) {
-	if(connected)
-		_handler.onFailed(*this,error);
-	else
-		WARN("Client failed: ",error);
-}
-
 void Peer::onDisconnection() {
 	if(connected) {
 		_pWriter = NULL;
@@ -257,13 +252,6 @@ void Peer::onMessage(Exception& ex, const string& name,DataReader& reader) {
 		_handler.onMessage(ex, *this, name, reader);
 	else
 		ERROR("RPC client before connection")
-}
-
-void Peer::onManage() {
-	if(connected) {
-		_handler.onManage(*this);
-		return;
-	}
 }
 
 void Peer::onJoinGroup(Group& group) {
@@ -328,9 +316,9 @@ void Peer::onUnsubscribe(const Listener& listener) {
 	WARN("Unsubscription client before connection")
 }
 
-bool Peer::onRead(string& filePath,MapParameters& parameters) {
+bool Peer::onRead(Exception& ex, string& filePath, MapParameters& parameters) {
 	if(connected)
-		return _handler.onRead(*this, filePath,parameters);
+		return _handler.onRead(ex,*this, filePath, parameters);
 	ERROR("Resource '",filePath,"' access by a not connected client")
 	return false;
 }

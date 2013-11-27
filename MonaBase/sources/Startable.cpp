@@ -1,18 +1,20 @@
-/* 
-	Copyright 2013 Mona - mathieu.poux[a]gmail.com
- 
-	This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+/*
+Copyright 2014 Mona
+mathieu.poux[a]gmail.com
+jammetthomas[a]gmail.com
 
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License received along this program for more
-	details (or else see http://www.gnu.org/licenses/).
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-	This file is a part of Mona.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License received along this program for more
+details (or else see http://www.gnu.org/licenses/).
+
+This file is a part of Mona.
 */
 
 
@@ -93,23 +95,24 @@ Startable::WakeUpType Startable::sleep(UInt32 millisec) {
 
 // caller is usually the thread controller of _thread
 bool Startable::start(Exception& ex, Priority priority) {
+	lock_guard<mutex> lock(_mutex);
 	if (!_stop)  // if running
 		return true;
-	lock_guard<mutex> lock(_mutex);
 	if (_thread.get_id() == this_thread::get_id()) {
 		ex.set(Exception::THREAD,"Startable::start method can't be called from the running thread");
 		return false;
 	}
+	lock_guard<mutex> lockStop(_mutexStop);
 	if (_thread.joinable())
 		_thread.join();
 	try {
-		lock_guard<mutex> lock(_mutexStop);
 		_wakeUpEvent.reset();
 		_stop = false;
 		_thread = thread(&Startable::process, ref(*this)); // start the thread
 		initThread(ex, _thread, priority);
 	} catch (exception& exc) {
 		ex.set(Exception::THREAD, "Impossible to start the thread of ", _name, ", ", exc.what());
+		_stop = true;
 		return false;
 	}
 	return true;
@@ -137,11 +140,19 @@ void Startable::initThread(Exception& ex,thread& thread,Priority priority) {
 
 // caller is usually the thread controller of _thread
 void Startable::stop() {
+	{	// for the case where the both (handler and thread) call the stop method in same time
+		lock_guard<mutex> lock(_mutexStop);
+		if (_stop) {
+			if (_thread.joinable() && _thread.get_id() != this_thread::get_id())
+				_thread.join();
+			return;
+		}
+	}
 	lock_guard<mutex> lock(_mutex);
 	{
 		lock_guard<mutex> lock(_mutexStop);
 		if (_stop) {
-			if (_thread.get_id() != this_thread::get_id() && _thread.joinable())
+			if (_thread.joinable() && _thread.get_id() != this_thread::get_id())
 				_thread.join();
 			return;
 		}

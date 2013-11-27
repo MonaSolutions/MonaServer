@@ -1,5 +1,7 @@
 /*
-Copyright 2013 Mona - mathieu.poux[a]gmail.com
+Copyright 2014 Mona
+mathieu.poux[a]gmail.com
+jammetthomas[a]gmail.com
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -14,6 +16,7 @@ details (or else see http://www.gnu.org/licenses/).
 
 This file is a part of Mona.
 */
+
 
 #pragma once
 
@@ -30,9 +33,8 @@ namespace Mona {
 class FileSystem : virtual Static {
 public:
 
-	static bool			Exists(const std::string& path);
-	static bool			IsFile(const std::string& path);
-	static bool			IsDirectory(const std::string& path) { return !IsFile(path); }
+	/// In giving a path with /, it tests one folder existance, otherwise file existance (test windows device without / => C:)
+	static bool			Exists(const std::string& path,bool any=false);
 	static bool			IsAbsolute(const std::string& path);
 	
 	static UInt32		GetSize(Exception& ex,const std::string& path);
@@ -45,10 +47,13 @@ public:
 	static bool			GetHome(std::string& path);
 
 	static void			RegisterForDeletion(const std::string& path);
-	static bool			Remove(const std::string& path) { return remove(path.c_str()) == 0; }
+	static bool			Remove(const std::string& path);
+	static void			RemoveAll(Exception& ex, const std::string& path);
 	static bool			Rename(const std::string& fromPath, const std::string& toPath) { return rename(fromPath.c_str(), toPath.c_str()) == 0; }
 	static bool			CreateDirectory(const std::string& path);
+	static void			CreateDirectories(Exception& ex, const std::string& path);
 	static std::string&	MakeDirectory(std::string& path);
+	static std::string&	MakeFile(std::string& path);
 	
 	static bool							ResolveFileWithPaths(const std::string& paths, std::string& file);
 	static std::vector<std::string>&	Unpack(const std::string& path, std::vector<std::string>& values);

@@ -112,6 +112,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="sources\Application.cpp" />
+    <ClCompile Include="sources\Database.cpp" />
+    <ClCompile Include="sources\Files.cpp" />
     <ClCompile Include="sources\DNS.cpp" />
     <ClCompile Include="sources\Event.cpp" />
     <ClCompile Include="sources\FileSystem.cpp" />
@@ -169,7 +171,9 @@
   <ItemGroup>
     <ClInclude Include="include\Mona\Binary.h" />
     <ClInclude Include="include\Mona\Buffer.h" />
+    <ClInclude Include="include\Mona\Database.h" />
     <ClInclude Include="include\Mona\DatagramSocket.h" />
+    <ClInclude Include="include\Mona\Files.h" />
     <ClInclude Include="include\Mona\DNS.h" />
     <ClInclude Include="include\Mona\Event.h" />
     <ClInclude Include="include\Mona\Exceptions.h" />

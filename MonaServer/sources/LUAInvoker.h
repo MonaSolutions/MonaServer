@@ -1,18 +1,20 @@
-/* 
-	Copyright 2013 Mona - mathieu.poux[a]gmail.com
- 
-	This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+/*
+Copyright 2014 Mona
+mathieu.poux[a]gmail.com
+jammetthomas[a]gmail.com
 
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License received along this program for more
-	details (or else see http://www.gnu.org/licenses/).
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-	This file is a part of Mona.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License received along this program for more
+details (or else see http://www.gnu.org/licenses/).
+
+This file is a part of Mona.
 */
 
 #pragma once
@@ -20,14 +22,25 @@
 #include "Script.h"
 #include "Mona/Peer.h"
 
+namespace Mona {
+	class Invoker;
+}
+
 class LUAInvoker {
 public:
-	static const char* Name;
-
-	static void ID(std::string& id);
-
+	static void Init(lua_State *pState, Mona::Invoker& invoker);
 	static int Get(lua_State *pState);
 	static int Set(lua_State *pState);
+
+	static void AddClient(lua_State *pState, Mona::Invoker& invoker, Mona::Client& client, int indexClient);
+	static void RemoveClient(lua_State *pState, Mona::Invoker& invoker,const Mona::Client& client);
+
+	static void AddPublication(lua_State *pState, Mona::Invoker& invoker, const Mona::Publication& publication, int indexPublication);
+	static void RemovePublication(lua_State *pState, Mona::Invoker& invoker, const Mona::Publication& publication);
+
+	static void AddGroup(lua_State *pState, Mona::Invoker& invoker, Mona::Group& group, int indexGroup);
+	static void RemoveGroup(lua_State *pState, Mona::Invoker& invoker, const Mona::Group& group);
+
 
 private:
 	static int  Split(lua_State *pState);
@@ -43,11 +56,6 @@ private:
 	static int	CreateTCPServer(lua_State *pState);
 	static int	CreateTCPClient(lua_State *pState);
 	static int	Publish(lua_State *pState);
+	static int	JoinGroup(lua_State *pState);
 	static int	AbsolutePath(lua_State *pState);
 };
-
-inline void LUAInvoker::ID(std::string& id) {
-	id = "mona";
-}
-
-

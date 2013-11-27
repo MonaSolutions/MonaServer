@@ -99,6 +99,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="sources\BinaryReaderWriterTest.cpp" />
+    <ClCompile Include="sources\DatabaseTest.cpp" />
     <ClCompile Include="sources\DNSTest.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
     </ClCompile>

@@ -1,18 +1,20 @@
-/* 
-	Copyright 2013 Mona - mathieu.poux[a]gmail.com
- 
-	This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+/*
+Copyright 2014 Mona
+mathieu.poux[a]gmail.com
+jammetthomas[a]gmail.com
 
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License received along this program for more
-	details (or else see http://www.gnu.org/licenses/).
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-	This file is a part of Mona.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License received along this program for more
+details (or else see http://www.gnu.org/licenses/).
+
+This file is a part of Mona.
 */
 
 #pragma once
@@ -34,7 +36,6 @@ extern "C" {
 #define SCRIPT_FILE(DEFAULT)					(strlen(Script::LuaDebug.short_src)>0 && strcmp(Script::LuaDebug.short_src,"[C]")!=0) ? Script::LuaDebug.short_src : DEFAULT
 #define SCRIPT_LINE(DEFAULT)					Script::LuaDebug.currentline>0 ? Script::LuaDebug.currentline : DEFAULT
 
-#define SCRIPT_LOG_NAME_DISABLED	false
 #define SCRIPT_FATAL(...)		{Script::Log(__pState,Mona::Logger::PRIO_FATAL,__FILE__,__LINE__, ## __VA_ARGS__);}
 #define SCRIPT_CRITIC(...)		{Script::Log(__pState,Mona::Logger::PRIO_CRITIC,__FILE__,__LINE__, ## __VA_ARGS__);}
 #define SCRIPT_ERROR(...)		{Script::Log(__pState,Mona::Logger::PRIO_ERROR,__FILE__,__LINE__, ## __VA_ARGS__);}
@@ -44,22 +45,21 @@ extern "C" {
 #define SCRIPT_DEBUG(...)		{Script::Log(__pState,Mona::Logger::PRIO_DEBUG,__FILE__,__LINE__, ## __VA_ARGS__);}
 #define SCRIPT_TRACE(...)		{Script::Log(__pState,Mona::Logger::PRIO_TRACE,__FILE__,__LINE__, ## __VA_ARGS__);}
 
-#define SCRIPT_CALLBACK(TYPE,LUATYPE,OBJ)						{int __args=1;lua_State* __pState = pState; bool __destructor=false; bool __thisIsConst=false; TYPE* pObj = Script::ToObject<TYPE,LUATYPE>(__pState,__thisIsConst,true);if(!pObj) return 0; TYPE& OBJ = *pObj;int __results=lua_gettop(__pState);
-#define SCRIPT_DESTRUCTOR_CALLBACK(TYPE,LUATYPE,OBJ)			{int __args=1;lua_State* __pState = pState; bool __destructor=true; TYPE* pObj = Script::DestructorCallback<TYPE,LUATYPE>(__pState);if(!pObj) return 0;TYPE& OBJ = *pObj;int __results=lua_gettop(__pState);
+#define SCRIPT_CALLBACK(TYPE,OBJ)								{int __args=1;lua_State* __pState = pState; bool __destructor=false; bool __thisIsConst=false; TYPE* pObj = Script::ToObject<TYPE>(__pState,__thisIsConst,true);if(!pObj) return 0; TYPE& OBJ = *pObj;int __results=lua_gettop(__pState);
+#define SCRIPT_DESTRUCTOR_CALLBACK(TYPE,OBJ)					{int __args=1;lua_State* __pState = pState; bool __destructor=true; TYPE* pObj = Script::DestructorCallback<TYPE>(__pState);if(!pObj) return 0;TYPE& OBJ = *pObj;int __results=lua_gettop(__pState);
 
 #define SCRIPT_CALLBACK_NOTCONST_CHECK							if(__thisIsConst) {SCRIPT_ERROR("const object can't call this method") return 0;}
 
 #define SCRIPT_CALLBACK_RETURN									__results= lua_gettop(__pState)-__results;if(__destructor && __results>0) SCRIPT_WARN("Destructor callback should return 0 arguments") return (__results>=0 ? __results : 0);}
 
 
-
 #define SCRIPT_BEGIN(STATE)										if(lua_State* __pState = STATE) { const char* __error=NULL;
 
-#define SCRIPT_CREATE_PERSISTENT_OBJECT(TYPE,LUATYPE,OBJ)		Script::WritePersistentObject<TYPE,LUATYPE>(__pState,OBJ);lua_pop(__pState,1);
-#define SCRIPT_ADD_DESTRUCTOR(DESTRUCTOR)						Script::AddObjectDestructor(__pState,DESTRUCTOR);
+#define SCRIPT_NEW_OBJECT(TYPE,LUATYPE,OBJ)						Script::NewObject<TYPE,LUATYPE>(__pState,OBJ);
 
-#define SCRIPT_WRITE_PERSISTENT_OBJECT(TYPE,LUATYPE,OBJ)		Script::WritePersistentObject<TYPE,LUATYPE>(__pState,OBJ);
-#define SCRIPT_WRITE_OBJECT(TYPE,LUATYPE,OBJ)					Script::WriteObject<TYPE,LUATYPE>(__pState,OBJ);
+#define SCRIPT_ADD_OBJECT(TYPE,LUATYPE,OBJ)						Script::AddObject<TYPE,LUATYPE>(__pState,OBJ);
+#define SCRIPT_REMOVE_OBJECT(TYPE,LUATYPE,OBJ)					Script::RemoveObject<TYPE,LUATYPE>(__pState,OBJ);
+
 #define SCRIPT_WRITE_DATA(READER,COUNT)							Script::WriteData(__pState,READER,COUNT);
 #define SCRIPT_WRITE_STRING(VALUE)								lua_pushstring(__pState,VALUE);
 #define SCRIPT_WRITE_BINARY(VALUE,SIZE)							lua_pushlstring(__pState,(const char*)VALUE,SIZE);
@@ -71,12 +71,13 @@ extern "C" {
 
 #define SCRIPT_LAST_ERROR										__error
 
-#define SCRIPT_MEMBER_FUNCTION_BEGIN(TYPE,LUATYPE,OBJ,MEMBER)	{ if(lua_getmetatable(__pState,LUA_GLOBALSINDEX)!=0) { lua_getfield(__pState,-1,"__pointers");if(!lua_isnil(__pState,-1)) {lua_replace(__pState,-2);std::string __id;Script::GetObjectID<TYPE,LUATYPE>(OBJ,__id);lua_getfield(__pState,-1,__id.c_str());if(!lua_isnil(__pState,-1)) {lua_getfield(__pState,-1,MEMBER);lua_replace(__pState,-3);}}} else {lua_pushnil(__pState);lua_pushnil(__pState);}if(!lua_isfunction(__pState,-2))lua_pop(__pState,2);else {int __top=lua_gettop(__pState)-1;std::string __name = #TYPE;__name += ".";__name += MEMBER;
-#define SCRIPT_FUNCTION_BEGIN(NAME)								{ bool __env=false; if(lua_getmetatable(__pState,LUA_GLOBALSINDEX)!=0) { lua_getfield(__pState,-1,"//env"); lua_replace(__pState,-2); if(!lua_isnil(__pState,-1)) { lua_getfield(__pState,-1,NAME); __env=true;} } else lua_getglobal(__pState,NAME); if(!lua_isfunction(__pState,-1)) lua_pop(__pState,__env ? 2 : 1); else { if(__env) { lua_pushvalue(__pState,-2); lua_setfenv(__pState,-2); lua_replace(__pState,-2); }	int __top=lua_gettop(__pState); string __name = NAME;
-#define SCRIPT_FUNCTION_CALL_WITHOUT_LOG						Service::StartVolatileObjectsRecording(__pState);if(lua_pcall(__pState,lua_gettop(__pState)-__top,LUA_MULTRET,0)!=0) { __error = lua_tostring(__pState,-1);} else {--__top;int __results=lua_gettop(__pState);int __args=__top;
-#define SCRIPT_FUNCTION_CALL									Service::StartVolatileObjectsRecording(__pState);if(lua_pcall(__pState,lua_gettop(__pState)-__top,LUA_MULTRET,0)!=0) { __error = lua_tostring(__pState,-1);SCRIPT_ERROR(Script::LastError(__pState))} else {--__top;int __results=lua_gettop(__pState);int __args=__top;
+#define SCRIPT_MEMBER_FUNCTION_BEGIN(TYPE,OBJ,MEMBER)			{ lua_getmetatable(__pState,LUA_GLOBALSINDEX); lua_getfield(__pState,-1,"|pointers");if(!lua_isnil(__pState,-1)) {lua_replace(__pState,-2);lua_pushnumber(__pState, reinterpret_cast<unsigned>(&OBJ)); lua_gettable(__pState,-2);if(!lua_isnil(__pState,-1)) {lua_getfield(__pState,-1,MEMBER);lua_replace(__pState,-3);}} if(!lua_isfunction(__pState,-2))lua_pop(__pState,2);else {int __top=lua_gettop(__pState)-1;std::string __name = #TYPE;__name += ".";__name += MEMBER;
+#define SCRIPT_MEMBER_FUNCTION_WITH_OBJHANDLE_BEGIN(TYPE,OBJ,MEMBER,OBJHANDLE)			{ lua_getmetatable(__pState,LUA_GLOBALSINDEX); lua_getfield(__pState,-1,"|pointers");if(!lua_isnil(__pState,-1)) {lua_replace(__pState,-2);lua_pushnumber(__pState, reinterpret_cast<unsigned>(&OBJ)); lua_gettable(__pState,-2); {OBJHANDLE} if(!lua_isnil(__pState,-1)) {lua_getfield(__pState,-1,MEMBER);lua_replace(__pState,-3);}} if(!lua_isfunction(__pState,-2))lua_pop(__pState,2);else {int __top=lua_gettop(__pState)-1;std::string __name = #TYPE;__name += ".";__name += MEMBER;
+#define SCRIPT_FUNCTION_BEGIN(NAME)								{ bool __env=false; lua_getmetatable(__pState,LUA_GLOBALSINDEX); lua_getfield(__pState,-1,"|env"); lua_replace(__pState,-2); if(!lua_isnil(__pState,-1)) { lua_getfield(__pState,-1,NAME); __env=true;} if(!lua_isfunction(__pState,-1)) lua_pop(__pState,__env ? 2 : 1); else { if(__env) { lua_pushvalue(__pState,-2); lua_setfenv(__pState,-2); lua_replace(__pState,-2); }	int __top=lua_gettop(__pState); string __name = NAME;
+#define SCRIPT_FUNCTION_CALL_WITHOUT_LOG						if(lua_pcall(__pState,lua_gettop(__pState)-__top,LUA_MULTRET,0)!=0) { __error = lua_tostring(__pState,-1);} else {--__top;int __results=lua_gettop(__pState);int __args=__top;
+#define SCRIPT_FUNCTION_CALL									if(lua_pcall(__pState,lua_gettop(__pState)-__top,LUA_MULTRET,0)!=0) { __error = lua_tostring(__pState,-1);SCRIPT_ERROR(Script::LastError(__pState))} else {--__top;int __results=lua_gettop(__pState);int __args=__top;
 #define SCRIPT_FUNCTION_NULL_CALL								{ lua_pop(__pState,lua_gettop(__pState)-__top+1);--__top;int __results=lua_gettop(__pState);int __args=__top;
-#define SCRIPT_FUNCTION_END										Service::StopVolatileObjectsRecording(__pState);lua_pop(__pState,__results-__top);__args = __results-__args; if(__args>0) SCRIPT_WARN(__args," arguments not required on '",__name,"' results") else if(__args<0) SCRIPT_WARN(-__args," missing arguments on '",__name,"' results") } } }
+#define SCRIPT_FUNCTION_END										lua_pop(__pState,__results-__top);__args = __results-__args; if(__args>0) SCRIPT_WARN(__args," arguments not required on '",__name,"' results") else if(__args<0) SCRIPT_WARN(-__args," missing arguments on '",__name,"' results") } } }
 
 #define SCRIPT_CAN_READ											(__results-__args)>0
 #define SCRIPT_NEXT_TYPE										(SCRIPT_CAN_READ ? lua_type(__pState,__args+1) : LUA_TNONE)
@@ -97,7 +98,6 @@ class Script {
 public:
 
 	static const char*	LastError(lua_State *pState);
-
 	static void			Test(lua_State *pState);
 
 	static void			WriteData(lua_State *pState,Mona::DataReader& reader,Mona::UInt32 count);
@@ -105,116 +105,158 @@ public:
 
 	static void			CloseState(lua_State* pState);
 	static lua_State*	CreateState();
-	static void			AddObjectDestructor(lua_State* pState,lua_CFunction destructor);
-	
-	template<class Type,class LUAType>
-	static void GetObjectID(const Type& object,std::string& id) {
-		LUAType::ID(id);
-		if(id.empty()) {
-			Mona::String::Format(id, LUAType::Name, (void*)&object);
+;
+
+	template<class CollectorType = Script, class LUAItemType = Script>
+	static bool Collection(lua_State* pState, int index,const char* field, Mona::UInt32 size, CollectorType* pCollector = NULL) {
+		if (!lua_getmetatable(pState, index))
+			lua_pushvalue(pState, index); // if no metatable, write the collection in the index table
+		bool creation(false);
+		// get collection table
+		lua_getfield(pState, -1, field);
+		if (!lua_istable(pState, -1)) {
+			lua_pop(pState, 1);
+			// create
+			lua_newtable(pState);
+			// metatable
+			lua_newtable(pState);
+			lua_pushvalue(pState, -1);
+			lua_pushcfunction(pState, &Script::NewIndexProhibited);
+			lua_setfield(pState, -2, "__newindex");
+			lua_pushcfunction(pState, &Script::Len);
+			lua_setfield(pState, -2, "__len");
+			lua_pushstring(pState, "change metatable of datatable values is prohibited");
+			lua_setfield(pState, -2, "__metatable");
+			lua_setmetatable(pState, -3);
+			
+			lua_pushvalue(pState, -2);
+			lua_setfield(pState, -4, field);
+			creation = true;
+		} else
+			lua_getmetatable(pState, -1);
+
+		lua_pushnumber(pState, size);
+		lua_setfield(pState, -2, "|count");
+		if (pCollector) {
+			lua_pushlightuserdata(pState, pCollector);
+			lua_setfield(pState, -2, "|collector");
+			lua_pushcfunction(pState, &LUAItemType::Item);
+			lua_setfield(pState, -2, "__call");
 		}
+
+		lua_pop(pState, 1); // remove metatable of collection
+		lua_replace(pState, -2); // collection replace first metatable
+		return creation;
+	}
+
+	template<class CollectorType>
+	static CollectorType* GetCollector(lua_State *pState, int index) {
+		CollectorType* pCollector = NULL;
+		if (lua_getmetatable(pState, index)) {
+			lua_getfield(pState, -1, "|collector");
+			pCollector = (CollectorType*)lua_touserdata(pState, -1);
+			lua_pop(pState, 2);
+		}
+		return pCollector;
 	}
 
 	template<class Type,class LUAType>
-	static void ClearPersistentObject(lua_State *pState,const Type& object) {
-		if(lua_getmetatable(pState,LUA_GLOBALSINDEX)==0) {
-			SCRIPT_BEGIN(pState)
-				SCRIPT_WARN("Persistent object clearing impossible without a global table with metatable")
-			SCRIPT_END
-			return;
-		}
-
-		std::string id;
-		GetObjectID<Type,LUAType>(object,id);
-		const char* idc = id.c_str();
-		lua_getfield(pState,-1,idc);
-		if(!lua_isnil(pState,-1)) {
-
-			if(lua_getmetatable(pState,-1)!=0) {
-				// erase __gcThis in metatable
-				lua_getfield(pState,-1,"__gcThis");
-				if(!lua_isnil(pState,-1)) {
-					lua_pushnil(pState);
-					lua_setmetatable(pState,-2);
-				}
-				lua_pop(pState,2);
-			}
-
-			// erase metatable
-			lua_pushnil(pState);
-			lua_setmetatable(pState,-2);
-
-			// erase pointer
-			lua_pushnil(pState);
-			lua_setfield(pState,-3,idc);
-		}
-		lua_pop(pState,2);
-	}
-	
-
-	template<class Type,class LUAType>
-	static void WriteObject(lua_State *pState,Type& object) {
-		WriteObject<Type,LUAType>(pState,(const Type&)object);
-		// add var
-		lua_getmetatable(pState,-1);
-		lua_pushnumber(pState,1);
-		lua_setfield(pState,-2,"__var");
-		lua_pop(pState,1);
-	}
-
-	template<class Type,class LUAType>
-	static void WriteObject(lua_State *pState,const Type& object) {
-		if(lua_getmetatable(pState,LUA_GLOBALSINDEX)==0) {
-			SCRIPT_BEGIN(pState)
-				SCRIPT_ERROR("Object writing impossible without a global table with metatable")
-			SCRIPT_END
-			return;
-		}
+	static void NewObject(lua_State *pState, Type& object) {
 		CreateObject<Type,LUAType>(pState,object);
-		lua_replace(pState,-2);
+
+		// add desctructor
+		lua_newuserdata(pState, sizeof(void*));
+		lua_getmetatable(pState, -2);
+		lua_pushnumber(pState, 1);
+		lua_setfield(pState, -2, "|var"); // never const
+		lua_pushcfunction(pState, &LUAType::Destroy);
+		lua_setfield(pState, -2, "__gc"); // function in metatable
+		lua_pushvalue(pState, -2);
+		lua_setfield(pState, -2, "|gcThis"); // userdata in metatable
+		lua_setmetatable(pState, -2); // metatable of user data, as metatable as object
+		lua_pop(pState, 1);
+
+		LUAType::Init(pState, object);
 	}
 
-	template<class Type,class LUAType>
-	static void WritePersistentObject(lua_State *pState,Type& object) {
-		WritePersistentObject<Type,LUAType>(pState,(const Type&)object);
-		// add __var
+	template<class Type, class LUAType>
+	static void AddObject(lua_State *pState, Type& object) {
+		AddObject<Type, LUAType>(pState, (const Type&)object);
+		// add //var
 		lua_getmetatable(pState,-1);
 		lua_pushnumber(pState,1);
-		lua_setfield(pState,-2,"__var");
+		lua_setfield(pState,-2,"|var");
 		lua_pop(pState,1);
 	}
 
 	template<class Type,class LUAType>
-	static void WritePersistentObject(lua_State *pState,const Type& object) {
-		if(lua_getmetatable(pState,LUA_GLOBALSINDEX)==0) {
-			SCRIPT_BEGIN(pState)
-				SCRIPT_ERROR("Persistent object writing impossible without a global table with metatable")
-			SCRIPT_END
-			return;
+	static void AddObject(lua_State *pState, const Type& object) {
+		lua_getmetatable(pState, LUA_GLOBALSINDEX);
+		lua_getfield(pState, -1,"|objects");
+		if (!lua_istable(pState, -1)) {
+			lua_pop(pState, 1);
+			lua_newtable(pState);
+			lua_pushvalue(pState, -1);
+			lua_setfield(pState, -3, "|objects");
 		}
-		std::string id;
-		GetObjectID<Type,LUAType>(object,id);
-		const char* idc = id.c_str();
-		lua_getfield(pState,-1,idc);
-		if(lua_isnil(pState,-1)) {
+		lua_replace(pState, -2);
+		double ptr(0);
+		ptr = (double)reinterpret_cast<unsigned>(&object);
+		lua_pushnumber(pState, ptr);
+		lua_gettable(pState, -2);
+		bool creation(false);
+		if(!lua_istable(pState,-1)) {
 			lua_pop(pState,1);
-			CreateObject<Type,LUAType>(pState,object);
-			lua_pushvalue(pState,-1);
-			lua_setfield(pState,-3,idc);
+			CreateObject<Type, LUAType>(pState, object);
+			lua_pushnumber(pState, ptr);
+			lua_pushvalue(pState,-2);
+			lua_settable(pState,-4);
+			creation = true;
 		}
-		lua_replace(pState,-2);
-
+		lua_replace(pState, -2);
+		
 		lua_getmetatable(pState,-1);
-		// remove __var
+		// remove //var
 		lua_pushnil(pState);
-		lua_setfield(pState,-2,"__var");
-		// set running
-		lua_pushnumber(pState,1);
-		lua_setfield(pState,-2,"//running");
-		lua_pop(pState,1);
+		lua_setfield(pState,-2,"|var");
+		lua_pop(pState, 1);
+
+		if (creation)
+			LUAType::Init(pState, (Type&)object);
 	}
 
-	template<class Type,class LUAType>
+	template<class Type, class LUAType>
+	static void RemoveObject(lua_State* pState, const Type& object) {
+		ClearObject<Type, LUAType>(pState, object, true);
+		LUAType::Clear(pState, object);
+	}
+
+	template<class Type, class LUAType>
+	static void RemoveObject(lua_State* pState, int index) {
+		if (lua_getmetatable(pState, index)) {
+			// remove this
+			lua_pushnil(pState);
+			lua_setfield(pState, -2, "|this");
+			lua_pop(pState, 1);
+		}
+		lua_pushvalue(pState, index);
+		bool isConst;
+		Type* pObject = ToObject<Type>(pState, isConst);
+		lua_pop(pState, 1);
+		if (pObject) {
+			ClearObject<Type, LUAType>(pState, *pObject, false);
+			LUAType::Clear(pState, *pObject);
+		}
+	}
+
+
+	template<class Type, class LUAType>
+	static void ClearObject(lua_State *pState, const Type& object) {
+		ClearObject<Type, LUAType>(pState, object, true);
+	}
+
+
+	template<class Type>
 	static Type* DestructorCallback(lua_State *pState) {
 		if(lua_gettop(pState)==0 || !lua_isuserdata(pState,1)) {
 			SCRIPT_BEGIN(pState)
@@ -224,10 +266,28 @@ public:
 		}
 
 		bool isConst;
-		return ToObject<Type,LUAType>(pState,isConst,true);
+		return ToObject<Type>(pState,isConst,true);
 	}
 
-	template<class Type,class LUAType>
+	template<class Type>
+	static bool FromObject(lua_State* pState, const Type& object) {
+		lua_getmetatable(pState, LUA_GLOBALSINDEX);
+		lua_getfield(pState, -1,"|pointers");
+		lua_replace(pState, -2);
+		if (!lua_istable(pState, -1)) {
+			lua_pop(pState, 1);
+			return false;
+		}
+		lua_pushnumber(pState, (double)reinterpret_cast<unsigned>(&object));
+		lua_gettable(pState, -2);
+		if (!lua_istable(pState, -1)) {
+			lua_pop(pState, 1);
+			return false;
+		}
+		return true;
+	}
+
+	template<class Type>
 	static Type* ToObject(lua_State *pState,bool& isConst,bool callback=false) {
 		if(lua_gettop(pState)==0) {
 			if(!callback) return NULL;
@@ -245,49 +305,21 @@ public:
 			return NULL;
 		}
 
-		// __type is correct type?
-		lua_getfield(pState,-1,"__type");
-		if(!lua_isstring(pState,-1) || strcmp(lua_tostring(pState,-1),LUAType::Name)!=0) {
+		// already deleted?
+		lua_getfield(pState,-1,"|this");
+		Type* pThis = (Type*)lua_touserdata(pState, -1);
+		if (!pThis) {
 			lua_pop(pState,2);
 			if(!callback) return NULL;
 			SCRIPT_BEGIN(pState)
-				SCRIPT_ERROR("bad cast of 'this' argument, call method with ':' colon operator")
+				SCRIPT_ERROR("Object deleted")
 			SCRIPT_END
 			return NULL;
-		}
-		lua_pop(pState,1);
-
-		// __this is user data?
-		lua_getfield(pState,-1,"__this");
-		if(!lua_islightuserdata(pState,-1)) {
-			lua_pop(pState,2);
-			if(!callback) return NULL;
-			SCRIPT_BEGIN(pState)
-				SCRIPT_ERROR("bad 'this' argument (bad type)")
-			SCRIPT_END
-			return NULL;
-		}
-
-		Type* pThis = (Type*) lua_touserdata(pState, -1);
-		lua_pop(pState,1);
-
-		// persistent checking to avoid to use a Mona object deleted!
-		lua_getfield(pState,-1,"//running");
-		if(!lua_isnil(pState,-1) && lua_getmetatable(pState,LUA_GLOBALSINDEX)!=0) {
-			std::string id;
-			GetObjectID<Type,LUAType>(*pThis,id);
-			const char* idc = id.c_str();
-			lua_getfield(pState,-1,idc);
-			if(lua_isnil(pState,-1)) {
-				lua_pop(pState,4);
-				return NULL;
-			}
-			lua_pop(pState,2);
 		}
 		lua_pop(pState,1);
 
 		// isConst?
-		lua_getfield(pState,-1,"__var");
+		lua_getfield(pState,-1,"|var");
 		if(lua_isnil(pState,-1))
 			isConst=true;
 
@@ -299,17 +331,28 @@ public:
 
 	template <typename ...Args>
 	static void Log(lua_State* pState, Mona::Logger::Priority priority, const char* file, long line, Args&&... args) {
-		if (lua_getstack(pState, 0, &Script::LuaDebug) == 1)
-			lua_getinfo(pState, "n", &Script::LuaDebug);
-		if (lua_getstack(pState, 1, &Script::LuaDebug) == 1)
-			lua_getinfo(pState, "Sl", &Script::LuaDebug);
-		if (!SCRIPT_LOG_NAME_DISABLED && Script::LuaDebug.name) {
+		if (Mona::Logs::GetLevel() < priority) {
+			_NextLogCallerDisabled = false;
+			return;
+		}
+		// I stop remonting level stack at the sub level where I have gotten the name
+		int level = 0;
+		bool nameGotten(false);
+		while (lua_getstack(pState, level++, &Script::LuaDebug) == 1) {
+			lua_getinfo(pState, Script::LuaDebug.name ? "Sl" : "nSl", &Script::LuaDebug);
+			if (nameGotten)
+				break;
+			if (Script::LuaDebug.name)
+				nameGotten = true;
+		}
+		if (!_NextLogCallerDisabled && Script::LuaDebug.name) {
 			if (Script::LuaDebug.namewhat)
 				Mona::Logs::Log(priority, SCRIPT_FILE(file), SCRIPT_LINE(line), "(", Script::LuaDebug.namewhat, " '", Script::LuaDebug.name, "') ", args ...);
 			else
 				Mona::Logs::Log(priority, SCRIPT_FILE(file), SCRIPT_LINE(line), "(", Script::LuaDebug.name, ") ", args ...);
 		} else
 			Mona::Logs::Log(priority, SCRIPT_FILE(file), SCRIPT_LINE(line), args ...);
+		_NextLogCallerDisabled = false;
 		Script::LuaDebug.name = Script::LuaDebug.namewhat = NULL;
 		if (Script::LuaDebug.short_src)
 			Script::LuaDebug.short_src[0] = '\0';
@@ -319,14 +362,19 @@ public:
 	static lua_Debug	LuaDebug;
 
 private:
-	static const char* ToString(lua_State* pState,std::string& out);
+	static const char* ToPrint(lua_State* pState,std::string& out);
 	static void	ReadData(lua_State *pState,Mona::DataWriter& writer,Mona::UInt32 count,std::map<Mona::UInt64,Mona::UInt32>& references);
 	static void WriteData(lua_State *pState,Mona::DataReader::Type type,Mona::DataReader& reader);
 
 
+	static int NewIndexProhibited(lua_State *pState) {
+		// prohibited all users additions!
+		return 0;
+	}
+
 	template<class Type,class LUAType>
-	static void CreateObject(lua_State *pState,const Type& object) {
-		// here glabal metatable is on the top
+	static void CreateObject(lua_State *pState, const Type& object) {
+		lua_getmetatable(pState, LUA_GLOBALSINDEX);
 
 		// Create table to represent our object
 		lua_newtable(pState); 
@@ -334,17 +382,25 @@ private:
 		// metatable
 		lua_newtable(pState); 
 	
-		// __this
+		// //this
 		lua_pushlightuserdata(pState,(void*)&object);
-		lua_setfield(pState,-2,"__this");
+		lua_setfield(pState,-2,"|this");
 
-		// type
-		lua_pushstring(pState,LUAType::Name);
-		lua_setfield(pState, -2, "__type");
-
-		// call
-		lua_pushcfunction(pState,&Script::Call<LUAType>);
+		// call => override operator ( )
+		lua_pushcfunction(pState, &Script::Call<LUAType>);
 		lua_setfield(pState,-2,"__call");
+
+		// len => override operator #
+		lua_pushcfunction(pState, &Script::Len);
+		lua_setfield(pState, -2, "__len");
+
+		// pairs => override operator pairs
+		lua_pushcfunction(pState, &Script::Pairs);
+		lua_setfield(pState, -2, "__pairs");
+
+		// ipairs => override operator ipairs
+		lua_pushcfunction(pState, &Script::Pairs);
+		lua_setfield(pState, -2, "__ipairs");
 
 		// get
 		lua_pushcfunction(pState,&LUAType::Get);
@@ -360,8 +416,8 @@ private:
 
 		lua_setmetatable(pState,-2);
 
-		// set in __pointers of global metatable
-		lua_getfield(pState,-2,"__pointers");
+		// record the pointer
+		lua_getfield(pState,-2,"|pointers");
 		if(lua_isnil(pState,-1)) {
 			lua_pop(pState,1);
 			lua_newtable(pState);
@@ -370,25 +426,65 @@ private:
 			lua_pushstring(pState,"v");
 			lua_setfield(pState,-2,"__mode");
 			lua_setmetatable(pState,-2);
-			lua_setfield(pState,-4,"__pointers");
+			lua_setfield(pState,-4,"|pointers");
 		}
-		
-		// record the pointer
-		std::string id;
-		GetObjectID<Type,LUAType>(object,id);
-		lua_pushvalue(pState,-2);
-		lua_setfield(pState,-2,id.c_str());
-		lua_pop(pState,1);
+		lua_pushnumber(pState, (double)reinterpret_cast<unsigned>(&object));
+		lua_pushvalue(pState, -3);
+		lua_settable(pState, -3);
+		lua_pop(pState,1); // remove |pointers
+		lua_replace(pState, -2); // remove global metatable
+	}
+
+	template<class Type, class LUAType>
+	static void ClearObject(lua_State *pState, const Type& object,bool safe) {
+		lua_getmetatable(pState, LUA_GLOBALSINDEX);
+		lua_getfield(pState, -1, "|objects");
+		if (!lua_istable(pState, -1)) {
+			lua_pop(pState, 2);
+			return;
+		}
+		lua_replace(pState, -2);
+
+		if (safe) {
+			double ptr = (double)reinterpret_cast<unsigned>(&object);
+			lua_pushnumber(pState, ptr);
+			lua_gettable(pState, -2);
+			if (lua_istable(pState, -1)) {
+				// remove this
+				if (lua_getmetatable(pState, -1)) {
+					lua_pushnil(pState);
+					lua_setfield(pState, -2, "|this");
+					lua_pop(pState, 1);
+				}
+
+				// erase id entry object
+				lua_pushnumber(pState, ptr);
+				lua_pushnil(pState);
+				lua_settable(pState, -4);
+			}
+			lua_pop(pState, 1);
+		} else {
+			lua_pushnumber(pState, (double)reinterpret_cast<unsigned>(&object));
+			lua_pushnil(pState);
+			lua_settable(pState, -3);
+		}
+
+		lua_pop(pState, 1);
 	}
 
 	template<class LUAType>
 	static int Call(lua_State* pState) {
-		lua_pushstring(pState,"(");
-		lua_insert(pState,2);
+		lua_pushstring(pState, "(");
+		lua_insert(pState, 2);
 		int result = LUAType::Get(pState);
-		lua_remove(pState,2);
+		lua_remove(pState, 2);
 		return result;
 	}
+
+	static int Len(lua_State* pState);
+	static int Pairs(lua_State* pState);
+
+	static int Item(lua_State *pState) { return 0; }
 
 	static int Error(lua_State* pState);
 	static int Warn(lua_State* pState);
@@ -397,6 +493,8 @@ private:
 	static int Debug(lua_State* pState);
 	static int Trace(lua_State* pState);
 
-	static int			Panic(lua_State *pState);
-	static int			EnvironmentIndex(lua_State *pState);
+	static int	Panic(lua_State *pState);
+
+
+	static bool _NextLogCallerDisabled;
 };

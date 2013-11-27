@@ -1,5 +1,7 @@
 /*
-Copyright 2013 Mona - mathieu.poux[a]gmail.com
+Copyright 2014 Mona
+mathieu.poux[a]gmail.com
+jammetthomas[a]gmail.com
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -19,9 +21,9 @@ This file is a part of Mona.
 
 
 #include "Mona/Mona.h"
+#include "Mona/Exceptions.h"
 #include <memory>
 #include <mutex>
-
 
 
 namespace Mona {
@@ -45,12 +47,17 @@ public:
 		return *_pExpired ? NULL : _pOwner;
 	}
 
-	bool shareThis(Exception& ex, Expirable& other) {
-		ASSERT_RETURN(other._isOwner==false,false);
+	ObjectType* unsafeThis() {
+		if (!_pOwner)
+			return NULL;
+		return *_pExpired ? NULL : _pOwner;
+	}
+
+	void shareThis(Expirable& other) {
+		FATAL_ASSERT(other._isOwner == false)
 		other._pOwner = _pOwner;
 		other._pMutex = _pMutex;
 		other._pExpired = _pExpired;
-		return true;
 	}
 	
 protected:

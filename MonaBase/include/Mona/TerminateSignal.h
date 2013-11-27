@@ -1,5 +1,7 @@
 /*
-Copyright 2013 Mona - mathieu.poux[a]gmail.com
+Copyright 2014 Mona
+mathieu.poux[a]gmail.com
+jammetthomas[a]gmail.com
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -38,7 +40,7 @@ protected:
 #else
 	sigset_t				_signalSet;
 #endif
-	};
+};
 
 
 

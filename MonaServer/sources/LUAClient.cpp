@@ -1,41 +1,78 @@
-/* 
-	Copyright 2013 Mona - mathieu.poux[a]gmail.com
- 
-	This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+/*
+Copyright 2014 Mona
+mathieu.poux[a]gmail.com
+jammetthomas[a]gmail.com
 
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License received along this program for more
-	details (or else see http://www.gnu.org/licenses/).
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-	This file is a part of Mona.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License received along this program for more
+details (or else see http://www.gnu.org/licenses/).
+
+This file is a part of Mona.
 */
 
 #include "LUAClient.h"
+#include "Mona/Invoker.h"
 #include "Mona/Util.h"
 #include "LUAWriter.h"
+#include "LUAQualityOfService.h"
 
 
 using namespace std;
 using namespace Mona;
 
-const char*		LUAClient::Name="Mona::Client";
+
+void LUAClient::GetKey(lua_State *pState, const Client& client) {
+	string key;
+	if (client.getString("name", key))
+		lua_pushstring(pState, key.c_str());
+	else
+		lua_pushstring(pState, Util::FormatHex(client.id, ID_SIZE, key).c_str());
+}
 
 void LUAClient::Clear(lua_State* pState,const Client& client){
-	Script::ClearPersistentObject<Writer,LUAWriter>(pState,((Client&)client).writer());
-	Script::ClearPersistentObject<Client,LUAClient>(pState,client);
+	Script::ClearObject<Writer, LUAWriter>(pState, ((Client&)client).writer());
+	Script::ClearObject<QualityOfService, LUAQualityOfService>(pState, ((Client&)client).writer().qos());
+}
+
+int LUAClient::Item(lua_State *pState) {
+	// 1 => clients table
+	// 2 => parameter
+	if (!lua_isstring(pState, 2))
+		return 0;
+	Invoker* pInvoker = Script::GetCollector<Invoker>(pState,1);
+	if (!pInvoker)
+		return 0;
+	Client* pClient(NULL);
+	UInt32 size = lua_objlen(pState, 2);
+	const char* id = lua_tostring(pState, 2);
+	if (size == ID_SIZE)
+		pClient = pInvoker->clients(id);
+	else if (size == (ID_SIZE * 2))
+		pClient = pInvoker->clients(Util::UnformatHex((UInt8*)id, size));
+	if (!pClient) {
+		string name(id, size);
+		pClient = pInvoker->clients(name); // try by name!
+	}
+	SCRIPT_BEGIN(pState)
+		if (pClient)
+			SCRIPT_ADD_OBJECT(Client, LUAClient,*pClient)
+	SCRIPT_END
+	return pClient ? 1 : 0;
 }
 
 int LUAClient::Get(lua_State *pState) {
-	SCRIPT_CALLBACK(Client,LUAClient,client)
+	SCRIPT_CALLBACK(Client,client)
 		string name = SCRIPT_READ_STRING("");
 		if(name=="writer") {
 			SCRIPT_CALLBACK_NOTCONST_CHECK
-			SCRIPT_WRITE_PERSISTENT_OBJECT(Writer,LUAWriter,client.writer())
+			SCRIPT_ADD_OBJECT(Writer,LUAWriter,client.writer())
 		} else if(name=="id") {
 			string hex;
 			SCRIPT_WRITE_STRING(Util::FormatHex(client.id, ID_SIZE, hex).c_str())
@@ -47,6 +84,17 @@ int LUAClient::Get(lua_State *pState) {
 			SCRIPT_WRITE_STRING(client.address.toString().c_str())
 		} else if(name=="ping") {
 			SCRIPT_WRITE_NUMBER(client.ping)
+		} else if (name == "parameters") {
+			if (Script::Collection(pState, -1, "parameters", client.count())) {
+				for (auto it : client) {
+					lua_pushstring(pState, it.first.c_str());
+					if (String::ICompare(it.second, "false") == 0 || String::ICompare(it.second, "nil") == 0)
+						lua_pushboolean(pState, 0);
+					else
+						lua_pushlstring(pState, it.second.c_str(), it.second.size());
+					lua_rawset(pState, -3); // rawset cause NewIndexProhibited
+				}
+			}
 		} else {
 			string value;
 			if(client.getString(name,value))
@@ -56,7 +104,7 @@ int LUAClient::Get(lua_State *pState) {
 }
 
 int LUAClient::Set(lua_State *pState) {
-	SCRIPT_CALLBACK(Client,LUAClient,client)
+	SCRIPT_CALLBACK(Client,client)
 		string name = SCRIPT_READ_STRING("");
 		if(name=="name") {
 			const char* newName = lua_tostring(pState,-1);

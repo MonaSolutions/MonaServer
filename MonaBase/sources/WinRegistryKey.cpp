@@ -1,5 +1,7 @@
 /*
-Copyright 2013 Mona - mathieu.poux[a]gmail.com
+Copyright 2014 Mona
+mathieu.poux[a]gmail.com
+jammetthomas[a]gmail.com
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -14,6 +16,7 @@ details (or else see http://www.gnu.org/licenses/).
 
 This file is a part of Mona.
 */
+
 
 #include "Mona/WinRegistryKey.h"
 #include <map>
