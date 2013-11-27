@@ -28,7 +28,7 @@ namespace Mona {
 
 class DataWriterNull;
 
-class DataWriter : virtual Object {
+class DataWriter : public virtual NullableObject {
 public:
 
 	virtual void beginObject(const std::string& type="",bool external=false)=0;
@@ -68,7 +68,7 @@ public:
 
     static DataWriterNull Null;
 protected:
-	DataWriter():writer(stream),_lastReference(0){}
+	DataWriter(): writer(stream),_lastReference(0){}
 
 	UInt32	_lastReference;
 };
@@ -100,7 +100,7 @@ inline void	DataWriter::clear() {
 }
 
 
-class DataWriterNull : public DataWriter, virtual NullableObject {
+class DataWriterNull : public DataWriter {
 public:
 	DataWriterNull() : NullableObject(true) { stream.setstate(std::ios_base::eofbit); }
 

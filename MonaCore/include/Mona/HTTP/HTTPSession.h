@@ -26,6 +26,7 @@ This file is a part of Mona.
 
 namespace Mona {
 
+class HTTPPacketReader;
 
 class HTTPSession :  public WSSession {
 public:
@@ -40,8 +41,29 @@ private:
 	void			packetHandler(MemoryReader& packet);
 	void			endReception() { if (_isWS) WSSession::endReception(); }
 
+	/// \brief Send the HTTP error response
+	void			sendError(Exception& ex);
+	
+	/// \brief Send the file
 	void			processGet(Exception& ex, const std::string& fileName);
 
+	/// \brief Parse SOAP request, execute lua function and send SOAP response
+	void			processSOAPfunction(Exception& ex, MemoryReader& packet);
+
+	/// \brief Send the Option response
+	/// Note: It is called when processMove is used before a SOAP request
+	void			processOptions(Exception& ex, const std::string& methods);
+
+	/// \brief Send the Move response if the file requested is a directory
+	void			processMove(const std::string& filePath);
+
+	/// \brief Send Not Modified
+	void			processNotModified();
+
+	std::string			_cmd;
+	std::string			_file;
+	std::unique_ptr<HTTPPacketReader> _request;
+	MapParameters	_headers;
 	HTTPWriter		_writer;
 	bool			_isWS;
 };

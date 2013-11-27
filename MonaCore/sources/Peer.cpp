@@ -247,9 +247,9 @@ void Peer::onDisconnection() {
 	}
 }
 
-void Peer::onMessage(Exception& ex, const string& name,DataReader& reader) {
+void Peer::onMessage(Exception& ex, const string& name,DataReader& reader,Mona::DataWriter& writer) {
 	if(connected)
-		_handler.onMessage(ex, *this, name, reader);
+		_handler.onMessage(ex, *this, name, reader, writer);
 	else
 		ERROR("RPC client before connection")
 }
@@ -316,9 +316,10 @@ void Peer::onUnsubscribe(const Listener& listener) {
 	WARN("Unsubscription client before connection")
 }
 
-bool Peer::onRead(Exception& ex, string& filePath, MapParameters& parameters) {
+bool Peer::onRead(Exception& ex, string& filePath,DataReader& parameters) {
+
 	if(connected)
-		return _handler.onRead(ex,*this, filePath, parameters);
+		return _handler.onRead(ex, *this, filePath,parameters);
 	ERROR("Resource '",filePath,"' access by a not connected client")
 	return false;
 }

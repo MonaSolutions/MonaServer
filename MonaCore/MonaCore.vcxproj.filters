@@ -199,6 +199,18 @@
     <ClInclude Include="include\Mona\Server.h" />
     <ClInclude Include="include\Mona\ServerParams.h" />
     <ClInclude Include="include\Mona\Writer.h" />
+    <ClInclude Include="include\Mona\XMLReader.h">
+      <Filter>Serializers</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\XMLWriter.h">
+      <Filter>Serializers</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\SOAPReader.h">
+      <Filter>Serializers</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\SOAPWriter.h">
+      <Filter>Serializers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="sources\Protocols.cpp">
@@ -320,5 +332,17 @@
     <ClCompile Include="sources\SDP.cpp" />
     <ClCompile Include="sources\Server.cpp" />
     <ClCompile Include="sources\Writer.cpp" />
+    <ClCompile Include="sources\XMLReader.cpp">
+      <Filter>Serializers</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\XMLWriter.cpp">
+      <Filter>Serializers</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\SOAPWriter.cpp">
+      <Filter>Serializers</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\SOAPReader.cpp">
+      <Filter>Serializers</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

@@ -111,6 +111,7 @@ void HTTP::MIMEType(const string& extension, string& type) {
 void HTTP::ReadHeader(HTTPPacketReader& reader, MapParameters& headers, string& cmd, string& path, string& file, MapParameters& properties) {
 	HTTPPacketReader::Type type;
 	bool first = true;
+	string tmp;
 	Exception ex;
 	while ((type = reader.followingType()) != HTTPPacketReader::END) {
 		if (type == HTTPPacketReader::STRING) {
@@ -123,6 +124,11 @@ void HTTP::ReadHeader(HTTPPacketReader& reader, MapParameters& headers, string& 
 				if (fields.size() > 0) {
 					cmd = fields[0];
 					if (fields.size() > 1 && Util::UnpackUrl(ex,fields[1], path, file, properties)) {
+
+						tmp.assign(fields[1]);
+						if (file.empty() && !tmp.empty() && tmp[tmp.size()-1]=='/')
+							file.assign("index.html");
+
 						if (fields.size() > 2) {
 							unsigned found = fields[2].find_last_of("/");
 							Exception ex;
@@ -145,17 +151,26 @@ void HTTP::ReadHeader(HTTPPacketReader& reader, MapParameters& headers, string& 
 
 		string name, value;
 		while ((type = reader.readItem(name)) != HTTPPacketReader::END) {
-			if (type != HTTPPacketReader::STRING) {
+			
+			switch (type) {
+				
+			case HTTPPacketReader::STRING:
+				if (String::ToLower(name).compare("referer") == 0) {
+					string referer, pathReference;
+					Util::UnpackUrl(ex, reader.readString(referer), pathReference, properties);
+
+					if (ex)
+						WARN("HTTPHeader malformed, ", ex.error())
+				}
+				headers.setString(name, reader.readString(value));
+				break;
+			case HTTPPacketReader::NUMBER:
+				headers.setNumber(String::ToLower(name), reader.readNumber());
+				break;
+			default:
 				reader.next();
 				continue;
 			}
-			if (String::ToLower(name).compare("referer") == 0) {
-				string referer;
-				Util::UnpackUrl(ex,reader.readString(referer), path, properties);
-				if (ex)
-					WARN("HTTPHeader malformed, ", ex.error())
-			}
-			headers.setString(name, reader.readString(value));
 		}
 	}
 }

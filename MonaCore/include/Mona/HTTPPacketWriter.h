@@ -39,7 +39,7 @@ public:
 	void endArray() {}
 
 	void writeDate(const Time& date);
-	void writeNumber(double value) { std::string text; writeString(String::Format(text)); }
+	void writeNumber(double value) { std::string text; writeString(String::Format(text, value)); }
 	void writeString(const std::string& value);
 	void writeBoolean(bool value);
 	void writeNull() { writer.writeRaw("null\r\n", 6); }

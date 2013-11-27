@@ -443,7 +443,7 @@ void MonaServer::onDisconnection(const Client& client) {
 	delete pExpirableService;
 }
 
-void MonaServer::onMessage(Exception& ex, Client& client,const string& name,DataReader& reader) {
+void MonaServer::onMessage(Exception& ex, Client& client,const string& name,DataReader& reader, DataWriter& writer) {
 	string error("Method '" + name + "' not found");
 	SCRIPT_BEGIN(openService(client))
 		SCRIPT_MEMBER_FUNCTION_BEGIN(Client,client,name.c_str())
@@ -451,7 +451,10 @@ void MonaServer::onMessage(Exception& ex, Client& client,const string& name,Data
 			error.clear();
 			SCRIPT_FUNCTION_CALL_WITHOUT_LOG
 			if(SCRIPT_CAN_READ) {
-				Script::ReadData(_pState,client.writer().writeMessage(),1);
+				if (writer)
+					Script::ReadData(_pState,writer,1);
+				else
+					Script::ReadData(_pState,client.writer().writeMessage(),1);
 				++__args;
 			}
 		SCRIPT_FUNCTION_END

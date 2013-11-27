@@ -186,7 +186,7 @@ private:
 	template<typename Type>
 	Type& getOption(Exception& ex, int level, int option, Type& value) {
 		ASSERT_RETURN(_initialized == true, value)
-            int length(sizeof(value));
+            NET_SOCKLEN length(sizeof(value));
 		if (::getsockopt(_sockfd, level, option, reinterpret_cast<char*>(&value), &length) == -1)
 			Net::SetError(ex);
 		return value;
@@ -196,7 +196,7 @@ private:
 	template<typename Type>
 	void setOption(Exception& ex, int level, int option, const Type& value) {
 		ASSERT(_initialized == true)
-			int length(sizeof(value));
+            NET_SOCKLEN length(sizeof(value));
 		if (::setsockopt(_sockfd, level, option, reinterpret_cast<const char*>(&value), length) == -1)
 			Net::SetError(ex);
 	}

@@ -35,8 +35,8 @@ public:
 	virtual void			onHandshake(const std::string& protocol,const SocketAddress& address,const std::string& path,const MapParameters& properties,UInt32 attempts,std::set<SocketAddress>& addresses){}
 	virtual void			onConnection(Exception& ex,Client& client,DataReader& parameters,DataWriter& response){} // ERROR_NOTFOUND, ERROR_APPLICATION
 	virtual void			onDisconnection(const Client& client){}
-	virtual void			onMessage(Exception& ex, Client& client,const std::string& name,DataReader& reader){} // ERROR_NOTFOUND, ERROR_APPLICATION
-	virtual bool			onRead(Exception& ex, Client& client, std::string& filePath, MapParameters& parameters) { return true; }  // ERROR_APPLICATION
+	virtual void			onMessage(Exception& ex, Client& client,const std::string& name,DataReader& reader,Mona::DataWriter& writer){} // ERROR_NOTFOUND, ERROR_APPLICATION
+	virtual bool			onRead(Exception& ex, Client& client,std::string& filePath,DataReader& parameters){return true;}  // ERROR_APPLICATION
 
 	virtual void			onJoinGroup(Client& client,Group& group){}
 	virtual void			onUnjoinGroup(Client& client,Group& group){}
