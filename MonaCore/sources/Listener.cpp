@@ -29,7 +29,7 @@ namespace Mona {
 Listener::Listener(Publication& publication,Client& client,Writer& writer,bool unbuffered) : _droppedFrames(0),_unbuffered(unbuffered),
 	_writer(writer),publication(publication),_firstKeyFrame(false),receiveAudio(true),receiveVideo(true),client(client),
 	_pAudioWriter(NULL),_pVideoWriter(NULL),_pDataWriter(NULL),_publicationReader((const UInt8*)publication.name().c_str(),publication.name().size()),
-	_time(0),_deltaTime(0),_addingTime(0),_bufferTime(0) {
+	_time(0),_deltaTime(0),_addingTime(0),_bufferTime(0),_firstAudio(true),_firstVideo(true),_firstTime(true) {
 }
 
 Listener::~Listener() {
@@ -80,8 +80,9 @@ void Listener::init(Writer** ppWriter,Writer::MediaType type) {
 }
 
 UInt32 Listener::computeTime(UInt32 time) {
-	if(_time==0) { // has been initialized, compute deltatime
+	if(_firstTime) { // has been initialized, compute deltatime
 		_deltaTime = time;
+		_firstTime = false;
 		DEBUG("Deltatime assignment, ",_deltaTime);
 	} else if(time==0)
 		time=(UInt32)(_ts.elapsed()/1000);
@@ -91,8 +92,6 @@ UInt32 Listener::computeTime(UInt32 time) {
 		_deltaTime = time;
 	}
 	_time = time-_deltaTime+_addingTime;
-	if(_time==0)
-		_time=1;
 	TRACE("Time ",_time)
 	return (_time = time);
 }
@@ -104,6 +103,7 @@ void Listener::startPublishing() {
 }
 
 void Listener::stopPublishing() {
+	_firstTime = 0;
 	_deltaTime=0;
 	_addingTime = _time;
 	_droppedFrames = 0;
@@ -146,6 +146,7 @@ void Listener::pushDataPacket(DataReader& packet) {
 void Listener::pushVideoPacket(MemoryReader& packet,UInt32 time) {
 	if(!receiveVideo) {
 		_firstKeyFrame=false;
+		_firstVideo=true;
 		return;
 	}
 	if(!_pVideoWriter)
@@ -160,18 +161,54 @@ void Listener::pushVideoPacket(MemoryReader& packet,UInt32 time) {
 		++_droppedFrames;
 		return;
 	}
-	if(!_pVideoWriter->writeMedia(Writer::VIDEO,computeTime(time),packet))
+
+	time = computeTime(time);
+
+	if(_firstVideo) {
+		_firstVideo=false;
+		UInt32 size = publication.videoCodecBuffer().size();
+		if(size>0) {
+			MemoryReader videoCodecPacket(&publication.videoCodecBuffer()[0],size);
+			// Reliable way for video codec packet!
+			bool reliable = _pVideoWriter->reliable;
+			_pVideoWriter->reliable = true;
+			if (!_pVideoWriter->writeMedia(Writer::VIDEO, time, videoCodecPacket))
+				init();
+			_pVideoWriter->reliable = reliable;
+		}
+	}
+
+
+	if(!_pVideoWriter->writeMedia(Writer::VIDEO,time,packet))
 		init();
 }
 
 
 void Listener::pushAudioPacket(MemoryReader& packet,UInt32 time) {
-	if(!receiveAudio)
+	if(!receiveAudio) {
+		_firstAudio=true;
 		return;
+	}
 	if(!_pAudioWriter)
 		init();
 
-	if(!_pAudioWriter->writeMedia(Writer::AUDIO,computeTime(time),packet))
+	time = computeTime(time);
+
+	if(_firstAudio) {
+		_firstAudio=false;
+		UInt32 size = publication.audioCodecBuffer().size();
+		if(size>0) {
+			MemoryReader audioCodecPacket(&publication.audioCodecBuffer()[0],size);
+			// Reliable way for audio codec packet!
+			bool reliable = _pAudioWriter->reliable;
+			_pAudioWriter->reliable = true;
+			if(!_pAudioWriter->writeMedia(Writer::AUDIO,time,audioCodecPacket))
+				init();
+			_pAudioWriter->reliable = reliable;
+		}
+	}
+
+	if(!_pAudioWriter->writeMedia(Writer::AUDIO,time,packet))
 		init();
 }
 

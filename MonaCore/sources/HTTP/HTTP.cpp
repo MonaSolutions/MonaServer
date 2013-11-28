@@ -26,7 +26,7 @@ using namespace std;
 
 namespace Mona {
 
-static map<UInt16, string> CodeMessages({
+static map<UInt16, const char*> CodeMessages({
 	{ 100, HTTP_CODE_100 },
 	{ 101, HTTP_CODE_101 },
 	{ 102, HTTP_CODE_102 },
@@ -157,10 +157,7 @@ void HTTP::ReadHeader(HTTPPacketReader& reader, MapParameters& headers, string& 
 			case HTTPPacketReader::STRING:
 				if (String::ToLower(name).compare("referer") == 0) {
 					string referer, pathReference;
-					Util::UnpackUrl(ex, reader.readString(referer), pathReference, properties);
-
-					if (ex)
-						WARN("HTTPHeader malformed, ", ex.error())
+					EXCEPTION_TO_LOG(Util::UnpackUrl(ex, reader.readString(referer), pathReference, properties), "HTTPHeader malformed")
 				}
 				headers.setString(name, reader.readString(value));
 				break;

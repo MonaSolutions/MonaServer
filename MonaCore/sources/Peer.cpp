@@ -57,9 +57,7 @@ Group& Peer::joinGroup(const UInt8* id,Writer* pWriter) {
 	// create group if need
 	Entities<Group>::Map::iterator it = _handler._groups.lower_bound(id);
 	Group* pGroup = NULL;
-	if(it==_handler._groups.end() || it->first!=id) {
-		if(it!=_handler._groups.begin())
-			--it;
+	if(it==_handler._groups.end() || memcmp(it->first,id,ID_SIZE)!=0) {
 		pGroup = new Group(id);
 		_handler._groups.insert(it,pair<const UInt8*,Group*>(pGroup->id,pGroup));
 	} else

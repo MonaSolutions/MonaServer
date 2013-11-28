@@ -26,7 +26,7 @@ using namespace std;
 
 namespace Mona {
 
-Publication::Publication(const string& name):_name(name),_droppedFrames(0),_firstKeyFrame(false),listeners(_listeners),_pPublisher(NULL) {
+Publication::Publication(const string& name):_audioCodecBuffer(0),_videoCodecBuffer(0),_name(name),_droppedFrames(0),_firstKeyFrame(false),listeners(_listeners),_pPublisher(NULL) {
 	DEBUG("New publication ",_name);
 }
 
@@ -115,6 +115,8 @@ void Publication::stop(Peer& peer) {
 	_videoQOS.reset();
 	_audioQOS.reset();
 	_dataQOS.reset();
+	_videoCodecBuffer.resize(0,false);
+	_audioCodecBuffer.resize(0,false);
 	_droppedFrames=0;
 	_pPublisher=NULL;
 	return;
@@ -153,6 +155,13 @@ void Publication::pushAudio(MemoryReader& packet,UInt32 time,UInt32 numberLostFr
 	if(numberLostFragments>0)
 		INFO(numberLostFragments," audio fragments lost on publication ",_name);
 	_audioQOS.add(_pPublisher->ping,packet.available()+4,packet.fragments,numberLostFragments); // 4 for time encoded
+
+	if ((*packet.current()>>4)==0x0A && packet.available() && packet.current()[1] == 0) {
+		// AAC codec && settings codec informations
+		_audioCodecBuffer.resize(packet.available());
+		memcpy(&_audioCodecBuffer[0],packet.current(),packet.available());
+	}
+
 	map<Client*,Listener*>::const_iterator it;
 	for(it=_listeners.begin();it!=_listeners.end();++it) {
 		it->second->pushAudioPacket(packet,time);
@@ -167,18 +176,23 @@ void Publication::pushVideo(MemoryReader& packet,UInt32 time,UInt32 numberLostFr
 		return;
 	}
 	
-
 	// if some lost packet, it can be a keyframe, to avoid break video, we must wait next key frame
 	if(numberLostFragments>0)
 		_firstKeyFrame=false;
 
-	// is keyframe?
-	if(((*packet.current())&0xF0) == 0x10)
-		_firstKeyFrame = true;
-
 	_videoQOS.add(_pPublisher->ping,packet.available()+4,packet.fragments,numberLostFragments); // 4 for time encoded
 	if(numberLostFragments>0)
 		INFO(numberLostFragments," video fragments lost on publication ",_name);
+
+	// is keyframe?
+	if(((*packet.current())&0xF0) == 0x10) {
+		_firstKeyFrame = true;
+		if (*packet.current()==0x17 && packet.available() && packet.current()[1] == 0) {
+			// h264 codec && settings codec informations
+			_videoCodecBuffer.resize(packet.available());
+			memcpy(&_videoCodecBuffer[0],packet.current(),packet.available());
+		}
+	}
 
 	if(!_firstKeyFrame) {
 		DEBUG("No key frame available on publication ",_name,", frame dropped to wait first key frame");

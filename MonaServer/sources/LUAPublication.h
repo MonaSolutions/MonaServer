@@ -58,36 +58,35 @@ public:
 
 	static int Get(lua_State *pState) {
 		SCRIPT_CALLBACK(PublicationType, publication)
-			std::string name = SCRIPT_READ_STRING("");
+			const char* name = SCRIPT_READ_STRING("");
 			Mona::Publication* pPublication = Publication(publication);
 			if (!pPublication) {
 				SCRIPT_ERROR("Publication ", name,", publication closed")
 			} else {
-				string name = SCRIPT_READ_STRING("");
-				if(name=="publisher") {
+				if(strcmp(name,"publisher")==0) {
 					if (pPublication->publisher())
 						SCRIPT_ADD_OBJECT(Client, LUAClient, *pPublication->publisher())
-				} else if(name=="name") {
+				} else if(strcmp(name,"name")==0) {
 					SCRIPT_WRITE_STRING(pPublication->name().c_str())
-				} else if(name=="listeners") {
+				} else if(strcmp(name,"listeners")==0) {
 					Script::Collection(pState, 1, "listeners", pPublication->listeners.count());
-				} else if(name=="droppedFrames") {
+				} else if(strcmp(name,"droppedFrames")==0) {
 					SCRIPT_WRITE_NUMBER(pPublication->droppedFrames())
-				} else if(name=="audioQOS") {
+				} else if(strcmp(name,"audioQOS")==0) {
 					SCRIPT_ADD_OBJECT(QualityOfService, LUAQualityOfService, pPublication->audioQOS())
-				} else if(name=="videoQOS") {
+				} else if(strcmp(name,"videoQOS")==0) {
 					SCRIPT_ADD_OBJECT(QualityOfService,LUAQualityOfService,pPublication->videoQOS())
-				} else if(name=="dataQOS") {
+				} else if(strcmp(name,"dataQOS")==0) {
 					SCRIPT_ADD_OBJECT(QualityOfService,LUAQualityOfService,pPublication->dataQOS())
-				} else if(name=="close") {
+				} else if(strcmp(name,"close")==0) {
 					SCRIPT_WRITE_FUNCTION(&LUAPublication::Close)
-				} else if(name=="pushAudio") {
+				} else if(strcmp(name,"pushAudio")==0) {
 					SCRIPT_WRITE_FUNCTION(&LUAPublication::PushAudio)
-				} else if(name=="flush") {
+				} else if(strcmp(name,"flush")==0) {
 					SCRIPT_WRITE_FUNCTION(&LUAPublication::Flush)
-				} else if(name=="pushVideo") {
+				} else if(strcmp(name,"pushVideo")==0) {
 					SCRIPT_WRITE_FUNCTION(&LUAPublication::PushVideo)
-				} else if(name=="pushData") {
+				} else if(strcmp(name,"pushData")==0) {
 					SCRIPT_WRITE_FUNCTION(&LUAPublication::PushData)
 				}
 			}

@@ -25,55 +25,59 @@ This file is a part of Mona.
 
 namespace Mona {
 
-
-	class Exception : virtual Object {
-	public:
-		enum Code {
-			NIL,
-			APPLICATION = 1,
-			SOFTWARE,
-			FILE,
-			ARGUMENT,
-			OPTION,
-			SERVICE,
-			REGISTRY,
-			PROTOCOL,
-			NETWORK,
-			SOCKET,
-			NETADDRESS,
-			FORMATTING,
-			THREAD,
-			MEMORY,
-			SYSTEM,
-			MATH,
-			CRYPTO,
-			ASSERT
-		};
-
-		Exception() : _code(NIL) {}
-
-
-		template <typename ...Args>
-		void set(Code code, Args&&... args) {
-			_code = code;
-			String::Format(_error, args ...);
-		}
-
-		void set(const Exception& other) {
-			_code = other._code;
-			_error = other._error;
-		}
-
-		operator bool() const { return !_error.empty() || _code != Exception::NIL; }
-
-		const std::string&	error() const { return _error; }
-		Code				code() const { return _code; }
-
-	private:
-
-		Code		_code;
-		std::string	_error;
+class Exception : virtual Object {
+public:
+	///// ADD TOO in Exceptions.cpp!!
+	enum Code {
+		NIL,
+		APPLICATION = 1,
+		SOFTWARE,
+		FILE,
+		ARGUMENT,
+		OPTION,
+		SERVICE,
+		REGISTRY,
+		PROTOCOL,
+		NETWORK,
+		SOCKET,
+		NETADDRESS,
+		FORMATTING,
+		THREAD,
+		MEMORY,
+		SYSTEM,
+		MATH,
+		CRYPTO,
+		ASSERT
 	};
+
+	Exception() : _code(NIL) {}
+
+
+	template <typename ...Args>
+	void set(Code code, Args&&... args) {
+		_code = code;
+		String::Format(_error, args ...);
+		if (_code != Exception::NIL && _error.empty()) 
+			_error.assign(_CodeMessages[code]);
+	}
+
+	void set(const Exception& other) {
+		_code = other._code;
+		_error = other._error;
+	}
+
+	operator bool() const { return _code != Exception::NIL; }
+
+	const std::string&	error() const { return _error; }
+	Code				code() const { return _code; }
+
+private:
+
+	Code		_code;
+	std::string	_error;
+
+	static std::map<Code, const char*> _CodeMessages;
+};
 
 #undef		ASSERT
 #define		ASSERT(CONDITION)					if(!(CONDITION)) { ex.set(Exception::ASSERT, #CONDITION);return;}

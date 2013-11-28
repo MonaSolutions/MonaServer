@@ -130,8 +130,10 @@ bool Util::UnpackUrl(Exception& ex,const string& url, SocketAddress& address, st
 			++it;
 			while (it != end && (*it == '/' || *it == '\\'))
 				++it;
-			if (it == end)
-				return true; // no address, no path, just "scheme://"
+			if (it == end) {
+				 // no address, no path, just "scheme://"
+				return true;
+			}
 			auto itEnd(it);
 			string::const_iterator itPort=end;
 			while (itEnd != end && *itEnd != '/' && *itEnd != '\\') {
@@ -148,8 +150,12 @@ bool Util::UnpackUrl(Exception& ex,const string& url, SocketAddress& address, st
 		}
 		++it;
 	}
-	if (ex || it == end)
-		return !ex;
+	if (ex)
+		return false;
+
+	file.clear();
+	path.clear();
+	properties.clear();
 
 	// Normalize path => replace // by / and \ by / AND remove the last '/'
 	path.assign(it,end);
@@ -204,7 +210,7 @@ bool Util::UnpackUrl(Exception& ex,const string& url, SocketAddress& address, st
 }
 // TODO check unitest
 void Util::UnpackQuery(const string& query, MapParameters& properties) {
-	
+
 	string myQuery(query);
 
 	string::iterator it = myQuery.begin();

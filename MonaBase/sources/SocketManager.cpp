@@ -233,25 +233,17 @@ void SocketManager::handle(Exception& ex) {
 		pSocket->onError(curEx.error());
 		return;
 	}
+
 	/// now, read or accept event!
 
-	bool acceptEvent = false;
 #if defined(_WIN32)
-	if (_currentEvent == FD_ACCEPT)
-		acceptEvent = true;
-#else
-	if (_currentEvent&EPOLLIN && pSocket->available(_exSkip)==0)
-		acceptEvent = true;
+	if(_currentEvent==FD_READ && pSocket->available(_exSkip)==0) // In the linux case, when _currentEvent==SELECT_READ with 0 bytes it's a ACCEPT event!
+		return;
 #endif
-	Exception curEx;
-	while (acceptEvent || pSocket->available(curEx)) {
-		if (!curEx)
-			pSocket->onReadable(curEx);
-		if (curEx)
-			pSocket->onError(curEx.error());
-		if (curEx || acceptEvent)
-			break;
-	}
+	Exception socketEx;
+	pSocket->onReadable(socketEx);
+	if (socketEx)
+		pSocket->onError(socketEx.error());
 }
 
 void SocketManager::requestHandle() {
@@ -304,7 +296,6 @@ void SocketManager::run(Exception& exc) {
 #if defined(_WIN32)
 	MSG		  msg;
     while(GetMessage(&msg,_eventSystem, 0, 0)) {
-		TRACE(msg.lParam)
 		if(msg.wParam==0)
 			continue;
 		if(msg.message==0) {

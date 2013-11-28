@@ -46,7 +46,7 @@ AMFWriter::AMFWriter(bool isNull) : NullableObject(isNull),_amf3(false), amf0Pre
 
 AMFWriter::~AMFWriter() {
 	if(!_lastObjectReferences.empty())
-		ERROR("AMFWriter end without terminating a complex type (object, map or array)");
+		WARN("AMFWriter end without terminating a complex type (object, map or array)");
 	list<ObjectRef*>::iterator it;
 	for(it=_lastObjectReferences.begin();it!=_lastObjectReferences.end();++it)
 		delete *it;

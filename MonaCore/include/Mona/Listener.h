@@ -47,7 +47,7 @@ public:
 	const Publication&	publication;
 	Client&				client;
 
-	UInt32			droppedFrames() const { return _droppedFrames; }
+	UInt32					droppedFrames() const { return _droppedFrames; }
 	const QualityOfService&	videoQOS() const;
 	const QualityOfService&	audioQOS() const;
 	const QualityOfService&	dataQOS() const;
@@ -56,18 +56,21 @@ public:
 	void setBufferTime(UInt32 ms) { _bufferTime = ms; }
 
 private:
-	void			init();
-	void			init(Writer** ppWriter,Writer::MediaType type);
+	void	init();
+	void	init(Writer** ppWriter,Writer::MediaType type);
 	UInt32 	computeTime(UInt32 time);
 
 	bool					_unbuffered;
 	bool					_firstKeyFrame;
+	bool					_firstAudio;
+	bool					_firstVideo;
+	bool					_firstTime;
 
-	UInt32 			_deltaTime;
-	UInt32 			_addingTime;
-	UInt32 			_time;
-	UInt32			_bufferTime;
-	Time			_ts;
+	UInt32 					_deltaTime;
+	UInt32 					_addingTime;
+	UInt32 					_time;
+	UInt32					_bufferTime;
+	Time					_ts;
 	
 	Writer&					_writer;
 	Writer*					_pAudioWriter;

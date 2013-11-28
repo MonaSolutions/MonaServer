@@ -104,11 +104,9 @@ void FlashMainStream::messageHandler(Exception& ex, const string& name,AMFReader
 		message.startReferencing();
 
 		string tcUrl;
-		Exception exWarn;
+		Exception exUnpack;
 		if (peer.path.empty() && peer.getString("tcUrl", tcUrl))
-			Util::UnpackUrl(exWarn, tcUrl, (SocketAddress&)peer.serverAddress, (string&)peer.path, peer);
-		if (exWarn)
-			WARN("serverAddress impossible to determine from url ", tcUrl);
+			EXCEPTION_TO_LOG(Util::UnpackUrl(exUnpack, tcUrl, (SocketAddress&)peer.serverAddress, (string&)peer.path, peer), "Flash UnpackUrl")
 		if (peer.serverAddress.port() == 0) {
 			string protocol;
 			if (peer.getString("protocol", protocol)) {
@@ -136,10 +134,9 @@ void FlashMainStream::messageHandler(Exception& ex, const string& name,AMFReader
 		response.writeNumberProperty("objectEncoding",3.0);
 		response.amf0Preference = false;
 		peer.onConnection(ex, writer,message,response);
+		response.endObject();
 		if (ex)
 			return;
-		response.endObject();
-
 
 	} else if(name == "setPeerInfo") {
 

@@ -163,6 +163,9 @@
     <ClCompile Include="sources\Database.cpp">
       <Filter>File</Filter>
     </ClCompile>
+    <ClCompile Include="sources\Exceptions.cpp">
+      <Filter>Util</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Mona\BinaryReader.h">

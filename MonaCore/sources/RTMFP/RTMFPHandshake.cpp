@@ -148,10 +148,7 @@ RTMFPSession* RTMFPHandshake::createSession(const UInt8* cookieValue) {
 	peer.clear();
 	memcpy((void*)peer.id,cookie.peerId,ID_SIZE);
 
-	
-	Util::UnpackUrl(ex,cookie.queryUrl,(SocketAddress&)peer.serverAddress,(string&)peer.path,peer);
-	if (ex)
-		WARN("RTMFP peer.serverAddress impossible to determine from url ", cookie.queryUrl)
+	EXCEPTION_TO_LOG(Util::UnpackUrl(ex, cookie.queryUrl, (SocketAddress&)peer.serverAddress, (string&)peer.path, peer), "RTMFP UnpackUrl ", cookie.queryUrl);
 
 	(UInt32&)farId = cookie.farId;
 	((SocketAddress&)peer.address).set(cookie.peerAddress);
@@ -245,11 +242,9 @@ UInt8 RTMFPHandshake::handshakeHandler(UInt8 id,MemoryReader& request,MemoryWrit
 				HelloAttempt& attempt = AttemptCounter::attempt<HelloAttempt>(tag);
 
 				// Fill peer infos
+				Exception ex;
 				peer.clear();
-				Exception exWarn;
-				Util::UnpackUrl(exWarn, epd, (SocketAddress&)peer.serverAddress, (string&)peer.path, peer);
-				if (exWarn)
-					WARN("serverAddress of RTMFP impossible to determine from url ", epd)
+				EXCEPTION_TO_LOG(Util::UnpackUrl(ex, epd, (SocketAddress&)peer.serverAddress, (string&)peer.path, peer),"RTMFP UnpackUrl ",epd)
 				if (peer.serverAddress.port() == 0)
 					((SocketAddress&)peer.serverAddress).set(peer.serverAddress.host(), invoker.params.RTMFP.port);
 				set<SocketAddress> addresses;
@@ -266,7 +261,6 @@ UInt8 RTMFPHandshake::handshakeHandler(UInt8 id,MemoryReader& request,MemoryWrit
 				}
 
 				// New RTMFPCookie
-				Exception ex;
 				if (!createCookie(ex, response, attempt, tag, epd)) {
 					ERROR("RTMFPCookie creation, ",ex.error())
 					return 0;

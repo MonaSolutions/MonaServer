@@ -56,11 +56,17 @@ public:
 	void					removeListener(Peer& peer);
 
 	void					flush();
+
+	const Buffer<UInt8>&	audioCodecBuffer() const { return _audioCodecBuffer; }
+	const Buffer<UInt8>&	videoCodecBuffer() const { return _videoCodecBuffer; }
 private:
 	Peer*								_pPublisher;
 	bool								_firstKeyFrame;
 	std::string							_name;
 	std::map<Client*,Listener*>			_listeners;
+
+	Buffer<UInt8>						_audioCodecBuffer;
+	Buffer<UInt8>						_videoCodecBuffer;
 
 	QualityOfService					_videoQOS;
 	QualityOfService					_audioQOS;

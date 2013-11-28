@@ -113,6 +113,7 @@
   <ItemGroup>
     <ClCompile Include="sources\Application.cpp" />
     <ClCompile Include="sources\Database.cpp" />
+    <ClCompile Include="sources\Exceptions.cpp" />
     <ClCompile Include="sources\Files.cpp" />
     <ClCompile Include="sources\DNS.cpp" />
     <ClCompile Include="sources\Event.cpp" />
