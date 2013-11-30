@@ -37,7 +37,7 @@ private:
 
 inline bool WSUnmasking::decode(Exception& ex, MemoryReader& reader) {
 	WS::Unmask(reader);
-	reader.reset(3);
+	reader.reset(reader.position()-1);
 	(*reader.current()) = _type;
 	return true;
 }

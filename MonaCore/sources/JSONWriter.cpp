@@ -91,6 +91,18 @@ void JSONWriter::writePropertyName(const string& value) {
 	_first=true;
 }
 
+void JSONWriter::writeNumber(double value) {
+	if(!_started) {
+		_started=true;
+		writer.write8('[');
+	}
+	if(!_first)
+		writer.write8(',');
+	_first=false;
+	string stValue;
+	writer.writeRaw(String::Format(stValue, value));
+}
+
 void JSONWriter::writeString(const string& value) {
 	if(!_started) {
 		_started=true;

@@ -76,6 +76,7 @@ bool WSSession::buildPacket(const shared_ptr<Buffer<UInt8>>& pData, MemoryReader
 		return false;
 
 	if (lengthByte & 0x80) {
+		pData->resize(size+packet.position());
 		shared_ptr<WSUnmasking> pUnmasking(new WSUnmasking(pData, type, invoker,packet.position()));
 		decode<WSUnmasking>(pUnmasking);
 	} else {
@@ -165,7 +166,7 @@ void WSSession::packetHandler(MemoryReader& packet) {
 				_writer.ping = (UInt16&)peer.ping = (UInt16)(_time.elapsed()/1000);
 				break;
 			default:
-				ex.set(Exception::PROTOCOL, Format<UInt8>("Type %#?x unknown",type), WS_MALFORMED_PAYLOAD);
+				ex.set(Exception::PROTOCOL, Format<UInt8>("Type %#x unknown", type), WS_MALFORMED_PAYLOAD);
 				break;
 		}
 		
