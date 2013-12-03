@@ -107,6 +107,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="sources\main.cpp" />
+    <ClCompile Include="sources\MemoryStreamTest.cpp" />
     <ClCompile Include="sources\OptionsTest.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
     </ClCompile>
