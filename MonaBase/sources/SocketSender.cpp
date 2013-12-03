@@ -27,11 +27,11 @@ using namespace std;
 
 namespace Mona {
 
-SocketSender::SocketSender() :
+SocketSender::SocketSender(const char* name) : WorkThread(name),
 	_position(0), _data(NULL), _size(0), _memcopied(false) {
 }
 
-SocketSender::SocketSender(const UInt8* data, UInt32 size) :
+SocketSender::SocketSender(const char* name,const UInt8* data, UInt32 size) : WorkThread(name),
 	_position(0), _data((UInt8*)data), _size(size), _memcopied(false) {
 }
 

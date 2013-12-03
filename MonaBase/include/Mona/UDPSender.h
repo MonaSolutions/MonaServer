@@ -28,8 +28,8 @@ namespace Mona {
 
 class UDPSender : public SocketSender, virtual Object {
 public:
-	UDPSender(bool dump = false) {}
-	UDPSender(const UInt8* data, UInt32 size) : SocketSender(data, size) {}
+	UDPSender(const char* name,bool dump = false) : SocketSender(name) {}
+	UDPSender(const char* name,const UInt8* data, UInt32 size) : SocketSender(name,data, size) {}
 
 	SocketAddress			address;
 private:

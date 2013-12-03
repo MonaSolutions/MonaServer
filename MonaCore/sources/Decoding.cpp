@@ -25,8 +25,8 @@ using namespace std;
 
 namespace Mona {
 
-Decoding::Decoding(const shared_ptr<Buffer<UInt8>> &pBuffer, TaskHandler& taskHandler, UInt32 offset) :
-	Task(taskHandler), _pBuffer(pBuffer), _reader(pBuffer->data(), pBuffer->size()) {
+Decoding::Decoding(const char* name,const shared_ptr<Buffer<UInt8>> &pBuffer, TaskHandler& taskHandler, UInt32 offset) :
+	WorkThread(name),Task(taskHandler), _pBuffer(pBuffer), _reader(pBuffer->data(), pBuffer->size()) {
 	if (offset)
 		_reader.next(offset);
 }

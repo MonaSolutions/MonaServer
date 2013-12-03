@@ -44,7 +44,7 @@ public:
 
 class RelaySender : public UDPSender, virtual Object {
 public:
-	RelaySender(UInt32 available) : data(available), UDPSender(true) {}
+	RelaySender(UInt32 available) : data(available), UDPSender("RelaySender",true) {}
 	Buffer<UInt8> data;
 
 	const UInt8*	begin(bool displaying = false) { return data.size()==0 ? NULL : &data[0]; }

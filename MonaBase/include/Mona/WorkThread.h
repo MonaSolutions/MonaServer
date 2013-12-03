@@ -27,7 +27,9 @@ namespace Mona {
 
 class WorkThread : virtual Object {
 public:
-	WorkThread() {}
+	WorkThread(const char* name) : name(name) {}
+
+	const char* name;
 
 	// If ex is raised, an error is displayed if the operation has returned false
 	// otherwise a warning is displayed

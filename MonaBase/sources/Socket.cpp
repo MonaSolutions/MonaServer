@@ -173,7 +173,12 @@ int Socket::sendBytes(Exception& ex, const void* buffer, int length, int flags) 
 		ASSERT_RETURN(_initialized == true, 0)
 		rc = ::send(_sockfd, reinterpret_cast<const char*>(buffer), length, flags);
 	} while (rc < 0 && Net::LastError() == NET_EINTR);
-	Net::CheckError(ex);
+	if (rc < 0) {
+		int err = Net::LastError();
+		if (err == NET_EAGAIN || err == NET_EWOULDBLOCK)
+			return 0;
+		Net::SetError(ex, err);
+	}
 	return rc;
 }
 
@@ -186,7 +191,7 @@ int Socket::receiveBytes(Exception& ex, void* buffer, int length, int flags) {
 	} while (rc < 0 && Net::LastError() == NET_EINTR);
 	if (rc < 0) {
 		int err = Net::LastError();
-		if (err == NET_EAGAIN)
+		if (err == NET_EAGAIN || err == NET_EWOULDBLOCK)
 			return 0;
 		Net::SetError(ex, err);
 	}
@@ -206,7 +211,12 @@ int Socket::sendTo(Exception& ex, const void* buffer, int length, const SocketAd
 		rc = ::sendto(_sockfd, reinterpret_cast<const char*>(buffer), length, flags, &address.addr(), sizeof(address.addr()));
 	}
 	while (rc < 0 && Net::LastError() == NET_EINTR);
-	Net::CheckError(ex);
+	if (rc < 0) {
+		int err = Net::LastError();
+		if (err == NET_EAGAIN || err == NET_EWOULDBLOCK)
+			return 0;
+		Net::SetError(ex, err);
+	}
 	return rc;
 }
 
@@ -225,8 +235,12 @@ int Socket::receiveFrom(Exception& ex, void* buffer, int length, SocketAddress& 
 		ASSERT_RETURN(_initialized == true, 0)
 		rc = ::recvfrom(_sockfd, reinterpret_cast<char*>(buffer), length, flags, pSA, &saLen);
 	} while (rc < 0 && Net::LastError() == NET_EINTR);
-	if (rc < 0)
-		Net::SetError(ex, Net::LastError());
+	if (rc < 0) {
+		int err = Net::LastError();
+		if (err == NET_EAGAIN || err == NET_EWOULDBLOCK)
+			return 0;
+		Net::SetError(ex, err);
+	}
 	address.set(ex, *pSA);
 	return rc;
 }

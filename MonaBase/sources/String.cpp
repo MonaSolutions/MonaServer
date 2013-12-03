@@ -19,6 +19,7 @@ This file is a part of Mona.
 
 #include "Mona/String.h"
 #include "Mona/Exceptions.h"
+#include <limits>
 #include <cctype>
 
 using namespace std;

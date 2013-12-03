@@ -151,14 +151,7 @@ int Script::Len(lua_State* pState) {
 		lua_getfield(pState, -1, "|count");
 		if (!lua_isnumber(pState, -1)) {
 			lua_pop(pState, 1);
-			lua_getfield(pState, -1, "|items");
-			if (!lua_istable(pState, -1)) {
-				lua_pop(pState, 1);
-				lua_objlen(pState, 1);
-			} else {
-				lua_replace(pState, -2);
-				Len(pState);
-			}
+			lua_objlen(pState, 1);
 		}
 		lua_replace(pState, -2);
 	} else

@@ -158,7 +158,7 @@ void Publication::pushAudio(MemoryReader& packet,UInt32 time,UInt32 numberLostFr
 
 	if ((*packet.current()>>4)==0x0A && packet.available() && packet.current()[1] == 0) {
 		// AAC codec && settings codec informations
-		_audioCodecBuffer.resize(packet.available());
+		_audioCodecBuffer.resize(packet.available(),false);
 		memcpy(&_audioCodecBuffer[0],packet.current(),packet.available());
 	}
 
@@ -189,7 +189,7 @@ void Publication::pushVideo(MemoryReader& packet,UInt32 time,UInt32 numberLostFr
 		_firstKeyFrame = true;
 		if (*packet.current()==0x17 && packet.available() && packet.current()[1] == 0) {
 			// h264 codec && settings codec informations
-			_videoCodecBuffer.resize(packet.available());
+			_videoCodecBuffer.resize(packet.available(),false);
 			memcpy(&_videoCodecBuffer[0],packet.current(),packet.available());
 		}
 	}

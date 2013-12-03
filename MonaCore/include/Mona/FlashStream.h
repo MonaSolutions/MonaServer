@@ -23,7 +23,6 @@ This file is a part of Mona.
 #include "Mona/AMF.h"
 #include "Mona/AMFReader.h"
 #include "Mona/Peer.h"
-#include "Mona/MemoryReader.h"
 #include "Mona/FlashWriter.h"
 
 namespace Mona {
@@ -38,8 +37,11 @@ public:
 	
 	void setBufferTime(UInt32 ms);
 
-	void process(AMF::ContentType type,MemoryReader& data,FlashWriter& writer,UInt32 numberLostFragments=0);
-	void flush();
+	void		 process(AMF::ContentType type,UInt32 time,MemoryReader& data,FlashWriter& writer,UInt32 numberLostFragments=0);
+	virtual void flush();
+
+
+	virtual FlashStream* stream(UInt32 id) { return NULL; }
 
 protected:
 
@@ -51,9 +53,9 @@ private:
 
 	virtual void	messageHandler(Exception& ex, const std::string& name, AMFReader& message, FlashWriter& writer);
 	virtual void	rawHandler(Exception& ex, UInt8 type, MemoryReader& data, FlashWriter& writer);
-	virtual void	dataHandler(Exception& ex, DataReader& data, UInt32 numberLostFragments);
-	virtual void	audioHandler(Exception& ex, MemoryReader& packet, UInt32 numberLostFragments);
-	virtual void	videoHandler(Exception& ex, MemoryReader& packet, UInt32 numberLostFragments);
+	virtual void	dataHandler(Exception& ex,DataReader& data, UInt32 numberLostFragments);
+	virtual void	audioHandler(Exception& ex,UInt32 time, MemoryReader& packet, UInt32 numberLostFragments);
+	virtual void	videoHandler(Exception& ex, UInt32 time,MemoryReader& packet, UInt32 numberLostFragments);
 
 	virtual void	close(FlashWriter& writer,const std::string& error,int code=0);
 

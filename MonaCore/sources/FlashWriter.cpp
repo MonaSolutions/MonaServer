@@ -44,7 +44,7 @@ AMFWriter& FlashWriter::writeInvocation(const string& name) {
 	writer.write8(AMF_STRING);writer.writeString16(name);
 	writer.write8(AMF_NUMBER);
 	writer.writeNumber<double>(callbackHandle);
-	writer.write8(AMF_NULL);
+	writer.write8(AMF_NULL); // for RTMP compatibility! (requiere it)
 	return amf;
 }
 

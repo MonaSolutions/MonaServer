@@ -27,7 +27,7 @@ using namespace std;
 
 namespace Mona {
 
-RTMFPCookieComputing::RTMFPCookieComputing(RTMFPHandshake& handshake,Invoker& invoker): _handshake(handshake),Task(invoker),initiatorKey(0),sharedSecret(0) {
+RTMFPCookieComputing::RTMFPCookieComputing(RTMFPHandshake& handshake,Invoker& invoker): WorkThread("RTMFPCookieComputing"),_handshake(handshake),Task(invoker),initiatorKey(0),sharedSecret(0) {
 	Util::Random(value, COOKIE_SIZE);
 }
 

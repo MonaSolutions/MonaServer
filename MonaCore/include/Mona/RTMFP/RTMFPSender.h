@@ -27,7 +27,10 @@ namespace Mona {
 
 class RTMFPSender : public UDPSender, virtual Object {
 public:
-	RTMFPSender();
+	RTMFPSender(): UDPSender("RTMFPSender"),packet(_buffer,sizeof(_buffer)),farId(0) {
+		packet.clear(11);
+		packet.limit(RTMFP_MAX_PACKET_LENGTH); // set normal limit
+	}
 	
 	RTMFPEngine		encoder;
 	UInt32			farId;
@@ -44,6 +47,14 @@ private:
 	UInt8			_buffer[RTMFP_PACKET_SEND_SIZE];
 	
 };
+
+inline bool RTMFPSender::run(Exception& ex) {
+	packet.limit(); // no limit for sending!
+	RTMFP::Encode(encoder,packet);
+	RTMFP::Pack(packet,farId);
+	return UDPSender::run(ex);
+}
+
 
 
 

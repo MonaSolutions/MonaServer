@@ -30,72 +30,81 @@ using namespace std;
 
 namespace Mona {
 
-
-RTMPSession::RTMPSession(const SocketAddress& address, Protocol& protocol, Invoker& invoker) : _pThread(NULL),_mainStream(invoker, peer), _chunkSize(DEFAULT_CHUNKSIZE), _handshaking(0), _pWriter(NULL), TCPSession(address, protocol, invoker) {
+RTMPSession::RTMPSession(const SocketAddress& address, Protocol& protocol, Invoker& invoker) : 	_pSender(new RTMPSender()),_controller(2,*this,address,_pSender),_unackBytes(0),_decrypted(0),_pThread(NULL), _chunkSize(RTMP::DEFAULT_CHUNKSIZE), _winAckSize(RTMP::DEFAULT_WIN_ACKSIZE), _handshaking(0), _pWriter(NULL), TCPSession(address, protocol, invoker) {
 	dumpJustInDebug = true;
 }
 
 
 RTMPSession::~RTMPSession() {
 	// TODO if(!died)
-		// writeAMFError("Connect.AppShutdown","server is stopping");
-		//_writer.close(...);
-	map<UInt8,RTMPWriter*>::iterator it;
-	for(it=_writers.begin();it!=_writers.end();++it)
-		delete it->second;
+	// writeAMFError("Connect.AppShutdown","server is stopping");
+	//_writer.close(...);
+
+	kill();
 }
 
-/* TODO replace!!!
-void RTMPSession::onNewData(const UInt8* data,UInt32 size) {
-	if(_pDecryptKey)
-		RC4(_pDecryptKey.get(),size,data,(UInt8*)data); // TODO use a thread to decode?
+void RTMPSession::kill() {
+	if (died)
+		return;
+	_pStream.reset();
+	Session::kill();
 }
-*/
 
 bool RTMPSession::buildPacket(const shared_ptr<Buffer<UInt8>>& pData, MemoryReader& packet) {
+	if (_pDecryptKey && pData->size()>_decrypted) {
+		RC4(_pDecryptKey.get(),pData->size()-_decrypted,pData->data()+_decrypted,pData->data()+_decrypted); // TODO use a thread to decode?
+		_decrypted = pData->size();
+	}
+
 	switch(_handshaking) {
 		case 0:
-			return packet.available() >= 1537;
+			packet.shrink(1537);
+			return packet.available() == 1537;
 		case 1:
-			return packet.available() >= 1536;
+			if (packet.available() < 1536)
+				return false;
+			if (_decrypted>=1536)
+				_decrypted -= 1536;
+			packet.shrink(1536);
+			return true;
 	}
 
 	dumpJustInDebug = false;
 
 	UInt8 headerSize = packet.read8();
-
 	UInt8 idWriter = headerSize & 0x3F;
-	map<UInt8,RTMPWriter*>::iterator it = _writers.lower_bound(idWriter);
-	if(it==_writers.end() || it->first!=idWriter)
-		it = _writers.emplace_hint(it,idWriter,new RTMPWriter(idWriter,_pEncryptKey,*this));
-	_pWriter = it->second;
 
-	headerSize = 12 - (headerSize&0xC0)*4;
+	headerSize = 12 - (headerSize>>6)*4;
 	if(headerSize==0)
 		headerSize=1;
 
-	RTMPChannel& channel(_pWriter->channel);
-
-	if(headerSize>channel.headerSize)
-		channel.headerSize = headerSize;
-	
-	UInt32 total = channel.bodySize+channel.headerSize;
-	if (packet.available()<total)
+	if (packet.available() < headerSize) // want read in first the header!
 		return false;
 
-	UInt32 time=0;
+	RTMPWriter* pWriter(NULL);
+	if (idWriter != 2) {
+		auto it = _writers.lower_bound(idWriter);
+		if (it == _writers.end() || it->first != idWriter)
+			it = _writers.emplace_hint(it, piecewise_construct, forward_as_tuple(idWriter), forward_as_tuple(idWriter, (StreamSocket&)*this, peerAddress(), _pSender));
+		pWriter = &it->second;
+	}
+	if (!pWriter)
+		pWriter = &_controller;
 
-	if(channel.headerSize>=4) {
+
+	RTMPChannel& channel(pWriter->channel);
+
+	bool isRelative(true);
+	if(headerSize>=4) {
 		// TIME
-		time = packet.read24();
-	
-		if(channel.headerSize>=8) {
+		channel.time = packet.read24();
+		if(headerSize>=8) {
 			// SIZE
 			channel.bodySize = packet.read24();
-			channel.headerSize += (UInt16)floor(double(channel.bodySize/_chunkSize)); 
 			// TYPE
 			channel.type = (AMF::ContentType)packet.read8();
-			if(channel.headerSize>=12) {
+			if(headerSize>=12) {
+				isRelative = false;
 				// STREAM
 				channel.streamId = packet.read8();
 				channel.streamId += packet.read8() << 8;
@@ -103,27 +112,51 @@ bool RTMPSession::buildPacket(const shared_ptr<Buffer<UInt8>>& pData, MemoryRead
 				channel.streamId += packet.read8() << 24;
 			}
 		}
+
+		// extended timestamp
+		if (channel.time >= 0xFFFFFF) {
+			headerSize += 4;
+			if (packet.available() < 4)
+				return false;
+			channel.time = packet.read32();
+		}
 	}
 
-	if(time==0xFFFFFF) {
-		channel.headerSize += 4;
-		if (packet.available()>4)
-			time = packet.read32();
-	}
-	if(channel.headerSize>=12)
-		channel.time = time;
+	UInt16 chunks = (UInt16)ceil(channel.bodySize / (double)_chunkSize)-1;
+	UInt32 total = channel.bodySize + chunks;	
+
+	if (packet.available()<total)
+		return false;
+
+	//// data consumed now!
+	packet.shrink(total);
+	total += headerSize;
+	if (_decrypted>=total)
+		_decrypted -= total;
+
+	if (isRelative)
+		channel.absoluteTime += channel.time;
 	else
-		channel.time += time;
+		channel.absoluteTime = channel.time;
 
-	// TODO?
-	// 	if stream.typeRecv == 0x11 then headerSize = headerSize+1 end
+	// remove the 0xC3 bytes
+	UInt32 i = _chunkSize;
+	++chunks;
+	for (UInt16 chunk = 1; chunk < chunks; ++chunk) {
+		UInt32 rest = channel.bodySize - i;
+		memcpy(packet.current()+i, packet.current() + i + chunk, _chunkSize >= rest ? rest : _chunkSize);
+		i += _chunkSize;
+	}
 
-	packet.shrink(channel.headerSize+channel.bodySize-packet.position());
+	_pWriter = pWriter;
 	return true;
 }
 
 
 void RTMPSession::packetHandler(MemoryReader& packet) {
+
+	_unackBytes += packet.position() + packet.available();
+
 	if(_handshaking==0) {
 		UInt8 handshakeType = packet.read8();
 		if(handshakeType!=3 && handshakeType!=6) {
@@ -140,52 +173,50 @@ void RTMPSession::packetHandler(MemoryReader& packet) {
 	} else if(_handshaking==1) {
 		++_handshaking;
 		return;
+	} else if (_handshaking == 2) {
+		++_handshaking;
+		// client settings
+		_controller.writeProtocolSettings();
 	}
-	
+
+	// ack if required
+	if (_unackBytes >= _winAckSize) {
+		_controller.writeAck(_unackBytes);
+		_unackBytes = 0;
+	}
+
 	if(!_pWriter) {
 		ERROR("Packet received on session ",name()," without channel indication");
-		return;
-	}
-
-	// add the max chunksize possible!
-	if(_writers.size()==1 && _handshaking==2) {
-		++_handshaking;
-		_pWriter->writeMaxChunkSize();
-	}
-
-	// Pack the packet
-
-	RTMPChannel& channel(_pWriter->channel);
-
-	UInt16 count = (UInt16)floor(double(channel.bodySize/_chunkSize));
-	packet.shrink(packet.available()-count);
-	while(count>0) {
-		UInt32 nextSize = count>1 ? _chunkSize : (packet.available()-_chunkSize);
-		memcpy(packet.current()+_chunkSize,packet.current()+_chunkSize+1,nextSize);
-		--count;
-	}
+        return;
+    }
 
 	// Process the packet
+	RTMPChannel& channel(_pWriter->channel);
+
+	packet.shrink(channel.bodySize);
+	if (channel.type == AMF::INVOCATION_AMF3)
+		packet.next(1);
+
 	switch(channel.type) {
 		case AMF::CHUNKSIZE:
 			_chunkSize = packet.read32();
 			break;
+		case AMF::BANDWITH:
+			// send a win_acksize message for accept this change
+			_controller.writeWinAckSize(packet.read32());
+			break;
+		case AMF::WIN_ACKSIZE:
+			_winAckSize = packet.read32();
+			break;
 		default:
-			// TODO channel.streamId!
-			_mainStream.process(channel.type,packet,*_pWriter); // TODO peer.serverAddress?
+			invoker.flashStream(channel.streamId,peer,_pStream).process(channel.type,channel.absoluteTime, packet,*_pWriter); // TODO peer.serverAddress?
 	}
 
-	if(!peer.connected)
+	if (!peer.connected)
 		kill();
 
-	_pWriter->flush();
-
-}
-
-void RTMPSession::manage() {
-	map<UInt8,RTMPWriter*>::const_iterator it;
-	for(it=_writers.begin();it!=_writers.end();++it)
-		it->second->flush();
+	_pWriter = NULL;
+	_controller.flush();
 }
 
 
@@ -197,6 +228,7 @@ bool RTMPSession::performHandshake(MemoryReader& packet, bool encrypted) {
 		if(encrypted) {
 			_pDecryptKey.reset(new RC4_KEY);
 			_pEncryptKey.reset(new RC4_KEY);
+			_pSender.reset(new RTMPSender(_pEncryptKey));
 		}
 		packet.reset();
 		pHandshaker.reset(new RTMPHandshaker(peerAddress(),packet.current() + RTMP::GetDHPos(packet.current(), middle), challengeKey, middle, _pDecryptKey, _pEncryptKey));
@@ -209,7 +241,7 @@ bool RTMPSession::performHandshake(MemoryReader& packet, bool encrypted) {
 	Exception ex;
 	_pThread = send<RTMPHandshaker>(ex, pHandshaker, _pThread);
 	if (ex)
-		ERROR("Handshake RTMP client file, ",ex.error());
+		ERROR("Handshake RTMP client failed, ",ex.error());
 	return !ex;
 }
 

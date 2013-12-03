@@ -22,7 +22,6 @@ This file is a part of Mona.
 #include "Mona/String.h"
 #include "Mona/Time.h"
 #include <fstream>
-#include <random>
 
 #if !defined(_WIN32)
 extern "C" char **environ; // TODO test it on linux!
@@ -39,7 +38,6 @@ mutex			Util::_MutexEnvironment;
 map<thread::id, string>	Util::_ThreadNames;
 mutex					Util::_MutexThreadNames;
 
-
 static const char B64Table[65] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 static const char ReverseB64Table[128] = {
@@ -52,10 +50,6 @@ static const char ReverseB64Table[128] = {
 	64, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40,
 	41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 64, 64, 64, 64, 64
 };
-
-static default_random_engine RandomGenerator((UInt32)Time());
-
-
 
 const string& Util::GetThreadName(thread::id id) {
 	lock_guard<mutex> lock(_MutexThreadNames);
@@ -286,7 +280,7 @@ void Util::Dump(const UInt8* in,UInt32 size,Buffer<UInt8>& out,const string& hea
 	UInt32 i = 0;
 	UInt32 c = 0;
 	UInt8 b;
-	out.resize((UInt32)ceil((double)size / 16) * 67 + (header.empty() ? 0 : (header.size() + 2)));
+	out.resize((UInt32)ceil((double)size / 16) * 67 + (header.empty() ? 0 : (header.size() + 2)),false);
 
 	if(!header.empty()) {
 		out[len++] = '\t';
@@ -415,7 +409,7 @@ Buffer<UInt8>& Util::ToBase64(const UInt8* data, UInt32 size, Buffer<UInt8>& res
 	int j = 0;
 	UInt32 accumulator = 0;
 	UInt32 bits = 0;
-	result.resize((UInt32)ceil(size/3.0)*4);
+	result.resize((UInt32)ceil(size/3.0)*4,false);
 
 	for (i = 0; i < size;++i) {
 		accumulator = (accumulator << 8) | (data[i] & 0xFFu);
@@ -437,7 +431,7 @@ Buffer<UInt8>& Util::ToBase64(const UInt8* data, UInt32 size, Buffer<UInt8>& res
 bool Util::FromBase64(const UInt8* data, UInt32 size, Buffer<UInt8>& result) {
 	UInt32 bits = 0;
 	UInt32 accumulator = 0;
-	result.resize(size/4 * 3);
+	result.resize(size/4 * 3,false);
 	int j = 0;
 
 	for (int i = 0; i < size; ++i) {
@@ -455,14 +449,13 @@ bool Util::FromBase64(const UInt8* data, UInt32 size, Buffer<UInt8>& result) {
 			result[j++] = ((accumulator >> bits) & 0xFFu);
 		}
 	}
-	result.resize(j);
+	result.resize(j,true);
 	return true;
 }
 
 void Util::Random(UInt8* data, UInt32 size) {
-    uniform_int_distribution<short> distribution(0,255);
-	for (UInt32 i = 0; i < size;++i)
-        data[i] = (UInt8)distribution(RandomGenerator);
+	for (UInt32 i = 0; i < size; ++i)
+		data[i] = Random<UInt8>();
 }
 
 

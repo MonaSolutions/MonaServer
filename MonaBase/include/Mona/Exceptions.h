@@ -22,6 +22,7 @@ This file is a part of Mona.
 #include "Mona/Mona.h"
 #include "Mona/String.h"
 #include <stdexcept>
+#include <map>
 
 namespace Mona {
 

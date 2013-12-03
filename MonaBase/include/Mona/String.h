@@ -21,7 +21,6 @@ This file is a part of Mona.
 
 #include "Mona/Mona.h"
 #include <vector>
-#include <limits>
 
 #undef max
 // TODO? #pragma warning(disable:4146)

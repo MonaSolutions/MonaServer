@@ -41,8 +41,8 @@ public:
 	virtual UInt32			size() { return _size; }
 
 protected:
-	SocketSender();
-	SocketSender(const UInt8* data, UInt32 size);
+	SocketSender(const char* name);
+	SocketSender(const char* name,const UInt8* data, UInt32 size);
 	virtual ~SocketSender();
 
 

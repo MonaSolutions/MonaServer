@@ -23,7 +23,6 @@ This file is a part of Mona.
 #include "Mona/TCPClient.h"
 #include "Mona/MemoryReader.h"
 #include "Mona/MapParameters.h"
-#include "Mona/Logs.h"
 
 class ServerMessage : public Mona::AMFWriter {
 public:
@@ -64,7 +63,7 @@ public:
 private:
 	void			sendPublicAddress();
 
-	void			onError(const std::string& error) { ERROR("Server ", address.toString(), ", ", error); _error = error; }
+	void			onError(const std::string& error);
 	Mona::UInt32	onReception(const std::shared_ptr<Mona::Buffer<Mona::UInt8>>& pData);
 	void			onDisconnection();
 

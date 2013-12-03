@@ -47,7 +47,7 @@ public:
 private:
 	void				fragmentSortedHandler(UInt64 stage,MemoryReader& fragment,UInt8 flags);
 	
-	AMF::ContentType	unpack(MemoryReader& reader);
+	AMF::ContentType	unpack(MemoryReader& reader,UInt32& time);
 
 	bool							_completed;
 	BandWriter&						_band;

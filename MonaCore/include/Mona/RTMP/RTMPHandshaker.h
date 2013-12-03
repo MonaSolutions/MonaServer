@@ -42,7 +42,7 @@ private:
 
 	UInt8					_buffer[3073];
 	MemoryWriter			_writer;
-	Buffer<UInt8>		_farPubKey;
+	Buffer<UInt8>			_farPubKey;
 	UInt8					_challengeKey[HMAC_KEY_SIZE];	
 	bool						_middle;
 	std::shared_ptr<RC4_KEY>	_pEncryptKey;

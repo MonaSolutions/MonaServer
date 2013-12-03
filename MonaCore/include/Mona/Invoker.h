@@ -28,13 +28,14 @@ This file is a part of Mona.
 #include "Mona/TaskHandler.h"
 #include "Mona/PoolThreads.h"
 #include "Mona/ServerParams.h"
-#include "Mona/FlashStream.h"
+#include "Mona/FlashMainStream.h"
 #include "Mona/RelayServer.h"
 
 namespace Mona {
 
 class Invoker : public Entity,public TaskHandler, virtual Object {
 	friend class Peer; // Peer manage _clients,_clientsByName and _groups list!
+	friend class FlashStream; // FlashStream manage _streams
 public:
 	// invocations
 	Clients					clients;
@@ -44,8 +45,8 @@ public:
 	const RelayServer		relay;
 	PoolThreads				poolThreads;
 
-	UInt32							createFlashStream(Peer& peer);
-	std::shared_ptr<FlashStream>	getFlashStream(UInt32 id) { return _streams[id]; }
+	std::shared_ptr<FlashStream>&	createFlashStream(Peer& peer);
+	FlashStream&					flashStream(UInt32 id, Peer& peer,std::shared_ptr<FlashStream>& pStream);
 	void							destroyFlashStream(UInt32 id) { _streams.erase(id); }
 
 	Publication*			publish(Exception& ex,const std::string& name) { return publish(ex,myself(), name); }

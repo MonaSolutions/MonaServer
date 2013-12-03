@@ -28,7 +28,7 @@ namespace Mona {
 
 class HTTPSender : public TCPSender, virtual Object {
 public:
-	HTTPSender() {}
+	HTTPSender() : TCPSender("TCPSender") {}
 
 	HTTPPacketWriter	writer;
 

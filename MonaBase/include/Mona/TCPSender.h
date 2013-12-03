@@ -27,8 +27,8 @@ namespace Mona {
 
 class TCPSender : public SocketSender, virtual Object {
 public:
-	TCPSender() {}
-	TCPSender(const UInt8* data, UInt32 size) : SocketSender(data, size) {}
+	TCPSender(const char* name) : SocketSender(name) {}
+	TCPSender(const char* name,const UInt8* data, UInt32 size) : SocketSender(name,data, size) {}
 
 
 private:

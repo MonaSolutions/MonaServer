@@ -68,7 +68,7 @@ void UDPSocket::onReadable(Exception& ex) {
 	if (ex)
 		return;
 	UInt32 originSize = _pBuffer->size();
-	_pBuffer->resize(size);
+	_pBuffer->resize(size,true);
 	onReception(_pBuffer,address);
 	if (!_pBuffer.unique())
 		_pBuffer.reset(new Buffer<UInt8>(originSize));
@@ -105,7 +105,7 @@ bool UDPSocket::connect(Exception& ex, const SocketAddress& address) {
 bool UDPSocket::send(Exception& ex, const UInt8* data, UInt32 size) {
 	if (size == 0)
 		return true;
-	shared_ptr<UDPSender> pSender(new UDPSender(data, size));
+	shared_ptr<UDPSender> pSender(new UDPSender("UDPSender::send",data, size));
 	DatagramSocket::send(ex, pSender);
 	if (!ex)
 		return false;
@@ -119,7 +119,7 @@ bool UDPSocket::send(Exception& ex, const UInt8* data, UInt32 size) {
 bool UDPSocket::send(Exception& ex, const UInt8* data, UInt32 size,const SocketAddress& address) {
 	if (size == 0)
 		return true;
-	shared_ptr<UDPSender> pSender(new UDPSender(data, size));
+	shared_ptr<UDPSender> pSender(new UDPSender("UDPSender::send",data, size));
 	pSender->address.set(address);
 	DatagramSocket::send(ex, pSender);
 	if (!ex)

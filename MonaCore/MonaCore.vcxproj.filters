@@ -171,9 +171,6 @@
     <ClInclude Include="include\Mona\AMF.h">
       <Filter>Flash</Filter>
     </ClInclude>
-    <ClInclude Include="include\Mona\FlashMainStream.h">
-      <Filter>Flash</Filter>
-    </ClInclude>
     <ClInclude Include="include\Mona\FlashStream.h">
       <Filter>Flash</Filter>
     </ClInclude>
@@ -211,6 +208,9 @@
     <ClInclude Include="include\Mona\SOAPWriter.h">
       <Filter>Serializers</Filter>
     </ClInclude>
+    <ClInclude Include="include\Mona\FlashMainStream.h">
+      <Filter>Flash</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="sources\Protocols.cpp">
@@ -237,9 +237,6 @@
     <ClCompile Include="sources\RTMFP\RTMFProtocol.cpp">
       <Filter>Protocols\RTMFP</Filter>
     </ClCompile>
-    <ClCompile Include="sources\RTMFP\RTMFPSender.cpp">
-      <Filter>Protocols\RTMFP</Filter>
-    </ClCompile>
     <ClCompile Include="sources\RTMFP\RTMFPSession.cpp">
       <Filter>Protocols\RTMFP</Filter>
     </ClCompile>
@@ -250,9 +247,6 @@
       <Filter>Protocols\RTMP</Filter>
     </ClCompile>
     <ClCompile Include="sources\RTMP\RTMPHandshaker.cpp">
-      <Filter>Protocols\RTMP</Filter>
-    </ClCompile>
-    <ClCompile Include="sources\RTMP\RTMPSender.cpp">
       <Filter>Protocols\RTMP</Filter>
     </ClCompile>
     <ClCompile Include="sources\RTMP\RTMPSession.cpp">
@@ -315,9 +309,6 @@
     <ClCompile Include="sources\TCPSession.cpp">
       <Filter>Sessions</Filter>
     </ClCompile>
-    <ClCompile Include="sources\FlashMainStream.cpp">
-      <Filter>Flash</Filter>
-    </ClCompile>
     <ClCompile Include="sources\FlashStream.cpp">
       <Filter>Flash</Filter>
     </ClCompile>
@@ -343,6 +334,12 @@
     </ClCompile>
     <ClCompile Include="sources\SOAPReader.cpp">
       <Filter>Serializers</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\FlashMainStream.cpp">
+      <Filter>Flash</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\RTMP\RTMPSender.cpp">
+      <Filter>Protocols\RTMP</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

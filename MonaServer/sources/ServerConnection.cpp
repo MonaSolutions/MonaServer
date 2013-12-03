@@ -19,6 +19,7 @@ This file is a part of Mona.
 
 #include "ServerConnection.h"
 #include "Mona/Util.h"
+#include "Mona/Logs.h"
 
 
 using namespace std;
@@ -174,6 +175,11 @@ UInt32 ServerConnection::onReception(const shared_ptr<Buffer<UInt8>>& pData) {
 		_handler.message(*this,handler,reader);
 
 	return rest;
+}
+
+void ServerConnection::onError(const std::string& error) {
+	_error = error;
+	disconnect();
 }
 
 void ServerConnection::onDisconnection(){

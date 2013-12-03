@@ -116,6 +116,7 @@
     <ClInclude Include="include\Mona\Client.h" />
     <ClInclude Include="include\Mona\Clients.h" />
     <ClInclude Include="include\Mona\Decoding.h" />
+    <ClInclude Include="include\Mona\FlashMainStream.h" />
     <ClInclude Include="include\Mona\Group.h" />
     <ClInclude Include="include\Mona\Handler.h" />
     <ClInclude Include="include\Mona\ICE.h" />
@@ -177,7 +178,6 @@
     <ClInclude Include="include\Mona\Sessions.h" />
     <ClInclude Include="include\Mona\TCPSession.h" />
     <ClInclude Include="include\Mona\AMF.h" />
-    <ClInclude Include="include\Mona\FlashMainStream.h" />
     <ClInclude Include="include\Mona\FlashStream.h" />
     <ClInclude Include="include\Mona\FlashWriter.h" />
     <ClInclude Include="include\Mona\XMLReader.h" />
@@ -185,10 +185,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="sources\Decoding.cpp" />
+    <ClCompile Include="sources\FlashMainStream.cpp" />
     <ClCompile Include="sources\ICE.cpp" />
     <ClCompile Include="sources\Invoker.cpp" />
     <ClCompile Include="sources\Peer.cpp" />
     <ClCompile Include="sources\RelayServer.cpp" />
+    <ClCompile Include="sources\RTMP\RTMPSender.cpp" />
     <ClCompile Include="sources\SDP.cpp" />
     <ClCompile Include="sources\Server.cpp" />
     <ClCompile Include="sources\SOAPReader.cpp" />
@@ -202,12 +204,10 @@
     <ClCompile Include="sources\RTMFP\RTMFPHandshake.cpp" />
     <ClCompile Include="sources\RTMFP\RTMFPMessage.cpp" />
     <ClCompile Include="sources\RTMFP\RTMFProtocol.cpp" />
-    <ClCompile Include="sources\RTMFP\RTMFPSender.cpp" />
     <ClCompile Include="sources\RTMFP\RTMFPSession.cpp" />
     <ClCompile Include="sources\RTMFP\RTMFPWriter.cpp" />
     <ClCompile Include="sources\RTMP\RTMP.cpp" />
     <ClCompile Include="sources\RTMP\RTMPHandshaker.cpp" />
-    <ClCompile Include="sources\RTMP\RTMPSender.cpp" />
     <ClCompile Include="sources\RTMP\RTMPSession.cpp" />
     <ClCompile Include="sources\RTMP\RTMPWriter.cpp" />
     <ClCompile Include="sources\WebSocket\WS.cpp" />
@@ -230,7 +230,6 @@
     <ClCompile Include="sources\Session.cpp" />
     <ClCompile Include="sources\Sessions.cpp" />
     <ClCompile Include="sources\TCPSession.cpp" />
-    <ClCompile Include="sources\FlashMainStream.cpp" />
     <ClCompile Include="sources\FlashStream.cpp" />
     <ClCompile Include="sources\FlashWriter.cpp" />
     <ClCompile Include="sources\XMLReader.cpp" />

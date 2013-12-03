@@ -139,7 +139,7 @@ void Listener::pushDataPacket(DataReader& packet) {
 	packet.reset();
 	MemoryReader reader(pWriter->stream.data(),pWriter->stream.size());
 	reader.next(offset);
-	if(!_pDataWriter->writeMedia(Writer::DATA,0,reader))
+	if(!_pDataWriter->writeMedia(Writer::DATA,computeTime(0),reader))
 		init();
 }
 

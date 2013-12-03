@@ -69,9 +69,9 @@ UInt16 RTMFPCookie::read(MemoryWriter& writer) {
 
 
 bool RTMFPCookie::computeSecret(Exception& ex, const UInt8* initiatorKey,UInt32 sizeKey,const UInt8* initiatorNonce,UInt32 sizeNonce) {
-	_pCookieComputing->initiatorKey.resize(sizeKey);
+	_pCookieComputing->initiatorKey.resize(sizeKey,false);
 	memcpy(&_pCookieComputing->initiatorKey[0],initiatorKey,sizeKey);
-	_initiatorNonce.resize(sizeNonce);
+	_initiatorNonce.resize(sizeNonce,false);
 	memcpy(&_initiatorNonce[0],initiatorNonce,sizeNonce);
 	_pCookieComputing->weak = _pCookieComputing;
 	_pComputingThread = _invoker.poolThreads.enqueue<RTMFPCookieComputing>(ex,_pCookieComputing, _pComputingThread);

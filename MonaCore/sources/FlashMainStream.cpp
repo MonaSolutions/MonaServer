@@ -40,10 +40,18 @@ FlashMainStream::~FlashMainStream() {
 	if(_pGroup)
 		peer.unjoinGroup(*_pGroup);
 	// delete stream index remaining (which have not had time to send a 'destroyStream' message)
-	set<UInt32>::const_iterator it;
-	for(it=_streams.begin();it!=_streams.end();++it)
-		invoker.destroyFlashStream(*it);
+	for(auto it : _streams)
+		invoker.destroyFlashStream(it.first);
 }
+
+
+FlashStream* FlashMainStream::stream(UInt32 id) {
+	auto it = _streams.find(id);
+	if (it == _streams.end())
+		return NULL;
+	return it->second.get();
+}
+
 
 void FlashMainStream::close(FlashWriter& writer,const string& error,int code) {
 	switch(code) {
@@ -134,9 +142,11 @@ void FlashMainStream::messageHandler(Exception& ex, const string& name,AMFReader
 		response.writeNumberProperty("objectEncoding",3.0);
 		response.amf0Preference = false;
 		peer.onConnection(ex, writer,message,response);
-		response.endObject();
-		if (ex)
+		if (ex) {
+			response.clear(); // TODO test!
 			return;
+		}
+		response.endObject();
 
 	} else if(name == "setPeerInfo") {
 
@@ -161,14 +171,14 @@ void FlashMainStream::messageHandler(Exception& ex, const string& name,AMFReader
 	} else if(name == "initStream") {
 		// TODO?
 	} else if(name == "createStream") {
-
-		writer.writeMessage().writeNumber(*_streams.insert(invoker.createFlashStream(peer)).first);
+		shared_ptr<FlashStream>& pStream = invoker.createFlashStream(peer);
+		_streams.emplace(pStream->id, pStream);
+		writer.writeMessage().writeNumber(pStream->id);
 
 	} else if(name == "deleteStream") {
 		UInt32 id = (UInt32)message.readNumber();
 		_streams.erase(id);
 		invoker.destroyFlashStream(id);
-
 	} else {
 		Exception exm;
 		peer.onMessage(exm, name, message);
@@ -211,7 +221,7 @@ void FlashMainStream::rawHandler(Exception& ex,UInt8 type,MemoryReader& data,Fla
 				setBufferTime(data.read32());
 				return;
 			}
-			shared_ptr<FlashStream> pStream = invoker.getFlashStream(streamId);
+			FlashStream* pStream = stream(streamId); // TODO checker!
 			if (!pStream) {
 				ERROR("setBufferTime message for a unknown ",streamId," stream")
 				return;

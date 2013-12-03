@@ -22,7 +22,6 @@ This file is a part of Mona.
 #include "Mona/Mona.h"
 #include "Mona/TCPSender.h"
 #include "Mona/AMFWriter.h"
-#include "Mona/MemoryReader.h"
 #include "Mona/RTMP/RTMP.h"
 
 
@@ -30,25 +29,25 @@ namespace Mona {
 
 class RTMPSender : public TCPSender, virtual Object {
 public:
-	RTMPSender(const SocketAddress& address,const std::shared_ptr<RC4_KEY>& pEncryptKey);
-	RTMPSender(const RTMPSender& sender);
+	RTMPSender(const std::shared_ptr<RC4_KEY>& pEncryptKey=nullptr) : _pEncryptKey(pEncryptKey),sizePos(0),headerSize(0),TCPSender("RTMPSender") {}
+	RTMPSender(const RTMPSender& sender) : sizePos(0),headerSize(0),TCPSender("RTMPSender"),_pEncryptKey(sender._pEncryptKey) {}
 
-	AMFWriter	writer;
-	
-	AMFWriter&	write(UInt32 id,AMF::ContentType type,UInt32 time=0,UInt32 streamId=0,MemoryReader* pData=NULL);
-	
-	const UInt8*		begin() { return writer.stream.data(); }
-	UInt32				size() { return writer.stream.size(); }
+	UInt32				sizePos;
+	UInt8				headerSize;
 
+	const UInt8*		begin() { return _writer.stream.data(); }
+	UInt32				size() { return _writer.stream.size(); }
+
+	bool				encrypted() { return _pEncryptKey ? true : false; }
+
+	void clear() { _writer.clear(); }
+
+	AMFWriter& writer(RTMPChannel& channel);
 private:
 	bool				run(Exception& ex);
-	void				pack(); // TODO remove??
 
-	UInt32						_sizePos;
-	UInt32						_chunkSize;
-	RTMPChannel					_channel; // TODO not copied on RTMPSender(const RTMPSender& sender); ?
+	AMFWriter					_writer;
 	std::shared_ptr<RC4_KEY>	_pEncryptKey;
-	SocketAddress				_address;
 };
 
 

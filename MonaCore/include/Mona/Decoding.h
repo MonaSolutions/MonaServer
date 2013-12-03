@@ -37,7 +37,7 @@ class Session;
 class Decoding : public WorkThread, private Task, virtual Object {
 	friend class Session;
 public:
-	Decoding(const std::shared_ptr<Buffer<UInt8>> &pBuffer, TaskHandler& taskHandler, UInt32 offset = 0);
+	Decoding(const char* name,const std::shared_ptr<Buffer<UInt8>> &pBuffer, TaskHandler& taskHandler, UInt32 offset = 0);
 private:
 	// If ex is raised, an error is displayed if the operation has returned false
 	// otherwise a warning is displayed

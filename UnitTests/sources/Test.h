@@ -20,6 +20,7 @@ This file is a part of Mona.
 #pragma once
 
 #include "Mona/Exceptions.h"
+#include "Mona/StopWatch.h"
 #include <memory>
 #include <map>
 
@@ -33,14 +34,15 @@ public:
 	virtual ~Test() {}
 		/// \brief You can do clean-up work that doesn't throw exceptions here.
 
-	virtual void TestFunction(){}
-		/// \brief The test function to overload
-
-	const std::string& name(){ return _name;}
-		/// \brief accessor to the fullname of the test
+	void run();
 
 private:
-	std::string _name; /// fullname of the test
+	virtual void TestFunction() = 0;
+		/// \brief The test function to overload
+
+
+	std::string		_name; /// fullname of the test
+	Mona::Stopwatch	_chrono;
 };
 
 /// \class Container of Test classes

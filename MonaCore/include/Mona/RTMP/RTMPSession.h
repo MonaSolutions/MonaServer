@@ -35,27 +35,33 @@ public:
 private:
 	bool			buildPacket(const std::shared_ptr<Buffer<UInt8>>& pData, MemoryReader& packet);
 	void			packetHandler(MemoryReader& packet);
+	void			endReception() {if (_pStream) _pStream->flush();}
 
 	bool			performHandshake(MemoryReader& packet, bool encrypted);
 	void			performComplexHandshake(const UInt8* farPubKey,const UInt8* challengeKey, bool encrypted);
 	void			performSimpleHandshake(MemoryReader& packet);
 
+	void			kill();
 
-	void			manage();
+	void			manage() {_controller.flush();}
 
 
 	UInt8							_handshaking;
-		
-	UInt16						_chunkSize;
+	UInt16							_chunkSize;
+	UInt32							_winAckSize;
+	UInt32							_unackBytes;
 
-	std::map<UInt8,RTMPWriter*>	_writers;
+	std::map<UInt16,RTMPWriter>			_writers;
+	std::shared_ptr<RTMPSender>			_pSender;
+	RTMPWriter							_controller;
 	RTMPWriter*							_pWriter;
+
 	PoolThread*							_pThread;
-
-	std::shared_ptr<RC4_KEY>			_pDecryptKey;
 	std::shared_ptr<RC4_KEY>			_pEncryptKey;
+	std::shared_ptr<RC4_KEY>			_pDecryptKey;
 
-	FlashMainStream						_mainStream;
+	std::shared_ptr<FlashStream>		_pStream;
+	UInt32								_decrypted;
 };
 
 

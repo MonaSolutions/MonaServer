@@ -70,12 +70,15 @@ public:
 	enum ContentType {
 		EMPTY				=0x00,
 		CHUNKSIZE			=0x01,
-		ABORT				=0x02, // TODO (just need by RTMP)?
+		ABORT				=0x02,
+		ACK					=0x03,
 		RAW					=0x04,
-		SERVER_BANDWITH		=0x05,
+		WIN_ACKSIZE			=0x05,
+		BANDWITH			=0x06,
 		AUDIO				=0x08,
 		VIDEO				=0x09,
 		DATA				=0x0F,
+		INVOCATION_AMF3		=0x11,
 		INVOCATION			=0x14
 	};
 };

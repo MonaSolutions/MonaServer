@@ -59,7 +59,7 @@ void BinaryWriter::write16(UInt16 value) {
 void BinaryWriter::write24(UInt32 value) {
 	if (_flipBytes)
 		value = Binary::Flip24(value);
-	_ostr.write((const char*)&value, sizeof(value));
+	_ostr.write((const char*)&value, 3);
 }
 
 void BinaryWriter::write32(UInt32 value) {

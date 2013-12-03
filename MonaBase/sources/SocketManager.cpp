@@ -320,9 +320,8 @@ void SocketManager::run(Exception& exc) {
 			}
 
 		} else if (_currentEvent != FD_READ || _fakeSocket.available(_exSkip)) {
-			_currentError = WSAGETSELECTERROR(msg.lParam);
-			if(_currentError == ECONNABORTED)
-				_currentError = 0;
+			if (_currentEvent!=FD_CLOSE)
+				_currentError = WSAGETSELECTERROR(msg.lParam);
 			// TRACE("SocketManager::waitHandle()")
 			Task::waitHandle();
 		}

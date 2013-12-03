@@ -443,13 +443,6 @@ void RTMFPWriter::flush(bool full) {
 	while(it!=_messages.end()) {
 		RTMFPMessage& message(**it);
 
-		if(message.canceled) {
-			delete *it;
-			_messages.pop_front();
-			it=_messages.begin();
-			continue;
-		}
-
 		if(message.repeatable) {
 			++_repeatable;
 			_trigger.start();
@@ -525,8 +518,6 @@ RTMFPWriter::State RTMFPWriter::state(State value,bool minimal) {
 				delete _messages.back();
 				_messages.pop_back();
 			}
-			if(!_messages.empty())
-				(*_messages.back()).canceled=true;
 		}
 		_connectedSize=-1;
 	}

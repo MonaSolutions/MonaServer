@@ -43,15 +43,41 @@ Invoker::~Invoker() {
 		delete it2->second;
 }
 
-UInt32 Invoker::createFlashStream(Peer& peer) {
-
+shared_ptr<FlashStream>& Invoker::createFlashStream(Peer& peer) {
 	map<UInt32, shared_ptr<FlashStream> >::iterator it;
 	do {
 		it = _streams.lower_bound((++_nextId) == 0 ? ++_nextId : _nextId);
 	} while (it != _streams.end() && it->first == _nextId);
 	shared_ptr<FlashStream> pStream(new FlashStream(_nextId,*this, peer));
-	_streams.emplace_hint(it, _nextId, pStream);
-	return _nextId;
+	return _streams.emplace_hint(it, _nextId, pStream)->second;
+}
+
+FlashStream& Invoker::flashStream(UInt32 id,Peer& peer,shared_ptr<FlashStream>& pStream) {
+	// flash main stream
+	if (id == 0) {
+		if (!pStream)
+			pStream.reset(new FlashMainStream(*this,peer));
+		return *pStream;
+	}
+	if (pStream) {
+		// search inside pStream
+		FlashStream* pResult = pStream->stream(id);
+		if (pResult)
+			return *pResult;	
+	}
+	// search in streams list
+	auto it = _streams.lower_bound(id);
+	if (it != _streams.end() && id == it->first) {
+		if (!pStream)
+			pStream = it->second;
+		return *it->second;
+	}
+	// return pStream passed or a create a new FlashStream
+	if (pStream)
+		return *pStream;
+	pStream.reset(new FlashStream(id, *this, peer));
+	_streams.emplace_hint(it, id, pStream);
+	return *pStream;
 }
 
 Publication* Invoker::publish(Exception& ex, Peer& peer,const string& name) {

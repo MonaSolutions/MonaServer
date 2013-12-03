@@ -32,7 +32,7 @@ using namespace std;
 
 namespace Mona {
 
-RTMPHandshaker::RTMPHandshaker(const SocketAddress& address, const UInt8* data, UInt32 size) : _address(address), _middle(false), _writer(_buffer, sizeof(_buffer)), _farPubKey(0) {
+RTMPHandshaker::RTMPHandshaker(const SocketAddress& address, const UInt8* data, UInt32 size) : TCPSender("RTMPHandshaker"),_address(address), _middle(false), _writer(_buffer, sizeof(_buffer)), _farPubKey(0) {
 	_writer.write8(3);
 	//generate random data
 	Util::Random(_writer.begin() + _writer.position(), 1536);
@@ -40,7 +40,7 @@ RTMPHandshaker::RTMPHandshaker(const SocketAddress& address, const UInt8* data, 
 	_writer.writeRaw(data,size);
 }
 
-RTMPHandshaker::RTMPHandshaker(const SocketAddress& address, const UInt8* farPubKey, const UInt8* challengeKey, bool middle, const std::shared_ptr<RC4_KEY>& pDecryptKey, const std::shared_ptr<RC4_KEY>& pEncryptKey) : _address(address), _pDecryptKey(pDecryptKey), _pEncryptKey(pEncryptKey), _middle(middle), _writer(_buffer, sizeof(_buffer)), _farPubKey(DH_KEY_SIZE) {
+RTMPHandshaker::RTMPHandshaker(const SocketAddress& address, const UInt8* farPubKey, const UInt8* challengeKey, bool middle, const std::shared_ptr<RC4_KEY>& pDecryptKey, const std::shared_ptr<RC4_KEY>& pEncryptKey) : TCPSender("RTMPHandshaker"),_address(address), _pDecryptKey(pDecryptKey), _pEncryptKey(pEncryptKey), _middle(middle), _writer(_buffer, sizeof(_buffer)), _farPubKey(DH_KEY_SIZE) {
 	memcpy(_farPubKey.data(),farPubKey,_farPubKey.size());
 	memcpy(_challengeKey,challengeKey,sizeof(_challengeKey));
 }
@@ -51,7 +51,7 @@ bool RTMPHandshaker::run(Exception& ex) {
 		if (!runComplex(ex))
 			return false;
 	}
-	Writer::DumpResponse(begin(), size(), _address);
+	Writer::DumpResponse(begin(), size(), _address,true);
 	return TCPSender::run(ex);
 }
 
@@ -83,7 +83,7 @@ bool RTMPHandshaker::runComplex(Exception& ex) {
 		DiffieHellman dh;
 		int publicKeySize;
 		do {
-			if (!ex || !dh.initialize(ex, true))
+			if (ex || !dh.initialize(ex, true))
 				return false;
 			dh.computeSecret(ex, _farPubKey, secret);
 		} while (!ex && (secret.size() != DH_KEY_SIZE || dh.privateKeySize(ex) != DH_KEY_SIZE || (publicKeySize=dh.publicKeySize(ex)) != DH_KEY_SIZE));

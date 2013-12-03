@@ -27,7 +27,7 @@ namespace Mona {
 
 class RTMFPDecoding : public Decoding, virtual Object {
 public:
-	RTMFPDecoding(const std::shared_ptr<Buffer<UInt8> >& pBuffer, TaskHandler& taskHandler) : Decoding(pBuffer, taskHandler) {}
+	RTMFPDecoding(const std::shared_ptr<Buffer<UInt8> >& pBuffer, TaskHandler& taskHandler) : Decoding("RTMFPDecoding",pBuffer, taskHandler) {}
 
 	RTMFPEngine	  decoder;
 

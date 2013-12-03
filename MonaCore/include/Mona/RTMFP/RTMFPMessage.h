@@ -45,7 +45,6 @@ public:
 
 	std::map<UInt32,UInt64>		fragments;
 	const bool					repeatable;
-	bool						canceled;
 	
 private:
 	virtual	UInt32	init(UInt32 position)=0;

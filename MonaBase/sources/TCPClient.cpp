@@ -67,7 +67,7 @@ void TCPClient::onReadable(Exception& ex) {
 	}
 
 	if (available > (_pBuffer->size() - _rest))
-		_pBuffer->resize(available + _rest);
+		_pBuffer->resize(available + _rest,true);
 
 	int received = receiveBytes(ex, _pBuffer->data()+_rest, available);
 	if (ex)
@@ -79,10 +79,12 @@ void TCPClient::onReadable(Exception& ex) {
 	}
 	_rest += received;
 
+	bool consumed(false);
+
 	while (_rest > 0) {
 
 		UInt32 originSize = _pBuffer->size();
-		_pBuffer->resize(_rest);
+		_pBuffer->resize(_rest,true);
 		UInt32 rest = onReception(_pBuffer);
 
 		if (rest > _rest)
@@ -95,10 +97,18 @@ void TCPClient::onReadable(Exception& ex) {
 			_pBuffer->resetSize();
 	
 		// rest <= _rest, has consumed 0 or few bytes
-		if (rest>0 && (_rest != rest || !_pBuffer.unique())) // has consumed few bytes or buffer has changed
+		if (rest>0 && (_rest != rest || _pBuffer.unique())) // has consumed few bytes (but not all) or buffer has changed
 			memcpy(_pBuffer->data(), pOldBuffer->data() + (_rest - rest), rest); // move to the beginning
+		
+		if (_rest == rest) // no new bytes consumption, wait next reception
+			break;
+
 		_rest = rest;
+		consumed = true;
 	}
+	
+	if (consumed)
+		endReception();
 }
 
 
@@ -106,7 +116,6 @@ bool TCPClient::connect(Exception& ex,const SocketAddress& address) {
 	disconnect();
 	return _connected = StreamSocket::connect(ex, address);
 }
-
 
 void TCPClient::disconnect() {
 	if(!_connected)
@@ -123,7 +132,7 @@ void TCPClient::disconnect() {
 bool TCPClient::send(Exception& ex,const UInt8* data,UInt32 size) {
 	if(size==0)
 		return true;
-	shared_ptr<TCPSender> pSender(new TCPSender(data, size));
+	shared_ptr<TCPSender> pSender(new TCPSender("TCPClient::send",data, size));
 	StreamSocket::send(ex, pSender);
 	return !ex;
 }

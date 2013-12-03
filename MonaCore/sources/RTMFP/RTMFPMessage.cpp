@@ -26,7 +26,7 @@ using namespace std;
 
 namespace Mona {
 
-RTMFPMessage::RTMFPMessage(istream& istr,bool repeatable) : _reader(istr),repeatable(repeatable),canceled(false) {
+RTMFPMessage::RTMFPMessage(istream& istr,bool repeatable) : _reader(istr),repeatable(repeatable) {
 	
 }
 

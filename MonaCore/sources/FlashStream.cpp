@@ -56,10 +56,10 @@ void FlashStream::disengage(FlashWriter* pWriter) {
 }
 
 void FlashStream::close(FlashWriter& writer,const string& error,int code) {
-	// TODO
+	// TODO what doing for FlashStream?
 }
 
-void FlashStream::process(AMF::ContentType type,MemoryReader& data,FlashWriter& writer,UInt32 numberLostFragments) {
+void FlashStream::process(AMF::ContentType type,UInt32 time,MemoryReader& data,FlashWriter& writer,UInt32 numberLostFragments) {
 	if(type==AMF::EMPTY)
 		return;
 	
@@ -67,6 +67,7 @@ void FlashStream::process(AMF::ContentType type,MemoryReader& data,FlashWriter& 
 	Exception ex;
 	// if exception, it closes the connection, and print an ERROR message
 	switch(type) {
+		case AMF::INVOCATION_AMF3:
 		case AMF::INVOCATION: {
 			string name;
 			AMFReader reader(data);
@@ -79,14 +80,18 @@ void FlashStream::process(AMF::ContentType type,MemoryReader& data,FlashWriter& 
 		}
 		case AMF::DATA: {
 			AMFReader reader(data);
-			dataHandler(ex, reader, numberLostFragments);
+			dataHandler(ex,reader, numberLostFragments);
 			break;
 		}
 		case AMF::AUDIO:
-			audioHandler(ex, data, numberLostFragments);
+			audioHandler(ex, time,data, numberLostFragments);
 			break;
 		case AMF::VIDEO:
-			videoHandler(ex, data, numberLostFragments);
+			videoHandler(ex, time,data, numberLostFragments);
+			break;
+		case AMF::ACK:
+			// nothing to do, a ack message says about how many bytes have been gotten by the peer
+			// RTMFP has a complexe ack mechanism and RTMP is TCP based, ack mechanism is in system layer => so useless
 			break;
 		default:
 			rawHandler(ex, type, data, writer);
@@ -122,8 +127,8 @@ void FlashStream::messageHandler(Exception& ex,const string& name,AMFReader& mes
 			raw.write32(id);
 			_pListener->setBufferTime(_bufferTime);
 		}
-		writer.writeAMFStatus("NetStream.Play.Reset","Playing and resetting " + publication);
-		writer.writeAMFStatus("NetStream.Play.Start","Started playing " + publication);
+		writer.writeAMFStatus("NetStream.Play.Reset","Playing and resetting " + publication); // for entiere playlist
+		writer.writeAMFStatus("NetStream.Play.Start","Started playing " + publication); // for item
 		
 	} else if(name == "closeStream") {
 		disengage(&writer);
@@ -151,7 +156,6 @@ void FlashStream::messageHandler(Exception& ex,const string& name,AMFReader& mes
 		_pListener->receiveVideo = message.readBoolean();
 	} else
 		ERROR("RTMFPMessage '",name,"' unknown on stream ",id);
-	
 }
 
 
@@ -171,7 +175,7 @@ void FlashStream::setBufferTime(UInt32 ms) {
 		_pListener->setBufferTime(ms);
 }
 
-void FlashStream::dataHandler(Exception& ex, DataReader& data, UInt32 numberLostFragments) {
+void FlashStream::dataHandler(Exception& ex,DataReader& data, UInt32 numberLostFragments) {
 	if(!_pPublication) {
 		ERROR("a data packet has been received on a no publishing stream ",id);
 		return;
@@ -183,24 +187,24 @@ void FlashStream::dataHandler(Exception& ex, DataReader& data, UInt32 numberLost
 }
 
 
-void FlashStream::audioHandler(Exception& ex, MemoryReader& packet, UInt32 numberLostFragments) {
+void FlashStream::audioHandler(Exception& ex, UInt32 time,MemoryReader& packet, UInt32 numberLostFragments) {
 	if(!_pPublication) {
 		WARN("an audio packet has been received on a no publishing stream ",id,", certainly a publication currently closing");
 		return;
 	}
 	if(_pPublication->publisher() == &peer)
-		_pPublication->pushAudio(packet,packet.read32(),numberLostFragments);
+		_pPublication->pushAudio(packet,time,numberLostFragments);
 	else
 		WARN("an audio packet has been received on a stream ",id," which is not on owner of this publication, certainly a publication currently closing");
 }
 
-void FlashStream::videoHandler(Exception& ex, MemoryReader& packet, UInt32 numberLostFragments) {
+void FlashStream::videoHandler(Exception& ex, UInt32 time,MemoryReader& packet, UInt32 numberLostFragments) {
 	if(!_pPublication) {
 		WARN("a video packet has been received on a no publishing stream ",id,", certainly a publication currently closing");
 		return;
 	}
 	if(_pPublication->publisher() == &peer)
-		_pPublication->pushVideo(packet,packet.read32(),numberLostFragments);
+		_pPublication->pushVideo(packet,time,numberLostFragments);
 	else
 		WARN("a video packet has been received on a stream ",id," which is not on owner of this publication, certainly a publication currently closing");
 }

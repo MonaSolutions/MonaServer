@@ -34,7 +34,7 @@ namespace Mona {
 
 const char* LogPriorities[] = { "FATAL", "CRITIC", "ERROR", "WARN", "NOTE", "INFO", "DEBUG", "TRACE" };
 
-Application::Application() : _logSizeByFile(1000000), _logRotation(10) {
+Application::Application() : _logSizeByFile(500), _logRotation(10) {
 #if defined(_DEBUG)
 #if defined(_WIN32)
 	DetectMemoryLeak();
@@ -219,7 +219,10 @@ void Application::manageLogFiles() {
 		string newPath;
 		while(--num>=0)
 			FileSystem::Rename(String::Format(path, _logPath, num), String::Format(newPath, _logPath, num + 1));
-		_logStream.open(_logPath, ios::out | ios::binary | ios::app);
+		if (_logRotation>0)
+			_logStream.open(_logPath+"0", ios::out | ios::binary | ios::app);
+		else
+			_logStream.open(_logPath, ios::out | ios::binary | ios::app);
 	}
 }
 

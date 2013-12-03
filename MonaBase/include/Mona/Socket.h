@@ -138,14 +138,14 @@ private:
 		SocketAddress address;
 		if (!address.set(ex, *pSA) || !onConnection(address))
 			return NULL;
-		SocketType* pSocketType = new SocketType(address,args ...);
-		Socket* pSocketBase = (Socket*)pSocketType;
+		SocketType* pSocket = new SocketType(address,args ...);
+		Socket* pSocketBase = (Socket*)pSocket;
 		std::lock_guard<std::mutex>	lock(pSocketBase->_mutexInit);
 		if (!pSocketBase->init(ex, sockfd)) {
-			delete pSocketType;
-			pSocketType = NULL;
+			delete pSocket;
+			pSocket = NULL;
 		}
-		return pSocketType;
+		return pSocket;
 	}
 	void rejectConnection();
 

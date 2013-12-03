@@ -59,7 +59,8 @@ void Sessions::updateAddress(Session& session, const SocketAddress& oldAddress) 
 void Sessions::manage() {
 	auto it= _sessions.begin();
 	while(it!=_sessions.end()) {
-		it->second->manage();
+		if(!it->second->died)
+			it->second->manage();
 		if(it->second->died) {
 			remove(it++);
 			continue;

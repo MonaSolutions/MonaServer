@@ -35,7 +35,7 @@ public:
 
 	void resetSize() { _size = _originalSize; }
 
-	void resize(UInt32 size,bool preserveContent = true) {
+	void resize(UInt32 size,bool preserveContent) {
 		if (size == _originalSize)
 			return;
 		if (size<_originalSize) {

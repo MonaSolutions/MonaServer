@@ -700,6 +700,8 @@ void MonaServer::disconnection(const ServerConnection& server,const string& erro
 	SCRIPT_BEGIN(_pService->open())
 		SCRIPT_FUNCTION_BEGIN("onServerDisconnection")
 			SCRIPT_ADD_OBJECT(ServerConnection,LUAServer,server)
+			if (!error.empty())
+				SCRIPT_WRITE_STRING(error.c_str());
 			SCRIPT_FUNCTION_CALL
 		SCRIPT_FUNCTION_END
 	SCRIPT_END

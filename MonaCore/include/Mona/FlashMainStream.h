@@ -29,6 +29,10 @@ public:
 	FlashMainStream(Invoker& invoker,Peer& peer);
 	virtual ~FlashMainStream();
 
+	FlashStream* stream(UInt32 id);
+
+	void flush() {for(auto it : _streams) it.second->flush(); }
+
 private:
 
 	void	messageHandler(Exception& ex, const std::string& name, AMFReader& message, FlashWriter& writer);
@@ -36,8 +40,8 @@ private:
 
 	void	close(FlashWriter& writer,const std::string& error,int code=0);
 
-	std::set<UInt32>	_streams;
-	Group*				_pGroup;
+	std::map<UInt32,std::shared_ptr<FlashStream>>	_streams;
+	Group*											_pGroup;
 };
 
 

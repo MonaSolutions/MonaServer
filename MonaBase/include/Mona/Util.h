@@ -1,4 +1,4 @@
-/*
+﻿/*
 Copyright 2014 Mona
 mathieu.poux[a]gmail.com
 jammetthomas[a]gmail.com
@@ -27,7 +27,7 @@ This file is a part of Mona.
 #include <vector>
 #include <map>
 #include <thread>
-
+#include <limits>
 
 namespace Mona {
 
@@ -64,6 +64,14 @@ public:
 	static unsigned ProcessorCount() { unsigned result(std::thread::hardware_concurrency());  return result > 0 ? result : 1; }
 	static const MapParameters& Environment();
 
+	template<typename Type>
+	static Type Random() {
+		static UInt32 x = (UInt32)Time();
+		static UInt32 y = 362436069, z = 521288629, w = 88675123;
+		UInt32 t = x ^ (x << 11);
+		x = y; y = z; z = w;
+		return (w = w ^ (w >> 19) ^ (t ^ (t >> 8))) % std::numeric_limits<Type>::max();
+	}
 	static void Random(UInt8* data, UInt32 size);
 private:
 	static MapParameters	_Environment;

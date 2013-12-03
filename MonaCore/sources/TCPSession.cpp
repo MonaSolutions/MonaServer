@@ -25,7 +25,7 @@ using namespace std;
 
 namespace Mona {
 
-TCPSession::TCPSession(const SocketAddress& peerAddress, Protocol& protocol, Invoker& invoker) : _decoding(false), TCPClient(invoker.sockets, peerAddress), Session(protocol, invoker) {
+TCPSession::TCPSession(const SocketAddress& peerAddress, Protocol& protocol, Invoker& invoker) : TCPClient(invoker.sockets, peerAddress), Session(protocol, invoker) {
 	((SocketAddress&)peer.address).set(peerAddress);
 	peer.addresses.begin()->set(peerAddress);
 }
@@ -36,23 +36,13 @@ void TCPSession::onError(const string& error) {
 
 UInt32 TCPSession::onReception(const shared_ptr<Buffer<UInt8>>& pData) {
 	UInt32 size = pData->size();
-	onData(pData);
-	if (pData->size() >= size)
-		return false;
-	// has consumed few data
-	endReception();
-	return size - pData->size();
-}
-
-void TCPSession::onData(const shared_ptr<Buffer<UInt8>>& pData) {
 	if (died)
-		return;
-	_decoding=false;
+		return size;
 	MemoryReader packet(pData->data(), pData->size());
 	if (!buildPacket(pData, packet))
-		return;
+		return size;
 	UInt32 length = packet.position() + packet.available();
-	if (!_decoding) {
+	if (pData.unique()) { // if not decoded!
 		UInt32 pos = packet.position();
 		packet.reset();
 		if (!dumpJustInDebug || (dumpJustInDebug && Logs::GetLevel() >= 7))
@@ -60,12 +50,7 @@ void TCPSession::onData(const shared_ptr<Buffer<UInt8>>& pData) {
 		packet.next(pos);
 		packetHandler(packet);
 	}
-	UInt32 rest = pData->size() - length;
-	if (rest == 0)
-		return;
-	memcpy(pData->data(), pData->data() + (pData->size() - rest), rest); // move the rest to the beginning
-	pData->resize(rest);
-	onData(pData);
+	return pData->size() - length;
 }
 
 

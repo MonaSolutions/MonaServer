@@ -29,11 +29,10 @@ namespace Mona {
 
 class RTMPWriter : public FlashWriter, virtual Object {
 public:
-	RTMPWriter(UInt8 id,const std::shared_ptr<RC4_KEY>& pEncryptKey,StreamSocket& socket);
+	RTMPWriter(UInt32 id,StreamSocket& socket,const SocketAddress& address,std::shared_ptr<RTMPSender>& pSender);
 
-	const UInt8		id;
+	const UInt32	id;
 	RTMPChannel		channel;
-
 
 	State			state(State value=GET,bool minimal=false);
 	void			close(int code=0);
@@ -42,13 +41,20 @@ public:
 
 	void			flush(bool full=false);
 
-	void			writeMaxChunkSize();
+	void			writeAck(UInt32 count) {write(AMF::ACK).writer.write32(count);}
+	void			writeWinAckSize(UInt32 value) {write(AMF::WIN_ACKSIZE).writer.write32(value);}
+	void			writeProtocolSettings();
 private:
+
 	AMFWriter&		write(AMF::ContentType type,UInt32 time=0,MemoryReader* pData=NULL);
 
-	std::shared_ptr<RTMPSender>	_pSender;
-	StreamSocket&				_socket;
-	PoolThread*					_pThread;
+	RTMPChannel						_channel;
+	std::shared_ptr<RTMPSender>&	_pSender;
+	StreamSocket&					_socket;
+	PoolThread*						_pThread;
+	SocketAddress					_address;
+	bool							_isMain;
+	
 };
 
 

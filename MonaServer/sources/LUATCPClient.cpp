@@ -35,7 +35,7 @@ LUATCPClient::~LUATCPClient() {
 
 void LUATCPClient::onError(const std::string& error) {
 	_error = error;
-	ERROR("LUATCPClient, ", error);
+	disconnect();
 }
 
 
@@ -45,7 +45,8 @@ UInt32 LUATCPClient::onReception(const shared_ptr<Buffer<UInt8>>& pData) {
 		SCRIPT_MEMBER_FUNCTION_BEGIN(LUATCPClient,*this,"onReception")
 			SCRIPT_WRITE_BINARY(pData->data(),pData->size())
 			SCRIPT_FUNCTION_CALL
-			rest = SCRIPT_READ_UINT(0);
+			if (SCRIPT_CAN_READ)
+				rest = SCRIPT_READ_UINT(0);
 		SCRIPT_FUNCTION_END
 	SCRIPT_END
 	return rest;

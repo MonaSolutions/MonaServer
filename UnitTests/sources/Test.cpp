@@ -23,11 +23,17 @@ This file is a part of Mona.
 using namespace Mona;
 using namespace std;
 
+
+void Test::run() {
+	_chrono.restart();
+	TestFunction();
+	_chrono.stop();
+	NOTE(_name, " OK (",_chrono.elapsed()/1000,"ms)");
+}
+
 void PoolTest::runAll() {
-    for(auto& itTest : _mapTests) {
-        itTest.second->TestFunction();
-        NOTE(itTest.second->name(), " OK");
-	}
+    for(auto& itTest : _mapTests)
+        itTest.second->run();
 }
 
 void PoolTest::run(const string& mod) {
@@ -40,10 +46,8 @@ void PoolTest::run(const string& mod) {
 	}
 
 	// Run all tests of the module
-	for(auto it = itTest.first; it != itTest.second; it++) {
-        it->second->TestFunction();
-        NOTE(it->second->name(), " OK");
-	}
+	for(auto it = itTest.first; it != itTest.second; it++)
+        it->second->run();
 }
 
 void PoolTest::getListTests(vector<string>& lTests) {

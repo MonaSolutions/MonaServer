@@ -30,6 +30,7 @@ This file is a part of Mona.
 #define HMAC_KEY_SIZE	0x20
 
 #if defined(_WIN32)
+#define NOMINMAX
 #define _WINSOCKAPI_    // stops windows.h including winsock.h
 #define sprintf sprintf_s
 #define snprintf sprintf_s

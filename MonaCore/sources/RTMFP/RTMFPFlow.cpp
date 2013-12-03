@@ -43,7 +43,7 @@ public:
 
 	void add(MemoryReader& fragment) {
 		string::size_type old = _buffer.size();
-		_buffer.resize(old + (string::size_type)fragment.available());
+		_buffer.resize(old + (string::size_type)fragment.available(),true);
 		if(_buffer.size()>old)
 			memcpy(&_buffer[old],fragment.current(),(size_t)fragment.available());
 		++(UInt16&)fragments;
@@ -91,7 +91,7 @@ RTMFPFlow::RTMFPFlow(UInt64 id,const string& signature,Peer& peer,Invoker& invok
 	if(signature.size()>4 && signature.compare(0,5,"\x00\x54\x43\x04\x00",5)==0)
 		(bool&)pWriter->critical = true; // NetConnection
 	else if(signature.size()>3 && signature.compare(0,4,"\x00\x54\x43\x04",4)==0)
-		_pStream = invoker.getFlashStream(MemoryReader((const UInt8*)signature.c_str()+4,signature.length()-4).read7BitValue()); // NetStream
+		invoker.flashStream(MemoryReader((const UInt8*)signature.c_str()+4,signature.length()-4).read7BitValue(),peer,_pStream); // NetStream
 	else if(signature.size()>2 && signature.compare(0,3,"\x00\x47\x43",3)==0)
 		(UInt64&)pWriter->flowId = id; // NetGroup
 	
@@ -135,26 +135,26 @@ void RTMFPFlow::fail(const string& error) {
 	writer.write8(0); // unknown
 }
 
-AMF::ContentType RTMFPFlow::unpack(MemoryReader& reader) {
+AMF::ContentType RTMFPFlow::unpack(MemoryReader& reader,UInt32& time) {
 	if(reader.available()==0)
 		return AMF::EMPTY;
 	AMF::ContentType type = (AMF::ContentType)reader.read8();
 	switch(type) {
 		// amf content
-		case 0x11:
+		case AMF::INVOCATION_AMF3:
 			reader.next(1);
 		case AMF::INVOCATION:
 			reader.next(4);
 			return AMF::INVOCATION;
-		case AMF::DATA:
-			reader.next(5);
 		case AMF::AUDIO:
 		case AMF::VIDEO:
+			time = reader.read32();
 			break;
-		// raw data
+		case AMF::DATA:
+			reader.next(1);
 		case AMF::RAW:
 			reader.next(4);
-		case 0x01:
+		case AMF::CHUNKSIZE:
 			break;
 		default:
 			ERROR("Unpacking type '",Format<UInt8>("%02x",(UInt8)type),"' unknown");
@@ -334,8 +334,8 @@ void RTMFPFlow::fragmentSortedHandler(UInt64 _stage,MemoryReader& fragment,UInt8
 		_pPacket = new RTMFPPacket(fragment);
 		return;
 	}
-
-	_pStream->process(unpack(*pMessage),*pMessage,*_pWriter,_numberLostFragments);
+	UInt32 time(0);
+	_pStream->process(unpack(*pMessage,time),time,*pMessage,*_pWriter,_numberLostFragments);
 	_numberLostFragments=0;
 
 	if(_pPacket) {

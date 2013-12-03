@@ -28,24 +28,24 @@ This file is a part of Mona.
 
 namespace Mona {
 
-#define DEFAULT_CHUNKSIZE	128
-
-
 class RTMPChannel : virtual Object {
 public:
-	RTMPChannel():headerSize(0),time(0),bodySize(0),type(AMF::EMPTY),streamId(0){}
-	virtual ~RTMPChannel(){}
-
-	UInt16		headerSize;
-	UInt32		bodySize;
-	UInt32		time;
-	UInt32		streamId;
+	RTMPChannel(): absoluteTime(0),time(0),bodySize(0),type(AMF::EMPTY),streamId(0){}
+	UInt32				bodySize;
+	UInt32				time;
+	UInt32				absoluteTime;
+	UInt32				streamId;
 	AMF::ContentType	type;
 };
 
 
 class RTMP : virtual Static {
 public:
+
+	static enum {
+		DEFAULT_CHUNKSIZE =	128,
+		DEFAULT_WIN_ACKSIZE = 131072 // TODO default value?
+	};
 
 	static UInt32			GetDigestPos(const UInt8* data,bool middle);
 	static UInt32			GetDHPos(const UInt8* data,bool middle);

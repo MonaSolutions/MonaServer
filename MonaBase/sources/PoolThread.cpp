@@ -60,11 +60,11 @@ void PoolThread::run(Exception& ex) {
 
 			try {
 				Exception ex;
-				EXCEPTION_TO_LOG(pWork->run(ex), name());
+				EXCEPTION_TO_LOG(pWork->run(ex), pWork->name);
 			} catch (exception& ex) {
-				ERROR(name(),", ",ex.what());
+				ERROR(pWork->name,", ",ex.what());
 			} catch (...) {
-				ERROR(name(),", unknown error");
+				ERROR(pWork->name,", unknown error");
 			}
 
 			{

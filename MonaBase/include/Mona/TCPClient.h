@@ -54,8 +54,10 @@ public:
 protected:
 
 	virtual UInt32			onReception(const std::shared_ptr<Buffer<UInt8>>& pData) = 0; // in protected to allow a circular call (to process all data on one time!)
-
+	
 private:
+	virtual void			onError(const std::string& error) = 0;
+	virtual void			endReception() {}
 	virtual void			onDisconnection() {}
 
 

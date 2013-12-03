@@ -63,10 +63,7 @@ bool HTTPSession::buildPacket(const shared_ptr<Buffer<UInt8>>& pData, MemoryRead
 	} else {
 		end = packet.current() + packet.available() - 4;
 	}
-
-	if(memcmp(end,"\r\n\r\n",4)!=0)
-		return false;
-	return true;
+	return memcmp(end,"\r\n\r\n",4)==0;
 }
 
 
