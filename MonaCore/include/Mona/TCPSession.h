@@ -48,8 +48,6 @@ private:
 	UInt32			onReception(const std::shared_ptr<Buffer<UInt8>>& pData);
 	void			onError(const std::string& error);
 	void			onDisconnection() { kill(); }
-
-	bool			_gotten;
 };
 
 

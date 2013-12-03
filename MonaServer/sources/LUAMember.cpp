@@ -18,6 +18,7 @@ This file is a part of Mona.
 */
 
 #include "LUAMember.h"
+#include "LUAClient.h"
 #include "Mona/Util.h"
 
 using namespace Mona;
@@ -40,8 +41,7 @@ int LUAMember::Get(lua_State *pState) {
 	SCRIPT_CALLBACK(Peer,member)
 		const char* name = SCRIPT_READ_STRING("");
 		if (strcmp(name,"id")==0) {
-			string hex;
-			SCRIPT_WRITE_STRING(Util::FormatHex(member.id,ID_SIZE,hex).c_str())
+			LUAClient::GetKey(pState,member);
 		} else if (strcmp(name, "rawId") == 0)
 			SCRIPT_WRITE_BINARY(member.id,ID_SIZE)
 		else if (strcmp(name, "release") == 0)

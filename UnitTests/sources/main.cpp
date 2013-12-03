@@ -25,6 +25,8 @@ using namespace Mona;
 using namespace std;
 
 class TestApp : public Application  {
+public:
+	TestApp() : _loop(1) {}
 private:
 	void defineOptions(Exception& ex, Options& options) 
 		/// \brief define options of TestApp
@@ -32,6 +34,9 @@ private:
 
         options.add(ex, "module", "m", "Specify the module to run.")
 			.argument("module");
+
+		options.add(ex, "loop", "l", "Specify the number of loop to execute for every test to run.")
+			.argument("number of loop");
 
 		// defines here your options applications
         Application::defineOptions(ex,options);
@@ -60,12 +65,12 @@ private:
 		if (!input.empty()) {
 			number = String::ToNumber<int>(ex, input);
 			if (!ex) {
-				PoolTest::PoolTestInstance().run(lTests.at(number));
+				PoolTest::PoolTestInstance().run(lTests.at(number),_loop);
 				return;
 			}
 			WARN("Unvalid test index, all tests will run")
 		}
-        PoolTest::PoolTestInstance().runAll();
+        PoolTest::PoolTestInstance().runAll(_loop);
 	}
 
 ///// MAIN
@@ -73,12 +78,13 @@ private:
 		try {
 
 			string module;
+			argument("loop", _loop);
 			if (!argument("module", module))
 				runSelectedModule();
 			else if (module=="all")
-				PoolTest::PoolTestInstance().runAll();
+				PoolTest::PoolTestInstance().runAll(_loop);
 			else
-				PoolTest::PoolTestInstance().run(module);
+				PoolTest::PoolTestInstance().run(module,_loop);
 		}
 		catch (exception& ex) {
 			FATAL(ex.what())
@@ -89,6 +95,9 @@ private:
 
 		return EXIT_OK;
 	}
+
+private:
+	UInt32	_loop;
 };
 
 int main(int argc, const char* argv[]) {

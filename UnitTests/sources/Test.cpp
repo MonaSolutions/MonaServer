@@ -24,19 +24,20 @@ using namespace Mona;
 using namespace std;
 
 
-void Test::run() {
+void Test::run(UInt32 loop) {
 	_chrono.restart();
-	TestFunction();
+	for (UInt32 i = 0; i < loop;++i)
+		TestFunction();
 	_chrono.stop();
 	NOTE(_name, " OK (",_chrono.elapsed()/1000,"ms)");
 }
 
-void PoolTest::runAll() {
+void PoolTest::runAll(UInt32 loop) {
     for(auto& itTest : _mapTests)
-        itTest.second->run();
+        itTest.second->run(loop);
 }
 
-void PoolTest::run(const string& mod) {
+void PoolTest::run(const string& mod,UInt32 loop) {
 	auto itTest = _mapTests.equal_range(mod);
 	if (itTest.first == itTest.second) 
 		itTest = _mapTests.equal_range(mod + "Test");
@@ -47,7 +48,7 @@ void PoolTest::run(const string& mod) {
 
 	// Run all tests of the module
 	for(auto it = itTest.first; it != itTest.second; it++)
-        it->second->run();
+        it->second->run(loop);
 }
 
 void PoolTest::getListTests(vector<string>& lTests) {

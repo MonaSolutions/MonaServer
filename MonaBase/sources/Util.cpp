@@ -137,8 +137,10 @@ bool Util::UnpackUrl(Exception& ex,const string& url, SocketAddress& address, st
 			}
 			if (itPort == end)
 				address.set(ex, string(it, itEnd),0);
-			else
-				address.set(ex, string(it, itPort), string(itPort, itEnd));
+			else {
+				string host(it, itPort);
+				address.set(ex, host, string(++itPort, itEnd));
+			}
 			it = itEnd;
 			break;
 		}
@@ -149,7 +151,6 @@ bool Util::UnpackUrl(Exception& ex,const string& url, SocketAddress& address, st
 
 	file.clear();
 	path.clear();
-	properties.clear();
 
 	// Normalize path => replace // by / and \ by / AND remove the last '/'
 	path.assign(it,end);
@@ -232,6 +233,8 @@ void Util::UnpackQuery(const string& query, MapParameters& properties) {
 				++itEnd;
 			};
 			value.assign(it, itEnd);
+			if (itEnd != end) // if it's '&'
+				++itEnd;
 			it = itEnd;
 		}
 		properties.setString(DecodeURI(name), DecodeURI(value));

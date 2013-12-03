@@ -34,7 +34,7 @@ namespace Mona {
 
 const char* LogPriorities[] = { "FATAL", "CRITIC", "ERROR", "WARN", "NOTE", "INFO", "DEBUG", "TRACE" };
 
-Application::Application() : _logSizeByFile(500), _logRotation(10) {
+Application::Application() : _logSizeByFile(1000000), _logRotation(10) {
 #if defined(_DEBUG)
 #if defined(_WIN32)
 	DetectMemoryLeak();

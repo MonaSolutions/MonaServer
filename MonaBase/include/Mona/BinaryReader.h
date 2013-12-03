@@ -20,6 +20,7 @@ This file is a part of Mona.
 #pragma once
 
 #include "Mona/Mona.h"
+#include "Mona/Binary.h"
 #include <istream>
 
 namespace Mona {
@@ -51,13 +52,9 @@ public:
 	template<typename NumberType>
 	NumberType		readNumber() {
 		NumberType value;
-		if (_flipBytes) {
-			char* ptr = (char*)&value;
-			ptr += sizeof(value);
-			for (unsigned i = 0; i < sizeof(value); ++i)
-				_istr.read(--ptr, 1);
-		} else
-			_istr.read((char*)&value, sizeof(value));
+		_istr.read((char*)&value, sizeof(value));
+		if (_flipBytes)
+			Binary::ReverseBytes((UInt8*)&value, sizeof(value));
 		return value;
 	}
 
