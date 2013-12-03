@@ -50,7 +50,7 @@ void RTMPSession::kill() {
 	Session::kill();
 }
 
-bool RTMPSession::buildPacket(const shared_ptr<Buffer<UInt8>>& pData, MemoryReader& packet) {
+bool RTMPSession::buildPacket(MemoryReader& packet,const shared_ptr<Buffer<UInt8>>& pData) {
 	if (_pDecryptKey && pData->size()>_decrypted) {
 		RC4(_pDecryptKey.get(),pData->size()-_decrypted,pData->data()+_decrypted,pData->data()+_decrypted); // TODO use a thread to decode?
 		_decrypted = pData->size();

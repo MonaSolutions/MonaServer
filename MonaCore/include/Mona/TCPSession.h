@@ -41,7 +41,7 @@ protected:
 	}
 
 private:
-	virtual bool	buildPacket(const std::shared_ptr<Buffer<UInt8>>& pData, MemoryReader& packet) = 0;
+	virtual bool	buildPacket(MemoryReader& packet,const std::shared_ptr<Buffer<UInt8>>& pData) = 0;
 	virtual void	packetHandler(MemoryReader& packet)=0;
 
 	// TCPClient implementation
