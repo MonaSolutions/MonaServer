@@ -451,7 +451,7 @@ void Script::ReadData(lua_State* pState,DataWriter& writer,UInt32 count,map<UInt
 						/* uses 'key' (at index -2) and 'value' (at index -1) */
 						int keyType = lua_type(pState,-2);
 						const char* key = NULL;
-						if(keyType==LUA_TSTRING) {
+						if(keyType==LUA_TSTRING && strcmp((key=lua_tostring(pState,-2)),"__type")!=0 ) {
 							writer.writePropertyName(key);
 							ReadData(pState,writer,1);
 						}

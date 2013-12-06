@@ -76,7 +76,8 @@ bool WSSession::buildPacket(const shared_ptr<Buffer<UInt8>>& pData, MemoryReader
 		return false;
 
 	if (lengthByte & 0x80) {
-		pData->resize(size+packet.position());
+		pData->resize(size+packet.position(), true); // For limiting to the current packet
+
 		shared_ptr<WSUnmasking> pUnmasking(new WSUnmasking(pData, type, invoker,packet.position()));
 		decode<WSUnmasking>(pUnmasking);
 	} else {
