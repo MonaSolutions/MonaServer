@@ -55,7 +55,10 @@ public:
 	const Options&			options() const { return _options; }
 
 	bool					hasArgument(const std::string& name) { return hasKey("application."+name); }
-	bool					argument(const std::string& name, std::string& value) { return getRaw("application." + name, value); }
+	bool					argument(const std::string& name, std::string& value) { return getString("application." + name, value); }
+	bool					argument(const std::string& name, bool& value) { return getBool("application." + name, value); }
+	template<typename NumberType>
+	bool					argument(const std::string& name, NumberType& value) { return getNumber<NumberType>("application." + name, value); }
 
 	void					displayHelp();
 

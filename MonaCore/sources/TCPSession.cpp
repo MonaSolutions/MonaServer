@@ -37,11 +37,13 @@ void TCPSession::onError(const string& error) {
 UInt32 TCPSession::onReception(const shared_ptr<Buffer<UInt8>>& pData) {
 	UInt32 size = pData->size();
 	if (died)
-		return size;
+		return 0;
 	MemoryReader packet(pData->data(), pData->size());
-	if (!buildPacket(pData, packet))
+	if (!buildPacket(packet,pData))
 		return size;
+	
 	UInt32 length = packet.position() + packet.available();
+	pData->resize(length,true);
 	if (pData.unique()) { // if not decoded!
 		UInt32 pos = packet.position();
 		packet.reset();
@@ -50,7 +52,7 @@ UInt32 TCPSession::onReception(const shared_ptr<Buffer<UInt8>>& pData) {
 		packet.next(pos);
 		packetHandler(packet);
 	}
-	return pData->size() - length;
+	return size - length;
 }
 
 

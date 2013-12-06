@@ -48,10 +48,10 @@ HTTPSession::~HTTPSession() {
 }
 
 
-bool HTTPSession::buildPacket(const shared_ptr<Buffer<UInt8>>& pData, MemoryReader& packet) {
+bool HTTPSession::buildPacket(MemoryReader& packet,const shared_ptr<Buffer<UInt8>>& pData) {
 
 	if(_isWS)
-		return WSSession::buildPacket(pData, packet);
+		return WSSession::buildPacket(packet,pData);
 
 	_request = unique_ptr<HTTPPacketReader>(new HTTPPacketReader(packet));
 	HTTP::ReadHeader(*_request, _headers, _cmd, (string&)peer.path, _file, peer);

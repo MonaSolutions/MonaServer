@@ -34,7 +34,7 @@ public:
 	virtual ~WSSession();
 
 
-	bool			buildPacket(const std::shared_ptr<Buffer<UInt8>>& pData, MemoryReader& packet);
+	bool			buildPacket(MemoryReader& packet,const std::shared_ptr<Buffer<UInt8>>& pData);
 	void			packetHandler(MemoryReader& packet);
 	void			endReception() { if (_pPublication) _pPublication->flush(); }
 	void			manage();

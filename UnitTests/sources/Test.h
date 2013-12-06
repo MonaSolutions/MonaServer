@@ -34,7 +34,7 @@ public:
 	virtual ~Test() {}
 		/// \brief You can do clean-up work that doesn't throw exceptions here.
 
-	void run();
+	void run(Mona::UInt32 loop);
 
 private:
 	virtual void TestFunction() = 0;
@@ -57,10 +57,10 @@ public:
     void getListTests(std::vector<std::string>& lTests);
 		/// \brief get a list of test module names
 
-	void runAll();
+	void runAll(Mona::UInt32 loop);
 		/// \brief Run all tests
 
-	void run(const std::string& mod);
+	void run(const std::string& mod,Mona::UInt32 loop);
 		/// \brief Run the test with 'mod' name
 
 	static PoolTest& PoolTestInstance();
@@ -80,6 +80,12 @@ private:
 
 /// Macro for assert true function
 #define CHECK(CONDITION) FATAL_ASSERT(CONDITION)
+
+#if defined(_DEBUG)
+#define DEBUG_CHECK(CONDITION) CHECK(CONDITION)
+#else
+#define DEBUG_CHECK(CONDITION) {}
+#endif
 
 /// Macro for adding new tests in a Test cpp
 #define ADD_TEST(CLASSNAME, TESTNAME) class CLASSNAME ## TESTNAME : public Test { \

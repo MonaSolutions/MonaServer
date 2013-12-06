@@ -32,8 +32,9 @@ void LUAClient::GetKey(lua_State *pState, const Client& client) {
 	string key;
 	if (client.getString("name", key))
 		lua_pushstring(pState, key.c_str());
-	else
-		lua_pushstring(pState, Util::FormatHex(client.id, ID_SIZE, key).c_str());
+	else if (!client.getString("__hexID", key))
+		((Client&)client).setString("__hexID", Util::FormatHex(client.id, ID_SIZE, key));
+	lua_pushstring(pState, key.c_str());
 }
 
 void LUAClient::Clear(lua_State* pState,const Client& client){
@@ -74,8 +75,7 @@ int LUAClient::Get(lua_State *pState) {
 			SCRIPT_CALLBACK_NOTCONST_CHECK
 			SCRIPT_ADD_OBJECT(Writer,LUAWriter,client.writer())
 		} else if(name=="id") {
-			string hex;
-			SCRIPT_WRITE_STRING(Util::FormatHex(client.id, ID_SIZE, hex).c_str())
+			LUAClient::GetKey(pState, client);
 		} else if(name=="rawId") {
 			SCRIPT_WRITE_BINARY(client.id,ID_SIZE);
 		} else if(name=="path") {

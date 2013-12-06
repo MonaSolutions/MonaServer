@@ -77,3 +77,28 @@ ADD_TEST(UtilTest, FormatHex) {
 	CHECK(memcmp(result.c_str(), "\00\01\02\03\04\05", size) == 0)
 }
 
+ADD_TEST(UtilTest, UnpackUrl) {
+	Exception ex;
+	SocketAddress address;
+	string path;
+	string file;
+	string value;
+	MapParameters properties;
+	
+	CHECK(Util::UnpackUrl(ex, "rtmp://",path,properties));
+	CHECK(Util::UnpackUrl(ex, "rtmp://127.0.0.1", address, path, properties));
+	CHECK(Util::UnpackUrl(ex, "rtmp://127.0.0.1:1234/", address, path, properties));
+	CHECK(Util::UnpackUrl(ex, "rtmp://127.0.0.1:1234/file.txt?", address, path, file,properties));
+	CHECK(Util::UnpackUrl(ex, "rtmp://127.0.0.1:1234/file.txt?name1=value1&name2=value2", address, path, file, properties));
+	CHECK(Util::UnpackUrl(ex, "rtmp://127.0.0.1:1234/path/file.txt?name1=value1&name2=value2", address, path, file, properties));
+	CHECK(!ex);
+
+	DEBUG_CHECK(properties.getString("name1", value) && value == "value1");
+	DEBUG_CHECK(properties.getString("name2", value) && value == "value2");
+	DEBUG_CHECK(path=="/path");
+	DEBUG_CHECK(file=="file.txt");
+	DEBUG_CHECK(address.toString()=="127.0.0.1:1234");
+}
+
+
+

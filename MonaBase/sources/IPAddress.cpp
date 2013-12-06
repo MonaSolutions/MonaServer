@@ -31,6 +31,8 @@ using namespace std;
 
 namespace Mona {
 
+static const char* Localhost("127.0.0.1"); // to accelerate the parse
+
 class IPAddressCommon : virtual Object {
 public:
 	virtual const void* addr(NET_SOCKLEN& size) const = 0;
@@ -106,17 +108,18 @@ public:
 		return addr >= 0xE0000100 && addr <= 0xEE000000; // 224.0.1.0 to 238.255.255.255
 	}
 
-	static IPv4Address* Parse(Exception& ex,const string& addr) {
-		if (addr.empty() || !Net::InitializeNetwork(ex))
+	static IPv4Address* Parse(Exception& ex,const string& address) {
+		if (address.empty() || !Net::InitializeNetwork(ex))
 			return 0;
+		const char* addr(address == "localhost" ? Localhost : address.c_str());
 		struct in_addr ia;
 #if defined(_WIN32) 
-		ia.s_addr = inet_addr(addr.c_str());
-		if (ia.s_addr == INADDR_NONE && addr != "255.255.255.255")
+		ia.s_addr = inet_addr(addr);
+		if (ia.s_addr == INADDR_NONE && strcmp(addr,"255.255.255.255")!=0)
 			return 0;
 		return new IPv4Address(ia);
 #else
-		if (inet_aton(addr.c_str(), &ia))
+		if (inet_aton(addr, &ia))
             return new IPv4Address(ia);
 		return 0;
 #endif
@@ -253,26 +256,25 @@ public:
 		return (ntohs(words[0]) & 0xFFEF) == 0xFF0F;
 	}
 
-	static IPv6Address* Parse(Exception& ex,const string& addr) {
-		if (addr.empty() || !Net::InitializeNetwork(ex))
+	static IPv6Address* Parse(Exception& ex,const string& address) {
+		if (address.empty() || !Net::InitializeNetwork(ex))
 			return 0;
 #if defined(_WIN32)
+		const char* addr(address == "localhost" ? Localhost : address.c_str());
 		struct addrinfo* pAI;
 		struct addrinfo hints;
 		memset(&hints, 0, sizeof(hints));
 		hints.ai_flags = AI_NUMERICHOST;
-		int rc = getaddrinfo(addr.c_str(), NULL, &hints, &pAI);
+		int rc = getaddrinfo(addr, NULL, &hints, &pAI);
 		if (rc == 0) {
 			IPv6Address* pResult = new IPv6Address(reinterpret_cast<struct sockaddr_in6*>(pAI->ai_addr)->sin6_addr, static_cast<int>(reinterpret_cast<struct sockaddr_in6*>(pAI->ai_addr)->sin6_scope_id));
 			freeaddrinfo(pAI);
 			return pResult;
 		}
-		else return 0;
 #else
 		struct in6_addr ia;
 		string::size_type pos = addr.find('%');
-		if (string::npos != pos)
-		{
+		if (string::npos != pos) {
 			string::size_type start = ('[' == addr[0]) ? 1 : 0;
 			string unscopedAddr(addr, start, pos - start);
 			string scope(addr, pos + 1, addr.size() - start - pos);
@@ -281,17 +283,13 @@ public:
 				return 0;
 			if (inet_pton(AF_INET6, unscopedAddr.c_str(), &ia) == 1)
                 return new IPv6Address(ia, scopeId);
-			else
-				return 0;
-		}
-		else
-		{
-			if (inet_pton(AF_INET6, addr.c_str(), &ia) == 1)
+		} else {
+			const char* addr(address == "localhost" ? localhost : address.c_str());
+			if (inet_pton(AF_INET6, addr, &ia) == 1)
                 return new IPv6Address(ia);
-			else
-				return 0;
 		}
 #endif
+		return 0;
 	}
 	
 	void mask(Exception& ex, const IPAddressCommon* pMask, const IPAddressCommon* pSet) {

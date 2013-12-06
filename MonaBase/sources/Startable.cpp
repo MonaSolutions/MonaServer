@@ -140,26 +140,25 @@ void Startable::initThread(Exception& ex,thread& thread,Priority priority) {
 
 // caller is usually the thread controller of _thread
 void Startable::stop() {
-	{	// for the case where the both (handler and thread) call the stop method in same time
+	if (_thread.get_id() == this_thread::get_id()) {
+		// case where it's the thread which calls stop!
 		lock_guard<mutex> lock(_mutexStop);
-		if (_stop) {
-			if (_thread.joinable() && _thread.get_id() != this_thread::get_id())
-				_thread.join();
-			return;
-		}
+		if (_stop)
+			_stop = true;
+		return;
 	}
 	lock_guard<mutex> lock(_mutex);
 	{
 		lock_guard<mutex> lock(_mutexStop);
 		if (_stop) {
-			if (_thread.joinable() && _thread.get_id() != this_thread::get_id())
+			if (_thread.joinable())
 				_thread.join();
 			return;
 		}
 		_stop = true;
 	}
 	_wakeUpEvent.set();
-	if (_thread.get_id() != this_thread::get_id() && _thread.joinable())
+	if (_thread.joinable())
 		_thread.join();
 }
 

@@ -18,7 +18,6 @@ This file is a part of Mona.
 */
 
 #include "Mona/BinaryReader.h"
-#include "Mona/Binary.h"
 #include "Mona/Util.h"
 
 using namespace std;

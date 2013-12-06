@@ -33,7 +33,7 @@ public:
 	virtual ~RTMPSession();
 
 private:
-	bool			buildPacket(const std::shared_ptr<Buffer<UInt8>>& pData, MemoryReader& packet);
+	bool			buildPacket(MemoryReader& packet,const std::shared_ptr<Buffer<UInt8>>& pData);
 	void			packetHandler(MemoryReader& packet);
 	void			endReception() {if (_pStream) _pStream->flush();}
 

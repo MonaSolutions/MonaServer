@@ -26,24 +26,23 @@ namespace Mona {
 /// A chrono in microseconds
 class Stopwatch : virtual Object{
 public:
-	Stopwatch() : _start(0), _stop(0), _running(false) {}
+	Stopwatch() : _running(false) {}
 
 	void start() { 
-		if (!_running) {
-			_start.update(Time() - (_stop - _start));
-			_running = true;
-		}
+		if (_running)
+			return;
+		_start.update(Time() - elapsed());
+		_running = true;
 	}
 
 	void stop() { _stop.update(); _running = false; }
 
 	void restart() {
-		_start.update(0);
-		_stop.update(0);
-		start();
+		_start.update();
+		_running = true;
 	}
 
-	Int64 elapsed() { return (_stop - _start); }
+	Int64 elapsed() { return _running ? (Time()-_start) : (_stop-_start); }
 
 private:
 	Time _start;

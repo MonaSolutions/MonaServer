@@ -48,7 +48,7 @@ void RTMPWriter::flush(bool full) {
 	}
 	if(!_pSender->available())
 		return;
-	_pSender->writer(channel); // pack!
+	_pSender->writer(_channel); // pack!
 	Exception ex;
 	Writer::DumpResponse(_pSender->begin(), _pSender->size(), _address);
 	if (_pSender->encrypted())
@@ -114,7 +114,7 @@ AMFWriter& RTMPWriter::write(AMF::ContentType type,UInt32 time,MemoryReader* pDa
 	_channel.time = time;
 	_channel.type = type;
 
-	AMFWriter& writer = _pSender->writer(channel);
+	AMFWriter& writer = _pSender->writer(_channel);
 	BinaryWriter& data = writer.writer;
 	data.write8((headerFlag<<6)| id);
 

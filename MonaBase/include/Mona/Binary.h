@@ -29,7 +29,8 @@ public:
 	static UInt32	Flip24(UInt32 value) { return ((value >> 16) & 0x000000FF) | (value & 0x0000FF00) | ((value << 16) & 0x00FF0000); }
 	static UInt32	Flip32(UInt32 value) { return ((value >> 24) & 0x000000FF) | ((value >> 8) & 0x0000FF00) | ((value << 8) & 0x00FF0000) | ((value << 24) & 0xFF000000); }
 	static UInt64	Flip64(UInt64 value) { UInt32 hi = UInt32(value >> 32); UInt32 lo = UInt32(value & 0xFFFFFFFF); return UInt64(Flip32(hi)) | (UInt64(Flip32(lo)) << 32); }
-
+	static void ReverseBytes(UInt8* data, int size) { UInt8 *lo = data; UInt8 *hi = data + size - 1; UInt8 swap;  while (lo < hi) { swap = *lo; *lo++ = *hi; *hi-- = swap; }
+}
 };
 
 
