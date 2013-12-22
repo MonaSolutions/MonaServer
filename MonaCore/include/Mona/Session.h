@@ -54,18 +54,19 @@ public:
 		if (ex)
 			ERROR("Impossible to decode packet of protocol ", protocolName(), " on session ", name(), ", ", ex.error());
 	}
+
 	template<typename DecodingType>
-	void decode(const std::shared_ptr<DecodingType>& pDecoding, const SocketAddress& address) {
+	void decode(const std::shared_ptr<DecodingType>& pDecoding,const SocketAddress& address) {
 		pDecoding->_address.set(address);
-		decode<DecodingType>(pDecoding);
+		decode(pDecoding);
 	}
 
 	void				receive(MemoryReader& packet);
-	void				receive(MemoryReader& packet, const SocketAddress& address);
+	virtual void		receive(MemoryReader& packet, const SocketAddress& address);
 
 	virtual void		manage() {}
 	virtual void		kill();
-
+	virtual void		flush() { peer.writer().flush(); }
 protected:
 	Session(Protocol& protocol,Invoker& invoker, const char* name=NULL);
 	Session(Protocol& protocol, Invoker& invoker, const Peer& peer, const char* name = NULL);

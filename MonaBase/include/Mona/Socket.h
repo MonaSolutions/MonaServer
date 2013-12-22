@@ -25,7 +25,7 @@ This file is a part of Mona.
 #include "Mona/PoolThreads.h"
 #include "Mona/Expirable.h"
 #include <memory>
-#include <list>
+#include <deque>
 
 namespace Mona {
 
@@ -105,7 +105,7 @@ public:
 			return pThread;
 		shareThis(pSender->_expirableSocket);
 		pSender->_pThis = pSender;
-		pThread = _poolThreads.enqueue<SocketSenderType>(ex,pSender, pThread);
+		pThread = poolThreads().enqueue<SocketSenderType>(ex,pSender, pThread);
 		return pThread;
 	}
 
@@ -202,6 +202,8 @@ private:
 	}
 	void	setOption(Exception& ex, int level, int option, int value) { setOption<int>(ex, level, option, value); }
 
+	PoolThreads& poolThreads();
+
 	// A wrapper for the ioctl system call
 	int		ioctl(Exception& ex,NET_IOCTLREQUEST request,int value);
 
@@ -209,9 +211,7 @@ private:
 
 	std::mutex									_mutexAsync;
 	bool										_writing;
-	std::list<std::shared_ptr<SocketSender>>	_senders;
-
-	PoolThreads&								_poolThreads;
+	std::deque<std::shared_ptr<SocketSender>>	_senders;
 
 	std::mutex				_mutexManaged;
 	volatile bool			_managed;

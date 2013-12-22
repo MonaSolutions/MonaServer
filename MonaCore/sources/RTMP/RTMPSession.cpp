@@ -30,6 +30,7 @@ using namespace std;
 
 namespace Mona {
 
+
 RTMPSession::RTMPSession(const SocketAddress& address, Protocol& protocol, Invoker& invoker) : 	_pSender(new RTMPSender()),_controller(2,*this,address,_pSender),_unackBytes(0),_decrypted(0),_pThread(NULL), _chunkSize(RTMP::DEFAULT_CHUNKSIZE), _winAckSize(RTMP::DEFAULT_WIN_ACKSIZE), _handshaking(0), _pWriter(NULL), TCPSession(address, protocol, invoker) {
 	dumpJustInDebug = true;
 }
@@ -50,10 +51,11 @@ void RTMPSession::kill() {
 	Session::kill();
 }
 
-bool RTMPSession::buildPacket(MemoryReader& packet,const shared_ptr<Buffer<UInt8>>& pData) {
-	if (_pDecryptKey && pData->size()>_decrypted) {
-		RC4(_pDecryptKey.get(),pData->size()-_decrypted,pData->data()+_decrypted,pData->data()+_decrypted); // TODO use a thread to decode?
-		_decrypted = pData->size();
+bool RTMPSession::buildPacket(MemoryReader& packet) {
+
+	if (_pDecryptKey && packet.available()>_decrypted) {
+		RC4(_pDecryptKey.get(),packet.available()-_decrypted,packet.current()+_decrypted,packet.current()+_decrypted);
+		_decrypted = packet.available();
 	}
 
 	switch(_handshaking) {
@@ -154,7 +156,6 @@ bool RTMPSession::buildPacket(MemoryReader& packet,const shared_ptr<Buffer<UInt8
 
 
 void RTMPSession::packetHandler(MemoryReader& packet) {
-
 	_unackBytes += packet.position() + packet.available();
 
 	if(_handshaking==0) {
@@ -178,6 +179,7 @@ void RTMPSession::packetHandler(MemoryReader& packet) {
 		// client settings
 		_controller.writeProtocolSettings();
 	}
+
 
 	// ack if required
 	if (_unackBytes >= _winAckSize) {
@@ -209,11 +211,11 @@ void RTMPSession::packetHandler(MemoryReader& packet) {
 			_winAckSize = packet.read32();
 			break;
 		default:
-			invoker.flashStream(channel.streamId,peer,_pStream).process(channel.type,channel.absoluteTime, packet,*_pWriter); // TODO peer.serverAddress?
+			invoker.flashStream(channel.streamId, peer, _pStream).process(channel.type,channel.absoluteTime, packet,*_pWriter); // TODO peer.serverAddress?	
 	}
 
 	if (!peer.connected)
-		kill();
+		kill();	
 
 	_pWriter = NULL;
 	_controller.flush();

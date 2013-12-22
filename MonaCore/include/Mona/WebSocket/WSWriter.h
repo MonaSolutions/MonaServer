@@ -21,31 +21,17 @@ This file is a part of Mona.
 
 #include "Mona/Mona.h"
 #include "Mona/Writer.h"
-#include "Mona/PoolThreads.h"
 #include "Mona/JSONReader.h"
 #include "Mona/WebSocket/WS.h"
 #include "Mona/WebSocket/WSSender.h"
 
 namespace Mona {
 
-#define WS_NORMAL_CLOSE				1000
-#define WS_ENDPOINT_GOING_AWAY		1001
-#define WS_PROTOCOL_ERROR			1002
-#define WS_PAYLOAD_NOT_ACCEPTABLE	1003
-#define WS_RESERVED					1004
-#define WS_RESERVED_NO_STATUS_CODE	1005
-#define WS_RESERVED_ABNORMAL_CLOSE	1006
-#define WS_MALFORMED_PAYLOAD		1007
-#define WS_POLICY_VIOLATION			1008
-#define WS_PAYLOAD_TOO_BIG			1009
-#define WS_EXTENSION_REQUIRED		1010
-#define WS_UNEXPECTED_CONDITION		1011
-
 
 class WSWriter : public Writer, virtual Object {
 public:
 
-	WSWriter(StreamSocket& socket);
+	WSWriter(StreamSocket& socket,const SocketAddress& address);
 	
 	UInt16			ping;
 
@@ -54,12 +40,13 @@ public:
 
 	DataWriter&		writeInvocation(const std::string& name);
 	DataWriter&		writeMessage();
-	void			writeRaw(const UInt8* data, UInt32 size) { write(WS_TEXT, data, size); }
+	DataWriter&		writeResponse(UInt8 type);
+	void			writeRaw(const UInt8* data, UInt32 size) { write(WS::TYPE_TEXT, data, size); }
 
-	void			writePing() { write(WS_PING, NULL, 0); }
+	void			writePing() { write(WS::TYPE_PING, NULL, 0); }
 	UInt16			elapsedSincePing();
-	void			writePong(const UInt8* data, UInt32 size) { write(WS_PONG, data, size); }
-	void			close(int code);
+	void			writePong(const UInt8* data, UInt32 size) { write(WS::TYPE_PONG, data, size); }
+	void			close(int code = WS::CODE_NORMAL_CLOSE);
 
 private:
 	void			pack();
@@ -70,10 +57,11 @@ private:
 
 	void			write(UInt8 type,const UInt8* data,UInt32 size);
 
-	JSONWriter&		newWriter();
+	JSONWriter&		newDataWriter(bool modeRaw=false);
 
 	UInt32									_sent;
 	StreamSocket&							_socket;
+	SocketAddress							_address;
 	std::list<std::shared_ptr<WSSender>>	_senders;
 };
 

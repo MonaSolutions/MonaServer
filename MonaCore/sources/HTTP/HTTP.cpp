@@ -19,12 +19,23 @@ This file is a part of Mona.
 
 #include "Mona/HTTP/HTTP.h"
 #include "Mona/Logs.h"
+#include "Mona/FileSystem.h"
 #include "Mona/Util.h"
+#include <algorithm>
+
+#include "Mona/XMLWriter.h"
+#include "Mona/SOAPWriter.h"
+#include "Mona/JSONWriter.h"
+#include "Mona/CSSWriter.h"
+#include "Mona/HTMLWriter.h"
+#include "Mona/SVGWriter.h"
+#include "Mona/RawWriter.h"
 
 using namespace std;
 
 
 namespace Mona {
+
 
 static map<UInt16, const char*> CodeMessages({
 	{ 100, HTTP_CODE_100 },
@@ -56,7 +67,7 @@ static map<UInt16, const char*> CodeMessages({
 	{ 401, HTTP_CODE_401 },
 	{ 402, HTTP_CODE_402 },
 	{ 403, HTTP_CODE_403 },
-	{ 404, HTTP_CODE_405 },
+	{ 404, HTTP_CODE_404 },
 	{ 405, HTTP_CODE_405 },
 	{ 406, HTTP_CODE_406 },
 	{ 407, HTTP_CODE_407 },
@@ -98,87 +109,260 @@ static map<UInt16, const char*> CodeMessages({
 	{ 520, HTTP_CODE_520 }
 });
 
-void HTTP::MIMEType(const string& extension, string& type) {
-	if (String::ICompare(extension, "svg") == 0)
-		type = "image/svg+xml";
-	else if (String::ICompare(extension, "js") == 0)
-		type = "application/javascript";
-	else {
-		String::Format(type, "text/", extension);
-	} // TODO!!
-}
+const UInt32 HTTP::DefaultTimeout(7000000); // 7 sec
 
-void HTTP::ReadHeader(HTTPPacketReader& reader, MapParameters& headers, string& cmd, string& path, string& file, MapParameters& properties) {
-	HTTPPacketReader::Type type;
-	bool first = true;
-	string tmp;
-	Exception ex;
-	while ((type = reader.followingType()) != HTTPPacketReader::END) {
-		if (type == HTTPPacketReader::STRING) {
-			string value;
-			reader.readString(value);
-			if (first) {
-				first = false;
-				vector<string> fields;
-				String::Split(value, " ", fields, String::SPLIT_IGNORE_EMPTY | String::SPLIT_TRIM);
-				if (fields.size() > 0) {
-					cmd = fields[0];
-					if (fields.size() > 1 && Util::UnpackUrl(ex,fields[1], path, file, properties)) {
-
-						tmp.assign(fields[1]);
-						if (file.empty() && !tmp.empty() && tmp[tmp.size()-1]=='/')
-							file.assign("index.html");
-
-						if (fields.size() > 2) {
-							unsigned found = fields[2].find_last_of("/");
-							Exception ex;
-							double value = String::ToNumber<double>(ex, fields[2].substr(found + 1));
-							if (found != string::npos && !ex)
-								properties.setNumber("HTTPVersion", value); // TODO check how is named for AMF
-						}
-					}
-					if (ex)
-						WARN("HTTPHeader malformed, ", ex.error())
-				}
-			}
-			continue;
-		}
-
-		if (type != HTTPPacketReader::OBJECT) {
-			reader.next();
-			continue;
-		}
-
-		string name, value;
-		while ((type = reader.readItem(name)) != HTTPPacketReader::END) {
-			
-			switch (type) {
-				
-			case HTTPPacketReader::STRING:
-				if (String::ToLower(name).compare("referer") == 0) {
-					string referer, pathReference;
-					EXCEPTION_TO_LOG(Util::UnpackUrl(ex, reader.readString(referer), pathReference, properties), "HTTPHeader malformed")
-				}
-				headers.setString(name, reader.readString(value));
-				break;
-			case HTTPPacketReader::NUMBER:
-				headers.setNumber(String::ToLower(name), reader.readNumber());
-				break;
-			default:
-				reader.next();
-				continue;
-			}
-		}
+HTTP::ContentType HTTP::ExtensionToMIMEType(const string& extension, string& subType) {
+	if (String::ICompare(extension, "js") == 0) {
+		subType = "javascript";
+		return CONTENT_APPLICATON;
 	}
+	if (String::ICompare(extension, "flv") == 0) {
+		subType = "x-flv";
+		return CONTENT_VIDEO;
+	}
+	if (String::ICompare(extension, "ts") == 0) {
+		subType = "mpeg";
+		return CONTENT_VIDEO;
+	}
+	if (String::ICompare(extension, "svg") == 0) {
+		subType = "svg+xml";
+		return CONTENT_IMAGE;
+	}
+	if (String::ICompare(extension, EXPAND_SIZE("m3u")) == 0) {
+		subType = (extension.size() > 3 && extension[3] == '8') ? "x-mpegurl; charset=utf-8" : "x-mpegurl";
+		return CONTENT_AUDIO;
+	}
+	 // TODO others
+	subType = extension.empty() ? "plain" : extension;
+	return CONTENT_TEXT;
 }
 
 
-void HTTP::CodeToMessage(UInt16 code, std::string& message) {
+string& HTTP::FormatContentType(ContentType type, const string& subType, string& value) {
+	switch (type) {
+		case CONTENT_TEXT:
+			value.assign("text/");
+			break;
+		case CONTENT_IMAGE:
+			value.assign("image/");
+			break;
+		case CONTENT_APPLICATON:
+			value.assign("application/");
+			break;
+		case CONTENT_MULTIPART:
+			value.assign("multipart/");
+			break;
+		case CONTENT_AUDIO:
+			value.assign("audio/");
+			break;
+		case CONTENT_VIDEO:
+			value.assign("video/");
+			break;
+		case CONTENT_MESSAGE:
+			value.assign("message/");
+			break;
+		case CONTENT_MODEL:
+			value.assign("model/");
+			break;
+		case CONTENT_EXAMPLE:
+			value.assign("example/");
+			break;
+	}
+	return value.append(subType);
+}
+
+DataWriter* HTTP::NewDataWriter(const string& subType) {
+	if (String::ICompare(subType,EXPAND_SIZE("html"))==0 || String::ICompare(subType,EXPAND_SIZE("xhtml+xml"))==0)
+		return new HTMLWriter();
+	if (String::ICompare(subType,EXPAND_SIZE("xml"))==0)
+		return new XMLWriter();
+	if (String::ICompare(subType,EXPAND_SIZE("soap+xml"))==0)
+		return new SOAPWriter();
+	if (String::ICompare(subType,EXPAND_SIZE("json"))==0)
+		return new JSONWriter();
+	if (String::ICompare(subType,EXPAND_SIZE("svg+xml"))==0)
+		return new SVGWriter();
+	if (String::ICompare(subType,EXPAND_SIZE("css"))==0)
+		return new CSSWriter();
+	return new RawWriter();
+}
+
+string& HTTP::CodeToMessage(UInt16 code, string& message) {
 	auto found = CodeMessages.find(code);
 	if (found != CodeMessages.end())
-		message = found->second;
+		message.assign(found->second);
+	return message;
 }
 
+HTTP::CommandType HTTP::ParseCommand(const char* value) {
+	if (String::ICompare(value,EXPAND_SIZE("GET"))==0)
+		return COMMAND_GET;
+	if (String::ICompare(value,EXPAND_SIZE("PUSH"))==0)
+		return COMMAND_PUSH;
+	if (String::ICompare(value,EXPAND_SIZE("HEAD"))==0)
+		return COMMAND_HEAD;
+	if (String::ICompare(value,EXPAND_SIZE("OPTIONS"))==0)
+		return COMMAND_OPTIONS;
+	if (String::ICompare(value,EXPAND_SIZE("POST"))==0)
+		return COMMAND_POST;
+	ERROR("HTTP command ",string(value,4)," unknown")
+	return COMMAND_HEAD; // default value, HEAD is the less intrusive behavior
+}
+
+UInt8 HTTP::ParseConnection(const char* value) {
+	vector<string> fields;
+	UInt8 type(CONNECTION_ABSENT);
+	for (const string& field : String::Split(value, ",", fields, String::SPLIT_IGNORE_EMPTY | String::SPLIT_TRIM)) {
+		if (String::ICompare(field, "upgrade") == 0)
+			type |= CONNECTION_UPGRADE;
+		else if (String::ICompare(field, "keep-alive") == 0)
+			type |= CONNECTION_KEEPALIVE;
+		else if (String::ICompare(field, "close") == 0)
+			type |= CONNECTION_CLOSE;
+		else
+			ERROR("HTTP type connection ",field," unknown")
+	}
+	return type;
+}
+
+
+HTTP::ContentType HTTP::ParseContentType(const char* value, string& subType) {
+	
+	// subtype
+	const char* comma = strchr(value, ';');
+	const char* slash = (const char*)memchr(value, '/', comma ? comma - value : strlen(value));
+	if (slash)
+		subType.assign(slash+1);
+	else if (comma)
+		subType.assign(comma);
+	else
+		subType.clear();
+
+	// type
+	if (String::ICompare(value,EXPAND_SIZE("text")==0))
+		return CONTENT_TEXT;
+	if (String::ICompare(value,EXPAND_SIZE("image")==0))
+		return CONTENT_IMAGE;
+	if (String::ICompare(value,EXPAND_SIZE("application")==0))
+		return CONTENT_APPLICATON;
+	if (String::ICompare(value,EXPAND_SIZE("multipart")==0))
+		return CONTENT_MULTIPART;
+	if (String::ICompare(value,EXPAND_SIZE("audio")==0))
+		return CONTENT_AUDIO;
+	if (String::ICompare(value,EXPAND_SIZE("video")==0))
+		return CONTENT_VIDEO;
+	if (String::ICompare(value,EXPAND_SIZE("message")==0))
+		return CONTENT_MESSAGE;
+	if (String::ICompare(value,EXPAND_SIZE("model")==0))
+		return CONTENT_MODEL;
+	if (String::ICompare(value,EXPAND_SIZE("example")==0))
+		return CONTENT_EXAMPLE;
+	return CONTENT_TEXT; // default value
+}
+
+
+
+
+class EntriesComparator {
+public:
+	enum Type {
+		NAME,
+		SIZE,
+		MODIFIED
+	};
+	enum Direction {
+		ASC,
+		DESC
+	};
+
+	EntriesComparator(Type type,Direction direction) : _type(type), _direction(direction) {}
+
+	bool operator() (const FilePath* pFile1,const FilePath* pFile2) {
+		if (_type == SIZE)
+			return _direction == ASC ? pFile1->size() < pFile2->size() : pFile2->size() < pFile1->size();
+		if (_type == MODIFIED)
+			return _direction == ASC ? pFile1->lastModified() < pFile2->lastModified() : pFile2->lastModified() < pFile1->lastModified();
+		
+		// NAME case
+		if (pFile1->isDirectory() && !pFile2->isDirectory())
+			return _direction == ASC;
+		if (pFile2->isDirectory() && !pFile1->isDirectory())
+			return _direction == DESC;
+		int result = String::ICompare(pFile1->name(), pFile2->name());
+		return _direction == ASC ? result<0 : result>0; 
+	}
+private:
+	Type		_type;
+	Direction	_direction;
+};
+
+
+void HTTP::WriteDirectoryEntries(BinaryWriter& writer, const string& serverAddress, const std::string& path, const Files& entries,const MapParameters& parameters) {
+	
+	string buffer;
+	EntriesComparator::Type type(EntriesComparator::NAME);
+	EntriesComparator::Direction direction(EntriesComparator::ASC);
+	if (parameters.getString("N", buffer))
+		type = EntriesComparator::NAME;
+	else if (parameters.getString("M", buffer))
+		type = EntriesComparator::MODIFIED;
+	else if (parameters.getString("S", buffer))
+		type = EntriesComparator::SIZE;
+	char sort[] = "D";
+	if (!buffer.empty() && buffer == "D") {
+		direction = EntriesComparator::DESC;
+		sort[0] = 'A';
+	}
+
+	// Write column names
+	// Name		Modified	Size
+	writer.writeRaw("<html><head><title>Index of ",
+		path, "/</title><style>th {text-align: center;}</style></head><body><h1>Index of ",
+		path, "/</h1><pre><table cellpadding=\"0\"><tr><th><a href=\"?N=",
+		sort, "\">Name</a></th><th><a href=\"?M=",
+		sort, "\">Modified</a></th><th><a href=\"?S=",
+		sort, "\">Size</a></th></tr><tr><td colspan=\"3\"><hr></td></tr>");
+
+	// Write first entry - link to a parent directory
+	if(!path.empty())
+		writer.writeRaw("<tr><td><a href=\"http://", serverAddress,path,"/..\">Parent directory</a></td><td>&nbsp;-</td><td>&nbsp;&nbsp;-</td></tr>\n");
+
+	// Sort entries
+	deque<FilePath*> files;
+	for (const string& entry : entries)
+		files.emplace_back(new FilePath(entry));
+	EntriesComparator comparator(type,direction);
+	std::sort(files.begin(), files.end(),comparator);
+
+	// Write entries
+	for (const FilePath* pFile : files) {
+		WriteDirectoryEntry(writer,serverAddress,path, *pFile);
+		delete pFile;
+	}
+
+	// Write footer
+	writer.writeRaw("</table></body></html>");
+}
+
+void HTTP::WriteDirectoryEntry(BinaryWriter& writer,const string& serverAddress,const string& path,const FilePath& entry) {
+	string size,buffer;
+	if (entry.isDirectory())
+		size.assign("-");
+	else if (entry.size()<1024)
+		String::Format(size, entry.size());
+	else if (entry.size() <	1048576)
+		String::Format(size, Format<double>("%.1fk",entry.size()/1024.0));
+	else if (entry.size() <	1073741824)
+		String::Format(size, Format<double>("%.1fM",entry.size()/1048576.0));
+	else
+		String::Format(size, Format<double>("%.1fG",entry.size()/1073741824.0));
+
+	writer.writeRaw("<tr><td><a href=\"http://", serverAddress, path, "/",
+		entry.name(), entry.isDirectory() ? "/\">" : "\">",
+		entry.name(), entry.isDirectory() ? "/" : "", "</a></td><td>&nbsp;",
+		entry.lastModified().toString("%d-%b-%Y %H:%M", buffer), "</td><td align=right>&nbsp;&nbsp;",
+		size, "</td></tr>\n");
+}
 
 
 } // namespace Mona

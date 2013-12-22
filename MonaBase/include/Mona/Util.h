@@ -22,9 +22,8 @@ This file is a part of Mona.
 #include "Mona/Mona.h"
 #include "Mona/MapParameters.h"
 #include "Mona/SocketAddress.h"
-#include "Mona/Buffer.h"
+#include "Mona/Time.h"
 #include "Mona/Exceptions.h"
-#include <vector>
 #include <map>
 #include <thread>
 #include <limits>
@@ -40,26 +39,24 @@ public:
 	static const std::string&	GetThreadName(std::thread::id id);
 	static void					SetThreadName(std::thread::id id,const std::string& name);
 
-	static void Dump(const UInt8* in, UInt32 size, Buffer<UInt8>& out) { std::string header; Dump(in, size, out, header); }
-	static void Dump(const UInt8* in, UInt32 size, Buffer<UInt8>& out, const std::string& header);
+	static void Dump(const UInt8* in, UInt32 size, Buffer& out) { std::string header; Dump(in, size, out, header); }
+	static void Dump(const UInt8* in, UInt32 size, Buffer& out, const std::string& header);
 
-	static bool UnpackUrl(Exception& ex, const std::string& url, std::string& path, MapParameters& properties);
-	static bool UnpackUrl(Exception& ex, const std::string& url, std::string& path, std::string& file, MapParameters& properties);
-	static bool UnpackUrl(Exception& ex, const std::string& url, SocketAddress& address, std::string& path, MapParameters& properties);
-	static bool UnpackUrl(Exception& ex, const std::string& url, SocketAddress& address, std::string& path, std::string& file, MapParameters& properties);
+	static std::size_t UnpackUrl(const std::string& url, std::string& path, Parameters& properties) {std::string address; return UnpackUrl(url, address, path, properties);}
+	static std::size_t UnpackUrl(const std::string& url, std::string& address, std::string& path, Parameters& properties);
 	
-	static void UnpackQuery(const std::string& query, MapParameters& properties);
+	static void UnpackQuery(const std::string& query, Parameters& properties);
 
 	static std::string& DecodeURI(std::string& uri);
 
-	static UInt8*			UnformatHex(UInt8* data,UInt32& size);
-	static std::string&		FormatHex(const UInt8* data, UInt32 size, std::string& result);
-	static std::string&		FormatHexCpp(const UInt8* data, UInt32 size, std::string& result);
-	static bool				FromBase64(const UInt8* data, UInt32 size, Buffer<UInt8>& result);
-	static Buffer<UInt8>&	ToBase64(const UInt8* data, UInt32 size, Buffer<UInt8>& result);
+	static UInt8*		UnformatHex(UInt8* data,UInt32& size);
+	static std::string&	FormatHex(const UInt8* data, UInt32 size, std::string& result);
+	static std::string&	FormatHexCpp(const UInt8* data, UInt32 size, std::string& result);
+	static bool			FromBase64(const UInt8* data, UInt32 size, Buffer& result);
+	static Buffer&		ToBase64(const UInt8* data, UInt32 size, Buffer& result);
 	
 
-	static bool ReadIniFile(Exception& ex, const std::string& path, MapParameters& parameters);
+	static bool ReadIniFile(Exception& ex, const std::string& path, Parameters& parameters);
 
 	static unsigned ProcessorCount() { unsigned result(std::thread::hardware_concurrency());  return result > 0 ? result : 1; }
 	static const MapParameters& Environment();
@@ -72,7 +69,7 @@ public:
 		x = y; y = z; z = w;
 		return (w = w ^ (w >> 19) ^ (t ^ (t >> 8))) % std::numeric_limits<Type>::max();
 	}
-	static void Random(UInt8* data, UInt32 size);
+	static void Random(UInt8* data, UInt32 size) {for (UInt32 i = 0; i < size; ++i) data[i] = Random<UInt8>();}
 private:
 	static MapParameters	_Environment;
 	static std::mutex		_MutexEnvironment;

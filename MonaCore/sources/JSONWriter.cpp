@@ -27,7 +27,7 @@ using namespace std;
 namespace Mona {
 
 
-JSONWriter::JSONWriter() : _first(true),_started(false),_layers(0) {
+JSONWriter::JSONWriter(bool modeRaw) : _modeRaw(modeRaw),_first(true),_started(false),_layers(0) {
 	
 }
 
@@ -91,19 +91,12 @@ void JSONWriter::writePropertyName(const string& value) {
 	_first=true;
 }
 
-void JSONWriter::writeNumber(double value) {
-	if(!_started) {
-		_started=true;
-		writer.write8('[');
-	}
-	if(!_first)
-		writer.write8(',');
-	_first=false;
-	string stValue;
-	writer.writeRaw(String::Format(stValue, value));
-}
-
 void JSONWriter::writeString(const string& value) {
+	if (_modeRaw) {
+		writeRaw(value);
+		_modeRaw = false;
+		return;
+	}
 	if(!_started) {
 		_started=true;
 		writer.write8('[');
@@ -116,13 +109,6 @@ void JSONWriter::writeString(const string& value) {
 	writer.write8('"');
 }
 
-
-void JSONWriter::writeDate(const Time& date) {
-	string str;
-	writeString(date.toString(Time::ISO8601_FRAC_FORMAT, str));
-}
-
-
 void JSONWriter::writeBytes(const UInt8* data,UInt32 size) {
 	if(!_started) {
 		_started=true;
@@ -131,12 +117,12 @@ void JSONWriter::writeBytes(const UInt8* data,UInt32 size) {
 	if(!_first)
 		writer.write8(',');
 	_first=false;
-	writer.writeRaw("{__raw:\"",8);
+	writer.writeRaw("{__raw:\"");
 
-	Buffer<UInt8> result;
+	Buffer result;
 	Util::ToBase64(data, size, result);
 	writer.writeRaw(result.data(),result.size());
-	writer.writeRaw("\"}",2);
+	writer.writeRaw("\"}");
 }
 
 void JSONWriter::end() {

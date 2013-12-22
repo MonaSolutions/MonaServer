@@ -145,7 +145,7 @@ bool SDP::build(Exception& ex, const string& text) {
 			}
 			case 'a': { // a=* (zero or more session attribute lines)
 
-				list<string>* pFields = NULL;
+				deque<string>* pFields = NULL;
 				bool	isMsId = false;
 				string   fingerHash;
 
@@ -197,7 +197,7 @@ bool SDP::build(Exception& ex, const string& text) {
 						} else */
 							WARN("Media attribute ",key," unknown");
 					} else if(pFields)
-						pFields->push_back(st);
+						pFields->emplace_back(st);
 					else if(!fingerHash.empty())
 						int i=0; // TODO finger = talk_base::SSLFingerprint::CreateFromRfc4572(fingerHash, field);
 					else if(key=="group") // RFC 5888 and draft-holmberg-mmusic-sdp-bundle-negotiation-00

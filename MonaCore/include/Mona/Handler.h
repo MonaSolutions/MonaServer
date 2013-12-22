@@ -22,7 +22,7 @@ This file is a part of Mona.
 #include "Mona/Mona.h"
 #include "Mona/Exceptions.h"
 #include "Mona/Invoker.h"
-#include <cstring>
+#include "Mona/FilePath.h"
 
 namespace Mona {
 
@@ -33,10 +33,10 @@ public:
 	//events	
 	virtual	void			onRendezVousUnknown(const std::string& protocol,const UInt8* id,std::set<SocketAddress>& addresses){}
 	virtual void			onHandshake(const std::string& protocol,const SocketAddress& address,const std::string& path,const MapParameters& properties,UInt32 attempts,std::set<SocketAddress>& addresses){}
-	virtual void			onConnection(Exception& ex,Client& client,DataReader& parameters,DataWriter& response){} // ERROR_NOTFOUND, ERROR_APPLICATION
+	virtual void			onConnection(Exception& ex,Client& client,DataReader& parameters,DataWriter& response){} // Exception::SOFTWARE, Exception::APPLICATION
 	virtual void			onDisconnection(const Client& client){}
-	virtual void			onMessage(Exception& ex, Client& client,const std::string& name,DataReader& reader,Mona::DataWriter& writer){} // ERROR_NOTFOUND, ERROR_APPLICATION
-	virtual bool			onRead(Exception& ex, Client& client,std::string& filePath,DataReader& parameters){return true;}  // ERROR_APPLICATION
+	virtual void			onMessage(Exception& ex, Client& client,const std::string& name,DataReader& reader,UInt8 responseType){} // Exception::SOFTWARE, Exception::APPLICATION
+	virtual bool			onRead(Exception& ex, Client& client,FilePath& filePath,DataReader& parameters,DataWriter& properties){return true;}  // Exception::SOFTWARE
 
 	virtual void			onJoinGroup(Client& client,Group& group){}
 	virtual void			onUnjoinGroup(Client& client,Group& group){}
@@ -53,7 +53,7 @@ public:
 	virtual void			onUnsubscribe(Client& client,const Listener& listener){}
 
 protected:
-	Handler(UInt32 bufferSize, UInt32 threads) : _myself(*this), Invoker(bufferSize, threads) {
+	Handler(UInt32 bufferSize, UInt16 threads) : _myself(*this), Invoker(bufferSize, threads) {
 		Util::Random(id, ID_SIZE); // Allow to publish in intern (Invoker is the publisher)
 		(bool&)_myself.connected=true;
 		std::memcpy((UInt8*)myself().id,id,ID_SIZE);

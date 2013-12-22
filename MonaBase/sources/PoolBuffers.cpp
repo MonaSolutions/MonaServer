@@ -17,7 +17,8 @@ details (or else see http://www.gnu.org/licenses/).
 This file is a part of Mona.
 */
 
-#include "Mona/HTTPPacketWriter.h"
+#include "Mona/PoolBuffers.h"
+
 
 using namespace std;
 
@@ -25,27 +26,34 @@ using namespace std;
 namespace Mona {
 
 
-
-void HTTPPacketWriter::writeDate(const Time& date) {
-	string str;
-	writeString(date.toString(Time::HTTP_FORMAT, str));
+void PoolBuffers::clear() {
+	lock_guard<mutex> lock(_mutex);
+	for (Buffer* pBuffer : _buffers)
+		delete pBuffer;
+	_buffers.clear();
 }
 
-void HTTPPacketWriter::writePropertyName(const string& value) {
-	writer.writeRaw(value);
-	writer.writeRaw(": ",2);
+Buffer* PoolBuffers::beginBuffer(UInt32 size) const {
+	Buffer* pBuffer(NULL);
+	{
+		lock_guard<mutex> lock(_mutex);
+		if (size > _maximumBufferSize || _buffers.empty())
+			return new Buffer(size);
+		pBuffer = _buffers.front();
+		_buffers.pop_front();
+	}
+	if (size > 0 && size != pBuffer->size())
+		pBuffer->resize(size);
+	return pBuffer;
 }
 
-void HTTPPacketWriter::writeString(const string& value) {
-	writer.writeRaw(value);
-	writer.writeRaw("\r\n",2);
-}
-
-void HTTPPacketWriter::writeBoolean(bool value) {
-	if(value)
-		writer.writeRaw("true\r\n",6);
-	else
-		writer.writeRaw("false\r\n",7);
+void PoolBuffers::endBuffer(Buffer* pBuffer) const {
+	if (pBuffer->capacity() > _maximumBufferSize) {
+		delete pBuffer;
+		return;
+	}
+	lock_guard<mutex> lock(_mutex);
+	_buffers.emplace_back(pBuffer);
 }
 
 

@@ -21,36 +21,61 @@ This file is a part of Mona.
 
 #include "Mona/Mona.h"
 #include "Mona/Writer.h"
-#include "Mona/HTTPPacketWriter.h"
 #include "Mona/HTTP/HTTPSender.h"
-#include "Mona/StreamSocket.h"
+#include "Mona/TCPClient.h"
+#include "Mona/MediaContainer.h"
 
 namespace Mona {
 
 
+
 class HTTPWriter : public Writer, virtual Object {
 public:
+	enum DataType {
+		HTML = 0,
+		RAW,
+		XML,
+		SOAP,
+		JSON,
+		SVG,
+		CSS
+	};
 
-	HTTPWriter(StreamSocket& socket);
+	HTTPWriter(TCPClient& socket);
+
+	std::shared_ptr<HTTPPacket>		pRequest;
+	Time							timeout;
 
 	State			state(State value=GET,bool minimal=false);
 	void			flush(bool full=false);
 
-	DataWriter&		writeInvocation(const std::string& name);
-	DataWriter&		writeMessage();
-	void			writeRaw(const UInt8* data, UInt32 size) { newWriter().writer.writeRaw(data, size); }
+	DataWriter&		writeInvocation(const std::string& type) { return write("200  OK", HTTP::ParseContentType(type.c_str(), _buffer), _buffer);}
+	DataWriter&		writeMessage() { return writeResponse(HTML); }
+	DataWriter&		writeResponse(UInt8 type);
+	void			writeRaw(const UInt8* data, UInt32 size) { write("200 OK", HTTP::CONTENT_TEXT,"plain; charset=utf-8",data,size); }
+	void			close(int code=0);
 
-	// TODO ?void			close(int code);
-
-
-	
+	DataWriter&		write(const std::string& code, HTTP::ContentType type=HTTP::CONTENT_TEXT, const std::string& subType="html; charset=utf-8",const UInt8* data=NULL,UInt32 size=0);
+	void			writeFile(const FilePath& file) { return createSender().writeFile(file); }
+	void			close(const Exception& ex);
 private:
-	bool				hasToConvert(DataReader& reader) { return dynamic_cast<HTTPPacketWriter*>(&reader) == NULL; }
-	HTTPPacketWriter&	newWriter();
+	bool			writeMedia(MediaType type,UInt32 time,MemoryReader& data);
+	
+	HTTPSender& createSender() {
+		_senders.emplace_back(new HTTPSender(_socket.address(),pRequest));
+		return *_senders.back();
+	}
 
+	TCPClient&								_socket;
+	PoolThread*								_pThread;
+	std::deque<std::shared_ptr<HTTPSender>>	_senders;
+	std::deque<std::shared_ptr<HTTPSender>>	_sent;
+	bool									_isMain;
+	std::string								_buffer;
 
-	StreamSocket&								_socket;
-	std::list<std::shared_ptr<HTTPSender>>		_senders;
+	// multimedia
+	MediaContainer::Type					_mediaType;
+	bool									_initMedia;
 };
 
 

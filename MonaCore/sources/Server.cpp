@@ -18,7 +18,6 @@ This file is a part of Mona.
 */
 
 #include "Mona/Server.h"
-#include "Mona/Decoding.h"
 #include "Mona/Sessions.h"
 
 
@@ -43,7 +42,7 @@ void ServerManager::handle(Exception& ex) {
 	_server.relay.manage();
 }
 
-Server::Server(UInt32 bufferSize,UInt32 threads) : Startable("Server"),Handler(bufferSize,threads),_protocols(*this),_manager(*this) {
+Server::Server(UInt32 bufferSize,UInt16 threads) : Startable("Server"),Handler(bufferSize,threads),_protocols(*this),_manager(*this) {
 
 }
 
@@ -109,9 +108,12 @@ void Server::run(Exception& exc) {
 		_pSessions.reset();
 
 	// stop receiving and sending engine (it waits the end of sending last session messages)
-	poolThreads.clear();
+	poolThreads.join();
 
 	_protocols.unload();
+
+	// release memory
+	poolBuffers.clear();
 
 	onStop();
 	NOTE("Server stopped");

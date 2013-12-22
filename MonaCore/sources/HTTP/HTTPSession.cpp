@@ -19,13 +19,13 @@ This file is a part of Mona.
 
 #include "Mona/HTTP/HTTPSession.h"
 #include "Mona/HTTP/HTTP.h"
-#include "Mona/HTTPPacketReader.h"
+#include "Mona/HTTPHeaderReader.h"
 #include "Mona/SOAPReader.h"
+#include "Mona/MapReader.h"
 #include "Mona/SOAPWriter.h"
-#include "Mona/FileSystem.h"
 #include "Mona/Protocol.h"
 #include "Mona/Exceptions.h"
-#include <fstream>
+#include "Mona/FileSystem.h"
 
 
 using namespace std;
@@ -34,136 +34,184 @@ using namespace std;
 namespace Mona {
 
 
-HTTPSession::HTTPSession(const SocketAddress& address, Protocol& protocol, Invoker& invoker) : WSSession(address, protocol, invoker), _isWS(false), _writer(*this) {
+HTTPSession::HTTPSession(const SocketAddress& address, Protocol& protocol, Invoker& invoker) : WSSession(address, protocol, invoker), _isWS(false), _writer(*this),_ppBuffer(new PoolBuffer(invoker.poolBuffers)), _pListener(NULL) {
 
 }
 
 
 HTTPSession::~HTTPSession() {
-	if(!died) {
-		if(_isWS)
-			wsWriter().close(WS_ENDPOINT_GOING_AWAY);
-		// TODO else for HTTP?
-	}
+	kill();
 }
 
+void HTTPSession::kill(){
+	if(died)
+		return;
+	if (_isWS)
+		wsWriter().close(WS::CODE_ENDPOINT_GOING_AWAY);
+	if (_pListener) {
+		invoker.unsubscribe(peer, _pListener->publication.name());
+		_pListener = NULL;
+	}
+	WSSession::kill();
+}
 
-bool HTTPSession::buildPacket(MemoryReader& packet,const shared_ptr<Buffer<UInt8>>& pData) {
-
+bool HTTPSession::buildPacket(MemoryReader& packet) {
 	if(_isWS)
-		return WSSession::buildPacket(packet,pData);
-
-	_request = unique_ptr<HTTPPacketReader>(new HTTPPacketReader(packet));
-	HTTP::ReadHeader(*_request, _headers, _cmd, (string&)peer.path, _file, peer);
-
-	UInt16 length = 0;
-	UInt8* end = NULL;
-	if (_headers.getNumber<UInt16>("content-length", length)) {
-		end = packet.current() + packet.available() - 4 - length;
-	} else {
-		end = packet.current() + packet.available() - 4;
-	}
-	return memcmp(end,"\r\n\r\n",4)==0;
+		return WSSession::buildPacket(packet);
+	// consumes all!
+	_pPacketBuildings.emplace_back(new HTTPPacketBuilding(invoker,packet.current(),packet.available(), _ppBuffer));
+	decode<HTTPPacketBuilding>(_pPacketBuildings.back());
+	return true;
 }
 
+const shared_ptr<HTTPPacket>& HTTPSession::packet() {
+	while (!_pPacketBuildings.empty() && _pPacketBuildings.front().unique())
+		_pPacketBuildings.pop_front();
+	if (!_pPacketBuildings.empty()) {
+		_writer.pRequest = _pPacketBuildings.front();
+		_pPacketBuildings.pop_front();
+		return _writer.pRequest;
+	}
+	if (_writer.pRequest) {
+		// erase previous parameters
+		for (auto it : _writer.pRequest->parameters)
+			peer.erase(it.first);
+		// erase previous request
+		_writer.pRequest.reset();
+	}
+	return _writer.pRequest;
+}
 
-void HTTPSession::packetHandler(MemoryReader& packet) {
+void HTTPSession::packetHandler(MemoryReader& reader) {
 	if(_isWS) {
-		WSSession::packetHandler(packet);
+		WSSession::packetHandler(reader);
 		return;
 	}
 
-	UInt32 pos = packet.position();
-	UInt32 posEnd = 0;
+	const shared_ptr<HTTPPacket>& pPacket(packet());
+	if (!pPacket) {
+		ERROR("HTTPSession::packetHandler without http packet built");
+		return;
+	}
 
 	string oldPath;
 	if(peer.connected)
 		oldPath = peer.path;
 
-	string temp = "127.0.0.1"; // TODO?
-	_headers.getString("host", temp);
-	Exception ex;
-	((SocketAddress&)peer.serverAddress).set(ex,temp, invoker.params.HTTP.port);
-	if (ex)
-		WARN("serverAddress of HTTPSession ",name()," impossible to determine with the host ",temp)
+	// HTTP is a simplex communication, so if request, remove possible old subscription
+	if (_pListener) {
+		invoker.unsubscribe(peer, _pListener->publication.name());
+		_pListener = NULL;
+	}
 
+	////  fill peers infos
+	(string&)peer.serverAddress = pPacket->serverAddress;
+	peer.setNumber("HTTPVersion", pPacket->version); // TODO check how is named for AMF
+	for (auto it : pPacket->parameters)
+		peer.setString(it.first,it.second);
+	(string&)peer.path = pPacket->path;
+	FilePath filePath(peer.path);
+	if (pPacket->filePos != string::npos)
+		((string&)peer.path).erase(pPacket->filePos - 1);
+
+
+	//// Disconnection if path has changed
 	if(peer.connected && String::ICompare(oldPath,peer.path)!=0)
 		peer.onDisconnection();
 
-	// HTTP GET
-	if (String::ICompare(_cmd, "GET") == 0) {
+	/// Client onConnection
+	Exception ex;
+	if(pPacket->connection&HTTP::CONNECTION_UPGRADE) {
+		// Ugrade to WebSocket
+		if (String::ICompare(pPacket->upgrade,"websocket")==0) {
+			peer.onDisconnection();
+			_isWS=true;
+			peer.setString("protocol", "WebSocket");
+			((string&)protocol().name) = "WebSocket";
 
-		bool connectionHasUpgrade = false;
-		if (_headers.getString("connection", temp)) {
-			vector<string> fields;
-			for (const string& field : String::Split(temp, ",", fields, String::SPLIT_IGNORE_EMPTY | String::SPLIT_TRIM)) {
-				if (String::ICompare(field, "upgrade") == 0) {
-					connectionHasUpgrade = true;
-					break;
+			DataWriter& response = _writer.write("101 Switching Protocols", HTTP::CONTENT_ABSENT);
+			BinaryWriter& writer = response.writer;
+			HTTP_BEGIN_HEADER(response)
+				HTTP_ADD_HEADER(writer,"Upgrade","WebSocket")
+				HTTP_ADD_HEADER(writer,"Sec-WebSocket-Accept", WS::ComputeKey(pPacket->secWebsocketKey))
+			HTTP_END_HEADER(writer)
+			HTTPHeaderReader reader(pPacket->headers);
+			peer.onConnection(ex, wsWriter(),reader,response);
+			_writer.flush(true); // last HTTP flush for this connection, now we are in a WebSession mode!
+		} // TODO else
+	} else {
+
+		MapReader<MapParameters::Iterator> parameters(reader,pPacket->parameters.begin(),pPacket->parameters.end());
+
+		if (!peer.connected) {
+			_options.clear();
+			peer.onConnection(ex, _writer,parameters,_options);
+		}
+
+		if (!ex && peer.connected) {
+
+
+			////////////  HTTP GET  //////////////
+			if ((pPacket->command == HTTP::COMMAND_HEAD ||pPacket->command == HTTP::COMMAND_GET)) {
+				// use index http option in the case of GET request on a directory
+				bool methodCalled(false);
+				// if no file in the path, try to invoke a method on client object
+				if (pPacket->filePos == string::npos) {
+					if (!_options.index.empty()) {
+						if (_options.indexCanBeMethod) {
+							Exception exTry;
+							parameters.reset();
+							peer.onMessage(exTry, _options.index,parameters,HTTPWriter::RAW);
+							if (exTry) {
+								if (exTry.code() == Exception::SOFTWARE)
+									ex.set(exTry);
+							} else
+								methodCalled = true;
+						}
+						if (!methodCalled && !ex)
+							filePath.set(filePath.path(),"/",_options.index);
+					} else if (!_options.indexDirectory)
+						ex.set(Exception::PERMISSION, "No authorization to see the content of ", peer.path,"/");
+				}
+
+				// try to get a file if the client object had not method named like that
+				if (!methodCalled && !ex) {
+					parameters.reset();
+					if (peer.onRead(ex, filePath, parameters, pPacket->properties) && !ex) {
+						// If onRead has been authorised, and that the file is a multimedia file, and it doesn't exists (no VOD, filePath.lastModified()==0 means "doesn't exists")
+						// Subscribe for a live stream with the basename file as stream name
+						if (filePath.lastModified() == 0) {
+							if (pPacket->contentType == HTTP::CONTENT_ABSENT)
+								pPacket->contentType = HTTP::ExtensionToMIMEType(filePath.extension(),pPacket->contentSubType);
+							if ((pPacket->contentType == HTTP::CONTENT_VIDEO || pPacket->contentType == HTTP::CONTENT_AUDIO) && filePath.lastModified() == 0)
+								_pListener = invoker.subscribe(ex, peer, filePath.baseName(), _writer);
+						}
+						if (!_pListener)
+							_writer.writeFile(filePath); // HTTP get
+					}
 				}
 			}
+			////////////  HTTP POST  //////////////
+			else if (pPacket->command == HTTP::COMMAND_POST) {
+				// TODO publication!
+				string contentType;
+				if (pPacket->contentType == HTTP::CONTENT_TEXT && pPacket->contentSubType == "xml")
+					processSOAPfunction(ex, reader);
+			}
+			////////////  HTTP OPTIONS  ////////////// (it is due requested when Move Redirection is sent)
+			else if (pPacket->command == HTTP::COMMAND_OPTIONS)
+				processOptions(ex, pPacket);
+
+
 		}
-		
-		// Ugrade to WebSocket?
-		if(connectionHasUpgrade) {
-			if (_headers.getString("upgrade", temp) && String::ICompare(temp, "websocket") == 0) {
-				peer.onDisconnection();
-				_isWS=true;
-				peer.setString("protocol", "WebSocket");
-				((string&)protocol().name) = "WebSocket";
-				DataWriter& response = _writer.writeMessage();
-				response.writeString("HTTP/1.1 101 Switching Protocols");
-				response.beginObject();
-				response.writeStringProperty("Upgrade","WebSocket");
-				response.writeStringProperty("Connection","Upgrade");
-				if (_headers.getString("sec-websocket-key", temp)) {
-					WS::ComputeKey(temp);
-					response.writeStringProperty("Sec-WebSocket-Accept", temp);
-				}
-				posEnd = packet.position();
-				packet.reset(pos);
-				//skip first line (HTTP/1.1 / GET ..)
-				if(_request->followingType()==HTTPPacketReader::STRING)
-					_request->next();
-
-				peer.onConnection(ex, wsWriter(),*_request,response);
-				if (!ex)
-					response.endObject();
-			} // TODO else
-		} else
-			processGet(ex, _file);
-
-	} /* TODO else if (icompare(cmd,"HEAD")==0) {*/
-	// WebService POST
-	else if (String::ICompare(_cmd, "POST") == 0) {
-
-		string contentType;
-		if (_headers.getString("content-type", contentType) && contentType.find("text/xml") != string::npos)
-			processSOAPfunction(ex, packet);
-	}
-	// TODO see if it is necessary (it is due requested when Move Redirection is sent)
-	else if (String::ICompare(_cmd, "OPTIONS") == 0) {
-
-		string methods;
-		if (_headers.getString("access-control-request-method", methods))
-			processOptions(ex, methods);
 	}
 
 	if (ex)
-		sendError(ex);
-	
-	if(!peer.connected) {
+		_writer.close(ex);
+	else if(!peer.connected)
 		kill();
-		return;
-	}
-
-	_writer.flush();
-
-	// continue the packet (because here the packet can contains multiple sub packet, cause the buildPacket implementation)
-	if(posEnd>0)
-		packet.reset(posEnd);
-	if(packet.available())
-		packetHandler(packet);
+	else
+		_writer.timeout.update();
 }
 
 void HTTPSession::manage() {
@@ -171,175 +219,34 @@ void HTTPSession::manage() {
 		WSSession::manage();
 		return;
 	}
-	/* TODO ping?
-	if(peer.connected && _time.elapsed()>60000000) {
-		_writer.writePing();
-		_time.update();
-	}*/
-	_writer.flush();
+	// timeout http session
+	if (peer.connected && _options.timeout > 0 && !_pListener && _writer.timeout.isElapsed(_options.timeout))
+		kill();
 }
 
-
-void HTTPSession::processGet(Exception& ex, const string& fileName) {
-	if(!peer.connected) {
-		peer.onConnection(ex, _writer);
-		if (ex)
-			return;
-	}
-	
-	string filePath(peer.path);
-	if (!fileName.empty())
-		String::Append(filePath, "/", fileName);
-
-	if(peer.onRead(ex, filePath)) {
-		string dir(filePath);
-		if (fileName.empty() && FileSystem::Exists(FileSystem::MakeDirectory(dir))) { // TODO keep this FileSystem access in MonaCore?
-			// Redirect to the real path of directory
-			processMove(peer.path);
-			return;
-		}
-
-		auto size = FileSystem::GetSize(ex,filePath);
-		if (ex)
-			return;
-
-		ifstream ifile(filePath, ios::in | ios::binary);
-		if (!ifile.good()) {
-			ex.set(Exception::FILE, "Impossible to open ", filePath, " file");
-			return;
-		}
-
-		Time time;
-		FileSystem::GetLastModified(ex, filePath, time);
-		if (ex)
-			return;
-
-		Time lastTime;
-		string tmp;
-		if (_headers.getString("if-modified-since", tmp) && lastTime.fromString(tmp)) {
-
-			// Not Modified => don't send the file
-			if (lastTime >= time)
-				processNotModified();
-		}
-		
-		DataWriter& response = _writer.writeMessage();
-		response.writeString("HTTP/1.1 200 OK");
-		response.beginObject();
-		response.writeStringProperty("Date", Time().toString(Time::HTTP_FORMAT, tmp));
-		response.writeStringProperty("Server","Mona");
-
-		if (_headers.getString("connection", tmp) && tmp == "keep-alive")
-			response.writeStringProperty("Connection","Keep-Alive");
-		else
-			response.writeStringProperty("Connection","close");
-
-		response.writeStringProperty("Last-Modified", time.toString(Time::HTTP_FORMAT, tmp));
-
-		string extension;
-		string type("text/plain");
-		HTTP::MIMEType(FileSystem::GetExtension(filePath, extension), type);		
-		response.writeStringProperty("Content-Type", type);
-		response.writeNumberProperty("Content-Length", (double)size);
-		response.endObject();
-
-		UInt32 pos = response.stream.size();
-		response.stream.next((UInt32)size);
-		
-		ifile.read((char*)response.stream.data() + pos, size); // TODO copy, what about peformance? multhreaded?
-	}
-}
-
-void HTTPSession::processNotModified() {
-
-	DataWriter& response = _writer.writeMessage();
-	response.writeString("HTTP/1.1 304 Not Modified");
-	response.beginObject();
-	string stDate;
-	response.writeStringProperty("Date", Time().toString(Time::HTTP_FORMAT, stDate));
-	response.writeStringProperty("Server","Mona");
-	response.writeStringProperty("Connection","close");
-	response.writeNumberProperty("Content-Length", 0);
-	response.endObject();
-}
-
-void HTTPSession::processMove(const string& filePath) {
-
-	DataWriter& response = _writer.writeMessage();
-	response.writeString("HTTP/1.1 301 Moved Permanently");
-	response.beginObject();
-	string stDate;
-	response.writeStringProperty("Date", Time().toString(Time::HTTP_FORMAT, stDate));
-	response.writeStringProperty("Server","Mona");
-	response.writeStringProperty("Connection","close");
-
-	string url;
-	// TODO determine the protocol (https/http)
-	String::Format(url, "http://", peer.serverAddress.host().toString(), filePath, '/');
-	response.writeStringProperty("Location", url);
-
-	string htmlMove("<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\">");
-	htmlMove += "<html><head>";
-	htmlMove += "<title>301 Moved Permanently</title>";
-	htmlMove += "</head><body>";
-	htmlMove += "<h1>Moved Permanently</h1>";
-	htmlMove += "<p>The document has moved <a href=\"";
-	htmlMove += url;
-	htmlMove += "\">here</a>.</p>";
-	htmlMove += "<hr>";
-	htmlMove += "<address>Mona Server at ";
-	String::Append(htmlMove, peer.serverAddress.host().toString(), " Port ", peer.serverAddress.port()); 
-	htmlMove += "</address>";
-	htmlMove += "</body></html>";
-
-	response.writeNumberProperty("Content-Length",htmlMove.size());
-	response.writeStringProperty("Content-Type","text/html; charset=utf-8");
-	response.endObject();
-
-	response.writeString(htmlMove);
-}
-
-void HTTPSession::processOptions(Exception& ex, const string& methods) {
+void HTTPSession::processOptions(Exception& ex,const shared_ptr<HTTPPacket>& pPacket) {
 
 	// Control methods quiested
-	vector<string> values;
-	String::Split(methods, ", ", values);
-	bool ok=true;
-	for (string& value : values) {
-		if(String::ICompare(value, "POST")!=0 && String::ICompare(value, "GET")!=0) {
-
-			ex.set(Exception::PROTOCOL, "Access control error : ", methods, " not allowed");
-			return;
-		}
+	if (pPacket->accessControlRequestMethod&HTTP::COMMAND_DELETE) {
+		ex.set(Exception::PROTOCOL,"Delete not allowed");
+		return;
 	}
 
-	DataWriter& response = _writer.writeMessage();
-	string stDate;
-	response.writeString("HTTP/1.1 200 OK");
-	response.beginObject();
-	response.writeStringProperty("Date", Time().toString(Time::HTTP_FORMAT, stDate));
-	response.writeStringProperty("Server","Mona");
+	DataWriter& response = _writer.write("200 OK", HTTP::CONTENT_ABSENT);
+	BinaryWriter& writer = response.writer;
 
-	string url;
 	// TODO determine the protocol (https/http)
-	String::Format(url, "http://", peer.serverAddress.host().toString());
-	response.writeStringProperty("Access-Control-Allow-Origin", url);
-					
-	response.writeStringProperty("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
-	response.writeStringProperty("Access-Control-Allow-Headers", "Content-Type");
-	response.writeNumberProperty("Content-Length", 0);
-	response.writeStringProperty("Connection","close");
-	response.writeStringProperty("Content-Type", "text/xml; charset=utf-8");
-	response.endObject();
+	String::Format(_buffer, "http://", peer.serverAddress);
+
+	HTTP_BEGIN_HEADER(response)
+		HTTP_ADD_HEADER(writer,"Access-Control-Allow-Origin", _buffer)
+		HTTP_ADD_HEADER(writer,"Access-Control-Allow-Methods", "GET, HEAD, PUT, PATH, POST, OPTIONS")
+		HTTP_ADD_HEADER(writer,"Access-Control-Allow-Headers", "Content-Type")
+	HTTP_END_HEADER(writer)
 }
 
 void HTTPSession::processSOAPfunction(Exception& ex, MemoryReader& packet) {
-	if(!peer.connected) {
-		peer.onConnection(ex, _writer);
-		if (ex)
-			return;
-	}
-	
+	/*
 	// Get function name
 	SOAPReader reader(packet);
 	string function = "onMessage";
@@ -386,43 +293,8 @@ void HTTPSession::processSOAPfunction(Exception& ex, MemoryReader& packet) {
 	response.endObject();
 
 	// Send SOAP Response
-	response.writeBytes(writer.stream.data(), size);
+	response.writeBytes(writer.stream.data(), size);*/
 }
 
-void HTTPSession::sendError(Exception& ex) {
-
-	string firstLine,title;
-	switch(ex.code()) {
-		case Exception::FILE:
-			firstLine.assign("HTTP/1.1 404 Not Found");
-			break;
-		case Exception::APPLICATION:
-			firstLine.assign("HTTP/1.1 500 Internal Server Error");
-			break;
-		default:
-			firstLine.assign("HTTP/1.1 520 ");
-			HTTP::CodeToMessage(520,title);
-	}
-	DataWriter& response = _writer.writeMessage();
-	response.writeString(firstLine);
-	response.beginObject();
-	string stDate;
-	response.writeStringProperty("Date", Time().toString(Time::HTTP_FORMAT, stDate));
-	response.writeStringProperty("Server","Mona");
-	response.writeStringProperty("Connection","Close");
-	response.endObject();
-	string error("<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\"><html><head><title>");
-	error += title;
-	error += "</title></head><body><h1>";
-	error += title;
-	error += "</h1><p>";
-	error += ex.error();
-	error += "</p><hr><address>Mona Server at ";
-	error += peer.serverAddress.toString();
-	error += "</address></body></html>\r\n";
-	response.writeString(error);
-	_writer.close();
-	kill();
-}
 
 } // namespace Mona

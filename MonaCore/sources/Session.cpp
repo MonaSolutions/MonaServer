@@ -18,7 +18,6 @@ This file is a part of Mona.
 */
 
 #include "Mona/Session.h"
-#include "Mona/Decoding.h"
 #include "Mona/Protocol.h"
 #include "Mona/Sessions.h"
 #include "Mona/Util.h"
@@ -32,7 +31,6 @@ namespace Mona {
 Session::Session(Protocol& protocol, Invoker& invoker, const Peer& peer, const char* name) : _pSessions(NULL), dumpJustInDebug(false),
 	Expirable(this), _protocol(protocol), _name(name ? name : ""), invoker(invoker), _pDecodingThread(NULL), died(false), _id(0), peer(peer) {
 	this->peer.setString("protocol", protocol.name);
-	this->peer.addresses.begin()->set(peer.address);
 	if(memcmp(this->peer.id,"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",ID_SIZE)==0)
 		Util::Random(this->peer.id,ID_SIZE);
 	string hex;
@@ -81,7 +79,6 @@ void Session::receive(MemoryReader& packet, const SocketAddress& address) {
 	if (address != peer.address) {
 		SocketAddress oldAddress(peer.address);
 		((SocketAddress&)peer.address).set(address);
-		peer.addresses.begin()->set(address);
 		if (_pSessions && id() != 0) // id!=0 if session is managed by _sessions
 			_pSessions->updateAddress(*this, oldAddress);
 	}

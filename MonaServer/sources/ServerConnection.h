@@ -64,7 +64,7 @@ private:
 	void			sendPublicAddress();
 
 	void			onError(const std::string& error);
-	Mona::UInt32	onReception(const std::shared_ptr<Mona::Buffer<Mona::UInt8>>& pData);
+	Mona::UInt32	onReception(const Mona::UInt8* data,Mona::UInt32 size);
 	void			onDisconnection();
 
 	ServerHandler&						_handler;

@@ -20,6 +20,7 @@ This file is a part of Mona.
 
 #include "Mona/UDPSocket.h"
 #include "Mona/UDPSender.h"
+#include "Mona/SocketManager.h"
 
 
 using namespace std;
@@ -28,7 +29,7 @@ using namespace std;
 namespace Mona {
 
 
-UDPSocket::UDPSocket(const SocketManager& manager, bool allowBroadcast) : _broadcasting(false), DatagramSocket(manager), _allowBroadcast(allowBroadcast) {
+UDPSocket::UDPSocket(const SocketManager& manager, bool allowBroadcast) : _pBuffer(manager.poolBuffers),_broadcasting(false), DatagramSocket(manager), _allowBroadcast(allowBroadcast) {
 
 }
 
@@ -58,22 +59,15 @@ void UDPSocket::onReadable(Exception& ex) {
 	if(ex || available==0)
 		return;
 
-	if (!_pBuffer)
-		_pBuffer.reset(new Buffer<UInt8>(available));
-	else if (available>_pBuffer->size())
-		_pBuffer->resize(available,false);
+	if (available>_pBuffer->size())
+		_pBuffer->resize(available);
 
 	SocketAddress address;
-	int size = receiveFrom(ex, _pBuffer->data(), available, address);
+	int size = receiveFrom(ex,_pBuffer->data(), available, address);
 	if (ex)
 		return;
-	UInt32 originSize = _pBuffer->size();
-	_pBuffer->resize(size,true);
-	onReception(_pBuffer,address);
-	if (!_pBuffer.unique())
-		_pBuffer.reset(new Buffer<UInt8>(originSize));
-	else
-		_pBuffer->resetSize();
+	_pBuffer->resize(size);
+	onReception(_pBuffer->data(),size,address);
 }
 
 void UDPSocket::close() {
@@ -81,7 +75,7 @@ void UDPSocket::close() {
 	_broadcasting = false;
 	_address.clear();
 	_peerAddress.clear();
-	_pBuffer.reset();
+	_pBuffer->clear();
 }
 
 bool UDPSocket::bind(Exception& ex,const SocketAddress& address) {

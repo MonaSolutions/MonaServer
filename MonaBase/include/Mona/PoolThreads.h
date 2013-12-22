@@ -21,38 +21,38 @@ This file is a part of Mona.
 
 #include "Mona/Mona.h"
 #include "Mona/PoolThread.h"
-#include <vector>
+#include "Mona/Util.h"
+#include <deque>
 
 namespace Mona {
 
 class PoolThreads : virtual Object {
 public:
-	PoolThreads(UInt32 threadsAvailable=0);
-	virtual ~PoolThreads();
+	PoolThreads(UInt16 threadsAvailable=0) {
+		if (threadsAvailable == 0)
+			threadsAvailable = Util::ProcessorCount();
+		for(UInt16 i=0;i<threadsAvailable;++i) _threads.push_back(new PoolThread());
+	}
+	virtual ~PoolThreads() {
+		for(PoolThread* pThread : _threads) delete pThread;
+	}
 
-	void			clear();
+	void	join() { for(PoolThread* pThread : _threads) pThread->join(); }
 	UInt32	threadsAvailable() { return _threads.size(); }
 
 	template<typename WorkThreadType>
     PoolThread* enqueue(Exception& ex, const std::shared_ptr<WorkThreadType>& pWork, PoolThread* pThread = NULL) {
-		UInt32 queue = 0;
 		if (!pThread) {
-			for (PoolThread* pPoolThread : _threads) {
-				UInt32 newQueue = pPoolThread->queue();
-				if (!pThread || newQueue <= queue) {
-					pThread = pPoolThread;
-					if ((queue = newQueue) == 0)
-						break;
-				}
-			}
+			pThread = _threads.front();
+			_threads.pop_front();
+			_threads.push_back(pThread);
 		}
-        std::shared_ptr<WorkThread> pWorkCp = std::static_pointer_cast<WorkThread>(pWork);
-        pThread->push(ex, pWorkCp);
+		pThread->push<WorkThreadType>(ex, pWork);
 		return pThread;
 	}
 
 private:
-	std::vector<PoolThread*>	_threads;
+	std::deque<PoolThread*>	_threads;
 };
 
 

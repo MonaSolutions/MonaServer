@@ -28,21 +28,12 @@ namespace Mona {
 
 UInt32	PoolThread::_Id(0);
 
-bool PoolThread::push(Exception& ex,shared_ptr<WorkThread>& pWork) {
-	lock_guard<mutex> lock(_mutex);
-	if (!running() && !start(ex))
-		return false;
-	++_queue;
-	_jobs.emplace_back(pWork);
-	wakeUp();
-	return true;
-}
 
 void PoolThread::run(Exception& ex) {
 
 	for(;;) {
 
-		WakeUpType wakeUpType = sleep(40000); // 40 sec of timeout
+		WakeUpType wakeUpType = sleep(120000); // 2 mn sec of timeout
 		
 		for (;;) {
 			WorkThread* pWork;
@@ -59,8 +50,7 @@ void PoolThread::run(Exception& ex) {
 			}
 
 			try {
-				Exception ex;
-				EXCEPTION_TO_LOG(pWork->run(ex), pWork->name);
+				EXCEPTION_TO_LOG(pWork->run(ex),pWork->name);
 			} catch (exception& ex) {
 				ERROR(pWork->name,", ",ex.what());
 			} catch (...) {
@@ -71,7 +61,6 @@ void PoolThread::run(Exception& ex) {
 				lock_guard<mutex> lock(_mutex);
 				_jobs.pop_front();
 			}
-			--_queue;
 		}
 	}
 }

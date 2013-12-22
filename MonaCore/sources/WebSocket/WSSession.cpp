@@ -21,7 +21,7 @@ This file is a part of Mona.
 #include "Mona/WebSocket/WS.h"
 #include "Mona/WebSocket/WSUnmasking.h"
 #include "Mona/JSONReader.h"
-#include "Mona/StringReader.h"
+#include "Mona/RawReader.h"
 
 
 using namespace std;
@@ -30,7 +30,7 @@ using namespace std;
 namespace Mona {
 
 
-WSSession::WSSession(const SocketAddress& address, Protocol& protocol, Invoker& invoker) : TCPSession(address, protocol, invoker), _writer(*this), _pListener(NULL), _pPublication(NULL) {
+WSSession::WSSession(const SocketAddress& address, Protocol& protocol, Invoker& invoker) : TCPSession(address, protocol, invoker), _writer(*this,address), _pListener(NULL), _pPublication(NULL) {
 }
 
 
@@ -41,19 +41,28 @@ WSSession::~WSSession() {
 void WSSession::kill(){
 	if(died)
 		return;
-	// Impossible to send something here, socket is null!
-	if(_pPublication)
-		invoker.unpublish(peer,_pPublication->name());
-	_pPublication=NULL;
-	if(_pListener)
-		invoker.unsubscribe(peer,_pListener->publication.name());
-	_pListener=NULL;
+	closePublication();
+	closeSusbcription();
 	TCPSession::kill();
 }
 
+void WSSession::closeSusbcription(){
+	if (_pListener) {
+		invoker.unsubscribe(peer,_pListener->publication.name());
+		_pListener=NULL;
+	}
+}
 
-bool WSSession::buildPacket(MemoryReader& packet,const shared_ptr<Buffer<UInt8>>& pData) {
-	if (pData->size()<2)
+void WSSession::closePublication(){
+	if(_pPublication) {
+		invoker.unpublish(peer,_pPublication->name());
+		_pPublication=NULL;
+	}
+}
+
+
+bool WSSession::buildPacket(MemoryReader& packet) {
+	if (packet.available()<2)
 		return false;
 	UInt8 type = packet.read8() & 0x0F;
 	UInt8 lengthByte = packet.read8();
@@ -75,15 +84,15 @@ bool WSSession::buildPacket(MemoryReader& packet,const shared_ptr<Buffer<UInt8>>
 	if (packet.available()<size)
 		return false;
 
+	packet.shrink(size);
+
 	if (lengthByte & 0x80) {
-		shared_ptr<WSUnmasking> pUnmasking(new WSUnmasking(pData, type, invoker,packet.position()));
-		decode<WSUnmasking>(pUnmasking);
+		shared_ptr<WSUnmasking> pWSUnmasking(new WSUnmasking(invoker, packet.current(),packet.available(), type));
+		decode<WSUnmasking>(pWSUnmasking);
 	} else {
 		packet.reset(packet.position()-1);
 		*packet.current() = type;
 	}
-
-	packet.shrink(size);
 	return true;
 }
 
@@ -96,14 +105,14 @@ void WSSession::packetHandler(MemoryReader& packet) {
 		type = packet.read8();	
 		
 		switch(type) {
-			case WS_BINARY: {
-				StringReader reader(packet);
-				peer.onMessage(ex, "onMessage",reader);
+			case WS::TYPE_BINARY: {
+				RawReader reader(packet);
+				peer.onMessage(ex, "onMessage",reader,WS::TYPE_BINARY);
 				break;
 			}
-			case WS_TEXT: {
+			case WS::TYPE_TEXT: {
 				if(!JSONReader::IsValid(packet)) {
-					StringReader reader(packet);
+					RawReader reader(packet);
 					peer.onMessage(ex, "onMessage",reader);
 					break;
 				}
@@ -116,7 +125,7 @@ void WSSession::packetHandler(MemoryReader& packet) {
 				reader.readString(name);
 				if(name=="__publish") {
 					if(reader.followingType()!=JSONReader::STRING) {
-						ex.set(Exception::PROTOCOL, "__publish method takes a stream name in first parameter",WS_MALFORMED_PAYLOAD);
+						ex.set(Exception::PROTOCOL, "__publish method takes a stream name in first parameter",WS::CODE_MALFORMED_PAYLOAD);
 						break;
 					}
 					reader.readString(name);
@@ -125,29 +134,20 @@ void WSSession::packetHandler(MemoryReader& packet) {
 					_pPublication = invoker.publish(ex, peer,name);
 				} else if(name=="__play") {
 					if(reader.followingType()!=JSONReader::STRING) {
-						ex.set(Exception::PROTOCOL, "__play method takes a stream name in first parameter",WS_MALFORMED_PAYLOAD);
+						ex.set(Exception::PROTOCOL, "__play method takes a stream name in first parameter",WS::CODE_MALFORMED_PAYLOAD);
 						break;
 					}
 					reader.readString(name);
-					if(_pListener)
-						invoker.unsubscribe(peer,_pListener->publication.name());
-					_pListener = invoker.subscribe(ex, peer,name,_writer);
 					
+					closeSusbcription();
 				} else if(name=="__closePublish") {
-					if(_pPublication)
-						invoker.unpublish(peer,_pPublication->name());
-					_pPublication = NULL;
+					closePublication();
 				} else if(name=="__closePlay") {
-					if(_pListener)
-						invoker.unsubscribe(peer,_pListener->publication.name());
-					_pListener = NULL;
-				} else if(name=="__close") {
-					if(_pPublication)
-						invoker.unpublish(peer,_pPublication->name());
-					if(_pListener)
-						invoker.unsubscribe(peer,_pListener->publication.name());
-					_pListener = NULL;
-					_pPublication = NULL;
+					closeSusbcription();
+				} else if (name == "__close") {
+					closePublication();
+					closeSusbcription();
+					
 				} else if(_pPublication) {
 					reader.reset();
 					_pPublication->pushData(reader);
@@ -155,31 +155,28 @@ void WSSession::packetHandler(MemoryReader& packet) {
 					peer.onMessage(ex, name,reader);
 				break;
 			}
-			case WS_CLOSE:
+			case WS::TYPE_CLOSE:
 				_writer.close(packet.available() ? packet.read16() : 0);
 				break;
-			case WS_PING:
+			case WS::TYPE_PING:
 				_writer.writePong(packet.current(),packet.available());
 				break;
-			case WS_PONG:
+			case WS::TYPE_PONG:
 				_writer.ping = (UInt16&)peer.ping = (UInt16)(_time.elapsed()/1000);
 				break;
 			default:
-				ex.set(Exception::PROTOCOL, Format<UInt8>("Type %#x unknown", type), WS_MALFORMED_PAYLOAD);
+				ex.set(Exception::PROTOCOL, Format<UInt8>("Type %#x unknown", type), WS::CODE_MALFORMED_PAYLOAD);
 				break;
 		}
 		
 		if (ex) {
-			if (ex.code() != Exception::APPLICATION) {
-				ERROR(ex.error());
-				_writer.close(ex.code());
-			} else
-				_writer.close(WS_PROTOCOL_ERROR); // onMessage displays already the error!
+			ERROR(ex.error());
+			_writer.close((ex.code()==Exception::APPLICATION || ex.code() == Exception::SOFTWARE) ? WS::CODE_PROTOCOL_ERROR : ex.code());	
 		}
 		
 	}
 
-	if(!peer.connected || type==WS_CLOSE)
+	if(!peer.connected || type==WS::TYPE_CLOSE)
 		kill();
 	else
 		_writer.flush();
@@ -191,7 +188,6 @@ void WSSession::manage() {
 		_writer.writePing();
 		_time.update();
 	}
-	_writer.flush();
 }
 
 

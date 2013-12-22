@@ -97,45 +97,31 @@ void XMLWriter::endObject() {
 	
 }
 
-void XMLWriter::writeDate(const Time& date) {
-	string str;
-	writePrimitive(date.toString(Time::ISO8601_FRAC_FORMAT, str));
-}
-
-void XMLWriter::writeBoolean(bool value) { 
-	writePrimitive(value? "true" : "false");
-}
-
-void XMLWriter::writeNumber(double value) {
-
-	string str;
-	writePrimitive(String::Format(str, value));
-}
-
-void XMLWriter::writeString(const string& value) { 
-		
-	writePrimitive(value);
-}
-
-void XMLWriter::writeNull() {
-	writeString("null");
-}
-
 void XMLWriter::writeBytes(const UInt8* data,UInt32 size) {
-
-	writePrimitive("", data, size);
+	begin();
+	writer.writeRaw(data, size);
+	end();
 }
 
-void XMLWriter::writePrimitive(const string& value, const UInt8* data /*= NULL*/, UInt32 size /*= 0*/) {
+void XMLWriter::writeRaw(const char* value) { 
+	begin();
+	writer.writeRaw(value);
+	end();
+}
+void XMLWriter::writeRaw(const string& value) { 
+	begin();
+	writer.writeRaw(value);
+	end();
+}
 
+void XMLWriter::begin() {
 	if (!_value.empty()) {
-		
-		if (_value=="__value")
-			_value="value";
+		if (_value == "__value")
+			_value = "value";
 
 		if (_closeLast) {
 			writer.write8('>');
-			_closeLast=false;
+			_closeLast = false;
 		}
 
 		writer.write8('<');
@@ -143,20 +129,16 @@ void XMLWriter::writePrimitive(const string& value, const UInt8* data /*= NULL*/
 		writer.write8('>');
 	}
 
-	// Write value
-	if (data)
-		writer.writeRaw(data,size);
-	else
-		writer.writeRaw(value);
+}
 
+void XMLWriter::end() {
 	if (!_value.empty()) {
-		
 		writer.writeRaw("</");
 		writer.writeRaw(_value);
 		writer.write8('>');
-
 		_value.assign("");
 	}
 }
+
 
 } // namespace Mona

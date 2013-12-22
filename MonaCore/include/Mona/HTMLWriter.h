@@ -17,30 +17,35 @@ details (or else see http://www.gnu.org/licenses/).
 This file is a part of Mona.
 */
 
-#include "Mona/PoolThreads.h"
-#include "Mona/Util.h"
+#pragma once
 
-using namespace std;
-
+#include "Mona/Mona.h"
+#include "Mona/DataWriter.h"
 
 namespace Mona {
 
-PoolThreads::PoolThreads(UInt32 threadsAvailable) : _threads(threadsAvailable == 0 ? Util::ProcessorCount() : threadsAvailable) {
-	for(UInt16 i=0;i<_threads.size();++i)
-		_threads[i] = new PoolThread();
-}
 
-PoolThreads::~PoolThreads() {
-	vector<PoolThread*>::iterator it;
-	for(it=_threads.begin();it!=_threads.end();++it)
-		delete *it;
-}
+class HTMLWriter : public DataWriter, virtual Object {
+public:
+	HTMLWriter() {}
 
-void PoolThreads::clear() {
-	vector<PoolThread*>::iterator it;
-	for(it=_threads.begin();it!=_threads.end();++it)
-		(*it)->clear();
-}
+	void beginObject(const std::string& type = "", bool external = false) {}
+	void endObject() {}
+
+	void writePropertyName(const std::string& value) {}
+
+	void beginArray(UInt32 size) {}
+	void endArray() {}
+
+	void writeDate(const Time& date) {}
+	void writeNumber(double value) {}
+	void writeString(const std::string& value) { writer.writeRaw(value); }
+	void writeBoolean(bool value) {}
+	void writeNull() {}
+	void writeBytes(const UInt8* data,UInt32 size) {}
+
+	void	clear() {}
+};
 
 
 

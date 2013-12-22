@@ -22,7 +22,7 @@ This file is a part of Mona.
 
 #include "Mona/Mona.h"
 #include "Mona/DatagramSocket.h"
-#include "Mona/Buffer.h"
+#include "Mona/PoolBuffer.h"
 
 namespace Mona {
 
@@ -50,10 +50,10 @@ public:
 	const SocketAddress&	peerAddress();
 
 private:
-	virtual void			onReception(const std::shared_ptr<Buffer<UInt8>>& pData, const SocketAddress& address) = 0;
+	virtual void			onReception(const UInt8* data, UInt32 size, const SocketAddress& address) = 0;
 	void					onReadable(Exception& ex);
 
-	std::shared_ptr<Buffer<UInt8>>			_pBuffer;
+	PoolBuffer				_pBuffer;
 	bool					_allowBroadcast;
 	bool					_broadcasting;
 

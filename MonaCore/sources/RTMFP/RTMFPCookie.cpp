@@ -41,7 +41,7 @@ bool RTMFPCookie::finalize(Exception& ex) {
 		return false;
 	_writer.write7BitLongValue(size+11);
 	UInt8* nonce = _writer.begin() + _writer.position();
-	_writer.writeRaw("\x03\x1A\x00\x00\x02\x1E\x00",7);
+	_writer.writeRaw("\x03\x1A\x00\x00\x02\x1E\x00");
 	UInt8 byte2 = DH_KEY_SIZE-size;
 	if(byte2>2) {
 		CRITIC("Generation DH key with less of 126 bytes!");

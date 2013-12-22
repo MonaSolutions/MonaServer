@@ -4,7 +4,8 @@
     <script type="text/javascript">
         function soap() {
             var xmlhttp = new XMLHttpRequest();
-            xmlhttp.open('POST', 'http://localhost/soap', true);
+			var address = window.document.getElementById("address").value;
+            xmlhttp.open('POST', address, true);
 
 			var req = window.document.getElementById("request").value;
 			var test =
@@ -37,6 +38,7 @@
 </head>
 <body>
     <form name="Demo" action="" method="post">
+<textarea id="address" rows="1" cols="100">http://localhost/soap</textarea>
 <textarea id="request" rows="10" cols="100">
 <urn:sayHello>
 	<message>test</message>

@@ -28,14 +28,14 @@ using namespace std;
 
 namespace Mona {
 
-void WS::ComputeKey(string& key) {
+string& WS::ComputeKey(string& key) {
 	key.append("258EAFA5-E914-47DA-95CA-C5AB0DC85B11"); // WEBSOCKET_GUID
 	UInt8 temp[20];
 	EVP_Digest(key.c_str(),key.size(),temp,NULL,EVP_sha1(),NULL);
 
-	Buffer<UInt8> buffer; //  TODO remove this temporary variable?
+	Buffer buffer; //  TODO remove this temporary variable?
 	Util::ToBase64(temp, sizeof(temp), buffer); 
-	key.assign((const char*)buffer.data(),buffer.size());
+	return key.assign((const char*)buffer.data(),buffer.size());
 }
 
 

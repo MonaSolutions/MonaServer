@@ -61,6 +61,8 @@ void Sessions::manage() {
 	while(it!=_sessions.end()) {
 		if(!it->second->died)
 			it->second->manage();
+		if(!it->second->died)
+			it->second->flush();
 		if(it->second->died) {
 			remove(it++);
 			continue;

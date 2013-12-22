@@ -19,16 +19,17 @@ This file is a part of Mona.
 
 #include "Mona/TCPClient.h"
 #include "Mona/TCPSender.h"
+#include "Mona/SocketManager.h"
 
 using namespace std;
 
 
 namespace Mona {
 
-TCPClient::TCPClient(const SocketManager& manager) : _pBuffer(new Buffer<UInt8>()), _connected(false), StreamSocket(manager), _rest(0) {
+TCPClient::TCPClient(const SocketManager& manager) :  _pBuffer(manager.poolBuffers),_connected(false), StreamSocket(manager), _rest(0) {
 }
 
-TCPClient::TCPClient(const SocketManager& manager, const SocketAddress& peerAddress) : _pBuffer(new Buffer<UInt8>()),_peerAddress(peerAddress), _connected(true), _rest(0), StreamSocket(manager) {
+TCPClient::TCPClient(const SocketAddress& peerAddress, const SocketManager& manager) :  _pBuffer(manager.poolBuffers),_peerAddress(peerAddress), _connected(true), _rest(0), StreamSocket(manager) {
 
 }
 
@@ -66,10 +67,11 @@ void TCPClient::onReadable(Exception& ex) {
 		return;
 	}
 
-	if (available > (_pBuffer->size() - _rest))
-		_pBuffer->resize(available + _rest,true);
+	if(available>(_pBuffer->size() - _rest))
+		_pBuffer->resize(available);
 
-	int received = receiveBytes(ex, _pBuffer->data()+_rest, available);
+
+	int received = receiveBytes(ex,_pBuffer->data()+_rest, available);
 	if (ex)
 		return;
 
@@ -79,36 +81,23 @@ void TCPClient::onReadable(Exception& ex) {
 	}
 	_rest += received;
 
-	bool consumed(false);
-
 	while (_rest > 0) {
 
-		UInt32 originSize = _pBuffer->size();
-		_pBuffer->resize(_rest,true);
-		UInt32 rest = onReception(_pBuffer);
+		UInt32 rest = onReception(_pBuffer->data(),_rest);
 
 		if (rest > _rest)
 			rest = _rest;
 
-		shared_ptr<Buffer<UInt8>> pOldBuffer(_pBuffer);
-		if (_pBuffer.use_count() > 2)
-			_pBuffer.reset(new Buffer<UInt8>(originSize));
-		else
-			_pBuffer->resetSize();
-	
 		// rest <= _rest, has consumed 0 or few bytes
-		if (rest>0 && (_rest != rest || _pBuffer.unique())) // has consumed few bytes (but not all) or buffer has changed
-			memcpy(_pBuffer->data(), pOldBuffer->data() + (_rest - rest), rest); // move to the beginning
+		if (rest>0 && (_rest != rest)) // has consumed few bytes (but not all)
+			memcpy(_pBuffer->data(), _pBuffer->data() + (_rest - rest), rest); // move to the beginning
 		
 		if (_rest == rest) // no new bytes consumption, wait next reception
 			break;
 
 		_rest = rest;
-		consumed = true;
 	}
-	
-	if (consumed)
-		endReception();
+
 }
 
 
@@ -124,6 +113,7 @@ void TCPClient::disconnect() {
 	shutdown(ex,Socket::RECV);
 	close();
 	_rest = 0;
+	_pBuffer->clear();
 	_address.clear();
 	_peerAddress.clear();
 	onDisconnection();

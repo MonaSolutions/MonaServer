@@ -20,30 +20,19 @@ This file is a part of Mona.
 #pragma once
 
 #include "Mona/Mona.h"
-#include "Mona/DataWriter.h"
-#include "math.h"
+#include "Mona/Decoding.h"
+#include "Mona/HTTP/HTTPPacket.h"
 
 namespace Mona {
 
-
-class HTTPPacketWriter : public DataWriter {
+class HTTPPacketBuilding : public Decoding, public HTTPPacket, virtual Object {
 public:
-	HTTPPacketWriter() {}
+	HTTPPacketBuilding(Invoker& invoker, const UInt8* data, UInt32 size, std::shared_ptr<PoolBuffer>& ppBuffer) : _ppBuffer(ppBuffer),HTTPPacket(*ppBuffer),Decoding("HTTPPacketBuilding", invoker, data, size) {}
 
-	void beginObject(const std::string& type = "", bool external = false) {}
-	void endObject() { writer.writeRaw("\r\n", 2); }
+private:
+	const UInt8* decodeRaw(Exception& ex, PoolBuffer& pBuffer, UInt32 times,const UInt8* data,UInt32& size) { return build(pBuffer,data,size); }
 
-	void writePropertyName(const std::string& value);
-
-	void beginArray(UInt32 size) {}
-	void endArray() {}
-
-	void writeDate(const Time& date);
-	void writeNumber(double value) { std::string text; writeString(String::Format(text, value)); }
-	void writeString(const std::string& value);
-	void writeBoolean(bool value);
-	void writeNull() { writer.writeRaw("null\r\n", 6); }
-	void writeBytes(const UInt8* data, UInt32 size) { writer.writeRaw(data, size); }
+	const std::shared_ptr<PoolBuffer>	 _ppBuffer;
 };
 
 

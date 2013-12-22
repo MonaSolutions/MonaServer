@@ -24,7 +24,7 @@ This file is a part of Mona.
 #include "Mona/Util.h"
 #include "Mona/Time.h"
 #include "Mona/SocketAddress.h"
-#include <list>
+#include <deque>
 #include <set>
 
 namespace Mona {
@@ -40,7 +40,7 @@ public:
 	UInt16			mediaIndex;
 
 	void			fromSDPLine(const std::string& line,SDPCandidate& publicCandidate);
-	void			fromSDPLine(const std::string& line, SDPCandidate& publicCandidate, std::list<SDPCandidate>& relayCurrentCandidates, std::list<SDPCandidate>& relayRemoteCandidates) { fromSDPLine(line, publicCandidate, relayCurrentCandidates, relayRemoteCandidates, true); }
+	void			fromSDPLine(const std::string& line, SDPCandidate& publicCandidate, std::deque<SDPCandidate>& relayCurrentCandidates, std::deque<SDPCandidate>& relayRemoteCandidates) { fromSDPLine(line, publicCandidate, relayCurrentCandidates, relayRemoteCandidates, true); }
 
 	void			reset();
 	UInt32			elapsed() { return (UInt32)_time.elapsed() / 1000; }
@@ -53,8 +53,8 @@ private:
 		REMOTE
 	};
 	
-	void fromSDPLine(const std::string& line,SDPCandidate& publicCandidate,std::list<SDPCandidate>& relayCurrentCandidates,std::list<SDPCandidate>& relayRemoteCandidates,bool relayed);
-	void fromSDPCandidate(const std::string& candidate,SDPCandidate& publicCandidate,std::list<SDPCandidate>& relayCurrentCandidates,std::list<SDPCandidate>& relayRemoteCandidates,bool relayed);
+	void fromSDPLine(const std::string& line,SDPCandidate& publicCandidate,std::deque<SDPCandidate>& relayCurrentCandidates,std::deque<SDPCandidate>& relayRemoteCandidates,bool relayed);
+	void fromSDPCandidate(const std::string& candidate,SDPCandidate& publicCandidate,std::deque<SDPCandidate>& relayCurrentCandidates,std::deque<SDPCandidate>& relayRemoteCandidates,bool relayed);
 
 	std::map<UInt16,std::map<UInt8,std::set<SocketAddress> > >	_initiatorAddresses;
 	std::map<UInt16,std::map<UInt8,std::set<SocketAddress> > >	_remoteAddresses;

@@ -25,14 +25,20 @@ using namespace std;
 
 namespace Mona {
 
+const MapParameters MapParameters::Null(true);
 
-bool MapParameters::getRaw(const string& key, string& value) const {
+const string* MapParameters::getRaw(const string& key) const {
 	auto it = _map.find(key);
-	if (it != _map.end()) {
-		value = it->second;
-		return true;
-	}
-	return false;
+	if (it != _map.end())
+		return &it->second;
+	return NULL;
+}
+
+void MapParameters::setRaw(const string& key, const char* value) {
+	if (value)
+		_map[key] = value;
+	else
+		_map.erase(key);
 }
 
 

@@ -21,7 +21,10 @@ This file is a part of Mona.
 
 #include "Mona/Mona.h"
 #include "Mona/WebSocket/WSSession.h"
+#include "Mona/HTTPOptionsWriter.h"
 #include "Mona/HTTP/HTTPWriter.h"
+#include "Mona/HTTP/HTTPPacket.h"
+#include "Mona/HTTP/HTTPPacketBuilding.h"
 
 
 namespace Mona {
@@ -35,37 +38,30 @@ public:
 	virtual ~HTTPSession();
 	
 private:
+	void			kill();
 	void			manage();
 
-	bool			buildPacket(MemoryReader& packet,const std::shared_ptr<Buffer<UInt8>>& pData);
-	void			packetHandler(MemoryReader& packet);
-	void			endReception() { if (_isWS) WSSession::endReception(); }
-
-	/// \brief Send the HTTP error response
-	void			sendError(Exception& ex);
-	
-	/// \brief Send the file
-	void			processGet(Exception& ex, const std::string& fileName);
+	bool								buildPacket(MemoryReader& packet);
+	const std::shared_ptr<HTTPPacket>&	packet();
+	void								packetHandler(MemoryReader& packet);
 
 	/// \brief Parse SOAP request, execute lua function and send SOAP response
 	void			processSOAPfunction(Exception& ex, MemoryReader& packet);
 
 	/// \brief Send the Option response
 	/// Note: It is called when processMove is used before a SOAP request
-	void			processOptions(Exception& ex, const std::string& methods);
+	void			processOptions(Exception& ex,const std::shared_ptr<HTTPPacket>& pPacket);
 
-	/// \brief Send the Move response if the file requested is a directory
-	void			processMove(const std::string& filePath);
+	HTTPWriter			_writer;
+	bool				_isWS;
 
-	/// \brief Send Not Modified
-	void			processNotModified();
+	Listener*			_pListener;
 
-	std::string			_cmd;
-	std::string			_file;
-	std::unique_ptr<HTTPPacketReader> _request;
-	MapParameters	_headers;
-	HTTPWriter		_writer;
-	bool			_isWS;
+	std::deque<std::shared_ptr<HTTPPacketBuilding>>	_pPacketBuildings;
+	std::shared_ptr<PoolBuffer>						_ppBuffer;
+	std::string										_buffer;
+
+	HTTPOptionsWriter								_options;
 };
 
 

@@ -22,6 +22,7 @@ This file is a part of Mona.
 #include "Mona/Mona.h"
 #include "Mona/Session.h"
 #include "Mona/TCPClient.h"
+#include "Mona/Decoding.h"
 
 namespace Mona {
 
@@ -32,22 +33,30 @@ protected:
 	template<typename DecodingType>
 	void decode(const std::shared_ptr<DecodingType>& pDecoding,const SocketAddress& address) {
 		WARN("TCP Session ", name(), " cannot updated its address (TCP session is in a connected way");
-		Session::decode<DecodingType>(pDecoding);
+		TCPSession::decode(pDecoding);
 	}
 
 	template<typename DecodingType>
 	void decode(const std::shared_ptr<DecodingType>& pDecoding) {
-		Session::decode<DecodingType>(pDecoding);
+		_pDecoding = pDecoding;
 	}
 
 private:
-	virtual bool	buildPacket(MemoryReader& packet,const std::shared_ptr<Buffer<UInt8>>& pData) = 0;
-	virtual void	packetHandler(MemoryReader& packet)=0;
+	void receive(MemoryReader& packet, const SocketAddress& address) {
+		WARN("TCP Session ", name(), " cannot updated its address (TCP session is in a connected way");
+		Session::receive(packet);
+	}
+
+	virtual bool	buildPacket(MemoryReader& packet) = 0;
 
 	// TCPClient implementation
-	UInt32			onReception(const std::shared_ptr<Buffer<UInt8>>& pData);
+	UInt32			onReception(const UInt8* data, UInt32 size);
 	void			onError(const std::string& error);
 	void			onDisconnection() { kill(); }
+
+	bool							_consumed;
+	std::shared_ptr<Decoding>		_pLastDecoding;
+	std::shared_ptr<Decoding>		_pDecoding;
 };
 
 

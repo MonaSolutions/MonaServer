@@ -35,12 +35,10 @@ public:
 	Writer*			pWriter;
 };
 
-Peer::Peer(Handler& handler) :Client(turnPeers), _handler(handler), connected(false), addresses(1), relayable(false) {
+Peer::Peer(Handler& handler) :Client(turnPeers), _handler(handler), connected(false), relayable(false) {
 }
 
-Peer::Peer(const Peer& peer) : Client(peer), turnPeers(peer.turnPeers), _handler(peer._handler), connected(peer.connected), relayable(false), addresses(peer.addresses) {
-	for(auto& it: peer)
-		setRaw(it.first,it.second);
+Peer::Peer(const Peer& peer) : Client(peer), turnPeers(peer.turnPeers), _handler(peer._handler), connected(peer.connected), relayable(false), localAddresses(peer.localAddresses) {
 }
 
 Peer::~Peer() {
@@ -245,9 +243,9 @@ void Peer::onDisconnection() {
 	}
 }
 
-void Peer::onMessage(Exception& ex, const string& name,DataReader& reader,Mona::DataWriter& writer) {
+void Peer::onMessage(Exception& ex, const string& name,DataReader& reader,UInt8 responseType) {
 	if(connected)
-		_handler.onMessage(ex, *this, name, reader, writer);
+		_handler.onMessage(ex, *this, name, reader, responseType);
 	else
 		ERROR("RPC client before connection")
 }
@@ -314,11 +312,10 @@ void Peer::onUnsubscribe(const Listener& listener) {
 	WARN("Unsubscription client before connection")
 }
 
-bool Peer::onRead(Exception& ex, string& filePath,DataReader& parameters) {
-
+bool Peer::onRead(Exception& ex, FilePath& filePath,DataReader& parameters,DataWriter& properties) {
 	if(connected)
-		return _handler.onRead(ex, *this, filePath,parameters);
-	ERROR("Resource '",filePath,"' access by a not connected client")
+		return _handler.onRead(ex, *this, filePath,parameters,properties);
+	ERROR("Resource '",filePath.path(),"' access by a not connected client")
 	return false;
 }
 

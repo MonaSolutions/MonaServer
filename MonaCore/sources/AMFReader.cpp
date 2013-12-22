@@ -29,7 +29,7 @@ class ObjectDef : virtual Object {
 public:
 	ObjectDef(UInt32 amf3,UInt8 arrayType=0) : amf3(amf3),reset(0),dynamic(false),externalizable(false),count(0),arrayType(arrayType) {}
 
-	list<string>	hardProperties;
+	deque<string>	hardProperties;
 	UInt32			reset;
 	bool			dynamic;
 	bool			externalizable;
@@ -45,16 +45,14 @@ AMFReader::AMFReader(MemoryReader& reader) : DataReader(reader),_amf3(0),_amf0Re
 
 
 AMFReader::~AMFReader() {
-	list<ObjectDef*>::iterator it;
-	for(it=_objectDefs.begin();it!=_objectDefs.end();++it)
-		delete *it;
+	for(ObjectDef* pObjectDef : _objectDefs)
+		delete pObjectDef;
 }
 
 void AMFReader::reset() {
 	DataReader::reset();
-	list<ObjectDef*>::iterator it;
-	for(it=_objectDefs.begin();it!=_objectDefs.end();++it)
-		delete *it;
+	for(ObjectDef* pObjectDef : _objectDefs)
+		delete pObjectDef;
 	_objectDefs.clear();
 	_stringReferences.clear();
 	_classDefReferences.clear();
@@ -406,9 +404,8 @@ bool AMFReader::readObject(string& type,bool& external) {
 
 	if(!pObjectDef->externalizable) {
 		pObjectDef->hardProperties.resize(flags);
-		list<string>::iterator it;
-		for(it=pObjectDef->hardProperties.begin();it!=pObjectDef->hardProperties.end();++it)
-			readText(*it);
+		for(string& hardProperty : pObjectDef->hardProperties)
+			readText(hardProperty);
 	}
 
 	if(reset>0)

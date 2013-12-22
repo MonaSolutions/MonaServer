@@ -23,7 +23,6 @@ This file is a part of Mona.
 #include "Mona/Exceptions.h"
 #include "Mona/Writer.h"
 #include "Mona/IPAddress.h"
-#include <list>
 #include <map>
 
 
@@ -41,7 +40,7 @@ public:
 
 	const std::string		codec;
 	const UInt16		port; // if port==0 the media is rejected!
-	std::list<UInt8>	formats;
+	std::deque<UInt8>	formats;
 };
 
 class Peer;
@@ -67,14 +66,14 @@ public:
 
 	std::string				iceUFrag;
 	std::string				icePwd;
-	std::list<std::string>	iceOptions;
+	std::deque<std::string>	iceOptions;
 
 	std::string				finger;
 	bool					supportMsId;
 
-	std::map<std::string,std::list<std::string> >	groups;
+	std::map<std::string,std::deque<std::string> >	groups;
 
-	std::map<std::string,std::list<std::string> >	extensions;
+	std::map<std::string,std::deque<std::string> >	extensions;
 
 	SDPMedia*	addMedia(const std::string& name, UInt16 port, const std::string& codec) { return _medias.insert(std::pair<std::string, SDPMedia*>(name, new SDPMedia(port, codec))).first->second; }
 	void		clearMedias();

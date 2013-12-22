@@ -22,7 +22,7 @@ This file is a part of Mona.
 #include "Mona/Mona.h"
 #include "Mona/AMF.h"
 #include "Mona/DataReader.h"
-#include <list>
+#include <deque>
 
 namespace Mona {
 
@@ -59,7 +59,7 @@ private:
 	std::string&					readText(std::string& value);
 	UInt8							current() { return *reader.current(); }
 
-	std::list<ObjectDef*>			_objectDefs;
+	std::deque<ObjectDef*>	_objectDefs;
 	std::vector<UInt32>		_stringReferences;
 	std::vector<UInt32>		_classDefReferences;
 	std::vector<UInt32>		_references;

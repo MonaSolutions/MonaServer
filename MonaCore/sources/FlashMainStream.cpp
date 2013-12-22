@@ -22,7 +22,6 @@ This file is a part of Mona.
 #include "Mona/Util.h"
 #include "Mona/Exceptions.h"
 #include "Mona/Logs.h"
-#include "Mona/Buffer.h"
 #include <openssl/evp.h>
 
 
@@ -111,23 +110,9 @@ void FlashMainStream::messageHandler(Exception& ex, const string& name,AMFReader
 		}
 		message.startReferencing();
 
-		string tcUrl;
-		Exception exUnpack;
-		if (peer.path.empty() && peer.getString("tcUrl", tcUrl))
-			EXCEPTION_TO_LOG(Util::UnpackUrl(exUnpack, tcUrl, (SocketAddress&)peer.serverAddress, (string&)peer.path, peer), "Flash UnpackUrl")
-		if (peer.serverAddress.port() == 0) {
-			string protocol;
-			if (peer.getString("protocol", protocol)) {
-				if (protocol == "RTMP")
-					((SocketAddress&)peer.serverAddress).set(peer.serverAddress.host(), invoker.params.RTMP.port);
-				else if (protocol == "RTMFP")
-					((SocketAddress&)peer.serverAddress).set(peer.serverAddress.host(), invoker.params.RTMFP.port);
-				else
-					WARN("Impossible to determine the serverAddress port from unknown ",protocol," protocol")
-			}
-		}
-
-	
+		if (peer.path.empty() && peer.getString("tcUrl", _buffer))
+			Util::UnpackUrl(_buffer, (string&)peer.serverAddress, (string&)peer.path, peer);
+		
 		// Don't support AMF0 forced on NetConnection object because AMFWriter writes in AMF3 format
 		// But it's not a pb because NetConnection RTMFP works since flash player 10.0 only (which supports AMF3)
 		double objEncoding = 1;
@@ -150,17 +135,15 @@ void FlashMainStream::messageHandler(Exception& ex, const string& name,AMFReader
 
 	} else if(name == "setPeerInfo") {
 
-		peer.addresses.resize(1);
-		string addr;
+		peer.localAddresses.clear();
 		while(message.available()) {
-	
-			peer.addresses.emplace_back();
-			Exception ex;
-			peer.addresses.back().set(ex, message.readString(addr));  // private host
+			SocketAddress address;
+			address.set(ex, message.readString(_buffer));
 			if (ex) {
-				ERROR("Bad peer address ",addr,", ",ex.error());
-				peer.addresses.pop_back();
+				ERROR("Bad peer address ",_buffer,", ",ex.error());
+				continue;
 			}
+			peer.localAddresses.emplace(address);
 		}
 		
 		BinaryWriter& response = writer.writeRaw();
@@ -183,8 +166,9 @@ void FlashMainStream::messageHandler(Exception& ex, const string& name,AMFReader
 		Exception exm;
 		peer.onMessage(exm, name, message);
 		if (exm) {
+			ERROR(exm.error());
 			writer.writeAMFError("NetConnection.Call.Failed", exm.error());
-		}		
+		}
 	}
 	
 }
@@ -199,9 +183,9 @@ void FlashMainStream::rawHandler(Exception& ex,UInt8 type,MemoryReader& data,Fla
 			UInt8 groupId[ID_SIZE];
 
 			if(flag==0x10) {
-				Buffer<UInt8> groupIdVar(size);
-				data.readRaw(&groupIdVar[0],size);
-				EVP_Digest(&groupIdVar[0],groupIdVar.size(),(unsigned char *)groupId,NULL,EVP_sha256(),NULL);
+				Buffer groupIdVar(size);
+				data.readRaw(groupIdVar.data(),size);
+				EVP_Digest(groupIdVar.data(),groupIdVar.size(),(unsigned char *)groupId,NULL,EVP_sha256(),NULL);
 			} else
 				data.readRaw(groupId,ID_SIZE);
 		

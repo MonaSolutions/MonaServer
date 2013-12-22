@@ -48,6 +48,7 @@ protected:
 	Invoker&	invoker;
 	Peer&		peer;
 
+	std::string		_buffer;
 private:
 	void			disengage(FlashWriter* pWriter=NULL);
 

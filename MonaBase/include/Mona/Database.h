@@ -22,9 +22,9 @@ This file is a part of Mona.
 
 #include "Mona/Startable.h"
 #include "Mona/Exceptions.h"
-#include "Mona/Buffer.h"
+#include "Mona/PoolBuffer.h"
 #include <functional>
-#include <list>
+#include <deque>
 
 namespace Mona {
 
@@ -35,7 +35,7 @@ public:
 
 class Database : private Startable, virtual Object {
 public:
-	Database(const char* name = "Database") : Startable(name), _disableTransaction(false) {}
+	Database(const PoolBuffers& poolBuffers,const char* name = "Database") : _poolBuffers(poolBuffers),Startable(name), _disableTransaction(false) {}
 
 	void load(Exception& ex, const std::string& rootPath, DatabaseLoader& loader,bool disableTransaction=false);
 	bool add(Exception& ex,const std::string& path, const UInt8* value, UInt32 size);
@@ -45,11 +45,11 @@ public:
 private:
 	class Entry : virtual Object {
 	public:
-		Entry(const std::string& path) : path(path), toRemove(true) {} // remove
-		Entry(const std::string& path, const UInt8* value, UInt32 size) : path(path), buffer(size), toRemove(false) { // add
-			memcpy(buffer.data(), value, size);
+		Entry(const PoolBuffers& poolBuffers,const std::string& path) : pBuffer(poolBuffers),path(path), toRemove(true) {} // remove
+		Entry(const PoolBuffers& poolBuffers,const std::string& path, const UInt8* value, UInt32 size) : path(path), pBuffer(poolBuffers,size), toRemove(false) { // add
+			memcpy(pBuffer->data(), value, size);
 		}
-		Buffer<UInt8>	buffer;
+		PoolBuffer		pBuffer;
 		std::string		path;
 		bool			toRemove;
 	};
@@ -61,8 +61,9 @@ private:
 
 	std::string			_rootPath;
 	std::mutex			_mutex;
-	std::list<Entry>	_entries;
+	std::deque<Entry>	_entries;
 	bool				_disableTransaction;
+	const PoolBuffers&	_poolBuffers;
 };
 
 } // namespace Mona

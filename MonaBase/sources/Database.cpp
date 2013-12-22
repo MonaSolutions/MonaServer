@@ -44,7 +44,7 @@ bool Database::add(Exception& ex, const string& path, const UInt8* value, UInt32
 	lock_guard<mutex> lock(_mutex);
 	if (!running() && !start(ex,Startable::PRIORITY_LOWEST))
 		return false;
-	_entries.emplace_back(path,value,size);
+	_entries.emplace_back(_poolBuffers,path,value,size);
 	wakeUp();
 	return true;
 }
@@ -55,7 +55,7 @@ bool Database::remove(Exception& ex, const string& path) {
 	lock_guard<mutex> lock(_mutex);
 	if (!running() && !start(ex, Startable::PRIORITY_LOWEST))
 		return false;
-	_entries.emplace_back(path);
+	_entries.emplace_back(_poolBuffers,path);
 	wakeUp();
 	return true;
 }
@@ -115,7 +115,7 @@ void Database::processEntry(Exception& ex,Entry& entry) {
 
 	// compute md5
 	UInt8 result[16];
-	EVP_Digest(entry.buffer.data(), entry.buffer.size(), result, NULL, EVP_md5(), NULL);
+	EVP_Digest(entry.pBuffer->data(), entry.pBuffer->size(), result, NULL, EVP_md5(), NULL);
 	string name;
 	Util::FormatHex(result, sizeof(result), name);
 
@@ -127,7 +127,7 @@ void Database::processEntry(Exception& ex,Entry& entry) {
 		ex.set(Exception::FILE, "Impossible to write file ", file, " in ", directory);
 		return;
 	}
-	ofile.write((const char*)entry.buffer.data(), entry.buffer.size());
+	ofile.write((const char*)entry.pBuffer->data(), entry.pBuffer->size());
 }
 
 
@@ -136,15 +136,13 @@ bool Database::loadDirectory(Exception& ex, const string& directory, const strin
 	if (ex)
 		return true;
 
+	string name;
 	bool hasData = false;
-	for (const string& file : files) {
-		string folder(file);
-		FileSystem::MakeDirectory(folder);
-		string sub(directory);
-		sub.append(folder);
-		if (FileSystem::Exists(sub)) {
+	for (const string& item : files) {
+		string file(item);
+		if (FileSystem::Exists(FileSystem::MakeDirectory(file))) {
 			/// directory
-			hasData = loadDirectory(ex, sub, path + "/" + file, loader);
+			hasData = loadDirectory(ex, file, path + "/" + FileSystem::GetName(file,name), loader);
 			continue;
 		}
 
@@ -155,25 +153,24 @@ bool Database::loadDirectory(Exception& ex, const string& directory, const strin
 			continue;
 		}
 
-		FileSystem::MakeFile(sub);
 		// read the file
-		ifstream ifile(sub, ios::in | ios::binary | ios::ate);
+		ifstream ifile(FileSystem::MakeFile(file), ios::in | ios::binary | ios::ate);
 		if (!ifile.good()) {
-			ex.set(Exception::FILE, "Impossible to read file ", sub);
-			return true;
+			ex.set(Exception::FILE, "Impossible to read file ", file);
+			continue;
 		}
 		UInt32 size = (UInt32)ifile.tellg();
 		ifile.seekg(0);
-		Buffer<char> buffer(size);
+		vector<char> buffer(size);
 		if (size>0)
 			ifile.read(buffer.data(), size);
 		// compute md5
 		UInt8 result[16];
 		EVP_Digest(buffer.data(), size, result, NULL, EVP_md5(), NULL);
-		string name;
-		Util::FormatHex(result, sizeof(result), name);
+		string value;
+		Util::FormatHex(result, sizeof(result), value);
 		// compare with file name
-		if (memcmp(name.data(), file.c_str(), name.size()) != 0) {
+		if (FileSystem::GetName(file,name) != value) {
 			// erase this data!
 			FileSystem::Remove(file);
 			continue;

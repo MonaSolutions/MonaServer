@@ -154,7 +154,7 @@ void Net::SetError(Exception& ex, int error, const string& argument) {
 	if (argument.empty())
 		ex.set(Exception::SOCKET, message);
 	else
-		ex.set(Exception::SOCKET, message, " (", argument, ")");
+		ex.set(Exception::SOCKET, message, " (", argument, ')');
 }
 
 #if defined(_WIN32)

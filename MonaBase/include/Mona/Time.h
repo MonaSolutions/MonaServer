@@ -20,8 +20,8 @@ This file is a part of Mona.
 #pragma once
 
 #include "Mona/Mona.h"
+#include "Mona/TimeParser.h"
 #include <chrono>
-#include <list>
 
 namespace Mona {
 
@@ -62,6 +62,8 @@ public:
 
 	/// \brief Destructor
 	virtual ~Time() { }
+
+	Time& operator=(const Time& other) { _time = other._time; return *this; }
 
 	/// \brief Update the time object with current time
 	Time& update() { _time = std::chrono::system_clock::now(); return *this; }
@@ -106,7 +108,7 @@ public:
 	std::string& toLocaleString(const std::string& fmt, std::string& out, int timezone = UTC) const;
 
 	/// \brief Try to parse a date string and assign the Time instance
-	bool fromString(const std::string &in);
+	bool fromString(const std::string &in) { return TimeParser::TryParse(in, *this);}
 
 	/// \brief Convert Mona Time to local time
 	struct tm& toLocal(struct tm& tmtime) const;

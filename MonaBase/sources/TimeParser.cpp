@@ -46,20 +46,21 @@ bool TimeParser::TryParse(const string& in, Time& dateTime, int& tz) {
 
 	if (in[3] == ',')
 		return Parse("%w, %e %b %r %H:%M:%S %Z", in, dateTime, tz);
-	else if (in[3] == ' ')
+	if (in[3] == ' ')
 		return Parse(Time::ASCTIME_FORMAT, in, dateTime, tz);
-	else if (in.find(',') < 10)
+	if (in.find(',') < 10)
 		return Parse("%W, %e %b %r %H:%M:%S %Z", in, dateTime, tz);
-	else if (isdigit(in[0])) {
 
-		if (in.find(' ') != string::npos || in.length() == 10)
-			return Parse(Time::SORTABLE_FORMAT, in, dateTime, tz);
-		else if (in.find('.') != string::npos || in.find(',') != string::npos)
-			return Parse(Time::ISO8601_FRAC_FORMAT, in, dateTime, tz);
-		else
-			return Parse(Time::ISO8601_FORMAT, in, dateTime, tz);
-	}
-	else return false;
+	if (!isdigit(in[0]))
+		return false;
+
+	if (in.find(' ') != string::npos || in.length() == 10)
+		return Parse(Time::SORTABLE_FORMAT, in, dateTime, tz);
+	if (in.find('.') != string::npos || in.find(',') != string::npos)
+		return Parse(Time::ISO8601_FRAC_FORMAT, in, dateTime, tz);
+	if (in.find('-') != string::npos)
+		return Parse(Time::ISO8601_FORMAT, in, dateTime, tz);
+	return false;
 }
 
 bool TimeParser::Parse(const string& fmt, const string& in, Time& dateTime, int& tzdifferencial) {

@@ -33,7 +33,8 @@ public:
 	}
 };
 
-Database	data;
+PoolBuffers poolBuffers;
+Database	data(poolBuffers);
 string		path;
 Loader		loader;
 

@@ -50,7 +50,7 @@ private:
 
 class RelayServer : virtual Object {
 public:
-	RelayServer(PoolThreads& poolThreads,UInt32 bufferSize=0);
+	RelayServer(PoolBuffers& poolBuffers,PoolThreads& poolThreads,UInt32 bufferSize=0);
 	virtual ~RelayServer();
 	
 	UInt16 add(const Peer& peer1,const SocketAddress& address1,const Peer& peer2,const SocketAddress& address2,UInt16 timeout=120) const;

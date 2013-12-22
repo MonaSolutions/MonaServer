@@ -26,10 +26,9 @@ This file is a part of Mona.
 namespace Mona {
 
 
-class StringReader : public DataReader, virtual Object {
+class RawReader : public DataReader, virtual Object {
 public:
-	StringReader(MemoryReader& reader) : DataReader(reader) {}
-	virtual ~StringReader() {}
+	RawReader(MemoryReader& reader) : DataReader(reader) {}
 
 	std::string&		readString(std::string& value) { return reader.readRaw(reader.available(), value); }
 	double				readNumber() {return 0;}

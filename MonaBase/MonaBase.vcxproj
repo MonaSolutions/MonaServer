@@ -114,6 +114,7 @@
     <ClCompile Include="sources\Application.cpp" />
     <ClCompile Include="sources\Database.cpp" />
     <ClCompile Include="sources\Exceptions.cpp" />
+    <ClCompile Include="sources\FilePath.cpp" />
     <ClCompile Include="sources\Files.cpp" />
     <ClCompile Include="sources\DNS.cpp" />
     <ClCompile Include="sources\Event.cpp" />
@@ -144,6 +145,7 @@
     </ClCompile>
     <ClCompile Include="sources\Options.cpp" />
     <ClCompile Include="sources\Parameters.cpp" />
+    <ClCompile Include="sources\PoolBuffers.cpp" />
     <ClCompile Include="sources\QualityOfService.cpp" />
     <ClCompile Include="sources\ServerApplication.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug|Win32'">false</ExcludedFromBuild>
@@ -157,7 +159,6 @@
     <ClCompile Include="sources\Trigger.cpp" />
     <ClCompile Include="sources\Util.cpp" />
     <ClCompile Include="sources\PoolThread.cpp" />
-    <ClCompile Include="sources\PoolThreads.cpp" />
     <ClCompile Include="sources\Startable.cpp" />
     <ClCompile Include="sources\Task.cpp" />
     <ClCompile Include="sources\TaskHandler.cpp" />
@@ -171,9 +172,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Mona\Binary.h" />
-    <ClInclude Include="include\Mona\Buffer.h" />
     <ClInclude Include="include\Mona\Database.h" />
     <ClInclude Include="include\Mona\DatagramSocket.h" />
+    <ClInclude Include="include\Mona\FilePath.h" />
     <ClInclude Include="include\Mona\Files.h" />
     <ClInclude Include="include\Mona\DNS.h" />
     <ClInclude Include="include\Mona\Event.h" />
@@ -202,6 +203,8 @@
     <ClInclude Include="include\Mona\MapParameters.h" />
     <ClInclude Include="include\Mona\Option.h" />
     <ClInclude Include="include\Mona\Options.h" />
+    <ClInclude Include="include\Mona\PoolBuffer.h" />
+    <ClInclude Include="include\Mona\PoolBuffers.h" />
     <ClInclude Include="include\Mona\Process.h" />
     <ClInclude Include="include\Mona\QualityOfService.h" />
     <ClInclude Include="include\Mona\ServerApplication.h" />

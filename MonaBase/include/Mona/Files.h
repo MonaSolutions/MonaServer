@@ -27,45 +27,29 @@ This file is a part of Mona.
 #else
 #include "dirent.h"
 #endif
-#include <list>
+#include <deque>
 
 namespace Mona {
 
-class Files;
-class DirectoryIterator : virtual Object {
-public:
-	DirectoryIterator(Files& files, bool end = false);
-	DirectoryIterator(const DirectoryIterator& other) : _files(other._files), _it(other._it) {}
-	bool				operator !=(const DirectoryIterator& other) { return _it != other._it; }
-	bool				operator ==(const DirectoryIterator& other) { return _it == other._it; }
-	DirectoryIterator	operator ++();
-	DirectoryIterator	operator --();
-	const std::string&	operator *();
-private:
-
-	Files&									_files;
-	std::list<std::string>::const_iterator	_it;
-};
-
 
 class Files : virtual Object {
-	friend class DirectoryIterator;
 public:
 	Files(Exception& ex, const std::string& path);
 	virtual ~Files();
 
-	typedef DirectoryIterator Iterator;
+	typedef std::deque<std::string>::const_iterator Iterator;
 
 	const std::string& directory() const { return _directory; }
 
-	Iterator begin() { return DirectoryIterator(*this); }
-	Iterator end() { return DirectoryIterator(*this, true); }
+	Iterator begin() const { return _files.begin(); }
+	Iterator end() const { return _files.end(); }
+
+	UInt32 count() const { return _files.size(); }
 private:
 
 	bool next();
 
-	std::list<std::string>	_files;
-	bool					_failed;
+	std::deque<std::string>	_files;
 	std::string				_directory;
 
 #if defined(_WIN32)

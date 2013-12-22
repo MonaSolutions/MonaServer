@@ -72,7 +72,7 @@ bool SocketSender::flush(Exception& ex,Socket& socket) {
 	// if data have been given on SocketSender construction we have to copy data to send it in an async way now
 	if (!_memcopied && _data == begin()) {
 		_size = _size - _position;
-		UInt8* temp = new UInt8[_size]();
+		UInt8* temp = new UInt8[_size](); // TODO replace by a pool buffer?
 		memcpy(temp, _data + _position, _size);
 		_data = temp;
 		_position = 0;

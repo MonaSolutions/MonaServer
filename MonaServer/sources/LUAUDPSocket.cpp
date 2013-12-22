@@ -34,10 +34,10 @@ void LUAUDPSocket::onError(const string& error) {
 	WARN("LUAUDPSocket, ", error);
 }
 
-void LUAUDPSocket::onReception(const shared_ptr<Buffer<UInt8>>& pData , const SocketAddress& address) {
+void LUAUDPSocket::onReception(const UInt8* data, UInt32 size , const SocketAddress& address) {
 	SCRIPT_BEGIN(_pState)
 		SCRIPT_MEMBER_FUNCTION_BEGIN(LUAUDPSocket,*this,"onReception")
-			SCRIPT_WRITE_BINARY(pData->data(),pData->size())
+			SCRIPT_WRITE_BINARY(data,size)
 			SCRIPT_WRITE_STRING(address.toString().c_str())
 			SCRIPT_FUNCTION_CALL
 		SCRIPT_FUNCTION_END

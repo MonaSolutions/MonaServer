@@ -48,9 +48,8 @@ void RTMPWriter::flush(bool full) {
 	}
 	if(!_pSender->available())
 		return;
-	_pSender->writer(_channel); // pack!
+	_pSender->dump(_channel,_address);
 	Exception ex;
-	Writer::DumpResponse(_pSender->begin(), _pSender->size(), _address);
 	if (_pSender->encrypted())
 		_pThread = _socket.send<RTMPSender>(ex, _pSender, _pThread);
 	else
@@ -80,13 +79,15 @@ void RTMPWriter::writeRaw(const UInt8* data,UInt32 size) {
 	write(type,reader.read32(),&reader);
 }
 
-// TODO essayer de comprendre toutes les routes closes!?
+// TODO essayer de comprendre toutes les routes closes et leur close!
 void RTMPWriter::close(int code) {
-	if (!_isMain)
-		return; // multimedia writer, not close!
-	if(code>0)
-		writeAMFError(code==1 ? "NetConnection.Connect.IdleTimeout" : "NetConnection.Connect.AppShutdown","Client closed by server side");
-	Writer::close(code); // TODO kill if code==0???
+	if (_isMain && code>=0) {
+		if (code > 0)
+			writeAMFError(code == 1 ? "NetConnection.Connect.IdleTimeout" : "NetConnection.Connect.AppShutdown", "Client closed by server side");
+		// TODO	kill RTMP session?
+	}
+	Writer::close(code);
+	 
 }
 
 AMFWriter& RTMPWriter::write(AMF::ContentType type,UInt32 time,MemoryReader* pData) {

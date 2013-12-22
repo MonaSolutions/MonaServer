@@ -24,6 +24,7 @@ This file is a part of Mona.
 #include "Mona/Client.h"
 #include "Mona/DataReader.h"
 #include "Mona/ICE.h"
+#include "Mona/FilePath.h"
 #include <set>
 
 namespace Mona {
@@ -40,7 +41,7 @@ public:
 	Peer(const Peer& peer);
 	virtual ~Peer();
 
-	std::list<SocketAddress>	addresses;
+	std::set<SocketAddress>		localAddresses;
 	const bool					connected;
 
 	Entities<Client>::Map		turnPeers;
@@ -60,11 +61,9 @@ public:
 	void onRendezVousUnknown(const UInt8* peerId,std::set<SocketAddress>& addresses);
 	void onHandshake(UInt32 attempts,std::set<SocketAddress>& addresses);
 
-    void onConnection(Exception& ex, Writer& writer) {onConnection(ex, writer,DataReader::Null, DataWriter::Null);}
-    void onConnection(Exception& ex, Writer& writer,DataWriter& response) {onConnection(ex, writer,DataReader::Null,response);}
 	void onConnection(Exception& ex, Writer& writer,DataReader& parameters,DataWriter& response);
 	void onDisconnection();
-	void onMessage(Exception& ex, const std::string& name,DataReader& reader, Mona::DataWriter& writer = Mona::DataWriter::Null);
+	void onMessage(Exception& ex, const std::string& name,DataReader& reader, UInt8 responseType=0);
 
 	bool onPublish(const Publication& publication,std::string& error);
 	void onUnpublish(const Publication& publication);
@@ -77,8 +76,7 @@ public:
 	bool onSubscribe(const Listener& listener,std::string& error);
 	void onUnsubscribe(const Listener& listener);
 
-    bool onRead(Exception& ex, std::string& filePath) { return onRead(ex, filePath, DataReader::Null); }
-    bool onRead(Exception& ex, std::string& filePath, DataReader& parameters);
+    bool onRead(Exception& ex, FilePath& filePath, DataReader& parameters,DataWriter& properties);
 
 private:
 	void onJoinGroup(Group& group);

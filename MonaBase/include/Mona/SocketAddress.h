@@ -46,15 +46,18 @@ public:
 
 	/// Creates a SocketAddress from an IP address and a port number.
 	void set(const IPAddress& host, UInt16 port);
-
+	
 	/// set SocketAddress from an IP address and a port number.
-	bool set(Exception& ex,const std::string& host, UInt16 port);
+	bool set(Exception& ex, const std::string& host, UInt16 port) { return setIntern(ex, host, port,false); }
+	bool setWithDNS(Exception& ex, const std::string& host, UInt16 port) { return setIntern(ex, host, port,true); }
 
 	/// set SocketAddress from an IP address and a service name or port number
-	bool set(Exception& ex, const std::string& host, const std::string& port) { return set(ex, host, resolveService(ex,port)); }
+	bool set(Exception& ex, const std::string& host, const std::string& port) { return setIntern(ex, host, resolveService(ex,port),false); }
+	bool setWithDNS(Exception& ex, const std::string& host, const std::string& port) { return setIntern(ex, host, resolveService(ex,port),true); }
 
 	/// set SocketAddress from an IP address or host name and a port number/service name
-	bool set(Exception& ex, const std::string& hostAndPort);
+	bool set(Exception& ex, const std::string& hostAndPort) { return setIntern(ex, hostAndPort, false); }
+	bool setWithDNS(Exception& ex, const std::string& hostAndPort) { return setIntern(ex, hostAndPort, true); }
 	
 	/// set SocketAddress from a native socket address
 	bool set(Exception& ex, const struct sockaddr& addr);
@@ -76,7 +79,12 @@ public:
 	// Returns a wildcard IPv4 or IPv6 address (0.0.0.0)
 	static const SocketAddress& Wildcard(IPAddress::Family family = IPAddress::IPv4) { return family == IPAddress::IPv6 ? _Addressv6Wildcard : _Addressv4Wildcard; }
 
+
+	static UInt16	Split(const std::string& address,std::string& host);
 private:
+	bool setIntern(Exception& ex,const std::string& host, UInt16 port,bool resolveHost);
+	bool setIntern(Exception& ex, const std::string& hostAndPort, bool resolveHost);
+
 	UInt16 resolveService(Exception& ex, const std::string& service);
 
 	std::shared_ptr<SocketAddressCommon>	_pAddress;

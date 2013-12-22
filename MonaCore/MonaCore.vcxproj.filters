@@ -144,19 +144,10 @@
     <ClInclude Include="include\Mona\DataWriter.h">
       <Filter>Serializers</Filter>
     </ClInclude>
-    <ClInclude Include="include\Mona\HTTPPacketReader.h">
-      <Filter>Serializers</Filter>
-    </ClInclude>
-    <ClInclude Include="include\Mona\HTTPPacketWriter.h">
-      <Filter>Serializers</Filter>
-    </ClInclude>
     <ClInclude Include="include\Mona\JSONReader.h">
       <Filter>Serializers</Filter>
     </ClInclude>
     <ClInclude Include="include\Mona\JSONWriter.h">
-      <Filter>Serializers</Filter>
-    </ClInclude>
-    <ClInclude Include="include\Mona\StringReader.h">
       <Filter>Serializers</Filter>
     </ClInclude>
     <ClInclude Include="include\Mona\Session.h">
@@ -210,6 +201,42 @@
     </ClInclude>
     <ClInclude Include="include\Mona\FlashMainStream.h">
       <Filter>Flash</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\HTTPHeaderReader.h">
+      <Filter>Serializers</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\HTTP\HTTPPacketBuilding.h">
+      <Filter>Protocols\HTTP</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\HTTP\HTTPPacket.h">
+      <Filter>Protocols\HTTP</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\RawReader.h">
+      <Filter>Serializers</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\RawWriter.h">
+      <Filter>Serializers</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\CSSWriter.h">
+      <Filter>Serializers</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\SVGWriter.h">
+      <Filter>Serializers</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\HTMLWriter.h">
+      <Filter>Serializers</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\HTTPOptionsWriter.h">
+      <Filter>Serializers</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\MapReader.h">
+      <Filter>Serializers</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\MapWriter.h">
+      <Filter>Serializers</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\MediaContainer.h">
+      <Filter>Multimedia</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -288,12 +315,6 @@
     <ClCompile Include="sources\DataReader.cpp">
       <Filter>Serializers</Filter>
     </ClCompile>
-    <ClCompile Include="sources\HTTPPacketReader.cpp">
-      <Filter>Serializers</Filter>
-    </ClCompile>
-    <ClCompile Include="sources\HTTPPacketWriter.cpp">
-      <Filter>Serializers</Filter>
-    </ClCompile>
     <ClCompile Include="sources\JSONReader.cpp">
       <Filter>Serializers</Filter>
     </ClCompile>
@@ -340,6 +361,30 @@
     </ClCompile>
     <ClCompile Include="sources\RTMP\RTMPSender.cpp">
       <Filter>Protocols\RTMP</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\HTTPHeaderReader.cpp">
+      <Filter>Serializers</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\HTTP\HTTPPacket.cpp">
+      <Filter>Protocols\HTTP</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\HTTP\HTTPSender.cpp">
+      <Filter>Protocols\HTTP</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\CSSWriter.cpp">
+      <Filter>Serializers</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\SVGWriter.cpp">
+      <Filter>Serializers</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\HTMLWriter.cpp">
+      <Filter>Serializers</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\HTTPOptionsWriter.cpp">
+      <Filter>Serializers</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\MediaContainer.cpp">
+      <Filter>Multimedia</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

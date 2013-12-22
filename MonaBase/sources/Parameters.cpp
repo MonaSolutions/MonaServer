@@ -25,13 +25,21 @@ using namespace std;
 
 namespace Mona {
 
+bool Parameters::getString(const std::string& key, std::string& value) const {
+	const string* pTemp = getRaw(key);
+	if (!pTemp)
+		return false;
+	value.assign(*pTemp);
+	return true;
+}
+
 bool Parameters::getBool(const string& key, bool& value) const {
-	string temp;
-	if (!getRaw(key, temp))
+	const string* pTemp = getRaw(key);
+	if (!pTemp)
 		return false;
 	int number;
 	// true if number !=0 or if not equals to "false", "no" or "off"
-	value = String::ToNumber<int>(temp, number) && (number != 0) || (String::ICompare(temp, "false") != 0 && String::ICompare(temp, "no") != 0 && String::ICompare(temp, "off") != 0);
+	value = String::ToNumber<int>(*pTemp, number) && (number != 0) || (String::ICompare(*pTemp, "false") != 0 && String::ICompare(*pTemp, "no") != 0 && String::ICompare(*pTemp, "off") != 0);
 	return true;
 }
 

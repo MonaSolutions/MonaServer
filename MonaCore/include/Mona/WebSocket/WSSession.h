@@ -34,9 +34,9 @@ public:
 	virtual ~WSSession();
 
 
-	bool			buildPacket(MemoryReader& packet,const std::shared_ptr<Buffer<UInt8>>& pData);
+	bool			buildPacket(MemoryReader& packet);
 	void			packetHandler(MemoryReader& packet);
-	void			endReception() { if (_pPublication) _pPublication->flush(); }
+	void			flush() { if (_pPublication) _pPublication->flush(); Session::flush(); }
 	void			manage();
 
 protected:
@@ -44,6 +44,9 @@ protected:
 	void			kill();
 	
 private:
+	void			closeSusbcription();
+	void			closePublication();
+
 	WSWriter		_writer;
 	Time			_time;
 	Publication*	_pPublication;

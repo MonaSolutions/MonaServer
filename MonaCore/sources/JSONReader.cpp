@@ -226,7 +226,7 @@ JSONReader::Type JSONReader::followingType() {
 		reader.reset(pos);
 		reader.readRaw(size,_text);
 		if(_bool) {
-			Buffer<UInt8> result;
+			Buffer result;
 			Util::FromBase64((const UInt8*)_text.c_str(), size, result);
 			_text.assign((const char*)result.data(),result.size());
 		}
@@ -238,7 +238,7 @@ JSONReader::Type JSONReader::followingType() {
 			_bool=true;
 			return STRING;
 		}
-		if (_text.size() > 18 && _text.size() < 34 && _date.fromString(_text)) {
+		if (_date.fromString(_text)) {
 			_last=2;
 			return TIME;
 		}

@@ -30,16 +30,15 @@ bool RTMPSender::run(Exception& ex) {
 	return TCPSender::run(ex);
 }
 
-AMFWriter& RTMPSender::writer(RTMPChannel& channel) {
+void RTMPSender::pack(RTMPChannel& channel) {
 	if (sizePos == 0)
-		return _writer;
+		return;
 	// writer the size of the precedent playload!
 	channel.bodySize = _writer.stream.size()-sizePos+4-headerSize;
 	_writer.stream.resetWriting(sizePos);
 	_writer.writer.write24(channel.bodySize);
 	_writer.stream.resetWriting(sizePos-4+headerSize+channel.bodySize);
 	sizePos=0;
-	return _writer;
 }
 
 

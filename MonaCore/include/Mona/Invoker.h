@@ -27,6 +27,7 @@ This file is a part of Mona.
 #include "Mona/SocketManager.h"
 #include "Mona/TaskHandler.h"
 #include "Mona/PoolThreads.h"
+#include "Mona/PoolBuffers.h"
 #include "Mona/ServerParams.h"
 #include "Mona/FlashMainStream.h"
 #include "Mona/RelayServer.h"
@@ -44,6 +45,7 @@ public:
 	const SocketManager		sockets;
 	const RelayServer		relay;
 	PoolThreads				poolThreads;
+	PoolBuffers				poolBuffers;
 
 	std::shared_ptr<FlashStream>&	createFlashStream(Peer& peer);
 	FlashStream&					flashStream(UInt32 id, Peer& peer,std::shared_ptr<FlashStream>& pStream);
@@ -65,7 +67,7 @@ public:
 	const ServerParams		params;
 
 protected:
-	Invoker(UInt32 bufferSize,UInt32 threads);
+	Invoker(UInt32 bufferSize,UInt16 threads);
 	virtual ~Invoker();
 
 private:

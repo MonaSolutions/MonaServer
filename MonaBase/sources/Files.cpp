@@ -25,8 +25,7 @@ namespace Mona {
 
 using namespace std;
 
-Files::Files(Exception& ex, const string& path) : _failed(false), _directory(path) {
-	_failed = false;
+Files::Files(Exception& ex, const string& path) : _directory(path) {
 	int err = 0;
 	FileSystem::MakeDirectory(_directory);
 #if defined(_WIN32)
@@ -37,21 +36,28 @@ Files::Files(Exception& ex, const string& path) : _failed(false), _directory(pat
 		if ((err = GetLastError()) == ERROR_NO_MORE_FILES)
 			return;
 	} else {
-		if (strlen(_fileData.cFileName) == 1 && memcmp(_fileData.cFileName, ".", 1)==0 || strlen(_fileData.cFileName) == 2 && memcmp(_fileData.cFileName, "..", 2)==0)
-			next();
-		else
-			_files.emplace_back(_fileData.cFileName);
+		do {
+			if (strcmp(_fileData.cFileName, ".") != 0 && strcmp(_fileData.cFileName, "..") != 0) {
+				_files.emplace_back(_directory);
+				_files.back().append(_fileData.cFileName);
+			}
+		} while (FindNextFile(_fileHandle, &_fileData) != 0);
 		return;
 	}
 #else
 	_pDirectory = opendir(_directory.c_str());
 	if (_pDirectory) {
-		next();
+		struct dirent* pEntry(NULL);
+		while(pEntry = readdir(_pDirectory)) {
+			if (strcmp(pEntry->d_name, ".")!=0 && strcmp(pEntry->d_name, "..")!=0) {
+				_files.emplace_back(_directory);
+				_files.back().append(pEntry->d_name);
+			}
+		}
 		return;
 	}
 	err = errno;
 #endif
-	_failed = true;
 	string error;
 	STRERROR(err, error); // TODO test
 	ex.set(Exception::FILE, error);
@@ -67,50 +73,6 @@ Files::~Files() {
 #endif
 }
 
-
-bool Files::next() {
-	if (_failed)
-		return false;
-#if defined(_WIN32)
-	while (FindNextFile(_fileHandle, &_fileData) != 0) {
-		if (strlen(_fileData.cFileName) == 1 && memcmp(_fileData.cFileName, ".", 1) == 0 || strlen(_fileData.cFileName) == 2 && memcmp(_fileData.cFileName, "..", 2) == 0)
-			continue;
-		_files.emplace_back(_fileData.cFileName);
-		return true;
-	}
-#else
-	struct dirent* pEntry(NULL);
-	while(pEntry = readdir(_pDirectory)) {
-		if (strlen(pEntry->d_name) == 1 && memcmp(pEntry->d_name, ".", 1)==0 || strlen(pEntry->d_name) == 2 && memcmp(pEntry->d_name, "..", 2)==0)
-			continue;
-		_files.emplace_back(pEntry->d_name);
-		return true;
-	}
-#endif
-	_failed = true;
-	return false;
-}
-
-DirectoryIterator::DirectoryIterator(Files& files, bool end) : _it(end ? _files._files.end() : _files._files.begin()), _files(files) {
-}
-
-DirectoryIterator DirectoryIterator::operator++() {
-	if (_files.next())
-		++_it;
-	else
-		_it = _files._files.end();
-	return *this;
-}
-
-DirectoryIterator DirectoryIterator::operator--() {
-	if (_it != _files._files.begin())
-		--_it;
-	return *this;
-}
-
-const string& DirectoryIterator::operator*() {
-	return _it == _files._files.end() ? String::Empty : *_it;
-}
 
 
 } // namespace Mona

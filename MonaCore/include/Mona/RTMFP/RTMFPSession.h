@@ -48,14 +48,15 @@ public:
 
 	std::shared_ptr<RTMFPCookieComputing>	pRTMFPCookieComputing;
 
-	bool				decode(const std::shared_ptr < Buffer < UInt8 >> &pBuffer, const SocketAddress& address);
+	void				decode(const UInt8* data, UInt32 size, const SocketAddress& address);
 
 	bool				failed() const { return _failed; }
 
 protected:
 	const UInt32		farId;
 
-	void				flush(bool echoTime = true) { flush(0x4a, echoTime, prevEngineType()); }
+	void				flush() { flush(0x4a, true, prevEngineType()); }
+	void				flush(bool echoTime) { flush(0x4a, echoTime, prevEngineType()); }
 	void				flush(bool echoTime, RTMFPEngine::Type type) { flush(0x4a, echoTime, type); }
 	void				flush(UInt8 marker, bool echoTime) { flush(marker, echoTime, prevEngineType()); }
 	void				flush(UInt8 marker,bool echoTime,RTMFPEngine::Type type);

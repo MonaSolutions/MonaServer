@@ -20,43 +20,48 @@ This file is a part of Mona.
 #pragma once
 
 #include "Mona/Mona.h"
-#include "Mona/DataReader.h"
-#include "Mona/Time.h"
+#include "Mona/BinaryWriter.h"
 
 
 namespace Mona {
 
 
-class HTTPPacketReader : public DataReader, virtual Object {
+class MediaContainer : virtual Static {
 public:
-	HTTPPacketReader(MemoryReader& reader);
+	enum Type {
+		FLV,
+		MPEG_TS
+	};
 
+	enum Track {
+		AUDIO = 1,
+		VIDEO = 2,
+		BOTH = 3
+	};
 
-	std::string&		readString(std::string& value);
-	double				readNumber();
-	bool				readBoolean();
-	Time&				readTime(Time& time);
-	void				readNull();
-
-	bool				readObject(std::string& type, bool& external) { return true; }
-	Type				readItem(std::string& name);
+	template <typename ...Args>
+	static void Write(Type type,BinaryWriter& writer, Args&&... args) {
+		switch (type) {
+			case FLV:
+				FLV::Write(writer, args ...);
+				break;
+			case MPEG_TS:
+				// TODO THOM
+				break;
+		}
+		
+	}
 	
-	Type				followingType();
+	class FLV : virtual Static {
+	public:
+		// To write header
+		static void Write(BinaryWriter& writer,UInt8 track=BOTH);
+		// To write audio or video packet
+		static void Write(BinaryWriter& writer, UInt8 track, UInt32 time, const UInt8* data, UInt32 size);
+	};
 
-	void				reset();
-
-private:
-	bool				readArray(UInt32& size) {return false;}
-	const UInt8*		readBytes(UInt32& size);
-	
-	void				readLine();
-
-	Type				_type;
-	double				_number;
-	std::string			_value;
-	std::string			_name;
-	Time				_date;
 };
+
 
 
 

@@ -24,21 +24,28 @@ This file is a part of Mona.
 #include "Mona/MapParameters.h"
 #include "Mona/Time.h"
 #include "Mona/Exceptions.h"
-#include <vector>
 #undef CreateDirectory
 
 namespace Mona {
 
-
 class FileSystem : virtual Static {
 public:
+	struct Attributes {
+		Attributes() : size(0), lastModified(0), isDirectory(false) {}
+		Time	lastModified;
+		UInt32	size;
+		bool	isDirectory;
+	};
 
 	/// In giving a path with /, it tests one folder existance, otherwise file existance (test windows device without / => C:)
 	static bool			Exists(const std::string& path,bool any=false);
 	static bool			IsAbsolute(const std::string& path);
 	
+	/// Doesn't work for a folder
 	static UInt32		GetSize(Exception& ex,const std::string& path);
+
 	static Time&		GetLastModified(Exception& ex,const std::string& path, Time& time);
+	static Attributes&	GetAttributes(Exception& ex, const std::string& path, Attributes& attributes);
 
 	static std::string& GetName(const std::string& path, std::string& value);
 	static std::string& GetBaseName(const std::string& path, std::string& value);

@@ -20,7 +20,6 @@ This file is a part of Mona.
 #pragma once
 
 #include "Mona/Mona.h"
-#include <vector>
 
 #undef max
 // TODO? #pragma warning(disable:4146)
@@ -34,6 +33,8 @@ This file is a part of Mona.
 #endif
 
 namespace Mona {
+
+#define EXPAND_SIZE(VALUE)	VALUE"",(sizeof(VALUE)-1) // "" concatenation is here to check that it's a valid const string is not a pointer of char*
 
 template<typename Type>
 class Format : virtual Object {
@@ -65,27 +66,28 @@ public:
 
 	static std::string&	ToLower(std::string& str);
 
-	static int ICompare(const char* value1, const char* value2, int size = -1);
-	static int ICompare(const std::string& value1, const std::string& value2, int size = -1) { return ICompare(value1.empty() ? NULL : value1.c_str(), value2.empty() ? NULL : value2.c_str(), size); }
-	static int ICompare(const std::string& value1, const char* value2, int size = -1) { return ICompare(value1.empty() ? NULL : value1.c_str(), value2, size); }
-	static int ICompare(const char* value1, const std::string& value2, int size = -1) { return ICompare(value1, value2.empty() ? NULL : value2.c_str(), size); }
+	static int ICompare(const char* value1, const char* value2,  std::size_t size = std::string::npos);
+	static int ICompare(const std::string& value1, const std::string& value2, std::size_t size = std::string::npos) { return ICompare(value1.empty() ? NULL : value1.c_str(), value2.empty() ? NULL : value2.c_str(), size); }
+	static int ICompare(const std::string& value1, const char* value2,  std::size_t size = std::string::npos) { return ICompare(value1.empty() ? NULL : value1.c_str(), value2, size); }
+	static int ICompare(const char* value1, const std::string& value2,  std::size_t size = std::string::npos) { return ICompare(value1, value2.empty() ? NULL : value2.c_str(), size); }
 
 	template <typename ...Args>
 	static std::string& Format(std::string& result, Args&&... args) {
 		result.clear();
 		return String::Append(result, args ...);
 	}
-	
-	/// \brief match "char*" case
-	template <typename ...Args>
-	static std::string& Append(std::string& result, const char* value, Args&&... args) {
-		result.append(value);
-		return String::Append(result, args ...);
-	}
 
 	/// \brief match "std::string" case
 	template <typename ...Args>
 	static std::string& Append(std::string& result, const std::string& value, Args&&... args) {
+		result.append(value);
+		return String::Append(result, args ...);
+	}
+
+	
+	/// \brief match "char*" case
+	template <typename ...Args>
+	static std::string& Append(std::string& result, const char* value, Args&&... args) {
 		result.append(value);
 		return String::Append(result, args ...);
 	}

@@ -22,6 +22,7 @@ This file is a part of Mona.
 #include "Mona/FlashMainStream.h"
 #include "Mona/Logs.h"
 #include "Mona/Util.h"
+#include "Mona/PoolBuffer.h"
 #include <cstring>
 
 using namespace std;
@@ -32,9 +33,9 @@ namespace Mona {
 
 class RTMFPPacket : virtual Object {
 public:
-	RTMFPPacket(MemoryReader& fragment) : fragments(1),_pMessage(NULL),_buffer((string::size_type)fragment.available()) {
-		if(_buffer.size()>0)
-			memcpy(&_buffer[0],fragment.current(),_buffer.size());
+	RTMFPPacket(const PoolBuffers& poolBuffers,MemoryReader& fragment) : fragments(1),_pMessage(NULL),_pBuffer(poolBuffers,fragment.available()) {
+		if(_pBuffer->size()>0)
+			memcpy(_pBuffer->data(),fragment.current(),_pBuffer->size());
 	}
 	~RTMFPPacket() {
 		if(_pMessage)
@@ -42,10 +43,10 @@ public:
 	}
 
 	void add(MemoryReader& fragment) {
-		string::size_type old = _buffer.size();
-		_buffer.resize(old + (string::size_type)fragment.available(),true);
-		if(_buffer.size()>old)
-			memcpy(&_buffer[old],fragment.current(),(size_t)fragment.available());
+		string::size_type old = _pBuffer->size();
+		_pBuffer->resize(old + fragment.available());
+		if(_pBuffer->size()>old)
+			memcpy(_pBuffer->data()+old,fragment.current(),fragment.available());
 		++(UInt16&)fragments;
 	}
 
@@ -54,28 +55,28 @@ public:
 			ERROR("RTMFPPacket already released!");
 			return _pMessage;
 		}
-		_pMessage = new MemoryReader(_buffer.size()==0 ? NULL : &_buffer[0],_buffer.size());
+		_pMessage = new MemoryReader(_pBuffer->size()==0 ? NULL : _pBuffer->data(),_pBuffer->size());
 		(UInt16&)_pMessage->fragments = fragments;
 		return _pMessage;
 	}
 
 	const UInt32	fragments;
 private:
-	Buffer<UInt8>	_buffer;
+	PoolBuffer		_pBuffer;
 	MemoryReader*  _pMessage;
 };
 
 
-class RTMFPFragment : public Buffer<UInt8>, virtual Object{
+class RTMFPFragment : public Buffer, virtual Object{
 public:
-	RTMFPFragment(MemoryReader& data,UInt8 flags) : flags(flags),Buffer<UInt8>(data.available()) {
+	RTMFPFragment(MemoryReader& data,UInt8 flags) : flags(flags),Buffer(data.available()) {
 		data.readRaw(this->data(),size());
 	}
 	UInt8					flags;
 };
 
 
-RTMFPFlow::RTMFPFlow(UInt64 id,const string& signature,Peer& peer,Invoker& invoker,BandWriter& band) : _numberLostFragments(0),id(id),_stage(0),_completed(false),_pPacket(NULL),_pStream(NULL),_band(band) {
+RTMFPFlow::RTMFPFlow(UInt64 id,const string& signature,Peer& peer,Invoker& invoker,BandWriter& band) : _poolBuffers(invoker.poolBuffers),_numberLostFragments(0),id(id),_stage(0),_completed(false),_pPacket(NULL),_pStream(NULL),_band(band) {
 	
 	RTMFPWriter* pWriter = new RTMFPWriter(signature, band, _pWriter);
 
@@ -167,19 +168,19 @@ void RTMFPFlow::commit() {
 
 	// Lost informations!
 	UInt32 size = 0;
-	list<UInt64> lost;
+	deque<UInt64> losts;
 	UInt64 current=_stage;
 	UInt32 count=0;
 	map<UInt64,RTMFPFragment*>::const_iterator it=_fragments.begin();
 	while(it!=_fragments.end()) {
 		current = it->first-current-2;
 		size += Util::Get7BitValueSize(current);
-		lost.push_back(current);
+		losts.push_back(current);
 		current = it->first;
 		while(++it!=_fragments.end() && it->first==(++current))
 			++count;
 		size += Util::Get7BitValueSize(count);
-		lost.push_back(count);
+		losts.push_back(count);
 		--current;
 		count=0;
 	}
@@ -195,9 +196,8 @@ void RTMFPFlow::commit() {
 	ack.write7BitValue(bufferSize);
 	ack.write7BitLongValue(_stage);
 
-	list<UInt64>::const_iterator it2;
-	for(it2=lost.begin();it2!=lost.end();++it2)
-		ack.write7BitLongValue(*it2);
+	for(UInt64 lost : losts)
+		ack.write7BitLongValue(lost);
 
 	if(_pStream)
 		_pStream->flush();
@@ -331,7 +331,7 @@ void RTMFPFlow::fragmentSortedHandler(UInt64 _stage,MemoryReader& fragment,UInt8
 			_numberLostFragments += _pPacket->fragments;
 			delete _pPacket;
 		}
-		_pPacket = new RTMFPPacket(fragment);
+		_pPacket = new RTMFPPacket(_poolBuffers,fragment);
 		return;
 	}
 	UInt32 time(0);

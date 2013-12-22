@@ -67,12 +67,27 @@ void FileSystem::RegisterForDeletion(const string& path) {
 	Temps.add(path);
 }
 
+FileSystem::Attributes& FileSystem::GetAttributes(Exception& ex,const string& path,Attributes& attributes) {
+	struct stat status;
+	status.st_mtime = attributes.lastModified;
+	status.st_size = attributes.size;
+	string file(path);
+	if (::stat(MakeFile(file).c_str(), &status) != 0) {
+		ex.set(Exception::FILE, "Path ", path, " doesn't exist");
+		return attributes;
+	}
+	attributes.lastModified.update(chrono::system_clock::from_time_t(status.st_mtime));
+	attributes.size = (UInt32)status.st_size;
+	attributes.isDirectory = status.st_mode&_S_IFDIR ? true : false;
+	return attributes;
+}
+
 Time& FileSystem::GetLastModified(Exception& ex, const string& path, Time& time) {
 	struct stat status;
 	status.st_mtime = time;
 	string file(path);
 	if (::stat(MakeFile(file).c_str(), &status) != 0)
-		ex.set(Exception::FILE, "File ", path, " doesn't exist");
+		ex.set(Exception::FILE, "Path ", path, " doesn't exist");
 	else
 		time.update(chrono::system_clock::from_time_t(status.st_mtime));
 	return time;
@@ -82,6 +97,11 @@ UInt32 FileSystem::GetSize(Exception& ex,const string& path) {
 	struct stat status;
 	status.st_size = 0;
 	string file(path);
+	if (MakeFile(file).size() < path.size()) {
+		// folder, no GetSize possible
+		ex.set(Exception::FILE, "GetSize works just on file, and ", path, " is a folder");
+		return 0;
+	}
 	if (::stat(MakeFile(file).c_str(), &status) != 0)
 		ex.set(Exception::FILE, "File ", path, " doesn't exist");
 	return (UInt32)status.st_size;
@@ -96,6 +116,7 @@ bool FileSystem::Exists(const string& path, bool any) {
 		return false;
 	if (any)
 		return true;
+	// if existing test was on folder, and that the result is a file, return false
 	if (oldSize > file.size() && !(status.st_mode&_S_IFDIR))
 		return false;
 	return true;
@@ -148,7 +169,7 @@ void FileSystem::RemoveAll(Exception& ex,const string& path) {
 	Exception exc;
 	Files files(exc, path); // if exception it's a file or a not existed folded
 	for (const string& file : files)
-		RemoveAll(ex,files.directory() + file);
+		RemoveAll(ex,file);
 	if (!Remove(path))
 		ex.set(Exception::FILE, "Impossible to remove ", path);
 }

@@ -27,7 +27,7 @@ This file is a part of Mona.
 namespace Mona {
 
 class Publication;
-class Listener : virtual Object {
+class Listener : virtual Object, WriterHandler {
 public:
 	Listener(Publication& publication,Client& client,Writer& writer,bool unbuffered);
 	virtual ~Listener();
@@ -59,6 +59,9 @@ private:
 	void	init();
 	void	init(Writer** ppWriter,Writer::MediaType type);
 	UInt32 	computeTime(UInt32 time);
+
+	/// WriterHandler implementation
+	void	close(Writer& writer, int code);
 
 	bool					_unbuffered;
 	bool					_firstKeyFrame;

@@ -29,29 +29,21 @@ DataWriterNull      DataWriter::Null;
 Writer				Writer::Null(true);
 
 
-
-void Writer::DumpResponse(const UInt8* data, UInt32 size, const Socket& socket, bool justInDebug) {
-	if (Logs::GetDump()&Logs::DUMP_EXTERN && (!justInDebug || (justInDebug&&Logs::GetLevel() >= 7))) {
-		// executed just in debug mode, or in dump mode
-		SocketAddress address;
-		Exception ex;
-		DumpResponse(data, size, socket.peerAddress(ex, address), justInDebug);
-	}
-}
-
 void Writer::DumpResponse(const UInt8* data, UInt32 size, const SocketAddress& address, bool justInDebug) {
 	// executed just in debug mode, or in dump mode
 	if (Logs::GetDump()&Logs::DUMP_EXTERN && (!justInDebug || (justInDebug&&Logs::GetLevel() >= 7)))
 		DUMP(data, size, "Response to ", address.toString())
 }
 
-Writer::Writer(WriterHandler* pHandler) : reliable(true),_pHandler(pHandler),_state(CONNECTED) {
+Writer::Writer(WriterHandler* pHandler) : reliable(true),_state(CONNECTED) {
+	if (pHandler)
+		_handlers.insert(pHandler);
 }
 
-Writer::Writer(Writer& writer) : reliable(writer.reliable),_pHandler(writer._pHandler),_state(writer._state) {
+Writer::Writer(Writer& writer) : reliable(writer.reliable),_state(writer._state) {
 }
 
-Writer::Writer(bool isNull) : NullableObject(isNull), reliable(true), _pHandler(NULL), _state(CONNECTED) {
+Writer::Writer(bool isNull) : NullableObject(isNull), reliable(true), _state(CONNECTED) {
 }
 
 Writer::~Writer(){
@@ -64,13 +56,13 @@ Writer::State Writer::state(State value, bool minimal) {
 	return _state = value;
 }
 
-
 void Writer::close(int code) {
 	if(_state==CLOSED)
 		return;
 	state(CLOSED);
-	if(_pHandler)
-		_pHandler->close(*this,code);
+	for (WriterHandler* pHandler : _handlers)
+		pHandler->close(*this, code);
+	_handlers.clear();
 	flush();
 }
 

@@ -21,15 +21,13 @@ This file is a part of Mona.
 
 #include "Mona/Mona.h"
 #include "Mona/DataWriter.h"
-#include "math.h"
-#include <list>
 
 namespace Mona {
 
 
 class JSONWriter : public DataWriter, virtual Object {
 public:
-	JSONWriter();
+	JSONWriter(bool modeRaw=false);
 
 	void beginObject(const std::string& type="",bool external=false);
 	void endObject();
@@ -39,20 +37,34 @@ public:
 	void beginArray(UInt32 size);
 	void endArray();
 
-	void writeDate(const Time& date);
-	void writeNumber(double value);
+	void writeDate(const Time& date) { writeRaw(date.toString(Time::ISO8601_FRAC_FORMAT, _buffer)); }
+	void writeNumber(double value) { writeRaw(String::Format(_buffer, value)); }
 	void writeString(const std::string& value);
-	void writeBoolean(bool value) { writeString(value ? "true" : "false"); }
-	void writeNull() { writeString("null"); }
+	void writeBoolean(bool value) { writeRaw( value ? "true" : "false"); }
+	void writeNull() { writeRaw("null"); }
 	void writeBytes(const UInt8* data,UInt32 size);
 
 	void	end();
 	void	clear();
 private:
 
-	bool	_started;
-	bool	_first;
-	UInt32	_layers;
+	template <typename ...Args>
+	void writeRaw(Args&&... args) {
+		if(!_started) {
+			_started=true;
+			writer.write8('[');
+		}
+		if(!_first)
+			writer.write8(',');
+		_first=false;
+		writer.writeRaw(args ...);
+	}
+
+	bool		_modeRaw;
+	bool		_started;
+	bool		_first;
+	UInt32		_layers;
+	std::string _buffer;
 };
 
 

@@ -22,7 +22,7 @@ This file is a part of Mona.
 
 #include "Mona/Mona.h"
 #include "Mona/StreamSocket.h"
-#include "Mona/Buffer.h"
+#include "Mona/PoolBuffer.h"
 
 namespace Mona {
 
@@ -30,7 +30,7 @@ namespace Mona {
 class TCPClient : protected StreamSocket, virtual Object {
 public:
 	TCPClient(const SocketManager& manager);
-	TCPClient(const SocketManager& manager, const SocketAddress& peerAddress);
+	TCPClient(const SocketAddress& peerAddress,const SocketManager& manager);
 	virtual ~TCPClient();
 
 	bool					connect(Exception& ex, const SocketAddress& address);
@@ -51,13 +51,9 @@ public:
 	const SocketAddress&	address();
 	const SocketAddress&	peerAddress();
 
-protected:
-
-	virtual UInt32			onReception(const std::shared_ptr<Buffer<UInt8>>& pData) = 0; // in protected to allow a circular call (to process all data on one time!)
-	
 private:
+	virtual UInt32			onReception(const UInt8* data,UInt32 size) = 0;
 	virtual void			onError(const std::string& error) = 0;
-	virtual void			endReception() {}
 	virtual void			onDisconnection() {}
 
 
@@ -65,12 +61,12 @@ private:
 	
 	int						sendIntern(const UInt8* data,UInt32 size);
 
-	std::shared_ptr<Buffer<UInt8>>	_pBuffer;
-	UInt32							_rest;
-	bool							_connected;
+	PoolBuffer				_pBuffer;
+	UInt32					_rest;
+	bool					_connected;
 
-	SocketAddress					_address;
-	SocketAddress					_peerAddress;
+	SocketAddress			_address;
+	SocketAddress			_peerAddress;
 };
 
 

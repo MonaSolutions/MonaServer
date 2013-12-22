@@ -21,7 +21,7 @@ This file is a part of Mona.
 #pragma once
 
 #include "Mona/Mona.h"
-#include "Mona/Buffer.h"
+#include "Mona/Exceptions.h"
 #include <openssl/dh.h>
 
 
@@ -40,7 +40,7 @@ public:
 	int		privateKeySize(Exception& ex) { if (!initialize(ex)) return -1;  return BN_num_bytes(_pDH->priv_key); }
 	UInt8*	readPublicKey(Exception& ex, UInt8* pubKey) { if (!initialize(ex)) return NULL; readKey(_pDH->pub_key, pubKey); return pubKey; }
 	UInt8*	readPrivateKey(Exception& ex, UInt8* privKey) { if (!initialize(ex)) return NULL;  readKey(_pDH->priv_key, privKey); return privKey; }
-	Buffer<UInt8>&	computeSecret(Exception& ex, const Buffer<UInt8>& farPubKey, Buffer<UInt8>& sharedSecret);
+	Buffer&	computeSecret(Exception& ex, const Buffer& farPubKey, Buffer& sharedSecret);
 
 private:
 	void	readKey(BIGNUM *pKey, UInt8* key) { BN_bn2bin(pKey, key); }

@@ -20,9 +20,11 @@ This file is a part of Mona.
 #pragma once
 
 #include "Mona/Mona.h"
-#include "Mona/HTTPPacketReader.h"
+#include "Mona/BinaryWriter.h"
+#include "Mona/Files.h"
 #include "Mona/MapParameters.h"
-
+#include "Mona/FilePath.h"
+#include "Mona/DataWriter.h"
 
 namespace Mona {
 
@@ -98,10 +100,54 @@ namespace Mona {
 
 class HTTP : virtual Static {
 public:
-	static void 	MIMEType(const std::string& extension,std::string& type);
-	static void 	CodeToMessage(UInt16 code,std::string& message);
-	static void 	ReadHeader(HTTPPacketReader& reader, MapParameters& headers, std::string& cmd, std::string& path, std::string& file, MapParameters& properties);
 
+	static const UInt32 DefaultTimeout;
+
+	enum CommandType {
+		COMMAND_HEAD=1,
+		COMMAND_GET = 2,
+		COMMAND_PUSH = 4,
+		COMMAND_OPTIONS = 8,
+		COMMAND_POST = 16,
+		COMMAND_DELETE = 32
+	};
+
+	enum ContentType {
+		CONTENT_TEXT,
+		CONTENT_APPLICATON,
+		CONTENT_EXAMPLE,
+		CONTENT_AUDIO,
+		CONTENT_VIDEO,
+		CONTENT_IMAGE,
+		CONTENT_MESSAGE,
+		CONTENT_MODEL,
+		CONTENT_MULTIPART,
+		CONTENT_ABSENT
+	};
+
+	enum ConnectionType {
+		CONNECTION_ABSENT = 0,
+		CONNECTION_CLOSE = 1,
+		CONNECTION_UPGRADE = 2,
+		CONNECTION_KEEPALIVE = 4
+	};
+
+	
+	static CommandType	ParseCommand(const char* value);
+	static ContentType	ParseContentType(const char* value,std::string& subType);
+	static UInt8		ParseConnection(const char* value);
+
+	static std::string&	FormatContentType(ContentType type,const std::string& subType,std::string& value);
+
+	static ContentType	ExtensionToMIMEType(const std::string& extension, std::string& subType);
+
+	static std::string&	CodeToMessage(UInt16 code,std::string& message);
+
+	static DataWriter* NewDataWriter(const std::string& subType);
+	static void WriteDirectoryEntries(BinaryWriter& writer, const std::string& serverAddress, const std::string& path, const Files& entries,const MapParameters& parameters);
+	
+private:
+	static void WriteDirectoryEntry(BinaryWriter& writer, const std::string& serverAddress,const std::string& path,const FilePath& entry);
 };
 
 
