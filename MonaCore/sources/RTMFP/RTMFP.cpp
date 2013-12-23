@@ -52,7 +52,7 @@ RTMFPEngine::RTMFPEngine(const RTMFPEngine& engine) : type(engine.type),_key(eng
 }
 
 void RTMFPEngine::set(const RTMFPEngine& engine,Type type) {
-	(Type&)type = type;
+	(Type&)this->type = type;
 	_key = engine._key;
 	_direction = engine._direction;
 }

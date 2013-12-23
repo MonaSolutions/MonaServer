@@ -28,6 +28,8 @@ namespace Mona {
 class Attempt : virtual Object {
 public:
 	Attempt() : count(0) {}
+	virtual ~Attempt() {}
+
 	UInt32	count;
 
 	bool obsolete() { return _time.isElapsed(120000000); } // 2mn
@@ -39,7 +41,9 @@ private:
 class AttemptCounter : virtual Object {
 public:
 
-	void			manage();
+	virtual ~AttemptCounter();
+
+	void	manage();
 
 	UInt32	attempt(const std::string& tag) { return (attempt<Attempt>(tag)).count; }
 	void	clearAttempt(const std::string& tag);
@@ -48,14 +52,14 @@ public:
 	AttemptType& attempt(const std::string& tag) {
 		auto it = _attempts.lower_bound(tag);
 		if(it!=_attempts.end() && it->first==tag) {
-			++it->second.count;
-			return (AttemptType&)it->second;
+			++it->second->count;
+			return (AttemptType&)*it->second;
 		}
-		return (AttemptType&)_attempts[tag];
+		return (AttemptType&)*_attempts.emplace_hint(it,tag,new AttemptType())->second;
 	}
 
 private:
-	std::map<std::string,Attempt>		_attempts;
+	std::map<std::string,Attempt*>		_attempts;
 
 };
 

@@ -34,7 +34,8 @@ This file is a part of Mona.
 
 namespace Mona {
 
-#define EXPAND_SIZE(VALUE)	VALUE"",(sizeof(VALUE)-1) // "" concatenation is here to check that it's a valid const string is not a pointer of char*
+#define EXPAND_SIZE(VALUE)		VALUE"",(sizeof(VALUE)-1) // "" concatenation is here to check that it's a valid const string is not a pointer of char*
+#define EXPAND_DATA_SIZE(VALUE)	(const UInt8*)VALUE"",(UInt32)(sizeof(VALUE)-1)
 
 template<typename Type>
 class Format : virtual Object {

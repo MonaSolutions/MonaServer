@@ -35,7 +35,9 @@ void MediaContainer::FLV::Write(BinaryWriter& writer,UInt8 track) {
 		byteTrack |= 1;
 	if (track&AUDIO)
 		byteTrack |= 4;
-	writer.writeRaw("\x46\x4c\x56\x01",track,(const UInt8*)EXPAND_SIZE("\x00\x00\x00\x09\x00\x00\x00\x00"));
+	writer.writeRaw("\x46\x4c\x56\x01");
+	writer.write8(track);
+	writer.writeRaw(EXPAND_DATA_SIZE("\x00\x00\x00\x09\x00\x00\x00\x00"));
 }
 
 // Writer audio or video packet

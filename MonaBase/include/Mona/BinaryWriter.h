@@ -51,11 +51,6 @@ public:
 		_ostr.write(value.c_str(), value.size());
 		writeRaw(args ...);
 	}
-	template <typename ...Args>
-	void writeRaw(const UInt8 value,Args&&... args) {
-		_ostr.put(value);
-		writeRaw(args ...);
-	}
 
 	void write8(UInt8 value) { _ostr.put(value); }
 	void write16(UInt16 value);

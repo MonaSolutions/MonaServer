@@ -199,7 +199,7 @@ UInt8 RTMFPHandshake::handshakeHandler(UInt8 id,MemoryReader& request,MemoryWrit
 
 					RTMFPSession* pSession = (times>0 || peer.address.host() == pSessionWanted->peer.address.host()) ? _sessions.find<RTMFPSession>(peer.address) : NULL;
 					
-					if(pSession) {
+				/*	TODO if(pSession) {
 						UInt16 port = invoker.relay.add(pSession->peer,pSession->peer.address,pSessionWanted->peer,pSessionWanted->peer.address);
 						if(port>0) {
 							Exception ex;
@@ -208,7 +208,7 @@ UInt8 RTMFPHandshake::handshakeHandler(UInt8 id,MemoryReader& request,MemoryWrit
 							response.writeAddress(address, true);
 							return 0x71;
 						}
-					}
+					}*/
 					
 
 					pSessionWanted->p2pHandshake(tag,peer.address,times,pSession);
