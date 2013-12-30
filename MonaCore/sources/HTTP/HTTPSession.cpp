@@ -33,9 +33,10 @@ using namespace std;
 
 namespace Mona {
 
+map<string, HLSMaster>		HTTPSession::HlsHost2Sequence;
 
 HTTPSession::HTTPSession(const SocketAddress& address, Protocol& protocol, Invoker& invoker) : WSSession(address, protocol, invoker), _isWS(false), _writer(*this) {
-
+	
 }
 
 
@@ -187,6 +188,28 @@ void HTTPSession::processGet(Exception& ex, const string& fileName) {
 			return;
 	}
 	
+	// HLS Playlist
+	string ext;
+	//if (fileName=="playlist.m3u8") {
+	if (FileSystem::GetExtension(fileName, ext)=="m3u8") {
+
+		INFO("M3U8 file requested : ", fileName)
+		processM3U8(fileName);
+		return;
+	}
+
+	// HLS Segment
+	if (FileSystem::GetExtension(fileName, ext)=="ts") {
+
+		INFO("MPEG TS file requested : ", fileName)
+		if(_pListener) {
+			invoker.unsubscribe(peer, "hls");
+			_pListener=NULL;
+		}
+		_pListener = invoker.subscribe(ex, peer, "hls", _writer);
+		return;
+	}
+
 	string filePath(peer.path);
 	if (!fileName.empty())
 		String::Append(filePath, "/", fileName);
@@ -247,7 +270,54 @@ void HTTPSession::processGet(Exception& ex, const string& fileName) {
 		response.stream.next((UInt32)size);
 		
 		ifile.read((char*)response.stream.data() + pos, size); // TODO copy, what about peformance? multhreaded?
+		INFO("HTTP file sended : ", filePath)
 	}
+}
+
+void HTTPSession::processM3U8(const string& fileName) {
+
+	const string& host = peer.serverAddress.host().toString();
+	HLSMaster& master = HTTPSession::HlsHost2Sequence[host];
+
+	string contentM3U8;
+	// Master Playlist
+	if (fileName=="playlist.m3u8") {
+
+		contentM3U8.append("#EXTM3U\n#EXT-X-VERSION:3\n");
+		contentM3U8.append("#EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=50000\n");
+		String::Append(contentM3U8, "playlist_", ++master.m3u8Sequence, ".m3u8");
+	} 
+	// Playlist
+	else {
+		contentM3U8.append("#EXTM3U\n#EXT-X-VERSION:3\n#EXT-X-ALLOW-CACHE:NO\n#EXT-X-TARGETDURATION:10\n#EXT-X-MEDIA-SEQUENCE:");
+		String::Append(contentM3U8, master.tsSequence, "\n");
+		contentM3U8.append("#EXTINF:8.50\n");
+		String::Append(contentM3U8, "play_", master.tsSequence, ".ts\n");
+		contentM3U8.append("#EXTINF:8.50\n");
+		String::Append(contentM3U8, "play_", ++master.tsSequence, ".ts\n");
+		contentM3U8.append("#EXTINF:8.50\n");
+		String::Append(contentM3U8, "play_", ++master.tsSequence, ".ts");
+	}
+
+	/*string contentM3U8;
+	contentM3U8.append("#EXTM3U\n");
+	contentM3U8.append("#EXT-X-TARGETDURATION:10\n");
+	contentM3U8.append("#EXTINF:9.99\n");
+	contentM3U8.append("play.ts\n");*/
+
+	DataWriter& response = _writer.writeMessage();
+	response.writeString("HTTP/1.1 200 OK");
+	response.beginObject();
+	string stDate;
+	response.writeStringProperty("Date", Time().toString(Time::HTTP_FORMAT, stDate));
+	response.writeStringProperty("Content-Type", "application/vnd.apple.mpegurl");
+	response.writeStringProperty("Accept-Ranges", "bytes");
+	response.writeStringProperty("Server","Mona");
+	response.writeStringProperty("Cache-Control","no-cache");
+	response.writeNumberProperty("Content-Length", (double)contentM3U8.size());
+	response.endObject();
+
+	response.writeString(contentM3U8);
 }
 
 void HTTPSession::processNotModified() {

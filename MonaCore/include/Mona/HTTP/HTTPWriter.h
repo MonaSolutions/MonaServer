@@ -27,30 +27,48 @@ This file is a part of Mona.
 
 namespace Mona {
 
+#define HLS_PACKET_SIZE					188
 
 class HTTPWriter : public Writer, virtual Object {
 public:
 
+	enum TypeFrame {
+		FIRST=0,
+		OTHER,
+		LAST,
+		UNIQUE,
+	};
+
 	HTTPWriter(StreamSocket& socket);
 
-	State			state(State value=GET,bool minimal=false);
-	void			flush(bool full=false);
+	virtual State			state(State value=GET,bool minimal=false);
+	virtual void			flush(bool full=false);
 
-	DataWriter&		writeInvocation(const std::string& name);
-	DataWriter&		writeMessage();
-	void			writeRaw(const UInt8* data, UInt32 size) { newWriter().writer.writeRaw(data, size); }
+	virtual DataWriter&		writeInvocation(const std::string& name);
+	virtual DataWriter&		writeMessage();
+	virtual void			writeRaw(const UInt8* data, UInt32 size) { newWriter().writer.writeRaw(data, size); }
+	virtual bool			writeMedia(MediaType type,UInt32 time,MemoryReader& data);
 
 	// TODO ?void			close(int code);
-
-
 	
 private:
 	bool				hasToConvert(DataReader& reader) { return dynamic_cast<HTTPPacketWriter*>(&reader) == NULL; }
 	HTTPPacketWriter&	newWriter();
-
+	
+	void				writeHeader();
+	void				writeVideoPacket(BinaryWriter& writer, UInt32 available, UInt32 time, UInt8* pData, bool isMetadata, TypeFrame type);
 
 	StreamSocket&								_socket;
 	std::list<std::shared_ptr<HTTPSender>>		_senders;
+	static UInt32								CounterRow;
+	static UInt32								CounterFrame;
+	static char									CounterA;
+	static UInt32								BeginTime;
+
+	// TODO don't do it static
+	static UInt8								HLSInitVideoBuff[];
+	static UInt8								BeginBuff1[];
+	static UInt8								BeginBuff2[];
 };
 
 

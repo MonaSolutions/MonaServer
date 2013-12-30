@@ -26,6 +26,14 @@ This file is a part of Mona.
 
 namespace Mona {
 
+struct HLSMaster {
+
+	HLSMaster() : tsSequence(0), m3u8Sequence(0) {}
+
+	UInt32	tsSequence;
+	UInt32	m3u8Sequence;
+};
+
 class HTTPPacketReader;
 
 class HTTPSession :  public WSSession {
@@ -60,12 +68,17 @@ private:
 	/// \brief Send Not Modified
 	void			processNotModified();
 
+	/// \brief Send the playlist HLS m3u8 file
+	void			processM3U8(const std::string& fileName);
+
 	std::string			_cmd;
 	std::string			_file;
 	std::unique_ptr<HTTPPacketReader> _request;
 	MapParameters	_headers;
 	HTTPWriter		_writer;
 	bool			_isWS;
+	
+	static std::map<std::string, HLSMaster>		HlsHost2Sequence;
 };
 
 
