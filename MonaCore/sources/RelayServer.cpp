@@ -45,7 +45,7 @@ public:
 class RelaySender : public UDPSender, virtual Object {
 public:
 	RelaySender(UInt32 available) : data(available), UDPSender("RelaySender",true) {}
-	Buffer<UInt8> data;
+	Buffer data;
 
 	const UInt8*	begin(bool displaying = false) { return data.size()==0 ? NULL : &data[0]; }
 	UInt32			size(bool displaying = false) { return data.size(); }
@@ -127,7 +127,7 @@ void RelaySocket::onReadable(Exception& ex) {
 
 
 
-RelayServer::RelayServer(PoolThreads& poolThreads,UInt32 bufferSize) : _manager(poolThreads,bufferSize,"RelayServer")  {
+RelayServer::RelayServer(PoolBuffers& poolBuffers,PoolThreads& poolThreads,UInt32 bufferSize) : _manager(poolBuffers,poolThreads,bufferSize,"RelayServer")  {
 	
 }
 
@@ -173,13 +173,9 @@ UInt16 RelayServer::add(const Peer& peer1,const SocketAddress& address1,const Pe
 		}
 		++port;
 
-		SocketAddress address;
-		Exception ex;
-		if (!address.set(ex, "0.0.0.0", port)) {
-			DEBUG("Turn listening impossible on ",port," port, ", ex.error())
-			continue;
-		}
+		SocketAddress address(IPAddress::Wildcard(), port);
 
+		Exception ex;
 		pSocket = new RelaySocket(_manager);
 		if (!pSocket->load(ex, address)) {
 			delete pSocket;

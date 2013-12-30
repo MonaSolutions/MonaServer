@@ -40,8 +40,8 @@ using namespace Mona;
 const string MonaServer::WWWPath("./");
 const string MonaServer::DataPath("./");
 
-MonaServer::MonaServer(TerminateSignal& terminateSignal, UInt32 bufferSize, UInt32 threads, UInt16 serversPort, const string& serversTarget) :
-Server(bufferSize, threads), servers(serversPort, *this, sockets, serversTarget), _terminateSignal(terminateSignal) {
+MonaServer::MonaServer(TerminateSignal& terminateSignal, UInt32 bufferSize, UInt16 threads, UInt16 serversPort, const string& serversTarget) :
+Server(bufferSize, threads), servers(serversPort, *this, sockets, serversTarget), _data(this->poolBuffers),_terminateSignal(terminateSignal) {
 }
 
 
@@ -218,7 +218,7 @@ void MonaServer::onDataLoading(const string& path, const char* value, UInt32 siz
 	}
 
 	// set value
-	if (size == 5 && memicmp(value, "false", 5) == 0 || size == 3 && memicmp(value, "nil", 3) == 0)
+	if (String::ICompare(value, "false") == 0 || String::ICompare(value, "nil") == 0)
 		lua_pushboolean(_pState, 0);
 	else
 		lua_pushlstring(_pState, value, size);
@@ -347,7 +347,7 @@ void MonaServer::onRendezVousUnknown(const string& protocol,const UInt8* id,set<
 	SCRIPT_END
 }
 
-void MonaServer::onHandshake(const string& protocol,const SocketAddress& address,const string& path,const map<string,string>& properties,UInt32 attempts,set<SocketAddress>& addresses) {
+void MonaServer::onHandshake(const string& protocol,const SocketAddress& address,const string& path,const MapParameters& properties,UInt32 attempts,set<SocketAddress>& addresses) {
 	Expirable<Service> expirableService;
 	Service* pService = _pService->get(path, expirableService);
 	if (!pService)
@@ -358,10 +358,9 @@ void MonaServer::onHandshake(const string& protocol,const SocketAddress& address
 			SCRIPT_WRITE_STRING(address.toString().c_str())
 			SCRIPT_WRITE_STRING(path.c_str())
 			lua_newtable(_pState);
-			map<string,string>::const_iterator it;
-			for(it=properties.begin();it!=properties.end();++it) {
-				lua_pushlstring(_pState,it->second.c_str(),it->second.size());
-				lua_setfield(_pState,-2,it->first.c_str());
+			for(auto it : properties) {
+				lua_pushlstring(_pState,it.second.c_str(),it.second.size());
+				lua_setfield(_pState,-2,it.first.c_str());
 			}
 			SCRIPT_WRITE_INT(attempts)
 			SCRIPT_FUNCTION_CALL
@@ -395,14 +394,16 @@ void MonaServer::onConnection(Exception& ex, Client& client,DataReader& paramete
 					lua_pushnil(_pState);  // first key 
 					while (lua_next(_pState, -2) != 0) {
 						// uses 'key' (at index -2) and 'value' (at index -1) 
-						// remove the raw!
-						response.writePropertyName(lua_tostring(_pState,-2));
-						Script::ReadData(_pState,response,1);
+						if (lua_isstring(_pState, -2)) {
+							response.writePropertyName(lua_tostring(_pState,-2));
+							Script::ReadData(_pState,response,1);
+						} else
+							SCRIPT_WARN("key=value ignored because key is not a string value")
 						lua_pop(_pState,1);
 					}
+					SCRIPT_READ_NEXT
 				} else
-					SCRIPT_ERROR("onConnection return argument ignored, it must be a table (with key=value)")
-				SCRIPT_READ_NEXT
+					SCRIPT_ERROR("onConnection return argument ignored, it must be a table {key1=value1,key2=value2}")
 			}
 		SCRIPT_FUNCTION_END
 		if(SCRIPT_LAST_ERROR)
@@ -443,7 +444,7 @@ void MonaServer::onDisconnection(const Client& client) {
 	delete pExpirableService;
 }
 
-void MonaServer::onMessage(Exception& ex, Client& client,const string& name,DataReader& reader, DataWriter& writer) {
+void MonaServer::onMessage(Exception& ex, Client& client,const string& name,DataReader& reader, UInt8 responseType) {
 	string error("Method '" + name + "' not found");
 	SCRIPT_BEGIN(openService(client))
 		SCRIPT_MEMBER_FUNCTION_BEGIN(Client,client,name.c_str())
@@ -451,38 +452,50 @@ void MonaServer::onMessage(Exception& ex, Client& client,const string& name,Data
 			error.clear();
 			SCRIPT_FUNCTION_CALL_WITHOUT_LOG
 			if(SCRIPT_CAN_READ) {
-				if (writer)
-					Script::ReadData(_pState,writer,1);
-				else
-					Script::ReadData(_pState,client.writer().writeMessage(),1);
+				Script::ReadData(_pState,client.writer().writeResponse(responseType),1);
 				++__args;
 			}
 		SCRIPT_FUNCTION_END
 		if(SCRIPT_LAST_ERROR) {
-			ex.set(Exception::APPLICATION,SCRIPT_LAST_ERROR);
+			ex.set(Exception::SOFTWARE,SCRIPT_LAST_ERROR);
 			return;
 		}
 	SCRIPT_END
-	if(!error.empty()) {
-		ERROR(error);
+	if(!error.empty())
 		ex.set(Exception::APPLICATION, error);
-		return;
-	}
 }
 
-bool MonaServer::onRead(Exception& ex, Client& client,string& filePath,DataReader& parameters) { 
+bool MonaServer::onRead(Exception& ex, Client& client,FilePath& filePath,DataReader& parameters,DataWriter& properties) { 
 	bool result = true;
-	filePath = WWWPath + filePath;
+	filePath.directory(WWWPath);
 	SCRIPT_BEGIN(openService(client))
 		SCRIPT_MEMBER_FUNCTION_BEGIN(Client,client,"onRead")
-			SCRIPT_WRITE_STRING(filePath.c_str())
+			SCRIPT_WRITE_STRING(filePath.name().c_str())
 			SCRIPT_WRITE_DATA(parameters,0)
 			SCRIPT_FUNCTION_CALL
 			if(SCRIPT_CAN_READ) {
-				if(SCRIPT_NEXT_TYPE==LUA_TNIL)
+				if (SCRIPT_NEXT_TYPE == LUA_TNIL) {
 					result=false;
-				else
-					filePath = SCRIPT_READ_STRING(filePath);
+					SCRIPT_READ_NIL
+				} else {
+					_buffer.assign(filePath.name());
+					SCRIPT_READ_STRING(_buffer);
+					if (!_buffer.empty()) // to avoid for root app to give "/" instead of ""
+						filePath.set(client.path,"/",_buffer);
+				}
+				if(SCRIPT_NEXT_TYPE==LUA_TTABLE) {
+					lua_pushnil(_pState);  // first key 
+					while (lua_next(_pState, -2) != 0) {
+						// uses 'key' (at index -2) and 'value' (at index -1) 
+						if (lua_isstring(_pState, -2)) {
+							properties.writePropertyName(lua_tostring(_pState,-2));
+							Script::ReadData(_pState,properties,1);
+						} else
+							SCRIPT_WARN("key=value ignored because key is not a string value")
+						lua_pop(_pState,1);
+					}
+					SCRIPT_READ_NEXT
+				}
 			}
 		SCRIPT_FUNCTION_END
 		if (SCRIPT_LAST_ERROR) {

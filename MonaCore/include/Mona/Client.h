@@ -31,12 +31,12 @@ class Client : public Entity, public MapParameters, virtual Object {
 public:
 	Client(Entities<Client>::Map& turnClients):turnClients(turnClients),_pWriter(NULL),ping(0){}
 	Client(const Client& o) :
-		Entity(o),address(o.address), serverAddress(o.serverAddress),
+		Entity(o),MapParameters(o),address(o.address), serverAddress(o.serverAddress),
 		path(o.path), ping(o.ping), turnClients(o.turnClients), _pWriter(o._pWriter) {
 	}
 
 	const SocketAddress			address;
-	const SocketAddress			serverAddress;
+	const std::string			serverAddress;
 
 	const std::string			path;
 	const UInt16				ping;

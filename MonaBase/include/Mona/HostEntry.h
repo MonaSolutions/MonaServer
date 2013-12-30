@@ -22,7 +22,7 @@ This file is a part of Mona.
 
 #include "Mona/Mona.h"
 #include "Mona/IPAddress.h"
-#include <list>
+#include <deque>
 
 
 namespace Mona {
@@ -32,8 +32,8 @@ namespace Mona {
 	/// of IP addresses.
 class HostEntry : virtual Object {
 public:
-	typedef std::list<std::string> AliasList;
-	typedef std::list<IPAddress>   AddressList;
+	typedef std::deque<std::string> AliasList;
+	typedef std::deque<IPAddress>   AddressList;
 	
 	// Creates an empty HostEntry.
 	HostEntry() {}

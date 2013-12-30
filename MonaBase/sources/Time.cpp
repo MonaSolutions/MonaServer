@@ -18,7 +18,6 @@ This file is a part of Mona.
 */
 
 #include "Mona/Time.h"
-#include "Mona/TimeParser.h"
 #include "Mona/String.h"
 
 using namespace std;
@@ -181,11 +180,6 @@ string& Time::tzFormat(int tzDifferential, string& out, bool bISO /* = true */) 
 	String::Append(out, Format<int>("%02d", tzd / 3600));
 	if (bISO) out += ':';
 	return String::Append(out, Format<int>("%02d", (tzd % 3600) / 60));
-}
-
-bool Time::fromString(const string &in) {
-	int tz = 0;
-	return TimeParser::TryParse(in, *this, tz);
 }
 
 struct tm& Time::toLocal(struct tm& tmtime) const {

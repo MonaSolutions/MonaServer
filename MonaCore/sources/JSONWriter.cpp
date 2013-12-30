@@ -27,21 +27,26 @@ using namespace std;
 namespace Mona {
 
 
-JSONWriter::JSONWriter() {
+JSONWriter::JSONWriter(bool modeRaw) : _modeRaw(modeRaw),_first(true),_started(false),_layers(0) {
 	
 }
 
 void JSONWriter::clear() {
-
-	while (!_queueObjects.empty())
-		_queueObjects.pop();
-
+	_first=true;
+	_started=false;
+	_layers=0;
 	DataWriter::clear();
 }
 
 void JSONWriter::beginObject(const string& type,bool external) {
-	manageSeparator(true);
-
+	if(!_started) {
+		_started=true;
+		writer.write8('[');
+	}	
+	if(!_first)
+		writer.write8(',');
+	_first=true;
+	++_layers;
 	writer.write8('{');
 	if(type.empty())
 		return;
@@ -50,102 +55,83 @@ void JSONWriter::beginObject(const string& type,bool external) {
 }
 
 void JSONWriter::endObject() {
-	if(_queueObjects.empty()) {
+	if(_layers==0) {
 		WARN("JSON object already finished")
 		return;
 	}
-	
 	writer.write8('}');
-	_queueObjects.pop();
+	--_layers;
 }
 
 void JSONWriter::beginArray(UInt32 size) {
-	manageSeparator(true);
-	
+	if(!_started) {
+		_started=true;
+		writer.write8('[');
+	}	
+	if(!_first)
+		writer.write8(',');
+	_first=true;
+	++_layers;
 	writer.write8('[');
 }
 
 void JSONWriter::endArray() {
-	if(_queueObjects.empty()) {
+	if(_layers==0) {
 		WARN("JSON array already finished")
 		return;
 	}
 	writer.write8(']');
-	_queueObjects.pop();
+	--_layers;
 }
 
 
 void JSONWriter::writePropertyName(const string& value) {
 	writeString(value);
 	writer.write8(':');
-
-	// reset cursor for property value
-	JSONCursor& cur = _queueObjects.top();
-	if (!cur.first)
-		cur.first=true;
-}
-
-void JSONWriter::writeNumber(double value) {
-	manageSeparator();
-	string stValue;
-	writer.writeRaw(String::Format(stValue, value));
+	_first=true;
 }
 
 void JSONWriter::writeString(const string& value) {
-	manageSeparator();
+	if (_modeRaw) {
+		writeRaw(value);
+		_modeRaw = false;
+		return;
+	}
+	if(!_started) {
+		_started=true;
+		writer.write8('[');
+	}
+	if(!_first)
+		writer.write8(',');
+	_first=false;
 	writer.write8('"');
 	writer.writeRaw(value);
 	writer.write8('"');
 }
 
-
-void JSONWriter::writeDate(const Time& date) {
-	manageSeparator();
-	string str;
-	writeString(date.toString(Time::ISO8601_FRAC_FORMAT, str));
-}
-
-
 void JSONWriter::writeBytes(const UInt8* data,UInt32 size) {
-	manageSeparator();
-	writer.writeRaw("{__raw:\"",8);
+	if(!_started) {
+		_started=true;
+		writer.write8('[');
+	}
+	if(!_first)
+		writer.write8(',');
+	_first=false;
+	writer.writeRaw("{__raw:\"");
 
-	Buffer<UInt8> result;
+	Buffer result;
 	Util::ToBase64(data, size, result);
 	writer.writeRaw(result.data(),result.size());
-	writer.writeRaw("\"}",2);
-}
-
-void JSONWriter::manageSeparator(bool create /*=false*/) {
-	// Append appropriate separator before new element 
-	if(!_queueObjects.empty()) {
-		JSONCursor& cur = _queueObjects.top();
-
-		if (cur.first)
-			cur.first=false;
-		else
-			writer.write8(',');
-	} else {
-		writer.write8('[');
-		_queueObjects.emplace(false);
-	}
-
-	// add object in queue
-	if(create)
-		_queueObjects.emplace();
+	writer.writeRaw("\"}");
 }
 
 void JSONWriter::end() {
-	if(_queueObjects.size()>1) {
-		WARN("Finish JSON complex element before end of JSONWriter")
+	if(_layers>0) {
+		WARN("Finish JSON complex element before to end JSONWriter")
 		return;
 	}
-
-	// End of the stream
-	if(!_queueObjects.empty()) {
+	if(_started)
 		writer.write8(']');
-		_queueObjects.pop();
-	}
 }
 
 

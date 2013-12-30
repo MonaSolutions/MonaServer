@@ -66,7 +66,7 @@ public:
 
 	template <typename ...Args>
 	static void Dump(const UInt8* data, UInt32 size, Args&&... args) {
-		Buffer<UInt8> out;
+		Buffer out;
 		std::string header;
 		String::Format(header, args ...);
 		Util::Dump(data, size, out, header);

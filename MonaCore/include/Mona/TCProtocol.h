@@ -45,7 +45,7 @@ private:
 
 inline bool TCProtocol::load(Exception& ex, const ProtocolParams& params) {
 	SocketAddress address;
-	if (!address.set(ex, params.host, params.port))
+	if (!address.setWithDNS(ex, params.host, params.port))
 		return false;
 	return start(ex, address);
 }

@@ -20,14 +20,8 @@ This file is a part of Mona.
 #pragma once
 
 #include "Mona/Mona.h"
-#include "Mona/Task.h"
-#include "Mona/WorkThread.h"
-#include "Mona/MemoryReader.h"
-#include "Mona/Buffer.h"
-#include "Mona/Expirable.h"
-#include "Mona/SocketAddress.h"
-#include <memory>
-
+#include "Mona/Invoker.h"
+#include "Mona/PoolBuffer.h"
 
 
 namespace Mona {
@@ -36,20 +30,29 @@ class Session;
 
 class Decoding : public WorkThread, private Task, virtual Object {
 	friend class Session;
+	friend class TCPSession;
 public:
-	Decoding(const char* name,const std::shared_ptr<Buffer<UInt8>> &pBuffer, TaskHandler& taskHandler, UInt32 offset = 0);
+	Decoding(const char* name,Invoker& invoker,const UInt8* data,UInt32 size);
+
 private:
-	// If ex is raised, an error is displayed if the operation has returned false
-	// otherwise a warning is displayed
-	virtual bool	decode(Exception& ex,MemoryReader& reader){return false;}
+	// If return true, packet is pass to the session.
+	// If ex is raised on true returned value, it displays a WARN
+	// If ex is raised on false returned value, it displays a ERROR
+	virtual const UInt8*	decodeRaw(Exception& ex, PoolBuffer& pBuffer, UInt32 times,const UInt8* data,UInt32& size);
+	virtual bool			decode(Exception& ex, MemoryReader& reader, UInt32 times) { return false; }
 
 	bool			run(Exception& ex);
 	void			handle(Exception& ex);
 
-	const std::shared_ptr<Buffer<UInt8>>	_pBuffer;
-	Expirable<Session>						_expirableSession;
-	MemoryReader							_reader;
-	SocketAddress							_address;
+	PoolBuffer						_pBuffer;
+	std::unique_ptr<MemoryReader>	_pReader;
+	Expirable<Session>				_expirableSession;
+	SocketAddress					_address;
+	bool							_flush;
+	bool							_noFlush;
+
+	UInt32							_size;
+	const UInt8*					_current;
 };
 
 

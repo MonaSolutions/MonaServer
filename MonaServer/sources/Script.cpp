@@ -431,7 +431,7 @@ void Script::ReadData(lua_State* pState,DataWriter& writer,UInt32 count,map<UInt
 						if(lua_pcall(pState,2,1,0)!=0)
 							SCRIPT_ERROR(Script::LastError(pState))
 						else {
-							writer.writer.writeRaw(lua_tostring(pState,-1),lua_objlen(pState,-1));
+							writer.writer.writeRaw((const UInt8*)lua_tostring(pState,-1),lua_objlen(pState,-1));
 							lua_pop(pState,1);
 						}
 						writer.endObject();

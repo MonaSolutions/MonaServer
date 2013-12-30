@@ -34,7 +34,7 @@ public:
 
 private:
 	virtual ~LUAUDPSocket();
-	void	onReception(const std::shared_ptr<Mona::Buffer<Mona::UInt8>>& pData, const Mona::SocketAddress& address);
+	void	onReception(const Mona::UInt8* data, Mona::UInt32 size, const Mona::SocketAddress& address);
 	void	onError(const std::string& error);
 
 	static int	Bind(lua_State* pState);

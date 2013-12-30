@@ -26,7 +26,7 @@ using namespace std;
 namespace Mona {
 
 
-Invoker::Invoker(UInt32 bufferSize,UInt32 threads) : poolThreads(threads),relay(poolThreads,bufferSize),sockets(*this,poolThreads,bufferSize),clients(_clients,_clientsByName),groups(_groups),publications(_publications),_nextId(0) {
+Invoker::Invoker(UInt32 bufferSize,UInt16 threads) : poolThreads(threads),relay(poolBuffers,poolThreads,bufferSize),sockets(*this,poolBuffers,poolThreads,bufferSize),clients(_clients,_clientsByName),groups(_groups),publications(_publications),_nextId(0) {
 	DEBUG(poolThreads.threadsAvailable()," threads available in the server poolthreads");
 		
 }

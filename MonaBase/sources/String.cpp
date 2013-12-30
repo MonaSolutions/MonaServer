@@ -88,7 +88,7 @@ string& String::Trim(string& value, TrimOption option) {
 	return value;
 }
 
-int String::ICompare(const char* value1, const char* value2, int size) {
+int String::ICompare(const char* value1, const char* value2,  size_t size) {
 	if (value1 == value2)
 		return 0;
 	if (value1 == NULL)
@@ -104,7 +104,7 @@ int String::ICompare(const char* value1, const char* value2, int size) {
 			f -= 'A' - 'a';
 		if (((l = (unsigned char)(*(value2++))) >= 'A') && (l <= 'Z'))
 			l -= 'A' - 'a';
-		if (size > 0)
+		if (size != std::string::npos)
 			--size;
 	} while (f && (f == l));
 
@@ -187,9 +187,6 @@ T String::ToNumber(Exception& ex, const std::string& value, T result) {
 }
 
 
-template bool String::ToNumber(const std::string& value, int& result);
-template int String::ToNumber(Exception& ex, const std::string& value, int result);
-
 template bool String::ToNumber(const std::string& value, float& result);
 template float String::ToNumber(Exception& ex, const std::string& value, float result);
 
@@ -199,13 +196,25 @@ template double String::ToNumber(Exception& ex, const std::string& value, double
 template bool String::ToNumber(const std::string& value, UInt8& result);
 template UInt8 String::ToNumber(Exception& ex, const std::string& value, UInt8 result);
 
+template bool String::ToNumber(const std::string& value, Int8& result);
+template Int8 String::ToNumber(Exception& ex, const std::string& value, Int8 result);
+
 template bool String::ToNumber(const std::string& value, UInt16& result);
 template UInt16 String::ToNumber(Exception& ex, const std::string& value, UInt16 result);
+
+template bool String::ToNumber(const std::string& value, Int16& result);
+template Int16 String::ToNumber(Exception& ex, const std::string& value, Int16 result);
 
 template bool String::ToNumber(const std::string& value, UInt32& result);
 template UInt32 String::ToNumber(Exception& ex, const std::string& value, UInt32 result);
 
+template bool String::ToNumber(const std::string& value, Int32& result);
+template Int32 String::ToNumber(Exception& ex, const std::string& value, Int32 result);
+
 template bool String::ToNumber(const std::string& value, UInt64& result);
 template UInt64 String::ToNumber(Exception& ex, const std::string& value, UInt64 result);
+
+template bool String::ToNumber(const std::string& value, Int64& result);
+template Int64 String::ToNumber(Exception& ex, const std::string& value, Int64 result);
 
 } // namespace Mona

@@ -20,11 +20,11 @@ This file is a part of Mona.
 #pragma once
 
 #include "Mona/Mona.h"
-#include <list>
+#include "Mona/Time.h"
+#include <deque>
 
 namespace Mona {
 
-class Sample;
 class QualityOfService : virtual Object {
 public:
 	QualityOfService();
@@ -39,7 +39,16 @@ public:
 
 	static QualityOfService Null;
 private:
-	std::list<Sample*>	_samples;
+	class Sample : virtual Object {
+		public:
+			Sample(UInt32 success,UInt32 lost,UInt32 size) : success(success),lost(lost),size(size) {}
+			const Time		time;
+			const UInt32	success;
+			const UInt32	lost;
+			const UInt32	size;
+	};
+
+	std::deque<Sample>	_samples;
 	UInt32		_size;
 	UInt32		_num;
 	UInt32		_den;

@@ -36,8 +36,8 @@ public:
 	
 	UInt8								value[COOKIE_SIZE];
 	DiffieHellman						diffieHellman;
-	Buffer<UInt8>						initiatorKey;
-	Buffer<UInt8>						sharedSecret;
+	Buffer								initiatorKey;
+	Buffer								sharedSecret;
 	std::weak_ptr<RTMFPCookieComputing> weak;
 
 private:

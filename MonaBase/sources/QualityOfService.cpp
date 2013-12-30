@@ -18,20 +18,11 @@ This file is a part of Mona.
 */
 
 #include "Mona/QualityOfService.h"
-#include "Mona/Time.h"
 
 using namespace std;
 
 namespace Mona {
 
-class Sample : virtual Object {
-public:
-	Sample(UInt32 success,UInt32 lost,UInt32 size) : success(success),lost(lost),size(size) {}
-	const Time time;
-	const UInt32	success;
-	const UInt32	lost;
-	const UInt32	size;
-};
 
 QualityOfService QualityOfService::Null;
 
@@ -50,21 +41,20 @@ void QualityOfService::add(UInt32 ping,UInt32 size,UInt32 success,UInt32 lost) {
 	_num += lost;
 	_den += (lost+success);
 	_size += size;
-
-	list<Sample*>::iterator it=_samples.begin();
-	while(it!=_samples.end()) {
-		Sample& sample(**it);
+	
+	deque<Sample>::iterator it=_samples.begin();
+	while(!_samples.empty()) {
+		Sample& sample(_samples.front());
 		if(!sample.time.isElapsed(5000000)) // 5 secondes
 			break;
 		_den -= (sample.success+sample.lost);
 		_num -= sample.lost;
 		_size -= sample.size;
-		delete *it;
-		_samples.erase(it++);
+		_samples.pop_front();
 	}
-	_samples.push_back(new Sample(success,lost,size));
+	_samples.emplace_back(success,lost,size);
 	
-	double elapsed = (double)(*_samples.begin())->time.elapsed()/1000;
+	double elapsed = (double)(*_samples.begin()).time.elapsed()/1000;
 
 	(double&)byteRate = (double)_size;
 	if(elapsed>0)
@@ -80,9 +70,6 @@ void QualityOfService::reset() {
 	(double&)byteRate = 0;
 	(UInt32&)latency = 0;
 	_size=_num=_den=0;
-	list<Sample*>::iterator it;
-	for(it=_samples.begin();it!=_samples.end();++it)
-		delete (*it);
 	_samples.clear();
 }
 

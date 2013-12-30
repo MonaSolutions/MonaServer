@@ -25,7 +25,7 @@ using namespace Mona;
 
 using namespace std;
 
-Buffer<UInt8> Result;
+Buffer Result;
 
 void TestEncode(const char* data,UInt32 size, const char* result) {
 	Util::ToBase64((UInt8*)data, size, Result);
@@ -51,7 +51,7 @@ ADD_TEST(UtilTest, Base64) {
 
 	string message("The quick brown fox jumped over the lazy dog.");
 	Util::ToBase64((const UInt8*)message.c_str(), message.size(), Result);
-	Buffer<UInt8> buffer;
+	Buffer buffer;
 	CHECK(Util::FromBase64(Result.data(), Result.size(), buffer));
 	CHECK(memcmp(buffer.data(), message.c_str(), message.size()) == 0);
 
@@ -78,26 +78,24 @@ ADD_TEST(UtilTest, FormatHex) {
 }
 
 ADD_TEST(UtilTest, UnpackUrl) {
-	Exception ex;
-	SocketAddress address;
+	string address;
 	string path;
 	string file;
 	string value;
 	MapParameters properties;
 	
-	CHECK(Util::UnpackUrl(ex, "rtmp://",path,properties));
-	CHECK(Util::UnpackUrl(ex, "rtmp://127.0.0.1", address, path, properties));
-	CHECK(Util::UnpackUrl(ex, "rtmp://127.0.0.1:1234/", address, path, properties));
-	CHECK(Util::UnpackUrl(ex, "rtmp://127.0.0.1:1234/file.txt?", address, path, file,properties));
-	CHECK(Util::UnpackUrl(ex, "rtmp://127.0.0.1:1234/file.txt?name1=value1&name2=value2", address, path, file, properties));
-	CHECK(Util::UnpackUrl(ex, "rtmp://127.0.0.1:1234/path/file.txt?name1=value1&name2=value2", address, path, file, properties));
-	CHECK(!ex);
+	CHECK(Util::UnpackUrl("rtmp://",path,properties)==string::npos);
+	CHECK(Util::UnpackUrl("rtmp://127.0.0.1", address, path, properties)==string::npos)
+	CHECK(Util::UnpackUrl("rtmp://127.0.0.1:1234/", address, path, properties)==string::npos)
+	CHECK(Util::UnpackUrl("rtmp://127.0.0.1:1234/file.txt?", address, path,properties)!=string::npos)
+	CHECK(Util::UnpackUrl("rtmp://127.0.0.1:1234/file.txt?name1=value1&name2=value2", address, path, properties)!=string::npos)
+	CHECK(Util::UnpackUrl("rtmp://127.0.0.1:1234/path/file.txt?name1=value1&name2=value2", address, path, properties)!=string::npos)
 
 	DEBUG_CHECK(properties.getString("name1", value) && value == "value1");
 	DEBUG_CHECK(properties.getString("name2", value) && value == "value2");
 	DEBUG_CHECK(path=="/path");
 	DEBUG_CHECK(file=="file.txt");
-	DEBUG_CHECK(address.toString()=="127.0.0.1:1234");
+	DEBUG_CHECK(address=="127.0.0.1:1234");
 }
 
 

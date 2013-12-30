@@ -51,11 +51,10 @@ RTMFPEngine::RTMFPEngine(const RTMFPEngine& engine,Type type) : type(engine.type
 RTMFPEngine::RTMFPEngine(const RTMFPEngine& engine) : type(engine.type),_key(engine._key),_direction(engine._direction) {
 }
 
-RTMFPEngine& RTMFPEngine::operator=(const RTMFPEngine& engine) {
-	(Type&)type = engine.type;
+void RTMFPEngine::set(const RTMFPEngine& engine,Type type) {
+	(Type&)this->type = type;
 	_key = engine._key;
 	_direction = engine._direction;
-	return *this;
 }
 
 
@@ -150,7 +149,7 @@ void RTMFP::Pack(MemoryWriter& packet,UInt32 farId) {
 }
 
 
-void RTMFP::ComputeAsymetricKeys(const Buffer<UInt8>& sharedSecret, const UInt8* initiatorNonce,UInt16 initNonceSize,
+void RTMFP::ComputeAsymetricKeys(const Buffer& sharedSecret, const UInt8* initiatorNonce,UInt16 initNonceSize,
 														    const UInt8* responderNonce,UInt16 respNonceSize,
 														    UInt8* requestKey,UInt8* responseKey) {
 	UInt8 mdp1[HMAC_KEY_SIZE];

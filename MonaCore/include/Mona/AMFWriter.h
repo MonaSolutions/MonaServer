@@ -22,7 +22,7 @@ This file is a part of Mona.
 #include "Mona/Mona.h"
 #include "Mona/AMF.h"
 #include "Mona/DataWriter.h"
-#include <list>
+#include <deque>
 #include <map>
 
 namespace Mona {
@@ -68,7 +68,7 @@ private:
 	std::map<std::string,UInt32>	_stringReferences;
 	std::vector<UInt8>				_references;
 	bool							_amf3;
-	std::list<ObjectRef*>			_lastObjectReferences;
+	std::deque<ObjectRef*>			_lastObjectReferences;
 };
 
 

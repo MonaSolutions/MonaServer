@@ -48,6 +48,7 @@ public:
 		SYSTEM,
 		MATH,
 		CRYPTO,
+		PERMISSION,
 		ASSERT
 	};
 

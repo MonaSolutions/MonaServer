@@ -28,7 +28,7 @@ This file is a part of Mona.
 
 class MonaServer : public Mona::Server, private ServiceHandler, private ServerHandler, private Mona::DatabaseLoader {
 public:
-	MonaServer(Mona::TerminateSignal& terminateSignal, Mona::UInt32 bufferSize, Mona::UInt32 threads, Mona::UInt16 serversPort, const std::string& serversTarget);
+	MonaServer(Mona::TerminateSignal& terminateSignal, Mona::UInt32 bufferSize, Mona::UInt16 threads, Mona::UInt16 serversPort, const std::string& serversTarget);
 
 	static const std::string				WWWPath;
 	static const std::string				DataPath;
@@ -66,12 +66,12 @@ private:
 	void					onStop();
 
 	void					onRendezVousUnknown(const std::string& protocol, const Mona::UInt8* id, std::set<Mona::SocketAddress>& addresses);
-	void					onHandshake(const std::string& protocol, const Mona::SocketAddress& address, const std::string& path, const std::map<std::string, std::string>& properties, Mona::UInt32 attempts, std::set<Mona::SocketAddress>& addresses);
+	void					onHandshake(const std::string& protocol, const Mona::SocketAddress& address, const std::string& path, const Mona::MapParameters& properties, Mona::UInt32 attempts, std::set<Mona::SocketAddress>& addresses);
 
 	void					onConnection(Mona::Exception& ex, Mona::Client& client,Mona::DataReader& parameters,Mona::DataWriter& response);
 	void					onDisconnection(const Mona::Client& client);
-	void					onMessage(Mona::Exception& ex, Mona::Client& client,const std::string& name,Mona::DataReader& reader,Mona::DataWriter& writer);
-	bool					onRead(Mona::Exception& ex, Mona::Client& client, std::string& filePath, Mona::DataReader& parameters);
+	void					onMessage(Mona::Exception& ex, Mona::Client& client,const std::string& name,Mona::DataReader& reader,Mona::UInt8 responseType);
+	bool					onRead(Mona::Exception& ex, Mona::Client& client, Mona::FilePath& filePath, Mona::DataReader& parameters,Mona::DataWriter& properties);
 
 	void					onJoinGroup(Mona::Client& client,Mona::Group& group);
 	void					onUnjoinGroup(Mona::Client& client,Mona::Group& group);
@@ -96,5 +96,6 @@ private:
 	std::map<std::string, Mona::UInt16>	_ports;
 	std::string							_host;
 	Mona::Database						_data;
+	std::string							_buffer;
 };
 

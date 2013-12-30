@@ -130,7 +130,7 @@ void RTMFPWriter::acknowledgment(MemoryReader& reader) {
 	bool header = true;
 	bool stop=false;
 
-	list<RTMFPMessage*>::iterator it=_messagesSent.begin();
+	deque<RTMFPMessage*>::iterator it=_messagesSent.begin();
 	while(!stop && it!=_messagesSent.end()) {
 		RTMFPMessage& message(**it);
 
@@ -355,14 +355,13 @@ void RTMFPWriter::flush(MemoryWriter& writer,UInt64 stage,UInt8 flags,bool heade
 }
 
 void RTMFPWriter::raiseMessage() {
-	list<RTMFPMessage*>::const_iterator it;
 	bool header = true;
 	bool stop = true;
 	bool sent = false;
 	UInt64 stage = _stageAck+1;
 
-	for(it=_messagesSent.begin();it!=_messagesSent.end();++it) {
-		RTMFPMessage& message(**it);
+	for(RTMFPMessage* pMessage : _messagesSent) {
+		RTMFPMessage& message(*pMessage);
 		
 		if(message.fragments.empty())
 			break;
@@ -439,7 +438,7 @@ void RTMFPWriter::flush(bool full) {
 	// flush
 	bool header = !_band.canWriteFollowing(*this);
 
-	list<RTMFPMessage*>::const_iterator it=_messages.begin();
+	deque<RTMFPMessage*>::const_iterator it=_messages.begin();
 	while(it!=_messages.end()) {
 		RTMFPMessage& message(**it);
 

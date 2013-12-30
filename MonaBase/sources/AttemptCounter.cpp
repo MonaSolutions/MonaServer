@@ -24,30 +24,24 @@ using namespace std;
 
 namespace Mona {
 
-AttemptCounter::AttemptCounter() {
-
-}
-
 AttemptCounter::~AttemptCounter() {
-	// delete attempts
-	for(auto it : _attempts)
+	for (auto it : _attempts)
 		delete it.second;
 }
 
-
 void AttemptCounter::clearAttempt(const string& tag) {
 	auto it=_attempts.find(tag);
-	if(it==_attempts.end())
-		return;
-	delete it->second;
-	_attempts.erase(it);
+	if (it != _attempts.end()) {
+		delete it->second;
+		_attempts.erase(it);
+	}
 }
 
 void AttemptCounter::manage() {
 	// clean obsolete attempts
 	auto it=_attempts.begin();
 	while(it!=_attempts.end()) {
-		if(it->second->obsolete()) {
+		if (it->second->obsolete()) {
 			delete it->second;
 			_attempts.erase(it++);
 		} else

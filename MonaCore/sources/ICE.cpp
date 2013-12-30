@@ -28,7 +28,9 @@ using namespace std;
 
 namespace Mona {
 
-ICE::ICE(const Peer& initiator,const Peer& remote,const RelayServer& relay) : _first(true),mediaIndex(0),_relay(relay),_type(INITIATOR),_publicHost(initiator.address.host().toString()),_serverRemoteHost(remote.serverAddress.host().toString()),_serverInitiatorHost(initiator.serverAddress.host().toString()),_initiator(initiator),_remote(remote) {
+ICE::ICE(const Peer& initiator,const Peer& remote,const RelayServer& relay) : _first(true),mediaIndex(0),_relay(relay),_type(INITIATOR),_publicHost(initiator.address.host().toString()),_initiator(initiator),_remote(remote) {
+	SocketAddress::Split(remote.serverAddress, _serverRemoteHost);
+	SocketAddress::Split(initiator.serverAddress, _serverInitiatorHost);
 }
 
 ICE::~ICE() {
@@ -50,12 +52,12 @@ void ICE::reset() {
 }
 
 void ICE::fromSDPLine(const string& line,SDPCandidate& publicCandidate) {
-	list<SDPCandidate> relayCurrentCandidates;
-	list<SDPCandidate> relayRemoteCandidates;
+	deque<SDPCandidate> relayCurrentCandidates;
+	deque<SDPCandidate> relayRemoteCandidates;
 	fromSDPLine(line,publicCandidate,relayCurrentCandidates,relayRemoteCandidates,false);
 }
 
-void ICE::fromSDPLine(const string& line,SDPCandidate& publicCandidate,list<SDPCandidate>& relayCurrentCandidates,list<SDPCandidate>& relayRemoteCandidates,bool relayed) {
+void ICE::fromSDPLine(const string& line,SDPCandidate& publicCandidate,deque<SDPCandidate>& relayCurrentCandidates,deque<SDPCandidate>& relayRemoteCandidates,bool relayed) {
 	relayCurrentCandidates.clear();
 	relayRemoteCandidates.clear();
 	publicCandidate.candidate.clear();
@@ -76,7 +78,7 @@ void ICE::fromSDPLine(const string& line,SDPCandidate& publicCandidate,list<SDPC
 		fromSDPCandidate(line,publicCandidate,relayCurrentCandidates,relayRemoteCandidates,relayed);
 }
 
-void ICE::fromSDPCandidate(const string& candidate,SDPCandidate& publicCandidate,list<SDPCandidate>& relayCurrentCandidates,list<SDPCandidate>& relayRemoteCandidates,bool relayed) {
+void ICE::fromSDPCandidate(const string& candidate,SDPCandidate& publicCandidate,deque<SDPCandidate>& relayCurrentCandidates,deque<SDPCandidate>& relayRemoteCandidates,bool relayed) {
 	
 	const char* end = NULL;
 	do {
@@ -95,29 +97,29 @@ void ICE::fromSDPCandidate(const string& candidate,SDPCandidate& publicCandidate
 	bool isTCP=false;
 	string& content=publicCandidate.candidate;
 	UInt32 compoment=0;
-	for(string& st : fields) {
+	for(string& field : fields) {
 		if(index>0)
 			content.append(" ");
 		if(++index==2) {
 			Exception ex;
-			compoment = String::ToNumber<UInt32>(ex, st);
-			content += st;
-		} else if (index == 3 && String::ICompare(st, "tcp") == 0) {
+			compoment = String::ToNumber<UInt32>(ex, field);
+			content += field;
+		} else if (index == 3 && String::ICompare(field, "tcp") == 0) {
 			isTCP = true;
-			content += st;
+			content += field;
 		} else if(index==4)
 			content += "1845501695";
 		else if(index==5) {
 			content += _publicHost; // address
-			pHost = &st;
+			pHost = &field;
 		} else if(index==6) {
-			content += st;
-			port = st; // port	
-		} else if(index==8 && String::ICompare(st,"host")!=0) {
+			content += field;
+			port = field; // port	
+		} else if(index==8 && String::ICompare(field,"host")!=0) {
 			content.clear();
 			return;
 		} else
-			content += st;
+			content += field;
 	}
 	if(!content.empty()) {
 		//content.clear();
@@ -130,20 +132,17 @@ void ICE::fromSDPCandidate(const string& candidate,SDPCandidate& publicCandidate
 	if(relayed && !isTCP && !port.empty()) {
 		// informations usefull just for relay line!
 		
-		Exception ex;
-		int valport = String::ToNumber<int>(ex, port);
-		if (ex) {
-			WARN("Invalid candidate address, ",ex.error());
-			return ;
-		}
-
-		SocketAddress address;
-		address.set(ex,_publicHost, valport);
-		if (ex) {
-			WARN("Invalid candidate address")
+		UInt16 value;
+		if (!String::ToNumber<UInt16>(port, value)) {
+			WARN("Invalid candidate ", port , " port");
 			return;
 		}
-			
+		Exception ex;
+		SocketAddress address;
+		EXCEPTION_TO_LOG(address.set(ex,_publicHost,value),"Invalid candidate address")
+		if (ex)
+			return;
+
 		set<SocketAddress>& currentAddresses = _type==INITIATOR ? _initiatorAddresses[mediaIndex][compoment] : _remoteAddresses[mediaIndex][compoment];
 		set<SocketAddress>& remoteAddresses = _type==INITIATOR ?  _remoteAddresses[mediaIndex][compoment] :_initiatorAddresses[mediaIndex][compoment];
 
@@ -154,12 +153,12 @@ void ICE::fromSDPCandidate(const string& candidate,SDPCandidate& publicCandidate
 				if(port==0)
 					continue;
 				if(_relayPorts[mediaIndex][compoment].insert(port).second) {
-					relayCurrentCandidates.resize(relayCurrentCandidates.size()+1);
+					relayCurrentCandidates.emplace_back();
 					SDPCandidate& currentCandidate = relayCurrentCandidates.back();
 					String::Format(currentCandidate.candidate, "a=candidate:7 ",compoment," udp 1 ",_type==INITIATOR ? _serverInitiatorHost : _serverRemoteHost," ",port," typ host\\r\\n");
 					currentCandidate.mLineIndex = mediaIndex;
 
-					relayRemoteCandidates.resize(relayRemoteCandidates.size()+1);
+					relayCurrentCandidates.emplace_back();
 					SDPCandidate& remoteCandidate = relayRemoteCandidates.back();
 					String::Format(remoteCandidate.candidate, "a=candidate:7 ",compoment," udp 1 ",_type==INITIATOR ? _serverRemoteHost : _serverInitiatorHost," ",port," typ host\\r\\n");
 					remoteCandidate.mLineIndex = mediaIndex;
@@ -182,8 +181,8 @@ bool ICE::ProcessSDPPacket(DataReader& packet,Peer& current,Writer& currentWrite
 	}
 
 	SDPCandidate		candidate;
-	list<string>		newLines;
-	list<SDPCandidate>	relayCurrentCandidates,relayRemoteCandidates;
+	deque<string>		newLines;
+	deque<SDPCandidate>	relayCurrentCandidates,relayRemoteCandidates;
 	DataWriter& writer = remoteWriter.writeInvocation(name);
 	ICE& ice = current.ice(remote);
 
@@ -246,13 +245,12 @@ bool ICE::ProcessSDPPacket(DataReader& packet,Peer& current,Writer& currentWrite
 						pos += candidate.candidate.size();
 						candidate.candidate.clear();
 					}
-					list<SDPCandidate>::iterator it;
-					for(it=relayCurrentCandidates.begin();it!=relayCurrentCandidates.end();++it) {
-						content.insert(lastPos,it->candidate);
-						pos += it->candidate.size();
+					for(SDPCandidate& candidate : relayCurrentCandidates) {
+						content.insert(lastPos,candidate.candidate);
+						pos += candidate.candidate.size();
 					}
-					for(it=relayRemoteCandidates.begin();it!=relayRemoteCandidates.end();++it)
-						SDP::SendNewCandidate(currentWriter,*it);
+					for(SDPCandidate& candidate : relayRemoteCandidates)
+						SDP::SendNewCandidate(currentWriter,candidate);
 				}
 				lastPos = pos + 4;
 			} while(lastPos<content.length());
@@ -267,11 +265,10 @@ bool ICE::ProcessSDPPacket(DataReader& packet,Peer& current,Writer& currentWrite
 		ice.fromSDPLine(candidate.candidate,publicCandidate,relayCurrentCandidates,relayRemoteCandidates);
 		if(!publicCandidate.candidate.empty())
 			SDP::SendNewCandidate(currentWriter,publicCandidate);
-		list<SDPCandidate>::iterator it;
-		for(it=relayCurrentCandidates.begin();it!=relayCurrentCandidates.end();++it)
-			SDP::SendNewCandidate(currentWriter,*it);
-		for(it=relayRemoteCandidates.begin();it!=relayRemoteCandidates.end();++it)
-			SDP::SendNewCandidate(remoteWriter,*it);
+		for(SDPCandidate& candidate : relayCurrentCandidates)
+			SDP::SendNewCandidate(currentWriter,candidate);
+		for(SDPCandidate& candidate : relayRemoteCandidates)
+			SDP::SendNewCandidate(remoteWriter,candidate);
 	}
 
 	return true;

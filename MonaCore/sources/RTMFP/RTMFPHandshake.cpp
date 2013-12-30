@@ -148,7 +148,7 @@ RTMFPSession* RTMFPHandshake::createSession(const UInt8* cookieValue) {
 	peer.clear();
 	memcpy((void*)peer.id,cookie.peerId,ID_SIZE);
 
-	EXCEPTION_TO_LOG(Util::UnpackUrl(ex, cookie.queryUrl, (SocketAddress&)peer.serverAddress, (string&)peer.path, peer), "RTMFP UnpackUrl ", cookie.queryUrl);
+	Util::UnpackUrl(cookie.queryUrl, (string&&)peer.serverAddress, (string&)peer.path, peer);
 
 	(UInt32&)farId = cookie.farId;
 	((SocketAddress&)peer.address).set(cookie.peerAddress);
@@ -199,7 +199,7 @@ UInt8 RTMFPHandshake::handshakeHandler(UInt8 id,MemoryReader& request,MemoryWrit
 
 					RTMFPSession* pSession = (times>0 || peer.address.host() == pSessionWanted->peer.address.host()) ? _sessions.find<RTMFPSession>(peer.address) : NULL;
 					
-					if(pSession) {
+				/*	TODO if(pSession) {
 						UInt16 port = invoker.relay.add(pSession->peer,pSession->peer.address,pSessionWanted->peer,pSessionWanted->peer.address);
 						if(port>0) {
 							Exception ex;
@@ -208,15 +208,15 @@ UInt8 RTMFPHandshake::handshakeHandler(UInt8 id,MemoryReader& request,MemoryWrit
 							response.writeAddress(address, true);
 							return 0x71;
 						}
-					}
+					}*/
 					
 
 					pSessionWanted->p2pHandshake(tag,peer.address,times,pSession);
 
-					list<SocketAddress>::const_iterator it;
-					for(it=pSessionWanted->peer.addresses.begin();it!=pSessionWanted->peer.addresses.end();++it) {
-						response.writeAddress(*it,it==pSessionWanted->peer.addresses.begin());
-						DEBUG("P2P address initiator exchange, ",it->toString());
+					response.writeAddress(peer.address, true);
+					for(const SocketAddress& address : peer.localAddresses) {
+						response.writeAddress(address,false);
+						DEBUG("P2P address initiator exchange, ",address.toString());
 					}
 					return 0x71;
 				}
@@ -242,19 +242,23 @@ UInt8 RTMFPHandshake::handshakeHandler(UInt8 id,MemoryReader& request,MemoryWrit
 				HelloAttempt& attempt = AttemptCounter::attempt<HelloAttempt>(tag);
 
 				// Fill peer infos
-				Exception ex;
 				peer.clear();
-				EXCEPTION_TO_LOG(Util::UnpackUrl(ex, epd, (SocketAddress&)peer.serverAddress, (string&)peer.path, peer),"RTMFP UnpackUrl ",epd)
-				if (peer.serverAddress.port() == 0)
-					((SocketAddress&)peer.serverAddress).set(peer.serverAddress.host(), invoker.params.RTMFP.port);
+				Util::UnpackUrl(epd, (string&)peer.serverAddress, (string&)peer.path, peer);
+
+
+				Exception ex;
+
 				set<SocketAddress> addresses;
 				peer.onHandshake(attempt.count+1,addresses);
 				if(!addresses.empty()) {
 					set<SocketAddress>::iterator it;
 					for(it=addresses.begin();it!=addresses.end();++it) {
-						if(it->host().isWildcard())
-							response.writeAddress(peer.serverAddress,it==addresses.begin());
-						else
+						if (it->host().isWildcard()) {
+							SocketAddress address;
+							EXCEPTION_TO_LOG(address.set(ex, peer.serverAddress),"RTMFP onHandshake redirection");
+							if (!ex)
+								response.writeAddress(address,it==addresses.begin());
+						} else
 							response.writeAddress(*it,it==addresses.begin());
 					}
 					return 0x71;

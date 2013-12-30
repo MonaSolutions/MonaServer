@@ -27,13 +27,17 @@ using namespace std;
 namespace Mona {
 
 
-Socket::Socket(const SocketManager& manager, int type) : Expirable<Socket>(this),_poolThreads(manager._poolThreads), _type(type), _initialized(false), _managed(false), manager(manager), _sockfd(NET_INVALID_SOCKET), _writing(false) {}
+Socket::Socket(const SocketManager& manager, int type) : Expirable<Socket>(this), _type(type),_initialized(false), _managed(false), manager(manager), _sockfd(NET_INVALID_SOCKET), _writing(false) {}
 
 Socket::~Socket() {
 	close();
 	if (_initialized)
 		NET_CLOSESOCKET(_sockfd);
 	expire(); // prevent deletion for SocketSender
+}
+
+PoolThreads& Socket::poolThreads() {
+	return manager.poolThreads;
 }
 
 void Socket::close() {

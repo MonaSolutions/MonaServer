@@ -26,7 +26,7 @@ using namespace std;
 using namespace Mona;
 
 
-ServerConnection::ServerConnection(const SocketAddress& peerAddress, const SocketManager& manager, ServerHandler& handler, ServersHandler& serversHandler,bool alreadyConnected) : address(peerAddress), _size(0), _handler(handler), TCPClient(manager, peerAddress), _connected(false), _serversHandler(serversHandler), isTarget(false) {
+ServerConnection::ServerConnection(const SocketAddress& peerAddress, const SocketManager& manager, ServerHandler& handler, ServersHandler& serversHandler,bool alreadyConnected) : address(peerAddress), _size(0), _handler(handler), TCPClient(peerAddress, manager), _connected(false), _serversHandler(serversHandler), isTarget(false) {
 	if (alreadyConnected)
 		sendPublicAddress();
 }
@@ -117,15 +117,15 @@ void ServerConnection::send(const string& handler,ServerMessage& message) {
 }
 
 
-UInt32 ServerConnection::onReception(const shared_ptr<Buffer<UInt8>>& pData) {
-	if (_size == 0 && pData->size() < 4)
-		return pData->size();
+UInt32 ServerConnection::onReception(const UInt8* data,UInt32 size) {
+	if (_size == 0 && size < 4)
+		return size;
 
-	MemoryReader reader(pData->data(), pData->size());
+	MemoryReader reader(data, size);
 	if(_size==0)
 		_size = reader.read32();
 	if (reader.available() < _size)
-		return pData->size();
+		return size;
 
 	UInt32 rest = reader.available() - _size;
 	reader.shrink(_size);
@@ -164,7 +164,7 @@ UInt32 ServerConnection::onReception(const shared_ptr<Buffer<UInt8>>& pData) {
 			string key,value;
 			reader.readString(key);
 			reader.readString(value);
-			setRaw(key,value);
+			setString(key,value);
 		}
 		if(!_connected) {
 			_connected=true;

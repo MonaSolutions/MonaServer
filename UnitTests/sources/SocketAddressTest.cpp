@@ -26,6 +26,7 @@ using namespace Mona;
 
 ADD_TEST(SocketAddress, Test) {
 	
+	
 	SocketAddress sa;
 	Exception ex;
 
@@ -52,7 +53,7 @@ ADD_TEST(SocketAddress, Test) {
 
 	ex.set(Exception::NIL, "");
 
-	sa.set(ex,"www.appinf.com", 80);
+	sa.setWithDNS(ex,"www.appinf.com", 80);
 	CHECK(sa.host().toString() == "50.57.108.29");
 	CHECK(sa.port() == 80);
 

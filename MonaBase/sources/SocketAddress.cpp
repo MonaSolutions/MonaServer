@@ -170,7 +170,7 @@ bool SocketAddress::set(Exception& ex,const struct sockaddr& addr) {
 	return true;
 }
 
-bool SocketAddress::set(Exception& ex,const string& hostAndPort) {
+bool SocketAddress::setIntern(Exception& ex,const string& hostAndPort,bool resolveHost) {
 	ASSERT_RETURN(!hostAndPort.empty(),false);
 
 	string host, port;
@@ -198,10 +198,10 @@ bool SocketAddress::set(Exception& ex,const string& hostAndPort) {
 		ex.set(Exception::NETADDRESS, "Missing port number in ", hostAndPort);
 		return false;
 	}
-	return set(ex,host, resolveService(ex,port));
+	return setIntern(ex,host, resolveService(ex,port),resolveHost);
 }
 
-bool SocketAddress::set(Exception& ex,const string& host, UInt16 port) {
+bool SocketAddress::setIntern(Exception& ex,const string& host, UInt16 port,bool resolveHost) {
 	IPAddress ip;
 	Exception ignore;
 	if (ip.set(ignore, host)) {
@@ -209,7 +209,7 @@ bool SocketAddress::set(Exception& ex,const string& host, UInt16 port) {
 		return true;
 	}
 	HostEntry entry;
-	if (!DNS::HostByName(ex, host, entry))
+	if (!resolveHost || !DNS::HostByName(ex, host, entry))
 		return false;
 	auto& addresses = entry.addresses();
 	if (addresses.size() > 0) {
@@ -285,6 +285,19 @@ UInt16 SocketAddress::resolveService(Exception& ex,const string& service) {
 		return ntohs(se->s_port);
 	ex.set(Exception::NETADDRESS, "Service ", service, " unknown");
 	return 0;
+}
+
+
+UInt16 SocketAddress::Split(const string& address,string& host) {
+	auto found = address.find(':');
+	host = address.substr(0, found);
+	UInt16 port(0);
+	if (found != string::npos) {
+		address.substr(0, found);
+		if (++found < address.size())
+			String::ToNumber(address.substr(found), port);
+	}
+	return port;
 }
 
 

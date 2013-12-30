@@ -36,18 +36,31 @@ public:
 
 	void flush() { _ostr.flush(); }
 
-	void writeRaw(const UInt8* value, UInt32 size) { _ostr.write((const char*)value, size); }
-	void writeRaw(const char* value, UInt32 size) { _ostr.write(value, size); }
-	void writeRaw(const std::string& value) { _ostr.write(value.c_str(), value.size()); }
+	template <typename ...Args>
+	void writeRaw(const UInt8* value, UInt32 size,Args&&... args) {
+		_ostr.write((const char*)value, size);
+		writeRaw(args ...);
+	}
+	template <typename ...Args>
+	void writeRaw(const char* value, Args&&... args) {
+		_ostr.write(value, strlen(value));
+		writeRaw(args ...);
+	}
+	template <typename ...Args>
+	void writeRaw(const std::string& value,Args&&... args) {
+		_ostr.write(value.c_str(), value.size());
+		writeRaw(args ...);
+	}
+
 	void write8(UInt8 value) { _ostr.put(value); }
 	void write16(UInt16 value);
 	void write24(UInt32 value);
 	void write32(UInt32 value);
 	void write64(UInt64 value);
 	void writeString8(const std::string& value) { write8(value.size()); writeRaw(value); }
-	void writeString8(const char* value, UInt8 size) { write8(size); writeRaw(value, size); }
+	void writeString8(const char* value, UInt8 size) { write8(size); _ostr.write(value, size); }
 	void writeString16(const std::string& value) { write16(value.size()); writeRaw(value); }
-	void writeString16(const char* value, UInt16 size) { write16(size); writeRaw(value, size); }
+	void writeString16(const char* value, UInt16 size) { write16(size); _ostr.write(value, size); }
 	void writeString(const std::string& value) { write7BitEncoded(value.size()); writeRaw(value); }
 	void write7BitEncoded(UInt32 value);
 	void write7BitValue(UInt32 value);
@@ -65,6 +78,8 @@ public:
 			_ostr.write((const char*)&value, sizeof(value));
 	}
 private:
+	void writeRaw() {}
+
 	bool			_flipBytes;
 	std::ostream&   _ostr;
 };

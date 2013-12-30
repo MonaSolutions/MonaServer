@@ -150,17 +150,20 @@ void RTMFPSession::p2pHandshake(const string& tag,const SocketAddress& address,U
 	
 	UInt16 size = 0x36;
 	UInt8 index=0;
+	// times starts to 0
 
 	const SocketAddress* pAddress = &address;
-	if(pSession && peer.addresses.size()>0) {
+	if(pSession && !pSession->peer.localAddresses.empty()) {
 		// If two clients are on the same lan, starts with private address
-		if(pSession->peer.addresses.front().host()==peer.addresses.front().host())
+		if(pSession->peer.address == peer.address)
 			++times;
 
-		index=times%pSession->peer.addresses.size();
-		auto it =pSession->peer.addresses.begin();
-		advance(it,index);
-		pAddress = &(*it);
+		index=times%(pSession->peer.localAddresses.size()+1);
+		if (index > 0) {
+			auto it = pSession->peer.localAddresses.begin();
+			advance(it, --index);
+			pAddress = &(*it);
+		}
 	}
 	size += (pAddress->host().family() == IPAddress::IPv6 ? 16 : 4);
 
@@ -181,12 +184,10 @@ void RTMFPSession::p2pHandshake(const string& tag,const SocketAddress& address,U
 	flush();
 }
 
-bool RTMFPSession::decode(const shared_ptr<Buffer<UInt8> >& pBuffer, const SocketAddress& address) {
-	shared_ptr<RTMFPDecoding> pDecoding(new RTMFPDecoding(pBuffer,invoker));
-	pDecoding->decoder = _decrypt.next(farId==0 ? RTMFPEngine::SYMMETRIC : RTMFPEngine::DEFAULT);
-	_prevEngineType = pDecoding->decoder.type;
-	Session::decode<RTMFPDecoding>(pDecoding,address);
-	return false;
+void RTMFPSession::decode(const UInt8* data, UInt32 size, const SocketAddress& address) {
+	_prevEngineType = farId == 0 ? RTMFPEngine::SYMMETRIC : RTMFPEngine::DEFAULT;
+	shared_ptr<RTMFPDecoding> pRTMFPDecoding(new RTMFPDecoding(invoker, data, size,_decrypt,_prevEngineType));
+	Session::decode<RTMFPDecoding>(pRTMFPDecoding,address);
 }
 
 void RTMFPSession::flush(UInt8 marker,bool echoTime,RTMFPEngine::Type type) {
@@ -215,7 +216,7 @@ void RTMFPSession::flush(UInt8 marker,bool echoTime,RTMFPEngine::Type type) {
 			packet.write16(_timeSent+RTMFP::Time(_recvTimestamp.elapsed()));
 		
 		_pSender->farId = farId;
-		_pSender->encoder = _encrypt.next(type);
+		_pSender->encoder.set(_encrypt,type);
 		_pSender->address.set(peer.address);
 
 		dumpResponse(_pSender->packet.begin() + 6, _pSender->packet.length() - 6);
@@ -424,11 +425,8 @@ void RTMFPSession::packetHandler(MemoryReader& packet) {
 					flags = message.read8();
 
 				// Process request
-				if (pFlow) {
+				if (pFlow)
 					pFlow->fragmentHandler(stage, deltaNAck, message, flags);
-					if (peer.serverAddress.port() == 0)
-						((SocketAddress&)peer.serverAddress).set(peer.serverAddress.host(), invoker.params.RTMFP.port);
-				}
 
 				break;
 			}
@@ -450,8 +448,6 @@ void RTMFPSession::packetHandler(MemoryReader& packet) {
 			pFlow=NULL;
 		}
 	}
-
-	flush();
 }
 
 RTMFPWriter* RTMFPSession::writer(UInt64 id) {

@@ -34,28 +34,24 @@ protected:
 	UDProtocol(const char* name, Invoker& invoker, Sessions& sessions) : UDPSocket(invoker.sockets), Protocol(name, invoker, sessions) {}
 	
 private:
-	void		onReception(const std::shared_ptr<Buffer<UInt8>>& pData, const SocketAddress& address);
+	void		onReception(const UInt8* data, UInt32 size,const SocketAddress& address);
 	void		onError(const std::string& error) { WARN("Protocol ",name,", ", error); }
 
-	virtual void onPacket(const std::shared_ptr<Buffer<UInt8>>& pData, const SocketAddress& address) = 0;
+	virtual void onPacket(const UInt8* data, UInt32 size, const SocketAddress& address) = 0;
 };
 
 inline bool UDProtocol::load(Exception& ex, const ProtocolParams& params) {
 	SocketAddress address;
-	if (!address.set(ex, params.host, params.port))
+	if (!address.setWithDNS(ex, params.host, params.port))
 		return false;
 	return bind(ex, address);
 }
 
 
-inline void	UDProtocol::onReception(const std::shared_ptr<Buffer<UInt8>>& pData, const SocketAddress& address) {
-	if (!pData) {
-		WARN("Protocol ", name, ", onReception of null data");
-		return;
-	}
+inline void	UDProtocol::onReception(const UInt8* data, UInt32 size, const SocketAddress& address) {
 	if(!auth(address))
 		return;
-	onPacket(pData, address);
+	onPacket(data, size,address);
 }
 
 

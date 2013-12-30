@@ -26,7 +26,7 @@ using namespace std;
 
 namespace Mona {
 
-Publication::Publication(const string& name):_audioCodecBuffer(0),_videoCodecBuffer(0),_name(name),_droppedFrames(0),_firstKeyFrame(false),listeners(_listeners),_pPublisher(NULL) {
+Publication::Publication(const string& name):_new(false),_audioCodecBuffer(0),_videoCodecBuffer(0),_name(name),_droppedFrames(0),_firstKeyFrame(false),listeners(_listeners),_pPublisher(NULL) {
 	DEBUG("New publication ",_name);
 }
 
@@ -115,14 +115,16 @@ void Publication::stop(Peer& peer) {
 	_videoQOS.reset();
 	_audioQOS.reset();
 	_dataQOS.reset();
-	_videoCodecBuffer.resize(0,false);
-	_audioCodecBuffer.resize(0,false);
+	_videoCodecBuffer.clear();
+	_audioCodecBuffer.clear();
 	_droppedFrames=0;
 	_pPublisher=NULL;
 	return;
 }
 
 void Publication::flush() {
+	if (!_new)
+		return;
 	map<Client*,Listener*>::const_iterator it;
 	for(it=_listeners.begin();it!=_listeners.end();++it)
 		it->second->flush();
@@ -134,6 +136,8 @@ void Publication::pushData(DataReader& packet,UInt32 numberLostFragments) {
 		ERROR("Data packet pushed on '",_name,"' publication which has no publisher");
 		return;
 	}
+
+	_new = true;
 	int pos = packet.reader.position();
 	_dataQOS.add(_pPublisher->ping,packet.available()+4,packet.reader.fragments,numberLostFragments); // 4 for time encoded
 	map<Client*,Listener*>::const_iterator it;
@@ -158,10 +162,11 @@ void Publication::pushAudio(MemoryReader& packet,UInt32 time,UInt32 numberLostFr
 
 	if ((*packet.current()>>4)==0x0A && packet.available() && packet.current()[1] == 0) {
 		// AAC codec && settings codec informations
-		_audioCodecBuffer.resize(packet.available(),false);
+		_audioCodecBuffer.resize(packet.available());
 		memcpy(&_audioCodecBuffer[0],packet.current(),packet.available());
 	}
 
+	_new = true;
 	map<Client*,Listener*>::const_iterator it;
 	for(it=_listeners.begin();it!=_listeners.end();++it) {
 		it->second->pushAudioPacket(packet,time);
@@ -189,7 +194,7 @@ void Publication::pushVideo(MemoryReader& packet,UInt32 time,UInt32 numberLostFr
 		_firstKeyFrame = true;
 		if (*packet.current()==0x17 && packet.available() && packet.current()[1] == 0) {
 			// h264 codec && settings codec informations
-			_videoCodecBuffer.resize(packet.available(),false);
+			_videoCodecBuffer.resize(packet.available());
 			memcpy(&_videoCodecBuffer[0],packet.current(),packet.available());
 		}
 	}
@@ -200,6 +205,7 @@ void Publication::pushVideo(MemoryReader& packet,UInt32 time,UInt32 numberLostFr
 		return;
 	}
 
+	_new = true;
 	int pos = packet.position();
 	map<Client*,Listener*>::const_iterator it;
 	for(it=_listeners.begin();it!=_listeners.end();++it) {

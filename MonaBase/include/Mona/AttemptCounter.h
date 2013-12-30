@@ -28,6 +28,8 @@ namespace Mona {
 class Attempt : virtual Object {
 public:
 	Attempt() : count(0) {}
+	virtual ~Attempt() {}
+
 	UInt32	count;
 
 	bool obsolete() { return _time.isElapsed(120000000); } // 2mn
@@ -36,26 +38,24 @@ private:
 };
 
 
-class AttemptCounter {
+class AttemptCounter : virtual Object {
 public:
-	AttemptCounter();
+
 	virtual ~AttemptCounter();
-	
-	void			manage();
+
+	void	manage();
 
 	UInt32	attempt(const std::string& tag) { return (attempt<Attempt>(tag)).count; }
 	void	clearAttempt(const std::string& tag);
 
 	template<class AttemptType>
-	AttemptType&	attempt(const std::string& tag) {
-		std::map<std::string,Attempt*>::iterator it = _attempts.lower_bound(tag);
+	AttemptType& attempt(const std::string& tag) {
+		auto it = _attempts.lower_bound(tag);
 		if(it!=_attempts.end() && it->first==tag) {
 			++it->second->count;
 			return (AttemptType&)*it->second;
 		}
-		if(it!=_attempts.begin())
-			--it;
-		return (AttemptType&)*_attempts.insert(it,std::pair<std::string,Attempt*>(tag,new AttemptType()))->second;
+		return (AttemptType&)*_attempts.emplace_hint(it,tag,new AttemptType())->second;
 	}
 
 private:

@@ -23,12 +23,11 @@ This file is a part of Mona.
 #include "Mona/DataReader.h"
 #include "Mona/QualityOfService.h"
 #include "Mona/MemoryReader.h"
-#include "Mona/Socket.h"
 #include "Mona/Logs.h"
+#include <set>
 
 namespace Mona {
 
-#define FLUSH_SENDERS(ERROR_HEADER,SENDERTYPE,SENDERS) { Exception __ex; for (std::shared_ptr<SENDERTYPE>& pSender : SENDERS) { Writer::DumpResponse(pSender->begin(),pSender->size(),_socket);_socket.send<SENDERTYPE>(__ex, pSender); if (__ex) ERROR(ERROR_HEADER,", ",__ex.error()); } SENDERS.clear();}
 
 class Writer;
 class WriterHandler : virtual Object {	
@@ -54,7 +53,6 @@ public:
 		CLOSED
 	};
 
-	static void DumpResponse(const UInt8* data, UInt32 size, const Socket& socket, bool justInDebug = false);
 	static void DumpResponse(const UInt8* data, UInt32 size, const SocketAddress& address, bool justInDebug = false);
 
 	bool					reliable;
@@ -62,9 +60,15 @@ public:
 	const QualityOfService&	qos() { return _qos; }
 
 
-	virtual Writer&			newWriter(WriterHandler* pHandler = NULL) { return *this; }
+	virtual Writer&			newWriter(WriterHandler& handler) { _handlers.insert(&handler); return *this; }
 
 	virtual State			state(State value=GET,bool minimal=false);
+
+	//// The main Writer of one session should close the entiere session
+	//// If code==0, it's a normal close
+	//// If code>0, it's a user close (from server application script)
+	//// If code<0, it's a system core close
+	///			-1 => Listener close!
 	virtual void			close(int code=0);
 
 	virtual bool			writeMedia(MediaType type,UInt32 time,MemoryReader& data);
@@ -72,6 +76,7 @@ public:
 
     virtual DataWriter&		writeInvocation(const std::string& name){return DataWriter::Null;}
     virtual DataWriter&		writeMessage(){return DataWriter::Null;}
+	virtual DataWriter&		writeResponse(UInt8 type){return writeMessage();}
 	virtual void			writeRaw(const UInt8* data,UInt32 size){}
 
 	virtual void			flush(bool full=false){}
@@ -88,11 +93,11 @@ protected:
 	Writer(bool isNull);
 	virtual ~Writer();
 
-	QualityOfService		_qos;
-	WriterHandler*			_pHandler;
-
+	QualityOfService				_qos;
+	
 private:
-	State					_state;
+	std::set<WriterHandler*>		_handlers;
+	State							_state;
 };
 
 

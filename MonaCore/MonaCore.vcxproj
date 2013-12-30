@@ -115,19 +115,31 @@
   <ItemGroup>
     <ClInclude Include="include\Mona\Client.h" />
     <ClInclude Include="include\Mona\Clients.h" />
+    <ClInclude Include="include\Mona\CSSWriter.h" />
     <ClInclude Include="include\Mona\Decoding.h" />
     <ClInclude Include="include\Mona\FlashMainStream.h" />
     <ClInclude Include="include\Mona\Group.h" />
     <ClInclude Include="include\Mona\Handler.h" />
+    <ClInclude Include="include\Mona\HTMLWriter.h" />
+    <ClInclude Include="include\Mona\HTTPHeaderReader.h" />
+    <ClInclude Include="include\Mona\HTTPOptionsWriter.h" />
+    <ClInclude Include="include\Mona\HTTP\HTTPPacket.h" />
+    <ClInclude Include="include\Mona\HTTP\HTTPPacketBuilding.h" />
     <ClInclude Include="include\Mona\ICE.h" />
     <ClInclude Include="include\Mona\Invoker.h" />
+    <ClInclude Include="include\Mona\MapReader.h" />
+    <ClInclude Include="include\Mona\MapWriter.h" />
+    <ClInclude Include="include\Mona\MediaContainer.h" />
     <ClInclude Include="include\Mona\Peer.h" />
+    <ClInclude Include="include\Mona\RawReader.h" />
+    <ClInclude Include="include\Mona\RawWriter.h" />
     <ClInclude Include="include\Mona\RelayServer.h" />
     <ClInclude Include="include\Mona\SDP.h" />
     <ClInclude Include="include\Mona\Server.h" />
     <ClInclude Include="include\Mona\ServerParams.h" />
     <ClInclude Include="include\Mona\SOAPReader.h" />
     <ClInclude Include="include\Mona\SOAPWriter.h" />
+    <ClInclude Include="include\Mona\SVGWriter.h" />
     <ClInclude Include="include\Mona\TCProtocol.h" />
     <ClInclude Include="include\Mona\UDProtocol.h" />
     <ClInclude Include="include\Mona\Writer.h" />
@@ -169,11 +181,8 @@
     <ClInclude Include="include\Mona\AMFWriter.h" />
     <ClInclude Include="include\Mona\DataReader.h" />
     <ClInclude Include="include\Mona\DataWriter.h" />
-    <ClInclude Include="include\Mona\HTTPPacketReader.h" />
-    <ClInclude Include="include\Mona\HTTPPacketWriter.h" />
     <ClInclude Include="include\Mona\JSONReader.h" />
     <ClInclude Include="include\Mona\JSONWriter.h" />
-    <ClInclude Include="include\Mona\StringReader.h" />
     <ClInclude Include="include\Mona\Session.h" />
     <ClInclude Include="include\Mona\Sessions.h" />
     <ClInclude Include="include\Mona\TCPSession.h" />
@@ -184,10 +193,26 @@
     <ClInclude Include="include\Mona\XMLWriter.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="sources\CSSWriter.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="sources\Decoding.cpp" />
     <ClCompile Include="sources\FlashMainStream.cpp" />
+    <ClCompile Include="sources\HTMLWriter.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="sources\HTTPHeaderReader.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='release|Win32'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug|Win32'">false</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="sources\HTTPOptionsWriter.cpp" />
+    <ClCompile Include="sources\HTTP\HTTPPacket.cpp" />
+    <ClCompile Include="sources\HTTP\HTTPSender.cpp" />
     <ClCompile Include="sources\ICE.cpp" />
     <ClCompile Include="sources\Invoker.cpp" />
+    <ClCompile Include="sources\MediaContainer.cpp" />
     <ClCompile Include="sources\Peer.cpp" />
     <ClCompile Include="sources\RelayServer.cpp" />
     <ClCompile Include="sources\RTMP\RTMPSender.cpp" />
@@ -195,6 +220,10 @@
     <ClCompile Include="sources\Server.cpp" />
     <ClCompile Include="sources\SOAPReader.cpp" />
     <ClCompile Include="sources\SOAPWriter.cpp" />
+    <ClCompile Include="sources\SVGWriter.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="sources\Writer.cpp" />
     <ClCompile Include="sources\Protocols.cpp" />
     <ClCompile Include="sources\RTMFP\RTMFP.cpp" />
@@ -223,8 +252,6 @@
     <ClCompile Include="sources\AMFReader.cpp" />
     <ClCompile Include="sources\AMFWriter.cpp" />
     <ClCompile Include="sources\DataReader.cpp" />
-    <ClCompile Include="sources\HTTPPacketReader.cpp" />
-    <ClCompile Include="sources\HTTPPacketWriter.cpp" />
     <ClCompile Include="sources\JSONReader.cpp" />
     <ClCompile Include="sources\JSONWriter.cpp" />
     <ClCompile Include="sources\Session.cpp" />

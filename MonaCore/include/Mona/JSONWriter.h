@@ -21,48 +21,50 @@ This file is a part of Mona.
 
 #include "Mona/Mona.h"
 #include "Mona/DataWriter.h"
-#include "math.h"
-#include <stack>
 
 namespace Mona {
 
-class JSONCursor : public virtual Object {
-
-public:
-	JSONCursor(bool started = true) : first(started) {}
-
-	bool		first;
-};
 
 class JSONWriter : public DataWriter, virtual Object {
 public:
-	JSONWriter();
+	JSONWriter(bool modeRaw=false);
 
-	virtual void beginObject(const std::string& type="",bool external=false);
-	virtual void endObject();
+	void beginObject(const std::string& type="",bool external=false);
+	void endObject();
 
-	virtual void writePropertyName(const std::string& value);
+	void writePropertyName(const std::string& value);
 
-	virtual void beginObjectArray(UInt32 size) { beginArray(size); beginObject(); }
-	virtual void beginArray(UInt32 size);
-	virtual void endArray();
+	void beginArray(UInt32 size);
+	void endArray();
 
-	virtual void writeDate(const Time& date);
-	virtual void writeNumber(double value);
-	virtual void writeString(const std::string& value);
-	virtual void writeBoolean(bool value) { writeString(value ? "true" : "false"); }
-	virtual void writeNull() { writeString("null"); }
-	virtual void writeBytes(const UInt8* data,UInt32 size);
-	virtual void clear();
-
-	void	manageSeparator(bool create = false);
-			///\brief Add separator/Create object if needed
+	void writeDate(const Time& date) { writeRaw(date.toString(Time::ISO8601_FRAC_FORMAT, _buffer)); }
+	void writeNumber(double value) { writeRaw(String::Format(_buffer, value)); }
+	void writeString(const std::string& value);
+	void writeBoolean(bool value) { writeRaw( value ? "true" : "false"); }
+	void writeNull() { writeRaw("null"); }
+	void writeBytes(const UInt8* data,UInt32 size);
 
 	void	end();
-			///\brief Finish the stream
+	void	clear();
 private:
 
-	std::stack<JSONCursor>	_queueObjects;
+	template <typename ...Args>
+	void writeRaw(Args&&... args) {
+		if(!_started) {
+			_started=true;
+			writer.write8('[');
+		}
+		if(!_first)
+			writer.write8(',');
+		_first=false;
+		writer.writeRaw(args ...);
+	}
+
+	bool		_modeRaw;
+	bool		_started;
+	bool		_first;
+	UInt32		_layers;
+	std::string _buffer;
 };
 
 

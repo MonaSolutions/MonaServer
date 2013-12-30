@@ -21,6 +21,7 @@ This file is a part of Mona.
 
 #include <stdio.h>
 #include <string>
+#include <vector>
 
 /////  Usefull macros and patchs   //////
 
@@ -34,7 +35,6 @@ This file is a part of Mona.
 #define _WINSOCKAPI_    // stops windows.h including winsock.h
 #define sprintf sprintf_s
 #define snprintf sprintf_s
-#define memicmp _memicmp
 #define timegm _mkgmtime
 #define GMTIME(VALUE,RESULT) gmtime_s(&RESULT,&VALUE);
 #define LOCALTIME(VALUE,RESULT) localtime_s(&RESULT,&VALUE);
@@ -277,7 +277,7 @@ void DetectMemoryLeak();
 #endif
 #endif
 
-
+typedef std::vector<UInt8>    Buffer;
 
 //////  No copy, no move, objet nullable  //////
 

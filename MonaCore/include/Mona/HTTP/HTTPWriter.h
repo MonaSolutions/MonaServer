@@ -21,54 +21,61 @@ This file is a part of Mona.
 
 #include "Mona/Mona.h"
 #include "Mona/Writer.h"
-#include "Mona/HTTPPacketWriter.h"
 #include "Mona/HTTP/HTTPSender.h"
-#include "Mona/StreamSocket.h"
+#include "Mona/TCPClient.h"
+#include "Mona/MediaContainer.h"
 
 namespace Mona {
 
-#define HLS_PACKET_SIZE					188
+
 
 class HTTPWriter : public Writer, virtual Object {
 public:
-
-	enum TypeFrame {
-		FIRST=0,
-		OTHER,
-		LAST,
-		UNIQUE,
+	enum DataType {
+		HTML = 0,
+		RAW,
+		XML,
+		SOAP,
+		JSON,
+		SVG,
+		CSS
 	};
 
-	HTTPWriter(StreamSocket& socket);
+	HTTPWriter(TCPClient& socket);
 
-	virtual State			state(State value=GET,bool minimal=false);
-	virtual void			flush(bool full=false);
+	std::shared_ptr<HTTPPacket>		pRequest;
+	Time							timeout;
 
-	virtual DataWriter&		writeInvocation(const std::string& name);
-	virtual DataWriter&		writeMessage();
-	virtual void			writeRaw(const UInt8* data, UInt32 size) { newWriter().writer.writeRaw(data, size); }
-	virtual bool			writeMedia(MediaType type,UInt32 time,MemoryReader& data);
+	State			state(State value=GET,bool minimal=false);
+	void			flush(bool full=false);
 
-	// TODO ?void			close(int code);
-	
+	DataWriter&		writeInvocation(const std::string& type) { return write("200  OK", HTTP::ParseContentType(type.c_str(), _buffer), _buffer);}
+	DataWriter&		writeMessage() { return writeResponse(HTML); }
+	DataWriter&		writeResponse(UInt8 type);
+	void			writeRaw(const UInt8* data, UInt32 size) { write("200 OK", HTTP::CONTENT_TEXT,"plain; charset=utf-8",data,size); }
+	void			close(int code=0);
+
+	DataWriter&		write(const std::string& code, HTTP::ContentType type=HTTP::CONTENT_TEXT, const std::string& subType="html; charset=utf-8",const UInt8* data=NULL,UInt32 size=0);
+	void			writeFile(const FilePath& file) { return createSender().writeFile(file); }
+	void			close(const Exception& ex);
 private:
-	bool				hasToConvert(DataReader& reader) { return dynamic_cast<HTTPPacketWriter*>(&reader) == NULL; }
-	HTTPPacketWriter&	newWriter();
+	bool			writeMedia(MediaType type,UInt32 time,MemoryReader& data);
 	
-	void				writeHeader();
-	void				writeVideoPacket(BinaryWriter& writer, UInt32 available, UInt32 time, UInt8* pData, bool isMetadata, TypeFrame type);
+	HTTPSender& createSender() {
+		_senders.emplace_back(new HTTPSender(_socket.address(),pRequest));
+		return *_senders.back();
+	}
 
-	StreamSocket&								_socket;
-	std::list<std::shared_ptr<HTTPSender>>		_senders;
-	static UInt32								CounterRow;
-	static UInt32								CounterFrame;
-	static char									CounterA;
-	static UInt32								BeginTime;
+	TCPClient&								_socket;
+	PoolThread*								_pThread;
+	std::deque<std::shared_ptr<HTTPSender>>	_senders;
+	std::deque<std::shared_ptr<HTTPSender>>	_sent;
+	bool									_isMain;
+	std::string								_buffer;
 
-	// TODO don't do it static
-	static UInt8								HLSInitVideoBuff[];
-	static UInt8								BeginBuff1[];
-	static UInt8								BeginBuff2[];
+	// multimedia
+	MediaContainer::Type					_mediaType;
+	bool									_initMedia;
 };
 
 

@@ -28,7 +28,7 @@ namespace Mona {
 
 class WSSender : public TCPSender, virtual Object {
 public:
-	WSSender() : TCPSender("WSSender"), packaged(false) {}
+	WSSender(bool modeRaw=false) : TCPSender("WSSender"), packaged(false),writer(modeRaw) {}
 	
 	JSONWriter		writer;
 	bool			packaged;

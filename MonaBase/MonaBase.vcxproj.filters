@@ -57,9 +57,6 @@
     <ClCompile Include="sources\PoolThread.cpp">
       <Filter>Threading</Filter>
     </ClCompile>
-    <ClCompile Include="sources\PoolThreads.cpp">
-      <Filter>Threading</Filter>
-    </ClCompile>
     <ClCompile Include="sources\Startable.cpp">
       <Filter>Threading</Filter>
     </ClCompile>
@@ -165,6 +162,12 @@
     </ClCompile>
     <ClCompile Include="sources\Exceptions.cpp">
       <Filter>Util</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\PoolBuffers.cpp">
+      <Filter>Util</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\FilePath.cpp">
+      <Filter>File</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -324,9 +327,6 @@
     <ClInclude Include="include\Mona\FileWatcher.h">
       <Filter>File</Filter>
     </ClInclude>
-    <ClInclude Include="include\Mona\Buffer.h">
-      <Filter>Util</Filter>
-    </ClInclude>
     <ClInclude Include="include\Mona\FileSystem.h">
       <Filter>File</Filter>
     </ClInclude>
@@ -350,6 +350,15 @@
       <Filter>File</Filter>
     </ClInclude>
     <ClInclude Include="include\Mona\Database.h">
+      <Filter>File</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\PoolBuffer.h">
+      <Filter>Util</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\PoolBuffers.h">
+      <Filter>Util</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\FilePath.h">
       <Filter>File</Filter>
     </ClInclude>
   </ItemGroup>

@@ -20,7 +20,6 @@ This file is a part of Mona.
 #pragma once
 
 #include "Mona/Mona.h"
-#include <list>
 
 namespace Mona {
 
@@ -29,6 +28,7 @@ class Time;
 class TimeParser : virtual Static {
 public:
 
+	static bool TryParse(const std::string& in, Time& dateTime) { int tz(0); return TryParse(in, dateTime, tz); }
 	static bool TryParse(const std::string& in, Time& dateTime, int& tz);
 	static bool Parse(const std::string& fmt, const std::string& in, Time& time, int& tzdifferencial);
 	

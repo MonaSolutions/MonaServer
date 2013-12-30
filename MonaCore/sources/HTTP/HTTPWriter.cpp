@@ -19,92 +19,63 @@ This file is a part of Mona.
 
 #include "Mona/HTTP/HTTPWriter.h"
 #include "Mona/HTTP/HTTP.h"
-#include "Mona/String.h"
 
 using namespace std;
 
 namespace Mona {
 
-UInt8	HTTPWriter::HLSInitVideoBuff[] = {
-0x00, 0x00, 0x01, 0xe0, 0x00, 0x00, 0x81, 0x80, 
-0x05, 0x21
-};
-
-UInt8	HTTPWriter::BeginBuff1[] = {
-0x47, 0x40, 0x00, 0x30, 0xa6, 0x00, 0xff, 0xff,
-0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-0xff, 0xff, 0xff, 0x00, 0x00, 0xb0, 0x0d, 0x00,
-0x01, 0xc1, 0x00, 0x00, 0x00, 0x01, 0xe0, 0x20,
-0xa2, 0xc3, 0x29, 0x41,
-};
-
-UInt8	HTTPWriter::BeginBuff2[] = {
-0x47, 0x40, 0x20, 0x30, 0x8b, 0x00, 0xff, 0xff,
-0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-0x00, 0x02, 0xb0, 0x28, 0x00, 0x01, 0xc1, 0x00,
-0x00, 0xe0, 0x40, 0xf0, 0x0c, 0x05, 0x04, 0x48,
-0x44, 0x4d, 0x56, 0x88, 0x04, 0x0f, 0xff, 0xfc,
-0xfc, 0x1b, 0xe0, 0x40, 0xf0, 0x0a, 0x05, 0x08,
-0x48, 0x44, 0x4d, 0x56, 0xff, 0x1b, 0x44, 0x3f,
-0xfb, 0xa2, 0xe2, 0x49,
-};
-
-UInt32 HTTPWriter::CounterRow(0);
-UInt32 HTTPWriter::CounterFrame(0);
-char HTTPWriter::CounterA(0);
-UInt32 HTTPWriter::BeginTime(0);
-
-HTTPWriter::HTTPWriter(StreamSocket& socket) : _socket(socket) {
+HTTPWriter::HTTPWriter(TCPClient& socket) : _socket(socket),_pThread(NULL),_initMedia(false) {
 	
 }
 
+void HTTPWriter::close(const Exception& ex) {
+	int code(500);
+	switch(ex.code()) {
+		case Exception::FILE:
+			code = 404;
+			break;
+		case Exception::PERMISSION:
+			code = 403;
+			break;
+		case Exception::APPLICATION:
+			code = 503;
+			break;
+	}
+	_buffer.assign(ex.error());
+	close(code);
+}
 
-HTTPPacketWriter& HTTPWriter::newWriter() {
-	HTTPSender* pSender = new HTTPSender();
-	_senders.emplace_back(pSender);
-	return pSender->writer;
+void HTTPWriter::close(int code) {
+	if (code >= 0) {
+		if (code > 0)
+			createSender().writeError(code,_buffer,true);
+		_socket.disconnect();
+	}
+	Writer::close(code);
 }
 
 void HTTPWriter::flush(bool full) {
+	if(state()==CONNECTING) {
+		ERROR("Violation policy, impossible to flush data on a connecting writer");
+		return;
+	}
+
 	if(_senders.empty())
 		return;
 	// TODO _qos.add(ping,_sent);
-	FLUSH_SENDERS("HTTPSender flush", HTTPSender, _senders)
+	// _sent=0;
+	
+	timeout.update();
+
+	Exception ex;
+	for (shared_ptr<HTTPSender>& pSender : _senders) {
+		_pThread = _socket.send<HTTPSender>(ex, pSender,_pThread);
+		if (ex)
+			ERROR("HTTPSender flush, ", ex.error())
+		else
+			_sent.emplace_back(pSender);
+	}
+	_senders.clear();
 }
 
 
@@ -115,204 +86,74 @@ HTTPWriter::State HTTPWriter::state(State value,bool minimal) {
 	return state;
 }
 
-
-
-DataWriter& HTTPWriter::writeInvocation(const std::string& name) {
-	DataWriter& writer = writeMessage();
-	string header("HTTP/1.1 ");
-	Exception ex;
-	UInt16 code(0);
-	if (String::ToNumber<UInt16>(name, code)) {
-		string message;
-		header.append(name);
-		header.append(" ");
-		HTTP::CodeToMessage(code,message);
-		if(!message.empty())
-			header.append(message);
-	} else
-		header.append(name);
-	writer.writeString(header);
-	return writer;
-}
-
-DataWriter& HTTPWriter::writeMessage() {
+DataWriter& HTTPWriter::write(const string& code, HTTP::ContentType type, const string& subType, const UInt8* data,UInt32 size) {
 	if(state()==CLOSED)
         return DataWriter::Null;
-	return newWriter();
+	return createSender().writer(code, type, subType, data, size);
 }
 
-bool HTTPWriter::writeMedia(MediaType type, UInt32 time, MemoryReader& data) {
+DataWriter& HTTPWriter::writeResponse(UInt8 type) {
+	switch (type) {
+		case RAW:
+			return write("200 OK",HTTP::CONTENT_TEXT,"plain; charset=utf-8");
+		case XML:
+			return write("200 OK", HTTP::CONTENT_APPLICATON,"xml; charset=utf-8");
+		case JSON:
+			return write("200 OK", HTTP::CONTENT_APPLICATON,"json; charset=utf-8");
+		case SOAP:
+			return write("200 OK", HTTP::CONTENT_APPLICATON,"soap+xml; charset=utf-8");
+		case CSS:
+			return write("200 OK", HTTP::CONTENT_TEXT,"css; charset=utf-8");
+		case SVG:
+			return write("200 OK", HTTP::CONTENT_IMAGE,"svg+xml; charset=utf-8");
+	}
+	return write("200 OK");
+}
 
+bool HTTPWriter::writeMedia(MediaType type,UInt32 time,MemoryReader& data) {
+	if(state()==CLOSED)
+		return true;
 	switch(type) {
-		case INIT:
-			INFO("INIT HLS");
-			break;
 		case START:
-			INFO("Start HLS ");
-			writeHeader();
-			break;
 		case STOP:
-			INFO("Stop HLS");
 			break;
-		case AUDIO:
-			//writeMessage().writeBytes(data.current(), data.available());
-			break;
-		case VIDEO:
-			if (data.available()>13 && *(data.current()+9)==0x09) {
-				
-				// Record time offset
-				if (!BeginTime)
-					BeginTime = 0; //BeginTime = time - (time % 1000);
-
-				bool isMetadata = *data.current() == 0x17;
-				data.next(9);
-				BinaryWriter& writer = writeMessage().writer;
-
-				UInt32 available = data.available() - 5;
-				UInt32 max = isMetadata? HLS_PACKET_SIZE - 24 : HLS_PACKET_SIZE - 30;
-
-				// Big Frame
-				if (available > max) {
-
-					// First row of frame
-					writeVideoPacket(writer, max, time-BeginTime, data.current(), isMetadata, FIRST);
-					data.next(max + 1); // +1 because of patch
-					available = data.available();
-
-					if (available <= 4) // ignore last 5 bytes
-						return true;
-					
-					// Next rows of frame
-					while (available - 4 > HLS_PACKET_SIZE - 6) {
-
-						writeVideoPacket(writer, HLS_PACKET_SIZE - 4, time-BeginTime, data.current(), isMetadata, OTHER);
-						data.next(HLS_PACKET_SIZE - 4);
-						available = data.available();
-
-						if (available <= 4)  // ignore last 5 bytes
-							return true;
-					}
-
-					// Last row of frame
-					writeVideoPacket(writer, available - 4, time-BeginTime, data.current(), isMetadata, LAST);
-				}
-				else 
-					writeVideoPacket(writer, available, time-BeginTime, data.current(), isMetadata, UNIQUE);
-			} else {
-
-				WARN("Video data is not well formated (available : ", data.available(), ")")
-				DUMP(data)
+		case INIT: {
+			if (time>0) // one init by mediatype, we want here just init one time!
+				break;
+			Exception ex;
+			if (!pRequest)
+				ex.set(Exception::APPLICATION, "HTTP streaming without request related");
+			else if(pRequest->contentSubType == "x-flv")
+				_mediaType = MediaContainer::FLV;
+			else if(pRequest->contentSubType == "mpeg")
+				_mediaType = MediaContainer::MPEG_TS;
+			else
+				ex.set(Exception::APPLICATION, "HTTP streaming for a ",pRequest->contentSubType," unsupported");
+			if (ex) {
+				close(ex);
+				break;
 			}
+			// write a HTTP header without content-length (data==NULL and size>0)
+			write("200", pRequest->contentType, pRequest->contentSubType, NULL, 1);
+			_initMedia = true;
 			break;
-		case DATA:
-			INFO("HLS Data");
+		}
+		case AUDIO:
+		case VIDEO: {
+			BinaryWriter& writer = createSender().writeRaw();
+			if (_initMedia) {
+				// write header the first time
+				MediaContainer::Write(_mediaType,writer);
+				_initMedia = false;
+			}
+			MediaContainer::Write(_mediaType,writer,type,time,data.current(), data.available());
 			break;
+		}
+		default:
+			return Writer::writeMedia(type,time,data);
 	}
 	return true;
 }
 
-void HTTPWriter::writeVideoPacket(BinaryWriter& writer, UInt32 available, UInt32 time, UInt8* pData, bool isMetadata, TypeFrame type) {
-
-	//INFO("Video Packet Type = ", type, " available = ", available)
-	//DUMP(pData, available)
-
-	// TODO Audio data??
-	if ((type == FIRST || type == UNIQUE) && (CounterFrame % 3) == 0) {
-
-		writer.write8(0x47);
-		writer.write8(0x40);
-		writer.write8(0x00);
-		writer.write8(0x30 + (CounterA & 0x0F));
-		writer.writeRaw(&BeginBuff1[4], HLS_PACKET_SIZE - 4);
-					
-		writer.write8(0x47);
-		writer.write8(0x40);
-		writer.write8(0x20);
-		writer.write8(0x30 + (CounterA++ & 0x0F));
-		writer.writeRaw(&BeginBuff2[4], HLS_PACKET_SIZE - 4);
-	}
-
-	// header
-	writer.write8(0x47);
-	writer.write8((type == FIRST || type == UNIQUE)? 0x40 : 0x00);
-	writer.write8(0x40);
-	writer.write8(((type == OTHER)? 0x10 : 0x30) + (CounterRow++ & 0x0F)); // timestamp on first row
-
-	// Adaptive Field
-	UInt16 nbFFBytes = 0;
-	if (type != OTHER) {
-		
-		if (type != LAST) { 
-
-			CounterFrame++; // It is a new frame
-			writer.write8(HLS_PACKET_SIZE - (5 + available + 18)); // size of Adaptive Field
-			writer.write8(isMetadata? 0x40 : 0x10); // packet with timestamp
-
-			if (!isMetadata) {
-				// timestamp
-				writer.write32(CounterFrame*180);
-				writer.write8(0x00);
-				writer.write8(0x00);
-			}
-			nbFFBytes = HLS_PACKET_SIZE - (available + 18) - (isMetadata? 6 : 12);
-		} else { // LAST
-
-			writer.write8(HLS_PACKET_SIZE - (5 + available)); // size of Adaptive Field
-			writer.write8(0x00);
-			nbFFBytes = HLS_PACKET_SIZE - (6 + available);
-		}
-
-		// empty cells
-		for (int i = 0; i < nbFFBytes; i++)
-			writer.write8(0xFF);
-
-		// Video header
-		if (type != LAST) {
-
-			writer.writeRaw(HLSInitVideoBuff, 10); // Marker init video
-			writer.write32(time*180); // Time
-			writer.write32(1); // 0x00 0x00 0x00 0x01
-
-			// Video data
-			if (isMetadata) {
-				writer.writeRaw(pData, 5);
-				writer.write8(0x01); // Patch 0x17 by 0x01 at position 5
-				writer.writeRaw(pData+6, 26);
-				writer.write8(0x01); // Patch 0x05 by 0x01 at position 32
-				writer.writeRaw(pData+33, 7);
-				writer.write8(0x01); // Patch 0x00 43 by 0x01 at position 41
-				writer.writeRaw(pData+42, available - 41);
-			} else {
-				writer.writeRaw(pData, 4);
-				writer.write8(0x01); // Patch 0x00 0x01 by 0x01 at position 5
-				writer.writeRaw(pData+6, available -5);
-			}
-		} else // LAST
-			writer.writeRaw(pData, available);
-
-	} else // OTHER
-		writer.writeRaw(pData, available);
-}
-
-void HTTPWriter::writeHeader() {
-
-	DataWriter& response = writeMessage();
-	response.writeString("HTTP/1.1 200 OK");
-	response.beginObject();
-	string stDate;
-	response.writeStringProperty("Date", Time().toString(Time::HTTP_FORMAT, stDate));
-	response.writeStringProperty("Content-Type", "video/mp2t");
-	response.writeStringProperty("Accept-Ranges", "bytes");
-	response.writeStringProperty("Server","Mona");
-	response.writeStringProperty("Cache-Control", "no-cache");
-	response.writeNumberProperty("Content-Length", HLS_PACKET_SIZE*1050);
-	response.endObject();
-	
-	// TODO write the first audio buffer dynamicly
-	//BinaryWriter& writer = response.writer;
-	//writer.writeRaw(BeginBuff1, HLS_PACKET_SIZE);
-	//writer.writeRaw(BeginBuff2, HLS_PACKET_SIZE);
-	INFO("START : CounterA = ", (int)CounterA, " CounterFrame = ", CounterFrame, " CounterRow = ", CounterRow)
-}
 
 } // namespace Mona

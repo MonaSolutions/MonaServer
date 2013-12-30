@@ -20,6 +20,7 @@ This file is a part of Mona.
 #pragma once
 
 #include "Mona/Mona.h"
+#include "Mona/Writer.h"
 #include "Mona/TCPSender.h"
 #include "Mona/AMFWriter.h"
 #include "Mona/RTMP/RTMP.h"
@@ -40,10 +41,13 @@ public:
 
 	bool				encrypted() { return _pEncryptKey ? true : false; }
 
-	void clear() { _writer.clear(); }
+	void				clear() { _writer.clear(); }
 
-	AMFWriter& writer(RTMPChannel& channel);
+	void				dump(RTMPChannel& channel,const SocketAddress& address) { pack(channel); Writer::DumpResponse(begin(), size(), address); }
+
+	AMFWriter&			writer(RTMPChannel& channel) { pack(channel); return _writer; }
 private:
+	void				pack(RTMPChannel& channel);
 	bool				run(Exception& ex);
 
 	AMFWriter					_writer;

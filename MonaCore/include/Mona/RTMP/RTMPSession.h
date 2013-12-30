@@ -33,17 +33,15 @@ public:
 	virtual ~RTMPSession();
 
 private:
-	bool			buildPacket(MemoryReader& packet,const std::shared_ptr<Buffer<UInt8>>& pData);
+	bool			buildPacket(MemoryReader& packet);
 	void			packetHandler(MemoryReader& packet);
-	void			endReception() {if (_pStream) _pStream->flush();}
+	void			flush() {if (_pStream) _pStream->flush(); Session::flush();}
 
 	bool			performHandshake(MemoryReader& packet, bool encrypted);
 	void			performComplexHandshake(const UInt8* farPubKey,const UInt8* challengeKey, bool encrypted);
 	void			performSimpleHandshake(MemoryReader& packet);
 
 	void			kill();
-
-	void			manage() {_controller.flush();}
 
 
 	UInt8							_handshaking;

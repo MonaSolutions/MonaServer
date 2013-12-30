@@ -24,7 +24,7 @@ using namespace std;
 using namespace Mona;
 
 
-LUATCPClient::LUATCPClient(const SocketAddress& peerAddress,const SocketManager& manager, lua_State* pState) : _pState(pState), TCPClient(manager, peerAddress) {
+LUATCPClient::LUATCPClient(const SocketAddress& peerAddress,const SocketManager& manager, lua_State* pState) : _pState(pState), TCPClient(peerAddress, manager) {
 }
 
 LUATCPClient::LUATCPClient(const SocketManager& manager,lua_State* pState) : _pState(pState),TCPClient(manager) {
@@ -39,11 +39,11 @@ void LUATCPClient::onError(const std::string& error) {
 }
 
 
-UInt32 LUATCPClient::onReception(const shared_ptr<Buffer<UInt8>>& pData) {
+UInt32 LUATCPClient::onReception(const UInt8* data,UInt32 size) {
 	UInt32 rest(0);
 	SCRIPT_BEGIN(_pState)
 		SCRIPT_MEMBER_FUNCTION_BEGIN(LUATCPClient,*this,"onReception")
-			SCRIPT_WRITE_BINARY(pData->data(),pData->size())
+			SCRIPT_WRITE_BINARY(data,size)
 			SCRIPT_FUNCTION_CALL
 			if (SCRIPT_CAN_READ)
 				rest = SCRIPT_READ_UINT(0);

@@ -25,34 +25,61 @@ using namespace std;
 
 namespace Mona {
 
-TCPSession::TCPSession(const SocketAddress& peerAddress, Protocol& protocol, Invoker& invoker) : TCPClient(invoker.sockets, peerAddress), Session(protocol, invoker) {
+TCPSession::TCPSession(const SocketAddress& peerAddress, Protocol& protocol, Invoker& invoker) : TCPClient(peerAddress,invoker.sockets), Session(protocol, invoker),_consumed(false) {
 	((SocketAddress&)peer.address).set(peerAddress);
-	peer.addresses.begin()->set(peerAddress);
 }
 
 void TCPSession::onError(const string& error) {
-	ERROR("Protocol ", protocol().name, ", ", error);
+	WARN("Protocol ", protocol().name, ", ", error);
 }
 
-UInt32 TCPSession::onReception(const shared_ptr<Buffer<UInt8>>& pData) {
-	UInt32 size = pData->size();
+UInt32 TCPSession::onReception(const UInt8* data, UInt32 size) {
 	if (died)
 		return 0;
-	MemoryReader packet(pData->data(), pData->size());
-	if (!buildPacket(packet,pData))
+	MemoryReader packet(data, size);
+	if (!buildPacket(packet)) {
+		if (_pDecoding)
+			_pDecoding.reset();
+		if (_pLastDecoding) {
+			Session::decode<Decoding>(_pLastDecoding); // flush
+			_pLastDecoding.reset();
+		}
+		if (_consumed) {
+			Session::flush(); // flush
+			_consumed = false;
+		}
 		return size;
-	
+	}
+
 	UInt32 length = packet.position() + packet.available();
-	pData->resize(length,true);
-	if (pData.unique()) { // if not decoded!
+	UInt32 rest = size - length;
+
+	if (_pLastDecoding) {
+		_pLastDecoding->_noFlush = true;
+		Session::decode<Decoding>(_pLastDecoding);
+		_pLastDecoding.reset();
+	}
+
+	if (_pDecoding) {
+		if (rest == 0)
+			Session::decode<Decoding>(_pDecoding); // flush
+		else
+			_pLastDecoding = _pDecoding;
+		_pDecoding.reset();
+	} else {
 		UInt32 pos = packet.position();
 		packet.reset();
 		if (!dumpJustInDebug || (dumpJustInDebug && Logs::GetLevel() >= 7))
 			DUMP(packet, "Request from ", peer.address.toString());
 		packet.next(pos);
 		packetHandler(packet);
+		if (rest == 0) {
+			Session::flush(); // flush
+			_consumed = false;
+		} else
+			_consumed = true;
 	}
-	return size - length;
+	return rest;
 }
 
 

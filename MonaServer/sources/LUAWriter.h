@@ -22,7 +22,7 @@ This file is a part of Mona.
 #include "Script.h"
 #include "Mona/Writer.h"
 
-class LUAWriter : public Mona::WriterHandler {
+class LUAWriter : Mona::WriterHandler {
 public:
 	LUAWriter(lua_State* pState,Mona::Writer& writer);
 	Mona::Writer&		writer;

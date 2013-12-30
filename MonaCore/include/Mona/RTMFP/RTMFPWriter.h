@@ -49,7 +49,7 @@ public:
 	const UInt64		flowId;
 	const std::string	signature;
 
-	virtual Writer&		newWriter(WriterHandler* pHandler = NULL) { return *(new RTMFPWriter(signature, _band, pHandler)); }
+	virtual Writer&		newWriter(WriterHandler& handler) { return *(new RTMFPWriter(signature, _band, &handler)); }
 
 	void				flush(bool full=false);
 
@@ -98,9 +98,9 @@ private:
 	Trigger						_trigger;
 
 	int			 				_connectedSize;
-	std::list<RTMFPMessage*>	_messages;
+	std::deque<RTMFPMessage*>	_messages;
 	UInt64						_stage;
-	std::list<RTMFPMessage*>	_messagesSent;
+	std::deque<RTMFPMessage*>	_messagesSent;
 	UInt64						_stageAck;
 	UInt32						_lostCount;
 	UInt32						_ackCount;

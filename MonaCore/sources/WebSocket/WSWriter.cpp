@@ -25,19 +25,20 @@ using namespace std;
 
 namespace Mona {
 
-WSWriter::WSWriter(StreamSocket& socket) : ping(0),_socket(socket),_sent(0) {
+WSWriter::WSWriter(StreamSocket& socket,const SocketAddress& address) : _address(address),ping(0),_socket(socket),_sent(0) {
 	
 }
 
-void WSWriter::close(int type) {
-	write(WS_CLOSE, NULL, (UInt32)type);
+void WSWriter::close(int type /* = WS::CODE_NORMAL_CLOSE */ ) {
+	if (type>=0) // user or normal closing
+		write(WS::TYPE_CLOSE, NULL, (UInt32)type);
 	Writer::close(type);
 }
 
 
-JSONWriter& WSWriter::newWriter() {
+JSONWriter& WSWriter::newDataWriter(bool modeRaw) {
 	pack();
-	WSSender* pSender = new WSSender();
+	WSSender* pSender = new WSSender(modeRaw);
 	_senders.emplace_back(pSender);
 	pSender->writer.stream.next(10); // header
 	return pSender->writer;
@@ -56,18 +57,29 @@ void WSWriter::pack() {
 	UInt32 pos = 10-WS::HeaderSize(size);
 	stream.resetWriting(pos);
 	stream.resetReading(pos);
-	stream.resetWriting(pos+WS::WriteHeader(WS_TEXT,size,writer.writer)+size);
+	stream.resetWriting(pos+WS::WriteHeader(WS::TYPE_TEXT,size,writer.writer)+size);
 	_sent += stream.size();
 	sender.packaged = true;
 }
 
 void WSWriter::flush(bool full) {
+	if(state()==CONNECTING) {
+		ERROR("Violation policy, impossible to flush data on a connecting writer");
+		return;
+	}
 	if(_senders.empty())
 		return;
 	pack();
 	_qos.add(ping,_sent);
 	_sent=0;
-	FLUSH_SENDERS("WSSender flush", WSSender, _senders)
+	Exception ex;
+	for (shared_ptr<WSSender>& pSender : _senders) {
+		Writer::DumpResponse(pSender->begin(),pSender->size(),_address);
+		_socket.send<WSSender>(ex, pSender);
+		if (ex)
+			ERROR("WSSender flush, ",ex.error());
+	}
+	_senders.clear();
 }
 
 
@@ -85,7 +97,7 @@ void WSWriter::write(UInt8 type,const UInt8* data,UInt32 size) {
 	pSender->packaged = true;
 	_senders.emplace_back(pSender);
 	BinaryWriter& writer = pSender->writer.writer;
-	if(type==WS_CLOSE) {
+	if(type==WS::TYPE_CLOSE) {
 		// here size is the code!
 		if(size>0) {
 			WS::WriteHeader(type,2,writer);
@@ -103,16 +115,25 @@ void WSWriter::write(UInt8 type,const UInt8* data,UInt32 size) {
 DataWriter& WSWriter::writeInvocation(const std::string& name) {
 	if(state()==CLOSED)
         return DataWriter::Null;
-	DataWriter& invocation = newWriter();
+	DataWriter& invocation = newDataWriter();
 	invocation.writeString(name);
 	return invocation;
+}
+
+DataWriter& WSWriter::writeResponse(UInt8 type) {
+	 if (type == 0)
+		 return writeMessage(); 
+	if(state()==CLOSED)
+        return DataWriter::Null;
+	return newDataWriter(true);
 }
 
 DataWriter& WSWriter::writeMessage() {
 	if(state()==CLOSED)
         return DataWriter::Null;
-	return newWriter();
+	return newDataWriter();
 }
+
 
 
 bool WSWriter::writeMedia(MediaType type,UInt32 time,MemoryReader& data) {
@@ -126,7 +147,7 @@ bool WSWriter::writeMedia(MediaType type,UInt32 time,MemoryReader& data) {
 			writeInvocation("__unpublishing").writeString(string((const char*)data.current(),data.available()));
 			break;
 		case DATA: {
-			JSONWriter& writer = newWriter();
+			JSONWriter& writer = newDataWriter();
 			writer.writer.write8('[');
 			writer.writer.writeRaw(data.current(),data.available());
 			writer.writer.write8(']');

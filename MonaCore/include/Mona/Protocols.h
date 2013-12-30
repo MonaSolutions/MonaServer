@@ -22,7 +22,6 @@ This file is a part of Mona.
 #include "Mona/Mona.h"
 #include "Mona/ServerParams.h"
 #include "Mona/Protocol.h"
-#include <list>
 
 
 namespace Mona {
@@ -51,7 +50,7 @@ private:
 		}
 	}
 
-	std::list<std::shared_ptr<Protocol>>	_protocols;
+	std::deque<std::shared_ptr<Protocol>>	_protocols;
 	Invoker&								_invoker;
 };
 

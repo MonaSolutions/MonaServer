@@ -33,12 +33,27 @@ Listener::Listener(Publication& publication,Client& client,Writer& writer,bool u
 }
 
 Listener::~Listener() {
+	// -1 indicate that it come of the listener class
 	if(_pAudioWriter)
-		_pAudioWriter->close();
+		_pAudioWriter->close(-1);
 	if(_pVideoWriter)
-		_pVideoWriter->close();
+		_pVideoWriter->close(-1);
 	if(_pDataWriter)
-		_pDataWriter->close();
+		_pDataWriter->close(-1);
+}
+
+void Listener::close(Writer& writer,int code){
+	if (code == -1) // code == -1 when it's closing by itself
+		return;
+	// call by the possible WriterHandler
+	// We have to reset the listener, and reset complelty the related writer (newWriter)
+	if (_pVideoWriter == &writer)
+		_pVideoWriter = NULL;
+	else if (_pAudioWriter == &writer)
+		_pAudioWriter = NULL;
+	else if (_pDataWriter == &writer)
+		_pDataWriter = NULL;
+	init();
 }
 
 const QualityOfService& Listener::audioQOS() const {
@@ -60,7 +75,7 @@ const QualityOfService& Listener::dataQOS() const {
 }
 
 void Listener::init() {
-	if(_pAudioWriter)
+	if (_pAudioWriter)
 		WARN("Reinitialisation of one ",publication.name()," subscription")
 	_writer.writeMedia(Writer::INIT,0,_publicationReader);
 	init(&_pAudioWriter,Writer::AUDIO);
@@ -68,11 +83,13 @@ void Listener::init() {
 	init(&_pDataWriter,Writer::DATA);
 	_time = 0;
 	_addingTime = 0;
+	_ts.update();
+	_firstTime = true;
 }
 
 void Listener::init(Writer** ppWriter,Writer::MediaType type) {
 	if(*ppWriter == NULL) {
-		*ppWriter = &_writer.newWriter();
+		*ppWriter = &_writer.newWriter(*this);
 		if(_unbuffered)
 			(*ppWriter)->reliable = false;
 	}
@@ -80,30 +97,30 @@ void Listener::init(Writer** ppWriter,Writer::MediaType type) {
 }
 
 UInt32 Listener::computeTime(UInt32 time) {
-	if(_firstTime) { // has been initialized, compute deltatime
+	if(time==0)
+		time=(UInt32)(_ts.elapsed()/1000);
+	if(_firstTime) { // first time, compute deltatime
 		_deltaTime = time;
 		_firstTime = false;
 		DEBUG("Deltatime assignment, ",_deltaTime);
-	} else if(time==0)
-		time=(UInt32)(_ts.elapsed()/1000);
-	_ts.update();
+	}
 	if(_deltaTime>time) {
 		WARN("Subcription ",publication.name()," time ",time," inferior to deltaTime ",_deltaTime," (non increasing time)")
 		_deltaTime = time;
 	}
 	_time = time-_deltaTime+_addingTime;
 	TRACE("Time ",_time)
-	return (_time = time);
+	return _time;
 }
 
 void Listener::startPublishing() {
+	// publisher time will start to 0 here!
 	_writer.writeMedia(Writer::START,0,_publicationReader);
 	_firstKeyFrame=false;
 	_ts.update();
 }
 
 void Listener::stopPublishing() {
-	_firstTime = 0;
 	_deltaTime=0;
 	_addingTime = _time;
 	_droppedFrames = 0;

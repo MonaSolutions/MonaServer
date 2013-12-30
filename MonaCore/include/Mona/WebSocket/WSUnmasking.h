@@ -28,14 +28,16 @@ namespace Mona {
 
 class WSUnmasking : public Decoding, virtual Object {
 public:
-	WSUnmasking(const std::shared_ptr<Buffer<UInt8>>& pBuffer, UInt8 type, TaskHandler& taskHandler, UInt32 offset) : _type(type), Decoding("WSUnmasking",pBuffer, taskHandler, offset) {}
+	WSUnmasking(Invoker& invoker,const UInt8* data,UInt32 size,UInt8 type) : _type(type), Decoding("WSUnmasking",invoker,data,size) {}
 	
 private:
-	bool					decode(Exception& ex, MemoryReader& reader);
+	bool					decode(Exception& ex, MemoryReader& reader, UInt32 times);
 	UInt8					_type;
 };
 
-inline bool WSUnmasking::decode(Exception& ex, MemoryReader& reader) {
+inline bool WSUnmasking::decode(Exception& ex, MemoryReader& reader, UInt32 times) {
+	if (times)
+		return false;
 	WS::Unmask(reader);
 	reader.reset(reader.position()-1);
 	(*reader.current()) = _type;

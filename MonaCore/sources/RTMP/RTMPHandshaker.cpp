@@ -78,7 +78,7 @@ bool RTMPHandshaker::runComplex(Exception& ex) {
 		//compute DH key position
 		UInt32 serverDHPos = RTMP::GetDHPos(_writer.begin(), _middle);
 
-		Buffer<UInt8> secret(0);
+		Buffer secret(0);
 		//generate DH key
 		DiffieHellman dh;
 		int publicKeySize;

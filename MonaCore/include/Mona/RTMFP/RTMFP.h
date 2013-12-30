@@ -23,7 +23,6 @@ This file is a part of Mona.
 #include "Mona/MemoryReader.h"
 #include "Mona/MemoryWriter.h"
 #include "Mona/Time.h"
-#include "Mona/Buffer.h"
 #include <openssl/aes.h>
 #include <math.h>
 
@@ -51,10 +50,8 @@ public:
 	RTMFPEngine(const RTMFPEngine& other);
 	RTMFPEngine(const RTMFPEngine& other,Type type);
 
-	RTMFPEngine&  operator=(const RTMFPEngine& other);
-	RTMFPEngine	next(Type type) { return RTMFPEngine(*this, type); }
-	RTMFPEngine	next() { return RTMFPEngine(*this); }
-	void		process(const UInt8* in,UInt8* out,UInt32 size);
+	void		  set(const RTMFPEngine& other,Type type);
+	void		  process(const UInt8* in,UInt8* out,UInt32 size);
 
 	const Type	type;
 private:
@@ -78,7 +75,7 @@ public:
 	static void					Encode(RTMFPEngine& aesEncrypt,MemoryWriter& packet);
 	
 
-	static void					ComputeAsymetricKeys(const Buffer<UInt8>& sharedSecret,
+	static void					ComputeAsymetricKeys(const Buffer& sharedSecret,
 														const UInt8* initiatorNonce,UInt16 initNonceSize,
 														const UInt8* responderNonce,UInt16 respNonceSize,
 														 UInt8* requestKey,

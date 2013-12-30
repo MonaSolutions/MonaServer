@@ -42,9 +42,11 @@ public:
 	static bool HostByAddress(Exception& ex, const IPAddress& address, HostEntry& host);
 
 	// Returns a HostEntry object containing the DNS information for the host with the given IP address or host name
+	// BEWARE blocking method!!
 	static bool Resolve(Exception& ex, const std::string& address, HostEntry& host);
-
+		
 	// Returns a HostEntry object containing the DNS information for this host
+	// BEWARE blocking method!!
 	static bool ThisHost(Exception& ex,HostEntry& host);
 
 	// Returns the host name of this host

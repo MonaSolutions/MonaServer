@@ -21,6 +21,7 @@ This file is a part of Mona.
 
 #include "Mona/Mona.h"
 #include "Mona/FlashStream.h"
+#include "Mona/PoolBuffers.h"
 #include "Mona/RTMFP/RTMFPWriter.h"
 
 
@@ -59,6 +60,7 @@ private:
 	RTMFPPacket*					_pPacket;
 	std::map<UInt64,RTMFPFragment*>	_fragments;
 	UInt32							_numberLostFragments;
+	const PoolBuffers&				_poolBuffers;
 };
 
 

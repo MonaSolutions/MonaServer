@@ -25,7 +25,6 @@ This file is a part of Mona.
 #include "Mona/BinaryStream.h"
 #include "Mona/BinaryReader.h"
 #include "Mona/MemoryStream.h"
-#include <list>
 
 namespace Mona {
 

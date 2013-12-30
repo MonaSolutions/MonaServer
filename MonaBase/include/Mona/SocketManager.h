@@ -23,20 +23,25 @@ This file is a part of Mona.
 #include "Mona/Startable.h"
 #include "Mona/TaskHandler.h"
 #include "Mona/PoolThreads.h"
+#include "Mona/PoolBuffers.h"
 #include "Mona/Socket.h"
 #include <map>
+#include <atomic>
 
 namespace Mona {
 
 class SocketManager : private Task, private Startable, private TaskHandler, virtual Object {
 	friend class Socket;
 public:
-	SocketManager(TaskHandler& handler, PoolThreads& poolThreads, UInt32 bufferSize = 0, const std::string& name = "SocketManager");
-	SocketManager(PoolThreads& poolThreads, UInt32 bufferSize = 0, const std::string& name = "SocketManager");
+	SocketManager(TaskHandler& handler, PoolBuffers& poolBuffers, PoolThreads& poolThreads, UInt32 bufferSize = 0, const std::string& name = "SocketManager");
+	SocketManager(PoolBuffers& poolBuffers, PoolThreads& poolThreads, UInt32 bufferSize = 0, const std::string& name = "SocketManager");
 	virtual ~SocketManager() { stop(); }
 
 	bool					start(Exception& ex);
 	void					stop();
+
+	PoolThreads&			poolThreads;
+	PoolBuffers&			poolBuffers;
 
 private:
 	class FakeSocket : public Socket {
@@ -64,7 +69,6 @@ private:
 	bool								_selfHandler;
 	Exception							_ex;
 	UInt32								_bufferSize;
-	PoolThreads&						_poolThreads;
 
 	mutable std::atomic<int>			_counter;
 	mutable Event						_eventInit;

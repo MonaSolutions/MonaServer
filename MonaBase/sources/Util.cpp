@@ -92,119 +92,69 @@ const MapParameters& Util::Environment() {
 }
 
 
-bool Util::UnpackUrl(Exception& ex, const string& url, string& path, MapParameters& properties) {
-	SocketAddress address;
-	string file;
-	return UnpackUrl(ex, url, address, path, file, properties);
-}
-
-bool Util::UnpackUrl(Exception& ex, const string& url, string& path, string& file, MapParameters& properties) {
-	SocketAddress address;
-	return UnpackUrl(ex, url, address, path, file, properties);
-}
-
-bool Util::UnpackUrl(Exception& ex, const string& url, SocketAddress& address, string& path, MapParameters& properties) {
-	string file;
-	return UnpackUrl(ex, url, address, path, file, properties);
-}
 // TODO check unitest
-bool Util::UnpackUrl(Exception& ex,const string& url, SocketAddress& address, string& path, string& file, MapParameters& properties) {
+size_t Util::UnpackUrl(const string& url, string& address, string& path, Parameters& properties) {
 	
 	auto it = url.begin();
 	auto end = url.end();
 	while (it != end) {
-		if (isspace(*it)) {
-			ex.set(Exception::FORMATTING, "URL ", url, " malformed, space character");
-			return false;
-		}
-		if (*it == '/' || *it == '\\') // no address!
+		if (*it == '/' || *it == '\\') // no address, just path
 			break;
 		if (*it == ':') {
 			// address
 			++it;
 			while (it != end && (*it == '/' || *it == '\\'))
 				++it;
-			if (it == end) {
-				 // no address, no path, just "scheme://"
-				return true;
-			}
+			if (it == end) // no address, no path, just "scheme://"
+				return string::npos;
 			auto itEnd(it);
-			string::const_iterator itPort=end;
-			while (itEnd != end && *itEnd != '/' && *itEnd != '\\') {
-				if (*itEnd == ':')
-					itPort = itEnd;
+			while (itEnd != end && *itEnd != '/' && *itEnd != '\\')
 				++itEnd;
-			}
-			if (itPort == end)
-				address.set(ex, string(it, itEnd),0);
-			else {
-				string host(it, itPort);
-				address.set(ex, host, string(++itPort, itEnd));
-			}
+			address.assign(it, itEnd);
 			it = itEnd;
 			break;
 		}
 		++it;
 	}
-	if (ex)
-		return false;
 
-	file.clear();
 	path.clear();
 
 	// Normalize path => replace // by / and \ by / AND remove the last '/'
 	path.assign(it,end);
-    auto itPath = path.begin();
-    auto itFile = itPath;
-    auto endPath = path.end();
-	bool hasFile(false);
+	bool isFile(false);
+    auto itPath(path.begin());
+	auto itField(itPath);
 	string query;
-    while (itPath != endPath) {
-        if (isspace(*itPath)) {
-			ex.set(Exception::FORMATTING, "URL ", url, " malformed, space character");
-			return false;
-		}
+    while (itPath != path.end()) {
         if (*itPath == '?') {
-			// query now!
-			// file?
-			if (hasFile)
-                file.assign(itFile, itPath);
 			// query
-            UnpackQuery(string(++itPath, endPath),properties);
-			// trunk the path
-			if (hasFile)
-                path.erase(--itFile, endPath);
-			else
-                path.erase(--itPath, endPath);
-			return true;
+            UnpackQuery(string(++itPath, path.end()),properties);
+			// remove query part from path
+			path.resize(path.size()-(path.end()-itPath)-1);
+			// remove last slashes
+			while (!path.empty() && (path.back() == '/' || path.back() == '\\'))
+				path.resize(path.size() - 1);
+			break;
 		}
         if (*itPath == '/' || *itPath == '\\') {
             ++itPath;
-            while (itPath != endPath && (*itPath == '/' || *itPath == '\\'))
-                path.erase(itPath++); // erase multiple slashes
-            if (itPath == endPath) {
-				hasFile = false;
+            while (itPath != path.end() && (*itPath == '/' || *itPath == '\\'))
+                path.erase(itPath); // erase multiple slashes
+           if (itPath == path.end()) {
 				// remove the last /
                 path.erase(--itPath);
 				break;
 			}
-            itFile = itPath;
-		}
-        if (*itPath == '.')
-			hasFile = true;
-        ++itPath;
+			itField = itPath;
+			isFile = false;
+		} else if (*itPath++ == '.')
+			isFile = true;
 	}
-
-
-	// file?
-	if (hasFile) {
-        file.assign(itFile, endPath);
-        path.erase(--itFile, endPath); // trunk the path if file (no query here)
-	}
-	return true;
+	return isFile ? (itField-path.begin()) : string::npos;
 }
+
 // TODO check unitest
-void Util::UnpackQuery(const string& query, MapParameters& properties) {
+void Util::UnpackQuery(const string& query, Parameters& properties) {
 
 	string myQuery(query);
 
@@ -278,12 +228,12 @@ string& Util::DecodeURI(string& uri) {
 }
 
 
-void Util::Dump(const UInt8* in,UInt32 size,Buffer<UInt8>& out,const string& header) {
+void Util::Dump(const UInt8* in,UInt32 size,Buffer& out,const string& header) {
 	UInt32 len = 0;
 	UInt32 i = 0;
 	UInt32 c = 0;
 	UInt8 b;
-	out.resize((UInt32)ceil((double)size / 16) * 67 + (header.empty() ? 0 : (header.size() + 2)),false);
+	out.resize((UInt32)ceil((double)size / 16) * 67 + (header.empty() ? 0 : (header.size() + 2)));
 
 	if(!header.empty()) {
 		out[len++] = '\t';
@@ -325,49 +275,53 @@ void Util::Dump(const UInt8* in,UInt32 size,Buffer<UInt8>& out,const string& hea
 
 
 
-bool Util::ReadIniFile(Exception& ex,const string& path,MapParameters& parameters) {
-	ifstream istr(path, ios::in | ios::binary);
+bool Util::ReadIniFile(Exception& ex,const string& path,Parameters& parameters) {
+	ifstream istr(path, ios::in | ios::binary | ios::ate);
 	if (!istr.good()) {
 		ex.set(Exception::FILE, "Impossible to open ", path, " file");
 		return false;
 	}
+	UInt32 size = (UInt32)istr.tellg();
+	Buffer buffer(size);
+	UInt32 i(0);
 	string section;
-	auto eof = char_traits<char>::eof();
-	while (!istr.eof()) {
-		int c = istr.get();
-		while (c != eof && isspace(c))
-			c = istr.get();
-		if (c == eof)
+	while (i<size) {
+		char c(0);
+		do {
+			c = buffer[i++];
+		} while (isspace(c) && i < size);
+		if (i<size)
 			return true;
 		if (c == ';') {
-			while (c != eof && c != '\n')
-				c = istr.get();
+			while (c != '\n' && i<size)
+				c = buffer[i++];
 		} else if (c == '[') {
 			section.clear();
-			c = istr.get();
-			while (c != eof && isblank(c))
-				c = istr.get();
-			while (c != eof && c != ']' && c != '\n') {
-				section += (char)c;
-				c = istr.get();
+			do {
+				c = buffer[i++];
+			} while (isblank(c) && i < size);
+			while (i<size && c != ']' && c != '\n') {
+				section += c;
+				c = buffer[i++];
 			}
 			String::Trim(section, String::TRIM_RIGHT);
 		} else {
 			string key;
-			while (c != eof && isblank(c))
-				c = istr.get();
-			while (c != eof && c != '=' && c != '\n') {
-				key += (char)c;
-				c = istr.get();
+			do {
+				c = buffer[i++];
+			} while (isblank(c) && i < size);
+			while (i < size && c != '=' && c != '\n') {
+				key += c;
+				c = buffer[i++];
 			}
 			string value;
-			if (c == '=') {
-				c = istr.get();
-				while (c != eof && isblank(c))
-					c = istr.get();
-				while (c != eof && c != '\n') {
-					value += (char)c;
-					c = istr.get();
+			if (i < size && c == '=') {
+				do {
+					c = buffer[i++];
+				} while (isblank(c) && i < size);
+				while (i < size && c != '\n') {
+					value += c;
+					c = buffer[i++];
 				}
 			}
 			string fullKey = section;
@@ -407,12 +361,12 @@ string& Util::FormatHexCpp(const UInt8* data, UInt32 size, string& result) {
 }
 
 
-Buffer<UInt8>& Util::ToBase64(const UInt8* data, UInt32 size, Buffer<UInt8>& result) {
+Buffer& Util::ToBase64(const UInt8* data, UInt32 size, Buffer& result) {
 	int i = 0;
 	int j = 0;
 	UInt32 accumulator = 0;
 	UInt32 bits = 0;
-	result.resize((UInt32)ceil(size/3.0)*4,false);
+	result.resize((UInt32)ceil(size/3.0)*4);
 
 	for (i = 0; i < size;++i) {
 		accumulator = (accumulator << 8) | (data[i] & 0xFFu);
@@ -431,10 +385,10 @@ Buffer<UInt8>& Util::ToBase64(const UInt8* data, UInt32 size, Buffer<UInt8>& res
 	return result;
 }
 
-bool Util::FromBase64(const UInt8* data, UInt32 size, Buffer<UInt8>& result) {
+bool Util::FromBase64(const UInt8* data, UInt32 size, Buffer& result) {
 	UInt32 bits = 0;
 	UInt32 accumulator = 0;
-	result.resize(size/4 * 3,false);
+	result.resize(size/4 * 3);
 	int j = 0;
 
 	for (int i = 0; i < size; ++i) {
@@ -452,14 +406,8 @@ bool Util::FromBase64(const UInt8* data, UInt32 size, Buffer<UInt8>& result) {
 			result[j++] = ((accumulator >> bits) & 0xFFu);
 		}
 	}
-	result.resize(j,true);
+	result.resize(j);
 	return true;
 }
-
-void Util::Random(UInt8* data, UInt32 size) {
-	for (UInt32 i = 0; i < size; ++i)
-		data[i] = Random<UInt8>();
-}
-
 
 } // namespace Mona

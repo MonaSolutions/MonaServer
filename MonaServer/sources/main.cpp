@@ -32,7 +32,8 @@ private:
 ///// MAIN
 	int main(TerminateSignal& terminateSignal) {
 		// starts the server
-		int bufferSize(0), threads(0), serversPort(0);
+		UInt16 threads(0),serversPort(0);
+		UInt32 bufferSize(0);
 		getNumber("bufferSize", bufferSize);
 		getNumber("threads", threads);
 		string serversTargets;

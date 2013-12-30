@@ -26,18 +26,34 @@ This file is a part of Mona.
 
 namespace Mona {
 
-	
-//FRAME_OP_CONT    = 0x00, /// Continuation frame.
-#define WS_TEXT     0x01 /// Text frame.
-#define WS_BINARY	0x02 /// Binary frame.
-#define WS_CLOSE	0x08 /// Close connection.
-#define WS_PING		0x09 /// Ping frame.
-#define WS_PONG		0x0a /// Pong frame.
-
 class WS : virtual Static {
 public:
 
-	static void			ComputeKey(std::string& key);
+	enum MessageType {
+		//FRAME_OP_CONT    = 0x00, /// Continuation frame.
+		TYPE_TEXT		= 0x01, /// Text frame.
+		TYPE_BINARY	= 0x02, /// Binary frame.
+		TYPE_CLOSE	= 0x08, /// Close connection.
+		TYPE_PING		= 0x09, /// Ping frame.
+		TYPE_PONG		= 0x0a /// Pong frame.
+	};
+
+	enum ResponseCode {
+		CODE_NORMAL_CLOSE				= 1000,
+		CODE_ENDPOINT_GOING_AWAY		= 1001,
+		CODE_PROTOCOL_ERROR			= 1002,
+		CODE_PAYLOAD_NOT_ACCEPTABLE	= 1003,
+		CODE_RESERVED					= 1004,
+		CODE_RESERVED_NO_STATUS_CODE	= 1005,
+		CODE_RESERVED_ABNORMAL_CLOSE	= 1006,
+		CODE_MALFORMED_PAYLOAD		= 1007,
+		CODE_POLICY_VIOLATION			= 1008,
+		CODE_PAYLOAD_TOO_BIG			= 1009,
+		CODE_EXTENSION_REQUIRED		= 1010,
+		CODE_UNEXPECTED_CONDITION		= 1011
+	};
+
+	static std::string&	ComputeKey(std::string& key);
 	static void		    Unmask(MemoryReader& data);
 	static UInt8	WriteHeader(UInt8 type,UInt32 size,BinaryWriter& writer);
 	static UInt8	HeaderSize(UInt32 size);

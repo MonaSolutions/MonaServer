@@ -22,7 +22,6 @@ This file is a part of Mona.
 
 #include "Mona/Mona.h"
 #include "Mona/Exceptions.h"
-#include <vector>
 #if defined(_WIN32)
 #include <Windows.h>
 #endif

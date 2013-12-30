@@ -26,7 +26,7 @@ using namespace Mona;
 
 
 
-LUAWriter::LUAWriter(lua_State* pState,Writer& writer):writer(writer.newWriter(this)),_pState(pState) {
+LUAWriter::LUAWriter(lua_State* pState,Writer& writer):writer(writer.newWriter(*this)),_pState(pState) {
 }
 
 void LUAWriter::close(Writer& writer,int code){
@@ -45,7 +45,7 @@ int LUAWriter::Destroy(lua_State* pState) {
 
 int LUAWriter::Close(lua_State* pState) {
 	SCRIPT_CALLBACK(Writer,writer)
-		writer.close(SCRIPT_READ_INT(0));
+		writer.close(SCRIPT_READ_UINT(0));
 	SCRIPT_CALLBACK_RETURN
 }
 
@@ -84,7 +84,10 @@ int LUAWriter::Set(lua_State *pState) {
 
 int LUAWriter::Flush(lua_State* pState) {
 	SCRIPT_CALLBACK(Writer,writer)
-		writer.flush(SCRIPT_READ_BOOL(true));
+		if(writer.state()==Writer::CONNECTING)
+			SCRIPT_ERROR("Violation policy, impossible to flush data on a connecting writer")
+		else
+			writer.flush(SCRIPT_READ_BOOL(true));
 	SCRIPT_CALLBACK_RETURN
 }
 
@@ -102,8 +105,11 @@ int LUAWriter::WriteInvocation(lua_State* pState) {
 
 int LUAWriter::WriteRaw(lua_State* pState) {
 	SCRIPT_CALLBACK(Writer,writer)
-		SCRIPT_READ_BINARY(data,size);
-		writer.writeRaw(data,size);
+		while(SCRIPT_CAN_READ) {
+			SCRIPT_READ_BINARY(data, size);
+			if (data)
+				writer.writeRaw(data, size);
+		}
 	SCRIPT_CALLBACK_RETURN
 }
 

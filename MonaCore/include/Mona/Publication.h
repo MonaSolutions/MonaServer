@@ -57,22 +57,23 @@ public:
 
 	void					flush();
 
-	const Buffer<UInt8>&	audioCodecBuffer() const { return _audioCodecBuffer; }
-	const Buffer<UInt8>&	videoCodecBuffer() const { return _videoCodecBuffer; }
+	const Buffer&			audioCodecBuffer() const { return _audioCodecBuffer; }
+	const Buffer&			videoCodecBuffer() const { return _videoCodecBuffer; }
 private:
 	Peer*								_pPublisher;
 	bool								_firstKeyFrame;
 	std::string							_name;
 	std::map<Client*,Listener*>			_listeners;
 
-	Buffer<UInt8>						_audioCodecBuffer;
-	Buffer<UInt8>						_videoCodecBuffer;
+	Buffer								_audioCodecBuffer;
+	Buffer								_videoCodecBuffer;
 
 	QualityOfService					_videoQOS;
 	QualityOfService					_audioQOS;
 	QualityOfService					_dataQOS;
 
 	UInt32						_droppedFrames;
+	bool						_new;
 };
 
 

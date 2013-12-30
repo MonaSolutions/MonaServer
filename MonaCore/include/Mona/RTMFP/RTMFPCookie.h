@@ -61,7 +61,7 @@ private:
 	UInt8									_buffer[256];
 	MemoryWriter							_writer;
 	Invoker&								_invoker;
-	Buffer<UInt8>							_initiatorNonce;
+	Buffer									_initiatorNonce;
 };
 
 

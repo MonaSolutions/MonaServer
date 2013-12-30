@@ -22,7 +22,6 @@ This file is a part of Mona.
 #include "Mona/Mona.h"
 #include "Mona/TCPSender.h"
 #include "Mona/MemoryWriter.h"
-#include "Mona/Buffer.h"
 #include <openssl/rc4.h>
 
 namespace Mona {
@@ -42,7 +41,7 @@ private:
 
 	UInt8					_buffer[3073];
 	MemoryWriter			_writer;
-	Buffer<UInt8>			_farPubKey;
+	Buffer					_farPubKey;
 	UInt8					_challengeKey[HMAC_KEY_SIZE];	
 	bool						_middle;
 	std::shared_ptr<RC4_KEY>	_pEncryptKey;

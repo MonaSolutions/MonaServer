@@ -27,32 +27,35 @@ namespace Mona {
 class Parameters : virtual Object {
 public:
 
-	bool getString(const std::string& key, std::string& value) const {return getRaw(key, value);}
+	bool getString(const std::string& key, std::string& value) const;
 	template<typename NumberType>
 	bool getNumber(const std::string& key, NumberType& value) const {
-		std::string temp;
-		if (!getRaw(key, temp))
+		const  std::string* pTemp = getRaw(key);
+		if (!pTemp)
 			return false;
-		return String::ToNumber<NumberType>(temp, value);
+		return String::ToNumber<NumberType>(*pTemp, value);
 	}
 	bool getBool(const std::string& key, bool& value) const;
 
-	void setString(const std::string& key, const std::string& value) {setRaw(key, value);}
+	bool hasKey(const std::string& key) { return getRaw(key) != NULL; }
+	void erase(const std::string& key) { setRaw(key, NULL); }
+
+	void setString(const std::string& key, const std::string& value) {setRaw(key, &value[0]);}
+	void setString(const std::string& key, const char* value) {setRaw(key, value);}
 	template<typename NumberType>
 	void setNumber(const std::string& key, NumberType value) {
 		std::string val;
-		setRaw(key, String::Format(val, value));
+		setString(key, String::Format(val, value));
 	}
 	void setBool(const std::string& key, bool value) {setRaw(key, value ? "true" : "false");}
-
-	bool hasKey(const std::string& key) { std::string value; return getRaw(key, value); }
 
 protected:
 	Parameters() {}
 
 private:
-	virtual bool getRaw(const std::string& key, std::string& value) const = 0;
-	virtual void setRaw(const std::string& key, const std::string& value) = 0;
+	virtual const std::string* getRaw(const std::string& key) const = 0;
+	// if value==NULL the property should be removed
+	virtual void setRaw(const std::string& key, const char* value) = 0;
 };
 
 template<class IteratorType>
@@ -62,6 +65,7 @@ public:
 
 	virtual Iterator begin() const = 0;
 	virtual Iterator end() const = 0;
+	virtual UInt32  count() const = 0;
 protected:
 	IterableParameters() {}
 };

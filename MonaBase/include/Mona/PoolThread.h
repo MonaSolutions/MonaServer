@@ -22,9 +22,8 @@ This file is a part of Mona.
 #include "Mona/Mona.h"
 #include "Mona/Startable.h"
 #include "Mona/WorkThread.h"
-#include <list>
 #include <memory>
-#include <atomic>
+#include <deque>
 
 
 namespace Mona {
@@ -32,17 +31,23 @@ namespace Mona {
 class PoolThread : private Startable, virtual Object {
 public:
 	PoolThread() : Startable("PoolThread" + std::to_string(++_Id)) {}
-	virtual ~PoolThread() {clear();	}
+	virtual ~PoolThread() {join();	}
 
-	void	clear() { stop(); }
-	bool	push(Exception& ex,std::shared_ptr<WorkThread>& pWork);
-	int		queue() const { return _queue; }
+	void	join() { stop(); }
+
+	template<typename WorkThreadType>
+	void push(Exception& ex,const std::shared_ptr<WorkThreadType>& pWork) {
+		std::lock_guard<std::mutex> lock(_mutex);
+		if (!running() && !start(ex))
+			return;
+		_jobs.emplace_back(pWork);
+		wakeUp();
+	}
 private:
 	void	run(Exception& ex);
 
 	std::mutex								_mutex;
-	std::list<std::shared_ptr<WorkThread>>	_jobs;
-	std::atomic<int>						_queue;
+	std::deque<std::shared_ptr<WorkThread>>	_jobs;
 	
 	static UInt32							_Id;
 
