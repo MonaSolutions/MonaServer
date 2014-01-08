@@ -36,7 +36,7 @@ public:
 
 	const UInt64		id;
 
-	void				fragmentHandler(UInt64 stage,UInt64 deltaNAck,MemoryReader& fragment,UInt8 flags);
+	void				fragmentHandler(UInt64 stage,UInt64 deltaNAck,PacketReader& fragment,UInt8 flags);
 	
 	void				commit();
 
@@ -46,9 +46,9 @@ public:
 	void				complete();
 	
 private:
-	void				fragmentSortedHandler(UInt64 stage,MemoryReader& fragment,UInt8 flags);
+	void				fragmentSortedHandler(UInt64 stage,PacketReader& fragment,UInt8 flags);
 	
-	AMF::ContentType	unpack(MemoryReader& reader,UInt32& time);
+	AMF::ContentType	unpack(PacketReader& packet,UInt32& time);
 
 	bool							_completed;
 	BandWriter&						_band;
@@ -58,7 +58,7 @@ private:
 
 	// Receiving
 	RTMFPPacket*					_pPacket;
-	std::map<UInt64,RTMFPFragment*>	_fragments;
+	std::map<UInt64,RTMFPFragment>	_fragments;
 	UInt32							_numberLostFragments;
 	const PoolBuffers&				_poolBuffers;
 };

@@ -30,7 +30,7 @@ namespace Mona {
 class ObjectDef;
 class AMFReader : public DataReader, virtual Object {
 public:
-	AMFReader(MemoryReader& reader);
+	AMFReader(PacketReader& reader);
 	virtual ~AMFReader();
 
 	std::string&		readString(std::string& value);
@@ -57,7 +57,7 @@ public:
 
 private:
 	std::string&					readText(std::string& value);
-	UInt8							current() { return *reader.current(); }
+	UInt8							current() { return *packet.current(); }
 
 	std::deque<ObjectDef*>	_objectDefs;
 	std::vector<UInt32>		_stringReferences;

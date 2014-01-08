@@ -41,24 +41,53 @@ namespace Mona {
 	{ int i = 0; while (i < n && it != end && isdigit(*it)) { var = var * 10 + ((*it++) - '0'); i++; } while (i++ < n) var *= 10; }
 
 bool TimeParser::TryParse(const string& in, Time& dateTime, int& tz) {
-	
-	if (in.length() < 4) return false;
+	if (in.length()>50)
+		return false;
 
+	if (in.length() < 4) return false;
 	if (in[3] == ',')
 		return Parse("%w, %e %b %r %H:%M:%S %Z", in, dateTime, tz);
 	if (in[3] == ' ')
 		return Parse(Time::ASCTIME_FORMAT, in, dateTime, tz);
-	if (in.find(',') < 10)
-		return Parse("%W, %e %b %r %H:%M:%S %Z", in, dateTime, tz);
 
-	if (!isdigit(in[0]))
-		return false;
+	int length(0);
+	bool digit(false);
+	char signifiant(0);
+	for (char c : in) {
+		if (length<10) {
+			if (length == 0)
+				digit = isdigit(c)!=0;
+			if (c == ',')
+				return Parse("%W, %e %b %r %H:%M:%S %Z", in, dateTime, tz);
+			if (digit) {
+				if (c == ' ')
+					signifiant = ' ';
+				else if (c == '.' || c == ',')
+					signifiant = '.';
+				else if (c == 'T')
+					signifiant = 'T';
+			}
+			
+			if (length < 9) {
+				++length;
+				continue;
+			}
+			c = signifiant;
+		}
 
-	if (in.find(' ') != string::npos || in.length() == 10)
+		if(!digit)
+			return false;
+		if (c == ' ')
+			return Parse(Time::SORTABLE_FORMAT, in, dateTime, tz);
+		if (c == '.' || c == ',')
+			return Parse(Time::ISO8601_FRAC_FORMAT, in, dateTime, tz);
+		if (c == 'T')
+			signifiant = 'T';
+		++length;
+	}
+	if (length == 10)
 		return Parse(Time::SORTABLE_FORMAT, in, dateTime, tz);
-	if (in.find('.') != string::npos || in.find(',') != string::npos)
-		return Parse(Time::ISO8601_FRAC_FORMAT, in, dateTime, tz);
-	if (in.find('-') != string::npos)
+	if (signifiant == 'T')
 		return Parse(Time::ISO8601_FORMAT, in, dateTime, tz);
 	return false;
 }
@@ -68,8 +97,8 @@ bool TimeParser::Parse(const string& fmt, const string& in, Time& dateTime, int&
 	int year = 0, month = 0, day = 0, hour = 0;
 	int minute = 0, second = 0, millis = 0, micros = 0;
 
-	auto it = in.begin(), end = in.end();
-	auto itf = fmt.begin(),	endf = fmt.end();
+	auto it = in.begin(),& end = in.end();
+	auto itf = fmt.begin(),&	endf = fmt.end();
 
 	while (itf != endf && it != end)
 	{

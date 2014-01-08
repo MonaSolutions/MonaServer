@@ -21,8 +21,8 @@ This file is a part of Mona.
 
 #include "Mona/Mona.h"
 #include "Mona/SocketAddress.h"
-#include "Mona/PoolThread.h"
 #include "Mona/PoolThreads.h"
+#include "Mona/PoolBuffers.h"
 #include "Mona/Expirable.h"
 #include <memory>
 #include <deque>
@@ -80,7 +80,7 @@ public:
 
 	template<typename SocketSenderType>
 	// Can be called from one other thread than main thread (by the poolthread)
-	void send(Exception& ex, std::shared_ptr<SocketSenderType>& pSender) {
+	void send(Exception& ex,const std::shared_ptr<SocketSenderType>& pSender) {
 		// return if no data to send
 		if (!pSender->available())
 			return;
@@ -99,7 +99,7 @@ public:
 	}
 
 	template<typename SocketSenderType>
-	PoolThread* send(Exception& ex, std::shared_ptr<SocketSenderType>& pSender, PoolThread* pThread) {
+	PoolThread* send(Exception& ex,const std::shared_ptr<SocketSenderType>& pSender, PoolThread* pThread) {
 		ASSERT_RETURN(_initialized == true, pThread)
 		if (!managed(ex))
 			return pThread;
@@ -109,12 +109,16 @@ public:
 		return pThread;
 	}
 
+	const PoolBuffers&	poolBuffers();
+	PoolThreads&		poolThreads();
+
 protected:
 	// Can be called by a separated thread!
-	virtual void	onError(const std::string& error) = 0;
+	virtual void			onError(const std::string& error) = 0;
 
-	const SocketManager&	manager;
 	void					close();
+	const SocketManager&	manager;
+	
 private:
 	// Creates a Socket
 	Socket(const SocketManager& manager, int type = SOCK_STREAM);
@@ -181,7 +185,7 @@ private:
 
 	// flush async sending
 	void    manageWrite(Exception& ex);
-	void	flush(Exception& ex);
+	void	flushSenders(Exception& ex);
 
 	template<typename Type>
 	Type& getOption(Exception& ex, int level, int option, Type& value) {
@@ -201,8 +205,6 @@ private:
 			Net::SetError(ex);
 	}
 	void	setOption(Exception& ex, int level, int option, int value) { setOption<int>(ex, level, option, value); }
-
-	PoolThreads& poolThreads();
 
 	// A wrapper for the ioctl system call
 	int		ioctl(Exception& ex,NET_IOCTLREQUEST request,int value);

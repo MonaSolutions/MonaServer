@@ -37,7 +37,7 @@ public:
 	
 	void setBufferTime(UInt32 ms);
 
-	void		 process(AMF::ContentType type,UInt32 time,MemoryReader& data,FlashWriter& writer,UInt32 numberLostFragments=0);
+	void		 process(AMF::ContentType type,UInt32 time,PacketReader& packet,FlashWriter& writer,UInt32 numberLostFragments=0);
 	virtual void flush();
 
 
@@ -53,10 +53,10 @@ private:
 	void			disengage(FlashWriter* pWriter=NULL);
 
 	virtual void	messageHandler(Exception& ex, const std::string& name, AMFReader& message, FlashWriter& writer);
-	virtual void	rawHandler(Exception& ex, UInt8 type, MemoryReader& data, FlashWriter& writer);
+	virtual void	rawHandler(Exception& ex, UInt8 type, PacketReader& data, FlashWriter& writer);
 	virtual void	dataHandler(Exception& ex,DataReader& data, UInt32 numberLostFragments);
-	virtual void	audioHandler(Exception& ex,UInt32 time, MemoryReader& packet, UInt32 numberLostFragments);
-	virtual void	videoHandler(Exception& ex, UInt32 time,MemoryReader& packet, UInt32 numberLostFragments);
+	virtual void	audioHandler(Exception& ex,UInt32 time, PacketReader& packet, UInt32 numberLostFragments);
+	virtual void	videoHandler(Exception& ex, UInt32 time,PacketReader& packet, UInt32 numberLostFragments);
 
 	virtual void	close(FlashWriter& writer,const std::string& error,int code=0);
 

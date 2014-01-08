@@ -86,7 +86,7 @@ int LUAClient::Get(lua_State *pState) {
 			SCRIPT_WRITE_NUMBER(client.ping)
 		} else if (name == "parameters") {
 			if (Script::Collection(pState, -1, "parameters", client.count())) {
-				for (auto it : client) {
+				for (auto& it : client) {
 					lua_pushstring(pState, it.first.c_str());
 					if (String::ICompare(it.second, "false") == 0 || String::ICompare(it.second, "nil") == 0)
 						lua_pushboolean(pState, 0);
@@ -106,12 +106,14 @@ int LUAClient::Get(lua_State *pState) {
 int LUAClient::Set(lua_State *pState) {
 	SCRIPT_CALLBACK(Client,client)
 		string name = SCRIPT_READ_STRING("");
-		if(name=="name") {
-			const char* newName = lua_tostring(pState,-1);
-			if(!newName)
+		if (name == "name") {
+			const char* newName = SCRIPT_READ_STRING(NULL);
+			if (!newName)
 				SCRIPT_ERROR("Invalid name value")
-			else if(!client.setName(newName))
-			SCRIPT_ERROR("A client has already the '", newName, "' name")
+			else if (!client.setName(newName))
+				SCRIPT_ERROR("A client has already the '", newName, "' name")
+		} else if(name=="__timesBeforeTurn") {
+			client.setNumber("__timesBeforeTurn", SCRIPT_READ_UINT(0));
 		} else
 			lua_rawset(pState,1); // consumes key and value
 	SCRIPT_CALLBACK_RETURN

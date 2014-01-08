@@ -27,7 +27,7 @@ namespace Mona {
 
 class JSONWriter : public DataWriter, virtual Object {
 public:
-	JSONWriter(bool modeRaw=false);
+	JSONWriter(const PoolBuffers& buffers,bool modeRaw=false);
 
 	void beginObject(const std::string& type="",bool external=false);
 	void endObject();
@@ -52,12 +52,12 @@ private:
 	void writeRaw(Args&&... args) {
 		if(!_started) {
 			_started=true;
-			writer.write8('[');
+			packet.write8('[');
 		}
 		if(!_first)
-			writer.write8(',');
+			packet.write8(',');
 		_first=false;
-		writer.writeRaw(args ...);
+		packet.writeRaw(args ...);
 	}
 
 	bool		_modeRaw;

@@ -125,8 +125,8 @@ private:
 				SCRIPT_READ_BINARY(pData, size)
 				Mona::UInt32 time = SCRIPT_READ_UINT(0);
 				if (pData) {
-					Mona::MemoryReader reader(pData, size);
-					pPublication->pushAudio(reader, time, SCRIPT_READ_UINT(0));
+					Mona::PacketReader packet(pData, size);
+					pPublication->pushAudio(packet, time, SCRIPT_READ_UINT(0));
 				}
 			}
 		SCRIPT_CALLBACK_RETURN
@@ -141,8 +141,8 @@ private:
 				SCRIPT_READ_BINARY(pData, size)
 				Mona::UInt32 time = SCRIPT_READ_UINT(0);
 				if (pData) {
-					Mona::MemoryReader reader(pData, size);
-					pPublication->pushVideo(reader, time, SCRIPT_READ_UINT(0));
+					Mona::PacketReader packet(pData, size);
+					pPublication->pushVideo(packet, time, SCRIPT_READ_UINT(0));
 				}
 			}
 		SCRIPT_CALLBACK_RETURN
@@ -159,12 +159,12 @@ private:
 					std::shared_ptr<Mona::DataWriter> pWriter;
 					pPublisher->writer().createWriter(pWriter);
 					if (pWriter) {
-						Mona::UInt32 offset = pWriter->stream.size();
+						Mona::UInt32 offset = pWriter->packet.size();
 						SCRIPT_READ_DATA(*pWriter)
-							Mona::MemoryReader reader(pWriter->stream.data(), pWriter->stream.size());
-						reader.next(offset);
+						Mona::PacketReader packet(pWriter->packet.data(), pWriter->packet.size());
+						packet.next(offset);
 						std::shared_ptr<Mona::DataReader> pReader;
-						pPublisher->writer().createReader(reader, pReader);
+						pPublisher->writer().createReader(packet, pReader);
 						if (pReader)
 							pPublication->pushData(*pReader);
 						else

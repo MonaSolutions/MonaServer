@@ -26,37 +26,42 @@ using namespace std;
 namespace Mona {
 
 Decoding::Decoding(const char* name,Invoker& invoker,const UInt8* data,UInt32 size) :
-	_size(size),_noFlush(false),_flush(false),WorkThread(name),Task(invoker), _pBuffer(invoker.poolBuffers,size) {
+	_size(size),WorkThread(name),Task(invoker), _pBuffer(invoker.poolBuffers,size) {
 	memcpy(_pBuffer->data(), data,size);
 	_current = _pBuffer->data();
 }
 
+Decoding::Decoding(const char* name,Invoker& invoker,PoolBuffer& pBuffer) :
+	_pBuffer(invoker.poolBuffers),WorkThread(name),Task(invoker),_size(pBuffer->size()),_current(pBuffer->data()) {
+	_pBuffer.swap(pBuffer);
+}
+
 const UInt8* Decoding::decodeRaw(Exception& ex, PoolBuffer& pBuffer, UInt32 times,const UInt8* data,UInt32& size) {
-	if (!_pReader)
-		_pReader.reset(new MemoryReader(data,size));
-	bool result = decode(ex,*_pReader,times);
+	PacketReader packet(data,size);
+	bool result = decode(ex,packet,times);
 	if (!result)
 		return NULL;
-	return data;
+	size = packet.available();
+	return packet.current();
 }
 
 bool Decoding::run(Exception& exc) {
-	Exception ex;
 	UInt32 times(0);
 	UInt32 size(_size);
-	while(_size>0 && (_current=decodeRaw(ex, _pBuffer,times++,_current,_size))) {
+	while(_size>0) {
+		Exception ex;
+		if (!(_current = decodeRaw(ex, _pBuffer, times++, _current, _size))) {
+			if (ex)
+				ERROR(name,", ",ex.error())
+			break;
+		}
 		if (ex)
 			WARN(name,", ",ex.error())
 		waitHandle();
 
 		_current += _size;
-		_size = size-_size;
-	}
-	if (ex)
-		ERROR(name,", ",ex.error())
-	if (!_noFlush && times>0 && _current) {
-		_flush = true;
-		waitHandle();
+		size -= _size;
+		_size = size;
 	}
 	return true;
 }
@@ -66,17 +71,11 @@ void Decoding::handle(Exception& ex) {
 	Session* pSession = _expirableSession.safeThis(lock);
 	if (!pSession)
 		return;
-	if (_flush) {
-		pSession->flush();
-		return;
-	}
-	if (!_pReader)
-		_pReader.reset(new MemoryReader(_current, _size));
+	PacketReader packet(_current, _size);
 	if (_address.host().isWildcard())
-		pSession->receive(*_pReader);
+		pSession->receive(packet);
 	else
-		pSession->receive(*_pReader, _address);
-	_pReader->reset();
+		pSession->receive(packet, _address);
 }
 
 

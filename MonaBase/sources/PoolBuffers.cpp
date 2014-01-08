@@ -18,13 +18,14 @@ This file is a part of Mona.
 */
 
 #include "Mona/PoolBuffers.h"
+#include "Mona/PoolBuffer.h"
+//#include <atomic>
 
 
 using namespace std;
 
 
 namespace Mona {
-
 
 void PoolBuffers::clear() {
 	lock_guard<mutex> lock(_mutex);
@@ -33,26 +34,36 @@ void PoolBuffers::clear() {
 	_buffers.clear();
 }
 
+// static atomic_int n;
+
 Buffer* PoolBuffers::beginBuffer(UInt32 size) const {
 	Buffer* pBuffer(NULL);
 	{
 		lock_guard<mutex> lock(_mutex);
-		if (size > _maximumBufferSize || _buffers.empty())
-			return new Buffer(size);
+		if ((size > _maximumCapacity) || _buffers.empty()) {
+			pBuffer = new Buffer(size);
+		//	printf("New %d %p\n", ++n,pBuffer);
+			return pBuffer;
+		}
 		pBuffer = _buffers.front();
 		_buffers.pop_front();
 	}
-	if (size > 0 && size != pBuffer->size())
-		pBuffer->resize(size);
+	if (size>0)
+		pBuffer->resize(size,false);
+	// printf("get Buffer %u\n",pBuffer->capacity());
+//	printf("Get %d %p\n", ++n,pBuffer);
 	return pBuffer;
 }
 
 void PoolBuffers::endBuffer(Buffer* pBuffer) const {
-	if (pBuffer->capacity() > _maximumBufferSize) {
+	if (pBuffer->capacity() > _maximumCapacity) {
 		delete pBuffer;
 		return;
 	}
 	lock_guard<mutex> lock(_mutex);
+	// printf("release Buffer %u\n",pBuffer->capacity());
+//	printf("Release %d %p\n", --n,pBuffer);
+	pBuffer->clear(); //to fix clip, and resize to 0
 	_buffers.emplace_back(pBuffer);
 }
 

@@ -26,13 +26,13 @@ namespace Mona {
 
 class XMLReader : public DataReader, virtual Object {
 public:
-	XMLReader(MemoryReader& reader);
+	XMLReader(PacketReader& packet);
 
 	virtual std::string&		readString(std::string& value);
 	virtual double				readNumber();
 	virtual bool				readBoolean();
 	virtual Time&				readTime(Time& time);
-	virtual void				readNull() { reader.next(4); }
+	virtual void				readNull() { packet.next(4); }
 	
 	bool						readArray(UInt32& size);
 	virtual bool				readObject(std::string& type,bool& external);

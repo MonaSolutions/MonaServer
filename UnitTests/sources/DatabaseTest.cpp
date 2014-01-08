@@ -33,10 +33,10 @@ public:
 	}
 };
 
-PoolBuffers poolBuffers;
-Database	data(poolBuffers);
-string		path;
-Loader		loader;
+static PoolBuffers	poolBuffers;
+static Database		data(poolBuffers);
+static string		path;
+static Loader		loader;
 
 ADD_TEST(DatabaseTest, Load) {
 	// create base of test

@@ -25,7 +25,7 @@ namespace Mona {
 
 class SOAPReader : public XMLReader, virtual Object {
 public:
-	SOAPReader(MemoryReader& reader);
+	SOAPReader(PacketReader& packet) : XMLReader(packet), _body(false) {}
 
 	virtual Type				followingType();
 

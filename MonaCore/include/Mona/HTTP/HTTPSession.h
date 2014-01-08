@@ -24,7 +24,6 @@ This file is a part of Mona.
 #include "Mona/HTTPOptionsWriter.h"
 #include "Mona/HTTP/HTTPWriter.h"
 #include "Mona/HTTP/HTTPPacket.h"
-#include "Mona/HTTP/HTTPPacketBuilding.h"
 
 
 namespace Mona {
@@ -41,12 +40,12 @@ private:
 	void			kill();
 	void			manage();
 
-	bool								buildPacket(MemoryReader& packet);
+	bool								buildPacket(PacketReader& packet);
 	const std::shared_ptr<HTTPPacket>&	packet();
-	void								packetHandler(MemoryReader& packet);
+	void								packetHandler(PacketReader& packet);
 
 	/// \brief Parse SOAP request, execute lua function and send SOAP response
-	void			processSOAPfunction(Exception& ex, MemoryReader& packet);
+	void			processSOAPfunction(Exception& ex, PacketReader& packet);
 
 	/// \brief Send the Option response
 	/// Note: It is called when processMove is used before a SOAP request
@@ -57,7 +56,7 @@ private:
 
 	Listener*			_pListener;
 
-	std::deque<std::shared_ptr<HTTPPacketBuilding>>	_pPacketBuildings;
+	std::deque<std::shared_ptr<HTTPPacket>>			_packets;
 	std::shared_ptr<PoolBuffer>						_ppBuffer;
 	std::string										_buffer;
 

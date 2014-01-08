@@ -60,7 +60,7 @@ WinRegistryKey::WinRegistryKey(const string& key, bool readOnly, REGSAM extraSam
 			_hRootKey = HKEY_CURRENT_USER;
 			_subKey = key;
 		} else {
-			auto it = RootKeys.find(key.substr(0, pos));
+			auto& it = RootKeys.find(key.substr(0, pos));
 			_hRootKey = it == RootKeys.end() ? HKEY_CURRENT_USER : it->second;
 			_subKey = key.substr(pos + 1);
 		}	

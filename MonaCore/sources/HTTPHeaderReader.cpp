@@ -29,7 +29,7 @@ using namespace std;
 namespace Mona {
 
 
-HTTPHeaderReader::HTTPHeaderReader(deque<const char*>& headers):DataReader(MemoryReader::Null),_bool(false),_date(0),_header(headers.begin()),_headers(headers) {
+HTTPHeaderReader::HTTPHeaderReader(deque<const char*>& headers): _bool(false),_date(0),_header(headers.begin()),_headers(headers) {
 }
 
 

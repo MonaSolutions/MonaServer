@@ -20,7 +20,7 @@ This file is a part of Mona.
 #pragma once
 
 #include "Mona/Mona.h"
-#include "Mona/MemoryReader.h"
+#include "Mona/BinaryReader.h"
 #include "Mona/BinaryWriter.h"
 
 
@@ -54,7 +54,7 @@ public:
 	};
 
 	static std::string&	ComputeKey(std::string& key);
-	static void		    Unmask(MemoryReader& data);
+	static void		    Unmask(BinaryReader& reader);
 	static UInt8	WriteHeader(UInt8 type,UInt32 size,BinaryWriter& writer);
 	static UInt8	HeaderSize(UInt32 size);
 

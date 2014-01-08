@@ -31,16 +31,16 @@ public:
 	WSUnmasking(Invoker& invoker,const UInt8* data,UInt32 size,UInt8 type) : _type(type), Decoding("WSUnmasking",invoker,data,size) {}
 	
 private:
-	bool					decode(Exception& ex, MemoryReader& reader, UInt32 times);
+	bool					decode(Exception& ex, PacketReader& packet, UInt32 times);
 	UInt8					_type;
 };
 
-inline bool WSUnmasking::decode(Exception& ex, MemoryReader& reader, UInt32 times) {
+inline bool WSUnmasking::decode(Exception& ex, PacketReader& packet, UInt32 times) {
 	if (times)
 		return false;
-	WS::Unmask(reader);
-	reader.reset(reader.position()-1);
-	(*reader.current()) = _type;
+	WS::Unmask(packet);
+	packet.reset(packet.position()-1);
+	*(UInt8*)packet.current() = _type;
 	return true;
 }
 

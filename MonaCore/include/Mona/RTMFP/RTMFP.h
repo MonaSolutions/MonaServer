@@ -20,8 +20,8 @@ This file is a part of Mona.
 #pragma once
 
 #include "Mona/Mona.h"
-#include "Mona/MemoryReader.h"
-#include "Mona/MemoryWriter.h"
+#include "Mona/PacketReader.h"
+#include "Mona/PacketWriter.h"
 #include "Mona/Time.h"
 #include <openssl/aes.h>
 #include <math.h>
@@ -29,10 +29,10 @@ This file is a part of Mona.
 namespace Mona {
 
 #define RTMFP_SYMETRIC_KEY (UInt8*)"Adobe Systems 02"
-#define RTMFP_MIN_PACKET_SIZE	12
-#define RTMFP_MAX_PACKET_LENGTH 1192
+#define RTMFP_HEADER_SIZE		11
+#define RTMFP_MIN_PACKET_SIZE	(RTMFP_HEADER_SIZE+1)
+#define RTMFP_MAX_PACKET_SIZE	1192
 #define RTMFP_TIMESTAMP_SCALE	4
-#define RTMFP_PACKET_SEND_SIZE	1215
 
 class RTMFPEngine : virtual Object {
 public:
@@ -66,13 +66,13 @@ private:
 
 class RTMFP : virtual Static {
 public:
-	static UInt32				Unpack(MemoryReader& packet);
-	static void					Pack(MemoryWriter& packet,UInt32 farId);
+	static UInt32				Unpack(PacketReader& packet);
+	static void					Pack(PacketWriter& packet,UInt32 farId);
 
-	static bool					ReadCRC(MemoryReader& packet);
-	static void					WriteCRC(MemoryWriter& packet);
-	static bool					Decode(Exception& ex,RTMFPEngine& aesDecrypt,MemoryReader& packet);
-	static void					Encode(RTMFPEngine& aesEncrypt,MemoryWriter& packet);
+	static bool					ReadCRC(PacketReader& packet);
+	static void					WriteCRC(PacketWriter& packet);
+	static bool					Decode(Exception& ex,RTMFPEngine& aesDecrypt,PacketReader& packet);
+	static void					Encode(RTMFPEngine& aesEncrypt,PacketWriter& packet);
 	
 
 	static void					ComputeAsymetricKeys(const Buffer& sharedSecret,
@@ -85,7 +85,7 @@ public:
 	static UInt16				Time(Int64 timeVal) { return (UInt32)round(timeVal / (1000.0*RTMFP_TIMESTAMP_SCALE)); }
 
 private:
-	static UInt16				CheckSum(MemoryReader& packet);
+	static UInt16				CheckSum(PacketReader& packet);
 };
 
 }  // namespace Mona

@@ -76,7 +76,7 @@ void RTMFPEngine::process(const UInt8* in,UInt8* out,UInt32 size) {
 
 
 
-UInt16 RTMFP::CheckSum(MemoryReader& packet) {
+UInt16 RTMFP::CheckSum(PacketReader& packet) {
 	int sum = 0;
 	int pos = packet.position();
 	while(packet.available()>0)
@@ -90,16 +90,16 @@ UInt16 RTMFP::CheckSum(MemoryReader& packet) {
 }
 
 
-bool RTMFP::Decode(Exception& ex,RTMFPEngine& aesDecrypt,MemoryReader& packet) {
+bool RTMFP::Decode(Exception& ex,RTMFPEngine& aesDecrypt,PacketReader& packet) {
 	// Decrypt
-	aesDecrypt.process(packet.current(),packet.current(),packet.available());
+	aesDecrypt.process(packet.current(),(UInt8*)packet.current(),packet.available());
 	bool result = ReadCRC(packet);
 	if (!result)
 		ex.set(Exception::CRYPTO, "Bad RTMFP CRC sum computing");
 	return result;
 }
 
-bool RTMFP::ReadCRC(MemoryReader& packet) {
+bool RTMFP::ReadCRC(PacketReader& packet) {
 	// Check the first 2 CRC bytes 
 	packet.reset(4);
 	UInt16 sum = packet.read16();
@@ -107,32 +107,30 @@ bool RTMFP::ReadCRC(MemoryReader& packet) {
 }
 
 
-void RTMFP::Encode(RTMFPEngine& aesEncrypt,MemoryWriter& packet) {
+void RTMFP::Encode(RTMFPEngine& aesEncrypt,PacketWriter& packet) {
 	if(aesEncrypt.type != RTMFPEngine::EMPTY) {
 		// paddingBytesLength=(0xffffffff-plainRequestLength+5)&0x0F
-		int paddingBytesLength = (0xFFFFFFFF-packet.length()+5)&0x0F;
+		int paddingBytesLength = (0xFFFFFFFF-packet.size()+5)&0x0F;
 		// Padd the plain request with paddingBytesLength of value 0xff at the end
-		packet.reset(packet.length());
-		string end(paddingBytesLength,(UInt8)0xFF);
-		packet.writeRaw(end);
+		while (paddingBytesLength-->0)
+			packet.write8(0xFF);
 	}
 
 	WriteCRC(packet);
 	
 	// Encrypt the resulted request
-	aesEncrypt.process(packet.begin()+4,packet.begin()+4,packet.length()-4);
+	aesEncrypt.process(packet.data()+4,(UInt8*)packet.data()+4,packet.size()-4);
 }
 
-void RTMFP::WriteCRC(MemoryWriter& packet) {
+void RTMFP::WriteCRC(PacketWriter& packet) {
 	// Compute the CRC and add it at the beginning of the request
-	MemoryReader reader(packet.begin(),packet.length());
+	PacketReader reader(packet.data(),packet.size());
 	reader.next(6);
 	UInt16 sum = CheckSum(reader);
-	packet.reset(4);
-	packet.write16(sum);
+	BinaryWriter(packet,4).write16(sum);
 }
 
-UInt32 RTMFP::Unpack(MemoryReader& packet) {
+UInt32 RTMFP::Unpack(PacketReader& packet) {
 	packet.reset();
 	UInt32 id=0;
 	for(int i=0;i<3;++i)
@@ -141,11 +139,10 @@ UInt32 RTMFP::Unpack(MemoryReader& packet) {
 	return id;
 }
 
-void RTMFP::Pack(MemoryWriter& packet,UInt32 farId) {
-	MemoryReader reader(packet.begin(),packet.length());
+void RTMFP::Pack(PacketWriter& packet,UInt32 farId) {
+	PacketReader reader(packet.data(),packet.size());
 	reader.next(4);
-	packet.reset(0);
-	packet.write32(reader.read32()^reader.read32()^farId);
+	BinaryWriter(packet).write32(reader.read32()^reader.read32()^farId);
 }
 
 
@@ -161,8 +158,8 @@ void RTMFP::ComputeAsymetricKeys(const Buffer& sharedSecret, const UInt8* initia
 	HMAC(EVP_sha256(),initiatorNonce,initNonceSize,responderNonce,respNonceSize,mdp2,NULL);
 
 	// now doing HMAC-sha256 of both result with the shared secret DH key
-	HMAC(EVP_sha256(),&sharedSecret[0],sharedSecret.size(),mdp1,HMAC_KEY_SIZE,requestKey,NULL);
-	HMAC(EVP_sha256(),&sharedSecret[0],sharedSecret.size(),mdp2,HMAC_KEY_SIZE,responseKey,NULL);
+	HMAC(EVP_sha256(),sharedSecret.data(),sharedSecret.size(),mdp1,HMAC_KEY_SIZE,requestKey,NULL);
+	HMAC(EVP_sha256(),sharedSecret.data(),sharedSecret.size(),mdp2,HMAC_KEY_SIZE,responseKey,NULL);
 }
 
 

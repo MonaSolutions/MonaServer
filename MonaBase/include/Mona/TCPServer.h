@@ -44,6 +44,8 @@ public:
 		return pClient;
 	}
 
+	Socket&			socket() { return *this; }
+
 private:
 
 	virtual void	onConnectionRequest(Exception& ex) = 0;

@@ -21,32 +21,33 @@ This file is a part of Mona.
 
 #include "Mona/Mona.h"
 #include "Mona/TCPSender.h"
-#include "Mona/MemoryWriter.h"
+#include "Mona/PacketWriter.h"
 #include <openssl/rc4.h>
 
 namespace Mona {
 
 class RTMPHandshaker : public TCPSender, virtual Object {
 public:
-	RTMPHandshaker(const SocketAddress& address,const UInt8* data, UInt32 size);
-	RTMPHandshaker(const SocketAddress& address, const UInt8* farPubKey, const UInt8* challengeKey, bool middle, const std::shared_ptr<RC4_KEY>& pDecryptKey, const std::shared_ptr<RC4_KEY>& pEncryptKey);
+	RTMPHandshaker(const PoolBuffers& poolBuffers,const SocketAddress& address,const UInt8* data, UInt32 size);
+	RTMPHandshaker(const PoolBuffers& poolBuffers,const SocketAddress& address, const UInt8* farPubKey, const UInt8* challengeKey, bool middle, const std::shared_ptr<RC4_KEY>& pDecryptKey, const std::shared_ptr<RC4_KEY>& pEncryptKey);
 
 private:
 	
 	bool run(Exception& ex);
 	bool runComplex(Exception& ex);
 
-	const UInt8*	begin() { return _writer.begin(); }
-	UInt32			size() { return _writer.length(); }
+	const UInt8*	data() { return _writer.data(); }
+	UInt32			size() { return _writer.size(); }
 
-	UInt8					_buffer[3073];
-	MemoryWriter			_writer;
-	Buffer					_farPubKey;
+	const PoolBuffers&		_poolBuffers;
+	PacketWriter			_writer;
+	PoolBuffer				_pFarPubKey;
 	UInt8					_challengeKey[HMAC_KEY_SIZE];	
 	bool						_middle;
 	std::shared_ptr<RC4_KEY>	_pEncryptKey;
 	std::shared_ptr<RC4_KEY>	_pDecryptKey;
 	SocketAddress				_address;
+	
 };
 
 

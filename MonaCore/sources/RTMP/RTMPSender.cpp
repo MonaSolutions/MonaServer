@@ -26,7 +26,7 @@ namespace Mona {
 	
 bool RTMPSender::run(Exception& ex) {
 	if (_pEncryptKey)
-		RC4(_pEncryptKey.get(), size(), begin(), (UInt8*)begin());
+		RC4(_pEncryptKey.get(), size(), data(), (UInt8*)data());
 	return TCPSender::run(ex);
 }
 
@@ -34,10 +34,8 @@ void RTMPSender::pack(RTMPChannel& channel) {
 	if (sizePos == 0)
 		return;
 	// writer the size of the precedent playload!
-	channel.bodySize = _writer.stream.size()-sizePos+4-headerSize;
-	_writer.stream.resetWriting(sizePos);
-	_writer.writer.write24(channel.bodySize);
-	_writer.stream.resetWriting(sizePos-4+headerSize+channel.bodySize);
+	channel.bodySize = _writer.packet.size()-sizePos+4-headerSize;
+	BinaryWriter(_writer.packet,sizePos).write24(channel.bodySize);
 	sizePos=0;
 }
 

@@ -25,24 +25,24 @@ using namespace std;
 namespace Mona {
 
 
-SOAPWriter::SOAPWriter() : XMLWriter() {
-	writer.writeRaw("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
-	writer.writeRaw("<SOAP-ENV:Envelope xmlns:SOAP-ENV=\"http://schemas.xmlsoap.org/soap/envelope/\" ");
-	writer.writeRaw("xmlns:SOAP-ENC=\"http://schemas.xmlsoap.org/soap/encoding/\" ");
-	writer.writeRaw("xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" ");
-	writer.writeRaw("xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" ");
-	writer.writeRaw("xmlns:ns=\"urn:mona\">\n");
-	writer.writeRaw("<SOAP-ENV:Body>\n");
-	writer.writeRaw("<ns:MonaResponse>\n");
-	writer.writeRaw("<result>\n");
+SOAPWriter::SOAPWriter(const PoolBuffers& buffers) : XMLWriter(buffers) {
+	packet.writeRaw("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+	packet.writeRaw("<SOAP-ENV:Envelope xmlns:SOAP-ENV=\"http://schemas.xmlsoap.org/soap/envelope/\" ");
+	packet.writeRaw("xmlns:SOAP-ENC=\"http://schemas.xmlsoap.org/soap/encoding/\" ");
+	packet.writeRaw("xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" ");
+	packet.writeRaw("xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" ");
+	packet.writeRaw("xmlns:ns=\"urn:mona\">\n");
+	packet.writeRaw("<SOAP-ENV:Body>\n");
+	packet.writeRaw("<ns:MonaResponse>\n");
+	packet.writeRaw("<result>\n");
 }
 
 void SOAPWriter::end() {
 
-	writer.writeRaw("\n</result>\n");
-	writer.writeRaw("</ns:aMonaResponse>\n");
-	writer.writeRaw("</SOAP-ENV:Body>\n");
-	writer.writeRaw("</SOAP-ENV:Envelope>");
+	packet.writeRaw("\n</result>\n");
+	packet.writeRaw("</ns:aMonaResponse>\n");
+	packet.writeRaw("</SOAP-ENV:Body>\n");
+	packet.writeRaw("</SOAP-ENV:Envelope>");
 }
 
 } // namespace Mona

@@ -27,18 +27,20 @@ namespace Mona {
 
 class PoolBuffer : virtual Object {
 public:
-	PoolBuffer(const PoolBuffers& poolBuffers,UInt32 size=0) : _size(size),_poolBuffers(poolBuffers),_pBuffer(NULL) {}
-	virtual ~PoolBuffer() { clear(); }
+	PoolBuffer(const PoolBuffers& poolBuffers,UInt32 size=0) : _size(size),poolBuffers(poolBuffers),_pBuffer(NULL) {}
+	virtual ~PoolBuffer() { release(); }
 
-	bool	empty() { return !_pBuffer || _pBuffer->empty(); }
-	void	clear() { if (!_pBuffer) return; _poolBuffers.endBuffer(_pBuffer); _pBuffer = NULL; }
+	bool	empty() { return !_pBuffer || _pBuffer->size()==0; }
+	void	release() { if (!_pBuffer) return; poolBuffers.endBuffer(_pBuffer); _pBuffer = NULL; }
 
 	void	swap(PoolBuffer& buffer) { std::swap(buffer._pBuffer,_pBuffer); }
-	Buffer* operator->() { if (!_pBuffer) _pBuffer=_poolBuffers.beginBuffer(_size);  return _pBuffer; }
-	Buffer& operator*() { if (!_pBuffer) _pBuffer=_poolBuffers.beginBuffer(_size);  return *_pBuffer; }
+	Buffer* operator->() { if (!_pBuffer) _pBuffer=poolBuffers.beginBuffer(_size);  return _pBuffer; }
+	Buffer& operator*() { if (!_pBuffer) _pBuffer=poolBuffers.beginBuffer(_size);  return *_pBuffer; }
+
+	const PoolBuffers&	poolBuffers;
+
 private:
 	Buffer*				_pBuffer;
-	const PoolBuffers&	_poolBuffers;
 	UInt32				_size;
 
 };

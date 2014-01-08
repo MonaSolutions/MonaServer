@@ -21,7 +21,6 @@ This file is a part of Mona.
 
 #include "Mona/Mona.h"
 #include "Mona/FlashWriter.h"
-#include "Mona/MemoryReader.h"
 #include "Mona/Trigger.h"
 #include "Mona/AMFReader.h"
 #include "Mona/Logs.h"
@@ -53,7 +52,7 @@ public:
 
 	void				flush(bool full=false);
 
-	void				acknowledgment(MemoryReader& reader);
+	void				acknowledgment(PacketReader& packet);
 	void				manage(Exception& ex, Invoker& invoker);
 
 	template <typename ...Args>
@@ -77,7 +76,7 @@ public:
 
 	State				state(State value=GET,bool minimal=false);
 
-	bool				writeMedia(MediaType type,UInt32 time,MemoryReader& data);
+	bool				writeMedia(MediaType type,UInt32 time,PacketReader& packet);
 	void				writeRaw(const UInt8* data,UInt32 size);
 	void				writeMember(const Peer& peer);
 
@@ -85,14 +84,14 @@ private:
 	RTMFPWriter(RTMFPWriter& writer);
 	
 	UInt32					headerSize(UInt64 stage);
-	void					flush(MemoryWriter& writer,UInt64 stage,UInt8 flags,bool header,BinaryReader& reader,UInt16 size);
+	void					flush(BinaryWriter& writer,UInt64 stage,UInt8 flags,bool header,const UInt8* data,UInt16 size);
 
 	void					raiseMessage();
 	RTMFPMessageBuffered&	createBufferedMessage();
-	AMFWriter&				write(AMF::ContentType type,UInt32 time=0,MemoryReader* pData=NULL);
+	AMFWriter&				write(AMF::ContentType type,UInt32 time=0,PacketReader* pPacket=NULL);
 
-	void					createReader(MemoryReader& reader, std::shared_ptr<DataReader>& pReader) { pReader.reset(new AMFReader(reader)); }
-	void					createWriter(std::shared_ptr<DataWriter>& pWriter) { pWriter.reset(new AMFWriter());pWriter->stream.next(6); }
+	void					createReader(PacketReader& packet, std::shared_ptr<DataReader>& pReader) { pReader.reset(new AMFReader(packet)); }
+	void					createWriter(std::shared_ptr<DataWriter>& pWriter) { pWriter.reset(new AMFWriter(_band.poolBuffers()));pWriter->packet.next(6); }
 	bool					hasToConvert(DataReader& reader) { return dynamic_cast<AMFReader*>(&reader) == NULL; }
 
 	Trigger						_trigger;
@@ -110,7 +109,6 @@ private:
 	UInt32						_boundCount;
 	bool						_reseted;
 
-	static RTMFPMessageNull		_MessageNull;
 };
 
 

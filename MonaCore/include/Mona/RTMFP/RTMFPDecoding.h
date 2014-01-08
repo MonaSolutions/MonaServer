@@ -27,10 +27,10 @@ namespace Mona {
 
 class RTMFPDecoding : public Decoding, virtual Object {
 public:
-	RTMFPDecoding(Invoker& invoker,const UInt8* data,UInt32 size,const RTMFPEngine& engine,RTMFPEngine::Type type) : Decoding("RTMFPDecoding",invoker,data,size),_decoder(engine,type) {}
+	RTMFPDecoding(Invoker& invoker,PoolBuffer& poolBuffer,const RTMFPEngine& engine,RTMFPEngine::Type type) : Decoding("RTMFPDecoding",invoker,poolBuffer),_decoder(engine,type) {}
 
 private:
-	bool		  decode(Exception& ex, MemoryReader& reader, UInt32 times) { if (times) return false;  reader.next(4); return RTMFP::Decode(ex, _decoder, reader); }
+	bool		  decode(Exception& ex, PacketReader& packet, UInt32 times) { if (times) return false;  packet.next(4); return RTMFP::Decode(ex, _decoder, packet); }
 
 	RTMFPEngine	  _decoder;
 };

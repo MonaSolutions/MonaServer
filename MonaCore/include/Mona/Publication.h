@@ -48,9 +48,9 @@ public:
 	void					start(Exception& ex, Peer& peer);
 	void					stop(Peer& peer);
 
-	void					pushAudio(MemoryReader& packet,UInt32 time=0,UInt32 numberLostFragments=0);
-	void					pushVideo(MemoryReader& packet,UInt32 time=0,UInt32 numberLostFragments=0);
-	void					pushData(DataReader& data,UInt32 numberLostFragments=0);
+	void					pushAudio(PacketReader& packet,UInt32 time=0,UInt32 numberLostFragments=0);
+	void					pushVideo(PacketReader& packet,UInt32 time=0,UInt32 numberLostFragments=0);
+	void					pushData(DataReader& reader,UInt32 numberLostFragments=0);
 
 	Listener*				addListener(Exception& ex, Peer& peer,Writer& writer,bool unbuffered);
 	void					removeListener(Peer& peer);

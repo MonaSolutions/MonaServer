@@ -20,19 +20,18 @@ This file is a part of Mona.
 #include "Test.h"
 #include "Mona/BinaryWriter.h"
 #include "Mona/BinaryReader.h"
-#include <sstream>
 
 using namespace Mona;
 using namespace std;
 
-
+static Buffer _Buffer(128);
 
 void Write(BinaryWriter& writer) {
 
 	bool bval = true;
-	writer.writeRaw((char*)&bval, sizeof(bval));
+	writer.writeRaw((const UInt8*)&bval, sizeof(bval));
 	bval = false;
-	writer.writeRaw((char*)&bval, sizeof(bval));
+	writer.writeRaw((const UInt8*)&bval, sizeof(bval));
 	writer.write8('a');
 	writer.write16((short)-100);
 	writer.write16((unsigned short)50000);
@@ -45,9 +44,9 @@ void Write(BinaryWriter& writer) {
 	writer.write64((UInt64)1234567890);
 
 	float fVal = 1.5;
-	writer.writeRaw((char *)&fVal, sizeof(fVal));
+	writer.writeRaw((const UInt8*)&fVal, sizeof(fVal));
 	double dVal = -1.5;
-	writer.writeRaw((char *)&dVal, sizeof(dVal));
+	writer.writeRaw((const UInt8*)&dVal, sizeof(dVal));
 
 	writer.writeString8("foo");
 	writer.writeString8("");
@@ -152,30 +151,24 @@ void Read(BinaryReader& reader) {
 
 
 ADD_TEST(BinaryReaderWriterTest, Native) {
-
-	std::stringstream sstream;
-	BinaryWriter writer(sstream);
-	BinaryReader reader(sstream);
+	BinaryWriter writer(_Buffer.data(),_Buffer.size());
 	Write(writer);
+	BinaryReader reader(writer.data(),writer.size());
 	Read(reader);
 }
 
 ADD_TEST(BinaryReaderWriterTest, BigEndian) {
-
-	std::stringstream sstream;
-    BinaryWriter writer(sstream, BinaryWriter::BIG_ENDIAN_ORDER);
-    BinaryReader reader(sstream, BinaryReader::BIG_ENDIAN_ORDER);
-	
+	BinaryWriter writer(_Buffer.data(),_Buffer.size(), BinaryWriter::BIG_ENDIAN_ORDER);
 	Write(writer);
+
+	BinaryReader reader(writer.data(),writer.size(), BinaryReader::BIG_ENDIAN_ORDER);
 	Read(reader);
 }
 
 ADD_TEST(BinaryReaderWriterTest, LittleEndian) {
-
-	std::stringstream sstream;
-    BinaryWriter writer(sstream, BinaryWriter::LITTLE_ENDIAN_ORDER);
-    BinaryReader reader(sstream, BinaryReader::LITTLE_ENDIAN_ORDER);
-	
+    BinaryWriter writer(_Buffer.data(),_Buffer.size(), BinaryWriter::LITTLE_ENDIAN_ORDER);
 	Write(writer);
+
+	BinaryReader reader(writer.data(),writer.size(), BinaryReader::LITTLE_ENDIAN_ORDER);
 	Read(reader);
 }

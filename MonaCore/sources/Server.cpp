@@ -24,7 +24,6 @@ This file is a part of Mona.
 using namespace std;
 
 
-
 namespace Mona {
 
 
@@ -63,6 +62,7 @@ bool Server::start(const ServerParams& params) {
 }
 
 void Server::run(Exception& exc) {
+
 	Exception ex;
 	try {
 		TaskHandler::start();
@@ -113,7 +113,7 @@ void Server::run(Exception& exc) {
 	_protocols.unload();
 
 	// release memory
-	poolBuffers.clear();
+	((PoolBuffers&)poolBuffers).clear();
 
 	onStop();
 	NOTE("Server stopped");

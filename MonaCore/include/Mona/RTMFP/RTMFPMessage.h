@@ -20,11 +20,8 @@ This file is a part of Mona.
 #pragma once
 
 #include "Mona/Mona.h"
-#include "Mona/BinaryWriter.h"
 #include "Mona/AMFWriter.h"
-#include "Mona/BinaryStream.h"
-#include "Mona/BinaryReader.h"
-#include "Mona/MemoryStream.h"
+
 
 namespace Mona {
 
@@ -32,54 +29,48 @@ namespace Mona {
 class RTMFPMessage : virtual Object {
 public:
 
-	RTMFPMessage(std::istream& istr,bool repeatable);
+	RTMFPMessage(bool repeatable) : repeatable(repeatable) {}
 
-	BinaryReader&			reader(UInt32& size);
-	BinaryReader&			reader(UInt32 fragment,UInt32& size);
+	virtual const UInt8*	data()=0;
+	virtual UInt32			size()=0;
 
-	virtual UInt32			length();
-	UInt32					elapsed() { return (UInt32)(_time.elapsed() / 1000); }
+	std::map<UInt32,UInt64>	fragments;
+	const bool				repeatable;
 
-	void					addFragment(UInt32 size,UInt64 stage);
-
-	std::map<UInt32,UInt64>		fragments;
-	const bool					repeatable;
-	
-private:
-	virtual	UInt32	init(UInt32 position)=0;
-	BinaryReader	_reader;
-	Time			_time;
+	Time					sendingTime;
 };
-
 
 
 class RTMFPMessageUnbuffered : public RTMFPMessage, virtual Object {
 public:
-	RTMFPMessageUnbuffered(const UInt8* data,UInt32 size);
+	RTMFPMessageUnbuffered(const UInt8* data, UInt32 size) : _data(data), _size(size),RTMFPMessage(false) {}
 	
 private:
-	UInt32				init(UInt32 position);
-	UInt32				length() { return _size; }
+	const UInt8*	data() { return _data; }
+	UInt32			size() { return _size; }
 
-	MemoryInputStream	_stream;
-	UInt32				_size;
+	UInt32			_size;
+	const UInt8*	_data;
 };
 
 
-class RTMFPMessageBuffered : public RTMFPMessage, virtual Object {
-public:
-	RTMFPMessageBuffered(bool repeatable=true);
 
-	AMFWriter			writer;
+class RTMFPMessageBuffered: public RTMFPMessage, virtual NullableObject {
+public:
+	RTMFPMessageBuffered(const PoolBuffers& poolBuffers,bool repeatable) : _pWriter(new AMFWriter(poolBuffers)),RTMFPMessage(repeatable) {}
+	RTMFPMessageBuffered() : _pWriter(&AMFWriter::Null),RTMFPMessage(false),NullableObject(true) {}
+	
+	virtual ~RTMFPMessageBuffered() { if (_pWriter != &AMFWriter::Null) delete _pWriter; }
+
+	AMFWriter&		writer() { return *_pWriter; }
 
 private:
-	UInt32		init(UInt32 position);
 
-};
+	const UInt8*	data() { return _pWriter->packet.data(); }
+	UInt32			size() { return _pWriter->packet.size(); }
 
-class RTMFPMessageNull : public RTMFPMessageBuffered {
-public:
-	RTMFPMessageNull();
+	AMFWriter*		_pWriter;
+
 };
 
 

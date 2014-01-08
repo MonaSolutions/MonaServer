@@ -33,30 +33,33 @@ protected:
 	template<typename DecodingType>
 	void decode(const std::shared_ptr<DecodingType>& pDecoding,const SocketAddress& address) {
 		WARN("TCP Session ", name(), " cannot updated its address (TCP session is in a connected way");
-		TCPSession::decode(pDecoding);
+		decode(pDecoding);
 	}
 
 	template<typename DecodingType>
 	void decode(const std::shared_ptr<DecodingType>& pDecoding) {
-		_pDecoding = pDecoding;
+		_decodings.emplace_back(pDecoding);
+		_decoding = true;
+		Session::decode(pDecoding);
 	}
 
 private:
-	void receive(MemoryReader& packet, const SocketAddress& address) {
+	void receive(PacketReader& packet, const SocketAddress& address) {
 		WARN("TCP Session ", name(), " cannot updated its address (TCP session is in a connected way");
 		Session::receive(packet);
 	}
+	void receive(PacketReader& packet);
 
-	virtual bool	buildPacket(MemoryReader& packet) = 0;
+	virtual bool	buildPacket(PacketReader& packet) = 0;
 
 	// TCPClient implementation
 	UInt32			onReception(const UInt8* data, UInt32 size);
 	void			onError(const std::string& error);
 	void			onDisconnection() { kill(); }
 
-	bool							_consumed;
-	std::shared_ptr<Decoding>		_pLastDecoding;
-	std::shared_ptr<Decoding>		_pDecoding;
+	bool			_consumed;
+	bool			_decoding;
+	std::deque<std::shared_ptr<Decoding>> _decodings;
 };
 
 

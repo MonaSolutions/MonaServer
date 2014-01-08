@@ -27,7 +27,7 @@ using namespace std;
 namespace Mona {
 
 
-JSONWriter::JSONWriter(bool modeRaw) : _modeRaw(modeRaw),_first(true),_started(false),_layers(0) {
+JSONWriter::JSONWriter(const PoolBuffers& buffers,bool modeRaw) : DataWriter(buffers),_modeRaw(modeRaw),_first(true),_started(false),_layers(0) {
 	
 }
 
@@ -41,13 +41,13 @@ void JSONWriter::clear() {
 void JSONWriter::beginObject(const string& type,bool external) {
 	if(!_started) {
 		_started=true;
-		writer.write8('[');
+		packet.write8('[');
 	}	
 	if(!_first)
-		writer.write8(',');
+		packet.write8(',');
 	_first=true;
 	++_layers;
-	writer.write8('{');
+	packet.write8('{');
 	if(type.empty())
 		return;
 	writePropertyName("__type"); // TODO add it in JSONReader?
@@ -59,20 +59,20 @@ void JSONWriter::endObject() {
 		WARN("JSON object already finished")
 		return;
 	}
-	writer.write8('}');
+	packet.write8('}');
 	--_layers;
 }
 
 void JSONWriter::beginArray(UInt32 size) {
 	if(!_started) {
 		_started=true;
-		writer.write8('[');
+		packet.write8('[');
 	}	
 	if(!_first)
-		writer.write8(',');
+		packet.write8(',');
 	_first=true;
 	++_layers;
-	writer.write8('[');
+	packet.write8('[');
 }
 
 void JSONWriter::endArray() {
@@ -80,14 +80,14 @@ void JSONWriter::endArray() {
 		WARN("JSON array already finished")
 		return;
 	}
-	writer.write8(']');
+	packet.write8(']');
 	--_layers;
 }
 
 
 void JSONWriter::writePropertyName(const string& value) {
 	writeString(value);
-	writer.write8(':');
+	packet.write8(':');
 	_first=true;
 }
 
@@ -99,30 +99,30 @@ void JSONWriter::writeString(const string& value) {
 	}
 	if(!_started) {
 		_started=true;
-		writer.write8('[');
+		packet.write8('[');
 	}
 	if(!_first)
-		writer.write8(',');
+		packet.write8(',');
 	_first=false;
-	writer.write8('"');
-	writer.writeRaw(value);
-	writer.write8('"');
+	packet.write8('"');
+	packet.writeRaw(value);
+	packet.write8('"');
 }
 
 void JSONWriter::writeBytes(const UInt8* data,UInt32 size) {
 	if(!_started) {
 		_started=true;
-		writer.write8('[');
+		packet.write8('[');
 	}
 	if(!_first)
-		writer.write8(',');
+		packet.write8(',');
 	_first=false;
-	writer.writeRaw("{__raw:\"");
+	packet.writeRaw("{__raw:\"");
 
 	Buffer result;
 	Util::ToBase64(data, size, result);
-	writer.writeRaw(result.data(),result.size());
-	writer.writeRaw("\"}");
+	packet.writeRaw(result.data(),result.size());
+	packet.writeRaw("\"}");
 }
 
 void JSONWriter::end() {
@@ -131,7 +131,7 @@ void JSONWriter::end() {
 		return;
 	}
 	if(_started)
-		writer.write8(']');
+		packet.write8(']');
 }
 
 

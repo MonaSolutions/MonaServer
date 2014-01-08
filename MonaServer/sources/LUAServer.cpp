@@ -29,7 +29,7 @@ int LUAServer::Send(lua_State* pState) {
 		if(handler.empty() || handler==".") {
 			ERROR("handler of one sending server message can't be null or equal to '.'")
 		} else {
-			ServerMessage message;
+			ServerMessage message(server.poolBuffers());
 			SCRIPT_READ_DATA(message)
 			server.send(handler,message);
 		}
@@ -58,7 +58,7 @@ int LUAServer::Get(lua_State* pState) {
 			SCRIPT_WRITE_FUNCTION(&LUAServer::Port)
 		} else if (name == "parameters") {
 			if(Script::Collection(pState, -1, "parameters", server.count())) {
-				for (auto it : server) {
+				for (auto& it : server) {
 					lua_pushstring(pState, it.first.c_str());
 					if (String::ICompare(it.second, "false") == 0 || String::ICompare(it.second, "nil") == 0)
 						lua_pushboolean(pState, 0);

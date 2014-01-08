@@ -21,7 +21,6 @@ This file is a part of Mona.
 
 #include <stdio.h>
 #include <string>
-#include <vector>
 
 /////  Usefull macros and patchs   //////
 
@@ -277,7 +276,6 @@ void DetectMemoryLeak();
 #endif
 #endif
 
-typedef std::vector<UInt8>    Buffer;
 
 //////  No copy, no move, objet nullable  //////
 

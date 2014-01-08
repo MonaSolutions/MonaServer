@@ -34,8 +34,8 @@ public:
 	virtual ~WSSession();
 
 
-	bool			buildPacket(MemoryReader& packet);
-	void			packetHandler(MemoryReader& packet);
+	bool			buildPacket(PacketReader& packet);
+	void			packetHandler(PacketReader& packet);
 	void			flush() { if (_pPublication) _pPublication->flush(); Session::flush(); }
 	void			manage();
 

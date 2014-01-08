@@ -66,7 +66,7 @@ FlashStream& Invoker::flashStream(UInt32 id,Peer& peer,shared_ptr<FlashStream>& 
 			return *pResult;	
 	}
 	// search in streams list
-	auto it = _streams.lower_bound(id);
+	auto& it = _streams.lower_bound(id);
 	if (it != _streams.end() && id == it->first) {
 		if (!pStream)
 			pStream = it->second;

@@ -59,7 +59,7 @@ void FlashStream::close(FlashWriter& writer,const string& error,int code) {
 	// TODO what doing for FlashStream?
 }
 
-void FlashStream::process(AMF::ContentType type,UInt32 time,MemoryReader& data,FlashWriter& writer,UInt32 numberLostFragments) {
+void FlashStream::process(AMF::ContentType type,UInt32 time,PacketReader& packet,FlashWriter& writer,UInt32 numberLostFragments) {
 	if(type==AMF::EMPTY)
 		return;
 	
@@ -70,7 +70,7 @@ void FlashStream::process(AMF::ContentType type,UInt32 time,MemoryReader& data,F
 		case AMF::INVOCATION_AMF3:
 		case AMF::INVOCATION: {
 			string name;
-			AMFReader reader(data);
+			AMFReader reader(packet);
 			reader.readString(name);
 			writer.callbackHandle = reader.readNumber();
 			if(reader.followingType()==AMFReader::NIL)
@@ -79,22 +79,22 @@ void FlashStream::process(AMF::ContentType type,UInt32 time,MemoryReader& data,F
 			break;
 		}
 		case AMF::DATA: {
-			AMFReader reader(data);
+			AMFReader reader(packet);
 			dataHandler(ex,reader, numberLostFragments);
 			break;
 		}
 		case AMF::AUDIO:
-			audioHandler(ex, time,data, numberLostFragments);
+			audioHandler(ex, time,packet, numberLostFragments);
 			break;
 		case AMF::VIDEO:
-			videoHandler(ex, time,data, numberLostFragments);
+			videoHandler(ex, time,packet, numberLostFragments);
 			break;
 		case AMF::ACK:
 			// nothing to do, a ack message says about how many bytes have been gotten by the peer
 			// RTMFP has a complexe ack mechanism and RTMP is TCP based, ack mechanism is in system layer => so useless
 			break;
 		default:
-			rawHandler(ex, type, data, writer);
+			rawHandler(ex, type, packet, writer);
 	}
 	if (ex)
 		close(writer,ex.error());
@@ -159,8 +159,8 @@ void FlashStream::messageHandler(Exception& ex,const string& name,AMFReader& mes
 }
 
 
-void FlashStream::rawHandler(Exception& ex, UInt8 type, MemoryReader& data, FlashWriter& writer) {
-	if(data.read16()==0x22) { // TODO Here we receive publication bounds (id + tracks), useless? maybe to record a file and sync tracks?
+void FlashStream::rawHandler(Exception& ex, UInt8 type, PacketReader& packet, FlashWriter& writer) {
+	if(packet.read16()==0x22) { // TODO Here we receive publication bounds (id + tracks), useless? maybe to record a file and sync tracks?
 		//TRACE("Bound ",id," : ",data.read32()," ",data.read32());
 		return;
 	}
@@ -187,7 +187,7 @@ void FlashStream::dataHandler(Exception& ex,DataReader& data, UInt32 numberLostF
 }
 
 
-void FlashStream::audioHandler(Exception& ex, UInt32 time,MemoryReader& packet, UInt32 numberLostFragments) {
+void FlashStream::audioHandler(Exception& ex, UInt32 time,PacketReader& packet, UInt32 numberLostFragments) {
 	if(!_pPublication) {
 		WARN("an audio packet has been received on a no publishing stream ",id,", certainly a publication currently closing");
 		return;
@@ -198,7 +198,7 @@ void FlashStream::audioHandler(Exception& ex, UInt32 time,MemoryReader& packet, 
 		WARN("an audio packet has been received on a stream ",id," which is not on owner of this publication, certainly a publication currently closing");
 }
 
-void FlashStream::videoHandler(Exception& ex, UInt32 time,MemoryReader& packet, UInt32 numberLostFragments) {
+void FlashStream::videoHandler(Exception& ex, UInt32 time,PacketReader& packet, UInt32 numberLostFragments) {
 	if(!_pPublication) {
 		WARN("a video packet has been received on a no publishing stream ",id,", certainly a publication currently closing");
 		return;

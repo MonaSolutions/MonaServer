@@ -28,7 +28,7 @@ namespace Mona {
 
 Listener::Listener(Publication& publication,Client& client,Writer& writer,bool unbuffered) : _droppedFrames(0),_unbuffered(unbuffered),
 	_writer(writer),publication(publication),_firstKeyFrame(false),receiveAudio(true),receiveVideo(true),client(client),
-	_pAudioWriter(NULL),_pVideoWriter(NULL),_pDataWriter(NULL),_publicationReader((const UInt8*)publication.name().c_str(),publication.name().size()),
+	_pAudioWriter(NULL),_pVideoWriter(NULL),_pDataWriter(NULL),_publicationNamePacket((const UInt8*)publication.name().c_str(),publication.name().size()),
 	_time(0),_deltaTime(0),_addingTime(0),_bufferTime(0),_firstAudio(true),_firstVideo(true),_firstTime(true) {
 }
 
@@ -74,17 +74,19 @@ const QualityOfService& Listener::dataQOS() const {
 	return _pDataWriter->qos();
 }
 
-void Listener::init() {
+bool Listener::init() {
 	if (_pAudioWriter)
 		WARN("Reinitialisation of one ",publication.name()," subscription")
-	_writer.writeMedia(Writer::INIT,0,_publicationReader);
-	init(&_pAudioWriter,Writer::AUDIO);
+	if (!_writer.writeMedia(Writer::INIT, 0, publicationNamePacket()))
+		return false; // Here consider that the listener have to be closed by the caller
+	init(&_pAudioWriter, Writer::AUDIO);
 	init(&_pVideoWriter,Writer::VIDEO);
 	init(&_pDataWriter,Writer::DATA);
 	_time = 0;
 	_addingTime = 0;
 	_ts.update();
 	_firstTime = true;
+	return true;
 }
 
 void Listener::init(Writer** ppWriter,Writer::MediaType type) {
@@ -93,7 +95,7 @@ void Listener::init(Writer** ppWriter,Writer::MediaType type) {
 		if(_unbuffered)
 			(*ppWriter)->reliable = false;
 	}
-	(*ppWriter)->writeMedia(Writer::INIT,type,_publicationReader);
+	(*ppWriter)->writeMedia(Writer::INIT,type,publicationNamePacket());
 }
 
 UInt32 Listener::computeTime(UInt32 time) {
@@ -115,7 +117,7 @@ UInt32 Listener::computeTime(UInt32 time) {
 
 void Listener::startPublishing() {
 	// publisher time will start to 0 here!
-	_writer.writeMedia(Writer::START,0,_publicationReader);
+	_writer.writeMedia(Writer::START,0,publicationNamePacket());
 	_firstKeyFrame=false;
 	_ts.update();
 }
@@ -124,21 +126,21 @@ void Listener::stopPublishing() {
 	_deltaTime=0;
 	_addingTime = _time;
 	_droppedFrames = 0;
-	_writer.writeMedia(Writer::STOP,0,_publicationReader);
+	_writer.writeMedia(Writer::STOP,0,publicationNamePacket());
 }
 
 
-void Listener::pushDataPacket(DataReader& packet) {
-	if(!_pDataWriter)
-		init();
+void Listener::pushDataPacket(DataReader& reader) {
+	if (!_pDataWriter && !init())
+		return;
 
 	if(publication.publisher()) {
-		if(ICE::ProcessSDPPacket(packet,(Peer&)*publication.publisher(),publication.publisher()->writer(),(Peer&)client,*_pDataWriter))
+		if(ICE::ProcessSDPPacket(reader,(Peer&)*publication.publisher(),publication.publisher()->writer(),(Peer&)client,*_pDataWriter))
 			return;
 	}
 
-	if(!_pDataWriter->hasToConvert(packet)) {
-		if(!_pDataWriter->writeMedia(Writer::DATA,0,packet.reader))
+	if(!_pDataWriter->hasToConvert(reader)) {
+		if(!_pDataWriter->writeMedia(Writer::DATA,0,reader.packet))
 			init();
 		return;
 	}
@@ -146,28 +148,28 @@ void Listener::pushDataPacket(DataReader& packet) {
 	shared_ptr<DataWriter> pWriter;
 	_pDataWriter->createWriter(pWriter);
 	if (!pWriter) {
-		if(!_pDataWriter->writeMedia(Writer::DATA,0,packet.reader))
+		if(!_pDataWriter->writeMedia(Writer::DATA,0,reader.packet))
 			init();
 		return;
 	}
 	
-	UInt32 offset = pWriter->stream.size();
-	packet.read(*pWriter);
-	packet.reset();
-	MemoryReader reader(pWriter->stream.data(),pWriter->stream.size());
-	reader.next(offset);
-	if(!_pDataWriter->writeMedia(Writer::DATA,computeTime(0),reader))
+	UInt32 offset = pWriter->packet.size();
+	reader.read(*pWriter);
+	reader.reset();
+	PacketReader packet(pWriter->packet.data(),pWriter->packet.size());
+	packet.next(offset);
+	if(!_pDataWriter->writeMedia(Writer::DATA,computeTime(0),packet))
 		init();
 }
 
-void Listener::pushVideoPacket(MemoryReader& packet,UInt32 time) {
+void Listener::pushVideoPacket(PacketReader& packet,UInt32 time) {
 	if(!receiveVideo) {
 		_firstKeyFrame=false;
 		_firstVideo=true;
 		return;
 	}
-	if(!_pVideoWriter)
-		init();
+	if (!_pVideoWriter && !init())
+		return;
 
 	// key frame ?
 	if(((*packet.current())&0xF0) == 0x10)
@@ -185,12 +187,12 @@ void Listener::pushVideoPacket(MemoryReader& packet,UInt32 time) {
 		_firstVideo=false;
 		UInt32 size = publication.videoCodecBuffer().size();
 		if(size>0) {
-			MemoryReader videoCodecPacket(&publication.videoCodecBuffer()[0],size);
+			PacketReader videoCodecPacket(publication.videoCodecBuffer().data(),size);
 			// Reliable way for video codec packet!
 			bool reliable = _pVideoWriter->reliable;
 			_pVideoWriter->reliable = true;
-			if (!_pVideoWriter->writeMedia(Writer::VIDEO, time, videoCodecPacket))
-				init();
+			if (!_pVideoWriter->writeMedia(Writer::VIDEO, time, videoCodecPacket) && !init())
+				return;
 			_pVideoWriter->reliable = reliable;
 		}
 	}
@@ -201,13 +203,13 @@ void Listener::pushVideoPacket(MemoryReader& packet,UInt32 time) {
 }
 
 
-void Listener::pushAudioPacket(MemoryReader& packet,UInt32 time) {
+void Listener::pushAudioPacket(PacketReader& packet,UInt32 time) {
 	if(!receiveAudio) {
 		_firstAudio=true;
 		return;
 	}
-	if(!_pAudioWriter)
-		init();
+	if (!_pAudioWriter && !init())
+		return;
 
 	time = computeTime(time);
 
@@ -215,12 +217,12 @@ void Listener::pushAudioPacket(MemoryReader& packet,UInt32 time) {
 		_firstAudio=false;
 		UInt32 size = publication.audioCodecBuffer().size();
 		if(size>0) {
-			MemoryReader audioCodecPacket(&publication.audioCodecBuffer()[0],size);
+			PacketReader audioCodecPacket(publication.audioCodecBuffer().data(),size);
 			// Reliable way for audio codec packet!
 			bool reliable = _pAudioWriter->reliable;
 			_pAudioWriter->reliable = true;
-			if(!_pAudioWriter->writeMedia(Writer::AUDIO,time,audioCodecPacket))
-				init();
+			if (!_pAudioWriter->writeMedia(Writer::AUDIO, time, audioCodecPacket) && !init())
+				return;
 			_pAudioWriter->reliable = reliable;
 		}
 	}

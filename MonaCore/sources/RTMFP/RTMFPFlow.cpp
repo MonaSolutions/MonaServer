@@ -33,7 +33,7 @@ namespace Mona {
 
 class RTMFPPacket : virtual Object {
 public:
-	RTMFPPacket(const PoolBuffers& poolBuffers,MemoryReader& fragment) : fragments(1),_pMessage(NULL),_pBuffer(poolBuffers,fragment.available()) {
+	RTMFPPacket(const PoolBuffers& poolBuffers,PacketReader& fragment) : fragments(1),_pMessage(NULL),_pBuffer(poolBuffers,fragment.available()) {
 		if(_pBuffer->size()>0)
 			memcpy(_pBuffer->data(),fragment.current(),_pBuffer->size());
 	}
@@ -42,20 +42,20 @@ public:
 			delete _pMessage;
 	}
 
-	void add(MemoryReader& fragment) {
+	void add(PacketReader& fragment) {
 		string::size_type old = _pBuffer->size();
-		_pBuffer->resize(old + fragment.available());
+		_pBuffer->resize(old + fragment.available(),true);
 		if(_pBuffer->size()>old)
 			memcpy(_pBuffer->data()+old,fragment.current(),fragment.available());
 		++(UInt16&)fragments;
 	}
 
-	MemoryReader* release() {
+	PacketReader* release() {
 		if(_pMessage) {
 			ERROR("RTMFPPacket already released!");
 			return _pMessage;
 		}
-		_pMessage = new MemoryReader(_pBuffer->size()==0 ? NULL : _pBuffer->data(),_pBuffer->size());
+		_pMessage = new PacketReader(_pBuffer->size()==0 ? NULL : _pBuffer->data(),_pBuffer->size());
 		(UInt16&)_pMessage->fragments = fragments;
 		return _pMessage;
 	}
@@ -63,14 +63,14 @@ public:
 	const UInt32	fragments;
 private:
 	PoolBuffer		_pBuffer;
-	MemoryReader*  _pMessage;
+	PacketReader*  _pMessage;
 };
 
 
-class RTMFPFragment : public Buffer, virtual Object{
+class RTMFPFragment : public PoolBuffer, virtual Object{
 public:
-	RTMFPFragment(MemoryReader& data,UInt8 flags) : flags(flags),Buffer(data.available()) {
-		data.readRaw(this->data(),size());
+	RTMFPFragment(const PoolBuffers& poolBuffers,PacketReader& packet,UInt8 flags) : flags(flags),PoolBuffer(poolBuffers,packet.available()) {
+		packet.readRaw((*this)->data(),(*this)->size());
 	}
 	UInt8					flags;
 };
@@ -92,7 +92,7 @@ RTMFPFlow::RTMFPFlow(UInt64 id,const string& signature,Peer& peer,Invoker& invok
 	if(signature.size()>4 && signature.compare(0,5,"\x00\x54\x43\x04\x00",5)==0)
 		(bool&)pWriter->critical = true; // NetConnection
 	else if(signature.size()>3 && signature.compare(0,4,"\x00\x54\x43\x04",4)==0)
-		invoker.flashStream(MemoryReader((const UInt8*)signature.c_str()+4,signature.length()-4).read7BitValue(),peer,_pStream); // NetStream
+		invoker.flashStream(BinaryReader((const UInt8*)signature.c_str()+4,signature.length()-4).read7BitValue(),peer,_pStream); // NetStream
 	else if(signature.size()>2 && signature.compare(0,3,"\x00\x47\x43",3)==0)
 		(UInt64&)pWriter->flowId = id; // NetGroup
 	
@@ -113,9 +113,6 @@ void RTMFPFlow::complete() {
 		DEBUG("RTMFPFlow ",id," consumed");
 
 	// delete fragments
-	map<UInt64,RTMFPFragment*>::const_iterator it;
-	for(it=_fragments.begin();it!=_fragments.end();++it)
-		delete it->second;
 	_fragments.clear();
 
 	// delete receive buffer
@@ -136,25 +133,25 @@ void RTMFPFlow::fail(const string& error) {
 	writer.write8(0); // unknown
 }
 
-AMF::ContentType RTMFPFlow::unpack(MemoryReader& reader,UInt32& time) {
-	if(reader.available()==0)
+AMF::ContentType RTMFPFlow::unpack(PacketReader& packet,UInt32& time) {
+	if(packet.available()==0)
 		return AMF::EMPTY;
-	AMF::ContentType type = (AMF::ContentType)reader.read8();
+	AMF::ContentType type = (AMF::ContentType)packet.read8();
 	switch(type) {
 		// amf content
 		case AMF::INVOCATION_AMF3:
-			reader.next(1);
+			packet.next(1);
 		case AMF::INVOCATION:
-			reader.next(4);
+			packet.next(4);
 			return AMF::INVOCATION;
 		case AMF::AUDIO:
 		case AMF::VIDEO:
-			time = reader.read32();
+			time = packet.read32();
 			break;
 		case AMF::DATA:
-			reader.next(1);
+			packet.next(1);
 		case AMF::RAW:
-			reader.next(4);
+			packet.next(4);
 		case AMF::CHUNKSIZE:
 			break;
 		default:
@@ -171,7 +168,7 @@ void RTMFPFlow::commit() {
 	deque<UInt64> losts;
 	UInt64 current=_stage;
 	UInt32 count=0;
-	map<UInt64,RTMFPFragment*>::const_iterator it=_fragments.begin();
+	auto it = _fragments.begin();
 	while(it!=_fragments.end()) {
 		current = it->first-current-2;
 		size += Util::Get7BitValueSize(current);
@@ -189,9 +186,8 @@ void RTMFPFlow::commit() {
 	if(!_pStream)
 		bufferSize=0; // not proceed a packet sur FlowNull
 
-	MemoryWriter& ack = _band.writeMessage(0x51,Util::Get7BitValueSize(id)+Util::Get7BitValueSize(bufferSize)+Util::Get7BitValueSize(_stage)+size);
+	BinaryWriter& ack = _band.writeMessage(0x51,Util::Get7BitValueSize(id)+Util::Get7BitValueSize(bufferSize)+Util::Get7BitValueSize(_stage)+size);
 
-	UInt32 pos = ack.position();
 	ack.write7BitLongValue(id);
 	ack.write7BitValue(bufferSize);
 	ack.write7BitLongValue(_stage);
@@ -204,7 +200,7 @@ void RTMFPFlow::commit() {
 	_pWriter->flush();
 }
 
-void RTMFPFlow::fragmentHandler(UInt64 _stage,UInt64 deltaNAck,MemoryReader& fragment,UInt8 flags) {
+void RTMFPFlow::fragmentHandler(UInt64 _stage,UInt64 deltaNAck,PacketReader& fragment,UInt8 flags) {
 	if(_completed)
 		return;
 
@@ -229,18 +225,17 @@ void RTMFPFlow::fragmentHandler(UInt64 _stage,UInt64 deltaNAck,MemoryReader& fra
 	}
 	
 	if(this->_stage < (_stage-deltaNAck)) {
-		map<UInt64,RTMFPFragment*>::iterator it=_fragments.begin();
+		auto it=_fragments.begin();
 		while(it!=_fragments.end()) {
 			if( it->first > _stage) 
 				break;
 			// leave all stages <= _stage
-			MemoryReader reader(it->second->data(),it->second->size());
-			fragmentSortedHandler(it->first,reader,it->second->flags);
-			if(it->second->flags&MESSAGE_END) {
+			PacketReader packet(it->second->data(),it->second->size());
+			fragmentSortedHandler(it->first,packet,it->second.flags);
+			if(it->second.flags&MESSAGE_END) {
 				complete();
 				return; // to prevent a crash bug!! (double fragments deletion)
 			}
-			delete it->second;
 			_fragments.erase(it++);
 		}
 
@@ -249,11 +244,9 @@ void RTMFPFlow::fragmentHandler(UInt64 _stage,UInt64 deltaNAck,MemoryReader& fra
 	
 	if(_stage>nextStage) {
 		// not following _stage, bufferizes the _stage
-		map<UInt64,RTMFPFragment*>::iterator it = _fragments.lower_bound(_stage);
+		auto it = _fragments.lower_bound(_stage);
 		if(it==_fragments.end() || it->first!=_stage) {
-			if(it!=_fragments.begin())
-				--it;
-			_fragments.insert(it,pair<UInt64,RTMFPFragment*>(_stage,new RTMFPFragment(fragment,flags)));
+			_fragments.emplace_hint(it,piecewise_construct,forward_as_tuple(_stage),forward_as_tuple(_poolBuffers,fragment,flags));
 			if(_fragments.size()>100)
 				DEBUG("_fragments.size()=",_fragments.size());
 		} else
@@ -262,24 +255,23 @@ void RTMFPFlow::fragmentHandler(UInt64 _stage,UInt64 deltaNAck,MemoryReader& fra
 		fragmentSortedHandler(nextStage++,fragment,flags);
 		if(flags&MESSAGE_END)
 			complete();
-		map<UInt64,RTMFPFragment*>::iterator it=_fragments.begin();
+		auto it=_fragments.begin();
 		while(it!=_fragments.end()) {
 			if( it->first > nextStage)
 				break;
-			MemoryReader reader(it->second->data(), it->second->size());
-			fragmentSortedHandler(nextStage++,reader,it->second->flags);
-			if(it->second->flags&MESSAGE_END) {
+			PacketReader packet(it->second->data(), it->second->size());
+			fragmentSortedHandler(nextStage++,packet,it->second.flags);
+			if(it->second.flags&MESSAGE_END) {
 				complete();
 				return; // to prevent a crash bug!! (double fragments deletion)
 			}
-			delete it->second;
 			_fragments.erase(it++);
 		}
 
 	}
 }
 
-void RTMFPFlow::fragmentSortedHandler(UInt64 _stage,MemoryReader& fragment,UInt8 flags) {
+void RTMFPFlow::fragmentSortedHandler(UInt64 _stage,PacketReader& fragment,UInt8 flags) {
 	if(_stage<=this->_stage) {
 		ERROR("Stage ",_stage," not sorted on flow ",id);
 		return;
@@ -309,7 +301,7 @@ void RTMFPFlow::fragmentSortedHandler(UInt64 _stage,MemoryReader& fragment,UInt8
 		return;
 	}
 
-	MemoryReader* pMessage(&fragment);
+	PacketReader* pMessage(&fragment);
 	if(flags&MESSAGE_WITH_BEFOREPART){
 		if(!_pPacket) {
 			WARN("A received message tells to have a 'beforepart' and nevertheless partbuffer is empty, certainly some packets were lost");

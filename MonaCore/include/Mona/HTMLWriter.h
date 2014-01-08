@@ -27,7 +27,7 @@ namespace Mona {
 
 class HTMLWriter : public DataWriter, virtual Object {
 public:
-	HTMLWriter() {}
+	HTMLWriter(const PoolBuffers& buffers) : DataWriter(buffers) {}
 
 	void beginObject(const std::string& type = "", bool external = false) {}
 	void endObject() {}
@@ -39,7 +39,7 @@ public:
 
 	void writeDate(const Time& date) {}
 	void writeNumber(double value) {}
-	void writeString(const std::string& value) { writer.writeRaw(value); }
+	void writeString(const std::string& value) { packet.writeRaw(value); }
 	void writeBoolean(bool value) {}
 	void writeNull() {}
 	void writeBytes(const UInt8* data,UInt32 size) {}

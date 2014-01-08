@@ -33,13 +33,11 @@ public:
 	virtual ~RTMPSession();
 
 private:
-	bool			buildPacket(MemoryReader& packet);
-	void			packetHandler(MemoryReader& packet);
-	void			flush() {if (_pStream) _pStream->flush(); Session::flush();}
+	bool			buildPacket(PacketReader& packet);
+	void			packetHandler(PacketReader& packet);
+	void			flush();
 
-	bool			performHandshake(MemoryReader& packet, bool encrypted);
-	void			performComplexHandshake(const UInt8* farPubKey,const UInt8* challengeKey, bool encrypted);
-	void			performSimpleHandshake(MemoryReader& packet);
+	bool			performHandshake(BinaryReader& packet, bool encrypted);
 
 	void			kill();
 
@@ -50,8 +48,7 @@ private:
 	UInt32							_unackBytes;
 
 	std::map<UInt16,RTMPWriter>			_writers;
-	std::shared_ptr<RTMPSender>			_pSender;
-	RTMPWriter							_controller;
+	std::unique_ptr<RTMPWriter>			_pController;
 	RTMPWriter*							_pWriter;
 
 	PoolThread*							_pThread;

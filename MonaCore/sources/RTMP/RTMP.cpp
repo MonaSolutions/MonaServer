@@ -66,39 +66,39 @@ UInt32 RTMP::GetDHPos(const UInt8* data,bool middle) {
 	return pos;
 }
 
-const UInt8* RTMP::ValidateClient(MemoryReader& packet,bool& middleKey) {
+const UInt8* RTMP::ValidateClient(BinaryReader& reader,bool& middleKey) {
 	middleKey=false;
-	UInt32 position = packet.position();
-	if (packet.read32() == 0) {
+	UInt32 position = reader.position();
+	if (reader.read32() == 0) {
 		WARN("This version of player doesn't support validation");
         // TODO fix the return value warning
 		return false;
 	}
 	
-	const UInt8* keyChallenge = ValidateClientScheme(packet, false);
+	const UInt8* keyChallenge = ValidateClientScheme(reader, false);
 	if (!keyChallenge) {
-		keyChallenge = ValidateClientScheme(packet, true);
+		keyChallenge = ValidateClientScheme(reader, true);
 		middleKey = true;
 	}
-	packet.reset(position);
+	reader.reset(position);
 	return keyChallenge;
 }
 
-const UInt8* RTMP::ValidateClientScheme(MemoryReader& packet,bool middleKey) {
-	packet.reset();
-	UInt16 pos = GetDigestPos(packet.current(),middleKey);
+const UInt8* RTMP::ValidateClientScheme(BinaryReader& reader,bool middleKey) {
+	reader.reset();
+	UInt16 pos = GetDigestPos(reader.current(),middleKey);
 
 	UInt8 content[1504];
-	packet.reset(1);
-	memcpy(content, packet.current(), pos-1);
-	packet.reset(pos);
-	memcpy(content+pos-1, packet.current()+HMAC_KEY_SIZE,packet.available()-HMAC_KEY_SIZE);
+	reader.reset(1);
+	memcpy(content, reader.current(), pos-1);
+	reader.reset(pos);
+	memcpy(content+pos-1, reader.current()+HMAC_KEY_SIZE,reader.available()-HMAC_KEY_SIZE);
 
 	UInt8 hash[HMAC_KEY_SIZE];
 	HMAC(EVP_sha256(),FPKey,sizeof(FPKey),content,sizeof(content),hash,NULL);
 
-	if(memcmp(hash,packet.current(),HMAC_KEY_SIZE)==0)
-		return packet.current();
+	if(memcmp(hash,reader.current(),HMAC_KEY_SIZE)==0)
+		return reader.current();
 	return NULL;
 }
 
@@ -127,10 +127,10 @@ void RTMP::WriteDigestAndKey(UInt8* data,const UInt8* challengeKey,bool middleKe
 void RTMP::ComputeRC4Keys(const UInt8* pubKey,UInt32 pubKeySize,const UInt8* farPubKey,UInt32 farPubKeySize,const Buffer& sharedSecret,RC4_KEY& decryptKey,RC4_KEY& encryptKey) {
 
 	UInt8 hash[HMAC_KEY_SIZE];
-	HMAC(EVP_sha256(),&sharedSecret[0],sharedSecret.size(),pubKey,pubKeySize,hash,NULL);
+	HMAC(EVP_sha256(),sharedSecret.data(),sharedSecret.size(),pubKey,pubKeySize,hash,NULL);
 	RC4_set_key(&decryptKey, 16, hash);
 
-	HMAC(EVP_sha256(),&sharedSecret[0],sharedSecret.size(),farPubKey,farPubKeySize,hash,NULL);
+	HMAC(EVP_sha256(),sharedSecret.data(),sharedSecret.size(),farPubKey,farPubKeySize,hash,NULL);
 	RC4_set_key(&encryptKey, 16, hash);
 
 	//bring the keys to correct cursor

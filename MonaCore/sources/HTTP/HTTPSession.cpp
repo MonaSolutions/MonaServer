@@ -26,6 +26,7 @@ This file is a part of Mona.
 #include "Mona/Protocol.h"
 #include "Mona/Exceptions.h"
 #include "Mona/FileSystem.h"
+#include "Mona/HTTP/HTTPPacketBuilding.h"
 
 
 using namespace std;
@@ -55,34 +56,28 @@ void HTTPSession::kill(){
 	WSSession::kill();
 }
 
-bool HTTPSession::buildPacket(MemoryReader& packet) {
+bool HTTPSession::buildPacket(PacketReader& packet) {
 	if(_isWS)
 		return WSSession::buildPacket(packet);
 	// consumes all!
-	_pPacketBuildings.emplace_back(new HTTPPacketBuilding(invoker,packet.current(),packet.available(), _ppBuffer));
-	decode<HTTPPacketBuilding>(_pPacketBuildings.back());
+	shared_ptr<HTTPPacketBuilding> pHTTPPacketBuilding(new HTTPPacketBuilding(invoker,rawBuffer(), _ppBuffer));
+	_packets.emplace_back(pHTTPPacketBuilding->pPacket);
+	decode<HTTPPacketBuilding>(pHTTPPacketBuilding);
 	return true;
 }
 
 const shared_ptr<HTTPPacket>& HTTPSession::packet() {
-	while (!_pPacketBuildings.empty() && _pPacketBuildings.front().unique())
-		_pPacketBuildings.pop_front();
-	if (!_pPacketBuildings.empty()) {
-		_writer.pRequest = _pPacketBuildings.front();
-		_pPacketBuildings.pop_front();
+	while (!_packets.empty() && _packets.front().unique())
+		_packets.pop_front();
+	if (_packets.empty())
 		return _writer.pRequest;
-	}
-	if (_writer.pRequest) {
-		// erase previous parameters
-		for (auto it : _writer.pRequest->parameters)
-			peer.erase(it.first);
-		// erase previous request
-		_writer.pRequest.reset();
-	}
+	_writer.pRequest = _packets.front();
+	_packets.pop_front();
 	return _writer.pRequest;
 }
+	
 
-void HTTPSession::packetHandler(MemoryReader& reader) {
+void HTTPSession::packetHandler(PacketReader& reader) {
 	if(_isWS) {
 		WSSession::packetHandler(reader);
 		return;
@@ -107,7 +102,7 @@ void HTTPSession::packetHandler(MemoryReader& reader) {
 	////  fill peers infos
 	(string&)peer.serverAddress = pPacket->serverAddress;
 	peer.setNumber("HTTPVersion", pPacket->version); // TODO check how is named for AMF
-	for (auto it : pPacket->parameters)
+	for (auto& it : pPacket->parameters)
 		peer.setString(it.first,it.second);
 	(string&)peer.path = pPacket->path;
 	FilePath filePath(peer.path);
@@ -130,8 +125,8 @@ void HTTPSession::packetHandler(MemoryReader& reader) {
 			((string&)protocol().name) = "WebSocket";
 
 			DataWriter& response = _writer.write("101 Switching Protocols", HTTP::CONTENT_ABSENT);
-			BinaryWriter& writer = response.writer;
-			HTTP_BEGIN_HEADER(response)
+			BinaryWriter& writer = response.packet;
+			HTTP_BEGIN_HEADER(writer)
 				HTTP_ADD_HEADER(writer,"Upgrade","WebSocket")
 				HTTP_ADD_HEADER(writer,"Sec-WebSocket-Accept", WS::ComputeKey(pPacket->secWebsocketKey))
 			HTTP_END_HEADER(writer)
@@ -141,7 +136,7 @@ void HTTPSession::packetHandler(MemoryReader& reader) {
 		} // TODO else
 	} else {
 
-		MapReader<MapParameters::Iterator> parameters(reader,pPacket->parameters.begin(),pPacket->parameters.end());
+		MapReader<MapParameters::Iterator> parameters(pPacket->parameters.begin(),pPacket->parameters.end());
 
 		if (!peer.connected) {
 			_options.clear();
@@ -183,10 +178,25 @@ void HTTPSession::packetHandler(MemoryReader& reader) {
 						if (filePath.lastModified() == 0) {
 							if (pPacket->contentType == HTTP::CONTENT_ABSENT)
 								pPacket->contentType = HTTP::ExtensionToMIMEType(filePath.extension(),pPacket->contentSubType);
-							if ((pPacket->contentType == HTTP::CONTENT_VIDEO || pPacket->contentType == HTTP::CONTENT_AUDIO) && filePath.lastModified() == 0)
-								_pListener = invoker.subscribe(ex, peer, filePath.baseName(), _writer);
+							if ((pPacket->contentType == HTTP::CONTENT_VIDEO || pPacket->contentType == HTTP::CONTENT_AUDIO) && filePath.lastModified() == 0) {
+								
+								if(pPacket->contentSubType == "x-flv")
+									_writer.mediaType = MediaContainer::FLV;
+								else if(pPacket->contentSubType == "mpeg")
+									_writer.mediaType = MediaContainer::MPEG_TS;
+								else
+									ex.set(Exception::APPLICATION, "HTTP streaming for a ",pPacket->contentSubType," unsupported");
+								
+								if (!ex) {
+									_pListener = invoker.subscribe(ex, peer, filePath.baseName(), _writer);
+									// write a HTTP header without content-length (data==NULL and size>0) + HEADER
+									MediaContainer::Write(_writer.mediaType,_writer.write("200", pPacket->contentType, pPacket->contentSubType, NULL, 1).packet);
+								}
+								
+							}
+								
 						}
-						if (!_pListener)
+						if (!ex && !_pListener)
 							_writer.writeFile(filePath); // HTTP get
 					}
 				}
@@ -212,6 +222,15 @@ void HTTPSession::packetHandler(MemoryReader& reader) {
 		kill();
 	else
 		_writer.timeout.update();
+
+	// erase request, we are in a pull mode (response just if request before)
+	if (_writer.pRequest) {
+		// erase previous parameters
+		for (auto& it : _writer.pRequest->parameters)
+			peer.erase(it.first);
+		// erase previous request
+		_writer.pRequest.reset();
+	}
 }
 
 void HTTPSession::manage() {
@@ -233,19 +252,19 @@ void HTTPSession::processOptions(Exception& ex,const shared_ptr<HTTPPacket>& pPa
 	}
 
 	DataWriter& response = _writer.write("200 OK", HTTP::CONTENT_ABSENT);
-	BinaryWriter& writer = response.writer;
+	BinaryWriter& writer = response.packet;
 
 	// TODO determine the protocol (https/http)
 	String::Format(_buffer, "http://", peer.serverAddress);
 
-	HTTP_BEGIN_HEADER(response)
+	HTTP_BEGIN_HEADER(writer)
 		HTTP_ADD_HEADER(writer,"Access-Control-Allow-Origin", _buffer)
 		HTTP_ADD_HEADER(writer,"Access-Control-Allow-Methods", "GET, HEAD, PUT, PATH, POST, OPTIONS")
 		HTTP_ADD_HEADER(writer,"Access-Control-Allow-Headers", "Content-Type")
 	HTTP_END_HEADER(writer)
 }
 
-void HTTPSession::processSOAPfunction(Exception& ex, MemoryReader& packet) {
+void HTTPSession::processSOAPfunction(Exception& ex, PacketReader& packet) {
 	/*
 	// Get function name
 	SOAPReader reader(packet);

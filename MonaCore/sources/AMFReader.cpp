@@ -39,7 +39,7 @@ public:
 };
 
 
-AMFReader::AMFReader(MemoryReader& reader) : DataReader(reader),_amf3(0),_amf0Reset(0),_referencing(true) {
+AMFReader::AMFReader(PacketReader& packet) : DataReader(packet),_amf3(0),_amf0Reset(0),_referencing(true) {
 
 }
 
@@ -66,7 +66,7 @@ void AMFReader::reset() {
 void AMFReader::readNull() {
 	Type type = followingType();
 	if(type==NIL) {
-		reader.next(1);
+		packet.next(1);
 		return;
 	}
 	ERROR("Type ",Format<UInt8>("%.2x",(UInt8)type)," is not a AMF Null type");
@@ -75,7 +75,7 @@ void AMFReader::readNull() {
 double AMFReader::readNumber() {
 	Type type = followingType();
 	if(type==NIL) {
-		reader.next(1);
+		packet.next(1);
 		return 0;
 	}
 	if(type!=NUMBER) {
@@ -83,21 +83,21 @@ double AMFReader::readNumber() {
 		return 0;
 	}
 	UInt8 byte = current();
-	reader.next(1);
+	packet.next(1);
 	if(byte==AMF3_INTEGER) {
 			// Forced in AMF3 here!
-		UInt32 value = reader.read7BitValue();
+		UInt32 value = packet.read7BitValue();
 		if(value>AMF_MAX_INTEGER)
 			value-=(1<<29);
 		return value;
 	}
-	return reader.readNumber<double>();
+	return packet.readNumber<double>();
 }
 
 bool AMFReader::readBoolean() {
 	Type type = followingType();
 	if(type==NIL) {
-		reader.next(1);
+		packet.next(1);
 		return false;
 	}
 	if(type!=BOOLEAN) {
@@ -105,29 +105,29 @@ bool AMFReader::readBoolean() {
 		return false;
 	}
 	if(_amf3)
-		return reader.read8()== AMF3_FALSE ? false : true;
-	reader.next(1);
-	return reader.read8()==0x00 ? false : true;
+		return packet.read8()== AMF3_FALSE ? false : true;
+	packet.next(1);
+	return packet.read8()==0x00 ? false : true;
 }
 
 const UInt8* AMFReader::readBytes(UInt32& size) {
 	Type type = followingType();
 	if(type==NIL) {
-		reader.next(1);
+		packet.next(1);
 		return NULL;
 	}
 	if(type!=BYTES) {
 		ERROR("Type ",Format<UInt8>("%.2x",(UInt8)type)," is not a AMF ByteArray type");
 		return NULL;
 	}
-	reader.next(1);
+	packet.next(1);
 
 	// Forced in AMF3 here!
-	UInt32 reference = reader.position();
-	size = reader.read7BitValue();
+	UInt32 reference = packet.position();
+	size = packet.read7BitValue();
 	bool isInline = size&0x01;
 	size >>= 1;
-	UInt32 reset = reader.position()+size;
+	UInt32 reset = packet.position()+size;
 	if(isInline) {
 		if(_referencing)
 			_references.push_back(reference);
@@ -137,19 +137,19 @@ const UInt8* AMFReader::readBytes(UInt32& size) {
 			return NULL;
 		}
 		reset -= size;
-		reader.reset(_references[size]);
-		size = reader.read7BitValue()>>1;
+		packet.reset(_references[size]);
+		size = packet.read7BitValue()>>1;
 		reset+=size;
 	}
-	const UInt8* result = reader.current();
-	reader.reset(reset);
+	const UInt8* result = packet.current();
+	packet.reset(reset);
 	return result;
 }
 
 Time& AMFReader::readTime(Time& time) {
 	Type type = followingType();
 	if(type==NIL) {
-		reader.next(1);
+		packet.next(1);
 		return time.update(0);
 	}
 	if(type!=TIME) {
@@ -157,38 +157,38 @@ Time& AMFReader::readTime(Time& time) {
 		return time.update(0);
 	}
 
-	reader.next(1);
+	packet.next(1);
 	double result = 0;
 	if (_amf3) {
-		UInt32 flags = reader.read7BitValue();
-		UInt32 reference = reader.position();
+		UInt32 flags = packet.read7BitValue();
+		UInt32 reference = packet.position();
 		bool isInline = flags & 0x01;
 		if (isInline) {
 			if (_referencing)
 				_references.push_back(reference);
-			result = reader.readNumber<double>();
+			result = packet.readNumber<double>();
 		} else {
 			flags >>= 1;
 			if (flags > _references.size()) {
 				ERROR("AMF3 reference not found")
 				return time.update(0);
 			}
-			UInt32 reset = reader.position();
-			reader.reset(_references[flags]);
-			result = reader.readNumber<double>();
-			reader.reset(reset);
+			UInt32 reset = packet.position();
+			packet.reset(_references[flags]);
+			result = packet.readNumber<double>();
+			packet.reset(reset);
 		}
 		return time.update((Int64)result * 1000);
 	}
-	result = reader.readNumber<double>();
-	reader.next(2); // Timezone, useless
+	result = packet.readNumber<double>();
+	packet.next(2); // Timezone, useless
 	return time.update((Int64)result * 1000);
 }
 
 string& AMFReader::readString(string& value) {
 	Type type = followingType();
 	if(type==NIL) {
-		reader.next(1);
+		packet.next(1);
 		value="";
 		return value;
 	}
@@ -196,18 +196,18 @@ string& AMFReader::readString(string& value) {
 		ERROR("Type ",Format<UInt8>("%.2x",(UInt8)type)," is not a AMF String type");
 		return value;
 	}
-	reader.next(1);
+	packet.next(1);
 	if(_amf3)
 		return readText(value);
 	if(current()==AMF_LONG_STRING)
-		return reader.readRaw(reader.read32(), value);
-	return reader.readString16(value);
+		return packet.readRaw(packet.read32(), value);
+	return packet.readString16(value);
 }
 
 bool AMFReader::readMap(UInt32& size,bool& weakKeys) {
 	Type type = followingType();
 	if(type==NIL) {
-		reader.next(1);
+		packet.next(1);
 		return false;
 	}
 	if(type!=MAP) {
@@ -216,9 +216,9 @@ bool AMFReader::readMap(UInt32& size,bool& weakKeys) {
 	}
 
 	// AMF3
-	reader.next(1); // marker
-	UInt32 reference = reader.position();
-	UInt32 count = reader.read7BitValue();
+	packet.next(1); // marker
+	UInt32 reference = packet.position();
+	UInt32 count = packet.read7BitValue();
 	bool isInline = count&0x01;
 	count >>= 1;
 
@@ -236,12 +236,12 @@ bool AMFReader::readMap(UInt32& size,bool& weakKeys) {
 			_references.push_back(reference);
 		pObjectDef->count = size = count;
 	} else {
-		pObjectDef->reset = reader.position();
-		reader.reset(_references[count]);
-		pObjectDef->count = size = reader.read7BitValue()>>1;
+		pObjectDef->reset = packet.position();
+		packet.reset(_references[count]);
+		pObjectDef->count = size = packet.read7BitValue()>>1;
 	}
 	pObjectDef->count *= 2;
-	weakKeys = reader.read8()&0x01;
+	weakKeys = packet.read8()&0x01;
 
 	return true;
 }
@@ -262,7 +262,7 @@ AMFReader::Type AMFReader::readKey() {
 
 	if(objectDef.count==0) {
 		if(objectDef.reset)
-			reader.reset(objectDef.reset);
+			packet.reset(objectDef.reset);
 		delete &objectDef;
 		_objectDefs.pop_back();
 		return END;
@@ -274,7 +274,7 @@ AMFReader::Type AMFReader::readKey() {
 bool AMFReader::readArray(UInt32& size) {
 	Type type = followingType();
 	if(type==NIL) {
-		reader.next(1);
+		packet.next(1);
 		return false;
 	}
 	if(type!=ARRAY) {
@@ -287,20 +287,20 @@ bool AMFReader::readArray(UInt32& size) {
 		_objectDefs.push_back(pObjectDef);
 		pObjectDef->dynamic=true;
 		if(_referencing)
-			_amf0References.push_back(reader.position());
+			_amf0References.push_back(packet.position());
 		if(_amf0Reset)
 			pObjectDef->reset = _amf0Reset;
-		reader.next(1);
-		size = reader.read32();
+		packet.next(1);
+		size = packet.read32();
 		if(pObjectDef->arrayType==AMF_STRICT_ARRAY)
 			pObjectDef->count = size;
 		return true;
 	}
 	
 	// AMF3
-	reader.next(1); // marker
-	UInt32 reference = reader.position();
-	UInt32 count = reader.read7BitValue();
+	packet.next(1); // marker
+	UInt32 reference = packet.position();
+	UInt32 count = packet.read7BitValue();
 	bool isInline = count&0x01;
 	count >>= 1;
 
@@ -318,9 +318,9 @@ bool AMFReader::readArray(UInt32& size) {
 			_references.push_back(reference);
 		 pObjectDef->count = size = count;
 	} else {
-		pObjectDef->reset = reader.position();
-		reader.reset(_references[size]);
-		pObjectDef->count = size = reader.read7BitValue()>>1;
+		pObjectDef->reset = packet.position();
+		packet.reset(_references[size]);
+		pObjectDef->count = size = packet.read7BitValue()>>1;
 	}
 
 	return true;
@@ -330,7 +330,7 @@ bool AMFReader::readArray(UInt32& size) {
 bool AMFReader::readObject(string& type,bool& external) {
 	Type marker = followingType();
 	if(marker==NIL) {
-		reader.next(1);
+		packet.next(1);
 		return false;
 	}
 	if(marker!=OBJECT) {
@@ -341,12 +341,12 @@ bool AMFReader::readObject(string& type,bool& external) {
 	external = false;
 	if(!_amf3) {
 		if(_referencing)
-			_amf0References.push_back(reader.position());
+			_amf0References.push_back(packet.position());
 		if(current()==AMF_BEGIN_TYPED_OBJECT) {
-			reader.next(1);
+			packet.next(1);
 			readText(type);
 		} else
-			reader.next(1);
+			packet.next(1);
 		ObjectDef* pObjectDef = new ObjectDef(_amf3);
 		_objectDefs.push_back(pObjectDef);
 		if(_amf0Reset)
@@ -356,9 +356,9 @@ bool AMFReader::readObject(string& type,bool& external) {
 	}
 	
 	// AMF3
-	reader.next(1); // marker
-	UInt32 reference = reader.position();
-	UInt32 flags = reader.read7BitValue();
+	packet.next(1); // marker
+	UInt32 reference = packet.position();
+	UInt32 flags = packet.read7BitValue();
 	bool isInline = flags&0x01;
 	flags >>= 1;
 
@@ -374,9 +374,9 @@ bool AMFReader::readObject(string& type,bool& external) {
 		if(_referencing)
 			_references.push_back(reference);
 	} else {
-		pObjectDef->reset = reader.position();
-		reader.reset(_references[flags]);
-		flags = reader.read7BitValue()>>1;
+		pObjectDef->reset = packet.position();
+		packet.reset(_references[flags]);
+		flags = packet.read7BitValue()>>1;
 	}
 
 	// classdef reading
@@ -387,9 +387,9 @@ bool AMFReader::readObject(string& type,bool& external) {
 		 _classDefReferences.push_back(reference);
 		readText(type);
 	} else if(flags<=_classDefReferences.size()) {
-		reset = reader.position();
-		reader.reset(_classDefReferences[flags]);
-		flags = reader.read7BitValue()>>2;
+		reset = packet.position();
+		packet.reset(_classDefReferences[flags]);
+		flags = packet.read7BitValue()>>2;
 		readText(type);
 	} else {
 		ERROR("AMF3 classDef reference not found")
@@ -409,7 +409,7 @@ bool AMFReader::readObject(string& type,bool& external) {
 	}
 
 	if(reset>0)
- 		reader.reset(reset); // reset classdef
+ 		packet.reset(reset); // reset classdef
 
 	return true;
 }
@@ -457,12 +457,12 @@ AMFReader::Type AMFReader::readItem(string& name) {
 
 	if(end) {
 		if(!_amf3 && objectDef.arrayType!=AMF_STRICT_ARRAY) {
-			UInt8 marker = reader.read8();
+			UInt8 marker = packet.read8();
 			if(marker!=AMF_END_OBJECT)
 				ERROR("AMF0 end marker object absent");
 		}
 		if(objectDef.reset>0)
-			reader.reset(objectDef.reset);
+			packet.reset(objectDef.reset);
 		delete &objectDef;
 		_objectDefs.pop_back();
 		return END;
@@ -474,31 +474,31 @@ AMFReader::Type AMFReader::readItem(string& name) {
 
 string& AMFReader::readText(string& value) {
 	if(!_amf3)
-		return reader.readString16(value);
+		return packet.readString16(value);
 	
-	UInt32 reference = reader.position();
-	UInt32 size = reader.read7BitValue();
+	UInt32 reference = packet.position();
+	UInt32 size = packet.read7BitValue();
 	bool isInline = size&0x01;
 	size >>= 1;
 	if(isInline) {
-		if (!reader.readRaw(size, value).empty())
+		if (!packet.readRaw(size, value).empty())
 			_stringReferences.push_back(reference);
 	} else {
 		if(size>_stringReferences.size()) {
 			ERROR("AMF3 string reference not found")
 			return value;
 		}
-		UInt32 reset = reader.position();
-		reader.reset(_stringReferences[size]);
-		reader.readRaw(reader.read7BitValue()>>1,value);
-		reader.reset(reset);
+		UInt32 reset = packet.position();
+		packet.reset(_stringReferences[size]);
+		packet.readRaw(packet.read7BitValue()>>1,value);
+		packet.reset(reset);
 	}
 	return value;
 }
 
 
 AMFReader::Type AMFReader::followingType() {
-	if(_amf3!=reader.position()) {
+	if(_amf3!=packet.position()) {
 		if(_objectDefs.size()>0)
 			_amf3=_objectDefs.back()->amf3;
 		else
@@ -509,8 +509,8 @@ AMFReader::Type AMFReader::followingType() {
 	
 	UInt8 type = current();
 	if(!_amf3 && type==AMF_AVMPLUS_OBJECT) {
-		reader.next(1);
-		_amf3=reader.position();
+		packet.next(1);
+		_amf3=packet.position();
 		if(!available())
 			return END;
 		type = current();
@@ -541,7 +541,7 @@ AMFReader::Type AMFReader::followingType() {
 				return BYTES;
 			default:
 				ERROR("Unknown AMF3 type ",Format<UInt8>("%.2x",(UInt8)type))
-				reader.next(1);
+				packet.next(1);
 				return followingType();
 		}
 	}
@@ -565,27 +565,27 @@ AMFReader::Type AMFReader::followingType() {
 		case AMF_BEGIN_TYPED_OBJECT:
 			return OBJECT;
 		case AMF_REFERENCE: {
-			reader.next(1);
-			UInt16 reference = reader.read16();
+			packet.next(1);
+			UInt16 reference = packet.read16();
 			if(reference>_amf0References.size()) {
 				ERROR("AMF0 reference not found")
 				return followingType();
 			}
-			_amf0Reset = reader.position();
-			reader.reset(_amf0References[reference]);
+			_amf0Reset = packet.position();
+			packet.reset(_amf0References[reference]);
 			return followingType();
 		}
 		case AMF_END_OBJECT:
 			ERROR("AMF end object type without begin object type before")
-			reader.next(1);
+			packet.next(1);
 			return followingType();
 		case AMF_UNSUPPORTED:
 			WARN("Unsupported type in AMF format")
-			reader.next(1);
+			packet.next(1);
 			return followingType();
 		default:
 			ERROR("Unknown AMF type ",Format<UInt8>("%.2x",(UInt8)type))
-			reader.next(1);
+			packet.next(1);
 			return followingType();
 	}
 }

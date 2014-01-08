@@ -20,8 +20,7 @@ This file is a part of Mona.
 #pragma once
 
 #include "Mona/Mona.h"
-#include "Mona/BinaryWriter.h"
-#include "Mona/BinaryStream.h"
+#include "Mona/PacketWriter.h"
 #include "Mona/Time.h"
 
 namespace Mona {
@@ -63,46 +62,21 @@ public:
 	void		 writeBooleanProperty(const std::string& name,bool value);
 	void		 writeStringProperty(const std::string& name,const std::string& value);
 		
-	BinaryWriter writer;
-	BinaryStream stream;
+	PacketWriter packet;
 
     static DataWriterNull Null;
 protected:
-	DataWriter(): writer(stream),_lastReference(0){}
+	DataWriter(const PoolBuffers& poolBuffers): packet(poolBuffers),_lastReference(0){}
+	DataWriter(): NullableObject(true),_lastReference(0){} // Null
 
-	UInt32	_lastReference;
+	UInt32					_lastReference;
+
 };
-
-
-inline void	DataWriter::writeNullProperty(const std::string& name) {
-	writePropertyName(name);
-	writeNull();
-}
-inline void	DataWriter::writeDateProperty(const std::string& name,const Time& date) {
-	writePropertyName(name);
-	writeDate(date);
-}
-inline void	DataWriter::writeNumberProperty(const std::string& name,double value) {
-	writePropertyName(name);
-	writeNumber(value);
-}
-inline void	DataWriter::writeBooleanProperty(const std::string& name,bool value) {
-	writePropertyName(name);
-	writeBoolean(value);
-}
-inline void	DataWriter::writeStringProperty(const std::string& name,const std::string& value) {
-	writePropertyName(name);
-	writeString(value);
-}
-inline void	DataWriter::clear() {
-	_lastReference=0;
-	stream.resetWriting(0);
-}
 
 
 class DataWriterNull : public DataWriter {
 public:
-	DataWriterNull() : NullableObject(true) { stream.setstate(std::ios_base::eofbit); }
+	DataWriterNull() : NullableObject(true),DataWriter() {}
 
 private:
     void beginObject(const std::string& type="",bool external=false){}

@@ -38,11 +38,11 @@ public:
 	bool					send(Exception& ex, const UInt8* data, UInt32 size);
 
 	template<typename SenderType>
-	void send(Exception& ex, std::shared_ptr<SenderType>& pSender) {
+	void send(Exception& ex,const std::shared_ptr<SenderType>& pSender) {
 		StreamSocket::send<SenderType>(ex, pSender);
 	}
 	template<typename SenderType>
-	PoolThread*	send(Exception& ex, std::shared_ptr<SenderType>& pSender, PoolThread* pThread) {
+	PoolThread*	send(Exception& ex,const std::shared_ptr<SenderType>& pSender, PoolThread* pThread) {
 		return StreamSocket::send<SenderType>(ex, pSender, pThread);
 	}
 
@@ -50,6 +50,11 @@ public:
 
 	const SocketAddress&	address();
 	const SocketAddress&	peerAddress();
+
+	Socket&					socket() { return *this; }
+
+protected:
+	PoolBuffer&				rawBuffer() { return _pBuffer; }
 
 private:
 	virtual UInt32			onReception(const UInt8* data,UInt32 size) = 0;

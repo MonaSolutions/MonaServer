@@ -44,8 +44,8 @@ UInt16 ServerConnection::port(const string& protocol) {
 }
 
 void ServerConnection::sendPublicAddress() {
-	ServerMessage message;
-	BinaryWriter& writer = message.writer;
+	ServerMessage message(socket().poolBuffers());
+	BinaryWriter& writer = message.packet;
 	writer.writeString(_handler.host());
 	writer.write8(_handler.ports().size());
 	map<string, UInt16>::const_iterator it0;
@@ -98,22 +98,23 @@ void ServerConnection::send(const string& handler,ServerMessage& message) {
 	UInt16 shift = handlerName.empty() ? Util::Get7BitValueSize(handlerRef) : handlerName.size();
 	shift = 300-(shift+5);
 
-	BinaryStream& stream = message.stream;
-	BinaryWriter& writer = message.writer;
-	stream.resetReading(shift);
-	UInt32 size = stream.size();
-	stream.resetWriting(shift);
+	PacketWriter& packet = message.packet;
+
+	UInt32 size = packet.size()-shift;
+
+	BinaryWriter writer(packet, shift);
+
 	writer.write32(size-4);
 	writer.writeString8(handlerName);
 	if(writeRef)
 		writer.write7BitEncoded(handlerRef);
 	else if(handlerName.empty())
 		writer.write8(0);
-	stream.resetWriting(size+shift);
+	writer.next(size);
 
-	DUMP_INTERN(stream.data() + 4, stream.size() - 4, "To ", address.toString()," server");
+	DUMP_INTERN(writer.data() + 4, writer.size() - 4, "To ", address.toString()," server");
 	Exception ex;
-	EXCEPTION_TO_LOG(TCPClient::send(ex,stream.data(),stream.size()),"Server ",address.toString());
+	EXCEPTION_TO_LOG(TCPClient::send(ex,writer.data(),writer.size()),"Server ",address.toString());
 }
 
 
@@ -121,23 +122,23 @@ UInt32 ServerConnection::onReception(const UInt8* data,UInt32 size) {
 	if (_size == 0 && size < 4)
 		return size;
 
-	MemoryReader reader(data, size);
+	PacketReader packet(data, size);
 	if(_size==0)
-		_size = reader.read32();
-	if (reader.available() < _size)
+		_size = packet.read32();
+	if (packet.available() < _size)
 		return size;
 
-	UInt32 rest = reader.available() - _size;
-	reader.shrink(_size);
+	UInt32 rest = packet.available() - _size;
+	packet.shrink(_size);
 	
-	DUMP_INTERN(reader, "From ", address.toString(), " server");
+	DUMP_INTERN(packet.current(),packet.available(), "From ", address.toString(), " server");
 
 	string handler;
-	UInt8 handlerSize = reader.read8();
+	UInt8 handlerSize = packet.read8();
 	if(handlerSize)
-		_receivingRefs[_receivingRefs.size() + 1] = reader.readRaw(handlerSize, handler);
+		_receivingRefs[_receivingRefs.size() + 1] = packet.readRaw(handlerSize, handler);
 	else {
-		UInt32 ref = reader.read7BitEncoded();
+		UInt32 ref = packet.read7BitEncoded();
 		if(ref>0) {
 			map<UInt32, string>::const_iterator it = _receivingRefs.find(ref);
 			if(it==_receivingRefs.end())
@@ -149,21 +150,21 @@ UInt32 ServerConnection::onReception(const UInt8* data,UInt32 size) {
 
 	_size=0;
 	if(handler.empty()) {
-		reader.readString((string&)host);
+		packet.readString((string&)host);
 
 		if(host.empty())
 			((string&)host) = address.host().toString();
-		UInt8 ports = reader.read8();
+		UInt8 ports = packet.read8();
 		string protocol;
 		while(ports>0) {
-			reader.readString(protocol);
-			_ports[protocol] = reader.read16();
+			packet.readString(protocol);
+			_ports[protocol] = packet.read16();
 			--ports;
 		}
-		while(reader.available()) {
+		while(packet.available()) {
 			string key,value;
-			reader.readString(key);
-			reader.readString(value);
+			packet.readString(key);
+			packet.readString(value);
 			setString(key,value);
 		}
 		if(!_connected) {
@@ -172,7 +173,7 @@ UInt32 ServerConnection::onReception(const UInt8* data,UInt32 size) {
 			_handler.connection(*this);
 		}
 	} else
-		_handler.message(*this,handler,reader);
+		_handler.message(*this,handler,packet);
 
 	return rest;
 }

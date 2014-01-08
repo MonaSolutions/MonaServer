@@ -68,7 +68,7 @@ void TCPClient::onReadable(Exception& ex) {
 	}
 
 	if(available>(_pBuffer->size() - _rest))
-		_pBuffer->resize(available);
+		_pBuffer->resize(_rest+available,true);
 
 
 	int received = receiveBytes(ex,_pBuffer->data()+_rest, available);
@@ -80,6 +80,7 @@ void TCPClient::onReadable(Exception& ex) {
 		return;
 	}
 	_rest += received;
+	_pBuffer->resize(_rest,true);
 
 	while (_rest > 0) {
 
@@ -89,9 +90,14 @@ void TCPClient::onReadable(Exception& ex) {
 			rest = _rest;
 
 		// rest <= _rest, has consumed 0 or few bytes
-		if (rest>0 && (_rest != rest)) // has consumed few bytes (but not all)
-			memcpy(_pBuffer->data(), _pBuffer->data() + (_rest - rest), rest); // move to the beginning
-		
+		if (rest > 0) {
+			if (_rest != rest) { // has consumed few bytes (but not all)
+				if (!_pBuffer.empty() && _pBuffer->size()>=_rest) // To prevent the case where the buffer has been manipulated during onReception call, if it happens, ignore copy!
+					memcpy(_pBuffer->data(), _pBuffer->data() + (_rest - rest), rest); // move to the beginning
+			}
+		} else // has consumed all
+			_pBuffer.release(); // release the buffer!
+
 		if (_rest == rest) // no new bytes consumption, wait next reception
 			break;
 
@@ -113,7 +119,7 @@ void TCPClient::disconnect() {
 	shutdown(ex,Socket::RECV);
 	close();
 	_rest = 0;
-	_pBuffer->clear();
+	_pBuffer.release();
 	_address.clear();
 	_peerAddress.clear();
 	onDisconnection();

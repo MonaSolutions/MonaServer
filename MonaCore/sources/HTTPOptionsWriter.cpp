@@ -34,7 +34,6 @@ void HTTPOptionsWriter::clear() {
 	(bool&)indexDirectory = true;
 	((string&)index).clear();
 	(UInt16&)timeout = HTTP::DefaultTimeout;
-	DataWriter::clear();
 }
 
 

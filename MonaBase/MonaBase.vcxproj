@@ -112,6 +112,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="sources\Application.cpp" />
+    <ClCompile Include="sources\Buffer.cpp" />
     <ClCompile Include="sources\Database.cpp" />
     <ClCompile Include="sources\Exceptions.cpp" />
     <ClCompile Include="sources\FilePath.cpp" />
@@ -126,15 +127,7 @@
     <ClCompile Include="sources\Logger.cpp" />
     <ClCompile Include="sources\Mona.cpp" />
     <ClCompile Include="sources\BinaryReader.cpp" />
-    <ClCompile Include="sources\BinaryStream.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug|Win32'">false</ExcludedFromBuild>
-    </ClCompile>
     <ClCompile Include="sources\BinaryWriter.cpp" />
-    <ClCompile Include="sources\MemoryReader.cpp" />
-    <ClCompile Include="sources\MemoryStream.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug|Win32'">false</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="sources\MemoryWriter.cpp" />
     <ClCompile Include="sources\AttemptCounter.cpp" />
     <ClCompile Include="sources\DiffieHellman.cpp" />
     <ClCompile Include="sources\Logs.cpp" />
@@ -172,6 +165,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Mona\Binary.h" />
+    <ClInclude Include="include\Mona\Buffer.h" />
     <ClInclude Include="include\Mona\Database.h" />
     <ClInclude Include="include\Mona\DatagramSocket.h" />
     <ClInclude Include="include\Mona\FilePath.h" />
@@ -185,15 +179,13 @@
     <ClInclude Include="include\Mona\HostEntry.h" />
     <ClInclude Include="include\Mona\IPAddress.h" />
     <ClInclude Include="include\Mona\Net.h" />
+    <ClInclude Include="include\Mona\PacketReader.h" />
+    <ClInclude Include="include\Mona\PacketWriter.h" />
     <ClInclude Include="include\Mona\Parameters.h" />
     <ClInclude Include="include\Mona\Application.h" />
     <ClInclude Include="include\Mona\Mona.h" />
     <ClInclude Include="include\Mona\BinaryReader.h" />
-    <ClInclude Include="include\Mona\BinaryStream.h" />
     <ClInclude Include="include\Mona\BinaryWriter.h" />
-    <ClInclude Include="include\Mona\MemoryReader.h" />
-    <ClInclude Include="include\Mona\MemoryStream.h" />
-    <ClInclude Include="include\Mona\MemoryWriter.h" />
     <ClInclude Include="include\Mona\AttemptCounter.h" />
     <ClInclude Include="include\Mona\DiffieHellman.h" />
     <ClInclude Include="include\Mona\Entities.h" />

@@ -49,16 +49,21 @@ public:
 	const SocketAddress&	address();
 	const SocketAddress&	peerAddress();
 
+	Socket&					socket() { return *this; }
+
+protected:
+	PoolBuffer&				rawBuffer() { return _pBuffer; }
+
 private:
 	virtual void			onReception(const UInt8* data, UInt32 size, const SocketAddress& address) = 0;
 	void					onReadable(Exception& ex);
 
-	PoolBuffer				_pBuffer;
 	bool					_allowBroadcast;
 	bool					_broadcasting;
 
 	SocketAddress			_address;
 	SocketAddress			_peerAddress;
+	PoolBuffer				_pBuffer;
 };
 
 

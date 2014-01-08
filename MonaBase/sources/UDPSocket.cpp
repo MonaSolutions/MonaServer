@@ -59,15 +59,14 @@ void UDPSocket::onReadable(Exception& ex) {
 	if(ex || available==0)
 		return;
 
-	if (available>_pBuffer->size())
-		_pBuffer->resize(available);
-
 	SocketAddress address;
+	_pBuffer->resize(available, false);
 	int size = receiveFrom(ex,_pBuffer->data(), available, address);
-	if (ex)
-		return;
-	_pBuffer->resize(size);
-	onReception(_pBuffer->data(),size,address);
+	if (!ex) {
+		_pBuffer->resize(size, true);
+		onReception(_pBuffer->data(),size,address);
+		_pBuffer.release();
+	}
 }
 
 void UDPSocket::close() {
@@ -75,7 +74,6 @@ void UDPSocket::close() {
 	_broadcasting = false;
 	_address.clear();
 	_peerAddress.clear();
-	_pBuffer->clear();
 }
 
 bool UDPSocket::bind(Exception& ex,const SocketAddress& address) {

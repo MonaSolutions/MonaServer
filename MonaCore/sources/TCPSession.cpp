@@ -25,7 +25,7 @@ using namespace std;
 
 namespace Mona {
 
-TCPSession::TCPSession(const SocketAddress& peerAddress, Protocol& protocol, Invoker& invoker) : TCPClient(peerAddress,invoker.sockets), Session(protocol, invoker),_consumed(false) {
+TCPSession::TCPSession(const SocketAddress& peerAddress, Protocol& protocol, Invoker& invoker) : TCPClient(peerAddress,invoker.sockets), Session(protocol, invoker),_consumed(false),_decoding(false) {
 	((SocketAddress&)peer.address).set(peerAddress);
 }
 
@@ -36,50 +36,39 @@ void TCPSession::onError(const string& error) {
 UInt32 TCPSession::onReception(const UInt8* data, UInt32 size) {
 	if (died)
 		return 0;
-	MemoryReader packet(data, size);
+	PacketReader packet(data, size);
+	_decoding = false;
 	if (!buildPacket(packet)) {
-		if (_pDecoding)
-			_pDecoding.reset();
-		if (_pLastDecoding) {
-			Session::decode<Decoding>(_pLastDecoding); // flush
-			_pLastDecoding.reset();
-		}
-		if (_consumed) {
-			Session::flush(); // flush
+		if (!_decoding && _consumed) {
+			flush(); // flush
 			_consumed = false;
 		}
 		return size;
 	}
 
-	UInt32 length = packet.position() + packet.available();
-	UInt32 rest = size - length;
-
-	if (_pLastDecoding) {
-		_pLastDecoding->_noFlush = true;
-		Session::decode<Decoding>(_pLastDecoding);
-		_pLastDecoding.reset();
-	}
-
-	if (_pDecoding) {
-		if (rest == 0)
-			Session::decode<Decoding>(_pDecoding); // flush
-		else
-			_pLastDecoding = _pDecoding;
-		_pDecoding.reset();
-	} else {
-		UInt32 pos = packet.position();
-		packet.reset();
-		if (!dumpJustInDebug || (dumpJustInDebug && Logs::GetLevel() >= 7))
-			DUMP(packet, "Request from ", peer.address.toString());
-		packet.next(pos);
-		packetHandler(packet);
+	UInt32 rest = size - packet.position() - packet.available();
+	if (!_decoding) {
+		receiveWithoutFlush(packet);
 		if (rest == 0) {
-			Session::flush(); // flush
+			flush(); // flush
 			_consumed = false;
 		} else
 			_consumed = true;
 	}
 	return rest;
+}
+
+void TCPSession::receive(PacketReader& packet) {
+	Session::receiveWithoutFlush(packet);
+	bool empty = _decodings.empty();
+	while (!_decodings.empty() && _decodings.front().unique())
+		_decodings.pop_front();
+	if (!_decodings.empty())
+		_decodings.pop_front();
+	if (!empty && _decodings.empty()) {
+		flush();
+		_consumed = true;
+	}
 }
 
 

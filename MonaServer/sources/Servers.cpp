@@ -26,7 +26,7 @@ using namespace Mona;
 
 
 
-Servers::Servers(Mona::UInt16 port, ServerHandler& handler, const SocketManager& manager, const string& targets) : TCPServer(manager), _port(port), _handler(handler), _manageTimes(1) {
+Servers::Servers(Mona::UInt16 port, ServerHandler& handler, const SocketManager& manager, const string& targets) : Broadcaster(manager.poolBuffers),targets(manager.poolBuffers),initiators(manager.poolBuffers),TCPServer(manager), _port(port), _handler(handler), _manageTimes(1) {
 	if (port > 0)
 		NOTE("Servers incoming connection enabled on port ", port)
 	else if (!_targets.empty())
@@ -46,7 +46,7 @@ Servers::Servers(Mona::UInt16 port, ServerHandler& handler, const SocketManager&
 		bool success;
 		EXCEPTION_TO_LOG(success=address.set(ex, target), "Servers ", target, " target");
 		if (success) {
-			auto it = _targets.insert(new ServerConnection(address, manager, _handler, *this));
+			auto& it = _targets.insert(new ServerConnection(address, manager, _handler, *this));
 			if (!query.empty())
 				Util::UnpackQuery(query, **it.first);
 		}

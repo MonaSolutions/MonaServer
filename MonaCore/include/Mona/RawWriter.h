@@ -27,6 +27,9 @@ namespace Mona {
 
 class RawWriter : public DataWriter, virtual Object {
 public:
+
+	RawWriter(const PoolBuffers& buffers) : DataWriter(buffers) {}
+
 	void beginObject(const std::string& type = "", bool external = false) {}
 	void endObject() {}
 
@@ -37,10 +40,10 @@ public:
 
 	void writeDate(const Time& date) { writeString(date.toString(Time::SORTABLE_FORMAT,_buffer)); }
 	void writeNumber(double value) { String::Format(_buffer, value); writeString(_buffer); }
-	void writeString(const std::string& value) { writer.writeRaw(value); }
-	void writeBoolean(bool value) { writer.writeRaw( value ? "true" : "false"); }
-	void writeNull() { writer.writeRaw("null"); }
-	void writeBytes(const UInt8* data, UInt32 size) { writer.writeRaw(data, size); }
+	void writeString(const std::string& value) { packet.writeRaw(value); }
+	void writeBoolean(bool value) { packet.writeRaw( value ? "true" : "false"); }
+	void writeNull() { packet.writeRaw("null"); }
+	void writeBytes(const UInt8* data, UInt32 size) { packet.writeRaw(data, size); }
 
 private:
 	std::string _buffer;

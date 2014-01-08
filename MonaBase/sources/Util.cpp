@@ -96,7 +96,7 @@ const MapParameters& Util::Environment() {
 size_t Util::UnpackUrl(const string& url, string& address, string& path, Parameters& properties) {
 	
 	auto it = url.begin();
-	auto end = url.end();
+	auto& end = url.end();
 	while (it != end) {
 		if (*it == '/' || *it == '\\') // no address, just path
 			break;
@@ -159,7 +159,7 @@ void Util::UnpackQuery(const string& query, Parameters& properties) {
 	string myQuery(query);
 
 	string::iterator it = myQuery.begin();
-	auto end = myQuery.end();
+	auto& end = myQuery.end();
 	while (it != end) {
 
 		// name
@@ -194,7 +194,7 @@ void Util::UnpackQuery(const string& query, Parameters& properties) {
 // TODO check unitest
 string& Util::DecodeURI(string& uri) {
 	auto it = uri.begin();
-	auto end = uri.end();
+	auto& end = uri.end();
 	while (it != end) {
 		char c = *it++;
 		if (c != '%' || it == end)
@@ -233,7 +233,7 @@ void Util::Dump(const UInt8* in,UInt32 size,Buffer& out,const string& header) {
 	UInt32 i = 0;
 	UInt32 c = 0;
 	UInt8 b;
-	out.resize((UInt32)ceil((double)size / 16) * 67 + (header.empty() ? 0 : (header.size() + 2)));
+	out.resize((UInt32)ceil((double)size / 16) * 67 + (header.empty() ? 0 : (header.size() + 2)),false);
 
 	if(!header.empty()) {
 		out[len++] = '\t';
@@ -366,7 +366,7 @@ Buffer& Util::ToBase64(const UInt8* data, UInt32 size, Buffer& result) {
 	int j = 0;
 	UInt32 accumulator = 0;
 	UInt32 bits = 0;
-	result.resize((UInt32)ceil(size/3.0)*4);
+	result.resize((UInt32)ceil(size/3.0)*4,false);
 
 	for (i = 0; i < size;++i) {
 		accumulator = (accumulator << 8) | (data[i] & 0xFFu);
@@ -388,7 +388,7 @@ Buffer& Util::ToBase64(const UInt8* data, UInt32 size, Buffer& result) {
 bool Util::FromBase64(const UInt8* data, UInt32 size, Buffer& result) {
 	UInt32 bits = 0;
 	UInt32 accumulator = 0;
-	result.resize(size/4 * 3);
+	result.resize(size/4 * 3,false);
 	int j = 0;
 
 	for (int i = 0; i < size; ++i) {
@@ -406,7 +406,7 @@ bool Util::FromBase64(const UInt8* data, UInt32 size, Buffer& result) {
 			result[j++] = ((accumulator >> bits) & 0xFFu);
 		}
 	}
-	result.resize(j);
+	result.resize(j,true);
 	return true;
 }
 

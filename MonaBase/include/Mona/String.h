@@ -20,6 +20,7 @@ This file is a part of Mona.
 #pragma once
 
 #include "Mona/Mona.h"
+#include <vector>
 
 #undef max
 // TODO? #pragma warning(disable:4146)

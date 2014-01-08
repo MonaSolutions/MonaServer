@@ -45,8 +45,8 @@ public:
 	virtual void			onUnpublish(Client& client,const Publication& publication){}
 
 	virtual void			onDataPacket(Client& client,const Publication& publication,DataReader& packet){}
-	virtual void			onAudioPacket(Client& client,const Publication& publication,UInt32 time,MemoryReader& packet){}
-	virtual void			onVideoPacket(Client& client,const Publication& publication,UInt32 time,MemoryReader& packet){}
+	virtual void			onAudioPacket(Client& client,const Publication& publication,UInt32 time,PacketReader& packet){}
+	virtual void			onVideoPacket(Client& client,const Publication& publication,UInt32 time,PacketReader& packet){}
 	virtual void			onFlushPackets(Client& client,const Publication& publication){}
 
 	virtual bool			onSubscribe(Client& client,const Listener& listener,std::string& error){return true;}

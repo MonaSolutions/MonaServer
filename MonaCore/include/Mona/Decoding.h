@@ -33,24 +33,21 @@ class Decoding : public WorkThread, private Task, virtual Object {
 	friend class TCPSession;
 public:
 	Decoding(const char* name,Invoker& invoker,const UInt8* data,UInt32 size);
+	Decoding(const char* name,Invoker& invoker,PoolBuffer& pBuffer);
 
 private:
 	// If return true, packet is pass to the session.
 	// If ex is raised on true returned value, it displays a WARN
 	// If ex is raised on false returned value, it displays a ERROR
 	virtual const UInt8*	decodeRaw(Exception& ex, PoolBuffer& pBuffer, UInt32 times,const UInt8* data,UInt32& size);
-	virtual bool			decode(Exception& ex, MemoryReader& reader, UInt32 times) { return false; }
+	virtual bool			decode(Exception& ex, PacketReader& packet, UInt32 times) { return false; }
 
 	bool			run(Exception& ex);
 	void			handle(Exception& ex);
 
 	PoolBuffer						_pBuffer;
-	std::unique_ptr<MemoryReader>	_pReader;
 	Expirable<Session>				_expirableSession;
 	SocketAddress					_address;
-	bool							_flush;
-	bool							_noFlush;
-
 	UInt32							_size;
 	const UInt8*					_current;
 };

@@ -42,11 +42,10 @@ void RTMFProtocol::onPacket(const UInt8* data, UInt32 size, const SocketAddress&
 		return;
 	}
 
-	MemoryReader reader(data,size);
+	PacketReader packet(data,size);
+	UInt32 id = RTMFP::Unpack(packet);
 
-	UInt32 id = RTMFP::Unpack(reader);
-
-	TRACE("RTMFP Session ",id);
+	// TRACE("RTMFP Session ",id);
 
 	RTMFPSession* pSession = id == 0 ? _pHandshake.get() : sessions.find<RTMFPSession>(id);
 
@@ -60,7 +59,7 @@ void RTMFProtocol::onPacket(const UInt8* data, UInt32 size, const SocketAddress&
 		pSession->pRTMFPCookieComputing.reset();
 	}
 
-	pSession->decode(data,size, address);
+	pSession->decode(rawBuffer(), address);
 }
 
 

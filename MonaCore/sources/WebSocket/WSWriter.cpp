@@ -38,9 +38,9 @@ void WSWriter::close(int type /* = WS::CODE_NORMAL_CLOSE */ ) {
 
 JSONWriter& WSWriter::newDataWriter(bool modeRaw) {
 	pack();
-	WSSender* pSender = new WSSender(modeRaw);
+	WSSender* pSender = new WSSender(_socket.poolBuffers(),modeRaw);
 	_senders.emplace_back(pSender);
-	pSender->writer.stream.next(10); // header
+	pSender->writer.packet.next(10); // header
 	return pSender->writer;
 }
 
@@ -52,13 +52,11 @@ void WSWriter::pack() {
 		return;
 	JSONWriter& writer = sender.writer;
 	writer.end();
-	BinaryStream& stream = writer.stream;
-	UInt32 size = stream.size()-10;
-	UInt32 pos = 10-WS::HeaderSize(size);
-	stream.resetWriting(pos);
-	stream.resetReading(pos);
-	stream.resetWriting(pos+WS::WriteHeader(WS::TYPE_TEXT,size,writer.writer)+size);
-	_sent += stream.size();
+	PacketWriter& packet = writer.packet;
+	UInt32 size = packet.size()-10;
+	packet.clip(10-WS::HeaderSize(size));
+	packet.clear(WS::WriteHeader(WS::TYPE_TEXT,size,BinaryWriter(packet))+size);
+	_sent += packet.size();
 	sender.packaged = true;
 }
 
@@ -74,7 +72,7 @@ void WSWriter::flush(bool full) {
 	_sent=0;
 	Exception ex;
 	for (shared_ptr<WSSender>& pSender : _senders) {
-		Writer::DumpResponse(pSender->begin(),pSender->size(),_address);
+		Writer::DumpResponse(pSender->data(),pSender->size(),_address);
 		_socket.send<WSSender>(ex, pSender);
 		if (ex)
 			ERROR("WSSender flush, ",ex.error());
@@ -93,10 +91,11 @@ WSWriter::State WSWriter::state(State value,bool minimal) {
 void WSWriter::write(UInt8 type,const UInt8* data,UInt32 size) {
 	if(state()==CLOSED)
 		return;
-	WSSender* pSender = new WSSender();
+	pack();
+	WSSender* pSender = new WSSender(_socket.poolBuffers());
 	pSender->packaged = true;
 	_senders.emplace_back(pSender);
-	BinaryWriter& writer = pSender->writer.writer;
+	BinaryWriter& writer = pSender->writer.packet;
 	if(type==WS::TYPE_CLOSE) {
 		// here size is the code!
 		if(size>0) {
@@ -136,27 +135,27 @@ DataWriter& WSWriter::writeMessage() {
 
 
 
-bool WSWriter::writeMedia(MediaType type,UInt32 time,MemoryReader& data) {
+bool WSWriter::writeMedia(MediaType type,UInt32 time,PacketReader& packet) {
 	if(state()==CLOSED)
 		return true;
 	switch(type) {
 		case START:
-			writeInvocation("__publishing").writeString(string((const char*)data.current(),data.available()));
+			writeInvocation("__publishing").writeString(string((const char*)packet.current(),packet.available()));
 			break;
 		case STOP:
-			writeInvocation("__unpublishing").writeString(string((const char*)data.current(),data.available()));
+			writeInvocation("__unpublishing").writeString(string((const char*)packet.current(),packet.available()));
 			break;
 		case DATA: {
 			JSONWriter& writer = newDataWriter();
-			writer.writer.write8('[');
-			writer.writer.writeRaw(data.current(),data.available());
-			writer.writer.write8(']');
+			writer.packet.write8('[');
+			writer.packet.writeRaw(packet.current(),packet.available());
+			writer.packet.write8(']');
 			break;
 		}
 		case INIT:
 			break;
 		default:
-			return Writer::writeMedia(type,time,data);
+			return Writer::writeMedia(type,time,packet);
 	}
 	return true;
 }

@@ -36,13 +36,10 @@ public:
 	const bool isObject;
 };
 
-AMFWriter::AMFWriter() : _amf3(false),amf0Preference(false) {
+AMFWriter::AMFWriter(const PoolBuffers& poolBuffers) : DataWriter(poolBuffers),_amf3(false),amf0Preference(false) {
 
 }
 
-AMFWriter::AMFWriter(bool isNull) : NullableObject(isNull),_amf3(false), amf0Preference(false) {
-	stream.setstate(std::ios_base::eofbit);
-}
 
 AMFWriter::~AMFWriter() {
 	if(!_lastObjectReferences.empty())
@@ -69,9 +66,9 @@ bool AMFWriter::repeat(UInt32 reference) {
 	}
 	--reference;
 	if(!_amf3)
-		writer.write8(AMF_AVMPLUS_OBJECT);
-	writer.write8(_references[reference]);
-	writer.write8(reference<<1);
+		packet.write8(AMF_AVMPLUS_OBJECT);
+	packet.write8(_references[reference]);
+	packet.write8(reference<<1);
 	return true;
 }
 
@@ -80,18 +77,18 @@ void AMFWriter::writeString(const string& value) {
 	if(!_amf3) {
 		if(amf0Preference) {
 			if(value.size()>65535) {
-				writer.write8(AMF_LONG_STRING);
-				writer.write32(value.size());
-				writer.writeRaw(value);
+				packet.write8(AMF_LONG_STRING);
+				packet.write32(value.size());
+				packet.writeRaw(value);
 			} else {
-				writer.write8(AMF_STRING);
-				writer.writeString16(value);
+				packet.write8(AMF_STRING);
+				packet.writeString16(value);
 			}
 			return;
 		}
-		writer.write8(AMF_AVMPLUS_OBJECT);
+		packet.write8(AMF_AVMPLUS_OBJECT);
 	}
-	writer.write8(AMF3_STRING); // marker
+	packet.write8(AMF3_STRING); // marker
 	writeText(value);
 	_lastReference=_references.size();
 }
@@ -100,7 +97,7 @@ void AMFWriter::writePropertyName(const string& value) {
 	_lastReference=0;
 	// no marker, no string_long, no empty value
 	if(!_amf3) {
-		writer.writeString16(value);
+		packet.writeString16(value);
 		return;
 	}
 	writeText(value);
@@ -110,45 +107,45 @@ void AMFWriter::writeText(const string& value) {
 	if(!value.empty()) {
 		map<string,UInt32>::iterator it = _stringReferences.lower_bound(value);
 		if(it!=_stringReferences.end() && it->first==value) {
-			writer.write7BitValue(it->second<<1);
+			packet.write7BitValue(it->second<<1);
 			return;
 		}
 		if(it!=_stringReferences.begin())
 			--it;
 		_stringReferences.insert(it,pair<string,UInt32>(value,_stringReferences.size()));
 	}
-	writer.write7BitValue((value.size()<<1) | 0x01);
-	writer.writeRaw(value);
+	packet.write7BitValue((value.size()<<1) | 0x01);
+	packet.writeRaw(value);
 }
 
 void AMFWriter::writeNull() {
 	_lastReference=0;
-	writer.write8(_amf3 ? AMF3_NULL : AMF_NULL); // marker
+	packet.write8(_amf3 ? AMF3_NULL : AMF_NULL); // marker
 }
 
 void AMFWriter::writeBoolean(bool value){
 	_lastReference=0;
 	if(!_amf3) {
-		writer.write8(AMF_BOOLEAN); // marker
-		writer.writeBool(value);
+		packet.write8(AMF_BOOLEAN); // marker
+		packet.writeBool(value);
 	} else
-		writer.write8(value ? AMF3_TRUE : AMF3_FALSE);
+		packet.write8(value ? AMF3_TRUE : AMF3_FALSE);
 }
 
 void AMFWriter::writeDate(const Time& date){
 	_lastReference=0;
 	if(!_amf3) {
 		if(amf0Preference) {
-			writer.write8(AMF_DATE);
-			writer.writeNumber<double>((double)date/1000);
-			writer.write16(0); // Timezone, useless in AMF0 format (always equals 0)
+			packet.write8(AMF_DATE);
+			packet.writeNumber<double>((double)date/1000);
+			packet.write16(0); // Timezone, useless in AMF0 format (always equals 0)
 			return;
 		}
-		writer.write8(AMF_AVMPLUS_OBJECT);
+		packet.write8(AMF_AVMPLUS_OBJECT);
 	}
-	writer.write8(AMF3_DATE);
-	writer.write8(0x01);
-	writer.writeNumber<double>((double)date / 1000);
+	packet.write8(AMF3_DATE);
+	packet.write8(0x01);
+	packet.writeNumber<double>((double)date / 1000);
 	_references.push_back(AMF3_DATE);
 	_lastReference=_references.size();
 }
@@ -159,29 +156,29 @@ void AMFWriter::writeNumber(double value){
 		writeInteger((Int32)value);
 		return;
 	}
-	writer.write8(_amf3 ? AMF3_NUMBER : AMF_NUMBER); // marker
-	writer.writeNumber<double>(value);
+	packet.write8(_amf3 ? AMF3_NUMBER : AMF_NUMBER); // marker
+	packet.writeNumber<double>(value);
 }
 
 void AMFWriter::writeInteger(Int32 value){
 	if(!_amf3)
-		writer.write8(AMF_AVMPLUS_OBJECT);
-	writer.write8(AMF3_INTEGER); // marker
+		packet.write8(AMF_AVMPLUS_OBJECT);
+	packet.write8(AMF3_INTEGER); // marker
 	if(value>AMF_MAX_INTEGER) {
 		ERROR("AMF Integer maximum value reached");
 		value=AMF_MAX_INTEGER;
 	} else if(value<0)
 		value+=(1<<29);
-	writer.write7BitValue(value);
+	packet.write7BitValue(value);
 }
 
 void AMFWriter::writeBytes(const UInt8* data,UInt32 size) {
 	if(!_amf3)
-		writer.write8(AMF_AVMPLUS_OBJECT); // switch in AMF3 format 
-	writer.write8(AMF3_BYTEARRAY); // bytearray in AMF3 format!
-	writer.write7BitValue((size << 1) | 1);
+		packet.write8(AMF_AVMPLUS_OBJECT); // switch in AMF3 format 
+	packet.write8(AMF3_BYTEARRAY); // bytearray in AMF3 format!
+	packet.write7BitValue((size << 1) | 1);
 	_references.push_back(AMF3_BYTEARRAY);
-	writer.writeRaw(data,size);
+	packet.writeRaw(data,size);
 	_lastReference=_references.size();
 }
 
@@ -191,17 +188,17 @@ void AMFWriter::beginObject(const string& type,bool external) {
 		if(amf0Preference && !external) {
 			_lastObjectReferences.push_back(new ObjectRef(0,true));
 			if(type.empty())
-				writer.write8(AMF_BEGIN_OBJECT);
+				packet.write8(AMF_BEGIN_OBJECT);
 			else {
-				writer.write8(AMF_BEGIN_TYPED_OBJECT);
+				packet.write8(AMF_BEGIN_TYPED_OBJECT);
 				writeString(type);
 			}
 			return;
 		}
-		writer.write8(AMF_AVMPLUS_OBJECT);
+		packet.write8(AMF_AVMPLUS_OBJECT);
 		_amf3=true;
 	}
-	writer.write8(AMF3_OBJECT);
+	packet.write8(AMF3_OBJECT);
 	_references.push_back(AMF3_OBJECT);
 	_lastReference=_references.size();
 	_lastObjectReferences.push_back(new ObjectRef(_lastReference,!external));
@@ -217,8 +214,7 @@ void AMFWriter::beginObject(const string& type,bool external) {
 	else
 		flags|=(1<<3); // Always dynamic, but can't be externalizable AND dynamic!
 
-
-	/* TODO?
+	/* Can be ignored finally!
 	if(externalizable) {
 		// What follows is the value of the “inner” object
 	} else if(hardProperties>0 && !pClassDef) {
@@ -227,18 +223,18 @@ void AMFWriter::beginObject(const string& type,bool external) {
 		flags |= (hardProperties<<4);
 	}*/
 
-	writer.write7BitValue(flags);
+	packet.write7BitValue(flags);
 	writePropertyName(type);
 }
 
 void AMFWriter::beginObjectArray(UInt32 size) {
 	_lastReference=0;
 	if(!_amf3) {
-		writer.write8(AMF_AVMPLUS_OBJECT);
+		packet.write8(AMF_AVMPLUS_OBJECT);
 		_amf3=true;
 	}
-	writer.write8(AMF3_ARRAY);
-	writer.write7BitValue((size << 1) | 1);
+	packet.write8(AMF3_ARRAY);
+	packet.write7BitValue((size << 1) | 1);
 	_references.push_back(AMF3_ARRAY);
 	_lastReference=_references.size();
 	_lastObjectReferences.push_back(new ObjectRef(_lastReference,false));
@@ -248,12 +244,12 @@ void AMFWriter::beginObjectArray(UInt32 size) {
 void AMFWriter::beginMap(UInt32 size,bool weakKeys) {
 	_lastReference=0;
 	if(!_amf3) {
-		writer.write8(AMF_AVMPLUS_OBJECT);
+		packet.write8(AMF_AVMPLUS_OBJECT);
 		_amf3=true;
 	}
-	writer.write8(AMF3_DICTIONARY);
-	writer.write7BitValue((size << 1) | 1);
-	writer.write8(weakKeys ? 0x01 : 0x00);
+	packet.write8(AMF3_DICTIONARY);
+	packet.write7BitValue((size << 1) | 1);
+	packet.write8(weakKeys ? 0x01 : 0x00);
 	_references.push_back(AMF3_DICTIONARY);
 	_lastReference=_references.size();
 	_lastObjectReferences.push_back(new ObjectRef(_lastReference,false));
@@ -271,11 +267,11 @@ void AMFWriter::endObject() {
 	_lastObjectReferences.pop_back();
 	if(isObject) {
 		if(!_amf3) {
-			writer.write16(0); 
-			writer.write8(AMF_END_OBJECT);
+			packet.write16(0); 
+			packet.write8(AMF_END_OBJECT);
 			return;
 		}
-		writer.write8(01); // end marker
+		packet.write8(01); // end marker
 	}
 	if(_lastObjectReferences.size()==0 || _lastObjectReferences.back()==0)
 		_amf3=false;

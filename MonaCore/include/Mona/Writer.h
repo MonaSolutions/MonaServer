@@ -22,7 +22,7 @@ This file is a part of Mona.
 #include "Mona/Mona.h"
 #include "Mona/DataReader.h"
 #include "Mona/QualityOfService.h"
-#include "Mona/MemoryReader.h"
+#include "Mona/PacketReader.h"
 #include "Mona/Logs.h"
 #include <set>
 
@@ -71,7 +71,7 @@ public:
 	///			-1 => Listener close!
 	virtual void			close(int code=0);
 
-	virtual bool			writeMedia(MediaType type,UInt32 time,MemoryReader& data);
+	virtual bool			writeMedia(MediaType type,UInt32 time,PacketReader& packet);
 	virtual void			writeMember(const Peer& peer);
 
     virtual DataWriter&		writeInvocation(const std::string& name){return DataWriter::Null;}
@@ -81,7 +81,7 @@ public:
 
 	virtual void			flush(bool full=false){}
 
-	virtual void			createReader(MemoryReader& reader,std::shared_ptr<DataReader>& pReader) {}
+	virtual void			createReader(PacketReader& packet,std::shared_ptr<DataReader>& pReader) {}
 	virtual void			createWriter(std::shared_ptr<DataWriter>& pWriter) {}
 	virtual bool			hasToConvert(DataReader& reader) {return false;}
 

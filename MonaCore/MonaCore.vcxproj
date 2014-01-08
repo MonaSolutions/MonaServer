@@ -197,6 +197,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="sources\DataWriter.cpp" />
     <ClCompile Include="sources\Decoding.cpp" />
     <ClCompile Include="sources\FlashMainStream.cpp" />
     <ClCompile Include="sources\HTMLWriter.cpp">
@@ -231,7 +232,6 @@
     <ClCompile Include="sources\RTMFP\RTMFPCookieComputing.cpp" />
     <ClCompile Include="sources\RTMFP\RTMFPFlow.cpp" />
     <ClCompile Include="sources\RTMFP\RTMFPHandshake.cpp" />
-    <ClCompile Include="sources\RTMFP\RTMFPMessage.cpp" />
     <ClCompile Include="sources\RTMFP\RTMFProtocol.cpp" />
     <ClCompile Include="sources\RTMFP\RTMFPSession.cpp" />
     <ClCompile Include="sources\RTMFP\RTMFPWriter.cpp" />

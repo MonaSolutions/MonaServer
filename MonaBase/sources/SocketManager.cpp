@@ -35,11 +35,11 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 #endif
 
 
-SocketManager::SocketManager(TaskHandler& handler, PoolBuffers& poolBuffers, PoolThreads& poolThreads, UInt32 bufferSize, const string& name) : poolBuffers(poolBuffers),
+SocketManager::SocketManager(TaskHandler& handler, const PoolBuffers& poolBuffers, PoolThreads& poolThreads, UInt32 bufferSize, const string& name) : poolBuffers(poolBuffers),
     _fakeSocket(*this), _selfHandler(false), poolThreads(poolThreads), _eventFD(0), _sockfd(NET_INVALID_SOCKET), _eventSystem(0), _bufferSize(bufferSize), Startable(name), Task(handler), _currentEvent(0), _currentError(0), _eventInit(false), _ppSocket(NULL) {
 	_fakeSocket._initialized = true;
 }
-SocketManager::SocketManager(PoolBuffers& poolBuffers, PoolThreads& poolThreads, UInt32 bufferSize, const string& name) : poolBuffers(poolBuffers),
+SocketManager::SocketManager(const PoolBuffers& poolBuffers, PoolThreads& poolThreads, UInt32 bufferSize, const string& name) : poolBuffers(poolBuffers),
     _fakeSocket(*this), _selfHandler(true), poolThreads(poolThreads), _eventFD(0), _sockfd(NET_INVALID_SOCKET), _eventSystem(0), _bufferSize(bufferSize), Startable(name), Task((TaskHandler&)*this), _currentEvent(0), _currentError(0), _eventInit(false), _ppSocket(NULL) {
 	_fakeSocket._initialized = true;
 }
@@ -70,7 +70,7 @@ void SocketManager::stop() {
 
 void SocketManager::clear() {
 	lock_guard<mutex> lock(_mutex);
-	for(auto it : _sockets) {
+	for(auto& it : _sockets) {
 		if(_eventSystem>0) {
 #if defined(_WIN32)
 			WSAAsyncSelect(it.first,_eventSystem,0,0);
@@ -103,7 +103,7 @@ bool SocketManager::add(Exception& ex,Socket& socket) const {
 
 	lock_guard<mutex> lock(_mutex);
 
-	auto it = _sockets.lower_bound(sockfd);
+	auto& it = _sockets.lower_bound(sockfd);
 	if (it != _sockets.end() && it->first == sockfd)
 		return true; // already managed
 	
@@ -187,7 +187,7 @@ bool SocketManager::stopWrite(Exception& ex, Socket& socket) const {
 
 void SocketManager::remove(Socket& socket) const {
 	lock_guard<mutex>	lock(_mutex);
-	auto it = _sockets.find(socket._sockfd);
+	auto& it = _sockets.find(socket._sockfd);
 	if(it == _sockets.end())
 		return;
 
@@ -219,7 +219,7 @@ void SocketManager::handle(Exception& ex) {
 	if (_ppSocket)
 		pSocket = _ppSocket->get();
 	if (!pSocket) {
-		auto it = _sockets.find(_sockfd);
+		auto& it = _sockets.find(_sockfd);
 		if(it==_sockets.end())
 			return;
 		pSocket = it->second->get();
@@ -310,11 +310,11 @@ void SocketManager::run(Exception& exc) {
 
 			// protected for _sockets access
 			lock_guard<mutex> lock(_mutex);
-			auto it = _sockets.find(_sockfd);
+			auto& it = _sockets.find(_sockfd);
 			if (it != _sockets.end()) {
 				Socket* pSocket = (*it->second).get();
 				Exception curEx;
-				pSocket->flush(curEx);
+				pSocket->flushSenders(curEx);
 				if (curEx)
 					pSocket->onError(curEx.error());
 			}

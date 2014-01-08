@@ -39,13 +39,13 @@ FlashWriter::~FlashWriter() {
 }
 
 AMFWriter& FlashWriter::writeInvocation(const string& name) {
-	AMFWriter& amf = write(AMF::INVOCATION);
-	BinaryWriter& writer = amf.writer;
-	writer.write8(AMF_STRING);writer.writeString16(name);
-	writer.write8(AMF_NUMBER);
-	writer.writeNumber<double>(callbackHandle);
-	writer.write8(AMF_NULL); // for RTMP compatibility! (requiere it)
-	return amf;
+	AMFWriter& writer = write(AMF::INVOCATION);
+	BinaryWriter& packet = writer.packet;
+	packet.write8(AMF_STRING);packet.writeString16(name);
+	packet.write8(AMF_NUMBER);
+	packet.writeNumber<double>(callbackHandle);
+	packet.write8(AMF_NULL); // for RTMP compatibility! (requiere it)
+	return writer;
 }
 
 AMFWriter& FlashWriter::writeAMFState(const string& name,const string& code,const string& description,bool withoutClosing) {
@@ -65,22 +65,22 @@ AMFWriter& FlashWriter::writeAMFState(const string& name,const string& code,cons
 }
 
 
-bool FlashWriter::writeMedia(MediaType type,UInt32 time,MemoryReader& data) {
+bool FlashWriter::writeMedia(MediaType type,UInt32 time,PacketReader& packet) {
 	switch(type) {
 		case START:
-			writeAMFStatus("Play.PublishNotify",string((const char*)data.current(),data.available()) + " is now published");
+			writeAMFStatus("Play.PublishNotify",string((const char*)packet.current(),packet.available()) + " is now published");
 			break;
 		case STOP:
-			writeAMFStatus("Play.UnpublishNotify",string((const char*)data.current(),data.available()) +" is now unpublished");
+			writeAMFStatus("Play.UnpublishNotify",string((const char*)packet.current(),packet.available()) +" is now unpublished");
 			break;
 		case AUDIO:
-			write(AMF::AUDIO,time,&data);
+			write(AMF::AUDIO,time,&packet);
 			break;
 		case VIDEO:
-			write(AMF::VIDEO,time,&data);
+			write(AMF::VIDEO,time,&packet);
 			break;
 		case DATA:
-			write(AMF::DATA,time,&data);
+			write(AMF::DATA,time,&packet);
 			break;
 	}
 	return true;

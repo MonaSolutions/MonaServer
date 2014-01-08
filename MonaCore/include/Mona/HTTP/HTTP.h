@@ -143,7 +143,7 @@ public:
 
 	static std::string&	CodeToMessage(UInt16 code,std::string& message);
 
-	static DataWriter* NewDataWriter(const std::string& subType);
+	static DataWriter* NewDataWriter(const PoolBuffers& poolBuffers,const std::string& subType);
 	static void WriteDirectoryEntries(BinaryWriter& writer, const std::string& serverAddress, const std::string& path, const Files& entries,const MapParameters& parameters);
 	
 private:

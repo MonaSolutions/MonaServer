@@ -17,21 +17,36 @@ details (or else see http://www.gnu.org/licenses/).
 This file is a part of Mona.
 */
 
-#include "Mona/MemoryReader.h"
+#include "Mona/DataWriter.h"
 
 using namespace std;
 
+
 namespace Mona {
 
-MemoryReader MemoryReader::Null(NULL,0);
-
-MemoryReader::MemoryReader(const UInt8* buffer,UInt32 size) : _memory((const char*)buffer,size),BinaryReader(_memory),fragments(1) {
+void DataWriter::writeNullProperty(const string& name) {
+	writePropertyName(name);
+	writeNull();
 }
-
-void MemoryReader::shrink(UInt32 rest) {
-	if(rest>available())
-		rest = available();
-	_memory.resize(position()+rest);
+void DataWriter::writeDateProperty(const string& name,const Time& date) {
+	writePropertyName(name);
+	writeDate(date);
+}
+void DataWriter::writeNumberProperty(const string& name,double value) {
+	writePropertyName(name);
+	writeNumber(value);
+}
+void DataWriter::writeBooleanProperty(const string& name,bool value) {
+	writePropertyName(name);
+	writeBoolean(value);
+}
+void DataWriter::writeStringProperty(const string& name,const string& value) {
+	writePropertyName(name);
+	writeString(value);
+}
+void DataWriter::clear() {
+	_lastReference=0;
+	packet.clear();
 }
 
 

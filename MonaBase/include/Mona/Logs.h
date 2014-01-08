@@ -23,8 +23,6 @@ This file is a part of Mona.
 #include "Mona/Logger.h"
 #include "Mona/String.h"
 #include "Mona/Util.h"
-#include "Mona/MemoryReader.h"
-#include "Mona/MemoryWriter.h"
 
 namespace Mona {
 
@@ -77,13 +75,6 @@ public:
 		else
 			_DefaultLogger.dump(&out[0], out.size());
 	}
-	template <typename ...Args>
-	static void	Dump(MemoryReader& packet, Args&&... args) { Dump(packet.current(), packet.available(), args ...);	}
-	template <typename ...Args>
-	static void	Dump(MemoryWriter& packet, Args&&... args) { Dump(packet.begin(), packet.length(), args ...); }
-	template <typename ...Args>
-	static void	Dump(MemoryWriter& packet, UInt16 offset, Args&&... args) { Dump(packet.begin() + offset, packet.length() - offset, args ...); }
-
 
 private:
 	static Logger*		_PLogger;

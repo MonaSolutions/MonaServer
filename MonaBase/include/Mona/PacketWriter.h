@@ -17,27 +17,27 @@ details (or else see http://www.gnu.org/licenses/).
 This file is a part of Mona.
 */
 
-#include "Mona/BinaryStream.h"
+#pragma once
 
-using namespace std;
+#include "Mona/Mona.h"
+#include "Mona/BinaryWriter.h"
 
 namespace Mona {
 
+class PacketWriter: public BinaryWriter, virtual NullableObject {
+public:
+	PacketWriter(const PoolBuffers& poolBuffers) : _ppBuffer(new PoolBuffer(poolBuffers)),BinaryWriter(NULL,0) {}
+	PacketWriter() : NullableObject(true),BinaryWriter(NULL,0) {} // NULL
 
-UInt32 BinaryStream::size() {
-	streamoff result = _buffer.pubseekoff(0, ios_base::cur, ios_base::out) - _buffer.pubseekoff(0, ios_base::cur, ios_base::in);
-	if (result < 0)
-		result = 0;
-	return (UInt32)result;
-}
+	UInt8* buffer(UInt32 size) { UInt32 pos(this->size()); next(size); return (UInt8*)data()+pos; }
 
-void BinaryStream::next(UInt32 count) {
-	if (count == 0)
-		return;
-	streamsize before = width(count);
-	(*this) << 'z';
-	width(before);
-}
+	BinaryWriter&	clear(UInt32 size = 0) { BinaryWriter::clear(size); if (_ppBuffer && _ppBuffer->empty()) _ppBuffer->release(); return *this; }
+
+private:
+	Buffer&	buffer() { return _ppBuffer ? **_ppBuffer : Buffer::Null; }
+
+	std::unique_ptr<PoolBuffer>		_ppBuffer;
+};
 
 
 } // namespace Mona

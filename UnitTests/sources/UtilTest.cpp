@@ -93,8 +93,7 @@ ADD_TEST(UtilTest, UnpackUrl) {
 
 	DEBUG_CHECK(properties.getString("name1", value) && value == "value1");
 	DEBUG_CHECK(properties.getString("name2", value) && value == "value2");
-	DEBUG_CHECK(path=="/path");
-	DEBUG_CHECK(file=="file.txt");
+	DEBUG_CHECK(path=="/path/file.txt");
 	DEBUG_CHECK(address=="127.0.0.1:1234");
 }
 

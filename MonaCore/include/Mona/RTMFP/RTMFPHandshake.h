@@ -41,7 +41,7 @@ public:
 	RTMFPHandshake(RTMFProtocol& protocol, Sessions& sessions, Invoker& invoker);
 	virtual ~RTMFPHandshake();
 
-	bool			createCookie(Exception& ex, MemoryWriter& writer, HelloAttempt& attempt, const std::string& tag, const std::string& queryUrl);
+	bool			createCookie(Exception& ex, PacketWriter& packet, HelloAttempt& attempt, const std::string& tag, const std::string& queryUrl);
 	void			commitCookie(const UInt8* value);
 	void			manage();
 	void			clear();
@@ -49,11 +49,10 @@ public:
 
 private:
 
-	void		flush() { RTMFPSession::flush(0x0b, false); }
-	void		flush(RTMFPEngine::Type type) { RTMFPSession::flush(0x0b, false, type); }
+	void		flush() { RTMFPSession::flush(0x0b, false); (UInt32&)farId=0; }
 
-	void		packetHandler(MemoryReader& packet);
-	UInt8		handshakeHandler(UInt8 id,MemoryReader& request,MemoryWriter& response);
+	void		packetHandler(PacketReader& packet);
+	UInt8		handshakeHandler(UInt8 id,PacketReader& request,PacketWriter& response);
 
 	struct CompareCookies {
 	   bool operator()(const UInt8* a,const UInt8* b) const {
@@ -64,6 +63,7 @@ private:
 	std::map<const UInt8*,RTMFPCookie*,CompareCookies>  _cookies; // RTMFPCookie, in waiting of creation session
 	UInt8												_certificat[77];
 	Sessions&											_sessions;
+	std::string											_buffer;
 };
 
 

@@ -25,12 +25,14 @@ using namespace std;
 
 namespace Mona {
 
-DataReaderNull      DataReader::Null;
+PacketReader	DataReader::_PacketReaderNull;
 
-DataReader::DataReader(MemoryReader& reader): reader(reader),_pos(reader.position()) {
+DataReader::DataReader() : packet(_PacketReaderNull),_pos(0) {
+
 }
 
-DataReader::~DataReader() {
+DataReader::DataReader(PacketReader& packet): packet(packet),_pos(packet.position()) {
+
 }
 
 
