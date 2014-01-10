@@ -28,26 +28,25 @@ namespace Mona {
 
 class RTMPHandshaker : public TCPSender, virtual Object {
 public:
-	RTMPHandshaker(const PoolBuffers& poolBuffers,const SocketAddress& address,const UInt8* data, UInt32 size);
-	RTMPHandshaker(const PoolBuffers& poolBuffers,const SocketAddress& address, const UInt8* farPubKey, const UInt8* challengeKey, bool middle, const std::shared_ptr<RC4_KEY>& pDecryptKey, const std::shared_ptr<RC4_KEY>& pEncryptKey);
+	RTMPHandshaker(const SocketAddress& address,PoolBuffer& pBuffer);
+
+	volatile bool failed;
+
+	std::shared_ptr<RC4_KEY>	pEncryptKey;
+	std::shared_ptr<RC4_KEY>    pDecryptKey;
 
 private:
-	
-	bool run(Exception& ex);
-	bool runComplex(Exception& ex);
+
+	bool run(Exception& ex) {return !(failed = !compute(ex)); }
+	bool compute(Exception& ex);
 
 	const UInt8*	data() { return _writer.data(); }
 	UInt32			size() { return _writer.size(); }
 
-	const PoolBuffers&		_poolBuffers;
 	PacketWriter			_writer;
-	PoolBuffer				_pFarPubKey;
-	UInt8					_challengeKey[HMAC_KEY_SIZE];	
-	bool						_middle;
-	std::shared_ptr<RC4_KEY>	_pEncryptKey;
-	std::shared_ptr<RC4_KEY>	_pDecryptKey;
+
 	SocketAddress				_address;
-	
+	PoolBuffer					_pBuffer;
 };
 
 

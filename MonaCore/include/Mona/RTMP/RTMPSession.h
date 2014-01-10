@@ -23,6 +23,7 @@ This file is a part of Mona.
 #include "Mona/TCPSession.h"
 #include "Mona/FlashMainStream.h"
 #include "Mona/RTMP/RTMPWriter.h"
+#include "Mona/RTMP/RTMPHandshaker.h"
 
 namespace Mona {
 
@@ -35,12 +36,13 @@ public:
 private:
 	bool			buildPacket(PacketReader& packet);
 	void			packetHandler(PacketReader& packet);
-	void			flush();
-
-	bool			performHandshake(BinaryReader& packet, bool encrypted);
+	void			manage();
 
 	void			kill();
 
+	void							readKeys();
+	const std::shared_ptr<RC4_KEY>&	pEncryptKey() { if (_handshaking == 1) readKeys(); return _pEncryptKey; }
+	const std::shared_ptr<RC4_KEY>&	pDecryptKey() { if (_handshaking == 1) readKeys(); return _pDecryptKey; }
 
 	UInt8							_handshaking;
 	UInt16							_chunkSize;
@@ -50,8 +52,9 @@ private:
 	std::map<UInt16,RTMPWriter>			_writers;
 	std::unique_ptr<RTMPWriter>			_pController;
 	RTMPWriter*							_pWriter;
+	std::shared_ptr<RTMPSender>			_pSender;
 
-	PoolThread*							_pThread;
+	std::shared_ptr<RTMPHandshaker>		_pHandshaker;
 	std::shared_ptr<RC4_KEY>			_pEncryptKey;
 	std::shared_ptr<RC4_KEY>			_pDecryptKey;
 

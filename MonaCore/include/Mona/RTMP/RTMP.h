@@ -23,6 +23,7 @@ This file is a part of Mona.
 #include "Mona/BinaryReader.h"
 #include "Mona/AMF.h"
 #include "Mona/Buffer.h"
+#include "Mona/Crypto.h"
 #include <openssl/rc4.h>
 
 
@@ -49,11 +50,11 @@ public:
 
 	static UInt32			GetDigestPos(const UInt8* data,bool middle);
 	static UInt32			GetDHPos(const UInt8* data,bool middle);
-	static const UInt8*		ValidateClient(BinaryReader& reader,bool& middleKey);
-	static const UInt8*		ValidateClientScheme(BinaryReader& reader,bool middleKey);
-	static void				WriteDigestAndKey(UInt8* data,const UInt8* challengeKey,bool middleKey);
-	static void				ComputeRC4Keys(const UInt8* pubKey,UInt32 pubKeySize,const UInt8* farPubKey,UInt32 farPubKeySize,const Buffer& sharedSecret,RC4_KEY& decryptKey,RC4_KEY& encryptKey);
-
+	static const UInt8*		ValidateClient(Crypto& crypto,BinaryReader& reader,bool& middleKey);
+	static void				WriteDigestAndKey(Crypto& crypto,UInt8* data,const UInt8* challengeKey,bool middleKey);
+	static void				ComputeRC4Keys(Crypto& crypto,const UInt8* pubKey,UInt32 pubKeySize,const UInt8* farPubKey,UInt32 farPubKeySize,const Buffer& sharedSecret,RC4_KEY& decryptKey,RC4_KEY& encryptKey);
+private:
+	static const UInt8*		ValidateClientScheme(Crypto& crypto,BinaryReader& reader,bool middleKey);
 };
 
 
