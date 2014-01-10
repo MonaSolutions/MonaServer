@@ -73,9 +73,9 @@ public:
 	const struct sockaddr&	addr() const;
 	
 	bool operator < (const SocketAddress& address) const;
-	bool operator == (const SocketAddress& address) const { return host() == address.host() && port() == address.port(); }
-	bool operator != (const SocketAddress& address) const { return host() != address.host() || port() != address.port(); }
-
+	bool operator == (const SocketAddress& address) const { return port() == address.port() && host() == address.host(); }
+	bool operator != (const SocketAddress& address) const { return port() != address.port() || host() != address.host(); }
+	
 	// Returns a wildcard IPv4 or IPv6 address (0.0.0.0)
 	static const SocketAddress& Wildcard(IPAddress::Family family = IPAddress::IPv4) { return family == IPAddress::IPv6 ? _Addressv6Wildcard : _Addressv4Wildcard; }
 
