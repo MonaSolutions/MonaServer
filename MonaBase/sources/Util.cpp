@@ -276,13 +276,17 @@ void Util::Dump(const UInt8* in,UInt32 size,Buffer& out,const string& header) {
 
 
 bool Util::ReadIniFile(Exception& ex,const string& path,Parameters& parameters) {
-	ifstream istr(path, ios::in | ios::binary | ios::ate);
-	if (!istr.good()) {
+	ifstream ifile(path, ios::in | ios::binary | ios::ate);
+	if (!ifile.good()) {
 		ex.set(Exception::FILE, "Impossible to open ", path, " file");
 		return false;
 	}
-	UInt32 size = (UInt32)istr.tellg();
-	Buffer buffer(size);
+	UInt32 size = (UInt32)ifile.tellg();
+	if (size == 0)
+		return true;
+	vector<char> buffer(size);
+	ifile.seekg(0);
+	ifile.read(buffer.data(), size);
 	UInt32 i(0);
 	string section;
 	while (i<size) {
@@ -290,7 +294,7 @@ bool Util::ReadIniFile(Exception& ex,const string& path,Parameters& parameters) 
 		do {
 			c = buffer[i++];
 		} while (isspace(c) && i < size);
-		if (i<size)
+		if (i==size)
 			return true;
 		if (c == ';') {
 			while (c != '\n' && i<size)
@@ -307,9 +311,8 @@ bool Util::ReadIniFile(Exception& ex,const string& path,Parameters& parameters) 
 			String::Trim(section, String::TRIM_RIGHT);
 		} else {
 			string key;
-			do {
+			while (isblank(c) && i < size)
 				c = buffer[i++];
-			} while (isblank(c) && i < size);
 			while (i < size && c != '=' && c != '\n') {
 				key += c;
 				c = buffer[i++];
