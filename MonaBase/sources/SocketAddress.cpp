@@ -233,15 +233,11 @@ bool SocketAddress::setIntern(Exception& ex,const string& host, UInt16 port,bool
 }
 
 bool SocketAddress::operator < (const SocketAddress& address) const {
-	if (family() < address.family())
-		return true;
-	if (family() > address.family())
-		return false;
-	if (host() < address.host())
-		return true;
-	if (host() > address.host())
-		return false;
-	return (port() < address.port());
+	if (family() != address.family())
+		return family() < address.family();
+	if (port() != address.port())
+		return port() < address.port();
+	return (host() < address.host());
 }
 
 const IPAddress& SocketAddress::host() const {

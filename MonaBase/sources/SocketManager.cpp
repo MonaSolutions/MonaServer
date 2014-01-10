@@ -111,7 +111,6 @@ bool SocketManager::add(Exception& ex,Socket& socket) const {
 	unique_ptr<Socket>* ppSocket = new unique_ptr<Socket>(&socket);
 #if defined(_WIN32)
 	int flags = FD_ACCEPT | FD_CLOSE | FD_READ;
-	TRACE("ADD SOCKET ",reinterpret_cast<u_int>(ppSocket))
 	if (WSAAsyncSelect(sockfd, _eventSystem, 104, flags) != 0) {
 		ppSocket->release();
 		delete ppSocket;
@@ -303,7 +302,8 @@ void SocketManager::run(Exception& exc) {
 			ppSocket->release(); // don't delete the pSocket!
 			delete ppSocket;
 			continue;
-		}
+		} else if (msg.message != 104) // unknown message
+			continue;
 		_currentEvent = WSAGETSELECTEVENT(msg.lParam);
 		_fakeSocket._sockfd = _sockfd = msg.wParam;
 		if(_currentEvent == FD_WRITE) {
@@ -322,7 +322,6 @@ void SocketManager::run(Exception& exc) {
 		} else if (_currentEvent != FD_READ || _fakeSocket.available(_exSkip)) {
 			if (_currentEvent!=FD_CLOSE)
 				_currentError = WSAGETSELECTERROR(msg.lParam);
-			// TRACE("SocketManager::waitHandle()")
 			Task::waitHandle();
 		}
 
