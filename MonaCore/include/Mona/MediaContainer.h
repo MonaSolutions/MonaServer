@@ -25,6 +25,7 @@ This file is a part of Mona.
 
 namespace Mona {
 
+#define MPEGTS_PACKET_SIZE		188
 
 class MediaContainer : virtual Static {
 public:
@@ -46,7 +47,7 @@ public:
 				FLV::Write(writer, args ...);
 				break;
 			case MPEG_TS:
-				// TODO THOM
+				MPEGTS::Write(writer, args ...);
 				break;
 		}
 		
@@ -58,6 +59,21 @@ public:
 		static void Write(BinaryWriter& writer,UInt8 track=BOTH);
 		// To write audio or video packet
 		static void Write(BinaryWriter& writer, UInt8 track, UInt32 time, const UInt8* data, UInt32 size);
+	};
+
+	class MPEGTS : virtual Static {
+	public:
+		// To write header
+		static void Write(BinaryWriter& writer,UInt8 track=BOTH);
+		// To write audio or video packet
+		static void Write(BinaryWriter& writer, UInt8 track, UInt32 time, const UInt8* data, UInt32 size);
+	private:
+
+		static void	writeVideoPacket(BinaryWriter& writer, UInt32& available, UInt32 time, const UInt8* pData, bool isMetadata, bool first);
+
+		static UInt32	CounterRow;
+		static UInt32	CounterFrame;
+		static char		CounterA;
 	};
 
 };

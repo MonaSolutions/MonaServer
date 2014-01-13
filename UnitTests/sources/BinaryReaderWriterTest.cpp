@@ -30,9 +30,9 @@ using namespace std;
 void Write(BinaryWriter& writer) {
 
 	bool bval = true;
-	writer.writeRaw((char*)&bval, sizeof(bval));
+	writer.writeBool(bval);
 	bval = false;
-	writer.writeRaw((char*)&bval, sizeof(bval));
+	writer.writeBool(bval);
 	writer.write8('a');
 	writer.write16((short)-100);
 	writer.write16((unsigned short)50000);
@@ -73,10 +73,9 @@ void Write(BinaryWriter& writer) {
 
 void Read(BinaryReader& reader) {
 
-	bool b;
-	reader.readRaw((char*)&b, sizeof(b));
+	bool b = reader.readBool();
 	CHECK(b);
-	reader.readRaw((char*)&b, sizeof(b));
+	b = reader.readBool();
 	CHECK(!b);
 
 	char c = reader.read8();

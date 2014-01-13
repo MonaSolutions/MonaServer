@@ -61,6 +61,8 @@ void JSONWriter::endObject() {
 	}
 	writer.write8('}');
 	--_layers;
+	if(_first)
+		_first=false;
 }
 
 void JSONWriter::beginArray(UInt32 size) {
@@ -82,6 +84,8 @@ void JSONWriter::endArray() {
 	}
 	writer.write8(']');
 	--_layers;
+	if(_first)
+		_first=false;
 }
 
 

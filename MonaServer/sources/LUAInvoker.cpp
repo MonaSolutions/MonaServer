@@ -179,7 +179,7 @@ int LUAInvoker::Dir(lua_State *pState) {
 		Exception ex;
 		string path(MonaServer::WWWPath + "/" + SCRIPT_READ_STRING("") + "/");
 		Files dir(ex, path);
-		for(DirectoryIterator itFile = dir.begin(); itFile != dir.end(); ++itFile) {
+		for(auto itFile = dir.begin(); itFile != dir.end(); ++itFile) {
 			SCRIPT_WRITE_STRING((*itFile).c_str());
 		}
 	SCRIPT_CALLBACK_RETURN

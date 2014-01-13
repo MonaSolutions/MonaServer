@@ -93,7 +93,7 @@ double JSONReader::readNumber() {
 	while(available() && (isdigit(c) || c=='.'))
 		c = reader.read8();
 
-	UInt32 size = reader.position()-pos;
+	UInt32 size = reader.position()-pos-1;
 	string value((const char*)cur,size);
 
 	Exception ex;
