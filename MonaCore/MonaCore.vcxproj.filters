@@ -28,6 +28,9 @@
     <Filter Include="Sessions">
       <UniqueIdentifier>{512c7341-6c6a-4bf3-bfeb-70b7ea5f87aa}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Protocols\Shared">
+      <UniqueIdentifier>{e9d19947-3865-4612-a939-f7c0c982077e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Mona\Protocol.h">
@@ -179,11 +182,8 @@
     <ClInclude Include="include\Mona\Decoding.h" />
     <ClInclude Include="include\Mona\Group.h" />
     <ClInclude Include="include\Mona\Handler.h" />
-    <ClInclude Include="include\Mona\ICE.h" />
     <ClInclude Include="include\Mona\Invoker.h" />
     <ClInclude Include="include\Mona\Peer.h" />
-    <ClInclude Include="include\Mona\RelayServer.h" />
-    <ClInclude Include="include\Mona\SDP.h" />
     <ClInclude Include="include\Mona\Server.h" />
     <ClInclude Include="include\Mona\ServerParams.h" />
     <ClInclude Include="include\Mona\Writer.h" />
@@ -238,6 +238,15 @@
     <ClInclude Include="include\Mona\MediaContainer.h">
       <Filter>Multimedia</Filter>
     </ClInclude>
+    <ClInclude Include="include\Mona\RelayServer.h">
+      <Filter>Protocols\Shared</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\ICE.h">
+      <Filter>Protocols\Shared</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\SDP.h">
+      <Filter>Protocols\Shared</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="sources\Protocols.cpp">
@@ -256,9 +265,6 @@
       <Filter>Protocols\RTMFP</Filter>
     </ClCompile>
     <ClCompile Include="sources\RTMFP\RTMFPHandshake.cpp">
-      <Filter>Protocols\RTMFP</Filter>
-    </ClCompile>
-    <ClCompile Include="sources\RTMFP\RTMFPMessage.cpp">
       <Filter>Protocols\RTMFP</Filter>
     </ClCompile>
     <ClCompile Include="sources\RTMFP\RTMFProtocol.cpp">
@@ -337,11 +343,8 @@
       <Filter>Flash</Filter>
     </ClCompile>
     <ClCompile Include="sources\Decoding.cpp" />
-    <ClCompile Include="sources\ICE.cpp" />
     <ClCompile Include="sources\Invoker.cpp" />
     <ClCompile Include="sources\Peer.cpp" />
-    <ClCompile Include="sources\RelayServer.cpp" />
-    <ClCompile Include="sources\SDP.cpp" />
     <ClCompile Include="sources\Server.cpp" />
     <ClCompile Include="sources\Writer.cpp" />
     <ClCompile Include="sources\XMLReader.cpp">
@@ -385,6 +388,18 @@
     </ClCompile>
     <ClCompile Include="sources\MediaContainer.cpp">
       <Filter>Multimedia</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\RelayServer.cpp">
+      <Filter>Protocols\Shared</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\ICE.cpp">
+      <Filter>Protocols\Shared</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\SDP.cpp">
+      <Filter>Protocols\Shared</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\DataWriter.cpp">
+      <Filter>Serializers</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

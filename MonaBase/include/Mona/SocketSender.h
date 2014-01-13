@@ -35,9 +35,9 @@ class SocketSender : public WorkThread, virtual Object {
 	friend class Socket;
 public:
 	// return true if there is few data available to send
-	virtual bool	available() { return begin() && _position < size(); }
+	virtual bool	available() { return data() && _position < size(); }
 
-	virtual const UInt8*	begin() { return _data; }
+	virtual const UInt8*	data() { return _data; }
 	virtual UInt32			size() { return _size; }
 
 protected:

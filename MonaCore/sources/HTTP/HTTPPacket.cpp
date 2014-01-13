@@ -67,7 +67,7 @@ const UInt8* HTTPPacket::build(PoolBuffer& pBuffer,const UInt8* data,UInt32& siz
 	/// append data
 	if (!_pBuffer.empty()) {
 		UInt32 oldSize = _pBuffer->size();
-		_pBuffer->resize(oldSize+size);
+		_pBuffer->resize(oldSize+size,true);
 		memcpy(_pBuffer->data()+oldSize, data,size);
 	} else
 		_pBuffer.swap(pBuffer); // exchange the buffers
@@ -157,13 +157,13 @@ const UInt8* HTTPPacket::build(PoolBuffer& pBuffer,const UInt8* data,UInt32& siz
 
 	UInt32 rest = end-current-1;
 	if (rest == 0) {
-		_pBuffer.clear(); // release buffer
+		_pBuffer.release(); // release buffer
 		size = pBuffer->size();
 		return pBuffer->data();
 	}
 
 	// prepare next iteration
-	_pBuffer->resize(rest);
+	_pBuffer->resize(rest,false);
 	memcpy(_pBuffer->data(), current + 1, rest);
 	
 

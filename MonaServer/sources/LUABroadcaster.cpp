@@ -76,7 +76,7 @@ int LUABroadcaster::Broadcast(lua_State* pState) {
 		if(handler.empty() || handler==".") {
 			ERROR("handler of one sending server message can't be null or equal to '.'")
 		} else {
-			ServerMessage message;
+			ServerMessage message(broadcaster.poolBuffers);
 			SCRIPT_READ_DATA(message)
 			broadcaster.broadcast(handler,message);
 		}

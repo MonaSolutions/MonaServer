@@ -20,8 +20,9 @@ This file is a part of Mona.
 #pragma once
 
 #include "Mona/Mona.h"
-#include "Mona/MemoryReader.h"
+#include "Mona/BinaryReader.h"
 #include "Mona/AMF.h"
+#include "Mona/Buffer.h"
 #include <openssl/rc4.h>
 
 
@@ -48,8 +49,8 @@ public:
 
 	static UInt32			GetDigestPos(const UInt8* data,bool middle);
 	static UInt32			GetDHPos(const UInt8* data,bool middle);
-	static const UInt8*		ValidateClient(MemoryReader& packet,bool& middleKey);
-	static const UInt8*		ValidateClientScheme(MemoryReader& packet,bool middleKey);
+	static const UInt8*		ValidateClient(BinaryReader& reader,bool& middleKey);
+	static const UInt8*		ValidateClientScheme(BinaryReader& reader,bool middleKey);
 	static void				WriteDigestAndKey(UInt8* data,const UInt8* challengeKey,bool middleKey);
 	static void				ComputeRC4Keys(const UInt8* pubKey,UInt32 pubKeySize,const UInt8* farPubKey,UInt32 farPubKeySize,const Buffer& sharedSecret,RC4_KEY& decryptKey,RC4_KEY& encryptKey);
 

@@ -41,7 +41,7 @@ public:
 		CSS
 	};
 
-	HTTPWriter(TCPClient& socket);
+	HTTPWriter(TCPClient& tcpClient);
 
 	std::shared_ptr<HTTPPacket>		pRequest;
 	Time							timeout;
@@ -58,24 +58,21 @@ public:
 	DataWriter&		write(const std::string& code, HTTP::ContentType type=HTTP::CONTENT_TEXT, const std::string& subType="html; charset=utf-8",const UInt8* data=NULL,UInt32 size=0);
 	void			writeFile(const FilePath& file) { return createSender().writeFile(file); }
 	void			close(const Exception& ex);
+
+	MediaContainer::Type	mediaType;
 private:
-	bool			writeMedia(MediaType type,UInt32 time,MemoryReader& data);
+	bool			writeMedia(MediaType type,UInt32 time,PacketReader& packet);
 	
 	HTTPSender& createSender() {
-		_senders.emplace_back(new HTTPSender(_socket.address(),pRequest));
+		_senders.emplace_back(new HTTPSender(_tcpClient.address(),pRequest));
 		return *_senders.back();
 	}
 
-	TCPClient&								_socket;
+	TCPClient&								_tcpClient;
 	PoolThread*								_pThread;
 	std::deque<std::shared_ptr<HTTPSender>>	_senders;
-	std::deque<std::shared_ptr<HTTPSender>>	_sent;
 	bool									_isMain;
 	std::string								_buffer;
-
-	// multimedia
-	MediaContainer::Type					_mediaType;
-	bool									_initMedia;
 };
 
 

@@ -23,6 +23,7 @@ This file is a part of Mona.
 #include "Mona/Time.h"
 #include "Mona/FileSystem.h"
 #include <sstream>
+#include <iostream>
 #if !defined(_WIN32)
     #include <signal.h>
 #endif

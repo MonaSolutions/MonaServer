@@ -38,7 +38,7 @@ public:
 	}
 
 	void	join() { for(PoolThread* pThread : _threads) pThread->join(); }
-	UInt32	threadsAvailable() { return _threads.size(); }
+	UInt32	threadsAvailable() const { return _threads.size(); }
 
 	template<typename WorkThreadType>
     PoolThread* enqueue(Exception& ex, const std::shared_ptr<WorkThreadType>& pWork, PoolThread* pThread = NULL) {

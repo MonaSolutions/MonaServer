@@ -111,8 +111,8 @@ void MonaServer::createParametersCollection(const char* name,const MapParameters
 void MonaServer::startService(Service& service) {
 	_servicesRunning.insert(&service);
 	// Send running information for all connected servers
-	ServerMessage message;
-	message.writer.writeString(service.path);
+	ServerMessage message(poolBuffers);
+	message.packet.writeString(service.path);
 	servers.broadcast(".",message);
 	
 	SCRIPT_BEGIN(_pState)
@@ -358,7 +358,7 @@ void MonaServer::onHandshake(const string& protocol,const SocketAddress& address
 			SCRIPT_WRITE_STRING(address.toString().c_str())
 			SCRIPT_WRITE_STRING(path.c_str())
 			lua_newtable(_pState);
-			for(auto it : properties) {
+			for(auto& it : properties) {
 				lua_pushlstring(_pState,it.second.c_str(),it.second.size());
 				lua_setfield(_pState,-2,it.first.c_str());
 			}
@@ -591,7 +591,7 @@ void MonaServer::onUnsubscribe(Client& client,const Listener& listener) {
 	}
 }
 
-void MonaServer::onAudioPacket(Client& client,const Publication& publication,UInt32 time,MemoryReader& packet) {
+void MonaServer::onAudioPacket(Client& client,const Publication& publication,UInt32 time,PacketReader& packet) {
 	if(client == this->id)
 		return;
 	SCRIPT_BEGIN(_pState)
@@ -603,7 +603,7 @@ void MonaServer::onAudioPacket(Client& client,const Publication& publication,UIn
 	SCRIPT_END
 }
 
-void MonaServer::onVideoPacket(Client& client,const Publication& publication,UInt32 time,MemoryReader& packet) {
+void MonaServer::onVideoPacket(Client& client,const Publication& publication,UInt32 time,PacketReader& packet) {
 	if(client == this->id)
 		return;
 	SCRIPT_BEGIN(_pState)
@@ -669,9 +669,9 @@ void MonaServer::onUnjoinGroup(Client& client,Group& group) {
 
 void MonaServer::connection(ServerConnection& server) {
 	// sends actual services online to every connected servers
-	ServerMessage message;
+	ServerMessage message(poolBuffers);
 	for(const Service* pService : _servicesRunning)
-		message.writer.writeString(pService->path);
+		message.packet.writeString(pService->path);
 	servers.broadcast(".",message);
 
 	Script::AddObject<ServerConnection, LUAServer>(_pState, server);
@@ -687,11 +687,11 @@ void MonaServer::connection(ServerConnection& server) {
 	lua_pop(_pState, 1); // remove Script::AddObject<ServerConnection,... (see above)
 }
 
-void MonaServer::message(ServerConnection& server,const std::string& handler,MemoryReader& reader) {
+void MonaServer::message(ServerConnection& server,const std::string& handler,PacketReader& packet) {
 	if(handler==".") {
-		while(reader.available()) {
+		while(packet.available()) {
 			string path;
-			reader.readString(path);
+			packet.readString(path);
 			// load the service relating with remoting server
 			Expirable<Service> expirableService;
 			Service* pService = _pService->get(path, expirableService);
@@ -702,7 +702,7 @@ void MonaServer::message(ServerConnection& server,const std::string& handler,Mem
 	}
 	SCRIPT_BEGIN(_pState)
 		SCRIPT_MEMBER_FUNCTION_BEGIN(ServerConnection,server,handler.c_str())
-			AMFReader amf(reader);
+			AMFReader amf(packet);
 			SCRIPT_WRITE_DATA(amf,0)
 			SCRIPT_FUNCTION_CALL
 		SCRIPT_FUNCTION_END

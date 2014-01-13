@@ -33,15 +33,15 @@ namespace Mona {
 class SocketManager : private Task, private Startable, private TaskHandler, virtual Object {
 	friend class Socket;
 public:
-	SocketManager(TaskHandler& handler, PoolBuffers& poolBuffers, PoolThreads& poolThreads, UInt32 bufferSize = 0, const std::string& name = "SocketManager");
-	SocketManager(PoolBuffers& poolBuffers, PoolThreads& poolThreads, UInt32 bufferSize = 0, const std::string& name = "SocketManager");
+	SocketManager(TaskHandler& handler, const PoolBuffers& poolBuffers, PoolThreads& poolThreads, UInt32 bufferSize = 0, const std::string& name = "SocketManager");
+	SocketManager(const PoolBuffers& poolBuffers, PoolThreads& poolThreads, UInt32 bufferSize = 0, const std::string& name = "SocketManager");
 	virtual ~SocketManager() { stop(); }
 
 	bool					start(Exception& ex);
 	void					stop();
 
 	PoolThreads&			poolThreads;
-	PoolBuffers&			poolBuffers;
+	const PoolBuffers&		poolBuffers;
 
 private:
 	class FakeSocket : public Socket {

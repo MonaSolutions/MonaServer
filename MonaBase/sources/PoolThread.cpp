@@ -29,7 +29,7 @@ namespace Mona {
 UInt32	PoolThread::_Id(0);
 
 
-void PoolThread::run(Exception& ex) {
+void PoolThread::run(Exception& exc) {
 
 	for(;;) {
 
@@ -50,6 +50,7 @@ void PoolThread::run(Exception& ex) {
 			}
 
 			try {
+				Exception ex;
 				EXCEPTION_TO_LOG(pWork->run(ex),pWork->name);
 			} catch (exception& ex) {
 				ERROR(pWork->name,", ",ex.what());

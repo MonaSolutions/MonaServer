@@ -58,8 +58,11 @@ public:
 	std::string					secWebsocketAccept;
 
 	MapWriter<std::map<std::string,std::string>>	properties;
-protected:
-	const UInt8* build(PoolBuffer& pBuffer,const UInt8* data,UInt32& size);
+
+	const PoolBuffers&			poolBuffers() { return _pBuffer.poolBuffers; }
+
+
+	const UInt8*				build(PoolBuffer& pBuffer,const UInt8* data,UInt32& size);
 
 private:
 	void parseHeader(const char* key, const char* value);

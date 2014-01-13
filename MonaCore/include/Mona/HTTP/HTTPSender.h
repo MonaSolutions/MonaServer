@@ -38,7 +38,7 @@ namespace Mona {
 	BINARYWRITER.writeRaw("</p><hr><address>Mona Server at ", ADDRESS ,"</address></body></html>\r\n");
 
 
-#define HTTP_BEGIN_HEADER(DATAWRITER)  DATAWRITER.stream.resetWriting(DATAWRITER.stream.size()-2);
+#define HTTP_BEGIN_HEADER(BINARYWRITER)  BINARYWRITER.clear(BINARYWRITER.size()-2);
 #define HTTP_ADD_HEADER(BINARYWRITER,NAME,VALUE) BINARYWRITER.writeRaw(NAME, ": ", VALUE , "\r\n");
 #define HTTP_END_HEADER(BINARYWRITER)  BINARYWRITER.writeRaw("\r\n");
 
@@ -51,21 +51,21 @@ public:
 	void			writeError(int code, const std::string& description,bool close=false);
 	void			writeFile(const FilePath& file) { _file = file; }
 
-	const UInt8*	begin() { return _pWriter ? _pWriter->stream.data() : NULL; }
-	UInt32			size() { return _pWriter ? _pWriter->stream.size() : 0; }
+	const UInt8*	data() { return _pWriter ? _pWriter->packet.data() : NULL; }
+	UInt32			size() { return _pWriter ? _pWriter->packet.size() : 0; }
 
-	BinaryWriter&	writeRaw();
+	BinaryWriter&	writeRaw(const PoolBuffers& poolBuffers);
 private:
 	bool			run(Exception& ex);
 
 	DataWriter&		write(const std::string& code, HTTP::ContentType type = HTTP::CONTENT_TEXT, const std::string& subType = "html; charset=utf-8") { return writer(code, type, subType, NULL, 0); }
 
-	FilePath						_file;
-	std::shared_ptr<HTTPPacket>		_pRequest;
-	UInt32							_sizePos;
-	std::unique_ptr<DataWriter>		_pWriter;
-	std::string						_buffer;
-	SocketAddress					_address;
+	FilePath							_file;
+	const std::shared_ptr<HTTPPacket>	_pRequest;
+	UInt32								_sizePos;
+	std::unique_ptr<DataWriter>			_pWriter;
+	std::string							_buffer;
+	SocketAddress						_address;
 };
 
 

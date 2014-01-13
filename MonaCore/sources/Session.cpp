@@ -65,16 +65,15 @@ void Session::kill() {
 	(bool&)died=true;
 }
 
-
-void Session::receive(MemoryReader& packet) {
+void Session::receiveWithoutFlush(PacketReader& packet) {
 	if(died)
 		return;
 	if (!dumpJustInDebug || (dumpJustInDebug && Logs::GetLevel()>=7))
-		DUMP(packet,"Request from ",peer.address.toString())
+		DUMP(packet.data(),packet.size(),"Request from ",peer.address.toString())
 	packetHandler(packet);
 }
 
-void Session::receive(MemoryReader& packet, const SocketAddress& address) {
+void Session::receive(PacketReader& packet, const SocketAddress& address) {
 	// if address  has changed (possible in UDP), update it
 	if (address != peer.address) {
 		SocketAddress oldAddress(peer.address);

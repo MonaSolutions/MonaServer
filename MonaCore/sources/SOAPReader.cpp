@@ -25,7 +25,6 @@ using namespace std;
 
 namespace Mona {
 
-SOAPReader::SOAPReader(MemoryReader& reader) : XMLReader(reader), _body(false) {}
 
 SOAPReader::Type SOAPReader::followingType() {
 	

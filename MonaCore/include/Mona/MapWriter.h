@@ -52,7 +52,7 @@ public:
 	typename MapType::const_iterator begin() { return _map.begin(); }
 	typename MapType::const_iterator end() { return _map.end(); }
 
-	void   clear() { _map.clear(); _size = 0; DataWriter::clear(); }
+	void   clear() { _map.clear(); _size = 0; }
 private:
 	template <typename ...Args>
 	void set(Args&&... args) {

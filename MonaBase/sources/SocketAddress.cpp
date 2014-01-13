@@ -175,7 +175,7 @@ bool SocketAddress::setIntern(Exception& ex,const string& hostAndPort,bool resol
 
 	string host, port;
 	auto it  = hostAndPort.begin();
-	auto end = hostAndPort.end();
+	auto& end = hostAndPort.end();
 	if (*it == '[') {
 		++it;
 		while (it != end && *it != ']')
@@ -209,7 +209,12 @@ bool SocketAddress::setIntern(Exception& ex,const string& host, UInt16 port,bool
 		return true;
 	}
 	HostEntry entry;
-	if (!resolveHost || !DNS::HostByName(ex, host, entry))
+	if (!resolveHost) {
+		if (ignore)
+			ex.set(ignore);
+		return false;
+	}
+	if (!DNS::HostByName(ex, host, entry))
 		return false;
 	auto& addresses = entry.addresses();
 	if (addresses.size() > 0) {

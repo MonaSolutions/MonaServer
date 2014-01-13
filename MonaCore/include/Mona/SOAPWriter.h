@@ -25,7 +25,7 @@ namespace Mona {
 
 class SOAPWriter : public XMLWriter, public virtual NullableObject {
 public:
-	SOAPWriter();
+	SOAPWriter(const PoolBuffers& buffers);
 
 	///\brief Close the soap structure, may be call before writing
 	void end();

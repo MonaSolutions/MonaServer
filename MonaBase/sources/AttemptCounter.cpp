@@ -25,7 +25,7 @@ using namespace std;
 namespace Mona {
 
 AttemptCounter::~AttemptCounter() {
-	for (auto it : _attempts)
+	for (auto& it : _attempts)
 		delete it.second;
 }
 

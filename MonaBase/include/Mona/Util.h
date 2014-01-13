@@ -24,6 +24,7 @@ This file is a part of Mona.
 #include "Mona/SocketAddress.h"
 #include "Mona/Time.h"
 #include "Mona/Exceptions.h"
+#include "Mona/Buffer.h"
 #include <map>
 #include <thread>
 #include <limits>

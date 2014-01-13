@@ -31,12 +31,12 @@ public:
 
 	FlashStream* stream(UInt32 id);
 
-	void flush() {for(auto it : _streams) it.second->flush(); }
+	void flush() {for(auto& it : _streams) it.second->flush(); }
 
 private:
 
 	void	messageHandler(Exception& ex, const std::string& name, AMFReader& message, FlashWriter& writer);
-	void	rawHandler(Exception& ex, UInt8 type, MemoryReader& data, FlashWriter& writer);
+	void	rawHandler(Exception& ex, UInt8 type, PacketReader& packet, FlashWriter& writer);
 
 	void	close(FlashWriter& writer,const std::string& error,int code=0);
 

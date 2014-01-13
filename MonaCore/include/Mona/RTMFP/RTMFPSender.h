@@ -27,29 +27,24 @@ namespace Mona {
 
 class RTMFPSender : public UDPSender, virtual Object {
 public:
-	RTMFPSender(): UDPSender("RTMFPSender"),packet(_buffer,sizeof(_buffer)),farId(0) {
-		packet.clear(11);
-		packet.limit(RTMFP_MAX_PACKET_LENGTH); // set normal limit
+	RTMFPSender(const PoolBuffers& poolBuffers): UDPSender("RTMFPSender"),packet(poolBuffers),farId(0) {
+		packet.next(RTMFP_HEADER_SIZE);
 	}
 	
 	RTMFPEngine		encoder;
 	UInt32			farId;
-	MemoryWriter	packet;
+	PacketWriter	packet;
 
-	bool			available() { return UDPSender::available() && packet.length() >= RTMFP_MIN_PACKET_SIZE; }
+	bool			available() { return UDPSender::available() && packet.size() >= RTMFP_MIN_PACKET_SIZE; }
 
 private:
-	const UInt8*	begin() { return packet.begin(); }
-	UInt32			size() { return packet.length(); }
+	const UInt8*	data() { return packet.data(); }
+	UInt32			size() { return packet.size(); }
 	
 	bool			run(Exception& ex);
-
-	UInt8			_buffer[RTMFP_PACKET_SEND_SIZE];
-	
 };
 
 inline bool RTMFPSender::run(Exception& ex) {
-	packet.limit(); // no limit for sending!
 	RTMFP::Encode(encoder,packet);
 	RTMFP::Pack(packet,farId);
 	return UDPSender::run(ex);

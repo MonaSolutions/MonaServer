@@ -27,7 +27,7 @@ namespace Mona {
 
 class SVGWriter : public DataWriter, virtual Object {
 public:
-	SVGWriter() {}
+	SVGWriter(const PoolBuffers& buffers) : DataWriter(buffers) {}
 
 	void beginObject(const std::string& type = "", bool external = false) {}
 	void endObject() {}

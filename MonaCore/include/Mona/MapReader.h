@@ -29,7 +29,7 @@ namespace Mona {
 template<class IteratorType>
 class MapReader : public DataReader, virtual Object {
 public:
-	MapReader(MemoryReader& reader,IteratorType& begin, IteratorType& end) : DataReader(reader),_objectReaden(false),_number(0),_begin(begin),_it(begin),_end(end) {}
+	MapReader(IteratorType& begin, IteratorType& end) : _objectReaden(false),_number(0),_begin(begin),_it(begin),_end(end) {}
 
 	std::string&	readString(std::string& value) { value.assign(_it->second); ++_it; return value; }
 	double			readNumber() {++_it; return _number;}

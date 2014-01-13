@@ -19,8 +19,6 @@ This file is a part of Mona.
 
 #include "Mona/RelayServer.h"
 #include "Mona/UDPSender.h"
-#include "Mona/Logs.h"
-
 
 using namespace std;
 
@@ -42,26 +40,8 @@ public:
 };
 
 
-class RelaySender : public UDPSender, virtual Object {
-public:
-	RelaySender(UInt32 available) : data(available), UDPSender("RelaySender",true) {}
-	Buffer data;
-
-	const UInt8*	begin(bool displaying = false) { return data.size()==0 ? NULL : &data[0]; }
-	UInt32			size(bool displaying = false) { return data.size(); }
-};
-
-
-RelaySocket::RelaySocket(const SocketManager& manager) : DatagramSocket(manager), port(0) {
+RelaySocket::RelaySocket(const SocketManager& manager,UInt16 port) : UDPSocket(manager),port(port) {
 	
-}
-
-
-bool RelaySocket::load(Exception& ex,const SocketAddress& address) {
-	if (!DatagramSocket::bind(ex, address))
-		return false;
-	(UInt16&)port = address.port();
-	return true;
 }
 
 Relay& RelaySocket::createRelay(const Peer& peer1,const SocketAddress& address1,const Peer& peer2,const SocketAddress& address2,UInt16 timeout) {
@@ -86,22 +66,7 @@ UInt32 RelaySocket::releaseRelay(Relay& relay) {
 }
 
 // executed in a parallel thread!
-void RelaySocket::onError(const string& error) {
-	DEBUG("Relay socket ", port, ", error");
-}
-
-// executed in a parallel thread!
-void RelaySocket::onReadable(Exception& ex) {
-	UInt32 available = DatagramSocket::available(ex);
-	if(available==0)
-		return;
-
-	shared_ptr<RelaySender> pSender(new RelaySender(available));
-	SocketAddress address;
-	available = DatagramSocket::receiveFrom(ex, &pSender->data[0], pSender->data.size(), address);
-	if (ex)
-		return;
-
+void RelaySocket::onReception(const UInt8* data, UInt32 size, const SocketAddress& address) {
 	lock_guard<mutex> lock(_mutex);
 	Addresses::const_iterator itAddress = addresses.find(address);
 	if(itAddress==addresses.end()) {
@@ -117,17 +82,22 @@ void RelaySocket::onReadable(Exception& ex) {
 		((Peer&)relay.peer2).turnPeers[relay.peer1.id] = (Peer*)&relay.peer1;
 	}
 
-	pSender->address.set(relay.address1==address ? relay.address2 : relay.address1);
+	SocketAddress destinator(relay.address1 == address ? relay.address2 : relay.address1);
 
-	DUMP(pSender->begin(), pSender->size(), "Request from ", address.toString())
-
-	relay.lastTime.update();
-	DEBUG("Relay packet (size=", pSender->size(), ") from ", address.toString(), " to ", pSender->address.toString()," on ",port)
+	DUMP(data, size, "Request from ", address.toString())
+	Exception ex;
+	send(ex, data, size, destinator);
+	if (ex) {
+		WARN("Relay packet (size=", size, ") from ", address.toString(), " to ", destinator.toString()," on ",port,", ",ex.error())
+	} else {
+		relay.lastTime.update();
+		DEBUG("Relay packet (size=", size, ") from ", address.toString(), " to ", destinator.toString()," on ",port)
+	}
 }
 
 
 
-RelayServer::RelayServer(PoolBuffers& poolBuffers,PoolThreads& poolThreads,UInt32 bufferSize) : _manager(poolBuffers,poolThreads,bufferSize,"RelayServer")  {
+RelayServer::RelayServer(const PoolBuffers& poolBuffers,PoolThreads& poolThreads,UInt32 bufferSize) : _manager(poolBuffers,poolThreads,bufferSize,"RelayServer")  {
 	
 }
 
@@ -136,7 +106,18 @@ RelayServer::~RelayServer() {
 }
 
 void RelayServer::stop() {
-	clear();
+	{
+		lock_guard<mutex> lock(_mutex);
+		set<Relay*>::iterator it;
+		for(it=_relays.begin();it!=_relays.end();++it) {
+			Relay& relay(**it);
+			// remove Relay of peers
+			removePeerRelay(relay.peer1,relay);
+			removePeerRelay(relay.peer2,relay);
+			releaseRelay(relay);
+		}
+		_relays.clear();
+	}
 	_manager.stop();
 };
 
@@ -176,19 +157,21 @@ UInt16 RelayServer::add(const Peer& peer1,const SocketAddress& address1,const Pe
 		SocketAddress address(IPAddress::Wildcard(), port);
 
 		Exception ex;
-		pSocket = new RelaySocket(_manager);
-		if (!pSocket->load(ex, address)) {
+		pSocket = new RelaySocket(_manager,port);
+		if (!pSocket->bind(ex, address)) {
 			delete pSocket;
-			pSocket = NULL;
 			DEBUG("Turn listening impossible on ", port, " port, ", ex.error())
 			continue;
 		}
 
-		INFO("Turn server listening on ", port," port")
+		if (ex)
+			WARN("Turn server listening on ", port," port, ",ex.error())
+		else
+			INFO("Turn server listening on ", port," port")
 
 		if (_sockets.empty())
 			it = _sockets.begin();
-		_sockets.insert(it, pSocket);
+		_sockets.emplace_hint(it, pSocket);
 	}
 
 	Relay* pRelay = &pSocket->createRelay(peer1,address1,peer2,address2,timeout);
@@ -243,24 +226,14 @@ void RelayServer::manage() const {
 	}
 }
 
-void RelayServer::clear() {
-	lock_guard<mutex> lock(_mutex);
-	set<Relay*>::iterator it;
-	for(it=_relays.begin();it!=_relays.end();++it) {
-		Relay& relay(**it);
-		// remove Relay of peers
-		removePeerRelay(relay.peer1,relay);
-		removePeerRelay(relay.peer2,relay);
-		releaseRelay(relay);
-	}
-	_relays.clear();
-}
-
 void RelayServer::releaseRelay(Relay& relay) const {
 	// remove addresses (and socket if necessary)
 	set<RelaySocket*,Compare>::iterator it = _sockets.find(&relay.socket);
 	if(it!=_sockets.end()) {
-		if((*it)->releaseRelay(relay)==0) {
+		RelaySocket& socket(**it);
+		if(socket.releaseRelay(relay)==0) {
+			socket.close();
+			socket.timeout.update();
 			delete *it;
 			_sockets.erase(it);
 		}

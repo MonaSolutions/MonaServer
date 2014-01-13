@@ -297,11 +297,11 @@ void Script::WriteData(lua_State *pState,DataReader::Type type,DataReader& reade
 					// self
 					lua_pushvalue(pState,-2);
 					// reader
-					SCRIPT_WRITE_BINARY(reader.reader.current(),reader.reader.available())
+					SCRIPT_WRITE_BINARY(reader.packet.current(),reader.packet.available())
 					if(lua_pcall(pState,2,1,0)!=0)
 						SCRIPT_ERROR(Script::LastError(pState))
 					else {
-						reader.reader.next((int)lua_tonumber(pState,-1));
+						reader.packet.next((int)lua_tonumber(pState,-1));
 						lua_pop(pState,1);
 					}
 					break;
@@ -320,7 +320,7 @@ void Script::WriteData(lua_State *pState,DataReader::Type type,DataReader& reade
 			break;
 		}
 		default:
-			reader.reader.next(1);
+			reader.packet.next(1);
 			SCRIPT_ERROR("AMF ",type," type unknown");
 			break;
 	}
@@ -431,7 +431,7 @@ void Script::ReadData(lua_State* pState,DataWriter& writer,UInt32 count,map<UInt
 						if(lua_pcall(pState,2,1,0)!=0)
 							SCRIPT_ERROR(Script::LastError(pState))
 						else {
-							writer.writer.writeRaw((const UInt8*)lua_tostring(pState,-1),lua_objlen(pState,-1));
+							writer.packet.writeRaw((const UInt8*)lua_tostring(pState,-1),lua_objlen(pState,-1));
 							lua_pop(pState,1);
 						}
 						writer.endObject();

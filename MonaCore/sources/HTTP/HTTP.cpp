@@ -171,20 +171,20 @@ string& HTTP::FormatContentType(ContentType type, const string& subType, string&
 	return value.append(subType);
 }
 
-DataWriter* HTTP::NewDataWriter(const string& subType) {
+DataWriter* HTTP::NewDataWriter(const PoolBuffers& poolBuffers,const string& subType) {
 	if (String::ICompare(subType,EXPAND_SIZE("html"))==0 || String::ICompare(subType,EXPAND_SIZE("xhtml+xml"))==0)
-		return new HTMLWriter();
+		return new HTMLWriter(poolBuffers);
 	if (String::ICompare(subType,EXPAND_SIZE("xml"))==0)
-		return new XMLWriter();
+		return new XMLWriter(poolBuffers);
 	if (String::ICompare(subType,EXPAND_SIZE("soap+xml"))==0)
-		return new SOAPWriter();
+		return new SOAPWriter(poolBuffers);
 	if (String::ICompare(subType,EXPAND_SIZE("json"))==0)
-		return new JSONWriter();
+		return new JSONWriter(poolBuffers);
 	if (String::ICompare(subType,EXPAND_SIZE("svg+xml"))==0)
-		return new SVGWriter();
+		return new SVGWriter(poolBuffers);
 	if (String::ICompare(subType,EXPAND_SIZE("css"))==0)
-		return new CSSWriter();
-	return new RawWriter();
+		return new CSSWriter(poolBuffers);
+	return new RawWriter(poolBuffers);
 }
 
 string& HTTP::CodeToMessage(UInt16 code, string& message) {

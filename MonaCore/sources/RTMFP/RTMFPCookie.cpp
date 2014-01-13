@@ -27,44 +27,42 @@ using namespace std;
 
 namespace Mona {
 
-RTMFPCookie::RTMFPCookie(RTMFPHandshake& handshake,Invoker& invoker,const string& tag,const string& queryUrl) : _invoker(invoker), _pComputingThread(NULL),_pCookieComputing(new RTMFPCookieComputing(handshake,invoker)),tag(tag),id(0),farId(0),queryUrl(queryUrl),_writer(_buffer,sizeof(_buffer)),_initiatorNonce(0) {
+RTMFPCookie::RTMFPCookie(RTMFPHandshake& handshake,Invoker& invoker,const string& tag,const string& queryUrl) : _invoker(invoker), _pComputingThread(NULL),_pCookieComputing(new RTMFPCookieComputing(handshake,invoker)),tag(tag),id(0),farId(0),queryUrl(queryUrl),_packet(invoker.poolBuffers) {
 	
 }
 
 
 bool RTMFPCookie::finalize(Exception& ex) {
-	if (_writer.length() > 0)
+	if (_packet.size() > 0)
 		return true;
 	// It's our key public part
 	int size = _pCookieComputing->diffieHellman.publicKeySize(ex);
 	if (ex)
 		return false;
-	_writer.write7BitLongValue(size+11);
-	UInt8* nonce = _writer.begin() + _writer.position();
-	_writer.writeRaw(EXPAND_DATA_SIZE("\x03\x1A\x00\x00\x02\x1E\x00"));
+	_packet.write7BitLongValue(size+11);
+	UInt32 noncePos = _packet.size();
+	_packet.writeRaw(EXPAND_DATA_SIZE("\x03\x1A\x00\x00\x02\x1E\x00"));
 	UInt8 byte2 = DH_KEY_SIZE-size;
 	if(byte2>2) {
 		CRITIC("Generation DH key with less of 126 bytes!");
 		byte2=2;
 	}
-	_writer.write8(0x81);
-	_writer.write8(2-byte2);
-	_writer.write8(0x0D);
-	_writer.write8(0x02);
-	_pCookieComputing->diffieHellman.readPublicKey(ex,&nonce[11]);
+	_packet.write8(0x81);
+	_packet.write8(2-byte2);
+	_packet.write8(0x0D);
+	_packet.write8(0x02);
+	_pCookieComputing->diffieHellman.readPublicKey(ex,_packet.buffer(size));
+	_packet.write8(0x58);
 
 	// Compute Keys
-	RTMFP::ComputeAsymetricKeys(_pCookieComputing->sharedSecret,&_initiatorNonce[0],_initiatorNonce.size(),nonce,size+11,decryptKey,encryptKey);
-
-	_writer.next(size);
-	_writer.write8(0x58);
+	RTMFP::ComputeAsymetricKeys(_pCookieComputing->sharedSecret,_initiatorNonce.data(),_initiatorNonce.size(),_packet.data()+noncePos,size+11,decryptKey,encryptKey);
 	return true;
 }
 
-UInt16 RTMFPCookie::read(MemoryWriter& writer) {
-	writer.write32(id);
-	writer.writeRaw(_writer.begin(),_writer.length());
-	return _writer.length();
+UInt16 RTMFPCookie::read(PacketWriter& packet) {
+	packet.write32(id);
+	packet.writeRaw(_packet.data(),_packet.size());
+	return _packet.size();
 }
 
 

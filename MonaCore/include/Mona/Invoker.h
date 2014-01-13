@@ -45,7 +45,7 @@ public:
 	const SocketManager		sockets;
 	const RelayServer		relay;
 	PoolThreads				poolThreads;
-	PoolBuffers				poolBuffers;
+	const PoolBuffers		poolBuffers;
 
 	std::shared_ptr<FlashStream>&	createFlashStream(Peer& peer);
 	FlashStream&					flashStream(UInt32 id, Peer& peer,std::shared_ptr<FlashStream>& pStream);

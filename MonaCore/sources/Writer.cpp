@@ -31,7 +31,7 @@ Writer				Writer::Null(true);
 
 void Writer::DumpResponse(const UInt8* data, UInt32 size, const SocketAddress& address, bool justInDebug) {
 	// executed just in debug mode, or in dump mode
-	if (Logs::GetDump()&Logs::DUMP_EXTERN && (!justInDebug || (justInDebug&&Logs::GetLevel() >= 7)))
+	if (!justInDebug || (justInDebug&&Logs::GetLevel() >= 7))
 		DUMP(data, size, "Response to ", address.toString())
 }
 
@@ -66,7 +66,7 @@ void Writer::close(int code) {
 	flush();
 }
 
-bool Writer::writeMedia(MediaType type,UInt32 time,MemoryReader& data) {
+bool Writer::writeMedia(MediaType type,UInt32 time,PacketReader& packet) {
 	ERROR("writeMedia method not supported by this protocol for ",Format<UInt8>("%.2x",(UInt8)type)," type")
 	return true;
 }

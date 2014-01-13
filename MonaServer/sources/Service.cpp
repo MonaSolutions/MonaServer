@@ -32,7 +32,7 @@ Service::Service(lua_State* pState, const string& path, ServiceHandler& handler)
 
 Service::~Service() {
 	// clean children
-	for (auto it : _services)
+	for (auto& it : _services)
 		delete it.second;
 	// clean this
 	close(true);

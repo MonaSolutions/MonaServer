@@ -61,7 +61,7 @@ void WSSession::closePublication(){
 }
 
 
-bool WSSession::buildPacket(MemoryReader& packet) {
+bool WSSession::buildPacket(PacketReader& packet) {
 	if (packet.available()<2)
 		return false;
 	UInt8 type = packet.read8() & 0x0F;
@@ -91,14 +91,13 @@ bool WSSession::buildPacket(MemoryReader& packet) {
 		decode<WSUnmasking>(pWSUnmasking);
 	} else {
 		packet.reset(packet.position()-1);
-		*packet.current() = type;
+		*(UInt8*)packet.current() = type;
 	}
 	return true;
 }
 
 
-void WSSession::packetHandler(MemoryReader& packet) {
-	
+void WSSession::packetHandler(PacketReader& packet) {
 	UInt8 type = 0;
 	Exception ex;
 	if(peer.connected) {

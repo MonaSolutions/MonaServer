@@ -31,20 +31,20 @@ public:
 	// For AMF response!
 	double					callbackHandle;
 
-	BinaryWriter&			writeRaw() { return write(AMF::RAW).writer; }
+	BinaryWriter&			writeRaw() { return write(AMF::RAW).packet; }
 	AMFWriter&				writeMessage() { return writeInvocation("_result"); }
 	AMFWriter&				writeInvocation(const std::string& name);
 	AMFWriter&				writeAMFSuccess(const std::string& code, const std::string& description, bool withoutClosing = false) { return writeAMFState("_result", code, description, withoutClosing); }
 	AMFWriter&				writeAMFStatus(const std::string& code, const std::string& description, bool withoutClosing = false) { return writeAMFState("onStatus", code, description, withoutClosing); }
 	AMFWriter&				writeAMFError(const std::string& code, const std::string& description, bool withoutClosing = false) { return writeAMFState("_error", code, description, withoutClosing); }
-	bool					writeMedia(MediaType type,UInt32 time,MemoryReader& data);
+	bool					writeMedia(MediaType type,UInt32 time,PacketReader& packet);
 
 protected:
 	FlashWriter(WriterHandler* pHandler=NULL);
 	FlashWriter(FlashWriter& writer);
 	virtual ~FlashWriter();
 
-	virtual AMFWriter&		write(AMF::ContentType type,UInt32 time=0,MemoryReader* pData=NULL)=0;
+	virtual AMFWriter&		write(AMF::ContentType type,UInt32 time=0,PacketReader* pPacket=NULL)=0;
 
 	AMFWriter&				writeAMFState(const std::string& name,const std::string& code,const std::string& description,bool withoutClosing=false);
 };

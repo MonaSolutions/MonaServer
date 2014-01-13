@@ -327,7 +327,7 @@ void Peer::onDataPacket(const Publication& publication,DataReader& packet) {
 	WARN("DataPacket client before connection")
 }
 
-void Peer::onAudioPacket(const Publication& publication,UInt32 time,MemoryReader& packet) {
+void Peer::onAudioPacket(const Publication& publication,UInt32 time,PacketReader& packet) {
 	if(connected) {
 		_handler.onAudioPacket(*this,publication,time,packet);
 		return;
@@ -335,7 +335,7 @@ void Peer::onAudioPacket(const Publication& publication,UInt32 time,MemoryReader
 	WARN("AudioPacket client before connection")
 }
 
-void Peer::onVideoPacket(const Publication& publication,UInt32 time,MemoryReader& packet) {
+void Peer::onVideoPacket(const Publication& publication,UInt32 time,PacketReader& packet) {
 	if(connected) {
 		_handler.onVideoPacket(*this,publication,time,packet);
 		return;

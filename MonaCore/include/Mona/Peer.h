@@ -69,8 +69,8 @@ public:
 	void onUnpublish(const Publication& publication);
 
 	void onDataPacket(const Publication& publication,DataReader& packet);
-	void onAudioPacket(const Publication& publication,UInt32 time,MemoryReader& packet);
-	void onVideoPacket(const Publication& publication,UInt32 time,MemoryReader& packet);
+	void onAudioPacket(const Publication& publication,UInt32 time,PacketReader& packet);
+	void onVideoPacket(const Publication& publication,UInt32 time,PacketReader& packet);
 	void onFlushPackets(const Publication& publication);
 
 	bool onSubscribe(const Listener& listener,std::string& error);

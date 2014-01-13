@@ -27,7 +27,7 @@ namespace Mona {
 
 class CSSWriter : public DataWriter, virtual Object {
 public:
-	CSSWriter() {}
+	CSSWriter(const PoolBuffers& buffers) : DataWriter(buffers) {}
 
 	void beginObject(const std::string& type = "", bool external = false) {}
 	void endObject() {}

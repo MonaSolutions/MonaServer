@@ -50,10 +50,10 @@ public:
 
 private:
 	void			pack();
-	void			createReader(MemoryReader& reader, std::shared_ptr<DataReader>& pReader) { pReader.reset(new JSONReader(reader)); }
-	void			createWriter(std::shared_ptr<DataWriter>& pWriter) { pWriter.reset(new JSONWriter()); }
+	void			createReader(PacketReader& reader, std::shared_ptr<DataReader>& pReader) { pReader.reset(new JSONReader(reader)); }
+	void			createWriter(std::shared_ptr<DataWriter>& pWriter) { pWriter.reset(new JSONWriter(_socket.poolBuffers())); }
 	bool			hasToConvert(DataReader& reader) { return dynamic_cast<JSONReader*>(&reader) == NULL; }
-	bool			writeMedia(MediaType type,UInt32 time,MemoryReader& data);
+	bool			writeMedia(MediaType type,UInt32 time,PacketReader& data);
 
 	void			write(UInt8 type,const UInt8* data,UInt32 size);
 

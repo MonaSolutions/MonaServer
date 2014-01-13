@@ -56,7 +56,7 @@ private:
 
 	// ServerHandler implementation
 	void										connection(ServerConnection& server);
-	void										message(ServerConnection& server, const std::string& handler, Mona::MemoryReader& reader);
+	void										message(ServerConnection& server, const std::string& handler, Mona::PacketReader& packet);
 	void										disconnection(const ServerConnection& server, const std::string& error);
 	const std::string&							host() { return _host; }
 	const std::map<std::string, Mona::UInt16>&	ports() { return _ports; }
@@ -79,8 +79,8 @@ private:
 	bool					onPublish(Mona::Client& client,const Mona::Publication& publication,std::string& error);
 	void					onUnpublish(Mona::Client& client,const Mona::Publication& publication);
 
-	void					onAudioPacket(Mona::Client& client, const Mona::Publication& publication, Mona::UInt32 time, Mona::MemoryReader& packet);
-	void					onVideoPacket(Mona::Client& client, const Mona::Publication& publication, Mona::UInt32 time, Mona::MemoryReader& packet);
+	void					onAudioPacket(Mona::Client& client, const Mona::Publication& publication, Mona::UInt32 time, Mona::PacketReader& packet);
+	void					onVideoPacket(Mona::Client& client, const Mona::Publication& publication, Mona::UInt32 time, Mona::PacketReader& packet);
 	void					onDataPacket(Mona::Client& client,const Mona::Publication& publication,Mona::DataReader& packet);
 	void					onFlushPackets(Mona::Client& client,const Mona::Publication& publication);
 

@@ -20,15 +20,14 @@ This file is a part of Mona.
 #pragma once
 
 #include "Mona/Mona.h"
-#include "Mona/MemoryReader.h"
+#include "Mona/PacketReader.h"
 #include "Mona/DataWriter.h"
 #include "Mona/Time.h"
 
 namespace Mona {
 
-class DataReaderNull;
 
-class DataReader : public virtual NullableObject {
+class DataReader : virtual NullableObject {
 public:
 	enum Type {
 		NIL=0,
@@ -42,9 +41,7 @@ public:
 		MAP,
 		END
 	};
-
-	virtual ~DataReader();
-		
+	
 	virtual Type				followingType()=0;
 
 	virtual std::string&		readString(std::string& value)=0;
@@ -62,42 +59,24 @@ public:
 	virtual Type				readKey() { return followingType(); }
 	virtual Type				readValue() { return followingType(); }
 
-	virtual bool				available() { return reader.available() > 0; }
+	virtual bool				available() { return packet.available() > 0; }
 
-	virtual void				reset() { reader.reset(_pos); }
+	virtual void				reset() { packet.reset(_pos); }
 
 	void						next();
 	void						read(DataWriter& writer,UInt32 count=0);
 
-	MemoryReader&				reader;
-
-    static DataReaderNull       Null;
+	PacketReader&				packet;
 
 protected:
-	DataReader(MemoryReader& reader);
+	DataReader(PacketReader& packet);
+	DataReader(); // Null
+
 private:
 	void						read(Type type,DataWriter& writer);
 
 	UInt32						_pos;
-};
-
-
-class DataReaderNull : public DataReader {
-public:
-	DataReaderNull() : NullableObject(true), DataReader(MemoryReader::Null) {}
-
-	Type followingType() {return END;}
-
-	std::string&				readString(std::string& value) { return value; }
-	virtual double				readNumber(){return 0;}
-	virtual bool				readBoolean(){return false;}
-	virtual const UInt8*		readBytes(UInt32& size){return NULL;}
-	virtual Time&				readTime(Time& time) { return time.update(); }
-	virtual void				readNull(){}
-
-	virtual bool				readObject(std::string& type,bool& external){return false;}
-	virtual bool				readArray(UInt32& size){return false;}
-	virtual Type				readItem(std::string& name){return END;}
+	static PacketReader			_PacketReaderNull;
 };
 
 

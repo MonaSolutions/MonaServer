@@ -28,9 +28,9 @@ namespace Mona {
 
 class RawReader : public DataReader, virtual Object {
 public:
-	RawReader(MemoryReader& reader) : DataReader(reader) {}
+	RawReader(PacketReader& packet) : DataReader(packet) {}
 
-	std::string&		readString(std::string& value) { return reader.readRaw(reader.available(), value); }
+	std::string&		readString(std::string& value) { return packet.readRaw(packet.available(), value); }
 	double				readNumber() {return 0;}
 	bool				readBoolean() {return false;}
 	Time&				readTime(Time& time) { return time.update(); }

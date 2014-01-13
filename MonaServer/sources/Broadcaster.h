@@ -25,7 +25,7 @@ This file is a part of Mona.
 class Broadcaster {
 	friend class Servers;
 public:
-	Broadcaster(){}
+	Broadcaster(const Mona::PoolBuffers& poolBuffers) : poolBuffers(poolBuffers) {}
 	virtual ~Broadcaster() {}
 
 	typedef std::set<ServerConnection*>::const_iterator Iterator;
@@ -38,6 +38,7 @@ public:
 	
 	void broadcast(const std::string& handler,ServerMessage& message);
 
+	const Mona::PoolBuffers& poolBuffers;
 private:
 	std::set<ServerConnection*>				_connections;
 };

@@ -26,8 +26,13 @@ using namespace std;
 
 namespace Mona {
 
+BinaryWriter::BinaryWriter(BinaryWriter& other,UInt32 offset) : _flipBytes(other._flipBytes),_buffer((UInt8*)other.data()+offset,other.size()-offset) {
+	_buffer.resize(0,true);
+}
 
-BinaryWriter::BinaryWriter(ostream& ostr,ByteOrder byteOrder) : _ostr(ostr) {
+
+BinaryWriter::BinaryWriter(UInt8* buffer, UInt32 size,ByteOrder byteOrder) : _buffer(buffer,size) {
+	_buffer.resize(0,true);
 #if defined(_ARCH_BIG_ENDIAN)
 	_flipBytes = byteOrder == LITTLE_ENDIAN;
 #else
@@ -35,46 +40,54 @@ BinaryWriter::BinaryWriter(ostream& ostr,ByteOrder byteOrder) : _ostr(ostr) {
 #endif
 }
 
-
-BinaryWriter::~BinaryWriter() {
-	_ostr.flush();
+BinaryWriter& BinaryWriter::writeRandom(UInt32 count) {
+	for (UInt32 i = 0; i < count; ++i)
+		write8(Util::Random<UInt8>());
+	return *this;
 }
 
-void BinaryWriter::write7BitEncoded(UInt32 value) {
+BinaryWriter& BinaryWriter::next(UInt32 count) {
+	Buffer& buffer(this->buffer());
+	buffer.resize(buffer.size() + count,true);
+	return *this;
+}
+
+BinaryWriter& BinaryWriter::write7BitEncoded(UInt32 value) {
 	do {
 		unsigned char c = (unsigned char)(value & 0x7F);
 		value >>= 7;
 		if (value)
 			c |= 0x80;
-		_ostr.put(c);
+		write8(c);
 	} while (value);
+	return *this;
 }
 
-void BinaryWriter::write16(UInt16 value) {
+BinaryWriter& BinaryWriter::write16(UInt16 value) {
 	if (_flipBytes)
 		value = Binary::Flip16(value);
-	_ostr.write((const char*)&value, sizeof(value));
+	return writeRaw((const UInt8*)&value, sizeof(value));
 }
 
-void BinaryWriter::write24(UInt32 value) {
+BinaryWriter& BinaryWriter::write24(UInt32 value) {
 	if (_flipBytes)
 		value = Binary::Flip24(value);
-	_ostr.write((const char*)&value, 3);
+	return writeRaw((const UInt8*)&value, 3);
 }
 
-void BinaryWriter::write32(UInt32 value) {
+BinaryWriter& BinaryWriter::write32(UInt32 value) {
 	if (_flipBytes)
 		value = Binary::Flip32(value);
-	_ostr.write((const char*)&value, sizeof(value));
+	return writeRaw((const UInt8*)&value, sizeof(value));
 }
 
-void BinaryWriter::write64(UInt64 value) {
+BinaryWriter& BinaryWriter::write64(UInt64 value) {
 	if (_flipBytes)
 		value = Binary::Flip64(value);
-	_ostr.write((const char*)&value, sizeof(value));
+	return writeRaw((const UInt8*)&value, sizeof(value));
 }
 
-void BinaryWriter::writeAddress(const SocketAddress& address,bool publicFlag) {
+BinaryWriter& BinaryWriter::writeAddress(const SocketAddress& address,bool publicFlag) {
 	UInt8 flag = publicFlag ? 0x02 : 0x01;
 	const IPAddress& host = address.host();
 	if (host.family() == IPAddress::IPv6)
@@ -84,10 +97,10 @@ void BinaryWriter::writeAddress(const SocketAddress& address,bool publicFlag) {
 	write8(flag);
 	for(int i=0;i<size;++i)
 		write8(bytes[i]);
-	write16(address.port());
+	return write16(address.port());
 }
 
-void BinaryWriter::write7BitValue(UInt32 value) {
+BinaryWriter& BinaryWriter::write7BitValue(UInt32 value) {
 	UInt8 shift = (Util::Get7BitValueSize(value)-1)*7;
 	bool max = false;
 	if(shift>=21) { // 4 bytes maximum
@@ -99,10 +112,10 @@ void BinaryWriter::write7BitValue(UInt32 value) {
 		write8(0x80 | ((value>>shift)&0x7F));
 		shift -= 7;
 	}
-	write8(max ? value&0xFF : value&0x7F);
+	return write8(max ? value&0xFF : value&0x7F);
 }
 
-void BinaryWriter::write7BitLongValue(UInt64 value) {
+BinaryWriter& BinaryWriter::write7BitLongValue(UInt64 value) {
 	UInt8 shift = (Util::Get7BitValueSize(value)-1)*7;
 	bool max = shift>=63; // Can give 10 bytes!
 	if(max)
@@ -112,7 +125,7 @@ void BinaryWriter::write7BitLongValue(UInt64 value) {
 		write8(0x80 | ((value>>shift)&0x7F));
 		shift -= 7;
 	}
-	write8(max ? value&0xFF : value&0x7F);
+	return write8(max ? value&0xFF : value&0x7F);
 }
 
 

@@ -40,6 +40,10 @@ PoolThreads& Socket::poolThreads() {
 	return manager.poolThreads;
 }
 
+const PoolBuffers& Socket::poolBuffers() {
+	return manager.poolBuffers;
+}
+
 void Socket::close() {
 	lock_guard<mutex>	lock(_mutexManaged);
 	if (!_managed)
@@ -329,7 +333,7 @@ void Socket::manageWrite(Exception& ex) {
 }
 
 // Can be called from one other thread than main thread (by the manager socket thread)
-void Socket::flush(Exception& ex) {
+void Socket::flushSenders(Exception& ex) {
 	lock_guard<mutex>	lock(_mutexAsync);
 	while (!_senders.empty()) {
 		if (!_senders.front()->flush(ex,*this)) {

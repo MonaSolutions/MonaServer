@@ -35,9 +35,9 @@ public:
 	void startPublishing();
 	void stopPublishing(); 
 
-	void pushAudioPacket(MemoryReader& packet,UInt32 time=0); 
-	void pushVideoPacket(MemoryReader& packet,UInt32 time=0);
-	void pushDataPacket(DataReader& packet);
+	void pushAudioPacket(PacketReader& packet,UInt32 time=0); 
+	void pushVideoPacket(PacketReader& packet,UInt32 time=0);
+	void pushDataPacket(DataReader& reader);
 
 	void flush();
 
@@ -56,9 +56,10 @@ public:
 	void setBufferTime(UInt32 ms) { _bufferTime = ms; }
 
 private:
-	void	init();
+	bool	init();
 	void	init(Writer** ppWriter,Writer::MediaType type);
 	UInt32 	computeTime(UInt32 time);
+	PacketReader& publicationNamePacket() { _publicationNamePacket.reset(); return _publicationNamePacket; }
 
 	/// WriterHandler implementation
 	void	close(Writer& writer, int code);
@@ -80,7 +81,7 @@ private:
 	Writer*					_pVideoWriter;
 	Writer*					_pDataWriter;
 	UInt32					_droppedFrames;
-	MemoryReader			_publicationReader;
+	PacketReader			_publicationNamePacket;
 };
 
 

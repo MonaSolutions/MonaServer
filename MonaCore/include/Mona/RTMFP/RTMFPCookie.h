@@ -21,7 +21,6 @@ This file is a part of Mona.
 
 #include "Mona/Mona.h"
 #include "Mona/Invoker.h"
-#include "Mona/MemoryWriter.h"
 #include "Mona/RTMFP/RTMFPCookieComputing.h"
 
 
@@ -51,15 +50,14 @@ public:
 
 	bool					obsolete() { return _createdTimestamp.isElapsed(120000000);}  // after 2 mn
 
-	UInt16					length() { return _writer.length() + 4; }
-	UInt16					read(MemoryWriter& writer);
+	UInt16					length() { return _packet.size() + 4; }
+	UInt16					read(PacketWriter& packet);
 private:
 	PoolThread*								_pComputingThread;
 	std::shared_ptr<RTMFPCookieComputing>	_pCookieComputing;
 	Time									_createdTimestamp;
 
-	UInt8									_buffer[256];
-	MemoryWriter							_writer;
+	PacketWriter							_packet;
 	Invoker&								_invoker;
 	Buffer									_initiatorNonce;
 };

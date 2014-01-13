@@ -31,7 +31,7 @@ using namespace std;
 namespace Mona {
 
 
-RTMPSession::RTMPSession(const SocketAddress& address, Protocol& protocol, Invoker& invoker) : 	_pSender(new RTMPSender()),_controller(2,*this,address,_pSender),_unackBytes(0),_decrypted(0),_pThread(NULL), _chunkSize(RTMP::DEFAULT_CHUNKSIZE), _winAckSize(RTMP::DEFAULT_WIN_ACKSIZE), _handshaking(0), _pWriter(NULL), TCPSession(address, protocol, invoker) {
+RTMPSession::RTMPSession(const SocketAddress& address, Protocol& protocol, Invoker& invoker) : _unackBytes(0),_decrypted(0),_pThread(NULL), _chunkSize(RTMP::DEFAULT_CHUNKSIZE), _winAckSize(RTMP::DEFAULT_WIN_ACKSIZE), _handshaking(0), _pWriter(NULL), TCPSession(address, protocol, invoker) {
 	dumpJustInDebug = true;
 }
 
@@ -51,10 +51,10 @@ void RTMPSession::kill() {
 	Session::kill();
 }
 
-bool RTMPSession::buildPacket(MemoryReader& packet) {
+bool RTMPSession::buildPacket(PacketReader& packet) {
 
 	if (_pDecryptKey && packet.available()>_decrypted) {
-		RC4(_pDecryptKey.get(),packet.available()-_decrypted,packet.current()+_decrypted,packet.current()+_decrypted);
+		RC4(_pDecryptKey.get(),packet.available()-_decrypted,packet.current()+_decrypted,(UInt8*)packet.current()+_decrypted);
 		_decrypted = packet.available();
 	}
 
@@ -70,6 +70,9 @@ bool RTMPSession::buildPacket(MemoryReader& packet) {
 			packet.shrink(1536);
 			return true;
 	}
+
+	if (!_pController)
+		_pController.reset(new RTMPWriter(2, *this, address(),_pEncryptKey));
 
 	dumpJustInDebug = false;
 
@@ -87,11 +90,11 @@ bool RTMPSession::buildPacket(MemoryReader& packet) {
 	if (idWriter != 2) {
 		auto it = _writers.lower_bound(idWriter);
 		if (it == _writers.end() || it->first != idWriter)
-			it = _writers.emplace_hint(it, piecewise_construct, forward_as_tuple(idWriter), forward_as_tuple(idWriter, (StreamSocket&)*this, peerAddress(), _pSender));
+			it = _writers.emplace_hint(it, piecewise_construct, forward_as_tuple(idWriter), forward_as_tuple(idWriter, (StreamSocket&)*this, peerAddress(), _pEncryptKey));
 		pWriter = &it->second;
 	}
 	if (!pWriter)
-		pWriter = &_controller;
+		pWriter = _pController.get();
 
 
 	RTMPChannel& channel(pWriter->channel);
@@ -146,7 +149,7 @@ bool RTMPSession::buildPacket(MemoryReader& packet) {
 	++chunks;
 	for (UInt16 chunk = 1; chunk < chunks; ++chunk) {
 		UInt32 rest = channel.bodySize - i;
-		memcpy(packet.current()+i, packet.current() + i + chunk, _chunkSize >= rest ? rest : _chunkSize);
+		memcpy((UInt8*)packet.current()+i, packet.current() + i + chunk, _chunkSize >= rest ? rest : _chunkSize);
 		i += _chunkSize;
 	}
 
@@ -155,7 +158,7 @@ bool RTMPSession::buildPacket(MemoryReader& packet) {
 }
 
 
-void RTMPSession::packetHandler(MemoryReader& packet) {
+void RTMPSession::packetHandler(PacketReader& packet) {
 	_unackBytes += packet.position() + packet.available();
 
 	if(_handshaking==0) {
@@ -177,13 +180,13 @@ void RTMPSession::packetHandler(MemoryReader& packet) {
 	} else if (_handshaking == 2) {
 		++_handshaking;
 		// client settings
-		_controller.writeProtocolSettings();
+		_pController->writeProtocolSettings();
 	}
 
 
 	// ack if required
 	if (_unackBytes >= _winAckSize) {
-		_controller.writeAck(_unackBytes);
+		_pController->writeAck(_unackBytes);
 		_unackBytes = 0;
 	}
 
@@ -205,7 +208,7 @@ void RTMPSession::packetHandler(MemoryReader& packet) {
 			break;
 		case AMF::BANDWITH:
 			// send a win_acksize message for accept this change
-			_controller.writeWinAckSize(packet.read32());
+			_pController->writeWinAckSize(packet.read32());
 			break;
 		case AMF::WIN_ACKSIZE:
 			_winAckSize = packet.read32();
@@ -216,13 +219,20 @@ void RTMPSession::packetHandler(MemoryReader& packet) {
 
 	if (!peer.connected)
 		kill();	
-
 	_pWriter = NULL;
-	_controller.flush();
+}
+
+void RTMPSession::flush() {
+	if (_pController)
+		_pController->flush();
+	if (_pStream)
+		_pStream->flush();
+	for (auto& it : _writers)
+		it.second.flush();
 }
 
 
-bool RTMPSession::performHandshake(MemoryReader& packet, bool encrypted) {
+bool RTMPSession::performHandshake(BinaryReader& packet, bool encrypted) {
 	bool middle;
 	const UInt8* challengeKey = RTMP::ValidateClient(packet,middle);
 	shared_ptr<RTMPHandshaker> pHandshaker;
@@ -230,15 +240,14 @@ bool RTMPSession::performHandshake(MemoryReader& packet, bool encrypted) {
 		if(encrypted) {
 			_pDecryptKey.reset(new RC4_KEY);
 			_pEncryptKey.reset(new RC4_KEY);
-			_pSender.reset(new RTMPSender(_pEncryptKey));
 		}
 		packet.reset();
-		pHandshaker.reset(new RTMPHandshaker(peerAddress(),packet.current() + RTMP::GetDHPos(packet.current(), middle), challengeKey, middle, _pDecryptKey, _pEncryptKey));
+		pHandshaker.reset(new RTMPHandshaker(invoker.poolBuffers,peerAddress(),packet.current() + RTMP::GetDHPos(packet.current(), middle), challengeKey, middle, _pDecryptKey, _pEncryptKey));
 	} else if (encrypted) {
 		ERROR("Unable to validate client");
 		return false;
 	} else // Simple handshake!
-		pHandshaker.reset(new RTMPHandshaker(peerAddress(), packet.current(), packet.available()));
+		pHandshaker.reset(new RTMPHandshaker(invoker.poolBuffers,peerAddress(), packet.current(), packet.available()));
 
 	Exception ex;
 	_pThread = send<RTMPHandshaker>(ex, pHandshaker, _pThread);

@@ -27,33 +27,33 @@ using namespace std;
 
 namespace Mona {
 
-bool JSONReader::IsValid(MemoryReader& reader) {
-	UInt8* cur = reader.current();
-	while(reader.available()>0 && isspace(*cur))
+bool JSONReader::IsValid(PacketReader& packet) {
+	const UInt8* cur = packet.current();
+	while(packet.available()>0 && isspace(*cur))
 		 ++cur;
-	if(reader.available()==0)
+	if(packet.available()==0)
 		return false;
 	return cur[0]=='{' || cur[0]=='[';
 }
 
 
-JSONReader::JSONReader(MemoryReader& reader) : DataReader(reader),_bool(false),_last(0) {
+JSONReader::JSONReader(PacketReader& packet) : DataReader(packet),_bool(false),_last(0) {
 	if(followingType()==ARRAY) {
-		if(readArray(_pos) && reader.available()>0) {
-			UInt8* cur = reader.current()+reader.available()-1;
+		if(readArray(_pos) && packet.available()>0) {
+			const UInt8* cur = packet.current()+packet.available()-1;
 
-			while(cur>=reader.current() && isspace(*cur))
+			while(cur>=packet.current() && isspace(*cur))
 				--cur;
-			if(cur>=reader.current() && *cur== ']')
-		 		reader.shrink(cur-reader.current());
+			if(cur>=packet.current() && *cur== ']')
+		 		packet.shrink(cur-packet.current());
 		}
 	}
-	_pos = reader.position();
+	_pos = packet.position();
 }
 
 
 void JSONReader::reset() {
-	reader.reset(_pos);
+	packet.reset(_pos);
 	_text.clear();
 	_bool = false;
 	_last =0;
@@ -66,7 +66,7 @@ const UInt8* JSONReader::readBytes(UInt32& size) {
 }
 
 bool JSONReader::readBoolean() {
-	reader.next(_bool ? 4 : 5);
+	packet.next(_bool ? 4 : 5);
 	return _bool;
 }
 
@@ -88,12 +88,12 @@ double JSONReader::readNumber() {
 		ERROR("JSON number absent, no more data available")
 		return 0;
 	}
-	UInt32 pos = reader.position();
-	UInt8 c = reader.read8();
+	UInt32 pos = packet.position();
+	UInt8 c = packet.read8();
 	while(available() && (isdigit(c) || c=='.'))
-		c = reader.read8();
+		c = packet.read8();
 
-	UInt32 size = reader.position()-pos-1;
+	UInt32 size = packet.position()-pos;
 	string value((const char*)cur,size);
 
 	Exception ex;
@@ -111,7 +111,7 @@ bool JSONReader::readObject(string& type,bool& external) {
 		ERROR("JSON array absent, no more data available")
 		return false;
 	}
-	reader.next(1);
+	packet.next(1);
 	external=false;
 	if(cur[0]=='{')
 		return true;
@@ -125,12 +125,12 @@ bool JSONReader::readArray(UInt32& size) {
 		ERROR("JSON array absent, no more data available")
 		return false;
 	}
-	reader.next(1);
+	packet.next(1);
 	if(cur[0]=='[') {
-		UInt32 available = reader.available();
+		UInt32 available = packet.available();
 		if(available==0) {
 			ERROR("JSON array without termination char")
-			reader.next(1);
+			packet.next(1);
 			return false;
 		}
 		size=0;
@@ -157,7 +157,7 @@ bool JSONReader::readArray(UInt32& size) {
 		}
 		if(isString) {
 			ERROR("JSON string without termination char")
-			reader.next(reader.available());
+			packet.next(packet.available());
 			return false;
 		}
 		return true;
@@ -173,10 +173,10 @@ JSONReader::Type JSONReader::readItem(string& name) {
 		return END;
 	}
 	if(cur[0]=='}' || cur[0]==']') {
-		reader.next(1);
+		packet.next(1);
 		cur = current();
 		if(cur && cur[0]==',')
-			reader.next(1);
+			packet.next(1);
 		return END;
 	}
 	_bool=false;
@@ -204,7 +204,7 @@ JSONReader::Type JSONReader::followingType() {
 	if(!cur)
 		return END;
 	if(cur[0]==',' || cur[0]=='}' || cur[0]==']') {
-		reader.next(1);
+		packet.next(1);
 		return followingType();
 	}
 	if(cur[0]=='{')
@@ -212,29 +212,29 @@ JSONReader::Type JSONReader::followingType() {
 	if(cur[0]=='[')
 		return ARRAY;
 	if(cur[0]=='"') {
-		reader.next(1);
-		UInt32 pos = reader.position();
+		packet.next(1);
+		UInt32 pos = packet.position();
 
 		while((cur=current()) && cur[0]!='"')
-			reader.next(cur[0]=='\\' ? 2 : 1);
+			packet.next(cur[0]=='\\' ? 2 : 1);
 		if(!available()) {
 			ERROR("JSON malformed, marker \" end of text not found");
 			return END;
 		}
 
-		UInt32 size = reader.position()-pos;
-		reader.reset(pos);
-		reader.readRaw(size,_text);
+		UInt32 size = packet.position()-pos;
+		packet.reset(pos);
+		packet.readRaw(size,_text);
 		if(_bool) {
 			Buffer result;
 			Util::FromBase64((const UInt8*)_text.c_str(), size, result);
 			_text.assign((const char*)result.data(),result.size());
 		}
-		reader.next(1); // skip the second '"'
+		packet.next(1); // skip the second '"'
 		cur = current();
 		_last=1; // String marker
 		if(cur && cur[0]==':') {
-			reader.next(1);
+			packet.next(1);
 			_bool=true;
 			return STRING;
 		}
@@ -258,11 +258,11 @@ JSONReader::Type JSONReader::followingType() {
 }
 
 const UInt8* JSONReader::current() {
-	while(available() && isspace(*reader.current()))
-		reader.next(1);
+	while(available() && isspace(*packet.current()))
+		packet.next(1);
 	if(!available())
 		return NULL;
-	return reader.current();
+	return packet.current();
 }
 
 

@@ -25,10 +25,10 @@ using namespace std;
 
 namespace Mona {
 
-XMLReader::XMLReader(MemoryReader& reader) : DataReader(reader),_last(NIL),_object(false) {}
+XMLReader::XMLReader(PacketReader& packet) : DataReader(packet),_last(NIL),_object(false) {}
 
 void XMLReader::reset() {
-	reader.reset(_pos);
+	packet.reset(_pos);
 	_text.clear();
 	_last=NIL;
 	_dval=0;
@@ -96,13 +96,13 @@ XMLReader::Type XMLReader::readItem(string& name) {
 		
 		// Ignore '/'
 		if (cur[0]=='/') {
-			reader.next(1);
+			packet.next(1);
 			cur=current();
 
 			if (!cur || cur[0]!='>')
 				ERROR("XML item absent, no more data available")
 			else {
-				reader.next(1); // not an array
+				packet.next(1); // not an array
 				_object=false;
 			}
 			return END;
@@ -112,7 +112,7 @@ XMLReader::Type XMLReader::readItem(string& name) {
 			_object=false;
 
 			// Primitive value?
-			UInt32 available = reader.available();
+			UInt32 available = packet.available();
 			while(available && isspace(*++cur))
 				--available;
 
@@ -124,19 +124,19 @@ XMLReader::Type XMLReader::readItem(string& name) {
 			return END;
 		}
 
-		UInt32 pos = reader.position();
+		UInt32 pos = packet.position();
 		while((cur=current()) && cur[0]!='=')
-			reader.next(1);
+			packet.next(1);
 
 		if (!cur) {
 			ERROR("XML item absent, no more data available")
 			return END;
 		}
 
-		UInt32 size = reader.position()-pos;
-		reader.reset(pos);
-		reader.readRaw(size,name);
-		reader.next(1);
+		UInt32 size = packet.position()-pos;
+		packet.reset(pos);
+		packet.readRaw(size,name);
+		packet.next(1);
 		type = XMLReader::followingType();
 	}
 
@@ -159,29 +159,29 @@ XMLReader::Type XMLReader::followingType() {
 
 	// Tag begin/end
 	if(cur[0]=='<') {
-		reader.next(1);
+		packet.next(1);
 		cur=current();
 
 		// End of the tag/Header/Comment
 		if (cur && (cur[0] == '/' || cur[0] == '?' || cur[0] == '!')) {
 
 			do {
-				reader.next(1);
+				packet.next(1);
 			} while((cur=current()) && (cur[0]!='>'));
 
 			if(!available())
 				return END;
 
 			// go to next object
-			reader.next(1);
+			packet.next(1);
 			return XMLReader::followingType();
 		}
 
 		// Read Tag name
-		UInt32 pos = reader.position();
+		UInt32 pos = packet.position();
 		while(available() && cur[0]!='>' && !isspace(cur[0])) {
-			reader.next(1);
-			cur=reader.current();
+			packet.next(1);
+			cur=packet.current();
 		}
 
 		if (!available()) {
@@ -189,16 +189,16 @@ XMLReader::Type XMLReader::followingType() {
 			return END;
 		}
 
-		UInt32 size = reader.position()-pos;
-		reader.reset(pos);
-		reader.readRaw(size,_text);
+		UInt32 size = packet.position()-pos;
+		packet.reset(pos);
+		packet.readRaw(size,_text);
 
 		// object of primitive type? => return primitive
 		cur=current();
 		if (cur[0]=='>') {
 			
 			_object=false;
-			reader.next(1);
+			packet.next(1);
 			cur=current();
 			if(cur && (isalnum(cur[0]) || cur[0]=='-' || cur[0]=='\"'))
 				return XMLReader::followingType();
@@ -215,12 +215,12 @@ XMLReader::Type XMLReader::followingType() {
 		bool chained=false;
 		if (cur[0]=='\"') {
 			chained=true;
-			reader.next(1);
+			packet.next(1);
 		}
 
-		UInt32 pos = reader.position();
+		UInt32 pos = packet.position();
 		while((cur=current()) && cur[0]!='\"' && cur[0]!='<')
-			reader.next(1);
+			packet.next(1);
 
 		if(!cur) {
 			ERROR("XML malformed, tag does not terminate");
@@ -231,9 +231,9 @@ XMLReader::Type XMLReader::followingType() {
 			return END;
 		}
 
-		UInt32 size = reader.position()-pos;
-		reader.reset(pos);
-		reader.readRaw(size,_text);
+		UInt32 size = packet.position()-pos;
+		packet.reset(pos);
+		packet.readRaw(size,_text);
 		String::Trim(_text);
 
 		_last=STRING;
@@ -245,13 +245,13 @@ XMLReader::Type XMLReader::followingType() {
 			_last=TIME;
 
 		if(chained)
-			reader.next(1); // remove last '"'
+			packet.next(1); // remove last '"'
 		
 		return _last;
 	}
 	// Tag with subtags
 	else if(cur[0]=='>') {
-		reader.next(1);
+		packet.next(1);
 		
 		_last=ARRAY;
 		return _last;
@@ -261,11 +261,11 @@ XMLReader::Type XMLReader::followingType() {
 }
 
 const UInt8* XMLReader::current() {
-	while(available() && isspace(*reader.current()))
-		reader.next(1);
+	while(available() && isspace(*packet.current()))
+		packet.next(1);
 	if(!available())
 		return NULL;
-	return reader.current();
+	return packet.current();
 }
 
 } // namespace Mona

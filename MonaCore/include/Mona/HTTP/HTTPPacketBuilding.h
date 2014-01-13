@@ -25,12 +25,13 @@ This file is a part of Mona.
 
 namespace Mona {
 
-class HTTPPacketBuilding : public Decoding, public HTTPPacket, virtual Object {
+class HTTPPacketBuilding : public Decoding, virtual Object {
 public:
-	HTTPPacketBuilding(Invoker& invoker, const UInt8* data, UInt32 size, std::shared_ptr<PoolBuffer>& ppBuffer) : _ppBuffer(ppBuffer),HTTPPacket(*ppBuffer),Decoding("HTTPPacketBuilding", invoker, data, size) {}
+	HTTPPacketBuilding(Invoker& invoker, PoolBuffer& pBuffer,const std::shared_ptr<PoolBuffer>& ppBuffer) : _ppBuffer(ppBuffer),pPacket(new HTTPPacket(*ppBuffer)),Decoding("HTTPPacketBuilding", invoker, pBuffer) {}
 
+	const std::shared_ptr<HTTPPacket> pPacket;
 private:
-	const UInt8* decodeRaw(Exception& ex, PoolBuffer& pBuffer, UInt32 times,const UInt8* data,UInt32& size) { return build(pBuffer,data,size); }
+	const UInt8* decodeRaw(Exception& ex, PoolBuffer& pBuffer, UInt32 times,const UInt8* data,UInt32& size) { return pPacket->build(pBuffer,data,size); }
 
 	const std::shared_ptr<PoolBuffer>	 _ppBuffer;
 };

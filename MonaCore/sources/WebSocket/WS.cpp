@@ -40,12 +40,12 @@ string& WS::ComputeKey(string& key) {
 
 
 
-void WS::Unmask(MemoryReader& data) {
+void WS::Unmask(BinaryReader& reader) {
 	UInt32 i;
 	UInt8 mask[4];
-	data.readRaw(mask,sizeof(mask));
-	UInt8* bytes = data.current();
-	for(i=0;i<data.available();++i)
+	reader.readRaw(mask,sizeof(mask));
+	UInt8* bytes = (UInt8*)reader.current();
+	for(i=0;i<reader.available();++i)
 		bytes[i] ^= mask[i%4];
 }
 

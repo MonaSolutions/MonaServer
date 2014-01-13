@@ -29,15 +29,15 @@ namespace Mona {
 
 class JSONReader : public DataReader, virtual Object {
 public:
-	JSONReader(MemoryReader& reader);
+	JSONReader(PacketReader& packet);
 
-	static bool			IsValid(MemoryReader& reader);
+	static bool			IsValid(PacketReader& packet);
 
 	std::string&		readString(std::string& value);
 	double				readNumber();
 	bool				readBoolean();
 	Time&				readTime(Time& time);
-	void				readNull() { reader.next(4); }
+	void				readNull() { packet.next(4); }
 
 	bool				readObject(std::string& type,bool& external);
 	bool				readArray(UInt32& size);
@@ -52,10 +52,10 @@ private:
 
 	const UInt8*	current();
 
-	UInt32		_pos;
-	std::string			_text;
+	UInt32			_pos;
+	std::string		_text;
 	Time			_date;
-	bool				_bool;
+	bool			_bool;
 	UInt8			_last;
 };
 

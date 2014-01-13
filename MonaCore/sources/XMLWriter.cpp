@@ -24,7 +24,7 @@ using namespace std;
 
 namespace Mona {
 
-XMLWriter::XMLWriter() : _arraySize(1), _closeLast(false) {
+XMLWriter::XMLWriter(const PoolBuffers& buffers) : DataWriter(buffers),_arraySize(1), _closeLast(false) {
 	
 }
 
@@ -52,13 +52,13 @@ void XMLWriter::beginObject(const string& type,bool external) {
 		return;
 
 	if (_closeLast) {
-		writer.write8('>');
+		packet.write8('>');
 		_closeLast=false;
 	}
 
 	TagPos& tag = _queueObjects.top();
-	writer.write8('<');
-	writer.writeRaw(tag.name);
+	packet.write8('<');
+	packet.writeRaw(tag.name);
 	_closeLast=true;
 }
 
@@ -82,13 +82,13 @@ void XMLWriter::endObject() {
 	// Auto-ended tag
 	if (_closeLast) {
 
-		writer.writeRaw("/>");
+		packet.writeRaw("/>");
 		_closeLast=false;
 	} else {
 
-		writer.writeRaw("</");
-		writer.writeRaw(tag.name);
-		writer.write8('>');
+		packet.writeRaw("</");
+		packet.writeRaw(tag.name);
+		packet.write8('>');
 	}
 
 	// Release the tag if ended
@@ -99,18 +99,18 @@ void XMLWriter::endObject() {
 
 void XMLWriter::writeBytes(const UInt8* data,UInt32 size) {
 	begin();
-	writer.writeRaw(data, size);
+	packet.writeRaw(data, size);
 	end();
 }
 
 void XMLWriter::writeRaw(const char* value) { 
 	begin();
-	writer.writeRaw(value);
+	packet.writeRaw(value);
 	end();
 }
 void XMLWriter::writeRaw(const string& value) { 
 	begin();
-	writer.writeRaw(value);
+	packet.writeRaw(value);
 	end();
 }
 
@@ -120,22 +120,22 @@ void XMLWriter::begin() {
 			_value = "value";
 
 		if (_closeLast) {
-			writer.write8('>');
+			packet.write8('>');
 			_closeLast = false;
 		}
 
-		writer.write8('<');
-		writer.writeRaw(_value);
-		writer.write8('>');
+		packet.write8('<');
+		packet.writeRaw(_value);
+		packet.write8('>');
 	}
 
 }
 
 void XMLWriter::end() {
 	if (!_value.empty()) {
-		writer.writeRaw("</");
-		writer.writeRaw(_value);
-		writer.write8('>');
+		packet.writeRaw("</");
+		packet.writeRaw(_value);
+		packet.write8('>');
 		_value.assign("");
 	}
 }

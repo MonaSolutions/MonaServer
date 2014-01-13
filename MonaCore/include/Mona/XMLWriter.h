@@ -23,18 +23,10 @@
 
 namespace Mona {
 
-class TagPos : public virtual Object {
-
+	
+class XMLWriter : public DataWriter, virtual Object {
 public:
-	TagPos(const std::string val) : name(val), counter(1) {}
-
-	std::string name;
-	UInt8		counter;
-};
-
-class XMLWriter : public DataWriter, public virtual NullableObject {
-public:
-	XMLWriter();
+	XMLWriter(const PoolBuffers& buffers);
 
 	virtual void beginObject(const std::string& type="",bool external=false);
 	virtual void endObject();
@@ -58,6 +50,15 @@ protected:
 	void	writeRaw(const char* value);
 	void	writeRaw(const std::string& value);
 	void	end();
+
+private:
+	class TagPos : virtual Object {
+	public:
+		TagPos(const std::string val) : name(val), counter(1) {}
+		std::string name;
+		UInt8		counter;
+	};
+	
 
 	std::stack<TagPos>	_queueObjects;
 	std::string			_value;

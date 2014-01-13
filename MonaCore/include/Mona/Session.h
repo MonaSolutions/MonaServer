@@ -61,8 +61,8 @@ public:
 		decode(pDecoding);
 	}
 
-	void				receive(MemoryReader& packet);
-	virtual void		receive(MemoryReader& packet, const SocketAddress& address);
+	virtual void		receive(PacketReader& packet) { receiveWithoutFlush(packet); flush(); }
+	virtual void		receive(PacketReader& packet, const SocketAddress& address);
 
 	virtual void		manage() {}
 	virtual void		kill();
@@ -73,9 +73,10 @@ protected:
 
 	Invoker&			invoker;
 
-	virtual void		packetHandler(MemoryReader& packet)=0;
+	void				receiveWithoutFlush(PacketReader& packet);
+	virtual void		packetHandler(PacketReader& packet)=0;
 
-private:	
+private:
 	void				checkAddress(const SocketAddress& address);
 	const std::string&  protocolName();
 

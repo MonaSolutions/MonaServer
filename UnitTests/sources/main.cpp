@@ -20,6 +20,7 @@ This file is a part of Mona.
 #include "Mona/Application.h"
 #include "Mona/Logs.h"
 #include "Test.h"
+#include <iostream>
 
 using namespace Mona;
 using namespace std;

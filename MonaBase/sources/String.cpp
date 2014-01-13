@@ -65,7 +65,7 @@ vector<string>& String::Split(const string& value, const string& separators, vec
 
 string& String::ToLower(string& value) {
 	auto it = value.begin();
-	for (it; it < value.end(); ++it)
+	for (it; it != value.end(); ++it)
 		*it = tolower(*it);
 	return value;
 }

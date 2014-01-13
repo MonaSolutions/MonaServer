@@ -20,15 +20,16 @@ This file is a part of Mona.
 #pragma once
 
 #include "Mona/Mona.h"
-#include "Mona/PoolThread.h"
+#include "Mona/Buffer.h"
 #include <deque>
+#include <mutex>
 
 namespace Mona {
 
 class PoolBuffers : virtual Object {
 	friend class PoolBuffer;
 public:
-	PoolBuffers(UInt16 maximumBufferSize = 8192) : _maximumBufferSize(maximumBufferSize) {}
+	PoolBuffers(UInt16 maximumCapacity = 32768) : _maximumCapacity(maximumCapacity) {}
 	virtual ~PoolBuffers() {clear();}
 
 	void clear();
@@ -39,7 +40,7 @@ private:
 
 	mutable std::deque<Buffer*>	_buffers;
 	mutable std::mutex			_mutex;
-	UInt16						_maximumBufferSize;
+	UInt16						_maximumCapacity;
 };
 
 

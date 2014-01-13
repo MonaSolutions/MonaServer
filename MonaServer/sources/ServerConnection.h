@@ -20,13 +20,13 @@ This file is a part of Mona.
 #pragma once
 
 #include "Mona/AMFWriter.h"
+#include "Mona/PacketReader.h"
 #include "Mona/TCPClient.h"
-#include "Mona/MemoryReader.h"
 #include "Mona/MapParameters.h"
 
 class ServerMessage : public Mona::AMFWriter {
 public:
-	ServerMessage() { stream.next(300); }
+	ServerMessage(const Mona::PoolBuffers& poolBuffers) : AMFWriter(poolBuffers) { packet.next(300); }
 };
 
 class ServerConnection;
@@ -35,7 +35,7 @@ public:
 	virtual const std::string&	host()=0;
 	virtual const std::map<std::string,Mona::UInt16>& ports()=0;
 	virtual void connection(ServerConnection& server)=0;
-	virtual void message(ServerConnection& server,const std::string& handler,Mona::MemoryReader& reader)=0;
+	virtual void message(ServerConnection& server,const std::string& handler,Mona::PacketReader& packet)=0;
 	virtual void disconnection(const ServerConnection& server,const std::string& error)=0;
 };
 
@@ -51,10 +51,12 @@ public:
 	ServerConnection(const Mona::SocketAddress& peerAddress, const Mona::SocketManager& manager, ServerHandler& handler, ServersHandler& serversHandler,bool alreadyConnected=false);
 	virtual ~ServerConnection();
 
-	const std::string							host;
-	const Mona::SocketAddress					address;
-	const bool									isTarget;
-	Mona::UInt16								port(const std::string& protocol);
+	const std::string				host;
+	const Mona::SocketAddress		address;
+	const bool						isTarget;
+	Mona::UInt16					port(const std::string& protocol);
+
+	const Mona::PoolBuffers&		poolBuffers() { return socket().poolBuffers(); }
 
 	void			connect();
 

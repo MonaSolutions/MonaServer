@@ -31,7 +31,7 @@ class ObjectRef;
 
 class AMFWriter : public DataWriter, virtual NullableObject {
 public:
-	AMFWriter();
+	AMFWriter(const PoolBuffers& poolBuffers);
 	virtual ~AMFWriter();
 
 	bool repeat(UInt32 reference);
@@ -58,10 +58,11 @@ public:
 
 	bool				amf0Preference;
 
-    static AMFWriter    Null;
+	static AMFWriter    Null;
 
 private:
-	AMFWriter(bool isNull);
+	AMFWriter() : _amf3(false), amf0Preference(false) {} // null version
+
 	void writeInteger(Int32 value);
 	void writeText(const std::string& value);
 

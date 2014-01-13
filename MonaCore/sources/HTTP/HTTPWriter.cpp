@@ -24,7 +24,7 @@ using namespace std;
 
 namespace Mona {
 
-HTTPWriter::HTTPWriter(TCPClient& socket) : _socket(socket),_pThread(NULL),_initMedia(false) {
+HTTPWriter::HTTPWriter(TCPClient& tcpClient) : _tcpClient(tcpClient),_pThread(NULL),mediaType(MediaContainer::FLV) {
 	
 }
 
@@ -47,9 +47,9 @@ void HTTPWriter::close(const Exception& ex) {
 
 void HTTPWriter::close(int code) {
 	if (code >= 0) {
-		if (code > 0)
+		if (code > 0 && pRequest)
 			createSender().writeError(code,_buffer,true);
-		_socket.disconnect();
+		_tcpClient.disconnect();
 	}
 	Writer::close(code);
 }
@@ -69,11 +69,9 @@ void HTTPWriter::flush(bool full) {
 
 	Exception ex;
 	for (shared_ptr<HTTPSender>& pSender : _senders) {
-		_pThread = _socket.send<HTTPSender>(ex, pSender,_pThread);
+		_pThread = _tcpClient.send<HTTPSender>(ex, pSender,_pThread);
 		if (ex)
 			ERROR("HTTPSender flush, ", ex.error())
-		else
-			_sent.emplace_back(pSender);
 	}
 	_senders.clear();
 }
@@ -110,47 +108,21 @@ DataWriter& HTTPWriter::writeResponse(UInt8 type) {
 	return write("200 OK");
 }
 
-bool HTTPWriter::writeMedia(MediaType type,UInt32 time,MemoryReader& data) {
+bool HTTPWriter::writeMedia(MediaType type,UInt32 time,PacketReader& packet) {
 	if(state()==CLOSED)
 		return true;
 	switch(type) {
 		case START:
 		case STOP:
+		case INIT:
 			break;
-		case INIT: {
-			if (time>0) // one init by mediatype, we want here just init one time!
-				break;
-			Exception ex;
-			if (!pRequest)
-				ex.set(Exception::APPLICATION, "HTTP streaming without request related");
-			else if(pRequest->contentSubType == "x-flv")
-				_mediaType = MediaContainer::FLV;
-			else if(pRequest->contentSubType == "mpeg")
-				_mediaType = MediaContainer::MPEG_TS;
-			else
-				ex.set(Exception::APPLICATION, "HTTP streaming for a ",pRequest->contentSubType," unsupported");
-			if (ex) {
-				close(ex);
-				break;
-			}
-			// write a HTTP header without content-length (data==NULL and size>0)
-			write("200", pRequest->contentType, pRequest->contentSubType, NULL, 1);
-			_initMedia = true;
-			break;
-		}
 		case AUDIO:
 		case VIDEO: {
-			BinaryWriter& writer = createSender().writeRaw();
-			if (_initMedia) {
-				// write header the first time
-				MediaContainer::Write(_mediaType,writer);
-				_initMedia = false;
-			}
-			MediaContainer::Write(_mediaType,writer,type,time,data.current(), data.available());
+			MediaContainer::Write(mediaType,createSender().writeRaw(_tcpClient.socket().poolBuffers()),type,time,packet.current(), packet.available());
 			break;
 		}
 		default:
-			return Writer::writeMedia(type,time,data);
+			return Writer::writeMedia(type,time,packet);
 	}
 	return true;
 }

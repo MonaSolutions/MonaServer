@@ -21,7 +21,8 @@ This file is a part of Mona.
 
 #include "Mona/Mona.h"
 #include "Mona/SocketAddress.h"
-#include <ostream>
+#include "Mona/PoolBuffer.h"
+#include "Mona/Binary.h"
 
 namespace Mona {
 
@@ -31,57 +32,65 @@ public:
         BIG_ENDIAN_ORDER,
         LITTLE_ENDIAN_ORDER
 	};
-    BinaryWriter(std::ostream& ostr, ByteOrder byteOrder = BIG_ENDIAN_ORDER); // BIG_ENDIAN_ORDER==NETWORK_ENDIAN
-	virtual ~BinaryWriter();
-
-	void flush() { _ostr.flush(); }
+	BinaryWriter(BinaryWriter& other,UInt32 offset=0);
+	BinaryWriter(UInt8* buffer, UInt32 size, ByteOrder byteOrder = BIG_ENDIAN_ORDER); // BIG_ENDIAN_ORDER==NETWORK_ENDIAN
+   
 
 	template <typename ...Args>
-	void writeRaw(const UInt8* value, UInt32 size,Args&&... args) {
-		_ostr.write((const char*)value, size);
-		writeRaw(args ...);
+	BinaryWriter& writeRaw(const UInt8* value, UInt32 size,Args&&... args) {
+		Buffer& buffer = this->buffer();
+		UInt32 oldSize(buffer.size());
+		if(buffer.resize(size+oldSize, true))
+			memcpy(buffer.data()+oldSize,value,size);
+		else
+			memcpy(buffer.data()+oldSize,value,buffer.size()-oldSize);
+		return writeRaw(args ...);
 	}
 	template <typename ...Args>
-	void writeRaw(const char* value, Args&&... args) {
-		_ostr.write(value, strlen(value));
-		writeRaw(args ...);
+	BinaryWriter& writeRaw(const char* value, Args&&... args) {
+		return writeRaw((const UInt8*)value, strlen(value), args ...);
 	}
 	template <typename ...Args>
-	void writeRaw(const std::string& value,Args&&... args) {
-		_ostr.write(value.c_str(), value.size());
-		writeRaw(args ...);
+	BinaryWriter& writeRaw(const std::string& value,Args&&... args) {
+		return writeRaw((const UInt8*)value.c_str(),value.size(),args ...);
 	}
 
-	void write8(UInt8 value) { _ostr.put(value); }
-	void write16(UInt16 value);
-	void write24(UInt32 value);
-	void write32(UInt32 value);
-	void write64(UInt64 value);
-	void writeString8(const std::string& value) { write8(value.size()); writeRaw(value); }
-	void writeString8(const char* value, UInt8 size) { write8(size); _ostr.write(value, size); }
-	void writeString16(const std::string& value) { write16(value.size()); writeRaw(value); }
-	void writeString16(const char* value, UInt16 size) { write16(size); _ostr.write(value, size); }
-	void writeString(const std::string& value) { write7BitEncoded(value.size()); writeRaw(value); }
-	void write7BitEncoded(UInt32 value);
-	void write7BitValue(UInt32 value);
-	void write7BitLongValue(UInt64 value);
-	void writeAddress(const SocketAddress& address,bool publicFlag);
-	void writeBool(bool value) { _ostr.put(value ? 1 : 0); }
+	BinaryWriter& write8(UInt8 value) { return writeRaw((const UInt8*)&value, sizeof(value)); }
+	BinaryWriter& write16(UInt16 value);
+	BinaryWriter& write24(UInt32 value);
+	BinaryWriter& write32(UInt32 value);
+	BinaryWriter& write64(UInt64 value);
+	BinaryWriter& writeString8(const std::string& value) { write8(value.size()); return writeRaw(value); }
+	BinaryWriter& writeString8(const char* value) { UInt32 size(strlen(value));  write8(size); return writeRaw((const UInt8*)value, size); }
+	BinaryWriter& writeString16(const std::string& value) { write16(value.size()); return writeRaw(value); }
+	BinaryWriter& writeString16(const char* value) { UInt32 size(strlen(value)); write16(size); return writeRaw((const UInt8*)value, size); }
+	BinaryWriter& writeString(const std::string& value) { write7BitEncoded(value.size()); return writeRaw(value); }
+	BinaryWriter& writeString(const char* value) { UInt32 size(strlen(value)); write7BitEncoded(size); return writeRaw((const UInt8*)value, size); }
+	BinaryWriter& write7BitEncoded(UInt32 value);
+	BinaryWriter& write7BitValue(UInt32 value);
+	BinaryWriter& write7BitLongValue(UInt64 value);
+	BinaryWriter& writeBool(bool value) { return write8(value ? 1 : 0); }
 	template<typename NumberType>
-	void writeNumber(NumberType value) {
-		if (_flipBytes) {
-			const char* ptr = (const char*)&value;
-			ptr += sizeof(value);
-			for (unsigned i = 0; i < sizeof(value); ++i)
-				_ostr.write(--ptr, 1);
-		} else
-			_ostr.write((const char*)&value, sizeof(value));
-	}
-private:
-	void writeRaw() {}
+	BinaryWriter& writeNumber(NumberType value) { return writeRaw(_flipBytes ? Binary::ReverseBytes((UInt8*)&value, sizeof(value)) : (const UInt8*)&value , sizeof(value)); }
 
-	bool			_flipBytes;
-	std::ostream&   _ostr;
+	BinaryWriter& writeAddress(const SocketAddress& address,bool publicFlag);
+	BinaryWriter& writeRandom(UInt32 count=1);
+	
+	virtual BinaryWriter&	clear(UInt32 size = 0) { buffer().resize(size, true); return *this; }
+	BinaryWriter&	next(UInt32 count = 1);
+	BinaryWriter&	clip(UInt32 offset) {buffer().clip(offset); return *this;}
+
+	const UInt8*	data() { return buffer().data(); }
+	UInt32			size() { return buffer().size(); }
+
+private:
+	
+	BinaryWriter& writeRaw() {return *this;}
+
+	virtual Buffer&	buffer() { return _buffer; }
+
+	bool	_flipBytes;
+	Buffer	_buffer;
 };
 
 

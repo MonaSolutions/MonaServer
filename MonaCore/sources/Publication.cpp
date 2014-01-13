@@ -26,7 +26,7 @@ using namespace std;
 
 namespace Mona {
 
-Publication::Publication(const string& name):_new(false),_audioCodecBuffer(0),_videoCodecBuffer(0),_name(name),_droppedFrames(0),_firstKeyFrame(false),listeners(_listeners),_pPublisher(NULL) {
+Publication::Publication(const string& name):_new(false),_name(name),_droppedFrames(0),_firstKeyFrame(false),listeners(_listeners),_pPublisher(NULL) {
 	DEBUG("New publication ",_name);
 }
 
@@ -94,9 +94,8 @@ void Publication::start(Exception& ex, Peer& peer) {
 		return;
 	}
 	_firstKeyFrame=false;
-	map<Client*,Listener*>::const_iterator it;
-	for(it=_listeners.begin();it!=_listeners.end();++it)
-		it->second->startPublishing();
+	for(auto& it : _listeners)
+		it.second->startPublishing();
 	flush();
 }
 
@@ -107,9 +106,8 @@ void Publication::stop(Peer& peer) {
 		ERROR("Unpublish '",_name,"' operation with a different publisher");
 		return;
 	}
-	map<Client*,Listener*>::const_iterator it;
-	for(it=_listeners.begin();it!=_listeners.end();++it)
-		it->second->stopPublishing();
+	for(auto& it : _listeners)
+		it.second->stopPublishing();
 	flush();
 	peer.onUnpublish(*this);
 	_videoQOS.reset();
@@ -131,25 +129,25 @@ void Publication::flush() {
 	_pPublisher->onFlushPackets(*this);
 }
 
-void Publication::pushData(DataReader& packet,UInt32 numberLostFragments) {
+void Publication::pushData(DataReader& reader,UInt32 numberLostFragments) {
 	if(!_pPublisher) {
 		ERROR("Data packet pushed on '",_name,"' publication which has no publisher");
 		return;
 	}
 
 	_new = true;
-	int pos = packet.reader.position();
-	_dataQOS.add(_pPublisher->ping,packet.available()+4,packet.reader.fragments,numberLostFragments); // 4 for time encoded
-	map<Client*,Listener*>::const_iterator it;
-	for(it=_listeners.begin();it!=_listeners.end();++it) {
-		it->second->pushDataPacket(packet);
-		packet.reader.reset(pos);
+	int pos = reader.packet.position();
+	_dataQOS.add(_pPublisher->ping,reader.available()+4,reader.packet.fragments,numberLostFragments); // 4 for time encoded
+	auto it = _listeners.begin();
+	while(it!=_listeners.end()) {
+		(it++)->second->pushDataPacket(reader);   // listener can be removed in this call
+		reader.packet.reset(pos);
 	}
-	_pPublisher->onDataPacket(*this,packet);
+	_pPublisher->onDataPacket(*this,reader);
 }
 
 
-void Publication::pushAudio(MemoryReader& packet,UInt32 time,UInt32 numberLostFragments) {
+void Publication::pushAudio(PacketReader& packet,UInt32 time,UInt32 numberLostFragments) {
 	if(!_pPublisher) {
 		ERROR("Audio packet pushed on '",_name,"' publication which has no publisher");
 		return;
@@ -162,20 +160,20 @@ void Publication::pushAudio(MemoryReader& packet,UInt32 time,UInt32 numberLostFr
 
 	if ((*packet.current()>>4)==0x0A && packet.available() && packet.current()[1] == 0) {
 		// AAC codec && settings codec informations
-		_audioCodecBuffer.resize(packet.available());
-		memcpy(&_audioCodecBuffer[0],packet.current(),packet.available());
+		_audioCodecBuffer.resize(packet.available(),false);
+		memcpy(_audioCodecBuffer.data(),packet.current(),packet.available());
 	}
 
 	_new = true;
-	map<Client*,Listener*>::const_iterator it;
-	for(it=_listeners.begin();it!=_listeners.end();++it) {
-		it->second->pushAudioPacket(packet,time);
+	auto it = _listeners.begin();
+	while(it!=_listeners.end()) {
+		(it++)->second->pushAudioPacket(packet,time);  // listener can be removed in this call
 		packet.reset(pos);
 	}
 	_pPublisher->onAudioPacket(*this,time,packet);
 }
 
-void Publication::pushVideo(MemoryReader& packet,UInt32 time,UInt32 numberLostFragments) {
+void Publication::pushVideo(PacketReader& packet,UInt32 time,UInt32 numberLostFragments) {
 	if(!_pPublisher) {
 		ERROR("Video packet pushed on '",_name,"' publication which has no publisher");
 		return;
@@ -194,8 +192,8 @@ void Publication::pushVideo(MemoryReader& packet,UInt32 time,UInt32 numberLostFr
 		_firstKeyFrame = true;
 		if (*packet.current()==0x17 && packet.available() && packet.current()[1] == 0) {
 			// h264 codec && settings codec informations
-			_videoCodecBuffer.resize(packet.available());
-			memcpy(&_videoCodecBuffer[0],packet.current(),packet.available());
+			_videoCodecBuffer.resize(packet.available(),false);
+			memcpy(_videoCodecBuffer.data(),packet.current(),packet.available());
 		}
 	}
 
@@ -207,9 +205,9 @@ void Publication::pushVideo(MemoryReader& packet,UInt32 time,UInt32 numberLostFr
 
 	_new = true;
 	int pos = packet.position();
-	map<Client*,Listener*>::const_iterator it;
-	for(it=_listeners.begin();it!=_listeners.end();++it) {
-		it->second->pushVideoPacket(packet,time);
+	auto it = _listeners.begin();
+	while(it!=_listeners.end()) {
+		(it++)->second->pushVideoPacket(packet,time); // listener can be removed in this call
 		packet.reset(pos);
 	}
 	_pPublisher->onVideoPacket(*this,time,packet);

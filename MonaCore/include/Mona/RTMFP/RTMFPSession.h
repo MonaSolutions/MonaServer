@@ -48,16 +48,15 @@ public:
 
 	std::shared_ptr<RTMFPCookieComputing>	pRTMFPCookieComputing;
 
-	void				decode(const UInt8* data, UInt32 size, const SocketAddress& address);
+	void				decode(PoolBuffer& poolBuffer, const SocketAddress& address);
 
 	bool				failed() const { return _failed; }
 
 protected:
 	const UInt32		farId;
-
+	PacketWriter&		packet();
 	void				flush() { flush(0x4a, true, prevEngineType()); }
 	void				flush(bool echoTime) { flush(0x4a, echoTime, prevEngineType()); }
-	void				flush(bool echoTime, RTMFPEngine::Type type) { flush(0x4a, echoTime, type); }
 	void				flush(UInt8 marker, bool echoTime) { flush(marker, echoTime, prevEngineType()); }
 	void				flush(UInt8 marker,bool echoTime,RTMFPEngine::Type type);
 
@@ -84,20 +83,22 @@ protected:
 		}
 	
 	}
-	MemoryWriter&		writer();
+	
 	
 private:
 
 	void							manage();
-	void							packetHandler(MemoryReader& packet);
+	void							packetHandler(PacketReader& packet);
 
 	// Implementation of BandWriter
+	const PoolBuffers&				poolBuffers() { return invoker.poolBuffers; }
 	void							initWriter(const std::shared_ptr<RTMFPWriter>& pWriter);
 	std::shared_ptr<RTMFPWriter>	changeWriter(RTMFPWriter& writer);
 	bool							canWriteFollowing(RTMFPWriter& writer) { return _pLastWriter == &writer; }
 	void							close() { failSignal(); }
+	UInt32							availableToWrite() { return RTMFP_MAX_PACKET_SIZE - (_pSender ? _pSender->packet.size() : RTMFP_HEADER_SIZE); }
 
-	MemoryWriter&					writeMessage(UInt8 type,UInt16 length,RTMFPWriter* pWriter=NULL);
+	BinaryWriter&					writeMessage(UInt8 type,UInt16 length,RTMFPWriter* pWriter=NULL);
 
 	RTMFPEngine::Type				prevEngineType() { return _prevEngineType; }
 	bool							keepAlive();

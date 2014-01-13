@@ -24,8 +24,7 @@ using namespace std;
 
 namespace Mona {
 
-
-BinaryReader::BinaryReader(istream& istr, ByteOrder byteOrder) : _istr(istr) {
+BinaryReader::BinaryReader(const UInt8* data,UInt32 size, ByteOrder byteOrder) : _end(data+size),_data(data),_size(size),_current(data) {
 #if defined(_ARCH_BIG_ENDIAN)
 	_flipBytes = byteOrder == LITTLE_ENDIAN;
 #else
@@ -33,14 +32,31 @@ BinaryReader::BinaryReader(istream& istr, ByteOrder byteOrder) : _istr(istr) {
 #endif
 }
 
+void BinaryReader::shrink(UInt32 rest) {
+	UInt32 available(this->available());
+	if (rest > available)
+		rest = available;
+	_end = _current+rest;
+	_size = _end-_data;
+}
+
+UInt8* BinaryReader::readRaw(UInt8* value, UInt32 size) {
+	UInt32 available(this->available());
+	if (size > available)
+		size = available;
+	if (size == 0)
+		return value;
+	memcpy(value, _current,size);
+	_current += size;
+	return value;
+}
 
 UInt32 BinaryReader::read7BitEncoded() {
-	char c;
+	UInt8 c;
 	UInt32 value = 0;
 	int s = 0;
 	do {
-		c = 0;
-		_istr.read(&c, 1);
+		c = read8();
 		UInt32 x = (c & 0x7F);
 		x <<= s;
 		value += x;
@@ -51,7 +67,7 @@ UInt32 BinaryReader::read7BitEncoded() {
 
 UInt16 BinaryReader::read16() {
 	UInt16 value;
-	_istr.read((char*)&value, sizeof(value));
+	readRaw((UInt8*)&value, sizeof(value));
 	if (_flipBytes)
 		return Binary::Flip16(value);
 	return value;
@@ -59,7 +75,7 @@ UInt16 BinaryReader::read16() {
 
 UInt32 BinaryReader::read24() {
 	UInt32 value;
-	_istr.read((char*)&value, 3);
+	readRaw((UInt8*)&value, 3);
 	if (_flipBytes)
 		return Binary::Flip24(value);
 	return value;
@@ -67,7 +83,7 @@ UInt32 BinaryReader::read24() {
 
 UInt32 BinaryReader::read32() {
 	UInt32 value;
-	_istr.read((char*)&value, sizeof(value));
+	readRaw((UInt8*)&value, sizeof(value));
 	if (_flipBytes)
 		return Binary::Flip32(value);
 	return value;
@@ -76,7 +92,7 @@ UInt32 BinaryReader::read32() {
 
 UInt64 BinaryReader::read64() {
 	UInt64 value;
-	_istr.read((char*)&value, sizeof(value));
+	readRaw((UInt8*)&value, sizeof(value));
 	if (_flipBytes)
 		return Binary::Flip64(value);
 	return value;
@@ -114,7 +130,7 @@ UInt64 BinaryReader::read7BitLongValue() {
 
 string& BinaryReader::readRaw(UInt32 size, string& value) {
 	value.resize(size);
-	_istr.read(&value[0], size);
+	readRaw((UInt8*)value.data(), size);
 	return value;
 }
 

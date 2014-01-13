@@ -47,15 +47,13 @@ void PoolTest::run(const string& mod,UInt32 loop) {
 	}
 
 	// Run all tests of the module
-	for(auto it = itTest.first; it != itTest.second; it++)
+	for(auto& it = itTest.first; it != itTest.second; it++)
         it->second->run(loop);
 }
 
 void PoolTest::getListTests(vector<string>& lTests) {
-
-	for(auto itTest = _mapTests.begin(), end = _mapTests.end(); itTest != end ; itTest = _mapTests.upper_bound(itTest->first)) {
+	for(auto& itTest = _mapTests.begin(), end = _mapTests.end(); itTest != end ; itTest = _mapTests.upper_bound(itTest->first))
         lTests.push_back(itTest->first);
-	}
 }
 
 PoolTest& PoolTest::PoolTestInstance () {

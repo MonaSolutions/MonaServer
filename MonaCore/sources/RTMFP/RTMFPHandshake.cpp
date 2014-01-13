@@ -61,7 +61,7 @@ void RTMFPHandshake::manage() {
 }
 
 void RTMFPHandshake::commitCookie(const UInt8* value) {
-	auto it = _cookies.find(value);
+	auto& it = _cookies.find(value);
 	if(it==_cookies.end()) {
 		string hex;
 		WARN("RTMFPCookie ", Util::FormatHex(value, COOKIE_SIZE, hex), " not found, maybe becoming obsolete before commiting (congestion?)");
@@ -83,7 +83,7 @@ void RTMFPHandshake::clear() {
 	_cookies.clear();
 }
 
-bool RTMFPHandshake::createCookie(Exception& ex,MemoryWriter& writer,HelloAttempt& attempt,const string& tag,const string& queryUrl) {
+bool RTMFPHandshake::createCookie(Exception& ex,PacketWriter& packet,HelloAttempt& attempt,const string& tag,const string& queryUrl) {
 	// New RTMFPCookie
 	RTMFPCookie* pCookie = attempt.pCookie;
 	if(!pCookie) {
@@ -95,13 +95,13 @@ bool RTMFPHandshake::createCookie(Exception& ex,MemoryWriter& writer,HelloAttemp
 		_cookies.emplace(pCookie->value(),pCookie);
 		attempt.pCookie = pCookie;
 	}
-	writer.write8(COOKIE_SIZE);
-	writer.writeRaw(pCookie->value(),COOKIE_SIZE);
+	packet.write8(COOKIE_SIZE);
+	packet.writeRaw(pCookie->value(),COOKIE_SIZE);
 	return true;
 }
 
 
-void RTMFPHandshake::packetHandler(MemoryReader& packet) {
+void RTMFPHandshake::packetHandler(PacketReader& packet) {
 
 	UInt8 marker = packet.read8();
 	if(marker!=0x0b) {
@@ -113,20 +113,14 @@ void RTMFPHandshake::packetHandler(MemoryReader& packet) {
 	UInt8 id = packet.read8();
 	packet.shrink(packet.read16()); // length
 
-	MemoryWriter& response(writer());
-	UInt32 pos = response.position();
-	response.next(3);
+	PacketWriter& response(this->packet());
+	UInt32 oldSize(response.size());
+	response.next(3); // type and size
 	UInt8 idResponse = handshakeHandler(id,packet,response);
-	response.reset(pos);
-	if(idResponse>0) {
-		response.write8(idResponse);
-		response.write16(response.length()-response.position()-2);
-		flush();
-	} else
-		response.clear(pos);
-
-	// reset farid to 0!
-	(UInt32&)farId=0;
+	if(idResponse>0)
+		BinaryWriter(response,oldSize).write8(idResponse).write16(response.size()-oldSize-3);
+	else
+		response.clear(oldSize);
 }
 
 RTMFPSession* RTMFPHandshake::createSession(const UInt8* cookieValue) {
@@ -158,23 +152,21 @@ RTMFPSession* RTMFPHandshake::createSession(const UInt8* cookieValue) {
 	(UInt32&)cookie.id = pSession->id();
 		
 	// response!
-	MemoryWriter& response(writer());
+	PacketWriter& response(packet());
 	response.write8(0x78);
 	response.write16(cookie.length());
 	cookie.read(response);
 	flush();
-
-	(UInt32&)farId=0; // reset farid to 0!
 	return pSession;
 }
 
 
-UInt8 RTMFPHandshake::handshakeHandler(UInt8 id,MemoryReader& request,MemoryWriter& response) {
+UInt8 RTMFPHandshake::handshakeHandler(UInt8 id,PacketReader& request,PacketWriter& response) {
 
 	switch(id){
 		case 0x30: {
 			
-			request.read8(); // passer un caractere (boite dans boite)
+			request.next(1);
 			UInt8 epdLen = request.read8()-1;
 
 			UInt8 type = request.read8();
@@ -199,24 +191,29 @@ UInt8 RTMFPHandshake::handshakeHandler(UInt8 id,MemoryReader& request,MemoryWrit
 
 					RTMFPSession* pSession = (times>0 || peer.address.host() == pSessionWanted->peer.address.host()) ? _sessions.find<RTMFPSession>(peer.address) : NULL;
 					
-				/*	TODO if(pSession) {
-						UInt16 port = invoker.relay.add(pSession->peer,pSession->peer.address,pSessionWanted->peer,pSessionWanted->peer.address);
-						if(port>0) {
-							Exception ex;
-							SocketAddress address;
-							address.set(ex,"127.0.0.1", port); // TODO IMPLEMENT THE TURN RTMFP SERVER!
-							response.writeAddress(address, true);
-							return 0x71;
-						}
-					}*/
-					
-
 					pSessionWanted->p2pHandshake(tag,peer.address,times,pSession);
 
 					response.writeAddress(peer.address, true);
 					for(const SocketAddress& address : peer.localAddresses) {
 						response.writeAddress(address,false);
 						DEBUG("P2P address initiator exchange, ",address.toString());
+					}
+
+					// add the turn address (RelayServer) if possible and required
+					if (pSession && times>0) {
+						UInt32 timesBeforeTurn(0);
+						if(pSession->peer.getNumber("__timesBeforeTurn",timesBeforeTurn) && timesBeforeTurn>=times) {
+							UInt16 port = invoker.relay.add(pSession->peer,pSession->peer.address,pSessionWanted->peer,pSessionWanted->peer.address);
+							if(port>0) {
+								Exception ex;
+								SocketAddress address;
+								SocketAddress::Split(pSession->peer.serverAddress, _buffer);
+								bool success(false);
+								EXCEPTION_TO_LOG(success=address.set(ex,_buffer, port),"RTMFP turn impossible")
+								if (success)
+									response.writeAddress(address, false);
+							} // else ERROR already display by RelayServer class
+						}
 					}
 					return 0x71;
 				}
@@ -306,7 +303,7 @@ UInt8 RTMFPHandshake::handshakeHandler(UInt8 id,MemoryReader& request,MemoryWrit
 
 				UInt32 sizeKey = request.read7BitValue()-2;
 				request.next(2); // unknown
-				UInt8* initiatorKey = request.current(); request.next(sizeKey);
+				const UInt8* initiatorKey = request.current(); request.next(sizeKey);
 			
 				UInt32 sizeNonce = request.read7BitValue();
 
