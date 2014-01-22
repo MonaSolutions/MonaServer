@@ -35,7 +35,7 @@ UDPSocket::UDPSocket(const SocketManager& manager, bool allowBroadcast) : _pBuff
 
 
 const SocketAddress& UDPSocket::address() {
-	if (!_address.host().isWildcard())
+	if (_address)
 		return _address;
 	Exception ex;
 	DatagramSocket::address(ex, _address);
@@ -45,7 +45,7 @@ const SocketAddress& UDPSocket::address() {
 }
 
 const SocketAddress& UDPSocket::peerAddress() {
-	if (!_peerAddress.host().isWildcard())
+	if (_peerAddress)
 		return _peerAddress;
 	Exception ex;
 	DatagramSocket::peerAddress(ex, _peerAddress);
@@ -59,12 +59,11 @@ void UDPSocket::onReadable(Exception& ex) {
 	if(ex || available==0)
 		return;
 
-	SocketAddress address;
 	_pBuffer->resize(available, false);
-	int size = receiveFrom(ex,_pBuffer->data(), available, address);
+	int size = receiveFrom(ex,_pBuffer->data(), available, _addressFrom);
 	if (!ex) {
 		_pBuffer->resize(size, true);
-		onReception(_pBuffer->data(),size,address);
+		onReception(_pBuffer->data(),size,_addressFrom);
 		_pBuffer.release();
 	}
 }
@@ -72,8 +71,8 @@ void UDPSocket::onReadable(Exception& ex) {
 void UDPSocket::close() {
 	DatagramSocket::close();
 	_broadcasting = false;
-	_address.clear();
-	_peerAddress.clear();
+	_address.reset();
+	_peerAddress.reset();
 }
 
 bool UDPSocket::bind(Exception& ex,const SocketAddress& address) {
@@ -98,14 +97,12 @@ bool UDPSocket::send(Exception& ex, const UInt8* data, UInt32 size) {
 	if (size == 0)
 		return true;
 	shared_ptr<UDPSender> pSender(new UDPSender("UDPSender::send",data, size));
-	DatagramSocket::send(ex, pSender);
-	if (!ex)
-		return false;
-	if (!ex && _allowBroadcast && !_broadcasting) {
+	bool success = DatagramSocket::send(ex, pSender);
+	if (success && _allowBroadcast && !_broadcasting) {
 		setBroadcast(ex, true);
 		_broadcasting = !ex;
 	}
-	return true;
+	return success;
 }
 
 bool UDPSocket::send(Exception& ex, const UInt8* data, UInt32 size,const SocketAddress& address) {
@@ -113,14 +110,12 @@ bool UDPSocket::send(Exception& ex, const UInt8* data, UInt32 size,const SocketA
 		return true;
 	shared_ptr<UDPSender> pSender(new UDPSender("UDPSender::send",data, size));
 	pSender->address.set(address);
-	DatagramSocket::send(ex, pSender);
-	if (!ex)
-		return false;
-	if (!ex && _allowBroadcast && !_broadcasting) {
+	bool success = DatagramSocket::send(ex, pSender);
+	if (success && _allowBroadcast && !_broadcasting) {
 		setBroadcast(ex, true);
 		_broadcasting = !ex;
 	}
-	return true;
+	return success;
 }
 
 } // namespace Mona

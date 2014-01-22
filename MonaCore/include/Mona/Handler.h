@@ -53,7 +53,7 @@ public:
 	virtual void			onUnsubscribe(Client& client,const Listener& listener){}
 
 protected:
-	Handler(UInt32 bufferSize, UInt16 threads) : _myself(*this), Invoker(bufferSize, threads) {
+	Handler(UInt32 socketBufferSize, UInt16 threads) : _myself(*this), Invoker(socketBufferSize, threads) {
 		Util::Random(id, ID_SIZE); // Allow to publish in intern (Invoker is the publisher)
 		(bool&)_myself.connected=true;
 		std::memcpy((UInt8*)myself().id,id,ID_SIZE);

@@ -37,10 +37,9 @@ public:
 	RTMFPSession(RTMFProtocol& protocol,
 			Invoker& invoker,
 			UInt32 farId,
-			const Peer& peer,
 			const UInt8* decryptKey,
 			const UInt8* encryptKey,
-			const char* name=NULL);
+			const std::shared_ptr<Peer>& pPeer);
 
 	virtual ~RTMFPSession();
 
@@ -53,13 +52,18 @@ public:
 	bool				failed() const { return _failed; }
 
 protected:
+	RTMFPSession(RTMFProtocol& protocol,
+			Invoker& invoker,
+			UInt32 farId,
+			const UInt8* decryptKey,
+			const UInt8* encryptKey,
+			const char* name);
+
 	const UInt32		farId;
 	PacketWriter&		packet();
 	void				flush() { flush(0x4a, true, prevEngineType()); }
 	void				flush(bool echoTime) { flush(0x4a, echoTime, prevEngineType()); }
 	void				flush(UInt8 marker, bool echoTime) { flush(marker, echoTime, prevEngineType()); }
-	void				flush(UInt8 marker,bool echoTime,RTMFPEngine::Type type);
-
 
 	template <typename ...Args>
 	void fail(Args&&... args) {
@@ -86,6 +90,7 @@ protected:
 	
 	
 private:
+	
 
 	void							manage();
 	void							packetHandler(PacketReader& packet);
@@ -100,7 +105,9 @@ private:
 
 	BinaryWriter&					writeMessage(UInt8 type,UInt16 length,RTMFPWriter* pWriter=NULL);
 
+	void							flush(UInt8 marker,bool echoTime,RTMFPEngine::Type type);
 	RTMFPEngine::Type				prevEngineType() { return _prevEngineType; }
+	
 	bool							keepAlive();
 	void							kill();
 
@@ -128,8 +135,8 @@ private:
 	std::shared_ptr<RTMFPSender>					_pSender;
 	UDPSocket&										_socket;
 
-	RTMFPEngine										_decrypt;
-	RTMFPEngine										_encrypt;
+	const std::shared_ptr<RTMFPKey>					_pDecryptKey;
+	const std::shared_ptr<RTMFPKey>					_pEncryptKey;
 	PoolThread*										_pThread;
 };
 

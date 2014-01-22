@@ -80,22 +80,24 @@ public:
 
 	template<typename SocketSenderType>
 	// Can be called from one other thread than main thread (by the poolthread)
-	void send(Exception& ex,const std::shared_ptr<SocketSenderType>& pSender) {
+	bool send(Exception& ex,const std::shared_ptr<SocketSenderType>& pSender) {
 		// return if no data to send
 		if (!pSender->available())
-			return;
+			return true;
 
-		ASSERT(_initialized == true)
+		ASSERT_RETURN(_initialized == true,false)
 		if (!managed(ex))
-			return;
+			return false;
 
 		// We can write immediatly if there are no queue packets to write,
 		// and if it remains some data to write (flush returns false)
 		std::lock_guard<std::mutex>	lock(_mutexAsync);
 		if (!_senders.empty() || !pSender->flush(ex, *this)) {
-            _senders.push_back(std::static_pointer_cast<SocketSender>(pSender));
+            _senders.emplace_back(pSender);
 			manageWrite(ex);
+			return !ex;
 		}
+		return true;
 	}
 
 	template<typename SocketSenderType>
@@ -139,8 +141,8 @@ private:
 			Net::SetError(ex);
 			return NULL;
 		}
-		SocketAddress address;
-		if (!address.set(ex, *pSA) || !onConnection(address))
+		SocketAddress address(*pSA);
+		if (!onConnection(address))
 			return NULL;
 		SocketType* pSocket = new SocketType(address,args ...);
 		Socket* pSocketBase = (Socket*)pSocket;

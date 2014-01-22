@@ -17,16 +17,37 @@ details (or else see http://www.gnu.org/licenses/).
 This file is a part of Mona.
 */
 
-#include "Mona/Logs.h"
-#include "Mona/Util.h"
+#pragma once
 
-using namespace std;
+#include "Mona/Mona.h"
+#include "Mona/BinaryWriter.h"
+
 
 namespace Mona {
 
-Logger*			Logs::_PLogger(NULL);
-Logs::DumpMode	Logs::_DumpMode(DUMP_NOTHING);
-UInt8			Logs::_Level(Logger::LEVEL_INFO); // default log level
-Logger			Logs::_DefaultLogger;
+
+class MediaCodec : virtual Static {
+public:
+
+	static bool IsKeyFrame(const UInt8* data, UInt32 size) { return size>0 && (*data&0xF0)==0x10; }
+	
+	class H264 : virtual Static {
+	public:
+		// To write header
+		static bool IsCodecInfos(const UInt8* data, UInt32 size) { return size>1 && *data == 0x17 && data[1] == 0; }
+
+	};
+
+	class AAC : virtual Static {
+	public:
+		// To write header
+		static bool IsCodecInfos(const UInt8* data, UInt32 size) { return size > 1 && (*data >> 4) == 0x0A && data[1] == 0; }
+
+	};
+
+};
+
+
+
 
 } // namespace Mona

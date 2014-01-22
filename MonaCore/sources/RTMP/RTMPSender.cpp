@@ -23,12 +23,6 @@ using namespace std;
 
 
 namespace Mona {
-	
-bool RTMPSender::run(Exception& ex) {
-	if (_pEncryptKey)
-		RC4(_pEncryptKey.get(), size(), data(), (UInt8*)data());
-	return TCPSender::run(ex);
-}
 
 void RTMPSender::pack(RTMPChannel& channel) {
 	if (sizePos == 0)

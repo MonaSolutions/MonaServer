@@ -28,9 +28,9 @@ Buffer	Buffer::Null(true,true,true);
 void Buffer::clip(UInt32 offset) {
 	if (offset > _size)
 		offset = _size;
-	_offset += offset;
 	if (offset == 0)
 		return;
+	_offset += offset;
 	_size -= offset;
 	_data += offset;
 	_capacity -= offset;
@@ -63,9 +63,10 @@ bool Buffer::resize(UInt32 size,bool preserveData) {
 
 	UInt8* oldData = _data;
 	_data = new UInt8[_capacity]();
-	if (preserveData && size>0)
+	if (preserveData && _size>0)
 		memcpy(_data, oldData, _size);
 	delete [] _buffer;
+	_offset = 0;
 	_buffer=_data;
 	_size = size;
 	return true;

@@ -49,18 +49,28 @@ void LUAInvoker::Init(lua_State *pState, Invoker& invoker) {
 void LUAInvoker::AddClient(lua_State *pState, Invoker& invoker, Client& client, int indexClient) {
 	lua_getglobal(pState, "mona");
 	Script::Collection(pState, -1, "clients", invoker.clients.count() + 1);
-	LUAClient::GetKey(pState, client);
+	LUAClient::GetID(pState, client);
 	lua_pushvalue(pState, indexClient);
 	lua_rawset(pState, -3); // rawset cause NewIndexProhibited
+	if (!client.name.empty()) {
+		lua_pushstring(pState, client.name.c_str());
+		lua_pushvalue(pState, indexClient);
+		lua_rawset(pState, -3); // rawset cause NewIndexProhibited
+	}
 	lua_pop(pState, 2);
 }
 
 void LUAInvoker::RemoveClient(lua_State *pState, Invoker& invoker, const Client& client) {
 	lua_getglobal(pState, "mona");
 	Script::Collection(pState, -1, "clients", invoker.clients.count());
-	LUAClient::GetKey(pState, client);
+	LUAClient::GetID(pState, client);
 	lua_pushnil(pState);
 	lua_rawset(pState, -3); // rawset cause NewIndexProhibited
+	if (!client.name.empty()) {
+		lua_pushstring(pState, client.name.c_str());
+		lua_pushnil(pState);
+		lua_rawset(pState, -3); // rawset cause NewIndexProhibited
+	}
 	lua_pop(pState, 2);
 }
 

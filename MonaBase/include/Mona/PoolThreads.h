@@ -31,7 +31,7 @@ public:
 	PoolThreads(UInt16 threadsAvailable=0) {
 		if (threadsAvailable == 0)
 			threadsAvailable = Util::ProcessorCount();
-		for(UInt16 i=0;i<threadsAvailable;++i) _threads.push_back(new PoolThread());
+		for(UInt16 i=0;i<threadsAvailable;++i) _threads.emplace_back(new PoolThread());
 	}
 	virtual ~PoolThreads() {
 		for(PoolThread* pThread : _threads) delete pThread;
@@ -45,7 +45,7 @@ public:
 		if (!pThread) {
 			pThread = _threads.front();
 			_threads.pop_front();
-			_threads.push_back(pThread);
+			_threads.emplace_back(pThread);
 		}
 		pThread->push<WorkThreadType>(ex, pWork);
 		return pThread;

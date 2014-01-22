@@ -32,18 +32,25 @@ namespace Mona {
 class RTMFPHandshake;
 class RTMFPCookieComputing : public WorkThread, private Task, virtual Object {
 public:
-	RTMFPCookieComputing(RTMFPHandshake&	handshake,Invoker& invoker);
+	RTMFPCookieComputing(RTMFPHandshake& handshake,Invoker& invoker);
 	
 	UInt8								value[COOKIE_SIZE];
-	DiffieHellman						diffieHellman;
+	
 	Buffer								initiatorKey;
-	Buffer								sharedSecret;
+	Buffer								initiatorNonce;
+	
+	UInt8								decryptKey[HMAC_KEY_SIZE];
+	UInt8								encryptKey[HMAC_KEY_SIZE];
+	PacketWriter						packet;
+
 	std::weak_ptr<RTMFPCookieComputing> weak;
 
 private:
 	bool						run(Exception& ex);
 	void						handle(Exception& ex);
 
+	DiffieHellman				_diffieHellman;
+	Buffer						_sharedSecret;
 	RTMFPHandshake&				_handshake;
 };
 

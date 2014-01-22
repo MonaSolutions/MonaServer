@@ -62,7 +62,7 @@ private:
 	UInt32									_sent;
 	StreamSocket&							_socket;
 	SocketAddress							_address;
-	std::list<std::shared_ptr<WSSender>>	_senders;
+	std::vector<std::shared_ptr<WSSender>>	_senders;
 };
 
 

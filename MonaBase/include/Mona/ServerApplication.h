@@ -22,7 +22,6 @@ This file is a part of Mona.
 #include "Mona/Mona.h"
 #include "Mona/Application.h"
 #include "Mona/TerminateSignal.h"
-#include <iostream>
 
 namespace Mona {
 
@@ -48,7 +47,7 @@ private:
 
 #if defined(_WIN32)
 
-	static void __stdcall ServiceMain(DWORD argc, LPTSTR* argv);
+	static void __stdcall ServiceMain(unsigned long argc, char** argv);
 
 	bool hasConsole();
 	bool isService();

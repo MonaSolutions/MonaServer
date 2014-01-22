@@ -249,7 +249,7 @@ int Socket::receiveFrom(Exception& ex, void* buffer, int length, SocketAddress& 
 			return 0;
 		Net::SetError(ex, err);
 	}
-	address.set(ex, *pSA);
+	address.set(*pSA);
 	return rc;
 }
 
@@ -259,7 +259,7 @@ SocketAddress& Socket::address(Exception& ex, SocketAddress& address) const {
 	struct sockaddr* pSA = reinterpret_cast<struct sockaddr*>(addressBuffer);
 	NET_SOCKLEN saLen = sizeof(addressBuffer);
 	if (::getsockname(_sockfd, pSA, &saLen) == 0) {
-		address.set(ex, *pSA);
+		address.set(*pSA);
 		return address;
 	}
 	Net::SetError(ex);
@@ -269,11 +269,11 @@ SocketAddress& Socket::address(Exception& ex, SocketAddress& address) const {
 	
 SocketAddress& Socket::peerAddress(Exception& ex, SocketAddress& address) const {
 	ASSERT_RETURN(_initialized == true, address)
-		char	addressBuffer[IPAddress::MAX_ADDRESS_LENGTH];
+	char	addressBuffer[IPAddress::MAX_ADDRESS_LENGTH];
 	struct sockaddr* pSA = reinterpret_cast<struct sockaddr*>(addressBuffer);
 	NET_SOCKLEN saLen = sizeof(addressBuffer);
 	if (::getpeername(_sockfd, pSA, &saLen) == 0) {
-		address.set(ex,*pSA);
+		address.set(*pSA);
 		return address;
 	}
 	Net::SetError(ex);

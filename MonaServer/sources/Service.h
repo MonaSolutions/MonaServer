@@ -46,7 +46,6 @@ private:
 	Service(lua_State* pState, const std::string& path, ServiceHandler& handler,bool init);
 
 	bool		open(bool create);
-	bool		serviceFolderExists(const std::string& name);
 	void		close(bool full = false);
 
 	void		loadFile();

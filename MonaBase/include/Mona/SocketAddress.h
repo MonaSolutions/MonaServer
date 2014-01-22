@@ -32,19 +32,20 @@ class SocketAddressCommon;
 /// address. The address can belong either to the
 /// IPv4 or the IPv6 address family and consists of a
 /// host address and a port number.
-class SocketAddress : virtual Object {
+class SocketAddress : public virtual NullableObject {
 public:
 	/// Creates a wildcard (all zero) IPv4 SocketAddress
 	SocketAddress(IPAddress::Family family = IPAddress::IPv4);
 		
-	SocketAddress(const IPAddress& host, UInt16 port);
+	/// Create/Set SocketAddress from a native socket address
+	SocketAddress(const struct sockaddr& addr);
+	void set(const struct sockaddr& addr);
+	
 	SocketAddress(const SocketAddress& other);
-
-	void clear();
-
 	void set(const SocketAddress& other);
 
 	/// Creates a SocketAddress from an IP address and a port number.
+	SocketAddress(const IPAddress& host, UInt16 port);
 	void set(const IPAddress& host, UInt16 port);
 	
 	/// set SocketAddress from an IP address and a port number.
@@ -59,8 +60,7 @@ public:
 	bool set(Exception& ex, const std::string& hostAndPort) { return setIntern(ex, hostAndPort, false); }
 	bool setWithDNS(Exception& ex, const std::string& hostAndPort) { return setIntern(ex, hostAndPort, true); }
 	
-	/// set SocketAddress from a native socket address
-	bool set(Exception& ex, const struct sockaddr& addr);
+	void reset();
 
 	const IPAddress&		host() const;
 	UInt16					port() const;
@@ -77,7 +77,7 @@ public:
 	bool operator != (const SocketAddress& address) const { return port() != address.port() || host() != address.host(); }
 	
 	// Returns a wildcard IPv4 or IPv6 address (0.0.0.0)
-	static const SocketAddress& Wildcard(IPAddress::Family family = IPAddress::IPv4) { return family == IPAddress::IPv6 ? _Addressv6Wildcard : _Addressv4Wildcard; }
+	static const SocketAddress& Wildcard(IPAddress::Family family = IPAddress::IPv4);
 
 
 	static UInt16	Split(const std::string& address,std::string& host);
@@ -89,11 +89,7 @@ private:
 
 	std::shared_ptr<SocketAddressCommon>	_pAddress;
 
-	mutable std::mutex		_mutex;
 	mutable std::string		_toString;
-
-	static SocketAddress	_Addressv4Wildcard;
-	static SocketAddress	_Addressv6Wildcard;
 };
 
 

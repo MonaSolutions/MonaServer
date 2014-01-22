@@ -28,12 +28,9 @@ namespace Mona {
 
 class BinaryWriter : virtual Object {
 public:
-	enum ByteOrder {
-        BIG_ENDIAN_ORDER,
-        LITTLE_ENDIAN_ORDER
-	};
+
 	BinaryWriter(BinaryWriter& other,UInt32 offset=0);
-	BinaryWriter(UInt8* buffer, UInt32 size, ByteOrder byteOrder = BIG_ENDIAN_ORDER); // BIG_ENDIAN_ORDER==NETWORK_ENDIAN
+	BinaryWriter(UInt8* buffer, UInt32 size, Binary::Order byteOrder = Binary::ORDER_BIG_ENDIAN); // ORDER_BIG_ENDIAN==NETWORK_ENDIAN
    
 
 	template <typename ...Args>

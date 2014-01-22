@@ -41,8 +41,8 @@ void ServerManager::handle(Exception& ex) {
 	_server.relay.manage();
 }
 
-Server::Server(UInt32 bufferSize,UInt16 threads) : Startable("Server"),Handler(bufferSize,threads),_protocols(*this),_manager(*this) {
-
+Server::Server(UInt32 socketBufferSize,UInt16 threads) : Startable("Server"),Handler(socketBufferSize,threads),_protocols(*this),_manager(*this) {
+	DEBUG("Socket Buffer size of ",socketBufferSize," bytes")
 }
 
 Server::~Server() {
@@ -87,7 +87,7 @@ void Server::run(Exception& exc) {
 		} else
 			ex.set(exWarn);
 		if (ex)
-			FATAL("Server, %s", ex.error().c_str());
+			FATAL("Server, ", ex.error());
 		
 	} catch (exception& ex) {
 		FATAL("Server, ",ex.what());

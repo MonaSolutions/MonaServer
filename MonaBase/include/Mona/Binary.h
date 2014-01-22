@@ -25,6 +25,17 @@ namespace Mona {
 
 class Binary : virtual Static {
 public:
+	 enum Order {
+        ORDER_BIG_ENDIAN,
+        ORDER_LITTLE_ENDIAN
+	 };
+
+#if defined(_ARCH_BIG_ENDIAN)
+	 static Order NativeOrder() { return ORDER_BIG_ENDIAN; }
+#else
+	 static Order NativeOrder() { return ORDER_LITTLE_ENDIAN; }
+#endif
+
 	static UInt16	Flip16(UInt16 value) { return ((value >> 8) & 0x00FF) | ((value << 8) & 0xFF00); }
 	static UInt32	Flip24(UInt32 value) { return ((value >> 16) & 0x000000FF) | (value & 0x0000FF00) | ((value << 16) & 0x00FF0000); }
 	static UInt32	Flip32(UInt32 value) { return ((value >> 24) & 0x000000FF) | ((value >> 8) & 0x0000FF00) | ((value << 8) & 0x00FF0000) | ((value << 24) & 0xFF000000); }

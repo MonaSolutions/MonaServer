@@ -42,6 +42,7 @@ public:
 
 	PoolThreads&			poolThreads;
 	const PoolBuffers&		poolBuffers;
+	const UInt32			bufferSize;
 
 private:
 	class FakeSocket : public Socket {
@@ -68,7 +69,6 @@ private:
 
 	bool								_selfHandler;
 	Exception							_ex;
-	UInt32								_bufferSize;
 
 	mutable std::atomic<int>			_counter;
 	mutable Event						_eventInit;

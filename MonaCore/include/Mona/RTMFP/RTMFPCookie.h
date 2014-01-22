@@ -28,38 +28,31 @@ namespace Mona {
 
 class RTMFPCookie : virtual Object {
 public:
-	RTMFPCookie(RTMFPHandshake& handshake,Invoker& invoker,const std::string& tag,const std::string& queryUrl); // For normal cookie
+	RTMFPCookie(RTMFPHandshake& handshake,Invoker& invoker,const std::string& tag,const std::shared_ptr<Peer>& pPeer);
 	
 	const UInt32			id;
 	const UInt32			farId;
 	const std::string		tag;
-	const std::string		queryUrl;
 
-	UInt8					peerId[ID_SIZE];
-	const SocketAddress		peerAddress;
+	const std::shared_ptr<Peer> pPeer;
 
-
-	bool run(Exception& ex) { _pComputingThread = _invoker.poolThreads.enqueue<RTMFPCookieComputing>(ex, _pCookieComputing, _pComputingThread); return !ex; }
+	bool					run(Exception& ex) { _pComputingThread = _invoker.poolThreads.enqueue<RTMFPCookieComputing>(ex, _pCookieComputing, _pComputingThread); return !ex; }
 
 	const UInt8*			value() { return _pCookieComputing->value; }
-	UInt8					decryptKey[HMAC_KEY_SIZE];
-	UInt8					encryptKey[HMAC_KEY_SIZE];
+	const UInt8*			decryptKey()  { return _pCookieComputing->decryptKey; }
+	const UInt8*			encryptKey()  { return _pCookieComputing->encryptKey; }
 	
 	bool					computeSecret(Exception& ex, const UInt8* initiatorKey,UInt32 sizeKey,const UInt8* initiatorNonce,UInt32 sizeNonce);
-	bool					finalize(Exception& ex);
 
 	bool					obsolete() { return _createdTimestamp.isElapsed(120000000);}  // after 2 mn
 
-	UInt16					length() { return _packet.size() + 4; }
-	UInt16					read(PacketWriter& packet);
+	UInt16					length() { return _pCookieComputing->packet.size() + 4; }
+	void					read(PacketWriter& packet) {packet.write32(id).writeRaw(_pCookieComputing->packet.data(),_pCookieComputing->packet.size());}
 private:
 	PoolThread*								_pComputingThread;
 	std::shared_ptr<RTMFPCookieComputing>	_pCookieComputing;
 	Time									_createdTimestamp;
-
-	PacketWriter							_packet;
 	Invoker&								_invoker;
-	Buffer									_initiatorNonce;
 };
 
 

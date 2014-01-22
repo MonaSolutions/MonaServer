@@ -42,17 +42,20 @@ Sessions::~Sessions() {
 }
 
 void Sessions::remove(map<UInt32,Session*>::iterator it) {
-	DEBUG("Session ",it->second->name()," died");
-	_sessionsByPeerId.erase(it->second->peer.id);
-	_sessionsByAddress.erase(it->second->peer.address);
-	delete it->second;
+	Session& session(*it->second);
+	DEBUG("Session ",session.name()," died");
+	if(session._sessionsOptions&BYPEER)
+		_sessionsByPeerId.erase(session.peer.id);
+	if(session._sessionsOptions&BYADDRESS)
+		_sessionsByAddress.erase(session.peer.address);
+	delete &session;
 	_sessions.erase(it);
 }
 
 void Sessions::updateAddress(Session& session, const SocketAddress& oldAddress) {
 	INFO("Session ",session.name()," has changed its address (",oldAddress.toString()," -> ",session.peer.address.toString(),")");
-	_sessionsByAddress.erase(oldAddress);
-	_sessionsByAddress[session.peer.address] = &session;
+	if(session._sessionsOptions&BYADDRESS && _sessionsByAddress.erase(oldAddress)>0)
+		_sessionsByAddress[session.peer.address] = &session;
 }
 
 

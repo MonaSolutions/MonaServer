@@ -98,3 +98,9 @@ private:\
 };\
 const bool CLASSNAME ## TESTNAME::_TestCreated = PoolTest::PoolTestInstance().makeAndRegister<CLASSNAME ## TESTNAME>(#CLASSNAME, #CLASSNAME "::" #TESTNAME);\
 void CLASSNAME ## TESTNAME::TestFunction()
+
+#if defined(_DEBUG)
+#define ADD_DEBUG_TEST(CLASSNAME, TESTNAME) ADD_TEST(CLASSNAME,TESTNAME)
+#else
+#define ADD_DEBUG_TEST(CLASSNAME, TESTNAME) void CLASSNAME ## TESTNAME()
+#endif

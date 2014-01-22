@@ -59,7 +59,7 @@ private:
 };
 
 template<class IteratorType>
-class IterableParameters : public Parameters, virtual Object {
+class IterableParameters : public Parameters {
 public:
 	typedef IteratorType Iterator;
 

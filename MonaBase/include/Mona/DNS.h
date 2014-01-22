@@ -52,13 +52,7 @@ public:
 	// Returns the host name of this host
 	static bool HostName(Exception& ex, std::string& host);
 
-protected:
-
-#if defined(_WIN32)
-	static int LastError() { return GetLastError(); }
-#else
-	static int LastError() { return h_errno; }
-#endif
+private:
 
 	// Set the exception according to the getaddrinfo() error code
 	static void SetAIError(Exception& ex, int error, const std::string& argument);

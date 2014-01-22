@@ -20,6 +20,11 @@ This file is a part of Mona.
 
 #include "Mona/Files.h"
 #include "Mona/FileSystem.h"
+#if defined(_WIN32)
+#include <windows.h>
+#else
+#include "dirent.h"
+#endif
 
 namespace Mona {
 
@@ -31,45 +36,36 @@ Files::Files(Exception& ex, const string& path) : _directory(path) {
 #if defined(_WIN32)
 	string directory(_directory);
 	directory.append("*");
-	_fileHandle = FindFirstFile(directory.c_str(), &_fileData);
-	if (_fileHandle == INVALID_HANDLE_VALUE) {
-		if ((err = GetLastError()) == ERROR_NO_MORE_FILES)
+	WIN32_FIND_DATA	fileData;
+	HANDLE	fileHandle = FindFirstFile(directory.c_str(), &fileData);
+	if (fileHandle == INVALID_HANDLE_VALUE) {
+		if ((err = GetLastError()) != ERROR_NO_MORE_FILES) {
+			ex.set(Exception::FILE, "Impossible to open directory ",_directory);
 			return;
-	} else {
-		do {
-			if (strcmp(_fileData.cFileName, ".") != 0 && strcmp(_fileData.cFileName, "..") != 0) {
-				_files.emplace_back(_directory);
-				_files.back().append(_fileData.cFileName);
-			}
-		} while (FindNextFile(_fileHandle, &_fileData) != 0);
-		return;
-	}
-#else
-	_pDirectory = opendir(_directory.c_str());
-	if (_pDirectory) {
-		struct dirent* pEntry(NULL);
-		while(pEntry = readdir(_pDirectory)) {
-			if (strcmp(pEntry->d_name, ".")!=0 && strcmp(pEntry->d_name, "..")!=0) {
-				_files.emplace_back(_directory);
-				_files.back().append(pEntry->d_name);
-			}
 		}
 		return;
 	}
-	err = errno;
-#endif
-	string error;
-	STRERROR(err, error); // TODO test
-	ex.set(Exception::FILE, error);
-}
-
-Files::~Files() {
-#if defined(_WIN32)
-	if (_fileHandle != INVALID_HANDLE_VALUE)
-		FindClose(_fileHandle);
+	do {
+		if (strcmp(fileData.cFileName, ".") != 0 && strcmp(fileData.cFileName, "..") != 0) {
+			_files.emplace_back(_directory);
+			_files.back().append(fileData.cFileName);
+		}
+	} while (FindNextFile(fileHandle, &fileData) != 0);
+	FindClose(fileHandle);
 #else
-	if (_pDirectory)
-		closedir(_pDirectory);
+	DIR* pDirectory = opendir(_directory.c_str());
+	if (!pDirectory) {
+		ex.set(Exception::FILE, "Impossible to open directory ",_directory);
+		return;
+	}
+	struct dirent* pEntry(NULL);
+	while(pEntry = readdir(pDirectory)) {
+		if (strcmp(pEntry->d_name, ".")!=0 && strcmp(pEntry->d_name, "..")!=0) {
+			_files.emplace_back(_directory);
+			_files.back().append(pEntry->d_name);
+		}
+	}
+	closedir(pDirectory);
 #endif
 }
 

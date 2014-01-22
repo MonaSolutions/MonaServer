@@ -129,6 +129,7 @@
     <ClInclude Include="include\Mona\Invoker.h" />
     <ClInclude Include="include\Mona\MapReader.h" />
     <ClInclude Include="include\Mona\MapWriter.h" />
+    <ClInclude Include="include\Mona\MediaCodec.h" />
     <ClInclude Include="include\Mona\MediaContainer.h" />
     <ClInclude Include="include\Mona\Peer.h" />
     <ClInclude Include="include\Mona\RawReader.h" />

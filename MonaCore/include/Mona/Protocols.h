@@ -50,7 +50,7 @@ private:
 		}
 	}
 
-	std::deque<std::shared_ptr<Protocol>>	_protocols;
+	std::vector<std::shared_ptr<Protocol>>	_protocols;
 	Invoker&								_invoker;
 };
 

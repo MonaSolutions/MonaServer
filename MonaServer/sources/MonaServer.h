@@ -19,16 +19,16 @@ This file is a part of Mona.
 
 #pragma once
 
-#include "Service.h"
-#include "Servers.h"
 #include "Mona/Server.h"
 #include "Mona/TerminateSignal.h"
 #include "Mona/Database.h"
+#include "Service.h"
+#include "Servers.h"
 
 
 class MonaServer : public Mona::Server, private ServiceHandler, private ServerHandler, private Mona::DatabaseLoader {
 public:
-	MonaServer(Mona::TerminateSignal& terminateSignal, Mona::UInt32 bufferSize, Mona::UInt16 threads, Mona::UInt16 serversPort, const std::string& serversTarget);
+	MonaServer(Mona::TerminateSignal& terminateSignal, Mona::UInt32 socketBufferSize, Mona::UInt16 threads, Mona::UInt16 serversPort, const std::string& serversTarget);
 
 	static const std::string				WWWPath;
 	static const std::string				DataPath;
@@ -96,6 +96,6 @@ private:
 	std::map<std::string, Mona::UInt16>	_ports;
 	std::string							_host;
 	Mona::Database						_data;
-	std::string							_buffer;
+	bool								_firstData;
 };
 

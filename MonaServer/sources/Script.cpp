@@ -29,7 +29,6 @@ using namespace std;
 using namespace Mona;
 
 lua_Debug	Script::LuaDebug;
-bool		Script::_NextLogCallerDisabled(false);
 
 const char* Script::LastError(lua_State *pState) {
 	int top = lua_gettop(pState);
@@ -43,50 +42,44 @@ const char* Script::LastError(lua_State *pState) {
 }
 
 int Script::Error(lua_State *pState) {
-	_NextLogCallerDisabled = true;
 	SCRIPT_BEGIN(pState)
 		string msg;
-		SCRIPT_ERROR(ToPrint(pState,msg));
+		SCRIPT_LOG(Mona::Logger::LEVEL_ERROR,__FILE__,__LINE__, false, ToPrint(pState,msg))
 	SCRIPT_END
 	return 0;
 }
 int Script::Warn(lua_State *pState) {
-	_NextLogCallerDisabled = true;
 	SCRIPT_BEGIN(pState)
 		string msg;
-		SCRIPT_WARN(ToPrint(pState, msg));
+		SCRIPT_LOG(Mona::Logger::LEVEL_WARN,__FILE__,__LINE__, false, ToPrint(pState,msg))
 	SCRIPT_END
 	return 0;
 }
 int Script::Note(lua_State *pState) {
-	_NextLogCallerDisabled = true;
 	SCRIPT_BEGIN(pState)
 		string msg;
-		SCRIPT_NOTE(ToPrint(pState,msg));
+		SCRIPT_LOG(Mona::Logger::LEVEL_NOTE,__FILE__,__LINE__, false, ToPrint(pState,msg))
 	SCRIPT_END
 	return 0;
 }
 int Script::Info(lua_State *pState) {
-	_NextLogCallerDisabled = true;
 	SCRIPT_BEGIN(pState)
 		string msg;
-		SCRIPT_INFO(ToPrint(pState,msg));
+		SCRIPT_LOG(Mona::Logger::LEVEL_INFO,__FILE__,__LINE__, false, ToPrint(pState,msg))
 	SCRIPT_END
 	return 0;
 }
 int Script::Debug(lua_State *pState) {
-	_NextLogCallerDisabled = true;
 	SCRIPT_BEGIN(pState)
 		string msg;
-		SCRIPT_DEBUG(ToPrint(pState,msg));
+		SCRIPT_LOG(Mona::Logger::LEVEL_DEBUG,__FILE__,__LINE__, false, ToPrint(pState,msg))
 	SCRIPT_END
 	return 0;
 }
 int Script::Trace(lua_State *pState) {
-	_NextLogCallerDisabled = true;
 	SCRIPT_BEGIN(pState)
 		string msg;
-		SCRIPT_TRACE(ToPrint(pState,msg));
+		SCRIPT_LOG(Mona::Logger::LEVEL_TRACE,__FILE__,__LINE__, false, ToPrint(pState,msg))
 	SCRIPT_END
 	return 0;
 }

@@ -26,7 +26,7 @@ class LUAClient {
 public:
 
 	static int Item(lua_State *pState);
-	static void GetKey(lua_State *pState, const Mona::Client& client);
+	static void GetID(lua_State *pState, const Mona::Client& client);
 
 	static void Init(lua_State *pState, Mona::Client& client) {}
 	static void Clear(lua_State* pState,const Mona::Client& client);

@@ -39,7 +39,7 @@ private:
 class Server : protected Handler,private Startable {
 	friend class ServerManager;
 public:
-	Server(UInt32 bufferSize=0,UInt16 threads=0);
+	Server(UInt32 socketBufferSize=0,UInt16 threads=0);
 	virtual ~Server();
 
 	bool	start() { return start(params); }

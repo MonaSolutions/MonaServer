@@ -18,7 +18,7 @@ This file is a part of Mona.
 */
 
 #include "Mona/HTTP/HTTPPacket.h"
-#include "Mona/Logs.h"
+#include "Mona/Util.h"
 
 using namespace std;
 
@@ -26,11 +26,11 @@ using namespace std;
 namespace Mona {
 
 
-HTTPPacket::HTTPPacket(PoolBuffer& pBuffer) : _pBuffer(pBuffer),
+HTTPPacket::HTTPPacket(PoolBuffer& pBuffer) : filePos(string::npos), _pBuffer(pBuffer),
 	content(NULL),
 	contentLength(0),
 	contentType(HTTP::CONTENT_ABSENT),
-	command(HTTP::COMMAND_HEAD),// default value, less instrusive
+	command(HTTP::COMMAND_UNKNOWN),
 	version(0),
 	connection(HTTP::CONNECTION_ABSENT),
 	ifModifiedSince(0),
@@ -38,14 +38,14 @@ HTTPPacket::HTTPPacket(PoolBuffer& pBuffer) : _pBuffer(pBuffer),
 
 }
 
-void HTTPPacket::parseHeader(const char* key, const char* value) {
+void HTTPPacket::parseHeader(Exception& ex,const char* key, const char* value) {
 	if (String::ICompare(key,"content-length")==0) {
 		Exception ex;
 		contentLength = String::ToNumber<UInt32>(ex,value,contentLength);
 	} else if (String::ICompare(key,"content-type")==0) {
 		contentType = HTTP::ParseContentType(value, contentSubType);
 	} else if (String::ICompare(key,"connection")==0) {
-		connection = HTTP::ParseConnection(value);
+		connection = HTTP::ParseConnection(ex,value);
 	} else if (String::ICompare(key,"host")==0) {
 		serverAddress.assign(value);
 	} else if (String::ICompare(key,"upgrade")==0) {
@@ -58,12 +58,12 @@ void HTTPPacket::parseHeader(const char* key, const char* value) {
 		ifModifiedSince.fromString(value);
 	} else if (String::ICompare(key,"access-control-request-method")==0) {
 		vector<string> values;
-		for (string& value : String::Split(value, ",", values,String::SPLIT_IGNORE_EMPTY | String::SPLIT_TRIM))
-			accessControlRequestMethod |= HTTP::ParseCommand(value.c_str());
+		for (string& value : String::Split(value, ",", values, String::SPLIT_IGNORE_EMPTY | String::SPLIT_TRIM))
+			accessControlRequestMethod |= HTTP::ParseCommand(ex,value.c_str());
 	}
 }
 	
-const UInt8* HTTPPacket::build(PoolBuffer& pBuffer,const UInt8* data,UInt32& size) {
+const UInt8* HTTPPacket::build(Exception& ex,PoolBuffer& pBuffer,const UInt8* data,UInt32& size) {
 	/// append data
 	if (!_pBuffer.empty()) {
 		UInt32 oldSize = _pBuffer->size();
@@ -92,22 +92,25 @@ const UInt8* HTTPPacket::build(PoolBuffer& pBuffer,const UInt8* data,UInt32& siz
 		else {
 			newLineCount = 0;
 
-			if ((step==LEFT || step == CMD || step == PATH) && isspace(byte)) {
+			if ((step == LEFT || step == CMD || step == PATH) && isspace(byte)) {
 				if (step == CMD) {
 					// by default command == GET
-					command = HTTP::ParseCommand(signifiant);
+					if ((command = HTTP::ParseCommand(ex, signifiant)) == HTTP::COMMAND_UNKNOWN) {
+						_pBuffer.release();
+						return NULL;
+					}
 					signifiant = NULL;
 					step = PATH;
 				} else if (step == PATH) {
-					_buffer.assign(signifiant,(const char*)current-signifiant);
+					_buffer.assign(signifiant, (const char*)current - signifiant);
 					// parse query
-					filePos = Util::UnpackUrl(_buffer, path, parameters);
+					filePos = Util::UnpackUrl(_buffer, path,query);
 					signifiant = NULL;
 					step = VERSION;
 				} else
 					++signifiant; // for trim begin of key or value
 				continue;
-			} else if (!key && byte == ':') {
+			} else if (step != CMD && !key && byte == ':') {
 				// KEY
 				key = signifiant;
 				step = LEFT;
@@ -120,6 +123,12 @@ const UInt8* HTTPPacket::build(PoolBuffer& pBuffer,const UInt8* data,UInt32& siz
 			} else if (step == CMD || step == PATH || step == VERSION) {
 				if (!signifiant)
 					signifiant = (const char*)current;
+				if (step == CMD && (current-_pBuffer->data())>7) {
+					// not a HTTP valid packet, consumes all
+					_pBuffer.release();
+					ex.set(Exception::PROTOCOL, "unvalid HTTP packet");
+					return NULL;
+				}
 			} else
 				step = RIGHT;
 			continue;
@@ -136,7 +145,7 @@ const UInt8* HTTPPacket::build(PoolBuffer& pBuffer,const UInt8* data,UInt32& siz
 					String::ToNumber(signifiant+5, version);
 				} else {
 					headers.emplace_back(signifiant);
-					parseHeader(key,signifiant);
+					parseHeader(ex,key,signifiant);
 					key = NULL;
 				}
 			}

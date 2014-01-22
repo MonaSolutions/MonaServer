@@ -26,6 +26,12 @@ using namespace std;
 
 IPAddress	_IpAddress;
 
+ADD_TEST(IPAddressTest, Parse) {
+	Exception ex;
+	CHECK(_IpAddress.set(ex, "192.168.1.120") && !ex);
+	CHECK(!_IpAddress.set(ex, "192.168.1.280") && ex);
+}
+
 ADD_TEST(IPAddressTest, StringConv) {
 	
 	Exception ex;
@@ -73,16 +79,6 @@ ADD_TEST(IPAddressTest, StringConv6) {
 	CHECK(!ex);
 	CHECK(_IpAddress.family() == IPAddress::IPv6);
 	CHECK(_IpAddress.toString() == "::FFFF:192.168.1.120");
-}
-
-ADD_TEST(IPAddressTest, Parse) {
-
-	Exception ex;
-	CHECK(_IpAddress.set(ex, "192.168.1.120"));
-	CHECK(!ex);
-
-	CHECK(!_IpAddress.set(ex, "192.168.1.280"));
-	CHECK(ex);
 }
 
 ADD_TEST(IPAddressTest, Classification) {

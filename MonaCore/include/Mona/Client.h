@@ -27,26 +27,39 @@ This file is a part of Mona.
 
 namespace Mona {
 
-class Client : public Entity, public MapParameters, virtual Object {
+class Client : public Entity, virtual Object {
 public:
-	Client(Entities<Client>::Map& turnClients):turnClients(turnClients),_pWriter(NULL),ping(0){}
-	Client(const Client& o) :
-		Entity(o),MapParameters(o),address(o.address), serverAddress(o.serverAddress),
-		path(o.path), ping(o.ping), turnClients(o.turnClients), _pWriter(o._pWriter) {
-	}
+	Client(Entities<Client>::Map& turnClients):turnClients(turnClients),_pWriter(NULL),ping(0),timesBeforeTurn(0),_pUserData(NULL) {}
 
 	const SocketAddress			address;
-	const std::string			serverAddress;
+	const std::string			protocol;
 
+	const std::string			name;
+
+	template <typename DataType>
+	DataType*					getUserData() const { return (DataType*)_pUserData; }
+
+	template <typename DataType>
+	DataType&					setUserData(DataType& data) { _pUserData = &data; return data; }
+
+	// Alterable in class children Peer
+	
 	const std::string			path;
+	const std::string			query;
+	const MapParameters			properties;
+	const std::string			serverAddress;
 	const UInt16				ping;
+
+
+	UInt32						timesBeforeTurn;
 	Entities<Client>			turnClients;
 
-	virtual bool				setName(const std::string& name)=0;
 
 	Writer&						writer() { return _pWriter ? *_pWriter : Writer::Null; }
 protected:
 	Writer*						_pWriter;
+private:
+	void*						_pUserData;
 };
 
 

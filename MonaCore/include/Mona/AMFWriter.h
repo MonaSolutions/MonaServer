@@ -22,17 +22,14 @@ This file is a part of Mona.
 #include "Mona/Mona.h"
 #include "Mona/AMF.h"
 #include "Mona/DataWriter.h"
-#include <deque>
 #include <map>
 
 namespace Mona {
 
-class ObjectRef;
 
 class AMFWriter : public DataWriter, virtual NullableObject {
 public:
 	AMFWriter(const PoolBuffers& poolBuffers);
-	virtual ~AMFWriter();
 
 	bool repeat(UInt32 reference);
 	void clear();
@@ -69,7 +66,14 @@ private:
 	std::map<std::string,UInt32>	_stringReferences;
 	std::vector<UInt8>				_references;
 	bool							_amf3;
-	std::deque<ObjectRef*>			_lastObjectReferences;
+
+	
+	struct ObjectRef {
+		ObjectRef(UInt32 reference,bool isObject) : reference(reference),isObject(isObject) {}
+		const UInt32	reference;
+		const bool		isObject;
+	};
+	std::vector<ObjectRef>			_lastObjectReferences;
 };
 
 

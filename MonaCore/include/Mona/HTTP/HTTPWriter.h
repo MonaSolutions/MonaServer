@@ -56,7 +56,7 @@ public:
 	void			close(int code=0);
 
 	DataWriter&		write(const std::string& code, HTTP::ContentType type=HTTP::CONTENT_TEXT, const std::string& subType="html; charset=utf-8",const UInt8* data=NULL,UInt32 size=0);
-	void			writeFile(const FilePath& file) { return createSender().writeFile(file); }
+	void			writeFile(const FilePath& file, UInt8 sortOptions) { return createSender().writeFile(file,sortOptions);}
 	void			close(const Exception& ex);
 
 	MediaContainer::Type	mediaType;
@@ -68,11 +68,11 @@ private:
 		return *_senders.back();
 	}
 
-	TCPClient&								_tcpClient;
-	PoolThread*								_pThread;
-	std::deque<std::shared_ptr<HTTPSender>>	_senders;
-	bool									_isMain;
-	std::string								_buffer;
+	TCPClient&									_tcpClient;
+	PoolThread*									_pThread;
+	std::vector<std::shared_ptr<HTTPSender>>	_senders;
+	bool										_isMain;
+	std::string									_buffer;
 };
 
 

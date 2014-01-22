@@ -21,6 +21,7 @@ This file is a part of Mona.
 
 #include "Mona/IPAddress.h"
 #include "Mona/String.h"
+#include "Mona/Util.h"
 #include <cstring>
 #if !defined(WIN32)
 	#include <net/if.h>
@@ -33,7 +34,7 @@ namespace Mona {
 
 static const char* Localhost("127.0.0.1"); // to accelerate the parse
 
-class IPAddressCommon : virtual Object {
+class IPAddressCommon {
 public:
 	virtual const void* addr(NET_SOCKLEN& size) const = 0;
 
@@ -60,16 +61,11 @@ public:
 
 class IPv4Address : public IPAddressCommon, virtual Object {
 public:
-	IPv4Address() {
-		_toString.reserve(16);
-		memset(&_addr, 0, sizeof(_addr));
-	}
+
 	IPv4Address(const in_addr& addr) {
-		_toString.reserve(16);
 		memcpy(&_addr, &addr, sizeof(_addr));
 	}
 
-	
 	const string& toString() const {
 		lock_guard<mutex> lock(_mutex);
 		if (!_toString.empty())
@@ -140,14 +136,10 @@ private:
 	mutable std::mutex	_mutex;
 };
 
+
 class IPv6Address : public IPAddressCommon, virtual Object {
 public:
-	IPv6Address() : _scope(0) {
-		_toString.reserve(24);
-		memset(&_addr, 0, sizeof(_addr));
-	}
 	IPv6Address(const in6_addr& addr, UInt32 scope = 0) : _scope(scope) {
-		_toString.reserve(24);
 		memcpy(&_addr, &addr, sizeof(_addr));
 	}
 
@@ -176,7 +168,7 @@ public:
 			if (i > 0)
 				_toString.append(":");
 			if (i < 8)
-				String::Append(_toString, Format<unsigned short>("%X", ntohs(words[i++])));
+				Util::AppendHex((const UInt8*)&words[i++],2,_toString,Util::HEX_TRIM_LEFT);
 		}
 		if (_scope > 0) {
 			_toString.append("%");
@@ -318,18 +310,49 @@ public:
 	}
 };
 
-IPBroadcaster		 _IPBroadcast;
-IPAddress IPAddress::_IPv4Wildcard(IPv4);
-IPAddress IPAddress::_IPv6Wildcard(IPv6);
+class IPWilcard : public IPAddress {
+public:
+	IPWilcard(Family family) {
+		if (family == IPv6) {
+			struct in6_addr	ia;	
+			memset(&ia, 0, sizeof(ia));
+			set(ia);
+		} else {
+			struct in_addr	ia;	
+			memset(&ia, 0, sizeof(ia));
+			set(ia);
+		}
+	}
+};
 
+static IPBroadcaster _IPBroadcast;
+static IPWilcard	 _IPv4Wildcard(IPAddress::IPv4);
+static IPWilcard	 _IPv6Wildcard(IPAddress::IPv6);
 
-IPAddress::IPAddress(Family family) : _pIPAddress(family == IPv6 ? (IPAddressCommon*)new IPv6Address() : (IPAddressCommon*)new IPv4Address()) {
+IPAddress::IPAddress(Family family) : NullableObject(true),_pIPAddress(family == IPv6 ? _IPv6Wildcard._pIPAddress : _IPv4Wildcard._pIPAddress) {
 }
-
 
 IPAddress::IPAddress(const IPAddress& other) : _pIPAddress(other._pIPAddress) {
 }
 
+IPAddress::IPAddress(const in_addr& addr) : _pIPAddress(new IPv4Address(addr)) {
+}
+
+IPAddress::IPAddress(const in6_addr& addr, UInt32 scope) : _pIPAddress(new IPv6Address(addr, scope)) {
+}
+
+void IPAddress::reset() {
+	_isNull = true;
+	_pIPAddress = _pIPAddress->family() == IPv6 ? _IPv6Wildcard._pIPAddress : _IPv4Wildcard._pIPAddress;
+}
+
+void IPAddress::set(const in_addr& addr) {
+	_pIPAddress.reset(new IPv4Address(addr));
+}
+
+void IPAddress::set(const in6_addr& addr, UInt32 scope) {
+	_pIPAddress.reset(new IPv6Address(addr, scope));
+}
 
 bool IPAddress::set(Exception& ex, const string& addr) {
 	IPAddressCommon* pIPAddress = IPv4Address::Parse(ex, addr);
@@ -355,15 +378,6 @@ bool IPAddress::set(Exception& ex, const string& addr, Family family) {
 	}
 	_pIPAddress.reset(pIPAddress);
 	return true;
-}
-
-
-void IPAddress::set(const in_addr& addr) {
-	_pIPAddress.reset(new IPv4Address(addr));
-}
-
-void IPAddress::set(const in6_addr& addr, UInt32 scope) {
-	_pIPAddress.reset(new IPv6Address(addr, scope));
 }
 
 void IPAddress::mask(Exception& ex, const IPAddress& mask) {
@@ -459,6 +473,9 @@ const IPAddress& IPAddress::Broadcast() {
 	return _IPBroadcast;
 }
 
+const IPAddress& IPAddress::Wildcard(Family family) {
+	return family == IPv6 ? _IPv6Wildcard : _IPv4Wildcard;
+}
 
 
 } // namespace Mona

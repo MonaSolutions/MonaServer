@@ -26,10 +26,9 @@ This file is a part of Mona.
 namespace Mona {
 
 
-class MapParameters : virtual NullableObject, public IterableParameters<std::unordered_map<std::string, std::string>::const_iterator> {
+class MapParameters : virtual Object, public IterableParameters<std::unordered_map<std::string, std::string>::const_iterator> {
 public:
 	MapParameters() {}
-	MapParameters(const MapParameters& other) : _map(other._map) {}
 
 	Iterator	begin() const { return _map.begin(); }
 	Iterator	end() const { return _map.end(); }
@@ -38,9 +37,7 @@ public:
 
 	void		clear() { _map.clear(); }
 
-	static const MapParameters	Null;
 private:	
-	MapParameters(bool isNull) : NullableObject(isNull) {}
 
 	const std::string* getRaw(const std::string& key) const;
 	void setRaw(const std::string& key, const char* value);

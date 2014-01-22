@@ -37,8 +37,10 @@ private:
 	bool			buildPacket(PacketReader& packet);
 	void			packetHandler(PacketReader& packet);
 	void			manage();
+	void			flush() { Session::flush(); if (_pStream) _pStream->flush(); }
 
 	void			kill();
+	
 
 	void							readKeys();
 	const std::shared_ptr<RC4_KEY>&	pEncryptKey() { if (_handshaking == 1) readKeys(); return _pEncryptKey; }

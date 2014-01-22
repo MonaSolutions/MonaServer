@@ -76,10 +76,10 @@ bool DiffieHellman::initialize(Exception& ex,bool reset) {
 }
 
 
-Buffer& DiffieHellman::computeSecret(Exception& ex, const Buffer& farPubKey, Buffer& sharedSecret) {
+Buffer& DiffieHellman::computeSecret(Exception& ex, const UInt8* farPubKey, UInt32 farPubKeySize, Buffer& sharedSecret) {
 	if (!initialize(ex))
 		return sharedSecret;
-	BIGNUM *bnFarPubKey = BN_bin2bn(farPubKey.data(),farPubKey.size(),NULL);
+	BIGNUM *bnFarPubKey = BN_bin2bn(farPubKey,farPubKeySize,NULL);
 	int i =BN_num_bits(_pDH->priv_key);
 	sharedSecret.resize(DH_KEY_SIZE,false);
 	int size = DH_compute_key(&sharedSecret[0], bnFarPubKey, _pDH);

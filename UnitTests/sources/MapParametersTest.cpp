@@ -17,16 +17,28 @@ details (or else see http://www.gnu.org/licenses/).
 This file is a part of Mona.
 */
 
-#include "Mona/Logs.h"
-#include "Mona/Util.h"
+#include "Test.h"
+#include "Mona/MapParameters.h"
 
 using namespace std;
+using namespace Mona;
 
-namespace Mona {
+static MapParameters Params;
+static MapParameters Params2;
+static string Buffer;
 
-Logger*			Logs::_PLogger(NULL);
-Logs::DumpMode	Logs::_DumpMode(DUMP_NOTHING);
-UInt8			Logs::_Level(Logger::LEVEL_INFO); // default log level
-Logger			Logs::_DefaultLogger;
 
-} // namespace Mona
+ADD_TEST(MapParametersTest, Creation) {
+	MapParameters params;
+}
+
+ADD_TEST(MapParametersTest, Set) {
+	static UInt32 I(0);
+	Params.setString(String::Format(Buffer,"key",++I), "value");
+	CHECK(Params.count() == I);
+}
+
+ADD_TEST(MapParametersTest, Get) {
+	static string Value;
+	CHECK(Params.getString(Buffer, Value) && Value=="value");
+}

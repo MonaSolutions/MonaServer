@@ -21,6 +21,8 @@ This file is a part of Mona.
 #include "Mona/TerminateSignal.h"
 #if !defined(_WIN32)
     #include "signal.h"
+#else
+	#include <Windows.h>
 #endif
 
 namespace Mona {

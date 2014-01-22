@@ -27,8 +27,12 @@ namespace Mona {
 
 class Sessions;
 class Protocol;
-class Session : virtual Object, Expirable<Session> {
+class Session : virtual Object, public Expirable<Session> {
 	friend class Sessions;
+
+private:
+	const std::shared_ptr<Peer> _pPeer; // before "peer" member to be created before it!!
+
 public:
 	virtual ~Session();
 
@@ -38,7 +42,8 @@ public:
 	template<typename ProtocolType = Protocol>
 	ProtocolType& protocol() { return (ProtocolType&)_protocol; }
 
-	mutable Peer		peer;
+	Peer&				peer;
+	Invoker&			invoker;
 
 	bool				dumpJustInDebug;
 
@@ -67,11 +72,10 @@ public:
 	virtual void		manage() {}
 	virtual void		kill();
 	virtual void		flush() { peer.writer().flush(); }
+
 protected:
 	Session(Protocol& protocol,Invoker& invoker, const char* name=NULL);
-	Session(Protocol& protocol, Invoker& invoker, const Peer& peer, const char* name = NULL);
-
-	Invoker&			invoker;
+	Session(Protocol& protocol, Invoker& invoker, const std::shared_ptr<Peer>& pPeer, const char* name = NULL);
 
 	void				receiveWithoutFlush(PacketReader& packet);
 	virtual void		packetHandler(PacketReader& packet)=0;
@@ -80,11 +84,12 @@ private:
 	void				checkAddress(const SocketAddress& address);
 	const std::string&  protocolName();
 
-	PoolThread*			_pDecodingThread;
-	mutable std::string	_name;
-	UInt32				_id;
-	Sessions*			_pSessions;
-	Protocol&			_protocol;
+	PoolThread*					_pDecodingThread;
+	mutable std::string			_name;
+	UInt32						_id;
+	Sessions*					_pSessions;
+	UInt8						_sessionsOptions;
+	Protocol&					_protocol;
 };
 
 

@@ -25,7 +25,6 @@ This file is a part of Mona.
 
 using namespace std;
 
-
 namespace Mona {
 
 
@@ -33,7 +32,7 @@ namespace Mona {
 // SocketAddressCommon
 //
 
-class SocketAddressCommon : virtual Object {
+class SocketAddressCommon {
 public:
 	virtual const IPAddress&		host() const = 0;
 	virtual UInt16					port() const = 0;
@@ -44,25 +43,16 @@ public:
 
 class IPv4SocketAddress : public SocketAddressCommon, virtual Object {
 public:
-	IPv4SocketAddress() {
-		memset(&_addr, 0, sizeof(_addr));
-		_addr.sin_family = AF_INET;
-		set_sin_len(&_addr);
-		_host.set(_addr.sin_addr);
-	}
-
-	IPv4SocketAddress(const struct sockaddr_in* addr) {
+	IPv4SocketAddress(const struct sockaddr_in* addr) : _host(addr->sin_addr) {
 		memcpy(&_addr, addr, sizeof(_addr));
-		_host.set(_addr.sin_addr);
 	}
 
-	IPv4SocketAddress(const IPAddress& host, UInt16 port) {
+	IPv4SocketAddress(const IPAddress& host, UInt16 port) : _host(host) {
 		memset(&_addr, 0, sizeof(_addr));
 		_addr.sin_family = AF_INET;
 		NET_SOCKLEN size(0);
 		memcpy(&_addr.sin_addr, host.addr(size), sizeof(_addr.sin_addr));
 		_addr.sin_port = port;
-		_host.set(_addr.sin_addr);
 	}
 
 	IPAddress::Family family() const { return IPAddress::IPv4; }
@@ -73,24 +63,17 @@ public:
 	const struct sockaddr&	addr() const { return *reinterpret_cast<const struct sockaddr*>(&_addr);}
 
 private:
-	struct sockaddr_in		_addr;
-	mutable IPAddress		_host;
+	struct sockaddr_in	_addr;
+	mutable IPAddress	_host;
 };
 
 
 class IPv6SocketAddress : public SocketAddressCommon, virtual Object {
 public:
-	IPv6SocketAddress() {
-		memset(&_addr, 0, sizeof(_addr));
-		_addr.sin6_family = AF_INET6;
-		set_sin6_len(&_addr);
-		_host.set(_addr.sin6_addr);
-	}
-	IPv6SocketAddress(const struct sockaddr_in6* addr) {
+	IPv6SocketAddress(const struct sockaddr_in6* addr) : _host(addr->sin6_addr, addr->sin6_scope_id) {
 		memcpy(&_addr, addr, sizeof(_addr));
-		_host.set(_addr.sin6_addr, _addr.sin6_scope_id);
 	}
-	IPv6SocketAddress(const IPAddress& host, UInt16 port, UInt32 scope = 0) {
+	IPv6SocketAddress(const IPAddress& host, UInt16 port, UInt32 scope = 0) : _host(host) {
 		memset(&_addr, 0, sizeof(_addr));
 		_addr.sin6_family = AF_INET6;
 		set_sin6_len(&_addr);
@@ -98,7 +81,6 @@ public:
 		memcpy(&_addr.sin6_addr, host.addr(size), sizeof(_addr.sin6_addr));
 		_addr.sin6_port = port;
 		_addr.sin6_scope_id = scope;
-		_host.set(_addr.sin6_addr, _addr.sin6_scope_id);
 	}
 
 	IPAddress::Family family() const { return IPAddress::IPv6; }
@@ -109,18 +91,38 @@ public:
 	const struct sockaddr&	addr() const { return *reinterpret_cast<const struct sockaddr*>(&_addr); }
 
 private:
-	struct sockaddr_in6		_addr;
-	mutable IPAddress		_host;
+	struct sockaddr_in6	_addr;
+	mutable IPAddress	_host;
 };
 
 
 //
 // SocketAddress
 //
-SocketAddress SocketAddress::_Addressv4Wildcard;
-SocketAddress SocketAddress::_Addressv6Wildcard(IPAddress::IPv6);
 
-SocketAddress::SocketAddress(IPAddress::Family family) : _pAddress(family == IPAddress::IPv6 ? (SocketAddressCommon*)new IPv6SocketAddress() : (SocketAddressCommon*)new IPv4SocketAddress()) {
+class SocketWilcard : public SocketAddress {
+public:
+	SocketWilcard(IPAddress::Family family) {
+		if (family == IPAddress::IPv6) {
+			struct sockaddr_in6	addr;	
+			memset(&addr, 0, sizeof(addr));
+			addr.sin6_family = AF_INET6;
+			set_sin6_len(&addr);
+			set(*reinterpret_cast<const struct sockaddr*>(&addr));
+		} else {
+			struct sockaddr_in	addr;	
+			memset(&addr, 0, sizeof(addr));
+			addr.sin_family = AF_INET;
+			set_sin_len(&addr);
+			set(*reinterpret_cast<const struct sockaddr*>(&addr));
+		}
+	}
+};
+
+static SocketWilcard _Addressv4Wildcard(IPAddress::IPv4);
+static SocketWilcard _Addressv6Wildcard(IPAddress::IPv6);
+
+SocketAddress::SocketAddress(IPAddress::Family family) : NullableObject(true),_pAddress(family == IPAddress::IPv6 ? _Addressv6Wildcard._pAddress : _Addressv4Wildcard._pAddress) {
 }
 
 SocketAddress::SocketAddress(const IPAddress& host, UInt16 port) {
@@ -130,44 +132,44 @@ SocketAddress::SocketAddress(const IPAddress& host, UInt16 port) {
 		_pAddress.reset(new IPv4SocketAddress(host, htons(port)));
 }
 
-SocketAddress::SocketAddress(const SocketAddress& other) : _pAddress(other._pAddress), _toString(other._toString) {
+SocketAddress::SocketAddress(const struct sockaddr& addr) {
+	if (sizeof(addr) == sizeof(struct sockaddr_in6))
+		_pAddress.reset(new IPv6SocketAddress(reinterpret_cast<const struct sockaddr_in6*>(&addr)));
+	else
+		_pAddress.reset(new IPv4SocketAddress(reinterpret_cast<const struct sockaddr_in*>(&addr)));
 }
 
-void SocketAddress::clear() {
-	lock_guard<mutex>	lock(_mutex);
+SocketAddress::SocketAddress(const SocketAddress& other) : _pAddress(other._pAddress) {
+}
+
+void SocketAddress::reset() {
+	_pAddress = _pAddress->family() == IPAddress::IPv6 ? _Addressv6Wildcard._pAddress : _Addressv4Wildcard._pAddress;
+	_isNull = true;
 	_toString.clear();
-	_pAddress.reset(family() == IPAddress::IPv6 ? (SocketAddressCommon*)new IPv6SocketAddress() : (SocketAddressCommon*)new IPv4SocketAddress());
 }
 
 void SocketAddress::set(const SocketAddress& other) {
-	_toString = other._toString;
 	_pAddress = other._pAddress;
+	_isNull = !other;
+	_toString.clear();
 }
 
 void SocketAddress::set(const IPAddress& host, UInt16 port) {
-
 	if (host.family() == IPAddress::IPv6)
 		_pAddress.reset(new IPv6SocketAddress(host, htons(port), host.scope()));
 	else
 		_pAddress.reset(new IPv4SocketAddress(host, htons(port)));
-	lock_guard<mutex>	lock(_mutex);
+	_isNull = host.isWildcard() && port==0;
 	_toString.clear();
 }
 
-bool SocketAddress::set(Exception& ex,const struct sockaddr& addr) {
-	SocketAddressCommon* pAddress(NULL);
-	if (sizeof(addr) == sizeof(struct sockaddr_in))
-		pAddress = new IPv4SocketAddress(reinterpret_cast<const struct sockaddr_in*>(&addr));
-	else if (sizeof(addr) == sizeof(struct sockaddr_in6))
-		pAddress = new IPv6SocketAddress(reinterpret_cast<const struct sockaddr_in6*>(&addr));
-	else {
-		ex.set(Exception::NETADDRESS, "Invalid socket address");
-		return false;
-	}
-	_pAddress.reset(pAddress);
-	lock_guard<mutex>	lock(_mutex);
+void SocketAddress::set(const struct sockaddr& addr) {
+	if (sizeof(addr) == sizeof(struct sockaddr_in6))
+		_pAddress.reset(new IPv6SocketAddress(reinterpret_cast<const struct sockaddr_in6*>(&addr)));
+	else
+		_pAddress.reset(new IPv4SocketAddress(reinterpret_cast<const struct sockaddr_in*>(&addr)));
+	_isNull = _pAddress->host().isWildcard() && _pAddress->port()==0;
 	_toString.clear();
-	return true;
 }
 
 bool SocketAddress::setIntern(Exception& ex,const string& hostAndPort,bool resolveHost) {
@@ -233,11 +235,15 @@ bool SocketAddress::setIntern(Exception& ex,const string& host, UInt16 port,bool
 }
 
 bool SocketAddress::operator < (const SocketAddress& address) const {
+	if (family() < address.family())
+		return true;
 	if (family() != address.family())
-		return family() < address.family();
-	if (port() != address.port())
-		return port() < address.port();
-	return (host() < address.host());
+		return false;
+	if (host() < address.host())
+		return true;
+	if (host() != address.host())
+		return false;
+	return (port() < address.port());
 }
 
 const IPAddress& SocketAddress::host() const {
@@ -257,7 +263,6 @@ const struct sockaddr& SocketAddress::addr() const {
 }
 
 const string& SocketAddress::toString() const {
-	lock_guard<mutex>	lock(_mutex);
 	if (!_toString.empty())
 		return _toString;
 
@@ -270,8 +275,7 @@ const string& SocketAddress::toString() const {
 		_toString.append("]");
 
 	_toString.append(":");
-	String::Append(_toString, port());
-	return _toString;
+	return String::Append(_toString, port());
 }
 
 
@@ -301,5 +305,8 @@ UInt16 SocketAddress::Split(const string& address,string& host) {
 	return port;
 }
 
+const SocketAddress& SocketAddress::Wildcard(IPAddress::Family family) {
+	return family == IPAddress::IPv6 ? _Addressv6Wildcard : _Addressv4Wildcard;
+}
 
 }	// namespace Mona

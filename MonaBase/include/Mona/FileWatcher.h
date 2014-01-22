@@ -21,18 +21,22 @@ This file is a part of Mona.
 
 #include "Mona/Mona.h"
 #include "Mona/Time.h"
+#include "Mona/FilePath.h"
 
 namespace Mona {
 
 class FileWatcher : virtual Object {
 public:
-	FileWatcher(const std::string& path);
+
+	template <typename ...Args>
+	FileWatcher(Args&&... args) : _delay(0),filePath(args ...), _lastModified(0), _exists(false) {}
+	
 
 	/// look if the file has changed, call clearFile if doesn't exist anymore, or call clearFile and loadFile if file has change
 	/// return true if file exists
-	bool				watchFile();
+	bool	watchFile();
 
-	const std::string	filePath;
+	const FilePath	filePath;
 private:
 	virtual void loadFile() = 0;
 	virtual void clearFile() = 0;

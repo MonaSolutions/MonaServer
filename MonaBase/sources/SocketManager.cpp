@@ -36,11 +36,11 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
 
 SocketManager::SocketManager(TaskHandler& handler, const PoolBuffers& poolBuffers, PoolThreads& poolThreads, UInt32 bufferSize, const string& name) : poolBuffers(poolBuffers),
-    _fakeSocket(*this), _selfHandler(false), poolThreads(poolThreads), _eventFD(0), _sockfd(NET_INVALID_SOCKET), _eventSystem(0), _bufferSize(bufferSize), Startable(name), Task(handler), _currentEvent(0), _currentError(0), _eventInit(false), _ppSocket(NULL) {
+    _fakeSocket(*this), _selfHandler(false), poolThreads(poolThreads), _eventFD(0), _sockfd(NET_INVALID_SOCKET), _eventSystem(0), bufferSize(bufferSize), Startable(name), Task(handler), _currentEvent(0), _currentError(0), _eventInit(false), _ppSocket(NULL) {
 	_fakeSocket._initialized = true;
 }
 SocketManager::SocketManager(const PoolBuffers& poolBuffers, PoolThreads& poolThreads, UInt32 bufferSize, const string& name) : poolBuffers(poolBuffers),
-    _fakeSocket(*this), _selfHandler(true), poolThreads(poolThreads), _eventFD(0), _sockfd(NET_INVALID_SOCKET), _eventSystem(0), _bufferSize(bufferSize), Startable(name), Task((TaskHandler&)*this), _currentEvent(0), _currentError(0), _eventInit(false), _ppSocket(NULL) {
+    _fakeSocket(*this), _selfHandler(true), poolThreads(poolThreads), _eventFD(0), _sockfd(NET_INVALID_SOCKET), _eventSystem(0), bufferSize(bufferSize), Startable(name), Task((TaskHandler&)*this), _currentEvent(0), _currentError(0), _eventInit(false), _ppSocket(NULL) {
 	_fakeSocket._initialized = true;
 }
 
@@ -135,9 +135,9 @@ bool SocketManager::add(Exception& ex,Socket& socket) const {
 	socket._ppSocket = ppSocket;
 	_sockets.emplace_hint(it, sockfd, ppSocket);
 
-	if(_bufferSize>0) {
-		socket.setReceiveBufferSize(ex, _bufferSize);
-		socket.setSendBufferSize(ex, _bufferSize);
+	if(bufferSize>0) {
+		socket.setReceiveBufferSize(ex, bufferSize);
+		socket.setSendBufferSize(ex, bufferSize);
 	}
 
 	return true;

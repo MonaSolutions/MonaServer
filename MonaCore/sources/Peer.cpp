@@ -38,9 +38,6 @@ public:
 Peer::Peer(Handler& handler) :Client(turnPeers), _handler(handler), connected(false), relayable(false) {
 }
 
-Peer::Peer(const Peer& peer) : Client(peer), turnPeers(peer.turnPeers), _handler(peer._handler), connected(peer.connected), relayable(false), localAddresses(peer.localAddresses) {
-}
-
 Peer::~Peer() {
 	unsubscribeGroups();
 	if(relayable)
@@ -143,20 +140,6 @@ void Peer::unsubscribeGroups() {
 		onUnjoinGroup(it++);
 }
 
-bool Peer::setName(const string& name) {
-	if(connected) {
-		// add the new
-		if(!_handler._clientsByName.insert(pair<string,Client*>(name,this)).second)
-			return false;
-		// remove the old
-		string nameClient;
-		if(getString("name", nameClient))
-			_handler._clientsByName.erase(nameClient);
-	}
-	setString("name",name);
-	return true;
-}
-
 ICE& Peer::ice(const Peer& peer) {
 	map<const Peer*,ICE*>::iterator it = _ices.begin();
 	while(it!=_ices.end()) {
@@ -184,18 +167,11 @@ ICE& Peer::ice(const Peer& peer) {
 
 
 void Peer::onHandshake(UInt32 attempts,set<SocketAddress>& addresses) {
-	string protocol;
-	getString("protocol", protocol);
-	_handler.onHandshake(protocol, address, path, *this, attempts, addresses);
+	_handler.onHandshake(protocol, address, path, properties(), attempts, addresses);
 }
 
 void Peer::onRendezVousUnknown(const UInt8* peerId,set<SocketAddress>& addresses) {
-	if (connected) {
-		string protocol;
-		getString("protocol", protocol);
-		_handler.onRendezVousUnknown(protocol, id, addresses);
-	} else
-		WARN("Rendez-vous using before connection");
+	_handler.onRendezVousUnknown(protocol, peerId, addresses);
 }
 
 void Peer::onConnection(Exception& ex, Writer& writer,DataReader& parameters,DataWriter& response) {
@@ -210,8 +186,7 @@ void Peer::onConnection(Exception& ex, Writer& writer,DataReader& parameters,Dat
 			return;
 		}
 		writer.state(Writer::CONNECTED);
-		string name;
-		if (getString("name", name)) {
+		if (properties().getString("name", (string&)name) && !name.empty()) {
 			if (!_handler._clientsByName.insert(pair<string, Client*>(name, this)).second) {
 				ex.set(Exception::NETWORK, "Client with a '%s' name exists already", name);
 				return;
@@ -232,8 +207,7 @@ void Peer::onDisconnection() {
 	if(connected) {
 		_pWriter = NULL;
 		(bool&)connected = false;
-		string name;
-		if (getString("name", name))
+		if (!name.empty())
 			_handler._clientsByName.erase(name);
 		if (_handler._clients.erase(id) == 0) {
 			string hex;

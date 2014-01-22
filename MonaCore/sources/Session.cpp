@@ -28,22 +28,20 @@ using namespace std;
 
 namespace Mona {
 
-Session::Session(Protocol& protocol, Invoker& invoker, const Peer& peer, const char* name) : _pSessions(NULL), dumpJustInDebug(false),
-	Expirable(this), _protocol(protocol), _name(name ? name : ""), invoker(invoker), _pDecodingThread(NULL), died(false), _id(0), peer(peer) {
-	this->peer.setString("protocol", protocol.name);
-	if(memcmp(this->peer.id,"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",ID_SIZE)==0)
-		Util::Random(this->peer.id,ID_SIZE);
-	string hex;
-	DEBUG("peer.id: ", Util::FormatHex(this->peer.id, ID_SIZE, hex));
+Session::Session(Protocol& protocol, Invoker& invoker, const shared_ptr<Peer>& pPeer, const char* name) : _pPeer(pPeer),peer(*_pPeer),_pSessions(NULL), dumpJustInDebug(false),
+	Expirable(this), _protocol(protocol), _name(name ? name : ""), invoker(invoker), _pDecodingThread(NULL), died(false), _id(0) {
+	((string&)peer.protocol) = protocol.name;
+	if(memcmp(peer.id,"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",ID_SIZE)==0)
+		Util::Random(peer.id,ID_SIZE);
+	DEBUG("peer.id: ", Util::FormatHex(peer.id, ID_SIZE, invoker.buffer));
 }
 	
-Session::Session(Protocol& protocol, Invoker& invoker, const char* name) : dumpJustInDebug(false), _pSessions(NULL),
-	Expirable(this),_protocol(protocol),_name(name ? name : ""), invoker(invoker), _pDecodingThread(NULL), died(false), _id(0), peer((Handler&)invoker) {
-	peer.setString("protocol", protocol.name);
+Session::Session(Protocol& protocol, Invoker& invoker, const char* name) : dumpJustInDebug(false), _pSessions(NULL), _pPeer(new Peer((Handler&)invoker)),
+	Expirable(this),_protocol(protocol),_name(name ? name : ""), invoker(invoker), _pDecodingThread(NULL), died(false), _id(0), peer(*_pPeer) {
+	((string&)peer.protocol) = protocol.name;
 	if(memcmp(peer.id,"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",ID_SIZE)==0)
-		Util::Random(this->peer.id, ID_SIZE);
-	string hex;
-	DEBUG("peer.id: ", Util::FormatHex(this->peer.id, ID_SIZE, hex));
+		Util::Random(peer.id, ID_SIZE);
+	DEBUG("peer.id: ", Util::FormatHex(peer.id, ID_SIZE, invoker.buffer));
 }
 
 

@@ -45,12 +45,11 @@ void TCPServer::stop() {
 	if (!_running)
 		_running;
 	close();
-	_address.clear();
+	_address.reset();
 	_running = false;
 }
 
 void TCPServer::onReadable(Exception& ex) {
-	int test = available(ex);
 	_hasToAccept = true;
 	onConnectionRequest(ex);
 	if (_hasToAccept) {

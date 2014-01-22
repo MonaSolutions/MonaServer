@@ -38,16 +38,20 @@ class Member;
 class Peer : public Client, virtual Object {
 public:
 	Peer(Handler& handler);
-	Peer(const Peer& peer);
 	virtual ~Peer();
 
 	std::set<SocketAddress>		localAddresses;
 	const bool					connected;
 
+	void						setPath(const std::string& value) { ((std::string&)Client::path).assign(value); }
+	void						setQuery(const std::string& value) { ((std::string&)Client::query).assign(value); }
+	void						setServerAddress(const std::string& value) { ((std::string&)Client::serverAddress).assign(value); }
+	void						setPing(UInt16 value) { ((UInt16&)ping) = value; }
+	MapParameters&				properties() { return (MapParameters&)Client::properties; };
+
+
 	Entities<Client>::Map		turnPeers;
 	bool						relayable;
-
-	bool		setName(const std::string& name);
 
 	ICE&		ice(const Peer& peer);
 

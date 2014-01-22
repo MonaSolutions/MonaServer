@@ -22,7 +22,6 @@ This file is a part of Mona.
 #include "Mona/Mona.h"
 #include "Mona/DataReader.h"
 #include "Mona/Time.h"
-#include <deque>
 
 
 namespace Mona {
@@ -30,7 +29,7 @@ namespace Mona {
 
 class HTTPHeaderReader : public DataReader, virtual Object {
 public:
-	HTTPHeaderReader(std::deque<const char*>& headers);
+	HTTPHeaderReader(std::vector<const char*>& headers);
 
 
 	std::string&		readString(std::string& value) {return _value.assign(value);}
@@ -51,8 +50,8 @@ private:
 	bool				readArray(UInt32& size) {return false;}
 	const UInt8*		readBytes(UInt32& size) { size = _value.size(); return (const UInt8*)_value.c_str(); }
 	
-	std::deque<const char*>&				_headers;
-	std::deque<const char*>::const_iterator _header;
+	std::vector<const char*>&				_headers;
+	std::vector<const char*>::const_iterator _header;
 	std::string								_value;
 	Time									_date;
 	bool									_bool;

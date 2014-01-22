@@ -27,11 +27,8 @@ namespace Mona {
 
 class BinaryReader : virtual Object {
 public:
-    enum ByteOrder {
-        BIG_ENDIAN_ORDER,
-        LITTLE_ENDIAN_ORDER
-    };
-    BinaryReader(const UInt8* data,UInt32 size,ByteOrder byteOrder=BIG_ENDIAN_ORDER); // BIG_ENDIAN_ORDER==NETWORK_ENDIAN
+   
+    BinaryReader(const UInt8* data,UInt32 size,Binary::Order byteOrder=Binary::ORDER_BIG_ENDIAN); // ORDER_BIG_ENDIAN==NETWORK_ENDIAN
 
 	UInt32			read7BitValue();
 	UInt64			read7BitLongValue();

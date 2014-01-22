@@ -19,6 +19,9 @@
     <Filter Include="IO">
       <UniqueIdentifier>{b8ef9199-65ab-4084-aec1-dacb203c793c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Crypto">
+      <UniqueIdentifier>{835ec284-f947-44d1-8dfc-2022d87d1c83}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="sources\BinaryReader.cpp">
@@ -28,9 +31,6 @@
       <Filter>IO</Filter>
     </ClCompile>
     <ClCompile Include="sources\AttemptCounter.cpp">
-      <Filter>Util</Filter>
-    </ClCompile>
-    <ClCompile Include="sources\DiffieHellman.cpp">
       <Filter>Util</Filter>
     </ClCompile>
     <ClCompile Include="sources\QualityOfService.cpp">
@@ -160,6 +160,15 @@
     <ClCompile Include="sources\Buffer.cpp">
       <Filter>IO</Filter>
     </ClCompile>
+    <ClCompile Include="sources\DiffieHellman.cpp">
+      <Filter>Crypto</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\Crypto.cpp">
+      <Filter>Crypto</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\Process.cpp">
+      <Filter>Util</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Mona\BinaryReader.h">
@@ -169,9 +178,6 @@
       <Filter>IO</Filter>
     </ClInclude>
     <ClInclude Include="include\Mona\AttemptCounter.h">
-      <Filter>Util</Filter>
-    </ClInclude>
-    <ClInclude Include="include\Mona\DiffieHellman.h">
       <Filter>Util</Filter>
     </ClInclude>
     <ClInclude Include="include\Mona\Entities.h">
@@ -348,6 +354,12 @@
     </ClInclude>
     <ClInclude Include="include\Mona\Buffer.h">
       <Filter>IO</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\DiffieHellman.h">
+      <Filter>Crypto</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\Crypto.h">
+      <Filter>Crypto</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

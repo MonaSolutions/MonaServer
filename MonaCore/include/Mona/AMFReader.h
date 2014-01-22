@@ -27,11 +27,9 @@ This file is a part of Mona.
 namespace Mona {
 
 
-class ObjectDef;
 class AMFReader : public DataReader, virtual Object {
 public:
 	AMFReader(PacketReader& reader);
-	virtual ~AMFReader();
 
 	std::string&		readString(std::string& value);
 	double				readNumber();
@@ -59,7 +57,7 @@ private:
 	std::string&					readText(std::string& value);
 	UInt8							current() { return *packet.current(); }
 
-	std::deque<ObjectDef*>	_objectDefs;
+	
 	std::vector<UInt32>		_stringReferences;
 	std::vector<UInt32>		_classDefReferences;
 	std::vector<UInt32>		_references;
@@ -67,6 +65,20 @@ private:
 	UInt32					_amf0Reset;
 	UInt32					_amf3;
 	bool					_referencing;
+
+	struct ObjectDef {
+		ObjectDef(UInt32 amf3,UInt8 arrayType=0) : amf3(amf3),reset(0),dynamic(false),externalizable(false),count(0),arrayType(arrayType) {}
+
+		std::deque<std::string>		hardProperties;
+		UInt32						reset;
+		bool						dynamic;
+		bool						externalizable;
+		UInt32						count;
+		UInt8						arrayType;
+		const UInt32				amf3;
+	};
+	std::vector<ObjectDef>	_objectDefs;
+
 };
 
 

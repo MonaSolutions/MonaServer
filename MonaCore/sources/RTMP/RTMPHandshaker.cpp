@@ -20,85 +20,99 @@ This file is a part of Mona.
 #include "Mona/RTMP/RTMPHandshaker.h"
 #include "Mona/DiffieHellman.h"
 #include "Mona/Writer.h"
-#include "Mona/Logs.h"
 #include "Mona/RTMP/RTMP.h"
-#include "Mona/Util.h"
-#include "Mona/Time.h"
-#include <cstring>
 
 using namespace std;
 
 
-
 namespace Mona {
 
-RTMPHandshaker::RTMPHandshaker(const PoolBuffers& poolBuffers,const SocketAddress& address, const UInt8* data, UInt32 size) : _poolBuffers(poolBuffers),_pFarPubKey(poolBuffers), TCPSender("RTMPHandshaker"),_address(address), _middle(false),_writer(poolBuffers) {
-	_writer.write8(3);
-	//generate random data
-	_writer.writeRandom(1536);
-	// write data
-	_writer.writeRaw(data,size);
+RTMPHandshaker::RTMPHandshaker(const SocketAddress& address,PoolBuffer& pBuffer) : failed(false),_pBuffer(pBuffer.poolBuffers), TCPSender("RTMPHandshaker"),_address(address),_writer(pBuffer.poolBuffers) {
+	_pBuffer.swap(pBuffer);
 }
 
-RTMPHandshaker::RTMPHandshaker(const PoolBuffers& poolBuffers,const SocketAddress& address, const UInt8* farPubKey, const UInt8* challengeKey, bool middle, const std::shared_ptr<RC4_KEY>& pDecryptKey, const std::shared_ptr<RC4_KEY>& pEncryptKey) : _poolBuffers(poolBuffers),_pFarPubKey(poolBuffers,DH_KEY_SIZE),TCPSender("RTMPHandshaker"),_address(address), _pDecryptKey(pDecryptKey), _pEncryptKey(pEncryptKey), _middle(middle), _writer(poolBuffers) {
-	memcpy(_pFarPubKey->data(),farPubKey,_pFarPubKey->size());
-	memcpy(_challengeKey,challengeKey,sizeof(_challengeKey));
-}
+bool RTMPHandshaker::compute(Exception& ex) {
+	BinaryReader packet(_pBuffer->data(),_pBuffer->size());
 
-
-bool RTMPHandshaker::run(Exception& ex) {
-	if (_writer.size() == 0) {
-		if (!runComplex(ex))
-			return false;
+	UInt8 handshakeType = packet.read8();
+	if(handshakeType!=3 && handshakeType!=6) {
+		ex.set(Exception::PROTOCOL,"RTMP Handshake type '",handshakeType,"' unknown");
+		return false;
 	}
+
+	Crypto crypto;
+	bool encrypted(handshakeType == 6);
+	bool middle;
+	const UInt8* challengeKey = RTMP::ValidateClient(crypto,packet,middle); // size = HMAC_KEY_SIZE
+
+	if (!challengeKey) {
+		if (encrypted) {
+			ex.set(Exception::PROTOCOL,"Unable to validate client");
+			return false;
+		}
+
+		/// Simple Handshake ///
+		
+		_writer.write8(3);
+		//generate random data
+		_writer.writeRandom(1536);
+		// write data
+		_writer.writeRaw(packet.current(),packet.available());
+	} else {
+
+		/// Complexe Handshake ///
+
+		if(encrypted) {
+			pDecryptKey.reset(new RC4_KEY);
+			pEncryptKey.reset(new RC4_KEY);
+		}
+		packet.reset();
+
+		const UInt8* farPubKey = packet.current() + RTMP::GetDHPos(packet.current(), middle); // size = DH_KEY_SIZE
+
+		// encrypted flag
+		_writer.write8(encrypted ? 6 : 3);
+
+		//timestamp
+		_writer.write32((UInt32)Time());
+
+		//version
+		_writer.write32(0);
+
+		//generate random data
+		_writer.writeRandom(3064);
+
+		if (encrypted) {
+
+			//compute DH key position
+			UInt32 serverDHPos = RTMP::GetDHPos(_writer.data(), middle);
+
+			PoolBuffer pSecret(_pBuffer.poolBuffers);
+			//generate DH key
+			DiffieHellman dh;
+			int publicKeySize;
+			do {
+				if (ex || !dh.initialize(ex, true))
+					return false;
+				dh.computeSecret(ex, farPubKey,DH_KEY_SIZE, *pSecret);
+			} while (!ex && (pSecret->size() != DH_KEY_SIZE || dh.privateKeySize(ex) != DH_KEY_SIZE || (publicKeySize=dh.publicKeySize(ex)) != DH_KEY_SIZE));
+		
+			if (ex)
+				return false;
+
+			dh.readPublicKey(ex,(UInt8*)_writer.data() + serverDHPos);
+			if (ex)
+				return false;
+
+			RTMP::ComputeRC4Keys(crypto,_writer.data() + serverDHPos, publicKeySize, farPubKey, DH_KEY_SIZE, *pSecret, *pDecryptKey, *pEncryptKey);
+		}
+
+		//generate the digest
+		RTMP::WriteDigestAndKey(crypto,(UInt8*)_writer.data(),challengeKey,middle);
+	}
+
 	Writer::DumpResponse(data(), size(), _address,true);
 	return TCPSender::run(ex);
-}
-
-bool RTMPHandshaker::runComplex(Exception& ex) {
-
-	bool encrypted = (_pDecryptKey && _pEncryptKey);
-
-	// encrypted flag
-	_writer.write8(encrypted ? 6 : 3);
-
-	//timestamp
-	_writer.write32((UInt32)Time());
-
-	//version
-	_writer.write32(0);
-
-	//generate random data
-	_writer.writeRandom(3064);
-
-	if (encrypted) {
-
-		//compute DH key position
-		UInt32 serverDHPos = RTMP::GetDHPos(_writer.data(), _middle);
-
-		PoolBuffer pSecret(_poolBuffers);
-		//generate DH key
-		DiffieHellman dh;
-		int publicKeySize;
-		do {
-			if (ex || !dh.initialize(ex, true))
-				return false;
-			dh.computeSecret(ex, *_pFarPubKey, *pSecret);
-		} while (!ex && (pSecret->size() != DH_KEY_SIZE || dh.privateKeySize(ex) != DH_KEY_SIZE || (publicKeySize=dh.publicKeySize(ex)) != DH_KEY_SIZE));
-		
-		if (ex)
-			return false;
-
-		dh.readPublicKey(ex,(UInt8*)_writer.data() + serverDHPos);
-		if (ex)
-			return false;
-
-		RTMP::ComputeRC4Keys(_writer.data() + serverDHPos, publicKeySize, _pFarPubKey->data(), _pFarPubKey->size(), *pSecret, *_pDecryptKey, *_pEncryptKey);
-	}
-
-	//generate the digest
-	RTMP::WriteDigestAndKey((UInt8*)_writer.data(),_challengeKey,_middle);
-	return true;
 }
 
 

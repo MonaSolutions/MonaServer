@@ -26,7 +26,6 @@ This file is a part of Mona.
 namespace Mona {
 
 
-
 class RTMPWriter : public FlashWriter, virtual Object {
 public:
 	RTMPWriter(UInt32 id,StreamSocket& socket,const SocketAddress& address,std::shared_ptr<RTMPSender>& pSender,const std::shared_ptr<RC4_KEY>& pEncryptKey);

@@ -25,8 +25,6 @@ using namespace std;
 
 namespace Mona {
 
-const MapParameters MapParameters::Null(true);
-
 const string* MapParameters::getRaw(const string& key) const {
 	auto& it = _map.find(key);
 	if (it != _map.end())

@@ -45,7 +45,7 @@ class IPAddressCommon;
 /// IPv6 addresses are supported only if the target platform
 /// supports IPv6.
 
-class IPAddress : virtual Object {
+class IPAddress : public virtual NullableObject {
 public:
 	enum Family {
 		IPv4=1,
@@ -56,7 +56,9 @@ public:
 	IPAddress(Family family=IPv4);
 	IPAddress(const IPAddress& other);
 
-	// Set an IPAddress from a native internet address. A pointer to a in_addr or a in6_addr structure may be  passed. Additionally, for an IPv6 address, a scope ID may be specified.
+	// Create/Set an IPAddress from a native internet address. A pointer to a in_addr or a in6_addr structure may be  passed. Additionally, for an IPv6 address, a scope ID may be specified.
+	IPAddress(const in_addr& addr);
+	IPAddress(const in6_addr& addr, UInt32 scope = 0);
 	void set(const in_addr& addr);
 	void set(const in6_addr& addr, UInt32 scope = 0);
 
@@ -65,6 +67,8 @@ public:
 
 	// Set an IPAddress from the string containing an IP address in presentation format (dotted decimal for IPv4, hex string for IPv6).
 	bool set(Exception& ex, const std::string& addr, Family family);
+
+	void reset();
 
 	// Masks the IP address using the given netmask, which is usually a IPv4 subnet mask (Only supported for IPv4 addresses)
 	// The new address is (address & mask)
@@ -150,7 +154,7 @@ public:
 	const void* addr(NET_SOCKLEN& size) const;
 
 	// Returns a wildcard IPv4 or IPv6 address (0.0.0.0)
-	static const IPAddress& Wildcard(Family family = IPv4) { return family == IPv6 ? _IPv6Wildcard : _IPv4Wildcard; }
+	static const IPAddress& Wildcard(Family family = IPv4);
 	// Returns a broadcast IPv4 address (255.255.255.255)
 	static const IPAddress& Broadcast();
 
@@ -160,11 +164,8 @@ public:
 	};
 
 private:
-
+	
 	std::shared_ptr<IPAddressCommon>	_pIPAddress;
-
-	static IPAddress					_IPv4Wildcard;
-	static IPAddress					_IPv6Wildcard;
 };
 
 

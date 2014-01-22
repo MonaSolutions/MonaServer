@@ -1,4 +1,4 @@
-/*
+﻿/*
 Copyright 2014 Mona
 mathieu.poux[a]gmail.com
 jammetthomas[a]gmail.com
@@ -17,16 +17,26 @@ details (or else see http://www.gnu.org/licenses/).
 This file is a part of Mona.
 */
 
-#include "Mona/Logs.h"
-#include "Mona/Util.h"
+#pragma once
 
-using namespace std;
+#include "Mona/Mona.h"
+#include <openssl/hmac.h>
+#include <mutex>
+#include <deque>
 
 namespace Mona {
 
-Logger*			Logs::_PLogger(NULL);
-Logs::DumpMode	Logs::_DumpMode(DUMP_NOTHING);
-UInt8			Logs::_Level(Logger::LEVEL_INFO); // default log level
-Logger			Logs::_DefaultLogger;
+class Crypto : virtual Object {
+public:
+
+	Crypto() { HMAC_CTX_init(&_hmacCTX);}
+	~Crypto() { HMAC_CTX_cleanup(&_hmacCTX); }
+
+	UInt8* hmac(const EVP_MD* evpMD, const void* key, int keySize, const UInt8* data, size_t size, UInt8* value);
+
+private:
+	HMAC_CTX _hmacCTX;
+};
+
 
 } // namespace Mona

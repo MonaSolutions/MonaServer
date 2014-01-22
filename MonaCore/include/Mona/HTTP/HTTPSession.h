@@ -58,7 +58,6 @@ private:
 
 	std::deque<std::shared_ptr<HTTPPacket>>			_packets;
 	std::shared_ptr<PoolBuffer>						_ppBuffer;
-	std::string										_buffer;
 
 	HTTPOptionsWriter								_options;
 };

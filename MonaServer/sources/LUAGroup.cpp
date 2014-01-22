@@ -28,17 +28,27 @@ using namespace Mona;
 
 void LUAGroup::AddClient(lua_State* pState, Group& group, Client& client, int indexGroup,int indexClient) {
 	Script::Collection(pState, indexGroup, "|items", group.size());
-	LUAClient::GetKey(pState, client);
+	LUAClient::GetID(pState, client);
 	lua_pushvalue(pState, indexClient);
 	lua_rawset(pState, -3);
+	if (!client.name.empty()) {
+		lua_pushstring(pState, client.name.c_str());
+		lua_pushvalue(pState, indexClient);
+		lua_rawset(pState, -3); // rawset cause NewIndexProhibited
+	}
 	lua_pop(pState, 1);
 }
 
 void LUAGroup::RemoveClient(lua_State* pState, Group& group, Client& client, int indexGroup) {
 	Script::Collection(pState, indexGroup, "|items", group.size());
-	LUAClient::GetKey(pState, client);
+	LUAClient::GetID(pState, client);
 	lua_pushnil(pState);
 	lua_rawset(pState, -3);
+	if (!client.name.empty()) {
+		lua_pushstring(pState, client.name.c_str());
+		lua_pushnil(pState);
+		lua_rawset(pState, -3); // rawset cause NewIndexProhibited
+	}
 	lua_pop(pState, 1);
 }
 
@@ -68,8 +78,16 @@ int LUAGroup::Get(lua_State *pState) {
 	SCRIPT_CALLBACK(Group,group)
 		const char* name = SCRIPT_READ_STRING("");
 		if(strcmp(name,"id")==0) {
-			string hex;
-			SCRIPT_WRITE_STRING(Mona::Util::FormatHex(group.id, ID_SIZE, hex).c_str());
+			if (lua_getmetatable(pState, 1)) {
+				lua_getfield(pState, -1, "|id");
+				if (!lua_isstring(pState, -1)) {
+					lua_pop(pState, 1);
+					string hex;
+					lua_pushstring(pState, Mona::Util::FormatHex(group.id, ID_SIZE, hex).c_str());
+					lua_setfield(pState, -2,"|id");
+				}
+				lua_replace(pState, -2);
+			}
 		} else if (strcmp(name, "rawId") == 0) {
 			SCRIPT_WRITE_BINARY(group.id,ID_SIZE);
 		} else if (strcmp(name, "size") == 0) {

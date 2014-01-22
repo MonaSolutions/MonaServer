@@ -99,11 +99,13 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <SDLCheck>
       </SDLCheck>
+      <PrecompiledHeaderFile />
+      <PrecompiledHeaderOutputFile />
     </ClCompile>
     <Link>
       <AdditionalDependencies>lua51.lib;MonaBase.lib;MonaCore.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>../External/lib;../MonaBase/lib;../MonaCore/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>

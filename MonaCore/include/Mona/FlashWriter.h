@@ -30,6 +30,7 @@ class FlashWriter : public Writer, virtual Object {
 public:
 	// For AMF response!
 	double					callbackHandle;
+	bool					amf0Preference;
 
 	BinaryWriter&			writeRaw() { return write(AMF::RAW).packet; }
 	AMFWriter&				writeMessage() { return writeInvocation("_result"); }

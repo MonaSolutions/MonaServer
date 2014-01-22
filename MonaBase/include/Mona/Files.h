@@ -22,12 +22,7 @@ This file is a part of Mona.
 
 #include "Mona/Mona.h"
 #include "Mona/Exceptions.h"
-#if defined(_WIN32)
-#include "windows.h"
-#else
-#include "dirent.h"
-#endif
-#include <deque>
+
 
 namespace Mona {
 
@@ -35,9 +30,8 @@ namespace Mona {
 class Files : virtual Object {
 public:
 	Files(Exception& ex, const std::string& path);
-	virtual ~Files();
 
-	typedef std::deque<std::string>::const_iterator Iterator;
+	typedef std::vector<std::string>::const_iterator Iterator;
 
 	const std::string& directory() const { return _directory; }
 
@@ -49,16 +43,8 @@ private:
 
 	bool next();
 
-	std::deque<std::string>	_files;
+	std::vector<std::string>	_files;
 	std::string				_directory;
-
-#if defined(_WIN32)
-	HANDLE				_fileHandle;
-	WIN32_FIND_DATA		_fileData;
-#else
-	DIR *	_pDirectory;
-#endif
-	
 };
 
 } // namespace Mona
