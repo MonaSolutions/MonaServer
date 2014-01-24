@@ -26,6 +26,8 @@ This file is a part of Mona.
 namespace Mona {
 
 #define MPEGTS_PACKET_SIZE		188
+#define TS_PROGRAM_ID_AUDIO		0x60
+#define TS_PROGRAM_ID_VIDEO		0x40
 
 class MediaContainer : virtual Static {
 public:
@@ -69,11 +71,12 @@ public:
 		static void Write(BinaryWriter& writer, UInt8 track, UInt32 time, const UInt8* data, UInt32 size);
 	private:
 
-		static void	writeVideoPacket(BinaryWriter& writer, UInt32& available, UInt32 time, const UInt8* pData, bool isMetadata, bool first);
+		static UInt8	GetAdaptiveSize(bool time, UInt32 available, bool first, bool& adaptiveField, Track type);
+		static void		WriteTS(BinaryWriter& writer, UInt32& available, UInt32 time, const UInt8* pData, bool isMetadata, Track type, bool first);
+		static UInt32	CalcCrc32(UInt8 * data, UInt32 datalen);
 
-		static UInt32	CounterRow;
-		static UInt32	CounterFrame;
-		static char		CounterA;
+		static UInt32				CrcTab[];
+		static std::map<Track, UInt32>	CounterRow;
 	};
 
 };
