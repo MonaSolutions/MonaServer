@@ -26,11 +26,13 @@ namespace Mona {
 
 class FilePath : virtual Object {
 public:
-
 	FilePath() : _attributesLoaded(false) {}
 
 	template <typename ...Args>
 	FilePath(const std::string& value,Args&&... args) : _attributesLoaded(false) { set(value,args ...); }
+
+	template <typename ...Args>
+	FilePath(const char* value,Args&&... args) : _attributesLoaded(false) { set(value,args ...); }
 
 	FilePath& operator=(const FilePath& other);
 
@@ -47,24 +49,61 @@ public:
 	bool				isDirectory() const { return attributes().isDirectory; }
 
 	template <typename ...Args>
-	const std::string& set(const std::string& value,Args&&... args) {
+	void set(Args&&... args) {
 		_name.clear();
 		_baseName.clear();
 		_extension.clear();
 		_attributesLoaded = false;
-		String::Format(_buffer,value,args ...);
-		_path.assign(_buffer);
-		return _path;
+		_directory.clear();
+		_path.clear();
+		append(args ...);
+	}
+
+	template <typename ...Args>
+	const std::string& path(Args&&... args) {
+		_name.clear();
+		_baseName.clear();
+		_extension.clear();
+		_attributesLoaded = false;
+		return String::Format(_path,args ...);
 	}
 	
 	template <typename ...Args>
-	const std::string& directory(const std::string& value,Args&&... args) {
+	const std::string& directory(Args&&... args) {
 		_attributesLoaded = false;
-		String::Format(_directory, value,args ...);
-		return _directory;
+		String::Format(_directory,args ...);
+		return FileSystem::MakeDirectory(_directory);
 	}
 	
 private:
+	template <typename ...Args>
+	void append(const std::string& value,Args&&... args) {
+		_directory.append(value);
+		append(args ...);
+	}
+	template <typename ...Args>
+	void append(const char* value,Args&&... args) {
+		_directory.append(value);
+		append(args ...);
+	}
+	void append(const std::string& value) {
+		if (value.back() != '/' && value.back() != '\\')
+			_path.assign(value);
+		else
+			_directory.append(value);
+		if(!_directory.empty())
+			FileSystem::MakeDirectory(_directory);
+	}
+	void append(const char* value) {
+		char back = value[strlen(value) - 1];
+		if (back != '/' && back != '\\') {
+			_path.assign(value);
+			return;
+		}
+		_path.clear();
+		_directory.append(value);
+	}
+
 	const FileSystem::Attributes& attributes() const;
 
 	std::string		_path;
@@ -76,8 +115,6 @@ private:
 	mutable std::string				_extension;
 	mutable FileSystem::Attributes	_attributes;
 	mutable bool					_attributesLoaded;
-
-	std::string		_buffer;
 };
 
 

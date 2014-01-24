@@ -25,18 +25,6 @@ using namespace std;
 
 namespace Mona {
 
-class ObjectDef : virtual Object {
-public:
-	ObjectDef(UInt32 amf3,UInt8 arrayType=0) : amf3(amf3),reset(0),dynamic(false),externalizable(false),count(0),arrayType(arrayType) {}
-
-	deque<string>	hardProperties;
-	UInt32			reset;
-	bool			dynamic;
-	bool			externalizable;
-	UInt32			count;
-	UInt8			arrayType;
-	const UInt32	amf3;
-};
 
 
 AMFReader::AMFReader(PacketReader& packet) : DataReader(packet),_amf3(0),_amf0Reset(0),_referencing(true) {
@@ -44,15 +32,8 @@ AMFReader::AMFReader(PacketReader& packet) : DataReader(packet),_amf3(0),_amf0Re
 }
 
 
-AMFReader::~AMFReader() {
-	for(ObjectDef* pObjectDef : _objectDefs)
-		delete pObjectDef;
-}
-
 void AMFReader::reset() {
 	DataReader::reset();
-	for(ObjectDef* pObjectDef : _objectDefs)
-		delete pObjectDef;
 	_objectDefs.clear();
 	_stringReferences.clear();
 	_classDefReferences.clear();
@@ -130,7 +111,7 @@ const UInt8* AMFReader::readBytes(UInt32& size) {
 	UInt32 reset = packet.position()+size;
 	if(isInline) {
 		if(_referencing)
-			_references.push_back(reference);
+			_references.emplace_back(reference);
 	} else {
 		if(size>_references.size()) {
 			ERROR("AMF3 reference not found")
@@ -165,7 +146,7 @@ Time& AMFReader::readTime(Time& time) {
 		bool isInline = flags & 0x01;
 		if (isInline) {
 			if (_referencing)
-				_references.push_back(reference);
+				_references.emplace_back(reference);
 			result = packet.readNumber<double>();
 		} else {
 			flags >>= 1;
@@ -227,32 +208,32 @@ bool AMFReader::readMap(UInt32& size,bool& weakKeys) {
 		return false;
 	}
 
-	ObjectDef* pObjectDef = new ObjectDef(_amf3,AMF3_DICTIONARY);
-	pObjectDef->dynamic=true;
-	_objectDefs.push_back(pObjectDef);
+	_objectDefs.emplace_back(_amf3,AMF3_DICTIONARY);
+	ObjectDef& objectDef = _objectDefs.back();
+	objectDef.dynamic=true;
 	
 	if(isInline) {
 		if(_referencing)
-			_references.push_back(reference);
-		pObjectDef->count = size = count;
+			_references.emplace_back(reference);
+		objectDef.count = size = count;
 	} else {
-		pObjectDef->reset = packet.position();
+		objectDef.reset = packet.position();
 		packet.reset(_references[count]);
-		pObjectDef->count = size = packet.read7BitValue()>>1;
+		objectDef.count = size = packet.read7BitValue()>>1;
 	}
-	pObjectDef->count *= 2;
+	objectDef.count *= 2;
 	weakKeys = packet.read8()&0x01;
 
 	return true;
 }
 
 AMFReader::Type AMFReader::readKey() {
-	if(_objectDefs.size()==0) {
+	if(_objectDefs.empty()) {
 		ERROR("readKey/readValue called without a readMap before");
 		return END;
 	}
 
-	ObjectDef& objectDef = *_objectDefs.back();
+	ObjectDef& objectDef = _objectDefs.back();
 	_amf3 = objectDef.amf3;
 
 	if(objectDef.arrayType != AMF3_DICTIONARY) {
@@ -263,7 +244,6 @@ AMFReader::Type AMFReader::readKey() {
 	if(objectDef.count==0) {
 		if(objectDef.reset)
 			packet.reset(objectDef.reset);
-		delete &objectDef;
 		_objectDefs.pop_back();
 		return END;
 	}
@@ -283,17 +263,17 @@ bool AMFReader::readArray(UInt32& size) {
 	}
 
 	if(!_amf3) {
-		ObjectDef* pObjectDef = new ObjectDef(_amf3,current());
-		_objectDefs.push_back(pObjectDef);
-		pObjectDef->dynamic=true;
+		_objectDefs.emplace_back(_amf3,current());
+		ObjectDef& objectDef = _objectDefs.back();
+		objectDef.dynamic=true;
 		if(_referencing)
-			_amf0References.push_back(packet.position());
+			_amf0References.emplace_back(packet.position());
 		if(_amf0Reset)
-			pObjectDef->reset = _amf0Reset;
+			objectDef.reset = _amf0Reset;
 		packet.next(1);
 		size = packet.read32();
-		if(pObjectDef->arrayType==AMF_STRICT_ARRAY)
-			pObjectDef->count = size;
+		if(objectDef.arrayType==AMF_STRICT_ARRAY)
+			objectDef.count = size;
 		return true;
 	}
 	
@@ -309,18 +289,18 @@ bool AMFReader::readArray(UInt32& size) {
 		return false;
 	}
 
-	ObjectDef* pObjectDef = new ObjectDef(_amf3,AMF3_ARRAY);
-	pObjectDef->dynamic=true;
-	_objectDefs.push_back(pObjectDef);
+	_objectDefs.emplace_back(_amf3,AMF3_ARRAY);
+	ObjectDef& objectDef = _objectDefs.back();
+	objectDef.dynamic = true;
 	
 	if(isInline) {
 		if(_referencing)
-			_references.push_back(reference);
-		 pObjectDef->count = size = count;
+			_references.emplace_back(reference);
+		 objectDef.count = size = count;
 	} else {
-		pObjectDef->reset = packet.position();
+		objectDef.reset = packet.position();
 		packet.reset(_references[size]);
-		pObjectDef->count = size = packet.read7BitValue()>>1;
+		objectDef.count = size = packet.read7BitValue()>>1;
 	}
 
 	return true;
@@ -341,17 +321,17 @@ bool AMFReader::readObject(string& type,bool& external) {
 	external = false;
 	if(!_amf3) {
 		if(_referencing)
-			_amf0References.push_back(packet.position());
+			_amf0References.emplace_back(packet.position());
 		if(current()==AMF_BEGIN_TYPED_OBJECT) {
 			packet.next(1);
 			readText(type);
 		} else
 			packet.next(1);
-		ObjectDef* pObjectDef = new ObjectDef(_amf3);
-		_objectDefs.push_back(pObjectDef);
+		_objectDefs.emplace_back(_amf3);
+		ObjectDef& objectDef = _objectDefs.back();
 		if(_amf0Reset)
-			pObjectDef->reset = _amf0Reset;
-		pObjectDef->dynamic = true;
+			objectDef.reset = _amf0Reset;
+		objectDef.dynamic = true;
 		return true;
 	}
 	
@@ -367,14 +347,14 @@ bool AMFReader::readObject(string& type,bool& external) {
 		return false;
 	}
 
-	ObjectDef* pObjectDef = new ObjectDef(_amf3);
-	_objectDefs.push_back(pObjectDef);
+	_objectDefs.emplace_back(_amf3);
+	ObjectDef& objectDef = _objectDefs.back();
 	
 	if(isInline) {
 		if(_referencing)
-			_references.push_back(reference);
+			_references.emplace_back(reference);
 	} else {
-		pObjectDef->reset = packet.position();
+		objectDef.reset = packet.position();
 		packet.reset(_references[flags]);
 		flags = packet.read7BitValue()>>1;
 	}
@@ -384,7 +364,7 @@ bool AMFReader::readObject(string& type,bool& external) {
 	flags >>= 1;
 	UInt32 reset=0;
 	if(isInline) {
-		 _classDefReferences.push_back(reference);
+		 _classDefReferences.emplace_back(reference);
 		readText(type);
 	} else if(flags<=_classDefReferences.size()) {
 		reset = packet.position();
@@ -397,14 +377,14 @@ bool AMFReader::readObject(string& type,bool& external) {
 	}
 
 	if(flags&0x01)
-		pObjectDef->externalizable = external = true;
+		objectDef.externalizable = external = true;
 	else if(flags&0x02)
-		pObjectDef->dynamic=true;
+		objectDef.dynamic=true;
 	flags>>=2;
 
-	if(!pObjectDef->externalizable) {
-		pObjectDef->hardProperties.resize(flags);
-		for(string& hardProperty : pObjectDef->hardProperties)
+	if(!objectDef.externalizable) {
+		objectDef.hardProperties.resize(flags);
+		for(string& hardProperty : objectDef.hardProperties)
 			readText(hardProperty);
 	}
 
@@ -415,12 +395,12 @@ bool AMFReader::readObject(string& type,bool& external) {
 }
 
 AMFReader::Type AMFReader::readItem(string& name) {
-	if(_objectDefs.size()==0) {
+	if(_objectDefs.empty()) {
 		ERROR("readItem called without a readObject or a readArray before");
 		return END;
 	}
 
-	ObjectDef& objectDef = *_objectDefs.back();
+	ObjectDef& objectDef = _objectDefs.back();
 	_amf3 = objectDef.amf3;
 	bool end=false;
 
@@ -431,7 +411,7 @@ AMFReader::Type AMFReader::readItem(string& name) {
 
 	if(objectDef.externalizable)
 		end=true;
-	else if(objectDef.hardProperties.size()>0) {
+	else if(!objectDef.hardProperties.empty()) {
 		name = objectDef.hardProperties.front();
 		objectDef.hardProperties.pop_front();
 	} else if(objectDef.arrayType == AMF_STRICT_ARRAY) {
@@ -463,7 +443,6 @@ AMFReader::Type AMFReader::readItem(string& name) {
 		}
 		if(objectDef.reset>0)
 			packet.reset(objectDef.reset);
-		delete &objectDef;
 		_objectDefs.pop_back();
 		return END;
 	}
@@ -482,7 +461,7 @@ string& AMFReader::readText(string& value) {
 	size >>= 1;
 	if(isInline) {
 		if (!packet.readRaw(size, value).empty())
-			_stringReferences.push_back(reference);
+			_stringReferences.emplace_back(reference);
 	} else {
 		if(size>_stringReferences.size()) {
 			ERROR("AMF3 string reference not found")
@@ -499,8 +478,8 @@ string& AMFReader::readText(string& value) {
 
 AMFReader::Type AMFReader::followingType() {
 	if(_amf3!=packet.position()) {
-		if(_objectDefs.size()>0)
-			_amf3=_objectDefs.back()->amf3;
+		if(!_objectDefs.empty())
+			_amf3=_objectDefs.back().amf3;
 		else
 			_amf3=0;
 	}

@@ -38,8 +38,8 @@ public:
 	bool					send(Exception& ex, const UInt8* data, UInt32 size, const SocketAddress& address);
 
 	template<typename SenderType>
-	void send(Exception& ex, std::shared_ptr<SenderType>& pSender) {
-		DatagramSocket::send<SenderType>(ex, pSender);
+	bool send(Exception& ex, std::shared_ptr<SenderType>& pSender) {
+		return DatagramSocket::send<SenderType>(ex, pSender);
 	}
 	template<typename SenderType>
 	PoolThread*	send(Exception& ex, std::shared_ptr<SenderType>& pSender, PoolThread* pThread) {
@@ -61,6 +61,7 @@ private:
 	bool					_allowBroadcast;
 	bool					_broadcasting;
 
+	SocketAddress			_addressFrom;
 	SocketAddress			_address;
 	SocketAddress			_peerAddress;
 	PoolBuffer				_pBuffer;

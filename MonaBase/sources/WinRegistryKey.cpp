@@ -312,10 +312,7 @@ void WinRegistryKey::subKeys(WinRegistryKey::Keys& keys) {
 	for (DWORD i = 0; i< subKeyCount; ++i)
 	{
 		if (RegEnumKeyExA(_hKey, i, buf, &bufSize, NULL, NULL, NULL, NULL) == ERROR_SUCCESS)
-		{
-			string name(buf);
-			keys.push_back(name);
-		}
+			keys.emplace_back(buf);
 		bufSize = sizeof(buf);
 	}
 }
@@ -335,10 +332,7 @@ void WinRegistryKey::values(WinRegistryKey::Values& vals) {
 	for (DWORD i = 0; i< valueCount; ++i)
 	{
 		if (RegEnumValueA(_hKey, i, buf, &bufSize, NULL, NULL, NULL, NULL) == ERROR_SUCCESS)
-		{
-			string name(buf);
-			vals.push_back(name);
-		}
+			vals.emplace_back(buf);
 		bufSize = sizeof(buf);
 	}
 }

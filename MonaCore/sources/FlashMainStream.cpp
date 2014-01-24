@@ -81,25 +81,27 @@ void FlashMainStream::messageHandler(Exception& ex, const string& name,AMFReader
 				ex.set(Exception::PROTOCOL, "External type not acceptable for a connection message");
 				return;
 			}
+			
+			MapParameters& properties(peer.properties());
 			while((type=message.readItem(name))!=AMFReader::END) {
 				switch(type) {
 					case AMFReader::NIL:
 						message.readNull();
 						break;
 					case AMFReader::BOOLEAN:
-						peer.setBool(name,message.readBoolean());
+						properties.setBool(name,message.readBoolean());
 						break;
 					case AMFReader::NUMBER:
-						peer.setNumber(name,message.readNumber());
+						properties.setNumber(name,message.readNumber());
 						break;
 					case AMFReader::STRING: {
 						string value;
-						peer.setString(name, message.readString(value));
+						properties.setString(name, message.readString(value));
 						break;
 					}
 					case AMFReader::TIME: {
 						Time time;
-						peer.setNumber(name, (double)(message.readTime(time) / 1000));
+						properties.setNumber(name, (double)(message.readTime(time) / 1000));
 						break;
 					}
 					default:
@@ -107,30 +109,32 @@ void FlashMainStream::messageHandler(Exception& ex, const string& name,AMFReader
 						return;
 				}
 			}
+
+			if (peer.path.empty() && properties.getString("tcUrl", invoker.buffer)) {
+				Util::UnpackUrl(invoker.buffer, (string&)peer.serverAddress,(string&)peer.path,(string&)peer.query);
+				Util::UnpackQuery(peer.query, properties);
+			}
+
+			// Don't support AMF0 forced on NetConnection object because AMFWriter writes in AMF3 format
+			// But it's not a pb because NetConnection RTMFP works since flash player 10.0 only (which supports AMF3)
+			double objEncoding = 1;
+			if (properties.getNumber("objectEncoding", objEncoding) && objEncoding==0) {
+				ex.set(Exception::PROTOCOL, "ObjectEncoding client must be in a AMF3 format (not AMF0)");
+				return;
+			}
 		}
 		message.startReferencing();
 
-		if (peer.path.empty() && peer.getString("tcUrl", _buffer))
-			Util::UnpackUrl(_buffer, (string&)peer.serverAddress, (string&)peer.path, peer);
-		
-		// Don't support AMF0 forced on NetConnection object because AMFWriter writes in AMF3 format
-		// But it's not a pb because NetConnection RTMFP works since flash player 10.0 only (which supports AMF3)
-		double objEncoding = 1;
-		if (peer.getNumber("objectEncoding", objEncoding) && objEncoding==0) {
-			ex.set(Exception::PROTOCOL, "ObjectEncoding client must be in a AMF3 format (not AMF0)");
-			return;
-		}
 
+		
 		// Check if the client is authorized
 		AMFWriter& response = writer.writeAMFSuccess("NetConnection.Connect.Success","Connection succeeded",true);
 		response.amf0Preference = true;
 		response.writeNumberProperty("objectEncoding",3.0);
 		response.amf0Preference = false;
 		peer.onConnection(ex, writer,message,response);
-		if (ex) {
-			response.clear(); // TODO test!
+		if (ex)
 			return;
-		}
 		response.endObject();
 
 	} else if(name == "setPeerInfo") {
@@ -138,9 +142,9 @@ void FlashMainStream::messageHandler(Exception& ex, const string& name,AMFReader
 		peer.localAddresses.clear();
 		while(message.available()) {
 			SocketAddress address;
-			address.set(ex, message.readString(_buffer));
+			address.set(ex, message.readString(invoker.buffer));
 			if (ex) {
-				ERROR("Bad peer address ",_buffer,", ",ex.error());
+				ERROR("Bad peer address ",invoker.buffer,", ",ex.error());
 				continue;
 			}
 			peer.localAddresses.emplace(address);
@@ -151,8 +155,6 @@ void FlashMainStream::messageHandler(Exception& ex, const string& name,AMFReader
 		response.write32(invoker.params.RTMFP.keepAliveServer);
 		response.write32(invoker.params.RTMFP.keepAlivePeer);
 
-	} else if(name == "initStream") {
-		// TODO?
 	} else if(name == "createStream") {
 		shared_ptr<FlashStream>& pStream = invoker.createFlashStream(peer);
 		_streams.emplace(pStream->id, pStream);

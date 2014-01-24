@@ -37,7 +37,9 @@ class Database : private Startable, virtual Object {
 public:
 	Database(const PoolBuffers& poolBuffers,const char* name = "Database") : _poolBuffers(poolBuffers),Startable(name), _disableTransaction(false) {}
 
-	void load(Exception& ex, const std::string& rootPath, DatabaseLoader& loader,bool disableTransaction=false);
+	// returns true if has data, otherwise returns false
+	bool load(Exception& ex, const std::string& rootPath, DatabaseLoader& loader,bool disableTransaction=false);
+
 	bool add(Exception& ex,const std::string& path, const UInt8* value, UInt32 size);
 	bool remove(Exception& ex, const std::string& path);
 	void flush() { stop(); }

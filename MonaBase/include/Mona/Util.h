@@ -21,18 +21,22 @@ This file is a part of Mona.
 
 #include "Mona/Mona.h"
 #include "Mona/MapParameters.h"
-#include "Mona/SocketAddress.h"
 #include "Mona/Time.h"
 #include "Mona/Exceptions.h"
 #include "Mona/Buffer.h"
 #include <map>
 #include <thread>
 #include <limits>
+#include <mutex>
 
 namespace Mona {
 
 class Util : virtual Static {
 public:
+	enum HexOption {
+		HEX_CPP=1,
+		HEX_TRIM_LEFT=2
+	};
 	
 	static UInt8 Get7BitValueSize(UInt32 value) { return Get7BitValueSize((UInt64)value); }
 	static UInt8 Get7BitValueSize(UInt64 value);
@@ -43,16 +47,14 @@ public:
 	static void Dump(const UInt8* in, UInt32 size, Buffer& out) { std::string header; Dump(in, size, out, header); }
 	static void Dump(const UInt8* in, UInt32 size, Buffer& out, const std::string& header);
 
-	static std::size_t UnpackUrl(const std::string& url, std::string& path, Parameters& properties) {std::string address; return UnpackUrl(url, address, path, properties);}
-	static std::size_t UnpackUrl(const std::string& url, std::string& address, std::string& path, Parameters& properties);
+	static std::size_t UnpackUrl(const std::string& url, std::string& path, std::string& query) {std::string address; return UnpackUrl(url, address, path, query);}
+	static std::size_t UnpackUrl(const std::string& url, std::string& address, std::string& path, std::string& query);
 	
-	static void UnpackQuery(const std::string& query, Parameters& properties);
-
-	static std::string& DecodeURI(std::string& uri);
+	static Parameters& UnpackQuery(const std::string& query, Parameters& properties);
 
 	static UInt8*		UnformatHex(UInt8* data,UInt32& size);
-	static std::string&	FormatHex(const UInt8* data, UInt32 size, std::string& result);
-	static std::string&	FormatHexCpp(const UInt8* data, UInt32 size, std::string& result);
+	static std::string&	FormatHex(const UInt8* data, UInt32 size, std::string& result, UInt8 options=0) { result.clear(); return AppendHex(data, size, result, options); }
+	static std::string&	AppendHex(const UInt8* data, UInt32 size, std::string& result,UInt8 options=0);
 	static bool			FromBase64(const UInt8* data, UInt32 size, Buffer& result);
 	static Buffer&		ToBase64(const UInt8* data, UInt32 size, Buffer& result);
 	
@@ -72,6 +74,8 @@ public:
 	}
 	static void Random(UInt8* data, UInt32 size) {for (UInt32 i = 0; i < size; ++i) data[i] = Random<UInt8>();}
 private:
+	static char DecodeURI(const std::string::const_iterator& it,const std::string::const_iterator& end);
+
 	static MapParameters	_Environment;
 	static std::mutex		_MutexEnvironment;
 	

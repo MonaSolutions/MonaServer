@@ -40,7 +40,7 @@ public:
 
 	const std::string		codec;
 	const UInt16		port; // if port==0 the media is rejected!
-	std::deque<UInt8>	formats;
+	std::vector<UInt8>	formats;
 };
 
 class Peer;
@@ -52,9 +52,9 @@ public:
 	bool build(Exception& ex, const std::string& text);
 	void build();
 
-	int				version;
+	int						version;
 	std::string				user;
-	UInt32			sessionId;
+	UInt32					sessionId;
 	std::string				sessionVersion;
 	std::string				sessionName;
 	std::string				sessionInfos;
@@ -66,14 +66,14 @@ public:
 
 	std::string				iceUFrag;
 	std::string				icePwd;
-	std::deque<std::string>	iceOptions;
+	std::vector<std::string>	iceOptions;
 
 	std::string				finger;
 	bool					supportMsId;
 
-	std::map<std::string,std::deque<std::string> >	groups;
+	std::map<std::string,std::vector<std::string> >	groups;
 
-	std::map<std::string,std::deque<std::string> >	extensions;
+	std::map<std::string,std::vector<std::string> >	extensions;
 
 	SDPMedia*	addMedia(const std::string& name, UInt16 port, const std::string& codec) { return _medias.insert(std::pair<std::string, SDPMedia*>(name, new SDPMedia(port, codec))).first->second; }
 	void		clearMedias();

@@ -18,6 +18,7 @@ This file is a part of Mona.
 */
 
 #include "Mona/Publication.h"
+#include "Mona/MediaCodec.h"
 #include "Mona/Logs.h"
 
 using namespace std;
@@ -158,7 +159,8 @@ void Publication::pushAudio(PacketReader& packet,UInt32 time,UInt32 numberLostFr
 		INFO(numberLostFragments," audio fragments lost on publication ",_name);
 	_audioQOS.add(_pPublisher->ping,packet.available()+4,packet.fragments,numberLostFragments); // 4 for time encoded
 
-	if ((*packet.current()>>4)==0x0A && packet.available() && packet.current()[1] == 0) {
+	// save audio codec packet for future listeners
+	if (MediaCodec::AAC::IsCodecInfos(packet.current(),packet.available())) {
 		// AAC codec && settings codec informations
 		_audioCodecBuffer.resize(packet.available(),false);
 		memcpy(_audioCodecBuffer.data(),packet.current(),packet.available());
@@ -188,9 +190,10 @@ void Publication::pushVideo(PacketReader& packet,UInt32 time,UInt32 numberLostFr
 		INFO(numberLostFragments," video fragments lost on publication ",_name);
 
 	// is keyframe?
-	if(((*packet.current())&0xF0) == 0x10) {
+	if (MediaCodec::IsKeyFrame(packet.current(), packet.available())) {
 		_firstKeyFrame = true;
-		if (*packet.current()==0x17 && packet.available() && packet.current()[1] == 0) {
+		// save video codec packet for future listeners
+		if (MediaCodec::H264::IsCodecInfos(packet.current(), packet.available())) {
 			// h264 codec && settings codec informations
 			_videoCodecBuffer.resize(packet.available(),false);
 			memcpy(_videoCodecBuffer.data(),packet.current(),packet.available());

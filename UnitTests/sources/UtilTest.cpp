@@ -25,7 +25,8 @@ using namespace Mona;
 
 using namespace std;
 
-Buffer Result;
+static Buffer Result;
+static MapParameters Properties;
 
 void TestEncode(const char* data,UInt32 size, const char* result) {
 	Util::ToBase64((UInt8*)data, size, Result);
@@ -37,6 +38,40 @@ bool TestDecode(const char* data, const char* result, UInt32 size) {
 	CHECK(size == Result.size() && memcmp(Result.data(), result, Result.size()) == 0);
 	return success;
 }
+
+ADD_TEST(UtilTest, UnpackQuery) {
+	string value;
+	Util::UnpackQuery("name1=value1&name2=value2", Properties);
+	DEBUG_CHECK(Properties.getString("name1", value) && value == "value1");
+	DEBUG_CHECK(Properties.getString("name2", value) && value == "value2");
+}
+
+ADD_TEST(UtilTest, UnpackUrlPerf) {
+	string address;
+	string path;
+	string query;
+	CHECK(Util::UnpackUrl("rtmp://127.0.0.1:1234/path/file.txt?name1=value1&name2=value2", address, path,query)!=string::npos)
+}
+
+
+ADD_TEST(UtilTest, UnpackUrl) {
+	string address;
+	string path;
+	string query;
+	string file;
+
+	CHECK(Util::UnpackUrl("rtmp://",path,query)==string::npos);
+	CHECK(Util::UnpackUrl("rtmp://127.0.0.1", address, path, query)==string::npos)
+	CHECK(Util::UnpackUrl("rtmp://127.0.0.1:1234/", address, path, query)==string::npos)
+	CHECK(Util::UnpackUrl("rtmp://127.0.0.1:1234/file.txt?", address, path,query)!=string::npos)
+	CHECK(Util::UnpackUrl("rtmp://127.0.0.1:1234/file.txt?name1=value1&name2=value2", address, path, query)!=string::npos)
+	CHECK(Util::UnpackUrl("rtmp://127.0.0.1:1234//path/file.txt?name1=value1&name2=value2", address, path, query)!=string::npos)
+
+	DEBUG_CHECK(query == "name1=value1&name2=value2");
+	DEBUG_CHECK(path=="/path/file.txt");
+	DEBUG_CHECK(address=="127.0.0.1:1234");
+}
+
 
 ADD_TEST(UtilTest, Base64) {
 	TestEncode("\00\01\02\03\04\05", 6,"AAECAwQF");
@@ -66,7 +101,7 @@ ADD_TEST(UtilTest, Base64) {
 
 ADD_TEST(UtilTest, FormatHex) {
 	string result;
-	Util::FormatHexCpp((const UInt8*)"\00\01\02\03\04\05", 6, result);
+	Util::FormatHex((const UInt8*)"\00\01\02\03\04\05", 6, result,Util::HEX_CPP);
 	CHECK(result == "\\x00\\x01\\x02\\x03\\x04\\x05")
 
 	Util::FormatHex((const UInt8*)"\00\01\02\03\04\05", 6, result);
@@ -76,26 +111,4 @@ ADD_TEST(UtilTest, FormatHex) {
 	Util::UnformatHex((UInt8*)result.c_str(), size);
 	CHECK(memcmp(result.c_str(), "\00\01\02\03\04\05", size) == 0)
 }
-
-ADD_TEST(UtilTest, UnpackUrl) {
-	string address;
-	string path;
-	string file;
-	string value;
-	MapParameters properties;
-	
-	CHECK(Util::UnpackUrl("rtmp://",path,properties)==string::npos);
-	CHECK(Util::UnpackUrl("rtmp://127.0.0.1", address, path, properties)==string::npos)
-	CHECK(Util::UnpackUrl("rtmp://127.0.0.1:1234/", address, path, properties)==string::npos)
-	CHECK(Util::UnpackUrl("rtmp://127.0.0.1:1234/file.txt?", address, path,properties)!=string::npos)
-	CHECK(Util::UnpackUrl("rtmp://127.0.0.1:1234/file.txt?name1=value1&name2=value2", address, path, properties)!=string::npos)
-	CHECK(Util::UnpackUrl("rtmp://127.0.0.1:1234/path/file.txt?name1=value1&name2=value2", address, path, properties)!=string::npos)
-
-	DEBUG_CHECK(properties.getString("name1", value) && value == "value1");
-	DEBUG_CHECK(properties.getString("name2", value) && value == "value2");
-	DEBUG_CHECK(path=="/path/file.txt");
-	DEBUG_CHECK(address=="127.0.0.1:1234");
-}
-
-
 

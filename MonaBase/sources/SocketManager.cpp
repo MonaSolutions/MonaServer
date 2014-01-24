@@ -36,11 +36,11 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
 
 SocketManager::SocketManager(TaskHandler& handler, const PoolBuffers& poolBuffers, PoolThreads& poolThreads, UInt32 bufferSize, const string& name) : poolBuffers(poolBuffers),
-    _fakeSocket(*this), _selfHandler(false), poolThreads(poolThreads), _eventFD(0), _sockfd(NET_INVALID_SOCKET), _eventSystem(0), _bufferSize(bufferSize), Startable(name), Task(handler), _currentEvent(0), _currentError(0), _eventInit(false), _ppSocket(NULL) {
+    _fakeSocket(*this), _selfHandler(false), poolThreads(poolThreads), _eventFD(0), _sockfd(NET_INVALID_SOCKET), _eventSystem(0), bufferSize(bufferSize), Startable(name), Task(handler), _currentEvent(0), _currentError(0), _eventInit(false), _ppSocket(NULL) {
 	_fakeSocket._initialized = true;
 }
 SocketManager::SocketManager(const PoolBuffers& poolBuffers, PoolThreads& poolThreads, UInt32 bufferSize, const string& name) : poolBuffers(poolBuffers),
-    _fakeSocket(*this), _selfHandler(true), poolThreads(poolThreads), _eventFD(0), _sockfd(NET_INVALID_SOCKET), _eventSystem(0), _bufferSize(bufferSize), Startable(name), Task((TaskHandler&)*this), _currentEvent(0), _currentError(0), _eventInit(false), _ppSocket(NULL) {
+    _fakeSocket(*this), _selfHandler(true), poolThreads(poolThreads), _eventFD(0), _sockfd(NET_INVALID_SOCKET), _eventSystem(0), bufferSize(bufferSize), Startable(name), Task((TaskHandler&)*this), _currentEvent(0), _currentError(0), _eventInit(false), _ppSocket(NULL) {
 	_fakeSocket._initialized = true;
 }
 
@@ -111,7 +111,6 @@ bool SocketManager::add(Exception& ex,Socket& socket) const {
 	unique_ptr<Socket>* ppSocket = new unique_ptr<Socket>(&socket);
 #if defined(_WIN32)
 	int flags = FD_ACCEPT | FD_CLOSE | FD_READ;
-	TRACE("ADD SOCKET ",reinterpret_cast<u_int>(ppSocket))
 	if (WSAAsyncSelect(sockfd, _eventSystem, 104, flags) != 0) {
 		ppSocket->release();
 		delete ppSocket;
@@ -136,9 +135,9 @@ bool SocketManager::add(Exception& ex,Socket& socket) const {
 	socket._ppSocket = ppSocket;
 	_sockets.emplace_hint(it, sockfd, ppSocket);
 
-	if(_bufferSize>0) {
-		socket.setReceiveBufferSize(ex, _bufferSize);
-		socket.setSendBufferSize(ex, _bufferSize);
+	if(bufferSize>0) {
+		socket.setReceiveBufferSize(ex, bufferSize);
+		socket.setSendBufferSize(ex, bufferSize);
 	}
 
 	return true;
@@ -303,7 +302,8 @@ void SocketManager::run(Exception& exc) {
 			ppSocket->release(); // don't delete the pSocket!
 			delete ppSocket;
 			continue;
-		}
+		} else if (msg.message != 104) // unknown message
+			continue;
 		_currentEvent = WSAGETSELECTEVENT(msg.lParam);
 		_fakeSocket._sockfd = _sockfd = msg.wParam;
 		if(_currentEvent == FD_WRITE) {
@@ -322,7 +322,6 @@ void SocketManager::run(Exception& exc) {
 		} else if (_currentEvent != FD_READ || _fakeSocket.available(_exSkip)) {
 			if (_currentEvent!=FD_CLOSE)
 				_currentError = WSAGETSELECTERROR(msg.lParam);
-			// TRACE("SocketManager::waitHandle()")
 			Task::waitHandle();
 		}
 

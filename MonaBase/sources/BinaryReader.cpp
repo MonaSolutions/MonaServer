@@ -18,17 +18,16 @@ This file is a part of Mona.
 */
 
 #include "Mona/BinaryReader.h"
-#include "Mona/Util.h"
 
 using namespace std;
 
 namespace Mona {
 
-BinaryReader::BinaryReader(const UInt8* data,UInt32 size, ByteOrder byteOrder) : _end(data+size),_data(data),_size(size),_current(data) {
+BinaryReader::BinaryReader(const UInt8* data,UInt32 size, Binary::Order byteOrder) : _end(data+size),_data(data),_size(size),_current(data) {
 #if defined(_ARCH_BIG_ENDIAN)
-	_flipBytes = byteOrder == LITTLE_ENDIAN;
+	_flipBytes = byteOrder == Binary::ORDER_LITTLE_ENDIAN;
 #else
-    _flipBytes = byteOrder == BIG_ENDIAN_ORDER;
+    _flipBytes = byteOrder == Binary::ORDER_BIG_ENDIAN;
 #endif
 }
 

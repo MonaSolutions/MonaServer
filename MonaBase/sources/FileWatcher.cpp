@@ -18,31 +18,23 @@ This file is a part of Mona.
 */
 
 #include "Mona/FileWatcher.h"
-#include "Mona/FileSystem.h"
 
 namespace Mona {
 
 using namespace std;
 
 
-FileWatcher::FileWatcher(const string& path) : _delay(0),filePath(path), _lastModified(0), _exists(false) {
-	
-}
-
-
 bool FileWatcher::watchFile() {
 	if (!_delay.isElapsed(1000000)) // already checked there is less of 1 sec!
 		return _exists;
 	_delay.update();
-	Time lastModified(0);
-	Exception ex;
-	if (FileSystem::GetLastModified(ex, filePath, lastModified) != _lastModified) { // if path doesn't exist lastModified==0
+	if (filePath.lastModified() != _lastModified) { // if path doesn't exist filePath.lastModified()==0
 		if (_lastModified > 0) {
 			_exists = false;
 			clearFile();
 		}
-		_lastModified.update(lastModified);
-		if (lastModified > 0) {
+		_lastModified.update(filePath.lastModified());
+		if (filePath.lastModified() > 0) {
 			_exists = true;
 			loadFile();
 		}

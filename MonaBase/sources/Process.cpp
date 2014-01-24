@@ -17,16 +17,18 @@ details (or else see http://www.gnu.org/licenses/).
 This file is a part of Mona.
 */
 
-#include "Mona/Logs.h"
-#include "Mona/Util.h"
+#include "Mona/Process.h"
+#if defined(_WIN32)
+	#include <windows.h>
+#endif
 
 using namespace std;
 
 namespace Mona {
-
-Logger*			Logs::_PLogger(NULL);
-Logs::DumpMode	Logs::_DumpMode(DUMP_NOTHING);
-UInt8			Logs::_Level(Logger::LEVEL_INFO); // default log level
-Logger			Logs::_DefaultLogger;
+#if defined(_WIN32)
+	int Process::Id() { return GetCurrentProcessId(); }
+#else
+	pid_t Process::Id() { return getpid(); }
+#endif
 
 } // namespace Mona

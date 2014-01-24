@@ -22,6 +22,7 @@ This file is a part of Mona.
 #include "Mona/Mona.h"
 #include "Mona/Entities.h"
 #include "Mona/Util.h"
+#include "Mona/SocketAddress.h"
 #include "Mona/Logs.h"
 #include <cstddef>
 
@@ -30,6 +31,12 @@ namespace Mona {
 class Session;
 class Sessions {
 public:
+	enum {
+		BYID = 0,
+		BYPEER = 1,
+		BYADDRESS = 2,
+	};
+
 	typedef std::map<UInt32,Session*>::const_iterator Iterator;
 
 	Sessions();
@@ -72,11 +79,14 @@ public:
 	
 
 	template<typename SessionType>
-	SessionType& add(SessionType& session) {
+	SessionType& add(SessionType& session,UInt8 options=BYID) {
 		session._id = _nextId;
 		_sessions[_nextId] = &session;
-		_sessionsByPeerId[session.peer.id] = &session;
-		_sessionsByAddress[session.peer.address] = &session;
+		if (options&BYPEER)
+			_sessionsByPeerId[session.peer.id] = &session;
+		if (options&BYADDRESS)
+			_sessionsByAddress[session.peer.address] = &session;
+		session._sessionsOptions = options;
 		DEBUG("Session ", _nextId, " created");
 		do {
 			++_nextId;

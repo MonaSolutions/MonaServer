@@ -18,7 +18,6 @@ This file is a part of Mona.
 */
 
 #include "Mona/HTTP/HTTP.h"
-#include "Mona/Logs.h"
 #include "Mona/FileSystem.h"
 #include "Mona/Util.h"
 #include <algorithm>
@@ -194,7 +193,7 @@ string& HTTP::CodeToMessage(UInt16 code, string& message) {
 	return message;
 }
 
-HTTP::CommandType HTTP::ParseCommand(const char* value) {
+HTTP::CommandType HTTP::ParseCommand(Exception& ex,const char* value) {
 	if (String::ICompare(value,EXPAND_SIZE("GET"))==0)
 		return COMMAND_GET;
 	if (String::ICompare(value,EXPAND_SIZE("PUSH"))==0)
@@ -205,11 +204,11 @@ HTTP::CommandType HTTP::ParseCommand(const char* value) {
 		return COMMAND_OPTIONS;
 	if (String::ICompare(value,EXPAND_SIZE("POST"))==0)
 		return COMMAND_POST;
-	ERROR("HTTP command ",string(value,4)," unknown")
-	return COMMAND_HEAD; // default value, HEAD is the less intrusive behavior
+	ex.set(Exception::PROTOCOL, "Unknown HTTP command ", string(value, 4));
+	return COMMAND_UNKNOWN;
 }
 
-UInt8 HTTP::ParseConnection(const char* value) {
+UInt8 HTTP::ParseConnection(Exception& ex,const char* value) {
 	vector<string> fields;
 	UInt8 type(CONNECTION_ABSENT);
 	for (const string& field : String::Split(value, ",", fields, String::SPLIT_IGNORE_EMPTY | String::SPLIT_TRIM)) {
@@ -220,7 +219,7 @@ UInt8 HTTP::ParseConnection(const char* value) {
 		else if (String::ICompare(field, "close") == 0)
 			type |= CONNECTION_CLOSE;
 		else
-			ERROR("HTTP type connection ",field," unknown")
+			ex.set(Exception::PROTOCOL, "Unknown HTTP type connection ", field);
 	}
 	return type;
 }
@@ -265,54 +264,32 @@ HTTP::ContentType HTTP::ParseContentType(const char* value, string& subType) {
 
 class EntriesComparator {
 public:
-	enum Type {
-		NAME,
-		SIZE,
-		MODIFIED
-	};
-	enum Direction {
-		ASC,
-		DESC
-	};
-
-	EntriesComparator(Type type,Direction direction) : _type(type), _direction(direction) {}
+	EntriesComparator(UInt8 options) : _options(options) {}
 
 	bool operator() (const FilePath* pFile1,const FilePath* pFile2) {
-		if (_type == SIZE)
-			return _direction == ASC ? pFile1->size() < pFile2->size() : pFile2->size() < pFile1->size();
-		if (_type == MODIFIED)
-			return _direction == ASC ? pFile1->lastModified() < pFile2->lastModified() : pFile2->lastModified() < pFile1->lastModified();
+		if (_options&HTTP::SORT_BY_SIZE)
+			return _options&HTTP::SORT_ASC ? pFile1->size() < pFile2->size() : pFile2->size() < pFile1->size();
+		if (_options&HTTP::SORT_BY_MODIFIED)
+			return _options&HTTP::SORT_ASC ? pFile1->lastModified() < pFile2->lastModified() : pFile2->lastModified() < pFile1->lastModified();
 		
 		// NAME case
 		if (pFile1->isDirectory() && !pFile2->isDirectory())
-			return _direction == ASC;
+			return _options&HTTP::SORT_ASC;
 		if (pFile2->isDirectory() && !pFile1->isDirectory())
-			return _direction == DESC;
+			return _options&HTTP::SORT_DESC;
 		int result = String::ICompare(pFile1->name(), pFile2->name());
-		return _direction == ASC ? result<0 : result>0; 
+		return _options&HTTP::SORT_ASC ? result<0 : result>0; 
 	}
 private:
-	Type		_type;
-	Direction	_direction;
+	UInt8 _options;
 };
 
 
-void HTTP::WriteDirectoryEntries(BinaryWriter& writer, const string& serverAddress, const std::string& path, const Files& entries,const MapParameters& parameters) {
-	
-	string buffer;
-	EntriesComparator::Type type(EntriesComparator::NAME);
-	EntriesComparator::Direction direction(EntriesComparator::ASC);
-	if (parameters.getString("N", buffer))
-		type = EntriesComparator::NAME;
-	else if (parameters.getString("M", buffer))
-		type = EntriesComparator::MODIFIED;
-	else if (parameters.getString("S", buffer))
-		type = EntriesComparator::SIZE;
+void HTTP::WriteDirectoryEntries(BinaryWriter& writer, const string& serverAddress, const std::string& path, const Files& entries,UInt8 sortOptions) {
+
 	char sort[] = "D";
-	if (!buffer.empty() && buffer == "D") {
-		direction = EntriesComparator::DESC;
+	if (sortOptions&SORT_DESC)
 		sort[0] = 'A';
-	}
 
 	// Write column names
 	// Name		Modified	Size
@@ -328,10 +305,11 @@ void HTTP::WriteDirectoryEntries(BinaryWriter& writer, const string& serverAddre
 		writer.writeRaw("<tr><td><a href=\"http://", serverAddress,path,"/..\">Parent directory</a></td><td>&nbsp;-</td><td>&nbsp;&nbsp;-</td></tr>\n");
 
 	// Sort entries
-	deque<FilePath*> files;
+	vector<FilePath*> files(entries.count());
+	int i = 0;
 	for (const string& entry : entries)
-		files.emplace_back(new FilePath(entry));
-	EntriesComparator comparator(type,direction);
+		files[i++] = new FilePath(entry);
+	EntriesComparator comparator(sortOptions);
 	std::sort(files.begin(), files.end(),comparator);
 
 	// Write entries
@@ -345,7 +323,7 @@ void HTTP::WriteDirectoryEntries(BinaryWriter& writer, const string& serverAddre
 }
 
 void HTTP::WriteDirectoryEntry(BinaryWriter& writer,const string& serverAddress,const string& path,const FilePath& entry) {
-	string size,buffer;
+	string size,date;
 	if (entry.isDirectory())
 		size.assign("-");
 	else if (entry.size()<1024)
@@ -360,7 +338,7 @@ void HTTP::WriteDirectoryEntry(BinaryWriter& writer,const string& serverAddress,
 	writer.writeRaw("<tr><td><a href=\"http://", serverAddress, path, "/",
 		entry.name(), entry.isDirectory() ? "/\">" : "\">",
 		entry.name(), entry.isDirectory() ? "/" : "", "</a></td><td>&nbsp;",
-		entry.lastModified().toString("%d-%b-%Y %H:%M", buffer), "</td><td align=right>&nbsp;&nbsp;",
+		entry.lastModified().toString("%d-%b-%Y %H:%M", date), "</td><td align=right>&nbsp;&nbsp;",
 		size, "</td></tr>\n");
 }
 

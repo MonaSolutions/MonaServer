@@ -62,11 +62,13 @@
       <ExceptionHandling>Sync</ExceptionHandling>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <PrecompiledHeader />
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <SDLCheck>true</SDLCheck>
+      <PrecompiledHeaderFile />
+      <PrecompiledHeaderOutputFile />
     </ClCompile>
     <Lib>
       <OutputFile>$(OutDir)$(ProjectName)d.lib</OutputFile>
@@ -113,6 +115,9 @@
   <ItemGroup>
     <ClCompile Include="sources\Application.cpp" />
     <ClCompile Include="sources\Buffer.cpp" />
+    <ClCompile Include="sources\Crypto.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug|Win32'">false</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="sources\Database.cpp" />
     <ClCompile Include="sources\Exceptions.cpp" />
     <ClCompile Include="sources\FilePath.cpp" />
@@ -139,6 +144,7 @@
     <ClCompile Include="sources\Options.cpp" />
     <ClCompile Include="sources\Parameters.cpp" />
     <ClCompile Include="sources\PoolBuffers.cpp" />
+    <ClCompile Include="sources\Process.cpp" />
     <ClCompile Include="sources\QualityOfService.cpp" />
     <ClCompile Include="sources\ServerApplication.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug|Win32'">false</ExcludedFromBuild>
@@ -166,6 +172,7 @@
   <ItemGroup>
     <ClInclude Include="include\Mona\Binary.h" />
     <ClInclude Include="include\Mona\Buffer.h" />
+    <ClInclude Include="include\Mona\Crypto.h" />
     <ClInclude Include="include\Mona\Database.h" />
     <ClInclude Include="include\Mona\DatagramSocket.h" />
     <ClInclude Include="include\Mona\FilePath.h" />

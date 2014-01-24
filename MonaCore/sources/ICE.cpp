@@ -52,12 +52,12 @@ void ICE::reset() {
 }
 
 void ICE::fromSDPLine(const string& line,SDPCandidate& publicCandidate) {
-	deque<SDPCandidate> relayCurrentCandidates;
-	deque<SDPCandidate> relayRemoteCandidates;
+	vector<SDPCandidate> relayCurrentCandidates;
+	vector<SDPCandidate> relayRemoteCandidates;
 	fromSDPLine(line,publicCandidate,relayCurrentCandidates,relayRemoteCandidates,false);
 }
 
-void ICE::fromSDPLine(const string& line,SDPCandidate& publicCandidate,deque<SDPCandidate>& relayCurrentCandidates,deque<SDPCandidate>& relayRemoteCandidates,bool relayed) {
+void ICE::fromSDPLine(const string& line,SDPCandidate& publicCandidate,vector<SDPCandidate>& relayCurrentCandidates,vector<SDPCandidate>& relayRemoteCandidates,bool relayed) {
 	relayCurrentCandidates.clear();
 	relayRemoteCandidates.clear();
 	publicCandidate.candidate.clear();
@@ -78,7 +78,7 @@ void ICE::fromSDPLine(const string& line,SDPCandidate& publicCandidate,deque<SDP
 		fromSDPCandidate(line,publicCandidate,relayCurrentCandidates,relayRemoteCandidates,relayed);
 }
 
-void ICE::fromSDPCandidate(const string& candidate,SDPCandidate& publicCandidate,deque<SDPCandidate>& relayCurrentCandidates,deque<SDPCandidate>& relayRemoteCandidates,bool relayed) {
+void ICE::fromSDPCandidate(const string& candidate,SDPCandidate& publicCandidate,vector<SDPCandidate>& relayCurrentCandidates,vector<SDPCandidate>& relayRemoteCandidates,bool relayed) {
 	
 	const char* end = NULL;
 	do {
@@ -181,8 +181,8 @@ bool ICE::ProcessSDPPacket(DataReader& packet,Peer& current,Writer& currentWrite
 	}
 
 	SDPCandidate		candidate;
-	deque<string>		newLines;
-	deque<SDPCandidate>	relayCurrentCandidates,relayRemoteCandidates;
+	// deque<string>		newLines;
+	vector<SDPCandidate>	relayCurrentCandidates,relayRemoteCandidates;
 	DataWriter& writer = remoteWriter.writeInvocation(name);
 	ICE& ice = current.ice(remote);
 

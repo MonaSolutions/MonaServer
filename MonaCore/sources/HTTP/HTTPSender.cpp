@@ -32,7 +32,7 @@ namespace Mona {
 
 
 
-HTTPSender::HTTPSender(const SocketAddress& address,const shared_ptr<HTTPPacket>& pRequest) : _pRequest(pRequest),_address(address),_sizePos(0),TCPSender("TCPSender") {
+HTTPSender::HTTPSender(const SocketAddress& address,const shared_ptr<HTTPPacket>& pRequest) : _pRequest(pRequest),_address(address),_sizePos(0),TCPSender("TCPSender"),_sortOptions(0) {
 	
 }
 
@@ -95,7 +95,7 @@ bool HTTPSender::run(Exception& ex) {
 						HTTP_ADD_HEADER(writer,"Last-Modified", time.toString(Time::HTTP_FORMAT, _buffer))
 					HTTP_END_HEADER(writer)
 
-					HTTP::WriteDirectoryEntries(writer,_pRequest->serverAddress,_file.path(),files,_pRequest->parameters);
+					HTTP::WriteDirectoryEntries(writer,_pRequest->serverAddress,_file.path(),files,_sortOptions);
 			
 				} else {
 					// File
@@ -121,7 +121,7 @@ bool HTTPSender::run(Exception& ex) {
 						UInt32 size((UInt32)ifile.tellg());
 						// push the entiere file content to memory
 						ifile.seekg(0);
-						char* current = (char*)packet.buffer(size+_pRequest->properties.size()); // reserve more memory to change <%name%> field
+						char* current = (char*)packet.buffer(size+_pRequest->parameters.size()); // reserve more memory to change <%name%> field
 						ifile.read(current, size);
 						// iterate on content to replace "<% key %>" fields
 						UInt32 newSize(size);
@@ -169,8 +169,8 @@ bool HTTPSender::run(Exception& ex) {
 									if (keyBegin)
 										key.assign(keyBegin, keyLength);
 									UInt32 available(current+1-signifiant);
-									auto& it = _pRequest->properties[key];
-									const string& value(it==_pRequest->properties.end() ? String::Empty : it->second);
+									auto& it = _pRequest->parameters[key];
+									const string& value(it==_pRequest->parameters.end() ? String::Empty : it->second);
 									// give the size available required
 									if (available < value.size()) {
 										available = value.size()-available; // to add

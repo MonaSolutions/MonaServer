@@ -137,7 +137,7 @@ bool SDP::build(Exception& ex, const string& text) {
 
 				pMedia = addMedia(values[0], val, values[2]);
 				for(const string& st : values) {
-					pMedia->formats.push_back(String::ToNumber<UInt8>(ex, st));
+					pMedia->formats.emplace_back(String::ToNumber<UInt8>(ex, st));
 					if (ex)
 						break;
 				}
@@ -145,7 +145,7 @@ bool SDP::build(Exception& ex, const string& text) {
 			}
 			case 'a': { // a=* (zero or more session attribute lines)
 
-				deque<string>* pFields = NULL;
+				vector<string>* pFields = NULL;
 				bool	isMsId = false;
 				string   fingerHash;
 
@@ -208,7 +208,7 @@ bool SDP::build(Exception& ex, const string& text) {
 						icePwd = value;
 					else if(key=="ice-options") {
 						pFields = &iceOptions;
-						iceOptions.push_back(value);
+						iceOptions.emplace_back(value);
 					} else if(key=="fingerprint") // fingerprint:<hash> <algo>
 						fingerHash = value; // fingerprint:<hash>
 					else if(key=="msid-semantic")

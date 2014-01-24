@@ -26,7 +26,7 @@ This file is a part of Mona.
 using namespace std;
 using namespace Mona;
 
-Service::Service(lua_State* pState, const string& path, ServiceHandler& handler) : Expirable(this), _handler(handler), path(path), _pState(pState), FileWatcher(MonaServer::WWWPath + path + "/main.lua"), _running(false) {
+Service::Service(lua_State* pState, const string& path, ServiceHandler& handler) : Expirable(this), _handler(handler), path(path), _pState(pState), FileWatcher(MonaServer::WWWPath,path,"main.lua"), _running(false) {
 	String::Split("www" + path, "/", _packages, String::SPLIT_IGNORE_EMPTY | String::SPLIT_TRIM);
 }
 
@@ -48,7 +48,7 @@ Service* Service::get(const string& path, Expirable<Service>& expirableService) 
 	string nextPath;
 	if (pos != string::npos) {
 		nextPath = name.substr(pos, name.size() - pos);
-		name = name.substr(0, pos);
+		name.resize(pos);
 	}
 
 	Service* pSubService(this);
@@ -63,7 +63,7 @@ Service* Service::get(const string& path, Expirable<Service>& expirableService) 
 	if (!nextPath.empty())
 		return pSubService->get(nextPath, expirableService);
 
-	if (pSubService->watchFile() || serviceFolderExists(name)) { // if file or folder exists, return the service
+	if (pSubService->watchFile() || FileSystem::Exists(pSubService->filePath.directory())) { // if file or folder exists, return the service
 		pSubService->shareThis(expirableService);
 		return pSubService;
 	}
@@ -75,17 +75,6 @@ Service* Service::get(const string& path, Expirable<Service>& expirableService) 
 	return NULL;
 }
 
-bool Service::serviceFolderExists(const string& name) {
-	// Folder exists?
-	string directory(filePath);
-	vector<string> values;
-	FileSystem::Unpack(directory, values);
-	if (values.empty())
-		return false;
-	values.resize(values.size() - 1);
-	FileSystem::Pack(values, directory);
-	return FileSystem::Exists(FileSystem::MakeDirectory(FileSystem::MakeDirectory(directory).append(name)));
-}
 
 int Service::Children(lua_State *pState) {
 	// 1 => table
@@ -294,7 +283,7 @@ void Service::loadFile() {
 	
 	(string&)lastError = "";
 
-	if(luaL_loadfile(_pState,filePath.c_str())!=0) {
+	if(luaL_loadfile(_pState,filePath.fullPath().c_str())!=0) {
 		SCRIPT_BEGIN(_pState)
 			const char* error = Script::LastError(_pState);
 			SCRIPT_ERROR(error)

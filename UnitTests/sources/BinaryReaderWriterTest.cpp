@@ -158,17 +158,17 @@ ADD_TEST(BinaryReaderWriterTest, Native) {
 }
 
 ADD_TEST(BinaryReaderWriterTest, BigEndian) {
-	BinaryWriter writer(_Buffer.data(),_Buffer.size(), BinaryWriter::BIG_ENDIAN_ORDER);
+	BinaryWriter writer(_Buffer.data(),_Buffer.size(), Binary::ORDER_BIG_ENDIAN);
 	Write(writer);
 
-	BinaryReader reader(writer.data(),writer.size(), BinaryReader::BIG_ENDIAN_ORDER);
+	BinaryReader reader(writer.data(),writer.size(), Binary::ORDER_BIG_ENDIAN);
 	Read(reader);
 }
 
 ADD_TEST(BinaryReaderWriterTest, LittleEndian) {
-    BinaryWriter writer(_Buffer.data(),_Buffer.size(), BinaryWriter::LITTLE_ENDIAN_ORDER);
+    BinaryWriter writer(_Buffer.data(),_Buffer.size(), Binary::ORDER_LITTLE_ENDIAN);
 	Write(writer);
 
-	BinaryReader reader(writer.data(),writer.size(), BinaryReader::LITTLE_ENDIAN_ORDER);
+	BinaryReader reader(writer.data(),writer.size(), Binary::ORDER_LITTLE_ENDIAN);
 	Read(reader);
 }

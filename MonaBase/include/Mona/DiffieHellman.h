@@ -41,7 +41,7 @@ public:
 	int		privateKeySize(Exception& ex) { if (!initialize(ex)) return -1;  return BN_num_bytes(_pDH->priv_key); }
 	UInt8*	readPublicKey(Exception& ex, UInt8* pubKey) { if (!initialize(ex)) return NULL; readKey(_pDH->pub_key, pubKey); return pubKey; }
 	UInt8*	readPrivateKey(Exception& ex, UInt8* privKey) { if (!initialize(ex)) return NULL;  readKey(_pDH->priv_key, privKey); return privKey; }
-	Buffer&	computeSecret(Exception& ex, const Buffer& farPubKey, Buffer& sharedSecret);
+	Buffer&	computeSecret(Exception& ex, const UInt8* farPubKey, UInt32 farPubKeySize, Buffer& sharedSecret);
 
 private:
 	void	readKey(BIGNUM *pKey, UInt8* key) { BN_bn2bin(pKey, key); }

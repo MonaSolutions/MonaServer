@@ -18,22 +18,24 @@ This file is a part of Mona.
 */
 
 #include "Mona/Application.h"
-#include "Mona/Logs.h"
 #include "Mona/Exceptions.h"
 #include "Mona/Time.h"
-#include "Mona/FileSystem.h"
-#include <sstream>
-#include <iostream>
 #if !defined(_WIN32)
     #include <signal.h>
+#else
+	#include <windows.h>
 #endif
+#include "Mona/FileSystem.h"
+#include "Mona/Logs.h"
+#include <sstream>
+#include <iostream>
 
 using namespace std;
 
 
 namespace Mona {
 
-const char* LogPriorities[] = { "FATAL", "CRITIC", "ERROR", "WARN", "NOTE", "INFO", "DEBUG", "TRACE" };
+static const char* LogLevels[] = { "FATAL", "CRITIC", "ERROR", "WARN", "NOTE", "INFO", "DEBUG", "TRACE" };
 
 Application::Application() : _logSizeByFile(1000000), _logRotation(10) {
 #if defined(_DEBUG)
@@ -180,15 +182,15 @@ int Application::run(int argc, const char* argv[]) {
 	}
 }
 
-void Application::log(thread::id threadId, const string& threadName, Priority priority, const char *filePath, string& shortFilePath, long line, string& message) {
+void Application::log(thread::id threadId, const string& threadName, Level level, const char *filePath, string& shortFilePath, long line, string& message) {
 	if (isInteractive())
-		Logger::log(threadId, threadName, priority, filePath, shortFilePath, line, message);
+		Logger::log(threadId, threadName, level, filePath, shortFilePath, line, message);
 	lock_guard<mutex> lock(_logMutex);
 	if (!_logStream.good())
 		return;
 	string stDate;
 	_logStream << Time().toLocaleString("%d/%m %H:%M:%S.%c  ", stDate)
-		<< LogPriorities[priority-1] << '\t' << threadName << '(' << threadId << ")\t"
+		<< LogLevels[level-1] << '\t' << threadName << '(' << threadId << ")\t"
 		<< shortFilePath << '[' << line << "]  " << message << std::endl;
 	_logStream.flush();
 	manageLogFiles();

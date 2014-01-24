@@ -28,31 +28,13 @@ namespace Mona {
 
 AMFWriter   AMFWriter::Null;
 
-class ObjectRef : virtual Object {
-public:
-	ObjectRef(UInt32 reference,bool isObject) : reference(reference),isObject(isObject) {}
-
-	const UInt32 reference;
-	const bool isObject;
-};
-
 AMFWriter::AMFWriter(const PoolBuffers& poolBuffers) : DataWriter(poolBuffers),_amf3(false),amf0Preference(false) {
 
-}
-
-
-AMFWriter::~AMFWriter() {
-	if(!_lastObjectReferences.empty())
-		WARN("AMFWriter end without terminating a complex type (object, map or array)");
-	for (ObjectRef* pObjectRef : _lastObjectReferences)
-		delete pObjectRef;
 }
 
 void AMFWriter::clear() {
 	_amf3=false;
 	amf0Preference=false;
-	for (ObjectRef* pObjectRef : _lastObjectReferences)
-		delete pObjectRef;
 	_lastObjectReferences.clear();
 	_references.clear();
 	_stringReferences.clear();
@@ -146,7 +128,7 @@ void AMFWriter::writeDate(const Time& date){
 	packet.write8(AMF3_DATE);
 	packet.write8(0x01);
 	packet.writeNumber<double>((double)date / 1000);
-	_references.push_back(AMF3_DATE);
+	_references.emplace_back(AMF3_DATE);
 	_lastReference=_references.size();
 }
 
@@ -177,7 +159,7 @@ void AMFWriter::writeBytes(const UInt8* data,UInt32 size) {
 		packet.write8(AMF_AVMPLUS_OBJECT); // switch in AMF3 format 
 	packet.write8(AMF3_BYTEARRAY); // bytearray in AMF3 format!
 	packet.write7BitValue((size << 1) | 1);
-	_references.push_back(AMF3_BYTEARRAY);
+	_references.emplace_back(AMF3_BYTEARRAY);
 	packet.writeRaw(data,size);
 	_lastReference=_references.size();
 }
@@ -186,7 +168,7 @@ void AMFWriter::beginObject(const string& type,bool external) {
 	_lastReference=0;
 	if(!_amf3) {
 		if(amf0Preference && !external) {
-			_lastObjectReferences.push_back(new ObjectRef(0,true));
+			_lastObjectReferences.emplace_back(0,true);
 			if(type.empty())
 				packet.write8(AMF_BEGIN_OBJECT);
 			else {
@@ -199,15 +181,15 @@ void AMFWriter::beginObject(const string& type,bool external) {
 		_amf3=true;
 	}
 	packet.write8(AMF3_OBJECT);
-	_references.push_back(AMF3_OBJECT);
+	_references.emplace_back(AMF3_OBJECT);
 	_lastReference=_references.size();
-	_lastObjectReferences.push_back(new ObjectRef(_lastReference,!external));
+	_lastObjectReferences.emplace_back(_lastReference,!external);
 
 
 	UInt32 flags = 1; // inner object
 	
 	// ClassDef always inline (because never hard properties, all is dynamic)
-	// _references.push_back(0);
+	// _references.emplace_back(0);
 	flags|=(1<<1);
 	if(external)
 		flags|=(1<<2);
@@ -235,10 +217,10 @@ void AMFWriter::beginObjectArray(UInt32 size) {
 	}
 	packet.write8(AMF3_ARRAY);
 	packet.write7BitValue((size << 1) | 1);
-	_references.push_back(AMF3_ARRAY);
+	_references.emplace_back(AMF3_ARRAY);
 	_lastReference=_references.size();
-	_lastObjectReferences.push_back(new ObjectRef(_lastReference,false));
-	_lastObjectReferences.push_back(new ObjectRef(_lastReference,false));
+	_lastObjectReferences.emplace_back(_lastReference,false);
+	_lastObjectReferences.emplace_back(_lastReference,false);
 }
 
 void AMFWriter::beginMap(UInt32 size,bool weakKeys) {
@@ -250,20 +232,19 @@ void AMFWriter::beginMap(UInt32 size,bool weakKeys) {
 	packet.write8(AMF3_DICTIONARY);
 	packet.write7BitValue((size << 1) | 1);
 	packet.write8(weakKeys ? 0x01 : 0x00);
-	_references.push_back(AMF3_DICTIONARY);
+	_references.emplace_back(AMF3_DICTIONARY);
 	_lastReference=_references.size();
-	_lastObjectReferences.push_back(new ObjectRef(_lastReference,false));
+	_lastObjectReferences.emplace_back(_lastReference,false);
 }
 
 void AMFWriter::endObject() {
-	if(_lastObjectReferences.size()==0) {
+	if(_lastObjectReferences.empty()) {
 		ERROR("endObject called without beginObject calling");
 		return;
 	}
-	ObjectRef* pObjectRef =_lastObjectReferences.back();
-	_lastReference = pObjectRef->reference;
-	bool isObject = pObjectRef->isObject;
-	delete pObjectRef;
+	ObjectRef& objectRef =_lastObjectReferences.back();
+	_lastReference = objectRef.reference;
+	bool isObject = objectRef.isObject;
 	_lastObjectReferences.pop_back();
 	if(isObject) {
 		if(!_amf3) {
@@ -273,7 +254,7 @@ void AMFWriter::endObject() {
 		}
 		packet.write8(01); // end marker
 	}
-	if(_lastObjectReferences.size()==0 || _lastObjectReferences.back()==0)
+	if(_lastObjectReferences.empty())
 		_amf3=false;
 }
 

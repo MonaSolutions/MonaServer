@@ -27,7 +27,9 @@ namespace Mona {
 
 class RTMFPDecoding : public Decoding, virtual Object {
 public:
-	RTMFPDecoding(Invoker& invoker,PoolBuffer& poolBuffer,const RTMFPEngine& engine,RTMFPEngine::Type type) : Decoding("RTMFPDecoding",invoker,poolBuffer),_decoder(engine,type) {}
+	RTMFPDecoding(Invoker& invoker,PoolBuffer& pBuffer,const std::shared_ptr<RTMFPKey>& pDecryptKey,RTMFPEngine::Type type) : Decoding("RTMFPDecoding",invoker,pBuffer),_decoder(pDecryptKey,RTMFPEngine::DECRYPT) {
+		_decoder.type = type;
+	}
 
 private:
 	bool		  decode(Exception& ex, PacketReader& packet, UInt32 times) { if (times) return false;  packet.next(4); return RTMFP::Decode(ex, _decoder, packet); }

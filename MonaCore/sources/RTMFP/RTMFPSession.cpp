@@ -33,13 +33,20 @@ namespace Mona {
 RTMFPSession::RTMFPSession(RTMFProtocol& protocol,
 				Invoker& invoker,
 				UInt32 farId,
-				const Peer& peer,
 				const UInt8* decryptKey,
 				const UInt8* encryptKey,
-				const char* name) : _failed(false),_pThread(NULL), _socket(protocol), farId(farId), Session(protocol, invoker, peer, name), _decrypt(decryptKey, RTMFPEngine::DECRYPT), _encrypt(encryptKey, RTMFPEngine::ENCRYPT), _timesFailed(0), _timeSent(0), _nextRTMFPWriterId(0), _timesKeepalive(0), _pLastWriter(NULL), _prevEngineType(RTMFPEngine::DEFAULT) {
-	_pFlowNull = new RTMFPFlow(0,"",this->peer,invoker,*this);
+				const shared_ptr<Peer>& pPeer) : _failed(false),_pThread(NULL), _socket(protocol), farId(farId), Session(protocol, invoker, pPeer), _pDecryptKey(new RTMFPKey(decryptKey)), _pEncryptKey(new RTMFPKey(encryptKey)), _timesFailed(0), _timeSent(0), _nextRTMFPWriterId(0), _timesKeepalive(0), _pLastWriter(NULL), _prevEngineType(RTMFPEngine::NORMAL) {
+	_pFlowNull = new RTMFPFlow(0,"",peer,invoker,*this);
 }
 
+RTMFPSession::RTMFPSession(RTMFProtocol& protocol,
+				Invoker& invoker,
+				UInt32 farId,
+				const UInt8* decryptKey,
+				const UInt8* encryptKey,
+				const char* name) : _failed(false),_pThread(NULL), _socket(protocol), farId(farId), Session(protocol, invoker,name), _pDecryptKey(new RTMFPKey(decryptKey)), _pEncryptKey(new RTMFPKey(encryptKey)), _timesFailed(0), _timeSent(0), _nextRTMFPWriterId(0), _timesKeepalive(0), _pLastWriter(NULL), _prevEngineType(RTMFPEngine::NORMAL) {
+	_pFlowNull = new RTMFPFlow(0,"",peer,invoker,*this);
+}
 
 RTMFPSession::~RTMFPSession() {
 	kill();
@@ -176,8 +183,8 @@ void RTMFPSession::p2pHandshake(const string& tag,const SocketAddress& address,U
 }
 
 void RTMFPSession::decode(PoolBuffer& poolBuffer, const SocketAddress& address) {
-	_prevEngineType = farId == 0 ? RTMFPEngine::SYMMETRIC : RTMFPEngine::DEFAULT;
-	shared_ptr<RTMFPDecoding> pRTMFPDecoding(new RTMFPDecoding(invoker, poolBuffer,_decrypt,_prevEngineType));
+	_prevEngineType = farId == 0 ? RTMFPEngine::DEFAULT : RTMFPEngine::NORMAL;
+	shared_ptr<RTMFPDecoding> pRTMFPDecoding(new RTMFPDecoding(invoker, poolBuffer,_pDecryptKey,_prevEngineType));
 	Session::decode<RTMFPDecoding>(pRTMFPDecoding,address);
 }
 
@@ -203,7 +210,7 @@ void RTMFPSession::flush(UInt8 marker,bool echoTime,RTMFPEngine::Type type) {
 			writer.write16(_timeSent+RTMFP::Time(_recvTimestamp.elapsed()));
 
 		_pSender->farId = farId;
-		_pSender->encoder.set(_encrypt,type);
+		_pSender->encoder.type = type;
 		_pSender->address.set(peer.address);
 
 		if (packet.size() > RTMFP_MAX_PACKET_SIZE)
@@ -221,7 +228,7 @@ void RTMFPSession::flush(UInt8 marker,bool echoTime,RTMFPEngine::Type type) {
 
 PacketWriter& RTMFPSession::packet() {
 	if (!_pSender)
-		_pSender.reset(new RTMFPSender(invoker.poolBuffers));
+		_pSender.reset(new RTMFPSender(invoker.poolBuffers,_pEncryptKey));
 	return _pSender->packet;
 }
 
@@ -268,7 +275,7 @@ void RTMFPSession::packetHandler(PacketReader& packet) {
 				time += 0xFFFF-timeEcho;
 			timeEcho = 0;
 		}
-		(UInt16&)peer.ping = (time-timeEcho)*RTMFP_TIMESTAMP_SCALE;
+		peer.setPing((time-timeEcho)*RTMFP_TIMESTAMP_SCALE);
 	}
 	else if(marker != 0xF9)
 		WARN("RTMFPPacket marker unknown : ", Format<UInt8>("%02x",marker));

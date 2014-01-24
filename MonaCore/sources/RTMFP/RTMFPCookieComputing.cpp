@@ -27,26 +27,54 @@ using namespace std;
 
 namespace Mona {
 
-RTMFPCookieComputing::RTMFPCookieComputing(RTMFPHandshake& handshake,Invoker& invoker): WorkThread("RTMFPCookieComputing"),_handshake(handshake),Task(invoker) {
+RTMFPCookieComputing::RTMFPCookieComputing(RTMFPHandshake& handshake,Invoker& invoker): WorkThread("RTMFPCookieComputing"),_handshake(handshake),Task(invoker),packet(invoker.poolBuffers) {
 	Util::Random(value, COOKIE_SIZE);
 }
 
 bool RTMFPCookieComputing::run(Exception& ex) {
 	// First execution is for the DH computing if pDH == null, else it's to compute Diffie-Hellman keys
-	if (!diffieHellman.initialized())
-		return diffieHellman.initialize(ex);
+	if (!_diffieHellman.initialized())
+		return _diffieHellman.initialize(ex);
 
 	// Compute Diffie-Hellman secret
-	diffieHellman.computeSecret(ex,initiatorKey,sharedSecret);
+	_diffieHellman.computeSecret(ex,initiatorKey.data(),initiatorKey.size(),_sharedSecret);
 	if (ex)
 		return false;
 
+	if (packet.size() > 0) {
+		ex.set(Exception::CRYPTO, "RTMFPCookieComputing already executed");
+		return false;
+	}
+
 	string hex;
-	DEBUG("Shared Secret : ", Util::FormatHex(sharedSecret.data(), sharedSecret.size(), hex));
+	DEBUG("Shared Secret : ", Util::FormatHex(_sharedSecret.data(), _sharedSecret.size(), hex));
+
+	// It's our key public part
+	int size = _diffieHellman.publicKeySize(ex);
+	if (ex)
+		return false;
+	packet.write7BitLongValue(size+11);
+	UInt32 noncePos = packet.size();
+	packet.writeRaw(EXPAND_DATA_SIZE("\x03\x1A\x00\x00\x02\x1E\x00"));
+	UInt8 byte2 = DH_KEY_SIZE-size;
+	if(byte2>2) {
+		CRITIC("Generation DH key with less of 126 bytes!");
+		byte2=2;
+	}
+	packet.write8(0x81);
+	packet.write8(2-byte2);
+	packet.write8(0x0D);
+	packet.write8(0x02);
+	_diffieHellman.readPublicKey(ex,packet.buffer(size));
+	packet.write8(0x58);
+
+	// Compute Keys
+	RTMFP::ComputeAsymetricKeys(_sharedSecret,initiatorNonce.data(),initiatorNonce.size(),packet.data()+noncePos,size+11,decryptKey,encryptKey);
 	
 	waitHandle();
 	return true;
 }
+
 
 void RTMFPCookieComputing::handle(Exception& ex) {
 	RTMFPSession* pSession = _handshake.createSession(value);

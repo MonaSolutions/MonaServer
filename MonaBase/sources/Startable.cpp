@@ -19,10 +19,12 @@ This file is a part of Mona.
 
 
 #include "Mona/Startable.h"
-#include "Mona/Logs.h"
 #if !defined(_WIN32)
 #include <sys/prctl.h> // for thread name
+#else
+#include <windows.h>
 #endif
+#include "Mona/Logs.h"
 
 
 using namespace std;
@@ -122,7 +124,8 @@ bool Startable::start(Exception& ex, Priority priority) {
 void Startable::initThread(Exception& ex,thread& thread,Priority priority) {
 	Util::SetThreadName(thread.get_id(), _name);
 #if defined(_WIN32)
-	if (priority == PRIORITY_NORMAL || SetThreadPriority(_thread.native_handle(), priority) != 0)
+	static int Priorities[] = {THREAD_PRIORITY_LOWEST,THREAD_PRIORITY_BELOW_NORMAL,THREAD_PRIORITY_NORMAL,THREAD_PRIORITY_ABOVE_NORMAL,THREAD_PRIORITY_HIGHEST};
+	if (priority == PRIORITY_NORMAL || SetThreadPriority(_thread.native_handle(), Priorities[priority]) != 0)
 		return;
 #else
 	static int Min = sched_get_priority_min(SCHED_FIFO);

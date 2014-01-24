@@ -19,6 +19,7 @@ This file is a part of Mona.
 
 #include "Mona/Listener.h"
 #include "Mona/Publication.h"
+#include "Mona/MediaCodec.h"
 #include "Mona/Logs.h"
 
 
@@ -172,7 +173,7 @@ void Listener::pushVideoPacket(PacketReader& packet,UInt32 time) {
 		return;
 
 	// key frame ?
-	if(((*packet.current())&0xF0) == 0x10)
+	if(MediaCodec::IsKeyFrame(packet.current(),packet.available()))
 		_firstKeyFrame=true;
 
 	if(!_firstKeyFrame) {
@@ -185,8 +186,8 @@ void Listener::pushVideoPacket(PacketReader& packet,UInt32 time) {
 
 	if(_firstVideo) {
 		_firstVideo=false;
-		UInt32 size = publication.videoCodecBuffer().size();
-		if(size>0) {
+		UInt32 size(0);
+		if(!MediaCodec::H264::IsCodecInfos(packet.current(),packet.available()) && (size=publication.videoCodecBuffer().size())>0) {
 			PacketReader videoCodecPacket(publication.videoCodecBuffer().data(),size);
 			// Reliable way for video codec packet!
 			bool reliable = _pVideoWriter->reliable;
@@ -196,7 +197,6 @@ void Listener::pushVideoPacket(PacketReader& packet,UInt32 time) {
 			_pVideoWriter->reliable = reliable;
 		}
 	}
-
 
 	if(!_pVideoWriter->writeMedia(Writer::VIDEO,time,packet))
 		init();
@@ -215,8 +215,8 @@ void Listener::pushAudioPacket(PacketReader& packet,UInt32 time) {
 
 	if(_firstAudio) {
 		_firstAudio=false;
-		UInt32 size = publication.audioCodecBuffer().size();
-		if(size>0) {
+		UInt32 size(0);
+		if(!MediaCodec::AAC::IsCodecInfos(packet.current(),packet.available()) && (size=publication.audioCodecBuffer().size())>0) {
 			PacketReader audioCodecPacket(publication.audioCodecBuffer().data(),size);
 			// Reliable way for audio codec packet!
 			bool reliable = _pAudioWriter->reliable;

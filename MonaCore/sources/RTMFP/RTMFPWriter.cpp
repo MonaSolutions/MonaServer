@@ -128,7 +128,7 @@ void RTMFPWriter::acknowledgment(PacketReader& packet) {
 	bool header = true;
 	bool stop=false;
 
-	deque<RTMFPMessage*>::iterator it=_messagesSent.begin();
+	auto it=_messagesSent.begin();
 	while(!stop && it!=_messagesSent.end()) {
 		RTMFPMessage& message(**it);
 
@@ -487,7 +487,7 @@ void RTMFPWriter::flush(bool full) {
 
 		} while(available>0);
 
-		_messagesSent.push_back(&message);
+		_messagesSent.emplace_back(&message);
 		_messages.pop_front();
 	}
 
@@ -518,7 +518,7 @@ RTMFPMessageBuffered& RTMFPWriter::createBufferedMessage() {
 		return MessageNull;
 	}
 	RTMFPMessageBuffered* pMessage = new RTMFPMessageBuffered(_band.poolBuffers(),reliable);
-	_messages.push_back(pMessage);
+	_messages.emplace_back(pMessage);
 	return *pMessage;
 }
 
@@ -562,8 +562,7 @@ void RTMFPWriter::writeRaw(const UInt8* data,UInt32 size) {
 	}
 	if(state()==CLOSED || signature.empty() || _band.failed()) // signature.empty() means that we are on the writer of FlowNull
 		return;
-	RTMFPMessage* pMessage = new RTMFPMessageUnbuffered(data,size);
-	_messages.push_back(pMessage);
+	_messages.emplace_back(new RTMFPMessageUnbuffered(data,size));
 	flush();
 }
 

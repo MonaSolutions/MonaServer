@@ -46,7 +46,7 @@ void RTMFProtocol::onPacket(const UInt8* data, UInt32 size, const SocketAddress&
 	UInt32 id = RTMFP::Unpack(packet);
 
 	// TRACE("RTMFP Session ",id);
-
+	
 	RTMFPSession* pSession = id == 0 ? _pHandshake.get() : sessions.find<RTMFPSession>(id);
 
 	if (!pSession) {

@@ -17,16 +17,18 @@ details (or else see http://www.gnu.org/licenses/).
 This file is a part of Mona.
 */
 
-#include "Mona/Logs.h"
-#include "Mona/Util.h"
+#include "Mona/Crypto.h"
 
 using namespace std;
 
 namespace Mona {
 
-Logger*			Logs::_PLogger(NULL);
-Logs::DumpMode	Logs::_DumpMode(DUMP_NOTHING);
-UInt8			Logs::_Level(Logger::LEVEL_INFO); // default log level
-Logger			Logs::_DefaultLogger;
+
+UInt8* Crypto::hmac(const EVP_MD* evpMD, const void* key, int keySize, const UInt8* data, size_t size, UInt8* value) {
+	HMAC_Init_ex(&_hmacCTX,key, keySize, evpMD, NULL);
+	HMAC_Update(&_hmacCTX, data, size);
+	HMAC_Final(&_hmacCTX, value,NULL);
+	return value;
+}
 
 } // namespace Mona

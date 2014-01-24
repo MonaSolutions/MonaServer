@@ -53,7 +53,7 @@ void PoolTest::run(const string& mod,UInt32 loop) {
 
 void PoolTest::getListTests(vector<string>& lTests) {
 	for(auto& itTest = _mapTests.begin(), end = _mapTests.end(); itTest != end ; itTest = _mapTests.upper_bound(itTest->first))
-        lTests.push_back(itTest->first);
+        lTests.emplace_back(itTest->first);
 }
 
 PoolTest& PoolTest::PoolTestInstance () {

@@ -29,19 +29,19 @@ namespace Mona {
 class Logger : virtual Object {
 public:
 	
-	enum Priority {
-		PRIO_FATAL = 1,   /// A fatal error. The application will most likely terminate. This is the highest priority.
-		PRIO_CRITIC,    /// A critical error. The application might not be able to continue running successfully.
-		PRIO_ERROR,       /// An error. An operation did not complete successfully, but the application as a whole is not affected.
-		PRIO_WARN,     /// A warning. An operation completed with an unexpected result.
-		PRIO_NOTE,      /// A notice, which is an information with just a higher priority.
-		PRIO_INFO, /// An informational message, usually denoting the successful completion of an operation.
-		PRIO_DEBUG,       /// A debugging message.
-		PRIO_TRACE        /// A tracing message. This is the lowest priority.
+	enum Level {
+		LEVEL_FATAL = 1, /// A fatal error. The application will most likely terminate. This is the highest priority.
+		LEVEL_CRITIC,    /// A critical error. The application might not be able to continue running successfully.
+		LEVEL_ERROR,    /// An error. An operation did not complete successfully, but the application as a whole is not affected.
+		LEVEL_WARN,     /// A warning. An operation completed with an unexpected result.
+		LEVEL_NOTE,      /// A notice, which is an information with just a higher priority.
+		LEVEL_INFO,		/// An informational message, usually denoting the successful completion of an operation.
+		LEVEL_DEBUG,    /// A debugging message.
+		LEVEL_TRACE      /// A tracing message. This is the lowest priority.
 	};
 
 
-    virtual void log(std::thread::id threadId, const std::string& threadName, Priority priority, const char *filePath, std::string& shortFilePath, long line, std::string& message);
+    virtual void log(std::thread::id threadId, const std::string& threadName, Level level, const char *filePath, std::string& shortFilePath, long line, std::string& message);
 	virtual void dump(const UInt8* data, UInt32 size);
 
 private:

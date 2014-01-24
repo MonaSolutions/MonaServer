@@ -49,7 +49,7 @@ public:
 
 	DataWriter&		writer(const std::string& code, HTTP::ContentType type, const std::string& subType,const UInt8* data,UInt32 size);
 	void			writeError(int code, const std::string& description,bool close=false);
-	void			writeFile(const FilePath& file) { _file = file; }
+	void			writeFile(const FilePath& file, UInt8 sortOptions) { _file = file; _sortOptions = sortOptions; }
 
 	const UInt8*	data() { return _pWriter ? _pWriter->packet.data() : NULL; }
 	UInt32			size() { return _pWriter ? _pWriter->packet.size() : 0; }
@@ -61,6 +61,7 @@ private:
 	DataWriter&		write(const std::string& code, HTTP::ContentType type = HTTP::CONTENT_TEXT, const std::string& subType = "html; charset=utf-8") { return writer(code, type, subType, NULL, 0); }
 
 	FilePath							_file;
+	UInt8								_sortOptions;
 	const std::shared_ptr<HTTPPacket>	_pRequest;
 	UInt32								_sizePos;
 	std::unique_ptr<DataWriter>			_pWriter;

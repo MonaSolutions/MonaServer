@@ -23,44 +23,53 @@ This file is a part of Mona.
 #include "Mona/PacketReader.h"
 #include "Mona/PacketWriter.h"
 #include "Mona/Time.h"
-#include <openssl/aes.h>
+#include <openssl/evp.h>
 #include <math.h>
 
 namespace Mona {
 
-#define RTMFP_SYMETRIC_KEY (UInt8*)"Adobe Systems 02"
+#define RTMFP_DEFAULT_KEY	(UInt8*)"Adobe Systems 02"
+#define RTMFP_KEY_SIZE		0x10
+
 #define RTMFP_HEADER_SIZE		11
 #define RTMFP_MIN_PACKET_SIZE	(RTMFP_HEADER_SIZE+1)
 #define RTMFP_MAX_PACKET_SIZE	1192
 #define RTMFP_TIMESTAMP_SCALE	4
 
-class RTMFPEngine : virtual Object {
+
+class RTMFPKey : virtual Object {
+public:
+	RTMFPKey(const UInt8* key) {memcpy(_key, key, RTMFP_KEY_SIZE);}
+	const UInt8* value() { return _key; }
+
+private:
+	UInt8 _key[RTMFP_KEY_SIZE];	
+};
+
+class RTMFPEngine : virtual NullableObject {
 public:
 	enum Direction {
 		DECRYPT=0,
 		ENCRYPT
 	};
 	enum Type {
-		DEFAULT=0,
-		EMPTY,
-		SYMMETRIC
+		NORMAL=0,
+		DEFAULT
 	};
-	RTMFPEngine();
-	RTMFPEngine(const UInt8* key,Direction direction);
-	RTMFPEngine(const RTMFPEngine& other);
-	RTMFPEngine(const RTMFPEngine& other,Type type);
+	RTMFPEngine(const std::shared_ptr<RTMFPKey>& pKey,Direction direction);
+	virtual ~RTMFPEngine();
 
-	void		  set(const RTMFPEngine& other,Type type);
-	void		  process(const UInt8* in,UInt8* out,UInt32 size);
+	void		  process(const UInt8* in,UInt8* out,int size);
 
-	const Type	type;
+	Type		  type;
 private:
-	static RTMFPEngine	_DefaultDecrypt;
-	static RTMFPEngine	_DefaultEncrypt;
+	Direction						_direction;
+	const std::shared_ptr<RTMFPKey> _pKey;
+	EVP_CIPHER_CTX					_context;
 
-	Direction	_direction;
-	AES_KEY		_key;
-	
+	static const std::shared_ptr<RTMFPKey>	_pDefaultKey;
+	static RTMFPEngine						_DefaultDecrypt;
+	static RTMFPEngine						_DefaultEncrypt;
 };
 
 

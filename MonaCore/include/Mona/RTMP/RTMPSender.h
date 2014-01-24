@@ -30,7 +30,7 @@ namespace Mona {
 
 class RTMPSender : public TCPSender, virtual Object {
 public:
-	RTMPSender(const PoolBuffers& poolBuffers,const std::shared_ptr<RC4_KEY>& pEncryptKey) : _writer(poolBuffers),_pEncryptKey(pEncryptKey),sizePos(0),headerSize(0),TCPSender("RTMPSender") {}
+	RTMPSender(const PoolBuffers& poolBuffers) : _writer(poolBuffers),sizePos(0),headerSize(0),TCPSender("RTMPSender") {}
 
 	UInt32				sizePos;
 	UInt8				headerSize;
@@ -38,17 +38,14 @@ public:
 	const UInt8*		data() { return _writer.packet.data(); }
 	UInt32				size() { return _writer.packet.size(); }
 
-	bool				encrypted() { return _pEncryptKey ? true : false; }
 
 	void				dump(RTMPChannel& channel,const SocketAddress& address) { pack(channel); Writer::DumpResponse(data(), size(), address); }
 
 	AMFWriter&			writer(RTMPChannel& channel) { pack(channel); return _writer; }
 private:
 	void				pack(RTMPChannel& channel);
-	bool				run(Exception& ex);
 
-	AMFWriter					_writer;
-	std::shared_ptr<RC4_KEY>	_pEncryptKey;
+	AMFWriter			_writer;
 };
 
 

@@ -28,12 +28,10 @@ using namespace std;
 using namespace Mona;
 
 
-void LUAClient::GetKey(lua_State *pState, const Client& client) {
+void LUAClient::GetID(lua_State *pState, const Client& client) {
 	string key;
-	if (client.getString("name", key))
-		lua_pushstring(pState, key.c_str());
-	else if (!client.getString("__hexID", key))
-		((Client&)client).setString("__hexID", Util::FormatHex(client.id, ID_SIZE, key));
+	if (!client.properties.getString("|id", key))
+		((MapParameters&)client.properties).setString("|id", Util::FormatHex(client.id, ID_SIZE, key));
 	lua_pushstring(pState, key.c_str());
 }
 
@@ -70,23 +68,29 @@ int LUAClient::Item(lua_State *pState) {
 
 int LUAClient::Get(lua_State *pState) {
 	SCRIPT_CALLBACK(Client,client)
-		string name = SCRIPT_READ_STRING("");
-		if(name=="writer") {
+		const char* name = SCRIPT_READ_STRING("");
+		if(strcmp(name,"writer")==0) {
 			SCRIPT_CALLBACK_NOTCONST_CHECK
 			SCRIPT_ADD_OBJECT(Writer,LUAWriter,client.writer())
-		} else if(name=="id") {
-			LUAClient::GetKey(pState, client);
-		} else if(name=="rawId") {
+		} else if(strcmp(name,"id")==0) {
+			LUAClient::GetID(pState, client);
+		} else if(strcmp(name,"name")==0) {
+			SCRIPT_WRITE_STRING(client.name.c_str())
+		} else if(strcmp(name,"rawId")==0) {
 			SCRIPT_WRITE_BINARY(client.id,ID_SIZE);
-		} else if(name=="path") {
+		} else if(strcmp(name,"path")==0) {
 			SCRIPT_WRITE_STRING(client.path.c_str())
-		} else if(name=="address") {
+		} else if(strcmp(name,"query")==0) {
+			SCRIPT_WRITE_STRING(client.query.c_str())
+		} else if(strcmp(name,"address")==0) {
 			SCRIPT_WRITE_STRING(client.address.toString().c_str())
-		} else if(name=="ping") {
+		} else if(strcmp(name,"ping")==0) {
 			SCRIPT_WRITE_NUMBER(client.ping)
-		} else if (name == "parameters") {
-			if (Script::Collection(pState, -1, "parameters", client.count())) {
-				for (auto& it : client) {
+		} else if(strcmp(name,"protocol")==0) {
+			SCRIPT_WRITE_STRING(client.protocol.c_str())
+		} else if (strcmp(name,"properties")==0) {
+			if (Script::Collection(pState, -1, "properties", client.properties.count())) {
+				for (auto& it : client.properties) {
 					lua_pushstring(pState, it.first.c_str());
 					if (String::ICompare(it.second, "false") == 0 || String::ICompare(it.second, "nil") == 0)
 						lua_pushboolean(pState, 0);
@@ -97,7 +101,7 @@ int LUAClient::Get(lua_State *pState) {
 			}
 		} else {
 			string value;
-			if(client.getString(name,value))
+			if(client.properties.getString(name,value))
 				SCRIPT_WRITE_STRING(value.c_str())
 		}
 	SCRIPT_CALLBACK_RETURN
@@ -105,15 +109,9 @@ int LUAClient::Get(lua_State *pState) {
 
 int LUAClient::Set(lua_State *pState) {
 	SCRIPT_CALLBACK(Client,client)
-		string name = SCRIPT_READ_STRING("");
-		if (name == "name") {
-			const char* newName = SCRIPT_READ_STRING(NULL);
-			if (!newName)
-				SCRIPT_ERROR("Invalid name value")
-			else if (!client.setName(newName))
-				SCRIPT_ERROR("A client has already the '", newName, "' name")
-		} else if(name=="__timesBeforeTurn") {
-			client.setNumber("__timesBeforeTurn", SCRIPT_READ_UINT(0));
+		const char* name = SCRIPT_READ_STRING("");
+		if(strcmp(name,"timesBeforeTurn")==0) {
+			client.timesBeforeTurn = SCRIPT_READ_UINT(0);
 		} else
 			lua_rawset(pState,1); // consumes key and value
 	SCRIPT_CALLBACK_RETURN

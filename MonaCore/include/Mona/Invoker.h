@@ -66,8 +66,10 @@ public:
 
 	const ServerParams		params;
 
+	std::string				buffer;
+
 protected:
-	Invoker(UInt32 bufferSize,UInt16 threads);
+	Invoker(UInt32 socketBufferSize,UInt16 threads);
 	virtual ~Invoker();
 
 private:

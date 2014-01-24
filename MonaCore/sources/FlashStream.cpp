@@ -64,11 +64,13 @@ void FlashStream::process(AMF::ContentType type,UInt32 time,PacketReader& packet
 		return;
 	
 	writer.callbackHandle = 0;
+	writer.amf0Preference = false;
 	Exception ex;
 	// if exception, it closes the connection, and print an ERROR message
 	switch(type) {
-		case AMF::INVOCATION_AMF3:
-		case AMF::INVOCATION: {
+		case AMF::INVOCATION:
+			writer.amf0Preference = true;
+		case AMF::INVOCATION_AMF3: {
 			string name;
 			AMFReader reader(packet);
 			reader.readString(name);
@@ -138,6 +140,9 @@ void FlashStream::messageHandler(Exception& ex,const string& name,AMFReader& mes
 
 		string type,publication;
 		message.readString(publication);
+		size_t query = publication.find('?');
+		if (query != string::npos)
+			publication = publication.substr(0, query); // TODO use query in Util::UnpackQuery for publication options?
 		if(message.available())
 			message.readString(type); // TODO recording publication feature!
 

@@ -53,19 +53,19 @@ namespace Mona {
 #endif
 
 #if defined(_WIN32)
-int			LogColors[] = { FATAL_COLOR, CRITIC_COLOR, ERROR_COLOR, WARN_COLOR, NOTE_COLOR, INFO_COLOR, DEBUG_COLOR, TRACE_COLOR };
+static int			LevelColors[] = { FATAL_COLOR, CRITIC_COLOR, ERROR_COLOR, WARN_COLOR, NOTE_COLOR, INFO_COLOR, DEBUG_COLOR, TRACE_COLOR };
 #else
-const char* LogColors[] = { FATAL_COLOR, CRITIC_COLOR, ERROR_COLOR, WARN_COLOR, NOTE_COLOR, INFO_COLOR, DEBUG_COLOR, TRACE_COLOR };
+static const char*  LevelColors[] = { FATAL_COLOR, CRITIC_COLOR, ERROR_COLOR, WARN_COLOR, NOTE_COLOR, INFO_COLOR, DEBUG_COLOR, TRACE_COLOR };
 #endif
 
 mutex Logger::_Mutex;
 
-void Logger::log(std::thread::id threadId, const string& threadName, Priority priority, const char *filePath, string& shortFilePath, long line, string& message) {
+void Logger::log(std::thread::id threadId, const string& threadName, Level level, const char *filePath, string& shortFilePath, long line, string& message) {
 	lock_guard<mutex> lock(_Mutex);
-	priority = (Priority)(priority - 1);
-	SET_CONSOLE_TEXT_COLOR(LogColors[priority]);
+	level = (Level)(level - 1);
+	SET_CONSOLE_TEXT_COLOR(LevelColors[level]);
 	printf("%s[%ld] %s\n", shortFilePath.c_str(), line, message.c_str());
-	SET_CONSOLE_TEXT_COLOR(LogColors[6]);
+	SET_CONSOLE_TEXT_COLOR(LevelColors[6]);
 	cout.flush();
 }
 

@@ -165,19 +165,19 @@ void RTMFPFlow::commit() {
 
 	// Lost informations!
 	UInt32 size = 0;
-	deque<UInt64> losts;
+	vector<UInt64> losts;
 	UInt64 current=_stage;
 	UInt32 count=0;
 	auto it = _fragments.begin();
 	while(it!=_fragments.end()) {
 		current = it->first-current-2;
 		size += Util::Get7BitValueSize(current);
-		losts.push_back(current);
+		losts.emplace_back(current);
 		current = it->first;
 		while(++it!=_fragments.end() && it->first==(++current))
 			++count;
 		size += Util::Get7BitValueSize(count);
-		losts.push_back(count);
+		losts.emplace_back(count);
 		--current;
 		count=0;
 	}
@@ -327,7 +327,8 @@ void RTMFPFlow::fragmentSortedHandler(UInt64 _stage,PacketReader& fragment,UInt8
 		return;
 	}
 	UInt32 time(0);
-	_pStream->process(unpack(*pMessage,time),time,*pMessage,*_pWriter,_numberLostFragments);
+	AMF::ContentType type(unpack(*pMessage, time));
+	_pStream->process(type,time,*pMessage,*_pWriter,_numberLostFragments);
 	_numberLostFragments=0;
 
 	if(_pPacket) {

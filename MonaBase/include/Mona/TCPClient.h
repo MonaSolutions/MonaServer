@@ -38,8 +38,8 @@ public:
 	bool					send(Exception& ex, const UInt8* data, UInt32 size);
 
 	template<typename SenderType>
-	void send(Exception& ex,const std::shared_ptr<SenderType>& pSender) {
-		StreamSocket::send<SenderType>(ex, pSender);
+	bool send(Exception& ex,const std::shared_ptr<SenderType>& pSender) {
+		return StreamSocket::send<SenderType>(ex, pSender);
 	}
 	template<typename SenderType>
 	PoolThread*	send(Exception& ex,const std::shared_ptr<SenderType>& pSender, PoolThread* pThread) {

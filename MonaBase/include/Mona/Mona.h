@@ -37,9 +37,7 @@ This file is a part of Mona.
 #define timegm _mkgmtime
 #define GMTIME(VALUE,RESULT) gmtime_s(&RESULT,&VALUE);
 #define LOCALTIME(VALUE,RESULT) localtime_s(&RESULT,&VALUE);
-#define STRERROR(CODE,ERROR) {ERROR.resize(100);strerror_s(&ERROR[0],(std::size_t)100,CODE);ERROR.resize(strlen(ERROR.c_str()));}
 #else
-#define STRERROR(CODE,ERROR) {ERROR.resize(100);strerror_r(CODE,&ERROR[0],100);ERROR.resize(strlen(ERROR.c_str()));}
 #define GMTIME(VALUE,RESULT) gmtime_r(&VALUE,&RESULT)
 #define LOCALTIME(VALUE,RESULT) localtime_r(&VALUE,&RESULT)
 #endif
@@ -298,6 +296,7 @@ public:
 };
 
 class NullableObject : virtual Object {
+protected:
 	bool _isNull;
 public:
 	NullableObject(bool isNull = false) : _isNull(isNull) {}

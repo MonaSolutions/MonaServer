@@ -30,14 +30,13 @@
 - Paralléliser les logs? (pour diminuer l'occupation du thread principale, du coup avec un threadpools dans Application, et le partager avec Mona::Server
 - FileSystem::UnpackPath & FileSystem::PackPath, vérifier leurs utilité!!
 - Vérifier les parametres de build des projets, et pourquoi mon projet console2 m averti pour les sprintf => _sprintf et pas Mona!
-- Supprimer onFailed event!
 - onServerConnection doit être disponible que sur la root application, et sur "error" doit rejeter la connection serveur
 startt
 shared_ptr faire le tour pour vérifier les const!
 DataWriter::writeString
 DataReader::readString
-Refactoriser UDPProtocol?
 - Elminer tous les constructeurs de délégation
 - Protéger les accès âralleles aux variables d'instances de Logs
 - Check que un LUa object publication create with cumulus::publish closes on nil assignation
-- Utiliser les PoolBuffer non pas que pour la réception mais pour lenvoi aussi. Par la même, remplacer les classes BinaryStream et MemoryStream par quelque chose de plus rapide!
+
+- Implements Proactor sockets models for windows, and use "splice" for linux socket

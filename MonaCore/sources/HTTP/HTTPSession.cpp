@@ -100,11 +100,11 @@ void HTTPSession::packetHandler(PacketReader& reader) {
 	}
 
 	////  fill peers infos
-	(string&)peer.serverAddress = pPacket->serverAddress;
-	peer.setNumber("HTTPVersion", pPacket->version); // TODO check how is named for AMF
-	for (auto& it : pPacket->parameters)
-		peer.setString(it.first,it.second);
-	(string&)peer.path = pPacket->path;
+	peer.setPath(pPacket->path);
+	peer.setQuery(pPacket->query);
+	peer.setServerAddress(pPacket->serverAddress);
+	peer.properties().setNumber("HTTPVersion", pPacket->version); // TODO check how is named for AMF
+	Util::UnpackQuery(peer.query,peer.properties());
 	FilePath filePath(peer.path);
 	if (pPacket->filePos != string::npos)
 		((string&)peer.path).erase(pPacket->filePos - 1);
@@ -121,7 +121,7 @@ void HTTPSession::packetHandler(PacketReader& reader) {
 		if (String::ICompare(pPacket->upgrade,"websocket")==0) {
 			peer.onDisconnection();
 			_isWS=true;
-			peer.setString("protocol", "WebSocket");
+			((string&)this->peer.protocol) = "WebSocket";
 			((string&)protocol().name) = "WebSocket";
 
 			DataWriter& response = _writer.write("101 Switching Protocols", HTTP::CONTENT_ABSENT);
@@ -136,7 +136,7 @@ void HTTPSession::packetHandler(PacketReader& reader) {
 		} // TODO else
 	} else {
 
-		MapReader<MapParameters::Iterator> parameters(pPacket->parameters.begin(),pPacket->parameters.end());
+		MapReader<MapParameters::Iterator> parameters(peer.properties().begin(),peer.properties().end());
 
 		if (!peer.connected) {
 			_options.clear();
@@ -172,7 +172,7 @@ void HTTPSession::packetHandler(PacketReader& reader) {
 				// try to get a file if the client object had not method named like that
 				if (!methodCalled && !ex) {
 					parameters.reset();
-					if (peer.onRead(ex, filePath, parameters, pPacket->properties) && !ex) {
+					if (peer.onRead(ex, filePath, parameters, pPacket->parameters) && !ex) {
 						// If onRead has been authorised, and that the file is a multimedia file, and it doesn't exists (no VOD, filePath.lastModified()==0 means "doesn't exists")
 						// Subscribe for a live stream with the basename file as stream name
 						if (filePath.lastModified() == 0) {
@@ -196,8 +196,20 @@ void HTTPSession::packetHandler(PacketReader& reader) {
 							}
 								
 						}
-						if (!ex && !_pListener)
-							_writer.writeFile(filePath); // HTTP get
+						if (!ex && !_pListener) {
+							 // for the case of one folder displayed, search sort arguments
+							UInt8 sortOptions(HTTP::SORT_ASC);
+							 if (peer.properties().getString("N", invoker.buffer))
+								sortOptions |= HTTP::SORT_BY_NAME;
+							 else if (peer.properties().getString("M", invoker.buffer))
+								sortOptions |= HTTP::SORT_BY_MODIFIED;
+							 else if (peer.properties().getString("S", invoker.buffer))
+								sortOptions |= HTTP::SORT_BY_SIZE;
+							 if (invoker.buffer == "D")
+								 sortOptions |= HTTP::SORT_DESC;
+							 // HTTP get
+							_writer.writeFile(filePath,sortOptions);
+						}
 					}
 				}
 			}
@@ -209,8 +221,11 @@ void HTTPSession::packetHandler(PacketReader& reader) {
 					processSOAPfunction(ex, reader);
 			}
 			////////////  HTTP OPTIONS  ////////////// (it is due requested when Move Redirection is sent)
-			else if (pPacket->command == HTTP::COMMAND_OPTIONS)
+			else if (pPacket->command == HTTP::COMMAND_OPTIONS) {
 				processOptions(ex, pPacket);
+
+			} else
+				ex.set(Exception::PROTOCOL, "Unsupported command");
 
 
 		}
@@ -226,8 +241,7 @@ void HTTPSession::packetHandler(PacketReader& reader) {
 	// erase request, we are in a pull mode (response just if request before)
 	if (_writer.pRequest) {
 		// erase previous parameters
-		for (auto& it : _writer.pRequest->parameters)
-			peer.erase(it.first);
+		peer.properties().clear();
 		// erase previous request
 		_writer.pRequest.reset();
 	}
@@ -255,10 +269,10 @@ void HTTPSession::processOptions(Exception& ex,const shared_ptr<HTTPPacket>& pPa
 	BinaryWriter& writer = response.packet;
 
 	// TODO determine the protocol (https/http)
-	String::Format(_buffer, "http://", peer.serverAddress);
+	String::Format(invoker.buffer, "http://", peer.serverAddress);
 
 	HTTP_BEGIN_HEADER(writer)
-		HTTP_ADD_HEADER(writer,"Access-Control-Allow-Origin", _buffer)
+		HTTP_ADD_HEADER(writer,"Access-Control-Allow-Origin", invoker.buffer)
 		HTTP_ADD_HEADER(writer,"Access-Control-Allow-Methods", "GET, HEAD, PUT, PATH, POST, OPTIONS")
 		HTTP_ADD_HEADER(writer,"Access-Control-Allow-Headers", "Content-Type")
 	HTTP_END_HEADER(writer)

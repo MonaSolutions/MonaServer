@@ -247,6 +247,9 @@
     <ClInclude Include="include\Mona\SDP.h">
       <Filter>Protocols\Shared</Filter>
     </ClInclude>
+    <ClInclude Include="include\Mona\MediaCodec.h">
+      <Filter>Multimedia</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="sources\Protocols.cpp">

@@ -104,6 +104,7 @@ public:
 	static const UInt32 DefaultTimeout;
 
 	enum CommandType {
+		COMMAND_UNKNOWN = 0,
 		COMMAND_HEAD=1,
 		COMMAND_GET = 2,
 		COMMAND_PUSH = 4,
@@ -132,10 +133,18 @@ public:
 		CONNECTION_KEEPALIVE = 4
 	};
 
+	enum SortOption {
+		SORT_ASC = 0,
+		SORT_DESC = 1,
+		SORT_BY_NAME = 2,
+		SORT_BY_MODIFIED = 4,
+		SORT_BY_SIZE = 8
+	};
+
 	
-	static CommandType	ParseCommand(const char* value);
+	static CommandType	ParseCommand(Exception& ex,const char* value);
 	static ContentType	ParseContentType(const char* value,std::string& subType);
-	static UInt8		ParseConnection(const char* value);
+	static UInt8		ParseConnection(Exception& ex,const char* value);
 
 	static std::string&	FormatContentType(ContentType type,const std::string& subType,std::string& value);
 
@@ -144,7 +153,7 @@ public:
 	static std::string&	CodeToMessage(UInt16 code,std::string& message);
 
 	static DataWriter* NewDataWriter(const PoolBuffers& poolBuffers,const std::string& subType);
-	static void WriteDirectoryEntries(BinaryWriter& writer, const std::string& serverAddress, const std::string& path, const Files& entries,const MapParameters& parameters);
+	static void WriteDirectoryEntries(BinaryWriter& writer, const std::string& serverAddress, const std::string& path, const Files& entries,UInt8 sortOptions);
 	
 private:
 	static void WriteDirectoryEntry(BinaryWriter& writer, const std::string& serverAddress,const std::string& path,const FilePath& entry);

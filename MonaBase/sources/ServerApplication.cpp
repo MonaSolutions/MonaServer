@@ -19,7 +19,6 @@ This file is a part of Mona.
 
 
 #include "Mona/ServerApplication.h"
-#include "Mona/Logs.h"
 #include "Mona/Exceptions.h"
 #include "Mona/HelpFormatter.h"
 #if defined(_WIN32)
@@ -35,7 +34,7 @@ This file is a part of Mona.
 #include <sys/stat.h>
 #include <fstream>
 #endif
-
+#include "Mona/Logs.h"
 
 using namespace std;
 
@@ -90,7 +89,6 @@ public:
 	}
 
 };
-
 
 
 void ServerApplication::ServiceMain(DWORD argc, LPTSTR* argv) {
@@ -175,7 +173,6 @@ bool ServerApplication::isService() {
 	svcDispatchTable[1].lpServiceProc = NULL; 
 	return StartServiceCtrlDispatcherA(svcDispatchTable) != 0; 
 }
-
 
 bool ServerApplication::hasConsole() {
 	HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);

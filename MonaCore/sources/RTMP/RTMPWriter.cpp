@@ -26,7 +26,7 @@ using namespace std;
 
 namespace Mona {
 
-RTMPWriter::RTMPWriter(UInt32 id,StreamSocket& socket,const SocketAddress& address,const shared_ptr<RC4_KEY>& pEncryptKey) : _pEncryptKey(pEncryptKey), _address(address),id(id), _isMain(false), _pThread(NULL), _socket(socket) {
+RTMPWriter::RTMPWriter(UInt32 id,StreamSocket& socket,const SocketAddress& address,std::shared_ptr<RTMPSender>& pSender,const shared_ptr<RC4_KEY>& pEncryptKey) : _pSender(pSender),_pEncryptKey(pEncryptKey), _address(address),id(id), _isMain(false), _socket(socket) {
 	// TODO _qos.add
 }
 
@@ -48,12 +48,11 @@ void RTMPWriter::flush(bool full) {
 		return;
 	_pSender->dump(_channel,_address);
 	Exception ex;
-	if (_pSender->encrypted())
-		_pThread = _socket.send<RTMPSender>(ex, _pSender, _pThread);
-	else
-		_socket.send<RTMPSender>(ex, _pSender);
-	if (ex)
-		ERROR("RTMPWriter flush, ", ex.error())
+	if (_pEncryptKey)
+		RC4(_pEncryptKey.get(), _pSender->size(), _pSender->data(), (UInt8*)_pSender->data());
+	EXCEPTION_TO_LOG(_socket.send<RTMPSender>(ex, _pSender), "RTMPWriter flush")
+		
+	
 	_pSender.reset(); // release the shared buffer (poolBuffer of AMWriter)
 }
 
@@ -114,7 +113,7 @@ AMFWriter& RTMPWriter::write(AMF::ContentType type,UInt32 time,PacketReader* pDa
 	_channel.type = type;
 
 	if (!_pSender)
-		_pSender.reset(new RTMPSender(_socket.poolBuffers(),_pEncryptKey));
+		_pSender.reset(new RTMPSender(_socket.poolBuffers()));
 
 	AMFWriter& writer = _pSender->writer(_channel);
 	BinaryWriter& data = writer.packet;

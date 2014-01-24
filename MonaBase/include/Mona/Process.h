@@ -20,18 +20,15 @@ This file is a part of Mona.
 #pragma once
 
 #include "Mona/Mona.h"
-#if defined(_WIN32)
-#include "Windows.h"
-#endif
 
 namespace Mona {
 
 class Process : virtual Static {
 public:
 #if defined(_WIN32)
-	static int Id() { return GetCurrentProcessId(); }
+	static int Id();
 #else
-	static pid_t Id() { return getpid(); }
+	static pid_t Id();
 #endif
 };
 

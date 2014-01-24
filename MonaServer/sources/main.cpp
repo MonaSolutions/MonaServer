@@ -31,15 +31,16 @@ private:
 
 ///// MAIN
 	int main(TerminateSignal& terminateSignal) {
+		
 		// starts the server
 		UInt16 threads(0),serversPort(0);
-		UInt32 bufferSize(0);
-		getNumber("bufferSize", bufferSize);
+		UInt32 socketBufferSize(0);
+		getNumber("socketBufferSize", socketBufferSize);
 		getNumber("threads", threads);
 		string serversTargets;
 		getNumber("servers.port", serversPort);
 		getString("servers.targets", serversTargets);
-		MonaServer server(terminateSignal, bufferSize, threads, serversPort, serversTargets);
+		MonaServer server(terminateSignal, socketBufferSize, threads, serversPort, serversTargets);
 		if (server.start(*this)) {
 			terminateSignal.wait();
 			// Stop the server

@@ -41,8 +41,7 @@ void QualityOfService::add(UInt32 ping,UInt32 size,UInt32 success,UInt32 lost) {
 	_num += lost;
 	_den += (lost+success);
 	_size += size;
-	
-	deque<Sample>::iterator it=_samples.begin();
+
 	while(!_samples.empty()) {
 		Sample& sample(_samples.front());
 		if(!sample.time.isElapsed(5000000)) // 5 secondes

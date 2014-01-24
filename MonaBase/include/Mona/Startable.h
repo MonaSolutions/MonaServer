@@ -22,9 +22,6 @@ This file is a part of Mona.
 #include "Mona/Exceptions.h"
 #include "Mona/Event.h"
 #include <thread>
-#if defined(_WIN32)
-#include <windows.h>
-#endif
 
 
 namespace Mona {
@@ -34,19 +31,11 @@ namespace Mona {
 class Startable : virtual Object {
 public:
 	enum Priority {
-#if defined(_WIN32)
-		PRIORITY_LOWEST = THREAD_PRIORITY_LOWEST,
-		PRIORITY_LOW = THREAD_PRIORITY_BELOW_NORMAL,
-		PRIORITY_NORMAL = THREAD_PRIORITY_NORMAL,
-		PRIORITY_HIGH = THREAD_PRIORITY_ABOVE_NORMAL,
-		PRIORITY_HIGHEST = THREAD_PRIORITY_HIGHEST
-#else
 		PRIORITY_LOWEST=0,
 		PRIORITY_LOW,
 		PRIORITY_NORMAL,
 		PRIORITY_HIGH,
 		PRIORITY_HIGHEST
-#endif
 	};
 
 	enum WakeUpType {

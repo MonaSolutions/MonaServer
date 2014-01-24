@@ -34,7 +34,7 @@ public:
 	SocketAddress			address;
 private:
 	UInt32					send(Exception& ex, Socket& socket, const UInt8* data, UInt32 size) {
-		return address == SocketAddress::Wildcard() ? ((DatagramSocket&)socket).sendBytes(ex, data, size) : ((DatagramSocket&)socket).sendTo(ex, data, size, address);
+		return address ? ((DatagramSocket&)socket).sendTo(ex, data, size, address) : ((DatagramSocket&)socket).sendBytes(ex, data, size);
 	}
 
 };

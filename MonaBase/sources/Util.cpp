@@ -23,6 +23,7 @@ This file is a part of Mona.
 #include "Mona/Time.h"
 #include <fstream>
 
+
 #if !defined(_WIN32)
 extern "C" char **environ; // TODO test it on linux!
 #endif
@@ -92,9 +93,11 @@ const MapParameters& Util::Environment() {
 }
 
 
-// TODO check unitest
-size_t Util::UnpackUrl(const string& url, string& address, string& path, Parameters& properties) {
+size_t Util::UnpackUrl(const string& url, string& address, string& path, string& query) {
 	
+	path.clear();
+	query.clear();
+
 	auto it = url.begin();
 	auto& end = url.end();
 	while (it != end) {
@@ -117,18 +120,15 @@ size_t Util::UnpackUrl(const string& url, string& address, string& path, Paramet
 		++it;
 	}
 
-	path.clear();
-
 	// Normalize path => replace // by / and \ by / AND remove the last '/'
 	path.assign(it,end);
 	bool isFile(false);
     auto itPath(path.begin());
 	auto itField(itPath);
-	string query;
     while (itPath != path.end()) {
         if (*itPath == '?') {
 			// query
-            UnpackQuery(string(++itPath, path.end()),properties);
+			query.assign(++itPath,path.end());
 			// remove query part from path
 			path.resize(path.size()-(path.end()-itPath)-1);
 			// remove last slashes
@@ -139,7 +139,7 @@ size_t Util::UnpackUrl(const string& url, string& address, string& path, Paramet
         if (*itPath == '/' || *itPath == '\\') {
             ++itPath;
             while (itPath != path.end() && (*itPath == '/' || *itPath == '\\'))
-                path.erase(itPath); // erase multiple slashes
+                itPath = path.erase(itPath); // erase multiple slashes
            if (itPath == path.end()) {
 				// remove the last /
                 path.erase(--itPath);
@@ -153,13 +153,11 @@ size_t Util::UnpackUrl(const string& url, string& address, string& path, Paramet
 	return isFile ? (itField-path.begin()) : string::npos;
 }
 
-// TODO check unitest
-void Util::UnpackQuery(const string& query, Parameters& properties) {
 
-	string myQuery(query);
+Parameters& Util::UnpackQuery(const string& query, Parameters& properties) {
 
-	string::iterator it = myQuery.begin();
-	auto& end = myQuery.end();
+	auto it = query.begin();
+	auto& end = query.end();
 	while (it != end) {
 
 		// name
@@ -167,10 +165,13 @@ void Util::UnpackQuery(const string& query, Parameters& properties) {
 		auto itEnd(it);
 		while (itEnd != end && *itEnd != '=' && *itEnd != '&') {
 			if (*itEnd == '+')
-				*itEnd = ' ';
+				name += ' ';
+			else if (*itEnd == '%')
+				name += DecodeURI(itEnd,end);
+			else
+				name += *itEnd;
 			++itEnd;
 		};
-		name.assign(it, itEnd);
 		it = itEnd;
 		string value;
 		if (it!=end && *it != '&') { // if it's '='
@@ -179,52 +180,47 @@ void Util::UnpackQuery(const string& query, Parameters& properties) {
 			auto itEnd(it);
 			while (itEnd != end && *itEnd != '&') {
 				if (*itEnd == '+')
-					*itEnd = ' ';
+					value += ' ';
+				else if (*itEnd == '%')
+					value += DecodeURI(itEnd,end);
+				else
+					value += *itEnd;
 				++itEnd;
 			};
-			value.assign(it, itEnd);
 			if (itEnd != end) // if it's '&'
 				++itEnd;
 			it = itEnd;
 		}
-		properties.setString(DecodeURI(name), DecodeURI(value));
+		properties.setString(name,value);
 	}
+	return properties;
 }
 
-// TODO check unitest
-string& Util::DecodeURI(string& uri) {
-	auto it = uri.begin();
-	auto& end = uri.end();
-	while (it != end) {
-		char c = *it++;
-		if (c != '%' || it == end)
-			continue;
-		auto itDecode(it);
-		char hi = *it++;
-		if (it == end)
-			return uri;
-		char lo = *it++;
-		if (hi >= '0' && hi <= '9')
-			c = hi - '0';
-		else if (hi >= 'A' && hi <= 'F')
-			c = hi - 'A' + 10;
-		else if (hi >= 'a' && hi <= 'f')
-			c = hi - 'a' + 10;
-		else
-			return uri; // syntax error
-		c *= 16;
-		if (lo >= '0' && lo <= '9')
-			c += lo - '0';
-		else if (lo >= 'A' && lo <= 'F')
-			c += lo - 'A' + 10;
-		else if (lo >= 'a' && lo <= 'f')
-			c += lo - 'a' + 10;
-		else
-			return uri; // syntax error
-		*itDecode = c;
-		uri.erase(++itDecode, it);
-	}
-	return uri;
+char Util::DecodeURI(const string::const_iterator& it,const string::const_iterator& end) {
+	auto itURI(it);
+	char hi = *itURI++;
+	if (it == end)
+		return '%'; // syntax error
+	char lo = *it;
+	char c;
+	if (hi >= '0' && hi <= '9')
+		c = hi - '0';
+	else if (hi >= 'A' && hi <= 'F')
+		c = hi - 'A' + 10;
+	else if (hi >= 'a' && hi <= 'f')
+		c = hi - 'a' + 10;
+	else
+		return '%'; // syntax error
+	c *= 16;
+	if (lo >= '0' && lo <= '9')
+		c += lo - '0';
+	else if (lo >= 'A' && lo <= 'F')
+		c += lo - 'A' + 10;
+	else if (lo >= 'a' && lo <= 'f')
+		c += lo - 'a' + 10;
+	else
+		return '%'; // syntax error
+	return c;
 }
 
 
@@ -276,13 +272,17 @@ void Util::Dump(const UInt8* in,UInt32 size,Buffer& out,const string& header) {
 
 
 bool Util::ReadIniFile(Exception& ex,const string& path,Parameters& parameters) {
-	ifstream istr(path, ios::in | ios::binary | ios::ate);
-	if (!istr.good()) {
+	ifstream ifile(path, ios::in | ios::binary | ios::ate);
+	if (!ifile.good()) {
 		ex.set(Exception::FILE, "Impossible to open ", path, " file");
 		return false;
 	}
-	UInt32 size = (UInt32)istr.tellg();
-	Buffer buffer(size);
+	UInt32 size = (UInt32)ifile.tellg();
+	if (size == 0)
+		return true;
+	vector<char> buffer(size);
+	ifile.seekg(0);
+	ifile.read(buffer.data(), size);
 	UInt32 i(0);
 	string section;
 	while (i<size) {
@@ -290,7 +290,7 @@ bool Util::ReadIniFile(Exception& ex,const string& path,Parameters& parameters) 
 		do {
 			c = buffer[i++];
 		} while (isspace(c) && i < size);
-		if (i<size)
+		if (i==size)
 			return true;
 		if (c == ';') {
 			while (c != '\n' && i<size)
@@ -300,16 +300,14 @@ bool Util::ReadIniFile(Exception& ex,const string& path,Parameters& parameters) 
 			do {
 				c = buffer[i++];
 			} while (isblank(c) && i < size);
-			while (i<size && c != ']' && c != '\n') {
+			do {
 				section += c;
+				if (i == size)
+					break;
 				c = buffer[i++];
-			}
-			String::Trim(section, String::TRIM_RIGHT);
+			} while (c != ']' && c != '\n');
 		} else {
 			string key;
-			do {
-				c = buffer[i++];
-			} while (isblank(c) && i < size);
 			while (i < size && c != '=' && c != '\n') {
 				key += c;
 				c = buffer[i++];
@@ -319,12 +317,14 @@ bool Util::ReadIniFile(Exception& ex,const string& path,Parameters& parameters) 
 				do {
 					c = buffer[i++];
 				} while (isblank(c) && i < size);
-				while (i < size && c != '\n') {
+				do {
 					value += c;
+					if (i == size)
+						break;
 					c = buffer[i++];
-				}
+				} while (c != '\n');
 			}
-			string fullKey = section;
+			string fullKey(String::Trim(section, String::TRIM_RIGHT));
 			if (!fullKey.empty())
 				fullKey += '.';
 			fullKey.append(String::Trim(key, String::TRIM_RIGHT));
@@ -346,17 +346,32 @@ UInt8* Util::UnformatHex(UInt8* data,UInt32& size) {
 	return data;
 }
 
-string& Util::FormatHex(const UInt8* data, UInt32 size, string& result) {
-	result.clear();
-	for (int i = 0; i < size; ++i)
-		String::Append(result, Format<UInt8>("%.2X", data[i]));
-	return result;
-}
-
-string& Util::FormatHexCpp(const UInt8* data, UInt32 size, string& result) {
-	result.clear();
-	for (int i = 0; i < size; ++i)
-		String::Append(result, Format<UInt8>("\\x%.2X", data[i]));
+string& Util::AppendHex(const UInt8* data, UInt32 size, string& result,UInt8 options) {
+	static UInt32 Distance('A'-'9'-1); // = 7 in ASCII
+	UInt32 i = 0;
+	bool skipLeft(false);
+	if (options&HEX_TRIM_LEFT) {
+		for (i; i < size; ++i) {
+			if ((data[i] >> 4)>0)
+				break;
+			if ((data[i] & 0x0F) > 0) {
+				skipLeft = true;
+				break;
+			}
+		}
+	}
+	UInt8 value;
+	for (i; i < size; ++i) {
+		if (options&HEX_CPP)
+			result.append("\\x");
+		value = data[i] >> 4;
+		if (!skipLeft)
+			result.append(1,value>9 ? ('0' + value + Distance) : '0' + value);
+		else
+			skipLeft = false;
+		value = data[i] & 0x0F;
+		result.append(1,value>9 ? ('0' + value + Distance) : '0' + value);
+	}
 	return result;
 }
 

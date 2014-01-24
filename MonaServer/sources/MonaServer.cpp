@@ -18,8 +18,6 @@ This file is a part of Mona.
 */
 
 #include "MonaServer.h"
-#include "Mona/Exceptions.h"
-#include "Mona/FileSystem.h"
 #include "LUAClient.h"
 #include "LUAPublication.h"
 #include "LUAListener.h"
@@ -29,9 +27,9 @@ This file is a part of Mona.
 #include "LUABroadcaster.h"
 #include "LUADataTable.h"
 
-#define CONFIG_NUMBER(NAME)  parameters.getNumber(#NAME,(double&)params.NAME);parameters.setNumber(#NAME,(double&)params.NAME);
+#define CONFIG_NUMBER(NAME)  parameters.getNumber(#NAME,params.NAME);parameters.setNumber(#NAME,params.NAME);
 
-#define CONFIG_PROTOCOL_NUMBER(PROTOCOL,NAME) parameters.getNumber(#PROTOCOL"."#NAME,(double&)params.PROTOCOL.NAME);parameters.setNumber(#PROTOCOL"."#NAME,(double&)params.PROTOCOL.NAME);if(#NAME=="port" && params.PROTOCOL.NAME>0) _ports[#PROTOCOL] = params.PROTOCOL.NAME;
+#define CONFIG_PROTOCOL_NUMBER(PROTOCOL,NAME) parameters.getNumber(#PROTOCOL"."#NAME,params.PROTOCOL.NAME);parameters.setNumber(#PROTOCOL"."#NAME,params.PROTOCOL.NAME);if(#NAME=="port" && params.PROTOCOL.NAME>0) _ports[#PROTOCOL] = params.PROTOCOL.NAME;
 
 using namespace std;
 using namespace Mona;
@@ -40,8 +38,8 @@ using namespace Mona;
 const string MonaServer::WWWPath("./");
 const string MonaServer::DataPath("./");
 
-MonaServer::MonaServer(TerminateSignal& terminateSignal, UInt32 bufferSize, UInt16 threads, UInt16 serversPort, const string& serversTarget) :
-Server(bufferSize, threads), servers(serversPort, *this, sockets, serversTarget), _data(this->poolBuffers),_terminateSignal(terminateSignal) {
+MonaServer::MonaServer(TerminateSignal& terminateSignal, UInt32 socketBufferSize, UInt16 threads, UInt16 serversPort, const string& serversTarget) :
+	Server(socketBufferSize, threads), servers(serversPort, *this, sockets, serversTarget), _firstData(true),_data(this->poolBuffers),_terminateSignal(terminateSignal) {
 }
 
 
@@ -163,12 +161,12 @@ void MonaServer::onStart() {
 
 	// load database
 	Exception ex;
-	INFO("Database loading...")
-	_data.load(ex, DataPath, *this,true);
-	if (ex)
-		ERROR("Error on database loading, ", ex)
-	else
+	_firstData = true;
+	if (_data.load(ex, DataPath, *this, true)) {
+		if (ex)
+			ERROR("Error on database loading, ", ex)
 		NOTE("Database loaded")
+	}
 	
 	// start servers
 	servers.start();
@@ -179,6 +177,10 @@ void MonaServer::onStart() {
 
 
 void MonaServer::onDataLoading(const string& path, const char* value, UInt32 size) {
+	if (_firstData) {
+		INFO("Database loading...")
+		_firstData = false;
+	}
 	if (!_pState) {
 		ERROR("Loading database useless, no recipient")
 		return;
@@ -323,10 +325,10 @@ EX:
 
 
 lua_State* MonaServer::openService(const Client& client) {
-	double ptr = 0;
-	if (!client.getNumber("&Service", ptr))
+	Expirable<Service>* pExpirableService = client.getUserData<Expirable<Service>>();
+	if (!pExpirableService)
 		return NULL;
-	Service* pService = reinterpret_cast<Expirable<Service>*>(static_cast<unsigned>(ptr))->unsafeThis();
+	Service* pService = pExpirableService->unsafeThis();
 	if (pService)
 		return pService->open();
 	return NULL;
@@ -414,9 +416,7 @@ void MonaServer::onConnection(Exception& ex, Client& client,DataReader& paramete
 		LUAInvoker::AddClient(_pState,*this,client,1);
 		lua_pop(_pState, 1); // remove Script::AddObject<Client .. (see above)
 		// connection accepted
-		Expirable<Service>* pExpirableService = new Expirable<Service>();
-		expirableService.shareThis(*pExpirableService);
-		client.setNumber("&Service", (double)reinterpret_cast<unsigned>(pExpirableService));
+		expirableService.shareThis(client.setUserData<Expirable<Service>>(*new Expirable<Service>()));
 		return;
 	}
 	// connection failed
@@ -426,10 +426,9 @@ void MonaServer::onConnection(Exception& ex, Client& client,DataReader& paramete
 }
 
 void MonaServer::onDisconnection(const Client& client) {
-	double ptr = 0;
-	if (!client.getNumber("&Service", ptr))
+	Expirable<Service>* pExpirableService = client.getUserData<Expirable<Service>>();
+	if (!pExpirableService)
 		return;
-	Expirable<Service>* pExpirableService = reinterpret_cast<Expirable<Service>*>(static_cast<unsigned>(ptr));
 	Service* pService = pExpirableService->unsafeThis();
 	if (pService) {
 		SCRIPT_BEGIN(pService->open())
@@ -478,10 +477,10 @@ bool MonaServer::onRead(Exception& ex, Client& client,FilePath& filePath,DataRea
 					result=false;
 					SCRIPT_READ_NIL
 				} else {
-					_buffer.assign(filePath.name());
-					SCRIPT_READ_STRING(_buffer);
-					if (!_buffer.empty()) // to avoid for root app to give "/" instead of ""
-						filePath.set(client.path,"/",_buffer);
+					buffer.assign(filePath.name());
+					SCRIPT_READ_STRING(buffer);
+					if (!buffer.empty()) // to avoid for root app to give "/" instead of ""
+						filePath.set(client.path,"/",buffer);
 				}
 				if(SCRIPT_NEXT_TYPE==LUA_TTABLE) {
 					lua_pushnil(_pState);  // first key 

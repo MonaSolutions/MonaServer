@@ -38,7 +38,7 @@ TCPClient::~TCPClient() {
 }
 
 const SocketAddress& TCPClient::address() {
-	if (!_address.host().isWildcard())
+	if (_address)
 		return _address;
 	Exception ex;
 	StreamSocket::address(ex, _address);
@@ -48,7 +48,7 @@ const SocketAddress& TCPClient::address() {
 }
 
 const SocketAddress& TCPClient::peerAddress() {
-	if (!_peerAddress.host().isWildcard())
+	if (_peerAddress)
 		return _peerAddress;
 	Exception ex;
 	StreamSocket::peerAddress(ex, _peerAddress);
@@ -83,6 +83,8 @@ void TCPClient::onReadable(Exception& ex) {
 	_pBuffer->resize(_rest,true);
 
 	while (_rest > 0) {
+
+		UInt16 port = address().port();
 
 		UInt32 rest = onReception(_pBuffer->data(),_rest);
 
@@ -120,8 +122,8 @@ void TCPClient::disconnect() {
 	close();
 	_rest = 0;
 	_pBuffer.release();
-	_address.clear();
-	_peerAddress.clear();
+	_address.reset();
+	_peerAddress.reset();
 	onDisconnection();
 }
 
@@ -129,8 +131,7 @@ bool TCPClient::send(Exception& ex,const UInt8* data,UInt32 size) {
 	if(size==0)
 		return true;
 	shared_ptr<TCPSender> pSender(new TCPSender("TCPClient::send",data, size));
-	StreamSocket::send(ex, pSender);
-	return !ex;
+	return StreamSocket::send(ex, pSender);
 }
 
 } // namespace Mona

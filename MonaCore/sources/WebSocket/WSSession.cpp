@@ -161,7 +161,7 @@ void WSSession::packetHandler(PacketReader& packet) {
 				_writer.writePong(packet.current(),packet.available());
 				break;
 			case WS::TYPE_PONG:
-				_writer.ping = (UInt16&)peer.ping = (UInt16)(_time.elapsed()/1000);
+				peer.setPing(_writer.ping = (UInt16)(_time.elapsed()/1000));
 				break;
 			default:
 				ex.set(Exception::PROTOCOL, Format<UInt8>("Type %#x unknown", type), WS::CODE_MALFORMED_PAYLOAD);

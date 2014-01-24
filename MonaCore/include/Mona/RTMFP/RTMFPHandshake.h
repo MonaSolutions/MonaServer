@@ -41,7 +41,6 @@ public:
 	RTMFPHandshake(RTMFProtocol& protocol, Sessions& sessions, Invoker& invoker);
 	virtual ~RTMFPHandshake();
 
-	bool			createCookie(Exception& ex, PacketWriter& packet, HelloAttempt& attempt, const std::string& tag, const std::string& queryUrl);
 	void			commitCookie(const UInt8* value);
 	void			manage();
 	void			clear();
@@ -63,7 +62,7 @@ private:
 	std::map<const UInt8*,RTMFPCookie*,CompareCookies>  _cookies; // RTMFPCookie, in waiting of creation session
 	UInt8												_certificat[77];
 	Sessions&											_sessions;
-	std::string											_buffer;
+	std::shared_ptr<Peer>								_pPeer;
 };
 
 

@@ -24,12 +24,13 @@ using namespace std;
 using namespace Mona;
 
 
-ADD_TEST(SocketAddress, Test) {
-	
+
+ADD_DEBUG_TEST(SocketAddressTest, Behavior) {
 	
 	SocketAddress sa;
 	Exception ex;
 
+	CHECK(!sa);
 	CHECK(sa.host().isWildcard());
 	CHECK(sa.port() == 0);
 
@@ -53,11 +54,10 @@ ADD_TEST(SocketAddress, Test) {
 
 	ex.set(Exception::NIL, "");
 
-	sa.setWithDNS(ex,"www.appinf.com", 80);
-	CHECK(sa.host().toString() == "50.57.108.29");
-	CHECK(sa.port() == 80);
-
-	CHECK(!ex);
+	DEBUG_CHECK(sa.setWithDNS(ex,"www.appinf.com", 80));
+	DEBUG_CHECK(sa.host().toString() == "50.57.108.29");
+	DEBUG_CHECK(sa.port() == 80);
+	DEBUG_CHECK(!ex);
 
 	sa.set(ex,"192.168.2.260", 80);
 
@@ -101,3 +101,23 @@ ADD_TEST(SocketAddress, Test) {
 	CHECK(!ex);
 }
 
+ADD_TEST(SocketAddressTest, ToString) {
+	// toString performance (for loop test)
+	SocketAddress sa;
+	sa.toString();
+}
+
+ADD_TEST(SocketAddressTest, ParsePerformance) {
+	// Parse performance (for loop test)
+	SocketAddress sa;
+	Exception ex;
+	sa.set(ex,"192.168.1.100",100);
+}
+
+ADD_TEST(SocketAddressTest, ComparaisonPerformance) {
+	// Comparaison performance (for loop test)
+	SocketAddress sa;
+	SocketAddress sa2(sa);
+	if (sa < sa2)
+		CHECK(false)
+}

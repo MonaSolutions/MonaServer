@@ -22,10 +22,9 @@ This file is a part of Mona.
 #include "Mona/Mona.h"
 #include "Mona/PoolBuffer.h"
 #include "Mona/Time.h"
-#include "Mona/MapParameters.h"
 #include "Mona/MapWriter.h"
 #include "Mona/HTTP/HTTP.h"
-#include <deque>
+
 
 namespace Mona {
 
@@ -34,38 +33,38 @@ public:
 
 	HTTPPacket(PoolBuffer& pBuffer);
 
-	std::deque<const char*>		headers;
+	std::vector<const char*>	headers;
 	const UInt8*				content;
 	UInt32						contentLength;
 	HTTP::ContentType			contentType;
 	std::string					contentSubType;
 
-	
 	HTTP::CommandType			command;
 	std::string					path;
-	std::size_t					filePos;
-	MapParameters				parameters;
+	std::string					query;
+	std::string					serverAddress;
 	float						version;
+	std::size_t					filePos;
 
 	UInt8						connection;
 	std::string					upgrade;
 	UInt8						cacheControl;
-	std::string					serverAddress;
+	
 	Time						ifModifiedSince;
 	UInt8						accessControlRequestMethod;
 
 	std::string					secWebsocketKey;
 	std::string					secWebsocketAccept;
 
-	MapWriter<std::map<std::string,std::string>>	properties;
-
+	MapWriter<std::map<std::string,std::string>>	parameters; // For onRead returned value (return file,parameters)
+	
 	const PoolBuffers&			poolBuffers() { return _pBuffer.poolBuffers; }
 
 
-	const UInt8*				build(PoolBuffer& pBuffer,const UInt8* data,UInt32& size);
+	const UInt8*				build(Exception& ex,PoolBuffer& pBuffer,const UInt8* data,UInt32& size);
 
 private:
-	void parseHeader(const char* key, const char* value);
+	void parseHeader(Exception& ex,const char* key, const char* value);
 
 	// for header
 	enum ReadingStep {

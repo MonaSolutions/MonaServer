@@ -18,8 +18,7 @@ This file is a part of Mona.
 */
 
 #include "Mona/RTMFP/RTMFP.h"
-#include <openssl/hmac.h>
-#include <math.h>
+#include "Mona/Crypto.h"
 
 
 using namespace std;
@@ -27,50 +26,31 @@ using namespace std;
 
 namespace Mona {
 
-#define RTMFP_KEY_SIZE	0x20
+
+const shared_ptr<RTMFPKey>	RTMFPEngine::_pDefaultKey(new RTMFPKey(RTMFP_DEFAULT_KEY));
+RTMFPEngine RTMFPEngine::_DefaultDecrypt(_pDefaultKey,DECRYPT);
+RTMFPEngine RTMFPEngine::_DefaultEncrypt(_pDefaultKey,ENCRYPT);
 
 
-RTMFPEngine RTMFPEngine::_DefaultDecrypt(RTMFP_SYMETRIC_KEY,RTMFPEngine::DECRYPT);
-RTMFPEngine RTMFPEngine::_DefaultEncrypt(RTMFP_SYMETRIC_KEY,RTMFPEngine::ENCRYPT);
-
-RTMFPEngine::RTMFPEngine() : type(EMPTY),_direction(DECRYPT) {
+RTMFPEngine::RTMFPEngine(const std::shared_ptr<RTMFPKey>& pKey,Direction direction) : type(NORMAL),_direction(direction),_pKey(pKey) {
+	EVP_CIPHER_CTX_init(&_context);
 }
 
-RTMFPEngine::RTMFPEngine(const UInt8* key,Direction direction) : type(key ? DEFAULT : EMPTY),_direction(direction) {
-	if(!key)
-		return;
-	if(_direction==DECRYPT)
-		AES_set_decrypt_key(key, 0x80,&_key);
-	else
-		AES_set_encrypt_key(key, 0x80,&_key);
+RTMFPEngine::~RTMFPEngine() {
+	EVP_CIPHER_CTX_cleanup(&_context);
 }
 
-RTMFPEngine::RTMFPEngine(const RTMFPEngine& engine,Type type) : type(engine.type==EMPTY ? EMPTY : type),_key(engine._key),_direction(engine._direction) {
-}
-
-RTMFPEngine::RTMFPEngine(const RTMFPEngine& engine) : type(engine.type),_key(engine._key),_direction(engine._direction) {
-}
-
-void RTMFPEngine::set(const RTMFPEngine& engine,Type type) {
-	(Type&)this->type = type;
-	_key = engine._key;
-	_direction = engine._direction;
-}
-
-
-void RTMFPEngine::process(const UInt8* in,UInt8* out,UInt32 size) {
-	if(type==EMPTY)
-		return;
-	if(type==SYMMETRIC) {
+void RTMFPEngine::process(const UInt8* in,UInt8* out,int size) {
+	if(type==DEFAULT) {
 		if(_direction==DECRYPT)
 			_DefaultDecrypt.process(in,out,size);
 		else
 			_DefaultEncrypt.process(in,out,size);
 		return;
 	}
-	UInt8	iv[RTMFP_KEY_SIZE];
-	memset(iv,0,sizeof(iv));
-	AES_cbc_encrypt(in, out,size,&_key,iv, _direction);
+	static UInt8 IV[RTMFP_KEY_SIZE];
+	EVP_CipherInit_ex(&_context, EVP_aes_128_cbc(), NULL, _pKey->value(), IV,_direction);
+	EVP_CipherUpdate(&_context, out, &size, in, size);
 }
 
 
@@ -108,16 +88,12 @@ bool RTMFP::ReadCRC(PacketReader& packet) {
 
 
 void RTMFP::Encode(RTMFPEngine& aesEncrypt,PacketWriter& packet) {
-	if(aesEncrypt.type != RTMFPEngine::EMPTY) {
-		// paddingBytesLength=(0xffffffff-plainRequestLength+5)&0x0F
-		int paddingBytesLength = (0xFFFFFFFF-packet.size()+5)&0x0F;
-		// Padd the plain request with paddingBytesLength of value 0xff at the end
-		while (paddingBytesLength-->0)
-			packet.write8(0xFF);
-	}
-
+	// paddingBytesLength=(0xffffffff-plainRequestLength+5)&0x0F
+	int paddingBytesLength = (0xFFFFFFFF-packet.size()+5)&0x0F;
+	// Padd the plain request with paddingBytesLength of value 0xff at the end
+	while (paddingBytesLength-->0)
+		packet.write8(0xFF);
 	WriteCRC(packet);
-	
 	// Encrypt the resulted request
 	aesEncrypt.process(packet.data()+4,(UInt8*)packet.data()+4,packet.size()-4);
 }
@@ -151,15 +127,16 @@ void RTMFP::ComputeAsymetricKeys(const Buffer& sharedSecret, const UInt8* initia
 														    UInt8* requestKey,UInt8* responseKey) {
 	UInt8 mdp1[HMAC_KEY_SIZE];
 	UInt8 mdp2[HMAC_KEY_SIZE];
+	Crypto crypto;
 
 	// doing HMAC-SHA256 of one side
-	HMAC(EVP_sha256(),responderNonce,respNonceSize,initiatorNonce,initNonceSize,mdp1,NULL);
+	crypto.hmac(EVP_sha256(),responderNonce,respNonceSize,initiatorNonce,initNonceSize,mdp1);
 	// doing HMAC-SHA256 of the other side
-	HMAC(EVP_sha256(),initiatorNonce,initNonceSize,responderNonce,respNonceSize,mdp2,NULL);
+	crypto.hmac(EVP_sha256(),initiatorNonce,initNonceSize,responderNonce,respNonceSize,mdp2);
 
 	// now doing HMAC-sha256 of both result with the shared secret DH key
-	HMAC(EVP_sha256(),sharedSecret.data(),sharedSecret.size(),mdp1,HMAC_KEY_SIZE,requestKey,NULL);
-	HMAC(EVP_sha256(),sharedSecret.data(),sharedSecret.size(),mdp2,HMAC_KEY_SIZE,responseKey,NULL);
+	crypto.hmac(EVP_sha256(),sharedSecret.data(),sharedSecret.size(),mdp1,HMAC_KEY_SIZE,requestKey);
+	crypto.hmac(EVP_sha256(),sharedSecret.data(),sharedSecret.size(),mdp2,HMAC_KEY_SIZE,responseKey);
 }
 
 

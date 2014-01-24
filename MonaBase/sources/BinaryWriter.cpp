@@ -31,12 +31,12 @@ BinaryWriter::BinaryWriter(BinaryWriter& other,UInt32 offset) : _flipBytes(other
 }
 
 
-BinaryWriter::BinaryWriter(UInt8* buffer, UInt32 size,ByteOrder byteOrder) : _buffer(buffer,size) {
+BinaryWriter::BinaryWriter(UInt8* buffer, UInt32 size,Binary::Order byteOrder) : _buffer(buffer,size) {
 	_buffer.resize(0,true);
 #if defined(_ARCH_BIG_ENDIAN)
-	_flipBytes = byteOrder == LITTLE_ENDIAN;
+	_flipBytes = byteOrder == Binary::ORDER_LITTLE_ENDIAN;
 #else
-    _flipBytes = byteOrder == BIG_ENDIAN_ORDER;;
+    _flipBytes = byteOrder == Binary::ORDER_BIG_ENDIAN;;
 #endif
 }
 

@@ -27,7 +27,7 @@ namespace Mona {
 
 class RTMFPSender : public UDPSender, virtual Object {
 public:
-	RTMFPSender(const PoolBuffers& poolBuffers): UDPSender("RTMFPSender"),packet(poolBuffers),farId(0) {
+	RTMFPSender(const PoolBuffers& poolBuffers,const std::shared_ptr<RTMFPKey>& pEncryptKey): encoder(pEncryptKey,RTMFPEngine::ENCRYPT),UDPSender("RTMFPSender"),packet(poolBuffers),farId(0) {
 		packet.next(RTMFP_HEADER_SIZE);
 	}
 	

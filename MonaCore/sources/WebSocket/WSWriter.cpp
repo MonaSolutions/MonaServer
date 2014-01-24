@@ -73,9 +73,7 @@ void WSWriter::flush(bool full) {
 	Exception ex;
 	for (shared_ptr<WSSender>& pSender : _senders) {
 		Writer::DumpResponse(pSender->data(),pSender->size(),_address);
-		_socket.send<WSSender>(ex, pSender);
-		if (ex)
-			ERROR("WSSender flush, ",ex.error());
+		EXCEPTION_TO_LOG(_socket.send<WSSender>(ex, pSender), "WSSender flush");
 	}
 	_senders.clear();
 }

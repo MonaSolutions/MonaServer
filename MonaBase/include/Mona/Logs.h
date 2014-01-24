@@ -43,8 +43,8 @@ public:
 
 
 	template <typename ...Args>
-    static void	Log(Logger::Priority prio, const char* file, long line, Args&&... args) {
-		if (_Level < prio)
+    static void	Log(Logger::Level level, const char* file, long line, Args&&... args) {
+		if (_Level < level)
 			return;
 		std::string shortFile(file);
 		auto found = shortFile.find_last_of("\\/");
@@ -57,9 +57,9 @@ public:
 		std::string message;
 		String::Format(message, args ...);
 		if (_PLogger)
-            _PLogger->log(std::this_thread::get_id(), Util::GetThreadName(std::this_thread::get_id()), prio, file, shortFile, line, message);
+            _PLogger->log(std::this_thread::get_id(), Util::GetThreadName(std::this_thread::get_id()), level, file, shortFile, line, message);
 		else
-            _DefaultLogger.log(std::this_thread::get_id(), Util::GetThreadName(std::this_thread::get_id()), prio, file, shortFile, line, message);
+            _DefaultLogger.log(std::this_thread::get_id(), Util::GetThreadName(std::this_thread::get_id()), level, file, shortFile, line, message);
 	}
 
 	template <typename ...Args>
@@ -86,17 +86,19 @@ private:
 #undef ERROR
 #undef DEBUG
 #undef TRACE
-#define FATAL(...) { Mona::Logs::Log(Mona::Logger::PRIO_FATAL,__FILE__,__LINE__, __VA_ARGS__); }
-#define CRITIC(...) { Mona::Logs::Log(Mona::Logger::PRIO_CRITIC,__FILE__,__LINE__, __VA_ARGS__); }
-#define ERROR(...) { Mona::Logs::Log(Mona::Logger::PRIO_ERROR,__FILE__,__LINE__, __VA_ARGS__); }
-#define WARN(...) { Mona::Logs::Log(Mona::Logger::PRIO_WARN,__FILE__,__LINE__, __VA_ARGS__); }
-#define NOTE(...) { Mona::Logs::Log(Mona::Logger::PRIO_NOTE,__FILE__,__LINE__, __VA_ARGS__); }
-#define INFO(...) { Mona::Logs::Log(Mona::Logger::PRIO_INFO,__FILE__,__LINE__, __VA_ARGS__); }
-#define DEBUG(...) { Mona::Logs::Log(Mona::Logger::PRIO_DEBUG,__FILE__,__LINE__, __VA_ARGS__); }
-#define TRACE(...) { Mona::Logs::Log(Mona::Logger::PRIO_TRACE,__FILE__,__LINE__, __VA_ARGS__); }
+#define LOG(LEVEL,FILE,LINE,...) { if(Mona::Logs::GetLevel()>=LEVEL) Mona::Logs::Log(LEVEL,FILE,LINE, __VA_ARGS__); }
 
-#define DUMP_INTERN(...) { if(Mona::Logs::GetDump()&Mona::Logs::DUMP_INTERN) {Mona::Logs::Dump(__VA_ARGS__);} }
-#define DUMP(...) { if(Mona::Logs::GetDump()&Mona::Logs::DUMP_EXTERN) {Mona::Logs::Dump(__VA_ARGS__);} }
+#define FATAL(...)	LOG(Mona::Logger::LEVEL_FATAL,__FILE__,__LINE__, __VA_ARGS__)
+#define CRITIC(...) LOG(Mona::Logger::LEVEL_CRITIC,__FILE__,__LINE__, __VA_ARGS__)
+#define ERROR(...)	LOG(Mona::Logger::LEVEL_ERROR,__FILE__,__LINE__, __VA_ARGS__)
+#define WARN(...)	LOG(Mona::Logger::LEVEL_WARN,__FILE__,__LINE__, __VA_ARGS__)
+#define NOTE(...)	LOG(Mona::Logger::LEVEL_NOTE,__FILE__,__LINE__, __VA_ARGS__)
+#define INFO(...)	LOG(Mona::Logger::LEVEL_INFO,__FILE__,__LINE__, __VA_ARGS__)
+#define DEBUG(...)	LOG(Mona::Logger::LEVEL_DEBUG,__FILE__,__LINE__, __VA_ARGS__)
+#define TRACE(...)	LOG(Mona::Logger::LEVEL_TRACE,__FILE__,__LINE__, __VA_ARGS__)
+
+#define DUMP_INTERN(...) { if(Mona::Logs::GetDump()&Mona::Logs::DUMP_INTERN) Mona::Logs::Dump(__VA_ARGS__); }
+#define DUMP(...) { if(Mona::Logs::GetDump()&Mona::Logs::DUMP_EXTERN) Mona::Logs::Dump(__VA_ARGS__); }
 
 
 } // namespace Mona

@@ -21,9 +21,6 @@ This file is a part of Mona.
 
 #include "Mona/Mona.h"
 #include "Mona/Event.h"
-#if defined(_WIN32)
-#include "Windows.h"
-#endif
 
 namespace Mona {
 
@@ -36,7 +33,7 @@ public:
 protected:
     static Event			_Terminate;
 #if defined(_WIN32)
-	static BOOL __stdcall	ConsoleCtrlHandler(DWORD ctrlType);
+	static int __stdcall	ConsoleCtrlHandler(unsigned long ctrlType);
 #else
 	sigset_t				_signalSet;
 #endif

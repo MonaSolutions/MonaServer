@@ -28,14 +28,13 @@ using namespace std;
 
 namespace Mona {
 
-void Database::load(Exception& ex, const string& rootPath, DatabaseLoader& loader,bool disableTransaction) {
+bool Database::load(Exception& ex, const string& rootPath, DatabaseLoader& loader,bool disableTransaction) {
 	flush();
-	_rootPath = rootPath;
 	_disableTransaction = disableTransaction;
-	FileSystem::MakeDirectory(_rootPath);
-	if (FileSystem::Exists(_rootPath))
-		loadDirectory(ex, _rootPath , "", loader);
+	FileSystem::MakeDirectory(_rootPath = rootPath);
+	bool result = loadDirectory(ex, _rootPath , "", loader);
 	_disableTransaction = false;
+	return result;
 }
 
 bool Database::add(Exception& ex, const string& path, const UInt8* value, UInt32 size) {
@@ -132,9 +131,10 @@ void Database::processEntry(Exception& ex,Entry& entry) {
 
 
 bool Database::loadDirectory(Exception& ex, const string& directory, const string& path, DatabaseLoader& loader) {
-	Files files(ex, directory);
-	if (ex)
-		return true;
+	Exception ignore; // no exception here, it can be created more later (simply "no data" boolean returned)
+	Files files(ignore, directory);
+	if (ignore)
+		return false; //no data here
 
 	string name;
 	bool hasData = false;
