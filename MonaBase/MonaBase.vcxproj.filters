@@ -169,6 +169,9 @@
     <ClCompile Include="sources\Process.cpp">
       <Filter>Util</Filter>
     </ClCompile>
+    <ClCompile Include="sources\SubstreamMap.cpp">
+      <Filter>IO</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Mona\BinaryReader.h">
@@ -360,6 +363,9 @@
     </ClInclude>
     <ClInclude Include="include\Mona\Crypto.h">
       <Filter>Crypto</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\SubstreamMap.h">
+      <Filter>IO</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -26,7 +26,7 @@ This file is a part of Mona.
 using namespace std;
 using namespace Mona;
 
-Service::Service(lua_State* pState, const string& path, ServiceHandler& handler) : Expirable(this), _handler(handler), path(path), _pState(pState), FileWatcher(MonaServer::WWWPath,path,"main.lua"), _running(false) {
+Service::Service(lua_State* pState, const string& path, ServiceHandler& handler) : Expirable(this), _handler(handler), path(path), _pState(pState), FileWatcher(MonaServer::WWWPath,path,"/main.lua"), _running(false) {
 	String::Split("www" + path, "/", _packages, String::SPLIT_IGNORE_EMPTY | String::SPLIT_TRIM);
 }
 

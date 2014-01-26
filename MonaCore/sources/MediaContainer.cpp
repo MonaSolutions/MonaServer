@@ -18,6 +18,7 @@
 #include "Mona/MediaContainer.h"
 #include "Mona/AMF.h"
 #include "Mona/Logs.h"
+#include "Mona/SubstreamMap.h"
 #include <algorithm>
 
 using namespace std;
@@ -59,7 +60,8 @@ void MediaContainer::FLV::Write(BinaryWriter& writer,UInt8 track,UInt32 time,con
 
 ////////////////////  MPEG_TS  /////////////////////////////	
 
-UInt32 MediaContainer::MPEGTS::CrcTab[256] = {
+// TODO Add CRC32 and refactorize MPEGTS header
+/*UInt32 MediaContainer::MPEGTS::CrcTab[256] = {
   0x00000000, 0x04c11db7, 0x09823b6e, 0x0d4326d9, 0x130476dc, 0x17c56b6b,
   0x1a864db2, 0x1e475005, 0x2608edb8, 0x22c9f00f, 0x2f8ad6d6, 0x2b4bcb61,
   0x350c9b64, 0x31cd86d3, 0x3c8ea00a, 0x384fbdbd, 0x4c11db70, 0x48d0c6c7,
@@ -114,183 +116,128 @@ UInt32 MediaContainer::MPEGTS::CalcCrc32(UInt8 * data, UInt32 datalen) {
   }
 
   return crc;
-}
+}*/
 
 map<MediaContainer::Track, UInt32>	MediaContainer::MPEGTS::CounterRow;
 
 // Write header
 void MediaContainer::MPEGTS::Write(BinaryWriter& writer,UInt8 track) {
 	
+	// TODO Deal with audio stream only + refactorize
 	writer.writeRaw(EXPAND_DATA_SIZE("\x47\x40\x00\x30\xa6\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\x00\x00\xb0\x0d\x00\x01\xc1\x00\x00\x00\x01\xe0\x20\xa2\xc3\x29\x41"));
 	writer.writeRaw(EXPAND_DATA_SIZE("\x47\x40\x20\x30\x9c\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\x00\x02\xb0\x17\x00\x01\xc1\x00\x00\xe0\x40\xf0\x00\x1b\xe0\x40\xf0\x00\x0f\xe0\x60\xf0\x00\x66\x75\xc4\x68"));
-
-	
-	/* Program Association Table
-     * table_id                                   8   uimsbf
-     * section_syntax_indicator                   1   bslbf
-     * '0'                                        1   bslbf
-     * reserved                                   2   bslbf
-     * section_length                            12   uimsbf
-     * transport_stream_id                       16   uimsbf
-     * reserved                                   2   bslbf
-     * version_number                             5   uimsbf
-     * current_next_indicator                     1   bslbf
-     * section_number                             8   uimsbf 
-     * last_section_number                        8   uimsbf
-     * for (i = 0; i < N; i++) {
-     *    program_number                         16   uimsbf
-     *    reserved                                3   bslbf
-     *    network_PID_or_program_map_PID         13   uimbsf
-     * }
-     * CRC_32                                    32   rbchof
-     */
-	
-	
-	/* Program Map Table
-     * table_id                                   8   uimsbf
-     * section_syntax_indicator                   1   bslbf
-     * '0'                                        1   bslbf
-     * reserved                                   2   bslbf
-     * section_length                            12   uimsbf
-     * program_id                                16   uimsbf
-     * reserved                                   2   bslbf
-     * version_number                             5   uimsbf
-     * current_next_indicator                     1   bslbf
-     * section_number                             8   uimsbf 
-     * last_section_number                        8   uimsbf
-	 *
-     * reserved                                   3   bslbf
-     * PCR_PID                                   13   uimsbf
-     * reserved                                   4   bslbf
-     * program_info_length                       12   uimsbf
-     * for (i = 0; i < N; i++)
-     *   descriptor ()
-     *
-     * for (i = 0; i < N1; i++) {
-     *    stream_type                             8   uimsbf
-     *    reserved                                3   bslbf
-     *    elementary_PID                         13   uimbsf
-     *    reserved                                4   bslbf
-     *    ES_info_length                         12   uimbsf
-     *    for (i = 0; i < N1; i++) {
-     *      descriptor ();
-     *    }
-     * }
-     * CRC_32                                    32   rbchof
-     */
 }
 
-/// \brief normalize the header of each elementary stream :
-/// set 00 00 00 01 in place of 00 00 0X YZ 6Z or 00 00 0X YZ 4Z
-/// (where YZ is the size of the elementary stream payload)
-/// \return size modified
-void normalize(const UInt8* data, UInt32 size) {
+UInt32 MediaContainer::MPEGTS::ParseNAL(SubstreamMap& reader, const UInt8* data, UInt32 size) {
 
-	BinaryWriter writerTmp((UInt8 *)data, size);
+	// Frame size error
+	UInt32 available = 0;
+	if (size<11)
+		return available;
+	
+	UInt8* pos = (UInt8*)data + 11;
+	bool twoBytesHeader = *data==0x17 && *(data+1)==0x00;
 
-	// Second Header or video stream
-	if (*data==0x27 || *data==0x17 && *(data+9)==0x09) {
-		
-		UInt8* pos = (UInt8*)data+11;
-		writerTmp.next(11);
-		while(size-(pos-data) > 5) {
+	// Parse each NALU
+	while(size-(pos-data) > (twoBytesHeader? 2 : 4)) {
 
-			if (*pos!=0x00)
-				++pos;
-			else if (*(pos+1)!=0x00)
-				pos += 2;
-			// TODO see if there is a simpliest rule
-			else if (*(pos+2) & 0xF0 || ((*(pos+4) & 0xF0)!=0x40 && (*(pos+4) & 0xF0)!=0x60)) {
-				pos += 3;
-			}
-			else { // Mask = 0x000000 4X/6X to 0x00000F 4X/6X
-				if (*(pos+2)!=0x00) {
-					writerTmp.next((pos-data)-writerTmp.size()+2);
-					writerTmp.write8(0x00);
-				} else 
-					writerTmp.next((pos-data)-writerTmp.size()+3);
-				
-				writerTmp.write8(0x01); // 0x00000001
-				pos+=4;
-			}
+		if (*pos++ != 0x00) {
+			WARN("H264 NALU Stream first byte not expected : ", *(pos-1))
+			//DUMP(data, size)
+			Logs::Dump(data, size);
+			break;
 		}
+
+		// Get size to read
+		UInt32 toRead = *pos++;
+		if (!twoBytesHeader) {
+			toRead <<= 16;
+			toRead += *pos++ << 8;
+			toRead += *pos++;
+		}
+
+		if (toRead > size-(pos-data)) {
+			WARN("H264 NALU Stream size too long : ", toRead)
+			DUMP(data, size)
+			break;
+		}
+
+		reader.addSub(pos-data, toRead);
+		pos += toRead-1;
+
+		// Go to next NALU (two bytes header? need to ignore 0x01 byte)
+		if (pos-data + 1 + twoBytesHeader < size)
+			pos += 1 + twoBytesHeader;
 	}
+
+	// No NALU founded
+	available = reader.totalSize();
+	if (available == 0)
+		return available;
+	
+	return available + reader.count()*3; // Add 3 bytes for each NALU start codes
 }
 
-UInt8 MediaContainer::MPEGTS::GetAdaptiveSize(bool time, UInt32 available, bool first, bool& adaptiveField, Track type) {
-	
-	UInt8 size = 0;
-	UInt8 headerSize = MPEGTS_PACKET_SIZE - 4 - (first * (type&AUDIO? 21 : 18));
-	if (available < headerSize) {
+UInt32 MediaContainer::MPEGTS::ParseAudio(SubstreamMap& reader, const UInt8* data, UInt32 size) {
 
-		adaptiveField = true;
-		if (available < headerSize-1)
-			size += (headerSize-1) - available;
-	}
+	// Frame size error
+	if (size <= 2)
+		return 0;
 
-	if (first && time) {
-
-		// Init Adaptive field needed?
-		adaptiveField = true;
-		size = max(size, (UInt8)7); // 7 : 1 byte for marker and 6 for timecode
-	}
-
-	return size;
+	reader.addSub(2, size-2);
+	return size-2;
 }
 
 // Writer audio or video packet
 void MediaContainer::MPEGTS::Write(BinaryWriter& writer,UInt8 track,UInt32 time,const UInt8* data,UInt32 size) {
-
+	
+	// TODO Parse the frame in the listener for improving performance
+	SubstreamMap subReader((UInt8 *)data, size);
 	if (track&VIDEO) {
-		
-		// TODO Think to not send the 4 last bytes
-		normalize(data, size);
-		UInt32 available = size-9;
-		if (available) {
 
-			while (available > 0) 
-				WriteTS(writer, available, time, data+(size-available), *data == 0x17, VIDEO, available == (size-9));
-		} else {
-			WARN("Video Frame not valid (size : ", size, ")")
-			DUMP(data, size)
-		}
+		UInt32 available = ParseNAL(subReader, (UInt8 *)data, size);
+		WriteTS(writer, available, time, subReader, *data == 0x17, VIDEO, true);
 	} else if (track&AUDIO) {
 
-		if (size /*&& *data==0xAF && *(data+1)==0x01*/) {
-
-			UInt32 available=size-2; // escape first 2 bytes
-			while (available > 0)
-				WriteTS(writer, available, time, data+(size-available), true, AUDIO, available == (size-2));
-		} else {
-			WARN("Audio Frame format not recognized")
-			DUMP(data, size)
-		}
+		UInt32 available = ParseAudio(subReader, (UInt8 *)data, size);
+		WriteTS(writer, available, time, subReader, true, AUDIO, true);
 	}
 }
 
-void MediaContainer::MPEGTS::WriteTS(BinaryWriter& writer, UInt32& available, UInt32 time, const UInt8* pData, bool isMetadata, Track type, bool first) {
+void MediaContainer::MPEGTS::WriteTS(BinaryWriter& writer, UInt32& available, UInt32 time, SubstreamMap& subReader, bool isMetadata, Track type, bool first) {
 
-	// header
+	// Error format
+	if (available == 0) {
+		WARN((type==VIDEO? "VIDEO" : "AUDIO"), " Frame is not well formated");
+		DUMP(subReader.originalData(), subReader.originalSize())
+		return;
+	}
+
+	// sync byte
 	writer.write8(0x47);
+
+	// PES start indicator (+ not used PID part)
 	writer.write8(first? 0x40 : 0x00);
+	
+	// PID (Packet Identifier)
 	writer.write8(type == AUDIO? 0x60 : 0x40);
 
-	// middle raws
+	// Payload (middle row)
 	UInt8 toWrite = MPEGTS_PACKET_SIZE - 4;
-	if (!first && available > MPEGTS_PACKET_SIZE - 4) {
-
+	if (!first && available > MPEGTS_PACKET_SIZE - 4)
 		writer.write8(0x10 + (CounterRow[type]++ & 0x0F));  // adaptive field off + Id
-	} else {
+	// First and last rows
+	else {
 		
 		// Adaptive Field
 		bool adaptiveField = false;
-		bool timeCode = true;
+		bool timeCode = true; // TODO see if it could be usefull to send the PCR time less often
 		UInt8 adaptiveSize = GetAdaptiveSize(timeCode, available, first, adaptiveField, type);
 		UInt8 nbFFBytes = 0;
-		toWrite = MPEGTS_PACKET_SIZE - 4 - adaptiveSize - adaptiveField - (first * (type&AUDIO? 21 : 18));
+		toWrite = MPEGTS_PACKET_SIZE - 4 - adaptiveSize - adaptiveField - (first * (type == AUDIO? 21 : 20));
 		UInt64 pts = time*90; // PTS is 90KHz time
 
-		// adaptive field marker + Id
+		// adaptive field marker + Counter
 		writer.write8((adaptiveField?0x30:0x10) + (CounterRow[type]++ & 0x0F));
 		
 		if (adaptiveField) {
@@ -302,11 +249,10 @@ void MediaContainer::MPEGTS::WriteTS(BinaryWriter& writer, UInt32& available, UI
 
 				nbFFBytes = adaptiveSize - 1;
 
-				// 6 bytes Timecode
+				// 6 bytes Time PCR
 				if (first && timeCode) {
 
 					nbFFBytes -= 6;
-					
 					// Adaptive timecode flag on
 					writer.write8(isMetadata? 0x50 : 0x10);
 
@@ -325,16 +271,16 @@ void MediaContainer::MPEGTS::WriteTS(BinaryWriter& writer, UInt32& available, UI
 
 		// empty cells
 		for (int i = 0; i < nbFFBytes; i++)
-			writer.write8(0xFF);
+			writer.write8(0xFF); // TODO is it more efficient to copy big 0xFFFFFF... stream?
 
-		// PES header (18 bytes)
+		// PES header (21/20 bytes)
 		if (first) {
 
 			// Packet start code prefix
 			writer.writeRaw(EXPAND_DATA_SIZE("\x00\x00\x01"));
 
 			// stream id (AAC : 0xc0; AC3 : 0xfd; H264 : e0)
-			writer.write8(type&AUDIO? 0xc0 : 0xe0); 	
+			writer.write8(type == AUDIO? 0xc0 : 0xe0); 	
 			
 			// PES size (0 means no limit)
 			writer.write16(0);
@@ -345,16 +291,19 @@ void MediaContainer::MPEGTS::WriteTS(BinaryWriter& writer, UInt32& available, UI
 			// PES header length that remain (5 for the PTS time)
 			writer.write8(0x05);
 
-			// Calcul of pts 
+			// Calcul of PTS time 
 			writer.write8(((pts >> 29) & 0x06) + 0x21);
 			writer.write8((pts >> 22) & 0xFF);
 			writer.write8(((pts >> 14) & 0xFE) + 0x01);
 			writer.write8((pts >> 7) & 0xFF);
 			writer.write8(((pts << 1) & 0xFE) + 0x01);
 
-			if (type&VIDEO)
+			// End of header
+			if (type == VIDEO) {
 				writer.write32(1); // 0x00 0x00 0x00 0x01
-			else {
+				writer.write8(0x09);
+				writer.write8(isMetadata? 0x10 : 0x30);
+			} else {
 				writer.write32(0xfff15040);
 				writer.write16(((toWrite+7) << 5) + 0x1F);
 				writer.write8(0xfc);
@@ -363,8 +312,57 @@ void MediaContainer::MPEGTS::WriteTS(BinaryWriter& writer, UInt32& available, UI
 	}
 	
 	FATAL_ASSERT(toWrite<=available);
-	writer.writeRaw(pData, toWrite);
 	available -= toWrite;
+
+	// Write stream and continue with next row
+	if (WritePES(writer, type, subReader, toWrite) && available)
+		WriteTS(writer, available, time, subReader, isMetadata, type, false);
+}
+
+UInt8 MediaContainer::MPEGTS::GetAdaptiveSize(bool time, UInt32 available, bool first, bool& adaptiveField, Track type) {
+	
+	UInt8 size = 0;
+	UInt8 sizeFree = MPEGTS_PACKET_SIZE - 4 - (first * (type == AUDIO? 21 : 20));
+	adaptiveField = (available < sizeFree) || (first && time);
+
+	// PES smaller than area free size => need to fill with 0xFF
+	if (available < sizeFree-1)
+		size += (sizeFree-1) - available;
+
+	// Add time if needed
+	if (first && time) 
+		size = max(size, (UInt8)7); // 7 : 1 byte for marker and 6 for timecode
+
+	return size;
+}
+
+bool MediaContainer::MPEGTS::WritePES(BinaryWriter& writer, Track type, SubstreamMap& subReader, UInt8& toWrite) {
+
+	UInt8* pos = NULL;
+	UInt32 readed = 0;
+	while (toWrite > 0) {
+		
+		// New NALU => start code
+		if (type == VIDEO && subReader.nextSubIsNew()) {
+			writer.write24(1); // 0x000001
+			toWrite -= 3;
+		}
+
+		// Read raw data unit (Video : NALU)
+		readed = subReader.readNextSub(pos, toWrite);
+		if (!readed) {
+			WARN("End of substream before expected")
+			//DUMP(subReader.originalData(), subReader.originalSize())
+			Logs::Dump(subReader.originalData(), subReader.originalSize());
+			return false;
+		}
+
+		// Write
+		writer.writeRaw(pos, readed);
+		toWrite -= readed;
+	}
+
+	return true;
 }
 
 } // namespace Mona

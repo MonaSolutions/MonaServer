@@ -152,6 +152,7 @@
     <ClCompile Include="sources\Socket.cpp" />
     <ClCompile Include="sources\SocketAddress.cpp" />
     <ClCompile Include="sources\String.cpp" />
+    <ClCompile Include="sources\SubstreamMap.cpp" />
     <ClCompile Include="sources\TerminateSignal.cpp" />
     <ClCompile Include="sources\Time.cpp" />
     <ClCompile Include="sources\TimeParser.cpp" />
@@ -214,6 +215,7 @@
     <ClInclude Include="include\Mona\SocketAddress.h" />
     <ClInclude Include="include\Mona\StreamSocket.h" />
     <ClInclude Include="include\Mona\String.h" />
+    <ClInclude Include="include\Mona\SubstreamMap.h" />
     <ClInclude Include="include\Mona\TerminateSignal.h" />
     <ClInclude Include="include\Mona\Time.h" />
     <ClInclude Include="include\Mona\TimeParser.h" />
