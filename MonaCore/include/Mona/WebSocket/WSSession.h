@@ -42,6 +42,8 @@ public:
 protected:
 	WSWriter&		wsWriter() { return _writer; }
 	void			kill();
+	Publication*	_pPublication;
+	Listener*		_pListener;
 	
 private:
 	void			closeSusbcription();
@@ -49,8 +51,6 @@ private:
 
 	WSWriter		_writer;
 	Time			_time;
-	Publication*	_pPublication;
-	Listener*		_pListener;
 };
 
 

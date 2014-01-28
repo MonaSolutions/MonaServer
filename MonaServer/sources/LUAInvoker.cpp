@@ -25,6 +25,7 @@ This file is a part of Mona.
 #include "LUAGroup.h"
 #include "LUAMember.h"
 #include "Mona/Exceptions.h"
+#include "Mona/Files.h"
 #include "MonaServer.h"
 #include <openssl/evp.h>
 #include "math.h"
@@ -144,7 +145,7 @@ int	LUAInvoker::Publish(lua_State *pState) {
 
 int	LUAInvoker::AbsolutePath(lua_State *pState) {
 	SCRIPT_CALLBACK(Invoker,invoker)
-		SCRIPT_WRITE_STRING((MonaServer::WWWPath + SCRIPT_READ_STRING("") + "/").c_str())
+		SCRIPT_WRITE_STRING((MonaServer::WWWPath + "/" + SCRIPT_READ_STRING("") + "/").c_str())
 	SCRIPT_CALLBACK_RETURN
 }
 
@@ -179,6 +180,17 @@ int	LUAInvoker::Md5(lua_State *pState) {
 				SCRIPT_ERROR("Input MD5 value have to be a string expression")
 				SCRIPT_WRITE_NIL
 			}
+		}
+	SCRIPT_CALLBACK_RETURN
+}
+
+int LUAInvoker::Dir(lua_State *pState) {
+	SCRIPT_CALLBACK(Invoker,invoker)
+		Exception ex;
+		string path(MonaServer::WWWPath + "/" + SCRIPT_READ_STRING("") + "/");
+		Files dir(ex, path);
+		for(auto itFile = dir.begin(); itFile != dir.end(); ++itFile) {
+			SCRIPT_WRITE_STRING((*itFile).c_str());
 		}
 	SCRIPT_CALLBACK_RETURN
 }
@@ -337,6 +349,8 @@ int LUAInvoker::Get(lua_State *pState) {
 			lua_replace(pState, -2);
 		} else if(strcmp(name,"servers")==0) {
 			lua_getglobal(pState, "m.s");
+		} else if (strcmp(name,"dir")==0) {
+			SCRIPT_WRITE_FUNCTION(&LUAInvoker::Dir)
 		}
 	SCRIPT_CALLBACK_RETURN
 }
