@@ -657,7 +657,7 @@ void MonaServer::onUnjoinGroup(Client& client,Group& group) {
 			SCRIPT_FUNCTION_CALL
 		SCRIPT_FUNCTION_END
 	SCRIPT_END
-	if (group.size() == 0) {
+	if (group.count() == 0) {
 		LUAInvoker::RemoveGroup(_pState, *this, group);
 		Script::RemoveObject<Group, LUAGroup>(_pState, group);
 	} else if (!done && Script::FromObject<Group>(_pState,group)) {

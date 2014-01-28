@@ -27,7 +27,7 @@ using namespace Mona;
 
 
 void LUAGroup::AddClient(lua_State* pState, Group& group, Client& client, int indexGroup,int indexClient) {
-	Script::Collection(pState, indexGroup, "|items", group.size());
+	Script::Collection(pState, indexGroup, "|items", group.count());
 	LUAClient::GetID(pState, client);
 	lua_pushvalue(pState, indexClient);
 	lua_rawset(pState, -3);
@@ -40,7 +40,7 @@ void LUAGroup::AddClient(lua_State* pState, Group& group, Client& client, int in
 }
 
 void LUAGroup::RemoveClient(lua_State* pState, Group& group, Client& client, int indexGroup) {
-	Script::Collection(pState, indexGroup, "|items", group.size());
+	Script::Collection(pState, indexGroup, "|items", group.count());
 	LUAClient::GetID(pState, client);
 	lua_pushnil(pState);
 	lua_rawset(pState, -3);
@@ -90,8 +90,8 @@ int LUAGroup::Get(lua_State *pState) {
 			}
 		} else if (strcmp(name, "rawId") == 0) {
 			SCRIPT_WRITE_BINARY(group.id,ID_SIZE);
-		} else if (strcmp(name, "size") == 0) {
-			SCRIPT_WRITE_NUMBER(group.size());
+		} else if (strcmp(name, "count") == 0) {
+			SCRIPT_WRITE_NUMBER(group.count());
 		}
 	SCRIPT_CALLBACK_RETURN
 }

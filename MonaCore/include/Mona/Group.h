@@ -20,50 +20,15 @@ This file is a part of Mona.
 #pragma once
 
 #include "Mona/Mona.h"
-#include "Mona/Peer.h"
-#include <map>
-#include <cstring>
-
+#include "Mona/Client.h"
 
 namespace Mona {
 
 
-class GroupIterator : virtual Object {
-	friend class Group;
+class Group : public Entity, virtual Object, public Entities<Client> {
 public:
-	GroupIterator():_pPeers(NULL){}
-	GroupIterator(const GroupIterator& other) :_pPeers(other._pPeers),_it(other._it) {}
-	GroupIterator(std::map<UInt32,Peer*>& peers,bool end=false) : _pPeers(&peers),_it(end ? peers.end() : peers.begin()) {}
-	bool		  operator !=(const GroupIterator& other) { return _it!=other._it; }
-	bool		  operator ==(const GroupIterator& other) { return _it==other._it; }
-    GroupIterator operator ++() { ++_it; return *this; }
-    GroupIterator operator --() { --_it; return *this; }
-    Client*		  operator *() { if(_pPeers && _it!=_pPeers->end()) return _it->second; return NULL; }
-private:
-	std::map<UInt32,Peer*>*				_pPeers; 
-	std::map<UInt32,Peer*>::const_iterator _it;
-};
+	Group(const UInt8* id) : Entity(id) {}
 
-
-class Group : public Entity, virtual Object {
-	friend class Peer;
-public:
-	Group(const UInt8* id) {
-		std::memcpy((UInt8*)this->id,id,ID_SIZE);
-	}
-	virtual ~Group(){}
-
-	typedef GroupIterator Iterator;
-
-	Iterator begin() { return GroupIterator(_peers); }
-	Iterator end() { return GroupIterator(_peers, true); }
-	UInt32  size() { return _peers.size(); }
-
-	static UInt32 Distance(Iterator& it0, Iterator& it1) { return distance(it0._it, it1._it); }
-	static void Advance(Iterator& it, UInt32 count) { advance(it._it, count); }
-
-private:
-	std::map<UInt32,Peer*> 	_peers;
 };
 
 

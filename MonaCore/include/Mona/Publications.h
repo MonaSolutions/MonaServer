@@ -26,10 +26,10 @@ namespace Mona {
 
 class Publications : virtual Object {
 public:
-	Publications(std::map<std::string,Publication*>& publications) :  _publications(publications){}
+	Publications(std::map<std::string,Publication>& publications) :  _publications(publications){}
 	virtual ~Publications(){}
 
-	typedef std::map<std::string,Publication*>::iterator Iterator;
+	typedef std::map<std::string,Publication>::iterator Iterator;
 
 	UInt32 count() { return _publications.size(); }
 	Iterator begin() { return _publications.begin();}
@@ -38,7 +38,7 @@ public:
 	Iterator operator()(const std::string& name) { return _publications.find(name); }
 
 private:
-	std::map<std::string,Publication*>&	_publications;
+	std::map<std::string,Publication>&	_publications;
 };
 
 

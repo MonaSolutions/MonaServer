@@ -29,7 +29,7 @@ namespace Mona {
 
 class Client : public Entity, virtual Object {
 public:
-	Client(Entities<Client>::Map& turnClients):turnClients(turnClients),_pWriter(NULL),ping(0),timesBeforeTurn(0),_pUserData(NULL) {}
+	Client() : _pWriter(NULL),ping(0),timesBeforeTurn(0),_pUserData(NULL) {}
 
 	const SocketAddress			address;
 	const std::string			protocol;
@@ -52,7 +52,7 @@ public:
 
 
 	UInt32						timesBeforeTurn;
-	Entities<Client>			turnClients;
+	const Entities<Client>		turnClients;
 
 
 	Writer&						writer() { return _pWriter ? *_pWriter : Writer::Null; }

@@ -21,6 +21,7 @@ This file is a part of Mona.
 #include "Mona/FileSystem.h"
 #include "Mona/Files.h"
 #include "Mona/RawWriter.h"
+#include "Mona/Logs.h"
 #include "Mona/HTTP/HTTPWriter.h"
 
 #include <fstream>

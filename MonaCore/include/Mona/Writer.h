@@ -23,7 +23,6 @@ This file is a part of Mona.
 #include "Mona/DataReader.h"
 #include "Mona/QualityOfService.h"
 #include "Mona/PacketReader.h"
-#include "Mona/Logs.h"
 #include <set>
 
 namespace Mona {
@@ -35,7 +34,7 @@ public:
 	virtual void	close(Writer& writer,int code){}
 };
 
-class Peer;
+class Client;
 class Writer : virtual NullableObject {
 public:
 	enum MediaType {
@@ -72,7 +71,7 @@ public:
 	virtual void			close(int code=0);
 
 	virtual bool			writeMedia(MediaType type,UInt32 time,PacketReader& packet);
-	virtual void			writeMember(const Peer& peer);
+	virtual bool			writeMember(const Client& client);
 
     virtual DataWriter&		writeInvocation(const std::string& name){return DataWriter::Null;}
     virtual DataWriter&		writeMessage(){return DataWriter::Null;}

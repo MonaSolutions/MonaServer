@@ -161,7 +161,7 @@ void RTMFPSession::p2pHandshake(const string& tag,const SocketAddress& address,U
 	const SocketAddress* pAddress = &address;
 	if(pSession && !pSession->peer.localAddresses.empty()) {
 		// If two clients are on the same lan, starts with private address
-		if(pSession->peer.address == peer.address)
+		if(pSession->peer.address.host() == peer.address.host())
 			++times;
 
 		index=times%(pSession->peer.localAddresses.size()+1);

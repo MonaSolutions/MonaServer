@@ -549,10 +549,11 @@ AMFWriter& RTMFPWriter::write(AMF::ContentType type,UInt32 time,PacketReader* pP
 	return amf;
 }
 
-void RTMFPWriter::writeMember(const Peer& peer) {
+bool RTMFPWriter::writeMember(const Client& client) {
 	RTMFPMessageBuffered& message(createBufferedMessage());
 	message.writer().packet.write8(0x0b); // unknown
-	message.writer().packet.writeRaw(peer.id,ID_SIZE);
+	message.writer().packet.writeRaw(client.id,ID_SIZE);
+	return true;
 }
 
 void RTMFPWriter::writeRaw(const UInt8* data,UInt32 size) {

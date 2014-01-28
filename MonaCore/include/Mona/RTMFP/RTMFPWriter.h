@@ -78,7 +78,7 @@ public:
 
 	bool				writeMedia(MediaType type,UInt32 time,PacketReader& packet);
 	void				writeRaw(const UInt8* data,UInt32 size);
-	void				writeMember(const Peer& peer);
+	bool				writeMember(const Client& client);
 
 private:
 	RTMFPWriter(RTMFPWriter& writer);

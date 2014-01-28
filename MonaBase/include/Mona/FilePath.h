@@ -96,12 +96,12 @@ private:
 	}
 	void append(const char* value) {
 		char back = value[strlen(value) - 1];
-		if (back != '/' && back != '\\') {
+		if (back != '/' && back != '\\')
 			_path.assign(value);
-			return;
-		}
-		_path.clear();
-		_directory.append(value);
+		else
+			_directory.append(value);
+		if(!_directory.empty())
+			FileSystem::MakeDirectory(_directory);
 	}
 
 	const FileSystem::Attributes& attributes() const;

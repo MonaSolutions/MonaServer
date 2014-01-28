@@ -27,20 +27,37 @@ namespace Mona {
 
 class Clients : public Entities<Client>, virtual Object {
 public:
-	
-	Clients(Map& clients,std::map<std::string,Client*>& clientsByName):Entities<Client>(clients),_clientsByName(clientsByName) {}
-	virtual ~Clients(){}
 
 	Client* operator()(const UInt8* id) const { return Entities<Client>::operator()(id); }
-
 	Client* operator()(const std::string& name) const {
 		std::map<std::string,Client*>::const_iterator it = _clientsByName.find(name);
 		if(it==_clientsByName.end())
 			return NULL;
 		return it->second;
 	}
+	bool add(Exception& ex,Client& client) {
+		if (client.properties.getString("name", (std::string&)client.name) && !client.name.empty()) {
+			if (!_clientsByName.emplace(client.name, &client).second) {
+				ex.set(Exception::PROTOCOL, "Client named ",client.name," exists already");
+				return false;
+			}
+		}
+		if (Entities<Client>::add(client))
+			return true;
+		std::string hex;
+		ex.set(Exception::PROTOCOL, "Client ",Util::FormatHex(client.id, ID_SIZE, hex)," exists already");
+		return false;
+	}
+
+	bool remove(Client& client) {
+		if (!client.name.empty())
+			_clientsByName.erase(client.name);
+		return Entities<Client>::remove(client);
+	}
+	
+
 private:
-	std::map<std::string,Client*>&	_clientsByName;
+	std::map<std::string,Client*>	_clientsByName;
 };
 
 

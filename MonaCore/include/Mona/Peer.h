@@ -50,13 +50,12 @@ public:
 	MapParameters&				properties() { return (MapParameters&)Client::properties; };
 
 
-	Entities<Client>::Map		turnPeers;
+	Entities<Client>&			turnPeers() { return (Entities<Client>&)turnClients; }
 	bool						relayable;
 
 	ICE&		ice(const Peer& peer);
 
 	void unsubscribeGroups();
-	void joinGroup(Group& group,Writer* pWriter);
 	Group& joinGroup(const UInt8* id,Writer* pWriter);
 	void unjoinGroup(Group& group);
 
@@ -84,11 +83,11 @@ public:
 
 private:
 	void onJoinGroup(Group& group);
-	void onUnjoinGroup(std::map<Group*,Member*>::iterator it);
-	bool writeId(Group& group,Peer& peer,Writer* pWriter);
+	void onUnjoinGroup(std::map<Group*,Writer*>::iterator& it);
+	bool exchangeMemberId(Group& group,Peer& peer,Writer* pWriter);
 
 	Handler&						_handler;
-	std::map<Group*,Member*>		_groups;
+	std::map<Group*,Writer*>		_groups;
 	std::map<const Peer*,ICE*>		_ices;
 };
 

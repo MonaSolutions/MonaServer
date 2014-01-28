@@ -36,23 +36,12 @@ public:
 	};
 
 	typedef typename std::map<const UInt8*,EntityType*,Compare> Map;
-	typedef typename Map::const_iterator Iterator;
+	typedef typename Map::const_iterator						Iterator;
 
-	Entities(Map& entities) : _entities(entities) {}
-	Entities(const Entities& entities) : _entities(entities._entities) {}
-	
 
-	Iterator		begin() const {
-		return _entities.begin();
-	}
-
-	Iterator end() const {
-		return _entities.end();
-	}
-
-	UInt32 count() const {
-		return _entities.size();
-	}
+	Iterator begin() const { return _entities.begin(); }
+	Iterator end() const { return _entities.end(); }
+	UInt32   count() const { return _entities.size(); }
 
 	EntityType* operator()(const UInt8* id) const {
 		Iterator it = _entities.find(id);
@@ -60,8 +49,38 @@ public:
 			return NULL;
 		return it->second;
 	}
+	
+
+	Iterator find(const UInt8* id) const {
+		return _entities.find(id);
+	}
+	bool add(EntityType& entity) {
+		return _entities.emplace(entity.id,&entity).second;
+	}
+	Iterator remove(Iterator& it) {
+		return _entities.erase(it);
+	}
+	bool remove(EntityType& entity) {
+		return _entities.erase(entity.id)>0;
+	}
+
+	EntityType& create(const UInt8* id) {
+		auto& it = _entities.lower_bound(id);
+		if (it != _entities.end() && memcmp(it->first, id, ID_SIZE) == 0)
+			return *it->second;
+		EntityType* pEntity(new EntityType(id));
+		return *_entities.emplace_hint(it, pEntity->id, pEntity)->second;
+	}
+	void erase(const UInt8* id) {
+		auto& it(_entities.find(id));
+		if (it == _entities.end())
+			return;
+		delete it->second;
+		_entities.erase(it);
+	}
+
 private:
-	Map&	_entities;
+	Map	_entities;
 };
 
 

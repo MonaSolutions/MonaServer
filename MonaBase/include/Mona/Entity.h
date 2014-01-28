@@ -28,8 +28,8 @@ namespace Mona {
 
 class Entity : virtual Object {
 public:
-	Entity() { std::memset(id, 0, sizeof(id)); }
-	Entity(const Entity& other) { std::memcpy(id, other.id,sizeof(id));	}
+	Entity() { std::memset(id, 0, ID_SIZE); }
+	Entity(const UInt8* id) { std::memcpy(this->id, id,ID_SIZE);	}
 	virtual ~Entity() {}
 
 	bool operator==(const Entity& other) const { return std::memcmp(id, other.id, ID_SIZE) == 0; }

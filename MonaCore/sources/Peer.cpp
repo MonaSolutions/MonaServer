@@ -30,12 +30,12 @@ namespace Mona {
 
 class Member : virtual Object {
 public:
-	Member(UInt32	index,Writer* pWriter) : index(index),pWriter(pWriter){}
-	const UInt32	index;
+	Member(Writer* pWriter) : pWriter(pWriter){}
 	Writer*			pWriter;
 };
 
-Peer::Peer(Handler& handler) :Client(turnPeers), _handler(handler), connected(false), relayable(false) {
+
+Peer::Peer(Handler& handler) : _handler(handler), connected(false), relayable(false) {
 }
 
 Peer::~Peer() {
@@ -48,96 +48,63 @@ Peer::~Peer() {
 	}
 }
 
-Group& Peer::joinGroup(const UInt8* id,Writer* pWriter) {
-	// create group if need
-	Entities<Group>::Map::iterator it = _handler._groups.lower_bound(id);
-	Group* pGroup = NULL;
-	if(it==_handler._groups.end() || memcmp(it->first,id,ID_SIZE)!=0) {
-		pGroup = new Group(id);
-		_handler._groups.insert(it,pair<const UInt8*,Group*>(pGroup->id,pGroup));
-	} else
-		pGroup = it->second;
-	joinGroup(*pGroup,pWriter);
-	return *pGroup;
-}
 
-bool Peer::writeId(Group& group,Peer& peer,Writer* pWriter) {
-	if(pWriter)
+bool Peer::exchangeMemberId(Group& group,Peer& peer,Writer* pWriter) {
+	if (pWriter) {
 		pWriter->writeMember(peer);
-	else {
-		map<Group*,Member*>::const_iterator it = peer._groups.find(&group);
-		if(it==peer._groups.end()) {
-			CRITIC("A peer in a group without have its _groups collection associated")
-			return false;
-		}
-		if(!it->second->pWriter)
-			return false;
-		it->second->pWriter->writeMember(*this);
+		return true;
 	}
-	return true;
+	auto& it = peer._groups.find(&group);
+	if(it==peer._groups.end()) {
+		CRITIC("A peer in a group without have its _groups collection associated")
+		return false;
+	}
+	return it->second->writeMember(*this);
 }
 
-void Peer::joinGroup(Group& group,Writer* pWriter) {
-	UInt16 count=5;
-	Group::Iterator it0=group.end();
-	while(group.size()>0) {
-		if(group.begin()==it0)
-			break;
-		--it0;
-		Client& client = **it0;
-		if(client==this->id)
-			continue;
-		if(!writeId(group,(Peer&)client,pWriter))
-			continue;
-		if(--count==0)
-			break;
+Group& Peer::joinGroup(const UInt8* id,Writer* pWriter) {
+	// create invoker.groups if need
+	Group& group(((Entities<Group>&)_handler.groups).create(id));
+
+	if (group.count() > 0) {
+		// If  group includes already members, give 6 last members to the new comer
+		UInt8 count=6;
+		auto it = group.end();
+		do {
+			Client& client(*(--it)->second);
+			if(client==this->id || !exchangeMemberId(group,(Peer&)client,pWriter))
+				continue;
+			if(--count==0)
+				break;
+		} while(it!=group.begin());
 	}
 
-	// + 1 random!
- 	if(it0!=group.end()) {
-		Group::Iterator itBegin = group.begin();
-		UInt32 distance = Group::Distance(itBegin,it0);
- 		if(distance>0) {
- 			Group::Advance(itBegin,rand() % distance);
-			writeId(group,(Peer&)**itBegin,pWriter);
- 		}
- 	 }
 
-	map<Group*,Member*>::iterator it = _groups.lower_bound(&group);
+	// group._clients and this->_groups insertions
+	auto& it = _groups.lower_bound(&group);
 	if(it!=_groups.end() && it->first==&group)
-		return;
+		return group;
 
-	if(it!=_groups.begin())
-		--it;
-
-	UInt32 index = 0;
-	if(!group._peers.empty()){
-		index = group._peers.rbegin()->first+1;
-		if(index<group._peers.rbegin()->first) {
-			// max index reached, rewritten index!
-			index=0;
-			map<UInt32,Peer*>::iterator it1;
-			for(it1=group._peers.begin();it1!=group._peers.end();++it1)
-				(UInt32&)it1->first = index++;
-		}
-	}
-	group._peers[index] = this;
-	_groups.insert(it,pair<Group*,Member*>(&group,new Member(index,pWriter)));
+	group.add(*this);
+	_groups.emplace_hint(it,&group,pWriter);
 	onJoinGroup(group);
+	return group;
 }
 
 
 void Peer::unjoinGroup(Group& group) {
-	map<Group*,Member*>::iterator it = _groups.lower_bound(&group);
-	if(it==_groups.end() || it->first!=&group)
+	auto& it = _groups.lower_bound(&group);
+	if (it == _groups.end() || it->first != &group)
 		return;
 	onUnjoinGroup(it);
+	_groups.erase(it);
 }
 
 void Peer::unsubscribeGroups() {
-	map<Group*,Member*>::iterator it=_groups.begin();
+	auto it=_groups.begin();
 	while(it!=_groups.end())
 		onUnjoinGroup(it++);
+	_groups.clear();
 }
 
 ICE& Peer::ice(const Peer& peer) {
@@ -158,7 +125,7 @@ ICE& Peer::ice(const Peer& peer) {
 	}
 	if(it!=_ices.begin())
 		--it;
-	ICE& ice = *_ices.insert(it,pair<const Peer*,ICE*>(&peer,new ICE(*this,peer,_handler.relay)))->second; // is offer
+	ICE& ice = *_ices.emplace_hint(it,&peer,new ICE(*this,peer,_handler.relay))->second; // is offer
 	((Peer&)peer)._ices[this] = &ice;
 	return ice;
 }
@@ -180,23 +147,14 @@ void Peer::onConnection(Exception& ex, Writer& writer,DataReader& parameters,Dat
 
 		writer.state(Writer::CONNECTING);
 		_handler.onConnection(ex, *this,parameters,response);
+		if (!ex)
+			(bool&)connected = ((Clients&)_handler.clients).add(ex,*this);
 		if (ex) {
 			writer.state(Writer::CONNECTED,true);
 			_pWriter = NULL;
 			return;
 		}
 		writer.state(Writer::CONNECTED);
-		if (properties().getString("name", (string&)name) && !name.empty()) {
-			if (!_handler._clientsByName.insert(pair<string, Client*>(name, this)).second) {
-				ex.set(Exception::NETWORK, "Client with a '%s' name exists already", name);
-				return;
-			}
-		}
-		(bool&)connected = true;
-		if (!_handler._clients.insert(pair<const UInt8*, Client*>(id, this)).second) {
-			string hex;
-			ERROR("Client ", Util::FormatHex(id, ID_SIZE, hex), " seems already connected!")
-		}
 	} else {
 		string hex;
 		ERROR("Client ", Util::FormatHex(id, ID_SIZE, hex), " seems already connected!")
@@ -204,17 +162,15 @@ void Peer::onConnection(Exception& ex, Writer& writer,DataReader& parameters,Dat
 }
 
 void Peer::onDisconnection() {
-	if(connected) {
-		_pWriter = NULL;
-		(bool&)connected = false;
-		if (!name.empty())
-			_handler._clientsByName.erase(name);
-		if (_handler._clients.erase(id) == 0) {
-			string hex;
-			ERROR("Client ",Util::FormatHex(id,ID_SIZE,hex)," seems already disconnected!")
-		}
-		_handler.onDisconnection(*this);
+	if (!connected)
+		return;
+	_pWriter = NULL;
+	(bool&)connected = false;
+	if (!((Clients&)_handler.clients).remove(*this)) {
+		string hex;
+		ERROR("Client ", Util::FormatHex(id, ID_SIZE, hex), " seems already disconnected!");
 	}
+	_handler.onDisconnection(*this);
 }
 
 void Peer::onMessage(Exception& ex, const string& name,DataReader& reader,UInt8 responseType) {
@@ -230,28 +186,34 @@ void Peer::onJoinGroup(Group& group) {
 	_handler.onJoinGroup(*this,group);
 }
 
-void Peer::onUnjoinGroup(map<Group*,Member*>::iterator it) {
-	Group& group = *it->first;
-	map<UInt32,Peer*>::iterator itPeer = group._peers.find(it->second->index);
-	group._peers.erase(itPeer++);
-	delete it->second;
-	_groups.erase(it);
+void Peer::onUnjoinGroup(map<Group*,Writer*>::iterator& it) {
+	Group& group(*it->first);
+
+	// group._clients suppression (this->_groups suppression must be done by the caller of onUnjoinGroup)
+	auto itPeer = group.find(id);
+	if (itPeer == group.end()) {
+		ERROR("Peer::onUnjoinGroup on a group which don't know this peer");
+		return;
+	}
+	itPeer = group.remove(itPeer);
 
 	if(connected)
 		_handler.onUnjoinGroup(*this,group);
 
-	if(group.size()==0) {
-		_handler._groups.erase(group.id);
-		delete &group;
-	} else if(itPeer!=group._peers.end()) {
-		// if a peer disconnects of one group, give to its following peer the 6th preceding peer
-		Peer& followingPeer = *itPeer->second;
-		UInt8 count=6;
-		while(--count!=0 && itPeer!=group._peers.begin())
-			--itPeer;
-		if(count==0)
-			itPeer->second->writeId(group,followingPeer,NULL);
+	if (group.count() == 0) {
+		((Entities<Group>&)_handler.groups).erase(group.id);
+		return;
 	}
+	if (itPeer == group.end())
+		return;
+
+	// if a peer disconnects of one group, give to its following peer the 6th preceding peer
+	Peer& followingPeer((Peer&)*itPeer->second);
+	UInt8 count=6;
+	while(--count!=0 && itPeer!=group.begin())
+		--itPeer;
+	if(count==0)
+		((Peer*)itPeer->second)->exchangeMemberId(group,followingPeer,NULL);
 }
 
 bool Peer::onPublish(const Publication& publication,string& error) {
