@@ -1,15 +1,15 @@
 <html>
 <head>
-    <title>SOAP JavaScript Client Test</title>
-    <script type="text/javascript">
-        function soap() {
-            var xmlhttp = new XMLHttpRequest();
-			var address = window.document.getElementById("address").value;
-            xmlhttp.open('POST', address, true);
+  <title>SOAP JavaScript Client Test</title>
+  <script type="text/javascript">
+    function soap() {
+      var xmlhttp = new XMLHttpRequest();
+      var address = window.document.getElementById("address").value;
+      xmlhttp.open('POST', address, true);
 
-			var req = window.document.getElementById("request").value;
-			var test =
-				'<?xml version="1.0" encoding="utf-8"?>' +
+      var req = window.document.getElementById("request").value;
+      var test =
+        '<?xml version="1.0" encoding="utf-8"?>' +
                 '<soapenv:Envelope ' + 
                     'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ' +
                     'xmlns:api="http://127.0.0.1/Integrics/Enswitch/API" ' +
@@ -19,26 +19,26 @@
                         req +
                     '</soapenv:Body>' +
                 '</soapenv:Envelope>';
-			
-			// Treat the response
-            xmlhttp.onreadystatechange = function () {
-                if (xmlhttp.readyState == 4) {
-                    if (xmlhttp.status == 200) {
+      
+      // Treat the response
+      xmlhttp.onreadystatechange = function () {
+          if (xmlhttp.readyState == 4) {
+              if (xmlhttp.status == 200) {
 
-						window.document.getElementById("response").value = xmlhttp.response;
-						console.log(xmlhttp); // for chrome/firefox debug
-                    }
-                }
-            }
-            // Send the POST request
-            xmlhttp.setRequestHeader('Content-Type', 'text/xml');
-            xmlhttp.send(test);
-        }
-    </script>
+                window.document.getElementById("response").value = xmlhttp.response;
+                console.log(xmlhttp); // for chrome/firefox debug
+              }
+          }
+      }
+      // Send the POST request
+      xmlhttp.setRequestHeader('Content-Type', 'text/xml');
+      xmlhttp.send(test);
+    }
+  </script>
 </head>
 <body>
     <form name="Demo" action="" method="post">
-<textarea id="address" rows="1" cols="100">http://localhost/soap</textarea>
+<textarea id="address" rows="1" cols="100">http://localhost/clients/soap</textarea>
 <textarea id="request" rows="10" cols="100">
 <urn:sayHello>
 	<message>test</message>
