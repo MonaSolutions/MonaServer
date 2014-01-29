@@ -19,6 +19,7 @@ This file is a part of Mona.
 
 #include "Mona/HTTP/HTTPWriter.h"
 #include "Mona/HTTP/HTTP.h"
+#include "Mona/Logs.h"
 
 using namespace std;
 

@@ -158,7 +158,9 @@ void FlashMainStream::messageHandler(Exception& ex, const string& name,AMFReader
 	} else if(name == "createStream") {
 		shared_ptr<FlashStream>& pStream = invoker.createFlashStream(peer);
 		_streams.emplace(pStream->id, pStream);
-		writer.writeMessage().writeNumber(pStream->id);
+		AMFWriter& response(writer.writeMessage());
+		response.amf0Preference = true;
+		response.writeNumber(pStream->id);
 
 	} else if(name == "deleteStream") {
 		UInt32 id = (UInt32)message.readNumber();
@@ -180,52 +182,44 @@ void FlashMainStream::rawHandler(Exception& ex,UInt8 type,PacketReader& packet,F
 	if(type==0x01) {
 		if(packet.available()>0) {
 			UInt32 size = packet.read7BitValue()-1;
-			UInt8 flag = packet.read8();
-
-			UInt8 groupId[ID_SIZE];
-
-			if(flag==0x10) {
+			if(packet.read8()==0x10) {
 				if (size > packet.available()) {
 					ERROR("Bad header size for RTMFP group id")
 					size = packet.available();
 				}
+				UInt8 groupId[ID_SIZE];
 				EVP_Digest(packet.current(),size,(unsigned char *)groupId,NULL,EVP_sha256(),NULL);
+				_pGroup = &peer.joinGroup(groupId, &writer);
 			} else
-				packet.readRaw(groupId,ID_SIZE);
-		
-			_pGroup = invoker.groups(groupId);
-		
-			if(_pGroup)
-				peer.joinGroup(*_pGroup,&writer);
-			else
-				_pGroup = &peer.joinGroup(groupId,&writer);
+				_pGroup = &peer.joinGroup(packet.current(), &writer);
 		}
-	} else {
-		UInt16 flag = packet.read16();
-		if(flag==0x03) {
-			// setBufferTime
-			UInt32 streamId = packet.read32();
-			if(streamId==0) {
-				setBufferTime(packet.read32());
-				return;
-			}
-			FlashStream* pStream = stream(streamId); // TODO checker!
-			if (!pStream) {
-				ERROR("setBufferTime message for a unknown ",streamId," stream")
-				return;
-			}
-			UInt32 ms = packet.read32();
-			INFO("setBufferTime ",ms," on stream ",pStream->id)
-			// To do working the buffertime on receiver side
-			BinaryWriter& raw = writer.writeRaw();
-			raw.write16(0);
-			raw.write32(pStream->id);
-			pStream->setBufferTime(ms);
+		return;
+	}
+
+	UInt16 flag = packet.read16();
+	if(flag==0x03) {
+		// setBufferTime
+		UInt32 streamId = packet.read32();
+		if(streamId==0) {
+			setBufferTime(packet.read32());
 			return;
 		}
-		ERROR("Raw message ",Format<UInt8>("%.2x",type),"/",flag," unknown on stream ",id);
+		FlashStream* pStream = stream(streamId); // TODO checker!
+		if (!pStream) {
+			ERROR("setBufferTime message for a unknown ",streamId," stream")
+			return;
+		}
+		UInt32 ms = packet.read32();
+		INFO("setBufferTime ",ms," on stream ",pStream->id)
+		// To do working the buffertime on receiver side
+		BinaryWriter& raw = writer.writeRaw();
+		raw.write16(0);
+		raw.write32(pStream->id);
+		pStream->setBufferTime(ms);
+		return;
 	}
-		
+
+	ERROR("Raw message ",Format<UInt8>("%.2x",type),"/",flag," unknown on stream ",id);	
 }
 
 

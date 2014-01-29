@@ -18,6 +18,7 @@ This file is a part of Mona.
 */
 
 #include "Mona/WebSocket/WSWriter.h"
+#include "Mona/Logs.h"
 
 
 using namespace std;

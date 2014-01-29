@@ -56,8 +56,8 @@ UInt32 RelaySocket::releaseRelay(Relay& relay) {
 	//remove turnPeers
 	if(relay.received) {
 		INFO("Turn finishing from ", relay.address1.toString(), " to ", relay.address2.toString(), " on ", port, " relayed port")
-		((Peer&)relay.peer1).turnPeers.erase(relay.peer2.id);
-		((Peer&)relay.peer2).turnPeers.erase(relay.peer1.id);
+		((Peer&)relay.peer1).turnPeers().remove((Peer&)relay.peer2);
+		((Peer&)relay.peer2).turnPeers().remove((Peer&)relay.peer1);
 	}
 	((Addresses&)addresses).erase(relay.address1);
 	((Addresses&)addresses).erase(relay.address2);
@@ -78,8 +78,8 @@ void RelaySocket::onReception(const UInt8* data, UInt32 size, const SocketAddres
 	if(!relay.received) {
 		relay.received=true;
 		INFO("Turn starting from ",relay.address1.toString()," to ",relay.address2.toString()," on ",port," relayed port")
-		((Peer&)relay.peer1).turnPeers[relay.peer2.id] = (Peer*)&relay.peer2;
-		((Peer&)relay.peer2).turnPeers[relay.peer1.id] = (Peer*)&relay.peer1;
+		((Peer&)relay.peer1).turnPeers().add((Peer&)relay.peer2);
+		((Peer&)relay.peer2).turnPeers().add((Peer&)relay.peer1);
 	}
 
 	SocketAddress destinator(relay.address1 == address ? relay.address2 : relay.address1);

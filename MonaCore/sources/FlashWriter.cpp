@@ -29,10 +29,10 @@ using namespace std;
 namespace Mona {
 
 
-FlashWriter::FlashWriter(WriterHandler* pHandler) : callbackHandle(0),Writer(pHandler),amf0Preference(false) {
+FlashWriter::FlashWriter(WriterHandler* pHandler) : callbackHandle(0),Writer(pHandler) {
 }
 
-FlashWriter::FlashWriter(FlashWriter& writer) : callbackHandle(writer.callbackHandle),Writer(writer),amf0Preference(false) {
+FlashWriter::FlashWriter(FlashWriter& writer) : callbackHandle(writer.callbackHandle),Writer(writer) {
 }
 
 FlashWriter::~FlashWriter() {
@@ -45,7 +45,6 @@ AMFWriter& FlashWriter::writeInvocation(const string& name) {
 	packet.write8(AMF_NUMBER);
 	packet.writeNumber<double>(callbackHandle);
 	packet.write8(AMF_NULL); // for RTMP compatibility! (requiere it)
-	writer.amf0Preference = amf0Preference;
 	return writer;
 }
 
@@ -59,7 +58,7 @@ AMFWriter& FlashWriter::writeAMFState(const string& name,const string& code,cons
 		writer.writeStringProperty("level","status");
 	writer.writeStringProperty("code",code);
 	writer.writeStringProperty("description",description);
-	writer.amf0Preference = amf0Preference;
+	writer.amf0Preference = false;
 	if(!withoutClosing)
 		writer.endObject();
 	return writer;

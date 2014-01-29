@@ -64,13 +64,12 @@ void FlashStream::process(AMF::ContentType type,UInt32 time,PacketReader& packet
 		return;
 	
 	writer.callbackHandle = 0;
-	writer.amf0Preference = false;
+
 	Exception ex;
 	// if exception, it closes the connection, and print an ERROR message
 	switch(type) {
-		case AMF::INVOCATION:
-			writer.amf0Preference = true;
-		case AMF::INVOCATION_AMF3: {
+		case AMF::INVOCATION_AMF3:
+		case AMF::INVOCATION: {
 			string name;
 			AMFReader reader(packet);
 			reader.readString(name);

@@ -35,12 +35,11 @@ This file is a part of Mona.
 namespace Mona {
 
 class Invoker : public Entity,public TaskHandler, virtual Object {
-	friend class Peer; // Peer manage _clients,_clientsByName and _groups list!
 	friend class FlashStream; // FlashStream manage _streams
 public:
 	// invocations
-	Clients					clients;
-	Entities<Group>			groups;
+	const Clients			clients;
+	const Entities<Group>	groups;
 	Publications			publications;
 	const SocketManager		sockets;
 	const RelayServer		relay;
@@ -73,16 +72,11 @@ protected:
 	virtual ~Invoker();
 
 private:
-	Publications::Iterator	createPublication(const std::string& name);
-	void					destroyPublication(const Publications::Iterator& it);
 	virtual Peer&			myself()=0;
 
-	std::map<std::string,Publication*>					_publications;
-	Entities<Group>::Map								_groups;
-	Entities<Client>::Map								_clients;
-	std::map<std::string,Client*>						_clientsByName;
-	std::set<IPAddress>						    _bannedList;
-	UInt32										_nextId;
+	std::map<std::string,Publication>				_publications;
+	std::set<IPAddress>								_bannedList;
+	UInt32											_nextId;
 	std::map<UInt32,std::shared_ptr<FlashStream> >	_streams;
 };
 

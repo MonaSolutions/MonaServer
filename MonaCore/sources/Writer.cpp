@@ -18,6 +18,7 @@ This file is a part of Mona.
 */
 
 #include "Mona/Writer.h"
+#include "Mona/Client.h"
 #include "Mona/Logs.h"
 
 
@@ -71,8 +72,9 @@ bool Writer::writeMedia(MediaType type,UInt32 time,PacketReader& packet) {
 	return true;
 }
 
-void Writer::writeMember(const Peer& peer){
-	ERROR("writeMember method not supported by this protocol")
+bool Writer::writeMember(const Client& client){
+	ERROR("writeMember method not supported by ",client.protocol," protocol")
+	return false;
 }
 
 
