@@ -87,6 +87,9 @@ private:
 		append(args ...);
 	}
 	void append(const std::string& value) {
+		if (value.empty())
+			return;
+
 		if (value.back() != '/' && value.back() != '\\')
 			_path.assign(value);
 		else
