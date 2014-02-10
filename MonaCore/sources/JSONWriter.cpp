@@ -27,7 +27,7 @@ using namespace std;
 namespace Mona {
 
 
-JSONWriter::JSONWriter(const PoolBuffers& buffers,bool modeRaw) : DataWriter(buffers),_modeRaw(modeRaw),_first(true),_started(false),_layers(0) {
+JSONWriter::JSONWriter(const PoolBuffers& buffers,bool modeRaw) : DataWriter(buffers),_modeRaw(modeRaw),_first(true),_started(false),_layers(0),doNotEnd(false) {
 	
 }
 
@@ -35,18 +35,13 @@ void JSONWriter::clear() {
 	_first=true;
 	_started=false;
 	_layers=0;
+	doNotEnd=false;
 	DataWriter::clear();
 }
 
 void JSONWriter::beginObject(const string& type,bool external) {
-	if(!_started) {
-		_started=true;
-		packet.write8('[');
-	}	
-	if(!_first)
-		packet.write8(',');
-	_first=true;
-	++_layers;
+	startData(true);
+
 	packet.write8('{');
 	if(type.empty())
 		return;
@@ -60,20 +55,13 @@ void JSONWriter::endObject() {
 		return;
 	}
 	packet.write8('}');
-	--_layers;
-	if(_first)
-		_first=false;
+
+	endData(true);
 }
 
 void JSONWriter::beginArray(UInt32 size) {
-	if(!_started) {
-		_started=true;
-		packet.write8('[');
-	}	
-	if(!_first)
-		packet.write8(',');
-	_first=true;
-	++_layers;
+	startData(true);
+
 	packet.write8('[');
 }
 
@@ -83,9 +71,8 @@ void JSONWriter::endArray() {
 		return;
 	}
 	packet.write8(']');
-	--_layers;
-	if(_first)
-		_first=false;
+
+	endData(true);
 }
 
 
@@ -101,42 +88,56 @@ void JSONWriter::writeString(const string& value) {
 		_modeRaw = false;
 		return;
 	}
-	if(!_started) {
-		_started=true;
-		packet.write8('[');
-	}
-	if(!_first)
-		packet.write8(',');
-	_first=false;
+
+	startData();
+
 	packet.write8('"');
 	packet.writeRaw(value);
 	packet.write8('"');
+
+	endData();
 }
 
 void JSONWriter::writeBytes(const UInt8* data,UInt32 size) {
-	if(!_started) {
-		_started=true;
-		packet.write8('[');
-	}
-	if(!_first)
-		packet.write8(',');
-	_first=false;
-	packet.writeRaw("{__raw:\"");
+	startData();
 
+	packet.writeRaw("{__raw:\"");
 	Buffer result;
 	Util::ToBase64(data, size, result);
 	packet.writeRaw(result.data(),result.size());
 	packet.writeRaw("\"}");
+
+	endData();
 }
 
-void JSONWriter::end() {
-	if(_layers>0) {
-		WARN("Finish JSON complex element before to end JSONWriter")
-		return;
+void JSONWriter::startData(bool isContainer) {
+
+	// Write first ']'
+	if(!_started) {
+		_started=true;
+		packet.write8('[');
 	}
-	if(_started)
+
+	if(!_first)
+		packet.write8(',');
+
+	if (isContainer) {
+		_first=true;
+		++_layers;
+	}
+}
+
+void JSONWriter::endData(bool isContainer) {
+
+	if (isContainer)
+		--_layers;
+	
+	if(_first)
+		_first=false;
+
+	// Write last ']'
+	if(_layers==0 && !doNotEnd)
 		packet.write8(']');
 }
-
 
 } // namespace Mona

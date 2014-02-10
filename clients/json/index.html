@@ -1,6 +1,6 @@
 <html>
 <head>
-    <title>JSON JavaScript Client Test</title>
+    <title>JSON/Websocket JavaScript Client Test</title>
     <script type="text/javascript">
       var socket;
       function createWebSocket() {
@@ -17,6 +17,7 @@
         socket.onclose = function() { window.document.getElementById("error").value = 'socket closed'; }
         socket.onerror = function() { window.document.getElementById("error").value = 'An error occurs'; }
         socket.onmessage = function(msg){ window.document.getElementById("response").value = msg.data; }
+        //socket.onreception = function(msg){ window.document.getElementById("response").value = msg.data; }
       }
        
       function sendMessage() {

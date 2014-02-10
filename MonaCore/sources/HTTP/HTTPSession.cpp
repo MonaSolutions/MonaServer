@@ -164,7 +164,7 @@ void HTTPSession::packetHandler(PacketReader& reader) {
 								methodCalled = true;
 						}
 						if (!methodCalled && !ex)
-							filePath.set(filePath.path(),"/",_options.index);
+							filePath.appendPath("/", _options.index);
 					} else if (!_options.indexDirectory)
 						ex.set(Exception::PERMISSION, "No authorization to see the content of ", peer.path,"/");
 				}
@@ -216,7 +216,7 @@ void HTTPSession::packetHandler(PacketReader& reader) {
 			////////////  HTTP POST  //////////////
 			else if (pPacket->command == HTTP::COMMAND_POST) {
 				// TODO publication!
-				string contentType;
+				reader.next(reader.available()-pPacket->contentLength);
 				if (pPacket->contentType == HTTP::CONTENT_TEXT && pPacket->contentSubType == "xml")
 					processSOAPfunction(ex, reader);
 			}
@@ -269,64 +269,23 @@ void HTTPSession::processOptions(Exception& ex,const shared_ptr<HTTPPacket>& pPa
 	BinaryWriter& writer = response.packet;
 
 	// TODO determine the protocol (https/http)
-	String::Format(invoker.buffer, "http://", peer.serverAddress);
+	/*IPAddress serverAddress;
+	if (!serverAddress.set(ex, peer.serverAddress))
+		return;
+
+	String::Format(invoker.buffer, "http://", serverAddress.toString());*/
 
 	HTTP_BEGIN_HEADER(writer)
-		HTTP_ADD_HEADER(writer,"Access-Control-Allow-Origin", invoker.buffer)
+		HTTP_ADD_HEADER(writer,"Access-Control-Allow-Origin", "*")
 		HTTP_ADD_HEADER(writer,"Access-Control-Allow-Methods", "GET, HEAD, PUT, PATH, POST, OPTIONS")
 		HTTP_ADD_HEADER(writer,"Access-Control-Allow-Headers", "Content-Type")
 	HTTP_END_HEADER(writer)
 }
 
 void HTTPSession::processSOAPfunction(Exception& ex, PacketReader& packet) {
-	/*
-	// Get function name
-	SOAPReader reader(packet);
-	string function = "onMessage";
-	bool external = false;
-	if(reader.followingType()==SOAPReader::OBJECT) {
-		reader.readObject(function, external);
-
-		string tmp;
-		while(reader.readItem(tmp)!=SOAPReader::END)
-			reader.readString(tmp);
-
-		// extract function from namespace
-		vector<string> nsAndFunction;
-		String::Split(function, ":", nsAndFunction);
-		if (nsAndFunction.size() > 1)
-			function = nsAndFunction[1];
-	}
-
-	// Try to call lua function
-	SOAPWriter writer;
-	peer.onMessage(ex, function, reader, writer);
-	if (ex)
-		return;
-
-	writer.end();
-	UInt32 size = writer.stream.size();
-
-	// Send HTTP Header
-	DataWriter& response = _writer.writeMessage();
-	response.writeString("HTTP/1.1 200 OK");
-	response.beginObject();
-	string stDate;
-	response.writeStringProperty("Date", Time().toString(Time::HTTP_FORMAT, stDate));
-	response.writeStringProperty("Server","Mona");
-
-	string url;
-	// TODO determine the protocol (https/http)
-	String::Format(url, "http://", peer.serverAddress.host().toString());
-	response.writeStringProperty("Access-Control-Allow-Origin", url);
-
-	response.writeStringProperty("Content-Type", "text/xml; charset=utf-8");
-	response.writeNumberProperty("Content-Length", (double)size);
-	response.writeStringProperty("Connection","close");
-	response.endObject();
-
-	// Send SOAP Response
-	response.writeBytes(writer.stream.data(), size);*/
+	
+	XMLReader reader(packet);
+	peer.onMessage(ex, "onMessage", reader, HTTPWriter::XML);
 }
 
 

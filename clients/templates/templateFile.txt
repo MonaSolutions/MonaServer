@@ -1,0 +1,7 @@
+This is a test for template replacement
+
+First template : <% var1 %>
+
+Second template : <% var2 %>
+
+End of template file

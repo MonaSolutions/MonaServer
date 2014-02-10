@@ -79,6 +79,10 @@ public:
 	bool onSubscribe(const Listener& listener,std::string& error);
 	void onUnsubscribe(const Listener& listener);
 
+	/// \brief call the onRead lua function ang get result in properties
+	/// \param filePath : relative path to the file (important : the directory will be erase)
+	/// \param parameters : gives parameters to the function onRead()
+	/// \param properties : recieve output parameters returned by onRead()
     bool onRead(Exception& ex, FilePath& filePath, DataReader& parameters,DataWriter& properties);
 
 private:

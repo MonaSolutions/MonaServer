@@ -98,7 +98,7 @@ public:
 		/// \brief Determine CRC32 value of input data
 		//static UInt32	CalcCrc32(UInt8 * data, UInt32 datalen);
 
-		static UInt32					CrcTab[];
+		//static UInt32					CrcTab[];
 
 		// TODO don't make it static, find a way to have a map for each peer
 		static std::map<Track, UInt32>	CounterRow;			///< Counter for each program/track

@@ -19,7 +19,6 @@
 
 #include "Mona/Mona.h"
 #include "Mona/DataWriter.h"
-#include <stack>
 
 namespace Mona {
 
@@ -46,25 +45,33 @@ public:
 	virtual void	clear();
 
 protected:
+	virtual void	writeRaw(const char* value);
+	virtual void	writeRaw(const std::string& value);
+
+	/// \brief write right tag before writing primitive value
 	void	begin();
-	void	writeRaw(const char* value);
-	void	writeRaw(const std::string& value);
+
+	/// \brief write right tag after writing primitive value
 	void	end();
 
-private:
+	void	setTagHasChilds();
+
+	/// \brief Intern class for managing tags
+	/// while writing
 	class TagPos : virtual Object {
 	public:
-		TagPos(const std::string val) : name(val), counter(1) {}
+		TagPos(const std::string& val) : name(val), counter(1), childs(false) {}
 		std::string name;
 		UInt8		counter;
+		bool		childs;
 	};
-	
 
-	std::stack<TagPos>	_queueObjects;
-	std::string			_value;
-	UInt32				_arraySize;
-	bool				_closeLast;	/// if true : it is necessary to close the last tag
-	std::string			_buffer;
+	std::deque<TagPos>	_queueTags; ///< queue of tags ordered by 
+
+private:	
+
+	std::string		_value; ///< last tag name readed 
+	std::string		_buffer; ///< buffer string for writing raw
 };
 
 

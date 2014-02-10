@@ -88,13 +88,14 @@ double JSONReader::readNumber() {
 		ERROR("JSON number absent, no more data available")
 		return 0;
 	}
-	UInt32 pos = packet.position();
-	UInt8 c = packet.read8();
-	while(available() && (isdigit(c) || c=='.'))
-		c = packet.read8();
 
-	UInt32 size = packet.position()-pos;
-	string value((const char*)cur,size);
+	UInt32 available = packet.available();
+	const UInt8* first = cur;
+	while((available-(cur-first)) && (isdigit(*cur) || *cur=='.'))
+		cur++;
+
+	string value;
+	packet.readRaw(cur-first, value);
 
 	Exception ex;
 	double dval = String::ToNumber<double>(ex, value);
@@ -169,6 +170,7 @@ bool JSONReader::readArray(UInt32& size) {
 JSONReader::Type JSONReader::readItem(string& name) {
 	const UInt8* cur = current();
 	if(!cur) {
+		// TODO is it really an error?
 		ERROR("JSON item absent, no more data available")
 		return END;
 	}

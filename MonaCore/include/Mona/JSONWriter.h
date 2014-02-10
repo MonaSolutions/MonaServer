@@ -44,20 +44,27 @@ public:
 	void writeNull() { writeRaw("null"); }
 	void writeBytes(const UInt8* data,UInt32 size);
 
-	void	end();
 	void	clear();
+
+	bool		doNotEnd; ///< true if user don't want to close the json root table
 private:
+
+	/// \brief Add '[' for first data or ',' for next data of an array/object
+	/// and update state members
+	/// \param isContainer current data is Array or Object
+	void startData(bool isContainer = false);
+
+	/// \brief Add last ']' if data ended and update state members
+	/// \param isContainer current data is Array or Object
+	void endData(bool isContainer = false);
 
 	template <typename ...Args>
 	void writeRaw(Args&&... args) {
-		if(!_started) {
-			_started=true;
-			packet.write8('[');
-		}
-		if(!_first)
-			packet.write8(',');
-		_first=false;
+		startData();
+
 		packet.writeRaw(args ...);
+
+		endData();
 	}
 
 	bool		_modeRaw;

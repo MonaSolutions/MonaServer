@@ -47,9 +47,31 @@ private:
 	static int	Md5(lua_State *pState);
 	static int	Dir(lua_State *pState);
 	static int	Sha256(lua_State *pState);
-	static int	ToAMF(lua_State *pState);
+
+	/// \brief Generic function for serialization
+	/// lua -> DataType
+	template<typename DataType>
+	static int	ToData(lua_State *pState) {
+		SCRIPT_CALLBACK(Invoker,invoker)
+		DataType writer(invoker.poolBuffers);
+		SCRIPT_READ_DATA(writer)
+		SCRIPT_WRITE_BINARY(writer.packet.data(),writer.packet.size())
+		SCRIPT_CALLBACK_RETURN
+	}
+
+	/// \brief Generic function for serialization
+	/// DataType -> lua
+	template<typename DataType>
+	static int	FromData(lua_State *pState) {
+		SCRIPT_CALLBACK(Invoker,invoker)
+		SCRIPT_READ_BINARY(data,size)
+		PacketReader packet(data,size);
+		DataType reader(packet);
+		SCRIPT_WRITE_DATA(reader,SCRIPT_READ_UINT(0))
+		SCRIPT_CALLBACK_RETURN
+	}
+
 	static int	ToAMF0(lua_State *pState);
-	static int	FromAMF(lua_State *pState);
 	static int	AddToBlacklist(lua_State *pState);
 	static int	RemoveFromBlacklist(lua_State *pState);
 

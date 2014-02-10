@@ -60,6 +60,10 @@ private:
 
 	DataWriter&		write(const std::string& code, HTTP::ContentType type = HTTP::CONTENT_TEXT, const std::string& subType = "html; charset=utf-8") { return writer(code, type, subType, NULL, 0); }
 
+	/// \brief  Write content file and replace the "<% key %>" field 
+	/// by relating parameters[key]
+	static void			ReplaceTemplateTags(PacketWriter& packet, std::ifstream& ifile, MapWriter<std::map<std::string,std::string>>& parameters);
+
 	FilePath							_file;
 	UInt8								_sortOptions;
 	const std::shared_ptr<HTTPPacket>	_pRequest;

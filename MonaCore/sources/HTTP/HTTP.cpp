@@ -111,27 +111,36 @@ static map<UInt16, const char*> CodeMessages({
 const UInt32 HTTP::DefaultTimeout(7000000); // 7 sec
 
 HTTP::ContentType HTTP::ExtensionToMIMEType(const string& extension, string& subType) {
+	// TODO Make a Static Array and complete extensions
 	if (String::ICompare(extension, "js") == 0) {
 		subType = "javascript";
 		return CONTENT_APPLICATON;
 	}
-	if (String::ICompare(extension, "flv") == 0) {
+	else if (String::ICompare(extension, "flv") == 0) {
 		subType = "x-flv";
 		return CONTENT_VIDEO;
 	}
-	if (String::ICompare(extension, "ts") == 0) {
+	else if (String::ICompare(extension, "ts") == 0) {
 		subType = "mpeg";
 		return CONTENT_VIDEO;
 	}
-	if (String::ICompare(extension, "svg") == 0) {
+	else if (String::ICompare(extension, "svg") == 0) {
 		subType = "svg+xml";
 		return CONTENT_IMAGE;
 	}
-	if (String::ICompare(extension, EXPAND_SIZE("m3u")) == 0) {
+	else if (String::ICompare(extension, EXPAND_SIZE("m3u")) == 0) {
 		subType = (extension.size() > 3 && extension[3] == '8') ? "x-mpegurl; charset=utf-8" : "x-mpegurl";
 		return CONTENT_AUDIO;
 	}
-	 // TODO others
+	else if (String::ICompare(extension, "jpg") == 0 || String::ICompare(extension, "jpeg") == 0) {
+		subType = "jpeg";
+		return CONTENT_IMAGE;
+	}
+	else if (String::ICompare(extension, "swf") == 0) {
+		subType = "x-shockwave-flash";
+		return CONTENT_APPLICATON;
+	}
+
 	subType = extension.empty() ? "plain" : extension;
 	return CONTENT_TEXT;
 }

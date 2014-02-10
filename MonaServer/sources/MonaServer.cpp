@@ -466,7 +466,7 @@ void MonaServer::onMessage(Exception& ex, Client& client,const string& name,Data
 
 bool MonaServer::onRead(Exception& ex, Client& client,FilePath& filePath,DataReader& parameters,DataWriter& properties) { 
 	bool result = true;
-	filePath.directory(WWWPath);
+	filePath.setDirectory(WWWPath);
 	SCRIPT_BEGIN(openService(client))
 		SCRIPT_MEMBER_FUNCTION_BEGIN(Client,client,"onRead")
 			SCRIPT_WRITE_STRING(filePath.name().c_str())
@@ -478,9 +478,9 @@ bool MonaServer::onRead(Exception& ex, Client& client,FilePath& filePath,DataRea
 					SCRIPT_READ_NIL
 				} else {
 					buffer.assign(filePath.name());
-					SCRIPT_READ_STRING(buffer);
+					buffer.assign(SCRIPT_READ_STRING(buffer));
 					if (!buffer.empty()) // to avoid for root app to give "/" instead of ""
-						filePath.set(client.path,"/",buffer);
+						filePath.setPath(client.path,"/",buffer);
 				}
 				if(SCRIPT_NEXT_TYPE==LUA_TTABLE) {
 					lua_pushnil(_pState);  // first key 

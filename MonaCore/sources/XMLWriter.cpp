@@ -24,76 +24,90 @@ using namespace std;
 
 namespace Mona {
 
-XMLWriter::XMLWriter(const PoolBuffers& buffers) : DataWriter(buffers),_arraySize(1), _closeLast(false) {
+XMLWriter::XMLWriter(const PoolBuffers& buffers) : DataWriter(buffers) {
 	
 }
 
 void XMLWriter::clear() {
 	DataWriter::clear();
-	_arraySize = 1;
 	_value.assign("");
-	while (!_queueObjects.empty())
-		_queueObjects.pop();
+	_queueTags.clear();
 }
 
 void XMLWriter::beginObject(const string& type,bool external) {
-	
-	// Creation of the tag
-	if (!_value.empty()) {
 
-		_queueObjects.emplace(_value);
-		TagPos& tag = _queueObjects.top();
-		tag.counter = _arraySize;
-		_arraySize = 1;
-		_value.assign("");
-	}
-
-	if (_queueObjects.empty())
+	if (_queueTags.empty())
 		return;
 
-	if (_closeLast) {
-		packet.write8('>');
-		_closeLast=false;
-	}
-
-	TagPos& tag = _queueObjects.top();
+	// Write start tag
+	TagPos& tag = _queueTags.back();
 	packet.write8('<');
 	packet.writeRaw(tag.name);
-	_closeLast=true;
+}
+
+void XMLWriter::setTagHasChilds() {
+
+	// New item = this tag has childs
+	if (!_queueTags.empty()) {
+		TagPos& tag = _queueTags.back();
+		if (!tag.childs) {
+			tag.childs=true;
+			packet.write8('>'); // End current start tag
+		}
+	}
 }
 
 void XMLWriter::writePropertyName(const string& value) {
-
+	
+	setTagHasChilds();
 	_value.assign(value);
 }
 
 void XMLWriter::beginArray(UInt32 size) {
 
-	_arraySize=size;
+	// Creation of the tag
+	if (!_value.empty()) {
+
+		setTagHasChilds();
+
+		_queueTags.emplace_back(_value);
+		TagPos& tag = _queueTags.back();
+		tag.counter = size;
+		_value.assign("");
+	} 
+	// Empty tag
+	else if (!_queueTags.empty() && !size) {
+
+		TagPos& tag = _queueTags.back();
+
+		packet.write8('<');
+		packet.writeRaw(tag.name);
+		packet.writeRaw("/>");
+
+		// Release the tag if ended
+		if(--tag.counter==0)
+			_queueTags.pop_back();
+	}
 }
 
 void XMLWriter::endObject() {
-		
+
 	// Write end of tag
-	if (_queueObjects.empty())
+	if (_queueTags.empty())
 		return;
-	TagPos& tag = _queueObjects.top();
+	TagPos& tag = _queueTags.back();
 
-	// Auto-ended tag
-	if (_closeLast) {
-
-		packet.writeRaw("/>");
-		_closeLast=false;
-	} else {
-
+	if (tag.childs) {
+		// End tag
 		packet.writeRaw("</");
 		packet.writeRaw(tag.name);
 		packet.write8('>');
-	}
+	} else
+		packet.writeRaw("/>"); // Auto-ended tag
 
 	// Release the tag if ended
 	if(--tag.counter==0)
-		_queueObjects.pop();
+		_queueTags.pop_back();
 	
 }
 
@@ -108,35 +122,58 @@ void XMLWriter::writeRaw(const char* value) {
 	packet.writeRaw(value);
 	end();
 }
-void XMLWriter::writeRaw(const string& value) { 
+
+void XMLWriter::writeRaw(const string& value) {
 	begin();
 	packet.writeRaw(value);
 	end();
 }
 
 void XMLWriter::begin() {
-	if (!_value.empty()) {
-		if (_value == "__value")
-			_value = "value";
 
-		if (_closeLast) {
+	// Attributes
+	if (!_value.empty()) {
+
+		if (_value!="__value") { // (__value is primitive text)
+			packet.write8('<');
+			packet.writeRaw(_value);
 			packet.write8('>');
-			_closeLast = false;
 		}
+	} 
+	// Primitive Tag value
+	else if (!_queueTags.empty()) {
+		TagPos& tag = _queueTags.back();
 
 		packet.write8('<');
-		packet.writeRaw(_value);
+		packet.writeRaw(tag.name);
 		packet.write8('>');
 	}
-
 }
 
 void XMLWriter::end() {
+
+	// Attribute
 	if (!_value.empty()) {
-		packet.writeRaw("</");
-		packet.writeRaw(_value);
-		packet.write8('>');
+
+		if (_value!="__value") { // (__value is primitive text)
+			packet.writeRaw("</");
+			packet.writeRaw(_value);
+			packet.write8('>');
+		}
 		_value.assign("");
+	}
+	// Primitive Tag value
+	else if (!_queueTags.empty()) {
+
+		// Write end tag
+		TagPos& tag = _queueTags.back();
+		packet.writeRaw("</");
+		packet.writeRaw(tag.name);
+		packet.write8('>');
+
+		// Release the tag if ended
+		if(--tag.counter==0)
+			_queueTags.pop_back();
 	}
 }
 
