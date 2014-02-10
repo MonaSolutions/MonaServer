@@ -49,8 +49,8 @@ void WS::Unmask(BinaryReader& reader) {
 		bytes[i] ^= mask[i%4];
 }
 
-UInt8 WS::WriteHeader(UInt8 type,UInt32 size,BinaryWriter& writer) {
-	if(type==0)
+UInt8 WS::WriteHeader(MessageType type,UInt32 size,BinaryWriter& writer) {
+	if(type==TYPE_NIL)
 		return 0;
 	writer.write8(type|0x80);
 	if (size < 126) {

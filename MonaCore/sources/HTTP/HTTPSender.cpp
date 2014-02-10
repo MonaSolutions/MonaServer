@@ -170,7 +170,7 @@ bool HTTPSender::run(Exception& ex) {
 									if (keyBegin)
 										key.assign(keyBegin, keyLength);
 									UInt32 available(current+1-signifiant);
-									auto& it = _pRequest->parameters[key];
+									auto it = _pRequest->parameters[key];
 									const string& value(it==_pRequest->parameters.end() ? String::Empty : it->second);
 									// give the size available required
 									if (available < value.size()) {
@@ -181,7 +181,7 @@ bool HTTPSender::run(Exception& ex) {
 									} else if (available>value.size()) {
 										available = available-value.size(); // to remove
 										newSize -= available;
-										memcpy(current+1-available,current+1,end-current-1);
+										memmove(current+1-available,current+1,end-current-1);
 										current -= available-1;
 									}
 									// replace <% key %> by value
@@ -218,7 +218,7 @@ bool HTTPSender::run(Exception& ex) {
 				ERROR("HTTP header without end, unvalid packet")
 		}
 
-		// writr content-length
+		// write content-length
 		String::Format(_buffer, end + 4 - content);
 		memcpy((UInt8*)packet.data()+_sizePos,_buffer.c_str(),_buffer.size());
 

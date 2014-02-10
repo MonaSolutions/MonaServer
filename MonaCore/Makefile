@@ -6,12 +6,12 @@ else
 	SHARED=-shared
 endif
 CC=g++
-CFLAGS+=-std=c++0x
-INCLUDES=-I/usr/local/include/ -I./../MonaBase/include/ -I./include/
-LIBDIR=-L/usr/local/lib/ -L./../MonaBase/lib/
+CFLAGS+=-std=c++11
+INCLUDES=-I./../MonaBase/include/ -I./include/
+LIBDIR=-L./../MonaBase/lib/
 LIBS ?= -lMonaBase -lcrypto -lssl
 
-SOURCES = $(wildcard sources/*.cpp sources/*/*.cpp)
+SOURCES = $(filter-out sources/CSSWriter.cpp sources/SVGWriter.cpp sources/HTMLWriter.cpp, $(wildcard sources/*.cpp sources/*/*.cpp))
 OBJECT = $(addprefix tmp/Release/,$(notdir $(SOURCES:%.cpp=%.o)))
 OBJECTD = $(addprefix tmp/Debug/,$(notdir $(SOURCES:%.cpp=%.o)))
 
@@ -27,7 +27,7 @@ debug:
 	mkdir -p lib
 	@make -k $(OBJECTD)
 	@echo creating dynamic debug lib $(LIB)
-	@$(CC) -g $(CFLAGS) $(LIBDIR) -fPIC $(SHARED) -o $(LIB) $(OBJECTD) $(LIBS)
+	@$(CC) -g -D_DEBUG $(CFLAGS) $(LIBDIR) -fPIC $(SHARED) -o $(LIB) $(OBJECTD) $(LIBS)
 
 $(OBJECT):
 	@echo compiling $(filter %/$(subst .o,.cpp,$(notdir $(@))),$(SOURCES))
@@ -35,7 +35,7 @@ $(OBJECT):
 
 $(OBJECTD):
 	@echo compiling $(filter %/$(subst .o,.cpp,$(notdir $(@))),$(SOURCES))
-	@$(CC) -g $(CFLAGS) -fpic $(INCLUDES) -c -o $(@) $(filter %/$(subst .o,.cpp,$(notdir $(@))),$(SOURCES))
+	@$(CC) -g -D_DEBUG $(CFLAGS) -fpic $(INCLUDES) -c -o $(@) $(filter %/$(subst .o,.cpp,$(notdir $(@))),$(SOURCES))
 
 clean:
 	@echo cleaning project MonaCore

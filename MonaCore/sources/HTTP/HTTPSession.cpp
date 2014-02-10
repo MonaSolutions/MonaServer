@@ -135,8 +135,7 @@ void HTTPSession::packetHandler(PacketReader& reader) {
 			_writer.flush(true); // last HTTP flush for this connection, now we are in a WebSession mode!
 		} // TODO else
 	} else {
-
-		MapReader<MapParameters::Iterator> parameters(peer.properties().begin(),peer.properties().end());
+		MapReader<MapParameters::Iterator> parameters(peer.properties());
 
 		if (!peer.connected) {
 			_options.clear();
@@ -163,8 +162,9 @@ void HTTPSession::packetHandler(PacketReader& reader) {
 							} else
 								methodCalled = true;
 						}
-						if (!methodCalled && !ex)
-							filePath.set(filePath.path(),"/",_options.index);
+						if (!methodCalled && !ex) {
+							filePath.path(filePath.path(),"/",_options.index);
+						}
 					} else if (!_options.indexDirectory)
 						ex.set(Exception::PERMISSION, "No authorization to see the content of ", peer.path,"/");
 				}

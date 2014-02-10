@@ -21,7 +21,6 @@ This file is a part of Mona.
 #include "Mona/SocketAddress.h"
 #include "Mona/String.h"
 #include "Mona/DNS.h"
-#include <cstring>
 
 using namespace std;
 
@@ -36,8 +35,10 @@ class SocketAddressCommon {
 public:
 	virtual const IPAddress&		host() const = 0;
 	virtual UInt16					port() const = 0;
-	virtual const struct sockaddr&  addr() const = 0;
 	virtual IPAddress::Family		family() const = 0;
+
+	virtual const sockaddr* addr() const = 0;
+	virtual NET_SOCKLEN		size() const = 0;
 };
 
 
@@ -50,17 +51,17 @@ public:
 	IPv4SocketAddress(const IPAddress& host, UInt16 port) : _host(host) {
 		memset(&_addr, 0, sizeof(_addr));
 		_addr.sin_family = AF_INET;
-		NET_SOCKLEN size(0);
-		memcpy(&_addr.sin_addr, host.addr(size), sizeof(_addr.sin_addr));
+		memcpy(&_addr.sin_addr, host.addr(), sizeof(_addr.sin_addr));
 		_addr.sin_port = port;
 	}
 
 	IPAddress::Family family() const { return IPAddress::IPv4; }
 
 	const IPAddress& host() const { return _host;}
+	UInt16			 port() const { return _addr.sin_port;}
 
-	UInt16					port() const { return _addr.sin_port;}
-	const struct sockaddr&	addr() const { return *reinterpret_cast<const struct sockaddr*>(&_addr);}
+	const sockaddr*	 addr() const { return (sockaddr*)&_addr;}
+	NET_SOCKLEN		 size() const { return sizeof(_addr); }
 
 private:
 	struct sockaddr_in	_addr;
@@ -77,8 +78,7 @@ public:
 		memset(&_addr, 0, sizeof(_addr));
 		_addr.sin6_family = AF_INET6;
 		set_sin6_len(&_addr);
-		NET_SOCKLEN size(0);
-		memcpy(&_addr.sin6_addr, host.addr(size), sizeof(_addr.sin6_addr));
+		memcpy(&_addr.sin6_addr, host.addr(), sizeof(_addr.sin6_addr));
 		_addr.sin6_port = port;
 		_addr.sin6_scope_id = scope;
 	}
@@ -87,8 +87,10 @@ public:
 
 	const IPAddress& host() const { return _host;}
 
-	UInt16					port() const { return _addr.sin6_port; }
-	const struct sockaddr&	addr() const { return *reinterpret_cast<const struct sockaddr*>(&_addr); }
+	UInt16			 port() const { return _addr.sin6_port; }
+
+	const sockaddr*	 addr() const { return (sockaddr*)&_addr;}
+	NET_SOCKLEN		 size() const { return sizeof(_addr); }
 
 private:
 	struct sockaddr_in6	_addr;
@@ -133,7 +135,7 @@ SocketAddress::SocketAddress(const IPAddress& host, UInt16 port) {
 }
 
 SocketAddress::SocketAddress(const struct sockaddr& addr) {
-	if (sizeof(addr) == sizeof(struct sockaddr_in6))
+	if (addr.sa_family == AF_INET6)
 		_pAddress.reset(new IPv6SocketAddress(reinterpret_cast<const struct sockaddr_in6*>(&addr)));
 	else
 		_pAddress.reset(new IPv4SocketAddress(reinterpret_cast<const struct sockaddr_in*>(&addr)));
@@ -164,7 +166,7 @@ void SocketAddress::set(const IPAddress& host, UInt16 port) {
 }
 
 void SocketAddress::set(const struct sockaddr& addr) {
-	if (sizeof(addr) == sizeof(struct sockaddr_in6))
+	if (addr.sa_family == AF_INET6)
 		_pAddress.reset(new IPv6SocketAddress(reinterpret_cast<const struct sockaddr_in6*>(&addr)));
 	else
 		_pAddress.reset(new IPv4SocketAddress(reinterpret_cast<const struct sockaddr_in*>(&addr)));
@@ -177,7 +179,7 @@ bool SocketAddress::setIntern(Exception& ex,const string& hostAndPort,bool resol
 
 	string host, port;
 	auto it  = hostAndPort.begin();
-	auto& end = hostAndPort.end();
+	auto end = hostAndPort.end();
 	if (*it == '[') {
 		++it;
 		while (it != end && *it != ']')
@@ -258,8 +260,12 @@ IPAddress::Family SocketAddress::family() const {
 	return _pAddress->family();
 }
 
-const struct sockaddr& SocketAddress::addr() const {
+const sockaddr* SocketAddress::addr() const {
 	return _pAddress->addr();
+}
+
+NET_SOCKLEN SocketAddress::size() const {
+	return _pAddress->size();
 }
 
 const string& SocketAddress::toString() const {

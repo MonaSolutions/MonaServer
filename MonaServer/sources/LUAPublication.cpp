@@ -78,7 +78,7 @@ int LUAPublicationBase::Item(lua_State *pState) {
 	int result(0);
 	SCRIPT_BEGIN(pState)
 	if (lua_isstring(pState, 2)) {
-		auto& it = pInvoker->publications(lua_tostring(pState,2));
+		auto it = pInvoker->publications(lua_tostring(pState,2));
 		if (it != pInvoker->publications.end()) {
 			SCRIPT_ADD_OBJECT(Mona::Publication, LUAPublication<>, it->second);
 			++result;

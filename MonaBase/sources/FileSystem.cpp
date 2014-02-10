@@ -23,7 +23,9 @@ This file is a part of Mona.
 #include <cctype>
 #if defined(_WIN32)
     #include "windows.h"
+	#include "direct.h"
 #else
+	#include <unistd.h>
     #include "limits.h"
     #include "pwd.h"
 #endif
@@ -46,7 +48,7 @@ public:
 
 	void add(const string& path) {
 		lock_guard<mutex> lock(_mutex);
-		_paths.insert(path); // TODO make absolute!!
+		_paths.insert(path);
 	}
 
 private:
@@ -77,8 +79,8 @@ FileSystem::Attributes& FileSystem::GetAttributes(Exception& ex,const string& pa
 		return attributes;
 	}
 	attributes.lastModified.update(chrono::system_clock::from_time_t(status.st_mtime));
-	attributes.size = (UInt32)status.st_size;
-	attributes.isDirectory = status.st_mode&_S_IFDIR ? true : false;
+	if(!(attributes.isDirectory = (status.st_mode&S_IFDIR) ? true : false))
+		attributes.size = (UInt32)status.st_size;
 	return attributes;
 }
 
@@ -97,13 +99,12 @@ UInt32 FileSystem::GetSize(Exception& ex,const string& path) {
 	struct stat status;
 	status.st_size = 0;
 	string file(path);
-	if (MakeFile(file).size() < path.size()) {
-		// folder, no GetSize possible
-		ex.set(Exception::FILE, "GetSize works just on file, and ", path, " is a folder");
-		return 0;
-	}
 	if (::stat(MakeFile(file).c_str(), &status) != 0)
 		ex.set(Exception::FILE, "File ", path, " doesn't exist");
+	else if (status.st_mode&S_IFDIR) // folder, no GetSize possible
+		ex.set(Exception::FILE, "GetSize works just on file, and ", path, " is a folder");
+	if (ex)
+		status.st_size = 0; // Cause on linux, for a folder, it's equal to 4096...
 	return (UInt32)status.st_size;
 }
 
@@ -116,40 +117,42 @@ bool FileSystem::Exists(const string& path, bool any) {
 		return false;
 	if (any)
 		return true;
-	// if existing test was on folder, and that the result is a file, return false
-	if (oldSize > file.size() && !(status.st_mode&_S_IFDIR))
-		return false;
-	return true;
+	// if existing test was on folder
+	if (oldSize > file.size())
+		return status.st_mode&S_IFDIR ? true : false;
+	return status.st_mode&S_IFDIR ? false : true;
 }
 
 void FileSystem::CreateDirectories(Exception& ex,const string& path) {
 	vector<string> directories;
-	Unpack(path, directories);
+	if (Unpack(path, directories).empty())
+		return;
 	string dir;
-	if (!directories.empty() && directories.back()[0] == ':') {
+	if (directories.front().size()==2 && directories.front().back() == ':') {
 		// device
 		dir.append(directories.front());
-		dir.append("/");
 		directories.erase(directories.begin());
 	}
 	for (const string& directory : directories) {
+		dir.append("/");
 		dir.append(directory);
 		if (!CreateDirectory(dir)) {
 			ex.set(Exception::FILE, "Impossible to create ", dir, " directory");
 			return;
 		}
-		dir.append("/");
 	}
 }
 
 
 bool FileSystem::CreateDirectory(const string& path) {
-	if (Exists(path+"/"))
-		return true;
+	struct stat status;
+	string file(path);
+	if (::stat(MakeFile(file).c_str(), &status) == 0) // exists already
+		return status.st_mode&S_IFDIR ? true : false;
 #if defined(_WIN32)
-	return CreateDirectoryA(path.c_str(), 0) != 0;
+	return _mkdir(path.c_str()) == 0;
 #else
-    return (mkdir(path.c_str(), S_IRWXU | S_IRWXG | S_IRWXO) == 0);
+    return mkdir(path.c_str(),S_IRWXU | S_IRWXG | S_IRWXO) == 0;
 #endif
 }
 
@@ -214,7 +217,7 @@ string& FileSystem::MakeFile(string& path) {
 	while (size>0 && (path[size - 1] == '\\' || path[size - 1] == '/'))
 		path.resize(--size);
 	// Device special case
-	if (size==2 && path[size - 1]==':')
+	if (size==2 && path.back()==':')
 		path.append("/");
 #else
 	while (size>0 && path[size - 1] == '/')
@@ -244,9 +247,11 @@ string& FileSystem::Pack(const vector<string>& values, string& path) {
 	path.clear();
 	bool first = true;
 	for (const string& value : values) {
+		if (value.empty())
+			continue;
 #if defined(_WIN32)
 		if (first) {
-			if (value.empty() || value[value.size() - 1] != ':')
+			if (value.size()!=2 || value.back()!= ':') // device case
 				path.append("/");
 			first = false;
 		} else
@@ -341,7 +346,7 @@ bool FileSystem::GetHome(string& path) {
 // TODO test unit
 bool FileSystem::IsAbsolute(const string& path) {
 #if defined(_WIN32)
-	return !path.empty() && isalpha(path[0]) && (path.size()<2 || path[1]==':');
+	return !path.empty() && isalpha(path[0]) && (path.size()!=2 || path.back()==':');
 #else
 	if (path.empty())
 		return false;

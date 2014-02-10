@@ -44,6 +44,7 @@ public:
 	const std::string&	baseName() const { return _baseName.empty() ? FileSystem::GetBaseName(_path,_baseName) : _baseName; }
 	const std::string&	extension() const { return _extension.empty() ? FileSystem::GetExtension(_path,_extension) : _extension; }
 
+	void				update() const { _attributesLoaded = false; }
 	UInt32				size() const { return attributes().size; }
 	const Time&			lastModified() const { return attributes().lastModified; }
 	bool				isDirectory() const { return attributes().isDirectory; }
@@ -61,11 +62,17 @@ public:
 
 	template <typename ...Args>
 	const std::string& path(Args&&... args) {
+		_path.clear();
+		return appendPath(_path,args ...);
+	}
+
+	template <typename ...Args>
+	const std::string& appendPath(Args&&... args) {
 		_name.clear();
 		_baseName.clear();
 		_extension.clear();
 		_attributesLoaded = false;
-		return String::Format(_path,args ...);
+		return String::Append(_path,args ...);
 	}
 	
 	template <typename ...Args>
@@ -87,19 +94,24 @@ private:
 		append(args ...);
 	}
 	void append(const std::string& value) {
-		if (value.back() != '/' && value.back() != '\\')
-			_path.assign(value);
-		else
-			_directory.append(value);
+		if (!value.empty()) {
+			if (value.back() != '/' && value.back() != '\\')
+				_path.assign(value);
+			else
+				_directory.append(value);
+		}
 		if(!_directory.empty())
 			FileSystem::MakeDirectory(_directory);
 	}
 	void append(const char* value) {
-		char back = value[strlen(value) - 1];
-		if (back != '/' && back != '\\')
-			_path.assign(value);
-		else
-			_directory.append(value);
+		UInt32 size(strlen(value));
+		if (size > 0) {
+			char back = value[strlen(value) - 1];
+			if (back != '/' && back != '\\')
+				_path.assign(value);
+			else
+				_directory.append(value);
+		}
 		if(!_directory.empty())
 			FileSystem::MakeDirectory(_directory);
 	}

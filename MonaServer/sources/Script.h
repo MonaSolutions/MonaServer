@@ -23,7 +23,6 @@ This file is a part of Mona.
 #include "Mona/DataReader.h"
 #include "Mona/DataWriter.h"
 #include "Mona/Logs.h"
-#include <cstring>
 #include <map>
 
 

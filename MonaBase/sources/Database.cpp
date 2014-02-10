@@ -123,7 +123,7 @@ void Database::processEntry(Exception& ex,Entry& entry) {
 	file.append(name);
 	ofstream ofile(file, ios::out | ios::binary);
 	if (!ofile.good()) {
-		ex.set(Exception::FILE, "Impossible to write file ", file, " in ", directory);
+		ex.set(Exception::FILE, "Impossible to write file ", file);
 		return;
 	}
 	ofile.write((const char*)entry.pBuffer->data(), entry.pBuffer->size());

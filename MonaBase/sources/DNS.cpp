@@ -21,7 +21,6 @@ This file is a part of Mona.
 #include "Mona/DNS.h"
 #include "Mona/SocketAddress.h"
 #include "Mona/Socket.h"
-#include <cstring>
 
 using namespace std;
 
@@ -54,7 +53,7 @@ bool DNS::HostByAddress(Exception& ex,const IPAddress& address, HostEntry& host)
 	SocketAddress sa;
 	sa.set(address, 0);
 	static char fqname[1024];
-	int rc = getnameinfo(&sa.addr(), sizeof(sa.addr()), fqname, sizeof(fqname), NULL, 0, NI_NAMEREQD);
+	int rc = getnameinfo(sa.addr(), sa.size(), fqname, sizeof(fqname), NULL, 0, NI_NAMEREQD);
 	if (rc == 0) {
 		struct addrinfo* pAI;
 		struct addrinfo hints;

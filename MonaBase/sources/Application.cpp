@@ -85,6 +85,8 @@ void Application::displayHelp() {
 
 bool Application::init(int argc, const char* argv[]) {
 
+	// set main thread name
+	Util::SetCurrentThreadName("Main");
 
 	initApplicationPaths(argv[0]);
 	
@@ -182,7 +184,7 @@ int Application::run(int argc, const char* argv[]) {
 	}
 }
 
-void Application::log(thread::id threadId, const string& threadName, Level level, const char *filePath, string& shortFilePath, long line, string& message) {
+void Application::log(THREAD_ID threadId, const string& threadName, Level level, const char *filePath, string& shortFilePath, long line, string& message) {
 	if (isInteractive())
 		Logger::log(threadId, threadName, level, filePath, shortFilePath, line, message);
 	lock_guard<mutex> lock(_logMutex);
@@ -266,9 +268,9 @@ void Application::initApplicationPaths(const char* command) {
 	FileSystem::Unpack(path, values);
 
 	setString("application.path", path);
-	setString("application.name", values.empty() ? "" : values.back());
+	setString("application.name", values.empty() ? String::Empty : values.back());
 	string baseName;
-	setString("application.baseName", values.empty() ? "" : FileSystem::GetBaseName(values.back(),baseName));
+	setString("application.baseName", values.empty() ? String::Empty : FileSystem::GetBaseName(values.back(),baseName));
 
 	if (!values.empty())
 		values.resize(values.size() - 1);

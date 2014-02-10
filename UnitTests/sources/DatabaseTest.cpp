@@ -56,7 +56,7 @@ ADD_TEST(DatabaseTest, Add) {
 	CHECK(!ex);
 
 	data.flush();
-	CHECK(FileSystem::Exists(path+"\\"));
+	CHECK(FileSystem::Exists(path+"/"));
 	CHECK(FileSystem::Exists(path + "/Test/"));
 }
 

@@ -6,9 +6,8 @@ else
 	SHARED=-shared
 endif
 CC=g++
-CFLAGS+=-std=c++0x
-INCLUDES=-I/usr/local/include/ -I./include/
-LIBDIR=-L/usr/local/lib/
+CFLAGS+=-std=c++11
+INCLUDES=-I./include/
 LIBS ?= -lcrypto -lssl
 
 SOURCES = $(filter-out sources/Win%.cpp, $(wildcard $(SRCDIR)*/*.cpp))
@@ -20,14 +19,14 @@ release:
 	mkdir -p lib
 	@make -k $(OBJECT)
 	@echo creating dynamic lib $(LIB)
-	@$(CC) $(CFLAGS) $(LIBDIR) -fPIC $(SHARED) -o $(LIB) $(OBJECT) $(LIBS)
+	@$(CC) $(CFLAGS) -fPIC $(SHARED) -o $(LIB) $(OBJECT) $(LIBS)
 
 debug:
 	mkdir -p tmp/Debug
 	mkdir -p lib
 	@make -k $(OBJECTD)
 	@echo creating dynamic debug lib $(LIB)
-	@$(CC) -g $(CFLAGS) $(LIBDIR) -fPIC $(SHARED) -o $(LIB) $(OBJECTD) $(LIBS)
+	@$(CC) -g -D_DEBUG $(CFLAGS) -fPIC $(SHARED) -o $(LIB) $(OBJECTD) $(LIBS)
 
 $(OBJECT):
 	@echo compiling $(@:tmp/Release/%.o=sources/%.cpp)
@@ -35,7 +34,7 @@ $(OBJECT):
 
 $(OBJECTD):
 	@echo compiling $(@:tmp/Debug/%.o=sources/%.cpp)
-	@$(CC) -g $(CFLAGS) -fpic $(INCLUDES) -c -o $(@) $(@:tmp/Debug/%.o=sources/%.cpp)
+	@$(CC) -g -D_DEBUG $(CFLAGS) -fpic $(INCLUDES) -c -o $(@) $(@:tmp/Debug/%.o=sources/%.cpp)
 
 clean:
 	@echo cleaning project MonaBase

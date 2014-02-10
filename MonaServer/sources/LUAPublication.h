@@ -65,7 +65,7 @@ public:
 			} else {
 				if(strcmp(name,"publisher")==0) {
 					if (pPublication->publisher())
-						SCRIPT_ADD_OBJECT(Client, LUAClient, *pPublication->publisher())
+						SCRIPT_ADD_OBJECT(Mona::Client, LUAClient, *pPublication->publisher())
 				} else if(strcmp(name,"name")==0) {
 					SCRIPT_WRITE_STRING(pPublication->name().c_str())
 				} else if(strcmp(name,"listeners")==0) {
@@ -73,11 +73,11 @@ public:
 				} else if(strcmp(name,"droppedFrames")==0) {
 					SCRIPT_WRITE_NUMBER(pPublication->droppedFrames())
 				} else if(strcmp(name,"audioQOS")==0) {
-					SCRIPT_ADD_OBJECT(QualityOfService, LUAQualityOfService, pPublication->audioQOS())
+					SCRIPT_ADD_OBJECT(Mona::QualityOfService, LUAQualityOfService, pPublication->audioQOS())
 				} else if(strcmp(name,"videoQOS")==0) {
-					SCRIPT_ADD_OBJECT(QualityOfService,LUAQualityOfService,pPublication->videoQOS())
+					SCRIPT_ADD_OBJECT(Mona::QualityOfService,LUAQualityOfService,pPublication->videoQOS())
 				} else if(strcmp(name,"dataQOS")==0) {
-					SCRIPT_ADD_OBJECT(QualityOfService,LUAQualityOfService,pPublication->dataQOS())
+					SCRIPT_ADD_OBJECT(Mona::QualityOfService,LUAQualityOfService,pPublication->dataQOS())
 				} else if(strcmp(name,"close")==0) {
 					SCRIPT_WRITE_FUNCTION(&LUAPublication::Close)
 				} else if(strcmp(name,"pushAudio")==0) {

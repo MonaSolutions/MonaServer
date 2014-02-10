@@ -95,7 +95,7 @@ void TCPClient::onReadable(Exception& ex) {
 		if (rest > 0) {
 			if (_rest != rest) { // has consumed few bytes (but not all)
 				if (!_pBuffer.empty() && _pBuffer->size()>=_rest) // To prevent the case where the buffer has been manipulated during onReception call, if it happens, ignore copy!
-					memcpy(_pBuffer->data(), _pBuffer->data() + (_rest - rest), rest); // move to the beginning
+					memmove(_pBuffer->data(), _pBuffer->data() + (_rest - rest), rest); // move to the beginning
 			}
 		} else // has consumed all
 			_pBuffer.release(); // release the buffer!
@@ -124,7 +124,8 @@ void TCPClient::disconnect() {
 	_pBuffer.release();
 	_address.reset();
 	_peerAddress.reset();
-	onDisconnection();
+	_connected = false;
+	onDisconnection(); // in last because code of onDisconnection accept a "delete this"
 }
 
 bool TCPClient::send(Exception& ex,const UInt8* data,UInt32 size) {

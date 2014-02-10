@@ -57,7 +57,7 @@ private:
 	// ServerHandler implementation
 	void										connection(ServerConnection& server);
 	void										message(ServerConnection& server, const std::string& handler, Mona::PacketReader& packet);
-	void										disconnection(const ServerConnection& server, const std::string& error);
+	void										disconnection(const ServerConnection& server);
 	const std::string&							host() { return _host; }
 	const std::map<std::string, Mona::UInt16>&	ports() { return _ports; }
 

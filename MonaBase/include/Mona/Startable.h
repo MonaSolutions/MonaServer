@@ -62,7 +62,6 @@ protected:
 
 private:
 	void			setDebugThreadName();
-	void			initThread(Exception& ex, std::thread& thread, Priority priority);
 	void			process();
 	
 
@@ -72,6 +71,7 @@ private:
 	volatile bool			_stop;
 	Event					_wakeUpEvent;
 	std::string				_name;
+	Priority				_priority;
 };
 
 

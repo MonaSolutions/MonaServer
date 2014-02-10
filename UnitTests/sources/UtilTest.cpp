@@ -19,7 +19,6 @@ This file is a part of Mona.
 
 #include "Test.h"
 #include "Mona/Util.h"
-#include <cstring>
 
 using namespace Mona;
 

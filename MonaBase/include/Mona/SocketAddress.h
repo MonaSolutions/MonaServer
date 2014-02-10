@@ -70,7 +70,8 @@ public:
 	const std::string&		toString() const;
 	
 	// Native socket address
-	const struct sockaddr&	addr() const;
+	const sockaddr*	addr() const;
+	NET_SOCKLEN		size() const;
 	
 	bool operator < (const SocketAddress& address) const;
 	bool operator == (const SocketAddress& address) const { return port() == address.port() && host() == address.host(); }

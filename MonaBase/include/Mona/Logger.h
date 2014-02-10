@@ -41,7 +41,7 @@ public:
 	};
 
 
-    virtual void log(std::thread::id threadId, const std::string& threadName, Level level, const char *filePath, std::string& shortFilePath, long line, std::string& message);
+    virtual void log(THREAD_ID threadId, const std::string& threadName, Level level, const char *filePath, std::string& shortFilePath, long line, std::string& message);
 	virtual void dump(const UInt8* data, UInt32 size);
 
 private:

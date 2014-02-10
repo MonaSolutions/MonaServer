@@ -36,20 +36,22 @@ public:
 	virtual const std::map<std::string,Mona::UInt16>& ports()=0;
 	virtual void connection(ServerConnection& server)=0;
 	virtual void message(ServerConnection& server,const std::string& handler,Mona::PacketReader& packet)=0;
-	virtual void disconnection(const ServerConnection& server,const std::string& error)=0;
+	virtual void disconnection(const ServerConnection& server)=0;
 };
 
 class ServersHandler {
 public:
 	virtual void connection(ServerConnection& server)=0;
-	virtual bool disconnection(ServerConnection& server)=0;
+	virtual void disconnection(ServerConnection& server)=0;
 };
 
 
 class ServerConnection : private Mona::TCPClient, public Mona::MapParameters  {
 public:
-	ServerConnection(const Mona::SocketAddress& peerAddress, const Mona::SocketManager& manager, ServerHandler& handler, ServersHandler& serversHandler,bool alreadyConnected=false);
-	virtual ~ServerConnection();
+	// Target version
+	ServerConnection(const Mona::SocketManager& manager, ServerHandler& handler, ServersHandler& serversHandler,const Mona::SocketAddress& targetAddress);
+	// Initiator version
+	ServerConnection(const Mona::SocketAddress& peerAddress, const Mona::SocketManager& manager, ServerHandler& handler, ServersHandler& serversHandler);
 
 	const std::string				host;
 	const Mona::SocketAddress		address;
@@ -59,6 +61,7 @@ public:
 	const Mona::PoolBuffers&		poolBuffers() { return socket().poolBuffers(); }
 
 	void			connect();
+	void			disconnect() { TCPClient::disconnect(); }
 
 	void			send(const std::string& handler,ServerMessage& message);
 

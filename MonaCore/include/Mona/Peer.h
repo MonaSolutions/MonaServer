@@ -83,7 +83,7 @@ public:
 
 private:
 	void onJoinGroup(Group& group);
-	void onUnjoinGroup(std::map<Group*,Writer*>::iterator& it);
+	void onUnjoinGroup(Group& group);
 	bool exchangeMemberId(Group& group,Peer& peer,Writer* pWriter);
 
 	Handler&						_handler;

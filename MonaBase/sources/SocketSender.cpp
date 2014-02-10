@@ -19,7 +19,6 @@ This file is a part of Mona.
 
 #include "Mona/SocketSender.h"
 #include "Mona/Socket.h"
-#include "Mona/Logs.h"
 
 
 using namespace std;
@@ -28,16 +27,11 @@ using namespace std;
 namespace Mona {
 
 SocketSender::SocketSender(const char* name) : WorkThread(name),
-	_position(0), _data(NULL), _size(0), _memcopied(false) {
+	_position(0), _data(NULL), _size(0) {
 }
 
 SocketSender::SocketSender(const char* name,const UInt8* data, UInt32 size) : WorkThread(name),
-	_position(0), _data((UInt8*)data), _size(size), _memcopied(false) {
-}
-
-SocketSender::~SocketSender() {
-	if(_memcopied)
-		delete [] _data;
+	_position(0), _data((UInt8*)data), _size(size) {
 }
 
 bool SocketSender::run(Exception& ex) {
@@ -59,27 +53,44 @@ bool SocketSender::run(Exception& ex) {
 bool SocketSender::flush(Exception& ex,Socket& socket) {
 	if(!available())
 		return true;
-	
-	_position += send(ex,socket,data() + _position, size() - _position);
-	if (ex) {
-		// terminate the sender
-		_position = size();
-		return true;
+
+	UInt32 size;
+	const UInt8* data;
+	if (_ppBuffer) {
+		size = (*_ppBuffer)->size();
+		data = (*_ppBuffer)->data();
+	} else {
+		size = this->size();
+		data = this->data();
 	}
+
+	_position += send(ex,socket,data + _position, size - _position);
+
+	if (ex) // terminate the sender
+		_position = size;
 	// everything has been sent
-	if (_position == size())
+	if (_position >= size) {
+		if (_ppBuffer)
+			_ppBuffer->release();
 		return true;
-	// if data have been given on SocketSender construction we have to copy data to send it in an async way now
-	if (!_memcopied && _data == data()) {
-		_size = _size - _position;
-		UInt8* temp = new UInt8[_size](); // TODO replace by a pool buffer?
-		memcpy(temp, _data + _position, _size);
-		_data = temp;
-		_position = 0;
-		_memcopied = true;
 	}
-	// remains data to send
-	return false;
+
+	if (buffering(socket.poolBuffers()))
+		return false;
+	return true;
+}
+
+bool SocketSender::buffering(const PoolBuffers& poolBuffers) {
+	// if data have been given on SocketSender construction we have to copy data to send it in an async way now
+	if (!_data || _ppBuffer)
+		return true; // no buffering required
+	if (_position >= _size)
+		return false; // no more data to send
+	UInt32 size(_size-_position);
+	_ppBuffer.reset(new PoolBuffer(poolBuffers, size));
+	memmove((*_ppBuffer)->data(), _data + _position, size);
+	_position = 0;
+	return true;
 }
 
 } // namespace Mona

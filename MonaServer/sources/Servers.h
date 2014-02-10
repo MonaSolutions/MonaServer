@@ -43,7 +43,7 @@ private:
 	void				onError(const std::string& error) { WARN("Servers, ", error); }
 
 	void				connection(ServerConnection& server);
-	bool				disconnection(ServerConnection& server);
+	void				disconnection(ServerConnection& server);
 
 
 	Mona::UInt8								_manageTimes;

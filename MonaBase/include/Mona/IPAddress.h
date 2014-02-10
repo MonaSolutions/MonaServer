@@ -151,17 +151,16 @@ public:
 	bool operator >= (const IPAddress& addr) const { return operator==(addr) || operator>(addr); }
 	
 	// Returns the internal address structure
-	const void* addr(NET_SOCKLEN& size) const;
+	const void* addr() const;
+	NET_SOCKLEN size() const;
 
 	// Returns a wildcard IPv4 or IPv6 address (0.0.0.0)
 	static const IPAddress& Wildcard(Family family = IPv4);
+	// Returns a loopback address, 127.0.0.1 for IPv4, ::1 for IPv6
+	static const IPAddress& Loopback(Family family = IPv4);
 	// Returns a broadcast IPv4 address (255.255.255.255)
 	static const IPAddress& Broadcast();
 
-	enum {
-		MAX_ADDRESS_LENGTH = sizeof(struct in6_addr)
-		/// Maximum length in bytes of a socket address.
-	};
 
 private:
 	

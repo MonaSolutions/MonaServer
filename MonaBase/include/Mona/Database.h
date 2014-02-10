@@ -42,7 +42,9 @@ public:
 
 	bool add(Exception& ex,const std::string& path, const UInt8* value, UInt32 size);
 	bool remove(Exception& ex, const std::string& path);
+
 	void flush() { stop(); }
+	bool writing() { return running(); }
 
 private:
 	class Entry : virtual Object {

@@ -32,7 +32,7 @@ using namespace std;
 namespace Mona {
 
 
-Startable::Startable(const string& name) : _name(name), _stop(true) {
+Startable::Startable(const string& name) : _priority(PRIORITY_NORMAL),_name(name), _stop(true) {
 	
 }
 
@@ -62,13 +62,40 @@ void Startable::setDebugThreadName() {
 	}
 
 #else
-	prctl(PR_SET_NAME, name.c_str(), 0, 0, 0);
+	prctl(PR_SET_NAME, _name.c_str(), 0, 0, 0);
 #endif
 #endif
 }
 
 void Startable::process() {
+	Util::SetCurrentThreadName(_name);
 	setDebugThreadName();
+
+	// set priority
+#if defined(_WIN32)
+	static int Priorities[] = { THREAD_PRIORITY_LOWEST, THREAD_PRIORITY_BELOW_NORMAL, THREAD_PRIORITY_NORMAL, THREAD_PRIORITY_ABOVE_NORMAL, THREAD_PRIORITY_HIGHEST };
+	if (_priority != PRIORITY_NORMAL && SetThreadPriority(GetCurrentThread(), Priorities[_priority]) == 0)
+		WARN("Impossible to change the thread ", _name, " priority to ", Priorities[_priority]);
+#else
+	static int Min = sched_get_priority_min(SCHED_OTHER);
+	if(Min==-1) {
+		WARN("Impossible to compute minimum thread ", _name, " priority, ",strerror(errno));
+	} else {
+		static int Max = sched_get_priority_max(SCHED_OTHER);
+		if(Max==-1) {
+			WARN("Impossible to compute maximum thread ", _name, " priority, ",strerror(errno));
+		} else {
+			static int Priorities[] = {Min,Min + (Max - Min) / 4,Min + (Max - Min) / 2,Min + (Max - Min) / 4,Max};
+
+			struct sched_param params;
+			params.sched_priority = Priorities[_priority];
+			int result;
+			if (result=pthread_setschedparam(pthread_self(), SCHED_OTHER , &params))
+				WARN("Impossible to change the thread ", _name, " priority to ", Priorities[_priority]," ",strerror(result));
+		}
+	}
+#endif
+
 	try {
 		Exception ex;
 		run(ex);
@@ -100,18 +127,14 @@ bool Startable::start(Exception& ex, Priority priority) {
 	lock_guard<mutex> lock(_mutex);
 	if (!_stop)  // if running
 		return true;
-	if (_thread.get_id() == this_thread::get_id()) {
-		ex.set(Exception::THREAD,"Startable::start method can't be called from the running thread");
-		return false;
-	}
 	lock_guard<mutex> lockStop(_mutexStop);
 	if (_thread.joinable())
 		_thread.join();
 	try {
 		_wakeUpEvent.reset();
 		_stop = false;
+		_priority = priority;
 		_thread = thread(&Startable::process, ref(*this)); // start the thread
-		initThread(ex, _thread, priority);
 	} catch (exception& exc) {
 		ex.set(Exception::THREAD, "Impossible to start the thread of ", _name, ", ", exc.what());
 		_stop = true;
@@ -121,33 +144,12 @@ bool Startable::start(Exception& ex, Priority priority) {
 }
 
 
-void Startable::initThread(Exception& ex,thread& thread,Priority priority) {
-	Util::SetThreadName(thread.get_id(), _name);
-#if defined(_WIN32)
-	static int Priorities[] = {THREAD_PRIORITY_LOWEST,THREAD_PRIORITY_BELOW_NORMAL,THREAD_PRIORITY_NORMAL,THREAD_PRIORITY_ABOVE_NORMAL,THREAD_PRIORITY_HIGHEST};
-	if (priority == PRIORITY_NORMAL || SetThreadPriority(_thread.native_handle(), Priorities[priority]) != 0)
-		return;
-#else
-	static int Min = sched_get_priority_min(SCHED_FIFO);
-	static int Max = sched_get_priority_max(SCHED_FIFO);
-	static int Priorities[] = {Min,Min + (Max - Min) / 4,Min + (Max - Min) / 2,Min + (Max - Min) / 4,Max};
-
-	struct sched_param params;
-	params.sched_priority = Priorities[priority];
-	if (!pthread_setschedparam(_thread.native_handle(), SCHED_FIFO, &params))
-		return;
-#endif
-	ex.set(Exception::THREAD, "Impossible to change the thread ", _name, " priority to ", priority);
-}
-
-
 // caller is usually the thread controller of _thread
 void Startable::stop() {
 	if (_thread.get_id() == this_thread::get_id()) {
 		// case where it's the thread which calls stop!
 		lock_guard<mutex> lock(_mutexStop);
-		if (_stop)
-			_stop = true;
+		_stop = true;
 		return;
 	}
 	lock_guard<mutex> lock(_mutex);

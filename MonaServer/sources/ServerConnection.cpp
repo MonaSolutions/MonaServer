@@ -26,15 +26,14 @@ using namespace std;
 using namespace Mona;
 
 
-ServerConnection::ServerConnection(const SocketAddress& peerAddress, const SocketManager& manager, ServerHandler& handler, ServersHandler& serversHandler,bool alreadyConnected) : address(peerAddress), _size(0), _handler(handler), TCPClient(peerAddress, manager), _connected(false), _serversHandler(serversHandler), isTarget(false) {
-	if (alreadyConnected)
-		sendPublicAddress();
+ServerConnection::ServerConnection(const SocketManager& manager, ServerHandler& handler, ServersHandler& serversHandler,const SocketAddress& targetAddress) : address(targetAddress), _size(0), _handler(handler), TCPClient(manager), _connected(false), _serversHandler(serversHandler), isTarget(true) {
+
 }
 
-
-ServerConnection::~ServerConnection() {
-	
+ServerConnection::ServerConnection(const SocketAddress& peerAddress, const SocketManager& manager, ServerHandler& handler, ServersHandler& serversHandler) : address(peerAddress), _size(0), _handler(handler), TCPClient(peerAddress, manager), _connected(false), _serversHandler(serversHandler), isTarget(false) {
+	sendPublicAddress();
 }
+
 
 UInt16 ServerConnection::port(const string& protocol) {
 	map<string, UInt16>::const_iterator it = _ports.find(protocol);
@@ -170,7 +169,7 @@ UInt32 ServerConnection::onReception(const UInt8* data,UInt32 size) {
 		if(!_connected) {
 			_connected=true;
 			_serversHandler.connection(*this);
-			_handler.connection(*this);
+			NOTE("Connection etablished with ",address.toString()," server ")
 		}
 	} else
 		_handler.message(*this,handler,packet);
@@ -188,12 +187,15 @@ void ServerConnection::onDisconnection(){
 	_receivingRefs.clear();
 	if(_connected) {
 		_connected=false;
-		bool autoDelete = _serversHandler.disconnection(*this);
-		_handler.disconnection(*this, _error);
+		_serversHandler.disconnection(*this);
+		if (_error.empty())
+			NOTE("Disconnection from ", address.toString(), " server ")
+		else
+			ERROR("Disconnection from ", address.toString(), " server, ",_error)
 		_ports.clear();
 		((string&)host).clear();
-		if(autoDelete)
-			delete this;
 	}
 	_error.clear();
+	if (!isTarget)
+		delete this;
 }

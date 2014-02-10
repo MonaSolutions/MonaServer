@@ -21,8 +21,8 @@ This file is a part of Mona.
 
 #include "Mona/Mona.h"
 #include "Mona/String.h"
-#include <stdexcept>
 #include <map>
+#include "assert.h"
 
 namespace Mona {
 
@@ -86,19 +86,19 @@ private:
 #define		ASSERT_RETURN(CONDITION,RETURN)		if(!(CONDITION)) { ex.set(Exception::ASSERT, #CONDITION);return RETURN;}
 
 #if defined(_DEBUG)
-#if defined(_WIN32)
-#define		FATAL_ASSERT(CONDITION)				{_ASSERTE(CONDITION);}
+	#if defined(_WIN32)
+		#define		FATAL_ASSERT(CONDITION)			{_ASSERTE(CONDITION);}
+	#else
+		#define		FATAL_ASSERT(CONDITION)			{assert(CONDITION);}
+	#endif
+	#if defined(_WIN32)
+		#define		FATAL_ERROR(...)				{string __error;Mona::String::Format(__error,## __VA_ARGS__);if (_CrtDbgReport(_CRT_ASSERT, __FILE__, __LINE__, NULL, __error.c_str()) == 1) _CrtDbgBreak();}
+	#else
+		#define		FATAL_ERROR(...)				{string __error;Mona::String::Format(__error,## __VA_ARGS__).c_str();__assert_fail(__error.c_str(),__FILE__,__LINE__,NULL);}
+	#endif
 #else
-#define		FATAL_ASSERT(CONDITION)				if(!(CONDITION)) {raise(SIGTRAP);} // TODO test on linux
-#endif
-#if defined(_WIN32)
-#define		FATAL_ERROR(...)				{string __error;_ASSERTE(!Mona::String::Format(__error,## __VA_ARGS__).c_str());}
-#else
-#define		FATAL_ERROR(...)				{raise(SIGTRAP);} // TODO test on linux
-#endif
-#else
-#define		FATAL_ASSERT(CONDITION)				if(!(CONDITION)) {throw std::runtime_error( #CONDITION ", " __FILE__ "[" LINE_STRING "]");}
-#define		FATAL_ERROR(...)				{string __error; throw std::runtime_error(Mona::String::Format(__error,## __VA_ARGS__,", " __FILE__ "[" LINE_STRING "]"));}
+	#define		FATAL_ASSERT(CONDITION)				if(!(CONDITION)) {throw std::runtime_error( #CONDITION ", " __FILE__ "[" LINE_STRING "]");}
+	#define		FATAL_ERROR(...)					{string __error; throw std::runtime_error(Mona::String::Format(__error,## __VA_ARGS__,", " __FILE__ "[" LINE_STRING "]"));}
 #endif
 
 #define		EXCEPTION_TO_LOG(CALL,...)		{ \

@@ -21,11 +21,16 @@ This file is a part of Mona.
 #include "Mona/Exceptions.h"
 #include "Mona/String.h"
 #include "Mona/Time.h"
+#include "math.h"
 #include <fstream>
 
 
-#if !defined(_WIN32)
-extern "C" char **environ; // TODO test it on linux!
+#if defined(_WIN32)
+	#include <windows.h>
+#else
+	#include <unistd.h>
+	#include <sys/syscall.h>
+	extern "C" char **environ;
 #endif
 
 using namespace std;
@@ -36,8 +41,8 @@ namespace Mona {
 MapParameters	Util::_Environment;
 mutex			Util::_MutexEnvironment;
 
-map<thread::id, string>	Util::_ThreadNames;
-mutex					Util::_MutexThreadNames;
+map<THREAD_ID, string>	Util::_ThreadNames;
+recursive_mutex			Util::_MutexThreadNames;
 
 static const char B64Table[65] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
@@ -52,14 +57,21 @@ static const char ReverseB64Table[128] = {
 	41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 64, 64, 64, 64, 64
 };
 
-const string& Util::GetThreadName(thread::id id) {
-	lock_guard<mutex> lock(_MutexThreadNames);
+const string& Util::CurrentThreadInfos(THREAD_ID& id) {
+#ifdef _WIN32
+	id = GetCurrentThreadId();
+#else
+	id = syscall(SYS_gettid);
+#endif
+	lock_guard<recursive_mutex> lock(_MutexThreadNames);
 	return _ThreadNames[id];
 }
 
-void Util::SetThreadName(thread::id id, const string& name) {
-	lock_guard<mutex> lock(_MutexThreadNames);
-	_ThreadNames[id] = name;
+void Util::SetCurrentThreadName(const string& name) {
+	THREAD_ID id;
+	lock_guard<recursive_mutex> lock(_MutexThreadNames);
+	const string& oldName(CurrentThreadInfos(id));
+	((string&)oldName).assign(name);
 }
 
 UInt8 Util::Get7BitValueSize(UInt64 value) {
@@ -99,7 +111,7 @@ size_t Util::UnpackUrl(const string& url, string& address, string& path, string&
 	query.clear();
 
 	auto it = url.begin();
-	auto& end = url.end();
+	auto end = url.end();
 	while (it != end) {
 		if (*it == '/' || *it == '\\') // no address, just path
 			break;
@@ -157,7 +169,7 @@ size_t Util::UnpackUrl(const string& url, string& address, string& path, string&
 Parameters& Util::UnpackQuery(const string& query, Parameters& properties) {
 
 	auto it = query.begin();
-	auto& end = query.end();
+	auto end = query.end();
 	while (it != end) {
 
 		// name

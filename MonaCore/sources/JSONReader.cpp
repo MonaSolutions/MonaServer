@@ -21,7 +21,6 @@ This file is a part of Mona.
 #include "Mona/Logs.h"
 #include "Mona/Util.h"
 #include <sstream>
-#include <cstring>
 
 using namespace std;
 

@@ -21,7 +21,7 @@ This file is a part of Mona.
 #include "Mona/AMF.h"
 #include "Mona/Util.h"
 #include "Mona/Logs.h"
-#include <cstring>
+
 
 using namespace std;
 

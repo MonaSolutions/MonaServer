@@ -43,7 +43,7 @@ public:
 class RTMP : virtual Static {
 public:
 
-	static enum {
+	enum {
 		DEFAULT_CHUNKSIZE =	128,
 		DEFAULT_WIN_ACKSIZE = 131072 // TODO default value?
 	};

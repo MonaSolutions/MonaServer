@@ -19,7 +19,6 @@
 #include "Mona/Logs.h"
 #include "Mona/Util.h"
 #include <sstream>
-#include <cstring>
 
 using namespace std;
 

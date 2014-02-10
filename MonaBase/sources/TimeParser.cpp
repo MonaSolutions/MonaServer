@@ -97,8 +97,8 @@ bool TimeParser::Parse(const string& fmt, const string& in, Time& dateTime, int&
 	int year = 0, month = 0, day = 0, hour = 0;
 	int minute = 0, second = 0, millis = 0, micros = 0;
 
-	auto it = in.begin(),& end = in.end();
-	auto itf = fmt.begin(),&	endf = fmt.end();
+	auto it = in.begin(),end = in.end();
+	auto itf = fmt.begin(),endf = fmt.end();
 
 	while (itf != endf && it != end)
 	{

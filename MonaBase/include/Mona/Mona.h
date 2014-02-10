@@ -21,6 +21,7 @@ This file is a part of Mona.
 
 #include <stdio.h>
 #include <string>
+#include <cstring>
 
 /////  Usefull macros and patchs   //////
 
@@ -30,6 +31,7 @@ This file is a part of Mona.
 #define HMAC_KEY_SIZE	0x20
 
 #if defined(_WIN32)
+#define THREAD_ID	DWORD
 #define NOMINMAX
 #define _WINSOCKAPI_    // stops windows.h including winsock.h
 #define sprintf sprintf_s
@@ -38,6 +40,7 @@ This file is a part of Mona.
 #define GMTIME(VALUE,RESULT) gmtime_s(&RESULT,&VALUE);
 #define LOCALTIME(VALUE,RESULT) localtime_s(&RESULT,&VALUE);
 #else
+#define THREAD_ID	pid_t
 #define GMTIME(VALUE,RESULT) gmtime_r(&VALUE,&RESULT)
 #define LOCALTIME(VALUE,RESULT) localtime_r(&VALUE,&RESULT)
 #endif
@@ -291,8 +294,8 @@ class Object {
 	Object(Object&& other) = delete;
 	Object operator=(Object&& other) = delete;
 public:
-	Object() = default;
-	virtual ~Object() = default;
+	Object() {};
+	virtual ~Object() {};
 };
 
 class NullableObject : virtual Object {
@@ -307,5 +310,3 @@ public:
 
 
 } // namespace Mona
-
-#include "string.h"

@@ -51,7 +51,7 @@ private:
 	UInt32							_winAckSize;
 	UInt32							_unackBytes;
 
-	std::map<UInt16,RTMPWriter>			_writers;
+	std::map<UInt8,RTMPWriter>			_writers;
 	std::unique_ptr<RTMPWriter>			_pController;
 	RTMPWriter*							_pWriter;
 	std::shared_ptr<RTMPSender>			_pSender;

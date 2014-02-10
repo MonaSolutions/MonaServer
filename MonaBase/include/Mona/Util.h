@@ -25,11 +25,12 @@ This file is a part of Mona.
 #include "Mona/Exceptions.h"
 #include "Mona/Buffer.h"
 #include <map>
-#include <thread>
 #include <limits>
 #include <mutex>
+#include <thread>
 
 namespace Mona {
+
 
 class Util : virtual Static {
 public:
@@ -41,8 +42,8 @@ public:
 	static UInt8 Get7BitValueSize(UInt32 value) { return Get7BitValueSize((UInt64)value); }
 	static UInt8 Get7BitValueSize(UInt64 value);
 
-	static const std::string&	GetThreadName(std::thread::id id);
-	static void					SetThreadName(std::thread::id id,const std::string& name);
+	static const std::string&	CurrentThreadInfos(THREAD_ID& id);
+	static void					SetCurrentThreadName(const std::string& name);
 
 	static void Dump(const UInt8* in, UInt32 size, Buffer& out) { std::string header; Dump(in, size, out, header); }
 	static void Dump(const UInt8* in, UInt32 size, Buffer& out, const std::string& header);
@@ -79,8 +80,8 @@ private:
 	static MapParameters	_Environment;
 	static std::mutex		_MutexEnvironment;
 	
-	static std::map<std::thread::id, std::string>	_ThreadNames;
-	static std::mutex								_MutexThreadNames;
+	static std::map<THREAD_ID, std::string>	_ThreadNames;
+	static std::recursive_mutex				_MutexThreadNames;
 };
 
 
