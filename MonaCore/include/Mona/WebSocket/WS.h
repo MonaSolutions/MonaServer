@@ -31,6 +31,7 @@ public:
 
 	enum MessageType {
 		//FRAME_OP_CONT    = 0x00, /// Continuation frame.
+		TYPE_NIL		= 0,
 		TYPE_TEXT		= 0x01, /// Text frame.
 		TYPE_BINARY	= 0x02, /// Binary frame.
 		TYPE_CLOSE	= 0x08, /// Close connection.
@@ -55,7 +56,7 @@ public:
 
 	static std::string&	ComputeKey(std::string& key);
 	static void		    Unmask(BinaryReader& reader);
-	static UInt8	WriteHeader(UInt8 type,UInt32 size,BinaryWriter& writer);
+	static UInt8	WriteHeader(MessageType type,UInt32 size,BinaryWriter& writer);
 	static UInt8	HeaderSize(UInt32 size);
 
 	

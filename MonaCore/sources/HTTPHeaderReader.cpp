@@ -43,13 +43,12 @@ void HTTPHeaderReader::reset() {
 HTTPHeaderReader::Type HTTPHeaderReader::readItem(string& name) {
 	if (_header == _headers.end())
 		return END;
-	auto it = _header;
-	name.assign(it,++_header);
-	if (_header == _headers.end() || ++_header == _headers.end())
+
+	name.assign(*_header++);
+	if (_header == _headers.end())
 		return NIL;
 
-	it = _header;
-	_value.assign(it, ++_header);
+	_value.assign(*_header++);
 
 	if (String::ICompare(_value, "false") == 0) {
 		_bool = false;

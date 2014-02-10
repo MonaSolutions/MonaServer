@@ -50,7 +50,7 @@ private:
 	bool				readArray(UInt32& size) {return false;}
 	const UInt8*		readBytes(UInt32& size) { size = _value.size(); return (const UInt8*)_value.c_str(); }
 	
-	std::vector<const char*>&				_headers;
+	std::vector<const char*>&				 _headers;
 	std::vector<const char*>::const_iterator _header;
 	std::string								_value;
 	Time									_date;

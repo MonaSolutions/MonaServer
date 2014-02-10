@@ -20,6 +20,8 @@ This file is a part of Mona.
 #include "Mona/Process.h"
 #if defined(_WIN32)
 	#include <windows.h>
+#else
+	#include <unistd.h>
 #endif
 
 using namespace std;

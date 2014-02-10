@@ -50,7 +50,7 @@ public:
 
 	template<class AttemptType>
 	AttemptType& attempt(const std::string& tag) {
-		auto& it = _attempts.lower_bound(tag);
+		auto it = _attempts.lower_bound(tag);
 		if(it!=_attempts.end() && it->first==tag) {
 			++it->second->count;
 			return (AttemptType&)*it->second;

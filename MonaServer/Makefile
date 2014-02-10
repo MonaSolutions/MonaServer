@@ -1,11 +1,11 @@
 
 CC=g++
-CFLAGS+=-std=c++0x
+CFLAGS+=-std=c++11
 EXEC=MonaServer
-INCLUDES=-I/usr/local/include/ -I./../MonaBase/include/ -I./../MonaCore/include/
-LIBDIR=-L/usr/local/lib/ -L./../MonaBase/lib/ -L./../MonaCore/lib/
+INCLUDES=-I./../MonaBase/include/ -I./../MonaCore/include/
+LIBDIR=-L./../MonaBase/lib/ -L./../MonaCore/lib/
 LDFLAGS+="-Wl,-rpath,./../MonaBase/lib/,-rpath,./../MonaCore/lib/,-rpath,/usr/local/lib/"
-LIBS ?= -lMonaBase -lMonaCore -lcrypto -lssl -lluajit-5.1
+LIBS ?=  -pthread -lMonaBase -lMonaCore -lcrypto -lssl -lluajit-5.1
 
 OS := $(shell uname)
 ifeq ($(OS),Darwin)
@@ -30,7 +30,7 @@ debug:
 	mkdir -p tmp/Debug/
 	@make -k $(OBJECTD)
 	@echo creating debugging executable $(EXEC)
-	@$(CC) -g $(CFLAGS) $(LDFLAGS) $(LIBDIR) -o $(EXEC) $(OBJECTD) $(LIBS)
+	@$(CC) -g -D_DEBUG $(CFLAGS) $(LDFLAGS) $(LIBDIR) -o $(EXEC) $(OBJECTD) $(LIBS)
 
 $(OBJECT): 
 	@echo compiling $(@:tmp/Release/%.o=sources/%.cpp)
@@ -38,7 +38,7 @@ $(OBJECT):
 
 $(OBJECTD):
 	@echo compiling $(@:tmp/Debug/%.o=sources/%.cpp)
-	@$(CC) -g $(CFLAGS) $(INCLUDES) -c -o $(@) $(@:tmp/Debug/%.o=sources/%.cpp)
+	@$(CC) -g -D_DEBUG $(CFLAGS) $(INCLUDES) -c -o $(@) $(@:tmp/Debug/%.o=sources/%.cpp)
 
 clean:
 	@echo cleaning project $(EXEC)

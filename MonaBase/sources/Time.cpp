@@ -124,7 +124,7 @@ string& Time::toLocaleString(const string& fmt, string& out, int timezone /*= UT
 
 string& Time::formatDate(const struct tm& datetm, const string& fmt, string& out, int timezone /*= UTC*/) const {
 
-	auto it = fmt.begin(), &end = fmt.end();
+	auto it = fmt.begin(), end = fmt.end();
 
 	while (it != end) {
 

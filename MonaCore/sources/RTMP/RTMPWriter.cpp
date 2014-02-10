@@ -26,7 +26,7 @@ using namespace std;
 
 namespace Mona {
 
-RTMPWriter::RTMPWriter(UInt32 id,StreamSocket& socket,const SocketAddress& address,std::shared_ptr<RTMPSender>& pSender,const shared_ptr<RC4_KEY>& pEncryptKey) : _pSender(pSender),_pEncryptKey(pEncryptKey), _address(address),id(id), _isMain(false), _socket(socket) {
+RTMPWriter::RTMPWriter(UInt8 id,StreamSocket& socket,const SocketAddress& address,std::shared_ptr<RTMPSender>& pSender,const shared_ptr<RC4_KEY>& pEncryptKey) : _pSender(pSender),_pEncryptKey(pEncryptKey), _address(address),id(id), _isMain(false), _socket(socket) {
 	// TODO _qos.add
 }
 

@@ -29,7 +29,9 @@ namespace Mona {
 template<class IteratorType>
 class MapReader : public DataReader, virtual Object {
 public:
-	MapReader(IteratorType& begin, IteratorType& end) : _objectReaden(false),_number(0),_begin(begin),_it(begin),_end(end) {}
+
+	template<typename MapType>
+	MapReader(const MapType& map) : _objectReaden(false),_number(0),_begin(map.begin()),_it(map.begin()),_end(map.end()) {}
 
 	std::string&	readString(std::string& value) { value.assign(_it->second); ++_it; return value; }
 	double			readNumber() {++_it; return _number;}
@@ -72,12 +74,12 @@ public:
 	void			reset() { _it = _begin; _objectReaden=false; }
 
 private:
-	Time			_time;
-	double			_number;
-	IteratorType	_begin;
-	IteratorType	_it;
-	IteratorType	_end;
-	bool			_objectReaden; // to write a object without parameter if there is no map entries
+	Time				_time;
+	double				_number;
+	IteratorType		_begin;
+	IteratorType		_it;
+	IteratorType		_end;
+	bool				_objectReaden; // to write a object without parameter if there is no map entries
 };
 
 

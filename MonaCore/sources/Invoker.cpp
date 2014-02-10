@@ -61,7 +61,7 @@ FlashStream& Invoker::flashStream(UInt32 id,Peer& peer,shared_ptr<FlashStream>& 
 			return *pResult;	
 	}
 	// search in streams list
-	auto& it = _streams.lower_bound(id);
+	auto it = _streams.lower_bound(id);
 	if (it != _streams.end() && id == it->first) {
 		if (!pStream)
 			pStream = it->second;
@@ -76,7 +76,7 @@ FlashStream& Invoker::flashStream(UInt32 id,Peer& peer,shared_ptr<FlashStream>& 
 }
 
 Publication* Invoker::publish(Exception& ex, Peer& peer,const string& name) {
-	auto& it(_publications.emplace(name, name).first);
+	auto it(_publications.emplace(piecewise_construct,forward_as_tuple(name),forward_as_tuple(name)).first);
 	Publication* pPublication = &it->second;
 	
 	pPublication->start(ex, peer);
@@ -89,7 +89,7 @@ Publication* Invoker::publish(Exception& ex, Peer& peer,const string& name) {
 }
 
 void Invoker::unpublish(Peer& peer,const string& name) {
-	auto& it = _publications.find(name);
+	auto it = _publications.find(name);
 	if(it == _publications.end()) {
 		DEBUG("The publication '",name,"' doesn't exist, unpublish useless");
 		return;
@@ -101,7 +101,7 @@ void Invoker::unpublish(Peer& peer,const string& name) {
 }
 
 Listener* Invoker::subscribe(Exception& ex, Peer& peer,const string& name,Writer& writer,double start) {
-	auto& it(_publications.emplace(name, name).first);
+	auto it(_publications.emplace(piecewise_construct,forward_as_tuple(name),forward_as_tuple(name)).first);
 	Publication& publication(it->second);
 	Listener* pListener = publication.addListener(ex, peer,writer,start==-3000 ? true : false);
 	if (ex) {
@@ -112,7 +112,7 @@ Listener* Invoker::subscribe(Exception& ex, Peer& peer,const string& name,Writer
 }
 
 void Invoker::unsubscribe(Peer& peer,const string& name) {
-	auto& it = _publications.find(name);
+	auto it = _publications.find(name);
 	if(it == _publications.end()) {
 		DEBUG("The publication '",name,"' doesn't exists, unsubscribe useless");
 		return;

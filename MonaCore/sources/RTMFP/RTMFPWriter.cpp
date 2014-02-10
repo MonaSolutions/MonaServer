@@ -21,7 +21,7 @@ This file is a part of Mona.
 #include "Mona/Peer.h"
 #include "Mona/Util.h"
 #include "Mona/RTMFP/RTMFP.h"
-#include <cstring>
+
 
 using namespace std;
 

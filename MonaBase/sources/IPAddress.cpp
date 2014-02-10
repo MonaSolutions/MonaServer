@@ -22,7 +22,6 @@ This file is a part of Mona.
 #include "Mona/IPAddress.h"
 #include "Mona/String.h"
 #include "Mona/Util.h"
-#include <cstring>
 #if !defined(WIN32)
 	#include <net/if.h>
 #endif
@@ -32,11 +31,13 @@ using namespace std;
 
 namespace Mona {
 
-static const char* Localhost("127.0.0.1"); // to accelerate the parse
+static const char* LocalhostV4("127.0.0.1"); // to accelerate the parse
+static const char* LocalhostV6("::1"); // to accelerate the parse
 
 class IPAddressCommon {
 public:
-	virtual const void* addr(NET_SOCKLEN& size) const = 0;
+	virtual const void* addr() const = 0;
+	virtual NET_SOCKLEN size() const = 0;
 
 	virtual const string& toString() const = 0;
 	virtual IPAddress::Family family() const = 0;
@@ -74,7 +75,9 @@ public:
 		return String::Format(_toString, bytes[0], '.', bytes[1], '.', bytes[2], '.', bytes[3]);
 	}
 
-	const void*			addr(NET_SOCKLEN& size) const { size = sizeof(_addr); return &_addr; }
+	const void*		addr() const { return &_addr; }
+	NET_SOCKLEN		size() const { return sizeof(_addr); }
+
 	IPAddress::Family	family() const {return IPAddress::IPv4;}
 
 	UInt32	scope() const { return 0; }
@@ -107,7 +110,7 @@ public:
 	static IPv4Address* Parse(Exception& ex,const string& address) {
 		if (address.empty() || !Net::InitializeNetwork(ex))
 			return 0;
-		const char* addr(address == "localhost" ? Localhost : address.c_str());
+		const char* addr(address == "localhost" ? LocalhostV4 : address.c_str());
 		struct in_addr ia;
 #if defined(_WIN32) 
 		ia.s_addr = inet_addr(addr);
@@ -189,7 +192,9 @@ public:
 
 	IPAddress::Family	family() const {return IPAddress::IPv6;}
 
-	const void*			addr(NET_SOCKLEN& size) const { size = sizeof(_addr); return &_addr; }
+	const void*			addr() const { return &_addr; }
+	NET_SOCKLEN			size() const { return sizeof(_addr); }
+
 	UInt32				scope() const {return _scope;}
 	bool				isBroadcast() const {return false;}
 
@@ -252,7 +257,7 @@ public:
 		if (address.empty() || !Net::InitializeNetwork(ex))
 			return 0;
 #if defined(_WIN32)
-		const char* addr(address == "localhost" ? Localhost : address.c_str());
+		const char* addr(address == "localhost" ? LocalhostV6 : address.c_str());
 		struct addrinfo* pAI;
 		struct addrinfo hints;
 		memset(&hints, 0, sizeof(hints));
@@ -265,18 +270,18 @@ public:
 		}
 #else
 		struct in6_addr ia;
-		string::size_type pos = addr.find('%');
+		string::size_type pos = address.find('%');
 		if (string::npos != pos) {
-			string::size_type start = ('[' == addr[0]) ? 1 : 0;
-			string unscopedAddr(addr, start, pos - start);
-			string scope(addr, pos + 1, addr.size() - start - pos);
+			string::size_type start = ('[' == address[0]) ? 1 : 0;
+			string unscopedAddr(address, start, pos - start);
+			string scope(address, pos + 1, address.size() - start - pos);
 			UInt32 scopeId(0);
 			if (!(scopeId = if_nametoindex(scope.c_str())))
 				return 0;
 			if (inet_pton(AF_INET6, unscopedAddr.c_str(), &ia) == 1)
                 return new IPv6Address(ia, scopeId);
 		} else {
-			const char* addr(address == "localhost" ? localhost : address.c_str());
+			const char* addr(address == "localhost" ? LocalhostV6 : address.c_str());
 			if (inet_pton(AF_INET6, addr, &ia) == 1)
                 return new IPv6Address(ia);
 		}
@@ -325,7 +330,14 @@ public:
 	}
 };
 
-static IPBroadcaster _IPBroadcast;
+class IPLoopback : public IPAddress {
+public:
+	IPLoopback(Family family) {
+		Exception ex; // never ex
+		set(ex, family == IPv6 ? LocalhostV6 : LocalhostV4);
+	}
+};
+
 static IPWilcard	 _IPv4Wildcard(IPAddress::IPv4);
 static IPWilcard	 _IPv6Wildcard(IPAddress::IPv6);
 
@@ -446,35 +458,45 @@ bool IPAddress::isGlobalMC() const {
 }
 
 bool IPAddress::operator == (const IPAddress& a) const {
-	NET_SOCKLEN size1;
-	const void* pAddr1 = addr(size1);
-	NET_SOCKLEN size2;
-	const void* pAddr2 = a.addr(size2);
-	if (size1 == size2)
-		return memcmp(pAddr1, pAddr2, size1) == 0;
-	return false;
+	NET_SOCKLEN size = this->size();
+	if (size != a.size())
+		return false;
+	const void* pAddr1(addr());
+	const void* pAddr2(a.addr());
+	return memcmp(pAddr1, pAddr2, size) == 0;
 }
 
 bool IPAddress::operator < (const IPAddress& a) const {
-	NET_SOCKLEN size1;
-	const void* pAddr1 = addr(size1);
-	NET_SOCKLEN size2;
-	const void* pAddr2 = a.addr(size2);
-	if (size1 == size2)
-		return memcmp(pAddr1, pAddr2, size1) < 0;
-	return size1<size2;
+	NET_SOCKLEN size1(size());
+	NET_SOCKLEN size2(a.size());
+	if (size1 != size2)
+		return size1<size2;
+	const void* pAddr1(addr());
+	const void* pAddr2(a.addr());
+	return memcmp(pAddr1, pAddr2, size1) < 0;
 }
 
-const void* IPAddress::addr(NET_SOCKLEN& size) const {
-	return _pIPAddress->addr(size);
+const void* IPAddress::addr() const {
+	return _pIPAddress->addr();
+}
+
+NET_SOCKLEN IPAddress::size() const {
+	return _pIPAddress->size();
 }
 
 const IPAddress& IPAddress::Broadcast() {
-	return _IPBroadcast;
+	static IPBroadcaster IPBroadcast;
+	return IPBroadcast;
 }
 
 const IPAddress& IPAddress::Wildcard(Family family) {
 	return family == IPv6 ? _IPv6Wildcard : _IPv4Wildcard;
+}
+
+const IPAddress& IPAddress::Loopback(Family family) {
+	static IPLoopback	 IPv4Loopback(IPAddress::IPv4);
+	static IPLoopback	 IPv6Loopback(IPAddress::IPv6);
+	return family == IPv6 ? IPv6Loopback : IPv4Loopback;
 }
 
 

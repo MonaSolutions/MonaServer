@@ -45,7 +45,7 @@ FlashMainStream::~FlashMainStream() {
 
 
 FlashStream* FlashMainStream::stream(UInt32 id) {
-	auto& it = _streams.find(id);
+	auto it = _streams.find(id);
 	if (it == _streams.end())
 		return NULL;
 	return it->second.get();

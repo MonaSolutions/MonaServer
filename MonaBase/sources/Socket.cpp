@@ -45,11 +45,14 @@ const PoolBuffers& Socket::poolBuffers() {
 }
 
 void Socket::close() {
-	lock_guard<mutex>	lock(_mutexManaged);
-	if (!_managed)
-		return;
-	_managed = false;
-	manager.remove(*this);
+	{
+		lock_guard<mutex>	lock(_mutexManaged);
+		if (!_managed)
+			return;
+		_managed = false;
+	}
+	manager.remove(*this); // keep not locked this call because "close" can create a deadlock on a SocketManager parallel
+	lock_guard<mutex>	lockSenders(_mutexAsync);
 	_senders.clear();
 }
 
@@ -68,13 +71,6 @@ bool Socket::init(Exception& ex, IPAddress::Family family) {
 
 	_initialized = true;
 
-	if (!managed(ex)) {
-		_initialized = false;
-		NET_CLOSESOCKET(_sockfd);
-		_sockfd = NET_INVALID_SOCKET;
-		return false;
-	}
-
 #if defined(__MACH__) && defined(__APPLE__) || defined(__FreeBSD__)
 	// SIGPIPE sends a signal that if unhandled (which is the default)
 	// will crash the process. This only happens on UNIX, and not Linux.
@@ -87,22 +83,13 @@ bool Socket::init(Exception& ex, IPAddress::Family family) {
 	return true;
 }
 
-bool Socket::init(Exception& ex, NET_SOCKET sockfd) {
-	_sockfd = sockfd;
-	_initialized = true;
-	bool managed = false;
-	if (!this->managed(ex)) {
-		NET_CLOSESOCKET(_sockfd);
-		_sockfd = NET_INVALID_SOCKET;
-		return false;
-	}
-	return true;
-}
-
 bool Socket::managed(Exception& ex) {
 	lock_guard<mutex>	lock(_mutexManaged);
 	if (_managed)
 		return true;
+	ioctl(ex,FIONBIO, 1); // set non blocking mode (usefull for posix)
+	if (ex)
+		return false;
 	return _managed = manager.add(ex, *this);
 }
 
@@ -110,9 +97,10 @@ bool Socket::managed(Exception& ex) {
 bool Socket::connect(Exception& ex, const SocketAddress& address) {
 	if (!_initialized && !init(ex, address.family()))
 		return false;
-	if (!managed(ex))
-		return false;
-	int rc = ::connect(_sockfd, &address.addr(), sizeof(address.addr()));
+
+	ioctl(ex,FIONBIO, 1); // set non blocking mode before bind
+
+	int rc = ::connect(_sockfd, address.addr(), address.size());
 	if (rc) {
 		int err = Net::LastError();
 		if (err != NET_EINPROGRESS && err != NET_EWOULDBLOCK) {
@@ -120,15 +108,15 @@ bool Socket::connect(Exception& ex, const SocketAddress& address) {
 			return false;
 		}	
 	}
-	return true;
+	return managed(ex);
 }
 
 
 bool Socket::bind(Exception& ex, const SocketAddress& address, bool reuseAddress) {
 	if (!_initialized && !init(ex, address.family()))
 		return false;
-	if (!managed(ex))
-		return false;
+
+	ioctl(ex,FIONBIO, 1); // set non blocking mode before bind
 
 	// TODO? if (address.family() == IPAddress::IPv6)
 		// setOption(ex, IPPROTO_IPV6, IPV6_V6ONLY, 1);
@@ -136,26 +124,41 @@ bool Socket::bind(Exception& ex, const SocketAddress& address, bool reuseAddress
 		setReuseAddress(ex,true);
 		setReusePort(true);
 	}
-	int rc = ::bind(_sockfd, &address.addr(), sizeof(address.addr()));
+	int rc = ::bind(_sockfd, address.addr(), address.size());
 	if (rc != 0) {
 		Net::SetError(ex, Net::LastError(), address.toString());
 		return false;
 	}
-	return true;
+	return managed(ex);
 }
 
-	
-bool Socket::listen(Exception& ex, int backlog) {
-	ASSERT_RETURN(_initialized==true, false)
-	if (!managed(ex))
+bool Socket::bindWithListen(Exception& ex, const SocketAddress& address, bool reuseAddress,int backlog) {
+	if (!_initialized && !init(ex, address.family()))
 		return false;
+	
+	
+	// TODO? if (address.family() == IPAddress::IPv6)
+		// setOption(ex, IPPROTO_IPV6, IPV6_V6ONLY, 1);
+	ioctl(ex,FIONBIO, 1); // set non blocking mode before bind
+
+	if (reuseAddress) {
+		setReuseAddress(ex,true);
+		setReusePort(true);
+	}
+	int rc = ::bind(_sockfd, address.addr(), address.size());
+	if (rc != 0) {
+		Net::SetError(ex, Net::LastError(), address.toString());
+		return false;
+	}
 
 	if (::listen(_sockfd, backlog) != 0) {
 		Net::SetError(ex);
 		return false;
 	}
-	return true;
+
+	return managed(ex);
 }
+
 
 void Socket::rejectConnection() {
 	if (!_initialized)
@@ -216,7 +219,7 @@ int Socket::sendTo(Exception& ex, const void* buffer, int length, const SocketAd
 	int rc;
 	do {
 		ASSERT_RETURN(_initialized == true, 0)
-		rc = ::sendto(_sockfd, reinterpret_cast<const char*>(buffer), length, flags, &address.addr(), sizeof(address.addr()));
+		rc = ::sendto(_sockfd, (const char*)buffer, length, flags, address.addr(), address.size());
 	}
 	while (rc < 0 && Net::LastError() == NET_EINTR);
 	if (rc < 0) {
@@ -235,13 +238,15 @@ int Socket::receiveFrom(Exception& ex, void* buffer, int length, SocketAddress& 
 	if (!managed(ex))
 		return false;
 
-	char abuffer[IPAddress::MAX_ADDRESS_LENGTH];
-	struct sockaddr* pSA = reinterpret_cast<struct sockaddr*>(abuffer);
-	NET_SOCKLEN saLen = sizeof(abuffer);
+	union {
+		struct sockaddr_in  sa_in;
+		struct sockaddr_in6 sa_in6;
+	} addr;
+	NET_SOCKLEN addrSize = sizeof(addr);
 	int rc;
 	do {
 		ASSERT_RETURN(_initialized == true, 0)
-		rc = ::recvfrom(_sockfd, reinterpret_cast<char*>(buffer), length, flags, pSA, &saLen);
+		rc = ::recvfrom(_sockfd, reinterpret_cast<char*>(buffer), length, flags, (sockaddr*)&addr, &addrSize);
 	} while (rc < 0 && Net::LastError() == NET_EINTR);
 	if (rc < 0) {
 		int err = Net::LastError();
@@ -249,17 +254,19 @@ int Socket::receiveFrom(Exception& ex, void* buffer, int length, SocketAddress& 
 			return 0;
 		Net::SetError(ex, err);
 	}
-	address.set(*pSA);
+	address.set((sockaddr&)addr);
 	return rc;
 }
 
 SocketAddress& Socket::address(Exception& ex, SocketAddress& address) const {
 	ASSERT_RETURN(_initialized == true, address)
-	char	addressBuffer[IPAddress::MAX_ADDRESS_LENGTH];
-	struct sockaddr* pSA = reinterpret_cast<struct sockaddr*>(addressBuffer);
-	NET_SOCKLEN saLen = sizeof(addressBuffer);
-	if (::getsockname(_sockfd, pSA, &saLen) == 0) {
-		address.set(*pSA);
+	union {
+		struct sockaddr_in  sa_in;
+		struct sockaddr_in6 sa_in6;
+	} addr;
+	NET_SOCKLEN addrSize = sizeof(addr);
+	if (::getsockname(_sockfd,(sockaddr*)&addr, &addrSize) == 0) {
+		address.set((sockaddr&)addr);
 		return address;
 	}
 	Net::SetError(ex);
@@ -268,12 +275,14 @@ SocketAddress& Socket::address(Exception& ex, SocketAddress& address) const {
 
 	
 SocketAddress& Socket::peerAddress(Exception& ex, SocketAddress& address) const {
-	ASSERT_RETURN(_initialized == true, address)
-	char	addressBuffer[IPAddress::MAX_ADDRESS_LENGTH];
-	struct sockaddr* pSA = reinterpret_cast<struct sockaddr*>(addressBuffer);
-	NET_SOCKLEN saLen = sizeof(addressBuffer);
-	if (::getpeername(_sockfd, pSA, &saLen) == 0) {
-		address.set(*pSA);
+	ASSERT_RETURN(_initialized == true, address);
+	union {
+		struct sockaddr_in  sa_in;
+		struct sockaddr_in6 sa_in6;
+	} addr;
+	NET_SOCKLEN addrSize = sizeof(addr);
+	if (::getpeername(_sockfd, (sockaddr*)&addr, &addrSize) == 0) {
+		address.set((sockaddr&)addr);
 		return address;
 	}
 	Net::SetError(ex);
@@ -325,11 +334,8 @@ int Socket::ioctl(Exception& ex,NET_IOCTLREQUEST request,int value) {
 	return value;
 }
 
-void Socket::manageWrite(Exception& ex) {
-	if (!_writing) {
-		_writing = true;
-		manager.startWrite(ex, *this);
-	}
+void Socket::manageWrite() {
+	_writing = manager.startWrite(*this);
 }
 
 // Can be called from one other thread than main thread (by the manager socket thread)
@@ -338,13 +344,13 @@ void Socket::flushSenders(Exception& ex) {
 	while (!_senders.empty()) {
 		if (!_senders.front()->flush(ex,*this)) {
 			if (!_writing)
-				_writing = manager.startWrite(ex,*this);
+				_writing = manager.startWrite(*this);
 			return;
 		}
 		_senders.pop_front();
 	}
-	if (_writing && _senders.empty())
-		_writing = !manager.stopWrite(ex, *this);
+	if (_writing)
+		_writing = !manager.stopWrite(*this);
 }
 
 

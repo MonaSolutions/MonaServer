@@ -26,13 +26,12 @@ This file is a part of Mona.
 namespace Mona {
 
 
-class MapParameters : virtual Object, public IterableParameters<std::unordered_map<std::string, std::string>::const_iterator> {
+class MapParameters : virtual Object, public Parameters {
 public:
-	MapParameters() {}
+	typedef std::unordered_map<std::string, std::string>::const_iterator Iterator;
 
 	Iterator	begin() const { return _map.begin(); }
 	Iterator	end() const { return _map.end(); }
-
 	UInt32		count() const { return _map.size(); }
 
 	void		clear() { _map.clear(); }

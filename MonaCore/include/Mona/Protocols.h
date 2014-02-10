@@ -33,24 +33,24 @@ public:
 
 	void load(Sessions& sessions);
 	void unload() { _protocols.clear(); }
-	void manage() { for (std::shared_ptr<Protocol>& pProtocol : _protocols) pProtocol->manage(); }
+	void manage() { for (std::unique_ptr<Protocol>& pProtocol : _protocols) pProtocol->manage(); }
 
 private:
 	template<class ProtocolType, class ParamsType,typename ...Args >
 	void loadProtocol(const char* name, const ParamsType& params, Sessions& sessions, Args&&... args) {
 		if(params.port==0)
 			return;
-		std::shared_ptr<Protocol> pProtocol(new ProtocolType(name, _invoker, sessions, args ...));
+		std::unique_ptr<Protocol> pProtocol(new ProtocolType(name, _invoker, sessions, args ...));
 		Exception ex;
 		bool success = false;
 		EXCEPTION_TO_LOG(success = ((ProtocolType*)pProtocol.get())->load(ex, params), name, " server")
-		if (success) {
-			_protocols.emplace_back(pProtocol);
-            NOTE(name, " server starts on ", params.port, " ", dynamic_cast<UDProtocol*>(pProtocol.get()) ? "UDP" : "TCP", " port");
-		}
+		if (!success)
+			return;
+		_protocols.emplace_back(pProtocol.release());
+        NOTE(name, " server starts on ", params.port, " ", dynamic_cast<UDProtocol*>(pProtocol.get()) ? "UDP" : "TCP", " port");
 	}
 
-	std::vector<std::shared_ptr<Protocol>>	_protocols;
+	std::vector<std::unique_ptr<Protocol>>	_protocols;
 	Invoker&								_invoker;
 };
 

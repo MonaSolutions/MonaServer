@@ -20,6 +20,7 @@ This file is a part of Mona.
 #include "Mona/RTMP/RTMPSession.h"
 #include "Mona/Util.h"
 #include "Mona/RTMP/RTMPSender.h"
+#include "math.h"
 
 
 using namespace std;
@@ -154,7 +155,7 @@ bool RTMPSession::buildPacket(PacketReader& packet) {
 	++chunks;
 	for (UInt16 chunk = 1; chunk < chunks; ++chunk) {
 		UInt32 rest = channel.bodySize - i;
-		memcpy((UInt8*)packet.current()+i, packet.current() + i + chunk, _chunkSize >= rest ? rest : _chunkSize);
+		memmove((UInt8*)packet.current()+i, packet.current() + i + chunk, _chunkSize >= rest ? rest : _chunkSize);
 		i += _chunkSize;
 	}
 

@@ -21,7 +21,6 @@ This file is a part of Mona.
 
 #include "Mona/Mona.h"
 #include "Mona/Entity.h"
-#include <cstring>
 #include <map>
 
 namespace Mona {
@@ -65,14 +64,14 @@ public:
 	}
 
 	EntityType& create(const UInt8* id) {
-		auto& it = _entities.lower_bound(id);
+		auto it = _entities.lower_bound(id);
 		if (it != _entities.end() && memcmp(it->first, id, ID_SIZE) == 0)
 			return *it->second;
 		EntityType* pEntity(new EntityType(id));
 		return *_entities.emplace_hint(it, pEntity->id, pEntity)->second;
 	}
 	void erase(const UInt8* id) {
-		auto& it(_entities.find(id));
+		auto it(_entities.find(id));
 		if (it == _entities.end())
 			return;
 		delete it->second;

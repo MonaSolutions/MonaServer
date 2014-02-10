@@ -44,6 +44,8 @@ public:
 	const PoolBuffers&		poolBuffers;
 	const UInt32			bufferSize;
 
+	bool					running() { return Startable::running(); }
+
 private:
 	class FakeSocket : public Socket {
 	public:
@@ -59,20 +61,19 @@ private:
 	// remove a socket with a valid file descriptor to unmanage it
 	void remove(Socket& socket) const;
 
-	bool startWrite(Exception& ex, Socket& socket) const;
-	bool stopWrite(Exception& ex, Socket& socket) const;
+	bool startWrite(Socket& socket) const;
+	bool stopWrite(Socket& socket) const;
 
 	void					requestHandle();
-	void					clear();
 	void					run(Exception& ex);
 	void					handle(Exception& ex);
 
 	bool								_selfHandler;
 	Exception							_ex;
 
-	mutable std::atomic<int>			_counter;
-	mutable Event						_eventInit;
-	mutable std::mutex					_mutex;
+	mutable  std::atomic<int>			_counter;
+	mutable  Event						_eventInit;
+	mutable std::recursive_mutex		_mutex;
 
     mutable std::map<NET_SOCKET, std::unique_ptr<Socket>*>		_sockets;
 

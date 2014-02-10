@@ -71,7 +71,6 @@ void Write(BinaryWriter& writer) {
 
 
 void Read(BinaryReader& reader) {
-
 	bool b;
 	reader.readRaw((char*)&b, sizeof(b));
 	CHECK(b);

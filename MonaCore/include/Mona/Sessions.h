@@ -53,7 +53,7 @@ public:
 
 	template<typename SessionType=Session>
 	SessionType* find(const SocketAddress& address) {
-		auto& it = _sessionsByAddress.find(address);
+		auto it = _sessionsByAddress.find(address);
 		if (it == _sessionsByAddress.end())
 			return NULL;
 		return dynamic_cast<SessionType*>(it->second);
@@ -62,7 +62,7 @@ public:
 
 	template<typename SessionType = Session>
 	SessionType* find(const UInt8* peerId) {
-		auto& it = _sessionsByPeerId.find(peerId);
+		auto it = _sessionsByPeerId.find(peerId);
 		if (it == _sessionsByPeerId.end())
 			return NULL;
 		return dynamic_cast<SessionType*>(it->second);
@@ -71,7 +71,7 @@ public:
 
 	template<typename SessionType = Session>
 	SessionType* find(UInt32 id) {
-		auto& it = _sessions.find(id);
+		auto it = _sessions.find(id);
 		if (it == _sessions.end())
 			return NULL;
 		return dynamic_cast<SessionType*>(it->second);

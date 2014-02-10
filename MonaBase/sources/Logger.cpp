@@ -60,7 +60,7 @@ static const char*  LevelColors[] = { FATAL_COLOR, CRITIC_COLOR, ERROR_COLOR, WA
 
 mutex Logger::_Mutex;
 
-void Logger::log(std::thread::id threadId, const string& threadName, Level level, const char *filePath, string& shortFilePath, long line, string& message) {
+void Logger::log(THREAD_ID threadId, const string& threadName, Level level, const char *filePath, string& shortFilePath, long line, string& message) {
 	lock_guard<mutex> lock(_Mutex);
 	level = (Level)(level - 1);
 	SET_CONSOLE_TEXT_COLOR(LevelColors[level]);

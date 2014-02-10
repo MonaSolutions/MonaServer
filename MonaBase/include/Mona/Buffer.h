@@ -31,8 +31,8 @@ public:
 	Buffer(UInt8* buffer,UInt32 size) : _offset(0),_buffer(NULL),_data(buffer),_capacity(size), _size(size) {}
 	virtual ~Buffer() { if (_buffer) delete [] _buffer; }
 
-	const UInt8		Buffer::operator[](UInt32 index) const { return _data[index >= _size ? (_size-1) : index]; }
-	UInt8&			Buffer::operator[](UInt32 index) { return _data[index >= _size ? (_size-1) : index]; }
+	const UInt8		operator[](UInt32 index) const { return _data[index >= _size ? (_size-1) : index]; }
+	UInt8&			operator[](UInt32 index) { return _data[index >= _size ? (_size-1) : index]; }
 
 	void			clip(UInt32 offset);
 	bool			resize(UInt32 size, bool preserveContent);

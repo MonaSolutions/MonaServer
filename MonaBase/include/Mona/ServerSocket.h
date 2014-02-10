@@ -30,12 +30,11 @@ class ServerSocket : public Socket, virtual Object {
 public:
 	ServerSocket(const SocketManager& manager) : Socket(manager) {}
 
-	bool bind(Exception& ex, const SocketAddress& address, bool reuseAddress = true) { return Socket::bind(ex, address, reuseAddress); }
-	bool listen(Exception& ex, int backlog = 64) { if (!Socket::listen(ex, backlog)) return false; setLinger(ex, false, 0); return true; }
-	
+	bool bindWithListen(Exception& ex, const SocketAddress& address, bool reuseAddress = true, int backlog = 64) { return Socket::bindWithListen(ex, address, reuseAddress,backlog); }
+
 	template<typename SocketType, typename ...Args>
 	SocketType* acceptConnection(Exception& ex, Args&&... args) { return Socket::acceptConnection<SocketType>(ex, args ...); }
-	void rejectConnection() { Socket::rejectConnection(); }
+	void		rejectConnection() { Socket::rejectConnection(); }
 };
 
 

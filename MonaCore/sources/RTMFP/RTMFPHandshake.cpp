@@ -21,7 +21,6 @@ This file is a part of Mona.
 #include "Mona/RTMFP/RTMFProtocol.h"
 #include "Mona/Util.h"
 #include <openssl/evp.h>
-#include <cstring>
 
 using namespace std;
 
@@ -61,7 +60,7 @@ void RTMFPHandshake::manage() {
 }
 
 void RTMFPHandshake::commitCookie(const UInt8* value) {
-	auto& it = _cookies.find(value);
+	auto it = _cookies.find(value);
 	if(it==_cookies.end()) {
 		string hex;
 		WARN("RTMFPCookie ", Util::FormatHex(value, COOKIE_SIZE, hex), " not found, maybe becoming obsolete before commiting (congestion?)");

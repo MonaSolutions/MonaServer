@@ -23,7 +23,6 @@ This file is a part of Mona.
 #include "Mona/Logs.h"
 #include "Mona/Util.h"
 #include "Mona/PoolBuffer.h"
-#include <cstring>
 
 using namespace std;
 

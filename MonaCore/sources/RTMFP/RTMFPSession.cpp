@@ -436,7 +436,7 @@ void RTMFPSession::packetHandler(PacketReader& packet) {
 }
 
 RTMFPWriter* RTMFPSession::writer(UInt64 id) {
-	auto& it = _flowWriters.find(id);
+	auto it = _flowWriters.find(id);
 	if(it==_flowWriters.end())
 		return NULL;
 	return it->second.get();
@@ -479,7 +479,7 @@ void RTMFPSession::initWriter(const shared_ptr<RTMFPWriter>& pWriter) {
 
 
 inline shared_ptr<RTMFPWriter> RTMFPSession::changeWriter(RTMFPWriter& writer) {
-	auto& it = _flowWriters.find(writer.id);
+	auto it = _flowWriters.find(writer.id);
 	if (it == _flowWriters.end()) {
 		ERROR("RTMFPWriter ", writer.id, " change impossible on session ", name())
 		return shared_ptr<RTMFPWriter>(&writer);

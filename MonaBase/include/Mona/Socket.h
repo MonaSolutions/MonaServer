@@ -92,9 +92,9 @@ public:
 		// We can write immediatly if there are no queue packets to write,
 		// and if it remains some data to write (flush returns false)
 		std::lock_guard<std::mutex>	lock(_mutexAsync);
-		if (!_senders.empty() || !pSender->flush(ex, *this)) {
+		if ((!_senders.empty() && pSender->buffering(poolBuffers())) || !pSender->flush(ex, *this)) {
             _senders.emplace_back(pSender);
-			manageWrite(ex);
+			manageWrite();
 			return !ex;
 		}
 		return true;
@@ -129,25 +129,31 @@ private:
 	SocketType* acceptConnection(Exception& ex, Args&&... args) {
 		ASSERT_RETURN(_initialized == true, NULL)
 
-		char buffer[IPAddress::MAX_ADDRESS_LENGTH];
-		struct sockaddr* pSA = reinterpret_cast<struct sockaddr*>(buffer);
-		NET_SOCKLEN saLen = sizeof(buffer);
-
+		union {
+			struct sockaddr_in  sa_in;
+			struct sockaddr_in6 sa_in6;
+		} addr;
+		NET_SOCKLEN addrSize = sizeof(addr);
 		NET_SOCKET sockfd;
 		do {
-			sockfd = ::accept(_sockfd, pSA, &saLen);  // TODO acceptEx?
-		} while (sockfd == NET_INVALID_SOCKET && Net::LastError() == EINTR);
+			sockfd = ::accept(_sockfd, (sockaddr*)&addr, &addrSize);  // TODO acceptEx?
+		} while (sockfd == NET_INVALID_SOCKET && Net::LastError() == NET_EINTR);
 		if (sockfd == NET_INVALID_SOCKET) {
 			Net::SetError(ex);
 			return NULL;
 		}
-		SocketAddress address(*pSA);
-		if (!onConnection(address))
+		SocketAddress address((sockaddr&)addr);
+		if (!onConnection(address)) {
+			NET_CLOSESOCKET(sockfd);
 			return NULL;
+		}
 		SocketType* pSocket = new SocketType(address,args ...);
 		Socket* pSocketBase = (Socket*)pSocket;
+
 		std::lock_guard<std::mutex>	lock(pSocketBase->_mutexInit);
-		if (!pSocketBase->init(ex, sockfd)) {
+		pSocketBase->_sockfd = sockfd;
+		pSocketBase->_initialized = true;
+		if (!pSocketBase->managed(ex)) {
 			delete pSocket;
 			pSocket = NULL;
 		}
@@ -157,8 +163,8 @@ private:
 
 	bool connect(Exception& ex, const SocketAddress& address);
 	bool bind(Exception& ex, const SocketAddress& address, bool reuseAddress = true);
-	bool listen(Exception& ex, int backlog = 64);
-
+	bool bindWithListen(Exception& ex, const SocketAddress& address, bool reuseAddress = true,int backlog = 64);
+	
 	int receiveBytes(Exception& ex, void* buffer, int length, int flags = 0);
 	int receiveFrom(Exception& ex, void* buffer, int length, SocketAddress& address, int flags = 0);
 
@@ -172,7 +178,7 @@ private:
 	bool getBroadcast(Exception& ex) { return getOption(ex, SOL_SOCKET, SO_BROADCAST) != 0; }
 
 	
-
+	// allow to reject a connection on the address client choice (before client object creation)
 	virtual bool    onConnection(const SocketAddress& address) { return true; }
 	// if ex of onReadable is raised, it's given to onError
 	virtual void	onReadable(Exception& ex) = 0;
@@ -181,12 +187,12 @@ private:
 
 	// Creates the underlying native socket
 	bool	init(Exception& ex, IPAddress::Family family);
-	bool	init(Exception& ex, NET_SOCKET sockfd);
+
 
 	bool    managed(Exception& ex);
 
 	// flush async sending
-	void    manageWrite(Exception& ex);
+	void    manageWrite();
 	void	flushSenders(Exception& ex);
 
 	template<typename Type>

@@ -55,7 +55,8 @@ void WSWriter::pack() {
 	PacketWriter& packet = writer.packet;
 	UInt32 size = packet.size()-10;
 	packet.clip(10-WS::HeaderSize(size));
-	packet.clear(WS::WriteHeader(WS::TYPE_TEXT,size,BinaryWriter(packet))+size);
+	BinaryWriter headerWriter(packet);
+	packet.clear(WS::WriteHeader(WS::TYPE_TEXT,size,headerWriter)+size);
 	_sent += packet.size();
 	sender.packaged = true;
 }
@@ -97,13 +98,13 @@ void WSWriter::write(UInt8 type,const UInt8* data,UInt32 size) {
 	if(type==WS::TYPE_CLOSE) {
 		// here size is the code!
 		if(size>0) {
-			WS::WriteHeader(type,2,writer);
+			WS::WriteHeader((WS::MessageType)type,2,writer);
 			writer.write16(size);
 		} else
-			WS::WriteHeader(type,0,writer);
+			WS::WriteHeader((WS::MessageType)type,0,writer);
 		return;
 	}
-	WS::WriteHeader(type,size,writer);
+	WS::WriteHeader((WS::MessageType)type,size,writer);
 	writer.writeRaw(data,size);
 }
 

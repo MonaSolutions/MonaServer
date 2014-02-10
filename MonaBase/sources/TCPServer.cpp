@@ -35,7 +35,7 @@ TCPServer::~TCPServer() {
 
 bool TCPServer::start(Exception& ex,const SocketAddress& address) {
 	stop();
-	if (!bind(ex, address) || !listen(ex))
+	if (!bindWithListen(ex, address))
 		return false;
 	_address.set(address);
 	return _running=true;

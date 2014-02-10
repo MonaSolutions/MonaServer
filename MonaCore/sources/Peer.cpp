@@ -54,7 +54,7 @@ bool Peer::exchangeMemberId(Group& group,Peer& peer,Writer* pWriter) {
 		pWriter->writeMember(peer);
 		return true;
 	}
-	auto& it = peer._groups.find(&group);
+	auto it = peer._groups.find(&group);
 	if(it==peer._groups.end()) {
 		CRITIC("A peer in a group without have its _groups collection associated")
 		return false;
@@ -81,7 +81,7 @@ Group& Peer::joinGroup(const UInt8* id,Writer* pWriter) {
 
 
 	// group._clients and this->_groups insertions
-	auto& it = _groups.lower_bound(&group);
+	auto it = _groups.lower_bound(&group);
 	if(it!=_groups.end() && it->first==&group)
 		return group;
 
@@ -93,17 +93,16 @@ Group& Peer::joinGroup(const UInt8* id,Writer* pWriter) {
 
 
 void Peer::unjoinGroup(Group& group) {
-	auto& it = _groups.lower_bound(&group);
+	auto it = _groups.lower_bound(&group);
 	if (it == _groups.end() || it->first != &group)
 		return;
-	onUnjoinGroup(it);
+	onUnjoinGroup(*it->first);
 	_groups.erase(it);
 }
 
 void Peer::unsubscribeGroups() {
-	auto it=_groups.begin();
-	while(it!=_groups.end())
-		onUnjoinGroup(it++);
+	for (auto& it : _groups)
+		onUnjoinGroup(*it.first);
 	_groups.clear();
 }
 
@@ -186,9 +185,7 @@ void Peer::onJoinGroup(Group& group) {
 	_handler.onJoinGroup(*this,group);
 }
 
-void Peer::onUnjoinGroup(map<Group*,Writer*>::iterator& it) {
-	Group& group(*it->first);
-
+void Peer::onUnjoinGroup(Group& group) {
 	// group._clients suppression (this->_groups suppression must be done by the caller of onUnjoinGroup)
 	auto itPeer = group.find(id);
 	if (itPeer == group.end()) {

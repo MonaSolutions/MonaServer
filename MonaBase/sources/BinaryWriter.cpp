@@ -92,8 +92,8 @@ BinaryWriter& BinaryWriter::writeAddress(const SocketAddress& address,bool publi
 	const IPAddress& host = address.host();
 	if (host.family() == IPAddress::IPv6)
 		flag |= 0x80;
-	NET_SOCKLEN size;
-	const UInt8* bytes = reinterpret_cast<const UInt8*>(host.addr(size));
+	NET_SOCKLEN size(host.size());
+	const UInt8* bytes = (const UInt8*)host.addr();
 	write8(flag);
 	for(int i=0;i<size;++i)
 		write8(bytes[i]);

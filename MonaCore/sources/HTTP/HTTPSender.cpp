@@ -122,10 +122,10 @@ bool HTTPSender::run(Exception& ex) {
 
 							// push the entire file content to memory
 							UInt32 size = (UInt32)ifile.tellg();
-							ifile.seekg(0);
+						ifile.seekg(0);
 							char* current = (char*)packet.buffer(size); // reserve memory for file
-							ifile.read(current, size);
-						}
+						ifile.read(current, size);
+									}
 					}
 				}
 			}

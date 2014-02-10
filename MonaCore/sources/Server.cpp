@@ -42,7 +42,8 @@ void ServerManager::handle(Exception& ex) {
 }
 
 Server::Server(UInt32 socketBufferSize,UInt16 threads) : Startable("Server"),Handler(socketBufferSize,threads),_protocols(*this),_manager(*this) {
-	DEBUG("Socket Buffer size of ",socketBufferSize," bytes")
+	if (socketBufferSize>0)
+		DEBUG("Socket Buffer size of ",socketBufferSize," bytes")
 }
 
 Server::~Server() {

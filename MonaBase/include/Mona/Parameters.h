@@ -58,18 +58,6 @@ private:
 	virtual void setRaw(const std::string& key, const char* value) = 0;
 };
 
-template<class IteratorType>
-class IterableParameters : public Parameters {
-public:
-	typedef IteratorType Iterator;
-
-	virtual Iterator begin() const = 0;
-	virtual Iterator end() const = 0;
-	virtual UInt32  count() const = 0;
-protected:
-	IterableParameters() {}
-};
-
 
 
 } // namespace Mona

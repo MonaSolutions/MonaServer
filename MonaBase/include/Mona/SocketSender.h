@@ -24,6 +24,7 @@ This file is a part of Mona.
 #include "Mona/PoolThread.h"
 #include "Mona/SocketAddress.h"
 #include "Mona/Expirable.h"
+#include "Mona/PoolBuffer.h"
 #include <memory>
 
 
@@ -34,8 +35,7 @@ class Socket;
 class SocketSender : public WorkThread, virtual Object {
 	friend class Socket;
 public:
-	// return true if there is few data available to send
-	virtual bool	available() { return data() && _position < size(); }
+	bool	available() { return _ppBuffer ? !_ppBuffer->empty() : (data() && _position < size()); }
 
 	virtual const UInt8*	data() { return _data; }
 	virtual UInt32			size() { return _size; }
@@ -43,13 +43,15 @@ public:
 protected:
 	SocketSender(const char* name);
 	SocketSender(const char* name,const UInt8* data, UInt32 size);
-	virtual ~SocketSender();
 
 
 	// if return true and ex==true it will display a warning, otherwise return false == failed
 	bool							run(Exception& ex);
 
 private:
+	
+	bool							buffering(const PoolBuffers& poolBuffers);
+
 	// send data
 	bool							flush(Exception& ex,Socket& socket);
 
@@ -64,7 +66,7 @@ private:
 	UInt32						_position;
 	UInt8*						_data;
 	UInt32						_size;
-	bool						_memcopied;
+	std::unique_ptr<PoolBuffer>	_ppBuffer;
 };
 
 

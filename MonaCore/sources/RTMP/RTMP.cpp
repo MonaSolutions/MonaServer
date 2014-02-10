@@ -69,8 +69,7 @@ const UInt8* RTMP::ValidateClient(Crypto& crypto,BinaryReader& reader,bool& midd
 	UInt32 position = reader.position();
 	if (reader.read32() == 0) {
 		WARN("This version of player doesn't support validation");
-        // TODO fix the return value warning
-		return false;
+		return NULL;
 	}
 	
 	const UInt8* keyChallenge = ValidateClientScheme(crypto,reader, false);

@@ -135,8 +135,7 @@ void HTTPSession::packetHandler(PacketReader& reader) {
 			_writer.flush(true); // last HTTP flush for this connection, now we are in a WebSession mode!
 		} // TODO else
 	} else {
-
-		MapReader<MapParameters::Iterator> parameters(peer.properties().begin(),peer.properties().end());
+		MapReader<MapParameters::Iterator> parameters(peer.properties());
 
 		if (!peer.connected) {
 			_options.clear();
@@ -283,7 +282,7 @@ void HTTPSession::processOptions(Exception& ex,const shared_ptr<HTTPPacket>& pPa
 }
 
 void HTTPSession::processSOAPfunction(Exception& ex, PacketReader& packet) {
-	
+
 	XMLReader reader(packet);
 	peer.onMessage(ex, "onMessage", reader, HTTPWriter::XML);
 }

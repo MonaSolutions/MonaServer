@@ -35,10 +35,8 @@ public:
 	UInt32			farId;
 	PacketWriter	packet;
 
-	bool			available() { return UDPSender::available() && packet.size() >= RTMFP_MIN_PACKET_SIZE; }
-
 private:
-	const UInt8*	data() { return packet.data(); }
+	const UInt8*	data() { return packet.size() < RTMFP_MIN_PACKET_SIZE ? NULL : packet.data(); }
 	UInt32			size() { return packet.size(); }
 	
 	bool			run(Exception& ex);

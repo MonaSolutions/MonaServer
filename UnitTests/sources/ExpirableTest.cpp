@@ -34,7 +34,7 @@ public:
 };
 
 
-ADD_TEST(ExpirableObject, Expire) {
+ADD_TEST(ExpirableTest, Expire) {
 	
 	ExpirableObject* pObject = new ExpirableObject();
 

@@ -45,7 +45,7 @@ public:
 	virtual void writeNull()=0;
 	virtual void writeBytes(const UInt8* data,UInt32 size)=0;
 
-
+	// if serializer don't support a mixed object, set the object as the first element of the array
 	virtual void beginObjectArray(UInt32 size) { beginArray(size); beginObject(); }
 
 	virtual void beginMap(UInt32 size, bool weakKeys = false) { beginObject(); }

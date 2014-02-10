@@ -29,7 +29,7 @@ using namespace Mona;
 Servers::Servers(Mona::UInt16 port, ServerHandler& handler, const SocketManager& manager, const string& targets) : Broadcaster(manager.poolBuffers),targets(manager.poolBuffers),initiators(manager.poolBuffers),TCPServer(manager), _port(port), _handler(handler), _manageTimes(1) {
 	if (port > 0)
 		NOTE("Servers incoming connection enabled on port ", port)
-	else if (!_targets.empty())
+	else if (!targets.empty())
 		NOTE("Servers incoming connection disabled (servers.port==0)")
 
 	vector<string> values;
@@ -46,7 +46,7 @@ Servers::Servers(Mona::UInt16 port, ServerHandler& handler, const SocketManager&
 		bool success;
 		EXCEPTION_TO_LOG(success=address.set(ex, target), "Servers ", target, " target");
 		if (success) {
-			auto& it = _targets.insert(new ServerConnection(address, manager, _handler, *this));
+			auto it = _targets.emplace(new ServerConnection(manager, _handler, *this,address));
 			if (!query.empty())
 				Util::UnpackQuery(query, **it.first);
 		}
@@ -55,18 +55,16 @@ Servers::Servers(Mona::UInt16 port, ServerHandler& handler, const SocketManager&
 
 Servers::~Servers() {
 	stop();
-	Iterator it;
-	for(it=_targets.begin();it!=_targets.end();++it)
-		delete (*it);
+	for (ServerConnection* pTarget : _targets)
+		delete pTarget;
 }
 
 void Servers::manage() {
-	if(_targets.empty() || (--_manageTimes)!=0)
+	if(!running() || _targets.empty() || (--_manageTimes)!=0)
 		return;
 	_manageTimes = 5; // every 10 sec
-	Iterator it;
-	for(it=_targets.begin();it!=_targets.end();++it)
-		(*it)->connect();
+	for (ServerConnection* pTarget : _targets)
+		pTarget->connect();
 }
 
 void Servers::start() {
@@ -86,37 +84,35 @@ void Servers::stop() {
 	_connections.clear();
 	targets._connections.clear();
 	initiators._connections.clear();
-	set<ServerConnection*>::iterator it;
-	for (it = _clients.begin(); it != _clients.end(); ++it)
-		delete (*it);
-	_clients.clear();
+	while(!_clients.empty())
+		(*_clients.begin())->disconnect();
 }
 
 void Servers::onConnectionRequest(Exception& ex) { 
-	ServerConnection* pServer = acceptClient<ServerConnection>(ex, manager, _handler, (ServersHandler&)*this, true);
+	ServerConnection* pServer = acceptClient<ServerConnection>(ex, manager, _handler, (ServersHandler&)*this);
 	if (!pServer)
 		return;
-	_clients.insert(pServer);
+	_clients.emplace(pServer);
 }
 
 void Servers::connection(ServerConnection& server) {
-	_connections.insert(&server);
+	_connections.emplace(&server);
 	if(server.isTarget)
-		targets._connections.insert(&server);
+		targets._connections.emplace(&server);
 	else
-		initiators._connections.insert(&server);
-	NOTE("Connection etablished with ",server.address.toString()," server ")
+		initiators._connections.emplace(&server);
+
+    _handler.connection(server);
 }
 
-bool Servers::disconnection(ServerConnection& server) {
-	_connections.erase(&server);
+void Servers::disconnection(ServerConnection& server) {
 	_clients.erase(&server);
+	if (_connections.erase(&server) == 0) // not connected
+		return;
 	if(server.isTarget)
 		targets._connections.erase(&server);
 	else
 		initiators._connections.erase(&server);
-	NOTE("Disconnection from ", server.address.toString(), " server ")
-	if(_targets.find(&server)==_targets.end())
-		return true;
-	return false;
+
+	_handler.disconnection(server);
 }
