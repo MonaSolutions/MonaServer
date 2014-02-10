@@ -22,6 +22,7 @@ This file is a part of Mona.
 #include "Mona/TCPServer.h"
 #include "Mona/UDPSocket.h"
 #include "Mona/Logs.h"
+#include <set>
 
 using namespace std;
 using namespace Mona;
