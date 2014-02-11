@@ -41,6 +41,22 @@ public:
 
 	virtual void				reset();
 
+protected:
+
+	/// \brief Intern structure for ordering tags and subtags
+	/// and return the good type in followingType()
+	class TagXML : virtual Object {
+	public:
+		TagXML(const std::string& name) : tagName(name), arrayStarted(false) {}
+		virtual ~TagXML() {}
+
+		bool		arrayStarted;
+		std::string tagName;
+		std::string currentSubTag;
+	};
+	
+    std::deque<TagXML>		_queueTags; ///< record each tags and the is last subtag
+
 private:
 	const UInt8*	readBytes(UInt32& size);
 
@@ -57,18 +73,6 @@ private:
 	/// \brief ignore spaces and get current char
 	const UInt8*	current();
 
-	/// \brief Intern structure for ordering tags and subtags
-	/// and return the good type in followingType()
-	class TagXML : virtual Object {
-	public:
-		TagXML(const std::string& name) : tagName(name), arrayStarted(false) {}
-		virtual ~TagXML() {}
-
-		bool		arrayStarted;
-		std::string tagName;
-		std::string currentSubTag;
-	};
-
 	enum ReadStep {
 		NOTHING=0,
 		POP_TAG,
@@ -76,7 +80,6 @@ private:
 		START_ARRAY
 	};
 
-    std::deque<TagXML>		_queueTags; ///< record each tags and the is last subtag
 	ReadStep				_nextStep; ///< if there is an action to terminate
 	UInt32			        _pos;
 	std::string		        _text;

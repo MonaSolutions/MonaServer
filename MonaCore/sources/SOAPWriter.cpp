@@ -25,24 +25,111 @@ using namespace std;
 namespace Mona {
 
 
-SOAPWriter::SOAPWriter(const PoolBuffers& buffers) : XMLWriter(buffers) {
+SOAPWriter::SOAPWriter(const PoolBuffers& buffers) : XMLWriter(buffers), _first(true) {}
+
+void SOAPWriter::writeHeader() {
+
 	packet.writeRaw("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
-	packet.writeRaw("<SOAP-ENV:Envelope xmlns:SOAP-ENV=\"http://schemas.xmlsoap.org/soap/envelope/\" ");
+	packet.writeRaw("<soapenv:Envelope xmlns:SOAP-ENV=\"http://schemas.xmlsoap.org/soap/envelope/\" ");
 	packet.writeRaw("xmlns:SOAP-ENC=\"http://schemas.xmlsoap.org/soap/encoding/\" ");
 	packet.writeRaw("xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" ");
 	packet.writeRaw("xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" ");
 	packet.writeRaw("xmlns:ns=\"urn:mona\">\n");
-	packet.writeRaw("<SOAP-ENV:Body>\n");
+	packet.writeRaw("<soapenv:Body>\n");
 	packet.writeRaw("<ns:MonaResponse>\n");
 	packet.writeRaw("<result>\n");
+
+	_first = false;
 }
 
-void SOAPWriter::end() {
+void SOAPWriter::writeFooter() {
 
 	packet.writeRaw("\n</result>\n");
 	packet.writeRaw("</ns:aMonaResponse>\n");
-	packet.writeRaw("</SOAP-ENV:Body>\n");
-	packet.writeRaw("</SOAP-ENV:Envelope>");
+	packet.writeRaw("</soapenv:Body>\n");
+	packet.writeRaw("</soapenv:Envelope>");
+}
+
+void SOAPWriter::beginObject(const string& type, bool external) {
+	if (_first)
+		writeHeader();
+
+	XMLWriter::beginObject(type, external);
+}
+
+void SOAPWriter::endObject() {
+	if (_queueTags.empty())
+		writeFooter();
+
+	XMLWriter::endObject();
+}
+
+void SOAPWriter::writePropertyName(const string& value) {
+	if (_first)
+		writeHeader();
+
+	XMLWriter::writePropertyName(value);
+}
+
+void SOAPWriter::beginArray(UInt32 size) {
+	if (_first)
+		writeHeader();
+
+	XMLWriter::beginArray(size);
+}
+
+void SOAPWriter::writeBytes(const UInt8* data, UInt32 size) {
+
+	if (_first) {
+		writeHeader();
+		XMLWriter::writeBytes(data, size);
+		writeFooter();
+	} else
+		XMLWriter::writeBytes(data, size);
+}
+
+void SOAPWriter::writeRaw(const char* value) {
+
+	if (_first) {
+
+		writeHeader();
+		XMLWriter::writeRaw(value);
+		writeFooter();
+	} else
+		XMLWriter::writeRaw(value);
+}
+
+void SOAPWriter::writeRaw(const string& value) {
+
+	if (_first) {
+
+		writeHeader();
+		XMLWriter::writeRaw(value);
+		writeFooter();
+	} else
+		XMLWriter::writeRaw(value);
+}
+
+void SOAPWriter::writeDate(const Time& date) { 
+
+	if (_first) {
+
+		writeHeader();
+		XMLWriter::writeDate(date);
+		writeFooter();
+	} else
+		XMLWriter::writeDate(date);
+}
+
+void SOAPWriter::writeNumber(double value) { 
+	
+	if (_first) {
+
+		writeHeader();
+		XMLWriter::writeNumber(value);
+		writeFooter();
+	} else
+		XMLWriter::writeNumber(value);
 }
 
 } // namespace Mona

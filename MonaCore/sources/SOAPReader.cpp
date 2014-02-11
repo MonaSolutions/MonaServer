@@ -24,37 +24,44 @@ using namespace std;
 
 namespace Mona {
 
-
-SOAPReader::Type SOAPReader::followingType() {
-	
+SOAPReader::SOAPReader(PacketReader& packet) : XMLReader(packet), _body(false) {
 	string name, tmp;
 	bool external;
 	UInt32 size = 0;
+	Type type = NIL;
 
-	// Search the Body tag
-	while(!_body && XMLReader::followingType()==OBJECT) {
-		readObject(name, external);
+	if (XMLReader::followingType()!=ARRAY) 
+		return;
+	readArray(size);
+
+	while ((type=readItem(name))!=END) {
 
 		// ignore attributes
-		while(readItem(tmp)!=END)
+		if (type != ARRAY) {
 			readString(tmp);
-
-		if (XMLReader::followingType()==ARRAY)
-			readArray(size);
-
-		if (name == "soapenv:Body") {
-			_body = true;
+			continue;
 		}
+		readArray(size);
+
+		// Body tag? read items and return
+		if (String::ICompare(name, "soapenv:Body")==0) {
+			_body=true;
+			break;
+		}
+
+		// We expect an object
+		if (readItem(tmp)!=OBJECT)
+			break;
+		readObject(tmp, external);
 	}
 
-	if (!_body) {
+	if (_body)
+		_queueTags.clear();
+}
 
-		ERROR(Exception::PROTOCOL, "SOAP error, tag Body not founded");
-		return END;
-	} else {
-
-		return XMLReader::followingType();
-	}
+bool SOAPReader::isValid() {
+	
+	return _body;
 }
 
 } // namespace Mona

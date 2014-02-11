@@ -303,7 +303,7 @@ void HTTPSender::ReplaceTemplateTags(PacketWriter& packet, ifstream& ifile, MapW
 				if (keyBegin)
 					key.assign(keyBegin, keyLength);
 				UInt32 available(current+1-signifiant);
-				auto& it = parameters[key];
+				auto it = parameters[key];
 				const string& value(it==parameters.end() ? String::Empty : it->second);
 				// give the size available required
 				if (available < value.size()) {

@@ -44,9 +44,6 @@ private:
 	const std::shared_ptr<HTTPPacket>&	packet();
 	void								packetHandler(PacketReader& packet);
 
-	/// \brief Parse SOAP request, execute lua function and send SOAP response
-	void			processSOAPfunction(Exception& ex, PacketReader& packet);
-
 	/// \brief Send the Option response
 	/// Note: It is called when processMove is used before a SOAP request
 	void			processOptions(Exception& ex,const std::shared_ptr<HTTPPacket>& pPacket);

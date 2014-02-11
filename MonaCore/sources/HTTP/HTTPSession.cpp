@@ -215,9 +215,22 @@ void HTTPSession::packetHandler(PacketReader& reader) {
 			////////////  HTTP POST  //////////////
 			else if (pPacket->command == HTTP::COMMAND_POST) {
 				// TODO publication!
-				reader.next(reader.available()-pPacket->contentLength);
-				if (pPacket->contentType == HTTP::CONTENT_TEXT && pPacket->contentSubType == "xml")
-					processSOAPfunction(ex, reader);
+				if (pPacket->contentType == HTTP::CONTENT_TEXT && pPacket->contentSubType == "xml") {
+					
+					UInt32 contentPos = reader.available()-pPacket->contentLength;
+					reader.next(contentPos);
+
+					// Is it a SOAP request?
+					SOAPReader soapReader(reader);
+					if (soapReader.isValid())
+						peer.onMessage(ex, "onMessage", soapReader, HTTPWriter::SOAP);
+					else { // XML
+						reader.reset(contentPos);
+						XMLReader xmlReader(reader);
+						peer.onMessage(ex, "onMessage", xmlReader, HTTPWriter::XML);
+					}
+
+				}
 			}
 			////////////  HTTP OPTIONS  ////////////// (it is due requested when Move Redirection is sent)
 			else if (pPacket->command == HTTP::COMMAND_OPTIONS) {
@@ -280,12 +293,5 @@ void HTTPSession::processOptions(Exception& ex,const shared_ptr<HTTPPacket>& pPa
 		HTTP_ADD_HEADER(writer,"Access-Control-Allow-Headers", "Content-Type")
 	HTTP_END_HEADER(writer)
 }
-
-void HTTPSession::processSOAPfunction(Exception& ex, PacketReader& packet) {
-
-	XMLReader reader(packet);
-	peer.onMessage(ex, "onMessage", reader, HTTPWriter::XML);
-}
-
 
 } // namespace Mona

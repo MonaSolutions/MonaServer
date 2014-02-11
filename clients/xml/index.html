@@ -1,6 +1,6 @@
 <html>
 <head>
-  <title>SOAP JavaScript Client Test</title>
+  <title>XML JavaScript Client Test</title>
   <script type="text/javascript">
     function send() {
       var xmlhttp = new XMLHttpRequest();
@@ -8,15 +8,6 @@
       xmlhttp.open('POST', address, true);
 
       var req = window.document.getElementById("request").value;
-      var test = '<?xml version="1.0" encoding="utf-8"?>' +
-                '<soapenv:Envelope ' + 
-                    'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ' +
-                    'xmlns:xsd="http://www.w3.org/2001/XMLSchema" ' +
-                    'xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">' +
-                    '<soapenv:Body>' +
-                        req +
-                    '</soapenv:Body>' +
-                '</soapenv:Envelope>';
       
       // Treat the response
       xmlhttp.onreadystatechange = function () {
@@ -30,14 +21,14 @@
       }
       // Send the POST request
       xmlhttp.setRequestHeader('Content-Type', 'text/xml');
-      xmlhttp.send(test);
+      xmlhttp.send(req);
     }
   </script>
 </head>
 <body>
     <form name="Demo" action="" method="post">
 <div>
-<textarea id="address" rows="1" cols="100">http://127.0.0.1/clients/soap</textarea>
+<textarea id="address" rows="1" cols="100">http://127.0.0.1/clients/xml</textarea>
 </div>
 <div>
 <textarea id="request" rows="10" cols="100">

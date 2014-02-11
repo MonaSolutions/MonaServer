@@ -21,10 +21,7 @@ This file is a part of Mona.
 
 #include "Script.h"
 #include "Mona/Peer.h"
-
-namespace Mona {
-	class Invoker;
-}
+#include "Mona/Invoker.h"
 
 class LUAInvoker {
 public:
@@ -52,7 +49,7 @@ private:
 	/// lua -> DataType
 	template<typename DataType>
 	static int	ToData(lua_State *pState) {
-		SCRIPT_CALLBACK(Invoker,invoker)
+		SCRIPT_CALLBACK(Mona::Invoker,invoker)
 		DataType writer(invoker.poolBuffers);
 		SCRIPT_READ_DATA(writer)
 		SCRIPT_WRITE_BINARY(writer.packet.data(),writer.packet.size())
@@ -63,9 +60,9 @@ private:
 	/// DataType -> lua
 	template<typename DataType>
 	static int	FromData(lua_State *pState) {
-		SCRIPT_CALLBACK(Invoker,invoker)
+		SCRIPT_CALLBACK(Mona::Invoker,invoker)
 		SCRIPT_READ_BINARY(data,size)
-		PacketReader packet(data,size);
+		Mona::PacketReader packet(data,size);
 		DataType reader(packet);
 		SCRIPT_WRITE_DATA(reader,SCRIPT_READ_UINT(0))
 		SCRIPT_CALLBACK_RETURN

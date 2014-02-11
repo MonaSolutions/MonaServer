@@ -33,7 +33,6 @@ public:
 	virtual void writePropertyName(const std::string& value);
 
 	virtual void beginArray(UInt32 size);
-	virtual void endArray();
 
 	virtual void writeDate(const Time& date);
 	virtual void writeNumber(double value);
