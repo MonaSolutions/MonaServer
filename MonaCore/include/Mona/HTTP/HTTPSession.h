@@ -24,6 +24,7 @@ This file is a part of Mona.
 #include "Mona/HTTPOptionsWriter.h"
 #include "Mona/HTTP/HTTPWriter.h"
 #include "Mona/HTTP/HTTPPacket.h"
+#include "Mona/MapReader.h"
 
 
 namespace Mona {
@@ -47,6 +48,10 @@ private:
 	/// \brief Send the Option response
 	/// Note: It is called when processMove is used before a SOAP request
 	void			processOptions(Exception& ex,const std::shared_ptr<HTTPPacket>& pPacket);
+
+	/// \brief Try to call the method with this name
+	/// \return true if method was call and no error occurs
+	bool			processMethod(Exception& ex, const std::string& name, MapReader<MapParameters::Iterator>& parameters);
 
 	HTTPWriter			_writer;
 	bool				_isWS;

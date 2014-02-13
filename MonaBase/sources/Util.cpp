@@ -112,11 +112,11 @@ size_t Util::UnpackUrl(const string& url, string& address, string& path, string&
 
 	auto it = url.begin();
 	auto end = url.end();
+	// Get address
 	while (it != end) {
 		if (*it == '/' || *it == '\\') // no address, just path
 			break;
 		if (*it == ':') {
-			// address
 			++it;
 			while (it != end && (*it == '/' || *it == '\\'))
 				++it;
@@ -152,15 +152,18 @@ size_t Util::UnpackUrl(const string& url, string& address, string& path, string&
             ++itPath;
             while (itPath != path.end() && (*itPath == '/' || *itPath == '\\'))
                 itPath = path.erase(itPath); // erase multiple slashes
+		   isFile = false;
            if (itPath == path.end()) {
 				// remove the last /
                 path.erase(--itPath);
 				break;
 			}
 			itField = itPath;
-			isFile = false;
-		} else if (*itPath++ == '.')
-			isFile = true;
+		} else {
+			itPath++;
+			if (!isFile)
+				isFile = true;
+		}
 	}
 	return isFile ? (itField-path.begin()) : string::npos;
 }

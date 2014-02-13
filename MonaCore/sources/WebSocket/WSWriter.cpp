@@ -52,6 +52,7 @@ void WSWriter::pack() {
 	if(sender.packaged)
 		return;
 	JSONWriter& writer = sender.writer;
+	writer.endWrite();
 	PacketWriter& packet = writer.packet;
 	UInt32 size = packet.size()-10;
 	packet.clip(10-WS::HeaderSize(size));
@@ -114,9 +115,7 @@ DataWriter& WSWriter::writeInvocation(const std::string& name) {
 	if(state()==CLOSED)
         return DataWriter::Null;
 	JSONWriter& invocation = newDataWriter();
-	invocation.doNotEnd=true;
 	invocation.writeString(name);
-	invocation.doNotEnd=false;
 	return invocation;
 }
 

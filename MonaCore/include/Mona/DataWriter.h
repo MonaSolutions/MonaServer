@@ -54,6 +54,9 @@ public:
 	virtual bool repeat(UInt32 reference) { return false; }
 	virtual void clear();
 
+	/// \brief Called for eventual ending treatment
+	virtual void endWrite() {}
+
 	UInt32		 lastReference() { return _lastReference; }
 
 	void		 writeNullProperty(const std::string& name);

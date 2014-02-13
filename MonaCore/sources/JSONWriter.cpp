@@ -27,7 +27,7 @@ using namespace std;
 namespace Mona {
 
 
-JSONWriter::JSONWriter(const PoolBuffers& buffers,bool modeRaw) : DataWriter(buffers),_modeRaw(modeRaw),_first(true),_started(false),_layers(0),doNotEnd(false) {
+JSONWriter::JSONWriter(const PoolBuffers& buffers,bool modeRaw) : DataWriter(buffers),_modeRaw(modeRaw),_first(true),_started(false),_layers(0) {
 	
 }
 
@@ -35,7 +35,6 @@ void JSONWriter::clear() {
 	_first=true;
 	_started=false;
 	_layers=0;
-	doNotEnd=false;
 	DataWriter::clear();
 }
 
@@ -134,9 +133,12 @@ void JSONWriter::endData(bool isContainer) {
 	
 	if(_first)
 		_first=false;
+}
+
+void JSONWriter::endWrite() {
 
 	// Write last ']'
-	if(_layers==0 && !doNotEnd)
+	if (_started)
 		packet.write8(']');
 }
 

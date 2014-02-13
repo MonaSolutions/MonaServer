@@ -21,7 +21,6 @@ This file is a part of Mona.
 #include "Mona/HTTP/HTTP.h"
 #include "Mona/HTTPHeaderReader.h"
 #include "Mona/SOAPReader.h"
-#include "Mona/MapReader.h"
 #include "Mona/SOAPWriter.h"
 #include "Mona/Protocol.h"
 #include "Mona/Exceptions.h"
@@ -109,7 +108,6 @@ void HTTPSession::packetHandler(PacketReader& reader) {
 	if (pPacket->filePos != string::npos)
 		((string&)peer.path).erase(pPacket->filePos - 1);
 
-
 	//// Disconnection if path has changed
 	if(peer.connected && String::ICompare(oldPath,peer.path)!=0)
 		peer.onDisconnection();
@@ -144,7 +142,6 @@ void HTTPSession::packetHandler(PacketReader& reader) {
 
 		if (!ex && peer.connected) {
 
-
 			////////////  HTTP GET  //////////////
 			if ((pPacket->command == HTTP::COMMAND_HEAD ||pPacket->command == HTTP::COMMAND_GET)) {
 				// use index http option in the case of GET request on a directory
@@ -152,21 +149,18 @@ void HTTPSession::packetHandler(PacketReader& reader) {
 				// if no file in the path, try to invoke a method on client object
 				if (pPacket->filePos == string::npos) {
 					if (!_options.index.empty()) {
-						if (_options.indexCanBeMethod) {
-							Exception exTry;
-							parameters.reset();
-							peer.onMessage(exTry, _options.index,parameters,HTTPWriter::RAW);
-							if (exTry) {
-								if (exTry.code() == Exception::SOFTWARE)
-									ex.set(exTry);
-							} else
-								methodCalled = true;
+						if (_options.indexCanBeMethod)
+							methodCalled = processMethod(ex, _options.index, parameters);
+
+						if (!methodCalled && !ex) {
+							// Redirect to the file (get name to prevent path insertion)
+							string nameFile;
+							filePath.appendPath(FileSystem::GetName(_options.index, nameFile));
 						}
-						if (!methodCalled && !ex)
-							filePath.appendPath("/", _options.index);
 					} else if (!_options.indexDirectory)
-						ex.set(Exception::PERMISSION, "No authorization to see the content of ", peer.path,"/");
-				}
+						ex.set(Exception::PERMISSION, "No authorization to see the content of ", peer.path, "/");
+				} else
+					methodCalled = processMethod(ex, filePath.name(), parameters);
 
 				// try to get a file if the client object had not method named like that
 				if (!methodCalled && !ex) {
@@ -292,6 +286,17 @@ void HTTPSession::processOptions(Exception& ex,const shared_ptr<HTTPPacket>& pPa
 		HTTP_ADD_HEADER(writer,"Access-Control-Allow-Methods", "GET, HEAD, PUT, PATH, POST, OPTIONS")
 		HTTP_ADD_HEADER(writer,"Access-Control-Allow-Headers", "Content-Type")
 	HTTP_END_HEADER(writer)
+}
+
+bool HTTPSession::processMethod(Exception& ex, const string& name, MapReader<MapParameters::Iterator>& parameters) {
+
+	Exception exTry;
+	parameters.reset();
+	peer.onMessage(exTry, name, parameters, HTTPWriter::RAW);
+	if (exTry && exTry.code() == Exception::SOFTWARE)
+		ex.set(exTry);
+	
+	return !exTry;
 }
 
 } // namespace Mona

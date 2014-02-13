@@ -116,16 +116,16 @@ bool HTTPSender::run(Exception& ex) {
 						HTTP_END_HEADER(packet)
 
 						// TODO see if filter is correct
-						if (type == HTTP::CONTENT_TEXT)
+						if (type == HTTP::CONTENT_TEXT && _pRequest->parameters.count())
 							ReplaceTemplateTags(packet, ifile, _pRequest->parameters);
 						else {
 
 							// push the entire file content to memory
 							UInt32 size = (UInt32)ifile.tellg();
-						ifile.seekg(0);
+							ifile.seekg(0);
 							char* current = (char*)packet.buffer(size); // reserve memory for file
-						ifile.read(current, size);
-									}
+							ifile.read(current, size);
+						}
 					}
 				}
 			}

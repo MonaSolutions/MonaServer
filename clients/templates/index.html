@@ -18,8 +18,7 @@
       
       var val1 = window.document.getElementById("var1").value;
       var val2 = window.document.getElementById("var2").value;
-      var address = window.document.getElementById("address").value;
-      address += "/templateFile.txt?var1=" + val1 + "&var2=" + val2;
+      var address = "templateFile.txt?var1=" + val1 + "&var2=" + val2;
       
       var client = new XMLHttpRequest();
       client.onreadystatechange = handler;
@@ -30,7 +29,6 @@
 </head>
 <body>
   <form name="Demo" action="" method="post">
-<div>Address : <input id="address" value="http://127.0.0.1/clients/templates" size=100/></div>
 <div>1st template : <input id="var1" value="value1"/></div>
 <div>2nd template : <input id="var2" value="value2"/></div>
 <div>

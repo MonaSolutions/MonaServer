@@ -29,24 +29,24 @@ class JSONWriter : public DataWriter, virtual Object {
 public:
 	JSONWriter(const PoolBuffers& buffers,bool modeRaw=false);
 
-	void beginObject(const std::string& type="",bool external=false);
-	void endObject();
+	virtual void beginObject(const std::string& type="",bool external=false);
+	virtual void endObject();
 
-	void writePropertyName(const std::string& value);
+	virtual void writePropertyName(const std::string& value);
 
-	void beginArray(UInt32 size);
-	void endArray();
+	virtual void beginArray(UInt32 size);
+	virtual void endArray();
 
-	void writeDate(const Time& date) { writeRaw(date.toString(Time::ISO8601_FRAC_FORMAT, _buffer)); }
-	void writeNumber(double value) { writeRaw(String::Format(_buffer, value)); }
-	void writeString(const std::string& value);
-	void writeBoolean(bool value) { writeRaw( value ? "true" : "false"); }
-	void writeNull() { writeRaw("null"); }
-	void writeBytes(const UInt8* data,UInt32 size);
+	virtual void writeDate(const Time& date) { writeString(date.toString(Time::ISO8601_FRAC_FORMAT, _buffer)); }
+	virtual void writeNumber(double value) { writeRaw(String::Format(_buffer, value)); }
+	virtual void writeString(const std::string& value);
+	virtual void writeBoolean(bool value) { writeRaw( value ? "true" : "false"); }
+	virtual void writeNull() { writeRaw("null"); }
+	virtual void writeBytes(const UInt8* data,UInt32 size);
 
-	void	clear();
+	virtual void clear();
+	virtual void endWrite();
 
-	bool		doNotEnd; ///< true if user don't want to close the json root table
 private:
 
 	/// \brief Add '[' for first data or ',' for next data of an array/object

@@ -89,7 +89,7 @@ extern "C" {
 #define SCRIPT_READ_UINT(DEFAULT)								(Mona::UInt32)((__results-(__args++))<=0 ? DEFAULT : (lua_isnumber(__pState,__args) ? (Mona::UInt32)lua_tonumber(__pState,__args) : DEFAULT))
 #define SCRIPT_READ_INT(DEFAULT)								(Mona::Int32)((__results-(__args++))<=0 ? DEFAULT : (lua_isnumber(__pState,__args) ? (Mona::Int32)lua_tointeger(__pState,__args) : DEFAULT))
 #define SCRIPT_READ_DOUBLE(DEFAULT)								(double)((__results-(__args++))<=0 ? DEFAULT : (lua_isnumber(__pState,__args) ? lua_tonumber(__pState,__args) : DEFAULT))
-#define SCRIPT_READ_DATA(WRITER)								Script::ReadData(__pState,WRITER,__results-__args);__args=__results;
+#define SCRIPT_READ_DATA(WRITER)								Script::ReadData(__pState,WRITER,__results-__args);__args=__results;WRITER.endWrite();
 #define SCRIPT_READ_NEXT										__args++;
 
 #define SCRIPT_END												}
