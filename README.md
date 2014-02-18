@@ -1,4 +1,0 @@
-Mona-Server
-===========
-
-In progress...

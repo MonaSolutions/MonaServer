@@ -1,0 +1,318 @@
+
+Functionnalities
+##############################
+
+.. contents:: Table of Contents
+
+Pull Data
+******************************
+
+This part describe how to write a simple pull data client/server that support Websocket, Flash and Http with RPC-type communication.The real amazing part is the 7 lines of server application which support each protocol :
+
+Server part (lua)
+==============================
+
+.. code-block:: lua
+
+  function onConnection(client,...)
+    INFO("Connection of a new client "..client.protocol)
+    function client:onMethod(data)
+      INFO("Reception Message : "..mona:toJSON(data))
+      client.writer:writeInvocation("onReception",data.." recieved")
+    end
+  end
+
+WebSocket client
+==============================
+
+.. code-block:: html
+
+  <html>
+  <head>
+      <title>Pull Websocket/JSON Client Test</title>
+      <script type="text/javascript">
+        var socket;      
+        function createWebSocket() {
+          host = "ws://" + window.location.host + "/" + window.location.pathname;
+          
+          if(window.MozWebSocket)
+            window.WebSocket=window.MozWebSocket;
+          if(!window.WebSocket) {
+            window.document.getElementById("error").value = "Your browser don't support webSocket!";
+            return false;
+          }
+          socket = new WebSocket(host);
+          socket.onopen = function() { alert('socket opened'); }
+          socket.onclose = function() { alert('socket closed'); }
+          socket.onerror = function() { alert('An error occurs'); }
+          socket.onmessage = onMessage;
+        }
+         
+        function onMessage(msg){ 
+          var response = JSON.parse(msg.data);
+          if (response[0] == "onReception") alert(response[1]);
+        }
+         
+        function sendMessage() { socket.send("message");}
+         
+        createWebSocket();
+      </script>
+  </head>
+  <body>
+    <input type="button" value="Send" onclick="sendMessage();" />
+  </body>
+  <html>
+
+Flash client
+==============================
+
+.. code-block:: as3
+
+  <?xml version="1.0" encoding="utf-8"?>
+  <mx:Application xmlns:fx="http://ns.adobe.com/mxml/2009" xmlns:mx="library://ns.adobe.com/flex/mx" layout="absolute" minWidth="955" minHeight="600">
+    <fx:Script>
+      <![CDATA[
+        import mx.controls.Alert;
+        private var _netConnection:NetConnection;
+        
+    // connect button handler
+    private function connectAndSend():void {
+          
+      // make a new NetConnection and connect
+      _netConnection = new NetConnection();
+      _netConnection.connect(address.text);
+      _netConnection.client = this;
+      // send the request
+      _netConnection.call("onMethod", null, "amf message");
+    }
+        
+    public function onReception(result:String):void { Alert.show(result); }
+      ]]>
+    </fx:Script>
+    <mx:TextInput x="10" y="10" width="400" text="rtmfp://localhost/clients/pull" id="address"/>
+    <mx:Button x="430" y="10" label="Connect and Send" click="connectAndSend()"/>
+  </mx:Application>
+
+Http client
+==============================
+
+.. code-block:: html
+
+  <html>
+  <head>
+    <title>HTTP JSON Client Test</title>
+    <script type="text/javascript">
+      function sendMessage() {
+        var xmlhttp = new XMLHttpRequest();
+        xmlhttp.open('POST', "", true);
+        
+        // Manage the response
+        xmlhttp.onreadystatechange = function () {
+          if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+            var response = JSON.parse(xmlhttp.response);
+            if (response[0] == "onReception") alert(response[1]);
+     }
+        }
+        // Send the POST request
+        xmlhttp.setRequestHeader('Content-Type', 'application/json');
+        var data = ["onMethod", "http json msg"];
+        xmlhttp.send(JSON.stringify(data));
+      }
+    </script>
+  </head>
+  <body>
+      <input type="button" value="Send" onclick="sendMessage();" />
+  </body>
+  <html>
+
+Mona support both json and xml formats, so just replace the response and request with the lines bellow to have xml http rpc sample :
+
+.. code-block:: js
+
+  // Manage the response
+  xmlhttp.onreadystatechange = function () {
+    if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+      var roolElmt = xmlhttp.responseXML.documentElement;
+      if (roolElmt.childNodes[0].textContent=="onReception")
+        alert(roolElmt.childNodes[1].textContent);
+    }
+  }
+  // Send the POST request
+  xmlhttp.setRequestHeader('Content-Type', 'text/xml');
+  xmlhttp.send("<root><__noname>onMethod</__noname><__noname>http xml msg</__noname></root>");
+
+Push Data
+******************************
+
+This chapter presents an example of push client/server in Websocket and Flash (HTTP support only long polling method). 
+Brief description : When the flash client send a message to the server, this message is sent to the websocket client and conversely message from websocket is sent to the other client.
+
+Server part
+==============================
+
+.. code-block:: lua
+
+  clientWS = nil
+  clientAMF = nil
+
+  function onConnection(client,...)
+    
+    INFO("Connection of a new client to push (protocol:"..client.protocol..")")
+    
+    if client.protocol == "WebSocket" then
+      clientWS = client
+    else
+      if client.protocol == "RTMFP" then
+        clientAMF = client
+      end
+    end
+    
+    function client:onMessage(data)
+      INFO("Reception Message : "..mona:toJSON(data))
+      
+      if client == clientAMF then
+        clientWS.writer:writeInvocation("onReception", data)
+      else
+        clientAMF.writer:writeInvocation("onReception", data)
+      end
+    end
+  end
+
+Websocket client
+==============================
+
+.. code-block:: html
+
+  <html>
+  <head>
+      <title>Push Websocket/JSON Client Test</title>
+      <script type="text/javascript">
+        var socket;      
+        function createWebSocket() {
+          host = "ws://" + window.location.host + "/" + window.location.pathname;
+          
+          if(window.MozWebSocket)
+            window.WebSocket=window.MozWebSocket;
+          if(!window.WebSocket) {
+            window.document.getElementById("error").value = "Your browser don't support webSocket!";
+            return false;
+          }
+          socket = new WebSocket(host);
+          socket.onopen = function() { alert('socket opened');}
+          socket.onclose = function() { alert('socket closed'); }
+          socket.onerror = function() { alert('socket in error'); }
+          socket.onmessage = onMessage;
+        }
+         
+        function onMessage(msg){
+          var response = JSON.parse(msg.data);
+          if (response[0] == "onReception")
+            alert(response[1] + " received");
+        }
+         
+        function sendMessage() { socket.send([["message from websocket"]]); }
+         
+        createWebSocket();
+      </script>
+  </head>
+  <body>
+    <input type="button" value="Send" onclick="sendMessage();" />
+  </body>
+  <html>
+
+Flash client
+==============================
+
+.. code-block:: as3
+
+  <?xml version="1.0" encoding="utf-8"?>
+  <mx:Application xmlns:fx="http://ns.adobe.com/mxml/2009" 
+          xmlns:mx="library://ns.adobe.com/flex/mx" layout="absolute" minWidth="955" minHeight="600" activate="connect()">
+    <fx:Script>
+      <![CDATA[
+        import mx.controls.Alert;
+        
+        private var _netConnection:NetConnection;
+        
+        // connect button handler
+        private function connect():void {
+          
+          // make a new NetConnection and connect
+          _netConnection = new NetConnection();
+          _netConnection.connect(address.text);
+          _netConnection.client = this;
+        }
+        
+        private function send():void {
+          // send the request
+          _netConnection.call("onMessage", null, "message from amf");
+        }
+        
+        public function onReception(result:String):void { Alert.show(result + " received"); }
+      ]]>
+    </fx:Script>
+    <mx:TextInput x="10" y="10" width="400" text="rtmfp://localhost/clients/push" id="address"/>
+    <mx:Button x="430" y="10" label="Send" click="send()"/>
+  </mx:Application>
+
+Read/Write Files
+******************************
+
+Communication channels
+******************************
+
+Publish live
+==============================
+
+Now we are about to create a sample of publication with a flash publisher. For the server part just create a directory “publish” in the root directory. The client could be vlc for example connected to the url http://localhost/publish/file.flv. for the publisher use the code bellow :
+
+.. code-block:: as3
+
+  <?xml version="1.0" encoding="utf-8"?>
+  <mx:Application xmlns:fx="http://ns.adobe.com/mxml/2009" 
+          xmlns:mx="library://ns.adobe.com/flex/mx" layout="absolute" minWidth="955" minHeight="600" activate="startCam()">
+    <fx:Script>
+      <![CDATA[
+        private var _cam:Camera;
+        private var _connection:NetConnection;
+        private var _outstream:NetStream;
+        
+        // init camera
+        private function startCam():void {
+          _cam = Camera.getCamera();
+          player.attachCamera(_cam);
+          player.play();
+        }
+        
+        // net status handler for the NetConnection : connect the netstream and publish
+        private function onStatus(evt:NetStatusEvent):void { 
+          
+          status.text = evt.info.code; 
+          _outstream = new NetStream(_connection);
+          _outstream.addEventListener(NetStatusEvent.NET_STATUS, onStatusOutstream);
+          _outstream.attachCamera(_cam);
+          _outstream.publish("file");
+        }
+        
+        // net status handler for the NetStream
+        private function onStatusOutstream(evt:NetStatusEvent):void { 			
+          statusOutstream.text = evt.info.code; 
+        }
+        
+        // Connect
+        private function send():void {
+          
+          _connection = new NetConnection();
+          _connection.connect(address.text);
+          _connection.addEventListener(NetStatusEvent.NET_STATUS, onStatus);
+        }
+      ]]>
+    </fx:Script>	
+    <mx:TextInput x="10" y="10" width="400" text="rtmfp://localhost/publish" id="address"/>
+    <mx:Button x="450" y="10" label="Send" click="send()"/>
+    <mx:Label x="10" y="40" text="Net Status Code: "/>
+    <mx:Text x="150" y="40" id="status" width="200"/>
+    <mx:Label x="10" y="70" text="OutStream Status Code: "/>
+    <mx:Text x="150" y="70" id="statusOutstream" width="200"/>
+    <mx:VideoDisplay x="10" y="100" width="160" height="120" id="player"/>
+  </mx:Application>

@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Functionnalities &mdash; DocTJ 1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/css/bootstrap-2.2.1.min.css" type="text/css" />
+    <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
+    <link rel="stylesheet" href="_static/css/bootstrap-responsive-2.2.1.min.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/js/bootstrap-2.2.1.min.js"></script>
+    <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
+    <link rel="top" title="DocTJ 1 documentation" href="index.html" />
+    <link rel="next" title="Mona Server’s lua API" href="api.html" />
+    <link rel="prev" title="Mona Documentation’s Guide" href="index.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head>
+  <body>
+<div class="container">
+  
+  <div id="navbar" class="navbar navbar-fixed-top">
+    <div class="navbar-inner">
+      <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+      <button class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+
+      <a class="brand" href="index.html">DocTJ</a>
+      <span class="navbar-text pull-left"><b>1</b></span>
+
+      <div class="nav-collapse">
+        <ul class="nav">
+          <li class="divider-vertical"></li>
+          
+            <li class="dropdown">
+  <a href="index.html" class="dropdown-toggle" data-toggle="dropdown">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"><ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="">Functionnalities</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">Mona Server&#8217;s lua API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="serverapp.html">Server Application</a></li>
+</ul>
+</ul>
+</li>
+            <li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"><ul>
+<li><a class="reference internal" href="#">Functionnalities</a><ul>
+<li><a class="reference internal" href="#pull-data">Pull Data</a><ul>
+<li><a class="reference internal" href="#server-part-lua">Server part (lua)</a></li>
+<li><a class="reference internal" href="#websocket-client">WebSocket client</a></li>
+<li><a class="reference internal" href="#flash-client">Flash client</a></li>
+<li><a class="reference internal" href="#http-client">Http client</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#push-data">Push Data</a><ul>
+<li><a class="reference internal" href="#server-part">Server part</a></li>
+<li><a class="reference internal" href="#id1">Websocket client</a></li>
+<li><a class="reference internal" href="#id2">Flash client</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#read-write-files">Read/Write Files</a></li>
+<li><a class="reference internal" href="#communication-channels">Communication channels</a><ul>
+<li><a class="reference internal" href="#publish-live">Publish live</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</ul>
+</li>
+          
+          
+            
+  <li><a href="index.html"
+         title="previous chapter">&laquo; Mona Documentation&#8217;s Guide</a></li>
+  <li><a href="api.html"
+         title="next chapter">Mona Server&#8217;s lua API &raquo;</a></li>
+          
+          
+            <li>
+  <a href="_sources/samples.txt"
+     rel="nofollow">Source</a></li>
+          
+        </ul>
+
+        
+          
+<form class="navbar-search pull-right" style="margin-bottom:-3px;" action="search.html" method="get">
+  <input type="text" name="q" placeholder="Search" />
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+        
+      </div>
+    </div>
+  </div>
+
+  
+  <div class="section" id="functionnalities">
+<h1><a class="toc-backref" href="#id3">Functionnalities</a><a class="headerlink" href="#functionnalities" title="Permalink to this headline">¶</a></h1>
+<div class="contents topic" id="table-of-contents">
+<p class="topic-title first">Table of Contents</p>
+<ul class="simple">
+<li><a class="reference internal" href="#functionnalities" id="id3">Functionnalities</a><ul>
+<li><a class="reference internal" href="#pull-data" id="id4">Pull Data</a><ul>
+<li><a class="reference internal" href="#server-part-lua" id="id5">Server part (lua)</a></li>
+<li><a class="reference internal" href="#websocket-client" id="id6">WebSocket client</a></li>
+<li><a class="reference internal" href="#flash-client" id="id7">Flash client</a></li>
+<li><a class="reference internal" href="#http-client" id="id8">Http client</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#push-data" id="id9">Push Data</a><ul>
+<li><a class="reference internal" href="#server-part" id="id10">Server part</a></li>
+<li><a class="reference internal" href="#id1" id="id11">Websocket client</a></li>
+<li><a class="reference internal" href="#id2" id="id12">Flash client</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#read-write-files" id="id13">Read/Write Files</a></li>
+<li><a class="reference internal" href="#communication-channels" id="id14">Communication channels</a><ul>
+<li><a class="reference internal" href="#publish-live" id="id15">Publish live</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="pull-data">
+<h2><a class="toc-backref" href="#id4">Pull Data</a><a class="headerlink" href="#pull-data" title="Permalink to this headline">¶</a></h2>
+<p>This part describe how to write a simple pull data client/server that support Websocket, Flash and Http with RPC-type communication.The real amazing part is the 7 lines of server application which support each protocol :</p>
+<div class="section" id="server-part-lua">
+<h3><a class="toc-backref" href="#id5">Server part (lua)</a><a class="headerlink" href="#server-part-lua" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-lua"><div class="highlight"><pre><span class="k">function</span> <span class="nf">onConnection</span><span class="p">(</span><span class="n">client</span><span class="p">,</span><span class="o">...</span><span class="p">)</span>
+  <span class="n">INFO</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">Connection of a new client &quot;</span><span class="o">..</span><span class="n">client</span><span class="p">.</span><span class="n">protocol</span><span class="p">)</span>
+  <span class="k">function</span> <span class="nf">client</span><span class="p">:</span><span class="n">onMethod</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+    <span class="n">INFO</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">Reception Message : &quot;</span><span class="o">..</span><span class="n">mona</span><span class="p">:</span><span class="n">toJSON</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
+    <span class="n">client</span><span class="p">.</span><span class="n">writer</span><span class="p">:</span><span class="n">writeInvocation</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">onReception&quot;</span><span class="p">,</span><span class="n">data</span><span class="o">..</span><span class="s2">&quot;</span><span class="s"> recieved&quot;</span><span class="p">)</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="websocket-client">
+<h3><a class="toc-backref" href="#id6">WebSocket client</a><a class="headerlink" href="#websocket-client" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-html"><div class="highlight"><pre><span class="nt">&lt;html&gt;</span>
+<span class="nt">&lt;head&gt;</span>
+    <span class="nt">&lt;title&gt;</span>Pull Websocket/JSON Client Test<span class="nt">&lt;/title&gt;</span>
+    <span class="nt">&lt;script </span><span class="na">type=</span><span class="s">&quot;text/javascript&quot;</span><span class="nt">&gt;</span>
+      <span class="kd">var</span> <span class="nx">socket</span><span class="p">;</span>
+      <span class="kd">function</span> <span class="nx">createWebSocket</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nx">host</span> <span class="o">=</span> <span class="s2">&quot;ws://&quot;</span> <span class="o">+</span> <span class="nb">window</span><span class="p">.</span><span class="nx">location</span><span class="p">.</span><span class="nx">host</span> <span class="o">+</span> <span class="s2">&quot;/&quot;</span> <span class="o">+</span> <span class="nb">window</span><span class="p">.</span><span class="nx">location</span><span class="p">.</span><span class="nx">pathname</span><span class="p">;</span>
+
+        <span class="k">if</span><span class="p">(</span><span class="nb">window</span><span class="p">.</span><span class="nx">MozWebSocket</span><span class="p">)</span>
+          <span class="nb">window</span><span class="p">.</span><span class="nx">WebSocket</span><span class="o">=</span><span class="nb">window</span><span class="p">.</span><span class="nx">MozWebSocket</span><span class="p">;</span>
+        <span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="nb">window</span><span class="p">.</span><span class="nx">WebSocket</span><span class="p">)</span> <span class="p">{</span>
+          <span class="nb">window</span><span class="p">.</span><span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s2">&quot;error&quot;</span><span class="p">).</span><span class="nx">value</span> <span class="o">=</span> <span class="s2">&quot;Your browser don&#39;t support webSocket!&quot;</span><span class="p">;</span>
+          <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="nx">socket</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">WebSocket</span><span class="p">(</span><span class="nx">host</span><span class="p">);</span>
+        <span class="nx">socket</span><span class="p">.</span><span class="nx">onopen</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span> <span class="nx">alert</span><span class="p">(</span><span class="s1">&#39;socket opened&#39;</span><span class="p">);</span> <span class="p">}</span>
+        <span class="nx">socket</span><span class="p">.</span><span class="nx">onclose</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span> <span class="nx">alert</span><span class="p">(</span><span class="s1">&#39;socket closed&#39;</span><span class="p">);</span> <span class="p">}</span>
+        <span class="nx">socket</span><span class="p">.</span><span class="nx">onerror</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span> <span class="nx">alert</span><span class="p">(</span><span class="s1">&#39;An error occurs&#39;</span><span class="p">);</span> <span class="p">}</span>
+        <span class="nx">socket</span><span class="p">.</span><span class="nx">onmessage</span> <span class="o">=</span> <span class="nx">onMessage</span><span class="p">;</span>
+      <span class="p">}</span>
+
+      <span class="kd">function</span> <span class="nx">onMessage</span><span class="p">(</span><span class="nx">msg</span><span class="p">){</span>
+        <span class="kd">var</span> <span class="nx">response</span> <span class="o">=</span> <span class="nx">JSON</span><span class="p">.</span><span class="nx">parse</span><span class="p">(</span><span class="nx">msg</span><span class="p">.</span><span class="nx">data</span><span class="p">);</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nx">response</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;onReception&quot;</span><span class="p">)</span> <span class="nx">alert</span><span class="p">(</span><span class="nx">response</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
+      <span class="p">}</span>
+
+      <span class="kd">function</span> <span class="nx">sendMessage</span><span class="p">()</span> <span class="p">{</span> <span class="nx">socket</span><span class="p">.</span><span class="nx">send</span><span class="p">(</span><span class="s2">&quot;message&quot;</span><span class="p">);}</span>
+
+      <span class="nx">createWebSocket</span><span class="p">();</span>
+    <span class="nt">&lt;/script&gt;</span>
+<span class="nt">&lt;/head&gt;</span>
+<span class="nt">&lt;body&gt;</span>
+  <span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">&quot;button&quot;</span> <span class="na">value=</span><span class="s">&quot;Send&quot;</span> <span class="na">onclick=</span><span class="s">&quot;sendMessage();&quot;</span> <span class="nt">/&gt;</span>
+<span class="nt">&lt;/body&gt;</span>
+<span class="nt">&lt;html&gt;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="flash-client">
+<h3><a class="toc-backref" href="#id7">Flash client</a><a class="headerlink" href="#flash-client" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-as3"><div class="highlight"><pre><span class="o">&lt;?</span><span class="n">xml</span> <span class="n">version</span><span class="o">=</span><span class="s2">&quot;1.0&quot;</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="o">?&gt;</span>
+<span class="o">&lt;</span><span class="n">mx</span><span class="o">:</span><span class="n">Application</span> <span class="n">xmlns</span><span class="o">:</span><span class="n">fx</span><span class="o">=</span><span class="s2">&quot;http://ns.adobe.com/mxml/2009&quot;</span> <span class="n">xmlns</span><span class="o">:</span><span class="n">mx</span><span class="o">=</span><span class="s2">&quot;library://ns.adobe.com/flex/mx&quot;</span> <span class="n">layout</span><span class="o">=</span><span class="s2">&quot;absolute&quot;</span> <span class="n">minWidth</span><span class="o">=</span><span class="s2">&quot;955&quot;</span> <span class="n">minHeight</span><span class="o">=</span><span class="s2">&quot;600&quot;</span><span class="o">&gt;</span>
+  <span class="o">&lt;</span><span class="n">fx</span><span class="o">:</span><span class="n">Script</span><span class="o">&gt;</span>
+    <span class="o">&lt;![</span><span class="n">CDATA</span><span class="o">[</span>
+      <span class="k">import</span> <span class="nn">mx.controls.Alert</span><span class="o">;</span>
+      <span class="kd">private</span> <span class="kd">var</span> <span class="n">_netConnection</span><span class="p">:</span><span class="kt">NetConnection</span><span class="o">;</span>
+
+  <span class="c1">// connect button handler</span>
+  <span class="kd">private</span> <span class="kd">function </span><span class="nf">connectAndSend</span><span class="o">():</span><span class="kt">void</span> <span class="o">{</span>
+
+    <span class="c1">// make a new NetConnection and connect</span>
+    <span class="n">_netConnection</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">NetConnection</span><span class="o">();</span>
+    <span class="n">_netConnection</span><span class="o">.</span><span class="na">connect</span><span class="o">(</span><span class="n">address</span><span class="o">.</span><span class="na">text</span><span class="o">);</span>
+    <span class="n">_netConnection</span><span class="o">.</span><span class="na">client</span> <span class="o">=</span> <span class="k">this</span><span class="o">;</span>
+    <span class="c1">// send the request</span>
+    <span class="n">_netConnection</span><span class="o">.</span><span class="na">call</span><span class="o">(</span><span class="s2">&quot;onMethod&quot;</span><span class="o">,</span> <span class="kc">null</span><span class="o">,</span> <span class="s2">&quot;amf message&quot;</span><span class="o">);</span>
+  <span class="o">}</span>
+
+  <span class="kd">public</span> <span class="kd">function </span><span class="nf">onReception</span><span class="o">(</span><span class="n">result</span><span class="o">:</span><span class="kt">String</span><span class="o">):</span><span class="kt">void</span> <span class="o">{</span> <span class="n">Alert</span><span class="o">.</span><span class="na">show</span><span class="o">(</span><span class="n">result</span><span class="o">);</span> <span class="o">}</span>
+    <span class="o">]]&gt;</span>
+  <span class="o">&lt;/</span><span class="n">fx</span><span class="o">:</span><span class="n">Script</span><span class="o">&gt;</span>
+  <span class="o">&lt;</span><span class="n">mx</span><span class="o">:</span><span class="n">TextInput</span> <span class="n">x</span><span class="o">=</span><span class="s2">&quot;10&quot;</span> <span class="n">y</span><span class="o">=</span><span class="s2">&quot;10&quot;</span> <span class="n">width</span><span class="o">=</span><span class="s2">&quot;400&quot;</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;rtmfp://localhost/clients/pull&quot;</span> <span class="n">id</span><span class="o">=</span><span class="s2">&quot;address&quot;</span><span class="o">/&gt;</span>
+  <span class="o">&lt;</span><span class="n">mx</span><span class="o">:</span><span class="n">Button</span> <span class="n">x</span><span class="o">=</span><span class="s2">&quot;430&quot;</span> <span class="n">y</span><span class="o">=</span><span class="s2">&quot;10&quot;</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Connect and Send&quot;</span> <span class="n">click</span><span class="o">=</span><span class="s2">&quot;connectAndSend()&quot;</span><span class="o">/&gt;</span>
+<span class="o">&lt;/</span><span class="n">mx</span><span class="o">:</span><span class="n">Application</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="http-client">
+<h3><a class="toc-backref" href="#id8">Http client</a><a class="headerlink" href="#http-client" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-html"><div class="highlight"><pre><span class="nt">&lt;html&gt;</span>
+<span class="nt">&lt;head&gt;</span>
+  <span class="nt">&lt;title&gt;</span>HTTP JSON Client Test<span class="nt">&lt;/title&gt;</span>
+  <span class="nt">&lt;script </span><span class="na">type=</span><span class="s">&quot;text/javascript&quot;</span><span class="nt">&gt;</span>
+    <span class="kd">function</span> <span class="nx">sendMessage</span><span class="p">()</span> <span class="p">{</span>
+      <span class="kd">var</span> <span class="nx">xmlhttp</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">XMLHttpRequest</span><span class="p">();</span>
+      <span class="nx">xmlhttp</span><span class="p">.</span><span class="nx">open</span><span class="p">(</span><span class="s1">&#39;POST&#39;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="kc">true</span><span class="p">);</span>
+
+      <span class="c1">// Manage the response</span>
+      <span class="nx">xmlhttp</span><span class="p">.</span><span class="nx">onreadystatechange</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nx">xmlhttp</span><span class="p">.</span><span class="nx">readyState</span> <span class="o">==</span> <span class="mi">4</span> <span class="o">&amp;&amp;</span> <span class="nx">xmlhttp</span><span class="p">.</span><span class="nx">status</span> <span class="o">==</span> <span class="mi">200</span><span class="p">)</span> <span class="p">{</span>
+          <span class="kd">var</span> <span class="nx">response</span> <span class="o">=</span> <span class="nx">JSON</span><span class="p">.</span><span class="nx">parse</span><span class="p">(</span><span class="nx">xmlhttp</span><span class="p">.</span><span class="nx">response</span><span class="p">);</span>
+          <span class="k">if</span> <span class="p">(</span><span class="nx">response</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;onReception&quot;</span><span class="p">)</span> <span class="nx">alert</span><span class="p">(</span><span class="nx">response</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
+   <span class="p">}</span>
+      <span class="p">}</span>
+      <span class="c1">// Send the POST request</span>
+      <span class="nx">xmlhttp</span><span class="p">.</span><span class="nx">setRequestHeader</span><span class="p">(</span><span class="s1">&#39;Content-Type&#39;</span><span class="p">,</span> <span class="s1">&#39;application/json&#39;</span><span class="p">);</span>
+      <span class="kd">var</span> <span class="nx">data</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;onMethod&quot;</span><span class="p">,</span> <span class="s2">&quot;http json msg&quot;</span><span class="p">];</span>
+      <span class="nx">xmlhttp</span><span class="p">.</span><span class="nx">send</span><span class="p">(</span><span class="nx">JSON</span><span class="p">.</span><span class="nx">stringify</span><span class="p">(</span><span class="nx">data</span><span class="p">));</span>
+    <span class="p">}</span>
+  <span class="nt">&lt;/script&gt;</span>
+<span class="nt">&lt;/head&gt;</span>
+<span class="nt">&lt;body&gt;</span>
+    <span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">&quot;button&quot;</span> <span class="na">value=</span><span class="s">&quot;Send&quot;</span> <span class="na">onclick=</span><span class="s">&quot;sendMessage();&quot;</span> <span class="nt">/&gt;</span>
+<span class="nt">&lt;/body&gt;</span>
+<span class="nt">&lt;html&gt;</span>
+</pre></div>
+</div>
+<p>Mona support both json and xml formats, so just replace the response and request with the lines bellow to have xml http rpc sample :</p>
+<div class="highlight-js"><div class="highlight"><pre><span class="c1">// Manage the response</span>
+<span class="nx">xmlhttp</span><span class="p">.</span><span class="nx">onreadystatechange</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
+  <span class="k">if</span> <span class="p">(</span><span class="nx">xmlhttp</span><span class="p">.</span><span class="nx">readyState</span> <span class="o">==</span> <span class="mi">4</span> <span class="o">&amp;&amp;</span> <span class="nx">xmlhttp</span><span class="p">.</span><span class="nx">status</span> <span class="o">==</span> <span class="mi">200</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">roolElmt</span> <span class="o">=</span> <span class="nx">xmlhttp</span><span class="p">.</span><span class="nx">responseXML</span><span class="p">.</span><span class="nx">documentElement</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nx">roolElmt</span><span class="p">.</span><span class="nx">childNodes</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="nx">textContent</span><span class="o">==</span><span class="s2">&quot;onReception&quot;</span><span class="p">)</span>
+      <span class="nx">alert</span><span class="p">(</span><span class="nx">roolElmt</span><span class="p">.</span><span class="nx">childNodes</span><span class="p">[</span><span class="mi">1</span><span class="p">].</span><span class="nx">textContent</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+<span class="c1">// Send the POST request</span>
+<span class="nx">xmlhttp</span><span class="p">.</span><span class="nx">setRequestHeader</span><span class="p">(</span><span class="s1">&#39;Content-Type&#39;</span><span class="p">,</span> <span class="s1">&#39;text/xml&#39;</span><span class="p">);</span>
+<span class="nx">xmlhttp</span><span class="p">.</span><span class="nx">send</span><span class="p">(</span><span class="s2">&quot;&lt;root&gt;&lt;__noname&gt;onMethod&lt;/__noname&gt;&lt;__noname&gt;http xml msg&lt;/__noname&gt;&lt;/root&gt;&quot;</span><span class="p">);</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="push-data">
+<h2><a class="toc-backref" href="#id9">Push Data</a><a class="headerlink" href="#push-data" title="Permalink to this headline">¶</a></h2>
+<p>This chapter presents an example of push client/server in Websocket and Flash (HTTP support only long polling method).
+Brief description : When the flash client send a message to the server, this message is sent to the websocket client and conversely message from websocket is sent to the other client.</p>
+<div class="section" id="server-part">
+<h3><a class="toc-backref" href="#id10">Server part</a><a class="headerlink" href="#server-part" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-lua"><div class="highlight"><pre><span class="n">clientWS</span> <span class="o">=</span> <span class="kc">nil</span>
+<span class="n">clientAMF</span> <span class="o">=</span> <span class="kc">nil</span>
+
+<span class="k">function</span> <span class="nf">onConnection</span><span class="p">(</span><span class="n">client</span><span class="p">,</span><span class="o">...</span><span class="p">)</span>
+
+  <span class="n">INFO</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">Connection of a new client to push (protocol:&quot;</span><span class="o">..</span><span class="n">client</span><span class="p">.</span><span class="n">protocol</span><span class="o">..</span><span class="s2">&quot;</span><span class="s">)&quot;</span><span class="p">)</span>
+
+  <span class="k">if</span> <span class="n">client</span><span class="p">.</span><span class="n">protocol</span> <span class="o">==</span> <span class="s2">&quot;</span><span class="s">WebSocket&quot;</span> <span class="k">then</span>
+    <span class="n">clientWS</span> <span class="o">=</span> <span class="n">client</span>
+  <span class="k">else</span>
+    <span class="k">if</span> <span class="n">client</span><span class="p">.</span><span class="n">protocol</span> <span class="o">==</span> <span class="s2">&quot;</span><span class="s">RTMFP&quot;</span> <span class="k">then</span>
+      <span class="n">clientAMF</span> <span class="o">=</span> <span class="n">client</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="k">function</span> <span class="nf">client</span><span class="p">:</span><span class="n">onMessage</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+    <span class="n">INFO</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">Reception Message : &quot;</span><span class="o">..</span><span class="n">mona</span><span class="p">:</span><span class="n">toJSON</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">client</span> <span class="o">==</span> <span class="n">clientAMF</span> <span class="k">then</span>
+      <span class="n">clientWS</span><span class="p">.</span><span class="n">writer</span><span class="p">:</span><span class="n">writeInvocation</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">onReception&quot;</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+    <span class="k">else</span>
+      <span class="n">clientAMF</span><span class="p">.</span><span class="n">writer</span><span class="p">:</span><span class="n">writeInvocation</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">onReception&quot;</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id1">
+<h3><a class="toc-backref" href="#id11">Websocket client</a><a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-html"><div class="highlight"><pre><span class="nt">&lt;html&gt;</span>
+<span class="nt">&lt;head&gt;</span>
+    <span class="nt">&lt;title&gt;</span>Push Websocket/JSON Client Test<span class="nt">&lt;/title&gt;</span>
+    <span class="nt">&lt;script </span><span class="na">type=</span><span class="s">&quot;text/javascript&quot;</span><span class="nt">&gt;</span>
+      <span class="kd">var</span> <span class="nx">socket</span><span class="p">;</span>
+      <span class="kd">function</span> <span class="nx">createWebSocket</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nx">host</span> <span class="o">=</span> <span class="s2">&quot;ws://&quot;</span> <span class="o">+</span> <span class="nb">window</span><span class="p">.</span><span class="nx">location</span><span class="p">.</span><span class="nx">host</span> <span class="o">+</span> <span class="s2">&quot;/&quot;</span> <span class="o">+</span> <span class="nb">window</span><span class="p">.</span><span class="nx">location</span><span class="p">.</span><span class="nx">pathname</span><span class="p">;</span>
+
+        <span class="k">if</span><span class="p">(</span><span class="nb">window</span><span class="p">.</span><span class="nx">MozWebSocket</span><span class="p">)</span>
+          <span class="nb">window</span><span class="p">.</span><span class="nx">WebSocket</span><span class="o">=</span><span class="nb">window</span><span class="p">.</span><span class="nx">MozWebSocket</span><span class="p">;</span>
+        <span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="nb">window</span><span class="p">.</span><span class="nx">WebSocket</span><span class="p">)</span> <span class="p">{</span>
+          <span class="nb">window</span><span class="p">.</span><span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s2">&quot;error&quot;</span><span class="p">).</span><span class="nx">value</span> <span class="o">=</span> <span class="s2">&quot;Your browser don&#39;t support webSocket!&quot;</span><span class="p">;</span>
+          <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="nx">socket</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">WebSocket</span><span class="p">(</span><span class="nx">host</span><span class="p">);</span>
+        <span class="nx">socket</span><span class="p">.</span><span class="nx">onopen</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span> <span class="nx">alert</span><span class="p">(</span><span class="s1">&#39;socket opened&#39;</span><span class="p">);}</span>
+        <span class="nx">socket</span><span class="p">.</span><span class="nx">onclose</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span> <span class="nx">alert</span><span class="p">(</span><span class="s1">&#39;socket closed&#39;</span><span class="p">);</span> <span class="p">}</span>
+        <span class="nx">socket</span><span class="p">.</span><span class="nx">onerror</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span> <span class="nx">alert</span><span class="p">(</span><span class="s1">&#39;socket in error&#39;</span><span class="p">);</span> <span class="p">}</span>
+        <span class="nx">socket</span><span class="p">.</span><span class="nx">onmessage</span> <span class="o">=</span> <span class="nx">onMessage</span><span class="p">;</span>
+      <span class="p">}</span>
+
+      <span class="kd">function</span> <span class="nx">onMessage</span><span class="p">(</span><span class="nx">msg</span><span class="p">){</span>
+        <span class="kd">var</span> <span class="nx">response</span> <span class="o">=</span> <span class="nx">JSON</span><span class="p">.</span><span class="nx">parse</span><span class="p">(</span><span class="nx">msg</span><span class="p">.</span><span class="nx">data</span><span class="p">);</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nx">response</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;onReception&quot;</span><span class="p">)</span>
+          <span class="nx">alert</span><span class="p">(</span><span class="nx">response</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot; received&quot;</span><span class="p">);</span>
+      <span class="p">}</span>
+
+      <span class="kd">function</span> <span class="nx">sendMessage</span><span class="p">()</span> <span class="p">{</span> <span class="nx">socket</span><span class="p">.</span><span class="nx">send</span><span class="p">([[</span><span class="s2">&quot;message from websocket&quot;</span><span class="p">]]);</span> <span class="p">}</span>
+
+      <span class="nx">createWebSocket</span><span class="p">();</span>
+    <span class="nt">&lt;/script&gt;</span>
+<span class="nt">&lt;/head&gt;</span>
+<span class="nt">&lt;body&gt;</span>
+  <span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">&quot;button&quot;</span> <span class="na">value=</span><span class="s">&quot;Send&quot;</span> <span class="na">onclick=</span><span class="s">&quot;sendMessage();&quot;</span> <span class="nt">/&gt;</span>
+<span class="nt">&lt;/body&gt;</span>
+<span class="nt">&lt;html&gt;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id2">
+<h3><a class="toc-backref" href="#id12">Flash client</a><a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-as3"><div class="highlight"><pre><span class="o">&lt;?</span><span class="n">xml</span> <span class="n">version</span><span class="o">=</span><span class="s2">&quot;1.0&quot;</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="o">?&gt;</span>
+<span class="o">&lt;</span><span class="n">mx</span><span class="o">:</span><span class="n">Application</span> <span class="n">xmlns</span><span class="o">:</span><span class="n">fx</span><span class="o">=</span><span class="s2">&quot;http://ns.adobe.com/mxml/2009&quot;</span>
+        <span class="n">xmlns</span><span class="o">:</span><span class="n">mx</span><span class="o">=</span><span class="s2">&quot;library://ns.adobe.com/flex/mx&quot;</span> <span class="n">layout</span><span class="o">=</span><span class="s2">&quot;absolute&quot;</span> <span class="n">minWidth</span><span class="o">=</span><span class="s2">&quot;955&quot;</span> <span class="n">minHeight</span><span class="o">=</span><span class="s2">&quot;600&quot;</span> <span class="n">activate</span><span class="o">=</span><span class="s2">&quot;connect()&quot;</span><span class="o">&gt;</span>
+  <span class="o">&lt;</span><span class="n">fx</span><span class="o">:</span><span class="n">Script</span><span class="o">&gt;</span>
+    <span class="o">&lt;![</span><span class="n">CDATA</span><span class="o">[</span>
+      <span class="k">import</span> <span class="nn">mx.controls.Alert</span><span class="o">;</span>
+
+      <span class="kd">private</span> <span class="kd">var</span> <span class="n">_netConnection</span><span class="p">:</span><span class="kt">NetConnection</span><span class="o">;</span>
+
+      <span class="c1">// connect button handler</span>
+      <span class="kd">private</span> <span class="kd">function </span><span class="nf">connect</span><span class="o">():</span><span class="kt">void</span> <span class="o">{</span>
+
+        <span class="c1">// make a new NetConnection and connect</span>
+        <span class="n">_netConnection</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">NetConnection</span><span class="o">();</span>
+        <span class="n">_netConnection</span><span class="o">.</span><span class="na">connect</span><span class="o">(</span><span class="n">address</span><span class="o">.</span><span class="na">text</span><span class="o">);</span>
+        <span class="n">_netConnection</span><span class="o">.</span><span class="na">client</span> <span class="o">=</span> <span class="k">this</span><span class="o">;</span>
+      <span class="o">}</span>
+
+      <span class="kd">private</span> <span class="kd">function </span><span class="nf">send</span><span class="o">():</span><span class="kt">void</span> <span class="o">{</span>
+        <span class="c1">// send the request</span>
+        <span class="n">_netConnection</span><span class="o">.</span><span class="na">call</span><span class="o">(</span><span class="s2">&quot;onMessage&quot;</span><span class="o">,</span> <span class="kc">null</span><span class="o">,</span> <span class="s2">&quot;message from amf&quot;</span><span class="o">);</span>
+      <span class="o">}</span>
+
+      <span class="kd">public</span> <span class="kd">function </span><span class="nf">onReception</span><span class="o">(</span><span class="n">result</span><span class="o">:</span><span class="kt">String</span><span class="o">):</span><span class="kt">void</span> <span class="o">{</span> <span class="n">Alert</span><span class="o">.</span><span class="na">show</span><span class="o">(</span><span class="n">result</span> <span class="o">+</span> <span class="s2">&quot; received&quot;</span><span class="o">);</span> <span class="o">}</span>
+    <span class="o">]]&gt;</span>
+  <span class="o">&lt;/</span><span class="n">fx</span><span class="o">:</span><span class="n">Script</span><span class="o">&gt;</span>
+  <span class="o">&lt;</span><span class="n">mx</span><span class="o">:</span><span class="n">TextInput</span> <span class="n">x</span><span class="o">=</span><span class="s2">&quot;10&quot;</span> <span class="n">y</span><span class="o">=</span><span class="s2">&quot;10&quot;</span> <span class="n">width</span><span class="o">=</span><span class="s2">&quot;400&quot;</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;rtmfp://localhost/clients/push&quot;</span> <span class="n">id</span><span class="o">=</span><span class="s2">&quot;address&quot;</span><span class="o">/&gt;</span>
+  <span class="o">&lt;</span><span class="n">mx</span><span class="o">:</span><span class="n">Button</span> <span class="n">x</span><span class="o">=</span><span class="s2">&quot;430&quot;</span> <span class="n">y</span><span class="o">=</span><span class="s2">&quot;10&quot;</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Send&quot;</span> <span class="n">click</span><span class="o">=</span><span class="s2">&quot;send()&quot;</span><span class="o">/&gt;</span>
+<span class="o">&lt;/</span><span class="n">mx</span><span class="o">:</span><span class="n">Application</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="read-write-files">
+<h2><a class="toc-backref" href="#id13">Read/Write Files</a><a class="headerlink" href="#read-write-files" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="communication-channels">
+<h2><a class="toc-backref" href="#id14">Communication channels</a><a class="headerlink" href="#communication-channels" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="publish-live">
+<h3><a class="toc-backref" href="#id15">Publish live</a><a class="headerlink" href="#publish-live" title="Permalink to this headline">¶</a></h3>
+<p>Now we are about to create a sample of publication with a flash publisher. For the server part just create a directory “publish” in the root directory. The client could be vlc for example connected to the url <a class="reference external" href="http://localhost/publish/file.flv">http://localhost/publish/file.flv</a>. for the publisher use the code bellow :</p>
+<div class="highlight-as3"><div class="highlight"><pre><span class="o">&lt;?</span><span class="n">xml</span> <span class="n">version</span><span class="o">=</span><span class="s2">&quot;1.0&quot;</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="o">?&gt;</span>
+<span class="o">&lt;</span><span class="n">mx</span><span class="o">:</span><span class="n">Application</span> <span class="n">xmlns</span><span class="o">:</span><span class="n">fx</span><span class="o">=</span><span class="s2">&quot;http://ns.adobe.com/mxml/2009&quot;</span>
+        <span class="n">xmlns</span><span class="o">:</span><span class="n">mx</span><span class="o">=</span><span class="s2">&quot;library://ns.adobe.com/flex/mx&quot;</span> <span class="n">layout</span><span class="o">=</span><span class="s2">&quot;absolute&quot;</span> <span class="n">minWidth</span><span class="o">=</span><span class="s2">&quot;955&quot;</span> <span class="n">minHeight</span><span class="o">=</span><span class="s2">&quot;600&quot;</span> <span class="n">activate</span><span class="o">=</span><span class="s2">&quot;startCam()&quot;</span><span class="o">&gt;</span>
+  <span class="o">&lt;</span><span class="n">fx</span><span class="o">:</span><span class="n">Script</span><span class="o">&gt;</span>
+    <span class="o">&lt;![</span><span class="n">CDATA</span><span class="o">[</span>
+      <span class="kd">private</span> <span class="kd">var</span> <span class="n">_cam</span><span class="p">:</span><span class="kt">Camera</span><span class="o">;</span>
+      <span class="kd">private</span> <span class="kd">var</span> <span class="n">_connection</span><span class="p">:</span><span class="kt">NetConnection</span><span class="o">;</span>
+      <span class="kd">private</span> <span class="kd">var</span> <span class="n">_outstream</span><span class="p">:</span><span class="kt">NetStream</span><span class="o">;</span>
+
+      <span class="c1">// init camera</span>
+      <span class="kd">private</span> <span class="kd">function </span><span class="nf">startCam</span><span class="o">():</span><span class="kt">void</span> <span class="o">{</span>
+        <span class="n">_cam</span> <span class="o">=</span> <span class="n">Camera</span><span class="o">.</span><span class="na">getCamera</span><span class="o">();</span>
+        <span class="n">player</span><span class="o">.</span><span class="na">attachCamera</span><span class="o">(</span><span class="n">_cam</span><span class="o">);</span>
+        <span class="n">player</span><span class="o">.</span><span class="na">play</span><span class="o">();</span>
+      <span class="o">}</span>
+
+      <span class="c1">// net status handler for the NetConnection : connect the netstream and publish</span>
+      <span class="kd">private</span> <span class="kd">function </span><span class="nf">onStatus</span><span class="o">(</span><span class="n">evt</span><span class="o">:</span><span class="kt">NetStatusEvent</span><span class="o">):</span><span class="kt">void</span> <span class="o">{</span>
+
+        <span class="n">status</span><span class="o">.</span><span class="na">text</span> <span class="o">=</span> <span class="n">evt</span><span class="o">.</span><span class="na">info</span><span class="o">.</span><span class="na">code</span><span class="o">;</span>
+        <span class="n">_outstream</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">NetStream</span><span class="o">(</span><span class="n">_connection</span><span class="o">);</span>
+        <span class="n">_outstream</span><span class="o">.</span><span class="na">addEventListener</span><span class="o">(</span><span class="n">NetStatusEvent</span><span class="o">.</span><span class="na">NET_STATUS</span><span class="o">,</span> <span class="n">onStatusOutstream</span><span class="o">);</span>
+        <span class="n">_outstream</span><span class="o">.</span><span class="na">attachCamera</span><span class="o">(</span><span class="n">_cam</span><span class="o">);</span>
+        <span class="n">_outstream</span><span class="o">.</span><span class="na">publish</span><span class="o">(</span><span class="s2">&quot;file&quot;</span><span class="o">);</span>
+      <span class="o">}</span>
+
+      <span class="c1">// net status handler for the NetStream</span>
+      <span class="kd">private</span> <span class="kd">function </span><span class="nf">onStatusOutstream</span><span class="o">(</span><span class="n">evt</span><span class="o">:</span><span class="kt">NetStatusEvent</span><span class="o">):</span><span class="kt">void</span> <span class="o">{</span>
+        <span class="n">statusOutstream</span><span class="o">.</span><span class="na">text</span> <span class="o">=</span> <span class="n">evt</span><span class="o">.</span><span class="na">info</span><span class="o">.</span><span class="na">code</span><span class="o">;</span>
+      <span class="o">}</span>
+
+      <span class="c1">// Connect</span>
+      <span class="kd">private</span> <span class="kd">function </span><span class="nf">send</span><span class="o">():</span><span class="kt">void</span> <span class="o">{</span>
+
+        <span class="n">_connection</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">NetConnection</span><span class="o">();</span>
+        <span class="n">_connection</span><span class="o">.</span><span class="na">connect</span><span class="o">(</span><span class="n">address</span><span class="o">.</span><span class="na">text</span><span class="o">);</span>
+        <span class="n">_connection</span><span class="o">.</span><span class="na">addEventListener</span><span class="o">(</span><span class="n">NetStatusEvent</span><span class="o">.</span><span class="na">NET_STATUS</span><span class="o">,</span> <span class="n">onStatus</span><span class="o">);</span>
+      <span class="o">}</span>
+    <span class="o">]]&gt;</span>
+  <span class="o">&lt;/</span><span class="n">fx</span><span class="o">:</span><span class="n">Script</span><span class="o">&gt;</span>
+  <span class="o">&lt;</span><span class="n">mx</span><span class="o">:</span><span class="n">TextInput</span> <span class="n">x</span><span class="o">=</span><span class="s2">&quot;10&quot;</span> <span class="n">y</span><span class="o">=</span><span class="s2">&quot;10&quot;</span> <span class="n">width</span><span class="o">=</span><span class="s2">&quot;400&quot;</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;rtmfp://localhost/publish&quot;</span> <span class="n">id</span><span class="o">=</span><span class="s2">&quot;address&quot;</span><span class="o">/&gt;</span>
+  <span class="o">&lt;</span><span class="n">mx</span><span class="o">:</span><span class="n">Button</span> <span class="n">x</span><span class="o">=</span><span class="s2">&quot;450&quot;</span> <span class="n">y</span><span class="o">=</span><span class="s2">&quot;10&quot;</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Send&quot;</span> <span class="n">click</span><span class="o">=</span><span class="s2">&quot;send()&quot;</span><span class="o">/&gt;</span>
+  <span class="o">&lt;</span><span class="n">mx</span><span class="o">:</span><span class="n">Label</span> <span class="n">x</span><span class="o">=</span><span class="s2">&quot;10&quot;</span> <span class="n">y</span><span class="o">=</span><span class="s2">&quot;40&quot;</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;Net Status Code: &quot;</span><span class="o">/&gt;</span>
+  <span class="o">&lt;</span><span class="n">mx</span><span class="o">:</span><span class="n">Text</span> <span class="n">x</span><span class="o">=</span><span class="s2">&quot;150&quot;</span> <span class="n">y</span><span class="o">=</span><span class="s2">&quot;40&quot;</span> <span class="n">id</span><span class="o">=</span><span class="s2">&quot;status&quot;</span> <span class="n">width</span><span class="o">=</span><span class="s2">&quot;200&quot;</span><span class="o">/&gt;</span>
+  <span class="o">&lt;</span><span class="n">mx</span><span class="o">:</span><span class="n">Label</span> <span class="n">x</span><span class="o">=</span><span class="s2">&quot;10&quot;</span> <span class="n">y</span><span class="o">=</span><span class="s2">&quot;70&quot;</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;OutStream Status Code: &quot;</span><span class="o">/&gt;</span>
+  <span class="o">&lt;</span><span class="n">mx</span><span class="o">:</span><span class="n">Text</span> <span class="n">x</span><span class="o">=</span><span class="s2">&quot;150&quot;</span> <span class="n">y</span><span class="o">=</span><span class="s2">&quot;70&quot;</span> <span class="n">id</span><span class="o">=</span><span class="s2">&quot;statusOutstream&quot;</span> <span class="n">width</span><span class="o">=</span><span class="s2">&quot;200&quot;</span><span class="o">/&gt;</span>
+  <span class="o">&lt;</span><span class="n">mx</span><span class="o">:</span><span class="n">VideoDisplay</span> <span class="n">x</span><span class="o">=</span><span class="s2">&quot;10&quot;</span> <span class="n">y</span><span class="o">=</span><span class="s2">&quot;100&quot;</span> <span class="n">width</span><span class="o">=</span><span class="s2">&quot;160&quot;</span> <span class="n">height</span><span class="o">=</span><span class="s2">&quot;120&quot;</span> <span class="n">id</span><span class="o">=</span><span class="s2">&quot;player&quot;</span><span class="o">/&gt;</span>
+<span class="o">&lt;/</span><span class="n">mx</span><span class="o">:</span><span class="n">Application</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+
+
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2013, TJ.<br/>
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b2.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

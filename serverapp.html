@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Server Application &mdash; DocTJ 1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/css/bootstrap-2.2.1.min.css" type="text/css" />
+    <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
+    <link rel="stylesheet" href="_static/css/bootstrap-responsive-2.2.1.min.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/js/bootstrap-2.2.1.min.js"></script>
+    <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
+    <link rel="top" title="DocTJ 1 documentation" href="index.html" />
+    <link rel="prev" title="Mona Server’s lua API" href="api.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head>
+  <body>
+<div class="container">
+  
+  <div id="navbar" class="navbar navbar-fixed-top">
+    <div class="navbar-inner">
+      <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+      <button class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+
+      <a class="brand" href="index.html">DocTJ</a>
+      <span class="navbar-text pull-left"><b>1</b></span>
+
+      <div class="nav-collapse">
+        <ul class="nav">
+          <li class="divider-vertical"></li>
+          
+            <li class="dropdown">
+  <a href="index.html" class="dropdown-toggle" data-toggle="dropdown">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"><ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="samples.html">Functionnalities</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">Mona Server&#8217;s lua API</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">Server Application</a></li>
+</ul>
+</ul>
+</li>
+            <li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"><ul>
+<li><a class="reference internal" href="#">Server Application</a><ul>
+<li><a class="reference internal" href="#create-a-server-application">Create a server application</a></li>
+<li><a class="reference internal" href="#global-configurations">Global configurations</a></li>
+<li><a class="reference internal" href="#communication-between-server-applications">Communication between server applications</a><ul>
+<li><a class="reference internal" href="#application-inheritance">Application inheritance</a></li>
+<li><a class="reference internal" href="#exchange-between-unrelated-server-applications">Exchange between unrelated server applications</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#communication-between-server-and-client">Communication between server and client</a><ul>
+<li><a class="reference internal" href="#pull-data-remote-call-procedure">Pull data, Remote Call Procedure</a></li>
+<li><a class="reference internal" href="#push-data">Push data</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#amf-and-lua-types-conversion">AMF and LUA types conversion</a><ul>
+<li><a class="reference internal" href="#complex-types">Complex types</a></li>
+<li><a class="reference internal" href="#custom-types">Custom types</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#lua-extensions-and-files-inclusion">LUA extensions and files inclusion</a></li>
+<li><a class="reference internal" href="#logs">LOGS</a></li>
+<li><a class="reference internal" href="#api">API</a></li>
+</ul>
+</li>
+</ul>
+</ul>
+</li>
+          
+          
+            
+  <li><a href="api.html"
+         title="previous chapter">&laquo; Mona Server&#8217;s lua API</a></li>
+          
+          
+            <li>
+  <a href="_sources/serverapp.txt"
+     rel="nofollow">Source</a></li>
+          
+        </ul>
+
+        
+          
+<form class="navbar-search pull-right" style="margin-bottom:-3px;" action="search.html" method="get">
+  <input type="text" name="q" placeholder="Search" />
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+        
+      </div>
+    </div>
+  </div>
+
+  
+  <div class="section" id="server-application">
+<h1><a class="toc-backref" href="#id1">Server Application</a><a class="headerlink" href="#server-application" title="Permalink to this headline">¶</a></h1>
+<p>CumulusServer includes a powerfull script-engine (using <a class="reference external" href="http://www.lua.org/">LUA</a> langage) to create your own server applications. It allows to extend Cumulus behavior to add your specific needs in a flexible scripting-way.</p>
+<div class="contents topic" id="table-of-contents">
+<p class="topic-title first">Table of Contents</p>
+<ul class="simple">
+<li><a class="reference internal" href="#server-application" id="id1">Server Application</a><ul>
+<li><a class="reference internal" href="#create-a-server-application" id="id2">Create a server application</a></li>
+<li><a class="reference internal" href="#global-configurations" id="id3">Global configurations</a></li>
+<li><a class="reference internal" href="#communication-between-server-applications" id="id4">Communication between server applications</a><ul>
+<li><a class="reference internal" href="#application-inheritance" id="id5">Application inheritance</a></li>
+<li><a class="reference internal" href="#exchange-between-unrelated-server-applications" id="id6">Exchange between unrelated server applications</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#communication-between-server-and-client" id="id7">Communication between server and client</a><ul>
+<li><a class="reference internal" href="#pull-data-remote-call-procedure" id="id8">Pull data, Remote Call Procedure</a></li>
+<li><a class="reference internal" href="#push-data" id="id9">Push data</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#amf-and-lua-types-conversion" id="id10">AMF and LUA types conversion</a><ul>
+<li><a class="reference internal" href="#complex-types" id="id11">Complex types</a></li>
+<li><a class="reference internal" href="#custom-types" id="id12">Custom types</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#lua-extensions-and-files-inclusion" id="id13">LUA extensions and files inclusion</a></li>
+<li><a class="reference internal" href="#logs" id="id14">LOGS</a></li>
+<li><a class="reference internal" href="#api" id="id15">API</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="create-a-server-application">
+<h2><a class="toc-backref" href="#id2">Create a server application</a><a class="headerlink" href="#create-a-server-application" title="Permalink to this headline">¶</a></h2>
+<p>On start, Cumulus creates a <em>www</em> folder in its root directory if it doesn&#8217;t exist already. In this space, you can create subfolders, each one of them describes one server application. When a client connects to CumulusServer, the URL path relates the application to use.
+For example, the address <em>rtmfp://host:port/myApplication</em> search its corresponding application in <em>CumulusServer/www/myApplication</em> folder. First time CumulusServer builds and executes the file <em>main.lua</em> presents in this folder. Then, on new comer, the application already built is executed, unless <em>main.lua</em> file has been modified since the last time. Indeed when you edit <em>main.lua</em> file, the corresponding application is rebuilt in a dynamic way, without having to restart the server.</p>
+<div class="highlight-text"><div class="highlight"><pre>rtmfp://host:port/                   -&gt;     CumulusServer/www/main.lua (root application)
+rtmfp://host:port/myApplication      -&gt;     CumulusServer/www/myApplication/main.lua
+rtmfp://host:port/Games/myGame       -&gt;     CumulusServer/www/Games/myGame/main.lua
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">The root application is built and started on CumulusServer start, whereas other server applications are started on first client connection.</p>
+</div>
+<p>Each application is identified by its <em>path</em>, which is exactly the <em>path</em> part of the RTMFP URL connection. In the example above, <em>root application</em> has an empty string for path, then the both others have respectively <em>/myApplication</em> and <em>/Games/myGame</em> for <em>path</em> values.</p>
+<p>Here a very simple first server application:</p>
+<div class="highlight-lua"><div class="highlight"><pre><span class="k">function</span> <span class="nf">onStart</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">Server application &#39;&quot;</span><span class="o">..</span><span class="n">path</span><span class="o">..</span><span class="s2">&quot;</span><span class="s">&#39; started&quot;</span><span class="p">)</span>
+<span class="k">end</span>
+<span class="k">function</span> <span class="nf">onStop</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">Server application &#39;&quot;</span><span class="o">..</span><span class="n">path</span><span class="o">..</span><span class="s2">&quot;</span><span class="s">&#39; stopped&quot;</span><span class="p">)</span>
+<span class="k">end</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="global-configurations">
+<h2><a class="toc-backref" href="#id3">Global configurations</a><a class="headerlink" href="#global-configurations" title="Permalink to this headline">¶</a></h2>
+<p><em>CumulusServer.ini</em> file allows to give some global configuration values on CumulusServer start-up (see [[Installation]] page). To access for these values from script, use <em>cumulus.configs</em> property (see <em>cumulus</em> object description in [[Server Application, API]] page to get more details). This system allows to create your own global configuration values and access for them in scripts.</p>
+<div class="highlight-ini"><div class="highlight"><pre><span class="c1">; CumulusServer.ini file</span>
+<span class="na">port</span><span class="o">=</span><span class="s">19350 ; existing config</span>
+<span class="c1">; New custom config</span>
+<span class="k">[myGroup]</span>
+<span class="na">myConfig</span><span class="o">=</span><span class="s">test</span>
+</pre></div>
+</div>
+<div class="highlight-lua"><div class="highlight"><pre><span class="c1">-- A script file</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">cumulus</span><span class="p">.</span><span class="n">configs</span><span class="p">.</span><span class="n">port</span><span class="p">)</span> <span class="c1">-- displays &quot;19350&quot;</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">cumulus</span><span class="p">.</span><span class="n">configs</span><span class="p">.</span><span class="n">myGroup</span><span class="p">.</span><span class="n">myConfig</span><span class="p">)</span> <span class="c1">-- displays &quot;test&quot;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="communication-between-server-applications">
+<h2><a class="toc-backref" href="#id4">Communication between server applications</a><a class="headerlink" href="#communication-between-server-applications" title="Permalink to this headline">¶</a></h2>
+<p>One application can access (read or write) to a variable of one other application, and can call one function of one other application. But it goes much further than that, applications can be specialized, and inherit them, exactly like inheritance of classes.</p>
+<div class="section" id="application-inheritance">
+<h3><a class="toc-backref" href="#id5">Application inheritance</a><a class="headerlink" href="#application-inheritance" title="Permalink to this headline">¶</a></h3>
+<p>Principle is simple, for example the <em>/Games/myGame</em> application extends the <em>/Games</em> application, and so all functions and variables available in <em>/Games/main.lua</em> are available in <em>/Games/myGame/main.lua</em>.</p>
+<div class="highlight-lua"><div class="highlight"><pre><span class="c1">-- /Games script application</span>
+<span class="n">test</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="s">I am Games&quot;</span>
+</pre></div>
+</div>
+<div class="highlight-lua"><div class="highlight"><pre><span class="c1">-- /Games/myGame script application</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">test</span><span class="p">)</span> <span class="c1">-- displays &quot;I am Games&quot;</span>
+</pre></div>
+</div>
+<p>You can overload an inherited variable or an inherited function, and even dynamically remove the overload if need in putting value to nil.</p>
+<div class="highlight-lua"><div class="highlight"><pre><span class="c1">-- /Games/myGame script application</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">test</span><span class="p">)</span>          <span class="c1">-- displays &quot;I am Games&quot;</span>
+<span class="n">test</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="s">I am myGame&quot;</span> <span class="c1">-- overloads test variable</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">test</span><span class="p">)</span>          <span class="c1">-- displays &quot;I am myGame&quot;</span>
+<span class="n">test</span> <span class="o">=</span> <span class="kc">nil</span>           <span class="c1">-- remove overloading test variable</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">test</span><span class="p">)</span>          <span class="c1">-- displays &quot;I am Games&quot;</span>
+</pre></div>
+</div>
+<p>On variable overloading (or function overloading), you can always access for the parent version in prefixing with the parent application name.</p>
+<div class="highlight-lua"><div class="highlight"><pre><span class="c1">-- /Games/myGame script application</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">test</span><span class="p">)</span>          <span class="c1">-- displays &quot;I am Games&quot;</span>
+<span class="n">test</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="s">I am myGame&quot;</span> <span class="c1">-- overloads test variable</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">test</span><span class="p">)</span>          <span class="c1">-- displays &quot;I am myGame&quot;</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">Games</span><span class="p">.</span><span class="n">test</span><span class="p">)</span>    <span class="c1">-- displays &quot;I am Games&quot;</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">The root server application has for path an empty string, and is reached by the name <em>www</em>.</p>
+</div>
+<div class="highlight-lua"><div class="highlight"><pre><span class="c1">-- &#39;/&#39; script application (the root server application)</span>
+<span class="k">function</span> <span class="nf">hello</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">I am the root application&quot;</span><span class="p">)</span>
+<span class="k">end</span>
+</pre></div>
+</div>
+<div class="highlight-lua"><div class="highlight"><pre><span class="c1">-- /Games script application</span>
+<span class="k">function</span> <span class="nf">hello</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">I am /Games application&quot;</span><span class="p">)</span>
+<span class="k">end</span>
+<span class="n">hello</span><span class="p">()</span> <span class="c1">-- displays &quot;I am /Games application&quot;</span>
+<span class="n">www</span><span class="p">:</span><span class="n">hello</span><span class="p">()</span> <span class="c1">-- displays &quot;I am the root application&quot;</span>
+</pre></div>
+</div>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">Events are functions called by the system (see <em>Events</em> part of [[Server Application, API]] page), if an application don&#8217;t definites <em>onConnection</em> event for example, on new client connection for this application, it&#8217;s the parent application which will receive the event. To avoid it, you have to overload the event in child application, and you can call also the parent version if need.</p>
+</div>
+<div class="highlight-lua"><div class="highlight"><pre><span class="c1">-- /Games script application</span>
+<span class="k">function</span> <span class="nf">onConnection</span><span class="p">(</span><span class="n">client</span><span class="p">,</span><span class="o">...</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">www</span><span class="p">:</span><span class="n">onConnection</span><span class="p">(</span><span class="n">client</span><span class="p">,</span><span class="o">...</span><span class="p">)</span>
+<span class="k">end</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">The keyword <em>super</em> is supported to refer to the the father application:</p>
+</div>
+<div class="highlight-lua"><div class="highlight"><pre><span class="c1">-- /Games script application</span>
+<span class="k">function</span> <span class="nf">onConnection</span><span class="p">(</span><span class="n">client</span><span class="p">,</span><span class="o">...</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">super</span><span class="p">:</span><span class="n">onConnection</span><span class="p">(</span><span class="n">client</span><span class="p">,</span><span class="o">...</span><span class="p">)</span>
+<span class="k">end</span>
+</pre></div>
+</div>
+<p>You can use <em>client.path</em> property to check if it&#8217;s a client connected for this application or for one child application (see [[Server Application, API]] page for more details on <em>client</em> object description).</p>
+</div>
+<div class="section" id="exchange-between-unrelated-server-applications">
+<h3><a class="toc-backref" href="#id6">Exchange between unrelated server applications</a><a class="headerlink" href="#exchange-between-unrelated-server-applications" title="Permalink to this headline">¶</a></h3>
+<p>In class inheritance, parent class has no knowledge of its children. However, here a parent server application can access for an child variable or function in checking before its existence.
+For example if <em>/Games</em> application would like to call a <em>load</em> function in <em>/Games/myGame</em> application, it have to check <em>myGame</em> existence, if <em>myGame</em> returns nil, it means that <em>myGame</em> doesn&#8217;t exist or is not yet started.</p>
+<div class="highlight-lua"><div class="highlight"><pre><span class="c1">-- /Games script application</span>
+<span class="k">if</span> <span class="n">myGame</span> <span class="k">then</span> <span class="n">myGame</span><span class="p">:</span><span class="nb">load</span><span class="p">()</span> <span class="k">end</span>
+</pre></div>
+</div>
+<div class="highlight-lua"><div class="highlight"><pre><span class="c1">-- /Games/myGame script application</span>
+<span class="k">function</span> <span class="nf">load</span><span class="p">()</span> <span class="k">end</span>
+        <span class="o">...</span>
+<span class="k">end</span>
+</pre></div>
+</div>
+<p>By the same way, any applications can do the same thing with any other applications, even without hierarchical relationship.</p>
+<div class="highlight-lua"><div class="highlight"><pre><span class="c1">-- /myApplication script application</span>
+<span class="k">if</span> <span class="n">Games</span> <span class="k">then</span>
+        <span class="k">if</span> <span class="n">Games</span><span class="p">.</span><span class="n">myGame</span> <span class="k">then</span> <span class="n">Games</span><span class="p">.</span><span class="n">myGame</span><span class="p">:</span><span class="nb">load</span><span class="p">()</span> <span class="k">end</span>
+<span class="k">end</span>
+</pre></div>
+</div>
+<div class="highlight-lua"><div class="highlight"><pre><span class="c1">-- /Games/myGame script application</span>
+<span class="k">function</span> <span class="nf">load</span><span class="p">()</span> <span class="k">end</span>
+        <span class="o">...</span>
+<span class="k">end</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="communication-between-server-and-client">
+<h2><a class="toc-backref" href="#id7">Communication between server and client</a><a class="headerlink" href="#communication-between-server-and-client" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="pull-data-remote-call-procedure">
+<h3><a class="toc-backref" href="#id8">Pull data, Remote Call Procedure</a><a class="headerlink" href="#pull-data-remote-call-procedure" title="Permalink to this headline">¶</a></h3>
+<p>You have to define your RPC functions as a member of <em>client</em> object gotten on connection, its signature will be exactly same on client and server side. It can take multiple parameters, and it can return one result.</p>
+<div class="highlight-lua"><div class="highlight"><pre><span class="k">function</span> <span class="nf">onConnection</span><span class="p">(</span><span class="n">client</span><span class="p">,</span><span class="o">...</span><span class="p">)</span>
+        <span class="k">function</span> <span class="nf">client</span><span class="p">:</span><span class="n">test</span><span class="p">(</span><span class="n">name</span><span class="p">,</span><span class="n">firstname</span><span class="p">)</span>
+                <span class="k">return</span> <span class="s2">&quot;</span><span class="s">Hello &quot;</span><span class="o">..</span><span class="n">firstname</span><span class="o">..</span><span class="s2">&quot;</span><span class="s"> &quot;</span><span class="o">..</span><span class="n">name</span>
+        <span class="k">end</span>
+<span class="k">end</span>
+</pre></div>
+</div>
+<div class="highlight-as3"><div class="highlight"><pre><span class="n">_netConnection</span><span class="o">.</span><span class="na">client</span> <span class="o">=</span> <span class="k">this</span>
+<span class="n">_netConnection</span><span class="o">.</span><span class="na">call</span><span class="o">(</span><span class="s2">&quot;test&quot;</span><span class="o">,</span><span class="k">new</span> <span class="kt">Responder</span><span class="o">(</span><span class="n">onResult</span><span class="o">,</span><span class="n">onStatus</span><span class="o">),</span><span class="s2">&quot;Client&quot;</span><span class="o">,</span><span class="s2">&quot;Test&quot;</span><span class="o">)</span>
+
+<span class="kd">function </span><span class="nf">close</span><span class="o">():</span><span class="kt">void</span> <span class="o">{</span> <span class="n">_netConnection</span><span class="o">.</span><span class="na">close</span><span class="o">()</span> <span class="o">}</span>
+<span class="kd">function </span><span class="nf">onStatus</span><span class="o">(</span><span class="n">status</span><span class="o">:</span><span class="kt">Object</span><span class="o">):</span><span class="kt">void</span> <span class="o">{</span>
+        <span class="nf">trace</span><span class="o">(</span><span class="n">status</span><span class="o">.</span><span class="na">description</span><span class="o">)</span>
+<span class="o">}</span>
+<span class="kd">function </span><span class="nf">onResult</span><span class="o">(</span><span class="n">response</span><span class="o">:</span><span class="kt">Object</span><span class="o">):</span><span class="kt">void</span> <span class="o">{</span>
+        <span class="nf">trace</span><span class="o">(</span><span class="n">response</span><span class="o">)</span> <span class="c1">// displays &quot;Hello Test Client&quot;</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">When you change default client of NetConnection, the new client should have a <em>close()</em> method which closes the connection, because a RTMFP Server can call this function in some special cases</p>
+</div>
+<p>Note that returned result of the scripting function is a writing shortcut for:</p>
+<div class="highlight-lua"><div class="highlight"><pre><span class="k">function</span> <span class="nf">client</span><span class="p">:</span><span class="n">test</span><span class="p">(</span><span class="n">name</span><span class="p">,</span><span class="n">firstname</span><span class="p">)</span>
+        <span class="n">client</span><span class="p">.</span><span class="n">writer</span><span class="p">:</span><span class="n">writeAMFResult</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">Hello &quot;</span><span class="o">..</span><span class="n">firstname</span><span class="o">..</span><span class="s2">&quot;</span><span class="s"> &quot;</span><span class="o">..</span><span class="n">name</span><span class="p">)</span>
+<span class="k">end</span>
+</pre></div>
+</div>
+<p>The both make exactly the same thing.</p>
+<p>If the function is not available on the <em>client</em> object, it returns a <em>NetConnection.Call.Failed</em> status event with <em>Method &#8216;test&#8217; not found</em> in description field. But you can also customize your own error event:</p>
+<div class="highlight-lua"><div class="highlight"><pre><span class="k">function</span> <span class="nf">client</span><span class="p">:</span><span class="n">test</span><span class="p">(</span><span class="n">name</span><span class="p">,</span><span class="n">firstname</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">firstname</span> <span class="k">then</span> <span class="nb">error</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">test function takes two arguments&quot;</span><span class="p">)</span> <span class="k">end</span>
+        <span class="k">return</span> <span class="s2">&quot;</span><span class="s">Hello &quot;</span><span class="o">..</span><span class="n">firstname</span><span class="o">..</span><span class="s2">&quot;</span><span class="s"> &quot;</span><span class="o">..</span><span class="n">name</span>
+<span class="k">end</span>
+</pre></div>
+</div>
+<div class="highlight-as3"><div class="highlight"><pre><span class="n">_netConnection</span><span class="o">.</span><span class="na">client</span> <span class="o">=</span> <span class="k">this</span>
+<span class="n">_netConnection</span><span class="o">.</span><span class="na">call</span><span class="o">(</span><span class="s2">&quot;test&quot;</span><span class="o">,</span><span class="k">new</span> <span class="kt">Responder</span><span class="o">(</span><span class="n">onResult</span><span class="o">,</span><span class="n">onStatus</span><span class="o">),</span><span class="s2">&quot;Client&quot;</span><span class="o">);</span>
+
+<span class="kd">function </span><span class="nf">close</span><span class="o">():</span><span class="kt">void</span> <span class="o">{</span> <span class="n">_netConnection</span><span class="o">.</span><span class="na">close</span><span class="o">()</span> <span class="o">}</span>
+<span class="kd">function </span><span class="nf">onStatus</span><span class="o">(</span><span class="n">status</span><span class="o">:</span><span class="kt">Object</span><span class="o">):</span><span class="kt">void</span> <span class="o">{</span>
+        <span class="nf">trace</span><span class="o">(</span><span class="n">status</span><span class="o">.</span><span class="na">description</span><span class="o">)</span> <span class="c1">// displays &quot;..main.lua:3: test function takes two arguments&quot;</span>
+<span class="o">}</span>
+<span class="kd">function </span><span class="nf">onResult</span><span class="o">(</span><span class="n">response</span><span class="o">:</span><span class="kt">Object</span><span class="o">):</span><span class="kt">void</span> <span class="o">{</span>
+        <span class="nf">trace</span><span class="o">(</span><span class="n">response</span><span class="o">)</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="push-data">
+<h3><a class="toc-backref" href="#id9">Push data</a><a class="headerlink" href="#push-data" title="Permalink to this headline">¶</a></h3>
+<p>Push data mechanism is also possible in using <em>client.writer</em> object.</p>
+<div class="highlight-lua"><div class="highlight"><pre><span class="n">client</span><span class="p">.</span><span class="n">writer</span><span class="p">:</span><span class="n">writeAMFMessage</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">onPushData&quot;</span><span class="p">,</span><span class="s2">&quot;</span><span class="s">Application&quot;</span><span class="p">,</span><span class="s2">&quot;</span><span class="s">Test&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-as3"><div class="highlight"><pre><span class="kd">function </span><span class="nf">onPushData</span><span class="o">(</span><span class="n">name</span><span class="o">:</span><span class="kt">String</span><span class="o">,</span><span class="n">firstName</span><span class="o">:</span><span class="kt">String</span><span class="o">):</span><span class="kt">void</span> <span class="o">{</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>Here an example of push data every two seconds (see <em>Events</em> part of [[Server Application, API]] page for <em>onManage</em> event description):</p>
+<div class="highlight-lua"><div class="highlight"><pre><span class="n">writers</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="k">function</span> <span class="nf">onConnection</span><span class="p">(</span><span class="n">client</span><span class="p">,</span><span class="o">...</span><span class="p">)</span>
+        <span class="n">writers</span><span class="p">[</span><span class="n">client</span><span class="p">]</span> <span class="o">=</span> <span class="n">client</span><span class="p">.</span><span class="n">writer</span>
+<span class="k">end</span>
+<span class="k">function</span> <span class="nf">onDisconnection</span><span class="p">(</span><span class="n">client</span><span class="p">)</span>
+        <span class="n">writers</span><span class="p">[</span><span class="n">client</span><span class="p">]</span> <span class="o">=</span> <span class="kc">nil</span>
+<span class="k">end</span>
+<span class="k">function</span> <span class="nf">onManage</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">client</span><span class="p">,</span><span class="n">writer</span> <span class="k">in</span> <span class="nb">pairs</span><span class="p">(</span><span class="n">writers</span><span class="p">)</span> <span class="k">do</span>
+                <span class="n">writer</span><span class="p">:</span><span class="n">writeAMFMessage</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">refresh&quot;</span><span class="p">)</span>
+        <span class="k">end</span>
+<span class="k">end</span>
+</pre></div>
+</div>
+<div class="highlight-as3"><div class="highlight"><pre><span class="kd">function </span><span class="nf">refresh</span><span class="o">():</span><span class="kt">void</span> <span class="o">{...}</span>
+</pre></div>
+</div>
+<p><em>client.writer</em> returns the main flowWriter of this client. A FlowWriter is an unidirectional communication pipe, which allows to write message in a fifo for the client. Each flowWriter has some statistic exchange informations.
+When you want push a constant flow with a large amount of data, or if you want to get independant exchange statistics without disrupting the main flowWriter of one client, you can create your own flowWriter channel to push data:</p>
+<div class="highlight-lua"><div class="highlight"><pre><span class="n">writers</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="k">function</span> <span class="nf">onConnection</span><span class="p">(</span><span class="n">client</span><span class="p">,</span><span class="o">...</span><span class="p">)</span>
+        <span class="n">writers</span><span class="p">[</span><span class="n">client</span><span class="p">]</span> <span class="o">=</span> <span class="n">client</span><span class="p">.</span><span class="n">writer</span><span class="p">:</span><span class="n">newFlowWriter</span><span class="p">()</span>
+<span class="k">end</span>
+<span class="k">function</span> <span class="nf">onDisconnection</span><span class="p">(</span><span class="n">client</span><span class="p">)</span>
+        <span class="n">writers</span><span class="p">[</span><span class="n">client</span><span class="p">]</span> <span class="o">=</span> <span class="kc">nil</span>
+<span class="k">end</span>
+<span class="k">function</span> <span class="nf">onManage</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">client</span><span class="p">,</span><span class="n">writer</span> <span class="k">in</span> <span class="nb">pairs</span><span class="p">(</span><span class="n">writers</span><span class="p">)</span> <span class="k">do</span>
+                <span class="n">writer</span><span class="p">:</span><span class="n">writeAMFMessage</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">refresh&quot;</span><span class="p">)</span>
+        <span class="k">end</span>
+<span class="k">end</span>
+</pre></div>
+</div>
+<div class="highlight-as3"><div class="highlight"><pre><span class="kd">function </span><span class="nf">refresh</span><span class="o">():</span><span class="kt">void</span> <span class="o">{...}</span>
+</pre></div>
+</div>
+<p>When you create your own flowWriter, you can overload its <em>onManage</em> function, allowing you to write the same thing in a more elegant way, which avoid here <em>writers</em> table usage, and make the code really more short (see <em>Objects</em> part of [[Server Application, API]] page for more details).</p>
+<div class="highlight-lua"><div class="highlight"><pre><span class="k">function</span> <span class="nf">onConnection</span><span class="p">(</span><span class="n">client</span><span class="p">,</span><span class="o">...</span><span class="p">)</span>
+        <span class="n">writer</span> <span class="o">=</span> <span class="n">client</span><span class="p">.</span><span class="n">writer</span><span class="p">:</span><span class="n">newFlowWriter</span><span class="p">()</span>
+        <span class="k">function</span> <span class="nf">writer</span><span class="p">:</span><span class="n">onManage</span><span class="p">()</span>
+                <span class="n">self</span><span class="p">:</span><span class="n">writeAMFMessage</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">refresh&quot;</span><span class="p">)</span>
+        <span class="k">end</span>
+<span class="k">end</span>
+</pre></div>
+</div>
+<div class="highlight-as3"><div class="highlight"><pre><span class="kd">function </span><span class="nf">refresh</span><span class="o">():</span><span class="kt">void</span> <span class="o">{...}</span>
+</pre></div>
+</div>
+<p>If you have need of pushing rate greater than two seconds, use <em>onRealTime</em> event of root application (see <em>Events</em> part of [[Server Application, API]] page for more details).</p>
+</div>
+</div>
+<div class="section" id="amf-and-lua-types-conversion">
+<h2><a class="toc-backref" href="#id10">AMF and LUA types conversion</a><a class="headerlink" href="#amf-and-lua-types-conversion" title="Permalink to this headline">¶</a></h2>
+<p>A conversion between AMF and <a class="reference external" href="http://www.lua.org/">LUA</a> types allows to read AMF data from client, and write AMF data to client.</p>
+<div class="section" id="complex-types">
+<h3><a class="toc-backref" href="#id11">Complex types</a><a class="headerlink" href="#complex-types" title="Permalink to this headline">¶</a></h3>
+<p>Primitive conversion types are easy and intuitive (Number, Boolean, String). Except these primitive types, in <a class="reference external" href="http://www.lua.org/">LUA</a> all is table. Concerning AMF complex type conversions, things go as following:</p>
+<div class="highlight-lua"><div class="highlight"><pre><span class="c1">-- LUA table formatted in Object          // AMF Object</span>
+<span class="p">{</span><span class="n">x</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span><span class="n">y</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span><span class="n">width</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span><span class="n">height</span><span class="o">=</span><span class="mi">100</span><span class="p">}</span>          <span class="p">{</span><span class="n">x</span><span class="p">:</span><span class="mi">10</span><span class="p">,</span><span class="n">y</span><span class="p">:</span><span class="mi">10</span><span class="p">,</span><span class="n">width</span><span class="p">:</span><span class="mi">100</span><span class="p">,</span><span class="n">height</span><span class="p">:</span><span class="mi">100</span><span class="p">}</span>
+
+<span class="c1">-- LUA table formatted in Array           // AMF Array</span>
+<span class="p">{</span><span class="mi">10</span><span class="p">,</span><span class="mi">10</span><span class="p">,</span><span class="mi">100</span><span class="p">,</span><span class="mi">100</span><span class="p">}</span>                           <span class="n">new</span> <span class="n">Array</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">10</span><span class="p">,</span><span class="mi">100</span><span class="p">,</span><span class="mi">100</span><span class="p">)</span>
+
+<span class="c1">-- LUA table mixed                       // AMF Array associative</span>
+<span class="p">{</span><span class="n">x</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span><span class="n">y</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span><span class="mi">100</span><span class="p">,</span><span class="mi">100</span><span class="p">}</span>                      <span class="n">var</span> <span class="n">mixed</span><span class="p">:</span><span class="n">Array</span> <span class="o">=</span> <span class="n">new</span> <span class="n">Array</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">10</span><span class="p">,</span><span class="mi">100</span><span class="p">,</span><span class="mi">100</span><span class="p">);</span>
+                                         <span class="n">mixed</span><span class="p">[</span><span class="s2">&quot;</span><span class="s">x&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">10</span><span class="p">;</span>  <span class="n">mixed</span><span class="p">[</span><span class="s2">&quot;</span><span class="s">y&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">10</span><span class="p">;</span>
+
+<span class="c1">-- LUA table formatted in Dictionary     // AMF Dictionary</span>
+<span class="p">{</span><span class="mi">10</span><span class="o">=</span><span class="s2">&quot;</span><span class="s">test&quot;</span><span class="p">,</span><span class="s2">&quot;</span><span class="s">test&quot;</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span><span class="n">__size</span><span class="o">=</span><span class="mi">2</span><span class="p">}</span>           <span class="n">var</span> <span class="n">dic</span><span class="p">:</span><span class="n">Dictionary</span> <span class="o">=</span> <span class="n">new</span> <span class="n">Dictionary</span><span class="p">();</span>
+                                         <span class="n">dic</span><span class="p">[</span><span class="mi">10</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="s">test&quot;</span><span class="p">;</span>  <span class="n">dic</span><span class="p">[</span><span class="s2">&quot;</span><span class="s">test&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">10</span><span class="p">;</span>
+
+<span class="c1">-- LUA table formatted in ByteArray      // AMF ByteArray</span>
+<span class="p">{</span><span class="n">__raw</span><span class="o">=</span><span class="s2">&quot;</span><span class="s">rawdata&quot;</span><span class="p">}</span>                        <span class="n">var</span> <span class="n">data</span><span class="p">:</span><span class="n">ByteArray</span> <span class="o">=</span> <span class="n">new</span> <span class="n">ByteArray</span><span class="p">();</span>
+                                         <span class="n">data</span><span class="p">.</span><span class="n">writeUTFBytes</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">rawdata&quot;</span><span class="p">);</span>
+
+<span class="c1">-- LUA Table formatted in date           // AMF Date</span>
+<span class="p">{</span><span class="n">year</span><span class="o">=</span><span class="mi">1998</span><span class="p">,</span><span class="n">month</span><span class="o">=</span><span class="mi">9</span><span class="p">,</span><span class="n">day</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span><span class="n">yday</span><span class="o">=</span><span class="mi">259</span><span class="p">,</span>      <span class="n">new</span> <span class="n">Date</span><span class="p">(</span><span class="mi">905989690435</span><span class="p">)</span>
+<span class="n">wday</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span><span class="n">hour</span><span class="o">=</span><span class="mi">23</span><span class="p">,</span><span class="n">min</span><span class="o">=</span><span class="mi">48</span><span class="p">,</span><span class="n">sec</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span><span class="n">msec</span><span class="o">=</span><span class="mi">435</span><span class="p">,</span>
+<span class="n">isdst</span><span class="o">=</span><span class="kc">false</span><span class="p">,</span><span class="n">__time</span><span class="o">=</span><span class="mi">905989690435</span><span class="p">}</span>
+</pre></div>
+</div>
+<p>On a <a class="reference external" href="http://www.lua.org/">LUA</a> to AMF conversion, priortiy conversion order works as following:</p>
+<p>1. If the LUA table given contains the property <em>__raw</em>, it&#8217;s converted to a ByteArray AMF object.
+1. If the LUA table given contains the property <em>__size</em>, it&#8217;s converted to a Dictionary AMF object.
+1. If the LUA table given contains the property <em>__time</em>, it&#8217;s converted to a Date AMF object.
+1. Otherwise it chooses the more adapted conversion (Object, Array, or Array associative).</p>
+<p>About <em>__time</em> property on a date object, it&#8217;s the the number of milliseconds elapsed since midnight UTC of January 1 1970 ([Unix time](<a class="reference external" href="http://en.wikipedia.org/wiki/Unix_time">http://en.wikipedia.org/wiki/Unix_time</a>)).</p>
+<p>About Dictionary object, <a class="reference external" href="http://www.lua.org/">LUA</a> table supports an [weak keys table](<a class="reference external" href="http://www.lua.org/pil/17.html">http://www.lua.org/pil/17.html</a>) feature, and it&#8217;s used in AMF conversion with the <em>weakKeys</em> contructor argument of [Dictionary AMF type](<a class="reference external" href="http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/utils/Dictionary.html">http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/utils/Dictionary.html</a>). It means that if you build an AMF Dictionary object with <em>weakKeys</em> equals <em>true</em> and send it to CumulusServer, CumulusServer converts it in a <a class="reference external" href="http://www.lua.org/">LUA</a> table with weak keys, and vice versa.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Actually Cumulus supports all AMF0 and AMF3 format, excepts <em>Vector</em> and <em>XML</em> types.</p>
+</div>
+</div>
+<div class="section" id="custom-types">
+<h3><a class="toc-backref" href="#id12">Custom types</a><a class="headerlink" href="#custom-types" title="Permalink to this headline">¶</a></h3>
+<p>You can custom your object in using typed object feature.
+Indeed, when a typed object is unserializing, a <em>onTypedObject</em> application event is called.</p>
+<p>On client side, the AS3 class flag <em>RemoteClass</em> have to be added:</p>
+<div class="highlight-as3"><div class="highlight"><pre><span class="o">[</span><span class="n">RemoteClass</span><span class="o">(</span><span class="n">alias</span><span class="o">=</span><span class="s2">&quot;Cat&quot;</span><span class="o">)]</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="n">Cat</span> <span class="o">{</span>
+        <span class="kd">public</span> <span class="kd">function </span><span class="nf">Cat</span> <span class="o">()</span> <span class="o">{</span>
+        <span class="o">}</span>
+        <span class="kd">public</span> <span class="kd">function </span><span class="nf">meow</span><span class="o">()</span> <span class="o">{</span>
+                <span class="nf">trace</span><span class="o">(</span><span class="s2">&quot;meow&quot;</span><span class="o">)</span>
+        <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>On reception of this type on script-server side, it will call our <em>onTypedObject</em> function, and you can custom your object:</p>
+<div class="highlight-lua"><div class="highlight"><pre><span class="k">function</span> <span class="nf">onTypedObject</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span><span class="n">object</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="o">==</span><span class="s2">&quot;</span><span class="s">Cat&quot;</span> <span class="k">then</span>
+                <span class="k">function</span> <span class="nf">object</span><span class="p">:</span><span class="n">meow</span><span class="p">()</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">meow&quot;</span><span class="p">)</span>
+                <span class="k">end</span>
+        <span class="k">end</span>
+<span class="k">end</span>
+</pre></div>
+</div>
+<p><em>object</em> second argument contains a <em>__type</em> property, here equals to <em>&#8220;Cat&#8221;</em> (also equals to the first argument of <em>typeFactory</em> function). It means that if you want create a typed object from script-side, and send it to client, you have just to add a <em>__type</em> property.</p>
+<div class="highlight-lua"><div class="highlight"><pre><span class="k">function</span> <span class="nf">onConnection</span><span class="p">(</span><span class="n">client</span><span class="p">,</span><span class="o">...</span><span class="p">)</span>
+        <span class="n">response</span><span class="p">:</span><span class="n">write</span><span class="p">({</span><span class="n">__type</span><span class="o">=</span><span class="s2">&quot;</span><span class="s">Cat&quot;</span><span class="p">})</span>
+<span class="k">end</span>
+</pre></div>
+</div>
+<p>Cient will try to cast it in a <em>Cat</em> class.</p>
+<p>You can go more further on this principle, and custom the AMF unserialization and serialization in adding __readExternal and __writeExternal function on the concerned object, it relates AS3 object which implements <em>IExternalizable</em> on client side (see [IExternalizable](<a class="reference external" href="http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/utils/IExternalizable.html">http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/utils/IExternalizable.html</a>)).
+For example, <em>ArrayCollection</em> is an externalizable type, and it&#8217;s not supported by default by the conversion system, you can add its support in adding this script code:</p>
+<div class="highlight-lua"><div class="highlight"><pre><span class="k">function</span> <span class="nf">onTypedObject</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span><span class="n">object</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="o">==</span><span class="s2">&quot;</span><span class="s">flex.messaging.io.ArrayCollection&quot;</span> <span class="k">then</span>
+                <span class="k">function</span> <span class="nf">object</span><span class="p">:</span><span class="n">__readExternal</span><span class="p">(</span><span class="n">reader</span><span class="p">)</span>
+                        <span class="n">self</span><span class="p">.</span><span class="n">source</span> <span class="o">=</span> <span class="n">reader</span><span class="p">:</span><span class="n">readAMF</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+                <span class="k">end</span>
+                <span class="k">function</span> <span class="nf">object</span><span class="p">:</span><span class="n">__writeExternal</span><span class="p">(</span><span class="n">writer</span><span class="p">)</span>
+                        <span class="n">writer</span><span class="p">:</span><span class="n">writeAMF</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">source</span><span class="p">)</span>
+                <span class="k">end</span>
+        <span class="k">end</span>
+<span class="k">end</span>
+</pre></div>
+</div>
+<p><em>reader</em> and <em>writer</em> arguments are equivalent of [IDataOutput](<a class="reference external" href="http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/utils/IDataOutput.html">http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/utils/IDataOutput.html</a>) and [IDataInput](<a class="reference external" href="http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/utils/IDataInput.html">http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/utils/IDataInput.html</a>) AS3 class (see <em>Objects</em> part of [[Server Application, API]] page for more details).</p>
+</div>
+</div>
+<div class="section" id="lua-extensions-and-files-inclusion">
+<h2><a class="toc-backref" href="#id13">LUA extensions and files inclusion</a><a class="headerlink" href="#lua-extensions-and-files-inclusion" title="Permalink to this headline">¶</a></h2>
+<p><a class="reference external" href="http://www.lua.org/">LUA</a> can be extended easly, it exists <a class="reference external" href="http://www.lua.org/">LUA</a> extensions for all needs and on all operating system. Add some new CumulusServer abilities as SQL, TCP sockets, or others is a common thing make possible by <a class="reference external" href="http://www.lua.org/">LUA</a>.
+Install your <a class="reference external" href="http://www.lua.org/">LUA</a> extension library, and add a <em>require</em> line for your script. <a class="reference external" href="http://www.lua.org/">LUA</a> will search the extension in some common location related with <a class="reference external" href="http://www.lua.org/">LUA</a> folder installation.</p>
+<p>Now if you have need to organize your code in different files for your server application, you can use <em>absolutePath(path)</em> helpful functions on <em>cumulus</em> object (see <em>Objects</em> part of [[Server Application, API]] page for more details), in addition of <em>dofile</em> or <em>loadfile</em> <a class="reference external" href="http://www.lua.org/">LUA</a> functions (see [this LUA page](<a class="reference external" href="http://www.lua.org/pil/8.html">http://www.lua.org/pil/8.html</a>)). It allows to convert <em>path</em> application for an absolute version.</p>
+<div class="highlight-lua"><div class="highlight"><pre><span class="k">function</span> <span class="nf">onStart</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="nb">dofile</span><span class="p">(</span><span class="n">cumulus</span><span class="p">:</span><span class="n">absolutePath</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="o">..</span><span class="s2">&quot;</span><span class="s">start.lua&quot;</span><span class="p">)</span>
+<span class="k">end</span>
+<span class="k">function</span> <span class="nf">onConnection</span><span class="p">(</span><span class="n">client</span><span class="p">,</span><span class="o">...</span><span class="p">)</span>
+        <span class="nb">dofile</span><span class="p">(</span><span class="n">cumulus</span><span class="p">:</span><span class="n">absolutePath</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="o">..</span><span class="s2">&quot;</span><span class="s">connection.lua&quot;</span><span class="p">)</span>
+<span class="k">end</span>
+</pre></div>
+</div>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">If you edit a included file (like <em>start.lua</em> or <em>connection.lua</em> here), change are not taken as far as <em>dofile</em> is not called again or <em>main.lua</em> of this server application is not updated again.</p>
+</div>
+</div>
+<div class="section" id="logs">
+<h2><a class="toc-backref" href="#id14">LOGS</a><a class="headerlink" href="#logs" title="Permalink to this headline">¶</a></h2>
+<p><a class="reference external" href="http://www.lua.org/">LUA</a> <em>print</em> function writes text on the output console of CumulusServer in a non-formatted way. Also, in service or daemon usage, nothing is printed of course.
+Solution is to use logs macro make available in scripts.</p>
+<ul class="simple">
+<li><strong>ERROR</strong>, an error.</li>
+<li><strong>WARN</strong>, a warning.</li>
+<li><strong>NOTE</strong>, an important information, displayed by default in Cumulus log files.</li>
+<li><strong>INFO</strong>, an information, displayed by default in Cumulus log files.</li>
+<li><strong>DEBUG</strong>, displayed only if you start CumulusServer with a more high level log (see <em>/help</em> or <em>&#8211;help</em> on command-line startup)</li>
+<li><strong>TRACE</strong>, displayed only if you start CumulusServer with a more high level log (see <em>/help</em> or <em>&#8211;help</em> on command-line startup)</li>
+</ul>
+<div class="highlight-lua"><div class="highlight"><pre><span class="k">function</span> <span class="nf">onStart</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="n">NOTE</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">Application &quot;</span><span class="o">..</span><span class="n">path</span><span class="o">..</span><span class="s2">&quot;</span><span class="s"> started&quot;</span><span class="p">)</span>
+<span class="k">end</span>
+<span class="k">function</span> <span class="nf">onStop</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="n">NOTE</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">Application &quot;</span><span class="o">..</span><span class="n">path</span><span class="o">..</span><span class="s2">&quot;</span><span class="s"> stoped&quot;</span><span class="p">)</span>
+<span class="k">end</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="api">
+<h2><a class="toc-backref" href="#id15">API</a><a class="headerlink" href="#api" title="Permalink to this headline">¶</a></h2>
+<p>Complete API is available on <a class="reference external" href="./api.html">Server Application, API</a> page.</p>
+</div>
+</div>
+
+
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2013, TJ.<br/>
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b2.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>
