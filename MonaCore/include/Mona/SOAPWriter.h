@@ -27,33 +27,8 @@ class SOAPWriter : public XMLWriter, public virtual NullableObject {
 public:
 	SOAPWriter(const PoolBuffers& buffers);
 
-	virtual void beginObject(const std::string& type="",bool external=false);
-	virtual void endObject();
-
-	virtual void writePropertyName(const std::string& value);
-
-	virtual void beginArray(UInt32 size);
-
-	virtual void writeDate(const Time& date);
-	virtual void writeNumber(double value);
-	virtual void writeString(const std::string& value) { writeRaw(value); }
-	virtual void writeBoolean(bool value) { writeRaw(value? "true" : "false"); }
-	virtual void writeNull() { writeRaw("null"); }
-	virtual void writeBytes(const UInt8* data, UInt32 size);
-
-protected:
-	virtual void writeRaw(const char* value);
-	virtual void writeRaw(const std::string& value);
-
-private:
-
-	bool _first;
-
-	/// \brief Start the soap structure
-	void writeHeader();
-
-	/// \brief Close the soap structure
-	void writeFooter();
+	virtual void endWrite();
+	virtual void beginDocument();
 };
 
 

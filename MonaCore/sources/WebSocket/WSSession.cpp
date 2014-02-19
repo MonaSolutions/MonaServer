@@ -110,48 +110,7 @@ void WSSession::packetHandler(PacketReader& packet) {
 				break;
 			}
 			case WS::TYPE_TEXT: {
-				if(!JSONReader::IsValid(packet)) {
-					RawReader reader(packet);
-					peer.onMessage(ex, "onMessage",reader);
-					break;
-				}
-				JSONReader reader(packet);
-				if(reader.followingType()!=JSONReader::STRING) {
-					peer.onMessage(ex, "onMessage",reader);
-					break;
-				}
-				string name;
-				reader.readString(name);
-				if(name=="__publish") {
-					if(reader.followingType()!=JSONReader::STRING) {
-						ex.set(Exception::PROTOCOL, "__publish method takes a stream name in first parameter",WS::CODE_MALFORMED_PAYLOAD);
-						break;
-					}
-					reader.readString(name);
-					if(_pPublication)
-						invoker.unpublish(peer,_pPublication->name());
-					_pPublication = invoker.publish(ex, peer,name);
-				} else if(name=="__play") {
-					if(reader.followingType()!=JSONReader::STRING) {
-						ex.set(Exception::PROTOCOL, "__play method takes a stream name in first parameter",WS::CODE_MALFORMED_PAYLOAD);
-						break;
-					}
-					reader.readString(name);
-					
-					closeSusbcription();
-				} else if(name=="__closePublish") {
-					closePublication();
-				} else if(name=="__closePlay") {
-					closeSusbcription();
-				} else if (name == "__close") {
-					closePublication();
-					closeSusbcription();
-					
-				} else if(_pPublication) {
-					reader.reset();
-					_pPublication->pushData(reader);
-				} else
-					peer.onMessage(ex, name,reader);
+				readMessage<JSONReader>(ex, packet);
 				break;
 			}
 			case WS::TYPE_CLOSE:

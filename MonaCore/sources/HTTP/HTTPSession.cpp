@@ -155,7 +155,7 @@ void HTTPSession::packetHandler(PacketReader& reader) {
 						if (!methodCalled && !ex) {
 							// Redirect to the file (get name to prevent path insertion)
 							string nameFile;
-							filePath.appendPath(FileSystem::GetName(_options.index, nameFile));
+							filePath.appendPath('/', FileSystem::GetName(_options.index, nameFile));
 						}
 					} else if (!_options.indexDirectory)
 						ex.set(Exception::PERMISSION, "No authorization to see the content of ", peer.path, "/");
@@ -174,16 +174,16 @@ void HTTPSession::packetHandler(PacketReader& reader) {
 							if ((pPacket->contentType == HTTP::CONTENT_VIDEO || pPacket->contentType == HTTP::CONTENT_AUDIO) && filePath.lastModified() == 0) {
 								
 								if(pPacket->contentSubType == "x-flv")
-									_writer.mediaType = MediaContainer::FLV;
+									_writer.media = make_unique<FLV>();
 								else if(pPacket->contentSubType == "mpeg")
-									_writer.mediaType = MediaContainer::MPEG_TS;
+									_writer.media = make_unique<MPEGTS>();
 								else
 									ex.set(Exception::APPLICATION, "HTTP streaming for a ",pPacket->contentSubType," unsupported");
 								
 								if (!ex) {
 									_pListener = invoker.subscribe(ex, peer, filePath.baseName(), _writer);
 									// write a HTTP header without content-length (data==NULL and size>0) + HEADER
-									MediaContainer::Write(_writer.mediaType,_writer.write("200", pPacket->contentType, pPacket->contentSubType, NULL, 1).packet);
+									_writer.media->write(_writer.write("200", pPacket->contentType, pPacket->contentSubType, NULL, 1).packet);
 								}
 								
 							}
@@ -201,30 +201,20 @@ void HTTPSession::packetHandler(PacketReader& reader) {
 							 if (invoker.buffer == "D")
 								 sortOptions |= HTTP::SORT_DESC;
 							 // HTTP get
-							_writer.writeFile(filePath,sortOptions);
+							_writer.writeFile(filePath, sortOptions, pPacket->filePos==string::npos);
 						}
 					}
 				}
 			}
 			////////////  HTTP POST  //////////////
 			else if (pPacket->command == HTTP::COMMAND_POST) {
-				// TODO publication!
-				if (pPacket->contentType == HTTP::CONTENT_TEXT && pPacket->contentSubType == "xml") {
-					
-					UInt32 contentPos = reader.available()-pPacket->contentLength;
-					reader.next(contentPos);
+				PacketReader packetContent(pPacket->content, pPacket->contentLength);
 
-					// Is it a SOAP request?
-					SOAPReader soapReader(reader);
-					if (soapReader.isValid())
-						peer.onMessage(ex, "onMessage", soapReader, HTTPWriter::SOAP);
-					else { // XML
-						reader.reset(contentPos);
-						XMLReader xmlReader(reader);
-						peer.onMessage(ex, "onMessage", xmlReader, HTTPWriter::XML);
-					}
+				// Get output format from input
+				_writer.contentType = pPacket->contentType;
+				_writer.contentSubType = pPacket->contentSubType;
 
-				}
+				HTTP::ReadMessageFromType(ex, *this, pPacket, packetContent);
 			}
 			////////////  HTTP OPTIONS  ////////////// (it is due requested when Move Redirection is sent)
 			else if (pPacket->command == HTTP::COMMAND_OPTIONS) {
@@ -292,7 +282,7 @@ bool HTTPSession::processMethod(Exception& ex, const string& name, MapReader<Map
 
 	Exception exTry;
 	parameters.reset();
-	peer.onMessage(exTry, name, parameters, HTTPWriter::RAW);
+	peer.onMessage(exTry, name, parameters);
 	if (exTry && exTry.code() == Exception::SOFTWARE)
 		ex.set(exTry);
 	

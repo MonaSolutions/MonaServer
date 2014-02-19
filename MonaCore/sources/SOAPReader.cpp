@@ -24,44 +24,59 @@ using namespace std;
 
 namespace Mona {
 
-SOAPReader::SOAPReader(PacketReader& packet) : XMLReader(packet), _body(false) {
-	string name, tmp;
-	bool external;
-	UInt32 size = 0;
-	Type type = NIL;
+SOAPReader::SOAPReader(PacketReader& packet) : XMLReader(packet), _body(false) {}
 
-	if (XMLReader::followingType()!=ARRAY) 
-		return;
-	readArray(size);
-
-	while ((type=readItem(name))!=END) {
-
-		// ignore attributes
-		if (type != ARRAY) {
-			readString(tmp);
-			continue;
-		}
-		readArray(size);
-
-		// Body tag? read items and return
-		if (String::ICompare(name, "soapenv:Body")==0) {
-			_body=true;
-			break;
-		}
-
-		// We expect an object
-		if (readItem(tmp)!=OBJECT)
-			break;
-		readObject(tmp, external);
-	}
-
-	if (_body)
-		_queueTags.clear();
+void SOAPReader::reset() {
+	_body=false;
+	XMLReader::reset();
 }
 
 bool SOAPReader::isValid() {
 	
+	followingType();
+
 	return _body;
+}
+
+DataReader::Type SOAPReader::followingType() {
+	
+	if (!_body) {
+		string name, tmp;
+		bool external;
+		UInt32 size = 0;
+		Type type = NIL;
+
+		if (XMLReader::followingType()==ARRAY) {
+
+			readArray(size);
+			while ((type=readItem(name))!=END) {
+
+				// ignore attributes
+				if (type != ARRAY) {
+					readString(tmp);
+					continue;
+				}
+				readArray(size);
+
+				// Body tag? read items and return
+				if (String::ICompare(name, "soapenv:Body")==0) {
+					_body=true;
+					break;
+				}
+
+				// We expect an object
+				if (readItem(tmp)!=OBJECT)
+					break;
+				readObject(tmp, external);
+			}
+		}
+	}
+
+	if (_body) {
+		_queueTags.clear();
+		return XMLReader::followingType();
+	} else
+		return END;
 }
 
 } // namespace Mona

@@ -52,7 +52,6 @@ void WSWriter::pack() {
 	if(sender.packaged)
 		return;
 	JSONWriter& writer = sender.writer;
-	writer.endWrite();
 	PacketWriter& packet = writer.packet;
 	UInt32 size = packet.size()-10;
 	packet.clip(10-WS::HeaderSize(size));

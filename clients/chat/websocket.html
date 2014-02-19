@@ -41,7 +41,7 @@
       
       // Socket connector
       function createWebSocket() {
-        host = "ws://" + window.location.host + "/" + window.location.pathname
+        host = "ws://" + window.location.host + "/" + window.location.pathname;
         
         if(window.MozWebSocket)
           window.WebSocket=window.MozWebSocket;

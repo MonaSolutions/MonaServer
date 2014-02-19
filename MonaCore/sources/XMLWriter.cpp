@@ -24,7 +24,7 @@ using namespace std;
 
 namespace Mona {
 
-XMLWriter::XMLWriter(const PoolBuffers& buffers) : DataWriter(buffers) {
+XMLWriter::XMLWriter(const PoolBuffers& buffers) : DataWriter(buffers), _started(false) {
 	
 }
 
@@ -36,6 +36,11 @@ void XMLWriter::clear() {
 
 void XMLWriter::beginObject(const string& type,bool external) {
 
+	if(!_started) {
+		beginDocument();
+		_started=true;
+	}
+
 	if (_queueTags.empty())
 		return;
 
@@ -43,6 +48,7 @@ void XMLWriter::beginObject(const string& type,bool external) {
 	TagPos& tag = _queueTags.back();
 	packet.write8('<');
 	packet.writeRaw(tag.name);
+	tag.childs=false; // reset childs flag
 }
 
 void XMLWriter::setTagHasChilds() {
@@ -131,6 +137,11 @@ void XMLWriter::writeRaw(const string& value) {
 
 void XMLWriter::begin() {
 
+	if(!_started) {
+		beginDocument();
+		_started=true;
+	}
+
 	// Attributes
 	if (!_value.empty()) {
 
@@ -148,6 +159,9 @@ void XMLWriter::begin() {
 		packet.writeRaw(tag.name);
 		packet.write8('>');
 	}
+	// Special case : Noname Tag
+	else
+		packet.writeRaw("<__noname>");
 }
 
 void XMLWriter::end() {
@@ -175,7 +189,9 @@ void XMLWriter::end() {
 		if(--tag.counter==0)
 			_queueTags.pop_back();
 	}
+	// Special case : Noname Tag
+	else
+		packet.writeRaw("</__noname>");
 }
-
 
 } // namespace Mona

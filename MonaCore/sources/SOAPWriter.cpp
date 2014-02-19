@@ -25,9 +25,9 @@ using namespace std;
 namespace Mona {
 
 
-SOAPWriter::SOAPWriter(const PoolBuffers& buffers) : XMLWriter(buffers), _first(true) {}
+SOAPWriter::SOAPWriter(const PoolBuffers& buffers) : XMLWriter(buffers) {}
 
-void SOAPWriter::writeHeader() {
+void SOAPWriter::beginDocument() {
 
 	packet.writeRaw("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
 	packet.writeRaw("<soapenv:Envelope xmlns:SOAP-ENV=\"http://schemas.xmlsoap.org/soap/envelope/\" ");
@@ -38,98 +38,14 @@ void SOAPWriter::writeHeader() {
 	packet.writeRaw("<soapenv:Body>\n");
 	packet.writeRaw("<ns:MonaResponse>\n");
 	packet.writeRaw("<result>\n");
-
-	_first = false;
 }
 
-void SOAPWriter::writeFooter() {
+void SOAPWriter::endWrite() {
 
 	packet.writeRaw("\n</result>\n");
 	packet.writeRaw("</ns:aMonaResponse>\n");
 	packet.writeRaw("</soapenv:Body>\n");
 	packet.writeRaw("</soapenv:Envelope>");
-}
-
-void SOAPWriter::beginObject(const string& type, bool external) {
-	if (_first)
-		writeHeader();
-
-	XMLWriter::beginObject(type, external);
-}
-
-void SOAPWriter::endObject() {
-	if (_queueTags.empty())
-		writeFooter();
-
-	XMLWriter::endObject();
-}
-
-void SOAPWriter::writePropertyName(const string& value) {
-	if (_first)
-		writeHeader();
-
-	XMLWriter::writePropertyName(value);
-}
-
-void SOAPWriter::beginArray(UInt32 size) {
-	if (_first)
-		writeHeader();
-
-	XMLWriter::beginArray(size);
-}
-
-void SOAPWriter::writeBytes(const UInt8* data, UInt32 size) {
-
-	if (_first) {
-		writeHeader();
-		XMLWriter::writeBytes(data, size);
-		writeFooter();
-	} else
-		XMLWriter::writeBytes(data, size);
-}
-
-void SOAPWriter::writeRaw(const char* value) {
-
-	if (_first) {
-
-		writeHeader();
-		XMLWriter::writeRaw(value);
-		writeFooter();
-	} else
-		XMLWriter::writeRaw(value);
-}
-
-void SOAPWriter::writeRaw(const string& value) {
-
-	if (_first) {
-
-		writeHeader();
-		XMLWriter::writeRaw(value);
-		writeFooter();
-	} else
-		XMLWriter::writeRaw(value);
-}
-
-void SOAPWriter::writeDate(const Time& date) { 
-
-	if (_first) {
-
-		writeHeader();
-		XMLWriter::writeDate(date);
-		writeFooter();
-	} else
-		XMLWriter::writeDate(date);
-}
-
-void SOAPWriter::writeNumber(double value) { 
-	
-	if (_first) {
-
-		writeHeader();
-		XMLWriter::writeNumber(value);
-		writeFooter();
-	} else
-		XMLWriter::writeNumber(value);
 }
 
 } // namespace Mona

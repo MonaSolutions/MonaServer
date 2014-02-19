@@ -25,7 +25,7 @@ using namespace std;
 
 namespace Mona {
 
-HTTPWriter::HTTPWriter(TCPClient& tcpClient) : _tcpClient(tcpClient),_pThread(NULL),mediaType(MediaContainer::FLV) {
+HTTPWriter::HTTPWriter(TCPClient& tcpClient) : _tcpClient(tcpClient),_pThread(NULL),contentType(HTTP::CONTENT_TEXT),contentSubType("html; charset=utf-8") {
 	
 }
 
@@ -93,20 +93,20 @@ DataWriter& HTTPWriter::write(const string& code, HTTP::ContentType type, const 
 
 DataWriter& HTTPWriter::writeResponse(UInt8 type) {
 	switch (type) {
-		case RAW:
+		case HTTP::RAW:
 			return write("200 OK",HTTP::CONTENT_TEXT,"plain; charset=utf-8");
-		case XML:
+		case HTTP::XML:
 			return write("200 OK", HTTP::CONTENT_APPLICATON,"xml; charset=utf-8");
-		case JSON:
+		case HTTP::JSON:
 			return write("200 OK", HTTP::CONTENT_APPLICATON,"json; charset=utf-8");
-		case SOAP:
+		case HTTP::SOAP:
 			return write("200 OK", HTTP::CONTENT_APPLICATON,"soap+xml; charset=utf-8");
-		case CSS:
+		case HTTP::CSS:
 			return write("200 OK", HTTP::CONTENT_TEXT,"css; charset=utf-8");
-		case SVG:
+		case HTTP::SVG:
 			return write("200 OK", HTTP::CONTENT_IMAGE,"svg+xml; charset=utf-8");
 	}
-	return write("200 OK");
+	return writeMessage();
 }
 
 bool HTTPWriter::writeMedia(MediaType type,UInt32 time,PacketReader& packet) {
@@ -119,7 +119,7 @@ bool HTTPWriter::writeMedia(MediaType type,UInt32 time,PacketReader& packet) {
 			break;
 		case AUDIO:
 		case VIDEO: {
-			MediaContainer::Write(mediaType,createSender().writeRaw(_tcpClient.socket().poolBuffers()),type,time,packet.current(), packet.available());
+			media->write(createSender().writeRaw(_tcpClient.socket().poolBuffers()),type,time,packet.current(), packet.available());
 			break;
 		}
 		default:

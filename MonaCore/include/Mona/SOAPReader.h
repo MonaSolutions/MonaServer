@@ -27,7 +27,9 @@ class SOAPReader : public XMLReader, virtual Object {
 public:
 	SOAPReader(PacketReader& packet);
 
-	bool	isValid();
+	virtual Type	followingType();
+	virtual bool	isValid();
+	virtual void	reset();
 
 private:
 	bool	_body;

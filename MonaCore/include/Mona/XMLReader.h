@@ -41,6 +41,9 @@ public:
 
 	virtual void				reset();
 
+	/// \brief Return true if content is valid
+	virtual bool				isValid();
+
 protected:
 
 	/// \brief Intern structure for ordering tags and subtags
@@ -62,6 +65,9 @@ private:
 
 	/// \brief ignore comment and return next type
 	Type			parseComment(const UInt8* first, const UInt8* cur);
+
+	/// \brief add a tag added and return type
+	Type			addTag(const UInt8* cur);
 
 	/// \brief remove last tag added and return type
 	Type			removeTag();
@@ -86,9 +92,8 @@ private:
 	Time			        _date;
 	Type			        _last;
 	double			        _dval;
-	bool                    _tagOpened;
-	bool					_objectPrimitive;
-	bool					_inited; ///< to return an array as first type
+	bool                    _tagOpened; ///< Tag is opened, we expect attributes
+	bool					_objectPrimitive; ///< Tag has no sub tags and no attributes
 };
 
 

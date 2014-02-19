@@ -29,6 +29,12 @@ This file is a part of Mona.
 #include "Mona/HTMLWriter.h"
 #include "Mona/SVGWriter.h"
 #include "Mona/RawWriter.h"
+#include "Mona/HTTP/HTTPSession.h"
+#include "Mona/HTTP/HTTPPacket.h"
+#include "Mona/PacketReader.h"
+#include "Mona/JSONReader.h"
+#include "Mona/XMLReader.h"
+#include "Mona/SOAPReader.h"
 
 using namespace std;
 
@@ -247,23 +253,23 @@ HTTP::ContentType HTTP::ParseContentType(const char* value, string& subType) {
 		subType.clear();
 
 	// type
-	if (String::ICompare(value,EXPAND_SIZE("text")==0))
+	if (String::ICompare(value,EXPAND_SIZE("text"))==0)
 		return CONTENT_TEXT;
-	if (String::ICompare(value,EXPAND_SIZE("image")==0))
+	if (String::ICompare(value,EXPAND_SIZE("image"))==0)
 		return CONTENT_IMAGE;
-	if (String::ICompare(value,EXPAND_SIZE("application")==0))
+	if (String::ICompare(value,EXPAND_SIZE("application"))==0)
 		return CONTENT_APPLICATON;
-	if (String::ICompare(value,EXPAND_SIZE("multipart")==0))
+	if (String::ICompare(value,EXPAND_SIZE("multipart"))==0)
 		return CONTENT_MULTIPART;
-	if (String::ICompare(value,EXPAND_SIZE("audio")==0))
+	if (String::ICompare(value,EXPAND_SIZE("audio"))==0)
 		return CONTENT_AUDIO;
-	if (String::ICompare(value,EXPAND_SIZE("video")==0))
+	if (String::ICompare(value,EXPAND_SIZE("video"))==0)
 		return CONTENT_VIDEO;
-	if (String::ICompare(value,EXPAND_SIZE("message")==0))
+	if (String::ICompare(value,EXPAND_SIZE("message"))==0)
 		return CONTENT_MESSAGE;
-	if (String::ICompare(value,EXPAND_SIZE("model")==0))
+	if (String::ICompare(value,EXPAND_SIZE("model"))==0)
 		return CONTENT_MODEL;
-	if (String::ICompare(value,EXPAND_SIZE("example")==0))
+	if (String::ICompare(value,EXPAND_SIZE("example"))==0)
 		return CONTENT_EXAMPLE;
 	return CONTENT_TEXT; // default value
 }
@@ -351,5 +357,19 @@ void HTTP::WriteDirectoryEntry(BinaryWriter& writer,const string& serverAddress,
 		size, "</td></tr>\n");
 }
 
+void HTTP::ReadMessageFromType(Exception& ex, HTTPSession& caller, const shared_ptr<HTTPPacket>& httpPacket, PacketReader& packet) {
+
+	// SOAP
+	if (httpPacket->contentType == HTTP::CONTENT_TEXT && String::ICompare(httpPacket->contentSubType,EXPAND_SIZE("soap+xml"))==0)
+		caller.readMessage<SOAPReader>(ex, packet);
+	// XML
+	else if (httpPacket->contentType == HTTP::CONTENT_TEXT && String::ICompare(httpPacket->contentSubType,EXPAND_SIZE("xml"))==0)
+		caller.readMessage<XMLReader>(ex, packet);
+	// JSON
+	else if (httpPacket->contentType == HTTP::CONTENT_APPLICATON && String::ICompare(httpPacket->contentSubType,EXPAND_SIZE("json"))==0)
+		caller.readMessage<JSONReader>(ex, packet);
+	
+	// TODO other types
+}
 
 } // namespace Mona

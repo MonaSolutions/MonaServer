@@ -27,8 +27,6 @@ function onConnection(client,...)
 	function client:sayHello(message)
 		INFO("Reception "..message)
 		
-		-- Test writer XML
-		-- return {a={att1="lorem",a1={{},{att1="lorem ip",__value="Lorem ipsum"}},a2={{}}}}
-		return {message.." recieved"}
+		return {message.." received"}
 	end
 end

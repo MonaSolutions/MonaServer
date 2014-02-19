@@ -26,17 +26,24 @@ using namespace std;
 
 namespace Mona {
 
-bool JSONReader::IsValid(PacketReader& packet) {
-	const UInt8* cur = packet.current();
-	while(packet.available()>0 && isspace(*cur))
-		 ++cur;
-	if(packet.available()==0)
-		return false;
-	return cur[0]=='{' || cur[0]=='[';
+bool JSONReader::isValid() {
+
+	// Not tested yet?
+	if (!_validated) {
+		const UInt8* cur = current();
+		_isValid = (packet.available() > 0) && (cur[0]=='{' || cur[0]=='[');
+		_validated=true;
+	}
+
+	return _isValid;
 }
 
 
-JSONReader::JSONReader(PacketReader& packet) : DataReader(packet),_bool(false),_last(0) {
+JSONReader::JSONReader(PacketReader& packet) : DataReader(packet),_bool(false),_last(0),_validated(false),_isValid(false) {
+
+	if (!isValid())
+		return;
+
 	if(followingType()==ARRAY) {
 		if(readArray(_pos) && packet.available()>0) {
 			const UInt8* cur = packet.current()+packet.available()-1;
@@ -239,6 +246,7 @@ JSONReader::Type JSONReader::followingType() {
 			_bool=true;
 			return STRING;
 		}
+		// TODO do not return time if format is not a date ("the end" return a time)
 		if (_date.fromString(_text)) {
 			_last=2;
 			return TIME;

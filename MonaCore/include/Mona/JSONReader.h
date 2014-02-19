@@ -31,7 +31,7 @@ class JSONReader : public DataReader, virtual Object {
 public:
 	JSONReader(PacketReader& packet);
 
-	static bool			IsValid(PacketReader& packet);
+	bool				isValid();
 
 	std::string&		readString(std::string& value);
 	double				readNumber();
@@ -57,6 +57,9 @@ private:
 	Time			_date;
 	bool			_bool;
 	UInt8			_last;
+
+	bool			_validated;
+	bool			_isValid;
 };
 
 

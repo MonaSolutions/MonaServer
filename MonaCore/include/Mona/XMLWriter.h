@@ -44,6 +44,11 @@ public:
 
 	virtual void	clear();
 
+	virtual void	endWrite() { packet.writeRaw("</root>"); }
+
+	/// \brief Function called for writing <root> tag
+	virtual void	beginDocument() { packet.writeRaw("<root>"); }
+
 protected:
 	virtual void	writeRaw(const char* value);
 	virtual void	writeRaw(const std::string& value);
@@ -72,6 +77,8 @@ private:
 
 	std::string		_value; ///< last tag name readed 
 	std::string		_buffer; ///< buffer string for writing raw
+
+	bool _started;
 };
 
 

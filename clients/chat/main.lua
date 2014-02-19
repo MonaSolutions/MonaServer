@@ -7,14 +7,6 @@ function onConnection(client,...)
   INFO("Connection of a new client to the chatroom")
   writers[client] = nil
   
-  function client:onRead(file)
-    INFO("Reading file ", file, "...")
-  
-    if file == "" then
-      return "index.html"
-    end
-  end
-  
   function client:onIdentification(name)
   
     if name then

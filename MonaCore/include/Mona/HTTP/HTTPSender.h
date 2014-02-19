@@ -49,7 +49,7 @@ public:
 
 	DataWriter&		writer(const std::string& code, HTTP::ContentType type, const std::string& subType,const UInt8* data,UInt32 size);
 	void			writeError(int code, const std::string& description,bool close=false);
-	void			writeFile(const FilePath& file, UInt8 sortOptions) { _file = file; _sortOptions = sortOptions; }
+	void			writeFile(const FilePath& file, UInt8 sortOptions, bool isApp) { _file = file; _sortOptions = sortOptions; _isApp = isApp; }
 
 	const UInt8*	data() { return _pWriter ? _pWriter->packet.data() : NULL; }
 	UInt32			size() { return _pWriter ? _pWriter->packet.size() : 0; }
@@ -64,6 +64,7 @@ private:
 	/// by relating parameters[key]
 	static void			ReplaceTemplateTags(PacketWriter& packet, std::ifstream& ifile, MapWriter<std::map<std::string,std::string>>& parameters);
 
+	bool								_isApp;
 	FilePath							_file;
 	UInt8								_sortOptions;
 	const std::shared_ptr<HTTPPacket>	_pRequest;

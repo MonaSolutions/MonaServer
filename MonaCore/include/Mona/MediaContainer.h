@@ -31,12 +31,8 @@ namespace Mona {
 
 class SubstreamMap;
 
-class MediaContainer : virtual Static {
+class MediaContainer : virtual Object {
 public:
-	enum Type {
-		FLV,
-		MPEG_TS
-	};
 
 	enum Track {
 		AUDIO = 1,
@@ -44,68 +40,61 @@ public:
 		BOTH = 3
 	};
 
-	template <typename ...Args>
-	static void Write(Type type,BinaryWriter& writer, Args&&... args) {
-		switch (type) {
-			case FLV:
-				FLV::Write(writer, args ...);
-				break;
-			case MPEG_TS:
-				MPEGTS::Write(writer, args ...);
-				break;
-		}
-		
-	}
-	
-	class FLV : virtual Static {
-	public:
-		// To write header
-		static void Write(BinaryWriter& writer,UInt8 track=BOTH);
-		// To write audio or video packet
-		static void Write(BinaryWriter& writer, UInt8 track, UInt32 time, const UInt8* data, UInt32 size);
-	};
+	// Write header
+	virtual void write(BinaryWriter& writer,UInt8 track=BOTH) = 0;
 
-	class MPEGTS : virtual Static {
-	public:
-		// To write header
-		static void Write(BinaryWriter& writer,UInt8 track=BOTH);
-		// To write audio or video packet
-		static void Write(BinaryWriter& writer, UInt8 track, UInt32 time, const UInt8* data, UInt32 size);
-	private:
-
-		/// \brief Parse each NALU (Video)
-		/// Manages 2 types of NALU header :
-		/// - 2 bytes header = 0x00XY (where XY = size of NALU)
-		/// - 4 bytes header = 0x00UVWXYZ4/6 to 0x00UVWXYZ4/6 (where UVWXYZ = size of NALU)
-		/// \return total size available
-		static UInt32		ParseNAL(SubstreamMap& reader, const UInt8* data, UInt32 size);
-
-		/// \brief Parse Audio frame
-		/// \return size available
-		static UInt32		ParseAudio(SubstreamMap& reader, const UInt8* data, UInt32 size);
-
-		/// \brief Determine if adaptive field is needed and return size of adaptive field 
-		/// \return return size of adaptive field
-		static UInt8	GetAdaptiveSize(bool time, UInt32 available, bool first, bool& adaptiveField, Track type);
-
-		/// \brief Write recursively data of subReader in TS format
-		static void		WriteTS(BinaryWriter& writer, UInt32& available, UInt32 time, SubstreamMap& subReader, bool isMetadata, Track type, bool first);
-
-		/// \brief Write payload of TS
-		/// \return false if format error detected
-		static bool		WritePES(BinaryWriter& writer, Track type, SubstreamMap& subReader, UInt8& toWrite);
-
-		/// \brief Determine CRC32 value of input data
-		//static UInt32	CalcCrc32(UInt8 * data, UInt32 datalen);
-
-		//static UInt32					CrcTab[];
-
-		// TODO don't make it static, find a way to have a map for each peer
-		static std::map<Track, UInt32>	CounterRow;			///< Counter for each program/track
-	};
-
+	// Write audio or video packet
+	virtual void write(BinaryWriter& writer, UInt8 track, UInt32 time, const UInt8* data, UInt32 size) = 0;
 };
 
+class FLV : public MediaContainer {
+public:
+	FLV(){}
+
+	// To write header
+	virtual void write(BinaryWriter& writer,UInt8 track=BOTH);
+	// To write audio or video packet
+	virtual void write(BinaryWriter& writer, UInt8 track, UInt32 time, const UInt8* data, UInt32 size);
+};
+
+class MPEGTS : public MediaContainer {
+public:
+	MPEGTS() {}
+
+	// To write header
+	virtual void write(BinaryWriter& writer,UInt8 track=BOTH);
+	// To write audio or video packet
+	virtual void write(BinaryWriter& writer, UInt8 track, UInt32 time, const UInt8* data, UInt32 size);
+private:
+	
+	/// \brief Write recursively data of subReader in TS format
+	void		writeTS(BinaryWriter& writer, UInt32& available, UInt32 time, SubstreamMap& subReader, bool isMetadata, Track type, bool first);
+
+	/// \brief Parse each NALU (Video)
+	/// Manages 2 types of NALU header :
+	/// - 2 bytes header = 0x00XY (where XY = size of NALU)
+	/// - 4 bytes header = 0x00UVWXYZ4/6 to 0x00UVWXYZ4/6 (where UVWXYZ = size of NALU)
+	/// \return total size available
+	static UInt32		ParseNAL(SubstreamMap& reader, const UInt8* data, UInt32 size);
+
+	/// \brief Parse Audio frame
+	/// \return size available
+	static UInt32		ParseAudio(SubstreamMap& reader, const UInt8* data, UInt32 size);
+
+	/// \brief Determine if adaptive field is needed and return size of adaptive field 
+	/// \return return size of adaptive field
+	static UInt8		GetAdaptiveSize(bool time, UInt32 available, bool first, bool& adaptiveField, Track type);
+
+	/// \brief Write payload of TS
+	/// \return false if format error detected
+	static bool			WritePES(BinaryWriter& writer, Track type, SubstreamMap& subReader, UInt8& toWrite);
+
+	/// \brief Determine CRC32 value of input data
+	//static UInt32	CalcCrc32(UInt8 * data, UInt32 datalen);
+	//static UInt32					CrcTab[];
+
+	std::map<Track, UInt32>	_counterRow;			///< Counter for each program/track
+};
 
 
 

@@ -33,7 +33,7 @@ namespace Mona {
 
 
 
-HTTPSender::HTTPSender(const SocketAddress& address,const shared_ptr<HTTPPacket>& pRequest) : _pRequest(pRequest),_address(address),_sizePos(0),TCPSender("TCPSender"),_sortOptions(0) {
+HTTPSender::HTTPSender(const SocketAddress& address,const shared_ptr<HTTPPacket>& pRequest) : _pRequest(pRequest),_address(address),_sizePos(0),TCPSender("TCPSender"),_sortOptions(0), _isApp(false) {
 	
 }
 
@@ -68,38 +68,39 @@ bool HTTPSender::run(Exception& ex) {
 		if (_file.lastModified()>0 && _pRequest->ifModifiedSince >= _file.lastModified()) {
 			write("304 Not Modified", HTTP::CONTENT_ABSENT);
 		} else {
-			if (_file.lastModified()==0) {
-				// file doesn't exist, test directory
-				string dir(_file.fullPath());
-				if (FileSystem::Exists(FileSystem::MakeDirectory(dir))) {
-					// Redirect to the real path of directory
-					DataWriter& response = write("301 Moved Permanently"); // TODO check that it happens sometimes or never!
-					BinaryWriter& writer = response.packet;
-					String::Format(_buffer, "http://", _pRequest->serverAddress, _file.path(), '/');
-					HTTP_BEGIN_HEADER(writer)
-						HTTP_ADD_HEADER(writer, "Location", _buffer)
-					HTTP_END_HEADER(writer)
-					HTML_BEGIN_COMMON_RESPONSE(writer, "Moved Permanently")
-						writer.writeRaw("The document has moved <a href=\"", _buffer, "\">here</a>.");
-					HTML_END_COMMON_RESPONSE(writer, _buffer)
-				} else
-					writeError(404, String::Format(_buffer,"File ", _file.path(), " doesn't exist"));
-			} else {
+			// file doesn't exist
+			if (_file.lastModified()==0)
+				writeError(404, String::Format(_buffer,"File ", _file.path(), " doesn't exist"));
+			else {
 				Exception exIgnore;
 				Files files(exIgnore, _file.fullPath());
+				// Folder
 				if (!exIgnore) {
-					// Folder
+					// Connected to parent => redirect to url + '/'
+					if (!_isApp) {
+						// Redirect to the real path of directory
+						DataWriter& response = write("301 Moved Permanently");
+						BinaryWriter& writer = response.packet;
+						String::Format(_buffer, "http://", _pRequest->serverAddress, _file.path(), '/');
+						HTTP_BEGIN_HEADER(writer)
+							HTTP_ADD_HEADER(writer, "Location", _buffer)
+						HTTP_END_HEADER(writer)
+						HTML_BEGIN_COMMON_RESPONSE(writer, "Moved Permanently")
+							writer.writeRaw("The document has moved <a href=\"", _buffer, "\">here</a>.");
+						HTML_END_COMMON_RESPONSE(writer, _buffer)
+					} else {
+					
+						DataWriter& response = write("200 OK");
+						BinaryWriter& writer = response.packet;
+						HTTP_BEGIN_HEADER(writer)
+							HTTP_ADD_HEADER(writer,"Last-Modified", time.toString(Time::HTTP_FORMAT, _buffer))
+						HTTP_END_HEADER(writer)
 
-					DataWriter& response = write("200 OK");
-					BinaryWriter& writer = response.packet;
-					HTTP_BEGIN_HEADER(writer)
-						HTTP_ADD_HEADER(writer,"Last-Modified", time.toString(Time::HTTP_FORMAT, _buffer))
-					HTTP_END_HEADER(writer)
-
-					HTTP::WriteDirectoryEntries(writer,_pRequest->serverAddress,_file.path(),files,_sortOptions);
-			
-				} else {
-					// File
+						HTTP::WriteDirectoryEntries(writer,_pRequest->serverAddress,_file.path(),files,_sortOptions);
+					}
+				} 
+				// File
+				else {
 					ifstream ifile(_file.fullPath(), ios::in | ios::binary | ios::ate);
 					if (!ifile.good()) {
 						exIgnore.set(Exception::NIL, "Impossible to open ", _file.path(), " file");

@@ -97,11 +97,24 @@ namespace Mona {
 #define HTTP_CODE_510	"Not extended"
 #define HTTP_CODE_520	"Web server is returning an unknown error"
 
+class HTTPSession;
+class HTTPPacket;
+class PacketReader;
 
 class HTTP : virtual Static {
 public:
 
 	static const UInt32 DefaultTimeout;
+
+	enum DataType {
+		HTML = 0,
+		RAW,
+		XML,
+		SOAP,
+		JSON,
+		SVG,
+		CSS
+	};
 
 	enum CommandType {
 		COMMAND_UNKNOWN = 0,
@@ -155,6 +168,8 @@ public:
 	static DataWriter* NewDataWriter(const PoolBuffers& poolBuffers,const std::string& subType);
 	static void WriteDirectoryEntries(BinaryWriter& writer, const std::string& serverAddress, const std::string& path, const Files& entries,UInt8 sortOptions);
 	
+	static void			ReadMessageFromType(Exception& ex, HTTPSession& caller, const std::shared_ptr<HTTPPacket>& httpPacket, PacketReader& packet);
+
 private:
 	static void WriteDirectoryEntry(BinaryWriter& writer, const std::string& serverAddress,const std::string& path,const FilePath& entry);
 };
