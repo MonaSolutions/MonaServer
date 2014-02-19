@@ -22,6 +22,7 @@ This file is a part of Mona.
 #include "Mona/Mona.h"
 #include "Mona/TCPSession.h"
 #include "Mona/WebSocket/WSWriter.h"
+#include "Mona/RawReader.h"
 
 
 namespace Mona {
