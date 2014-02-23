@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Scalability and load-balancing &mdash; Mona 1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/css/bootstrap-2.2.1.min.css" type="text/css" />
+    <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
+    <link rel="stylesheet" href="_static/css/bootstrap-responsive-2.2.1.min.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/js/bootstrap-2.2.1.min.js"></script>
+    <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
+    <link rel="top" title="Mona 1 documentation" href="index.html" />
+    <link rel="next" title="Server Application Sockets" href="serversocket.html" />
+    <link rel="prev" title="Server Application" href="serverapp.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head>
+  <body>
+<div class="container">
+  
+  <div id="navbar" class="navbar navbar-fixed-top">
+    <div class="navbar-inner">
+      <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+      <button class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+
+      <a class="brand" href="index.html">Mona</a>
+      <span class="navbar-text pull-left"><b>1</b></span>
+
+      <div class="nav-collapse">
+        <ul class="nav">
+          <li class="divider-vertical"></li>
+          
+            <li class="dropdown">
+  <a href="index.html" class="dropdown-toggle" data-toggle="dropdown">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"><ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="samples.html">Samples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="serverapp.html">Server Application</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">Scalability and load-balancing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="serversocket.html">Server Application Sockets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">Mona Server&#8217;s lua API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a></li>
+</ul>
+</ul>
+</li>
+            <li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"><ul>
+<li><a class="reference internal" href="#">Scalability and load-balancing</a><ul>
+<li><a class="reference internal" href="#configurations">Configurations</a></li>
+<li><a class="reference internal" href="#exchange-data-and-resources">Exchange data and resources</a></li>
+<li><a class="reference internal" href="#load-balancing-and-rendezvous-service">Load balancing and rendezvous service</a></li>
+</ul>
+</li>
+</ul>
+</ul>
+</li>
+          
+          
+            
+  <li><a href="serverapp.html"
+         title="previous chapter">&laquo; Server Application</a></li>
+  <li><a href="serversocket.html"
+         title="next chapter">Server Application Sockets &raquo;</a></li>
+          
+          
+            <li>
+  <a href="_sources/scalability.txt"
+     rel="nofollow">Source</a></li>
+          
+        </ul>
+
+        
+          
+<form class="navbar-search pull-right" style="margin-bottom:-3px;" action="search.html" method="get">
+  <input type="text" name="q" placeholder="Search" />
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+        
+      </div>
+    </div>
+  </div>
+
+  
+  <div class="section" id="scalability-and-load-balancing">
+<h1><a class="toc-backref" href="#id1">Scalability and load-balancing</a><a class="headerlink" href="#scalability-and-load-balancing" title="Permalink to this headline">¶</a></h1>
+<p>Even if RTMFP is a P2P protocol, RTMFP has need to have a server end-point to negotiate the P2P connection between both clients. Then, RTMFP can be used just for its UDP based abilities, like real-time video/audio streaming, in a classical client-server way (without using P2P feature).
+For these reasons, server load is always applied and central availability required.
+Of course, one machine has always some hardware limitation (CPU/memory), and when load required becomes too important, a MonaServer instance can not be enough.</p>
+<p>To solve this loading requirement, a full framework included in Monaerver allows to make communicate multiple MonaServer instances, to enlarge computing and receiving capacity. It allows to configure a multiple MonaServer environment, it offers detection of server connection and disconnection, exchange of data between them, redirection of clients between servers to deploy a load-balacing software system for example, and some well-thought features to synchronise client informations for the rendez-vous service and the NetGroup RTMFP options. Every communication between servers is done in a raw TCP way.</p>
+<p>The main idea is simple: by default, <strong>each instance is an independant server and share nothing with others, it&#8217;s you who decides what are the resources that it has to share</strong> between all the server instances.</p>
+<p>This page intends to describe every features of this framework illustrated with some code samples and context usage. Of course, the <cite>Server Application, API &lt;./api.html&gt;</cite> page lists all these feature but without code samples or any utilization context.</p>
+<p>Finally some piece of script code illustrates as uses it, to know how create a application server see <cite>Server Application &lt;./serveapp.html&gt;</cite> page.</p>
+<div class="contents topic" id="table-of-contents">
+<p class="topic-title first">Table of Contents</p>
+<ul class="simple">
+<li><a class="reference internal" href="#scalability-and-load-balancing" id="id1">Scalability and load-balancing</a><ul>
+<li><a class="reference internal" href="#configurations" id="id2">Configurations</a></li>
+<li><a class="reference internal" href="#exchange-data-and-resources" id="id3">Exchange data and resources</a></li>
+<li><a class="reference internal" href="#load-balancing-and-rendezvous-service" id="id4">Load balancing and rendezvous service</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="configurations">
+<h2><a class="toc-backref" href="#id2">Configurations</a><a class="headerlink" href="#configurations" title="Permalink to this headline">¶</a></h2>
+<p>Firstly to make communicate many instances of MonaServer, you have to configure them. The three following configurations allows to make working the multiple servers mode:</p>
+<ul class="simple">
+<li><em>publicAddress</em> to configure the public address server to make working the client redirections.</li>
+<li><em>servers.port</em> to configure the port to receive incoming server connections.</li>
+<li><em>servers.targets</em> to configure the addresses of remote MonaServer instances trying to join.</li>
+</ul>
+<p>Here follows an illustration of one configuration with two servers:</p>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">Exchange between servers is done in a uncrypted TCP way, so to avoid an attack by the incoming port of B, its <em>servers.port</em> configured should be protected by a firewall to allow just a connection by an other server and nothing else.</p>
+</div>
+<p>A initializes here the connection to B (<em>server.targets</em> configured). A sees B as a target:</p>
+<div class="highlight-lua"><div class="highlight"><pre><span class="c1">-- Server application on A side</span>
+<span class="k">function</span> <span class="nf">onServerConnection</span><span class="p">(</span><span class="n">server</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">server</span><span class="p">.</span><span class="n">isTarget</span> <span class="k">then</span>
+                <span class="n">NOTE</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">Target gotten : &quot;</span><span class="o">..</span><span class="n">server</span><span class="p">.</span><span class="n">address</span><span class="o">..</span><span class="s2">&quot;</span><span class="s">(&quot;</span><span class="o">..</span><span class="n">server</span><span class="p">.</span><span class="n">publicAddress</span><span class="o">..</span><span class="s2">&quot;</span><span class="s"> for clients)&quot;</span>
+                <span class="c1">-- displays &quot;Target gotten : 192.168.0.2 (www.hostB.com for clients)&quot;</span>
+        <span class="k">end</span>
+<span class="k">end</span>
+</pre></div>
+</div>
+<p>B, who has a incoming port configured (1936), accepts the connection of A. B sees A as an initiator:</p>
+<div class="highlight-lua"><div class="highlight"><pre><span class="c1">-- Server application on B side</span>
+<span class="k">function</span> <span class="nf">onServerConnection</span><span class="p">(</span><span class="n">server</span><span class="p">)</span>
+        <span class="n">NOTE</span><span class="p">(</span><span class="n">server</span><span class="p">.</span><span class="n">isTarget</span><span class="p">)</span> <span class="c1">-- displays &quot;false&quot;</span>
+<span class="k">end</span>
+</pre></div>
+</div>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">If server A and B configures each other as its target, the two TCP connections will be created, causing confusion in server exchange:</p>
+</div>
+<p>This configuration system allows to scale an existing system horizontaly without having to restart server already running. Indeed, the first server started can configure its incoming server port (<em>servers.port</em>) and no target, and a new server can come to extend the system in putting the address of the first server in its <em>servers.targets</em> configuration.</p>
+<p>Of course, complex configurations are possible, with multiple server (and properties individual by server, see <em>Configurations</em> part of <cite>Installation &lt;./installation.html&gt;</cite> page):</p>
+<div class="highlight-ini"><div class="highlight"><pre><span class="c1">;MonaServer.ini</span>
+<span class="na">publicAddress</span> <span class="o">=</span> <span class="s">www.myhost.com:1935</span>
+<span class="k">[servers]</span>
+<span class="na">targets</span> <span class="o">=</span> <span class="s">192.168.0.2:1936?type=master;192.168.0.3:1936</span>
+</pre></div>
+</div>
+<div class="highlight-lua"><div class="highlight"><pre><span class="k">function</span> <span class="nf">onServerConnection</span><span class="p">(</span><span class="n">server</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">server</span><span class="p">.</span><span class="n">type</span><span class="o">==</span><span class="s2">&quot;</span><span class="s">master&quot;</span> <span class="k">then</span> <span class="c1">-- true here just for 192.168.0.2:1936 server</span>
+                <span class="n">NOTE</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">Master server connected&quot;</span><span class="p">)</span>
+        <span class="k">end</span>
+<span class="k">end</span>
+<span class="k">function</span> <span class="nf">onServerDisconnection</span><span class="p">(</span><span class="n">server</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">server</span><span class="p">.</span><span class="n">type</span><span class="o">==</span><span class="s2">&quot;</span><span class="s">master&quot;</span> <span class="k">then</span> <span class="c1">-- true here just for 192.168.0.2:1936 server</span>
+                <span class="n">NOTE</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">Master server disconnected&quot;</span><span class="p">)</span>
+        <span class="k">end</span>
+<span class="k">end</span>
+</pre></div>
+</div>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">The server applications which have the same path (<em>www/myGame</em> on server A and on server B) are synchronized but reloaded always just on connection client. It means that if you edit the file <em>www/myGame/main.lua</em> on the server A, it rebuilds the server A version on new connection client, and tries to rebuild the server B version too (of course reloading is effective just if the server B version has changed too). But if you edit the server B version and that clients are always connected by the server A intermediate, you have to edit the server A version too to get a refresh of the server B application on connection client.</p>
+</div>
+</div>
+<div class="section" id="exchange-data-and-resources">
+<h2><a class="toc-backref" href="#id3">Exchange data and resources</a><a class="headerlink" href="#exchange-data-and-resources" title="Permalink to this headline">¶</a></h2>
+<p>To exchange data between servers you have to call the <em>server:send</em> method on sender side (see <em>server</em> object description on <cite>Server Application, API &lt;./api.html&gt;</cite>) and you have to define RPC server functions as a member of server object on the receiver side:</p>
+<div class="highlight-lua"><div class="highlight"><pre><span class="k">function</span> <span class="nf">onServerConnection</span><span class="p">(</span><span class="n">server</span><span class="p">)</span>
+        <span class="c1">-- RPC function declaration, to receive data from one other server</span>
+        <span class="k">function</span> <span class="nf">server</span><span class="p">:</span><span class="n">onHello</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+                <span class="n">self</span><span class="p">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="k">end</span>
+        <span class="c1">-- send my name to the incoming server (it will receive it on its &quot;onHello&quot; method)</span>
+        <span class="n">server</span><span class="p">:</span><span class="n">send</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">onHello&quot;</span><span class="p">,</span><span class="s2">&quot;</span><span class="s">MonaServer A&quot;</span><span class="p">)</span>
+<span class="k">end</span>
+
+<span class="c1">-- now you can find the name of each server everywhere</span>
+<span class="k">for</span> <span class="n">index</span><span class="p">,</span><span class="n">server</span> <span class="k">in</span> <span class="n">mona</span><span class="p">.</span><span class="n">servers</span><span class="p">:</span><span class="nb">ipairs</span><span class="p">()</span> <span class="k">do</span>
+        <span class="n">NOTE</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">Server &#39;&quot;</span><span class="o">..</span><span class="n">server</span><span class="p">.</span><span class="n">name</span><span class="o">..</span><span class="s2">&quot;</span><span class="s">&#39; at address &quot;</span><span class="o">..</span><span class="n">server</span><span class="p">.</span><span class="n">address</span><span class="p">)</span>
+<span class="k">end</span>
+</pre></div>
+</div>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last"><em>self.name = name</em> in the function body of <em>onHello</em> creates on the <em>server</em> object a <em>name</em> value. Beware with this kind of thing on <em>server</em> object, it&#8217;s shared with all other <cite>Server Application &lt;./serveapp.html&gt;</cite>. If one other server application attachs too a <em>name</em> value to this <em>server</em> object, it will overload the previous assignment. A solution can be to prefix the property by the name of the current application.</p>
+</div>
+<p>The main goal of this exchange mechanism is to share resource wanted between all the server instances.
+For example, if you use Mona to stream (by server bypass configuration, no P2P) to many subscribers, usually there are a small number of publishers and a very important number of subscribers. The server can support the publisher load, but could be saturated by the important number of listeners.
+One solution in this model case is to scale horizontaly the system to share the subscribers load.</p>
+<p>Here we have a configuration with three servers, but a fourth server could be added dynamically. The load-balacing system can be managed by a DNS way, but we have to share the publications between all three (or four) servers, otherwise one subscriber could not find one publication. Below following a complete <cite>Server Application &lt;./serveapp.html&gt;</cite> to share publications between all the servers.</p>
+<div class="highlight-lua"><div class="highlight"><pre><span class="c1">-- following server (horizontal scaling)</span>
+<span class="n">_server</span> <span class="o">=</span> <span class="kc">nil</span>
+
+<span class="c1">-- number of subscribers (listeners) for this server</span>
+<span class="n">_subscribers</span> <span class="o">=</span> <span class="mi">0</span>
+
+<span class="k">function</span> <span class="nf">onServerConnection</span><span class="p">(</span><span class="n">server</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">server</span><span class="p">.</span><span class="n">isTarget</span> <span class="k">then</span>
+                <span class="c1">-- incoming server is a following server!</span>
+                <span class="k">if</span> <span class="n">_server</span> <span class="k">then</span> <span class="nb">error</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">following server already connected&quot;</span><span class="p">)</span> <span class="k">end</span>
+                <span class="n">_server</span> <span class="o">=</span> <span class="n">server</span>
+                <span class="c1">-- informs the following server about my publications</span>
+                <span class="k">for</span> <span class="n">id</span><span class="p">,</span><span class="n">publication</span> <span class="k">in</span> <span class="n">mona</span><span class="p">.</span><span class="n">publications</span><span class="p">:</span><span class="nb">pairs</span><span class="p">()</span> <span class="k">do</span>
+                        <span class="n">_server</span><span class="p">:</span><span class="n">send</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">publish&quot;</span><span class="p">,</span><span class="n">publication</span><span class="p">.</span><span class="n">name</span><span class="p">)</span>
+                <span class="k">end</span>
+        <span class="k">else</span>
+                <span class="c1">-- incoming server is a previous server, we have to create RPC function to receive</span>
+                <span class="c1">-- its publication informations</span>
+                <span class="n">server</span><span class="p">.</span><span class="n">publications</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="k">function</span> <span class="nf">server</span><span class="p">:</span><span class="n">publish</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+                        <span class="c1">-- publication creation</span>
+                        <span class="n">self</span><span class="p">.</span><span class="n">publications</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">mona</span><span class="p">:</span><span class="n">publish</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+                <span class="k">end</span>
+                <span class="k">function</span> <span class="nf">server</span><span class="p">:</span><span class="n">unpublish</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+                        <span class="c1">-- publication suppression</span>
+                        <span class="kd">local</span> <span class="n">publication</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">publications</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+                        <span class="k">if</span> <span class="n">publication</span> <span class="k">then</span> <span class="n">publication</span><span class="p">:</span><span class="n">close</span><span class="p">()</span> <span class="k">end</span>
+                        <span class="n">self</span><span class="p">.</span><span class="n">publications</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="kc">nil</span>
+                <span class="k">end</span>
+                <span class="k">function</span> <span class="nf">server</span><span class="p">:</span><span class="n">video</span><span class="p">(</span><span class="n">name</span><span class="p">,</span><span class="n">time</span><span class="p">,</span><span class="n">packet</span><span class="p">)</span>
+                        <span class="kd">local</span> <span class="n">publication</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">publications</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+                        <span class="c1">-- give the video packet to our publication copy</span>
+                        <span class="k">if</span> <span class="n">publication</span> <span class="k">then</span> <span class="n">publication</span><span class="p">:</span><span class="n">pushVideoPacket</span><span class="p">(</span><span class="n">time</span><span class="p">,</span><span class="n">packet</span><span class="p">)</span> <span class="k">end</span>
+                <span class="k">end</span>
+                <span class="k">function</span> <span class="nf">server</span><span class="p">:</span><span class="n">audio</span><span class="p">(</span><span class="n">name</span><span class="p">,</span><span class="n">time</span><span class="p">,</span><span class="n">packet</span><span class="p">)</span>
+                        <span class="kd">local</span> <span class="n">publication</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">publications</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+                        <span class="c1">-- give the audio packet to our publication copy</span>
+                        <span class="k">if</span> <span class="n">publication</span> <span class="k">then</span> <span class="n">publication</span><span class="p">:</span><span class="n">pushVideoPacket</span><span class="p">(</span><span class="n">time</span><span class="p">,</span><span class="n">packet</span><span class="p">)</span> <span class="k">end</span>
+                <span class="k">end</span>
+                <span class="k">function</span> <span class="nf">server</span><span class="p">:</span><span class="n">data</span><span class="p">(</span><span class="n">name</span><span class="p">,</span><span class="n">time</span><span class="p">,</span><span class="n">packet</span><span class="p">)</span>
+                        <span class="kd">local</span> <span class="n">publication</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">publications</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+                        <span class="c1">-- give the data packet to our publication copy</span>
+                        <span class="k">if</span> <span class="n">publication</span> <span class="k">then</span> <span class="n">publication</span><span class="p">:</span><span class="n">pushVideoPacket</span><span class="p">(</span><span class="n">time</span><span class="p">,</span><span class="n">packet</span><span class="p">)</span> <span class="k">end</span>
+                <span class="k">end</span>
+        <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">function</span> <span class="nf">onServerDisconnection</span><span class="p">(</span><span class="n">server</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">server</span><span class="p">.</span><span class="n">isTarget</span> <span class="k">then</span>
+                <span class="c1">-- disconnected server was a following server!</span>
+                <span class="n">_server</span> <span class="o">=</span> <span class="kc">nil</span>
+                <span class="k">return</span>
+        <span class="k">end</span>
+        <span class="c1">-- disconnected server was a previous server, close its publications</span>
+        <span class="k">for</span> <span class="n">id</span><span class="p">,</span><span class="n">publication</span> <span class="k">in</span> <span class="n">server</span><span class="p">.</span><span class="n">publications</span> <span class="k">do</span>
+                <span class="n">publication</span><span class="p">:</span><span class="n">close</span><span class="p">()</span>
+        <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">function</span> <span class="nf">onPublish</span><span class="p">(</span><span class="n">client</span><span class="p">,</span><span class="n">publication</span><span class="p">)</span>
+        <span class="c1">-- informs the following server about this publication</span>
+        <span class="k">if</span> <span class="n">_server</span> <span class="k">then</span> <span class="n">_server</span><span class="p">:</span><span class="n">send</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">publish&quot;</span><span class="p">,</span><span class="n">publication</span><span class="p">.</span><span class="n">name</span><span class="p">)</span> <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">function</span> <span class="nf">onUnpublish</span><span class="p">(</span><span class="n">client</span><span class="p">,</span><span class="n">publication</span><span class="p">)</span>
+        <span class="c1">-- informs the following server about this unpublication</span>
+        <span class="k">if</span> <span class="n">_server</span> <span class="k">then</span> <span class="n">_server</span><span class="p">:</span><span class="n">send</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">unpublish&quot;</span><span class="p">,</span><span class="n">publication</span><span class="p">.</span><span class="n">name</span><span class="p">)</span> <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">function</span> <span class="nf">onSubscribe</span><span class="p">(</span><span class="n">client</span><span class="p">,</span><span class="n">listener</span><span class="p">)</span>
+        <span class="c1">-- if a following server exist, and if this server has more than 400 subscribers</span>
+        <span class="c1">-- redirect the client to the following server:</span>
+        <span class="c1">-- I send an error with the redirection server address in its description</span>
+        <span class="k">if</span> <span class="n">_server</span> <span class="ow">and</span> <span class="n">_subscribers</span><span class="o">&gt;=</span><span class="mi">400</span> <span class="k">then</span> <span class="nb">error</span><span class="p">(</span><span class="n">_server</span><span class="p">.</span><span class="n">publicAddress</span><span class="p">)</span> <span class="k">end</span>
+        <span class="n">_subscribers</span> <span class="o">=</span> <span class="n">_subscribers</span> <span class="o">+</span> <span class="mi">1</span>
+<span class="k">end</span>
+
+<span class="k">function</span> <span class="nf">onUnsubscribe</span><span class="p">(</span><span class="n">client</span><span class="p">,</span><span class="n">listener</span><span class="p">)</span>
+        <span class="n">_subscribers</span> <span class="o">=</span> <span class="n">_subscribers</span> <span class="o">-</span> <span class="mi">1</span>
+<span class="k">end</span>
+
+<span class="k">function</span> <span class="nf">onVideoPacket</span><span class="p">(</span><span class="n">client</span><span class="p">,</span><span class="n">publication</span><span class="p">,</span><span class="n">time</span><span class="p">,</span><span class="n">packet</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">_server</span> <span class="k">then</span> <span class="k">return</span> <span class="k">end</span>
+        <span class="c1">-- forward the video packet to the following server</span>
+        <span class="n">_server</span><span class="p">:</span><span class="n">send</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">video&quot;</span><span class="p">,</span><span class="n">publication</span><span class="p">.</span><span class="n">name</span><span class="p">,</span><span class="n">time</span><span class="p">,</span><span class="n">packet</span><span class="p">)</span>
+<span class="k">end</span>
+
+<span class="k">function</span> <span class="nf">onAudioPacket</span><span class="p">(</span><span class="n">client</span><span class="p">,</span><span class="n">publication</span><span class="p">,</span><span class="n">time</span><span class="p">,</span><span class="n">packet</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">_server</span> <span class="k">then</span> <span class="k">return</span> <span class="k">end</span>
+        <span class="c1">-- forward the audio packet to the following server</span>
+        <span class="n">_server</span><span class="p">:</span><span class="n">send</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">audio&quot;</span><span class="p">,</span><span class="n">publication</span><span class="p">.</span><span class="n">name</span><span class="p">,</span><span class="n">time</span><span class="p">,</span><span class="n">packet</span><span class="p">)</span>
+<span class="k">end</span>
+
+<span class="k">function</span> <span class="nf">onDataPacket</span><span class="p">(</span><span class="n">client</span><span class="p">,</span><span class="n">publication</span><span class="p">,</span><span class="n">name</span><span class="p">,</span><span class="n">packet</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">_server</span> <span class="k">then</span> <span class="k">return</span> <span class="k">end</span>
+        <span class="c1">-- forward the data packet to the following server</span>
+        <span class="n">_server</span><span class="p">:</span><span class="n">send</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">data&quot;</span><span class="p">,</span><span class="n">publication</span><span class="p">.</span><span class="n">name</span><span class="p">,</span><span class="n">time</span><span class="p">,</span><span class="n">packet</span><span class="p">)</span>
+<span class="k">end</span>
+</pre></div>
+</div>
+<p>The line <em>if _server and _subscribers&gt;=400 then error(_server.publicAddress) end</em> requires a specific client code to work, to redirect as wanted the new subscriber to the new server :</p>
+<div class="highlight-as3"><div class="highlight"><pre><span class="kd">function </span><span class="nf">onStatusEvent</span><span class="o">(</span><span class="n">event</span><span class="o">:</span><span class="kt">NetStatusEvent</span><span class="o">):</span><span class="kt">void</span> <span class="o">{</span>
+  <span class="k">switch</span><span class="o">(</span><span class="n">event</span><span class="o">.</span><span class="na">info</span><span class="o">.</span><span class="na">code</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">case</span> <span class="s2">&quot;NetStream.Play.Failed&quot;</span><span class="o">:</span>
+    <span class="n">_netConnection</span><span class="o">.</span><span class="na">close</span><span class="o">()</span>
+    <span class="n">_netConnection</span><span class="o">.</span><span class="na">connect</span><span class="o">(</span><span class="n">event</span><span class="o">.</span><span class="na">info</span><span class="o">.</span><span class="na">description</span><span class="o">);</span> <span class="c1">// error desciption contains the redirection server address</span>
+    <span class="k">break</span><span class="o">;</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="load-balancing-and-rendezvous-service">
+<h2><a class="toc-backref" href="#id4">Load balancing and rendezvous service</a><a class="headerlink" href="#load-balancing-and-rendezvous-service" title="Permalink to this headline">¶</a></h2>
+<p>In a load-balacing solution, usually we opt for hardware solution with a DNS which returns an address ip rotated on a list of addresses. You can realize it in a software way in using the <em>onHandshake</em> event (see <cite>Server Application, API &lt;./api.html&gt;</cite> page for complete details on this event):</p>
+<div class="highlight-lua"><div class="highlight"><pre><span class="c1">-- index incremented to redirect client equally to each server</span>
+<span class="n">index</span><span class="o">=</span><span class="mi">0</span>
+<span class="k">function</span> <span class="nf">onHandshake</span><span class="p">(</span><span class="n">address</span><span class="p">,</span><span class="n">path</span><span class="p">,</span><span class="n">properties</span><span class="p">,</span><span class="n">attempts</span><span class="p">)</span>
+        <span class="n">index</span><span class="o">=</span><span class="n">index</span><span class="o">+</span><span class="mi">1</span>
+        <span class="k">if</span> <span class="n">index</span> <span class="o">&gt;</span> <span class="n">mona</span><span class="p">.</span><span class="n">servers</span><span class="p">.</span><span class="n">count</span> <span class="k">then</span> <span class="n">index</span><span class="o">=</span><span class="mi">1</span> <span class="k">end</span> <span class="c1">-- not exceed the number of server available</span>
+        <span class="k">return</span> <span class="n">mona</span><span class="p">.</span><span class="n">servers</span><span class="p">(</span><span class="n">index</span><span class="p">)</span> <span class="c1">-- load-balacing system!</span>
+<span class="k">end</span>
+</pre></div>
+</div>
+<p>Here the server doesn&#8217;t accept any connection client, it redirects the cleint in handshake performing. There is no real benefits comparing with a hardware solution.
+An other possibility is of returning many server addresses to benefit of parallel connection behavior of RTMFP protocol.</p>
+<div class="highlight-lua"><div class="highlight"><pre><span class="k">function</span> <span class="nf">onHandshake</span><span class="p">(</span><span class="n">address</span><span class="p">,</span><span class="n">path</span><span class="p">,</span><span class="n">properties</span><span class="p">,</span><span class="n">attempts</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">mona</span><span class="p">.</span><span class="n">servers</span>
+<span class="k">end</span>
+</pre></div>
+</div>
+<p>Indeed, the client will receive multiple server addresses, and in this case, RTMFP starts multiple connection attempt in parallel, and keep only the faster to answer. It&#8217;s an other way of load-balacing system: the more faster wins.</p>
+<p>About the P2P rendezvous service of Mona, in a multiple servers way, if the peerA connected to MonaServerA requests a connection to the peerB connected to MonaServerB, of course MonaServerA will be unable to return information about peerB. We have to use the <em>onRendezVousUnknown</em> event (see <cite>Server Application, API &lt;./api.html&gt;</cite> page for complete details on this event):</p>
+<div class="highlight-lua"><div class="highlight"><pre><span class="k">function</span> <span class="nf">onRendezVousUnknown</span><span class="p">(</span><span class="n">peerId</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">mona</span><span class="p">.</span><span class="n">servers</span> <span class="c1">-- redirect to all the connected servers</span>
+<span class="k">end</span>
+</pre></div>
+</div>
+<p>With the above code addition, you can redirect a rendezvous request which fails to other servers.</p>
+<p>But it&#8217;s always missing a solution to synchronize member of groups in <a class="reference external" href="http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/net/NetGroup.html">NetGroup</a> usage case. Indeed, a groupA can exists on serverA and contains peerA, and the same groupA can exists on serverB too and contains peerB. peerB and peerA will never meet them. To solve it, you have to use <em>groups:join</em> method (see <em>groups</em> object description on <cite>Server Application, API &lt;./api.html&gt;</cite> page for complete description of this method).
+The idea is simple: you have to share every group inclusion informations between all servers. The following server application code realizes this sharing job:</p>
+<div class="highlight-lua"><div class="highlight"><pre><span class="k">function</span> <span class="nf">onRendezVousUnknown</span><span class="p">(</span><span class="n">peerId</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">mona</span><span class="p">.</span><span class="n">servers</span> <span class="c1">-- redirect to all the connected servers</span>
+<span class="k">end</span>
+
+<span class="k">function</span> <span class="nf">onJoinGroup</span><span class="p">(</span><span class="n">client</span><span class="p">,</span><span class="n">group</span><span class="p">)</span>
+        <span class="c1">-- inform other servers of this joining operation</span>
+        <span class="n">mona</span><span class="p">.</span><span class="n">servers</span><span class="p">:</span><span class="n">broadcast</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">join&quot;</span><span class="p">,</span><span class="n">group</span><span class="p">.</span><span class="n">rawId</span><span class="p">,</span><span class="n">client</span><span class="p">.</span><span class="n">rawId</span><span class="p">)</span>
+<span class="k">end</span>
+
+<span class="k">function</span> <span class="nf">onUnjoinGroup</span><span class="p">(</span><span class="n">client</span><span class="p">,</span><span class="n">group</span><span class="p">)</span>
+        <span class="c1">-- inform other servers of this unjoining operation</span>
+        <span class="n">mona</span><span class="p">.</span><span class="n">servers</span><span class="p">:</span><span class="n">broadcast</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">unjoin&quot;</span><span class="p">,</span><span class="n">group</span><span class="p">.</span><span class="n">rawId</span><span class="p">,</span><span class="n">client</span><span class="p">.</span><span class="n">rawId</span><span class="p">)</span>
+<span class="k">end</span>
+
+<span class="k">function</span> <span class="nf">onServerConnection</span><span class="p">(</span><span class="n">server</span><span class="p">)</span>
+        <span class="c1">-- inform this new incoming server of my group/client relations existing</span>
+        <span class="k">for</span> <span class="n">id</span><span class="p">,</span><span class="n">group</span> <span class="k">in</span> <span class="n">mona</span><span class="p">.</span><span class="n">groups</span><span class="p">:</span><span class="nb">pairs</span><span class="p">()</span> <span class="k">do</span>
+                <span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">client</span> <span class="k">in</span> <span class="n">mona</span><span class="p">.</span><span class="n">groups</span><span class="p">:</span><span class="nb">ipairs</span><span class="p">()</span> <span class="k">do</span>
+                        <span class="n">server</span><span class="p">:</span><span class="n">send</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">join&quot;</span><span class="p">,</span><span class="n">group</span><span class="p">.</span><span class="n">rawId</span><span class="p">,</span><span class="n">client</span><span class="p">.</span><span class="n">rawId</span><span class="p">)</span>
+                <span class="k">end</span>
+        <span class="k">end</span>
+
+        <span class="n">server</span><span class="p">.</span><span class="n">groups</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="c1">-- RPC server functions to receive joining/unjoining operation</span>
+        <span class="k">function</span> <span class="nf">server</span><span class="p">:</span><span class="n">join</span><span class="p">(</span><span class="n">groupId</span><span class="p">,</span><span class="n">clientId</span><span class="p">)</span>
+                <span class="c1">-- creation of a virtual member for this group</span>
+                <span class="kd">local</span> <span class="n">member</span> <span class="o">=</span> <span class="n">mona</span><span class="p">:</span><span class="n">join</span><span class="p">(</span><span class="n">groupId</span><span class="p">,</span><span class="n">clientId</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">member</span> <span class="k">then</span> <span class="k">return</span> <span class="k">end</span> <span class="c1">-- join operation has failed</span>
+                <span class="c1">-- We have to attach this member object to its server</span>
+                <span class="c1">-- to avoid its destruction by the LUA garbage collector</span>
+                <span class="kd">local</span> <span class="n">group</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">groups</span><span class="p">[</span><span class="n">groupId</span><span class="p">]</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">group</span> <span class="k">then</span> <span class="n">self</span><span class="p">.</span><span class="n">groups</span><span class="p">[</span><span class="n">groupId</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="n">size</span><span class="o">=</span><span class="mi">0</span><span class="p">}</span> <span class="k">end</span>
+                <span class="n">group</span><span class="p">.</span><span class="n">size</span> <span class="o">=</span> <span class="n">group</span><span class="p">.</span><span class="n">size</span> <span class="o">+</span> <span class="mi">1</span>
+                <span class="n">group</span><span class="p">[</span><span class="n">clientId</span><span class="p">]</span> <span class="o">=</span> <span class="n">member</span>
+        <span class="k">end</span>
+        <span class="k">function</span> <span class="nf">server</span><span class="p">:</span><span class="n">unjoin</span><span class="p">(</span><span class="n">groupId</span><span class="p">,</span><span class="n">clientId</span><span class="p">)</span>
+                <span class="c1">-- suppression of a possible virtual member of group</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">group</span> <span class="k">then</span> <span class="k">return</span> <span class="k">end</span>
+                <span class="kd">local</span> <span class="n">member</span> <span class="o">=</span> <span class="n">group</span><span class="p">[</span><span class="n">clientId</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">member</span> <span class="k">then</span>
+                        <span class="n">member</span><span class="p">:</span><span class="n">release</span><span class="p">()</span> <span class="c1">-- detach of its group</span>
+                        <span class="n">group</span><span class="p">[</span><span class="n">clientId</span><span class="p">]</span> <span class="o">=</span> <span class="kc">nil</span>
+                        <span class="n">group</span><span class="p">.</span><span class="n">size</span> <span class="o">=</span> <span class="n">group</span><span class="p">.</span><span class="n">size</span> <span class="o">-</span> <span class="mi">1</span>
+                <span class="k">end</span>
+                <span class="c1">-- erase the group object if it&#39;s empty now</span>
+                <span class="k">if</span> <span class="n">group</span><span class="p">.</span><span class="n">size</span><span class="o">==</span><span class="mi">0</span> <span class="k">then</span> <span class="n">self</span><span class="p">.</span><span class="n">groups</span><span class="p">[</span><span class="n">groupId</span><span class="p">]</span><span class="o">=</span><span class="kc">nil</span> <span class="k">end</span>
+        <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">function</span> <span class="nf">onServerDisconnection</span><span class="p">(</span><span class="n">server</span><span class="p">)</span>
+        <span class="c1">-- suppression of possible virtual members attached to this server</span>
+        <span class="k">for</span> <span class="n">id</span><span class="p">,</span><span class="n">group</span> <span class="k">in</span> <span class="nb">pairs</span><span class="p">(</span><span class="n">server</span><span class="p">.</span><span class="n">groups</span><span class="p">)</span> <span class="k">do</span>
+                <span class="k">for</span> <span class="n">id</span><span class="p">,</span><span class="n">member</span> <span class="k">in</span> <span class="nb">pairs</span><span class="p">(</span><span class="n">group</span><span class="p">)</span> <span class="k">do</span>
+                        <span class="k">if</span> <span class="n">id</span> <span class="o">~=</span> <span class="s2">&quot;</span><span class="s">size&quot;</span> <span class="k">then</span> <span class="n">member</span><span class="p">:</span><span class="n">release</span><span class="p">()</span> <span class="k">end</span>
+                <span class="k">end</span>
+        <span class="k">end</span>
+<span class="k">end</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2013, Mathieu Poux &amp; Thomas Jammet.<br/>
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b2.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

@@ -11,11 +11,12 @@ Mona starts with the idea that protocols essentially serve the same aims :
 
 And with this objective we are proud to give you a generic alternative to existing communication servers with :
  - The powerful **luajit** compiler combined in a useful lua API to write server applications,
- - An ingenious nosql database management system,
+ - An ingenious **NoSQL** database management system,
+ - The mighty protocol **RTMFP** which provide P2P channels, UDP reliable and non-reliable communication and many other great features,
  - And all of this developed keeping in mind the 5 following notions: speed, light weight, cross-platform, scalable and elegant **C++11** code.
 
 For now we have already included several protocols :
- - **RTMFP**, **RTMP**, **RTMPE**
+ - **RTMFP**, **RTMP**, **RTMPE**,
  - **HTTP** (and Web Services), **Websocket**.
 
 And we expect to add many others like **WebRTC**, **HLS**, **IPTV**. But remember that our development is open source so contribution is really appreciated (paypal link).
@@ -28,5 +29,9 @@ Mona project is under GPL license, please contact us for commercial licence at m
   :maxdepth: 1
   
   samples
-  api
+  installation
   serverapp
+  scalability
+  serversocket
+  api
+  faq

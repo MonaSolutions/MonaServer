@@ -2,23 +2,23 @@
 Server Application
 ##############################
 
-CumulusServer includes a powerfull script-engine (using LUA_ langage) to create your own server applications. It allows to extend Cumulus behavior to add your specific needs in a flexible scripting-way.
+MonaServer includes a powerfull script-engine (using LUA_ langage) to create your own server applications. It allows to extend Mona behavior to add your specific needs in a flexible scripting-way.
 
 .. contents:: Table of Contents
 
 Create a server application
 ******************************
 
-On start, Cumulus creates a *www* folder in its root directory if it doesn't exist already. In this space, you can create subfolders, each one of them describes one server application. When a client connects to CumulusServer, the URL path relates the application to use.
-For example, the address *rtmfp://host:port/myApplication* search its corresponding application in *CumulusServer/www/myApplication* folder. First time CumulusServer builds and executes the file *main.lua* presents in this folder. Then, on new comer, the application already built is executed, unless *main.lua* file has been modified since the last time. Indeed when you edit *main.lua* file, the corresponding application is rebuilt in a dynamic way, without having to restart the server.
+On start, Mona creates a *www* folder in its root directory if it doesn't exist already. In this space, you can create subfolders, each one of them describes one server application. When a client connects to MonaServer, the URL path relates the application to use.
+For example, the address *rtmfp://host:port/myApplication* search its corresponding application in *MonaServer/www/myApplication* folder. First time MonaServer builds and executes the file *main.lua* presents in this folder. Then, on new comer, the application already built is executed, unless *main.lua* file has been modified since the last time. Indeed when you edit *main.lua* file, the corresponding application is rebuilt in a dynamic way, without having to restart the server.
 
 .. code-block:: text
 
-	rtmfp://host:port/                   ->     CumulusServer/www/main.lua (root application)
-	rtmfp://host:port/myApplication      ->     CumulusServer/www/myApplication/main.lua
-	rtmfp://host:port/Games/myGame       ->     CumulusServer/www/Games/myGame/main.lua
+	rtmfp://host:port/                   ->     MonaServer/www/main.lua (root application)
+	rtmfp://host:port/myApplication      ->     MonaServer/www/myApplication/main.lua
+	rtmfp://host:port/Games/myGame       ->     MonaServer/www/Games/myGame/main.lua
 
-.. note:: The root application is built and started on CumulusServer start, whereas other server applications are started on first client connection.
+.. note:: The root application is built and started on MonaServer start, whereas other server applications are started on first client connection.
 
 Each application is identified by its *path*, which is exactly the *path* part of the RTMFP URL connection. In the example above, *root application* has an empty string for path, then the both others have respectively */myApplication* and */Games/myGame* for *path* values.
 
@@ -37,11 +37,11 @@ Here a very simple first server application:
 Global configurations
 ******************************
 
-*CumulusServer.ini* file allows to give some global configuration values on CumulusServer start-up (see [[Installation]] page). To access for these values from script, use *cumulus.configs* property (see *cumulus* object description in [[Server Application, API]] page to get more details). This system allows to create your own global configuration values and access for them in scripts.
+*MonaServer.ini* file allows to give some global configuration values on MonaServer start-up (see `Installation <./installation.html>` page). To access for these values from script, use *mona.configs* property (see *Mona* object description in `Server Application, API <./api.html>` page to get more details). This system allows to create your own global configuration values and access for them in scripts.
 
 .. code-block:: ini
 
-	; CumulusServer.ini file
+	; MonaServer.ini file
 	port=19350 ; existing config
 	; New custom config
 	[myGroup]
@@ -51,8 +51,8 @@ Global configurations
 .. code-block:: lua
 
 	-- A script file
-	print(cumulus.configs.port) -- displays "19350"
-	print(cumulus.configs.myGroup.myConfig) -- displays "test"
+	print(mona.configs.port) -- displays "19350"
+	print(mona.configs.myGroup.myConfig) -- displays "test"
 
 
 Communication between server applications
@@ -116,7 +116,7 @@ On variable overloading (or function overloading), you can always access for the
 	www:hello() -- displays "I am the root application"
 
 
-.. warning:: Events are functions called by the system (see *Events* part of [[Server Application, API]] page), if an application don't definites *onConnection* event for example, on new client connection for this application, it's the parent application which will receive the event. To avoid it, you have to overload the event in child application, and you can call also the parent version if need.
+.. warning:: Events are functions called by the system (see *Events* part of `Server Application, API <./api.html>` page), if an application don't definites *onConnection* event for example, on new client connection for this application, it's the parent application which will receive the event. To avoid it, you have to overload the event in child application, and you can call also the parent version if need.
 
 .. code-block:: lua
 
@@ -135,7 +135,7 @@ On variable overloading (or function overloading), you can always access for the
 		return super:onConnection(client,...)
 	end
 
-You can use *client.path* property to check if it's a client connected for this application or for one child application (see [[Server Application, API]] page for more details on *client* object description).
+You can use *client.path* property to check if it's a client connected for this application or for one child application (see `Server Application, API <./api.html>` page for more details on *client* object description).
 
 
 Exchange between unrelated server applications
@@ -208,7 +208,7 @@ Note that returned result of the scripting function is a writing shortcut for:
 .. code-block:: lua
 
 	function client:test(name,firstname)
-		client.writer:writeAMFResult("Hello "..firstname.." "..name)
+		client.writer:writeMessage("Hello "..firstname.." "..name)
 	end
 
 The both make exactly the same thing.
@@ -239,18 +239,33 @@ If the function is not available on the *client* object, it returns a *NetConnec
 Push data
 =======================================
 
-Push data mechanism is also possible in using *client.writer* object.
+Push data mechanism is also possible with Websocket and Flash using *client.writer* object.
 
 .. code-block:: lua
 
-	client.writer:writeAMFMessage("onPushData","Application","Test")
+	client.writer:writeInvocation("onPushData","Rambo","John")
 
 .. code-block:: as3
 
 	function onPushData(name:String,firstName:String):void {
 	}
+  
+.. code-block:: js
 
-Here an example of push data every two seconds (see *Events* part of [[Server Application, API]] page for *onManage* event description):
+  socket.onmessage = onMessage;
+  ...
+  function onMessage(msg){
+    var response = JSON.parse(msg.data);
+    if (response[0] == "onPushData") {
+      name = response[1]
+      firstName = response[2]
+      ...
+    }
+  }
+
+.. note:: Push data is not possible with HTTP protocol because it is an old protocol based on pull data only. Long polling is a solution for this but is not implemented yet.
+
+Here an example of push data every two seconds (see *Events* part of `Server Application, API <./api.html>` page for *onManage* event description):
 
 .. code-block:: lua
 
@@ -263,7 +278,7 @@ Here an example of push data every two seconds (see *Events* part of [[Server Ap
 	end
 	function onManage()
 		for client,writer in pairs(writers) do
-			writer:writeAMFMessage("refresh")
+			writer:writeInvocation("refresh")
 		end
 	end
 
@@ -285,7 +300,7 @@ When you want push a constant flow with a large amount of data, or if you want t
 	end
 	function onManage()
 		for client,writer in pairs(writers) do
-			writer:writeAMFMessage("refresh")
+			writer:writeInvocation("refresh")
 		end
 	end
 
@@ -293,14 +308,14 @@ When you want push a constant flow with a large amount of data, or if you want t
 
 	function refresh():void {...}
 
-When you create your own flowWriter, you can overload its *onManage* function, allowing you to write the same thing in a more elegant way, which avoid here *writers* table usage, and make the code really more short (see *Objects* part of [[Server Application, API]] page for more details).
+When you create your own flowWriter, you can overload its *onManage* function, allowing you to write the same thing in a more elegant way, which avoid here *writers* table usage, and make the code really more short (see *Objects* part of `Server Application, API <./api.html>` page for more details).
 
 .. code-block:: lua
 
 	function onConnection(client,...)
 		writer = client.writer:newFlowWriter()
 		function writer:onManage()
-			self:writeAMFMessage("refresh")
+			self:writeInvocation("refresh")
 		end
 	end
 
@@ -308,15 +323,19 @@ When you create your own flowWriter, you can overload its *onManage* function, a
 
 	function refresh():void {...}
 
-If you have need of pushing rate greater than two seconds, use *onRealTime* event of root application (see *Events* part of [[Server Application, API]] page for more details).
+If you have need of pushing rate greater than two seconds, use *onRealTime* event of root application (see *Events* part of `Server Application, API <./api.html>` page for more details).
 
-AMF and LUA types conversion
+LUA types conversions
 *****************************************
 
-A conversion between AMF and LUA_ types allows to read AMF data from client, and write AMF data to client.
+Several types are supported for messages received by server or sended to clients :
+ - AMF (for flash clients),
+ - JSON,
+ - XML,
+ - and raw data (obviously it does not needs conversion).
 
 
-Complex types
+AMF to LUA conversions
 =========================================
 
 Primitive conversion types are easy and intuitive (Number, Boolean, String). Except these primitive types, in LUA_ all is table. Concerning AMF complex type conversions, things go as following:
@@ -331,15 +350,15 @@ Primitive conversion types are easy and intuitive (Number, Boolean, String). Exc
 
 	-- LUA table mixed                       // AMF Array associative
 	{x=10,y=10,100,100}                      var mixed:Array = new Array(10,10,100,100);
-						 mixed["x"] = 10;  mixed["y"] = 10;
+                                            mixed["x"] = 10;  mixed["y"] = 10;
 
 	-- LUA table formatted in Dictionary     // AMF Dictionary
 	{10="test","test"=10,__size=2}           var dic:Dictionary = new Dictionary();
-						 dic[10] = "test";  dic["test"] = 10;
+                                            dic[10] = "test";  dic["test"] = 10;
 
 	-- LUA table formatted in ByteArray      // AMF ByteArray
 	{__raw="rawdata"}                        var data:ByteArray = new ByteArray();
-						 data.writeUTFBytes("rawdata");
+                                            data.writeUTFBytes("rawdata");
 
 	-- LUA Table formatted in date           // AMF Date
 	{year=1998,month=9,day=16,yday=259,      new Date(905989690435)
@@ -353,12 +372,44 @@ On a LUA_ to AMF conversion, priortiy conversion order works as following:
 1. If the LUA table given contains the property *__time*, it's converted to a Date AMF object.
 1. Otherwise it chooses the more adapted conversion (Object, Array, or Array associative).
 
-About *__time* property on a date object, it's the the number of milliseconds elapsed since midnight UTC of January 1 1970 ([Unix time](http://en.wikipedia.org/wiki/Unix_time)).
+About *__time* property on a date object, it's the the number of milliseconds elapsed since midnight UTC of January 1 1970 (`Unix time <http://en.wikipedia.org/wiki/Unix_time>`).
 
-About Dictionary object, LUA_ table supports an [weak keys table](http://www.lua.org/pil/17.html) feature, and it's used in AMF conversion with the *weakKeys* contructor argument of [Dictionary AMF type](http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/utils/Dictionary.html). It means that if you build an AMF Dictionary object with *weakKeys* equals *true* and send it to CumulusServer, CumulusServer converts it in a LUA_ table with weak keys, and vice versa.
+About Dictionary object, LUA_ table supports an `weak keys table <http://www.lua.org/pil/17.html>` feature, and it's used in AMF conversion with the *weakKeys* contructor argument of `Dictionary AMF type <http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/utils/Dictionary.html>`. It means that if you build an AMF Dictionary object with *weakKeys* equals *true* and send it to MonaServer, MonaServer converts it in a LUA_ table with weak keys, and vice versa.
 
-.. note:: Actually Cumulus supports all AMF0 and AMF3 format, excepts *Vector* and *XML* types.
+.. note:: Actually Mona supports all AMF0 and AMF3 format, excepts *Vector* and *XML* types.
 
+JSON to LUA conversions
+=========================================
+
+As in AMF primitive, conversion types are easy and intuitive (Number, Boolean, String). For the rest, things go as following:
+
+.. code-block:: lua
+
+	-- LUA table formatted in Object          // JSON Object 
+	{x=10,y=10,width=100,height=100}          {"x":10,"y":10,"width":100,"height":100}          
+
+	-- LUA table formatted in Array           // JSON Array
+	{10,10,100,100}                           [10,10,100,100]
+
+	-- LUA table mixed                       // JSON Array + Object
+	{x=10,y=10,100,100}                      [{"x":10,"y":10}, 100, 100]   
+
+.. note::
+  
+  - Order can differ from original type because in lua there is no order,
+  - Notice that in JSON mixed tables don't exist, that's why we must create an Array with an object containing associative values,
+  - For serializations reasons JSON data need to be encapsulated in a JSON array '[]'. For example the JSON Array above will be sended by client in this format :
+  
+.. code-block:: js
+
+  socket.send("[[10,10,100,100]]");
+  
+XML to LUA conversions
+=========================================
+
+XML is a special format that include some constraints :
+
+.. TODO
 
 Custom types
 =============================
@@ -402,7 +453,7 @@ On reception of this type on script-server side, it will call our *onTypedObject
 Cient will try to cast it in a *Cat* class.
 
 
-You can go more further on this principle, and custom the AMF unserialization and serialization in adding __readExternal and __writeExternal function on the concerned object, it relates AS3 object which implements *IExternalizable* on client side (see [IExternalizable](http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/utils/IExternalizable.html)).
+You can go more further on this principle, and custom the AMF unserialization and serialization in adding __readExternal and __writeExternal function on the concerned object, it relates AS3 object which implements *IExternalizable* on client side (see `IExternalizable <http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/utils/IExternalizable.html>`).
 For example, *ArrayCollection* is an externalizable type, and it's not supported by default by the conversion system, you can add its support in adding this script code:
 
 .. code-block:: lua
@@ -418,23 +469,23 @@ For example, *ArrayCollection* is an externalizable type, and it's not supported
 		end
 	end
 
-*reader* and *writer* arguments are equivalent of [IDataOutput](http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/utils/IDataOutput.html) and [IDataInput](http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/utils/IDataInput.html) AS3 class (see *Objects* part of [[Server Application, API]] page for more details).
+*reader* and *writer* arguments are equivalent of `IDataOutput <http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/utils/IDataOutput.html>` and `IDataInput <http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/utils/IDataInput.html>`) AS3 class (see *Objects* part of `Server Application, API <./api.html>` page for more details).
 
 LUA extensions and files inclusion
 ******************************************
 
-LUA_ can be extended easly, it exists LUA_ extensions for all needs and on all operating system. Add some new CumulusServer abilities as SQL, TCP sockets, or others is a common thing make possible by LUA_.
+LUA_ can be extended easly, it exists LUA_ extensions for all needs and on all operating system. Add some new MonaServer abilities as SQL, TCP sockets, or others is a common thing make possible by LUA_.
 Install your LUA_ extension library, and add a *require* line for your script. LUA_ will search the extension in some common location related with LUA_ folder installation.
 
-Now if you have need to organize your code in different files for your server application, you can use *absolutePath(path)* helpful functions on *cumulus* object (see *Objects* part of [[Server Application, API]] page for more details), in addition of *dofile* or *loadfile* LUA_ functions (see [this LUA page](http://www.lua.org/pil/8.html)). It allows to convert *path* application for an absolute version.
+Now if you have need to organize your code in different files for your server application, you can use *absolutePath(path)* helpful functions on *Mona* object (see *Objects* part of `Server Application, API <./api.html>` page for more details), in addition of *dofile* or *loadfile* LUA_ functions (see `this LUA page <http://www.lua.org/pil/8.html>`). It allows to convert *path* application for an absolute version.
 
 .. code-block:: lua
 
 	function onStart(path)
-		dofile(cumulus:absolutePath(path).."start.lua")
+		dofile(mona:absolutePath(path).."start.lua")
 	end
 	function onConnection(client,...)
-		dofile(cumulus:absolutePath(path).."connection.lua")
+		dofile(mona:absolutePath(path).."connection.lua")
 	end
 
 .. warning:: If you edit a included file (like *start.lua* or *connection.lua* here), change are not taken as far as *dofile* is not called again or *main.lua* of this server application is not updated again.
@@ -442,15 +493,15 @@ Now if you have need to organize your code in different files for your server ap
 LOGS
 ****************************************
 
-LUA_ *print* function writes text on the output console of CumulusServer in a non-formatted way. Also, in service or daemon usage, nothing is printed of course.
+LUA_ *print* function writes text on the output console of MonaServer in a non-formatted way. Also, in service or daemon usage, nothing is printed of course.
 Solution is to use logs macro make available in scripts.
 
 - **ERROR**, an error.
 - **WARN**, a warning.
-- **NOTE**, an important information, displayed by default in Cumulus log files.
-- **INFO**, an information, displayed by default in Cumulus log files.
-- **DEBUG**, displayed only if you start CumulusServer with a more high level log (see */help* or *--help* on command-line startup)
-- **TRACE**, displayed only if you start CumulusServer with a more high level log (see */help* or *--help* on command-line startup)
+- **NOTE**, an important information, displayed by default in Mona log files.
+- **INFO**, an information, displayed by default in Mona log files.
+- **DEBUG**, displayed only if you start MonaServer with a more high level log (see */help* or *--help* on command-line startup)
+- **TRACE**, displayed only if you start MonaServer with a more high level log (see */help* or *--help* on command-line startup)
 
 .. code-block:: lua
 
