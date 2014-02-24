@@ -65,7 +65,7 @@ UInt32 BinaryReader::read7BitEncoded() {
 }
 
 UInt16 BinaryReader::read16() {
-	UInt16 value;
+	UInt16 value(0);
 	readRaw((UInt8*)&value, sizeof(value));
 	if (_flipBytes)
 		return Binary::Flip16(value);
@@ -73,7 +73,7 @@ UInt16 BinaryReader::read16() {
 }
 
 UInt32 BinaryReader::read24() {
-	UInt32 value;
+	UInt32 value(0);
 	readRaw((UInt8*)&value, 3);
 	if (_flipBytes)
 		return Binary::Flip24(value);
@@ -81,7 +81,7 @@ UInt32 BinaryReader::read24() {
 }
 
 UInt32 BinaryReader::read32() {
-	UInt32 value;
+	UInt32 value(0);
 	readRaw((UInt8*)&value, sizeof(value));
 	if (_flipBytes)
 		return Binary::Flip32(value);
@@ -90,7 +90,7 @@ UInt32 BinaryReader::read32() {
 
 
 UInt64 BinaryReader::read64() {
-	UInt64 value;
+	UInt64 value(0);
 	readRaw((UInt8*)&value, sizeof(value));
 	if (_flipBytes)
 		return Binary::Flip64(value);

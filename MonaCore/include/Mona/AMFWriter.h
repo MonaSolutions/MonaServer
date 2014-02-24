@@ -46,7 +46,7 @@ public:
 	void beginObjectArray(UInt32 size);
 	void endArray() { endObject(); }
 
-	void writeDate(const Time& date);
+	void writeDate(const Date& date);
 	void writeNumber(double value);
 	void writeString(const std::string& value);
 	void writeBoolean(bool value);

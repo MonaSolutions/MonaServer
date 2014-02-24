@@ -33,15 +33,15 @@ void Write(BinaryWriter& writer) {
 	bval = false;
 	writer.writeRaw((const UInt8*)&bval, sizeof(bval));
 	writer.write8('a');
-	writer.write16((short)-100);
-	writer.write16((unsigned short)50000);
+	writer.write16(-100);
+	writer.write16(50000);
 	writer.write32(-123456);
-	writer.write32((unsigned)123456);
-	writer.write32((long)-1234567890);
-	writer.write32((unsigned long)1234567890);
+	writer.write32(123456);
+	writer.write32(-1234567890);
+	writer.write32(1234567890);
 
-	writer.write64((Int64)-1234567890);
-	writer.write64((UInt64)1234567890);
+	writer.write64(-1234567890);
+	writer.write64(1234567890);
 
 	float fVal = 1.5;
 	writer.writeRaw((const UInt8*)&fVal, sizeof(fVal));
@@ -54,17 +54,17 @@ void Write(BinaryWriter& writer) {
 	writer.writeString8(std::string("bar"));
 	writer.writeString8(std::string());
 
-	writer.write7BitValue((UInt32)100);
-	writer.write7BitValue((UInt32)1000);
-	writer.write7BitValue((UInt32)10000);
-	writer.write7BitValue((UInt32)100000);
-	writer.write7BitValue((UInt32)1000000);
+	writer.write7BitValue(100);
+	writer.write7BitValue(1000);
+	writer.write7BitValue(10000);
+	writer.write7BitValue(100000);
+	writer.write7BitValue(1000000);
 
-	writer.write7BitLongValue((UInt64)100);
-	writer.write7BitLongValue((UInt64)1000);
-	writer.write7BitLongValue((UInt64)10000);
-	writer.write7BitLongValue((UInt64)100000);
-	writer.write7BitLongValue((UInt64)1000000);
+	writer.write7BitLongValue(100);
+	writer.write7BitLongValue(1000);
+	writer.write7BitLongValue(10000);
+	writer.write7BitLongValue(100000);
+	writer.write7BitLongValue(1000000);
 
 	writer.writeRaw("RAW");
 }
@@ -92,10 +92,10 @@ void Read(BinaryReader& reader) {
 	unsigned uintv = reader.read32();
 	CHECK(uintv == 123456);
 
-	long longv = reader.read32();
+	Int32 longv = reader.read32();
 	CHECK(longv == -1234567890);
 
-	unsigned long ulongv = reader.read32();
+	UInt32 ulongv = reader.read32();
 	CHECK(ulongv == 1234567890);
 
 	Int64 int64v = reader.read64();

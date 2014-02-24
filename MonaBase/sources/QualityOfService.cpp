@@ -44,7 +44,7 @@ void QualityOfService::add(UInt32 ping,UInt32 size,UInt32 success,UInt32 lost) {
 
 	while(!_samples.empty()) {
 		Sample& sample(_samples.front());
-		if(!sample.time.isElapsed(5000000)) // 5 secondes
+		if(!sample.time.isElapsed(5000)) // 5 secondes
 			break;
 		_den -= (sample.success+sample.lost);
 		_num -= sample.lost;
@@ -53,7 +53,7 @@ void QualityOfService::add(UInt32 ping,UInt32 size,UInt32 success,UInt32 lost) {
 	}
 	_samples.emplace_back(success,lost,size);
 	
-	double elapsed = (double)(*_samples.begin()).time.elapsed()/1000;
+	double elapsed = (double)(*_samples.begin()).time.elapsed();
 
 	(double&)byteRate = (double)_size;
 	if(elapsed>0)

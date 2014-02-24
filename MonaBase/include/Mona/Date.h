@@ -1,0 +1,167 @@
+/*
+Copyright 2014 Mona
+mathieu.poux[a]gmail.com
+jammetthomas[a]gmail.com
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License received along this program for more
+details (or else see http://www.gnu.org/licenses/).
+
+This file is a part of Mona.
+*/
+
+#pragma once
+
+#include "Mona/Mona.h"
+#include "Mona/Time.h"
+#include "Mona/Exceptions.h"
+
+namespace Mona {
+
+
+class Date : public Time, virtual Object {
+public:
+	static const char* ISO8601_FORMAT; 		/// 2005-01-01T12:00:00+01:00 | 2005-01-01T11:00:00Z
+	static const char* ISO8601_FRAC_FORMAT;	/// 2005-01-01T12:00:00.000000+01:00 | 2005-01-01T11:00:00.000000Z
+	static const char* RFC822_FORMAT;		/// Sat, 1 Jan 05 12:00:00 +0100 | Sat, 1 Jan 05 11:00:00 GMT
+	static const char* RFC1123_FORMAT;		/// Sat, 1 Jan 2005 12:00:00 +0100 | Sat, 1 Jan 2005 11:00:00 GMT
+	static const char* HTTP_FORMAT;			/// Sat, 01 Jan 2005 12:00:00 +0100 | Sat, 01 Jan 2005 11:00:00 GMT
+	static const char* RFC850_FORMAT;		/// Saturday, 1-Jan-05 12:00:00 +0100 | Saturday, 1-Jan-05 11:00:00 GMT
+	static const char* RFC1036_FORMAT;		/// Saturday, 1 Jan 05 12:00:00 +0100 | Saturday, 1 Jan 05 11:00:00 GMT
+	static const char* ASCTIME_FORMAT;		/// Sat Jan  1 12:00:00 2005
+	static const char* SORTABLE_FORMAT;		/// 2005-01-01 12:00:00
+
+
+	enum Type {
+		GMT = 0x7FFFFFFF, /// Special value for offset (Int32 minimum)
+		LOCAL = 0x80000000 /// Special value for offset(Int32 maximum)
+	};
+
+	static bool  IsLeapYear(Int32 year) { return (year % 400 == 0) || (!(year & 3) && year % 100); }
+
+	// build a NOW date
+	explicit Date(Type type=LOCAL) : _isDST(false),_year(0), _month(0), _day(0), _weekDay(7),_hour(0), _minute(0), _second(0), _millisecond(0), _changed(true), _offset(type),_isLocal(true), Time(0) {}
+	
+	// build from time
+	explicit Date(Int64 time,Int32 offset=LOCAL) : _isDST(false),_year(0), _month(0), _day(0),  _weekDay(7),_hour(0), _minute(0), _second(0), _millisecond(0), _changed(true), _offset(0),_isLocal(true), Time(0) {
+		update(time, offset);
+	}
+
+	// build from other  date
+	explicit Date(const Date& date) : _isDST(date._isDST),_year(date._year), _month(date._month), _day(date._day),  _weekDay(date._weekDay),_hour(date._hour), _minute(date._minute), _second(date._second), _millisecond(date._millisecond), _changed(date._changed), _offset(date._offset),_isLocal(date._isLocal), Time(date._changed ? 0 : date.time()) {}
+	
+	// build from date
+	explicit Date(Int32 year, UInt8 month, UInt8 day, Int32 offset=LOCAL) : _isDST(false),_year(0), _month(0), _day(0), _weekDay(7),_hour(0), _minute(0), _second(0), _millisecond(0), _changed(true), _offset(0),_isLocal(true), Time(0) {
+		update(year,month,day,offset);
+	}
+
+	// build from clock
+	explicit Date(UInt8 hour, UInt8 minute, UInt8 second, UInt16 millisecond=0) : _isDST(false),_year(0), _month(1), _day(6), _weekDay(7),_hour(0), _minute(0), _second(0), _millisecond(0), _changed(true), _offset(0),_isLocal(false), Time(0) {
+		setClock(hour,minute,second,millisecond);
+	}
+
+	// build from date+clock
+	explicit Date(Int32 year, UInt8 month, UInt8 day, UInt8 hour=0, UInt8 minute=0, UInt8 second=0, UInt16 millisecond=0, Int32 offset=LOCAL) : _isDST(false),_year(0), _month(0), _day(0), _weekDay(7),_hour(0), _minute(0), _second(0), _millisecond(0), _changed(true), _offset(0),_isLocal(true), Time(0) {
+		update(year,month,day,hour,minute,second,millisecond,offset);
+	}
+
+	 // now
+	void update() { update(Time::Now()); }
+	void update(Int32 offset) { update(Time::Now(),offset); }
+
+	// from other date
+	void update(const Date& date);
+
+	// from time
+	void update(Int64 time) { update(time, _isLocal ? LOCAL : _offset); }
+	void update(Int64 time,Int32 offset);
+
+	// from date
+	void update(Int32 year, UInt8 month, UInt8 day);
+	void update(Int32 year, UInt8 month, UInt8 day, Int32 offset)	{ update(year,month,day); setOffset(offset); }
+
+	// from date+clock
+	void update(Int32 year, UInt8 month, UInt8 day, UInt8 hour, UInt8 minute, UInt8 second, UInt16 millisecond = 0);
+	void update(Int32 year, UInt8 month, UInt8 day, UInt8 hour, UInt8 minute, UInt8 second, UInt16 millisecond, Int32 offset) { update(year, month, day, hour, minute, second,millisecond); setOffset(offset); }
+
+	/// from string
+	bool update(Exception& ex, const std::string &value,const char* format=NULL);
+
+	Date& operator=(Int64 time) { update(time); return *this; }
+	Date& operator=(const Date& date) { update(date); return *this; }
+	Date& operator+= (Int64 time) { update(this->time()+time); return *this; }
+	Date& operator-= (Int64 time) { update(this->time()-time); return *this; }
+
+	// to string
+	std::string& toString(const char* format, std::string& value) const;
+
+	// to time
+	Int64 time() const;
+
+	/// GETTERS
+	// date
+	Int32	year() const			{ if (_day == 0) ((Date&)*this).update(_offset); return _year; }
+	UInt8	month() const			{ if (_day == 0) ((Date&)*this).update(_offset); return _month; }
+	UInt8	day() const				{ if (_day == 0) ((Date&)*this).update(_offset); return _day; }
+	UInt8	weekDay() const;
+	UInt16	yearDay() const;
+	// clock
+	UInt32  clock() const			{ if (_day == 0) ((Date&)*this).update(_offset); return _hour*3600000L + _minute*60000L + _second*1000L + _millisecond; }
+	UInt8	hour() const			{ if (_day == 0) ((Date&)*this).update(_offset); return _hour; }
+	UInt8	minute() const			{ if (_day == 0) ((Date&)*this).update(_offset); return _minute; }
+	UInt8	second() const			{ if (_day == 0) ((Date&)*this).update(_offset); return _second; }
+	UInt16	millisecond() const		{ if (_day == 0) ((Date&)*this).update(_offset); return _millisecond; }
+	// offset
+	Int32	offset() const;
+	bool	isGMT() const			{ if (_day == 0) ((Date&)*this).update(_offset); return offset()==0 && !_isLocal; }
+	bool	isDST() const			{ offset(); /* <= allow to refresh _isDST */ return _isDST; }
+
+	/// SETTERS
+	// date
+	void	setYear(Int32 year);
+	void	setMonth(UInt8 month);
+	void	setDay(UInt8 day);
+	// clock
+	void	setClock(UInt8 hour, UInt8 minute, UInt8 second, UInt16 millisecond=0);
+	void	setHour(UInt8 hour);
+	void	setMinute(UInt8 minute);
+	void	setSecond(UInt8 second);
+	void	setMillisecond(UInt16 millisecond);
+	// offset
+	void	setOffset(Int32 offset);
+
+private:
+
+	void  computeWeekDay(Int64 days);
+	bool  parseAuto(Exception& ex, const std::string &value);
+	UInt8 parseMonth(std::string::const_iterator& it, const std::string::const_iterator& end);
+	bool  parseAMPM(UInt8& hour,std::string::const_iterator& it, const std::string::const_iterator& end);
+	Int32 parseTimezone(bool& isDST,std::string::const_iterator& it, const std::string::const_iterator& end);
+	void  formatTimezone(std::string& value, bool bISO = true) const;
+
+	
+	Int32	_year;
+	UInt8	_month; // 1 to 12
+	UInt8	_day; // 1 to 31
+	mutable UInt8	_weekDay; // 0 to 6
+	UInt8	_hour; // 0 to 23
+	UInt8	_minute;  // 0 to 59
+	UInt8	_second;	// 0 to 59
+	UInt16	_millisecond; // 0 to 999
+	mutable Int32	_offset; // gmt offset
+	mutable bool	_isDST; // means that the offset is a Daylight Saving Time offset
+	mutable bool	_isLocal; // just used when offset is on the special Local value!
+
+	mutable bool _changed; // indicate that date information has changed, we have to refresh time value
+};
+
+
+} // namespace Mona
+

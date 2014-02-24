@@ -22,6 +22,9 @@
     <Filter Include="Crypto">
       <UniqueIdentifier>{835ec284-f947-44d1-8dfc-2022d87d1c83}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Time">
+      <UniqueIdentifier>{f8abdd34-07f1-42b7-a62f-5840cdcacea3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="sources\BinaryReader.cpp">
@@ -34,9 +37,6 @@
       <Filter>Util</Filter>
     </ClCompile>
     <ClCompile Include="sources\QualityOfService.cpp">
-      <Filter>Util</Filter>
-    </ClCompile>
-    <ClCompile Include="sources\Trigger.cpp">
       <Filter>Util</Filter>
     </ClCompile>
     <ClCompile Include="sources\Util.cpp">
@@ -70,12 +70,6 @@
       <Filter>Net</Filter>
     </ClCompile>
     <ClCompile Include="sources\String.cpp">
-      <Filter>Util</Filter>
-    </ClCompile>
-    <ClCompile Include="sources\Time.cpp">
-      <Filter>Util</Filter>
-    </ClCompile>
-    <ClCompile Include="sources\TimeParser.cpp">
       <Filter>Util</Filter>
     </ClCompile>
     <ClCompile Include="sources\Options.cpp">
@@ -172,6 +166,15 @@
     <ClCompile Include="sources\SubstreamMap.cpp">
       <Filter>IO</Filter>
     </ClCompile>
+    <ClCompile Include="sources\Date.cpp">
+      <Filter>Time</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\Timezone.cpp">
+      <Filter>Time</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\Trigger.cpp">
+      <Filter>Time</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Mona\BinaryReader.h">
@@ -190,9 +193,6 @@
       <Filter>Util</Filter>
     </ClInclude>
     <ClInclude Include="include\Mona\QualityOfService.h">
-      <Filter>Util</Filter>
-    </ClInclude>
-    <ClInclude Include="include\Mona\Trigger.h">
       <Filter>Util</Filter>
     </ClInclude>
     <ClInclude Include="include\Mona\Util.h">
@@ -238,15 +238,6 @@
       <Filter>Net</Filter>
     </ClInclude>
     <ClInclude Include="include\Mona\String.h">
-      <Filter>Util</Filter>
-    </ClInclude>
-    <ClInclude Include="include\Mona\StopWatch.h">
-      <Filter>Util</Filter>
-    </ClInclude>
-    <ClInclude Include="include\Mona\Time.h">
-      <Filter>Util</Filter>
-    </ClInclude>
-    <ClInclude Include="include\Mona\TimeParser.h">
       <Filter>Util</Filter>
     </ClInclude>
     <ClInclude Include="include\Mona\Exceptions.h">
@@ -366,6 +357,21 @@
     </ClInclude>
     <ClInclude Include="include\Mona\SubstreamMap.h">
       <Filter>IO</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\Date.h">
+      <Filter>Time</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\Time.h">
+      <Filter>Time</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\Trigger.h">
+      <Filter>Time</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\StopWatch.h">
+      <Filter>Time</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\Timezone.h">
+      <Filter>Time</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -21,7 +21,6 @@ This file is a part of Mona.
 
 #include "Mona/Mona.h"
 #include "Mona/DataReader.h"
-#include "Mona/Time.h"
 
 
 namespace Mona {
@@ -36,7 +35,7 @@ public:
 	std::string&	readString(std::string& value) { value.assign(_it->second); ++_it; return value; }
 	double			readNumber() {++_it; return _number;}
 	bool			readBoolean() {++_it; return _number==1;}
-	Time&			readTime(Time& time) { ++_it; return time.update(_time); }
+	Date&			readDate(Date& date) { ++_it; return date = _date; }
 	void			readNull() { ++_it; }
 	const UInt8*	readBytes(UInt32& size) { ++_it; return NULL; }
 
@@ -59,8 +58,9 @@ public:
 			return NIL;
 		if (String::ToNumber(_it->second, _number))
 			return NUMBER;
-		if (_time.fromString(_it->second))
-			return TIME;
+		Exception ex;
+		if (_date.update(ex,_it->second))
+			return DATE;
 		return STRING;
 	}
 	
@@ -74,7 +74,7 @@ public:
 	void			reset() { _it = _begin; _objectReaden=false; }
 
 private:
-	Time				_time;
+	Date				_date;
 	double				_number;
 	IteratorType		_begin;
 	IteratorType		_it;

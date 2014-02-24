@@ -23,15 +23,6 @@ This file is a part of Mona.
 #include <vector>
 
 #undef max
-// TODO? #pragma warning(disable:4146)
-
-#if defined(_MSC_VER) || defined(__MINGW32__)
-	#define I64_FMT "I64"
-#elif defined(__APPLE__) 
-	#define I64_FMT "q"
-#else
-	#define I64_FMT "ll"
-#endif
 
 namespace Mona {
 
@@ -97,7 +88,17 @@ public:
 	// match le "char" cas
 	template <typename ...Args>
 	static std::string& Append(std::string& result, char value, Args&&... args) {
-		result.append(1, value);
+		result.append(1,value);
+		return String::Append(result, args ...);
+	}
+
+
+	/// \brief match "short" case
+	template <typename ...Args>
+	static std::string& Append(std::string& result, short value, Args&&... args) {
+		char buffer[64];
+		sprintf(buffer, "%hd", value);
+		result.append(buffer);
 		return String::Append(result, args ...);
 	}
 
@@ -123,7 +124,7 @@ public:
 	template <typename ...Args>
 	static std::string& Append(std::string& result, unsigned char value, Args&&... args) {
 		char buffer[64];
-		sprintf(buffer, "%hu", value);
+		sprintf(buffer, "%hhu", value);
 		result.append(buffer);
 		return String::Append(result, args ...);
 	}
@@ -157,18 +158,18 @@ public:
 
 	/// \brief match "Int64" case
 	template <typename ...Args>
-	static std::string& Append(std::string& result, Int64 value, Args&&... args) {
+	static std::string& Append(std::string& result, long long value, Args&&... args) {
 		char buffer[64];
-		sprintf(buffer, "%" I64_FMT "d", value);
+		sprintf(buffer, "%lld", value);
 		result.append(buffer);
 		return String::Append(result, args ...);
 	}
 
 	/// \brief match "UInt64" case
 	template <typename ...Args>
-	static std::string& Append(std::string& result, UInt64 value, Args&&... args) {
+	static std::string& Append(std::string& result, unsigned long long value, Args&&... args) {
 		char buffer[64];
-		sprintf(buffer, "%" I64_FMT "u", value);
+		sprintf(buffer, "%llu", value);
 		result.append(buffer);
 		return String::Append(result, args ...);
 	}
@@ -202,13 +203,7 @@ public:
 	template <typename ...Args>
 	static std::string& Append(std::string& result, const void* value, Args&&... args)	{
 		char buffer[64];
-		
-		#if defined(MONA_PTR_IS_64_BIT) // TODO!!!
-            sprintf(buffer, "%016" I64_FMT "X", value);
-		#else
-            sprintf(buffer, "%08lX", value);
-		#endif
-
+		sprintf(buffer, sizeof(uintptr_t)>4 ? "%016llX" : "%08lX", value);
 		result.append(buffer);
 		return String::Append(result, args ...);
 	}

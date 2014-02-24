@@ -19,7 +19,6 @@ This file is a part of Mona.
 
 #include "Mona/HTTPHeaderReader.h"
 #include "Mona/Logs.h"
-#include "Mona/TimeParser.h"
 #include "Mona/Exceptions.h"
 
 
@@ -60,8 +59,10 @@ HTTPHeaderReader::Type HTTPHeaderReader::readItem(string& name) {
 	}
 	if (String::ICompare(_value,"null")==0)
 		return NIL;
-	if (_date.fromString(_value))
-		return TIME;
+	Exception ex;
+	_date.update(ex, _value);
+	if (!ex)
+		return DATE;
 	return STRING; // string or number are the same thing in LUA
 }
 

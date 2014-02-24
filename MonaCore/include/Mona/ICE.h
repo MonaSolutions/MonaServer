@@ -42,7 +42,7 @@ public:
 	void			fromSDPLine(const std::string& line, SDPCandidate& publicCandidate, std::vector<SDPCandidate>& relayCurrentCandidates, std::vector<SDPCandidate>& relayRemoteCandidates) { fromSDPLine(line, publicCandidate, relayCurrentCandidates, relayRemoteCandidates, true); }
 
 	void			reset();
-	UInt32			elapsed() { return (UInt32)_time.elapsed() / 1000; }
+	bool			obsolete() { return _time.isElapsed(120000); }
 
 	static bool ProcessSDPPacket(DataReader& packet,Peer& current,Writer& currentWriter,Peer& remote,Writer& remoteWriter);
 

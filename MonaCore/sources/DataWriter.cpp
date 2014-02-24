@@ -28,7 +28,7 @@ void DataWriter::writeNullProperty(const string& name) {
 	writePropertyName(name);
 	writeNull();
 }
-void DataWriter::writeDateProperty(const string& name,const Time& date) {
+void DataWriter::writeDateProperty(const string& name,const Date& date) {
 	writePropertyName(name);
 	writeDate(date);
 }

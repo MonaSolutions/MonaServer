@@ -37,7 +37,7 @@ public:
 	void beginArray(UInt32 size);
 	void endArray();
 
-	void writeDate(const Time& date) { writeRaw(date.toString(Time::ISO8601_FRAC_FORMAT, _buffer)); }
+	void writeDate(const Date& date) { writeRaw(date.toString(Date::ISO8601_FRAC_FORMAT, _buffer)); }
 	void writeNumber(double value) { writeRaw(String::Format(_buffer, value)); }
 	void writeString(const std::string& value);
 	void writeBoolean(bool value) { writeRaw( value ? "true" : "false"); }

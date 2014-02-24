@@ -101,7 +101,7 @@ void Listener::init(Writer** ppWriter,Writer::MediaType type) {
 
 UInt32 Listener::computeTime(UInt32 time) {
 	if(time==0)
-		time=(UInt32)(_ts.elapsed()/1000);
+		time=(UInt32)_ts.elapsed();
 	if(_firstTime) { // first time, compute deltatime
 		_deltaTime = time;
 		_firstTime = false;

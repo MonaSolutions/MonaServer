@@ -50,6 +50,7 @@ public:
 	static std::string& GetName(const std::string& path, std::string& value);
 	static std::string& GetBaseName(const std::string& path, std::string& value);
 	static std::string& GetExtension(const std::string& path,std::string& value);
+	static bool			GetApplicationCurrent(std::string& path);
 	static bool			GetCurrent(std::string& path);
 	static bool			GetHome(std::string& path);
 

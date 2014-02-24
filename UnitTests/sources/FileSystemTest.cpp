@@ -79,7 +79,7 @@ ADD_TEST(FileSystemTest, Properties) {
 	FileSystem::Attributes attributes;
 	FileSystem::GetAttributes(ex, Path2,attributes);
 	CHECK(!ex)
-	Time lastModified;
+	Date lastModified;
 	CHECK(FileSystem::GetLastModified(ex, Path2,lastModified)==attributes.lastModified && !ex);
 	CHECK(attributes.size==0 && FileSystem::GetSize(ex, Path2)==0 && ex);
 	string value;

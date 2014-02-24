@@ -24,8 +24,8 @@ namespace Mona {
 using namespace std;
 
 FilePath& FilePath::operator=(const FilePath& other) {
-	_attributes = other._attributes; 
-	_attributesLoaded = other._attributesLoaded;
+	if (_attributesLoaded = other._attributesLoaded)
+		_attributes.lastModified.update(other._attributes.lastModified); 
 	_extension = other._extension;
 	_fullPath = other._fullPath;
 	_directory = other._directory;

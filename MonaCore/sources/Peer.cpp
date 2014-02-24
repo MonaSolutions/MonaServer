@@ -113,7 +113,7 @@ ICE& Peer::ice(const Peer& peer) {
 			it->second->setCurrent(*this);
 			return *it->second;
 		}
-		if(it->second->elapsed()>120000) {
+		if(it->second->obsolete()) {
 			delete it->second;
 			_ices.erase(it++);
 			continue;

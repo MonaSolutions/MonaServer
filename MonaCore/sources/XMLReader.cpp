@@ -53,9 +53,9 @@ bool XMLReader::readBoolean() {
 	return _dval > 0;
 }
 
-Time& XMLReader::readTime(Time& time) {
+Date& XMLReader::readDate(Date& date) {
 	_last=NIL;
-	return time.update(_date);
+	return date = _date;
 }
 
 string& XMLReader::readString(string& value) {
@@ -240,8 +240,11 @@ XMLReader::Type XMLReader::followingType() {
 		_dval = String::ToNumber<double>(ex, _text);
 		if (!ex) 
 			_last = NUMBER;
-		else if (_text.size() > 18 && _text.size() < 34 && _date.fromString(_text))
-			_last=TIME;
+		else if (_text.size() > 18 && _text.size() < 34) {
+			Exception ex;
+			if(_date.update(ex,_text))
+				_last = DATE;
+		}
 
 		if(chained)
 			packet.next(1); // remove last '"'

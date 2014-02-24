@@ -37,7 +37,7 @@ public:
 	void beginArray(UInt32 size) {}
 	void endArray() {}
 
-	void writeDate(const Time& date) {}
+	void writeDate(const Date& date) {}
 	void writeNumber(double value) {}
 	void writeString(const std::string& value) { packet.writeRaw(value); }
 	void writeBoolean(bool value) {}

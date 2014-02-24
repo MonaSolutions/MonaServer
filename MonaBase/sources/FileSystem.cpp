@@ -71,14 +71,14 @@ void FileSystem::RegisterForDeletion(const string& path) {
 
 FileSystem::Attributes& FileSystem::GetAttributes(Exception& ex,const string& path,Attributes& attributes) {
 	struct stat status;
-	status.st_mtime = attributes.lastModified;
+	status.st_mtime = attributes.lastModified/1000;
 	status.st_size = attributes.size;
 	string file(path);
 	if (::stat(MakeFile(file).c_str(), &status) != 0) {
 		ex.set(Exception::FILE, "Path ", path, " doesn't exist");
 		return attributes;
 	}
-	attributes.lastModified.update(chrono::system_clock::from_time_t(status.st_mtime));
+	attributes.lastModified.update(status.st_mtime*1000);
 	if(!(attributes.isDirectory = (status.st_mode&S_IFDIR) ? true : false))
 		attributes.size = (UInt32)status.st_size;
 	return attributes;
@@ -86,12 +86,12 @@ FileSystem::Attributes& FileSystem::GetAttributes(Exception& ex,const string& pa
 
 Time& FileSystem::GetLastModified(Exception& ex, const string& path, Time& time) {
 	struct stat status;
-	status.st_mtime = time;
+	status.st_mtime = time/1000;
 	string file(path);
 	if (::stat(MakeFile(file).c_str(), &status) != 0)
 		ex.set(Exception::FILE, "Path ", path, " doesn't exist");
 	else
-		time.update(chrono::system_clock::from_time_t(status.st_mtime));
+		time.update(status.st_mtime*1000);
 	return time;
 }
 
@@ -379,6 +379,11 @@ bool FileSystem::ResolveFileWithPaths(const string& paths, string& file) {
 		}
 	}
 	return false;
+}
+
+bool FileSystem::GetApplicationCurrent(string& path) {
+	// TODO applicationPath
+	return GetCurrent(path);
 }
 
 bool FileSystem::GetCurrent(string& path) {

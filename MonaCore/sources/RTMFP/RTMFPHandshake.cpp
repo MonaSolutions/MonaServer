@@ -154,6 +154,7 @@ UInt8 RTMFPHandshake::handshakeHandler(UInt8 id,PacketReader& request,PacketWrit
 				const UInt8* peerId = (const UInt8*)epd.c_str();
 				
 				RTMFPSession* pSessionWanted = _sessions.find<RTMFPSession>(peerId);
+	
 				if(pSessionWanted) {
 					if(pSessionWanted->failed())
 						return 0x00; // TODO no way in RTMFP to tell "died!"
@@ -165,6 +166,7 @@ UInt8 RTMFPHandshake::handshakeHandler(UInt8 id,PacketReader& request,PacketWrit
 					pSessionWanted->p2pHandshake(tag,peer.address,times,pSession);
 
 					response.writeAddress(pSessionWanted->peer.address, true);
+					DEBUG("P2P address initiator exchange, ",pSessionWanted->peer.address.toString());
 					for(const SocketAddress& address : pSessionWanted->peer.localAddresses) {
 						response.writeAddress(address,false);
 						DEBUG("P2P address initiator exchange, ",address.toString());

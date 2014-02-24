@@ -322,7 +322,7 @@ int LUAInvoker::Get(lua_State *pState) {
 		} else if (strcmp(name, "absolutePath") == 0) {
 			SCRIPT_WRITE_FUNCTION(&LUAInvoker::AbsolutePath)
 		} else if (strcmp(name, "epochTime") == 0) {
-			SCRIPT_WRITE_NUMBER(round(Time()/1000))
+			SCRIPT_WRITE_NUMBER(Time::Now())
 		} else if (strcmp(name, "split") == 0) {
 			SCRIPT_WRITE_FUNCTION(&LUAInvoker::Split)
 		} else if (strcmp(name, "createUDPSocket") == 0) {

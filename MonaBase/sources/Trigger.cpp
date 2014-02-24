@@ -46,7 +46,7 @@ UInt16 Trigger::raise(Exception& ex) {
 	if(!_running)
 		return 0;
 	// Wait at least 1 sec before to begin the repeat cycle, it means that it will be between 1 and 3 sec in truth (freg mangement is set to 2)
-	if(_time==1 && !_timeInit.isElapsed(1000000))
+	if(_time==1 && !_timeInit.isElapsed(1000))
 		return 0;
 	++_time;
 	if(_time>=_cycle) {

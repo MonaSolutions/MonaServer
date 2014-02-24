@@ -185,32 +185,31 @@ void Script::WriteData(lua_State *pState,DataReader::Type type,DataReader& reade
 			lua_pushlstring(pState,value.c_str(),value.size());
 			break;
 		}
-		case DataReader::TIME: {
-			Time time;
-			struct tm datetm;
-			reader.readTime(time).toGMT(datetm);
+		case DataReader::DATE: {
+			Date date;
+			reader.readDate(date);
 			lua_newtable(pState);
-			lua_pushnumber(pState, (double)(time / 1000.0));
+			lua_pushnumber(pState, (double)date);
 			lua_setfield(pState, -2, "__time");
-			lua_pushnumber(pState, datetm.tm_year + 1900);
+			lua_pushnumber(pState, date.year());
 			lua_setfield(pState, -2, "year");
-			lua_pushnumber(pState, datetm.tm_mon + 1);
+			lua_pushnumber(pState, date.month() + 1);
 			lua_setfield(pState, -2, "month");
-			lua_pushnumber(pState, datetm.tm_mday);
+			lua_pushnumber(pState, date.day());
 			lua_setfield(pState, -2, "day");
-			lua_pushnumber(pState, datetm.tm_yday);
+			lua_pushnumber(pState, date.yearDay());
 			lua_setfield(pState, -2, "yday");
-			lua_pushnumber(pState, datetm.tm_wday);
+			lua_pushnumber(pState, date.weekDay());
 			lua_setfield(pState, -2, "wday");
-			lua_pushnumber(pState, datetm.tm_hour);
+			lua_pushnumber(pState, date.hour());
 			lua_setfield(pState, -2, "hour");
-			lua_pushnumber(pState, datetm.tm_min);
+			lua_pushnumber(pState, date.minute());
 			lua_setfield(pState, -2, "min");
-			lua_pushnumber(pState, datetm.tm_sec);
+			lua_pushnumber(pState, date.second());
 			lua_setfield(pState, -2, "sec");
-			lua_pushnumber(pState, time.millisec());
+			lua_pushnumber(pState, date.millisecond());
 			lua_setfield(pState, -2, "msec");
-			lua_pushboolean(pState, datetm.tm_isdst);
+			lua_pushboolean(pState, date.isDST() ? 1 : 0);
 			lua_setfield(pState, -2, "isdst");
 			break;
 		}
@@ -364,7 +363,7 @@ void Script::ReadData(lua_State* pState,DataWriter& writer,UInt32 count,map<UInt
 				// Date
 				lua_getfield(pState,args,"__time");
 				if(lua_isnumber(pState,-1)) {
-					Time date((Int64)lua_tonumber(pState,-1)*1000);
+					Date date((Int64)lua_tonumber(pState,-1));
 					writer.writeDate(date);
 					it->second = writer.lastReference();
 					lua_pop(pState,1);

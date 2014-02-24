@@ -109,10 +109,10 @@ ADD_TEST(StringTest, TestFormat) {
 
 	CHECK(String::Format(_Str, (Int64)123) == "123");
 	CHECK(String::Format(_Str, (Int64)-123) == "-123");
-	CHECK(String::Format(_Str, Format<Int64>("%5" I64_FMT "d", -123)) == " -123");
+	CHECK(String::Format(_Str, Format<Int64>("%5lld", -123)) == " -123");
 
 	CHECK(String::Format(_Str, (UInt64)123) == "123");
-	CHECK(String::Format(_Str, Format<UInt64>("%5" I64_FMT "u", 123)) == "  123");
+	CHECK(String::Format(_Str, Format<UInt64>("%5llu", 123)) == "  123");
 
 	CHECK(String::Format(_Str, 12.25) == "12.25");
 	CHECK(String::Format(_Str, Format<double>("%.4f", 12.25)) == "12.2500");

@@ -28,7 +28,7 @@ namespace Mona {
 class Relay : virtual Object {
 public:
 	Relay(const Peer& peer1,const SocketAddress& address1,const Peer& peer2,const SocketAddress& address2,RelaySocket& socket,UInt16 timeout):
-	 socket(socket),timeout(timeout*1000000),peer1(peer1),address1(address1),peer2(peer2),address2(address2),received(false) {}
+	 socket(socket),timeout(timeout*1000),peer1(peer1),address1(address1),peer2(peer2),address2(address2),received(false) {}
 	const Peer&							peer1;
 	const SocketAddress&				address1;
 	const Peer&							peer2;
@@ -213,7 +213,7 @@ void RelayServer::manage() const {
 	set<Relay*>::iterator it=_relays.begin();
 	while(it!=_relays.end()) {
 		Relay& relay(**it);
-		if(relay.lastTime.elapsed()>relay.timeout) {
+		if(relay.lastTime.isElapsed(relay.timeout)) {
 			// remove Relay of peers
 			removePeerRelay(relay.peer1,relay);
 			removePeerRelay(relay.peer2,relay);

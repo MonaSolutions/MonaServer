@@ -19,7 +19,7 @@ This file is a part of Mona.
 
 #include "Mona/Application.h"
 #include "Mona/Exceptions.h"
-#include "Mona/Time.h"
+#include "Mona/Date.h"
 #if !defined(_WIN32)
     #include <signal.h>
 #else
@@ -190,8 +190,8 @@ void Application::log(THREAD_ID threadId, const string& threadName, Level level,
 	lock_guard<mutex> lock(_logMutex);
 	if (!_logStream.good())
 		return;
-	string stDate;
-	_logStream << Time().toLocaleString("%d/%m %H:%M:%S.%c  ", stDate)
+	string date;
+	_logStream << Date().toString("%d/%m %H:%M:%S.%c  ", date)
 		<< LogLevels[level-1] << '\t' << threadName << '(' << threadId << ")\t"
 		<< shortFilePath << '[' << line << "]  " << message << std::endl;
 	_logStream.flush();

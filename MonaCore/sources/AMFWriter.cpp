@@ -114,12 +114,12 @@ void AMFWriter::writeBoolean(bool value){
 		packet.write8(value ? AMF3_TRUE : AMF3_FALSE);
 }
 
-void AMFWriter::writeDate(const Time& date){
+void AMFWriter::writeDate(const Date& date){
 	_lastReference=0;
 	if(!_amf3) {
 		if(amf0Preference) {
 			packet.write8(AMF_DATE);
-			packet.writeNumber<double>((double)date/1000);
+			packet.writeNumber<double>((double)date);
 			packet.write16(0); // Timezone, useless in AMF0 format (always equals 0)
 			return;
 		}
@@ -127,7 +127,7 @@ void AMFWriter::writeDate(const Time& date){
 	}
 	packet.write8(AMF3_DATE);
 	packet.write8(0x01);
-	packet.writeNumber<double>((double)date / 1000);
+	packet.writeNumber<double>((double)date);
 	_references.emplace_back(AMF3_DATE);
 	_lastReference=_references.size();
 }

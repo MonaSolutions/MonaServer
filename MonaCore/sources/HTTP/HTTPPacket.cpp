@@ -40,7 +40,6 @@ HTTPPacket::HTTPPacket(PoolBuffer& pBuffer) : filePos(string::npos), _pBuffer(pB
 
 void HTTPPacket::parseHeader(Exception& ex,const char* key, const char* value) {
 	if (String::ICompare(key,"content-length")==0) {
-		Exception ex;
 		contentLength = String::ToNumber<UInt32>(ex,value,contentLength);
 	} else if (String::ICompare(key,"content-type")==0) {
 		contentType = HTTP::ParseContentType(value, contentSubType);
@@ -55,7 +54,7 @@ void HTTPPacket::parseHeader(Exception& ex,const char* key, const char* value) {
 	} else if (String::ICompare(key,"sec-webSocket-accept")==0) {
 		secWebsocketAccept.assign(value);
 	} else if (String::ICompare(key,"if-modified-since")==0) {
-		ifModifiedSince.fromString(value);
+		ifModifiedSince.update(ex,value,Date::HTTP_FORMAT);
 	} else if (String::ICompare(key,"access-control-request-method")==0) {
 		vector<string> values;
 		for (string& value : String::Split(value, ",", values, String::SPLIT_IGNORE_EMPTY | String::SPLIT_TRIM))

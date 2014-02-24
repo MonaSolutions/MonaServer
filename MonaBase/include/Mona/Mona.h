@@ -20,6 +20,7 @@ This file is a part of Mona.
 #pragma once
 
 #include <stdio.h>
+#include <cstdint>
 #include <string>
 #include <cstring>
 
@@ -36,13 +37,8 @@ This file is a part of Mona.
 #define _WINSOCKAPI_    // stops windows.h including winsock.h
 #define sprintf sprintf_s
 #define snprintf sprintf_s
-#define timegm _mkgmtime
-#define GMTIME(VALUE,RESULT) gmtime_s(&RESULT,&VALUE);
-#define LOCALTIME(VALUE,RESULT) localtime_s(&RESULT,&VALUE);
 #else
 #define THREAD_ID	pid_t
-#define GMTIME(VALUE,RESULT) gmtime_r(&VALUE,&RESULT)
-#define LOCALTIME(VALUE,RESULT) localtime_r(&VALUE,&RESULT)
 #endif
 
 ///// Disable some annoying warnings /////
@@ -225,57 +221,14 @@ void DetectMemoryLeak();
 
 ///// TYPES /////
 
-#if defined(_MSC_VER)
-	//
-	// Windows/Visual C++
-	//
-	typedef signed char            Int8;
-	typedef unsigned char          UInt8;
-	typedef signed short           Int16;
-	typedef unsigned short         UInt16;
-	typedef signed int             Int32;
-	typedef unsigned int           UInt32;
-	typedef signed __int64         Int64;
-	typedef unsigned __int64       UInt64;
-
-#elif defined(__GNUC__) || defined(__clang__)
-	//
-	// Unix/GCC
-	//
-	typedef signed char            Int8;
-	typedef unsigned char          UInt8;
-	typedef signed short           Int16;
-	typedef unsigned short         UInt16;
-	typedef signed int             Int32;
-	typedef unsigned int           UInt32;
-	typedef signed long            IntPtr;
-	typedef unsigned long          UIntPtr;
-#if defined(__LP64__)
-	typedef signed long        Int64;
-	typedef unsigned long      UInt64;
-#else
-	typedef signed long long   Int64;
-	typedef unsigned long long UInt64;
-#endif
-
-#elif defined(__IBMCPP__) 
-	//
-	// IBM XL C++
-	//
-	typedef signed char            Int8;
-	typedef unsigned char          UInt8;
-	typedef signed short           Int16;
-	typedef unsigned short         UInt16;
-	typedef signed int             Int32;
-	typedef unsigned int           UInt32;
-#if defined(__64BIT__)
-	typedef signed long        Int64;
-	typedef unsigned long      UInt64;
-#else
-	typedef signed long long   Int64;
-	typedef unsigned long long UInt64;
-#endif
-#endif
+typedef int8_t			Int8;
+typedef uint8_t			UInt8;
+typedef int16_t			Int16;
+typedef uint16_t		UInt16;
+typedef int32_t         Int32;
+typedef uint32_t        UInt32;
+typedef int64_t			Int64;
+typedef uint64_t		UInt64;
 
 
 //////  No copy, no move, objet nullable  //////

@@ -33,7 +33,7 @@ public:
 	std::string&		readString(std::string& value) { return packet.readRaw(packet.available(), value); }
 	double				readNumber() {return 0;}
 	bool				readBoolean() {return false;}
-	Time&				readTime(Time& time) { return time.update(); }
+	Date&				readDate(Date& date) { return date; }
 	void				readNull() {}
 	const UInt8*		readBytes(UInt32& size) {return NULL;}
 

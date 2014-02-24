@@ -35,7 +35,7 @@ public:
 	double				readNumber();
 	bool				readBoolean();
 	const UInt8*		readBytes(UInt32& size);
-	Time&				readTime(Time& time);
+	Date&				readDate(Date& date);
 	void				readNull();
 
 	bool			readObject(std::string& type,bool& external);

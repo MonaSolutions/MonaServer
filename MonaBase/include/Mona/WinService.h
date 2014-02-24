@@ -96,7 +96,7 @@ protected:
 	static const std::string REGISTRY_DESCRIPTION;
 
 private:
-	bool open(Exception& ex) const;
+	bool open(Exception& ex,bool justManager=false) const;
 	void close();
 
 	LPQUERY_SERVICE_CONFIGA config(Exception& ex) const;

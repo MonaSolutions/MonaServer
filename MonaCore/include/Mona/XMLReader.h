@@ -31,7 +31,7 @@ public:
 	virtual std::string&		readString(std::string& value);
 	virtual double				readNumber();
 	virtual bool				readBoolean();
-	virtual Time&				readTime(Time& time);
+	virtual Date&				readDate(Date& date);
 	virtual void				readNull() { packet.next(4); }
 	
 	bool						readArray(UInt32& size);
@@ -48,7 +48,7 @@ private:
 
 	UInt32			_pos;
 	std::string		_text;
-	Time			_date;
+	Date			_date;
 	Type			_last;
 	double			_dval;
 	bool			_object; /// used for readItem to say that it is an object

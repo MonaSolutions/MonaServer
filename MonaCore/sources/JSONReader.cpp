@@ -69,9 +69,9 @@ bool JSONReader::readBoolean() {
 	return _bool;
 }
 
-Time& JSONReader::readTime(Time& time) {
+Date& JSONReader::readDate(Date& date) {
 	_last=0;
-	return time.update(_date);
+	return date = _date;
 }
 
 string& JSONReader::readString(string& value) {
@@ -193,7 +193,7 @@ JSONReader::Type JSONReader::followingType() {
 	if(_last==1)
 		return STRING;
 	if(_last==2)
-		return TIME;
+		return DATE;
 	if(!_text.empty())
 		_text.clear();
 	if(!available())
@@ -237,9 +237,11 @@ JSONReader::Type JSONReader::followingType() {
 			_bool=true;
 			return STRING;
 		}
-		if (_date.fromString(_text)) {
+		Exception ex;
+		_date.update(ex, _text);
+		if (!ex) {
 			_last=2;
-			return TIME;
+			return DATE;
 		}
 		return STRING;
 	}

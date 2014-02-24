@@ -21,6 +21,7 @@ This file is a part of Mona.
 #include "Mona/Exceptions.h"
 #include "Mona/String.h"
 #include "Mona/Time.h"
+#include "Mona/Timezone.h"
 #include "math.h"
 #include <fstream>
 
@@ -38,11 +39,19 @@ using namespace std;
 namespace Mona {
 
 
-MapParameters	Util::_Environment;
 mutex			Util::_MutexEnvironment;
+MapParameters	Util::_Environment;
 
-map<THREAD_ID, string>	Util::_ThreadNames;
 recursive_mutex			Util::_MutexThreadNames;
+map<THREAD_ID, string>	Util::_ThreadNames;
+
+// KEEP the following lines in this exact order (to be built correctly, and after _Environment variable)
+map<Int64,Timezone::Transition> Timezone::_Transitions;
+map<Int64,Timezone::Transition> Timezone::_LocalTransitions;
+Timezone::TransitionRule		Timezone::_StartDST;
+Timezone::TransitionRule		Timezone::_EndDST;
+Timezone						Timezone::_Timezone; // to guarantee that it will be build after _Environment
+
 
 static const char B64Table[65] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
