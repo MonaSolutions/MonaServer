@@ -21,7 +21,6 @@ This file is a part of Mona.
 #include "Mona/HTTP/HTTP.h"
 #include "Mona/HTTPHeaderReader.h"
 #include "Mona/SOAPReader.h"
-#include "Mona/MapReader.h"
 #include "Mona/SOAPWriter.h"
 #include "Mona/Protocol.h"
 #include "Mona/Exceptions.h"
@@ -109,7 +108,6 @@ void HTTPSession::packetHandler(PacketReader& reader) {
 	if (pPacket->filePos != string::npos)
 		((string&)peer.path).erase(pPacket->filePos - 1);
 
-
 	//// Disconnection if path has changed
 	if(peer.connected && String::ICompare(oldPath,peer.path)!=0)
 		peer.onDisconnection();
@@ -144,7 +142,6 @@ void HTTPSession::packetHandler(PacketReader& reader) {
 
 		if (!ex && peer.connected) {
 
-
 			////////////  HTTP GET  //////////////
 			if ((pPacket->command == HTTP::COMMAND_HEAD ||pPacket->command == HTTP::COMMAND_GET)) {
 				// use index http option in the case of GET request on a directory
@@ -152,22 +149,18 @@ void HTTPSession::packetHandler(PacketReader& reader) {
 				// if no file in the path, try to invoke a method on client object
 				if (pPacket->filePos == string::npos) {
 					if (!_options.index.empty()) {
-						if (_options.indexCanBeMethod) {
-							Exception exTry;
-							parameters.reset();
-							peer.onMessage(exTry, _options.index,parameters,HTTPWriter::RAW);
-							if (exTry) {
-								if (exTry.code() == Exception::SOFTWARE)
-									ex.set(exTry);
-							} else
-								methodCalled = true;
-						}
+						if (_options.indexCanBeMethod)
+							methodCalled = processMethod(ex, _options.index, parameters);
+
 						if (!methodCalled && !ex) {
-							filePath.path(filePath.path(),"/",_options.index);
+							// Redirect to the file (get name to prevent path insertion)
+							string nameFile;
+							filePath.appendPath('/', FileSystem::GetName(_options.index, nameFile));
 						}
 					} else if (!_options.indexDirectory)
-						ex.set(Exception::PERMISSION, "No authorization to see the content of ", peer.path,"/");
-				}
+						ex.set(Exception::PERMISSION, "No authorization to see the content of ", peer.path, "/");
+				} else
+					methodCalled = processMethod(ex, filePath.name(), parameters);
 
 				// try to get a file if the client object had not method named like that
 				if (!methodCalled && !ex) {
@@ -181,16 +174,16 @@ void HTTPSession::packetHandler(PacketReader& reader) {
 							if ((pPacket->contentType == HTTP::CONTENT_VIDEO || pPacket->contentType == HTTP::CONTENT_AUDIO) && filePath.lastModified() == 0) {
 								
 								if(pPacket->contentSubType == "x-flv")
-									_writer.mediaType = MediaContainer::FLV;
+									_writer.media = make_unique<FLV>();
 								else if(pPacket->contentSubType == "mpeg")
-									_writer.mediaType = MediaContainer::MPEG_TS;
+									_writer.media = make_unique<MPEGTS>();
 								else
 									ex.set(Exception::APPLICATION, "HTTP streaming for a ",pPacket->contentSubType," unsupported");
 								
 								if (!ex) {
 									_pListener = invoker.subscribe(ex, peer, filePath.baseName(), _writer);
 									// write a HTTP header without content-length (data==NULL and size>0) + HEADER
-									MediaContainer::Write(_writer.mediaType,_writer.write("200", pPacket->contentType, pPacket->contentSubType, NULL, 1).packet);
+									_writer.media->write(_writer.write("200", pPacket->contentType, pPacket->contentSubType, NULL, 1).packet);
 								}
 								
 							}
@@ -208,17 +201,20 @@ void HTTPSession::packetHandler(PacketReader& reader) {
 							 if (invoker.buffer == "D")
 								 sortOptions |= HTTP::SORT_DESC;
 							 // HTTP get
-							_writer.writeFile(filePath,sortOptions);
+							_writer.writeFile(filePath, sortOptions, pPacket->filePos==string::npos);
 						}
 					}
 				}
 			}
 			////////////  HTTP POST  //////////////
 			else if (pPacket->command == HTTP::COMMAND_POST) {
-				// TODO publication!
-				string contentType;
-				if (pPacket->contentType == HTTP::CONTENT_TEXT && pPacket->contentSubType == "xml")
-					processSOAPfunction(ex, reader);
+				PacketReader packetContent(pPacket->content, pPacket->contentLength);
+
+				// Get output format from input
+				_writer.contentType = pPacket->contentType;
+				_writer.contentSubType = pPacket->contentSubType;
+
+				HTTP::ReadMessageFromType(ex, *this, pPacket, packetContent);
 			}
 			////////////  HTTP OPTIONS  ////////////// (it is due requested when Move Redirection is sent)
 			else if (pPacket->command == HTTP::COMMAND_OPTIONS) {
@@ -269,65 +265,28 @@ void HTTPSession::processOptions(Exception& ex,const shared_ptr<HTTPPacket>& pPa
 	BinaryWriter& writer = response.packet;
 
 	// TODO determine the protocol (https/http)
-	String::Format(invoker.buffer, "http://", peer.serverAddress);
+	/*IPAddress serverAddress;
+	if (!serverAddress.set(ex, peer.serverAddress))
+		return;
+
+	String::Format(invoker.buffer, "http://", serverAddress.toString());*/
 
 	HTTP_BEGIN_HEADER(writer)
-		HTTP_ADD_HEADER(writer,"Access-Control-Allow-Origin", invoker.buffer)
+		HTTP_ADD_HEADER(writer,"Access-Control-Allow-Origin", "*")
 		HTTP_ADD_HEADER(writer,"Access-Control-Allow-Methods", "GET, HEAD, PUT, PATH, POST, OPTIONS")
 		HTTP_ADD_HEADER(writer,"Access-Control-Allow-Headers", "Content-Type")
 	HTTP_END_HEADER(writer)
 }
 
-void HTTPSession::processSOAPfunction(Exception& ex, PacketReader& packet) {
-	/*
-	// Get function name
-	SOAPReader reader(packet);
-	string function = "onMessage";
-	bool external = false;
-	if(reader.followingType()==SOAPReader::OBJECT) {
-		reader.readObject(function, external);
+bool HTTPSession::processMethod(Exception& ex, const string& name, MapReader<MapParameters::Iterator>& parameters) {
 
-		string tmp;
-		while(reader.readItem(tmp)!=SOAPReader::END)
-			reader.readString(tmp);
-
-		// extract function from namespace
-		vector<string> nsAndFunction;
-		String::Split(function, ":", nsAndFunction);
-		if (nsAndFunction.size() > 1)
-			function = nsAndFunction[1];
-	}
-
-	// Try to call lua function
-	SOAPWriter writer;
-	peer.onMessage(ex, function, reader, writer);
-	if (ex)
-		return;
-
-	writer.end();
-	UInt32 size = writer.stream.size();
-
-	// Send HTTP Header
-	DataWriter& response = _writer.writeMessage();
-	response.writeString("HTTP/1.1 200 OK");
-	response.beginObject();
-	string stDate;
-	response.writeStringProperty("Date", Time().toString(Time::HTTP_FORMAT, stDate));
-	response.writeStringProperty("Server","Mona");
-
-	string url;
-	// TODO determine the protocol (https/http)
-	String::Format(url, "http://", peer.serverAddress.host().toString());
-	response.writeStringProperty("Access-Control-Allow-Origin", url);
-
-	response.writeStringProperty("Content-Type", "text/xml; charset=utf-8");
-	response.writeNumberProperty("Content-Length", (double)size);
-	response.writeStringProperty("Connection","close");
-	response.endObject();
-
-	// Send SOAP Response
-	response.writeBytes(writer.stream.data(), size);*/
+	Exception exTry;
+	parameters.reset();
+	peer.onMessage(exTry, name, parameters);
+	if (exTry && exTry.code() == Exception::SOFTWARE)
+		ex.set(exTry);
+	
+	return !exTry;
 }
-
 
 } // namespace Mona

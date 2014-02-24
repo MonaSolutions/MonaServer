@@ -22,6 +22,7 @@ This file is a part of Mona.
 #include "Mona/Mona.h"
 #include "Mona/TCPSession.h"
 #include "Mona/WebSocket/WSWriter.h"
+#include "Mona/RawReader.h"
 
 
 namespace Mona {
@@ -38,6 +39,56 @@ public:
 	void			packetHandler(PacketReader& packet);
 	void			flush() { if (_pPublication) _pPublication->flush(); Session::flush(); }
 	void			manage();
+
+	/// \brief Read message and call method if needed
+	/// \param packet Content message to read
+	template<typename ReaderType>
+	void readMessage(Exception& ex, PacketReader& packet) {
+
+		ReaderType reader(packet);
+		if(!reader.isValid()) {
+			RawReader rawReader(packet);
+			peer.onMessage(ex, "onMessage",rawReader, WS::TYPE_TEXT);
+			return;
+		}
+
+		if (reader.followingType()==DataReader::STRING) {
+
+			string name;
+			reader.readString(name);
+			if(name=="__publish") {
+				if(reader.followingType()!=DataReader::STRING) {
+					ex.set(Exception::PROTOCOL, "__publish method takes a stream name in first parameter",WS::CODE_MALFORMED_PAYLOAD);
+					return;
+				}
+				reader.readString(name);
+				if(_pPublication)
+					invoker.unpublish(peer,_pPublication->name());
+				_pPublication = invoker.publish(ex, peer,name);
+			} else if(name=="__play") {
+				if(reader.followingType()!=DataReader::STRING) {
+					ex.set(Exception::PROTOCOL, "__play method takes a stream name in first parameter",WS::CODE_MALFORMED_PAYLOAD);
+					return;
+				}
+				reader.readString(name);
+					
+				closeSusbcription();
+			} else if(name=="__closePublish")
+				closePublication();
+			else if(name=="__closePlay")
+				closeSusbcription();
+			else if (name == "__close") {
+				closePublication();
+				closeSusbcription();
+			} else if(_pPublication) {
+				reader.reset();
+				_pPublication->pushData(reader);
+			} else
+				peer.onMessage(ex, name,reader);
+			return;
+		}
+		peer.onMessage(ex, "onMessage",reader);
+	}
 
 protected:
 	WSWriter&		wsWriter() { return _writer; }

@@ -29,35 +29,43 @@ class JSONWriter : public DataWriter, virtual Object {
 public:
 	JSONWriter(const PoolBuffers& buffers,bool modeRaw=false);
 
-	void beginObject(const std::string& type="",bool external=false);
-	void endObject();
+	virtual void beginObject(const std::string& type="",bool external=false);
+	virtual void endObject();
 
-	void writePropertyName(const std::string& value);
+	virtual void writePropertyName(const std::string& value);
 
-	void beginArray(UInt32 size);
-	void endArray();
+	virtual void beginArray(UInt32 size);
+	virtual void endArray();
 
-	void writeDate(const Date& date) { writeRaw(date.toString(Date::ISO8601_FRAC_FORMAT, _buffer)); }
+	void writeDate(const Time& date) { writeString(date.toString(Time::ISO8601_FRAC_FORMAT, _buffer)); }
+	void writeDate(const Date& date) { writeString(date.toString(Date::ISO8601_FRAC_FORMAT, _buffer)); }
 	void writeNumber(double value) { writeRaw(String::Format(_buffer, value)); }
 	void writeString(const std::string& value);
 	void writeBoolean(bool value) { writeRaw( value ? "true" : "false"); }
 	void writeNull() { writeRaw("null"); }
 	void writeBytes(const UInt8* data,UInt32 size);
 
-	void	end();
-	void	clear();
+	virtual void clear();
+	virtual void endWrite();
+
 private:
+
+	/// \brief Add '[' for first data or ',' for next data of an array/object
+	/// and update state members
+	/// \param isContainer current data is Array or Object
+	void startData(bool isContainer = false);
+
+	/// \brief Add last ']' if data ended and update state members
+	/// \param isContainer current data is Array or Object
+	void endData(bool isContainer = false);
 
 	template <typename ...Args>
 	void writeRaw(Args&&... args) {
-		if(!_started) {
-			_started=true;
-			packet.write8('[');
-		}
-		if(!_first)
-			packet.write8(',');
-		_first=false;
+		startData();
+
 		packet.writeRaw(args ...);
+
+		endData();
 	}
 
 	bool		_modeRaw;

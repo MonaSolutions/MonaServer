@@ -436,7 +436,6 @@ void Script::ReadData(lua_State* pState,DataWriter& writer,UInt32 count,map<UInt
 					start=true;
 				} else if(size>0) {
 					// Array, write properties in first
-					writer.beginObjectArray(size);
 					object=false;
 					lua_pushnil(pState);  /* first key */
 					while (lua_next(pState, args) != 0) {
@@ -444,14 +443,21 @@ void Script::ReadData(lua_State* pState,DataWriter& writer,UInt32 count,map<UInt
 						int keyType = lua_type(pState,-2);
 						const char* key = NULL;
 						if(keyType==LUA_TSTRING && strcmp((key=lua_tostring(pState,-2)),"__type")!=0 ) {
+							if (!start) {
+								writer.beginObjectArray(size);
+								start=true;
+							}
 							writer.writePropertyName(key);
 							ReadData(pState,writer,1);
 						}
 						/* removes 'value'; keeps 'key' for next iteration */
 						lua_pop(pState, 1);
 					}
-					writer.endObject();
-					start=true;
+					if (!start) {
+						writer.beginArray(size);
+						start=true;
+					} else
+						writer.endObject();
 				}
 				lua_pop(pState,1);
 				

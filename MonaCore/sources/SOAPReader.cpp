@@ -24,37 +24,59 @@ using namespace std;
 
 namespace Mona {
 
+SOAPReader::SOAPReader(PacketReader& packet) : XMLReader(packet), _body(false) {}
 
-SOAPReader::Type SOAPReader::followingType() {
+void SOAPReader::reset() {
+	_body=false;
+	XMLReader::reset();
+}
+
+bool SOAPReader::isValid() {
 	
-	string name, tmp;
-	bool external;
-	UInt32 size = 0;
+	followingType();
 
-	// Search the Body tag
-	while(!_body && XMLReader::followingType()==OBJECT) {
-		readObject(name, external);
+	return _body;
+}
 
-		// ignore attributes
-		while(readItem(tmp)!=END)
-			readString(tmp);
+DataReader::Type SOAPReader::followingType() {
+	
+	if (!_body) {
+		string name, tmp;
+		bool external;
+		UInt32 size = 0;
+		Type type = NIL;
 
-		if (XMLReader::followingType()==ARRAY)
+		if (XMLReader::followingType()==ARRAY) {
+
 			readArray(size);
+			while ((type=readItem(name))!=END) {
 
-		if (name == "soapenv:Body") {
-			_body = true;
+				// ignore attributes
+				if (type != ARRAY) {
+					readString(tmp);
+					continue;
+				}
+				readArray(size);
+
+				// Body tag? read items and return
+				if (String::ICompare(name, "soapenv:Body")==0) {
+					_body=true;
+					break;
+				}
+
+				// We expect an object
+				if (readItem(tmp)!=OBJECT)
+					break;
+				readObject(tmp, external);
+			}
 		}
 	}
 
-	if (!_body) {
-
-		ERROR(Exception::PROTOCOL, "SOAP error, tag Body not founded");
-		return END;
-	} else {
-
+	if (_body) {
+		_queueTags.clear();
 		return XMLReader::followingType();
-	}
+	} else
+		return END;
 }
 
 } // namespace Mona

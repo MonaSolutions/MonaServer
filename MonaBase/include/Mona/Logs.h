@@ -69,6 +69,7 @@ public:
 		Buffer out;
 		std::string header;
 		String::Format(header, args ...);
+		// TODO add a size limit to DUMP (otherwise it could take a long time)
 		Util::Dump(data, size, out, header);
 		if (out.size() == 0)
 			return;

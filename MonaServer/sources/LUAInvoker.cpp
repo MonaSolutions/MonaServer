@@ -28,6 +28,10 @@ This file is a part of Mona.
 #include "Mona/Files.h"
 #include "MonaServer.h"
 #include <openssl/evp.h>
+#include "Mona/JSONReader.h"
+#include "Mona/JSONWriter.h"
+#include "Mona/XMLReader.h"
+#include "Mona/XMLWriter.h"
 #include "math.h"
 
 
@@ -211,14 +215,6 @@ int	LUAInvoker::Sha256(lua_State *pState) {
 	SCRIPT_CALLBACK_RETURN
 }
 
-int	LUAInvoker::ToAMF(lua_State *pState) {
-	SCRIPT_CALLBACK(Invoker,invoker)
-		AMFWriter writer(invoker.poolBuffers);
-		SCRIPT_READ_DATA(writer)
-		SCRIPT_WRITE_BINARY(writer.packet.data(),writer.packet.size())
-	SCRIPT_CALLBACK_RETURN
-}
-
 int	LUAInvoker::ToAMF0(lua_State *pState) {
 	SCRIPT_CALLBACK(Invoker,invoker)
 		AMFWriter writer(invoker.poolBuffers);
@@ -227,16 +223,6 @@ int	LUAInvoker::ToAMF0(lua_State *pState) {
 		SCRIPT_WRITE_BINARY(writer.packet.data(),writer.packet.size())
 	SCRIPT_CALLBACK_RETURN
 }
-
-int	LUAInvoker::FromAMF(lua_State *pState) {
-	SCRIPT_CALLBACK(Invoker,invoker)
-		SCRIPT_READ_BINARY(data,size)
-		PacketReader packet(data,size);
-		AMFReader reader(packet);
-		SCRIPT_WRITE_DATA(reader,SCRIPT_READ_UINT(0))
-	SCRIPT_CALLBACK_RETURN
-}
-
 
 int	LUAInvoker::AddToBlacklist(lua_State* pState) {
 	SCRIPT_CALLBACK(Invoker,invoker)	
@@ -314,11 +300,19 @@ int LUAInvoker::Get(lua_State *pState) {
 		} else if (strcmp(name, "publish") == 0) {
 			SCRIPT_WRITE_FUNCTION(&LUAInvoker::Publish)
 		} else if (strcmp(name, "toAMF") == 0) {
-			SCRIPT_WRITE_FUNCTION(&LUAInvoker::ToAMF)
+			SCRIPT_WRITE_FUNCTION(&LUAInvoker::ToData<AMFWriter>)
 		} else if (strcmp(name, "toAMF0") == 0) {
 			SCRIPT_WRITE_FUNCTION(&LUAInvoker::ToAMF0)
 		} else if (strcmp(name, "fromAMF") == 0) {
-			SCRIPT_WRITE_FUNCTION(&LUAInvoker::FromAMF)
+			SCRIPT_WRITE_FUNCTION(&LUAInvoker::FromData<AMFReader>)
+		} else if (strcmp(name, "toJSON") == 0) {
+			SCRIPT_WRITE_FUNCTION(&LUAInvoker::ToData<JSONWriter>)
+		} else if (strcmp(name, "fromJSON") == 0) {
+			SCRIPT_WRITE_FUNCTION(&LUAInvoker::FromData<JSONReader>)
+		} else if (strcmp(name, "toXML") == 0) {
+			SCRIPT_WRITE_FUNCTION(&LUAInvoker::ToData<XMLWriter>)
+		} else if (strcmp(name, "fromXML") == 0) {
+			SCRIPT_WRITE_FUNCTION(&LUAInvoker::FromData<XMLReader>)
 		} else if (strcmp(name, "absolutePath") == 0) {
 			SCRIPT_WRITE_FUNCTION(&LUAInvoker::AbsolutePath)
 		} else if (strcmp(name, "epochTime") == 0) {

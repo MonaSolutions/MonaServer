@@ -24,6 +24,11 @@ This file is a part of Mona.
 
 namespace Mona {
 
+/// \class Divide paths into 2 parts to make it more easy to change one of them
+/// and record access to name, extension and basename for a faster response
+///
+/// directory : The root path (should be a directory)
+/// path : The relative path (may be a directory or a file)
 class FilePath : virtual Object {
 public:
 	FilePath() : _attributesLoaded(false) {}
@@ -36,18 +41,18 @@ public:
 
 	FilePath& operator=(const FilePath& other);
 
-	const std::string& path() const { return _path; }
-	const std::string& fullPath() const;
+	const std::string&	path() const { return _path; }
+	const std::string&	fullPath() const;
 
 	const std::string&	directory() const { return _directory; }
 	const std::string&	name() const { return _name.empty() ? FileSystem::GetName(_path,_name) : _name; }
 	const std::string&	baseName() const { return _baseName.empty() ? FileSystem::GetBaseName(_path,_baseName) : _baseName; }
 	const std::string&	extension() const { return _extension.empty() ? FileSystem::GetExtension(_path,_extension) : _extension; }
 
-	void				update() const { _attributesLoaded = false; }
 	UInt32				size() const { return attributes().size; }
 	const Time&			lastModified() const { return attributes().lastModified; }
 	bool				isDirectory() const { return attributes().isDirectory; }
+	void				update() const { _attributesLoaded = false; }
 
 	template <typename ...Args>
 	void set(Args&&... args) {
@@ -61,9 +66,9 @@ public:
 	}
 
 	template <typename ...Args>
-	const std::string& path(Args&&... args) {
+	const std::string& setPath(Args&&... args) {
 		_path.clear();
-		return appendPath(_path,args ...);
+		return appendPath(args ...);
 	}
 
 	template <typename ...Args>
@@ -74,12 +79,17 @@ public:
 		_attributesLoaded = false;
 		return String::Append(_path,args ...);
 	}
-	
+
 	template <typename ...Args>
-	const std::string& directory(Args&&... args) {
+	const std::string& setDirectory(Args&&... args) {
+		_directory.clear();
+		return appendDirectory(args ...);
+	}
+
+	template <typename ...Args>
+	const std::string& appendDirectory(Args&&... args) {
 		_attributesLoaded = false;
-		String::Format(_directory,args ...);
-		return FileSystem::MakeDirectory(_directory);
+		return String::Append(_directory,args ...);
 	}
 	
 private:

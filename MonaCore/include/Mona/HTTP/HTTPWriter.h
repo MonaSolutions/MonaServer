@@ -31,35 +31,34 @@ namespace Mona {
 
 class HTTPWriter : public Writer, virtual Object {
 public:
-	enum DataType {
-		HTML = 0,
-		RAW,
-		XML,
-		SOAP,
-		JSON,
-		SVG,
-		CSS
-	};
 
 	HTTPWriter(TCPClient& tcpClient);
 
 	std::shared_ptr<HTTPPacket>		pRequest;
 	Time							timeout;
 
-	State			state(State value=GET,bool minimal=false);
-	void			flush(bool full=false);
+	virtual State			state(State value=GET,bool minimal=false);
+	virtual void			flush(bool full=false);
 
-	DataWriter&		writeInvocation(const std::string& type) { return write("200  OK", HTTP::ParseContentType(type.c_str(), _buffer), _buffer);}
-	DataWriter&		writeMessage() { return writeResponse(HTML); }
-	DataWriter&		writeResponse(UInt8 type);
-	void			writeRaw(const UInt8* data, UInt32 size) { write("200 OK", HTTP::CONTENT_TEXT,"plain; charset=utf-8",data,size); }
-	void			close(int code=0);
+	virtual DataWriter&		writeInvocation(const std::string& name) { DataWriter& writer = write("200 OK", contentType, contentSubType); writer.writeString(name); return writer; }
+	virtual DataWriter&		writeMessage() { return write("200 OK", contentType, contentSubType); }
+	virtual DataWriter&		writeResponse(UInt8 type);
+	virtual void			writeRaw(const UInt8* data, UInt32 size) { write("200 OK", HTTP::CONTENT_TEXT,"plain; charset=utf-8",data,size); }
+	virtual void			close(int code=0);
 
 	DataWriter&		write(const std::string& code, HTTP::ContentType type=HTTP::CONTENT_TEXT, const std::string& subType="html; charset=utf-8",const UInt8* data=NULL,UInt32 size=0);
-	void			writeFile(const FilePath& file, UInt8 sortOptions) { return createSender().writeFile(file,sortOptions);}
-	void			close(const Exception& ex);
 
-	MediaContainer::Type	mediaType;
+	/// \brief create a Sender and write the file in parameter
+	/// \param file path of the file
+	/// \param sortOptions Sort options for directory listing
+	/// \param isApp True if file is an application
+	void			writeFile(const FilePath& file, UInt8 sortOptions, bool isApp) { return createSender().writeFile(file,sortOptions,isApp);}
+	void			close(const Exception& ex);
+	
+	
+	std::unique_ptr<MediaContainer>		media;
+	HTTP::ContentType					contentType; ///< Content type for pull response
+	std::string							contentSubType; ///< Content sub type for pull response 
 private:
 	bool			writeMedia(MediaType type,UInt32 time,PacketReader& packet);
 	

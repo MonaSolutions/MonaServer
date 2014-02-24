@@ -1,0 +1,42 @@
+<!doctype html>
+<html>
+<head>
+  <title>Template File Test</title>
+  <script type="text/javascript">
+    function handler() {
+      if (this.readyState == this.DONE) {
+      
+        if (this.status == 200) {
+
+          window.document.getElementById("response").value = this.response;
+          console.log(this); // for chrome/firefox debug
+        }
+      }
+    }
+  
+    function download() {
+      
+      var val1 = window.document.getElementById("var1").value;
+      var val2 = window.document.getElementById("var2").value;
+      var address = "templateFile.txt?var1=" + val1 + "&var2=" + val2;
+      
+      var client = new XMLHttpRequest();
+      client.onreadystatechange = handler;
+      client.open('GET', address);
+      client.send();
+    }
+  </script>
+</head>
+<body>
+  <form name="Demo" action="" method="post">
+<div>1st template : <input id="var1" value="value1"/></div>
+<div>2nd template : <input id="var2" value="value2"/></div>
+<div>
+  <input type="button" value="Download" onclick="download();" />
+</div>
+<textarea id="response" rows="10" cols="100" disabled>
+Here will be print the response.
+</textarea>
+  </form>
+</body>
+<html>

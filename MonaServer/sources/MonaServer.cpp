@@ -401,6 +401,7 @@ void MonaServer::onConnection(Exception& ex, Client& client,DataReader& paramete
 						if (lua_isstring(_pState, -2)) {
 							response.writePropertyName(lua_tostring(_pState,-2));
 							Script::ReadData(_pState,response,1);
+							response.endWrite();
 						} else
 							SCRIPT_WARN("key=value ignored because key is not a string value")
 						lua_pop(_pState,1);
@@ -453,7 +454,9 @@ void MonaServer::onMessage(Exception& ex, Client& client,const string& name,Data
 			error.clear();
 			SCRIPT_FUNCTION_CALL_WITHOUT_LOG
 			if(SCRIPT_CAN_READ) {
-				Script::ReadData(_pState,client.writer().writeResponse(responseType),1);
+				DataWriter& writer = client.writer().writeResponse(responseType);
+				Script::ReadData(_pState, writer,1);
+				writer.endWrite();
 				++__args;
 			}
 		SCRIPT_FUNCTION_END
@@ -468,10 +471,10 @@ void MonaServer::onMessage(Exception& ex, Client& client,const string& name,Data
 
 bool MonaServer::onRead(Exception& ex, Client& client,FilePath& filePath,DataReader& parameters,DataWriter& properties) { 
 	bool result = true;
-	filePath.directory(WWWPath);
+	filePath.setDirectory(WWWPath);
 	SCRIPT_BEGIN(openService(client))
 		SCRIPT_MEMBER_FUNCTION_BEGIN(Client,client,"onRead")
-			SCRIPT_WRITE_STRING(filePath.name().c_str())
+			SCRIPT_WRITE_STRING((client.path==filePath.path())? "" : filePath.name().c_str()) // "" if it is current application
 			SCRIPT_WRITE_DATA(parameters,0)
 			SCRIPT_FUNCTION_CALL
 			if(SCRIPT_CAN_READ) {
@@ -479,10 +482,10 @@ bool MonaServer::onRead(Exception& ex, Client& client,FilePath& filePath,DataRea
 					result=false;
 					SCRIPT_READ_NIL
 				} else {
-					buffer.assign(filePath.name());
-					SCRIPT_READ_STRING(buffer);
+					// Redirect to the file (get name to prevent path insertion)
+					FileSystem::GetName(SCRIPT_READ_STRING(filePath.path()), buffer);
 					if (!buffer.empty()) // to avoid for root app to give "/" instead of ""
-						filePath.set(client.path,"/",buffer);
+						filePath.setPath(client.path,"/",buffer);
 				}
 				if(SCRIPT_NEXT_TYPE==LUA_TTABLE) {
 					lua_pushnil(_pState);  // first key 
@@ -491,6 +494,7 @@ bool MonaServer::onRead(Exception& ex, Client& client,FilePath& filePath,DataRea
 						if (lua_isstring(_pState, -2)) {
 							properties.writePropertyName(lua_tostring(_pState,-2));
 							Script::ReadData(_pState,properties,1);
+							properties.endWrite();
 						} else
 							SCRIPT_WARN("key=value ignored because key is not a string value")
 						lua_pop(_pState,1);

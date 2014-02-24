@@ -27,8 +27,8 @@ class SOAPWriter : public XMLWriter, public virtual NullableObject {
 public:
 	SOAPWriter(const PoolBuffers& buffers);
 
-	///\brief Close the soap structure, may be call before writing
-	void end();
+	virtual void endWrite();
+	virtual void beginDocument();
 };
 
 

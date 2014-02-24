@@ -25,24 +25,27 @@ using namespace std;
 namespace Mona {
 
 
-SOAPWriter::SOAPWriter(const PoolBuffers& buffers) : XMLWriter(buffers) {
+SOAPWriter::SOAPWriter(const PoolBuffers& buffers) : XMLWriter(buffers) {}
+
+void SOAPWriter::beginDocument() {
+
 	packet.writeRaw("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
-	packet.writeRaw("<SOAP-ENV:Envelope xmlns:SOAP-ENV=\"http://schemas.xmlsoap.org/soap/envelope/\" ");
+	packet.writeRaw("<soapenv:Envelope xmlns:SOAP-ENV=\"http://schemas.xmlsoap.org/soap/envelope/\" ");
 	packet.writeRaw("xmlns:SOAP-ENC=\"http://schemas.xmlsoap.org/soap/encoding/\" ");
 	packet.writeRaw("xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" ");
 	packet.writeRaw("xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" ");
 	packet.writeRaw("xmlns:ns=\"urn:mona\">\n");
-	packet.writeRaw("<SOAP-ENV:Body>\n");
+	packet.writeRaw("<soapenv:Body>\n");
 	packet.writeRaw("<ns:MonaResponse>\n");
 	packet.writeRaw("<result>\n");
 }
 
-void SOAPWriter::end() {
+void SOAPWriter::endWrite() {
 
 	packet.writeRaw("\n</result>\n");
 	packet.writeRaw("</ns:aMonaResponse>\n");
-	packet.writeRaw("</SOAP-ENV:Body>\n");
-	packet.writeRaw("</SOAP-ENV:Envelope>");
+	packet.writeRaw("</soapenv:Body>\n");
+	packet.writeRaw("</soapenv:Envelope>");
 }
 
 } // namespace Mona

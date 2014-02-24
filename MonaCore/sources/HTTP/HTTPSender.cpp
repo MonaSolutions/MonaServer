@@ -33,7 +33,7 @@ namespace Mona {
 
 
 
-HTTPSender::HTTPSender(const SocketAddress& address,const shared_ptr<HTTPPacket>& pRequest) : _pRequest(pRequest),_address(address),_sizePos(0),TCPSender("TCPSender"),_sortOptions(0) {
+HTTPSender::HTTPSender(const SocketAddress& address,const shared_ptr<HTTPPacket>& pRequest) : _pRequest(pRequest),_address(address),_sizePos(0),TCPSender("TCPSender"),_sortOptions(0), _isApp(false) {
 	
 }
 
@@ -68,38 +68,39 @@ bool HTTPSender::run(Exception& ex) {
 		if (_file.lastModified()>0 && _pRequest->ifModifiedSince >= _file.lastModified()) {
 			write("304 Not Modified", HTTP::CONTENT_ABSENT);
 		} else {
-			if (_file.lastModified()==0) {
-				// file doesn't exist, test directory
-				string dir(_file.fullPath());
-				if (FileSystem::Exists(FileSystem::MakeDirectory(dir))) {
-					// Redirect to the real path of directory
-					DataWriter& response = write("301 Moved Permanently"); // TODO check that it happens sometimes or never!
-					BinaryWriter& writer = response.packet;
-					String::Format(_buffer, "http://", _pRequest->serverAddress, _file.path(), '/');
-					HTTP_BEGIN_HEADER(writer)
-						HTTP_ADD_HEADER(writer, "Location", _buffer)
-					HTTP_END_HEADER(writer)
-					HTML_BEGIN_COMMON_RESPONSE(writer, "Moved Permanently")
-						writer.writeRaw("The document has moved <a href=\"", _buffer, "\">here</a>.");
-					HTML_END_COMMON_RESPONSE(writer, _buffer)
-				} else
-					writeError(404, String::Format(_buffer,"File ", _file.path(), " doesn't exist"));
-			} else {
+			// file doesn't exist
+			if (_file.lastModified()==0)
+				writeError(404, String::Format(_buffer,"File ", _file.path(), " doesn't exist"));
+			else {
 				Exception exIgnore;
 				Files files(exIgnore, _file.fullPath());
+				// Folder
 				if (!exIgnore) {
-					// Folder
+					// Connected to parent => redirect to url + '/'
+					if (!_isApp) {
+						// Redirect to the real path of directory
+						DataWriter& response = write("301 Moved Permanently");
+						BinaryWriter& writer = response.packet;
+						String::Format(_buffer, "http://", _pRequest->serverAddress, _file.path(), '/');
+						HTTP_BEGIN_HEADER(writer)
+							HTTP_ADD_HEADER(writer, "Location", _buffer)
+						HTTP_END_HEADER(writer)
+						HTML_BEGIN_COMMON_RESPONSE(writer, "Moved Permanently")
+							writer.writeRaw("The document has moved <a href=\"", _buffer, "\">here</a>.");
+						HTML_END_COMMON_RESPONSE(writer, _buffer)
+					} else {
+					
+						DataWriter& response = write("200 OK");
+						BinaryWriter& writer = response.packet;
+						HTTP_BEGIN_HEADER(writer)
+							HTTP_ADD_HEADER(writer,"Last-Modified", time.toString(Time::HTTP_FORMAT, _buffer))
+						HTTP_END_HEADER(writer)
 
-					DataWriter& response = write("200 OK");
-					BinaryWriter& writer = response.packet;
-					HTTP_BEGIN_HEADER(writer)
-						HTTP_ADD_HEADER(writer,"Last-Modified", date.toString(Date::HTTP_FORMAT, _buffer))
-					HTTP_END_HEADER(writer)
-
-					HTTP::WriteDirectoryEntries(writer,_pRequest->serverAddress,_file.path(),files,_sortOptions);
-			
-				} else {
-					// File
+						HTTP::WriteDirectoryEntries(writer,_pRequest->serverAddress,_file.path(),files,_sortOptions);
+					}
+				} 
+				// File
+				else {
 					ifstream ifile(_file.fullPath(), ios::in | ios::binary | ios::ate);
 					if (!ifile.good()) {
 						exIgnore.set(Exception::NIL, "Impossible to open ", _file.path(), " file");
@@ -115,85 +116,17 @@ bool HTTPSender::run(Exception& ex) {
 							HTTP_ADD_HEADER(packet,"Last-Modified", date.toString(Date::HTTP_FORMAT, _buffer))
 						HTTP_END_HEADER(packet)
 
+						// TODO see if filter is correct
+						if (type == HTTP::CONTENT_TEXT && _pRequest->parameters.count())
+							ReplaceTemplateTags(packet, ifile, _pRequest->parameters);
+						else {
 
-						//// Write content file and replace the "<% key %>" field by relating _pRequest->properties[key] value
-						UInt32 pos = packet.size();
-						// get file content size
-						UInt32 size((UInt32)ifile.tellg());
-						// push the entiere file content to memory
-						ifile.seekg(0);
-						char* current = (char*)packet.buffer(size+_pRequest->parameters.size()); // reserve more memory to change <%name%> field
-						ifile.read(current, size);
-						// iterate on content to replace "<% key %>" fields
-						UInt32 newSize(size);
-						const char* end = current + size;
-						UInt8 step(0);
-						char* signifiant(NULL);
-						UInt32 keyLength(0);
-						const char* keyBegin(NULL);
-						string key;
-						while (current < end) {
-							char c = *current;
-							if (step < 2) {
-								if (step==0 && c == '<')
-									++step;
-								else if (step == 1 && c == '%') {
-									++step;
-									signifiant = current-1;
-									keyBegin = NULL;
-									keyLength = 0;
-									key.clear();
-								} else
-									step = 0;
-							} else {
-								// in <% ... %>
-								if (step==2 && c == '%')
-									++step;
-								else if (step==3 && c == '>')
-									++step;
-								else {
-									step = 2;
-									// search key
-									if (key.empty()) {
-										if (!isspace(c)) {
-											if (!keyBegin)
-												keyBegin = current;
-											++keyLength;
-										} else if(keyBegin)
-											key.assign(keyBegin, keyLength);
-									}
-								}
-
-								if (step == 4) {
-									step = 0;
-
-									if (keyBegin)
-										key.assign(keyBegin, keyLength);
-									UInt32 available(current+1-signifiant);
-									auto it = _pRequest->parameters[key];
-									const string& value(it==_pRequest->parameters.end() ? String::Empty : it->second);
-									// give the size available required
-									if (available < value.size()) {
-										available = value.size()-available; // to add
-										newSize += available;
-										memmove(current+1,current+1+available,end-current-1);
-										current += available-1;
-									} else if (available>value.size()) {
-										available = available-value.size(); // to remove
-										newSize -= available;
-										memmove(current+1-available,current+1,end-current-1);
-										current -= available-1;
-									}
-									// replace <% key %> by value
-									if (!value.empty())
-										memcpy(signifiant,value.c_str(),value.size());
-								}
-							}
-							++current;
+							// push the entire file content to memory
+							UInt32 size = (UInt32)ifile.tellg();
+							ifile.seekg(0);
+							char* current = (char*)packet.buffer(size); // reserve memory for file
+							ifile.read(current, size);
 						}
-
-						// resize final stream
-						packet.clear(pos+newSize);
 					}
 				}
 			}
@@ -315,5 +248,86 @@ BinaryWriter& HTTPSender::writeRaw(const PoolBuffers& poolBuffers) {
 	return _pWriter->packet;
 }
 
+void HTTPSender::ReplaceTemplateTags(PacketWriter& packet, ifstream& ifile, MapWriter<std::map<std::string,std::string>>& parameters) {
+
+	UInt32 pos = packet.size();
+	// get file content size
+	UInt32 size = (UInt32)ifile.tellg();
+
+	// push the entire file content to memory
+	ifile.seekg(0);
+	char* current = (char*)packet.buffer(size+parameters.size()); // reserve more memory to change <%name%> field
+	ifile.read(current, size);
+	// iterate on content to replace "<% key %>" fields
+	UInt32 newSize(size);
+	const char* end = current + size;
+	UInt8 step(0);
+	char* signifiant(NULL);
+	UInt32 keyLength(0);
+	const char* keyBegin(NULL);
+	string key;
+	while (current < end) {
+		char c = *current;
+		if (step < 2) {
+			if (step==0 && c == '<')
+				++step;
+			else if (step == 1 && c == '%') {
+				++step;
+				signifiant = current-1;
+				keyBegin = NULL;
+				keyLength = 0;
+				key.clear();
+			} else
+				step = 0;
+		} else {
+			// in <% ... %>
+			if (step==2 && c == '%')
+				++step;
+			else if (step==3 && c == '>')
+				++step;
+			else {
+				step = 2;
+				// search key
+				if (key.empty()) {
+					if (!isspace(c)) {
+						if (!keyBegin)
+							keyBegin = current;
+						++keyLength;
+					} else if(keyBegin)
+						key.assign(keyBegin, keyLength);
+				}
+			}
+
+			if (step == 4) {
+				step = 0;
+
+				if (keyBegin)
+					key.assign(keyBegin, keyLength);
+				UInt32 available(current+1-signifiant);
+				auto it = parameters[key];
+				const string& value(it==parameters.end() ? String::Empty : it->second);
+				// give the size available required
+				if (available < value.size()) {
+					available = value.size()-available; // to add
+					newSize += available;
+					memmove(current+1,current+1+available,end-current-1);
+					current += available-1;
+				} else if (available>value.size()) {
+					available = available-value.size(); // to remove
+					newSize -= available;
+					memcpy(current+1-available,current+1,end-current-1);
+					current -= available-1;
+				}
+				// replace <% key %> by value
+				if (!value.empty())
+					memcpy(signifiant,value.c_str(),value.size());
+			}
+		}
+		++current;
+	}
+
+	// resize final stream
+	packet.clear(pos+newSize);
+}
 
 } // namespace Mona

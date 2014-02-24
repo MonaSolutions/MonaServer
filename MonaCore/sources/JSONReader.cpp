@@ -26,17 +26,24 @@ using namespace std;
 
 namespace Mona {
 
-bool JSONReader::IsValid(PacketReader& packet) {
-	const UInt8* cur = packet.current();
-	while(packet.available()>0 && isspace(*cur))
-		 ++cur;
-	if(packet.available()==0)
-		return false;
-	return cur[0]=='{' || cur[0]=='[';
+bool JSONReader::isValid() {
+
+	// Not tested yet?
+	if (!_validated) {
+		const UInt8* cur = current();
+		_isValid = (packet.available() > 0) && (cur[0]=='{' || cur[0]=='[');
+		_validated=true;
+	}
+
+	return _isValid;
 }
 
 
-JSONReader::JSONReader(PacketReader& packet) : DataReader(packet),_bool(false),_last(0) {
+JSONReader::JSONReader(PacketReader& packet) : DataReader(packet),_bool(false),_last(0),_validated(false),_isValid(false) {
+
+	if (!isValid())
+		return;
+
 	if(followingType()==ARRAY) {
 		if(readArray(_pos) && packet.available()>0) {
 			const UInt8* cur = packet.current()+packet.available()-1;
@@ -87,13 +94,14 @@ double JSONReader::readNumber() {
 		ERROR("JSON number absent, no more data available")
 		return 0;
 	}
-	UInt32 pos = packet.position();
-	UInt8 c = packet.read8();
-	while(available() && (isdigit(c) || c=='.'))
-		c = packet.read8();
 
-	UInt32 size = packet.position()-pos;
-	string value((const char*)cur,size);
+	UInt32 available = packet.available();
+	const UInt8* first = cur;
+	while((available-(cur-first)) && (isdigit(*cur) || *cur=='.'))
+		cur++;
+
+	string value;
+	packet.readRaw(cur-first, value);
 
 	Exception ex;
 	double dval = String::ToNumber<double>(ex, value);
@@ -168,6 +176,7 @@ bool JSONReader::readArray(UInt32& size) {
 JSONReader::Type JSONReader::readItem(string& name) {
 	const UInt8* cur = current();
 	if(!cur) {
+		// TODO is it really an error?
 		ERROR("JSON item absent, no more data available")
 		return END;
 	}

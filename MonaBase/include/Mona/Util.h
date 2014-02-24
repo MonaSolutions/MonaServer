@@ -48,6 +48,11 @@ public:
 	static void Dump(const UInt8* in, UInt32 size, Buffer& out) { std::string header; Dump(in, size, out, header); }
 	static void Dump(const UInt8* in, UInt32 size, Buffer& out, const std::string& header);
 
+	/// \brief Unpack url in path and query
+	/// \param url Url to unpack
+	/// \param path Part of the url between host address and '?'
+	/// \param query Part of the url after '?' (if present)
+	/// \return The position of the file in path (std::npos for a directory)
 	static std::size_t UnpackUrl(const std::string& url, std::string& path, std::string& query) {std::string address; return UnpackUrl(url, address, path, query);}
 	static std::size_t UnpackUrl(const std::string& url, std::string& address, std::string& path, std::string& query);
 	

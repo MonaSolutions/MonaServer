@@ -2,17 +2,15 @@
 <head>
   <title>SOAP JavaScript Client Test</title>
   <script type="text/javascript">
-    function soap() {
+    function send() {
       var xmlhttp = new XMLHttpRequest();
-      var address = window.document.getElementById("address").value;
-      xmlhttp.open('POST', address, true);
+      //var address = window.document.getElementById("address").value;
+      xmlhttp.open('POST', "", true);
 
       var req = window.document.getElementById("request").value;
-      var test =
-        '<?xml version="1.0" encoding="utf-8"?>' +
+      var test = '<?xml version="1.0" encoding="utf-8"?>' +
                 '<soapenv:Envelope ' + 
                     'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ' +
-                    'xmlns:api="http://127.0.0.1/Integrics/Enswitch/API" ' +
                     'xmlns:xsd="http://www.w3.org/2001/XMLSchema" ' +
                     'xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">' +
                     '<soapenv:Body>' +
@@ -31,23 +29,29 @@
           }
       }
       // Send the POST request
-      xmlhttp.setRequestHeader('Content-Type', 'text/xml');
+      xmlhttp.setRequestHeader('Content-Type', 'text/soap+xml');
       xmlhttp.send(test);
     }
   </script>
 </head>
 <body>
     <form name="Demo" action="" method="post">
-<textarea id="address" rows="1" cols="100">http://localhost/clients/soap</textarea>
+<!--<div>
+<textarea id="address" rows="1" cols="100">http://127.0.0.1/clients/soap</textarea>
+</div>-->
+<div>
 <textarea id="request" rows="10" cols="100">
 <urn:sayHello>
 	<message>test</message>
 </urn:sayHello>
 </textarea>
+</div>
+<div>
 <textarea id="response" rows="10" cols="100" disabled>
 </textarea>
+</div>
         <div>
-            <input type="button" value="Soap" onclick="soap();" />
+            <input type="button" value="Send" onclick="send();" />
         </div>
     </form>
 </body>

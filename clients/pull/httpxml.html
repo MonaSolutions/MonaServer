@@ -1,0 +1,26 @@
+<html>
+<head>
+  <title>HTTP XML Client Test</title>
+  <script type="text/javascript">
+    function sendMessage() {
+      var xmlhttp = new XMLHttpRequest();
+      xmlhttp.open('POST', "", true);
+      
+      // Manage the response
+      xmlhttp.onreadystatechange = function () {
+        if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+          var roolElmt = xmlhttp.responseXML.documentElement;
+          if (roolElmt.childNodes[0].textContent=="onReception")
+            alert(roolElmt.childNodes[1].textContent);
+        }
+      }
+      // Send the POST request
+      xmlhttp.setRequestHeader('Content-Type', 'text/xml');
+      xmlhttp.send("<root><__noname>onMethod</__noname><__noname>http xml msg</__noname></root>");
+    }
+  </script>
+</head>
+<body>
+    <input type="button" value="Send" onclick="sendMessage();" />
+</body>
+<html>

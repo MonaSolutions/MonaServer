@@ -246,14 +246,12 @@ void AMFWriter::endObject() {
 	_lastReference = objectRef.reference;
 	bool isObject = objectRef.isObject;
 	_lastObjectReferences.pop_back();
-	if(isObject) {
-		if(!_amf3) {
-			packet.write16(0); 
-			packet.write8(AMF_END_OBJECT);
-			return;
-		}
-		packet.write8(01); // end marker
+	if(isObject && !_amf3) {
+		packet.write16(0); 
+		packet.write8(AMF_END_OBJECT);
+		return;
 	}
+	packet.write8(AMF3_NULL);
 	if(_lastObjectReferences.empty())
 		_amf3=false;
 }

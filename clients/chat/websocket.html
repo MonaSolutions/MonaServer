@@ -1,0 +1,83 @@
+<html>
+<head>
+    <title>Chat JavaScript Client Test</title>
+    <script type="text/javascript">
+      var socket;
+      // Reception handler
+      function onMessage(msg) {
+        try { // try to parse data
+          data = JSON.parse(msg.data);
+          if (data[0] == "onReception") {
+            onReception(data[1]);
+          }
+        } catch(exception) {}
+      }
+      
+      function onReception(message) {
+        
+          var textArea = window.document.getElementById("response");
+          textArea.value += message + '\n';
+          textArea.scrollTop = textArea.scrollHeight;
+      }
+      
+      // Connection handler : request name and send it to server
+      function onConnection() {
+        window.document.getElementById("error").value = 'socket opened'; 
+        window.document.getElementById("btConnect").disabled = true;
+        window.document.getElementById("message").disabled = false;
+        
+        var name = prompt("Please enter your name","User");
+        if (name!=null) {
+          socket.send('["onIdentification","' + name + '"]');
+        }
+      }
+      
+      // Disconnection handler
+      function onDisconnection() { 
+        window.document.getElementById("error").value = 'socket closed'; 
+        window.document.getElementById("btConnect").disabled = false;
+        window.document.getElementById("message").disabled = true;
+      }
+      
+      // Socket connector
+      function createWebSocket() {
+        host = "ws://" + window.location.host + "/" + window.location.pathname;
+        
+        if(window.MozWebSocket)
+          window.WebSocket=window.MozWebSocket;
+        if(!window.WebSocket) {
+          alert("Your browser don't support webSocket!");
+          return false;
+        }
+        socket = new WebSocket(host);
+        socket.onopen = onConnection;
+        socket.onclose = onDisconnection;
+        socket.onerror = function() { window.document.getElementById("error").value = 'An error occurs'; }
+        socket.onmessage = onMessage;
+      }
+       
+      // Send message event
+      function sendMessage() {
+        var data = window.document.getElementById("message").value;
+        if (data!="") {
+          socket.send('[["' + data + '"]]');
+          window.document.getElementById("message").value = "";
+        }
+      }
+       
+      createWebSocket();
+    </script>
+</head>
+<body>
+<div style="height:100%; width:100%">
+<b>Status :</b> <input id="error" readonly=1 style="color:red"/> <input id="btConnect" type="button" value="Connect" onclick="createWebSocket();" />
+  <textarea style="height:90%; width:100%" id="response" cols="80" disabled></textarea>
+  <form name="Demo" action="" onsubmit="sendMessage(); return false">
+    <div style="width:100%">
+      <input type="text" id="message" style="width:90%"/>
+      <input type="button" value="Send" onclick="sendMessage();"/>
+    </div>
+  </form>
+</div>
+</body>
+<html>

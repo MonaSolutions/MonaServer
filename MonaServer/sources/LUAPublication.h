@@ -160,7 +160,8 @@ private:
 					pPublisher->writer().createWriter(pWriter);
 					if (pWriter) {
 						Mona::UInt32 offset = pWriter->packet.size();
-						SCRIPT_READ_DATA(*pWriter)
+						DataWriter& writer = *pWriter;
+						SCRIPT_READ_DATA(writer)
 						Mona::PacketReader packet(pWriter->packet.data(), pWriter->packet.size());
 						packet.next(offset);
 						std::shared_ptr<Mona::DataReader> pReader;
