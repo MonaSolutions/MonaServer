@@ -300,17 +300,17 @@ int LUAInvoker::Get(lua_State *pState) {
 		} else if (strcmp(name, "publish") == 0) {
 			SCRIPT_WRITE_FUNCTION(&LUAInvoker::Publish)
 		} else if (strcmp(name, "toAMF") == 0) {
-			SCRIPT_WRITE_FUNCTION(&LUAInvoker::ToData<AMFWriter>)
+			SCRIPT_WRITE_FUNCTION(&LUAInvoker::ToData<Mona::AMFWriter>)
 		} else if (strcmp(name, "toAMF0") == 0) {
 			SCRIPT_WRITE_FUNCTION(&LUAInvoker::ToAMF0)
 		} else if (strcmp(name, "fromAMF") == 0) {
-			SCRIPT_WRITE_FUNCTION(&LUAInvoker::FromData<AMFReader>)
+			SCRIPT_WRITE_FUNCTION(&LUAInvoker::FromData<Mona::AMFReader>)
 		} else if (strcmp(name, "toJSON") == 0) {
-			SCRIPT_WRITE_FUNCTION(&LUAInvoker::ToData<JSONWriter>)
+			SCRIPT_WRITE_FUNCTION(&LUAInvoker::ToData<Mona::JSONWriter>)
 		} else if (strcmp(name, "fromJSON") == 0) {
-			SCRIPT_WRITE_FUNCTION(&LUAInvoker::FromData<JSONReader>)
+			SCRIPT_WRITE_FUNCTION(&LUAInvoker::FromData<Mona::JSONReader>)
 		} else if (strcmp(name, "toXML") == 0) {
-			SCRIPT_WRITE_FUNCTION(&LUAInvoker::ToData<XMLWriter>)
+			SCRIPT_WRITE_FUNCTION(&LUAInvoker::ToData<Mona::XMLWriter>)
 		} else if (strcmp(name, "fromXML") == 0) {
 			SCRIPT_WRITE_FUNCTION(&LUAInvoker::FromData<XMLReader>)
 		} else if (strcmp(name, "absolutePath") == 0) {
