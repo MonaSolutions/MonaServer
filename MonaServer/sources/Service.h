@@ -46,17 +46,17 @@ private:
 	Service(lua_State* pState, const std::string& path, ServiceHandler& handler,bool init);
 
 	bool		open(bool create);
-	void		close(bool full = false);
+	void		close(bool full);
 
 	void		loadFile();
-	void		clearFile() { close(); }
+	void		clearFile() { close(false); }
 	void		clearEnvironment();
 
 	static int	Children(lua_State *pState);
 	static int	CountChildren(lua_State *pState);
 	static int	Index(lua_State* pState);
 
-	bool						_running;
+	bool						_loaded;
 	lua_State*					_pState;
 	std::vector<std::string>	_packages;
 

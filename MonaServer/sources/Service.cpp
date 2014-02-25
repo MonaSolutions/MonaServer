@@ -26,7 +26,7 @@ This file is a part of Mona.
 using namespace std;
 using namespace Mona;
 
-Service::Service(lua_State* pState, const string& path, ServiceHandler& handler) : Expirable(this), _handler(handler), path(path), _pState(pState), FileWatcher(MonaServer::WWWPath,path,"main.lua"), _running(false) {
+Service::Service(lua_State* pState, const string& path, ServiceHandler& handler) : Expirable(this), _handler(handler), path(path), _pState(pState), FileWatcher(MonaServer::WWWPath,path,"main.lua"), _loaded(false) {
 	String::Split("www" + path, "/", _packages, String::SPLIT_IGNORE_EMPTY | String::SPLIT_TRIM);
 }
 
@@ -173,8 +173,6 @@ int Service::Index(lua_State *pState) {
 }
 
 lua_State* Service::open() {
-	if(!_running)
-		return NULL;
 	lua_State* pResult = open(true) ? _pState : NULL;
 	lua_pop(_pState, 1);
 	return pResult;
@@ -219,6 +217,9 @@ bool Service::open(bool create) {
 		lua_remove(_pState, -2); // remove children	
 
 		if (lua_getmetatable(_pState, -1)==0) {
+
+			//// create environment
+
 			// metatable
 			lua_newtable(_pState);
 
@@ -277,7 +278,7 @@ bool Service::open(bool create) {
 }
 
 void Service::loadFile() {
-	if (_running)
+	if (_loaded)
 		return;
 	open(true);
 	
@@ -298,14 +299,14 @@ void Service::loadFile() {
 		lua_pushvalue(_pState,-2);
 		lua_setfenv(_pState,-2);
 		if(lua_pcall(_pState, 0,0, 0)==0) {
-			_running=true;
+			_loaded=true;
 			
 			SCRIPT_FUNCTION_BEGIN("onStart")
 				SCRIPT_WRITE_STRING(path.c_str())
 				SCRIPT_FUNCTION_CALL
 			SCRIPT_FUNCTION_END
 			_handler.startService(*this);
-			SCRIPT_INFO("Application www", path, "/main.lua loaded")
+			SCRIPT_INFO("Application www", path, " loaded")
 		} else {
 			(string&)lastError = Script::LastError(_pState);
 			SCRIPT_ERROR(lastError);
@@ -319,14 +320,17 @@ void Service::loadFile() {
 void Service::close(bool full) {
 
 	(string&)lastError = "";
-	if (_running && open(false)) {
-		_handler.stopService(*this);
-		SCRIPT_BEGIN(_pState)
-			SCRIPT_FUNCTION_BEGIN("onStop")
-				SCRIPT_WRITE_STRING(path.c_str())
-				SCRIPT_FUNCTION_CALL
-			SCRIPT_FUNCTION_END
-		SCRIPT_END
+	if (open(false)) {
+
+		if (_loaded) {
+			_handler.stopService(*this);
+			SCRIPT_BEGIN(_pState)
+				SCRIPT_FUNCTION_BEGIN("onStop")
+					SCRIPT_WRITE_STRING(path.c_str())
+					SCRIPT_FUNCTION_CALL
+				SCRIPT_FUNCTION_END
+			SCRIPT_END
+		}
 
 		if (full) {
 			// Delete environment
@@ -345,7 +349,7 @@ void Service::close(bool full) {
 		lua_pop(_pState, 1);
 		lua_gc(_pState, LUA_GCCOLLECT, 0);
 	}
-	_running = false;
+	_loaded = false;
 }
 
 void Service::clearEnvironment() {
