@@ -169,23 +169,8 @@ void HTTPSession::packetHandler(PacketReader& reader) {
 						if (filePath.lastModified() == 0) {
 							if (pPacket->contentType == HTTP::CONTENT_ABSENT)
 								pPacket->contentType = HTTP::ExtensionToMIMEType(filePath.extension(),pPacket->contentSubType);
-							if ((pPacket->contentType == HTTP::CONTENT_VIDEO || pPacket->contentType == HTTP::CONTENT_AUDIO) && filePath.lastModified() == 0) {
-								
-								if (pPacket->contentSubType.compare(0, 5, "x-flv")==0)
-									_writer.media = make_unique<FLV>();
-								else if(pPacket->contentSubType.compare(0,4,"mpeg")==0)
-									_writer.media = make_unique<MPEGTS>();
-								else
-									ex.set(Exception::APPLICATION, "HTTP streaming for a ",pPacket->contentSubType," unsupported");
-								
-								if (!ex) {
-									_pListener = invoker.subscribe(ex, peer, filePath.baseName(), _writer);
-									// write a HTTP header without content-length (data==NULL and size>0) + HEADER
-									_writer.media->write(_writer.write("200", pPacket->contentType, pPacket->contentSubType, NULL, 1).packet);
-								}
-								
-							}
-								
+							if ((pPacket->contentType == HTTP::CONTENT_VIDEO || pPacket->contentType == HTTP::CONTENT_AUDIO) && filePath.lastModified() == 0)
+								_pListener = invoker.subscribe(ex, peer, filePath.baseName(), _writer);
 						}
 						if (!ex && !_pListener) {
 							 // for the case of one folder displayed, search sort arguments

@@ -57,7 +57,6 @@ public:
 	void			close(const Exception& ex);
 	
 	
-	std::unique_ptr<MediaContainer>		media;
 	HTTP::ContentType					contentType; ///< Content type for pull response
 	std::string							contentSubType; ///< Content sub type for pull response 
 private:
@@ -68,6 +67,7 @@ private:
 		return *_senders.back();
 	}
 
+	std::unique_ptr<MediaContainer>				_pMedia;
 	TCPClient&									_tcpClient;
 	PoolThread*									_pThread;
 	std::vector<std::shared_ptr<HTTPSender>>	_senders;

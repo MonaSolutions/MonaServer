@@ -115,11 +115,32 @@ bool HTTPWriter::writeMedia(MediaType type,UInt32 time,PacketReader& packet) {
 	switch(type) {
 		case START:
 		case STOP:
-		case INIT:
 			break;
+		case INIT: {
+			if (time>0) // one init by mediatype, we want here just init one time!
+				break;
+			Exception ex;
+			if (!pRequest)
+				ex.set(Exception::APPLICATION, "HTTP streaming without request related");
+			else if (pRequest->contentSubType.compare(0, 5, "x-flv")==0)
+				_pMedia.reset(new FLV());
+			else if(pRequest->contentSubType.compare(0,4,"mpeg")==0)
+				_pMedia.reset(new MPEGTS());
+			else
+				ex.set(Exception::APPLICATION, "HTTP streaming for a ",pRequest->contentSubType," unsupported");
+			if (ex) {
+				close(ex);
+				break;
+			}
+			// write a HTTP header without content-length (data==NULL and size>0)
+			_pMedia->write(write("200", pRequest->contentType, pRequest->contentSubType, NULL, 1).packet);
+			break;
+		}
 		case AUDIO:
 		case VIDEO: {
-			media->write(createSender().writeRaw(_tcpClient.socket().poolBuffers()),type,time,packet.current(), packet.available());
+			if (!_pMedia)
+				return false;
+			_pMedia->write(createSender().writeRaw(_tcpClient.socket().poolBuffers()),type,time,packet.current(), packet.available());
 			break;
 		}
 		default:

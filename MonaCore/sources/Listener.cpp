@@ -44,8 +44,6 @@ Listener::~Listener() {
 }
 
 void Listener::close(Writer& writer,int code){
-	if (code == -1) // code == -1 when it's closing by itself
-		return;
 	// call by the possible WriterHandler
 	// We have to reset the listener, and reset complelty the related writer (newWriter)
 	if (_pVideoWriter == &writer)
@@ -54,6 +52,8 @@ void Listener::close(Writer& writer,int code){
 		_pAudioWriter = NULL;
 	else if (_pDataWriter == &writer)
 		_pDataWriter = NULL;
+	if (code == -1) // code == -1 when it's closing by itself
+		return;
 	init();
 }
 
@@ -78,8 +78,12 @@ const QualityOfService& Listener::dataQOS() const {
 bool Listener::init() {
 	if (_pAudioWriter)
 		WARN("Reinitialisation of one ",publication.name()," subscription")
-	if (!_writer.writeMedia(Writer::INIT, 0, publicationNamePacket()))
+	if (!_writer.writeMedia(Writer::INIT, 0, publicationNamePacket())) {
+		_pVideoWriter = NULL;
+		_pAudioWriter = NULL;
+		_pDataWriter = NULL;
 		return false; // Here consider that the listener have to be closed by the caller
+	}
 	init(&_pAudioWriter, Writer::AUDIO);
 	init(&_pVideoWriter,Writer::VIDEO);
 	init(&_pDataWriter,Writer::DATA);
@@ -96,7 +100,7 @@ void Listener::init(Writer** ppWriter,Writer::MediaType type) {
 		if(_unbuffered)
 			(*ppWriter)->reliable = false;
 	}
-	(*ppWriter)->writeMedia(Writer::INIT,type,publicationNamePacket());
+	(*ppWriter)->writeMedia(Writer::INIT, type, publicationNamePacket());
 }
 
 UInt32 Listener::computeTime(UInt32 time) {
