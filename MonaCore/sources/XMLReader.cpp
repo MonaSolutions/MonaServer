@@ -342,8 +342,11 @@ XMLReader::Type XMLReader::parsePrimitive(const UInt8* cur) {
 	if (!ex) 
 		type = NUMBER;
 	// TODO do not return time if format is not a date ("the end" return a time)
-	else if (_text.size() > 18 && _text.size() < 34 && _date.fromString(_text))
-		type=TIME;
+	else if (_text.size() > 18 && _text.size() < 34) {
+		_date.update(ex, _text);
+		if (!ex)
+			type = DATE;
+	}
 
 	if(chained)
 		packet.next(1); // remove last '"'

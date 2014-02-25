@@ -52,7 +52,8 @@ public:
 	/// \param file path of the file
 	/// \param sortOptions Sort options for directory listing
 	/// \param isApp True if file is an application
-	void			writeFile(const FilePath& file, UInt8 sortOptions, bool isApp) { return createSender().writeFile(file,sortOptions,isApp);}
+	void			writeFile(const FilePath& file, UInt8 sortOptions, bool isApp) { return createSender().writeFile(file,sortOptions,isApp);}	
+
 	void			close(const Exception& ex);
 	
 	

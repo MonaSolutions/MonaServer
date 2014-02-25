@@ -178,7 +178,6 @@ void FileSystem::RemoveAll(Exception& ex,const string& path) {
 }
 
 
-// TODO test with TestUnits
 string& FileSystem::GetName(const string& path, string& value) {
 	value.assign(path);
 	auto separator = value.find_last_of("/\\");
@@ -187,7 +186,6 @@ string& FileSystem::GetName(const string& path, string& value) {
 	return value;
 }
 
-// TODO test with TestUnits
 string& FileSystem::GetBaseName(const string& path, string& value) {
 	value.assign(path);
 	auto dot = value.find_last_of('.');
@@ -199,7 +197,7 @@ string& FileSystem::GetBaseName(const string& path, string& value) {
 	return value;
 }
 
-// TODO test with TestUnits
+
 string& FileSystem::GetExtension(const string& path, string& value) {
 	value.assign(path);
 	auto dot = value.find_last_of('.');
@@ -241,8 +239,14 @@ string& FileSystem::MakeDirectory(string& path) {
 	return path;
 }
 
+string& FileSystem::Parent(string& path) {
+	auto separator = path.find_last_of("/\\");
+	if (separator != string::npos)
+		path.erase(separator+1); // keep the "/" (= folder!)
+	return path;
+}
 
-// TODO test units!
+
 string& FileSystem::Pack(const vector<string>& values, string& path) {
 	path.clear();
 	bool first = true;
@@ -264,7 +268,6 @@ string& FileSystem::Pack(const vector<string>& values, string& path) {
 	return path;
 }
 
-// TODO test units!
 vector<string>& FileSystem::Unpack(const string& path, vector<string>& values) {
 	string::const_iterator it = path.begin(), itValue, end = path.end();
 
@@ -381,9 +384,30 @@ bool FileSystem::ResolveFileWithPaths(const string& paths, string& file) {
 	return false;
 }
 
-bool FileSystem::GetApplicationCurrent(string& path) {
-	// TODO applicationPath
-	return GetCurrent(path);
+bool FileSystem::GetCurrentApplication(string& path) {
+	string result;
+#ifdef _WIN32
+	result.resize(MAX_PATH);
+	int n = GetModuleFileNameA(0, &result[0], MAX_PATH);
+	if (n <= 0)
+		return false;
+	result.resize(n);
+#else
+	
+	// get length of the pathname the link points to
+	struct stat status;
+	if (lstat("/proc/self/exe", &status) == -1)
+		return false;
+
+	result.resize(status.st_size+1);
+		// read the link target into variable linkTarget
+	ssize_t n(0);
+	if(n = readlink("/proc/self/exe", &result[0], result.size())<=0)
+		return false;
+	result.resize(n);
+#endif
+	path = move(result);
+	return true;
 }
 
 bool FileSystem::GetCurrent(string& path) {

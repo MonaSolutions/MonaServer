@@ -88,15 +88,20 @@ void HTTPSession::packetHandler(PacketReader& reader) {
 		return;
 	}
 
-	string oldPath;
-	if(peer.connected)
-		oldPath = peer.path;
-
 	// HTTP is a simplex communication, so if request, remove possible old subscription
 	if (_pListener) {
 		invoker.unsubscribe(peer, _pListener->publication.name());
 		_pListener = NULL;
 	}
+
+	
+	FilePath filePath(pPacket->path);
+	if (pPacket->filePos != string::npos)
+		((string&)pPacket->path).erase(pPacket->filePos - 1);
+
+	//// Disconnection if path has changed
+	if(peer.connected && String::ICompare(peer.path,pPacket->path)!=0)
+		peer.onDisconnection();
 
 	////  fill peers infos
 	peer.setPath(pPacket->path);
@@ -104,14 +109,7 @@ void HTTPSession::packetHandler(PacketReader& reader) {
 	peer.setServerAddress(pPacket->serverAddress);
 	peer.properties().setNumber("HTTPVersion", pPacket->version); // TODO check how is named for AMF
 	Util::UnpackQuery(peer.query,peer.properties());
-	FilePath filePath(peer.path);
-	if (pPacket->filePos != string::npos)
-		((string&)peer.path).erase(pPacket->filePos - 1);
-
-	//// Disconnection if path has changed
-	if(peer.connected && String::ICompare(oldPath,peer.path)!=0)
-		peer.onDisconnection();
-
+	
 	/// Client onConnection
 	Exception ex;
 	if(pPacket->connection&HTTP::CONNECTION_UPGRADE) {
@@ -173,9 +171,9 @@ void HTTPSession::packetHandler(PacketReader& reader) {
 								pPacket->contentType = HTTP::ExtensionToMIMEType(filePath.extension(),pPacket->contentSubType);
 							if ((pPacket->contentType == HTTP::CONTENT_VIDEO || pPacket->contentType == HTTP::CONTENT_AUDIO) && filePath.lastModified() == 0) {
 								
-								if(pPacket->contentSubType == "x-flv")
+								if (pPacket->contentSubType.compare(0, 5, "x-flv")==0)
 									_writer.media = make_unique<FLV>();
-								else if(pPacket->contentSubType == "mpeg")
+								else if(pPacket->contentSubType.compare(0,4,"mpeg")==0)
 									_writer.media = make_unique<MPEGTS>();
 								else
 									ex.set(Exception::APPLICATION, "HTTP streaming for a ",pPacket->contentSubType," unsupported");

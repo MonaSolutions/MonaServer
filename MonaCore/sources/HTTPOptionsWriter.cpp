@@ -73,7 +73,7 @@ void HTTPOptionsWriter::writeString(const string& value) {
 		Date date;
 		Exception ex;
 		if(date.update(ex,value))
-			(UInt32&)timeout = (UInt32)time/1000;
+			(UInt32&)timeout = (UInt32)date/1000;
 		else
 			ERROR("Unvalid HTTP timeout option, ",ex.error());
 	} else

@@ -89,11 +89,10 @@ bool HTTPSender::run(Exception& ex) {
 							writer.writeRaw("The document has moved <a href=\"", _buffer, "\">here</a>.");
 						HTML_END_COMMON_RESPONSE(writer, _buffer)
 					} else {
-					
 						DataWriter& response = write("200 OK");
 						BinaryWriter& writer = response.packet;
 						HTTP_BEGIN_HEADER(writer)
-							HTTP_ADD_HEADER(writer,"Last-Modified", time.toString(Time::HTTP_FORMAT, _buffer))
+							HTTP_ADD_HEADER(writer,"Last-Modified", date.toString(Date::HTTP_FORMAT, _buffer))
 						HTTP_END_HEADER(writer)
 
 						HTTP::WriteDirectoryEntries(writer,_pRequest->serverAddress,_file.path(),files,_sortOptions);
