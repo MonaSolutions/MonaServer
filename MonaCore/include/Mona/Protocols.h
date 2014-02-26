@@ -46,8 +46,8 @@ private:
 		EXCEPTION_TO_LOG(success = ((ProtocolType*)pProtocol.get())->load(ex, params), name, " server")
 		if (!success)
 			return;
+		NOTE(name, " server starts on ", params.port, " ", dynamic_cast<UDProtocol*>(pProtocol.get()) ? "UDP" : "TCP", " port");
 		_protocols.emplace_back(pProtocol.release());
-        NOTE(name, " server starts on ", params.port, " ", dynamic_cast<UDProtocol*>(pProtocol.get()) ? "UDP" : "TCP", " port");
 	}
 
 	std::vector<std::unique_ptr<Protocol>>	_protocols;

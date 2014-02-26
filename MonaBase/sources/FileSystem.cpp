@@ -393,17 +393,14 @@ bool FileSystem::GetCurrentApplication(string& path) {
 		return false;
 	result.resize(n);
 #else
-	
-	// get length of the pathname the link points to
-	struct stat status;
-	if (lstat("/proc/self/exe", &status) == -1)
-		return false;
-
-	result.resize(status.st_size+1);
+	result.resize(130);
 		// read the link target into variable linkTarget
-	ssize_t n(0);
-	if(n = readlink("/proc/self/exe", &result[0], result.size())<=0)
-		return false;
+	ssize_t n(130);
+	while(n>=result.size()) {
+		result.resize(result.size()*2);
+		if((n = readlink("/proc/self/exe", &result[0], result.size()))<=0)
+			return false;
+	}
 	result.resize(n);
 #endif
 	path = move(result);
