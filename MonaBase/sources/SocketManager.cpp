@@ -330,7 +330,7 @@ void SocketManager::run(Exception& exc) {
 		} else if (_currentEvent != FD_READ || _fakeSocket.available(_exSkip)) {
 			if (_currentEvent!=FD_CLOSE)
 				_currentError = WSAGETSELECTERROR(msg.lParam);
-			Task::waitHandle();EPOLL_CTL_DEL
+			Task::waitHandle();
 		}
 
 		_sockfd = INVALID_SOCKET;

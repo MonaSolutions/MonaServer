@@ -111,9 +111,6 @@ public:
 	template<class CollectorType = Script, class LUAItemType = Script>
 	static bool Collection(lua_State* pState, int index,const char* field, Mona::UInt32 size, CollectorType* pCollector = NULL) {
 		lua_getmetatable(pState, index);
-		// update count
-		lua_pushnumber(pState, size);
-		lua_setfield(pState, -2, "|count");
 
 		bool creation(false);
 		// get collection table
@@ -138,6 +135,10 @@ public:
 			creation = true;
 		} else
 			lua_getmetatable(pState, -1);
+
+		// update count
+		lua_pushnumber(pState, size);
+		lua_setfield(pState, -2, "|count");
 
 		if (pCollector) {
 			lua_pushlightuserdata(pState, pCollector);
