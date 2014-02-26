@@ -39,7 +39,7 @@ public:
 	void endArray(){}
 
 	void writeDate(const Date& date) { set(date.toString(Date::SORTABLE_FORMAT,_buffer)); }
-	void writeNumber(double value) { set(String::Format(_buffer, _buffer)); }
+	void writeNumber(double value) { set(String::Format(_buffer, value)); }
 	void writeString(const std::string& value) { set(value); }
 	void writeBoolean(bool value) { set( value ? "true" : "false");}
 	void writeNull() { set("null"); }
