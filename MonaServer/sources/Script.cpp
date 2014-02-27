@@ -113,8 +113,10 @@ lua_State* Script::CreateState() {
 
 	// set global metatable
 	lua_newtable(pState);
+#if !defined(_DEBUG)
 	lua_pushstring(pState, "change metatable of global environment is prohibited");
 	lua_setfield(pState, -2, "__metatable");
+#endif
 	lua_setmetatable(pState, LUA_GLOBALSINDEX);
 
 	return pState;
@@ -144,11 +146,16 @@ int Script::Len(lua_State* pState) {
 		lua_getfield(pState, -1, "|count");
 		if (!lua_isnumber(pState, -1)) {
 			lua_pop(pState, 1);
-			lua_objlen(pState, 1);
+			lua_getfield(pState, -1, "|items");
+			if (lua_istable(pState, -1)) {
+				Len(pState);
+				lua_replace(pState, -2);
+			} else
+				lua_pushnumber(pState,lua_objlen(pState, -2));
 		}
 		lua_replace(pState, -2);
 	} else
-		lua_objlen(pState, -1);
+		lua_pushnumber(pState,lua_objlen(pState, -1));
 	return 1;
 }
 

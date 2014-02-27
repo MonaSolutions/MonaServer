@@ -50,8 +50,7 @@ void RTMFPHandshake::manage() {
 	while(it!=_cookies.end()) {
 		if(it->second->obsolete()) {
 			clearAttempt(it->second->tag);
-			string hex;
-			DEBUG("Obsolete cookie, ", Util::FormatHex(it->first, COOKIE_SIZE, hex));
+			DEBUG("Obsolete cookie, ", Util::FormatHex(it->first, COOKIE_SIZE, invoker.buffer));
 			delete it->second;
 			_cookies.erase(it++);
 		} else
@@ -62,8 +61,7 @@ void RTMFPHandshake::manage() {
 void RTMFPHandshake::commitCookie(const UInt8* value) {
 	auto it = _cookies.find(value);
 	if(it==_cookies.end()) {
-		string hex;
-		WARN("RTMFPCookie ", Util::FormatHex(value, COOKIE_SIZE, hex), " not found, maybe becoming obsolete before commiting (congestion?)");
+		WARN("RTMFPCookie ", Util::FormatHex(value, COOKIE_SIZE, invoker.buffer), " not found, maybe becoming obsolete before commiting (congestion?)");
 		return;
 	}
 	clearAttempt(it->second->tag);
@@ -107,8 +105,7 @@ void RTMFPHandshake::packetHandler(PacketReader& packet) {
 RTMFPSession* RTMFPHandshake::createSession(const UInt8* cookieValue) {
 	map<const UInt8*,RTMFPCookie*,CompareCookies>::iterator itCookie = _cookies.find(cookieValue);
 	if(itCookie==_cookies.end()) {
-		string hex;
-		WARN("Creating session for an unknown cookie '", Util::FormatHex(cookieValue, COOKIE_SIZE, hex), "' (CPU congestion?)");
+		WARN("Creating session for an unknown cookie '", Util::FormatHex(cookieValue, COOKIE_SIZE, invoker.buffer), "' (CPU congestion?)");
 		return NULL;
 	}
 
@@ -190,8 +187,7 @@ UInt8 RTMFPHandshake::handshakeHandler(UInt8 id,PacketReader& request,PacketWrit
 					return 0x71;
 				}
 
-				string hex;
-				DEBUG("UDP Hole punching, session ", Util::FormatHex(peerId, ID_SIZE, hex), " wanted not found")
+				DEBUG("UDP Hole punching, session ", Util::FormatHex(peerId, ID_SIZE, invoker.buffer), " wanted not found")
 				set<SocketAddress> addresses;
 				peer.onRendezVousUnknown(peerId,addresses);
 				set<SocketAddress>::const_iterator it;
@@ -265,8 +261,7 @@ UInt8 RTMFPHandshake::handshakeHandler(UInt8 id,PacketReader& request,PacketWrit
 			(UInt32&)farId = request.read32();
 
 			if(request.read7BitLongValue()!=COOKIE_SIZE) {
-				string hex;
-				ERROR("Bad handshake cookie '", Util::FormatHex(request.current(), COOKIE_SIZE, hex), "': its size should be 64 bytes");
+				ERROR("Bad handshake cookie '", Util::FormatHex(request.current(), COOKIE_SIZE, invoker.buffer), "': its size should be 64 bytes");
 				return 0;
 			}
 	

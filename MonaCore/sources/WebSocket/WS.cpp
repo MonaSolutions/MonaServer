@@ -33,9 +33,7 @@ string& WS::ComputeKey(string& key) {
 	UInt8 temp[20];
 	EVP_Digest(key.c_str(),key.size(),temp,NULL,EVP_sha1(),NULL);
 
-	Buffer buffer; //  TODO remove this temporary variable?
-	Util::ToBase64(temp, sizeof(temp), buffer); 
-	return key.assign((const char*)buffer.data(),buffer.size());
+	return Util::ToBase64(temp, sizeof(temp), key); 
 }
 
 

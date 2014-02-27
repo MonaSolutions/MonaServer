@@ -223,9 +223,11 @@ bool Service::open(bool create) {
 			// metatable
 			lua_newtable(_pState);
 
+#if !defined(_DEBUG)
 			// hide metatable
 			lua_pushstring(_pState, "change metatable of environment is prohibited");
 			lua_setfield(_pState, -2, "__metatable");
+#endif
 
 			lua_pushvalue(_pState,-4);
 			lua_setfield(_pState,-2,"super");
@@ -245,8 +247,10 @@ bool Service::open(bool create) {
 			// set children table
 			lua_newtable(_pState);
 			lua_newtable(_pState); // metatable
+#if !defined(_DEBUG)
 			lua_pushstring(_pState, "change metatable of map is prohibited");
 			lua_setfield(_pState, -2, "__metatable");
+#endif
 			lua_pushcfunction(_pState, &Service::CountChildren);
 			lua_setfield(_pState, -2, "__len");
 			lua_pushcfunction(_pState,&Service::Children);

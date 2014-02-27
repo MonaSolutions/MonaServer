@@ -171,7 +171,7 @@ public:
 			if (i > 0)
 				_toString.append(":");
 			if (i < 8)
-				Util::AppendHex((const UInt8*)&words[i++],2,_toString,Util::HEX_TRIM_LEFT);
+				Util::FormatHex((const UInt8*)&words[i++],2,_toString,Util::HEX_TRIM_LEFT | Util::HEX_APPEND);
 		}
 		if (_scope > 0) {
 			_toString.append("%");

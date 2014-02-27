@@ -126,8 +126,10 @@ public:
 			lua_setfield(pState, -2, "__newindex");
 			lua_pushcfunction(pState, &Script::Len);
 			lua_setfield(pState, -2, "__len");
+#if !defined(_DEBUG)
 			lua_pushstring(pState, "change metatable of datatable values is prohibited");
 			lua_setfield(pState, -2, "__metatable");
+#endif
 			lua_setmetatable(pState, -3);
 			
 			lua_pushvalue(pState, -2);
@@ -281,6 +283,7 @@ public:
 		}
 		lua_pushlightuserdata(pState, (void*)&object);
 		lua_gettable(pState, -2);
+		lua_replace(pState, -2);
 		if (!lua_istable(pState, -1)) {
 			lua_pop(pState, 1);
 			return false;
@@ -407,8 +410,10 @@ private:
 		lua_setfield(pState,-2,"__newindex");
 
 		// hide metatable
+#if !defined(_DEBUG)
 		lua_pushstring(pState,"change metatable of this object is prohibited");
 		lua_setfield(pState,-2,"__metatable");
+#endif
 
 		lua_setmetatable(pState,-2);
 

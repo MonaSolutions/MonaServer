@@ -22,7 +22,6 @@ This file is a part of Mona.
 #include "Mona/String.h"
 #include "Mona/Time.h"
 #include "Mona/Timezone.h"
-#include "math.h"
 #include <fstream>
 
 
@@ -53,9 +52,9 @@ Timezone::TransitionRule		Timezone::_EndDST;
 Timezone						Timezone::_Timezone; // to guarantee that it will be build after _Environment
 
 
-static const char B64Table[65] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+const char Util::_B64Table[65] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
-static const char ReverseB64Table[128] = {
+const char Util::_ReverseB64Table[128] = {
 	64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64,
 	64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64,
 	64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 62, 64, 64, 64, 63,
@@ -358,95 +357,5 @@ bool Util::ReadIniFile(Exception& ex,const string& path,Parameters& parameters) 
 	return true;
 }
 
-UInt8* Util::UnformatHex(UInt8* data,UInt32& size) {
-	UInt32 sizeResult = (UInt32)ceil(size/ 2.0);
-	int j = 0;
-	for (int i = 0; i < sizeResult; ++i) {
-		const char first = data[j++];
-		const char second = j == size ? '0' : data[j++];
-		data[i] = ((first - (isdigit(first) ? '0' : '7')) << 4) | ((second - (isdigit(second) ? '0' : '7')) & 0x0F);
-	}
-	size = sizeResult;
-	return data;
-}
-
-string& Util::AppendHex(const UInt8* data, UInt32 size, string& result,UInt8 options) {
-	static UInt32 Distance('A'-'9'-1); // = 7 in ASCII
-	UInt32 i = 0;
-	bool skipLeft(false);
-	if (options&HEX_TRIM_LEFT) {
-		for (i; i < size; ++i) {
-			if ((data[i] >> 4)>0)
-				break;
-			if ((data[i] & 0x0F) > 0) {
-				skipLeft = true;
-				break;
-			}
-		}
-	}
-	UInt8 value;
-	for (i; i < size; ++i) {
-		if (options&HEX_CPP)
-			result.append("\\x");
-		value = data[i] >> 4;
-		if (!skipLeft)
-			result.append(1,value>9 ? ('0' + value + Distance) : '0' + value);
-		else
-			skipLeft = false;
-		value = data[i] & 0x0F;
-		result.append(1,value>9 ? ('0' + value + Distance) : '0' + value);
-	}
-	return result;
-}
-
-
-Buffer& Util::ToBase64(const UInt8* data, UInt32 size, Buffer& result) {
-	int i = 0;
-	int j = 0;
-	UInt32 accumulator = 0;
-	UInt32 bits = 0;
-	result.resize((UInt32)ceil(size/3.0)*4,false);
-
-	for (i = 0; i < size;++i) {
-		accumulator = (accumulator << 8) | (data[i] & 0xFFu);
-		bits += 8;
-		while (bits >= 6) {
-			bits -= 6;
-			result[j++] = B64Table[(accumulator >> bits) & 0x3Fu];
-		}
-	}
-	if (bits > 0) { // Any trailing bits that are missing.
-		accumulator <<= 6 - bits;
-		result[j++] = B64Table[accumulator & 0x3Fu];
-	}
-	while (result.size() > j) // padding with '='
-		result[j++] = '=';
-	return result;
-}
-
-bool Util::FromBase64(const UInt8* data, UInt32 size, Buffer& result) {
-	UInt32 bits = 0;
-	UInt32 accumulator = 0;
-	result.resize(size/4 * 3,false);
-	int j = 0;
-
-	for (int i = 0; i < size; ++i) {
-		const int c = data[i];
-		if (isspace(c) || c == '=')
-			continue;
-
-		if ((c > 127) || (c < 0) || (ReverseB64Table[c] > 63))
-			return false;
-		
-		accumulator = (accumulator << 6) | ReverseB64Table[c];
-		bits += 6;
-		if (bits >= 8) {
-			bits -= 8;
-			result[j++] = ((accumulator >> bits) & 0xFFu);
-		}
-	}
-	result.resize(j,true);
-	return true;
-}
 
 } // namespace Mona

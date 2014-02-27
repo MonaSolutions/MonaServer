@@ -37,8 +37,11 @@ void LUADataTable::Init(lua_State* pState, LUADataTable& table) {
 	lua_pushcfunction(pState, &LUADataTable::NewIndex);
 	lua_setfield(pState, -2, "__newindex");
 
+#if !defined(_DEBUG)
 	lua_pushstring(pState, "change metatable of datatable values is prohibited");
 	lua_setfield(pState, -2, "__metatable");
+#endif
+
 	lua_setmetatable(pState, -2);
 	lua_setfield(pState, -2, "|items");
 	lua_pop(pState, 1);

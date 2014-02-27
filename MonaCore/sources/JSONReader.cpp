@@ -233,11 +233,8 @@ JSONReader::Type JSONReader::followingType() {
 		UInt32 size = packet.position()-pos;
 		packet.reset(pos);
 		packet.readRaw(size,_text);
-		if(_bool) {
-			Buffer result;
-			Util::FromBase64((const UInt8*)_text.c_str(), size, result);
-			_text.assign((const char*)result.data(),result.size());
-		}
+		if(_bool)
+			Util::FromBase64(_text);
 		packet.next(1); // skip the second '"'
 		cur = current();
 		_last=1; // String marker

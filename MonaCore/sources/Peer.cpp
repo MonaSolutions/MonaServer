@@ -154,10 +154,8 @@ void Peer::onConnection(Exception& ex, Writer& writer,DataReader& parameters,Dat
 			return;
 		}
 		writer.state(Writer::CONNECTED);
-	} else {
-		string hex;
-		ERROR("Client ", Util::FormatHex(id, ID_SIZE, hex), " seems already connected!")
-	}
+	} else
+		ERROR("Client ", Util::FormatHex(id, ID_SIZE, _handler.buffer), " seems already connected!")
 }
 
 void Peer::onDisconnection() {
@@ -165,10 +163,8 @@ void Peer::onDisconnection() {
 		return;
 	_pWriter = NULL;
 	(bool&)connected = false;
-	if (!((Clients&)_handler.clients).remove(*this)) {
-		string hex;
-		ERROR("Client ", Util::FormatHex(id, ID_SIZE, hex), " seems already disconnected!");
-	}
+	if (!((Clients&)_handler.clients).remove(*this))
+		ERROR("Client ", Util::FormatHex(id, ID_SIZE, _handler.buffer), " seems already disconnected!");
 	_handler.onDisconnection(*this);
 }
 

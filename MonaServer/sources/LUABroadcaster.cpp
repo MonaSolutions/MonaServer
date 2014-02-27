@@ -29,11 +29,12 @@ void LUABroadcaster::Init(lua_State *pState, Broadcaster& broadcaster) {
 	lua_pop(pState, 1);
 }
 
-void LUABroadcaster::AddServer(lua_State* pState, Broadcaster& broadcaster, const string& address, int indexServer) {
+void LUABroadcaster::AddServer(lua_State* pState, Broadcaster& broadcaster, const string& address) {
+	// -1 must be the server table!
 	if (Script::FromObject(pState, broadcaster)) {
 		Script::Collection(pState, -1, "|items", broadcaster.count());
 		lua_pushstring(pState, address.c_str());
-		lua_pushvalue(pState, indexServer);
+		lua_pushvalue(pState, -4);
 		lua_rawset(pState, -3); // rawset cause NewIndexProhibited
 		lua_pop(pState, 2);
 	}

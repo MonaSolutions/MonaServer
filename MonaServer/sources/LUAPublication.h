@@ -33,9 +33,10 @@ public:
 
 	static int Item(lua_State *pState);
 
-
-	static void AddListener(lua_State* pState, const Mona::Listener& listener, int indexListener, int indexClient);
-	static void RemoveListener(lua_State* pState, const Mona::Listener& listener, int indexListener);
+	// -1 must be the client table!
+	static void AddListener(lua_State* pState, const Mona::Listener& listener, Mona::UInt8 indexListener);
+	// -1 must be the listener table!
+	static void RemoveListener(lua_State* pState, const Mona::Listener& listener);
 
 	static void Init(lua_State *pState, Mona::Publication& publication) {}
 protected:

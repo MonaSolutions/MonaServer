@@ -216,6 +216,8 @@ This file is a part of Mona.
 
 namespace Mona {
 
+
+
 void DetectMemoryLeak();
 
 
@@ -229,6 +231,7 @@ typedef int32_t         Int32;
 typedef uint32_t        UInt32;
 typedef int64_t			Int64;
 typedef uint64_t		UInt64;
+
 
 
 //////  No copy, no move, objet nullable  //////
@@ -260,6 +263,49 @@ public:
 	operator bool() const { return !_isNull; }
 };
 
+////// ASCII ////////
+
+class ASCII : virtual Static {
+public:
+	enum Type {
+		CONTROL  = 0x0001,
+		BLANK    = 0x0002,
+		SPACE    = 0x0004,
+		PUNCT    = 0x0008,
+		DIGIT    = 0x0010,
+		HEXDIGIT = 0x0020,
+		ALPHA    = 0x0040,
+		LOWER    = 0x0080,
+		UPPER    = 0x0100,
+		GRAPH    = 0x0200,
+		PRINT    = 0x0400
+	};
+
+	static UInt8 ToLower(char value) { return Is(value, UPPER) ? (value + 32) : value; }
+	static UInt8 ToUpper(char value) { return Is(value, LOWER) ? (value - 32) : value; }
+
+	static bool Is(char value,UInt16 type) {return value&0x80 ? 0 : ((_CharacterTypes[value]&type) != 0);}
+private:
+	static const UInt16 _CharacterTypes[128];
+};
+
+
+static bool isalnum(char value) { return ASCII::Is(value, ASCII::ALPHA | ASCII::DIGIT); }
+static bool isalpha(char value) { return ASCII::Is(value,ASCII::ALPHA); }
+static bool isblank(char value) { return ASCII::Is(value,ASCII::BLANK); }
+static bool iscntrl(char value) { return ASCII::Is(value,ASCII::CONTROL); }
+static bool isdigit(char value) { return ASCII::Is(value,ASCII::DIGIT); }
+static bool isgraph(char value) { return ASCII::Is(value,ASCII::GRAPH); }
+static bool islower(char value) { return ASCII::Is(value,ASCII::LOWER); }
+static bool isprint(char value) { return ASCII::Is(value,ASCII::PRINT); }
+static bool ispunct(char value) { return ASCII::Is(value,ASCII::PUNCT); }
+static bool isspace(char value) { return  ASCII::Is(value,ASCII::SPACE); }
+static bool isupper(char value) { return ASCII::Is(value,ASCII::UPPER); }
+static bool isxdigit(char value) { return ASCII::Is(value,ASCII::HEXDIGIT); }
+static char tolower(char value) { return ASCII::ToLower(value); }
+static char toupper(char value) { return ASCII::ToUpper(value); }
+
 
 
 } // namespace Mona
+

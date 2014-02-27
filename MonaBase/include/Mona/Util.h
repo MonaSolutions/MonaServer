@@ -24,6 +24,7 @@ This file is a part of Mona.
 #include "Mona/Time.h"
 #include "Mona/Exceptions.h"
 #include "Mona/Buffer.h"
+#include "math.h"
 #include <map>
 #include <limits>
 #include <mutex>
@@ -34,10 +35,6 @@ namespace Mona {
 
 class Util : virtual Static {
 public:
-	enum HexOption {
-		HEX_CPP=1,
-		HEX_TRIM_LEFT=2
-	};
 	
 	static UInt8 Get7BitValueSize(UInt32 value) { return Get7BitValueSize((UInt64)value); }
 	static UInt8 Get7BitValueSize(UInt64 value);
@@ -58,13 +55,6 @@ public:
 	
 	static Parameters& UnpackQuery(const std::string& query, Parameters& properties);
 
-	static UInt8*		UnformatHex(UInt8* data,UInt32& size);
-	static std::string&	FormatHex(const UInt8* data, UInt32 size, std::string& result, UInt8 options=0) { result.clear(); return AppendHex(data, size, result, options); }
-	static std::string&	AppendHex(const UInt8* data, UInt32 size, std::string& result,UInt8 options=0);
-	static bool			FromBase64(const UInt8* data, UInt32 size, Buffer& result);
-	static Buffer&		ToBase64(const UInt8* data, UInt32 size, Buffer& result);
-	
-
 	static bool ReadIniFile(Exception& ex, const std::string& path, Parameters& parameters);
 
 	static unsigned ProcessorCount() { unsigned result(std::thread::hardware_concurrency());  return result > 0 ? result : 1; }
@@ -79,6 +69,108 @@ public:
 		return (w = w ^ (w >> 19) ^ (t ^ (t >> 8))) % std::numeric_limits<Type>::max();
 	}
 	static void Random(UInt8* data, UInt32 size) {for (UInt32 i = 0; i < size; ++i) data[i] = Random<UInt8>();}
+
+
+	template <typename BufferType>
+	static BufferType& ToBase64(const UInt8* data, UInt32 size, BufferType& buffer) {
+		UInt32 i(0),j(0),accumulator(0),bits(0);
+		buffer.resize((UInt32)ceil(size/3.0)*4);
+
+		for (i = 0; i < size;++i) {
+			accumulator = (accumulator << 8) | (data[i] & 0xFFu);
+			bits += 8;
+			while (bits >= 6) {
+				bits -= 6;
+				buffer[j++] = _B64Table[(accumulator >> bits) & 0x3Fu];
+			}
+		}
+		if (bits > 0) { // Any trailing bits that are missing.
+			accumulator <<= 6 - bits;
+			buffer[j++] = _B64Table[accumulator & 0x3Fu];
+		}
+		while (buffer.size() > j) // padding with '='
+			buffer[j++] = '=';
+		return buffer;
+	}
+
+
+	template <typename BufferType>
+	static bool FromBase64(BufferType& buffer) {
+		UInt32 bits(0),j(0),accumulator(0),size(buffer.size());
+
+		for (UInt32 i = 0; i < size; ++i) {
+			const int c = buffer[i];
+			if (isspace(c) || c == '=')
+				continue;
+
+			if ((c > 127) || (c < 0) || (_ReverseB64Table[c] > 63))
+				return false;
+		
+			accumulator = (accumulator << 6) | _ReverseB64Table[c];
+			bits += 6;
+			if (bits >= 8) {
+				bits -= 8;
+				buffer[j++] = ((accumulator >> bits) & 0xFFu);
+			}
+		}
+		buffer.resize(j);
+		return true;
+	}
+
+	enum HexOption {
+		HEX_CPP=1,
+		HEX_TRIM_LEFT=2,
+		HEX_APPEND=4
+	};
+
+	template <typename BufferType>
+	static BufferType&	FormatHex(const UInt8* data, UInt32 size, BufferType& buffer, UInt8 options=0) {
+
+		UInt32 i(0), j(options&HEX_APPEND ? buffer.size() : 0);
+		bool skipLeft(false);
+		if (options&HEX_TRIM_LEFT) {
+			for (i; i < size; ++i) {
+				if ((data[i] >> 4)>0)
+					break;
+				if ((data[i] & 0x0F) > 0) {
+					skipLeft = true;
+					break;
+				}
+			}
+		}
+
+		buffer.resize((size-i) * ((options&HEX_CPP) ? 4 : 2) - (skipLeft ? 1 : 0) + j);
+
+		UInt8 value;
+		for (i; i < size; ++i) {
+			if (options&HEX_CPP) {
+				buffer[j++] = '\\';
+				buffer[j++] = 'x';
+			}
+			value = data[i] >> 4;
+			if (!skipLeft)
+				buffer[j++] = (value>9 ? (value + '7') : '0' + value);
+			else
+				skipLeft = false;
+			value = data[i] & 0x0F;
+			buffer[j++] = (value > 9 ? (value + '7') : '0' + value);
+		}
+		return buffer;
+	}
+
+	template <typename BufferType>
+	static BufferType& UnformatHex(BufferType& buffer) {
+		UInt32 j(0),i(0),size(buffer.size());
+		while(j<size) {
+			UInt8 first = buffer[j++];
+			UInt8 second = j == size ? '0' : buffer[j++];
+			buffer[i++] = ((first - (first<='9' ? '0' : '7')) << 4) | ((second - (second<='9' ? '0' : '7')) & 0x0F);
+		}
+		buffer.resize(i);
+		return buffer;
+	}
+
+
 private:
 	static char DecodeURI(const std::string::const_iterator& it,const std::string::const_iterator& end);
 
@@ -87,6 +179,9 @@ private:
 	
 	static std::map<THREAD_ID, std::string>	_ThreadNames;
 	static std::recursive_mutex				_MutexThreadNames;
+
+	static const char						_B64Table[65];
+	static const char						_ReverseB64Table[128];
 };
 
 
