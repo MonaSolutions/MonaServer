@@ -9,9 +9,9 @@
     
     <link rel="stylesheet" href="_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="_static/css/bootstrap-2.2.1.min.css" type="text/css" />
+    <link rel="stylesheet" href="_static/bootstrap-3.1.0/css/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="_static/bootstrap-3.1.0/css/bootstrap-theme.min.css" type="text/css" />
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
-    <link rel="stylesheet" href="_static/css/bootstrap-responsive-2.2.1.min.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
@@ -25,7 +25,9 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <script type="text/javascript" src="_static/js/bootstrap-2.2.1.min.js"></script>
+    <script type="text/javascript" src="_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="_static/bootstrap-3.1.0/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
     <link rel="top" title="Mona 1 documentation" href="index.html" />
     <link rel="prev" title="Mona Server’s lua API" href="api.html" />
@@ -36,27 +38,35 @@
 
   </head>
   <body>
-<div class="container">
-  
-  <div id="navbar" class="navbar navbar-fixed-top">
-    <div class="navbar-inner">
-      <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
-      <button class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
-      </button>
 
-      <a class="brand" href="index.html">Mona</a>
-      <span class="navbar-text pull-left"><b>1</b></span>
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="index.html">
+          Mona</a>
+        <span class="navbar-text navbar-version pull-left"><b>1</b></span>
+      </div>
 
-      <div class="nav-collapse">
-        <ul class="nav">
-          <li class="divider-vertical"></li>
-          
-            <li class="dropdown">
-  <a href="index.html" class="dropdown-toggle" data-toggle="dropdown">Site <b class="caret"></b></a>
-  <ul class="dropdown-menu globaltoc"><ul class="current">
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            <li class="divider-vertical"></li>
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="samples.html">Samples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="serverapp.html">Server Application</a></li>
@@ -67,9 +77,16 @@
 </ul>
 </ul>
 </li>
-            <li class="dropdown">
-  <a href="#" class="dropdown-toggle" data-toggle="dropdown">Page <b class="caret"></b></a>
-  <ul class="dropdown-menu localtoc"><ul>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"><ul>
 <li><a class="reference internal" href="#">FAQ</a><ul>
 <li><a class="reference internal" href="#what-are-the-advantages-of-rtmfp-protocol">What are the advantages of RTMFP Protocol?</a></li>
 <li><a class="reference internal" href="#why-the-cirrus-sample-doesn-t-work">Why the cirrus sample doesn&#8217;t work?</a></li>
@@ -78,33 +95,48 @@
 </ul>
 </ul>
 </li>
-          
+              
+            
+            
+              
+                
+  <li>
+    <a href="api.html" title="Previous Chapter: Mona Server’s lua API"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm">&laquo; Mona Server’s lu...</span>
+    </a>
+  </li>
+              
+            
+            
+            
+            
+              <li class="hidden-sm">
+<div id="sourcelink">
+  <a href="_sources/faq.txt"
+     rel="nofollow">Source</a>
+</div></li>
+            
+          </ul>
+
           
             
-  <li><a href="api.html"
-         title="previous chapter">&laquo; Mona Server&#8217;s lua API</a></li>
-          
-          
-            <li>
-  <a href="_sources/faq.txt"
-     rel="nofollow">Source</a></li>
-          
-        </ul>
-
-        
-          
-<form class="navbar-search pull-right" style="margin-bottom:-3px;" action="search.html" method="get">
-  <input type="text" name="q" placeholder="Search" />
+<form class="navbar-form navbar-right" action="search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
   <input type="hidden" name="check_keywords" value="yes" />
   <input type="hidden" name="area" value="default" />
 </form>
-        
-      </div>
+          
+        </div>
     </div>
   </div>
 
-  
-  <div class="section" id="faq">
+<div class="container">
+  <div class="row">
+    <div class="col-md-12">
+      
+  <a class="reference external image-reference" href="https://github.com/MonaSolutions/MonaServer"><img alt="_images/githubBlack.png" class="align-right" src="_images/githubBlack.png" /></a>
+<div class="section" id="faq">
 <h1><a class="toc-backref" href="#id1">FAQ</a><a class="headerlink" href="#faq" title="Permalink to this headline">¶</a></h1>
 <p>Here are listed answers for frequently asked questions.</p>
 <div class="contents topic" id="table-of-contents">
@@ -149,12 +181,15 @@
 <p>Adding it for your <em>www/main.lua</em> file will make working the <a class="reference external" href="http://labs.adobe.com/technologies/cirrus/samples/">cirrus sample</a>.</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
-<p class="last">the <a class="reference external" href="http://labs.adobe.com/technologies/cirrus/samples/">cirrus sample</a> requires some python scripts to exchange user names, it makes the thing complex whereas it could be easily to replace with some LUA code line. I guess you to keep an eye on the <em>meeting sample</em> of the <cite>Samples &lt;./samples.html&gt;</cite> page which does the same thing but without other external dependencies.</p>
+<p class="last">the <a class="reference external" href="http://labs.adobe.com/technologies/cirrus/samples/">cirrus sample</a> requires some python scripts to exchange user names, it makes the thing complex whereas it could be easily to replace with some LUA code line. I guess you to keep an eye on the <em>meeting sample</em> of the <a class="reference external" href="./samples.html">Samples</a> page which does the same thing but without other external dependencies.</p>
 </div>
 </div>
 </div>
 
 
+    </div>
+      
+  </div>
 </div>
 <footer class="footer">
   <div class="container">

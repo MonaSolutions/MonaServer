@@ -1,5 +1,9 @@
 .. Mona documentation master file
 
+.. image:: githubBlack.png
+  :align: right
+  :target: https://github.com/MonaSolutions/MonaServer
+
 Mona Documentation's Guide
 ##############################
 
@@ -10,14 +14,14 @@ Mona starts with the idea that protocols essentially serve the same aims :
  - AND communication channel between clients (**P2P** or publish/play **live**).
 
 And with this objective we are proud to give you a generic alternative to existing communication servers with :
- - The powerful **luajit** compiler combined in a useful lua API to write server applications,
+ - The powerful **LuaJIT_** compiler combined in a useful lua API to write server applications,
  - An ingenious **NoSQL** database management system,
  - The mighty protocol **RTMFP** which provide P2P channels, UDP reliable and non-reliable communication and many other great features,
  - And all of this developed keeping in mind the 5 following notions: speed, light weight, cross-platform, scalable and elegant **C++11** code.
 
 For now we have already included several protocols :
  - **RTMFP**, **RTMP**, **RTMPE**,
- - **HTTP** (and Web Services), **Websocket**.
+ - **HTTP** (with **JSON-RPC** and **XML-RPC**), **Websocket**.
 
 And we expect to add many others like **WebRTC**, **HLS**, **IPTV**. But remember that our development is open source so contribution is really appreciated (paypal link).
 
@@ -35,3 +39,5 @@ Mona project is under GPL license, please contact us for commercial licence at m
   serversocket
   api
   faq
+  
+.. _LuaJIT : http://luajit.org/

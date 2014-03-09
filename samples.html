@@ -9,9 +9,9 @@
     
     <link rel="stylesheet" href="_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="_static/css/bootstrap-2.2.1.min.css" type="text/css" />
+    <link rel="stylesheet" href="_static/bootstrap-3.1.0/css/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="_static/bootstrap-3.1.0/css/bootstrap-theme.min.css" type="text/css" />
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
-    <link rel="stylesheet" href="_static/css/bootstrap-responsive-2.2.1.min.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
@@ -25,7 +25,9 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <script type="text/javascript" src="_static/js/bootstrap-2.2.1.min.js"></script>
+    <script type="text/javascript" src="_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="_static/bootstrap-3.1.0/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
     <link rel="top" title="Mona 1 documentation" href="index.html" />
     <link rel="next" title="Installation" href="installation.html" />
@@ -37,27 +39,35 @@
 
   </head>
   <body>
-<div class="container">
-  
-  <div id="navbar" class="navbar navbar-fixed-top">
-    <div class="navbar-inner">
-      <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
-      <button class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
-      </button>
 
-      <a class="brand" href="index.html">Mona</a>
-      <span class="navbar-text pull-left"><b>1</b></span>
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="index.html">
+          Mona</a>
+        <span class="navbar-text navbar-version pull-left"><b>1</b></span>
+      </div>
 
-      <div class="nav-collapse">
-        <ul class="nav">
-          <li class="divider-vertical"></li>
-          
-            <li class="dropdown">
-  <a href="index.html" class="dropdown-toggle" data-toggle="dropdown">Site <b class="caret"></b></a>
-  <ul class="dropdown-menu globaltoc"><ul class="current">
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            <li class="divider-vertical"></li>
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="">Samples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="serverapp.html">Server Application</a></li>
@@ -68,15 +78,22 @@
 </ul>
 </ul>
 </li>
-            <li class="dropdown">
-  <a href="#" class="dropdown-toggle" data-toggle="dropdown">Page <b class="caret"></b></a>
-  <ul class="dropdown-menu localtoc"><ul>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"><ul>
 <li><a class="reference internal" href="#">Samples</a><ul>
 <li><a class="reference internal" href="#pull-data">Pull Data</a><ul>
 <li><a class="reference internal" href="#server-part-lua">Server part (lua)</a></li>
 <li><a class="reference internal" href="#websocket-client">WebSocket client</a></li>
 <li><a class="reference internal" href="#flash-client">Flash client</a></li>
-<li><a class="reference internal" href="#http-client">Http client</a></li>
+<li><a class="reference internal" href="#http-client-json-rpc-and-xml-rpc">Http client (JSON-RPC and XML-RPC)</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#push-data">Push Data</a><ul>
@@ -104,36 +121,55 @@
 </ul>
 </ul>
 </li>
-          
+              
+            
+            
+              
+                
+  <li>
+    <a href="index.html" title="Previous Chapter: Mona Documentation’s Guide"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm">&laquo; Mona Documentati...</span>
+    </a>
+  </li>
+  <li>
+    <a href="installation.html" title="Next Chapter: Installation"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm">Installation &raquo;</span>
+    </a>
+  </li>
+              
+            
+            
+            
+            
+              <li class="hidden-sm">
+<div id="sourcelink">
+  <a href="_sources/samples.txt"
+     rel="nofollow">Source</a>
+</div></li>
+            
+          </ul>
+
           
             
-  <li><a href="index.html"
-         title="previous chapter">&laquo; Mona Documentation&#8217;s Guide</a></li>
-  <li><a href="installation.html"
-         title="next chapter">Installation &raquo;</a></li>
-          
-          
-            <li>
-  <a href="_sources/samples.txt"
-     rel="nofollow">Source</a></li>
-          
-        </ul>
-
-        
-          
-<form class="navbar-search pull-right" style="margin-bottom:-3px;" action="search.html" method="get">
-  <input type="text" name="q" placeholder="Search" />
+<form class="navbar-form navbar-right" action="search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
   <input type="hidden" name="check_keywords" value="yes" />
   <input type="hidden" name="area" value="default" />
 </form>
-        
-      </div>
+          
+        </div>
     </div>
   </div>
 
-  
-  <div class="section" id="samples">
+<div class="container">
+  <div class="row">
+    <div class="col-md-12">
+      
+  <a class="reference external image-reference" href="https://github.com/MonaSolutions/MonaServer"><img alt="_images/githubBlack.png" class="align-right" src="_images/githubBlack.png" /></a>
+<div class="section" id="samples">
 <h1><a class="toc-backref" href="#id5">Samples</a><a class="headerlink" href="#samples" title="Permalink to this headline">¶</a></h1>
+<p>This page gives you several examples of what you can do with MonaServer. Others samples are available in the <em>clients</em> directory of MonaServer. You can copy or create a symbolic link of this directory in <em>www</em>.
+For more informations about functionalities see <a class="reference external" href="./serverapp.html">Server Application</a> page.</p>
 <div class="contents topic" id="table-of-contents">
 <p class="topic-title first">Table of Contents</p>
 <ul class="simple">
@@ -142,7 +178,7 @@
 <li><a class="reference internal" href="#server-part-lua" id="id7">Server part (lua)</a></li>
 <li><a class="reference internal" href="#websocket-client" id="id8">WebSocket client</a></li>
 <li><a class="reference internal" href="#flash-client" id="id9">Flash client</a></li>
-<li><a class="reference internal" href="#http-client" id="id10">Http client</a></li>
+<li><a class="reference internal" href="#http-client-json-rpc-and-xml-rpc" id="id10">Http client (JSON-RPC and XML-RPC)</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#push-data" id="id11">Push Data</a><ul>
@@ -256,8 +292,8 @@
 </pre></div>
 </div>
 </div>
-<div class="section" id="http-client">
-<h3><a class="toc-backref" href="#id10">Http client</a><a class="headerlink" href="#http-client" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="http-client-json-rpc-and-xml-rpc">
+<h3><a class="toc-backref" href="#id10">Http client (JSON-RPC and XML-RPC)</a><a class="headerlink" href="#http-client-json-rpc-and-xml-rpc" title="Permalink to this headline">¶</a></h3>
 <div class="highlight-html"><div class="highlight"><pre><span class="nt">&lt;html&gt;</span>
 <span class="nt">&lt;head&gt;</span>
   <span class="nt">&lt;title&gt;</span>HTTP JSON Client Test<span class="nt">&lt;/title&gt;</span>
@@ -271,7 +307,7 @@
         <span class="k">if</span> <span class="p">(</span><span class="nx">xmlhttp</span><span class="p">.</span><span class="nx">readyState</span> <span class="o">==</span> <span class="mi">4</span> <span class="o">&amp;&amp;</span> <span class="nx">xmlhttp</span><span class="p">.</span><span class="nx">status</span> <span class="o">==</span> <span class="mi">200</span><span class="p">)</span> <span class="p">{</span>
           <span class="kd">var</span> <span class="nx">response</span> <span class="o">=</span> <span class="nx">JSON</span><span class="p">.</span><span class="nx">parse</span><span class="p">(</span><span class="nx">xmlhttp</span><span class="p">.</span><span class="nx">response</span><span class="p">);</span>
           <span class="k">if</span> <span class="p">(</span><span class="nx">response</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;onReception&quot;</span><span class="p">)</span> <span class="nx">alert</span><span class="p">(</span><span class="nx">response</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
-   <span class="p">}</span>
+        <span class="p">}</span>
       <span class="p">}</span>
       <span class="c1">// Send the POST request</span>
       <span class="nx">xmlhttp</span><span class="p">.</span><span class="nx">setRequestHeader</span><span class="p">(</span><span class="s1">&#39;Content-Type&#39;</span><span class="p">,</span> <span class="s1">&#39;application/json&#39;</span><span class="p">);</span>
@@ -286,7 +322,7 @@
 <span class="nt">&lt;html&gt;</span>
 </pre></div>
 </div>
-<p>Mona support both json and xml formats, so just replace the response and request with the lines bellow to have xml http rpc sample :</p>
+<p>Mona support both json and xml formats, so just replace the response and request with the lines below to have xml http rpc sample :</p>
 <div class="highlight-js"><div class="highlight"><pre><span class="c1">// Manage the response</span>
 <span class="nx">xmlhttp</span><span class="p">.</span><span class="nx">onreadystatechange</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
   <span class="k">if</span> <span class="p">(</span><span class="nx">xmlhttp</span><span class="p">.</span><span class="nx">readyState</span> <span class="o">==</span> <span class="mi">4</span> <span class="o">&amp;&amp;</span> <span class="nx">xmlhttp</span><span class="p">.</span><span class="nx">status</span> <span class="o">==</span> <span class="mi">200</span><span class="p">)</span> <span class="p">{</span>
@@ -297,7 +333,7 @@
 <span class="p">}</span>
 <span class="c1">// Send the POST request</span>
 <span class="nx">xmlhttp</span><span class="p">.</span><span class="nx">setRequestHeader</span><span class="p">(</span><span class="s1">&#39;Content-Type&#39;</span><span class="p">,</span> <span class="s1">&#39;text/xml&#39;</span><span class="p">);</span>
-<span class="nx">xmlhttp</span><span class="p">.</span><span class="nx">send</span><span class="p">(</span><span class="s2">&quot;&lt;root&gt;&lt;__noname&gt;onMethod&lt;/__noname&gt;&lt;__noname&gt;http xml msg&lt;/__noname&gt;&lt;/root&gt;&quot;</span><span class="p">);</span>
+<span class="nx">xmlhttp</span><span class="p">.</span><span class="nx">send</span><span class="p">(</span><span class="s2">&quot;&lt;__array&gt;&lt;__noname&gt;onMethod&lt;/__noname&gt;&lt;__noname&gt;http xml msg&lt;/__noname&gt;&lt;/__array&gt;&quot;</span><span class="p">);</span>
 </pre></div>
 </div>
 </div>
@@ -419,7 +455,7 @@ Brief description : When the flash client send a message to the server, this mes
 <h2><a class="toc-backref" href="#id16">Communication channels</a><a class="headerlink" href="#communication-channels" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="publish-live">
 <h3><a class="toc-backref" href="#id17">Publish live</a><a class="headerlink" href="#publish-live" title="Permalink to this headline">¶</a></h3>
-<p>Now we are about to create a sample of publication with a flash publisher. For the server part just create a directory “publish” in the root directory. The client could be vlc for example connected to the url <a class="reference external" href="http://localhost/publish/file.flv">http://localhost/publish/file.flv</a>. for the publisher use the code bellow :</p>
+<p>Now we are about to create a sample of publication with a flash publisher. For the server part just create a directory “publish” in the root directory. The client could be vlc for example connected to the url <a class="reference external" href="http://localhost/publish/file.flv">http://localhost/publish/file.flv</a>. for the publisher use the code below :</p>
 <div class="highlight-as3"><div class="highlight"><pre><span class="o">&lt;?</span><span class="n">xml</span> <span class="n">version</span><span class="o">=</span><span class="s2">&quot;1.0&quot;</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="o">?&gt;</span>
 <span class="o">&lt;</span><span class="n">mx</span><span class="o">:</span><span class="n">Application</span> <span class="n">xmlns</span><span class="o">:</span><span class="n">fx</span><span class="o">=</span><span class="s2">&quot;http://ns.adobe.com/mxml/2009&quot;</span>
         <span class="n">xmlns</span><span class="o">:</span><span class="n">mx</span><span class="o">=</span><span class="s2">&quot;library://ns.adobe.com/flex/mx&quot;</span> <span class="n">layout</span><span class="o">=</span><span class="s2">&quot;absolute&quot;</span> <span class="n">minWidth</span><span class="o">=</span><span class="s2">&quot;955&quot;</span> <span class="n">minHeight</span><span class="o">=</span><span class="s2">&quot;600&quot;</span> <span class="n">activate</span><span class="o">=</span><span class="s2">&quot;startCam()&quot;</span><span class="o">&gt;</span>
@@ -476,7 +512,7 @@ Brief description : When the flash client send a message to the server, this mes
 <p>This sample shows P2P file transfert and NetGroup usage over Object Replication functionnality.</p>
 <div class="section" id="id3">
 <h4><a class="toc-backref" href="#id19">Server part</a><a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h4>
-<p>Source bellow is the lua application. During test you should take attention to the sender of the file which could be any peer among the providers.</p>
+<p>Source below is the lua application. During test you should take attention to the sender of the file which could be any peer among the providers.</p>
 <div class="highlight-lua"><div class="highlight"><pre><span class="n">peers</span> <span class="o">=</span> <span class="p">{}</span>
 
 <span class="k">function</span> <span class="nf">onConnection</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
@@ -900,6 +936,9 @@ Here is the file <em>P2PSharedObject.as</em>, the class file for objects that wi
 </div>
 
 
+    </div>
+      
+  </div>
 </div>
 <footer class="footer">
   <div class="container">

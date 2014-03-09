@@ -1,6 +1,13 @@
 
+.. image:: githubBlack.png
+  :align: right
+  :target: https://github.com/MonaSolutions/MonaServer
+
 Samples
 ##############################
+
+This page gives you several examples of what you can do with MonaServer. Others samples are available in the *clients* directory of MonaServer. You can copy or create a symbolic link of this directory in *www*.
+For more informations about functionalities see `Server Application`_ page.
 
 .. contents:: Table of Contents
 
@@ -96,8 +103,8 @@ Flash client
     <mx:Button x="430" y="10" label="Connect and Send" click="connectAndSend()"/>
   </mx:Application>
 
-Http client
-==============================
+Http client (JSON-RPC and XML-RPC)
+==================================
 
 .. code-block:: html
 
@@ -114,7 +121,7 @@ Http client
           if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
             var response = JSON.parse(xmlhttp.response);
             if (response[0] == "onReception") alert(response[1]);
-     }
+          }
         }
         // Send the POST request
         xmlhttp.setRequestHeader('Content-Type', 'application/json');
@@ -128,7 +135,7 @@ Http client
   </body>
   <html>
 
-Mona support both json and xml formats, so just replace the response and request with the lines bellow to have xml http rpc sample :
+Mona support both json and xml formats, so just replace the response and request with the lines below to have xml http rpc sample :
 
 .. code-block:: js
 
@@ -142,7 +149,7 @@ Mona support both json and xml formats, so just replace the response and request
   }
   // Send the POST request
   xmlhttp.setRequestHeader('Content-Type', 'text/xml');
-  xmlhttp.send("<root><__noname>onMethod</__noname><__noname>http xml msg</__noname></root>");
+  xmlhttp.send("<__array><__noname>onMethod</__noname><__noname>http xml msg</__noname></__array>");
 
 Push Data
 ******************************
@@ -267,7 +274,7 @@ Communication channels
 Publish live
 ==============================
 
-Now we are about to create a sample of publication with a flash publisher. For the server part just create a directory “publish” in the root directory. The client could be vlc for example connected to the url http://localhost/publish/file.flv. for the publisher use the code bellow :
+Now we are about to create a sample of publication with a flash publisher. For the server part just create a directory “publish” in the root directory. The client could be vlc for example connected to the url http://localhost/publish/file.flv. for the publisher use the code below :
 
 .. code-block:: as3
 
@@ -328,7 +335,7 @@ This sample shows P2P file transfert and NetGroup usage over Object Replication 
 Server part
 -------------------------------------
 
-Source bellow is the lua application. During test you should take attention to the sender of the file which could be any peer among the providers.
+Source below is the lua application. During test you should take attention to the sender of the file which could be any peer among the providers.
 
 .. code-block:: lua
 
@@ -757,4 +764,5 @@ Use only the client part of these souces, and for server side create the file Mo
       end
     end
   end
-  
+
+.. _Server Application: ./serverapp.html

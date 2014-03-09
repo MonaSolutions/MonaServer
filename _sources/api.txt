@@ -1,4 +1,8 @@
 
+.. image:: githubBlack.png
+  :align: right
+  :target: https://github.com/MonaSolutions/MonaServer
+
 Mona Server's lua API
 ##############################
 
@@ -6,6 +10,7 @@ This page references objects and events available in `Server Application`_ of Mo
 To know how create a server application, and understand how it works, read `Server Application`_ page.
 
 .. contents:: Table of Contents
+  :depth: 3
 
 Objects
 *********
@@ -18,7 +23,7 @@ Some notions are common for all available objects.
 Properties
 -----------------
 
-A property is available as following:
+A property is available as follows:
 
 .. code-block:: lua
 
@@ -35,7 +40,7 @@ And it can be assigned if it's not a *read-only* property like that:
 methods
 -----------------
 
-A method is called as following:
+A method is called as follows:
 
 .. code-block:: lua
 
@@ -46,7 +51,7 @@ It can take multiple parameters and return mutiple results.
 
 events
 -----------------
-A few objects have also some events, the system calls one of these member. Simply overload the named event by one function.
+A few objects have also some events called by the system. Simply overload the named event by defining a function as follows:
 
 .. code-block:: lua
 
@@ -55,45 +60,41 @@ A few objects have also some events, the system calls one of these member. Simpl
 	end
 
 
-pairs
+pairs and ipairs
 -----------------
 
-Few objects which represent a map (hashtable) have a *pairs* method. It allows to iterate on the map as following:
+Objects are kind of array or map, so you can iterate between elements of objects as follows:
 
 .. code-block:: lua
 
-	for name,value in mapObject:pairs() do
-		print(name,value)
-	end
-
-
-ipairs
------------------
-
-Few objects which represent an array have an *ipairs* method. It allows to iterate on the array as following:
-
-.. code-block:: lua
-
-	for index,value in arrayObject:ipairs() do
-		print(index,value)
+	for index,value in ipairs(object) do
+		INFO(index,value)
 	end
 
 
 Mona
 ====================
 
-*Mona* is a global object providing access to main Mona elements, available anywhere in all script files.
+*mona* is a global object providing access to main Mona elements, available anywhere in all script files.
 
 properties
 -----------------
 
 - **clients** (read-only), clients actually connected, see *clients* object thereafter.
-- **configs**, return a LUA_ table which contains Mona configurations, it means the *MonaServer.ini* content file, (see *Configurations* part of `Installation <./installation.html>` page) and also some others usefull parameters (application.path, application.baseName, and many others. To know really all its content, iterate on this table and print its content). One sample is given in *Global configurations* in `Server Application`_ page.
+- **configs**, return a LUA_ table which contains Mona configurations, it means the *MonaServer.ini* content file, (see *Configurations* part of `Installation <./installation.html>`_ page) and also some others usefull parameters (application.path, application.baseName, and many others. To know really all its content, iterate on this table and print its content). One sample is given in *Global configurations* in `Server Application`_ page.
+- **environments**, return a LUA_ table which contains environment variables from the system.
 - **epochTime** (read-only), gives the epoch time (since the Unix epoch, midnight, January 1, 1970) in milliseconds.
 - **groups** (read-only), existing groups (NetGroup_s running), see *groups* object thereafter.
 - **pulications** (read-only), server publications available, see *publications* object thereafter.
-- **servers** (read-only), MonaServer instances actually connected to the server, see *servers* object thereafter.
-- **publicAddress** (read-only), public server address as configured in *MonaServer.ini* file (see *Configurations* part of `Installation <./installation.html>` page).
+- **servers** (read-only), MonaServer instances actually connected to the server, see *Servers_* object thereafter.
+
+example of access to a Mona global property :
+
+.. code-block:: lua
+
+  for id, client in pairs(mona.clients) do
+		INFO(id, " : ", client.address)
+	end
 
 methods
 -----------------
@@ -101,35 +102,37 @@ methods
 - **absolutePath(path)**, take in first parameter the application *path* and returns a absolute way for its folder. Helpful to separate the code of your server application in many LUA_ files (see *LUA extensions and files inclusion* part of `Server Application`_ page).
 - **addToBlacklist(...)**, add to the blacklist the address(es) ip given as input argument(s).
 - **removeFromBlacklist(...)**, remove from the blacklist the address(es) ip given as input argument(s).
-- **createTCPClient()**, return a TCP client, see `Server Application Sockets <./serversocket.html>` page for more details.
-- **createTCPServer()**, return a TCP server, see `Server Application Sockets <./serversocket.html>` page for more details.
-- **createUDPSocket([allowBroadcast])**, return a UDP socket. The optional boolean *allowBroadcast* argument allows broadcasting date by this socket (by default it's to *false*). See `Server Application Sockets <./serversocket.html>` page for more details.
+- **createTCPClient()**, return a TCP client, see `Server Application Sockets <./serversocket.html>`_ page for more details.
+- **createTCPServer()**, return a TCP server, see `Server Application Sockets <./serversocket.html>`_ page for more details.
+- **createUDPSocket([allowBroadcast])**, return a UDP socket. The optional boolean *allowBroadcast* argument allows broadcasting date by this socket (by default it's to *false*). See `Server Application Sockets <./serversocket.html>`_ page for more details.
 - **publish(name)**, publishs a server publication with the name given, this method returns a *Publication* object if successful, or *nil* otherwise. Indeed it can fail if a publication with the same name exists already. Read *publication* object thereafter to get more details on how push audio,video or data packet for this publication.
 - **fromAMF(data)**, convert the AMF data given in parameter in multiple LUA_ types relating (see *AMF and LUA types conversion* part of `Server Application`_ page to know how AMF/LUA_ conversion works). It returns multiple LUA_ data resulting.
 - **toAMF(...)**, convert the multiple LUA_ parameters given in a AMF format (see *AMF and LUA types conversion* part of `Server Application`_ page to know how AMF/LUA_ conversion works). It returns a string which contain data converted.
 - **toAMF0(...)**, exactly same that the precedent method, but with a conversion priority to AMF0 format (when possible).
+- **fromJSON(data)**, convert the JSON data given in parameter in multiple LUA_ types relating (see *JSON and LUA types conversion* part of `Server Application`_ page to know how JSON/LUA_ conversion works). It returns multiple LUA_ data resulting.
+- **toJSON(...)**, convert the multiple LUA_ parameters given in a JSON format (see *JSON and LUA types conversion* part of `Server Application`_ page to know how JSON/LUA_ conversion works). It returns a string which contain data converted.
+- **fromXML(data)**, convert the XML data given in parameter in multiple LUA_ types relating (see *XML and LUA types conversion* part of `Server Application`_ page to know how XML/LUA_ conversion works). It returns multiple LUA_ data resulting.
+- **toXML(...)**, convert the multiple LUA_ parameters given in a XML format (see *XML and LUA types conversion* part of `Server Application`_ page to know how XML/LUA_ conversion works). It returns a string which contain data converted.
 - **md5(...)**, computes and returns the MD5 values from input values given as arguments.
 - **sha256(...)**, computes and returns the SHA256 values from input values given as arguments.
-- **sendMail(sender,subject,content,...)**, send an email from *sender* to recipients given in the last mutiple arguments field. It returns a mail object which contains only one event, *onSent(error)* to get one notification on sent, see `Server Application Sockets <./serversocket.html>` page for more details.
+- **sendMail(sender,subject,content,...)**, send an email from *sender* to recipients given in the last mutiple arguments field. It returns a mail object which contains only one event, *onSent(error)* to get one notification on sent, see `Server Application Sockets <./serversocket.html>`_ page for more details.
 - **split(expression,separator[,option])**, LUA_ has not real split operator, this function fills this gap. It splits the *expression* in relation with the *separator* term given, and returns tokens as a multiple result. A optional number argument indicates if you want to ignore empty tokens (*option* =1), or to remove leading and trailing whitespace from tokens (*option* =2), or the both in same time (*option* =3).
-
+- **files(dirName)**, return a LUA_ table containing objects of type *File*, see *File_* object thereafter.
 
 Clients
 ==================
 
 *clients* object (available by *mona.clients* way, see above) is the collection of clients currently connected to the server.
 
-properties
------------------
-
-- **count** (read-only), number of clients.
-
 methods
 -----------------
 
-- **pairs()**, iterate on the collection, keys are *client.id* and values are *client* object (see *client* object thereafter).
 - **(id/rawId)**, return a *client* object, it can take the id client parameter in a *string* format or a *raw hex* format (see *client* object thereafter).
 
+.. note::
+  
+  - You can use the **ipairs()** LUA_ function to iterate on the list of *clients*, keys are *client.id* and values are *client* object (see *client* object thereafter).
+  - And the "#" operator to get the number of clients.
 
 Client
 ================
@@ -237,22 +240,21 @@ events
 
 
 Groups
------------------
+===============
 
 Existing groups (NetGroup_s running), see *group* object thereafter.
 *groups* object (available by *mona.groups* way, see above) is the collection of groups currently running on the server. It means all NetGroup_ created or joined by clients.
 
-properties
------------------
-
-- **count** (read-only), number of groups.
-
 methods
 -----------------
 
-- **pairs()**, iterate on the collection, keys are *group.id* and values are *group* object (see *group* object thereafter).
 - **(id/rawId)**, return a *group* object, it can take the id group parameter in a *string* format or a *raw hex* format (see *group* object thereafter).
-- **join(peerId,groupId)**, add the *peerId* in the group *groupId*. This feature acts on the NetGroup_ members exchange (rendezvous service), it doesn't add the client with for id *peerId* in the group, it adds the *peerId* value as a *virtual member* of the group. For this reason, you have to be sure that this peer exists somewhere and has joined this group. Indeed, it's used just in multiple-servers case (see `Scalability and load-balancing <./scalability.html>` page). On success it returns a *member* object related (see *member* object description below to use it).
+- **join(peerId,groupId)**, add the *peerId* in the group *groupId*. This feature acts on the NetGroup_ members exchange (rendezvous service), it doesn't add the client with for id *peerId* in the group, it adds the *peerId* value as a *virtual member* of the group. For this reason, you have to be sure that this peer exists somewhere and has joined this group. Indeed, it's used just in multiple-servers case (see `Scalability and load-balancing <./scalability.html>`_ page). On success it returns a *member* object related (see *member* object description below to use it).
+
+.. note:: 
+  
+  - You can use the **ipairs()** LUA_ function to iterate on the list of *groups*, keys are *group.id* and values are *group* object (see *group* object thereafter).
+  - And the "#" operator to get the number of groups.
 
 Group
 ===============
@@ -264,11 +266,11 @@ properties
 
 - **id** (read-only), the group id in a readable string format, it has a size of 64 bytes.
 - **rawId** (read-only), the group id in a hexadecimal raw format, it has a size of 32 bytes.
-- **size** (read-only), number of clients in this group.
 
-methods
------------------
-- **ipairs()**, iterate on clients connected to this group.
+.. note:: 
+  
+  - You can use the **ipairs()** LUA_ function to iterate on the list of *clients*.
+  - And the "#" operator to get the number of clients.
 
 Member
 =================
@@ -306,16 +308,15 @@ Publications
 
 *publications* object (available by *mona.publications* way, see above) is the collection of publications actually publishing on the server.
 
-properties
------------------
-
-- **count** (read-only), number of publications.
-
 methods
 -----------------
 
-- **pairs()**, iterate on the collection, keys are *publication.name* and values are *publication* object (see *publication* object thereafter).
 - **(name)**, return a *publication* object, it can take the name of the publication in argument (see *publication* object thereafter).
+
+.. note:: 
+  
+  - You can use the **ipairs()** LUA_ function to iterate on the list of *publications*, keys are *publication.name* and values are *publication* object (see *publication* object thereafter).
+  - And the "#" operator to get the number of publications.
 
 
 Publication
@@ -347,15 +348,10 @@ Listeners
 
 *listeners* object describes a collection of subscribers for one publication (see *publication* object above).
 
-properties
------------------
-
-- **count** (read-only), number of listeners
-
-methods
------------------
-
-- **ipairs()**, iterate on the list of *listener* (see *listener* object thereafter).
+.. note:: 
+  
+  - You can use the **ipairs()** LUA_ function to iterate on the list of *listener* (see *listener* object thereafter).
+  - And the "#" operator to get the number of listeners.
 
 
 Listener
@@ -370,8 +366,8 @@ properties
 - **audioQOS** (read-only), *qualityOfService* object about audio transfer for this subscription (see *qualityOfService* object above).
 - **videoQOS** (read-only), *qualityOfService* object about video transfer for this subscription (see *qualityOfService* object above).
 - **publication** (read-only), *publication* object which describes publication listening by the subscriber (see *publication* object above).
-- **audioSampleAccess**, boolean to authorize or not audio sample access by the subscriber (see `NetStream:audioSampleAccess <http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/net/NetStream.html#audioSampleAccess>` property).
-- **videoSampleAccess**, boolean to authorize or not video sample access by the subscriber (see `NetStream:audioSampleAccess <http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/net/NetStream.html#audioSampleAccess>` property).
+- **audioSampleAccess**, boolean to authorize or not audio sample access by the subscriber (see `NetStream:audioSampleAccess <http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/net/NetStream.html#audioSampleAccess>`_ property).
+- **videoSampleAccess**, boolean to authorize or not video sample access by the subscriber (see `NetStream:audioSampleAccess <http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/net/NetStream.html#audioSampleAccess>`_ property).
 - **receiveAudio**, boolean to mute audio reception on the subscription.
 - **receiveVideo**, boolean to mute video reception on the subscription.
 
@@ -391,27 +387,29 @@ This object is only used for IExternalizable typed object, it's the first argume
 Servers
 =================
 
-Servers list of MonaServer currently connected to the server (see `Scalability and load-balancing <./scalability.html>` page for more details about multiple server features).
+Servers list of MonaServer currently connected to the server (see `Scalability and load-balancing <./scalability.html>`_ page for more details about multiple server features).
 
 properties
 -----------------
 
-- **count** (read-only), number of servers.
-- **initiators** (read-only), return a *broadcaster* object (see thereafter) including the server initiators. Server connections have a direction, with an iniator of the connection, and a target of the connection (see `Scalability and load-balancing <./scalability.html>` page for more details). 
-- **targets** (read-only), return a *broadcaster* object (see thereafter) including the server targets. Server connections have a direction, with an iniator of the connection, and a target of the connection (see `Scalability and load-balancing <./scalability.html>` page for more details). 
+- **initiators** (read-only), return a *broadcaster* object (see thereafter) including the server initiators. Server connections have a direction, with an iniator of the connection, and a target of the connection (see `Scalability and load-balancing <./scalability.html>`_ page for more details). 
+- **targets** (read-only), return a *broadcaster* object (see thereafter) including the server targets. Server connections have a direction, with an iniator of the connection, and a target of the connection (see `Scalability and load-balancing <./scalability.html>`_ page for more details). 
 
 methods
 -----------------
 
-- **ipairs()**, iterate on the list of servers.
-- **broadcast(handler,...)**, broadcast data to servers (initiators and targets). The *handler* parameter is the name of the *remote procedure call* method to receive data, multiple arguments following are the data (see `Scalability and load-balancing <./scalability.html>` page for more details).
+- **broadcast(handler,...)**, broadcast data to servers (initiators and targets). The *handler* parameter is the name of the *remote procedure call* method to receive data, multiple arguments following are the data (see `Scalability and load-balancing <./scalability.html>`_ page for more details).
 - **(address/index)**, return a *server* object (see *server* object thereafter). It can take the *address* of the server (string format) or the *index* of server (number format) as input argument. Indeed the list is sorted by order of connections.
 
+.. note:: 
+  
+  - You can use the **ipairs()** LUA_ function to iterate on the list of servers.
+  - And the "#" operator to get the number of servers.
 
 Server
 ===========
 
-*server* object describes a server communication (see `Scalability and load-balancing <./scalability.html>` page for more details about multiple server features).
+*server* object describes a server communication (see `Scalability and load-balancing <./scalability.html>`_ page for more details about multiple server features).
 
 properties
 -----------------
@@ -420,12 +418,12 @@ properties
 - **publicAddress** (read-only), name of the publication
 - **isTarget** (read-only), name of the publication
 
-.. note:: *server* object can have other dynamic properties (as *client* object) which relates properties used during the server connection (see *Configurations* part of `Installation <./installation.html>` page).
+.. note:: *server* object can have other dynamic properties (as *client* object) which relates properties used during the server connection (see *Configurations* part of `Installation <./installation.html>`_ page).
 
 methods
 -----------------
 
-*Server* has no hard-coded method by default, and if you add some methods on, you create RPC function available from other server (see `Scalability and load-balancing <./scalability.html>` page for more details).
+*Server* has no hard-coded method by default, and if you add some methods on, you create RPC function available from other server (see `Scalability and load-balancing <./scalability.html>`_ page for more details).
 
 
 Broadcaster
@@ -441,10 +439,26 @@ properties
 methods
 -----------------
 
-- **ipairs()**, iterate on the list of servers.
-- **broadcast(handler,...)**, broadcast data to servers. The *handler* parameter is the name of the *remote procedure call* method to receive data, multiple arguments following are the data (see `Scalability and load-balancing <./scalability.html>` page for more details).
+- **broadcast(handler,...)**, broadcast data to servers. The *handler* parameter is the name of the *remote procedure call* method to receive data, multiple arguments following are the data (see `Scalability and load-balancing <./scalability.html>`_ page for more details).
 - **(address/index)**, return a *server* object (see *server* object thereafter). It can take the *address* of the server (string format) or the *index* of server (number format) as input argument. Indeed the list is sorted by order of connections.
 
+.. note:: You can use the **ipairs()** LUA_ function to iterate on the list of servers.
+
+File
+=============
+
+*File* object gives some properties of a file in the file system. *File* objects are created on a *mona:files(...)* call.
+
+properties
+-----------------
+
+- **fullPath** (read-only), full path of the file
+- **name** (read-only), name of the file
+- **baseName** (read-only), name of the file, without extension
+- **extension** (read-only), extension of the file
+- **size** (read-only), size of the file
+- **lastModified** (read-only), date of last modification (in seconds)
+- **isDirectory** (read-only), true if the file is a directory
 
 Events
 **************
@@ -690,7 +704,7 @@ Call every two seconds, this event is available only in the *root* server applic
 onRendezVousUnknown(peerId)
 =====================================
 
-Allows to redirect a client who searchs a peerId that the rendezvous service doesn't find. Usually you will redirect the client to one or multiple other MonaServer (see `Scalability and load-balancing <./scalability.html>` for more details on multiple servers usage). You can return an address, but also multiple address, or an array of addresses.
+Allows to redirect a client who searchs a peerId that the rendezvous service doesn't find. Usually you will redirect the client to one or multiple other MonaServer (see `Scalability and load-balancing <./scalability.html>`_ for more details on multiple servers usage). You can return an address, but also multiple address, or an array of addresses.
 
 .. code-block:: lua
 
@@ -731,7 +745,7 @@ Then you can return a *server* object or a *servers* object (see above for these
 onHandshake (address,path,properties,attempts)
 ===============================================
 
-Allows to redirect the client to one other MonaServer (see `Scalability and load-balancing <./scalability.html>` for more details on multiple servers usage), in returning address(es) of redirection. About the returned value it works exactly same the returned value of *onRendezVousUnknown* event (see above).
+Allows to redirect the client to one other MonaServer (see `Scalability and load-balancing <./scalability.html>`_ for more details on multiple servers usage), in returning address(es) of redirection. About the returned value it works exactly same the returned value of *onRendezVousUnknown* event (see above).
 It's called on the first packet received from one client (before the creation of its client object associated). First *address* argument is the address of the client, *path* argument indicates the path expression of connection, *properties* argument is a table with the HTTP parameters given in the URL of connection (see dynamic properties of *client* object description above) and *attempts* argument indicates the number of attempts of connection (starts to 1 and is incremented on each attempt).
 
 .. code-block:: as3
@@ -764,13 +778,13 @@ It's called on the first packet received from one client (before the creation of
 onServerConnection(server)
 ====================================
 
-Call on server connection, see `Scalability and load-balancing <./scalability.html>` for more details on multiple servers usage, or *server* object description above about the input argument.
+Call on server connection, see `Scalability and load-balancing <./scalability.html>`_ for more details on multiple servers usage, or *server* object description above about the input argument.
 
 
 onServerDisconnection(server)
 ====================================
 
-Call on server disconnection, see `Scalability and load-balancing <./scalability.html>` for more details on multiple servers usage, or *server* object description above about the input argument.
+Call on server disconnection, see `Scalability and load-balancing <./scalability.html>`_ for more details on multiple servers usage, or *server* object description above about the input argument.
 
 
 .. _LUA: http://www.lua.org/
