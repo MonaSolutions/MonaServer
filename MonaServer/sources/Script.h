@@ -72,8 +72,8 @@ extern "C" {
 
 #define SCRIPT_LAST_ERROR										__error
 
-#define SCRIPT_MEMBER_FUNCTION_BEGIN(TYPE,OBJ,MEMBER)			{ lua_getmetatable(__pState,LUA_GLOBALSINDEX); lua_getfield(__pState,-1,"|pointers");if(!lua_isnil(__pState,-1)) {lua_replace(__pState,-2);lua_pushnumber(__pState, reinterpret_cast<unsigned>(&OBJ)); lua_gettable(__pState,-2);if(!lua_isnil(__pState,-1)) {lua_getfield(__pState,-1,MEMBER);lua_replace(__pState,-3);}} if(!lua_isfunction(__pState,-2))lua_pop(__pState,2);else {int __top=lua_gettop(__pState)-1;std::string __name = #TYPE;__name += ".";__name += MEMBER;
-#define SCRIPT_MEMBER_FUNCTION_WITH_OBJHANDLE_BEGIN(TYPE,OBJ,MEMBER,OBJHANDLE)			{ lua_getmetatable(__pState,LUA_GLOBALSINDEX); lua_getfield(__pState,-1,"|pointers");if(!lua_isnil(__pState,-1)) {lua_replace(__pState,-2);lua_pushnumber(__pState, reinterpret_cast<unsigned>(&OBJ)); lua_gettable(__pState,-2); {OBJHANDLE} if(!lua_isnil(__pState,-1)) {lua_getfield(__pState,-1,MEMBER);lua_replace(__pState,-3);}} if(!lua_isfunction(__pState,-2))lua_pop(__pState,2);else {int __top=lua_gettop(__pState)-1;std::string __name = #TYPE;__name += ".";__name += MEMBER;
+#define SCRIPT_MEMBER_FUNCTION_BEGIN(TYPE,OBJ,MEMBER)			{ lua_getmetatable(__pState,LUA_GLOBALSINDEX); lua_getfield(__pState,-1,"|pointers");if(!lua_isnil(__pState,-1)) {lua_replace(__pState,-2);lua_pushlightuserdata(__pState,(void*)&OBJ); lua_gettable(__pState,-2);if(!lua_isnil(__pState,-1)) {lua_getfield(__pState,-1,MEMBER);lua_replace(__pState,-3);}} if(!lua_isfunction(__pState,-2))lua_pop(__pState,2);else {int __top=lua_gettop(__pState)-1;std::string __name = #TYPE;__name += ".";__name += MEMBER;
+#define SCRIPT_MEMBER_FUNCTION_WITH_OBJHANDLE_BEGIN(TYPE,OBJ,MEMBER,OBJHANDLE)			{ lua_getmetatable(__pState,LUA_GLOBALSINDEX); lua_getfield(__pState,-1,"|pointers");if(!lua_isnil(__pState,-1)) {lua_replace(__pState,-2);lua_pushlightuserdata(__pState,(void*)&OBJ); lua_gettable(__pState,-2); {OBJHANDLE} if(!lua_isnil(__pState,-1)) {lua_getfield(__pState,-1,MEMBER);lua_replace(__pState,-3);}} if(!lua_isfunction(__pState,-2))lua_pop(__pState,2);else {int __top=lua_gettop(__pState)-1;std::string __name = #TYPE;__name += ".";__name += MEMBER;
 #define SCRIPT_FUNCTION_BEGIN(NAME)								{ bool __env=false; lua_getmetatable(__pState,LUA_GLOBALSINDEX); lua_getfield(__pState,-1,"|env"); lua_replace(__pState,-2); if(!lua_isnil(__pState,-1)) { lua_getfield(__pState,-1,NAME); __env=true;} if(!lua_isfunction(__pState,-1)) lua_pop(__pState,__env ? 2 : 1); else { if(__env) { lua_pushvalue(__pState,-2); lua_setfenv(__pState,-2); lua_replace(__pState,-2); }	int __top=lua_gettop(__pState); string __name = NAME;
 #define SCRIPT_FUNCTION_CALL_WITHOUT_LOG						if(lua_pcall(__pState,lua_gettop(__pState)-__top,LUA_MULTRET,0)!=0) { __error = lua_tostring(__pState,-1); lua_pop(__pState,1); } else {--__top;int __results=lua_gettop(__pState);int __args=__top;
 #define SCRIPT_FUNCTION_CALL									if(lua_pcall(__pState,lua_gettop(__pState)-__top,LUA_MULTRET,0)!=0) { SCRIPT_ERROR(__error = Script::LastError(__pState))} else {--__top;int __results=lua_gettop(__pState);int __args=__top;
@@ -89,7 +89,7 @@ extern "C" {
 #define SCRIPT_READ_UINT(DEFAULT)								(Mona::UInt32)((__results-(__args++))<=0 ? DEFAULT : (lua_isnumber(__pState,__args) ? (Mona::UInt32)lua_tonumber(__pState,__args) : DEFAULT))
 #define SCRIPT_READ_INT(DEFAULT)								(Mona::Int32)((__results-(__args++))<=0 ? DEFAULT : (lua_isnumber(__pState,__args) ? (Mona::Int32)lua_tointeger(__pState,__args) : DEFAULT))
 #define SCRIPT_READ_DOUBLE(DEFAULT)								(double)((__results-(__args++))<=0 ? DEFAULT : (lua_isnumber(__pState,__args) ? lua_tonumber(__pState,__args) : DEFAULT))
-#define SCRIPT_READ_DATA(WRITER)								DataWriter& w = WRITER;Script::ReadData(__pState,w,__results-__args);__args=__results;w.endWrite();
+#define SCRIPT_READ_DATA(WRITER)								Mona::DataWriter& w = WRITER;Script::ReadData(__pState,w,__results-__args);__args=__results;w.endWrite();
 #define SCRIPT_READ_NEXT										__args++;
 
 #define SCRIPT_END												}
@@ -111,9 +111,6 @@ public:
 	template<class CollectorType = Script, class LUAItemType = Script>
 	static bool Collection(lua_State* pState, int index,const char* field, Mona::UInt32 size, CollectorType* pCollector = NULL) {
 		lua_getmetatable(pState, index);
-		// update count
-		lua_pushnumber(pState, size);
-		lua_setfield(pState, -2, "|count");
 
 		bool creation(false);
 		// get collection table
@@ -129,8 +126,10 @@ public:
 			lua_setfield(pState, -2, "__newindex");
 			lua_pushcfunction(pState, &Script::Len);
 			lua_setfield(pState, -2, "__len");
+#if !defined(_DEBUG)
 			lua_pushstring(pState, "change metatable of datatable values is prohibited");
 			lua_setfield(pState, -2, "__metatable");
+#endif
 			lua_setmetatable(pState, -3);
 			
 			lua_pushvalue(pState, -2);
@@ -138,6 +137,10 @@ public:
 			creation = true;
 		} else
 			lua_getmetatable(pState, -1);
+
+		// update count
+		lua_pushnumber(pState, size);
+		lua_setfield(pState, -2, "|count");
 
 		if (pCollector) {
 			lua_pushlightuserdata(pState, pCollector);
@@ -202,15 +205,13 @@ public:
 			lua_setfield(pState, -3, "|objects");
 		}
 		lua_replace(pState, -2);
-		double ptr(0);
-		ptr = (double)reinterpret_cast<unsigned>(&object);
-		lua_pushnumber(pState, ptr);
+		lua_pushlightuserdata(pState, (void*)&object);
 		lua_gettable(pState, -2);
 		bool creation(false);
 		if(!lua_istable(pState,-1)) {
 			lua_pop(pState,1);
 			CreateObject<Type, LUAType>(pState, object);
-			lua_pushnumber(pState, ptr);
+			lua_pushlightuserdata(pState, (void*)&object);
 			lua_pushvalue(pState,-2);
 			lua_settable(pState,-4);
 			creation = true;
@@ -280,8 +281,9 @@ public:
 			lua_pop(pState, 1);
 			return false;
 		}
-		lua_pushnumber(pState, (double)reinterpret_cast<unsigned>(&object));
+		lua_pushlightuserdata(pState, (void*)&object);
 		lua_gettable(pState, -2);
+		lua_replace(pState, -2);
 		if (!lua_istable(pState, -1)) {
 			lua_pop(pState, 1);
 			return false;
@@ -408,8 +410,10 @@ private:
 		lua_setfield(pState,-2,"__newindex");
 
 		// hide metatable
+#if !defined(_DEBUG)
 		lua_pushstring(pState,"change metatable of this object is prohibited");
 		lua_setfield(pState,-2,"__metatable");
+#endif
 
 		lua_setmetatable(pState,-2);
 
@@ -425,7 +429,7 @@ private:
 			lua_setmetatable(pState,-2);
 			lua_setfield(pState,-4,"|pointers");
 		}
-		lua_pushnumber(pState, (double)reinterpret_cast<unsigned>(&object));
+		lua_pushlightuserdata(pState, (void*)&object);
 		lua_pushvalue(pState, -3);
 		lua_settable(pState, -3);
 		lua_pop(pState,1); // remove |pointers
@@ -443,8 +447,7 @@ private:
 		lua_replace(pState, -2);
 
 		if (safe) {
-			double ptr = (double)reinterpret_cast<unsigned>(&object);
-			lua_pushnumber(pState, ptr);
+			lua_pushlightuserdata(pState, (void*)&object);
 			lua_gettable(pState, -2);
 			if (lua_istable(pState, -1)) {
 				// remove this
@@ -455,13 +458,13 @@ private:
 				}
 
 				// erase id entry object
-				lua_pushnumber(pState, ptr);
+				lua_pushlightuserdata(pState, (void*)&object);
 				lua_pushnil(pState);
 				lua_settable(pState, -4);
 			}
 			lua_pop(pState, 1);
 		} else {
-			lua_pushnumber(pState, (double)reinterpret_cast<unsigned>(&object));
+			lua_pushlightuserdata(pState, (void*)&object);
 			lua_pushnil(pState);
 			lua_settable(pState, -3);
 		}

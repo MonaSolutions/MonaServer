@@ -29,13 +29,16 @@ public:
 	static int Get(lua_State *pState);
 	static int Set(lua_State *pState);
 
-	static void AddClient(lua_State *pState, Mona::Invoker& invoker, Mona::Client& client, int indexClient);
+	// -1 must be the client table!
+	static void AddClient(lua_State *pState, Mona::Invoker& invoker, Mona::Client& client);
 	static void RemoveClient(lua_State *pState, Mona::Invoker& invoker,const Mona::Client& client);
 
-	static void AddPublication(lua_State *pState, Mona::Invoker& invoker, const Mona::Publication& publication, int indexPublication);
+	// -1 must be the publication table!
+	static void AddPublication(lua_State *pState, Mona::Invoker& invoker, const Mona::Publication& publication);
 	static void RemovePublication(lua_State *pState, Mona::Invoker& invoker, const Mona::Publication& publication);
 
-	static void AddGroup(lua_State *pState, Mona::Invoker& invoker, Mona::Group& group, int indexGroup);
+	// -1 must be the group table!
+	static void AddGroup(lua_State *pState, Mona::Invoker& invoker, Mona::Group& group);
 	static void RemoveGroup(lua_State *pState, Mona::Invoker& invoker, const Mona::Group& group);
 
 

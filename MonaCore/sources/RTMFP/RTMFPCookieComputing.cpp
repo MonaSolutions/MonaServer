@@ -46,8 +46,8 @@ bool RTMFPCookieComputing::run(Exception& ex) {
 		return false;
 	}
 
-	string hex;
-	DEBUG("Shared Secret : ", Util::FormatHex(_sharedSecret.data(), _sharedSecret.size(), hex));
+	// string hex;
+	// DEBUG("Shared Secret : ", Util::FormatHex(_sharedSecret.data(), _sharedSecret.size(), hex));
 
 	// It's our key public part
 	int size = _diffieHellman.publicKeySize(ex);

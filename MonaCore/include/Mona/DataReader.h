@@ -22,7 +22,7 @@ This file is a part of Mona.
 #include "Mona/Mona.h"
 #include "Mona/PacketReader.h"
 #include "Mona/DataWriter.h"
-#include "Mona/Time.h"
+#include "Mona/Date.h"
 
 namespace Mona {
 
@@ -34,7 +34,7 @@ public:
 		BOOLEAN,
 		NUMBER,
 		STRING,
-		TIME,
+		DATE,
 		ARRAY,
 		OBJECT,
 		BYTES,
@@ -44,11 +44,11 @@ public:
 	
 	virtual Type				followingType()=0;
 
-	virtual std::string&		readString(std::string& value)=0;
+	virtual std::string&		readString(std::string& value)=0;	
 	virtual double				readNumber()=0;
 	virtual bool				readBoolean()=0;
 	virtual const UInt8*		readBytes(UInt32& size)=0;
-	virtual Time&				readTime(Time& time) = 0;
+	virtual Date&				readDate(Date& date) = 0;
 	virtual void				readNull()=0;
 
 	virtual bool				readObject(std::string& type,bool& external)=0;

@@ -31,7 +31,7 @@ public:
 	void start() { 
 		if (_running)
 			return;
-		_start.update(Time() - elapsed());
+		_start.update(Time::Now() - elapsed());
 		_running = true;
 	}
 
@@ -42,7 +42,7 @@ public:
 		_running = true;
 	}
 
-	Int64 elapsed() { return _running ? (Time()-_start) : (_stop-_start); }
+	Int64 elapsed() { return _running ? (Time::Now()-_start) : (_stop-_start); }
 
 private:
 	Time _start;

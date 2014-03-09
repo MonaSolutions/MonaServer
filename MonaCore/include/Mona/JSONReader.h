@@ -21,8 +21,6 @@ This file is a part of Mona.
 
 #include "Mona/Mona.h"
 #include "Mona/DataReader.h"
-#include "Mona/Time.h"
-
 
 namespace Mona {
 
@@ -36,7 +34,7 @@ public:
 	std::string&		readString(std::string& value);
 	double				readNumber();
 	bool				readBoolean();
-	Time&				readTime(Time& time);
+	Date&				readDate(Date& date);
 	void				readNull() { packet.next(4); }
 
 	bool				readObject(std::string& type,bool& external);
@@ -54,7 +52,7 @@ private:
 
 	UInt32			_pos;
 	std::string		_text;
-	Time			_date;
+	Date			_date;
 	bool			_bool;
 	UInt8			_last;
 

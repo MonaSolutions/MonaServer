@@ -26,21 +26,23 @@ using namespace std;
 using namespace Mona;
 
 
-void LUAGroup::AddClient(lua_State* pState, Group& group, Client& client, int indexGroup,int indexClient) {
+void LUAGroup::AddClient(lua_State* pState, Group& group, Client& client, UInt8 indexGroup) {
+	// -1 must be the client table!
 	Script::Collection(pState, indexGroup, "|items", group.count());
 	LUAClient::GetID(pState, client);
-	lua_pushvalue(pState, indexClient);
+	lua_pushvalue(pState, -3);
 	lua_rawset(pState, -3);
 	if (!client.name.empty()) {
 		lua_pushstring(pState, client.name.c_str());
-		lua_pushvalue(pState, indexClient);
+		lua_pushvalue(pState, -3);
 		lua_rawset(pState, -3); // rawset cause NewIndexProhibited
 	}
 	lua_pop(pState, 1);
 }
 
-void LUAGroup::RemoveClient(lua_State* pState, Group& group, Client& client, int indexGroup) {
-	Script::Collection(pState, indexGroup, "|items", group.count());
+void LUAGroup::RemoveClient(lua_State* pState, Group& group, Client& client) {
+	// -1 must be the group table!
+	Script::Collection(pState, -1, "|items", group.count());
 	LUAClient::GetID(pState, client);
 	lua_pushnil(pState);
 	lua_rawset(pState, -3);
@@ -65,8 +67,10 @@ int LUAGroup::Item(lua_State *pState) {
 	const UInt8* id = (const UInt8*)lua_tostring(pState, 2);
 	if (size == ID_SIZE)
 		pGroup = pInvoker->groups(id);
-	else if (size == (ID_SIZE * 2))
-		pGroup = pInvoker->groups(Util::UnformatHex((UInt8*)id, size));
+	else if (size == (ID_SIZE<<1)) {
+		pInvoker->buffer.assign((const char*)id,size);
+		pGroup = pInvoker->groups((const UInt8*)Util::UnformatHex(pInvoker->buffer).c_str());
+	}
 	SCRIPT_BEGIN(pState)
 		if (pGroup)
 			SCRIPT_ADD_OBJECT(Group, LUAGroup, *pGroup)
@@ -84,7 +88,8 @@ int LUAGroup::Get(lua_State *pState) {
 					lua_pop(pState, 1);
 					string hex;
 					lua_pushstring(pState, Mona::Util::FormatHex(group.id, ID_SIZE, hex).c_str());
-					lua_setfield(pState, -2,"|id");
+					lua_pushvalue(pState, -1);
+					lua_setfield(pState, -3,"|id");
 				}
 				lua_replace(pState, -2);
 			}

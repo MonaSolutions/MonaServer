@@ -31,7 +31,7 @@ Socket::Socket(const SocketManager& manager, int type) : Expirable<Socket>(this)
 
 Socket::~Socket() {
 	close();
-	if (_initialized)
+	if (_initialized && _sockfd != NET_INVALID_SOCKET)
 		NET_CLOSESOCKET(_sockfd);
 	expire(); // prevent deletion for SocketSender
 }

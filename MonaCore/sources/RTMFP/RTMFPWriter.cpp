@@ -262,7 +262,7 @@ void RTMFPWriter::acknowledgment(PacketReader& packet) {
 			if(message.repeatable)
 				--_repeatable;
 			if(_ackCount>0) {
-				_qos.add((UInt32)(message.sendingTime/1000),message.size(),_ackCount,_lostCount);
+				_qos.add((UInt32)message.sendingTime,message.size(),_ackCount,_lostCount);
 				_ackCount=_lostCount=0;
 			}
 			delete *it;

@@ -186,18 +186,17 @@ void SocketManager::remove(Socket& socket) const {
 
 	--_counter;
 	socket._ppSocket->release();
-	socket._ppSocket = NULL;
+	_sockets.erase(it);
 
 #if defined(_WIN32)
-	if (_eventSystem==0 || (WSAAsyncSelect(it->first,_eventSystem,0,0)==0 && !PostMessage(_eventSystem,0,(WPARAM)it->second,0)))
-		delete it->second;
+	if (_eventSystem==0 || (WSAAsyncSelect(socket._sockfd,_eventSystem,0,0)==0 && !PostMessage(_eventSystem,0,(WPARAM)socket._ppSocket,0)))
+		delete socket._ppSocket;
 #else
 	epoll_event event;
 	memset(&event, 0, sizeof(event));
-	if (_eventSystem==0 || (epoll_ctl(_eventSystem, EPOLL_CTL_DEL, it->first,&event)>=0 && write(_eventFD,&it->second,sizeof(it->second))<0))
-		delete it->second;
+	if (_eventSystem==0 || (epoll_ctl(_eventSystem, EPOLL_CTL_DEL,socket._sockfd,&event)>=0 && write(_eventFD,&socket._ppSocket,sizeof(socket._ppSocket))<0))
+		delete socket._ppSocket;
 #endif
-	_sockets.erase(it);
 }
 
 void SocketManager::handle(Exception& ex) {
@@ -286,7 +285,7 @@ void SocketManager::run(Exception& exc) {
 		// Add the event to terminate the epoll_wait!
 		epoll_event event;
 		memset(&event, 0, sizeof(event));
-		event.events = EPOLLIN | EPOLLPRI;
+		event.events = EPOLLIN;
 		event.data.fd = readFD;
 		epoll_ctl(_eventSystem, EPOLL_CTL_ADD,readFD, &event);	
 	}
@@ -343,6 +342,7 @@ void SocketManager::run(Exception& exc) {
 	_fakeSocket._sockfd = readFD;
     int count = _counter+1;
 	vector<epoll_event> events(count);
+	vector<unique_ptr<Socket>*>	removedSockets;
 
 	for(;;) {
 
@@ -368,7 +368,7 @@ void SocketManager::run(Exception& exc) {
 				unique_ptr<Socket>* ppSocket(NULL);
 				while (_fakeSocket.available(_exSkip)>=sizeof(ppSocket) && read(readFD, &ppSocket, sizeof(ppSocket)) > 0) {
 					// no mutex for ppSocket methods access because the socket has been removed already here!
-					delete ppSocket;
+					removedSockets.push_back(ppSocket);
 				}
 				continue;	
 			}
@@ -406,9 +406,20 @@ void SocketManager::run(Exception& exc) {
         count = _counter+1;
 		if(count!=events.size())
 			events.resize(count);
+
+		// remove sockets
+		if(removedSockets.empty())
+			continue;
+		for (unique_ptr<Socket>* ppSocket : removedSockets)
+			delete ppSocket;
+		removedSockets.clear();
 	}
 	::close(readFD);  // close reader pipe side
 	::close(_eventSystem); // close the system message
+
+	for (unique_ptr<Socket>* ppSocket : removedSockets)
+		delete ppSocket;
+	removedSockets.clear();
 #endif
 
 	if (ex)

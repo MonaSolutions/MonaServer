@@ -118,7 +118,7 @@ void TCPClient::disconnect() {
 	if(!_connected)
 		return;
 	Exception ex;
-	shutdown(ex,Socket::RECV);
+	shutdown(ex);
 	close();
 	_rest = 0;
 	_pBuffer.release();

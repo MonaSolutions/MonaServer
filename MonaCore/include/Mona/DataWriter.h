@@ -21,7 +21,7 @@ This file is a part of Mona.
 
 #include "Mona/Mona.h"
 #include "Mona/PacketWriter.h"
-#include "Mona/Time.h"
+#include "Mona/Date.h"
 
 namespace Mona {
 
@@ -38,7 +38,7 @@ public:
 	virtual void beginArray(UInt32 size)=0;
 	virtual void endArray()=0;
 
-	virtual void writeDate(const Time& date)=0;
+	virtual void writeDate(const Date& date)=0;
 	virtual void writeNumber(double value)=0;
 	virtual void writeString(const std::string& value)=0;
 	virtual void writeBoolean(bool value)=0;
@@ -60,7 +60,7 @@ public:
 	UInt32		 lastReference() { return _lastReference; }
 
 	void		 writeNullProperty(const std::string& name);
-	void		 writeDateProperty(const std::string& name,const Time& date);
+	void		 writeDateProperty(const std::string& name,const Date& date);
 	void		 writeNumberProperty(const std::string& name,double value);
 	void		 writeBooleanProperty(const std::string& name,bool value);
 	void		 writeStringProperty(const std::string& name,const std::string& value);
@@ -90,7 +90,7 @@ private:
     void beginArray(UInt32 size){}
     void endArray(){}
 
-    void writeDate(const Time& date){}
+    void writeDate(const Date& date){}
     void writeNumber(double value){}
     void writeString(const std::string& value){}
     void writeBoolean(bool value){}

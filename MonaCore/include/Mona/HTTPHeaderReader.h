@@ -35,7 +35,7 @@ public:
 	std::string&		readString(std::string& value) {return _value.assign(value);}
 	double				readNumber();
 	bool				readBoolean() { return _bool; }
-	Time&				readTime(Time& time) {return time.update(_date);}
+	Date&				readDate(Date& date) { return date = _date; }
 	void				readNull() {}
 
 	bool				readObject(std::string& type, bool& external) { return true; }
@@ -53,7 +53,7 @@ private:
 	std::vector<const char*>&				 _headers;
 	std::vector<const char*>::const_iterator _header;
 	std::string								_value;
-	Time									_date;
+	Date									_date;
 	bool									_bool;
 };
 

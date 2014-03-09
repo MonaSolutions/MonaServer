@@ -88,6 +88,51 @@ bool tryToNumber<double>(const char * value, double expected) {
 	return true;
 }
 
+
+
+ADD_TEST(StringTest, General) {
+
+	for (char c=0; c >= -10; ++c)
+		CHECK(isalpha(c) && (c>='a' && c<='z' || c>='A' && c<='Z') || c < 'A' || (c > 'Z' && c<'a') || c>'z')
+
+	for (char c=0; c >= -10; ++c)
+		CHECK(isdigit(c) && c>='0' && c<='9' || c < '0' || c > '9')
+
+	for (char c=0; c >= -10; ++c)
+		CHECK(isalnum(c) && (isalpha(c) || isdigit(c)) || (!isalpha(c) && !isdigit(c)))
+
+	for (char c=0; c >= -10; ++c)
+		CHECK(isblank(c) && (c==' ' || c=='\t') || (c!=' ' && c!='\t'))
+
+	for (char c=0; c >= -10; ++c)
+		CHECK(isspace(c) && (c>='\t' && c<='\r' || c==' ') || (c < '\t' || (c > '\r' && c!=' ')))
+
+	for (char c=0; c >= -10; ++c)
+		CHECK(iscntrl(c) && (c<=0x1F || c==0x7F) || (c>0x1F && c!=0x7F))
+
+	for (char c=0; c >= -10; ++c)
+		CHECK(isgraph(c) && c>='!' && c<='~' || c < '!' || c > '~')
+
+	for (char c=0; c >= -10; ++c)
+		CHECK(islower(c) && c>='a' && c<='z' || c < 'a' || c > 'z')
+
+	for (char c=0; c >= -10; ++c)
+		CHECK(isupper(c) && c>='A' && c<='Z' || c < 'A' || c > 'Z')
+
+	for (char c=0; c >= -10; ++c)
+		CHECK(isprint(c) && c>=' ' && c<='~' || c < ' ' || c > '~')
+
+	for (char c=0; c >= -10; ++c)
+		CHECK(isxdigit(c) && ((c>='A' && c<='F') || (c>='a' && c<='f') || isdigit(c)) || c<'0' || (c > '9' && c<'A') || (c > 'F' && c<'a') || c>'f')
+
+	for (char c=0; c >= -10; ++c)
+		CHECK(tolower(c)==(c+32) || c < 'A' || c > 'Z')
+
+	for (char c=0; c >= -10; ++c)
+		CHECK(toupper(c)==(c-32) || c < 'a' || c > 'z')
+	
+}
+
 string _Str;
 
 ADD_TEST(StringTest, TestFormat) {
@@ -109,10 +154,10 @@ ADD_TEST(StringTest, TestFormat) {
 
 	CHECK(String::Format(_Str, (Int64)123) == "123");
 	CHECK(String::Format(_Str, (Int64)-123) == "-123");
-	CHECK(String::Format(_Str, Format<Int64>("%5" I64_FMT "d", -123)) == " -123");
+	CHECK(String::Format(_Str, Format<Int64>("%5lld", -123)) == " -123");
 
 	CHECK(String::Format(_Str, (UInt64)123) == "123");
-	CHECK(String::Format(_Str, Format<UInt64>("%5" I64_FMT "u", 123)) == "  123");
+	CHECK(String::Format(_Str, Format<UInt64>("%5llu", 123)) == "  123");
 
 	CHECK(String::Format(_Str, 12.25) == "12.25");
 	CHECK(String::Format(_Str, Format<double>("%.4f", 12.25)) == "12.2500");

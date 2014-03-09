@@ -37,12 +37,12 @@ public:
 	virtual void beginArray(UInt32 size);
 	virtual void endArray();
 
-	virtual void writeDate(const Time& date) { writeString(date.toString(Time::ISO8601_FRAC_FORMAT, _buffer)); }
-	virtual void writeNumber(double value) { writeRaw(String::Format(_buffer, value)); }
-	virtual void writeString(const std::string& value);
-	virtual void writeBoolean(bool value) { writeRaw( value ? "true" : "false"); }
-	virtual void writeNull() { writeRaw("null"); }
-	virtual void writeBytes(const UInt8* data,UInt32 size);
+	void writeDate(const Date& date) { writeString(date.toString(Date::ISO8601_FRAC_FORMAT, _buffer)); }
+	void writeNumber(double value) { writeRaw(String::Format(_buffer, value)); }
+	void writeString(const std::string& value);
+	void writeBoolean(bool value) { writeRaw( value ? "true" : "false"); }
+	void writeNull() { writeRaw("null"); }
+	void writeBytes(const UInt8* data,UInt32 size);
 
 	virtual void clear();
 	virtual void endWrite();

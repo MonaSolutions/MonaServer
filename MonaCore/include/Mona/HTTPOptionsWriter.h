@@ -32,7 +32,7 @@ public:
 	const bool			indexDirectory;
 	const std::string	index;
 	const bool			indexCanBeMethod;
-	const UInt16		timeout;
+	const UInt32		timeout;
 	
 	void beginObject(const std::string& type = "", bool external = false) {}
 	void endObject() {}
@@ -42,7 +42,7 @@ public:
 	void beginArray(UInt32 size) {}
 	void endArray() {}
 
-	void writeDate(const Time& date);
+	void writeDate(const Date& date);
 	void writeNumber(double value);
 	void writeString(const std::string& value);
 	void writeBoolean(bool value);

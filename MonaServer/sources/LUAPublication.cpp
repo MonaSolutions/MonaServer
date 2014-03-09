@@ -30,20 +30,22 @@ void LUAPublicationBase::Clear(lua_State* pState, const Mona::Publication& publi
 	Script::ClearObject<QualityOfService, LUAQualityOfService>(pState, publication.videoQOS());
 }
 
-void LUAPublicationBase::AddListener(lua_State* pState, const Listener& listener, int indexListener, int indexClient) {
+void LUAPublicationBase::AddListener(lua_State* pState, const Listener& listener, UInt8 indexListener) {
+	// -1 must be the client table!
 	if (Script::FromObject<Mona::Publication>(pState, listener.publication)) {
 		Script::Collection(pState, -1, "listeners", listener.publication.listeners.count() + 1);
 		lua_pushvalue(pState, indexListener);
-		lua_pushvalue(pState, indexClient);
+		lua_pushvalue(pState, -4); // client table
 		lua_rawset(pState, -3); // rawset cause NewIndexProhibited
 		lua_pop(pState, 2);
 	}
 }
 
-void LUAPublicationBase::RemoveListener(lua_State* pState, const Listener& listener, int indexListener) {
+void LUAPublicationBase::RemoveListener(lua_State* pState, const Listener& listener) {
+	// -1 must be the listener table!
 	if (Script::FromObject<Mona::Publication>(pState, listener.publication)) {
 		Script::Collection(pState, -1, "listeners", listener.publication.listeners.count() - 1);
-		lua_pushvalue(pState, indexListener);
+		lua_pushvalue(pState, -3); // listener table
 		lua_pushnil(pState);
 		lua_rawset(pState, -3); // rawset cause NewIndexProhibited
 		lua_pop(pState, 3);

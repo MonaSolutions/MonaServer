@@ -101,9 +101,8 @@ void JSONWriter::writeBytes(const UInt8* data,UInt32 size) {
 	startData();
 
 	packet.writeRaw("{__raw:\"");
-	Buffer result;
-	Util::ToBase64(data, size, result);
-	packet.writeRaw(result.data(),result.size());
+	Util::ToBase64(data, size, _buffer);
+	packet.writeRaw((const UInt8*)_buffer.data(),_buffer.size());
 	packet.writeRaw("\"}");
 
 	endData();

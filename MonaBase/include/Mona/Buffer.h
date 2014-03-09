@@ -35,7 +35,7 @@ public:
 	UInt8&			operator[](UInt32 index) { return _data[index >= _size ? (_size-1) : index]; }
 
 	void			clip(UInt32 offset);
-	bool			resize(UInt32 size, bool preserveContent);
+	bool			resize(UInt32 size, bool preserveContent=false);
 	void			clear();
 
 	UInt8*			data() { return _data; }

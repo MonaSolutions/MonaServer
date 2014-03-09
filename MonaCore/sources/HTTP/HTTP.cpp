@@ -42,7 +42,7 @@ using namespace std;
 namespace Mona {
 
 
-static map<UInt16, const char*> CodeMessages({
+static const map<UInt16, const char*> CodeMessages({
 	{ 100, HTTP_CODE_100 },
 	{ 101, HTTP_CODE_101 },
 	{ 102, HTTP_CODE_102 },
@@ -114,7 +114,7 @@ static map<UInt16, const char*> CodeMessages({
 	{ 520, HTTP_CODE_520 }
 });
 
-const UInt32 HTTP::DefaultTimeout(7000000); // 7 sec
+const UInt32 HTTP::DefaultTimeout(7000); // 7 sec
 
 HTTP::ContentType HTTP::ExtensionToMIMEType(const string& extension, string& subType) {
 	// TODO Make a Static Array and complete extensions
@@ -353,7 +353,7 @@ void HTTP::WriteDirectoryEntry(BinaryWriter& writer,const string& serverAddress,
 	writer.writeRaw("<tr><td><a href=\"http://", serverAddress, path, "/",
 		entry.name(), entry.isDirectory() ? "/\">" : "\">",
 		entry.name(), entry.isDirectory() ? "/" : "", "</a></td><td>&nbsp;",
-		entry.lastModified().toString("%d-%b-%Y %H:%M", date), "</td><td align=right>&nbsp;&nbsp;",
+		Date(entry.lastModified()).toString("%d-%b-%Y %H:%M", date), "</td><td align=right>&nbsp;&nbsp;",
 		size, "</td></tr>\n");
 }
 

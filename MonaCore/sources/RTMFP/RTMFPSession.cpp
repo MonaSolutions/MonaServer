@@ -64,7 +64,7 @@ void RTMFPSession::failSignal() {
 	flush(false); // We send immediatly the fail message
 
 	// After 6 mn we can considerated that the session is died!
-	if(_timesFailed==10 || _recvTimestamp.isElapsed(360000000))
+	if(_timesFailed==10 || _recvTimestamp.isElapsed(360000))
 		kill();
 }
 
@@ -101,13 +101,13 @@ void RTMFPSession::manage() {
 	}
 
 	// After 6 mn we considerate than the session has failed
-	if(_recvTimestamp.isElapsed(360000000)) {
+	if(_recvTimestamp.isElapsed(360000)) {
 		fail("Timeout no client message");
 		return;
 	}
 
 	// To accelerate the deletion of peer ghost (mainly for netgroup efficient), starts a keepalive server after 2 mn
-	if(_recvTimestamp.isElapsed(120000000) && !keepAlive()) // TODO check it!
+	if(_recvTimestamp.isElapsed(120000) && !keepAlive()) // TODO check it!
 		return;
 
 	// Raise RTMFPWriter
@@ -196,7 +196,7 @@ void RTMFPSession::flush(UInt8 marker,bool echoTime,RTMFPEngine::Type type) {
 		PacketWriter& packet(_pSender->packet);
 	
 		// After 30 sec, send packet without echo time
-		if(_recvTimestamp.isElapsed(30000000))
+		if(_recvTimestamp.isElapsed(30000))
 			echoTime = false;
 
 		if(echoTime)
@@ -275,7 +275,7 @@ void RTMFPSession::packetHandler(PacketReader& packet) {
 				time += 0xFFFF-timeEcho;
 			timeEcho = 0;
 		}
-		peer.setPing((time-timeEcho)*RTMFP_TIMESTAMP_SCALE);
+		peer.setPing((time-timeEcho)*(UInt16)RTMFP_TIMESTAMP_SCALE);
 	}
 	else if(marker != 0xF9)
 		WARN("RTMFPPacket marker unknown : ", Format<UInt8>("%02x",marker));

@@ -43,12 +43,12 @@ WinService::~WinService() {
 		CloseServiceHandle(_scmHandle);
 }
 
-bool WinService::open(Exception& ex) const {
+bool WinService::open(Exception& ex,bool justManager) const {
 	if (!_scmHandle && !(_scmHandle = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS))) {
 		ex.set(Exception::SYSTEM, "Cannot open Service Control Manager");
 		return false;
 	}
-	if (!_svcHandle && !(_svcHandle = OpenServiceA(_scmHandle, _name.c_str(), SERVICE_ALL_ACCESS))) {
+	if (!justManager && !_svcHandle && !(_svcHandle = OpenServiceA(_scmHandle, _name.c_str(), SERVICE_ALL_ACCESS))) {
 		ex.set(Exception::SERVICE, "Service ", _name, " does not exist");
 		return false;
 	}
@@ -83,6 +83,8 @@ const string& WinService::getDisplayName(Exception& ex, string& name) const {
 
 bool WinService::registerService(Exception& ex,const string& path, const string& displayName) {
 	close();
+	if (!open(ex,true))
+		return false;
 	_svcHandle = CreateServiceA(
 		_scmHandle,
 		_name.c_str(),

@@ -55,7 +55,7 @@ public:
 
 		if (reader.followingType()==DataReader::STRING) {
 
-			string name;
+			std::string name;
 			reader.readString(name);
 			if(name=="__publish") {
 				if(reader.followingType()!=DataReader::STRING) {

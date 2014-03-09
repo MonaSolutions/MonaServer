@@ -24,19 +24,17 @@ using namespace Mona;
 
 using namespace std;
 
-static Buffer Result;
 static MapParameters Properties;
 
-void TestEncode(const char* data,UInt32 size, const char* result) {
-	Util::ToBase64((UInt8*)data, size, Result);
-	CHECK(strlen(result) == Result.size() && memcmp(Result.data(), result, Result.size()) == 0);
+bool TestEncode(const char* data,UInt32 size, const char* result) {
+	static string value;
+	return Util::ToBase64((UInt8*)data, size, value) == result;
 }
 
-bool TestDecode(const char* data, const char* result, UInt32 size) {
-	bool success = Util::FromBase64((UInt8*)data, strlen(data), Result);
-	CHECK(size == Result.size() && memcmp(Result.data(), result, Result.size()) == 0);
-	return success;
+bool TestDecode(string data, const char* result, UInt32 size) {
+	return Util::FromBase64(data) && memcmp(data.c_str(),result,size)==0;
 }
+
 
 ADD_TEST(UtilTest, UnpackQuery) {
 	string value;
@@ -73,9 +71,9 @@ ADD_TEST(UtilTest, UnpackUrl) {
 
 
 ADD_TEST(UtilTest, Base64) {
-	TestEncode("\00\01\02\03\04\05", 6,"AAECAwQF");
-	TestEncode("\00\01\02\03",4, "AAECAw==");
-	TestEncode("ABCDEF", 6,"QUJDREVG");
+	CHECK(TestEncode("\00\01\02\03\04\05", 6,"AAECAwQF"));
+	CHECK(TestEncode("\00\01\02\03",4, "AAECAw=="));
+	CHECK(TestEncode("ABCDEF", 6,"QUJDREVG"));
 
 	CHECK(TestDecode("AAECAwQF", "\00\01\02\03\04\05", 6));
 	CHECK(TestDecode("AAECAw==", "\00\01\02\03", 4));
@@ -83,31 +81,37 @@ ADD_TEST(UtilTest, Base64) {
 	CHECK(TestDecode("QUJ\r\nDRE\r\nVG", "ABCDEF", 6));
 	CHECK(!TestDecode("QUJD#REVG", "ABCDEF", 6));
 
-	string message("The quick brown fox jumped over the lazy dog.");
-	Util::ToBase64((const UInt8*)message.c_str(), message.size(), Result);
-	Buffer buffer;
-	CHECK(Util::FromBase64(Result.data(), Result.size(), buffer));
-	CHECK(memcmp(buffer.data(), message.c_str(), message.size()) == 0);
+	static string Message("The quick brown fox jumped over the lazy dog.");
+	static string Result;
+	Util::ToBase64((const UInt8*)Message.c_str(), Message.size(), Result);
+	CHECK(Util::FromBase64(Result) && Result==Message);
+	CHECK(Result==Message);
+
 
 	UInt8 data[255];
 	for (UInt8 i = 0; i < 255; ++i)
 		data[i] = i;
 	Util::ToBase64(data, sizeof(data), Result);
-	CHECK(Util::FromBase64(Result.data(), Result.size(), buffer));
-	CHECK(memcmp(buffer.data(), data, sizeof(data)) == 0);
+	CHECK(Util::FromBase64(Result));
+	CHECK(memcmp(Result.data(), data, sizeof(data)) == 0);
 }
 
 
 ADD_TEST(UtilTest, FormatHex) {
-	string result;
-	Util::FormatHex((const UInt8*)"\00\01\02\03\04\05", 6, result,Util::HEX_CPP);
-	CHECK(result == "\\x00\\x01\\x02\\x03\\x04\\x05")
+	Buffer buffer;
+	Util::FormatHex((const UInt8*)"\00\01\02\03\04\05", 6, buffer,Util::HEX_CPP);
+	CHECK(memcmp(buffer.data(),"\\x00\\x01\\x02\\x03\\x04\\x05",buffer.size())==0)
 
-	Util::FormatHex((const UInt8*)"\00\01\02\03\04\05", 6, result);
-	CHECK(result == "000102030405")
+	Util::FormatHex((const UInt8*)"\00\01\02\03\04\05", 6, buffer);
+	CHECK(memcmp(buffer.data(),"000102030405",buffer.size())==0)
 
-	UInt32 size = result.size();
-	Util::UnformatHex((UInt8*)result.c_str(), size);
-	CHECK(memcmp(result.c_str(), "\00\01\02\03\04\05", size) == 0)
+
+	Util::UnformatHex(buffer);
+	CHECK(memcmp(buffer.data(), "\00\01\02\03\04\05", buffer.size()) == 0)
+
+	buffer.resize(64);
+	memcpy(buffer.data(), "36393CB1428ECC178FE88D37094D0B3D34B95C0E985177E45336997EBEAB58CD", 64);
+	Util::UnformatHex(buffer);
+	CHECK(buffer.size()==32 && memcmp(buffer.data(), "\x36\x39\x3C\xB1\x42\x8E\xCC\x17\x8F\xE8\x8D\x37\x09\x4D\x0B\x3D\x34\xB9\x5C\x0E\x98\x51\x77\xE4\x53\x36\x99\x7E\xBE\xAB\x58\xCD", buffer.size()) == 0)
 }
 

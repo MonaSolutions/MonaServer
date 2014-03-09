@@ -71,14 +71,14 @@ void FileSystem::RegisterForDeletion(const string& path) {
 
 FileSystem::Attributes& FileSystem::GetAttributes(Exception& ex,const string& path,Attributes& attributes) {
 	struct stat status;
-	status.st_mtime = attributes.lastModified;
+	status.st_mtime = attributes.lastModified/1000;
 	status.st_size = attributes.size;
 	string file(path);
 	if (::stat(MakeFile(file).c_str(), &status) != 0) {
 		ex.set(Exception::FILE, "Path ", path, " doesn't exist");
 		return attributes;
 	}
-	attributes.lastModified.update(chrono::system_clock::from_time_t(status.st_mtime));
+	attributes.lastModified.update(status.st_mtime*1000);
 	if(!(attributes.isDirectory = (status.st_mode&S_IFDIR) ? true : false))
 		attributes.size = (UInt32)status.st_size;
 	return attributes;
@@ -86,12 +86,12 @@ FileSystem::Attributes& FileSystem::GetAttributes(Exception& ex,const string& pa
 
 Time& FileSystem::GetLastModified(Exception& ex, const string& path, Time& time) {
 	struct stat status;
-	status.st_mtime = time;
+	status.st_mtime = time/1000;
 	string file(path);
 	if (::stat(MakeFile(file).c_str(), &status) != 0)
 		ex.set(Exception::FILE, "Path ", path, " doesn't exist");
 	else
-		time.update(chrono::system_clock::from_time_t(status.st_mtime));
+		time.update(status.st_mtime*1000);
 	return time;
 }
 
@@ -178,7 +178,6 @@ void FileSystem::RemoveAll(Exception& ex,const string& path) {
 }
 
 
-// TODO test with TestUnits
 string& FileSystem::GetName(const string& path, string& value) {
 	value.assign(path);
 	auto separator = value.find_last_of("/\\");
@@ -187,7 +186,6 @@ string& FileSystem::GetName(const string& path, string& value) {
 	return value;
 }
 
-// TODO test with TestUnits
 string& FileSystem::GetBaseName(const string& path, string& value) {
 	value.assign(path);
 	auto dot = value.find_last_of('.');
@@ -199,7 +197,7 @@ string& FileSystem::GetBaseName(const string& path, string& value) {
 	return value;
 }
 
-// TODO test with TestUnits
+
 string& FileSystem::GetExtension(const string& path, string& value) {
 	value.assign(path);
 	auto dot = value.find_last_of('.');
@@ -241,8 +239,14 @@ string& FileSystem::MakeDirectory(string& path) {
 	return path;
 }
 
+string& FileSystem::Parent(string& path) {
+	auto separator = path.find_last_of("/\\");
+	if (separator != string::npos)
+		path.erase(separator+1); // keep the "/" (= folder!)
+	return path;
+}
 
-// TODO test units!
+
 string& FileSystem::Pack(const vector<string>& values, string& path) {
 	path.clear();
 	bool first = true;
@@ -264,7 +268,6 @@ string& FileSystem::Pack(const vector<string>& values, string& path) {
 	return path;
 }
 
-// TODO test units!
 vector<string>& FileSystem::Unpack(const string& path, vector<string>& values) {
 	string::const_iterator it = path.begin(), itValue, end = path.end();
 
@@ -379,6 +382,29 @@ bool FileSystem::ResolveFileWithPaths(const string& paths, string& file) {
 		}
 	}
 	return false;
+}
+
+bool FileSystem::GetCurrentApplication(string& path) {
+	string result;
+#ifdef _WIN32
+	result.resize(MAX_PATH);
+	int n = GetModuleFileNameA(0, &result[0], MAX_PATH);
+	if (n <= 0)
+		return false;
+	result.resize(n);
+#else
+	result.resize(130);
+		// read the link target into variable linkTarget
+	ssize_t n(130);
+	while(n>=result.size()) {
+		result.resize(result.size()*2);
+		if((n = readlink("/proc/self/exe", &result[0], result.size()))<=0)
+			return false;
+	}
+	result.resize(n);
+#endif
+	path = move(result);
+	return true;
 }
 
 bool FileSystem::GetCurrent(string& path) {

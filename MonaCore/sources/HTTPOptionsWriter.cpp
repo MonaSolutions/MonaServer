@@ -33,7 +33,7 @@ void HTTPOptionsWriter::clear() {
 	_option = NIL;
 	(bool&)indexDirectory = true;
 	((string&)index).clear();
-	(UInt16&)timeout = HTTP::DefaultTimeout;
+	(UInt32&)timeout = HTTP::DefaultTimeout;
 }
 
 
@@ -49,7 +49,7 @@ void HTTPOptionsWriter::writeNull() {
 		(bool&)indexDirectory = false;
 		((string&)index).clear();
 	} else if (_option == TIMEOUT) {
-		(UInt16&)timeout = 0;
+		(UInt32&)timeout = 0;
 	} else
 		ERROR("Unknown HTTP option");
 }
@@ -59,7 +59,7 @@ void HTTPOptionsWriter::writeNumber(double value) {
 		(bool&)indexDirectory = value!=0 ? true : false;
 		((string&)index).clear();
 	} else if (_option == TIMEOUT) {
-		(UInt16&)timeout = (UInt16)value;
+		(UInt32&)timeout = (UInt32)value/1000;
 	} else
 		ERROR("Unknown HTTP option");
 }
@@ -70,11 +70,12 @@ void HTTPOptionsWriter::writeString(const string& value) {
 		((string&)index).assign(value);
 		(bool&)indexCanBeMethod = index.find_last_of('.')==string::npos;
 	} else if (_option == TIMEOUT) {
-		Time time;
-		if(time.fromString(value))
-			(UInt16&)timeout = (UInt16)time/1000000;
+		Date date;
+		Exception ex;
+		if(date.update(ex,value))
+			(UInt32&)timeout = (UInt32)date/1000;
 		else
-			ERROR("Unvalid HTTP option");
+			ERROR("Unvalid HTTP timeout option, ",ex.error());
 	} else
 		ERROR("Unknown HTTP option");
 }
@@ -87,9 +88,9 @@ void HTTPOptionsWriter::writeBytes(const UInt8* data, UInt32 size) {
 	} else if (_option == TIMEOUT) {
 		Exception ex;
 		_buffer.assign((const char*)data,size);
-		(UInt16&)timeout = String::ToNumber(ex,_buffer,timeout);
+		(UInt32&)timeout = String::ToNumber(ex,_buffer,timeout)/1000;
 		if (ex)
-			ERROR("Unvalid HTTP option, ",ex.error());
+			ERROR("Unvalid HTTP timeout option, ",ex.error());
 	} else
 		ERROR("Unknown HTTP option");
 }
@@ -100,18 +101,18 @@ void HTTPOptionsWriter::writeBoolean(bool value) {
 		(bool&)indexDirectory = value;
 		((string&)index).clear();
 	} else if (_option == TIMEOUT) {
-		(UInt16&)timeout = value ? HTTP::DefaultTimeout : 0;
+		(UInt32&)timeout = value ? HTTP::DefaultTimeout : 0;
 	} else
 		ERROR("Unknown HTTP option");
 }
 
-void HTTPOptionsWriter::writeDate(const Time& date) {
+void HTTPOptionsWriter::writeDate(const Date& date) {
 	if (_option == INDEX) {
 		(bool&)indexDirectory = false;
-		((string&)index).assign(date.toString(Time::HTTP_FORMAT,_buffer));
+		((string&)index).assign(date.toString(Date::HTTP_FORMAT,_buffer));
 		(bool&)indexCanBeMethod = index.find_last_of('.')==string::npos;
 	} else if (_option == TIMEOUT) {
-		(UInt16&)timeout = (UInt16)date/1000000;
+		(UInt32&)timeout = (UInt32)date;
 	} else
 		ERROR("Unknown HTTP option");
 }

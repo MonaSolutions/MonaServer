@@ -24,7 +24,7 @@ This file is a part of Mona.
 using namespace Mona;
 using namespace std;
 
-IPAddress	_IpAddress;
+static IPAddress	_IpAddress;
 
 ADD_TEST(IPAddressTest, Parse) {
 	Exception ex;

@@ -34,7 +34,7 @@ namespace Mona {
 #define RTMFP_HEADER_SIZE		11
 #define RTMFP_MIN_PACKET_SIZE	(RTMFP_HEADER_SIZE+1)
 #define RTMFP_MAX_PACKET_SIZE	1192
-#define RTMFP_TIMESTAMP_SCALE	4
+#define RTMFP_TIMESTAMP_SCALE	4.0
 
 
 class RTMFPKey : virtual Object {
@@ -90,8 +90,8 @@ public:
 														 UInt8* requestKey,
 														 UInt8* responseKey);
 
-	static UInt16				TimeNow() { return Time(Mona::Time()); }
-	static UInt16				Time(Int64 timeVal) { return (UInt32)round(timeVal / (1000.0*RTMFP_TIMESTAMP_SCALE)); }
+	static UInt16				TimeNow() { return Time(Mona::Time::Now()); }
+	static UInt16				Time(Int64 timeVal) { return (UInt32)round(timeVal / RTMFP_TIMESTAMP_SCALE); }
 
 private:
 	static UInt16				CheckSum(PacketReader& packet);

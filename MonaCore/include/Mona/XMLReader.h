@@ -19,7 +19,7 @@
 
 #include "Mona/Mona.h"
 #include "Mona/DataReader.h"
-#include "Mona/Time.h"
+#include "Mona/Date.h"
 
 
 namespace Mona {
@@ -31,7 +31,7 @@ public:
 	virtual std::string&		readString(std::string& value);
 	virtual double				readNumber();
 	virtual bool				readBoolean();
-	virtual Time&				readTime(Time& time);
+	virtual Date&				readDate(Date& date);
 	virtual void				readNull() {}
 	
 	bool						readArray(UInt32& size);
@@ -102,7 +102,7 @@ private:
 	ReadStep			_nextStep; //! if there is an action to terminate
 	std::string		    _tagName;
 	std::string		    _value;
-	Time			    _date;
+	Date			    _date;
 	Type			    _last;
 	double			    _dval;
 	bool                _tagOpened; //! Tag is opened, we expect attributes

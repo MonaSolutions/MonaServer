@@ -33,9 +33,10 @@ public:
 
 	static int Item(lua_State *pState);
 
-
-	static void AddListener(lua_State* pState, const Mona::Listener& listener, int indexListener, int indexClient);
-	static void RemoveListener(lua_State* pState, const Mona::Listener& listener, int indexListener);
+	// -1 must be the client table!
+	static void AddListener(lua_State* pState, const Mona::Listener& listener, Mona::UInt8 indexListener);
+	// -1 must be the listener table!
+	static void RemoveListener(lua_State* pState, const Mona::Listener& listener);
 
 	static void Init(lua_State *pState, Mona::Publication& publication) {}
 protected:
@@ -160,8 +161,7 @@ private:
 					pPublisher->writer().createWriter(pWriter);
 					if (pWriter) {
 						Mona::UInt32 offset = pWriter->packet.size();
-						DataWriter& writer = *pWriter;
-						SCRIPT_READ_DATA(writer)
+						SCRIPT_READ_DATA(*pWriter)
 						Mona::PacketReader packet(pWriter->packet.data(), pWriter->packet.size());
 						packet.next(offset);
 						std::shared_ptr<Mona::DataReader> pReader;

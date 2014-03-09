@@ -119,6 +119,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug|Win32'">false</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="sources\Database.cpp" />
+    <ClCompile Include="sources\Date.cpp" />
     <ClCompile Include="sources\Exceptions.cpp" />
     <ClCompile Include="sources\FilePath.cpp" />
     <ClCompile Include="sources\Files.cpp" />
@@ -154,8 +155,7 @@
     <ClCompile Include="sources\String.cpp" />
     <ClCompile Include="sources\SubstreamMap.cpp" />
     <ClCompile Include="sources\TerminateSignal.cpp" />
-    <ClCompile Include="sources\Time.cpp" />
-    <ClCompile Include="sources\TimeParser.cpp" />
+    <ClCompile Include="sources\Timezone.cpp" />
     <ClCompile Include="sources\Trigger.cpp" />
     <ClCompile Include="sources\Util.cpp" />
     <ClCompile Include="sources\PoolThread.cpp" />
@@ -176,6 +176,7 @@
     <ClInclude Include="include\Mona\Crypto.h" />
     <ClInclude Include="include\Mona\Database.h" />
     <ClInclude Include="include\Mona\DatagramSocket.h" />
+    <ClInclude Include="include\Mona\Date.h" />
     <ClInclude Include="include\Mona\FilePath.h" />
     <ClInclude Include="include\Mona\Files.h" />
     <ClInclude Include="include\Mona\DNS.h" />
@@ -218,7 +219,7 @@
     <ClInclude Include="include\Mona\SubstreamMap.h" />
     <ClInclude Include="include\Mona\TerminateSignal.h" />
     <ClInclude Include="include\Mona\Time.h" />
-    <ClInclude Include="include\Mona\TimeParser.h" />
+    <ClInclude Include="include\Mona\Timezone.h" />
     <ClInclude Include="include\Mona\Trigger.h" />
     <ClInclude Include="include\Mona\Util.h" />
     <ClInclude Include="include\Mona\PoolThread.h" />

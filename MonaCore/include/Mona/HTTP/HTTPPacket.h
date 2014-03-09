@@ -21,7 +21,6 @@ This file is a part of Mona.
 
 #include "Mona/Mona.h"
 #include "Mona/PoolBuffer.h"
-#include "Mona/Time.h"
 #include "Mona/MapWriter.h"
 #include "Mona/HTTP/HTTP.h"
 
@@ -50,7 +49,7 @@ public:
 	std::string					upgrade;
 	UInt8						cacheControl;
 	
-	Time						ifModifiedSince;
+	Date						ifModifiedSince;
 	UInt8						accessControlRequestMethod;
 
 	std::string					secWebsocketKey;

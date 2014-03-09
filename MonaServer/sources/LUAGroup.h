@@ -28,8 +28,10 @@ public:
 	static void Init(lua_State *pState, Mona::Group& groups) {}
 	static void Clear(lua_State* pState, const Mona::Group& group) {}
 
-	static void AddClient(lua_State* pState, Mona::Group& group, Mona::Client& client, int indexGroup, int indexClient);
-	static void RemoveClient(lua_State* pState, Mona::Group& group, Mona::Client& client, int indexGroup);
+	// -1 must be the client table!
+	static void AddClient(lua_State* pState, Mona::Group& group, Mona::Client& client, Mona::UInt8 indexGroup);
+	// -1 must be the group table!
+	static void RemoveClient(lua_State* pState, Mona::Group& group, Mona::Client& client);
 
 	static int Get(lua_State *pState);
 	static int Set(lua_State *pState);

@@ -127,15 +127,15 @@ const UInt8* AMFReader::readBytes(UInt32& size) {
 	return result;
 }
 
-Time& AMFReader::readTime(Time& time) {
+Date& AMFReader::readDate(Date& date) {
 	Type type = followingType();
 	if(type==NIL) {
 		packet.next(1);
-		return time.update(0);
+		return date = 0;
 	}
-	if(type!=TIME) {
+	if(type!=DATE) {
 		ERROR("Type ",Format<UInt8>("%.2x",(UInt8)type)," is not a AMF Date type");
-		return time.update(0);
+		return date;
 	}
 
 	packet.next(1);
@@ -152,18 +152,18 @@ Time& AMFReader::readTime(Time& time) {
 			flags >>= 1;
 			if (flags > _references.size()) {
 				ERROR("AMF3 reference not found")
-				return time.update(0);
+				return date;
 			}
 			UInt32 reset = packet.position();
 			packet.reset(_references[flags]);
 			result = packet.readNumber<double>();
 			packet.reset(reset);
 		}
-		return time.update((Int64)result * 1000);
+		return date = (Int64)result;
 	}
 	result = packet.readNumber<double>();
 	packet.next(2); // Timezone, useless
-	return time.update((Int64)result * 1000);
+	return date = (Int64)result;
 }
 
 string& AMFReader::readString(string& value) {
@@ -509,7 +509,7 @@ AMFReader::Type AMFReader::followingType() {
 			case AMF3_STRING:
 				return STRING;
 			case AMF3_DATE:
-				return TIME;
+				return DATE;
 			case AMF3_ARRAY:
 				return ARRAY;
 			case AMF3_DICTIONARY:
@@ -539,7 +539,7 @@ AMFReader::Type AMFReader::followingType() {
 		case AMF_STRICT_ARRAY:
 			return ARRAY;
 		case AMF_DATE:
-			return TIME;
+			return DATE;
 		case AMF_BEGIN_OBJECT:
 		case AMF_BEGIN_TYPED_OBJECT:
 			return OBJECT;

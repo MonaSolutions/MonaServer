@@ -30,7 +30,9 @@ public:
 	static int Set(lua_State *pState);
 	static int Item(lua_State *pState);
 
-	static void AddServer(lua_State* pState, Broadcaster& broadcaster, const std::string& address, int indexServer);
+	// -1 must be the server table!
+	static void AddServer(lua_State* pState, Broadcaster& broadcaster, const std::string& address);
+
 	static void RemoveServer(lua_State* pState, Broadcaster& broadcaster, const std::string& address);
 
 protected:

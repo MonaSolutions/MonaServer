@@ -63,7 +63,7 @@ bool HTTPSender::run(Exception& ex) {
 	if (!_pWriter) {
 
 		//// GET FILE
-		Time time;
+		Date date;
 		// Not Modified => don't send the file
 		if (_file.lastModified()>0 && _pRequest->ifModifiedSince >= _file.lastModified()) {
 			write("304 Not Modified", HTTP::CONTENT_ABSENT);
@@ -89,11 +89,10 @@ bool HTTPSender::run(Exception& ex) {
 							writer.writeRaw("The document has moved <a href=\"", _buffer, "\">here</a>.");
 						HTML_END_COMMON_RESPONSE(writer, _buffer)
 					} else {
-					
 						DataWriter& response = write("200 OK");
 						BinaryWriter& writer = response.packet;
 						HTTP_BEGIN_HEADER(writer)
-							HTTP_ADD_HEADER(writer,"Last-Modified", time.toString(Time::HTTP_FORMAT, _buffer))
+							HTTP_ADD_HEADER(writer,"Last-Modified", date.toString(Date::HTTP_FORMAT, _buffer))
 						HTTP_END_HEADER(writer)
 
 						HTTP::WriteDirectoryEntries(writer,_pRequest->serverAddress,_file.path(),files,_sortOptions);
@@ -113,7 +112,7 @@ bool HTTPSender::run(Exception& ex) {
 						DataWriter& response = write("200 OK", type,subType);
 						PacketWriter& packet = response.packet;
 						HTTP_BEGIN_HEADER(packet)
-							HTTP_ADD_HEADER(packet,"Last-Modified", time.toString(Time::HTTP_FORMAT, _buffer))
+							HTTP_ADD_HEADER(packet,"Last-Modified", date.toString(Date::HTTP_FORMAT, _buffer))
 						HTTP_END_HEADER(packet)
 
 						// TODO see if filter is correct
@@ -195,7 +194,7 @@ DataWriter& HTTPSender::writer(const string& code, HTTP::ContentType type, const
 	}
 
 	// Date + Mona
-	packet.writeRaw("\r\nDate: "); packet.writeRaw(Time().toString(Time::HTTP_FORMAT, _buffer));
+	packet.writeRaw("\r\nDate: "); packet.writeRaw(Date().toString(Date::HTTP_FORMAT, _buffer));
 	packet.writeRaw("\r\nServer: Mona");
 
 	// Connection type, same than request!

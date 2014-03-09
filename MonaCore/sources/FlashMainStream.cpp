@@ -99,9 +99,9 @@ void FlashMainStream::messageHandler(Exception& ex, const string& name,AMFReader
 						properties.setString(name, message.readString(value));
 						break;
 					}
-					case AMFReader::TIME: {
-						Time time;
-						properties.setNumber(name, (double)(message.readTime(time) / 1000));
+					case AMFReader::DATE: {
+						Date date;
+						properties.setNumber<Int64>(name,message.readDate(date));
 						break;
 					}
 					default:

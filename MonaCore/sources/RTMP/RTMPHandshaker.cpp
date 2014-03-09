@@ -74,7 +74,7 @@ bool RTMPHandshaker::compute(Exception& ex) {
 		_writer.write8(encrypted ? 6 : 3);
 
 		//timestamp
-		_writer.write32((UInt32)Time());
+		_writer.write32((UInt32)Time::Now());
 
 		//version
 		_writer.write32(0);

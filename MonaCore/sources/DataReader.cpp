@@ -77,9 +77,9 @@ void DataReader::read(Type type,DataWriter& writer) {
 			writer.writeString(readString(value));
 			break;
 		}
-		case TIME: {
-			Time time;
-			writer.writeDate(readTime(time));
+		case DATE: {
+			Date date;
+			writer.writeDate(readDate(date));
 			break;
 		}
 		case BYTES: {

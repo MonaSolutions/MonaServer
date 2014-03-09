@@ -52,22 +52,21 @@ void LUAInvoker::Init(lua_State *pState, Invoker& invoker) {
 	lua_pop(pState, 1);
 }
 
-// TODO Useless?
-void LUAInvoker::AddClient(lua_State *pState, Invoker& invoker, Client& client, int indexClient) {
+void LUAInvoker::AddClient(lua_State *pState, Invoker& invoker, Client& client) {
+	// -1 must be the client table!
 	lua_getglobal(pState, "mona");
 	Script::Collection(pState, -1, "clients", invoker.clients.count() + 1);
 	LUAClient::GetID(pState, client);
-	lua_pushvalue(pState, indexClient);
+	lua_pushvalue(pState, -4); // client table
 	lua_rawset(pState, -3); // rawset cause NewIndexProhibited
 	if (!client.name.empty()) {
 		lua_pushstring(pState, client.name.c_str());
-		lua_pushvalue(pState, indexClient);
+		lua_pushvalue(pState, -4);  // client table
 		lua_rawset(pState, -3); // rawset cause NewIndexProhibited
 	}
 	lua_pop(pState, 2);
 }
 
-// TODO Useless?
 void LUAInvoker::RemoveClient(lua_State *pState, Invoker& invoker, const Client& client) {
 	lua_getglobal(pState, "mona");
 	Script::Collection(pState, -1, "clients", invoker.clients.count());
@@ -82,11 +81,12 @@ void LUAInvoker::RemoveClient(lua_State *pState, Invoker& invoker, const Client&
 	lua_pop(pState, 2);
 }
 
-void LUAInvoker::AddPublication(lua_State *pState, Invoker& invoker, const Publication& publication, int indexPublication) {
+void LUAInvoker::AddPublication(lua_State *pState, Invoker& invoker, const Publication& publication) {
+	// -1 must be the publication table!
 	lua_getglobal(pState, "mona");
 	Script::Collection(pState, -1, "publications", invoker.publications.count());
 	lua_pushstring(pState, publication.name().c_str());
-	lua_pushvalue(pState, indexPublication);
+	lua_pushvalue(pState, -4);
 	lua_rawset(pState, -3); // rawset cause NewIndexProhibited
 	lua_pop(pState, 2);
 }
@@ -100,12 +100,12 @@ void LUAInvoker::RemovePublication(lua_State *pState, Invoker& invoker, const Pu
 	lua_pop(pState, 2);
 }
 
-void LUAInvoker::AddGroup(lua_State *pState, Invoker& invoker, Group& group, int indexGroup) {
+void LUAInvoker::AddGroup(lua_State *pState, Invoker& invoker, Group& group) {
+	// -1 must be the group table!
 	lua_getglobal(pState, "mona");
 	Script::Collection(pState, -1, "groups", invoker.groups.count());
-	string key;
-	lua_pushstring(pState, Util::FormatHex(group.id, ID_SIZE, key).c_str());
-	lua_pushvalue(pState, indexGroup);
+	lua_pushstring(pState,Util::FormatHex(group.id, ID_SIZE, invoker.buffer).c_str());
+	lua_pushvalue(pState, -4);
 	lua_rawset(pState, -3); // rawset cause NewIndexProhibited
 	lua_pop(pState, 2);
 }
@@ -113,8 +113,7 @@ void LUAInvoker::AddGroup(lua_State *pState, Invoker& invoker, Group& group, int
 void LUAInvoker::RemoveGroup(lua_State *pState, Invoker& invoker, const Group& group) {
 	lua_getglobal(pState, "mona");
 	Script::Collection(pState, -1, "groups", invoker.groups.count());
-	string key;
-	lua_pushstring(pState, Util::FormatHex(group.id, ID_SIZE, key).c_str());
+	lua_pushstring(pState,Util::FormatHex(group.id, ID_SIZE,invoker.buffer).c_str());
 	lua_pushnil(pState);
 	lua_rawset(pState, -3); // rawset cause NewIndexProhibited
 	lua_pop(pState, 2);
@@ -259,23 +258,24 @@ int	LUAInvoker::RemoveFromBlacklist(lua_State* pState) {
 int LUAInvoker::JoinGroup(lua_State* pState) {
 	SCRIPT_CALLBACK(Invoker, invoker)
 		SCRIPT_READ_BINARY(peerId, size)
-		string hex;
-		if (size == (ID_SIZE * 2))
-			Util::UnformatHex((UInt8*)peerId, size);
-		else if (size != ID_SIZE) {
+		if (size == (ID_SIZE << 1)) {
+			invoker.buffer.assign((const char*)peerId,size);
+			Util::UnformatHex(invoker.buffer);
+		} else if (size != ID_SIZE) {
 			if (peerId) {
-				SCRIPT_ERROR("Bad member format id ", Util::FormatHex(peerId, size, hex));
+				SCRIPT_ERROR("Bad member format id ", Util::FormatHex(peerId, size, invoker.buffer));
 				peerId = NULL;
 			} else
 				SCRIPT_ERROR("Member id argument missing");
 		}
 		if (peerId) {
 			SCRIPT_READ_BINARY(groupId, size)
-			if (size == (ID_SIZE * 2))
-				Util::UnformatHex((UInt8*)groupId, size);
-			else if (size != ID_SIZE) {
+			if (size == (ID_SIZE << 1)) {
+				invoker.buffer.assign((const char*)groupId,size);
+				Util::UnformatHex(invoker.buffer);
+			} else if (size != ID_SIZE) {
 				if (groupId) {
-					SCRIPT_ERROR("Bad group format id ", Util::FormatHex(groupId, size, hex))
+					SCRIPT_ERROR("Bad group format id ", Util::FormatHex(groupId, size, invoker.buffer))
 					groupId = NULL;
 				} else
 					SCRIPT_ERROR("Group id argument missing")
@@ -306,23 +306,23 @@ int LUAInvoker::Get(lua_State *pState) {
 		} else if (strcmp(name, "publish") == 0) {
 			SCRIPT_WRITE_FUNCTION(&LUAInvoker::Publish)
 		} else if (strcmp(name, "toAMF") == 0) {
-			SCRIPT_WRITE_FUNCTION(&LUAInvoker::ToData<AMFWriter>)
+			SCRIPT_WRITE_FUNCTION(&LUAInvoker::ToData<Mona::AMFWriter>)
 		} else if (strcmp(name, "toAMF0") == 0) {
 			SCRIPT_WRITE_FUNCTION(&LUAInvoker::ToAMF0)
 		} else if (strcmp(name, "fromAMF") == 0) {
-			SCRIPT_WRITE_FUNCTION(&LUAInvoker::FromData<AMFReader>)
+			SCRIPT_WRITE_FUNCTION(&LUAInvoker::FromData<Mona::AMFReader>)
 		} else if (strcmp(name, "toJSON") == 0) {
-			SCRIPT_WRITE_FUNCTION(&LUAInvoker::ToData<JSONWriter>)
+			SCRIPT_WRITE_FUNCTION(&LUAInvoker::ToData<Mona::JSONWriter>)
 		} else if (strcmp(name, "fromJSON") == 0) {
-			SCRIPT_WRITE_FUNCTION(&LUAInvoker::FromData<JSONReader>)
+			SCRIPT_WRITE_FUNCTION(&LUAInvoker::FromData<Mona::JSONReader>)
 		} else if (strcmp(name, "toXML") == 0) {
-			SCRIPT_WRITE_FUNCTION(&LUAInvoker::ToData<XMLWriter>)
+			SCRIPT_WRITE_FUNCTION(&LUAInvoker::ToData<Mona::XMLWriter>)
 		} else if (strcmp(name, "fromXML") == 0) {
 			SCRIPT_WRITE_FUNCTION(&LUAInvoker::FromData<XMLReader>)
 		} else if (strcmp(name, "absolutePath") == 0) {
 			SCRIPT_WRITE_FUNCTION(&LUAInvoker::AbsolutePath)
 		} else if (strcmp(name, "epochTime") == 0) {
-			SCRIPT_WRITE_NUMBER(round(Time()/1000))
+			SCRIPT_WRITE_NUMBER(Time::Now())
 		} else if (strcmp(name, "split") == 0) {
 			SCRIPT_WRITE_FUNCTION(&LUAInvoker::Split)
 		} else if (strcmp(name, "createUDPSocket") == 0) {
@@ -349,7 +349,7 @@ int LUAInvoker::Get(lua_State *pState) {
 			lua_replace(pState, -2);
 		} else if(strcmp(name,"servers")==0) {
 			lua_getglobal(pState, "m.s");
-		} else if (strcmp(name,"files")==0) {
+		} else if (strcmp(name,"dir")==0) {
 			SCRIPT_WRITE_FUNCTION(&LUAInvoker::ListFiles)
 		}
 	SCRIPT_CALLBACK_RETURN

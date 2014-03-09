@@ -53,8 +53,11 @@ int LUAClient::Item(lua_State *pState) {
 	const char* id = lua_tostring(pState, 2);
 	if (size == ID_SIZE)
 		pClient = pInvoker->clients(id);
-	else if (size == (ID_SIZE * 2))
-		pClient = pInvoker->clients(Util::UnformatHex((UInt8*)id, size));
+	else if (size == (ID_SIZE << 1)) {
+		pInvoker->buffer.assign((const char*)id,size);
+		pClient = pInvoker->clients((const UInt8*)Util::UnformatHex(pInvoker->buffer).c_str());
+	}
+
 	if (!pClient) {
 		string name(id, size);
 		pClient = pInvoker->clients(name); // try by name!

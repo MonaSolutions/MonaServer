@@ -32,7 +32,7 @@ public:
 
 	UInt32	count;
 
-	bool obsolete() { return _time.isElapsed(120000000); } // 2mn
+	bool obsolete() { return _time.isElapsed(120000); } // 2mn
 private:
 	Time _time;
 };

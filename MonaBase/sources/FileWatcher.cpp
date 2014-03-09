@@ -25,7 +25,7 @@ using namespace std;
 
 
 bool FileWatcher::watchFile() {
-	if (!_delay.isElapsed(1500000)) // already checked there is less of 1.5 sec!
+	if (!_delay.isElapsed(1500)) // already checked there is less of 1.5 sec!
 		return _exists;
 	_delay.update();
 	filePath.update();

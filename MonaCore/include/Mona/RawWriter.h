@@ -38,7 +38,7 @@ public:
 	void beginArray(UInt32 size) {}
 	void endArray(){}
 
-	void writeDate(const Time& date) { writeString(date.toString(Time::SORTABLE_FORMAT,_buffer)); }
+	void writeDate(const Date& date) { writeString(date.toString(Date::SORTABLE_FORMAT,_buffer)); }
 	void writeNumber(double value) { String::Format(_buffer, value); writeString(_buffer); }
 	void writeString(const std::string& value) { packet.writeRaw(value); }
 	void writeBoolean(bool value) { packet.writeRaw( value ? "true" : "false"); }

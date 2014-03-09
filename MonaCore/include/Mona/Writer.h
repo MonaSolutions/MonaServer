@@ -56,6 +56,7 @@ public:
 
 	bool					reliable;
 
+
 	const QualityOfService&	qos() { return _qos; }
 
 
@@ -63,13 +64,22 @@ public:
 
 	virtual State			state(State value=GET,bool minimal=false);
 
-	//// The main Writer of one session should close the entiere session
-	//// If code==0, it's a normal close
-	//// If code>0, it's a user close (from server application script)
-	//// If code<0, it's a system core close
-	///			-1 => Listener close!
+
+	
+	/**	The main Writer of one session should close the entiere session
+		If code==0, it's a normal close
+		If code>0, it's a user close (from server application script)
+		If code<0, it's a system core close
+			-1 => Listener close!				*/
 	virtual void			close(int code=0);
 
+	
+	/**	Call  by Multimedia framework on a writer Listener, on subscription. The first call takes a type=INIT parameter, 
+		with a time=0, and with a packet argument which contains the publication name.
+		If this call returns false, the writer can be closed, and subscription have to be removed by the writer handler.
+		If it returns true, for every media type (AUDIO, VIDEO, DATA), an type=INIT call is invoked on start with time=MediaType,
+		and always publication name in packet.
+		Finally, every media data are passed (AUDIO, VIDEO and DATA), if the methods returns false, the cycle restart since the beginning */
 	virtual bool			writeMedia(MediaType type,UInt32 time,PacketReader& packet);
 	virtual bool			writeMember(const Client& client);
 

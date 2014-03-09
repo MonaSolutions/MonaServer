@@ -92,9 +92,9 @@ bool XMLReader::readBoolean() {
 	return _dval > 0;
 }
 
-Time& XMLReader::readTime(Time& time) {
+Date& XMLReader::readDate(Date& date) {
 	_last=NIL;
-	return time.update(_date);
+	return date = _date;
 }
 
 string& XMLReader::readString(string& value) {
@@ -380,8 +380,11 @@ XMLReader::Type XMLReader::parsePrimitive(const UInt8* cur) {
 	if (!ex) 
 		type = NUMBER;
 	// TODO do not return time if format is not a date ("the end" return a time)
-	else if (_value.size() > 18 && _value.size() < 34 && _date.fromString(_value))
-		type=TIME;
+	else if (_value.size() > 18 && _value.size() < 34) {
+		_date.update(ex, _value);
+		if (!ex)
+			type = DATE;
+	}
 
 	if(chained)
 		packet.next(1); // remove last '"'
