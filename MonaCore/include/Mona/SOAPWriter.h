@@ -28,7 +28,7 @@ public:
 	SOAPWriter(const PoolBuffers& buffers);
 
 	virtual void endWrite();
-	virtual void beginDocument();
+	virtual void beginDocument(bool doubleArray = false);
 };
 
 

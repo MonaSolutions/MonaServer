@@ -1,0 +1,70 @@
+<html>
+<head>
+  <title>XML JavaScript Client Test</title>
+  <script type="text/javascript">
+    function send() {
+      var xmlhttp = new XMLHttpRequest();
+      xmlhttp.open('POST', "", true);
+
+      var mimein = window.document.getElementById("mimein").value;
+      var mimeout = window.document.getElementById("mimeout").value;
+      var req = window.document.getElementById("request").value;
+      
+      // Treat the response
+      xmlhttp.onreadystatechange = function () {
+          if (xmlhttp.readyState == 4) {
+              if (xmlhttp.status == 200) {
+
+                window.document.getElementById("response").value = xmlhttp.response;
+                console.log(xmlhttp); // for chrome/firefox debug
+              } else
+                alert("Error during the request (code " + xmlhttp.status + ")");
+          }
+      }
+      // Send the POST request
+      xmlhttp.setRequestHeader('Content-Type', mimein);
+      
+      if (mimein == "application/json")
+        xmlhttp.send('[["' + mimeout + '"],' + req + ']');
+      else {//xml
+        xmlhttp.send("<__array><__array>" + mimeout + "</__array>" + req + "</__array>");
+      }
+    }
+    
+    function changeSample() {
+      var mimein = window.document.getElementById("mimein").value;
+      var req = window.document.getElementById("request");
+      if (mimein == "application/json")
+        req.value = "[1,2,3]";
+      else
+        req.value = "<__array><__noname>1</__noname><__noname>2</__noname><__noname>3</__noname></__array>";
+    }
+  </script>
+</head>
+<body>
+    <form name="Demo" action="" method="post">
+<label>Type IN : </label>
+<select id="mimein" onchange="changeSample();">
+  <option value="text/xml" selected="selected">text/xml</option>
+  <option value="application/json">application/json</option>
+</select>
+<label>Type OUT : </label>
+<select id="mimeout">
+  <option value="xml" selected="selected">text/xml</option>
+  <option value="json">application/json</option>
+</select>
+<div>
+<textarea id="request" rows="10" cols="100">
+<__array><__noname>1</__noname><__noname>2</__noname><__noname>3</__noname></__array>
+</textarea>
+</div>
+<div>
+<textarea id="response" rows="10" cols="100" disabled>
+</textarea>
+</div>
+        <div>
+            <input type="button" value="Send" onclick="send();" />
+        </div>
+    </form>
+</body>
+<html>

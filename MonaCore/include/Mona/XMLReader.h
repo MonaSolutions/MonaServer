@@ -32,7 +32,7 @@ public:
 	virtual double				readNumber();
 	virtual bool				readBoolean();
 	virtual Time&				readTime(Time& time);
-	virtual void				readNull() { packet.next(4); }
+	virtual void				readNull() {}
 	
 	bool						readArray(UInt32& size);
 	virtual bool				readObject(std::string& type,bool& external);
@@ -58,16 +58,25 @@ protected:
 		std::string currentSubTag;
 	};
 	
-    std::deque<TagXML>		_queueTags; ///< record each tags and the is last subtag
+    std::deque<TagXML>		_queueTags; ///< record each tags and the is last subtag	
+	UInt32					_pos;
 
 private:
 	const UInt8*	readBytes(UInt32& size);
 
-	/// \brief ignore comment and return next type
-	Type			parseComment(const UInt8* first, const UInt8* cur);
+	/**
+	 * \brief ignore comment and return next type
+	 * \param first current character
+	 */
+	Type			parseComment(const UInt8* first);
 
-	/// \brief add a tag added and return type
-	Type			addTag(const UInt8* cur);
+	/**
+	 * \brief add a tag added and return type
+	 * \param cur current character
+	 * \param evaluateArray if true evaluate if array need to be created
+	 */
+	Type			addTag(const UInt8* cur, bool evaluateArray = false);
+	bool			nextTagIsSame(const std::string& name);
 
 	/// \brief remove last tag added and return type
 	Type			removeTag();
@@ -76,6 +85,10 @@ private:
 	/// and return type
 	Type			parsePrimitive(const UInt8* cur);
 
+	/// \brief End an eventualy opened array of subtag
+	/// \return True if subtag ended
+	bool			endSubtagArray();
+
 	/// \brief ignore spaces and get current char
 	const UInt8*	current();
 
@@ -83,17 +96,19 @@ private:
 		NOTHING=0,
 		POP_TAG,
 		ADD_TAG,
-		START_ARRAY
+		START_ARRAY_TAG
 	};
 
-	ReadStep				_nextStep; ///< if there is an action to terminate
-	UInt32			        _pos;
-	std::string		        _text;
-	Time			        _date;
-	Type			        _last;
-	double			        _dval;
-	bool                    _tagOpened; ///< Tag is opened, we expect attributes
-	bool					_objectPrimitive; ///< Tag has no sub tags and no attributes
+	ReadStep			_nextStep; //! if there is an action to terminate
+	std::string		    _tagName;
+	std::string		    _value;
+	Time			    _date;
+	Type			    _last;
+	double			    _dval;
+	bool                _tagOpened; //! Tag is opened, we expect attributes
+
+	Type				_nextType; //! if next type has already been readed
+	bool				_isProperty; //! current is a property : need to write property name
 };
 
 

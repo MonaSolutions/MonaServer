@@ -27,47 +27,63 @@ namespace Mona {
 bool XMLReader::isValid() {
 
 	const UInt8* cur = current();
-	if (cur==NULL)
-		return false;
 
-	// First is root Tag
-	UInt32 size = packet.available();
-	bool isValid = size > 6 && *cur++=='<' && *cur++=='r' && *cur++=='o' && *cur++=='o' && *cur++=='t' && *cur++=='>';
-
-	size -= 6;
-	while(size && isspace(*cur)) {
-		cur++;
-		size--;
-	}
-
-	return size && *cur=='<';
+	return cur!=NULL && *cur=='<';
 }
 
-XMLReader::XMLReader(PacketReader& packet) : DataReader(packet),_last(NIL),_dval(0),_tagOpened(false),_objectPrimitive(false),_nextStep(NOTHING) {}
+XMLReader::XMLReader(PacketReader& packet) : DataReader(packet),_last(NIL),_dval(0),_tagOpened(false),_isProperty(false),_nextStep(NOTHING),_nextType(NIL) {
+
+	if (!isValid())
+		return;
+
+	// Ignore first '<__array>' and last '</__array>'
+	if(followingType()==ARRAY) {
+		if(readArray(_pos) && packet.available()>0) {
+
+			// Search for /__array from the end
+			const UInt8* first = packet.current();
+			const UInt8* cur = first+packet.available()-1;
+			while(cur>=first && isspace(*cur)) // ignore spaces at end
+				--cur;
+
+			// Delete </__array> from the end
+			if(cur>=first && (cur-first) > 9 && *cur== '>') {
+				cur -= 9;
+				_tagName.resize(10);
+				memcpy((UInt8*)_tagName.data(), cur, 10);
+				if (_tagName == "</__array>")
+		 			packet.shrink(cur-first);
+			}
+		}
+	}
+	_pos = packet.position();
+	reset();
+}
 
 void XMLReader::reset() {
 	packet.reset(_pos);
-	_text.clear();
+	_tagName.clear();
+	_value.clear();
 	_last=NIL;
 	_dval=0;
 	_tagOpened=false;
-	_objectPrimitive=false;
+	_isProperty=false;
 	_nextStep=NOTHING;
 	_queueTags.clear();
+	_nextType=NIL;
 }
 
 const UInt8* XMLReader::readBytes(UInt32& size) {
 	_last=NIL;
-	size = _text.size();
-	return (const UInt8*)_text.c_str();
+	size = _value.size();
+	return (const UInt8*)_value.c_str();
 }
 
 bool XMLReader::readBoolean() {
 	_last=NIL;
 	if(_last==STRING) {
-		string tmp = _text;
-		String::ToLower(tmp);
-		if (tmp=="true")
+		string tmp = _value;
+		if (String::ToLower(tmp)=="true")
 			return true;
 		else if (tmp=="false")
 			return false;
@@ -83,7 +99,7 @@ Time& XMLReader::readTime(Time& time) {
 
 string& XMLReader::readString(string& value) {
 	_last=NIL;
-	value.assign(_text);
+	value.assign(_value);
 	return value;
 }
 
@@ -101,11 +117,27 @@ bool XMLReader::readArray(UInt32& size) {
 	
 	_last=NIL;
 
-	if (_queueTags.empty())
-		_queueTags.emplace_back("");
-	else {
+	// First array
+	if (_queueTags.empty()) {
+
+		_queueTags.emplace_back("__array");
+		if (_tagName != "__array") {
+			TagXML& tag = _queueTags.back();
+			tag.arrayStarted=false;
+			_nextStep=START_ARRAY_TAG;
+			tag.currentSubTag.assign(_tagName);
+		}
+	} 
+	// Array
+	else if (_tagName == "__array") {
+		_queueTags.emplace_back("__array");
+	}
+	// Tag : start array of subtag
+	else if (!_queueTags.empty()) {
+
 		TagXML& tag = _queueTags.back();
-		tag.arrayStarted=true;
+		if (!tag.currentSubTag.empty())
+			tag.arrayStarted=true;
 	}
 
 	return true;
@@ -146,7 +178,7 @@ XMLReader::Type XMLReader::readItem(string& name) {
 				pos++;
 
 			if (size-(pos-cur)==0) {
-				ERROR("XML malformed, tag", _text," does not terminate")
+				ERROR("XML malformed, tag ", _tagName," does not terminate")
 				return END;
 			}
 			packet.readRaw(pos-cur, name);
@@ -160,12 +192,12 @@ XMLReader::Type XMLReader::readItem(string& name) {
 	// Read next subtag
 	Type type = XMLReader::followingType();
 
-	// Primitive type : assign name before read value
-	if (type == ARRAY)
-		name.assign(_text);
-	// Primitive tag value
-	else if (type != OBJECT && type != END && !_objectPrimitive)
-		name.assign("__value");
+	// New tag or Attribute : assign name before read value
+	if (_isProperty) {
+		_isProperty = false;
+		if (_tagName != "__array")
+			name.assign(_tagName);
+	}
 
 	return type;
 }
@@ -173,16 +205,20 @@ XMLReader::Type XMLReader::readItem(string& name) {
 DataReader::Type XMLReader::followingType() {
 	if(_last!=NIL && _last!=END)
 		return _last;
-	if(_dval)
-		_dval=0;
 
 	const UInt8* cur = current();
 	if(!cur)
 		return END;
 
 	_last=END;
+	// Send recorded type
+	if (_nextType) {
+
+		_last=_nextType;
+		_nextType=NIL;
+	}
 	// Terminate suspended action
-	if (_nextStep) {
+	else if (_nextStep) {
 
 		switch(_nextStep) {
 		case POP_TAG:
@@ -192,9 +228,8 @@ DataReader::Type XMLReader::followingType() {
 		case ADD_TAG:
 			_last = addTag(cur);
 			break;
-		case START_ARRAY:
-			_nextStep=ADD_TAG;
-			_last=ARRAY;
+		case START_ARRAY_TAG:
+			_last = addTag(cur, true);
 			break;
 		}
 	}
@@ -211,87 +246,90 @@ DataReader::Type XMLReader::followingType() {
 		// End Header/Comment
 		const UInt8* first = cur;
 		if (*first == '?' || *first == '!')
-			return parseComment(first, cur);
+			return parseComment(first);
 
 		// Read Tag name
 		do {
 			packet.next();
 		} while((cur=packet.current()) && *cur!='>' && (cur==first || *cur!='/') && !isspace(*cur));
-		_text.resize(cur-first);
-		memcpy((UInt8*)_text.data(), first, cur-first);
+		_tagName.resize(cur-first);
+		memcpy((UInt8*)_tagName.data(), first, cur-first);
 
 		// Got to next char
 		cur=current();
 
-		if (cur==NULL) {
-			ERROR("XML malformed, tag ", _text, " does not terminate")
-			return END;
-		}
-
-		// Special case : Primitive with ignored tag or root tag
-		if (_text == "__noname" || _text == "/__noname" || _text == "root" || _text == "/root") {
+		if (cur==NULL)
+			ERROR("XML malformed, tag ", _tagName, " does not terminate")
+		// Special case : Primitive with ignored tag
+		else if (_tagName == "__noname" || _tagName == "/__noname") {
 			packet.next();
-			return XMLReader::followingType();
+
+			 // Try to end last subtag array, otherwise return following
+			if (!endSubtagArray())
+				_last = XMLReader::followingType();
+		}
+		// Start of an array
+		else if (_tagName == "__array") {
+			packet.next();
+			_last=ARRAY; // readed in next readItem
+			// Try to end last subtag array, next type will be ARRAY
+			if (endSubtagArray())
+				return END;
 		}
 		// End tag
 		else if (*first == '/') {
-			_text.erase(_text.begin()); // Erase '/'
+			_tagName.erase(_tagName.begin()); // Erase '/'
 			packet.next();
 
 			if (_queueTags.empty()) {
-				ERROR("End of tag ", _text, " without start")
+				ERROR("End of tag ", _tagName, " without start")
 				return END;
 			}
 
-			// End of a parent tag
 			TagXML& tag = _queueTags.back();
-			if (tag.tagName==_text && !tag.currentSubTag.empty()) {
+			// End of child tag
+			if (tag.tagName==_tagName && !tag.currentSubTag.empty()) {
 				tag.currentSubTag.assign("");
 				_nextStep=POP_TAG;
-				return END; // First : End of array
-			}
-			return removeTag();
+			} 
+			// End of parent tag
+			else 
+				_last = removeTag();
 		}
 		// New subtag
-		else {
-
-			// First element is an array
-			if (_queueTags.empty())  {
-				_nextStep=START_ARRAY;
-				return(_last=ARRAY);
-			}
+		else if (!_queueTags.empty()) {
 
 			TagXML& tag = _queueTags.back();
-			// First subTag
-			if (tag.currentSubTag.empty())
-				tag.currentSubTag.assign(_text);
-			else if (tag.currentSubTag != _text) {
-				tag.currentSubTag.assign(_text);
+			// End of last Array
+			if (tag.arrayStarted && tag.currentSubTag != _tagName) {
+				tag.currentSubTag.assign(_tagName);
 				tag.arrayStarted=false;
-				_nextStep=START_ARRAY;
-				return END; // End of last Array
-			}
+				_nextStep=START_ARRAY_TAG;
+			} else {
+				if (tag.currentSubTag.empty())
+					tag.currentSubTag.assign(_tagName);
 
-			// First of all : create Array of subtags
-			if(!tag.arrayStarted) {
-				_nextStep=ADD_TAG;
-				return (_last=ARRAY);
+				_last = addTag(cur, !tag.arrayStarted);
 			}
 		}
-
 		// New tag
-		_last = addTag(cur);
+		else
+			_last = addTag(cur, true);
 	}
 	// Value
-	else if(isalnum(*cur) || *cur=='-' || *cur=='\"')
-		_last = parsePrimitive(cur);
+	else if(isalnum(*cur) || *cur=='-' || *cur=='\"') {
+		// Try to end last subtag array, otherwise return primitive
+		if (!endSubtagArray())
+			_last = parsePrimitive(cur);
+	}
 
 	return _last;
 }
 
-XMLReader::Type XMLReader::parseComment(const UInt8* first, const UInt8* cur) {
+XMLReader::Type XMLReader::parseComment(const UInt8* first) {
 
 	bool finished = false;
+	const UInt8* cur = NULL;
 	do {
 		packet.next(1);
 		cur=packet.current();
@@ -332,17 +370,17 @@ XMLReader::Type XMLReader::parsePrimitive(const UInt8* cur) {
 		return END;
 	}
 
-	_text.resize(cur-first);
-	memcpy((UInt8*)_text.data(), first, cur-first);
-	String::Trim(_text);
+	_value.resize(cur-first);
+	memcpy((UInt8*)_value.data(), first, cur-first);
+	String::Trim(_value);
 
 	Type type = STRING;
 	Exception ex;
-	_dval = String::ToNumber<double>(ex, _text);
+	_dval = String::ToNumber<double>(ex, _value);
 	if (!ex) 
 		type = NUMBER;
 	// TODO do not return time if format is not a date ("the end" return a time)
-	else if (_text.size() > 18 && _text.size() < 34 && _date.fromString(_text))
+	else if (_value.size() > 18 && _value.size() < 34 && _date.fromString(_value))
 		type=TIME;
 
 	if(chained)
@@ -351,31 +389,91 @@ XMLReader::Type XMLReader::parsePrimitive(const UInt8* cur) {
 	return type;
 }
 
-XMLReader::Type XMLReader::addTag(const UInt8* cur) {
-	_nextStep=NOTHING;
+XMLReader::Type XMLReader::addTag(const UInt8* cur, bool evaluateArray) {		
 
 	// Object with no attributes and no sub tag
+	Type res = ARRAY;
 	if (*cur=='>' && (isalnum(*(cur+1)) || *(cur+1)=='-' || *(cur+1)=='\"')) {
+
+		_nextStep=NOTHING;
 		packet.next();
-		_objectPrimitive=true; // to ignore close tag
-		return XMLReader::followingType();
+		res = parsePrimitive(packet.current());
+
+		cur=current();
+		// Is tag well closed?
+		if (packet.available() < _tagName.size() + 3) {
+			ERROR("Tag '", _tagName, "' not well finished")
+			return END;
+		}
+		string tmp;
+		packet.readRaw(_tagName.size() + 3, tmp);
+		string tmpTag;
+		if (String::ICompare(String::Format(tmpTag, "</", _tagName, ">"), tmp) != 0) {
+			ERROR("Tag '", _tagName, "' not well finished")
+			return END;
+		}
+		
+		// If array need to be created : record type and create array
+		if (evaluateArray) {
+			_isProperty=true;
+			if (nextTagIsSame(_tagName)) {
+				_nextType = res;
+				res = ARRAY;
+			} else
+				endSubtagArray(); // erase subtag name
+		}
 	} else {
-		_queueTags.emplace_back(_text);
-		_tagOpened=true;
-		return OBJECT;
+
+		if (evaluateArray) { // first create array
+			_isProperty=true;
+			_nextStep = ADD_TAG;
+		} else { // then create tag
+			_nextStep=NOTHING;
+			_queueTags.emplace_back(_tagName);
+			_tagOpened=true;
+		}
 	}
+
+	return res;
+}
+
+bool XMLReader::nextTagIsSame(const string& name) {
+
+	const UInt8* cur=current();
+	if (packet.available() > name.size() + 3) {
+		string tmp;
+		tmp.resize(name.size()+3);
+		memcpy((UInt8*)tmp.data(), cur, name.size() + 3);
+
+		// Next tag has the same name : return ARRAY
+		string tagOpen;
+		if (String::ICompare(String::Format(tagOpen, '<', name, '>'), tmp, name.size() + 2) == 0)
+			return true;
+
+		if (String::ICompare(String::Format(tagOpen, '<', name, "/>"), tmp) == 0)
+			return true;
+	}
+
+	return false;
 }
 
 XMLReader::Type XMLReader::removeTag() {
-
-	// For primitive we must ignore end tag
-	if (_objectPrimitive) {
-		_objectPrimitive=false;
-		return XMLReader::followingType();
-	}
 	
 	_queueTags.pop_back();
 	return END;
+}
+
+bool XMLReader::endSubtagArray() {
+
+	if (!_queueTags.empty()) {
+		TagXML& tag = _queueTags.back();
+		if (!tag.currentSubTag.empty()) {
+			tag.currentSubTag.assign("");
+			return true;
+		}
+	}
+
+	return false;
 }
 
 const UInt8* XMLReader::current() {

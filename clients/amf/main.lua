@@ -7,7 +7,6 @@ function onConnection(client,...)
     INFO("New message from amf : ")
     INFO("toJSON : ", mona:toJSON(data))
   
-    --client.writer:writeInvocation("onReception", data)
     return data
 	end
 end

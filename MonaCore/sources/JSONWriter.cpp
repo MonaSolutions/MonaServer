@@ -111,7 +111,7 @@ void JSONWriter::writeBytes(const UInt8* data,UInt32 size) {
 
 void JSONWriter::startData(bool isContainer) {
 
-	// Write first ']'
+	// Write first '['
 	if(!_started) {
 		_started=true;
 		packet.write8('[');

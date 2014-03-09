@@ -116,6 +116,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="sources\LUADataTable.h" />
+    <ClInclude Include="sources\LUAFilePath.h" />
     <ClInclude Include="sources\MonaServer.h" />
     <ClInclude Include="sources\Script.h" />
     <ClInclude Include="sources\Service.h" />
@@ -138,6 +139,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="sources\LUADataTable.cpp" />
+    <ClCompile Include="sources\LUAFilePath.cpp" />
     <ClCompile Include="sources\main.cpp" />
     <ClCompile Include="sources\MonaServer.cpp" />
     <ClCompile Include="sources\Script.cpp" />

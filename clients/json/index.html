@@ -4,7 +4,7 @@
     <script type="text/javascript">
       var socket;
       function createWebSocket() {
-        host = "ws://127.0.0.1/clients/json/";
+        host = "ws://" + window.location.host + "/" + window.location.pathname;
         
         if(window.MozWebSocket)
           window.WebSocket=window.MozWebSocket;
@@ -17,7 +17,6 @@
         socket.onclose = function() { window.document.getElementById("error").value = 'socket closed'; }
         socket.onerror = function() { window.document.getElementById("error").value = 'An error occurs'; }
         socket.onmessage = function(msg){ window.document.getElementById("response").value = msg.data; }
-        //socket.onreception = function(msg){ window.document.getElementById("response").value = msg.data; }
       }
        
       function sendMessage() {

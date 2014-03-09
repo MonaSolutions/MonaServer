@@ -27,7 +27,7 @@ namespace Mona {
 
 SOAPWriter::SOAPWriter(const PoolBuffers& buffers) : XMLWriter(buffers) {}
 
-void SOAPWriter::beginDocument() {
+void SOAPWriter::beginDocument(bool doubleArray) {
 
 	packet.writeRaw("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
 	packet.writeRaw("<soapenv:Envelope xmlns:SOAP-ENV=\"http://schemas.xmlsoap.org/soap/envelope/\" ");

@@ -24,10 +24,11 @@ using namespace std;
 
 namespace Mona {
 
-SOAPReader::SOAPReader(PacketReader& packet) : XMLReader(packet), _body(false) {}
+SOAPReader::SOAPReader(PacketReader& packet) : XMLReader(packet), _body(false) {
+	packet.reset();
+}
 
 void SOAPReader::reset() {
-	_body=false;
 	XMLReader::reset();
 }
 
@@ -42,7 +43,6 @@ DataReader::Type SOAPReader::followingType() {
 	
 	if (!_body) {
 		string name, tmp;
-		bool external;
 		UInt32 size = 0;
 		Type type = NIL;
 
@@ -64,19 +64,23 @@ DataReader::Type SOAPReader::followingType() {
 					break;
 				}
 
-				// We expect an object
-				if (readItem(tmp)!=OBJECT)
+				// We expect the Tag's array
+				if (readItem(tmp)!=ARRAY)
 					break;
-				readObject(tmp, external);
+				readArray(size);
 			}
+		}
+		if (_body) {
+			_queueTags.clear();
+			packet.next();
+			_pos=packet.position();
 		}
 	}
 
-	if (_body) {
-		_queueTags.clear();
+	if (_body)
 		return XMLReader::followingType();
-	} else
-		return END;
+	
+	return END;
 }
 
 } // namespace Mona

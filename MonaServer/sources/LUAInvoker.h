@@ -42,7 +42,7 @@ public:
 private:
 	static int  Split(lua_State *pState);
 	static int	Md5(lua_State *pState);
-	static int	Dir(lua_State *pState);
+	static int	ListFiles(lua_State *pState);
 	static int	Sha256(lua_State *pState);
 
 	/// \brief Generic function for serialization

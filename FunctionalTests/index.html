@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Functional Client Test</title>
+  <script type="text/javascript" src="./apitests.js"/></script>
+</head>
+<body onload="initList();">
+  <form name="FunctionalTests" action="" method="post">
+    <div style="position:absolute; top:5px; left:5px; ">
+      <select id="listTests" multiple="true" style="height:200px; width:200px;" autofocus="true">
+      </select>
+      <input id="btRun" type="button" value="Run!" onclick="run();" />
+    </div>
+    <div id="console" style="border-width:1; border-style:solid; position:absolute; top:210px; bottom:5px; left:5px; right:5px; overflow:auto; background-color:black; font-weight:bold;">
+    </div>
+  </form>
+</body>
+</html>
