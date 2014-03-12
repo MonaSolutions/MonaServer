@@ -42,11 +42,11 @@ public:
 	void set(const struct sockaddr& addr);
 	
 	SocketAddress(const SocketAddress& other);
-	void set(const SocketAddress& other);
+	SocketAddress& set(const SocketAddress& other);
 
 	/// Creates a SocketAddress from an IP address and a port number.
 	SocketAddress(const IPAddress& host, UInt16 port);
-	void set(const IPAddress& host, UInt16 port);
+	SocketAddress& set(const IPAddress& host, UInt16 port);
 	
 	/// set SocketAddress from an IP address and a port number.
 	bool set(Exception& ex, const std::string& host, UInt16 port) { return setIntern(ex, host, port,false); }

@@ -23,7 +23,6 @@ This file is a part of Mona.
 #include "Mona/WorkThread.h"
 #include "Mona/PoolThread.h"
 #include "Mona/SocketAddress.h"
-#include "Mona/Expirable.h"
 #include "Mona/PoolBuffer.h"
 #include <memory>
 
@@ -31,9 +30,9 @@ This file is a part of Mona.
 namespace Mona {
 
 class Socket;
-
 class SocketSender : public WorkThread, virtual Object {
 	friend class Socket;
+	friend class SocketHandler;
 public:
 	bool	available() { return _ppBuffer ? !_ppBuffer->empty() : (data() && _position < size()); }
 
@@ -60,7 +59,7 @@ private:
 
 	virtual	UInt32					send(Exception& ex,Socket& socket,const UInt8* data, UInt32 size) = 0;
 
-	Expirable<Socket>			_expirableSocket;
+	std::shared_ptr<Socket>		_pSocket;
 	std::weak_ptr<SocketSender>	_pThis;
 
 	UInt32						_position;

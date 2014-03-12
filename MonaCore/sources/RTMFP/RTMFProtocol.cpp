@@ -35,14 +35,14 @@ bool RTMFProtocol::load(Exception& ex, const RTMFPParams& params) {
 	return true;
 }
 
-void RTMFProtocol::onPacket(const UInt8* data, UInt32 size, const SocketAddress& address) {
+void RTMFProtocol::onPacket(PoolBuffer& pBuffer,const SocketAddress& address) {
 
-	if (size<RTMFP_MIN_PACKET_SIZE) {
+	if (pBuffer->size()<RTMFP_MIN_PACKET_SIZE) {
 		ERROR("Invalid RTMFP packet");
 		return;
 	}
 
-	PacketReader packet(data,size);
+	PacketReader packet(pBuffer->data(),pBuffer->size());
 	UInt32 id = RTMFP::Unpack(packet);
 
 	// TRACE("RTMFP Session ",id);
@@ -59,7 +59,7 @@ void RTMFProtocol::onPacket(const UInt8* data, UInt32 size, const SocketAddress&
 		pSession->pRTMFPCookieComputing.reset();
 	}
 
-	pSession->decode(rawBuffer(), address);
+	pSession->decode(pBuffer, address);
 }
 
 

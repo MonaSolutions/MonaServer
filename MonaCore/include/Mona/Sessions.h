@@ -102,7 +102,6 @@ private:
 	std::map<UInt32,Session*>				_sessions;
 	Entities<Session>::Map					_sessionsByPeerId;
 	std::map<SocketAddress,Session*>		_sessionsByAddress;
-	UInt32									_oldCount;
 };
 
 

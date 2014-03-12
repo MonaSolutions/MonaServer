@@ -43,10 +43,10 @@ public:
 	Int64 elapsed() const { return Now() - time(); }
 
 	/// \brief Update the time object with current time
-	virtual void update() { _time = Now(); }
+	virtual Time& update() { _time = Now(); return *this; }
 
 	/// \brief Update the time object with time parameter (in msec)
-	virtual void update(Int64 time) { _time = time; }
+	virtual Time& update(Int64 time) { _time = time; return *this; }
 	virtual Time& operator=(Int64 time) { _time = time; return *this; }
 
 	/// \brief add µsec to the Mona time instance

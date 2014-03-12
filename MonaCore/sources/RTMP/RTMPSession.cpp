@@ -29,7 +29,7 @@ using namespace std;
 namespace Mona {
 
 
-RTMPSession::RTMPSession(const SocketAddress& address, Protocol& protocol, Invoker& invoker) : _unackBytes(0),_decrypted(0), _chunkSize(RTMP::DEFAULT_CHUNKSIZE), _winAckSize(RTMP::DEFAULT_WIN_ACKSIZE), _handshaking(0), _pWriter(NULL), TCPSession(address, protocol, invoker) {
+RTMPSession::RTMPSession(const SocketAddress& address,const SocketManager& sockets, Protocol& protocol, Invoker& invoker) : _unackBytes(0),_decrypted(0), _chunkSize(RTMP::DEFAULT_CHUNKSIZE), _winAckSize(RTMP::DEFAULT_WIN_ACKSIZE), _handshaking(0), _pWriter(NULL), TCPSession(address,sockets, protocol, invoker) {
 	dumpJustInDebug = true;
 }
 
@@ -57,7 +57,7 @@ void RTMPSession::readKeys() {
 	_pHandshaker.reset();
 }
 
-bool RTMPSession::buildPacket(PacketReader& packet) {
+bool RTMPSession::buildPacket(PoolBuffer& pBuffer,PacketReader& packet) {
 
 	if (pDecryptKey() && packet.available()>_decrypted) {
 		RC4(pDecryptKey().get(),packet.available()-_decrypted,packet.current()+_decrypted,(UInt8*)packet.current()+_decrypted);
@@ -78,7 +78,7 @@ bool RTMPSession::buildPacket(PacketReader& packet) {
 	}
 
 	if (!_pController)
-		_pController.reset(new RTMPWriter(2, *this, address(),_pSender,pEncryptKey()));
+		_pController.reset(new RTMPWriter(2, *this,_pSender,pEncryptKey()));
 
 	dumpJustInDebug = false;
 
@@ -96,7 +96,7 @@ bool RTMPSession::buildPacket(PacketReader& packet) {
 	if (idWriter != 2) {
 		auto it = _writers.lower_bound(idWriter);
 		if (it == _writers.end() || it->first != idWriter)
-			it = _writers.emplace_hint(it, piecewise_construct, forward_as_tuple(idWriter), forward_as_tuple(idWriter, (StreamSocket&)*this, peerAddress(),_pSender, pEncryptKey()));
+			it = _writers.emplace_hint(it, piecewise_construct, forward_as_tuple(idWriter), forward_as_tuple(idWriter,*this,_pSender, pEncryptKey()));
 		pWriter = &it->second;
 	}
 	if (!pWriter)
@@ -160,6 +160,18 @@ bool RTMPSession::buildPacket(PacketReader& packet) {
 	}
 
 	_pWriter = pWriter;
+
+	if (_handshaking == 0) {
+		if (_pHandshaker) // in processing, repeated packet
+			return true;
+		Exception ex;
+		_pHandshaker.reset(new RTMPHandshaker(peerAddress(), pBuffer));
+		send<RTMPHandshaker>(ex, _pHandshaker,NULL);
+		if (ex) {
+			ERROR("RTMP Handshake, ", ex.error())
+			kill();
+		}
+	}
 	return true;
 }
 
@@ -167,23 +179,11 @@ bool RTMPSession::buildPacket(PacketReader& packet) {
 void RTMPSession::packetHandler(PacketReader& packet) {
 	_unackBytes += packet.position() + packet.available();
 
-	if(_handshaking==0) {
-		if (_pHandshaker) // in processing, repeated packet
-			return;
-		_pHandshaker.reset(new RTMPHandshaker(peerAddress(), rawBuffer()));
-		Exception ex;
-		++_handshaking;
-		send<RTMPHandshaker>(ex, _pHandshaker,NULL);
-		if (ex) {
-			ERROR("RTMP Handshake, ", ex.error())
-			kill();
-			return;
-		}
-		return;
-	} else if(_handshaking==1) {
+	if (_handshaking < 2) {
 		++_handshaking;
 		return;
-	} else if (_handshaking == 2) {
+	}
+	if (_handshaking == 2) {
 		++_handshaking;
 		// client settings
 		_pController->writeProtocolSettings();

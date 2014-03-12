@@ -22,6 +22,7 @@ This file is a part of Mona.
 #include "Mona/Mona.h"
 #include "Mona/Peer.h"
 #include "Mona/Invoker.h"
+#include "Mona/Expirable.h"
 
 namespace Mona {
 

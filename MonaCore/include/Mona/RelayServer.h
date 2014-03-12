@@ -42,7 +42,7 @@ public:
 	Time			timeout;
 private:
 	// executed in a parallel thread!
-	void	onReception(const UInt8* data, UInt32 size, const SocketAddress& address);
+	void	onReception(PoolBuffer& pBuffer, const SocketAddress& address);
 	// executed in a parallel thread!
 	void	onError(const std::string& error) { DEBUG("Relay socket ", port, ", error");} 
 	

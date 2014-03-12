@@ -26,7 +26,7 @@ using namespace std;
 namespace Mona {
 
 
-Sessions::Sessions():_nextId(1),_oldCount(0) {
+Sessions::Sessions():_nextId(1) {
 }
 
 Sessions::~Sessions() {
@@ -71,10 +71,6 @@ void Sessions::manage() {
 			continue;
 		}
 		++it;
-	}
-	if(_sessions.size()!=_oldCount) {
-		INFO(count()," clients");
-		_oldCount=_sessions.size();
 	}
 }
 

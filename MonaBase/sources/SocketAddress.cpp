@@ -145,24 +145,28 @@ SocketAddress::SocketAddress(const SocketAddress& other) : _pAddress(other._pAdd
 }
 
 void SocketAddress::reset() {
+	if (_isNull)
+		return;
 	_pAddress = _pAddress->family() == IPAddress::IPv6 ? _Addressv6Wildcard._pAddress : _Addressv4Wildcard._pAddress;
 	_isNull = true;
 	_toString.clear();
 }
 
-void SocketAddress::set(const SocketAddress& other) {
+SocketAddress& SocketAddress::set(const SocketAddress& other) {
 	_pAddress = other._pAddress;
 	_isNull = !other;
 	_toString.clear();
+	return *this;
 }
 
-void SocketAddress::set(const IPAddress& host, UInt16 port) {
+SocketAddress& SocketAddress::set(const IPAddress& host, UInt16 port) {
 	if (host.family() == IPAddress::IPv6)
 		_pAddress.reset(new IPv6SocketAddress(host, htons(port), host.scope()));
 	else
 		_pAddress.reset(new IPv4SocketAddress(host, htons(port)));
 	_isNull = host.isWildcard() && port==0;
 	_toString.clear();
+	return *this;
 }
 
 void SocketAddress::set(const struct sockaddr& addr) {

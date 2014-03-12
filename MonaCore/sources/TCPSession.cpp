@@ -25,7 +25,7 @@ using namespace std;
 
 namespace Mona {
 
-TCPSession::TCPSession(const SocketAddress& peerAddress, Protocol& protocol, Invoker& invoker) : TCPClient(peerAddress,invoker.sockets), Session(protocol, invoker),_consumed(false),_decoding(false) {
+TCPSession::TCPSession(const SocketAddress& peerAddress,const SocketManager& sockets, Protocol& protocol, Invoker& invoker) : TCPClient(peerAddress,sockets), Session(protocol, invoker),_consumed(false),_decoding(false) {
 	((SocketAddress&)peer.address).set(peerAddress);
 }
 
@@ -33,12 +33,13 @@ void TCPSession::onError(const string& error) {
 	WARN("Protocol ", protocol().name, ", ", error);
 }
 
-UInt32 TCPSession::onReception(const UInt8* data, UInt32 size) {
+UInt32 TCPSession::onReception(PoolBuffer& pBuffer) {
 	if (died)
 		return 0;
-	PacketReader packet(data, size);
+	UInt32 size(pBuffer->size());
+	PacketReader packet(pBuffer->data(), size);
 	_decoding = false;
-	if (!buildPacket(packet)) {
+	if (!buildPacket(pBuffer,packet)) {
 		if (!_decoding && _consumed) {
 			flush(); // flush
 			_consumed = false;

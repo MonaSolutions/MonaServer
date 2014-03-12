@@ -91,8 +91,9 @@ public:
 	// Returns true iff the address is a wildcard (all zero) address
 	bool isWildcard() const;
 		
-	// Returns true iff the address is a broadcast address (Only IPv4 addresses can be broadcast addresse)
+	// Returns true if the address is a broadcast address (Only IPv4 addresses can be broadcast addresse)
 	bool isBroadcast() const;
+	bool isAnyBroadcast() const;
 	
 	// Returns true iff the address is a loopback address
 	// 127.0.0.1 for IPv4, ::1 for IPv6

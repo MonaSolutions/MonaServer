@@ -20,41 +20,43 @@ This file is a part of Mona.
 #pragma once
 
 
-#include "Mona/SocketManager.h"
-#include "Mona/ServerSocket.h"
+#include "Mona/Mona.h"
+#include "Mona/SocketHandler.h"
 
 
 namespace Mona {
 
-class TCPServer : protected ServerSocket, virtual Object {
+class TCPServer : public SocketHandler, virtual Object {
 public:
 	TCPServer(const SocketManager& manager);
 	virtual ~TCPServer();
 
 	bool					start(Exception& ex, const SocketAddress& address);
 	bool					running() { return _running;  }
-	const SocketAddress&	address() { return _address; }
+	const SocketAddress&	address() { return SocketHandler::address(); }
 	void					stop();
 
+	 
 	template <typename ClientType,typename ...Args>
 	ClientType* acceptClient(Exception& ex, Args&&... args) {
 		ASSERT_RETURN(_hasToAccept == true, NULL)
-		ClientType* pClient = acceptConnection<ClientType>(ex, args ...);
+		ClientType* pClient = socket().acceptConnection<ClientType>(ex, args ...);
+		// no mutex protection on _hasToAccept because acceptClient has to be called from code of onConnectionRequest event
 		_hasToAccept = false;
 		return pClient;
 	}
 
-	Socket&			socket() { return *this; }
-
 private:
 
 	virtual void	onConnectionRequest(Exception& ex) = 0;
-
+	// Can be called from one other thread
 	void			onReadable(Exception& ex);
 
-	SocketAddress	_address;
-	bool			_hasToAccept;
-	volatile bool	_running;
+
+	bool				_hasToAccept; 
+	std::mutex			_mutex;
+	volatile bool		_running;
+	
 };
 
 

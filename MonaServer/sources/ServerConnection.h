@@ -46,7 +46,7 @@ public:
 };
 
 
-class ServerConnection : private Mona::TCPClient, public Mona::MapParameters  {
+class ServerConnection : public Mona::TCPClient, public Mona::MapParameters  {
 public:
 	// Target version
 	ServerConnection(const Mona::SocketManager& manager, ServerHandler& handler, ServersHandler& serversHandler,const Mona::SocketAddress& targetAddress);
@@ -58,8 +58,6 @@ public:
 	const bool						isTarget;
 	Mona::UInt16					port(const std::string& protocol);
 
-	const Mona::PoolBuffers&		poolBuffers() { return socket().poolBuffers(); }
-
 	void			connect();
 	void			disconnect() { TCPClient::disconnect(); }
 
@@ -68,8 +66,8 @@ public:
 private:
 	void			sendPublicAddress();
 
-	void			onError(const std::string& error);
-	Mona::UInt32	onReception(const Mona::UInt8* data,Mona::UInt32 size);
+	void			onError(const std::string& error) {_error = error;}
+	Mona::UInt32	onReception(Mona::PoolBuffer& pBuffer);
 	void			onDisconnection();
 
 	ServerHandler&						_handler;

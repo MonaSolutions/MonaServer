@@ -34,14 +34,14 @@ class HTTPPacketReader;
 class HTTPSession :  public WSSession {
 public:
 
-	HTTPSession(const SocketAddress& address, Protocol& protocol, Invoker& invoker);
+	HTTPSession(const SocketAddress& address,const SocketManager& sockets, Protocol& protocol, Invoker& invoker);
 	virtual ~HTTPSession();
 	
 private:
 	void			kill();
 	void			manage();
 
-	bool								buildPacket(PacketReader& packet);
+	bool								buildPacket(PoolBuffer& pBuffer,PacketReader& packet);
 	const std::shared_ptr<HTTPPacket>&	packet();
 	void								packetHandler(PacketReader& packet);
 

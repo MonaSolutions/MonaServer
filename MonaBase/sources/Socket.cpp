@@ -19,57 +19,36 @@ This file is a part of Mona.
 
 
 #include "Mona/Socket.h"
-#include "Mona/SocketManager.h"
-#include "Mona/SocketSender.h"
+#include "Mona/SocketHandler.h"
 
 using namespace std;
 
 namespace Mona {
 
 
-Socket::Socket(const SocketManager& manager, int type) : Expirable<Socket>(this), _type(type),_initialized(false), _managed(false), manager(manager), _sockfd(NET_INVALID_SOCKET), _writing(false) {}
+Socket::Socket(const SocketManager& manager,SocketEvents& events, SocketType type) : _pEvents(&events),type(type),_connecting(false), _managed(false), manager(manager), _sockfd(NET_INVALID_SOCKET), _writing(false) {}
+
+Socket::Socket(const SocketManager& manager) : _pEvents(NULL),type(DATAGRAM),_connecting(false), _managed(false), manager(manager), _sockfd(NET_INVALID_SOCKET), _writing(false) {}
+
 
 Socket::~Socket() {
-	close();
-	if (_initialized && _sockfd != NET_INVALID_SOCKET)
+	release();
+	if (_sockfd != NET_INVALID_SOCKET)
 		NET_CLOSESOCKET(_sockfd);
-	expire(); // prevent deletion for SocketSender
-}
-
-PoolThreads& Socket::poolThreads() {
-	return manager.poolThreads;
-}
-
-const PoolBuffers& Socket::poolBuffers() {
-	return manager.poolBuffers;
-}
-
-void Socket::close() {
-	{
-		lock_guard<mutex>	lock(_mutexManaged);
-		if (!_managed)
-			return;
-		_managed = false;
-	}
-	manager.remove(*this); // keep not locked this call because "close" can create a deadlock on a SocketManager parallel
-	lock_guard<mutex>	lockSenders(_mutexAsync);
-	_senders.clear();
 }
 
 bool Socket::init(Exception& ex, IPAddress::Family family) {
+
 	lock_guard<mutex>	lock(_mutexInit);
-	if (_initialized)
+	if (_sockfd != NET_INVALID_SOCKET)
 		return true;
-	ASSERT_RETURN(_sockfd == NET_INVALID_SOCKET,false)
 	if (!Net::InitializeNetwork(ex))
 		return false;
-	_sockfd = ::socket(family == IPAddress::IPv6 ? AF_INET6 : AF_INET, _type, 0);
+	_sockfd = ::socket(family == IPAddress::IPv6 ? AF_INET6 : AF_INET, type, 0);
 	if (_sockfd == NET_INVALID_SOCKET) {
 		Net::SetError(ex);
 		return false;
 	}
-
-	_initialized = true;
 
 #if defined(__MACH__) && defined(__APPLE__) || defined(__FreeBSD__)
 	// SIGPIPE sends a signal that if unhandled (which is the default)
@@ -83,37 +62,90 @@ bool Socket::init(Exception& ex, IPAddress::Family family) {
 	return true;
 }
 
+void Socket::release() {
+	lock_guard<recursive_mutex> lock(_mutexManaged);
+	if (!_pEvents)
+		return;
+	_pEvents = NULL;
+	_managed = false;
+	manager.remove(*this);
+	lock_guard<mutex>	lockSenders(_mutexAsync);
+	_senders.clear();
+	_connecting = false;
+}
+
+
 bool Socket::managed(Exception& ex) {
-	lock_guard<mutex>	lock(_mutexManaged);
+	lock_guard<recursive_mutex>	lock(_mutexManaged);
 	if (_managed)
 		return true;
+	ASSERT_RETURN(_pEvents!=NULL,false)
 	ioctl(ex,FIONBIO, 1); // set non blocking mode (usefull for posix)
 	if (ex)
 		return false;
 	return _managed = manager.add(ex, *this);
 }
 
+// Can be called by a separated thread!
+void Socket::onError(const std::string& error) {
+	shared_ptr<Socket> pSocket;
+	{
+		lock_guard<recursive_mutex> lock(_mutexManaged);
+		if (!_pEvents)
+			return;
+		Exception exSocket;
+		_pEvents->socket(pSocket);
+		_pEvents->onError(error);
+		if (pSocket.unique())
+			((string&)error).assign("__deleted");
+	}
+}
 
-bool Socket::connect(Exception& ex, const SocketAddress& address) {
-	if (!_initialized && !init(ex, address.family()))
+void Socket::onReadable(Exception& ex) {
+	shared_ptr<Socket> pSocket;
+	{
+		lock_guard<recursive_mutex> lock(_mutexManaged);
+		if (!_pEvents)
+			return;
+		Exception exSocket;
+		_pEvents->socket(pSocket);
+		_pEvents->onReadable(exSocket);
+		if (exSocket && !pSocket.unique())
+			_pEvents->onError(exSocket.error());
+		if (pSocket.unique())
+			ex.set(Exception::SOCKET, "__deleted");
+	}
+}
+
+
+bool Socket::connect(Exception& ex, const SocketAddress& address,bool allowBroadcast) {
+	if (_sockfd==NET_INVALID_SOCKET && !init(ex, address.family()))
 		return false;
 
 	ioctl(ex,FIONBIO, 1); // set non blocking mode before bind
 
+	if (allowBroadcast && address.host().isAnyBroadcast())
+		setOption(ex, SOL_SOCKET, SO_BROADCAST,1); // ex is warning here
+	
 	int rc = ::connect(_sockfd, address.addr(), address.size());
+
 	if (rc) {
 		int err = Net::LastError();
 		if (err != NET_EINPROGRESS && err != NET_EWOULDBLOCK) {
 			Net::SetError(ex, err, address.toString());
 			return false;
-		}	
+		} else {
+			lock_guard<mutex> lock(_mutexAsync);
+			_connecting = true;
+		}
 	}
-	return managed(ex);
+	managed(ex); // warning
+	return true;
 }
 
 
 bool Socket::bind(Exception& ex, const SocketAddress& address, bool reuseAddress) {
-	if (!_initialized && !init(ex, address.family()))
+	if (_sockfd==NET_INVALID_SOCKET && !init(ex, address.family()))
 		return false;
 
 	ioctl(ex,FIONBIO, 1); // set non blocking mode before bind
@@ -129,11 +161,12 @@ bool Socket::bind(Exception& ex, const SocketAddress& address, bool reuseAddress
 		Net::SetError(ex, Net::LastError(), address.toString());
 		return false;
 	}
-	return managed(ex);
+	managed(ex); // warning
+	return true;
 }
 
 bool Socket::bindWithListen(Exception& ex, const SocketAddress& address, bool reuseAddress,int backlog) {
-	if (!_initialized && !init(ex, address.family()))
+	if (_sockfd==NET_INVALID_SOCKET && !init(ex, address.family()))
 		return false;
 	
 	
@@ -156,12 +189,13 @@ bool Socket::bindWithListen(Exception& ex, const SocketAddress& address, bool re
 		return false;
 	}
 
-	return managed(ex);
+	managed(ex); // warning
+	return true;
 }
 
 
 void Socket::rejectConnection() {
-	if (!_initialized)
+	if (_sockfd==NET_INVALID_SOCKET)
 		return;
 	NET_SOCKET sockfd;
 	do {
@@ -172,16 +206,17 @@ void Socket::rejectConnection() {
 }
 
 void Socket::shutdown(Exception& ex,ShutdownType type) {
-	ASSERT(_initialized == true)
+	ASSERT(_sockfd!=NET_INVALID_SOCKET)
 	if (::shutdown(_sockfd, type) != 0)
 		Net::SetError(ex);
 }
 
 
 int Socket::sendBytes(Exception& ex, const void* buffer, int length, int flags) {
+	ASSERT_RETURN(_sockfd != NET_INVALID_SOCKET, 0);
+
 	int rc;
 	do {
-		ASSERT_RETURN(_initialized == true, 0)
 		rc = ::send(_sockfd, reinterpret_cast<const char*>(buffer), length, flags);
 	} while (rc < 0 && Net::LastError() == NET_EINTR);
 	if (rc < 0) {
@@ -195,9 +230,9 @@ int Socket::sendBytes(Exception& ex, const void* buffer, int length, int flags) 
 
 
 int Socket::receiveBytes(Exception& ex, void* buffer, int length, int flags) {
+	ASSERT_RETURN(_sockfd != NET_INVALID_SOCKET, 0);
 	int rc;
 	do {
-		ASSERT_RETURN(_initialized == true, 0)
 		rc = ::recv(_sockfd, reinterpret_cast<char*>(buffer), length, flags);
 	} while (rc < 0 && Net::LastError() == NET_EINTR);
 	if (rc < 0) {
@@ -210,18 +245,19 @@ int Socket::receiveBytes(Exception& ex, void* buffer, int length, int flags) {
 }
 
 
-int Socket::sendTo(Exception& ex, const void* buffer, int length, const SocketAddress& address, int flags) {
-	if (!_initialized && !init(ex, address.family()))
+int Socket::sendTo(Exception& ex, const void* buffer, int length, const SocketAddress& address, bool allowBroadcast,int flags) {
+	if (_sockfd==NET_INVALID_SOCKET && !init(ex, address.family()))
 		return 0;
-	if (!managed(ex))
-		return false;
+
+	managed(ex); // ex is warning here
+
+	if (allowBroadcast && address.host().isAnyBroadcast())
+		setOption(ex, SOL_SOCKET, SO_BROADCAST,1); // ex is warning here
 
 	int rc;
 	do {
-		ASSERT_RETURN(_initialized == true, 0)
 		rc = ::sendto(_sockfd, (const char*)buffer, length, flags, address.addr(), address.size());
-	}
-	while (rc < 0 && Net::LastError() == NET_EINTR);
+	} while (rc < 0 && Net::LastError() == NET_EINTR);
 	if (rc < 0) {
 		int err = Net::LastError();
 		if (err == NET_EAGAIN || err == NET_EWOULDBLOCK)
@@ -233,10 +269,8 @@ int Socket::sendTo(Exception& ex, const void* buffer, int length, const SocketAd
 
 
 int Socket::receiveFrom(Exception& ex, void* buffer, int length, SocketAddress& address, int flags) {
-	if (!_initialized && !init(ex, address.family()))
+	if (_sockfd==NET_INVALID_SOCKET && !init(ex, address.family()))
 		return 0;
-	if (!managed(ex))
-		return false;
 
 	union {
 		struct sockaddr_in  sa_in;
@@ -245,7 +279,6 @@ int Socket::receiveFrom(Exception& ex, void* buffer, int length, SocketAddress& 
 	NET_SOCKLEN addrSize = sizeof(addr);
 	int rc;
 	do {
-		ASSERT_RETURN(_initialized == true, 0)
 		rc = ::recvfrom(_sockfd, reinterpret_cast<char*>(buffer), length, flags, (sockaddr*)&addr, &addrSize);
 	} while (rc < 0 && Net::LastError() == NET_EINTR);
 	if (rc < 0) {
@@ -259,7 +292,7 @@ int Socket::receiveFrom(Exception& ex, void* buffer, int length, SocketAddress& 
 }
 
 SocketAddress& Socket::address(Exception& ex, SocketAddress& address) const {
-	ASSERT_RETURN(_initialized == true, address)
+	ASSERT_RETURN(_sockfd!=NET_INVALID_SOCKET, address)
 	union {
 		struct sockaddr_in  sa_in;
 		struct sockaddr_in6 sa_in6;
@@ -275,7 +308,7 @@ SocketAddress& Socket::address(Exception& ex, SocketAddress& address) const {
 
 	
 SocketAddress& Socket::peerAddress(Exception& ex, SocketAddress& address) const {
-	ASSERT_RETURN(_initialized == true, address);
+	ASSERT_RETURN(_sockfd!=NET_INVALID_SOCKET, address);
 	union {
 		struct sockaddr_in  sa_in;
 		struct sockaddr_in6 sa_in6;
@@ -323,7 +356,7 @@ bool Socket::getReusePort() {
 }
 
 int Socket::ioctl(Exception& ex,NET_IOCTLREQUEST request,int value) {
-	ASSERT_RETURN(_initialized == true, value)
+	ASSERT_RETURN(_sockfd!=NET_INVALID_SOCKET, value)
 #if defined(_WIN32)
 	int rc = ioctlsocket(_sockfd, request, reinterpret_cast<u_long*>(&value));
 #else
@@ -334,11 +367,7 @@ int Socket::ioctl(Exception& ex,NET_IOCTLREQUEST request,int value) {
 	return value;
 }
 
-void Socket::manageWrite() {
-	_writing = manager.startWrite(*this);
-}
-
-// Can be called from one other thread than main thread (by the manager socket thread)
+// Is called from one other thread than main thread (by the manager socket thread, so here socket is necessary managed)
 void Socket::flushSenders(Exception& ex) {
 	lock_guard<mutex>	lock(_mutexAsync);
 	while (!_senders.empty()) {

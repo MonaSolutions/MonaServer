@@ -80,7 +80,7 @@ static Int32 LeapYears(Int32 year) {
 }
 
 
-void Date::update(Int64 time,Int32 offset) {
+Date& Date::update(Int64 time,Int32 offset) {
 	Time::update(time);
 
 	_changed = false;
@@ -163,6 +163,7 @@ void Date::update(Int64 time,Int32 offset) {
 	time %= 1000;
 
 	_millisecond = (UInt16)time;
+	return *this;
 }
 
 Int64 Date::time() const {
@@ -247,7 +248,7 @@ void Date::setOffset(Int32 offset) {
 
 
 
-void Date::update(const Date& date) {
+Date& Date::update(const Date& date) {
 	_year = date._year;
 	_month = date._month;
 	_day = date._day;
@@ -261,22 +262,25 @@ void Date::update(const Date& date) {
 	_isDST = date._isDST;
 	if (!(_changed = date._changed))
 		Time::update(date.time());
+	return *this;
 }
 
-void Date::update(Int32 year, UInt8 month, UInt8 day, UInt8 hour, UInt8 minute, UInt8 second, UInt16 millisecond) {
+Date& Date::update(Int32 year, UInt8 month, UInt8 day, UInt8 hour, UInt8 minute, UInt8 second, UInt16 millisecond) {
 	setYear(year);
 	setMonth(month);
 	setClock(hour, minute, second, millisecond);
 	// keep the following line in last position
 	setDay(day);
+	return *this;
 }
 
 
-void Date::update(Int32 year, UInt8 month, UInt8 day) {
+Date& Date::update(Int32 year, UInt8 month, UInt8 day) {
 	setYear(year);
 	setMonth(month);
 	// keep the following line in last position
 	setDay(day);
+	return *this;
 }
 
 

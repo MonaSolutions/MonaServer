@@ -40,21 +40,27 @@ private:
 
 class TCPEchoClient : public TCPClient {
 public:
-	TCPEchoClient(const SocketManager& manager,bool parallel) : TCPClient(manager),_mutex(!parallel),parallel(parallel) {}
+	TCPEchoClient(const SocketManager& manager,bool parallel) : _unknown(false),testUnknown(false),TCPClient(manager),_mutex(!parallel),parallel(parallel) {}
 
 	const bool parallel;
-	
+	bool testUnknown;
+
 	void onError(const std::string& error) {
-		FATAL_ERROR("TCPEchoClient, ",error);
+		if (!testUnknown)
+			FATAL_ERROR("TCPEchoClient, ", error)
 	}
 
 	bool join() {
 		if (!parallel) {
+			if (testUnknown)
+				return _unknown;
 			lock_guard<Mutex> lock(_mutex);
 			return _datas.empty();
 		}
 		while(_event.wait(20000)) {
 			lock_guard<Mutex> lock(_mutex);
+			if (testUnknown)
+				return _unknown;
 			if (_datas.empty())
 				return true;
 		}
@@ -62,30 +68,38 @@ public:
 	}
 
 	bool echo(Exception& ex,const UInt8* data,UInt32 size) {
-		lock_guard<Mutex> lock(_mutex);
-		_datas.emplace_back(size);
-		memcpy(_datas.back().data(), data, size);
+		{
+			lock_guard<Mutex> lock(_mutex);
+			_datas.emplace_back(size);
+			memcpy(_datas.back().data(), data, size);
+		}
 		return send(ex, data, size);
 	}
 
 private:
-	UInt32 onReception(const UInt8* data,UInt32 size) {
+	UInt32 onReception(PoolBuffer& pBuffer) {
 		lock_guard<Mutex> lock(_mutex);
-		if (size < _datas.front().size())
-			return size; // wait more data
+		if (pBuffer->size() < _datas.front().size())
+			return pBuffer->size(); // wait more data
 		UInt32 consumed(_datas.front().size());
-		CHECK(memcmp(_datas.front().data(), data, consumed) == 0);
+		CHECK(memcmp(_datas.front().data(), pBuffer->data(), consumed) == 0);
 		_datas.pop_front();
 		if (parallel)
 			_event.set();
-		return size-consumed; // rest
+		return pBuffer->size()-consumed; // rest
 	}
 
-	void onDisconnection(){}
+	void onDisconnection(){
+		if (!testUnknown)
+			return;
+		_unknown=true;
+		_event.set();
+	}
 	
-	std::deque<vector<UInt8>> _datas;
-	Event					 _event;
-	Mutex					_mutex;
+	deque<vector<UInt8>> _datas;
+	Event				_event;
+	Mutex				_mutex;
+	atomic<bool>		_unknown;
 };
 
 
@@ -109,9 +123,9 @@ private:
 			FATAL_ERROR("Client, ",error);
 		}
 	private:
-		UInt32 onReception(const UInt8* data,UInt32 size) {
+		UInt32 onReception(PoolBuffer& pBuffer) {
 			Exception ex;
-			CHECK(send(ex, data, size) && !ex);
+			CHECK(send(ex, pBuffer->data(), pBuffer->size()) && !ex);
 			return 0;
 		}
 
@@ -124,7 +138,7 @@ private:
 	}
 
 	void onConnectionRequest(Exception& ex) {
-		Client* pClient = acceptClient<Client>(ex, manager);
+		Client* pClient = acceptClient<Client>(ex);
 		if (!pClient)
 			ERROR("NO CLIENT");
 		CHECK(pClient);	
@@ -167,17 +181,19 @@ public:
 	}
 
 	bool echo(Exception& ex,const UInt8* data,UInt32 size) {
-		lock_guard<Mutex> lock(_mutex);
-		_datas.emplace_back(size);
-		memcpy(_datas.back().data(), data, size);
+		{
+			lock_guard<Mutex> lock(_mutex);
+			_datas.emplace_back(size);
+			memcpy(_datas.back().data(), data, size);
+		}
 		return send(ex, data, size);
 	}
 
 private:
-	void onReception(const UInt8* data,UInt32 size,const SocketAddress& address) {
+	void onReception(PoolBuffer& pBuffer,const SocketAddress& address) {
 		lock_guard<Mutex> lock(_mutex);
 		CHECK(_address == address);
-		CHECK(_datas.front().size() == size && memcmp(_datas.front().data(), data, size) == 0);
+		CHECK(_datas.front().size() == pBuffer->size() && memcmp(_datas.front().data(), pBuffer->data(), pBuffer->size()) == 0);
 		_datas.pop_front();
 		if (parallel)
 			_event.set();
@@ -201,9 +217,9 @@ private:
 		FATAL_ERROR("UDPEchoServer, ",error);
 	}
 
-	void onReception(const UInt8* data,UInt32 size,const SocketAddress& address) {
+	void onReception(PoolBuffer& pBuffer,const SocketAddress& address) {
 		Exception ex;
-		CHECK(send(ex,data, size, address) && !ex);
+		CHECK(send(ex,pBuffer->data(), pBuffer->size(), address) && !ex);
 	}
 };
 
@@ -247,12 +263,14 @@ static SocketManager			Sockets(TaskSockets,Buffers,Threads);
 void TCPTest(SocketManager& sockets) {
 	Exception ex;
 
-	SocketAddress host(IPAddress::Wildcard(),65432);
+	SocketAddress host(IPAddress::Wildcard(),62435);
 	TCPEchoServer server(sockets);
 	CHECK(server.start(ex, host) && !ex);
-	
-	TCPEchoClient client(sockets,&sockets==&ParallelSockets);
-	SocketAddress target(IPAddress::Loopback(),65432);
+	server.stop();
+	CHECK(server.start(ex, host) && !ex);
+
+	TCPEchoClient client(sockets, &sockets == &ParallelSockets);
+	SocketAddress target(IPAddress::Loopback(),host.port());
 	CHECK(client.connect(ex, target) && !ex && client.connected());
 
 	CHECK(client.echo(ex,EXPAND_DATA_SIZE("hi mathieu and thomas")) && !ex);
@@ -261,17 +279,35 @@ void TCPTest(SocketManager& sockets) {
 
 	client.disconnect();
 	CHECK(!client.connected());
+
+	// Test an unknown connection
+	SocketAddress unknown(IPAddress::Loopback(),62434);
+	client.testUnknown = true;
+	if (client.connect(ex, unknown)) {
+		if (!client.parallel) {
+			CHECK(!ex && client.connected());
+			client.address();
+			client.peerAddress();
+			if (Util::Random<UInt8>()%2)
+				CHECK(client.send(ex,EXPAND_DATA_SIZE("salut")) && !ex)
+			CHECK(client.connected());
+		}
+		CHECK(TaskSockets.join(client));
+	}
+	CHECK(!client.connected());
 }
 
 void UDPTest(SocketManager& sockets) {
 	Exception ex;
 
-	SocketAddress	 host(IPAddress::Wildcard(),65432);
+	SocketAddress	 host(IPAddress::Wildcard(),62435);
 	UDPEchoServer    server(sockets);
+	CHECK(server.bind(ex, host) && !ex);
+	server.close();
 	CHECK(server.bind(ex, host) && !ex);
 
 	UDPEchoClient    client(sockets,&sockets==&ParallelSockets);
-	SocketAddress	 target(IPAddress::Loopback(),65432);
+	SocketAddress	 target(IPAddress::Loopback(),host.port());
 	CHECK(client.connect(ex, target) && !ex);
 
 	CHECK(client.echo(ex,EXPAND_DATA_SIZE("hi mathieu and thomas")) && !ex);

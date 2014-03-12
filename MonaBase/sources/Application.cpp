@@ -154,6 +154,7 @@ bool Application::loadLogFiles(string& directory, string& fileName, UInt32& size
 	getString("logs.directory", directory);
 	getString("logs.name", fileName);
 	getNumber("logs.rotation", rotation);
+	getNumber("logs.maxSize", sizeByFile);
 	return true;
 }
 

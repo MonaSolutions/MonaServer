@@ -140,7 +140,7 @@ bool HTTPWriter::writeMedia(MediaType type,UInt32 time,PacketReader& packet) {
 		case VIDEO: {
 			if (!_pMedia)
 				return false;
-			_pMedia->write(createSender().writeRaw(_tcpClient.socket().poolBuffers()),type,time,packet.current(), packet.available());
+			_pMedia->write(createSender().writeRaw(_tcpClient.poolBuffers()),type,time,packet.current(), packet.available());
 			break;
 		}
 		default:

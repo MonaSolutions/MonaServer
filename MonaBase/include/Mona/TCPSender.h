@@ -21,7 +21,7 @@ This file is a part of Mona.
 
 #include "Mona/Mona.h"
 #include "Mona/SocketSender.h"
-#include "Mona/StreamSocket.h"
+#include "Mona/Socket.h"
 
 namespace Mona {
 
@@ -32,7 +32,7 @@ public:
 
 
 private:
-	UInt32	send(Exception& ex, Socket& socket, const UInt8* data, UInt32 size) { return ((StreamSocket&)socket).sendBytes(ex,data, (int)size); }
+	UInt32	send(Exception& ex, Socket& socket, const UInt8* data, UInt32 size) { return socket.sendBytes(ex,data,size); }
 };
 
 

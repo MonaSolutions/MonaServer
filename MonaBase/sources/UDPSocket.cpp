@@ -29,80 +29,29 @@ using namespace std;
 namespace Mona {
 
 
-UDPSocket::UDPSocket(const SocketManager& manager, bool allowBroadcast) : _pBuffer(manager.poolBuffers),_broadcasting(false), DatagramSocket(manager), _allowBroadcast(allowBroadcast) {
+UDPSocket::UDPSocket(const SocketManager& manager, bool allowBroadcast) : SocketHandler(manager,Socket::DATAGRAM), _allowBroadcast(allowBroadcast) {
 
-}
-
-
-const SocketAddress& UDPSocket::address() {
-	if (_address)
-		return _address;
-	Exception ex;
-	DatagramSocket::address(ex, _address);
-	if (ex)
-		onError(ex.error());
-	return _address;
-}
-
-const SocketAddress& UDPSocket::peerAddress() {
-	if (_peerAddress)
-		return _peerAddress;
-	Exception ex;
-	DatagramSocket::peerAddress(ex, _peerAddress);
-	if (ex)
-		onError(ex.error());
-	return _peerAddress;
 }
 
 void UDPSocket::onReadable(Exception& ex) {
-	UInt32 available = DatagramSocket::available(ex);
+	UInt32 available = socket().available(ex);
 	if(ex || available==0)
 		return;
 
-	_pBuffer->resize(available, false);
-	int size = receiveFrom(ex,_pBuffer->data(), available, _addressFrom);
-	if (!ex) {
-		_pBuffer->resize(size, true);
-		onReception(_pBuffer->data(),size,_addressFrom);
-		_pBuffer.release();
-	}
-}
-
-void UDPSocket::close() {
-	DatagramSocket::close();
-	_broadcasting = false;
-	_address.reset();
-	_peerAddress.reset();
-}
-
-bool UDPSocket::bind(Exception& ex,const SocketAddress& address) {
-	bool result = DatagramSocket::bind(ex, address);
-	if (result && _allowBroadcast && !_broadcasting) {
-		setBroadcast(ex, true);
-		_broadcasting = !ex;
-	}
-	return result;
-}
-
-bool UDPSocket::connect(Exception& ex, const SocketAddress& address) {
-	bool result = DatagramSocket::connect(ex, address);
-	if (result && _allowBroadcast && !_broadcasting) {
-		setBroadcast(ex, true);
-		_broadcasting = !ex;
-	}
-	return result;
+	PoolBuffer pBuffer(poolBuffers(),available);
+	SocketAddress address;
+	int size = socket().receiveFrom(ex,pBuffer->data(), available, address);
+	if (ex || size <= 0)
+		return;
+	pBuffer->resize(size, true);
+	onReception(pBuffer,address);
 }
 
 bool UDPSocket::send(Exception& ex, const UInt8* data, UInt32 size) {
 	if (size == 0)
 		return true;
 	shared_ptr<UDPSender> pSender(new UDPSender("UDPSender::send",data, size));
-	bool success = DatagramSocket::send(ex, pSender);
-	if (success && _allowBroadcast && !_broadcasting) {
-		setBroadcast(ex, true);
-		_broadcasting = !ex;
-	}
-	return success;
+	return socket().send(ex, pSender);
 }
 
 bool UDPSocket::send(Exception& ex, const UInt8* data, UInt32 size,const SocketAddress& address) {
@@ -110,12 +59,8 @@ bool UDPSocket::send(Exception& ex, const UInt8* data, UInt32 size,const SocketA
 		return true;
 	shared_ptr<UDPSender> pSender(new UDPSender("UDPSender::send",data, size));
 	pSender->address.set(address);
-	bool success = DatagramSocket::send(ex, pSender);
-	if (success && _allowBroadcast && !_broadcasting) {
-		setBroadcast(ex, true);
-		_broadcasting = !ex;
-	}
-	return success;
+	pSender->allowBroadcast = _allowBroadcast;
+	return socket().send(ex, pSender);
 }
 
 } // namespace Mona

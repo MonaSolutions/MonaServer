@@ -35,7 +35,7 @@ void LUATCPServer::onError(const string& error) {
 }
 
 void LUATCPServer::onConnectionRequest(Exception& ex) {
-	LUATCPClient* pClient = acceptClient<LUATCPClient>(ex, manager, _pState);
+	LUATCPClient* pClient = acceptClient<LUATCPClient>(ex, _pState);
 	if (!pClient)
 		return;
 	SCRIPT_BEGIN(_pState)
@@ -56,7 +56,7 @@ int	LUATCPServer::Start(lua_State* pState) {
 	SCRIPT_CALLBACK(LUATCPServer, server)
 		string host("0.0.0.0");
 		if (SCRIPT_NEXT_TYPE == LUA_TSTRING)
-			host = SCRIPT_READ_STRING("0.0.0.0");
+			host = SCRIPT_READ_STRING(host);
 		UInt16 port = SCRIPT_READ_UINT(0);
 		Exception ex;
 		SocketAddress address;

@@ -30,7 +30,7 @@ using namespace std;
 namespace Mona {
 
 
-WSSession::WSSession(const SocketAddress& address, Protocol& protocol, Invoker& invoker) : TCPSession(address, protocol, invoker), _writer(*this,address), _pListener(NULL), _pPublication(NULL) {
+WSSession::WSSession(const SocketAddress& address,const SocketManager& sockets, Protocol& protocol, Invoker& invoker) : TCPSession(address, sockets,protocol, invoker), _writer(*this), _pListener(NULL), _pPublication(NULL) {
 }
 
 
@@ -61,7 +61,7 @@ void WSSession::closePublication(){
 }
 
 
-bool WSSession::buildPacket(PacketReader& packet) {
+bool WSSession::buildPacket(PoolBuffer& pBuffer,PacketReader& packet) {
 	if (packet.available()<2)
 		return false;
 	UInt8 type = packet.read8() & 0x0F;

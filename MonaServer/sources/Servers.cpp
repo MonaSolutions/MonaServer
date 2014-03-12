@@ -60,7 +60,7 @@ Servers::~Servers() {
 }
 
 void Servers::manage() {
-	if(!running() || _targets.empty() || (--_manageTimes)!=0)
+	if(_targets.empty() || (--_manageTimes)!=0)
 		return;
 	_manageTimes = 5; // every 10 sec
 	for (ServerConnection* pTarget : _targets)
@@ -89,7 +89,7 @@ void Servers::stop() {
 }
 
 void Servers::onConnectionRequest(Exception& ex) { 
-	ServerConnection* pServer = acceptClient<ServerConnection>(ex, manager, _handler, (ServersHandler&)*this);
+	ServerConnection* pServer = acceptClient<ServerConnection>(ex, _handler, (ServersHandler&)*this);
 	if (!pServer)
 		return;
 	_clients.emplace(pServer);

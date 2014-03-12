@@ -44,6 +44,7 @@ public:
 	virtual UInt32 scope() const = 0;
 	virtual bool isWildcard() const	= 0;
 	virtual bool isBroadcast() const = 0;
+	virtual bool isAnyBroadcast() const = 0;
 	virtual bool isLoopback() const = 0;
 	virtual bool isMulticast() const = 0;
 	virtual bool isLinkLocal() const = 0;
@@ -83,6 +84,7 @@ public:
 	UInt32	scope() const { return 0; }
 	bool	isWildcard() const { return _addr.s_addr == INADDR_ANY; }
 	bool	isBroadcast() const { return _addr.s_addr == INADDR_NONE; }
+	bool	isAnyBroadcast() const { return _addr.s_addr == INADDR_NONE || (ntohl(_addr.s_addr) & 0x000000FF) == 0x000000FF; }
 	bool	isLoopback() const { return (ntohl(_addr.s_addr) & 0xFF000000) == 0x7F000000; } // 127.0.0.1 to 127.255.255.255 
 	bool	isMulticast() const { return (ntohl(_addr.s_addr) & 0xF0000000) == 0xE0000000; } // 224.0.0.0/24 to 239.0.0.0/24 
 	bool	isLinkLocal() const { return (ntohl(_addr.s_addr) & 0xFFFF0000) == 0xA9FE0000; } // 169.254.0.0/16
@@ -197,6 +199,7 @@ public:
 
 	UInt32				scope() const {return _scope;}
 	bool				isBroadcast() const {return false;}
+	bool				isAnyBroadcast() const { return false; }
 
 	bool isWildcard() const {
 		const UInt16* words = reinterpret_cast<const UInt16*>(&_addr);
@@ -354,6 +357,8 @@ IPAddress::IPAddress(const in6_addr& addr, UInt32 scope) : _pIPAddress(new IPv6A
 }
 
 void IPAddress::reset() {
+	if (_isNull)
+		return;
 	_isNull = true;
 	_pIPAddress = _pIPAddress->family() == IPv6 ? _IPv6Wildcard._pIPAddress : _IPv4Wildcard._pIPAddress;
 }
@@ -417,6 +422,9 @@ bool IPAddress::isWildcard() const {
 bool IPAddress::isBroadcast() const {
 	return _pIPAddress->isBroadcast();
 }
+bool IPAddress::isAnyBroadcast() const {
+	return _pIPAddress->isAnyBroadcast();
+}
 bool IPAddress::isLoopback() const {
 	return _pIPAddress->isLoopback();
 }
@@ -424,7 +432,7 @@ bool IPAddress::isMulticast() const {
 	return _pIPAddress->isMulticast();
 }
 bool IPAddress::isUnicast() const {
-	return !isWildcard() && !isBroadcast() && !isMulticast();
+	return !isWildcard() && !isAnyBroadcast() && !isMulticast();
 }
 bool IPAddress::isLinkLocal() const {
 	return _pIPAddress->isLinkLocal();

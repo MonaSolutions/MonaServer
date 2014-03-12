@@ -66,7 +66,7 @@ UInt32 RelaySocket::releaseRelay(Relay& relay) {
 }
 
 // executed in a parallel thread!
-void RelaySocket::onReception(const UInt8* data, UInt32 size, const SocketAddress& address) {
+void RelaySocket::onReception(PoolBuffer& pBuffer, const SocketAddress& address) {
 	lock_guard<mutex> lock(_mutex);
 	Addresses::const_iterator itAddress = addresses.find(address);
 	if(itAddress==addresses.end()) {
@@ -84,14 +84,14 @@ void RelaySocket::onReception(const UInt8* data, UInt32 size, const SocketAddres
 
 	SocketAddress destinator(relay.address1 == address ? relay.address2 : relay.address1);
 
-	DUMP(data, size, "Request from ", address.toString())
+	DUMP(pBuffer->data(), pBuffer->size(), "Request from ", address.toString())
 	Exception ex;
-	send(ex, data, size, destinator);
+	send(ex, pBuffer->data(), pBuffer->size(), destinator);
 	if (ex) {
-		WARN("Relay packet (size=", size, ") from ", address.toString(), " to ", destinator.toString()," on ",port,", ",ex.error())
+		WARN("Relay packet (size=", pBuffer->size(), ") from ", address.toString(), " to ", destinator.toString()," on ",port,", ",ex.error())
 	} else {
 		relay.lastTime.update();
-		DEBUG("Relay packet (size=", size, ") from ", address.toString(), " to ", destinator.toString()," on ",port)
+		DEBUG("Relay packet (size=", pBuffer->size(), ") from ", address.toString(), " to ", destinator.toString()," on ",port)
 	}
 }
 

@@ -273,9 +273,6 @@
     <ClInclude Include="include\Mona\Net.h">
       <Filter>Net</Filter>
     </ClInclude>
-    <ClInclude Include="include\Mona\DatagramSocket.h">
-      <Filter>Net</Filter>
-    </ClInclude>
     <ClInclude Include="include\Mona\DNS.h">
       <Filter>Net</Filter>
     </ClInclude>
@@ -285,16 +282,10 @@
     <ClInclude Include="include\Mona\IPAddress.h">
       <Filter>Net</Filter>
     </ClInclude>
-    <ClInclude Include="include\Mona\ServerSocket.h">
-      <Filter>Net</Filter>
-    </ClInclude>
     <ClInclude Include="include\Mona\Socket.h">
       <Filter>Net</Filter>
     </ClInclude>
     <ClInclude Include="include\Mona\SocketAddress.h">
-      <Filter>Net</Filter>
-    </ClInclude>
-    <ClInclude Include="include\Mona\StreamSocket.h">
       <Filter>Net</Filter>
     </ClInclude>
     <ClInclude Include="include\Mona\Logs.h">
@@ -372,6 +363,9 @@
     </ClInclude>
     <ClInclude Include="include\Mona\Timezone.h">
       <Filter>Time</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\SocketHandler.h">
+      <Filter>Net</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

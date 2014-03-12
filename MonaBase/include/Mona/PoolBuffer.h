@@ -30,17 +30,18 @@ public:
 	PoolBuffer(const PoolBuffers& poolBuffers,UInt32 size=0) : _size(size),poolBuffers(poolBuffers),_pBuffer(NULL) {}
 	virtual ~PoolBuffer() { release(); }
 
-	bool	empty() { return !_pBuffer || _pBuffer->size()==0; }
-	void	release() { if (!_pBuffer) return; poolBuffers.endBuffer(_pBuffer); _pBuffer = NULL; }
+	bool	empty() const { return !_pBuffer || _pBuffer->size()==0; }
+	Buffer* operator->() const { if (!_pBuffer) _pBuffer=poolBuffers.beginBuffer(_size);  return _pBuffer; }
+	Buffer& operator*() const { if (!_pBuffer) _pBuffer=poolBuffers.beginBuffer(_size);  return *_pBuffer; }
 
+	
 	void	swap(PoolBuffer& buffer) { std::swap(buffer._pBuffer,_pBuffer); }
-	Buffer* operator->() { if (!_pBuffer) _pBuffer=poolBuffers.beginBuffer(_size);  return _pBuffer; }
-	Buffer& operator*() { if (!_pBuffer) _pBuffer=poolBuffers.beginBuffer(_size);  return *_pBuffer; }
+	void	release() { if (!_pBuffer) return; poolBuffers.endBuffer(_pBuffer); _pBuffer = NULL; }
 
 	const PoolBuffers&	poolBuffers;
 
 private:
-	Buffer*				_pBuffer;
+	mutable Buffer*		_pBuffer;
 	UInt32				_size;
 
 };

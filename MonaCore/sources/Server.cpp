@@ -27,7 +27,7 @@ using namespace std;
 namespace Mona {
 
 
-ServerManager::ServerManager(Server& server):_server(server),Task(server),Startable("ServerManager"){
+ServerManager::ServerManager(Server& server):_server(server),Task(server),Startable("ServerManager") {
 }
 
 void ServerManager::run(Exception& ex) {
@@ -41,7 +41,7 @@ void ServerManager::handle(Exception& ex) {
 	_server.relay.manage();
 }
 
-Server::Server(UInt32 socketBufferSize,UInt16 threads) : Startable("Server"),Handler(socketBufferSize,threads),_protocols(*this),_manager(*this) {
+Server::Server(UInt32 socketBufferSize,UInt16 threads) : Startable("Server"),Handler(socketBufferSize,threads),_countClients(0),_protocols(*this),_manager(*this) {
 	if (socketBufferSize>0)
 		DEBUG("Socket Buffer size of ",socketBufferSize," bytes")
 }
@@ -63,6 +63,7 @@ bool Server::start(const ServerParams& params) {
 }
 
 void Server::run(Exception& exc) {
+	_countClients = 0;
 
 	Exception ex;
 	try {
@@ -124,6 +125,8 @@ void Server::manage() {
 	_protocols.manage();
 	if (_pSessions)
 		_pSessions->manage();
+	if(clients.count() != _countClients)
+		INFO((_countClients=clients.count())," clients");
 }
 
 

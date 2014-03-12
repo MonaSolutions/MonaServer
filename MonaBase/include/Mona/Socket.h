@@ -21,26 +21,38 @@ This file is a part of Mona.
 
 #include "Mona/Mona.h"
 #include "Mona/SocketAddress.h"
+#include "Mona/SocketManager.h"
+#include "Mona/SocketSender.h"
 #include "Mona/PoolThreads.h"
 #include "Mona/PoolBuffers.h"
-#include "Mona/Expirable.h"
 #include <memory>
 #include <deque>
 
 namespace Mona {
 
-class SocketManager;
-class SocketSender;
 
-class Socket : virtual Object,Expirable<Socket> {
-	friend class SocketManager;
-	friend class DatagramSocket;
-	friend class StreamSocket;
-	friend class ServerSocket;
+
+class SocketEvents : virtual Object {
 public:
+	// Can be called by a separated thread!
+	virtual void onError(const std::string& error) = 0;
+	// Can be called by a separated thread!
+	// if ex of onReadable is raised, it's given to onError
+	virtual void onReadable(Exception& ex) = 0;
+	// allow to reject a connection on the address client choice (before client object creation)
+	virtual bool onConnection(const SocketAddress& address) { return true; }
 
-	// Destroys the Socket (Closes the socket if it is still open)
-	virtual ~Socket();
+	virtual Socket&	socket(std::shared_ptr<Socket>& pSocket) = 0;
+};
+
+
+class Socket : private SocketEvents, virtual Object {
+	friend class SocketManager;
+public:
+	enum SocketType {
+		STREAM = SOCK_STREAM,
+		DATAGRAM = SOCK_DGRAM
+	};
 
 	enum ShutdownType {
 		RECV = 0,
@@ -48,11 +60,20 @@ public:
 		BOTH = 2
 	};
 
-	int		available(Exception& ex) { return ioctl(ex, FIONREAD, 0); }
+	// Creates a Socket
+	Socket(const SocketManager& manager, SocketEvents& events,SocketType type = STREAM);
+	// Destroys the Socket (Closes the socket if it is still open)
+	virtual ~Socket();
+
+	const SocketManager&	manager;
+	const SocketType		type;
+
+	void release();
+
+	int	available(Exception& ex) { return ioctl(ex, FIONREAD, 0); }
 	
 	SocketAddress& address(Exception& ex, SocketAddress& address) const;
 	SocketAddress& peerAddress(Exception& ex, SocketAddress& address) const;
-
 
 	void setSendBufferSize(Exception& ex,int size) { setOption(ex, SOL_SOCKET, SO_SNDBUF, size); }
 	int  getSendBufferSize(Exception& ex) { return getOption(ex,SOL_SOCKET, SO_SNDBUF); }
@@ -78,56 +99,22 @@ public:
 	void setReusePort(bool flag);
 	bool getReusePort();
 
-	template<typename SocketSenderType>
-	// Can be called from one other thread than main thread (by the poolthread)
-	bool send(Exception& ex,const std::shared_ptr<SocketSenderType>& pSender) {
-		// return if no data to send
-		if (!pSender->available())
-			return true;
-
-		ASSERT_RETURN(_initialized == true,false)
-		if (!managed(ex))
-			return false;
-
-		// We can write immediatly if there are no queue packets to write,
-		// and if it remains some data to write (flush returns false)
-		std::lock_guard<std::mutex>	lock(_mutexAsync);
-		if ((!_senders.empty() && pSender->buffering(poolBuffers())) || !pSender->flush(ex, *this)) {
-            _senders.emplace_back(pSender);
-			manageWrite();
-			return !ex;
-		}
-		return true;
-	}
-
-	template<typename SocketSenderType>
-	PoolThread* send(Exception& ex,const std::shared_ptr<SocketSenderType>& pSender, PoolThread* pThread) {
-		ASSERT_RETURN(_initialized == true, pThread)
-		if (!managed(ex))
-			return pThread;
-		shareThis(pSender->_expirableSocket);
-		pSender->_pThis = pSender;
-		pThread = poolThreads().enqueue<SocketSenderType>(ex,pSender, pThread);
-		return pThread;
-	}
-
-	const PoolBuffers&	poolBuffers();
-	PoolThreads&		poolThreads();
-
-protected:
-	// Can be called by a separated thread!
-	virtual void			onError(const std::string& error) = 0;
-
-	void					close();
-	const SocketManager&	manager;
+	bool connect(Exception& ex, const SocketAddress& address,bool allowBroadcast=false);
+	bool bind(Exception& ex, const SocketAddress& address, bool reuseAddress = true);
+	bool bindWithListen(Exception& ex, const SocketAddress& address, bool reuseAddress = true,int backlog = 64);
+	void shutdown(Exception& ex, ShutdownType type = BOTH);
 	
-private:
-	// Creates a Socket
-	Socket(const SocketManager& manager, int type = SOCK_STREAM);
+	int receiveBytes(Exception& ex, void* buffer, int length, int flags = 0);
+	int receiveFrom(Exception& ex, void* buffer, int length, SocketAddress& address, int flags = 0);
+
+	int sendBytes(Exception& ex, const void* buffer, int length, int flags = 0);
+	int sendTo(Exception& ex, const void* buffer, int length, const SocketAddress& address, bool allowBroadcast = false, int flags = 0);
+
+	void rejectConnection();
 
 	template<typename SocketType, typename ...Args>
 	SocketType* acceptConnection(Exception& ex, Args&&... args) {
-		ASSERT_RETURN(_initialized == true, NULL)
+		ASSERT_RETURN(_sockfd!=NET_INVALID_SOCKET, NULL)
 
 		union {
 			struct sockaddr_in  sa_in;
@@ -143,48 +130,60 @@ private:
 			return NULL;
 		}
 		SocketAddress address((sockaddr&)addr);
-		if (!onConnection(address)) {
-			NET_CLOSESOCKET(sockfd);
-			return NULL;
+		{
+			std::lock_guard<std::recursive_mutex> lock(_mutexManaged);
+			if (_pEvents && !_pEvents->onConnection(address)) {
+				NET_CLOSESOCKET(sockfd);
+				return NULL;
+			}
 		}
-		SocketType* pSocket = new SocketType(address,args ...);
-		Socket* pSocketBase = (Socket*)pSocket;
+		SocketType* pSocketType = new SocketType(address,manager,args ...);
+		std::shared_ptr<Socket> pSocket;
+		Socket& socket = ((SocketEvents*)pSocketType)->socket(pSocket);
 
-		std::lock_guard<std::mutex>	lock(pSocketBase->_mutexInit);
-		pSocketBase->_sockfd = sockfd;
-		pSocketBase->_initialized = true;
-		if (!pSocketBase->managed(ex)) {
-			delete pSocket;
-			pSocket = NULL;
-		}
-		return pSocket;
+		std::lock_guard<std::mutex>	lock(socket._mutexInit);
+		socket._sockfd = sockfd;
+		if (!socket.managed(ex)) {
+			delete pSocketType;
+			pSocketType = NULL;
+		} else
+			socket.setNoDelay(ex, true); // enabe nodelay per default: OSX really needs that
+		return pSocketType;
 	}
-	void rejectConnection();
-
-	bool connect(Exception& ex, const SocketAddress& address);
-	bool bind(Exception& ex, const SocketAddress& address, bool reuseAddress = true);
-	bool bindWithListen(Exception& ex, const SocketAddress& address, bool reuseAddress = true,int backlog = 64);
-	
-	int receiveBytes(Exception& ex, void* buffer, int length, int flags = 0);
-	int receiveFrom(Exception& ex, void* buffer, int length, SocketAddress& address, int flags = 0);
-
-
-	void shutdown(Exception& ex, ShutdownType type = BOTH);
-
-	int sendBytes(Exception& ex, const void* buffer, int length, int flags = 0);
-	int sendTo(Exception& ex, const void* buffer, int length, const SocketAddress& address, int flags = 0);
-
-	void setBroadcast(Exception& ex, bool flag) { setOption(ex, SOL_SOCKET, SO_BROADCAST, flag ? 1 : 0); }
-	bool getBroadcast(Exception& ex) { return getOption(ex, SOL_SOCKET, SO_BROADCAST) != 0; }
-
-	
-	// allow to reject a connection on the address client choice (before client object creation)
-	virtual bool    onConnection(const SocketAddress& address) { return true; }
-	// if ex of onReadable is raised, it's given to onError
-	virtual void	onReadable(Exception& ex) = 0;
 	
 	
+	// Can be called from one other thread than main thread (by the poolthread)
+	template<typename SocketSenderType>
+	bool send(Exception& ex,const std::shared_ptr<SocketSenderType>& pSender) {
+		// return if no data to send
+		if (!pSender->available())
+			return true;
 
+		ASSERT_RETURN(_sockfd!=NET_INVALID_SOCKET,false)
+
+		// We can write immediatly if there are no queue packets to write,
+		// and if it remains some data to write (flush returns false)
+		std::lock_guard<std::mutex>	lock(_mutexAsync);
+		if ((_connecting || !_senders.empty()) && pSender->buffering(manager.poolBuffers) || !pSender->flush(ex, *this)) {
+			if (managed(ex)) {
+				_senders.emplace_back(pSender);
+				_writing = manager.startWrite(*this);
+			}
+			return !ex;
+		}
+		return true;
+	}
+
+private:
+	// SocketEvents implementation
+	void onError(const std::string& error);
+	void onReadable(Exception& ex);
+	virtual Socket&	socket(std::shared_ptr<Socket>& pSocket) {return *this;}
+
+	// for the fakesocket of SocketManager
+	Socket(const SocketManager& manager);
+
+	
 	// Creates the underlying native socket
 	bool	init(Exception& ex, IPAddress::Family family);
 
@@ -192,13 +191,12 @@ private:
 	bool    managed(Exception& ex);
 
 	// flush async sending
-	void    manageWrite();
 	void	flushSenders(Exception& ex);
 
 	template<typename Type>
 	Type& getOption(Exception& ex, int level, int option, Type& value) {
-		ASSERT_RETURN(_initialized == true, value)
-            NET_SOCKLEN length(sizeof(value));
+		ASSERT_RETURN(_sockfd!=NET_INVALID_SOCKET, value);
+        NET_SOCKLEN length(sizeof(value));
 		if (::getsockopt(_sockfd, level, option, reinterpret_cast<char*>(&value), &length) == -1)
 			Net::SetError(ex);
 		return value;
@@ -207,8 +205,8 @@ private:
 
 	template<typename Type>
 	void setOption(Exception& ex, int level, int option, const Type& value) {
-		ASSERT(_initialized == true)
-            NET_SOCKLEN length(sizeof(value));
+		ASSERT(_sockfd!=NET_INVALID_SOCKET);
+        NET_SOCKLEN length(sizeof(value));
 		if (::setsockopt(_sockfd, level, option, reinterpret_cast<const char*>(&value), length) == -1)
 			Net::SetError(ex);
 	}
@@ -223,13 +221,14 @@ private:
 	bool										_writing;
 	std::deque<std::shared_ptr<SocketSender>>	_senders;
 
-	std::mutex				_mutexManaged;
+	std::recursive_mutex	_mutexManaged;
 	volatile bool			_managed;
+	SocketEvents*			_pEvents;
 
 	NET_SOCKET				_sockfd;
 	std::mutex				_mutexInit;
-	volatile bool			_initialized;
-	int						_type;
+
+	volatile bool			_connecting;
 };
 
 

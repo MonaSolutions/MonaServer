@@ -34,10 +34,10 @@ protected:
 	UDProtocol(const char* name, Invoker& invoker, Sessions& sessions) : UDPSocket(invoker.sockets), Protocol(name, invoker, sessions) {}
 	
 private:
-	void		onReception(const UInt8* data, UInt32 size,const SocketAddress& address);
+	void		onReception(PoolBuffer& pBuffer,const SocketAddress& address);
 	void		onError(const std::string& error) { WARN("Protocol ",name,", ", error); }
 
-	virtual void onPacket(const UInt8* data, UInt32 size, const SocketAddress& address) = 0;
+	virtual void onPacket(PoolBuffer& pBuffer, const SocketAddress& address) = 0;
 };
 
 inline bool UDProtocol::load(Exception& ex, const ProtocolParams& params) {
@@ -48,10 +48,10 @@ inline bool UDProtocol::load(Exception& ex, const ProtocolParams& params) {
 }
 
 
-inline void	UDProtocol::onReception(const UInt8* data, UInt32 size, const SocketAddress& address) {
+inline void	UDProtocol::onReception(PoolBuffer& pBuffer, const SocketAddress& address) {
 	if(!auth(address))
 		return;
-	onPacket(data, size,address);
+	onPacket(pBuffer,address);
 }
 
 

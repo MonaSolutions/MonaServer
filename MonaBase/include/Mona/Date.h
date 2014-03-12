@@ -73,23 +73,23 @@ public:
 	}
 
 	 // now
-	void update() { update(Time::Now()); }
-	void update(Int32 offset) { update(Time::Now(),offset); }
+	Date& update() { return update(Time::Now()); }
+	Date& update(Int32 offset) { return update(Time::Now(),offset); }
 
 	// from other date
-	void update(const Date& date);
+	Date& update(const Date& date);
 
 	// from time
-	void update(Int64 time) { update(time, _isLocal ? LOCAL : _offset); }
-	void update(Int64 time,Int32 offset);
+	Date& update(Int64 time) { return update(time, _isLocal ? LOCAL : _offset); }
+	Date& update(Int64 time,Int32 offset);
 
 	// from date
-	void update(Int32 year, UInt8 month, UInt8 day);
-	void update(Int32 year, UInt8 month, UInt8 day, Int32 offset)	{ update(year,month,day); setOffset(offset); }
+	Date& update(Int32 year, UInt8 month, UInt8 day);
+	Date& update(Int32 year, UInt8 month, UInt8 day, Int32 offset) { update(year, month, day); setOffset(offset); return *this; }
 
 	// from date+clock
-	void update(Int32 year, UInt8 month, UInt8 day, UInt8 hour, UInt8 minute, UInt8 second, UInt16 millisecond = 0);
-	void update(Int32 year, UInt8 month, UInt8 day, UInt8 hour, UInt8 minute, UInt8 second, UInt16 millisecond, Int32 offset) { update(year, month, day, hour, minute, second,millisecond); setOffset(offset); }
+	Date& update(Int32 year, UInt8 month, UInt8 day, UInt8 hour, UInt8 minute, UInt8 second, UInt16 millisecond = 0);
+	Date& update(Int32 year, UInt8 month, UInt8 day, UInt8 hour, UInt8 minute, UInt8 second, UInt16 millisecond, Int32 offset) { update(year, month, day, hour, minute, second,millisecond); setOffset(offset); return *this; }
 
 	/// from string
 	bool update(Exception& ex, const std::string &value,const char* format=NULL);

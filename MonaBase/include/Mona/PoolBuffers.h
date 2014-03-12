@@ -21,6 +21,7 @@ This file is a part of Mona.
 
 #include "Mona/Mona.h"
 #include "Mona/Buffer.h"
+#include "Mona/Time.h"
 #include <deque>
 #include <mutex>
 
@@ -29,18 +30,21 @@ namespace Mona {
 class PoolBuffers : virtual Object {
 	friend class PoolBuffer;
 public:
-	PoolBuffers(UInt16 maximumCapacity = 32768) : _maximumCapacity(maximumCapacity) {}
-	virtual ~PoolBuffers() {clear();}
+	PoolBuffers(UInt16 maximumCapacity = 32768);
+	virtual ~PoolBuffers();
 
-	void clear();
+	void clear() { clear(false); }
 
 private:
+	void		clear(bool deleting);
 	Buffer*		beginBuffer(UInt32 size=0) const;
 	void		endBuffer(Buffer* pBuffer) const;
 
+				
 	mutable std::deque<Buffer*>	_buffers;
 	mutable std::mutex			_mutex;
 	UInt16						_maximumCapacity;
+	mutable Time				_lastEmptyTime;
 };
 
 

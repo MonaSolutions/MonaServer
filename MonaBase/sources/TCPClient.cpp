@@ -26,10 +26,10 @@ using namespace std;
 
 namespace Mona {
 
-TCPClient::TCPClient(const SocketManager& manager) :  _pBuffer(manager.poolBuffers),_connected(false), StreamSocket(manager), _rest(0) {
+TCPClient::TCPClient(const SocketManager& manager) :  _pBuffer(manager.poolBuffers),_connected(false), SocketHandler(manager), _rest(0) {
 }
 
-TCPClient::TCPClient(const SocketAddress& peerAddress, const SocketManager& manager) :  _pBuffer(manager.poolBuffers),_peerAddress(peerAddress), _connected(true), _rest(0), StreamSocket(manager) {
+TCPClient::TCPClient(const SocketAddress& peerAddress, const SocketManager& manager) :  _pBuffer(manager.poolBuffers), _connected(true), _rest(0), SocketHandler(peerAddress,manager) {
 
 }
 
@@ -37,31 +37,14 @@ TCPClient::~TCPClient() {
 	disconnect();
 }
 
-const SocketAddress& TCPClient::address() {
-	if (_address)
-		return _address;
-	Exception ex;
-	StreamSocket::address(ex, _address);
-	if (ex)
-		onError(ex.error());
-	return _address;
-}
-
-const SocketAddress& TCPClient::peerAddress() {
-	if (_peerAddress)
-		return _peerAddress;
-	Exception ex;
-	StreamSocket::peerAddress(ex, _peerAddress);
-	if (ex)
-		onError(ex.error());
-	return _peerAddress;
-}
-
 
 void TCPClient::onReadable(Exception& ex) {
-	UInt32 available = StreamSocket::available(ex);
+	UInt32 available = socket().available(ex);
 	if (ex)
 		return;
+
+	lock_guard<recursive_mutex> lock(_mutex);
+
 	if(available==0) {
 		disconnect();
 		return;
@@ -71,7 +54,7 @@ void TCPClient::onReadable(Exception& ex) {
 		_pBuffer->resize(_rest+available,true);
 
 
-	int received = receiveBytes(ex,_pBuffer->data()+_rest, available);
+	int received = socket().receiveBytes(ex,_pBuffer->data()+_rest, available);
 	if (ex)
 		return;
 
@@ -80,28 +63,33 @@ void TCPClient::onReadable(Exception& ex) {
 		return;
 	}
 	_rest += received;
-	_pBuffer->resize(_rest,true);
 
 	while (_rest > 0) {
 
-		UInt16 port = address().port();
+		_pBuffer->resize(_rest,true);
+		UInt32 rest = onReception(_pBuffer);
 
-		UInt32 rest = onReception(_pBuffer->data(),_rest);
+		 // To prevent the case where the buffer has been manipulated during onReception call
+		if(_pBuffer.empty())
+			rest = 0;
+		else if (_pBuffer->size() < _rest)
+			_rest = _pBuffer->size();
 
 		if (rest > _rest)
 			rest = _rest;
-
-		// rest <= _rest, has consumed 0 or few bytes
-		if (rest > 0) {
-			if (_rest != rest) { // has consumed few bytes (but not all)
-				if (!_pBuffer.empty() && _pBuffer->size()>=_rest) // To prevent the case where the buffer has been manipulated during onReception call, if it happens, ignore copy!
-					memmove(_pBuffer->data(), _pBuffer->data() + (_rest - rest), rest); // move to the beginning
-			}
-		} else // has consumed all
-			_pBuffer.release(); // release the buffer!
-
+		if (rest == 0) {
+			// has consumed all
+			_pBuffer.release();
+			_rest = 0;
+			break;
+		}
 		if (_rest == rest) // no new bytes consumption, wait next reception
 			break;
+
+
+		// has consumed few bytes (but not all)
+		// 0 < rest < _rest <= _pBuffer->size()
+		memmove(_pBuffer->data(), _pBuffer->data() + (_rest - rest), rest); // move to the beginning
 
 		_rest = rest;
 	}
@@ -110,29 +98,34 @@ void TCPClient::onReadable(Exception& ex) {
 
 
 bool TCPClient::connect(Exception& ex,const SocketAddress& address) {
+	lock_guard<recursive_mutex> lock(_mutex);
 	disconnect();
-	return _connected = StreamSocket::connect(ex, address);
+	_connected = socket().connect(ex, address);
+	if (!_connected)
+		return false;
+	SocketHandler::peerAddress(address);
+	return true;
 }
 
 void TCPClient::disconnect() {
+	lock_guard<recursive_mutex> lock(_mutex);
 	if(!_connected)
 		return;
 	Exception ex;
-	shutdown(ex);
+	socket().shutdown(ex);
 	close();
+	_connected = false;
 	_rest = 0;
 	_pBuffer.release();
-	_address.reset();
-	_peerAddress.reset();
-	_connected = false;
-	onDisconnection(); // in last because code of onDisconnection accept a "delete this"
+	resetAddresses();
+	onDisconnection(); // in last because can call a TCPClient::connect!
 }
 
 bool TCPClient::send(Exception& ex,const UInt8* data,UInt32 size) {
 	if(size==0)
 		return true;
 	shared_ptr<TCPSender> pSender(new TCPSender("TCPClient::send",data, size));
-	return StreamSocket::send(ex, pSender);
+	return socket().send(ex, pSender);
 }
 
 } // namespace Mona

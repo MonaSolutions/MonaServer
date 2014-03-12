@@ -31,11 +31,11 @@ namespace Mona {
 class WSSession : public TCPSession, virtual Object {
 public:
 
-	WSSession(const SocketAddress& address, Protocol& protocol, Invoker& invoker);
+	WSSession(const SocketAddress& address, const SocketManager& sockets, Protocol& protocol, Invoker& invoker);
 	virtual ~WSSession();
 
 
-	bool			buildPacket(PacketReader& packet);
+	bool			buildPacket(PoolBuffer& pBuffer,PacketReader& packet);
 	void			packetHandler(PacketReader& packet);
 	void			flush() { if (_pPublication) _pPublication->flush(); Session::flush(); }
 	void			manage();

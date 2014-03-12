@@ -92,9 +92,7 @@ void AMFWriter::writeText(const string& value) {
 			packet.write7BitValue(it->second<<1);
 			return;
 		}
-		if(it!=_stringReferences.begin())
-			--it;
-		_stringReferences.insert(it,pair<string,UInt32>(value,_stringReferences.size()));
+		_stringReferences.emplace_hint(it,value,_stringReferences.size());
 	}
 	packet.write7BitValue((value.size()<<1) | 0x01);
 	packet.writeRaw(value);

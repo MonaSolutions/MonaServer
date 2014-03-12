@@ -27,26 +27,42 @@ using namespace std;
 
 namespace Mona {
 
-void PoolBuffers::clear() {
+PoolBuffers::PoolBuffers(UInt16 maximumCapacity) : _maximumCapacity(maximumCapacity) {
+	// at least one buffer
+	_buffers.emplace_back(new Buffer(0));
+}
+
+PoolBuffers::~PoolBuffers() {
+	clear(true);
+}
+
+void PoolBuffers::clear(bool deleting) {
 	lock_guard<mutex> lock(_mutex);
-	for (Buffer* pBuffer : _buffers)
+	for(Buffer* pBuffer : _buffers)
 		delete pBuffer;
 	_buffers.clear();
+	// at least one buffer
+	if (!deleting)
+		_buffers.emplace_back(new Buffer(0));
 }
 
 // static atomic_int n;
 
 Buffer* PoolBuffers::beginBuffer(UInt32 size) const {
 	Buffer* pBuffer(NULL);
-	{
+	if (size > _maximumCapacity) {
+		pBuffer = new Buffer(size);
+	//	printf("New %d %p\n", ++n,pBuffer);
+		return pBuffer;
+	} else {
 		lock_guard<mutex> lock(_mutex);
-		if ((size > _maximumCapacity) || _buffers.empty()) {
-			pBuffer = new Buffer(size);
-		//	printf("New %d %p\n", ++n,pBuffer);
-			return pBuffer;
-		}
 		pBuffer = _buffers.front();
 		_buffers.pop_front();
+		// at least one buffer
+		if (_buffers.empty()) {
+			_buffers.emplace_back(new Buffer(0));
+			_lastEmptyTime.update();
+		}
 	}
 	if (size>0)
 		pBuffer->resize(size,false);
@@ -60,11 +76,19 @@ void PoolBuffers::endBuffer(Buffer* pBuffer) const {
 		delete pBuffer;
 		return;
 	}
-	lock_guard<mutex> lock(_mutex);
+	pBuffer->clear(); //to fix clip, and resize to 0
+	
 	// printf("release Buffer %u\n",pBuffer->capacity());
 //	printf("Release %d %p\n", --n,pBuffer);
-	pBuffer->clear(); //to fix clip, and resize to 0
+	_mutex.lock();
+	if (_lastEmptyTime.isElapsed(120000)) { // 2 minutes
+		_lastEmptyTime.update();
+		_mutex.unlock();
+		delete pBuffer;
+		return;
+	}
 	_buffers.emplace_back(pBuffer);
+	_mutex.unlock();
 }
 
 

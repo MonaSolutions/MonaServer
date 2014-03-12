@@ -43,7 +43,7 @@ UInt16 ServerConnection::port(const string& protocol) {
 }
 
 void ServerConnection::sendPublicAddress() {
-	ServerMessage message(socket().poolBuffers());
+	ServerMessage message(poolBuffers());
 	BinaryWriter& writer = message.packet;
 	writer.writeString(_handler.host());
 	writer.write8(_handler.ports().size());
@@ -117,15 +117,15 @@ void ServerConnection::send(const string& handler,ServerMessage& message) {
 }
 
 
-UInt32 ServerConnection::onReception(const UInt8* data,UInt32 size) {
-	if (_size == 0 && size < 4)
-		return size;
+UInt32 ServerConnection::onReception(PoolBuffer& pBuffer) {
+	if (_size == 0 && pBuffer->size() < 4)
+		return pBuffer->size();
 
-	PacketReader packet(data, size);
+	PacketReader packet(pBuffer->data(), pBuffer->size());
 	if(_size==0)
 		_size = packet.read32();
 	if (packet.available() < _size)
-		return size;
+		return pBuffer->size();
 
 	UInt32 rest = packet.available() - _size;
 	packet.shrink(_size);
@@ -175,11 +175,6 @@ UInt32 ServerConnection::onReception(const UInt8* data,UInt32 size) {
 		_handler.message(*this,handler,packet);
 
 	return rest;
-}
-
-void ServerConnection::onError(const std::string& error) {
-	_error = error;
-	disconnect();
 }
 
 void ServerConnection::onDisconnection(){

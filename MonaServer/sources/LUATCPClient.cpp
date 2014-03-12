@@ -30,20 +30,11 @@ LUATCPClient::LUATCPClient(const SocketAddress& peerAddress,const SocketManager&
 LUATCPClient::LUATCPClient(const SocketManager& manager,lua_State* pState) : _pState(pState),TCPClient(manager) {
 }
 
-LUATCPClient::~LUATCPClient() {
-}
-
-void LUATCPClient::onError(const std::string& error) {
-	_error = error;
-	disconnect();
-}
-
-
-UInt32 LUATCPClient::onReception(const UInt8* data,UInt32 size) {
+UInt32 LUATCPClient::onReception(PoolBuffer& pBuffer) {
 	UInt32 rest(0);
 	SCRIPT_BEGIN(_pState)
 		SCRIPT_MEMBER_FUNCTION_BEGIN(LUATCPClient,*this,"onReception")
-			SCRIPT_WRITE_BINARY(data,size)
+			SCRIPT_WRITE_BINARY(pBuffer->data(),pBuffer->size())
 			SCRIPT_FUNCTION_CALL
 			if (SCRIPT_CAN_READ)
 				rest = SCRIPT_READ_UINT(0);
@@ -73,7 +64,7 @@ int	LUATCPClient::Connect(lua_State* pState) {
 	SCRIPT_CALLBACK(LUATCPClient,client)
 		string host("127.0.0.1");
 		if (SCRIPT_NEXT_TYPE == LUA_TSTRING)
-			host = SCRIPT_READ_STRING("127.0.0.1");
+			host = SCRIPT_READ_STRING(host);
 		UInt16 port = SCRIPT_READ_UINT(0);
 		Exception ex;
 		SocketAddress address;

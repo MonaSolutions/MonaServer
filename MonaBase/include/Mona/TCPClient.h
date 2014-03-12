@@ -21,57 +21,48 @@ This file is a part of Mona.
 
 
 #include "Mona/Mona.h"
-#include "Mona/StreamSocket.h"
+#include "Mona/SocketHandler.h"
 #include "Mona/PoolBuffer.h"
 
 namespace Mona {
 
 
-class TCPClient : protected StreamSocket, virtual Object {
+class TCPClient : public SocketHandler, virtual Object {
 public:
 	TCPClient(const SocketManager& manager);
 	TCPClient(const SocketAddress& peerAddress,const SocketManager& manager);
 	virtual ~TCPClient();
 
+	const SocketAddress&	address() { return SocketHandler::address(); }
+	const SocketAddress&	peerAddress() { return SocketHandler::peerAddress(); }
+
 	bool					connect(Exception& ex, const SocketAddress& address);
 	bool					connected() { return _connected; }
 	bool					send(Exception& ex, const UInt8* data, UInt32 size);
+	void					disconnect();
 
 	template<typename SenderType>
 	bool send(Exception& ex,const std::shared_ptr<SenderType>& pSender) {
-		return StreamSocket::send<SenderType>(ex, pSender);
+		return socket().send<SenderType>(ex, pSender);
 	}
 	template<typename SenderType>
 	PoolThread*	send(Exception& ex,const std::shared_ptr<SenderType>& pSender, PoolThread* pThread) {
-		return StreamSocket::send<SenderType>(ex, pSender, pThread);
+		return SocketHandler::send<SenderType>(ex, pSender, pThread);
 	}
 
-	void					disconnect();
-
-	const SocketAddress&	address();
-	const SocketAddress&	peerAddress();
-
-	Socket&					socket() { return *this; }
-
-protected:
-	PoolBuffer&				rawBuffer() { return _pBuffer; }
-
 private:
-	virtual UInt32			onReception(const UInt8* data,UInt32 size) = 0;
-	virtual void			onError(const std::string& error) = 0;
+	
+	virtual UInt32			onReception(PoolBuffer& pBuffer) = 0;
 	virtual void			onDisconnection() {}
 
 
 	void					onReadable(Exception& ex);
-	
-	int						sendIntern(const UInt8* data,UInt32 size);
 
+	volatile bool			_connected;
+	std::recursive_mutex	_mutex;
 	PoolBuffer				_pBuffer;
 	UInt32					_rest;
-	bool					_connected;
-
-	SocketAddress			_address;
-	SocketAddress			_peerAddress;
+	
 };
 
 

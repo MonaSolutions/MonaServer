@@ -14,7 +14,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License received along this program for more
 details (or else see http://www.gnu.org/licenses/).
 
-This file is a part of Mona.
+This file is a part of Mona.	
 */
 
 #pragma once
@@ -26,9 +26,9 @@ This file is a part of Mona.
 
 namespace Mona {
 
-class TCPSession : public Session, protected TCPClient, virtual Object {
+class TCPSession : public Session, public TCPClient, virtual Object {
 protected:
-	TCPSession(const SocketAddress& address,Protocol& protocol,Invoker& invoker);
+	TCPSession(const SocketAddress& address,const SocketManager& sockets,Protocol& protocol,Invoker& invoker);
 
 	template<typename DecodingType>
 	void decode(const std::shared_ptr<DecodingType>& pDecoding,const SocketAddress& address) {
@@ -50,10 +50,10 @@ private:
 	}
 	void receive(PacketReader& packet);
 
-	virtual bool	buildPacket(PacketReader& packet) = 0;
+	virtual bool	buildPacket(PoolBuffer& pBuffer,PacketReader& packet) = 0;
 
 	// TCPClient implementation
-	UInt32			onReception(const UInt8* data, UInt32 size);
+	UInt32			onReception(PoolBuffer& pBuffer);
 	void			onError(const std::string& error);
 	void			onDisconnection() { kill(); }
 

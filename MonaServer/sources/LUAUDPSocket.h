@@ -34,11 +34,12 @@ public:
 
 private:
 	virtual ~LUAUDPSocket();
-	void	onReception(const Mona::UInt8* data, Mona::UInt32 size, const Mona::SocketAddress& address);
+	void	onReception(Mona::PoolBuffer& pBuffer, const Mona::SocketAddress& address);
 	void	onError(const std::string& error);
 
 	static int	Bind(lua_State* pState);
 	static int  Connect(lua_State* pState);
+	static int  Disconnect(lua_State* pState);
 	static int	Send(lua_State* pState);
 	static int  Close(lua_State* pState);
 	

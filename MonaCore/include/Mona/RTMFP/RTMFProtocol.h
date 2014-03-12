@@ -35,7 +35,7 @@ public:
 private:
 	void		manage() { if (_pHandshake) _pHandshake->manage(); }
 	
-	void		onPacket(const UInt8* data, UInt32 size, const SocketAddress& address);
+	void		onPacket(PoolBuffer& pBuffer, const SocketAddress& address);
 
 	std::unique_ptr<RTMFPHandshake>	_pHandshake;
 };

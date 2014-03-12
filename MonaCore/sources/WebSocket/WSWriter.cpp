@@ -26,7 +26,7 @@ using namespace std;
 
 namespace Mona {
 
-WSWriter::WSWriter(StreamSocket& socket,const SocketAddress& address) : _address(address),ping(0),_socket(socket),_sent(0) {
+WSWriter::WSWriter(TCPClient& client) : ping(0),_client(client),_sent(0) {
 	
 }
 
@@ -39,7 +39,7 @@ void WSWriter::close(int type /* = WS::CODE_NORMAL_CLOSE */ ) {
 
 JSONWriter& WSWriter::newDataWriter(bool modeRaw) {
 	pack();
-	WSSender* pSender = new WSSender(_socket.poolBuffers(),modeRaw);
+	WSSender* pSender = new WSSender(_client.poolBuffers(),modeRaw);
 	_senders.emplace_back(pSender);
 	pSender->writer.packet.next(10); // header
 	return pSender->writer;
@@ -73,8 +73,8 @@ void WSWriter::flush(bool full) {
 	_sent=0;
 	Exception ex;
 	for (shared_ptr<WSSender>& pSender : _senders) {
-		Writer::DumpResponse(pSender->data(),pSender->size(),_address);
-		EXCEPTION_TO_LOG(_socket.send<WSSender>(ex, pSender), "WSSender flush");
+		Writer::DumpResponse(pSender->data(),pSender->size(),_client.peerAddress());
+		EXCEPTION_TO_LOG(_client.send<WSSender>(ex, pSender), "WSSender flush");
 	}
 	_senders.clear();
 }
@@ -91,7 +91,7 @@ void WSWriter::write(UInt8 type,const UInt8* data,UInt32 size) {
 	if(state()==CLOSED)
 		return;
 	pack();
-	WSSender* pSender = new WSSender(_socket.poolBuffers());
+	WSSender* pSender = new WSSender(_client.poolBuffers());
 	pSender->packaged = true;
 	_senders.emplace_back(pSender);
 	BinaryWriter& writer = pSender->writer.packet;

@@ -24,12 +24,13 @@ This file is a part of Mona.
 #include "Mona/TaskHandler.h"
 #include "Mona/PoolThreads.h"
 #include "Mona/PoolBuffers.h"
-#include "Mona/Socket.h"
+#include "Mona/Net.h"
 #include <map>
 #include <atomic>
 
 namespace Mona {
 
+class Socket;
 class SocketManager : private Task, private Startable, private TaskHandler, virtual Object {
 	friend class Socket;
 public:
@@ -47,13 +48,6 @@ public:
 	bool					running() { return Startable::running(); }
 
 private:
-	class FakeSocket : public Socket {
-	public:
-		FakeSocket(SocketManager& manager) : Socket(manager) {}
-	private:
-		virtual void	onReadable(Exception& ex) {}
-		virtual void	onError(const std::string& error) {}
-	};
 	
 	// add a socket with a valid file descriptor to manage it
 	bool add(Exception& ex,Socket& socket) const;
@@ -77,7 +71,6 @@ private:
 
     mutable std::map<NET_SOCKET, std::unique_ptr<Socket>*>		_sockets;
 
-    FakeSocket							_fakeSocket;
     Exception							_exSkip;
 #if defined(_WIN32)
     HWND								_eventSystem;

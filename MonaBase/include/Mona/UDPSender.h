@@ -21,20 +21,20 @@ This file is a part of Mona.
 
 #include "Mona/Mona.h"
 #include "Mona/SocketSender.h"
-#include "Mona/DatagramSocket.h"
-
+#include "Mona/Socket.h"
 
 namespace Mona {
 
 class UDPSender : public SocketSender, virtual Object {
 public:
-	UDPSender(const char* name,bool dump = false) : SocketSender(name) {}
-	UDPSender(const char* name,const UInt8* data, UInt32 size) : SocketSender(name,data, size) {}
+	UDPSender(const char* name,bool dump = false) : SocketSender(name),allowBroadcast(false) {}
+	UDPSender(const char* name,const UInt8* data, UInt32 size) : SocketSender(name,data, size),allowBroadcast(false) {}
 
 	SocketAddress			address;
+	bool					allowBroadcast;
 private:
 	UInt32					send(Exception& ex, Socket& socket, const UInt8* data, UInt32 size) {
-		return address ? ((DatagramSocket&)socket).sendTo(ex, data, size, address) : ((DatagramSocket&)socket).sendBytes(ex, data, size);
+		return address ? socket.sendTo(ex, data, size, address,allowBroadcast) : socket.sendBytes(ex, data, size);
 	}
 
 };

@@ -21,50 +21,41 @@ This file is a part of Mona.
 
 
 #include "Mona/Mona.h"
-#include "Mona/DatagramSocket.h"
+#include "Mona/SocketHandler.h"
 #include "Mona/PoolBuffer.h"
 
 namespace Mona {
 
-class UDPSocket : protected DatagramSocket, virtual Object {
+class UDPSocket : public SocketHandler, virtual Object {
 public:
-	UDPSocket(const SocketManager& manager,bool allowBroadcast=false);
+	UDPSocket(const SocketManager& manager, bool allowBroadcast=false);
 
-	bool					bind(Exception& ex, const SocketAddress& address);
-	bool					connect(Exception& ex, const SocketAddress& address);
-	void					close();
+	const SocketAddress&	address() { return SocketHandler::address(); }
+	const SocketAddress&	peerAddress() { return SocketHandler::peerAddress(); }
+
+	bool					bind(Exception& ex, const SocketAddress& address) { bool result = socket().bind(ex, address); resetAddresses(); return result; }
+	void					close() { SocketHandler::close(); resetAddresses(); }
+	bool					connect(Exception& ex, const SocketAddress& address) { bool result = socket().connect(ex, address, _allowBroadcast);  resetAddresses(); return result; }
+	void					disconnect() { Exception ex; socket().connect(ex, SocketAddress::Wildcard()); resetAddresses(); }
 
 	bool					send(Exception& ex, const UInt8* data, UInt32 size);
 	bool					send(Exception& ex, const UInt8* data, UInt32 size, const SocketAddress& address);
 
 	template<typename SenderType>
 	bool send(Exception& ex, std::shared_ptr<SenderType>& pSender) {
-		return DatagramSocket::send<SenderType>(ex, pSender);
+		return socket().send<SenderType>(ex, pSender);
 	}
 	template<typename SenderType>
-	PoolThread*	send(Exception& ex, std::shared_ptr<SenderType>& pSender, PoolThread* pThread) {
-		return DatagramSocket::send<SenderType>(ex, pSender, pThread);
+	PoolThread* send(Exception& ex,const std::shared_ptr<SenderType>& pSender, PoolThread* pThread) {
+		return SocketHandler::send<SenderType>(ex, pSender,pThread);
 	}
 
-	const SocketAddress&	address();
-	const SocketAddress&	peerAddress();
-
-	Socket&					socket() { return *this; }
-
-protected:
-	PoolBuffer&				rawBuffer() { return _pBuffer; }
-
 private:
-	virtual void			onReception(const UInt8* data, UInt32 size, const SocketAddress& address) = 0;
+	virtual void			onReception(PoolBuffer& pBuffer, const SocketAddress& address) = 0;
+
 	void					onReadable(Exception& ex);
-
-	bool					_allowBroadcast;
-	bool					_broadcasting;
-
-	SocketAddress			_addressFrom;
-	SocketAddress			_address;
-	SocketAddress			_peerAddress;
-	PoolBuffer				_pBuffer;
+	
+	const bool				_allowBroadcast;
 };
 
 

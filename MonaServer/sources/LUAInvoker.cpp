@@ -156,8 +156,7 @@ int	LUAInvoker::AbsolutePath(lua_State *pState) {
 
 int	LUAInvoker::CreateUDPSocket(lua_State *pState) {
 	SCRIPT_CALLBACK(Invoker,invoker)
-		bool allowBroadcast = SCRIPT_READ_BOOL(false);
-		SCRIPT_NEW_OBJECT(LUAUDPSocket,LUAUDPSocket,*(new LUAUDPSocket(invoker.sockets,allowBroadcast,pState)))
+		SCRIPT_NEW_OBJECT(LUAUDPSocket,LUAUDPSocket,*(new LUAUDPSocket(invoker.sockets,SCRIPT_READ_BOOL(false),pState)))
 	SCRIPT_CALLBACK_RETURN
 }
 

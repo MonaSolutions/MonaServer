@@ -60,6 +60,7 @@ private:
 	Protocols					_protocols;
 	std::unique_ptr<Sessions>	_pSessions;	
 	ServerManager				_manager;
+	UInt32						_countClients;
 };
 
 

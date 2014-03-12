@@ -35,15 +35,14 @@ SocketSender::SocketSender(const char* name,const UInt8* data, UInt32 size) : Wo
 }
 
 bool SocketSender::run(Exception& ex) {
-	unique_lock<mutex> lock;
-	Socket* pSocket = _expirableSocket.safeThis(lock);
-	if (!pSocket)
-		return true;
-
+	if (!_pSocket) {
+		ex.set(Exception::SOCKET, "SocketSender ", name, " started in parallel without pointer of socket");
+		return false;
+	}
 	// send
 	Exception exc;
 	shared_ptr<SocketSender> pThis(_pThis);
-	pSocket->send(exc, pThis);
+	_pSocket->send(exc, pThis);
 	if (exc.code() != Exception::ASSERT)
 		ex.set(exc);
 	return true;
@@ -75,7 +74,7 @@ bool SocketSender::flush(Exception& ex,Socket& socket) {
 		return true;
 	}
 
-	if (buffering(socket.poolBuffers()))
+	if (buffering(socket.manager.poolBuffers))
 		return false;
 	return true;
 }

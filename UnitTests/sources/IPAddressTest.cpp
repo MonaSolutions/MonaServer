@@ -88,6 +88,7 @@ ADD_TEST(IPAddressTest, Classification) {
 	CHECK(!ex);
 	CHECK(_IpAddress.isWildcard());
 	CHECK(!_IpAddress.isBroadcast());
+	CHECK(!_IpAddress.isAnyBroadcast());
 	CHECK(!_IpAddress.isLoopback());
 	CHECK(!_IpAddress.isMulticast());
 	CHECK(!_IpAddress.isUnicast());
@@ -104,6 +105,7 @@ ADD_TEST(IPAddressTest, Classification) {
 	CHECK(!ex);
 	CHECK(!_IpAddress.isWildcard());
 	CHECK(_IpAddress.isBroadcast());
+	CHECK(_IpAddress.isAnyBroadcast());
 	CHECK(!_IpAddress.isLoopback());
 	CHECK(!_IpAddress.isMulticast());
 	CHECK(!_IpAddress.isUnicast());
@@ -115,11 +117,29 @@ ADD_TEST(IPAddressTest, Classification) {
 	CHECK(!_IpAddress.isSiteLocalMC());
 	CHECK(!_IpAddress.isOrgLocalMC());
 	CHECK(!_IpAddress.isGlobalMC());
+
+	CHECK(_IpAddress.set(ex, "192.168.255.255")); // sub broadcast
+	CHECK(!ex);
+	CHECK(!_IpAddress.isWildcard());
+	CHECK(!_IpAddress.isBroadcast());
+	CHECK(_IpAddress.isAnyBroadcast());
+	CHECK(!_IpAddress.isLoopback());
+	CHECK(!_IpAddress.isMulticast());
+	CHECK(!_IpAddress.isUnicast());
+	CHECK(!_IpAddress.isLinkLocal());
+	CHECK(_IpAddress.isSiteLocal());
+	CHECK(!_IpAddress.isWellKnownMC());
+	CHECK(!_IpAddress.isNodeLocalMC());
+	CHECK(!_IpAddress.isLinkLocalMC());
+	CHECK(!_IpAddress.isSiteLocalMC());
+	CHECK(!_IpAddress.isOrgLocalMC());
+	CHECK(!_IpAddress.isGlobalMC());
 	
 	CHECK(_IpAddress.set(ex, "127.0.0.1")); // loopback
 	CHECK(!ex);
 	CHECK(!_IpAddress.isWildcard());
 	CHECK(!_IpAddress.isBroadcast());
+	CHECK(!_IpAddress.isAnyBroadcast());
 	CHECK(_IpAddress.isLoopback());
 	CHECK(!_IpAddress.isMulticast());
 	CHECK(_IpAddress.isUnicast());
@@ -136,6 +156,7 @@ ADD_TEST(IPAddressTest, Classification) {
 	CHECK(!ex);
 	CHECK(!_IpAddress.isWildcard());
 	CHECK(!_IpAddress.isBroadcast());
+	CHECK(!_IpAddress.isAnyBroadcast());
 	CHECK(!_IpAddress.isLoopback());
 	CHECK(!_IpAddress.isMulticast());
 	CHECK(_IpAddress.isUnicast());
@@ -152,6 +173,7 @@ ADD_TEST(IPAddressTest, Classification) {
 	CHECK(!ex);
 	CHECK(!_IpAddress.isWildcard());
 	CHECK(!_IpAddress.isBroadcast());
+	CHECK(!_IpAddress.isAnyBroadcast());
 	CHECK(!_IpAddress.isLoopback());
 	CHECK(!_IpAddress.isMulticast());
 	CHECK(_IpAddress.isUnicast());
@@ -168,6 +190,7 @@ ADD_TEST(IPAddressTest, Classification) {
 	CHECK(!ex);
 	CHECK(!_IpAddress.isWildcard());
 	CHECK(!_IpAddress.isBroadcast());
+	CHECK(!_IpAddress.isAnyBroadcast());
 	CHECK(!_IpAddress.isLoopback());
 	CHECK(!_IpAddress.isMulticast());
 	CHECK(_IpAddress.isUnicast());
@@ -184,6 +207,7 @@ ADD_TEST(IPAddressTest, Classification) {
 	CHECK(!ex);
 	CHECK(!_IpAddress.isWildcard());
 	CHECK(!_IpAddress.isBroadcast());
+	CHECK(!_IpAddress.isAnyBroadcast());
 	CHECK(!_IpAddress.isLoopback());
 	CHECK(!_IpAddress.isMulticast());
 	CHECK(_IpAddress.isUnicast());
@@ -200,6 +224,7 @@ ADD_TEST(IPAddressTest, Classification) {
 	CHECK(!ex);
 	CHECK(!_IpAddress.isWildcard());
 	CHECK(!_IpAddress.isBroadcast());
+	CHECK(!_IpAddress.isAnyBroadcast());
 	CHECK(!_IpAddress.isLoopback());
 	CHECK(!_IpAddress.isMulticast());
 	CHECK(_IpAddress.isUnicast());
@@ -220,6 +245,7 @@ ADD_TEST(IPAddressTest, MCClassification) {
 	CHECK(!ex);
 	CHECK(!_IpAddress.isWildcard());
 	CHECK(!_IpAddress.isBroadcast());
+	CHECK(!_IpAddress.isAnyBroadcast());
 	CHECK(!_IpAddress.isLoopback());
 	CHECK(_IpAddress.isMulticast());
 	CHECK(!_IpAddress.isUnicast());
@@ -236,6 +262,7 @@ ADD_TEST(IPAddressTest, MCClassification) {
 	CHECK(!ex);
 	CHECK(!_IpAddress.isWildcard());
 	CHECK(!_IpAddress.isBroadcast());
+	CHECK(!_IpAddress.isAnyBroadcast());
 	CHECK(!_IpAddress.isLoopback());
 	CHECK(_IpAddress.isMulticast());
 	CHECK(!_IpAddress.isUnicast());
@@ -252,6 +279,7 @@ ADD_TEST(IPAddressTest, MCClassification) {
 	CHECK(!ex);
 	CHECK(!_IpAddress.isWildcard());
 	CHECK(!_IpAddress.isBroadcast());
+	CHECK(!_IpAddress.isAnyBroadcast());
 	CHECK(!_IpAddress.isLoopback());
 	CHECK(_IpAddress.isMulticast());
 	CHECK(!_IpAddress.isUnicast());
@@ -268,6 +296,7 @@ ADD_TEST(IPAddressTest, MCClassification) {
 	CHECK(!ex);
 	CHECK(!_IpAddress.isWildcard());
 	CHECK(!_IpAddress.isBroadcast());
+	CHECK(!_IpAddress.isAnyBroadcast());
 	CHECK(!_IpAddress.isLoopback());
 	CHECK(_IpAddress.isMulticast());
 	CHECK(!_IpAddress.isUnicast());
@@ -284,6 +313,7 @@ ADD_TEST(IPAddressTest, MCClassification) {
 	CHECK(!ex);
 	CHECK(!_IpAddress.isWildcard());
 	CHECK(!_IpAddress.isBroadcast());
+	CHECK(!_IpAddress.isAnyBroadcast());
 	CHECK(!_IpAddress.isLoopback());
 	CHECK(_IpAddress.isMulticast());
 	CHECK(!_IpAddress.isUnicast());
@@ -304,6 +334,7 @@ ADD_TEST(IPAddressTest, Classification6) {
 	CHECK(!ex);
 	CHECK(_IpAddress.isWildcard());
 	CHECK(!_IpAddress.isBroadcast());
+	CHECK(!_IpAddress.isAnyBroadcast());
 	CHECK(!_IpAddress.isLoopback());
 	CHECK(!_IpAddress.isMulticast());
 	CHECK(!_IpAddress.isUnicast());
@@ -320,6 +351,7 @@ ADD_TEST(IPAddressTest, Classification6) {
 	CHECK(!ex);
 	CHECK(!_IpAddress.isWildcard());
 	CHECK(!_IpAddress.isBroadcast());
+	CHECK(!_IpAddress.isAnyBroadcast());
 	CHECK(_IpAddress.isLoopback());
 	CHECK(!_IpAddress.isMulticast());
 	CHECK(_IpAddress.isUnicast());
@@ -336,6 +368,7 @@ ADD_TEST(IPAddressTest, Classification6) {
 	CHECK(!ex);
 	CHECK(!_IpAddress.isWildcard());
 	CHECK(!_IpAddress.isBroadcast());
+	CHECK(!_IpAddress.isAnyBroadcast());
 	CHECK(!_IpAddress.isLoopback());
 	CHECK(!_IpAddress.isMulticast());
 	CHECK(_IpAddress.isUnicast());
@@ -352,6 +385,7 @@ ADD_TEST(IPAddressTest, Classification6) {
 	CHECK(!ex);
 	CHECK(!_IpAddress.isWildcard());
 	CHECK(!_IpAddress.isBroadcast());
+	CHECK(!_IpAddress.isAnyBroadcast());
 	CHECK(!_IpAddress.isLoopback());
 	CHECK(!_IpAddress.isMulticast());
 	CHECK(_IpAddress.isUnicast());
@@ -368,6 +402,7 @@ ADD_TEST(IPAddressTest, Classification6) {
 	CHECK(!ex);
 	CHECK(!_IpAddress.isWildcard());
 	CHECK(!_IpAddress.isBroadcast());
+	CHECK(!_IpAddress.isAnyBroadcast());
 	CHECK(!_IpAddress.isLoopback());
 	CHECK(!_IpAddress.isMulticast());
 	CHECK(_IpAddress.isUnicast());
@@ -384,6 +419,7 @@ ADD_TEST(IPAddressTest, Classification6) {
 	CHECK(!ex);
 	CHECK(!_IpAddress.isWildcard());
 	CHECK(!_IpAddress.isBroadcast());
+	CHECK(!_IpAddress.isAnyBroadcast());
 	CHECK(!_IpAddress.isLoopback());
 	CHECK(!_IpAddress.isMulticast());
 	CHECK(_IpAddress.isUnicast());
@@ -405,6 +441,7 @@ ADD_TEST(IPAddressTest, MCClassification6) {
 	CHECK(!ex);
 	CHECK(!_IpAddress.isWildcard());
 	CHECK(!_IpAddress.isBroadcast());
+	CHECK(!_IpAddress.isAnyBroadcast());
 	CHECK(!_IpAddress.isLoopback());
 	CHECK(_IpAddress.isMulticast());
 	CHECK(!_IpAddress.isUnicast());
@@ -421,6 +458,7 @@ ADD_TEST(IPAddressTest, MCClassification6) {
 	CHECK(!ex);
 	CHECK(!_IpAddress.isWildcard());
 	CHECK(!_IpAddress.isBroadcast());
+	CHECK(!_IpAddress.isAnyBroadcast());
 	CHECK(!_IpAddress.isLoopback());
 	CHECK(_IpAddress.isMulticast());
 	CHECK(!_IpAddress.isUnicast());
@@ -437,6 +475,7 @@ ADD_TEST(IPAddressTest, MCClassification6) {
 	CHECK(!ex);
 	CHECK(!_IpAddress.isWildcard());
 	CHECK(!_IpAddress.isBroadcast());
+	CHECK(!_IpAddress.isAnyBroadcast());
 	CHECK(!_IpAddress.isLoopback());
 	CHECK(_IpAddress.isMulticast());
 	CHECK(!_IpAddress.isUnicast());
@@ -453,6 +492,7 @@ ADD_TEST(IPAddressTest, MCClassification6) {
 	CHECK(!ex);
 	CHECK(!_IpAddress.isWildcard());
 	CHECK(!_IpAddress.isBroadcast());
+	CHECK(!_IpAddress.isAnyBroadcast());
 	CHECK(!_IpAddress.isLoopback());
 	CHECK(_IpAddress.isMulticast());
 	CHECK(!_IpAddress.isUnicast());
@@ -469,6 +509,7 @@ ADD_TEST(IPAddressTest, MCClassification6) {
 	CHECK(!ex);
 	CHECK(!_IpAddress.isWildcard());
 	CHECK(!_IpAddress.isBroadcast());
+	CHECK(!_IpAddress.isAnyBroadcast());
 	CHECK(!_IpAddress.isLoopback());
 	CHECK(_IpAddress.isMulticast());
 	CHECK(!_IpAddress.isUnicast());

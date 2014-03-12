@@ -30,11 +30,11 @@ namespace Mona {
 class RTMPSession : public TCPSession, virtual Object {
 public:
 
-	RTMPSession(const SocketAddress& address, Protocol& protocol, Invoker& invoker);
+	RTMPSession(const SocketAddress& address, const SocketManager& sockets, Protocol& protocol, Invoker& invoker);
 	virtual ~RTMPSession();
 
 private:
-	bool			buildPacket(PacketReader& packet);
+	bool			buildPacket(PoolBuffer& pBuffer,PacketReader& packet);
 	void			packetHandler(PacketReader& packet);
 	void			manage();
 	void			flush() { Session::flush(); if (_pStream) _pStream->flush(); }

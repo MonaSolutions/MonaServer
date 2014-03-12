@@ -34,7 +34,7 @@ using namespace std;
 namespace Mona {
 
 
-HTTPSession::HTTPSession(const SocketAddress& address, Protocol& protocol, Invoker& invoker) : WSSession(address, protocol, invoker), _isWS(false), _writer(*this),_ppBuffer(new PoolBuffer(invoker.poolBuffers)), _pListener(NULL) {
+HTTPSession::HTTPSession(const SocketAddress& address,const SocketManager& sockets, Protocol& protocol, Invoker& invoker) : WSSession(address, sockets, protocol, invoker), _isWS(false), _writer(*this),_ppBuffer(new PoolBuffer(invoker.poolBuffers)), _pListener(NULL) {
 
 }
 
@@ -55,11 +55,11 @@ void HTTPSession::kill(){
 	WSSession::kill();
 }
 
-bool HTTPSession::buildPacket(PacketReader& packet) {
+bool HTTPSession::buildPacket(PoolBuffer& pBuffer,PacketReader& packet) {
 	if(_isWS)
-		return WSSession::buildPacket(packet);
+		return WSSession::buildPacket(pBuffer,packet);
 	// consumes all!
-	shared_ptr<HTTPPacketBuilding> pHTTPPacketBuilding(new HTTPPacketBuilding(invoker,rawBuffer(), _ppBuffer));
+	shared_ptr<HTTPPacketBuilding> pHTTPPacketBuilding(new HTTPPacketBuilding(invoker,pBuffer, _ppBuffer));
 	_packets.emplace_back(pHTTPPacketBuilding->pPacket);
 	decode<HTTPPacketBuilding>(pHTTPPacketBuilding);
 	return true;

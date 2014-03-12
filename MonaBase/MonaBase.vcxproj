@@ -175,7 +175,6 @@
     <ClInclude Include="include\Mona\Buffer.h" />
     <ClInclude Include="include\Mona\Crypto.h" />
     <ClInclude Include="include\Mona\Database.h" />
-    <ClInclude Include="include\Mona\DatagramSocket.h" />
     <ClInclude Include="include\Mona\Date.h" />
     <ClInclude Include="include\Mona\FilePath.h" />
     <ClInclude Include="include\Mona\Files.h" />
@@ -210,11 +209,10 @@
     <ClInclude Include="include\Mona\QualityOfService.h" />
     <ClInclude Include="include\Mona\ServerApplication.h" />
     <ClInclude Include="include\Mona\Expirable.h" />
+    <ClInclude Include="include\Mona\SocketHandler.h" />
     <ClInclude Include="include\Mona\StopWatch.h" />
-    <ClInclude Include="include\Mona\ServerSocket.h" />
     <ClInclude Include="include\Mona\Socket.h" />
     <ClInclude Include="include\Mona\SocketAddress.h" />
-    <ClInclude Include="include\Mona\StreamSocket.h" />
     <ClInclude Include="include\Mona\String.h" />
     <ClInclude Include="include\Mona\SubstreamMap.h" />
     <ClInclude Include="include\Mona\TerminateSignal.h" />
