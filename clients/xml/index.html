@@ -15,7 +15,8 @@
 
                 window.document.getElementById("response").value = xmlhttp.response;
                 console.log(xmlhttp); // for chrome/firefox debug
-              }
+              } else
+                alert("Error during the request (code " + xmlhttp.status + ")");
           }
       }
       // Send the POST request
@@ -28,11 +29,11 @@
     <form name="Demo" action="" method="post">
 <div>
 <textarea id="request" rows="10" cols="100">
-<root>
+<__array>
   <urn:sayHello>
     <message>test</message>
   </urn:sayHello>
-</root>
+</__array>
 </textarea>
 </div>
 <div>

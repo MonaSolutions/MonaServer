@@ -4,7 +4,6 @@
   <script type="text/javascript">
     function send() {
       var xmlhttp = new XMLHttpRequest();
-      //var address = window.document.getElementById("address").value;
       xmlhttp.open('POST', "", true);
 
       var req = window.document.getElementById("request").value;
@@ -36,9 +35,6 @@
 </head>
 <body>
     <form name="Demo" action="" method="post">
-<!--<div>
-<textarea id="address" rows="1" cols="100">http://127.0.0.1/clients/soap</textarea>
-</div>-->
 <div>
 <textarea id="request" rows="10" cols="100">
 <urn:sayHello>

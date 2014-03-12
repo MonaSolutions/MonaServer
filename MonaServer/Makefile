@@ -20,7 +20,7 @@ SOURCES = $(wildcard $(SRCDIR)*/*.cpp)
 OBJECT = $(SOURCES:sources/%.cpp=tmp/Release/%.o)
 OBJECTD = $(SOURCES:sources/%.cpp=tmp/Debug/%.o)
 
-release:	
+rel:	
 	mkdir -p tmp/Release/
 	@make -k $(OBJECT)
 	@echo creating executable $(EXEC)

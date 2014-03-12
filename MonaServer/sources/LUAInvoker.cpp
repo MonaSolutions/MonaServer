@@ -24,6 +24,7 @@ This file is a part of Mona.
 #include "LUATCPServer.h"
 #include "LUAGroup.h"
 #include "LUAMember.h"
+#include "LUAFilePath.h"
 #include "Mona/Exceptions.h"
 #include "Mona/Files.h"
 #include "MonaServer.h"
@@ -188,13 +189,16 @@ int	LUAInvoker::Md5(lua_State *pState) {
 	SCRIPT_CALLBACK_RETURN
 }
 
-int LUAInvoker::Dir(lua_State *pState) {
+int LUAInvoker::ListFiles(lua_State *pState) {
 	SCRIPT_CALLBACK(Invoker,invoker)
-		Exception ex;
 		string path(MonaServer::WWWPath + "/" + SCRIPT_READ_STRING("") + "/");
+		Exception ex;
 		Files dir(ex, path);
+		UInt32 index = 0;
+		SCRIPT_NEW_OBJECT(LUAFiles, LUAFiles, *(new LUAFiles()))
 		for(auto itFile = dir.begin(); itFile != dir.end(); ++itFile) {
-			SCRIPT_WRITE_STRING((*itFile).c_str());
+			SCRIPT_NEW_OBJECT(LUAFilePath, LUAFilePath, *(new LUAFilePath(*itFile)))
+			lua_rawseti(pState,-2,++index);
 		}
 	SCRIPT_CALLBACK_RETURN
 }
@@ -345,7 +349,7 @@ int LUAInvoker::Get(lua_State *pState) {
 		} else if(strcmp(name,"servers")==0) {
 			lua_getglobal(pState, "m.s");
 		} else if (strcmp(name,"dir")==0) {
-			SCRIPT_WRITE_FUNCTION(&LUAInvoker::Dir)
+			SCRIPT_WRITE_FUNCTION(&LUAInvoker::ListFiles)
 		}
 	SCRIPT_CALLBACK_RETURN
 }

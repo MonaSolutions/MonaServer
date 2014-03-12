@@ -44,6 +44,7 @@ JSONReader::JSONReader(PacketReader& packet) : DataReader(packet),_bool(false),_
 	if (!isValid())
 		return;
 
+	// Ignore first '[' and last ']'
 	if(followingType()==ARRAY) {
 		if(readArray(_pos) && packet.available()>0) {
 			const UInt8* cur = packet.current()+packet.available()-1;

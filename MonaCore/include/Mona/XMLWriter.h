@@ -28,12 +28,17 @@ public:
 	XMLWriter(const PoolBuffers& buffers);
 
 	virtual void beginObject(const std::string& type="",bool external=false);
+
+	/** Brief Function called at end of :
+	 - an object,
+	 - a list of attributes of a mixed array
+	*/
 	virtual void endObject();
 
 	virtual void writePropertyName(const std::string& value);
 
 	virtual void beginArray(UInt32 size);
-	virtual void endArray() {}
+	virtual void endArray();
 
 	virtual void writeDate(const Date& date) { writeRaw(date.toString(Date::ISO8601_FRAC_FORMAT, _buffer)); }
 	virtual void writeNumber(double value) { writeRaw(String::Format(_buffer, value)); }
@@ -44,41 +49,52 @@ public:
 
 	virtual void	clear();
 
-	virtual void	endWrite() { packet.writeRaw("</root>"); }
+	virtual void	endWrite();
 
-	/// \brief Function called for writing <root> tag
-	virtual void	beginDocument() { packet.writeRaw("<root>"); }
+	/** 
+	 * \brief Function called for writing first tag
+	 * \param doubleArray if double encapsulation is needed
+	 */
+	virtual void	beginDocument(bool doubleArray = false);
 
 protected:
 	virtual void	writeRaw(const char* value);
 	virtual void	writeRaw(const std::string& value);
 
-	/// \brief write right tag before writing primitive value
-	void	begin();
+	/*! \brief Write the right tag before writing primitive value
+	*/
+	void	begin(bool empty = false);
 
-	/// \brief write right tag after writing primitive value
+	/*! \brief Write the right tag after writing primitive value
+	*/
 	void	end();
 
+	/*! \brief Function to call before adding a child to a tag
+	* It close the tag if needed and set the flag 'childs' to true
+	*/
 	void	setTagHasChilds();
 
-	/// \brief Intern class for managing tags
-	/// while writing
+	/*! \brief Intern class for managing tags
+	*	while writing
+	*/
 	class TagPos : virtual Object {
 	public:
-		TagPos(const std::string& val) : name(val), counter(1), childs(false) {}
+		TagPos(const std::string& val) : name(val), childs(false), arrayLevel(1), empty(false) {}
 		std::string name;
-		UInt8		counter;
-		bool		childs;
+		bool		childs;			//! This tag has childs? Used to determine the closure mode
+		bool		empty;			//! Empty tag => no end tag
+		UInt8		arrayLevel;
 	};
 
-	std::deque<TagPos>	_queueTags; ///< queue of tags ordered by 
+	std::deque<TagPos>	_queueTags; //! queue of tags ordered by 
 
 private:	
 
-	std::string		_value; ///< last tag name readed 
-	std::string		_buffer; ///< buffer string for writing raw
+	std::string		_tagName;	// last tag name readed 
+	std::string		_buffer;	// buffer for raw conversion
 
-	bool _started;
+	bool	_started; // writing started
+	bool	_close2Times; // for an array of objects => close 2 times
 };
 
 

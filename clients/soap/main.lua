@@ -10,23 +10,8 @@ function onConnection(client,...)
   
   function client:onMessage(data)
 		INFO("Reception SOAP : ")
-    INFO("ToJSON : "..mona:toJSON(data))
-    data2 = mona:fromJSON(mona:toJSON(data))
-    INFO("ToJSON 2 : "..mona:toJSON(data2))
-    INFO("ToXML : "..mona:toXML(data))
-    
+    INFO("toJSON : "..mona:toJSON(data))
+
 		return data
-	end
-  
-	function client:add(a, b)
-		INFO("Reception "..a.." + "..b.." = "..(a+b))
-		
-		return a+b
-	end
-	
-	function client:sayHello(message)
-		INFO("Reception "..message)
-		
-		return {message.." received"}
 	end
 end
