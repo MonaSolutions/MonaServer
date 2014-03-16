@@ -46,6 +46,7 @@ Session::Session(Protocol& protocol, Invoker& invoker, const char* name) : dumpJ
 
 
 Session::~Session() {
+	expire();
 	kill();
 }
 
@@ -58,7 +59,6 @@ const string& Session::name() const {
 void Session::kill() {
 	if(died)
 		return;
-	expire(); //to avoid to continue receiving data!
 	peer.onDisconnection();
 	(bool&)died=true;
 }

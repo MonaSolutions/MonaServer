@@ -74,6 +74,8 @@ void RTMFPSession::kill() {
 	if(died)
 		return;
 
+	NOTE("RTMFPSession::kill ",name())
+
 	// unsubscribe peer for its groups
 	peer.unsubscribeGroups();
 
@@ -81,7 +83,10 @@ void RTMFPSession::kill() {
 	for(auto& it : _flows)
 		delete it.second;
 	_flows.clear();
-	delete _pFlowNull;
+	if (_pFlowNull) {
+		delete _pFlowNull;
+		_pFlowNull = NULL;
+	}
 	
 	Session::kill();
 	
@@ -396,7 +401,8 @@ void RTMFPSession::packetHandler(PacketReader& packet) {
 				
 				if(!pFlow) {
 					WARN("RTMFPFlow ",idFlow," unfound");
-					((UInt64&)_pFlowNull->id) = idFlow;
+					if (_pFlowNull)
+						((UInt64&)_pFlowNull->id) = idFlow;
 					pFlow = _pFlowNull;
 				}
 
@@ -440,16 +446,6 @@ RTMFPWriter* RTMFPSession::writer(UInt64 id) {
 	if(it==_flowWriters.end())
 		return NULL;
 	return it->second.get();
-}
-
-RTMFPFlow& RTMFPSession::flow(UInt64 id) {
-	map<UInt64,RTMFPFlow*>::const_iterator it = _flows.find(id);
-	if(it==_flows.end()) {
-		WARN("RTMFPFlow ",id," unfound");
-		((UInt64&)_pFlowNull->id) = id;
-		return *_pFlowNull;
-	}
-	return *it->second;
 }
 
 RTMFPFlow* RTMFPSession::createFlow(UInt64 id,const string& signature) {

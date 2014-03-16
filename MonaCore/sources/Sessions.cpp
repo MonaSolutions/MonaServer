@@ -37,7 +37,7 @@ Sessions::~Sessions() {
 		WARN("sessions are deleting");
 	Iterator it;
 	for (it = begin(); it != end(); ++it) {
-		it->second->expire();
+		it->second->expire();  //to avoid that threads which have handle on this session continue to deliver their results
 		delete it->second;
 	}
 	_sessions.clear();
@@ -50,7 +50,7 @@ void Sessions::remove(map<UInt32,Session*>::iterator it) {
 		_sessionsByPeerId.erase(session.peer.id);
 	if(session._sessionsOptions&BYADDRESS)
 		_sessionsByAddress.erase(session.peer.address);
-	session.expire();
+	session.expire(); //to avoid that threads which have handle on this session continue to deliver their results
 	delete &session;
 	_sessions.erase(it);
 }

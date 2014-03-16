@@ -112,7 +112,6 @@ private:
 	void							kill();
 
 	RTMFPWriter*					writer(UInt64 id);
-	RTMFPFlow&						flow(UInt64 id);
 	RTMFPFlow*						createFlow(UInt64 id,const std::string& signature);
 
 	void							failSignal();
