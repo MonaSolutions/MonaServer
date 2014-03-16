@@ -56,7 +56,7 @@ extern "C" {
 
 #define SCRIPT_BEGIN(STATE)										if(lua_State* __pState = STATE) { const char* __error=NULL;
 
-#define SCRIPT_NEW_OBJECT(TYPE,LUATYPE,OBJ)						Script::NewObject<TYPE,LUATYPE>(__pState,OBJ);
+#define SCRIPT_NEW_OBJECT(TYPE,LUATYPE,OBJ)						Script::NewObject<TYPE,LUATYPE>(__pState,*OBJ);
 
 #define SCRIPT_ADD_OBJECT(TYPE,LUATYPE,OBJ)						Script::AddObject<TYPE,LUATYPE>(__pState,OBJ);
 #define SCRIPT_REMOVE_OBJECT(TYPE,LUATYPE,OBJ)					Script::RemoveObject<TYPE,LUATYPE>(__pState,OBJ);

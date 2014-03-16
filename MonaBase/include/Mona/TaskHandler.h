@@ -32,7 +32,7 @@ public:
 	TaskHandler() : _pTask(NULL), _stop(true) {}
 	virtual ~TaskHandler() {stop(); }
 
-	void waitHandle(Task& task);
+	bool waitHandle(Task& task);
 
 protected:
 	void start();

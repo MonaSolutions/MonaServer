@@ -113,7 +113,7 @@ AMFWriter& RTMPWriter::write(AMF::ContentType type,UInt32 time,PacketReader* pDa
 	_channel.type = type;
 
 	if (!_pSender)
-		_pSender.reset(new RTMPSender(_client.poolBuffers()));
+		_pSender.reset(new RTMPSender(_client.manager().poolBuffers));
 
 	AMFWriter& writer = _pSender->writer(_channel);
 	BinaryWriter& data = writer.packet;

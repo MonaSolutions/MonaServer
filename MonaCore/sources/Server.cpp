@@ -96,12 +96,10 @@ void Server::run(Exception& exc) {
 	} catch (...) {
 		FATAL("Server, unknown error");
 	}
-
-	// terminate the tasks
+	 
+	// terminate the tasks (forced to do immediatly, because no more "giveHandle" is called)
 	TaskHandler::stop();
-	// terminate messages reception
-	((SocketManager&)sockets).stop();
-	((RelayServer&)relay).stop();
+
 	// terminate manager
 	_manager.stop();
 
@@ -109,15 +107,24 @@ void Server::run(Exception& exc) {
 	if (_pSessions)
 		_pSessions.reset();
 
+	// terminate relay server
+	((RelayServer&)relay).stop();
+
+	// unload protocol servers (close server socket)
+	_protocols.unload();
+
+	// stop event to unload children resource (before to release sockets, threads, and buffers)
+	onStop();
+
+	// terminate sockets manager
+	((SocketManager&)sockets).stop();
+
 	// stop receiving and sending engine (it waits the end of sending last session messages)
 	poolThreads.join();
-
-	_protocols.unload();
 
 	// release memory
 	((PoolBuffers&)poolBuffers).clear();
 
-	onStop();
 	NOTE("Server stopped");
 }
 

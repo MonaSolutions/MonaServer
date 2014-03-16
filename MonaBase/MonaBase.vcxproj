@@ -209,7 +209,6 @@
     <ClInclude Include="include\Mona\QualityOfService.h" />
     <ClInclude Include="include\Mona\ServerApplication.h" />
     <ClInclude Include="include\Mona\Expirable.h" />
-    <ClInclude Include="include\Mona\SocketHandler.h" />
     <ClInclude Include="include\Mona\StopWatch.h" />
     <ClInclude Include="include\Mona\Socket.h" />
     <ClInclude Include="include\Mona\SocketAddress.h" />

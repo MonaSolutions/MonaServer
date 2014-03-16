@@ -35,7 +35,7 @@ public:
 private:
 	virtual ~LUAUDPSocket();
 	void	onReception(Mona::PoolBuffer& pBuffer, const Mona::SocketAddress& address);
-	void	onError(const std::string& error);
+	void	onError(const Mona::Exception& ex);
 
 	static int	Bind(lua_State* pState);
 	static int  Connect(lua_State* pState);

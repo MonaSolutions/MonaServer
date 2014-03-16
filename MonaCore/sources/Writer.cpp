@@ -36,15 +36,15 @@ void Writer::DumpResponse(const UInt8* data, UInt32 size, const SocketAddress& a
 		DUMP(data, size, "Response to ", address.toString())
 }
 
-Writer::Writer(WriterHandler* pHandler) : reliable(true),_state(CONNECTED) {
+Writer::Writer(WriterHandler* pHandler) : _isNull(false),reliable(true),_state(CONNECTED) {
 	if (pHandler)
 		_handlers.insert(pHandler);
 }
 
-Writer::Writer(Writer& writer) : reliable(writer.reliable),_state(writer._state) {
+Writer::Writer(Writer& writer) : _isNull(writer._isNull),reliable(writer.reliable),_state(writer._state) {
 }
 
-Writer::Writer(bool isNull) : NullableObject(isNull), reliable(true), _state(CONNECTED) {
+Writer::Writer(bool isNull) : _isNull(isNull), reliable(true), _state(CONNECTED) {
 }
 
 Writer::~Writer(){

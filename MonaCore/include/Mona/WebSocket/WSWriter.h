@@ -52,7 +52,7 @@ public:
 private:
 	void			pack();
 	void			createReader(PacketReader& reader, std::shared_ptr<DataReader>& pReader) { pReader.reset(new JSONReader(reader)); }
-	void			createWriter(std::shared_ptr<DataWriter>& pWriter) { pWriter.reset(new JSONWriter(_client.poolBuffers())); }
+	void			createWriter(std::shared_ptr<DataWriter>& pWriter) { pWriter.reset(new JSONWriter(_client.manager().poolBuffers)); }
 	bool			hasToConvert(DataReader& reader) { return dynamic_cast<JSONReader*>(&reader) == NULL; }
 	bool			writeMedia(MediaType type,UInt32 time,PacketReader& data);
 

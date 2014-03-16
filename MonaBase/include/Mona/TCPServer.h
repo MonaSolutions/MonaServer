@@ -21,41 +21,37 @@ This file is a part of Mona.
 
 
 #include "Mona/Mona.h"
-#include "Mona/SocketHandler.h"
+#include "Mona/Socket.h"
 
 
 namespace Mona {
 
-class TCPServer : public SocketHandler, virtual Object {
+class TCPServer : private SocketEvents, virtual Object {
 public:
 	TCPServer(const SocketManager& manager);
 	virtual ~TCPServer();
 
+	// unsafe-threading
+	const SocketAddress&	address() { return _address; }
+	// safe-threading
+	SocketAddress&			address(SocketAddress& address){ std::lock_guard<std::recursive_mutex> lock(_mutex);  return address=_address; }
+
 	bool					start(Exception& ex, const SocketAddress& address);
 	bool					running() { return _running;  }
-	const SocketAddress&	address() { return SocketHandler::address(); }
 	void					stop();
 
-	 
-	template <typename ClientType,typename ...Args>
-	ClientType* acceptClient(Exception& ex, Args&&... args) {
-		ASSERT_RETURN(_hasToAccept == true, NULL)
-		ClientType* pClient = socket().acceptConnection<ClientType>(ex, args ...);
-		// no mutex protection on _hasToAccept because acceptClient has to be called from code of onConnectionRequest event
-		_hasToAccept = false;
-		return pClient;
-	}
-
+	const SocketManager&	manager() const { return _socket.manager(); }
+protected:
+	void close() { stop(); }
 private:
-
-	virtual void	onConnectionRequest(Exception& ex) = 0;
+	virtual void	onConnection(Exception& ex,const SocketAddress& address,SocketFile& file) = 0;
 	// Can be called from one other thread
-	void			onReadable(Exception& ex);
+	void			onReadable(Exception& ex,UInt32 available);
 
-
-	bool				_hasToAccept; 
-	std::mutex			_mutex;
-	volatile bool		_running;
+	Socket					_socket;
+	std::recursive_mutex	_mutex;
+	volatile bool			_running;
+	SocketAddress			_address;
 	
 };
 

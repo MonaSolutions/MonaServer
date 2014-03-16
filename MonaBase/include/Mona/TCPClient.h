@@ -21,20 +21,23 @@ This file is a part of Mona.
 
 
 #include "Mona/Mona.h"
-#include "Mona/SocketHandler.h"
-#include "Mona/PoolBuffer.h"
+#include "Mona/Socket.h"
 
 namespace Mona {
 
 
-class TCPClient : public SocketHandler, virtual Object {
+class TCPClient : private SocketEvents, virtual Object {
 public:
 	TCPClient(const SocketManager& manager);
-	TCPClient(const SocketAddress& peerAddress,const SocketManager& manager);
+	TCPClient(const SocketAddress& peerAddress,SocketFile& file,const SocketManager& manager);
 	virtual ~TCPClient();
 
-	const SocketAddress&	address() { return SocketHandler::address(); }
-	const SocketAddress&	peerAddress() { return SocketHandler::peerAddress(); }
+	// unsafe-threading
+	const SocketAddress&	address() const { std::lock_guard<std::recursive_mutex> lock(_mutex); return updateAddress(); }
+	const SocketAddress&	peerAddress() const {  std::lock_guard<std::recursive_mutex> lock(_mutex); return updatePeerAddress(); }
+	// safe-threading
+	SocketAddress&			address(SocketAddress& address) const { std::lock_guard<std::recursive_mutex> lock(_mutex); return address.set(updateAddress()); }
+	SocketAddress&			peerAddress(SocketAddress& address) const { std::lock_guard<std::recursive_mutex> lock(_mutex); return address.set(updatePeerAddress()); }
 
 	bool					connect(Exception& ex, const SocketAddress& address);
 	bool					connected() { return _connected; }
@@ -43,25 +46,37 @@ public:
 
 	template<typename SenderType>
 	bool send(Exception& ex,const std::shared_ptr<SenderType>& pSender) {
-		return socket().send<SenderType>(ex, pSender);
+		return _socket.send<SenderType>(ex, pSender);
 	}
 	template<typename SenderType>
 	PoolThread*	send(Exception& ex,const std::shared_ptr<SenderType>& pSender, PoolThread* pThread) {
-		return SocketHandler::send<SenderType>(ex, pSender, pThread);
+		return _socket.send<SenderType>(ex, pSender, pThread);
 	}
 
+	const SocketManager&	manager() const { return _socket.manager(); }
+protected:
+	void close();
 private:
 	
 	virtual UInt32			onReception(PoolBuffer& pBuffer) = 0;
+	virtual void			onError(const Exception& ex) = 0;
 	virtual void			onDisconnection() {}
 
+	const SocketAddress&	updateAddress() const { if (_address) return _address;  Exception ex; _socket.address(ex, _address); return _address; }
+	const SocketAddress&	updatePeerAddress() const { if (_peerAddress) return _peerAddress; Exception ex; _socket.peerAddress(ex, _peerAddress); return _peerAddress; }
 
-	void					onReadable(Exception& ex);
+	void					onReadable(Exception& ex,UInt32 available);
 
-	volatile bool			_connected;
-	std::recursive_mutex	_mutex;
-	PoolBuffer				_pBuffer;
-	UInt32					_rest;
+	Socket					_socket;
+
+	volatile bool				_connected;
+	bool						_disconnecting;
+
+	mutable std::recursive_mutex _mutex;
+	PoolBuffer					_pBuffer;
+	UInt32						_rest;
+	mutable SocketAddress	_address;
+	mutable SocketAddress	_peerAddress;
 	
 };
 

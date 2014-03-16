@@ -27,7 +27,7 @@ namespace Mona {
 
 class DataWriterNull;
 
-class DataWriter : public virtual NullableObject {
+class DataWriter : virtual NullableObject {
 public:
 
 	virtual void beginObject(const std::string& type="",bool external=false)=0;
@@ -67,10 +67,12 @@ public:
 		
 	PacketWriter packet;
 
+	operator bool() const { return packet; }
+
     static DataWriterNull Null;
 protected:
 	DataWriter(const PoolBuffers& poolBuffers): packet(poolBuffers),_lastReference(0){}
-	DataWriter(): NullableObject(true),_lastReference(0){} // Null
+	DataWriter() : _lastReference(0){} // Null
 
 	UInt32					_lastReference;
 
@@ -79,7 +81,7 @@ protected:
 
 class DataWriterNull : public DataWriter {
 public:
-	DataWriterNull() : NullableObject(true),DataWriter() {}
+	DataWriterNull() {}
 
 private:
     void beginObject(const std::string& type="",bool external=false){}

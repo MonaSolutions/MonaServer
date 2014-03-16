@@ -46,7 +46,7 @@ private:
 	UInt8 _key[RTMFP_KEY_SIZE];	
 };
 
-class RTMFPEngine : virtual NullableObject {
+class RTMFPEngine : virtual Object {
 public:
 	enum Direction {
 		DECRYPT=0,
@@ -62,6 +62,7 @@ public:
 	void		  process(const UInt8* in,UInt8* out,int size);
 
 	Type		  type;
+
 private:
 	Direction						_direction;
 	const std::shared_ptr<RTMFPKey> _pKey;

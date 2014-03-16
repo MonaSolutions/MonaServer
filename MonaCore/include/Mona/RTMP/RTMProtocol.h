@@ -28,15 +28,11 @@ namespace Mona {
 class RTMProtocol : public TCProtocol, virtual Object {
 public:
 	RTMProtocol(const char* name, Invoker& invoker, Sessions& sessions) : TCProtocol(name, invoker, sessions) {}
-
+	~RTMProtocol() { stop(); }
 private:
-	// TCPServer implementation
-	void onConnectionRequest(Exception& ex) {
-		RTMPSession* pSession = acceptClient<RTMPSession>(ex, *this, invoker);
-		if (!pSession)
-			return;
-		// Create session!
-		sessions.add(*pSession);
+	// Create session
+	void onClient(Exception& ex,const SocketAddress& address,SocketFile& file) {
+		sessions.create<RTMPSession>(address,file,*this,invoker);
 	}
 };
 

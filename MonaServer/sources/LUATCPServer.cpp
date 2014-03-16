@@ -28,23 +28,22 @@ LUATCPServer::LUATCPServer(const SocketManager& manager,lua_State* pState) : _pS
 }
 
 LUATCPServer::~LUATCPServer() {
+	close();
 }
 
-void LUATCPServer::onError(const string& error) {
-	WARN("LUATCPServer, ", error);
+void LUATCPServer::onError(const Exception& ex) {
+	WARN("LUATCPServer, ", ex.error());
 }
 
-void LUATCPServer::onConnectionRequest(Exception& ex) {
-	LUATCPClient* pClient = acceptClient<LUATCPClient>(ex, _pState);
-	if (!pClient)
-		return;
+void LUATCPServer::onConnection(Exception& ex,const SocketAddress& peerAddress,SocketFile& file) {
 	SCRIPT_BEGIN(_pState)
 		SCRIPT_MEMBER_FUNCTION_BEGIN(LUATCPServer,*this,"onConnection")	
-			SCRIPT_NEW_OBJECT(LUATCPClient, LUATCPClient, *pClient)
+			SCRIPT_NEW_OBJECT(LUATCPClient, LUATCPClient, new LUATCPClient(peerAddress,file,manager(),_pState))
 			SCRIPT_FUNCTION_CALL
 		SCRIPT_FUNCTION_END
 	SCRIPT_END
 }
+
 
 int	LUATCPServer::Destroy(lua_State* pState) {
 	SCRIPT_DESTRUCTOR_CALLBACK(LUATCPServer,server)

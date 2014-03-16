@@ -35,7 +35,7 @@ protected:
 	
 private:
 	void		onReception(PoolBuffer& pBuffer,const SocketAddress& address);
-	void		onError(const std::string& error) { WARN("Protocol ",name,", ", error); }
+	void		onError(const Exception& ex) { WARN("Protocol ",name,", ", ex.error()); }
 
 	virtual void onPacket(PoolBuffer& pBuffer, const SocketAddress& address) = 0;
 };

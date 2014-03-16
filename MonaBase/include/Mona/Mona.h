@@ -255,12 +255,9 @@ public:
 };
 
 class NullableObject : virtual Object {
-protected:
-	bool _isNull;
 public:
-	NullableObject(bool isNull = false) : _isNull(isNull) {}
-
-	operator bool() const { return !_isNull; }
+	NullableObject() {}
+	virtual operator bool() const = 0;
 };
 
 ////// ASCII ////////

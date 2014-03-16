@@ -32,7 +32,7 @@ namespace Mona {
 
 class Socket;
 class SocketManager : private Task, private Startable, private TaskHandler, virtual Object {
-	friend class Socket;
+	friend class SocketImpl;
 public:
 	SocketManager(TaskHandler& handler, const PoolBuffers& poolBuffers, PoolThreads& poolThreads, UInt32 bufferSize = 0, const std::string& name = "SocketManager");
 	SocketManager(const PoolBuffers& poolBuffers, PoolThreads& poolThreads, UInt32 bufferSize = 0, const std::string& name = "SocketManager");
@@ -45,18 +45,19 @@ public:
 	const PoolBuffers&		poolBuffers;
 	const UInt32			bufferSize;
 
-	bool					running() { return Startable::running(); }
+	bool					running() const { return Startable::running(); }
 
 private:
 	
 	// add a socket with a valid file descriptor to manage it
-	bool add(Exception& ex,Socket& socket) const;
+	Socket** add(Exception& ex,NET_SOCKET sockfd,Socket& socket) const;
 
 	// remove a socket with a valid file descriptor to unmanage it
-	void remove(Socket& socket) const;
+	// when removed, no new events must happened (Expirable Socket is here to guarantee it)
+	void remove(NET_SOCKET sockfd) const;
 
-	bool startWrite(Socket& socket) const;
-	bool stopWrite(Socket& socket) const;
+	bool startWrite(NET_SOCKET sockfd,Socket** ppSocket) const;
+	bool stopWrite(NET_SOCKET sockfd,Socket** ppSocket) const;
 
 	void					requestHandle();
 	void					run(Exception& ex);
@@ -69,7 +70,7 @@ private:
 	mutable  Event						_eventInit;
 	mutable std::recursive_mutex		_mutex;
 
-    mutable std::map<NET_SOCKET, std::unique_ptr<Socket>*>		_sockets;
+    mutable std::map<NET_SOCKET, Socket**>		_sockets;
 
     Exception							_exSkip;
 #if defined(_WIN32)
@@ -81,8 +82,9 @@ private:
 	
 	UInt32								_currentEvent;
 	int									_currentError;
+	Exception							_currentException;
 
-	std::unique_ptr<Socket>*			_ppSocket;
+	Socket**							_ppSocket;
     NET_SOCKET							_sockfd;
 };
 

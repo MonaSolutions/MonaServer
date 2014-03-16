@@ -20,7 +20,6 @@ This file is a part of Mona.
 
 #include "Mona/UDPSocket.h"
 #include "Mona/UDPSender.h"
-#include "Mona/SocketManager.h"
 
 
 using namespace std;
@@ -29,18 +28,20 @@ using namespace std;
 namespace Mona {
 
 
-UDPSocket::UDPSocket(const SocketManager& manager, bool allowBroadcast) : SocketHandler(manager,Socket::DATAGRAM), _allowBroadcast(allowBroadcast) {
-
+UDPSocket::UDPSocket(const SocketManager& manager, bool allowBroadcast) : _socket(*this,manager,Socket::DATAGRAM), _allowBroadcast(allowBroadcast) {
 }
 
-void UDPSocket::onReadable(Exception& ex) {
-	UInt32 available = socket().available(ex);
-	if(ex || available==0)
+UDPSocket::~UDPSocket() {
+	close();
+}
+
+void UDPSocket::onReadable(Exception& ex,UInt32 available) {
+	if(available==0)
 		return;
 
-	PoolBuffer pBuffer(poolBuffers(),available);
+	PoolBuffer pBuffer(_socket.manager().poolBuffers,available);
 	SocketAddress address;
-	int size = socket().receiveFrom(ex,pBuffer->data(), available, address);
+	int size = _socket.receiveFrom(ex,pBuffer->data(), available, address);
 	if (ex || size <= 0)
 		return;
 	pBuffer->resize(size, true);
@@ -51,7 +52,7 @@ bool UDPSocket::send(Exception& ex, const UInt8* data, UInt32 size) {
 	if (size == 0)
 		return true;
 	shared_ptr<UDPSender> pSender(new UDPSender("UDPSender::send",data, size));
-	return socket().send(ex, pSender);
+	return _socket.send(ex, pSender);
 }
 
 bool UDPSocket::send(Exception& ex, const UInt8* data, UInt32 size,const SocketAddress& address) {
@@ -60,7 +61,7 @@ bool UDPSocket::send(Exception& ex, const UInt8* data, UInt32 size,const SocketA
 	shared_ptr<UDPSender> pSender(new UDPSender("UDPSender::send",data, size));
 	pSender->address.set(address);
 	pSender->allowBroadcast = _allowBroadcast;
-	return socket().send(ex, pSender);
+	return _socket.send(ex, pSender);
 }
 
 } // namespace Mona

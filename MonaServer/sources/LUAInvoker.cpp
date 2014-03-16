@@ -144,7 +144,7 @@ int	LUAInvoker::Publish(lua_State *pState) {
 	else {
 		if (ex)
 			SCRIPT_WARN(ex.error().c_str())
-		SCRIPT_NEW_OBJECT(LUAMyPublication, LUAMyPublication, *new LUAMyPublication(*pPublication, invoker))
+		SCRIPT_NEW_OBJECT(LUAMyPublication, LUAMyPublication, new LUAMyPublication(*pPublication, invoker))
 	}
 	SCRIPT_CALLBACK_RETURN
 }
@@ -157,19 +157,19 @@ int	LUAInvoker::AbsolutePath(lua_State *pState) {
 
 int	LUAInvoker::CreateUDPSocket(lua_State *pState) {
 	SCRIPT_CALLBACK(Invoker,invoker)
-		SCRIPT_NEW_OBJECT(LUAUDPSocket,LUAUDPSocket,*(new LUAUDPSocket(invoker.sockets,SCRIPT_READ_BOOL(false),pState)))
+		SCRIPT_NEW_OBJECT(LUAUDPSocket,LUAUDPSocket,new LUAUDPSocket(invoker.sockets,SCRIPT_READ_BOOL(false),pState))
 	SCRIPT_CALLBACK_RETURN
 }
 
 int	LUAInvoker::CreateTCPClient(lua_State *pState) {
 	SCRIPT_CALLBACK(Invoker,invoker)
-		SCRIPT_NEW_OBJECT(LUATCPClient, LUATCPClient, *(new LUATCPClient(invoker.sockets, pState)))
+		SCRIPT_NEW_OBJECT(LUATCPClient, LUATCPClient, new LUATCPClient(invoker.sockets, pState))
 	SCRIPT_CALLBACK_RETURN
 }
 
 int	LUAInvoker::CreateTCPServer(lua_State *pState) {
 	SCRIPT_CALLBACK(Invoker,invoker)
-		SCRIPT_NEW_OBJECT(LUATCPServer, LUATCPServer, *(new LUATCPServer(invoker.sockets, pState)))
+		SCRIPT_NEW_OBJECT(LUATCPServer, LUATCPServer, new LUATCPServer(invoker.sockets, pState))
 	SCRIPT_CALLBACK_RETURN
 }
 
@@ -195,9 +195,9 @@ int LUAInvoker::ListFiles(lua_State *pState) {
 		Exception ex;
 		Files dir(ex, path);
 		UInt32 index = 0;
-		SCRIPT_NEW_OBJECT(LUAFiles, LUAFiles, *(new LUAFiles()))
+		SCRIPT_NEW_OBJECT(LUAFiles, LUAFiles, new LUAFiles())
 		for(auto itFile = dir.begin(); itFile != dir.end(); ++itFile) {
-			SCRIPT_NEW_OBJECT(LUAFilePath, LUAFilePath, *(new LUAFilePath(*itFile)))
+			SCRIPT_NEW_OBJECT(LUAFilePath, LUAFilePath, new LUAFilePath(*itFile))
 			lua_rawseti(pState,-2,++index);
 		}
 	SCRIPT_CALLBACK_RETURN
@@ -283,7 +283,7 @@ int LUAInvoker::JoinGroup(lua_State* pState) {
 				Peer* pPeer = new Peer((Handler&)invoker);
 				memcpy((void*)pPeer->id, peerId, ID_SIZE);
 				pPeer->joinGroup(groupId, NULL);
-				SCRIPT_NEW_OBJECT(Peer, LUAMember, *pPeer)
+				SCRIPT_NEW_OBJECT(Peer, LUAMember, pPeer)
 			}
 		}
 	SCRIPT_CALLBACK_RETURN

@@ -29,8 +29,8 @@ Task::Task(TaskHandler& handler) : _handler(handler)  {
 }
 
 
-void Task::waitHandle() {
-	_handler.waitHandle(*this);
+bool Task::waitHandle() {
+	return _handler.waitHandle(*this);
 }
 
 } // namespace Mona

@@ -94,19 +94,23 @@ public:
 	virtual void			createWriter(std::shared_ptr<DataWriter>& pWriter) {}
 	virtual bool			hasToConvert(DataReader& reader) {return false;}
 
+	operator bool() const { return !_isNull; }
+
     static Writer			Null;
 
 protected:
 	Writer(WriterHandler* pHandler=NULL);
 	Writer(Writer& writer);
-	Writer(bool isNull);
 	virtual ~Writer();
 
 	QualityOfService				_qos;
 	
 private:
+	Writer(bool isNull);
+
 	std::set<WriterHandler*>		_handlers;
 	State							_state;
+	bool							_isNull;
 };
 
 

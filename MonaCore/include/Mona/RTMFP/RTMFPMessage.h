@@ -58,11 +58,13 @@ private:
 class RTMFPMessageBuffered: public RTMFPMessage, virtual NullableObject {
 public:
 	RTMFPMessageBuffered(const PoolBuffers& poolBuffers,bool repeatable) : _pWriter(new AMFWriter(poolBuffers)),RTMFPMessage(repeatable) {}
-	RTMFPMessageBuffered() : _pWriter(&AMFWriter::Null),RTMFPMessage(false),NullableObject(true) {}
+	RTMFPMessageBuffered() : _pWriter(&AMFWriter::Null),RTMFPMessage(false) {}
 	
 	virtual ~RTMFPMessageBuffered() { if (_pWriter != &AMFWriter::Null) delete _pWriter; }
 
 	AMFWriter&		writer() { return *_pWriter; }
+
+	operator bool() const { return *_pWriter; }
 
 private:
 

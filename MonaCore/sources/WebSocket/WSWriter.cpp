@@ -39,7 +39,7 @@ void WSWriter::close(int type /* = WS::CODE_NORMAL_CLOSE */ ) {
 
 JSONWriter& WSWriter::newDataWriter(bool modeRaw) {
 	pack();
-	WSSender* pSender = new WSSender(_client.poolBuffers(),modeRaw);
+	WSSender* pSender = new WSSender(_client.manager().poolBuffers,modeRaw);
 	_senders.emplace_back(pSender);
 	pSender->writer.packet.next(10); // header
 	return pSender->writer;
@@ -91,7 +91,7 @@ void WSWriter::write(UInt8 type,const UInt8* data,UInt32 size) {
 	if(state()==CLOSED)
 		return;
 	pack();
-	WSSender* pSender = new WSSender(_client.poolBuffers());
+	WSSender* pSender = new WSSender(_client.manager().poolBuffers);
 	pSender->packaged = true;
 	_senders.emplace_back(pSender);
 	BinaryWriter& writer = pSender->writer.packet;

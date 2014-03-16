@@ -40,6 +40,7 @@ ADD_TEST(ExpirableTest, Expire) {
 
 	Expirable<ExpirableObject> expirable;
 	pObject->shareThis(expirable);
+	CHECK(pObject->isOwner());
 	{
 		unique_lock<mutex> lock;
 		ExpirableObject* pObject = expirable.safeThis(lock);

@@ -154,7 +154,7 @@ void MonaServer::onStart() {
 		SCRIPT_ADD_OBJECT(Broadcaster, LUABroadcaster, servers.targets)
 		lua_setglobal(_pState, "m.s.t");
 		lua_getmetatable(_pState, LUA_GLOBALSINDEX);
-		SCRIPT_NEW_OBJECT(LUADataTable, LUADataTable, *(new LUADataTable(_data, _pService->path)));
+		SCRIPT_NEW_OBJECT(LUADataTable, LUADataTable, new LUADataTable(_data, _pService->path));
 		lua_setfield(_pState, -2, "|data");
 		lua_pop(_pState, 1);
 	SCRIPT_END

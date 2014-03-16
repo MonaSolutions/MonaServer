@@ -31,7 +31,7 @@ namespace Mona {
 class WSSession : public TCPSession, virtual Object {
 public:
 
-	WSSession(const SocketAddress& address, const SocketManager& sockets, Protocol& protocol, Invoker& invoker);
+	WSSession(const SocketAddress& peerAddress, SocketFile& file, Protocol& protocol, Invoker& invoker);
 	virtual ~WSSession();
 
 

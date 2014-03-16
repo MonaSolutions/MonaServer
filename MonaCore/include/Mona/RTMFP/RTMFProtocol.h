@@ -29,6 +29,7 @@ namespace Mona {
 class RTMFProtocol : public UDProtocol, virtual Object  {
 public:
 	RTMFProtocol(const char* name, Invoker& invoker, Sessions& sessions) : UDProtocol(name, invoker, sessions) {}
+	~RTMFProtocol() { close(); }
 	
 	bool		load(Exception& ex, const RTMFPParams& params);
 

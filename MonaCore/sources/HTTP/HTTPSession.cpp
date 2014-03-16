@@ -34,7 +34,7 @@ using namespace std;
 namespace Mona {
 
 
-HTTPSession::HTTPSession(const SocketAddress& address,const SocketManager& sockets, Protocol& protocol, Invoker& invoker) : WSSession(address, sockets, protocol, invoker), _isWS(false), _writer(*this),_ppBuffer(new PoolBuffer(invoker.poolBuffers)), _pListener(NULL) {
+HTTPSession::HTTPSession(const SocketAddress& peerAddress, SocketFile& file, Protocol& protocol, Invoker& invoker) : WSSession(peerAddress, file, protocol, invoker), _isWS(false), _writer(*this),_ppBuffer(new PoolBuffer(invoker.poolBuffers)), _pListener(NULL) {
 
 }
 

@@ -28,7 +28,8 @@ namespace Mona {
 
 class TCPSession : public Session, public TCPClient, virtual Object {
 protected:
-	TCPSession(const SocketAddress& address,const SocketManager& sockets,Protocol& protocol,Invoker& invoker);
+	TCPSession(const SocketAddress& peerAddress, SocketFile& file,Protocol& protocol,Invoker& invoker);
+	virtual ~TCPSession() { TCPClient::close(); }
 
 	template<typename DecodingType>
 	void decode(const std::shared_ptr<DecodingType>& pDecoding,const SocketAddress& address) {
@@ -43,6 +44,8 @@ protected:
 		Session::decode(pDecoding);
 	}
 
+	void kill() { disconnect(); Session::kill(); }
+
 private:
 	void receive(PacketReader& packet, const SocketAddress& address) {
 		WARN("TCP Session ", name(), " cannot updated its address (TCP session is in a connected way");
@@ -54,8 +57,8 @@ private:
 
 	// TCPClient implementation
 	UInt32			onReception(PoolBuffer& pBuffer);
-	void			onError(const std::string& error);
-	void			onDisconnection() { kill(); }
+	void			onError(const Exception& ex);
+	void			onDisconnection() { Session::kill(); }
 
 	bool			_consumed;
 	bool			_decoding;

@@ -36,8 +36,10 @@ Sessions::~Sessions() {
 	if (!_sessions.empty())
 		WARN("sessions are deleting");
 	Iterator it;
-	for (it = begin(); it != end(); ++it)
+	for (it = begin(); it != end(); ++it) {
+		it->second->expire();
 		delete it->second;
+	}
 	_sessions.clear();
 }
 
@@ -48,6 +50,7 @@ void Sessions::remove(map<UInt32,Session*>::iterator it) {
 		_sessionsByPeerId.erase(session.peer.id);
 	if(session._sessionsOptions&BYADDRESS)
 		_sessionsByAddress.erase(session.peer.address);
+	session.expire();
 	delete &session;
 	_sessions.erase(it);
 }

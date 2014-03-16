@@ -31,6 +31,7 @@ class Relay;
 class RelaySocket : public UDPSocket, virtual Object {
 public:
 	RelaySocket(const SocketManager& manager,UInt16 port);
+	~RelaySocket() { close(); }
 
 	typedef std::map<SocketAddress,Relay*> Addresses;
 
@@ -44,7 +45,7 @@ private:
 	// executed in a parallel thread!
 	void	onReception(PoolBuffer& pBuffer, const SocketAddress& address);
 	// executed in a parallel thread!
-	void	onError(const std::string& error) { DEBUG("Relay socket ", port, ", error");} 
+	void	onError(const Exception& exception) { DEBUG("Relay socket ", port, ", ",exception.error());} 
 	
 	std::mutex	_mutex;
 };

@@ -27,7 +27,7 @@ This file is a part of Mona.
 namespace Mona {
 
 
-class AMFWriter : public DataWriter, virtual NullableObject {
+class AMFWriter : public DataWriter {
 public:
 	AMFWriter(const PoolBuffers& poolBuffers);
 

@@ -88,11 +88,8 @@ void Servers::stop() {
 		(*_clients.begin())->disconnect();
 }
 
-void Servers::onConnectionRequest(Exception& ex) { 
-	ServerConnection* pServer = acceptClient<ServerConnection>(ex, _handler, (ServersHandler&)*this);
-	if (!pServer)
-		return;
-	_clients.emplace(pServer);
+void Servers::onConnection(Exception& ex, const SocketAddress& peerAddress, SocketFile& file) { 
+	_clients.emplace(new ServerConnection(peerAddress,file,manager(),_handler,(ServersHandler&)*this));
 }
 
 void Servers::connection(ServerConnection& server) {

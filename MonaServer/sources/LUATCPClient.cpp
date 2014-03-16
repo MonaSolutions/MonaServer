@@ -24,10 +24,14 @@ using namespace std;
 using namespace Mona;
 
 
-LUATCPClient::LUATCPClient(const SocketAddress& peerAddress,const SocketManager& manager, lua_State* pState) : _pState(pState), TCPClient(peerAddress, manager) {
+LUATCPClient::LUATCPClient(const SocketAddress& peerAddress,SocketFile& file,const SocketManager& manager, lua_State* pState) : _pState(pState), TCPClient(peerAddress, file, manager) {
 }
 
 LUATCPClient::LUATCPClient(const SocketManager& manager,lua_State* pState) : _pState(pState),TCPClient(manager) {
+}
+
+LUATCPClient::~LUATCPClient() {
+	close();
 }
 
 UInt32 LUATCPClient::onReception(PoolBuffer& pBuffer) {

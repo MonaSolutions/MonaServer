@@ -30,7 +30,7 @@ namespace Mona {
 class RTMPSession : public TCPSession, virtual Object {
 public:
 
-	RTMPSession(const SocketAddress& address, const SocketManager& sockets, Protocol& protocol, Invoker& invoker);
+	RTMPSession(const SocketAddress& peerAddress, SocketFile& file, Protocol& protocol, Invoker& invoker);
 	virtual ~RTMPSession();
 
 private:

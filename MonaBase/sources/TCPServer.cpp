@@ -25,39 +25,41 @@ using namespace std;
 
 namespace Mona {
 
-TCPServer::TCPServer(const SocketManager& manager) : _hasToAccept(false), _running(false),SocketHandler(manager) {
+TCPServer::TCPServer(const SocketManager& manager) : _running(false),_socket(*this,manager) {
 }
-
 
 TCPServer::~TCPServer() {
 	stop();
 }
 
 bool TCPServer::start(Exception& ex,const SocketAddress& address) {
-	lock_guard<mutex> lock(_mutex);
-	if (_running)
+	lock_guard<recursive_mutex> lock(_mutex);
+	if (_running) {
+		if (address == _address)
+			return true;
 		stop();
-	if (!socket().bindWithListen(ex, address))
+	}
+	if (!_socket.bindWithListen(ex, address))
 		return false;
-	SocketHandler::address(address);
+	_address = address;
 	return _running=true;
 }
 
 void TCPServer::stop() {
-	lock_guard<mutex> lock(_mutex);
+	lock_guard<recursive_mutex> lock(_mutex);
 	if (!_running)
 		return;
-	close();
-	resetAddresses();
+	_socket.close();
+	_address.reset();
 	_running = false;
 }
 
-void TCPServer::onReadable(Exception& ex) {
-	_hasToAccept = true;
-	onConnectionRequest(ex);
-	if (_hasToAccept)
-		socket().rejectConnection();
-	_hasToAccept = false;
+void TCPServer::onReadable(Exception& ex,UInt32 available) {
+	SocketAddress address;
+	SocketFile file(_socket.acceptConnection(ex,address));
+	if (!file)
+		return;
+	onConnection(ex,address,file);
 }
 
 

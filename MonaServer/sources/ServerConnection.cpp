@@ -30,10 +30,13 @@ ServerConnection::ServerConnection(const SocketManager& manager, ServerHandler& 
 
 }
 
-ServerConnection::ServerConnection(const SocketAddress& peerAddress, const SocketManager& manager, ServerHandler& handler, ServersHandler& serversHandler) : address(peerAddress), _size(0), _handler(handler), TCPClient(peerAddress, manager), _connected(false), _serversHandler(serversHandler), isTarget(false) {
+ServerConnection::ServerConnection(const SocketAddress& peerAddress,SocketFile& file,const SocketManager& manager, ServerHandler& handler, ServersHandler& serversHandler) : address(peerAddress), _size(0), _handler(handler), TCPClient(peerAddress, file,manager), _connected(false), _serversHandler(serversHandler), isTarget(false) {
 	sendPublicAddress();
 }
 
+ServerConnection::~ServerConnection() {
+	close();
+}
 
 UInt16 ServerConnection::port(const string& protocol) {
 	map<string, UInt16>::const_iterator it = _ports.find(protocol);
@@ -43,7 +46,7 @@ UInt16 ServerConnection::port(const string& protocol) {
 }
 
 void ServerConnection::sendPublicAddress() {
-	ServerMessage message(poolBuffers());
+	ServerMessage message(manager().poolBuffers);
 	BinaryWriter& writer = message.packet;
 	writer.writeString(_handler.host());
 	writer.write8(_handler.ports().size());
@@ -60,7 +63,7 @@ void ServerConnection::sendPublicAddress() {
 }
 
 void ServerConnection::connect() {
-	if(connected())
+	if(_connected)
 		return;
 	INFO("Attempt to join ", address.toString(), " server")
 	Exception ex;

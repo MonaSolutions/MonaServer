@@ -19,49 +19,48 @@ This file is a part of Mona.
 
 #include "Mona/TCPClient.h"
 #include "Mona/TCPSender.h"
-#include "Mona/SocketManager.h"
 
 using namespace std;
 
 
 namespace Mona {
 
-TCPClient::TCPClient(const SocketManager& manager) :  _pBuffer(manager.poolBuffers),_connected(false), SocketHandler(manager), _rest(0) {
+TCPClient::TCPClient(const SocketManager& manager) :  _disconnecting(false),_pBuffer(manager.poolBuffers),_connected(false), _socket(*this,manager), _rest(0) {
+
 }
 
-TCPClient::TCPClient(const SocketAddress& peerAddress, const SocketManager& manager) :  _pBuffer(manager.poolBuffers), _connected(true), _rest(0), SocketHandler(peerAddress,manager) {
+TCPClient::TCPClient(const SocketAddress& peerAddress, SocketFile& file,const SocketManager& manager) : _disconnecting(false),_peerAddress(peerAddress),_pBuffer(manager.poolBuffers), _connected(true), _rest(0), _socket(file,*this,manager) {
 
 }
 
 TCPClient::~TCPClient() {
-	disconnect();
+	close();
 }
 
 
-void TCPClient::onReadable(Exception& ex) {
-	UInt32 available = socket().available(ex);
-	if (ex)
-		return;
+void TCPClient::onReadable(Exception& ex,UInt32 available) {
 
-	lock_guard<recursive_mutex> lock(_mutex);
-
-	if(available==0) {
-		disconnect();
+	if (available == 0) {
+		close(); // Graceful disconnection
 		return;
 	}
+
+	lock_guard<recursive_mutex> lock(_mutex);
 
 	if(available>(_pBuffer->size() - _rest))
 		_pBuffer->resize(_rest+available,true);
 
-
-	int received = socket().receiveBytes(ex,_pBuffer->data()+_rest, available);
-	if (ex)
-		return;
-
+	Exception exRecv;
+	int received = _socket.receiveBytes(exRecv,_pBuffer->data()+_rest, available);
 	if (received <= 0) {
-		disconnect(); // Graceful disconnection
+		if (exRecv)
+			onError(exRecv); // to be before onDisconnection!
+		close(); // Graceful disconnection
 		return;
-	}
+	} else if (exRecv)
+		ex.set(exRecv); // received > 0, so WARN
+
+
 	_rest += received;
 
 	while (_rest > 0) {
@@ -99,25 +98,41 @@ void TCPClient::onReadable(Exception& ex) {
 
 bool TCPClient::connect(Exception& ex,const SocketAddress& address) {
 	lock_guard<recursive_mutex> lock(_mutex);
-	disconnect();
-	_connected = socket().connect(ex, address);
+	if (_disconnecting) {
+		ex.set(Exception::SOCKET, "TCPClient is always connected to ", _peerAddress.toString(), ", call disconnect() before, and wait onDisconnection event");
+		return false;
+	}
+	_connected = _socket.connect(ex, address);
 	if (!_connected)
 		return false;
-	SocketHandler::peerAddress(address);
+	_peerAddress.set(address);
 	return true;
 }
 
 void TCPClient::disconnect() {
 	lock_guard<recursive_mutex> lock(_mutex);
-	if(!_connected)
+	if (_disconnecting)
 		return;
+	_disconnecting = true;
 	Exception ex;
-	socket().shutdown(ex);
-	close();
+	_socket.shutdown(ex,Socket::SEND);
+}
+
+void TCPClient::close() {
+	lock_guard<recursive_mutex> lock(_mutex);
+	if (!_connected)
+		return;
 	_connected = false;
+	if (!_disconnecting) {
+		Exception ex;
+		_socket.shutdown(ex);
+	} else
+		 _disconnecting = false;
+	_socket.close();
 	_rest = 0;
 	_pBuffer.release();
-	resetAddresses();
+	 _address.reset();
+	 _peerAddress.reset();
 	onDisconnection(); // in last because can call a TCPClient::connect!
 }
 
@@ -125,7 +140,7 @@ bool TCPClient::send(Exception& ex,const UInt8* data,UInt32 size) {
 	if(size==0)
 		return true;
 	shared_ptr<TCPSender> pSender(new TCPSender("TCPClient::send",data, size));
-	return socket().send(ex, pSender);
+	return _socket.send(ex, pSender);
 }
 
 } // namespace Mona

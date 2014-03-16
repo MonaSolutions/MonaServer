@@ -39,10 +39,11 @@ public:
 		
 	/// Create/Set SocketAddress from a native socket address
 	SocketAddress(const struct sockaddr& addr);
-	void set(const struct sockaddr& addr);
+	SocketAddress& set(const struct sockaddr& addr);
 	
 	SocketAddress(const SocketAddress& other);
 	SocketAddress& set(const SocketAddress& other);
+	SocketAddress& operator=(const SocketAddress& other) { return set(other); }
 
 	/// Creates a SocketAddress from an IP address and a port number.
 	SocketAddress(const IPAddress& host, UInt16 port);
@@ -77,6 +78,8 @@ public:
 	bool operator == (const SocketAddress& address) const { return port() == address.port() && host() == address.host(); }
 	bool operator != (const SocketAddress& address) const { return port() != address.port() || host() != address.host(); }
 	
+	operator bool() const { return host() || port()>0; }
+
 	// Returns a wildcard IPv4 or IPv6 address (0.0.0.0)
 	static const SocketAddress& Wildcard(IPAddress::Family family = IPAddress::IPv4);
 
@@ -89,8 +92,7 @@ private:
 	UInt16 resolveService(Exception& ex, const std::string& service);
 
 	std::shared_ptr<SocketAddressCommon>	_pAddress;
-
-	mutable std::string		_toString;
+	mutable std::string						_toString;
 };
 
 

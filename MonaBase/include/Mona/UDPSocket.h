@@ -21,41 +21,54 @@ This file is a part of Mona.
 
 
 #include "Mona/Mona.h"
-#include "Mona/SocketHandler.h"
-#include "Mona/PoolBuffer.h"
+#include "Mona/Socket.h"
 
 namespace Mona {
 
-class UDPSocket : public SocketHandler, virtual Object {
+class UDPSocket : private SocketEvents, virtual Object {
 public:
 	UDPSocket(const SocketManager& manager, bool allowBroadcast=false);
+	virtual ~UDPSocket();
 
-	const SocketAddress&	address() { return SocketHandler::address(); }
-	const SocketAddress&	peerAddress() { return SocketHandler::peerAddress(); }
+	// unsafe-threading
+	const SocketAddress&	address() const { std::lock_guard<std::mutex> lock(_mutex); return updateAddress(); }
+	const SocketAddress&	peerAddress() const {  std::lock_guard<std::mutex> lock(_mutex); return updatePeerAddress(); }
+	// safe-threading
+	SocketAddress&			address(SocketAddress& address) const { std::lock_guard<std::mutex> lock(_mutex); return address.set(updateAddress()); }
+	SocketAddress&			peerAddress(SocketAddress& address) const { std::lock_guard<std::mutex> lock(_mutex); return address.set(updatePeerAddress()); }
 
-	bool					bind(Exception& ex, const SocketAddress& address) { bool result = socket().bind(ex, address); resetAddresses(); return result; }
-	void					close() { SocketHandler::close(); resetAddresses(); }
-	bool					connect(Exception& ex, const SocketAddress& address) { bool result = socket().connect(ex, address, _allowBroadcast);  resetAddresses(); return result; }
-	void					disconnect() { Exception ex; socket().connect(ex, SocketAddress::Wildcard()); resetAddresses(); }
+	bool					bind(Exception& ex, const SocketAddress& address) { bool result = _socket.bind(ex, address); resetAddresses(); return result; }
+	void					close() { _socket.close(); resetAddresses(); }
+	bool					connect(Exception& ex, const SocketAddress& address) { bool result = _socket.connect(ex, address, _allowBroadcast);  resetAddresses(); return result; }
+	void					disconnect() { Exception ex; _socket.connect(ex, SocketAddress::Wildcard()); resetAddresses(); }
 
 	bool					send(Exception& ex, const UInt8* data, UInt32 size);
 	bool					send(Exception& ex, const UInt8* data, UInt32 size, const SocketAddress& address);
 
 	template<typename SenderType>
 	bool send(Exception& ex, std::shared_ptr<SenderType>& pSender) {
-		return socket().send<SenderType>(ex, pSender);
+		return _socket.send<SenderType>(ex, pSender);
 	}
 	template<typename SenderType>
 	PoolThread* send(Exception& ex,const std::shared_ptr<SenderType>& pSender, PoolThread* pThread) {
-		return SocketHandler::send<SenderType>(ex, pSender,pThread);
+		return _socket.send<SenderType>(ex, pSender,pThread);
 	}
 
+	const SocketManager&	manager() const { return _socket.manager(); }
 private:
 	virtual void			onReception(PoolBuffer& pBuffer, const SocketAddress& address) = 0;
 
-	void					onReadable(Exception& ex);
+	const SocketAddress&	updateAddress() const { if (_address) return _address;  Exception ex; _socket.address(ex, _address); return _address; }
+	const SocketAddress&	updatePeerAddress() const { if (_peerAddress) return _peerAddress; Exception ex; _socket.peerAddress(ex, _peerAddress); return _peerAddress; }
+	void					resetAddresses() {std::lock_guard<std::mutex> lock(_mutex);_address.reset();_peerAddress.reset();}
+
+	void					onReadable(Exception& ex,UInt32 available);
 	
 	const bool				_allowBroadcast;
+	Socket					_socket;
+	mutable std::mutex		_mutex;
+	mutable SocketAddress	_address;
+	mutable SocketAddress	_peerAddress;
 };
 
 

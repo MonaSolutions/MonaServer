@@ -42,12 +42,12 @@ public:
 	UInt32			size() const { return _size; }
 
 	UInt32			capacity() const { return _capacity; }
+
+	operator bool() const { return _data != NULL;  }
 	
 	static Buffer Null;
 
 private:
-	Buffer(bool,bool,bool) : NullableObject(true),_buffer(NULL),_data(NULL),_capacity(0), _size(0) {}
-
 	UInt32  _offset;
 	UInt8*	_data;
 	UInt32	_size;

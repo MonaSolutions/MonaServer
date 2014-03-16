@@ -25,12 +25,12 @@ using namespace std;
 
 namespace Mona {
 
-TCPSession::TCPSession(const SocketAddress& peerAddress,const SocketManager& sockets, Protocol& protocol, Invoker& invoker) : TCPClient(peerAddress,sockets), Session(protocol, invoker),_consumed(false),_decoding(false) {
+TCPSession::TCPSession(const SocketAddress& peerAddress, SocketFile& file, Protocol& protocol, Invoker& invoker) : TCPClient(peerAddress,file,invoker.sockets), Session(protocol, invoker),_consumed(false),_decoding(false) {
 	((SocketAddress&)peer.address).set(peerAddress);
 }
 
-void TCPSession::onError(const string& error) {
-	WARN("Protocol ", protocol().name, ", ", error);
+void TCPSession::onError(const Exception& ex) {
+	WARN("Protocol ", protocol().name, ", ", ex.error());
 }
 
 UInt32 TCPSession::onReception(PoolBuffer& pBuffer) {

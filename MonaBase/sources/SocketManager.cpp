@@ -46,6 +46,9 @@ SocketManager::SocketManager(const PoolBuffers& poolBuffers, PoolThreads& poolTh
 }
 
 bool SocketManager::start(Exception& ex) {
+	if (Startable::running())
+		return true;
+	_eventInit.reset();
 	TaskHandler::start();
 	return Startable::start(ex);
 }
@@ -56,27 +59,6 @@ void SocketManager::stop() {
 	TaskHandler::stop();
 	_eventInit.wait();
 
-	{
-		// clear sockets
-		lock_guard<recursive_mutex> lock(_mutex);
-		
-		for (auto& it : _sockets) {
-			it.second->release(); // don't delete the pSocket!
-
-#if defined(_WIN32)
-			if (_eventSystem == 0 || (WSAAsyncSelect(it.first, _eventSystem, 0, 0) == 0 && !PostMessage(_eventSystem, 0, (WPARAM)it.second, 0))) {
-#else
-			epoll_event event;
-			memset(&event, 0, sizeof(event));
-			if (_eventSystem==0 || (epoll_ctl(_eventSystem, EPOLL_CTL_DEL, it.first,&event)>=0 && write(_eventFD,&it.second,sizeof(it.second))<0)) {
-#endif
-				delete it.second;
-			}
-		}
-		_counter = 0;
-		_sockets.clear();
-	}
-
 #if defined(_WIN32)
 	if (_eventSystem > 0)
 		PostMessage(_eventSystem, WM_QUIT, 0, 0);
@@ -85,42 +67,37 @@ void SocketManager::stop() {
 		::close(_eventFD);
 #endif
 	Startable::stop();
-	_eventInit.reset();
 }
 
 
 
-bool SocketManager::add(Exception& ex,Socket& socket) const {
+Socket** SocketManager::add(Exception& ex,NET_SOCKET sockfd,Socket& socket) const {
 	if (!Startable::running()) {
 		ex.set(Exception::SOCKET, name(), "is not running");
-		return false;
+		return NULL;
 	}
 
 	_eventInit.wait();
 
 	if(_eventSystem==0) {
 		ex.set(Exception::SOCKET, name(), " hasn't been able to start, impossible to manage sockets");
-		return false;
+		return NULL;
 	}
 
 	lock_guard<recursive_mutex> lock(_mutex);
 
-	 NET_SOCKET sockfd = socket._sockfd;
-
 	auto it = _sockets.lower_bound(sockfd);
 	if (it != _sockets.end() && it->first == sockfd)
-		return true; // already managed
+		return it->second; // already managed
 	
-	
-	unique_ptr<Socket>* ppSocket = new unique_ptr<Socket>(&socket);
+	Socket** ppSocket = new Socket*(&socket);
 
 #if defined(_WIN32)
 	int flags = FD_CONNECT | FD_ACCEPT | FD_CLOSE | FD_READ;
 	if (WSAAsyncSelect(sockfd, _eventSystem, 104, flags) != 0) {
-		ppSocket->release();
 		delete ppSocket;
 		Net::SetError(ex);
-		return false;
+		return NULL;
 	}
 #else
 	epoll_event event;
@@ -130,15 +107,13 @@ bool SocketManager::add(Exception& ex,Socket& socket) const {
 	 event.data.ptr = ppSocket;
 	 int res = epoll_ctl(_eventSystem, EPOLL_CTL_ADD,sockfd, &event);
 	if(res<0) {
-		ppSocket->release();
 		delete ppSocket;
         Net::SetError(ex);
-		return false;
+		return NULL;
 	}
 #endif
 
 	++_counter;
-	socket._ppSocket = ppSocket;
 	_sockets.emplace_hint(it, sockfd, ppSocket);
 
 	if(bufferSize>0) {
@@ -146,95 +121,123 @@ bool SocketManager::add(Exception& ex,Socket& socket) const {
 		socket.setSendBufferSize(ex, bufferSize);
 	}
 
-	return true;
+	return ppSocket;
 }
 
-bool SocketManager::startWrite(Socket& socket) const {
+bool SocketManager::startWrite(NET_SOCKET sockfd,Socket** ppSocket) const {
 #if defined(_WIN32)
-	return WSAAsyncSelect(socket._sockfd, _eventSystem, 104, FD_CONNECT | FD_ACCEPT | FD_CLOSE | FD_READ | FD_WRITE) == 0;
+	return WSAAsyncSelect(sockfd, _eventSystem, 104, FD_CONNECT | FD_ACCEPT | FD_CLOSE | FD_READ | FD_WRITE) == 0;
 #else
 	epoll_event event;
 	memset(&event, 0, sizeof(event));
 	event.events = EPOLLIN | EPOLLOUT | EPOLLRDHUP;
-	event.data.fd = socket._sockfd;
-	event.data.ptr = socket._ppSocket;
-    return epoll_ctl(_eventSystem, EPOLL_CTL_MOD, socket._sockfd, &event)>=0;
+	event.data.fd = sockfd;
+	event.data.ptr = ppSocket;
+    return epoll_ctl(_eventSystem, EPOLL_CTL_MOD, sockfd, &event)>=0;
 #endif
 }
 
-bool SocketManager::stopWrite(Socket& socket) const {
+bool SocketManager::stopWrite(NET_SOCKET sockfd,Socket** ppSocket) const {
 #if defined(_WIN32)
-	return WSAAsyncSelect(socket._sockfd, _eventSystem, 104, FD_CONNECT | FD_ACCEPT | FD_CLOSE | FD_READ) == 0;
+	return WSAAsyncSelect(sockfd, _eventSystem, 104, FD_CONNECT | FD_ACCEPT | FD_CLOSE | FD_READ) == 0;
 #else
 	epoll_event event;
 	memset(&event, 0, sizeof(event));
 	event.events = EPOLLIN | EPOLLRDHUP;
-	event.data.fd = socket._sockfd;
-	event.data.ptr = socket._ppSocket;
-    return epoll_ctl(_eventSystem, EPOLL_CTL_MOD, socket._sockfd, &event) >= 0;
+	event.data.fd = sockfd;
+	event.data.ptr = ppSocket;
+    return epoll_ctl(_eventSystem, EPOLL_CTL_MOD,sockfd, &event) >= 0;
 #endif
 }
 
 
-void SocketManager::remove(Socket& socket) const {
-	lock_guard<recursive_mutex>	lock(_mutex);
-	auto it = _sockets.find(socket._sockfd);
-	if(it == _sockets.end())
+void SocketManager::remove(NET_SOCKET sockfd) const {
+	if (!Startable::running())
 		return;
 
 	_eventInit.wait();
 
-	--_counter;
-	socket._ppSocket->release();
+	if (_eventSystem == 0) // keep it to avoid dead lock on sockets deletion! (and _sockets is necessary empty!)
+		return;
+
+	lock_guard<recursive_mutex> lock(_mutex);
+	auto it = _sockets.find(sockfd);
+	if(it == _sockets.end())
+		return;
+
+	Socket** ppSocket = it->second;
 	_sockets.erase(it);
+	(*ppSocket) = NULL;
 
 #if defined(_WIN32)
-	if (_eventSystem==0 || (WSAAsyncSelect(socket._sockfd,_eventSystem,0,0)==0 && !PostMessage(_eventSystem,0,(WPARAM)socket._ppSocket,0)))
-		delete socket._ppSocket;
+	if (_eventSystem==0 || (WSAAsyncSelect(sockfd,_eventSystem,0,0)==0 && !PostMessage(_eventSystem,0,(WPARAM)ppSocket,0)))
+		delete ppSocket;
 #else
 	epoll_event event;
 	memset(&event, 0, sizeof(event));
-	if (_eventSystem==0 || (epoll_ctl(_eventSystem, EPOLL_CTL_DEL,socket._sockfd,&event)>=0 && write(_eventFD,&socket._ppSocket,sizeof(socket._ppSocket))<0))
-		delete socket._ppSocket;
+	if (_eventSystem==0 || (epoll_ctl(_eventSystem, EPOLL_CTL_DEL,sockfd,&event)>=0 && write(_eventFD,&ppSocket,sizeof(ppSocket))<0))
+		delete ppSocket;
 #endif
+	--_counter;
 }
 
 void SocketManager::handle(Exception& ex) {
-	if (_ex) {
-		ex.set(_ex);
+	if (_eventSystem==0) {
+		if (_ex)
+			ex.set(_ex);
+		lock_guard<recursive_mutex> lock(_mutex);
+		if (_sockets.empty())
+			return;
+		_currentException.set(Exception::NETWORK, "SocketManager is stopping");
+		for (auto& it : _sockets) {
+			(*it.second)->onError(_currentException);
+			delete it.second;
+		}
+		_sockets.clear();
 		return;
 	}
 
 	lock_guard<recursive_mutex>	lock(_mutex);
 
-	Socket* pSocket(NULL);
-	if (_ppSocket)
-		pSocket = _ppSocket->get();
-	if (!pSocket) {
+	if (!_ppSocket) {
+		if (_sockfd == NET_INVALID_SOCKET)
+			return;
 		auto it = _sockets.find(_sockfd);
 		if(it==_sockets.end())
 			return;
-		pSocket = it->second->get();
+		_ppSocket = it->second;
 	}
 
+	Socket* pSocket(*_ppSocket);
+	if (!pSocket) // expired!
+		return;
+
+
+	if (_currentException) {
+		pSocket->onError(_currentException);
+		_currentException.set(Exception::NIL);
+		if (*_ppSocket == NULL) // expired!
+			return;
+	}
+
+
 	if (_currentError != 0) {
-		Exception curEx;
 #if !defined(_WIN32)
 		if (_currentError == NET_EINTR) {
-			lock_guard<mutex> lock(pSocket->_mutexAsync);
-			if(pSocket->_connecting) {
+			if(pSocket->onConnection()) {
+				if (*_ppSocket == NULL) // expired!
+					return;
 				static char Temp;
-				read(pSocket->_sockfd,&Temp,1);
-				Net::SetError(curEx);
-				pSocket->_connecting = false;
+				pSocket->receiveBytes(_currentException,&Temp,1); // to get the correct connection error!
 			}
 		}
 #endif
-		if (!curEx)
-			Net::SetError(curEx, _currentError);
-		pSocket->onError(curEx.error());
-		if (curEx.error() == "__deleted")
-			return; // socket deleted
+		if (!_currentException)
+			Net::SetError(_currentException, _currentError);
+		pSocket->onError(_currentException);
+		_currentException.set(Exception::NIL);
+		if (*_ppSocket == NULL) // expired!
+			return;
 	}
 
 	if (_currentEvent == 0)
@@ -242,23 +245,25 @@ void SocketManager::handle(Exception& ex) {
 
 
 	/// now, connect, read, accept, or hangup event
-	Exception exDeleted;
 #if defined(_WIN32)
 	if (_currentEvent == FD_CONNECT) {
-		lock_guard<mutex> lock(pSocket->_mutexAsync);
-		pSocket->_connecting = false;
-		if (_currentError==0)
+		pSocket->onConnection();
+		if (_currentError==0 || *_ppSocket == NULL)
 			return;
 	}
 
-	if(_currentEvent==FD_READ && pSocket->available(_exSkip)==0) // In the linux case, when _currentEvent==SELECT_READ with 0 bytes it's a ACCEPT event!
-		return;
 #else
 	do { // call onReadable at minimum one time (it can be an accept or hangup)
 #endif
-		pSocket->onReadable(exDeleted);
+		pSocket->onReadable(_currentException,pSocket->available(_exSkip));
+		if (_currentException) {
+			if (*_ppSocket==NULL)
+				return;
+			pSocket->onError(_currentException);
+			_currentException.set(Exception::NIL);
+		}
 #if !defined(_WIN32)
-	} while (!exDeleted && pSocket->available(_exSkip) > 0);  // just one time for windows, and fill available bytes for posix
+	} while (*_ppSocket && pSocket->available(_exSkip) > 0);  // just one time for windows, and fill available bytes for posix
 	// while !exs because the socket can be deleted in pSocket->onReadable if on request the user call "close"
 #endif
 }
@@ -268,8 +273,8 @@ void SocketManager::requestHandle() {
 	giveHandle(ex);
 }
 
-void SocketManager::run(Exception& exc) {
-	Exception& ex(_selfHandler ? exc : _ex);
+void SocketManager::run(Exception& exThread) {
+	Exception& ex(_selfHandler ? exThread : _ex);
 	const char* name = Startable::name().c_str();
 	_eventSystem = 0;
 #if defined(_WIN32)
@@ -282,7 +287,7 @@ void SocketManager::run(Exception& exc) {
 	wc.cbWndExtra = 0;
 	RegisterClassEx(&wc);
 	_eventSystem = CreateWindow(name, name, WS_EX_LEFT, 0, 0, 0, 0, HWND_MESSAGE, NULL, NULL, NULL);
-	if(_eventSystem==0)
+	if (_eventSystem == 0)
 		ex.set(Exception::NETWORK, name, " starting failed, impossible to manage sockets");
 #else
 	int pipefds[2] = {};
@@ -313,58 +318,57 @@ void SocketManager::run(Exception& exc) {
 
 	_eventInit.set();
 	if (ex) { // here _eventSystem==0
-		Task::waitHandle();
+		if (!Task::waitHandle())
+			exThread.set(ex);
 		return;
 	}
 
 
-	Socket fakeSocket(*this);
-
-
 #if defined(_WIN32)
-	MSG		  msg;
+	MSG msg;
 	int result;
-    while((result=GetMessage(&msg,_eventSystem, 0, 0))>0) {
-		if(msg.wParam==0)
+	while ((result = GetMessage(&msg, _eventSystem, 0, 0)) > 0) {
+		if (msg.wParam == 0)
 			continue;
-		if(msg.message==0) {
-			unique_ptr<Socket>* ppSocket = (unique_ptr<Socket>*)msg.wParam;
+		if (msg.message == 0) {
 			// no mutex for ppSocket methods access because the socket has been removed already here!
-			delete ppSocket;
+			delete ((atomic<Socket*>*)msg.wParam);
 			continue;
 		} else if (msg.message != 104) // unknown message
 			continue;
 		_currentEvent = WSAGETSELECTEVENT(msg.lParam);
-		fakeSocket._sockfd = _sockfd = msg.wParam;
-		if(_currentEvent == FD_WRITE) {
-
+		_sockfd = msg.wParam;
+		if (_currentEvent == FD_WRITE) {
 			// protected for _sockets access
 			lock_guard<recursive_mutex> lock(_mutex);
 			auto& it = _sockets.find(_sockfd);
 			if (it != _sockets.end()) {
-				Socket* pSocket = (*it->second).get();
-				Exception curEx;
-				pSocket->flushSenders(curEx);
-				if (curEx)
-					pSocket->onError(curEx.error());
+				_ppSocket = it->second;
+				(*_ppSocket)->flushSenders(_currentException);
+				if (_currentException)
+					_currentEvent = 0;
 			}
-
-		} else if (_currentEvent != FD_READ || fakeSocket.available(_exSkip)) {
-			if (_currentEvent!=FD_CLOSE)
+		}
+		// FD_CONNECT | FD_ACCEPT | FD_CLOSE | FD_READ | FD_WRITE
+		// (_currentEvent>>2) => FD_CONNECT or FD_ACCEPT or FD_CLOSE (!FD_READ and !FD_WRITE)
+		if ((_currentEvent>>2) || _currentException || Socket::IOCTL(_exSkip, _sockfd, FIONREAD, 0)) {
+			if (_currentEvent != FD_CLOSE) // in close case, it's not an error!
 				_currentError = WSAGETSELECTERROR(msg.lParam);
 			Task::waitHandle();
 		}
-
+		_currentException.set(Exception::NIL);
+		_ppSocket = NULL;
 		_sockfd = INVALID_SOCKET;
 	}
 	DestroyWindow(_eventSystem);
-	if (result<0)
-		ex.set(Exception::NETWORK,name, " failed, impossible to manage sockets");
+	if (result < 0) {
+		ex.set(Exception::NETWORK, name, " failed, impossible to manage sockets");
+		exThread.set(ex);
+	}
 #else
-	fakeSocket._sockfd = readFD;
     int count = _counter+1;
 	vector<epoll_event> events(count);
-	vector<unique_ptr<Socket>*>	removedSockets;
+	vector<Socket**>	removedSockets;
 
 	for(;;) {
 
@@ -372,6 +376,7 @@ void SocketManager::run(Exception& exc) {
 
 		if(results<0 && errno!=NET_EINTR) {
 			Net::SetError(ex);
+			exThread.set(ex);
 			break;
 		}
 
@@ -387,11 +392,11 @@ void SocketManager::run(Exception& exc) {
 					break;
 				}
 
-				unique_ptr<Socket>* ppSocket(NULL);
-				while (fakeSocket.available(_exSkip)>=sizeof(ppSocket) && read(readFD, &ppSocket, sizeof(ppSocket)) > 0) {
+				while (Socket::IOCTL(_exSkip,readFD, FIONREAD, 0)>=sizeof(_ppSocket) && read(readFD, &_ppSocket, sizeof(_ppSocket)) > 0) {
 					// no mutex for ppSocket methods access because the socket has been removed already here!
-					removedSockets.push_back(ppSocket);
+					removedSockets.emplace_back(_ppSocket);
 				}
+				_ppSocket = NULL;
 				continue;	
 			}
 		
@@ -402,25 +407,22 @@ void SocketManager::run(Exception& exc) {
 			}
 
 			if(_currentEvent&EPOLLOUT) {
-				_ppSocket = (unique_ptr<Socket>*)event.data.ptr;
-				// protected for _ppSocket methods access
 				lock_guard<recursive_mutex> lock(_mutex);
-				Socket* pSocket(_ppSocket->get());
-				if(pSocket) {
-					Exception curEx;
-					pSocket->flushSenders(curEx);
-					if (curEx)
-						pSocket->onError(curEx.error());
-				}
+				_ppSocket = (Socket**)event.data.ptr;
+				Socket* pSocket(*_ppSocket);
+				if(pSocket)
+					pSocket->flushSenders(_currentException);
 				_currentEvent &= ~EPOLLOUT;
 			}
 
-			if(_currentError>0 || _currentEvent>0) {
-				_ppSocket = (unique_ptr<Socket>*)event.data.ptr;
+			if(_currentException || _currentError>0 || _currentEvent>0) {
+				if(!_ppSocket)
+					_ppSocket = (Socket**)event.data.ptr;
 				Task::waitHandle();
+				_currentException.set(Exception::NIL);
+				_currentError = 0;
 			}
 
-			_currentError = 0;
 			_ppSocket = NULL;
 		}
 		if(i==-1)
@@ -432,20 +434,32 @@ void SocketManager::run(Exception& exc) {
 		// remove sockets
 		if(removedSockets.empty())
 			continue;
-		for (unique_ptr<Socket>* ppSocket : removedSockets)
+		for (Socket** ppSocket : removedSockets)
 			delete ppSocket;
 		removedSockets.clear();
 	}
 	::close(readFD);  // close reader pipe side
 	::close(_eventSystem); // close the system message
 
-	for (unique_ptr<Socket>* ppSocket : removedSockets)
+	for (Socket** ppSocket : removedSockets)
 		delete ppSocket;
 	removedSockets.clear();
 #endif
 
-	if (ex)
-		Task::waitHandle();
+
+	_eventSystem = 0;
+	_counter = 0;
+
+	if (!Task::waitHandle()) { // to remove possible sockets remaing, or to set exception if(ex)
+		lock_guard<recursive_mutex> lock(_mutex);
+		if (!_sockets.empty()) {
+			for (auto& it : _sockets)
+				delete it.second;
+			_sockets.clear();
+			exThread.set(Exception::NETWORK, "TaskHandler of SocketManager is stopped, impossible to warn remaining sockets");
+		}
+	}
+
 }
 
 	

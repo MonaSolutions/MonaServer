@@ -76,22 +76,22 @@ public:
 			return NULL;
 		return dynamic_cast<SessionType*>(it->second);
 	}
-	
 
-	template<typename SessionType>
-	SessionType& add(SessionType& session,UInt8 options=BYID) {
-		session._id = _nextId;
-		_sessions[_nextId] = &session;
+	template<typename SessionType, UInt8 options = BYID,typename ...Args>
+	SessionType& create(Args&&... args) {
+		SessionType* pSession = new SessionType(args ...);
+		pSession->_id = _nextId;
+		_sessions[_nextId] = pSession;
 		if (options&BYPEER)
-			_sessionsByPeerId[session.peer.id] = &session;
+			_sessionsByPeerId[pSession->peer.id] = pSession;
 		if (options&BYADDRESS)
-			_sessionsByAddress[session.peer.address] = &session;
-		session._sessionsOptions = options;
+			_sessionsByAddress[pSession->peer.address] = pSession;
+		pSession->_sessionsOptions = options;
 		DEBUG("Session ", _nextId, " created");
 		do {
 			++_nextId;
 		} while (_nextId == 0 && find(_nextId));
-		return session;
+		return *pSession;
 	}
 
 private:

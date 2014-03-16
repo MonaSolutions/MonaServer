@@ -27,12 +27,13 @@ namespace Mona {
 class PacketWriter: public BinaryWriter, virtual NullableObject {
 public:
 	PacketWriter(const PoolBuffers& poolBuffers) : _ppBuffer(new PoolBuffer(poolBuffers)),BinaryWriter(NULL,0) {}
-	PacketWriter() : NullableObject(true),BinaryWriter(NULL,0) {} // NULL
+	PacketWriter() : BinaryWriter(NULL,0) {} // NULL
 
 	UInt8* buffer(UInt32 size) { UInt32 pos(this->size()); next(size); return (UInt8*)data()+pos; }
 
 	BinaryWriter&	clear(UInt32 size = 0) { BinaryWriter::clear(size); if (_ppBuffer && _ppBuffer->empty()) _ppBuffer->release(); return *this; }
 
+	operator bool() const { return _ppBuffer ? true : false; }
 private:
 	Buffer&	buffer() { return _ppBuffer ? **_ppBuffer : Buffer::Null; }
 

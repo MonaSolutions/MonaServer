@@ -29,7 +29,7 @@ int LUAServer::Send(lua_State* pState) {
 		if(handler.empty() || handler==".") {
 			ERROR("handler of one sending server message can't be null or equal to '.'")
 		} else {
-			ServerMessage message(server.poolBuffers());
+			ServerMessage message(server.manager().poolBuffers);
 			SCRIPT_READ_DATA(message)
 			server.send(handler,message);
 		}

@@ -116,6 +116,6 @@ int LUAWriter::WriteRaw(lua_State* pState) {
 
 int LUAWriter::NewWriter(lua_State* pState) {
 	SCRIPT_CALLBACK(Writer,writer)
-		SCRIPT_NEW_OBJECT(Writer,LUAWriter,(new LUAWriter(pState,writer))->writer)
+		SCRIPT_NEW_OBJECT(Writer,LUAWriter,&(new LUAWriter(pState,writer))->writer)
 	SCRIPT_CALLBACK_RETURN
 }

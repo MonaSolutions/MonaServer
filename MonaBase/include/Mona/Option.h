@@ -29,8 +29,6 @@ namespace Mona {
 class Option : public virtual NullableObject {
 	friend class Options;
 public:
-	Option();
-
 	Option(const char* fullName, const char* shortName);
 		/// Creates an option with the given properties.
 
@@ -93,9 +91,10 @@ public:
 	bool operator<(const Option& other) const { return _fullName < other._fullName; }
 	bool operator>(const Option& other) const { return _fullName > other._fullName; }
 
+	operator bool() const { return !_fullName.empty() && !_shortName.empty(); }
+
 	static Option Null;
 private:
-	Option(bool isNull);
 	std::string		_shortName;
 	std::string		_fullName;
 	std::string		_description;

@@ -28,15 +28,11 @@ namespace Mona {
 class HTTProtocol : public TCProtocol, virtual Object {
 public:
 	HTTProtocol(const char* name, Invoker& invoker, Sessions& sessions) : TCProtocol(name, invoker, sessions) {}
-
+	~HTTProtocol() { stop(); }
 private:
-	// TCPServer implementation
-	void	onConnectionRequest(Exception& ex) {
-		HTTPSession* pSession = acceptClient<HTTPSession>(ex, *this, invoker);
-		if (!pSession)
-			return;
-		// Create session!
-		sessions.add(*pSession);
+	// Create session
+	void onClient(Exception& ex,const SocketAddress& address,SocketFile& file) {
+		sessions.create<HTTPSession>(address,file,*this,invoker);
 	}
 };
 

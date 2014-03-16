@@ -22,7 +22,7 @@ This file is a part of Mona.
 #include "Mona/TCPServer.h"
 #include "Mona/UDPSocket.h"
 #include "Mona/Logs.h"
-#include <set>
+#include <list>
 
 using namespace std;
 using namespace Mona;
@@ -40,27 +40,27 @@ private:
 
 class TCPEchoClient : public TCPClient {
 public:
-	TCPEchoClient(const SocketManager& manager,bool parallel) : _unknown(false),testUnknown(false),TCPClient(manager),_mutex(!parallel),parallel(parallel) {}
+	TCPEchoClient(const SocketManager& manager,bool parallel) : testDisconnection(false),TCPClient(manager),_mutex(!parallel),parallel(parallel) {}
 
 	const bool parallel;
-	bool testUnknown;
+	bool testDisconnection;
 
-	void onError(const std::string& error) {
-		if (!testUnknown)
-			FATAL_ERROR("TCPEchoClient, ", error)
+	void onError(const Exception& ex) {
+		if (!testDisconnection)
+			FATAL_ERROR("TCPEchoClient, ", ex.error())
 	}
 
 	bool join() {
 		if (!parallel) {
-			if (testUnknown)
-				return _unknown;
+			if (testDisconnection)
+				return !connected();
 			lock_guard<Mutex> lock(_mutex);
 			return _datas.empty();
 		}
 		while(_event.wait(20000)) {
 			lock_guard<Mutex> lock(_mutex);
-			if (testUnknown)
-				return _unknown;
+			if (testDisconnection)
+				return !connected();
 			if (_datas.empty())
 				return true;
 		}
@@ -90,16 +90,13 @@ private:
 	}
 
 	void onDisconnection(){
-		if (!testUnknown)
-			return;
-		_unknown=true;
+		CHECK(!connected())
 		_event.set();
 	}
 	
 	deque<vector<UInt8>> _datas;
 	Event				_event;
 	Mutex				_mutex;
-	atomic<bool>		_unknown;
 };
 
 
@@ -109,18 +106,13 @@ public:
 	TCPEchoServer(const SocketManager& manager) : TCPServer(manager) {
 	}
 
-	virtual ~TCPEchoServer() {
-		for (Client* pClient : _clients)
-			delete pClient;
-	}
-
 private:
 	class Client : public TCPClient {
 	public:
-		Client(const SocketAddress& peerAddress,const SocketManager& manager) : TCPClient(peerAddress, manager) {}
+		Client(const SocketAddress& peerAddress,SocketFile& file,const SocketManager& manager) : TCPClient(peerAddress,file, manager) {}
 
-		void onError(const std::string& error) {
-			FATAL_ERROR("Client, ",error);
+		void onError(const Exception& ex) {
+			FATAL_ERROR("Client, ",ex.error());
 		}
 	private:
 		UInt32 onReception(PoolBuffer& pBuffer) {
@@ -129,23 +121,20 @@ private:
 			return 0;
 		}
 
-		void onDisconnection() {}
+		void onDisconnection() {CHECK(!connected())}
 
 	};
 
-	void onError(const string& error) {
-		FATAL_ERROR("TCPServer, ",error);
+	void onError(const Exception& ex) {
+		FATAL_ERROR("TCPServer, ",ex.error());
 	}
 
-	void onConnectionRequest(Exception& ex) {
-		Client* pClient = acceptClient<Client>(ex);
-		if (!pClient)
-			ERROR("NO CLIENT");
-		CHECK(pClient);	
-		_clients.emplace(pClient);
+	void onConnection(Exception& ex,const SocketAddress& address,SocketFile& file) {
+		CHECK(address && file);	
+		_clients.emplace_back(address,file,manager());
 	}
 
-	std::set<Client*> _clients;
+	std::list<Client> _clients;
 
 };
 
@@ -156,8 +145,8 @@ public:
 	
 	const bool parallel;
 
-	void onError(const std::string& error) {
-		FATAL_ERROR("UDPEchoClient, ",error);
+	void onError(const Exception& ex) {
+		FATAL_ERROR("UDPEchoClient, ",ex.error());
 	}
 
 	bool join() {
@@ -213,8 +202,8 @@ public:
 
 private:
 	
-	void onError(const string& error) {
-		FATAL_ERROR("UDPEchoServer, ",error);
+	void onError(const Exception& ex) {
+		FATAL_ERROR("UDPEchoServer, ",ex.error());
 	}
 
 	void onReception(PoolBuffer& pBuffer,const SocketAddress& address) {
@@ -231,6 +220,8 @@ public:
 	TaskHandlerSockets() {
 		start();
 	}
+
+	void stop() { TaskHandler::stop(); }
 
 	template<typename SocketType>
 	bool join(SocketType& socket) {
@@ -277,15 +268,18 @@ void TCPTest(SocketManager& sockets) {
 	CHECK(client.echo(ex,(const UInt8*)Long0Data.c_str(),Long0Data.size()) && !ex);
 	CHECK(TaskSockets.join(client));
 
+	client.testDisconnection = true;
+
 	client.disconnect();
-	CHECK(!client.connected());
+
+	CHECK(TaskSockets.join(client));
 
 	// Test an unknown connection
 	SocketAddress unknown(IPAddress::Loopback(),62434);
-	client.testUnknown = true;
 	if (client.connect(ex, unknown)) {
+		CHECK(!ex)
 		if (!client.parallel) {
-			CHECK(!ex && client.connected());
+			CHECK(client.connected());
 			client.address();
 			client.peerAddress();
 			if (Util::Random<UInt8>()%2)
@@ -338,6 +332,7 @@ ADD_TEST(SocketTest, UDPParallelSocket) {
 }
 
 ADD_TEST(SocketTest, StopSockets) {
+	TaskSockets.stop();
 	Sockets.stop();
 	CHECK(!Sockets.running());
 	ParallelSockets.stop();

@@ -313,9 +313,6 @@
       <Filter>Application</Filter>
     </ClInclude>
     <ClInclude Include="include\Mona\Mona.h" />
-    <ClInclude Include="include\Mona\Expirable.h">
-      <Filter>Util</Filter>
-    </ClInclude>
     <ClInclude Include="include\Mona\Files.h">
       <Filter>File</Filter>
     </ClInclude>
@@ -364,8 +361,8 @@
     <ClInclude Include="include\Mona\Timezone.h">
       <Filter>Time</Filter>
     </ClInclude>
-    <ClInclude Include="include\Mona\SocketHandler.h">
-      <Filter>Net</Filter>
+    <ClInclude Include="include\Mona\Expirable.h">
+      <Filter>Threading</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

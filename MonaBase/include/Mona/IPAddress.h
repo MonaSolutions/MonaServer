@@ -54,13 +54,16 @@ public:
 	
 	// Creates a wildcard (zero) IPv4 IPAddress.
 	IPAddress(Family family=IPv4);
+
 	IPAddress(const IPAddress& other);
+	IPAddress& set(const IPAddress& other);
+	IPAddress& operator=(const IPAddress& other) { return set(other); }
 
 	// Create/Set an IPAddress from a native internet address. A pointer to a in_addr or a in6_addr structure may be  passed. Additionally, for an IPv6 address, a scope ID may be specified.
 	IPAddress(const in_addr& addr);
 	IPAddress(const in6_addr& addr, UInt32 scope = 0);
-	void set(const in_addr& addr);
-	void set(const in6_addr& addr, UInt32 scope = 0);
+	IPAddress& set(const in_addr& addr);
+	IPAddress& set(const in6_addr& addr, UInt32 scope = 0);
 
 	// Set an IPAddress from the string containing an IP address in presentation format (dotted decimal for IPv4, hex string for IPv6).
 	bool set(Exception& ex, const std::string& addr);
@@ -72,10 +75,10 @@ public:
 
 	// Masks the IP address using the given netmask, which is usually a IPv4 subnet mask (Only supported for IPv4 addresses)
 	// The new address is (address & mask)
-	void mask(Exception& ex, const IPAddress& mask);
+	bool mask(Exception& ex, const IPAddress& mask) { return this->mask(ex, mask, Wildcard());}
 	// Masks the IP address using the given netmask, which is usually a IPv4 subnet mask (Only supported for IPv4 addresses)
 	// The new address is (address & mask) | (set & ~mask)
-	void mask(Exception& ex, const IPAddress& mask, const IPAddress& set);
+	bool mask(Exception& ex, const IPAddress& mask, const IPAddress& set);
 
 
 
@@ -162,7 +165,7 @@ public:
 	// Returns a broadcast IPv4 address (255.255.255.255)
 	static const IPAddress& Broadcast();
 
-
+	operator bool() const { return !isWildcard(); }
 private:
 	
 	std::shared_ptr<IPAddressCommon>	_pIPAddress;

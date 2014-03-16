@@ -28,10 +28,11 @@ LUAUDPSocket::LUAUDPSocket(const SocketManager& manager,bool allowBroadcast,lua_
 }
 
 LUAUDPSocket::~LUAUDPSocket() {
+	close();
 }
 
-void LUAUDPSocket::onError(const string& error) {
-	WARN("LUAUDPSocket, ", error);
+void LUAUDPSocket::onError(const Exception& ex) {
+	WARN("LUAUDPSocket, ", ex.error());
 }
 
 void LUAUDPSocket::onReception(PoolBuffer& pBuffer, const SocketAddress& address) {

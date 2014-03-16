@@ -68,6 +68,8 @@ public:
 
 	PacketReader&				packet;
 
+	operator bool() const { return packet; }
+
 protected:
 	DataReader(PacketReader& packet);
 	DataReader(); // Null

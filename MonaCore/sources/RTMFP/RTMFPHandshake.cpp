@@ -114,7 +114,7 @@ RTMFPSession* RTMFPHandshake::createSession(const UInt8* cookieValue) {
 	(UInt32&)farId = cookie.farId;
 
 	// Create session
-	RTMFPSession* pSession = &_sessions.add<RTMFPSession>(*new RTMFPSession(protocol<RTMFProtocol>(), invoker, farId, cookie.decryptKey(), cookie.encryptKey(),cookie.pPeer),Sessions::BYPEER | Sessions::BYADDRESS);
+	RTMFPSession* pSession = &_sessions.create<RTMFPSession,Sessions::BYPEER | Sessions::BYADDRESS>(protocol<RTMFProtocol>(), invoker, farId, cookie.decryptKey(), cookie.encryptKey(),cookie.pPeer);
 	(UInt32&)cookie.id = pSession->id();
 
 	// response!

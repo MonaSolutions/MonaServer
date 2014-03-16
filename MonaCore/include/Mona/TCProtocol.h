@@ -33,15 +33,20 @@ public:
 
 protected:
 	TCProtocol(const char* name, Invoker& invoker, Sessions& sessions) : TCPServer(invoker.sockets), Protocol(name, invoker, sessions) {}
-	virtual ~TCProtocol() {stop();}
-
 
 private:
 
-	void	onError(const std::string& error) { WARN("Protocol ", name, ", ", error); }
+	void	onError(const Exception& ex) { WARN("Protocol ", name, ", ", ex.error()); }
+	void	onConnection(Exception& ex, const SocketAddress& address, SocketFile& file);
 
-	bool    onConnection(const SocketAddress& address) { return auth(address); }
+	virtual void onClient(Exception& ex,const SocketAddress& address,SocketFile& file) = 0;
 };
+
+inline void	TCProtocol::onConnection(Exception& ex,const SocketAddress& address,SocketFile& file) {
+	if(!auth(address))
+		return;
+	onClient(ex,address,file);
+}
 
 inline bool TCProtocol::load(Exception& ex, const ProtocolParams& params) {
 	SocketAddress address;

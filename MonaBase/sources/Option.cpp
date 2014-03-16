@@ -23,18 +23,12 @@ using namespace std;
 
 namespace Mona {
 
-Option Option::Null(true);
+Option Option::Null(NULL,NULL);
 
-Option::Option():Option(false) {
-}
-
-Option::Option(bool isNull) : _required(false), _repeatable(false), _argRequired(false), NullableObject(isNull) {
-
-}
 
 Option::Option(const char* fullName, const char* shortName) :
-	_shortName(shortName),
-	_fullName(fullName),
+	_shortName(shortName ? shortName : ""),
+	_fullName(fullName ? fullName : ""),
 	_required(false),
 	_repeatable(false),
 	_argRequired(false) {
@@ -42,8 +36,8 @@ Option::Option(const char* fullName, const char* shortName) :
 
 
 Option::Option(const char* fullName, const char* shortName, const string& description, bool required) :
-	_shortName(shortName),
-	_fullName(fullName),
+	_shortName(shortName ? shortName : ""),
+	_fullName(fullName ? fullName : ""),
 	_description(description),
 	_required(required),
 	_repeatable(false),

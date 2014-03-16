@@ -23,7 +23,7 @@ This file is a part of Mona.
 
 namespace Mona {
 
-Buffer	Buffer::Null(true,true,true);
+Buffer	Buffer::Null(NULL,0);
 
 void Buffer::clip(UInt32 offset) {
 	if (offset > _size)

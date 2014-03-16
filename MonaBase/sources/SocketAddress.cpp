@@ -124,7 +124,7 @@ public:
 static SocketWilcard _Addressv4Wildcard(IPAddress::IPv4);
 static SocketWilcard _Addressv6Wildcard(IPAddress::IPv6);
 
-SocketAddress::SocketAddress(IPAddress::Family family) : NullableObject(true),_pAddress(family == IPAddress::IPv6 ? _Addressv6Wildcard._pAddress : _Addressv4Wildcard._pAddress) {
+SocketAddress::SocketAddress(IPAddress::Family family) : _pAddress(family == IPAddress::IPv6 ? _Addressv6Wildcard._pAddress : _Addressv4Wildcard._pAddress) {
 }
 
 SocketAddress::SocketAddress(const IPAddress& host, UInt16 port) {
@@ -145,16 +145,12 @@ SocketAddress::SocketAddress(const SocketAddress& other) : _pAddress(other._pAdd
 }
 
 void SocketAddress::reset() {
-	if (_isNull)
-		return;
 	_pAddress = _pAddress->family() == IPAddress::IPv6 ? _Addressv6Wildcard._pAddress : _Addressv4Wildcard._pAddress;
-	_isNull = true;
 	_toString.clear();
 }
 
 SocketAddress& SocketAddress::set(const SocketAddress& other) {
 	_pAddress = other._pAddress;
-	_isNull = !other;
 	_toString.clear();
 	return *this;
 }
@@ -164,18 +160,17 @@ SocketAddress& SocketAddress::set(const IPAddress& host, UInt16 port) {
 		_pAddress.reset(new IPv6SocketAddress(host, htons(port), host.scope()));
 	else
 		_pAddress.reset(new IPv4SocketAddress(host, htons(port)));
-	_isNull = host.isWildcard() && port==0;
 	_toString.clear();
 	return *this;
 }
 
-void SocketAddress::set(const struct sockaddr& addr) {
+SocketAddress& SocketAddress::set(const struct sockaddr& addr) {
 	if (addr.sa_family == AF_INET6)
 		_pAddress.reset(new IPv6SocketAddress(reinterpret_cast<const struct sockaddr_in6*>(&addr)));
 	else
 		_pAddress.reset(new IPv4SocketAddress(reinterpret_cast<const struct sockaddr_in*>(&addr)));
-	_isNull = _pAddress->host().isWildcard() && _pAddress->port()==0;
 	_toString.clear();
+	return *this;
 }
 
 bool SocketAddress::setIntern(Exception& ex,const string& hostAndPort,bool resolveHost) {

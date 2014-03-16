@@ -57,7 +57,6 @@ public:
 	virtual bool isSiteLocalMC() const = 0;
 	virtual bool isOrgLocalMC() const = 0;
 	virtual bool isGlobalMC() const = 0;
-	virtual void mask(Exception& ex, const IPAddressCommon* pMask, const IPAddressCommon* pSet) = 0;
 };
 
 
@@ -66,6 +65,12 @@ public:
 
 	IPv4Address(const in_addr& addr) {
 		memcpy(&_addr, &addr, sizeof(_addr));
+	}
+
+	IPv4Address(const in_addr& addr, const in_addr& mask, const in_addr& set) {
+		memcpy(&_addr,&addr,sizeof(addr)) ;
+		_addr.s_addr &= mask.s_addr;
+		_addr.s_addr |= set.s_addr & ~mask.s_addr;
 	}
 
 	const string& toString() const {
@@ -126,14 +131,6 @@ public:
 #endif
 	}
 	
-	void mask(Exception& ex, const IPAddressCommon* pMask, const IPAddressCommon* pSet) {
-		lock_guard<mutex> lock(_mutex);
-		ASSERT(pMask != NULL && pSet!=NULL)
-		ASSERT(pMask->family() == IPAddress::IPv4 && pSet->family() == IPAddress::IPv4)
-		_addr.s_addr &= static_cast<const IPv4Address*>(pMask)->_addr.s_addr;
-		_addr.s_addr |= static_cast<const IPv4Address*>(pSet)->_addr.s_addr & ~static_cast<const IPv4Address*>(pMask)->_addr.s_addr;
-		_toString.clear();
-	}
 
 private:
 	struct	in_addr		_addr;	
@@ -291,10 +288,6 @@ public:
 #endif
 		return 0;
 	}
-	
-	void mask(Exception& ex, const IPAddressCommon* pMask, const IPAddressCommon* pSet) {
-		ex.set(Exception::NETADDRESS,"mask() is only supported for IPv4 addresses");
-	}
 
 private:
 	struct in6_addr		_addr;	
@@ -344,7 +337,7 @@ public:
 static IPWilcard	 _IPv4Wildcard(IPAddress::IPv4);
 static IPWilcard	 _IPv6Wildcard(IPAddress::IPv6);
 
-IPAddress::IPAddress(Family family) : NullableObject(true),_pIPAddress(family == IPv6 ? _IPv6Wildcard._pIPAddress : _IPv4Wildcard._pIPAddress) {
+IPAddress::IPAddress(Family family) : _pIPAddress(family == IPv6 ? _IPv6Wildcard._pIPAddress : _IPv4Wildcard._pIPAddress) {
 }
 
 IPAddress::IPAddress(const IPAddress& other) : _pIPAddress(other._pIPAddress) {
@@ -357,18 +350,22 @@ IPAddress::IPAddress(const in6_addr& addr, UInt32 scope) : _pIPAddress(new IPv6A
 }
 
 void IPAddress::reset() {
-	if (_isNull)
-		return;
-	_isNull = true;
 	_pIPAddress = _pIPAddress->family() == IPv6 ? _IPv6Wildcard._pIPAddress : _IPv4Wildcard._pIPAddress;
 }
 
-void IPAddress::set(const in_addr& addr) {
-	_pIPAddress.reset(new IPv4Address(addr));
+IPAddress& IPAddress::set(const IPAddress& other) {
+	_pIPAddress = other._pIPAddress;
+	return *this;
 }
 
-void IPAddress::set(const in6_addr& addr, UInt32 scope) {
+IPAddress& IPAddress::set(const in_addr& addr) {
+	_pIPAddress.reset(new IPv4Address(addr));
+	return *this;
+}
+
+IPAddress& IPAddress::set(const in6_addr& addr, UInt32 scope) {
 	_pIPAddress.reset(new IPv6Address(addr, scope));
+	return *this;
 }
 
 bool IPAddress::set(Exception& ex, const string& addr) {
@@ -397,14 +394,10 @@ bool IPAddress::set(Exception& ex, const string& addr, Family family) {
 	return true;
 }
 
-void IPAddress::mask(Exception& ex, const IPAddress& mask) {
-	IPAddress null;
-	_pIPAddress->mask(ex, mask._pIPAddress.get(), null._pIPAddress.get());
-}
-
-
-void IPAddress::mask(Exception& ex, const IPAddress& mask, const IPAddress& set) {
-	_pIPAddress->mask(ex, mask._pIPAddress.get(), set._pIPAddress.get());
+bool IPAddress::mask(Exception& ex, const IPAddress& mask, const IPAddress& set) {
+	ASSERT_RETURN(family() == IPAddress::IPv4 && mask.family() == IPAddress::IPv4 && set.family() == IPAddress::IPv4,false);
+	_pIPAddress.reset(new IPv4Address(*(const in_addr*)_pIPAddress->addr(),*(const in_addr*)mask.addr(),*(const in_addr*)set.addr()));
+	return true;
 }
 
 IPAddress::Family IPAddress::family() const {

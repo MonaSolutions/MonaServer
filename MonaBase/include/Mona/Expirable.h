@@ -24,6 +24,7 @@ This file is a part of Mona.
 #include "Mona/Exceptions.h"
 #include <memory>
 #include <mutex>
+#include <atomic>
 
 
 namespace Mona {
@@ -33,11 +34,12 @@ class Expirable : virtual Object {
 public:
 	Expirable() : _pOwner(NULL), _isOwner(false) {}
 
-
 	virtual ~Expirable() {
 		if (_isOwner)
 			FATAL_ASSERT(*_pExpired);
 	}
+
+	bool isOwner() const { return _isOwner; }
 
 	ObjectType* safeThis(std::unique_lock<std::mutex>& guard) {
 		if (!_pOwner)
@@ -59,22 +61,24 @@ public:
 		other._pMutex = _pMutex;
 		other._pExpired = _pExpired;
 	}
-	
-protected:
-	Expirable(ObjectType* pThis) : _isOwner(true), _pMutex(new std::mutex()), _pOwner(pThis), _pExpired(new bool(false)) {}
 
 	void expire() {
-		if (!_isOwner)
+		if (!_isOwner || *_pExpired)
 			return;
 		std::lock_guard<std::mutex> lock(*_pMutex);
 		*_pExpired = true;
 	}
 
+	
+protected:
+	Expirable(ObjectType* pThis) : _isOwner(true), _pMutex(new std::mutex()), _pOwner(pThis), _pExpired(new std::atomic<bool>(false)) {}
+
+	
 private:
-	std::shared_ptr<std::mutex>	_pMutex;
-	std::shared_ptr<bool>		_pExpired;
-	ObjectType*					_pOwner;
-	bool						_isOwner;
+	std::shared_ptr<std::mutex>			_pMutex;
+	std::shared_ptr<std::atomic<bool>>	_pExpired;
+	ObjectType*							_pOwner;
+	bool								_isOwner;
 };
 
 } // namespace Mona

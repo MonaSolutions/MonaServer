@@ -23,7 +23,7 @@
 namespace Mona {
 
 
-class SOAPWriter : public XMLWriter, public virtual NullableObject {
+class SOAPWriter : public XMLWriter, virtual Object {
 public:
 	SOAPWriter(const PoolBuffers& buffers);
 

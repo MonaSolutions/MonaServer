@@ -100,7 +100,7 @@ int LUADataTable::Set(lua_State *pState) {
 				lua_getfield(pState, -1, "|items");
 		
 				if (lua_istable(pState, 3)) {
-					SCRIPT_NEW_OBJECT(LUADataTable, LUADataTable, *(new LUADataTable(table.database, path)));
+					SCRIPT_NEW_OBJECT(LUADataTable, LUADataTable, new LUADataTable(table.database, path));
 					// table iteration
 					lua_pushnil(pState);  // first key 
 					while (lua_next(pState, 3) != 0) {

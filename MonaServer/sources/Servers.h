@@ -39,8 +39,8 @@ private:
 	Mona::UInt32		flush(const std::string& handler);
 	Mona::UInt32		flush(Mona::UInt32 handlerRef);
 
-	void				onConnectionRequest(Mona::Exception& ex);
-	void				onError(const std::string& error) { WARN("Servers, ", error); }
+	void				onConnection(Mona::Exception& ex, const Mona::SocketAddress& peerAddress, Mona::SocketFile& file);
+	void				onError(const Mona::Exception& ex) { WARN("Servers, ", ex.error()); }
 
 	void				connection(ServerConnection& server);
 	void				disconnection(ServerConnection& server);

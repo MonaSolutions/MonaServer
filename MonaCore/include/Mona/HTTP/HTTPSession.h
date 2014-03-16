@@ -34,7 +34,7 @@ class HTTPPacketReader;
 class HTTPSession :  public WSSession {
 public:
 
-	HTTPSession(const SocketAddress& address,const SocketManager& sockets, Protocol& protocol, Invoker& invoker);
+	HTTPSession(const SocketAddress& peerAddress, SocketFile& file, Protocol& protocol, Invoker& invoker);
 	virtual ~HTTPSession();
 	
 private:

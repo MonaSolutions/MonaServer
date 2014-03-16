@@ -59,7 +59,7 @@ void RTMFPSession::failSignal() {
 		return;
 	++_timesFailed;
 	PacketWriter& writer = RTMFPSession::packet(); 
-	writer.clear(); // no other message, just fail message, so I erase all data in first
+	writer.clear(RTMFP_HEADER_SIZE); // no other message, just fail message, so I erase all data in first
 	writer.write8(0x0C).write16(0);
 	flush(false); // We send immediatly the fail message
 

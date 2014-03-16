@@ -74,7 +74,7 @@ bool SocketSender::flush(Exception& ex,Socket& socket) {
 		return true;
 	}
 
-	if (buffering(socket.manager.poolBuffers))
+	if (buffering(socket.manager().poolBuffers))
 		return false;
 	return true;
 }

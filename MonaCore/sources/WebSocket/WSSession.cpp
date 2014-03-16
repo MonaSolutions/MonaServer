@@ -30,7 +30,7 @@ using namespace std;
 namespace Mona {
 
 
-WSSession::WSSession(const SocketAddress& address,const SocketManager& sockets, Protocol& protocol, Invoker& invoker) : TCPSession(address, sockets,protocol, invoker), _writer(*this), _pListener(NULL), _pPublication(NULL) {
+WSSession::WSSession(const SocketAddress& peerAddress, SocketFile& file, Protocol& protocol, Invoker& invoker) : TCPSession(peerAddress, file,protocol, invoker), _writer(*this), _pListener(NULL), _pPublication(NULL) {
 }
 
 
