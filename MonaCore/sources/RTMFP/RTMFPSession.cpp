@@ -74,8 +74,6 @@ void RTMFPSession::kill() {
 	if(died)
 		return;
 
-	NOTE("RTMFPSession::kill ",name())
-
 	// unsubscribe peer for its groups
 	peer.unsubscribeGroups();
 
