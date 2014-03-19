@@ -238,7 +238,7 @@ public:
 	static void RemoveObject(lua_State* pState, int index) {
 		if (lua_getmetatable(pState, index)) {
 			// remove this
-			lua_pushnil(pState);
+			lua_pushnumber(pState,0); // set 0 and not nil to know that this mona object is death
 			lua_setfield(pState, -2, "|this");
 			lua_pop(pState, 1);
 		}
@@ -313,10 +313,14 @@ public:
 		lua_getfield(pState,-1,"|this");
 		Type* pThis = (Type*)lua_touserdata(pState, -1);
 		if (!pThis) {
+			bool isDeleted = lua_isnumber(pState, -1)!=0;
 			lua_pop(pState,2);
 			if(!callback) return NULL;
 			SCRIPT_BEGIN(pState)
-				SCRIPT_ERROR("Object deleted")
+				if (isDeleted)
+					SCRIPT_ERROR("'this' object deleted")
+				else
+					SCRIPT_ERROR("'this' argument not present, call method with ':' colon operator")
 			SCRIPT_END
 			return NULL;
 		}
@@ -452,7 +456,7 @@ private:
 			if (lua_istable(pState, -1)) {
 				// remove this
 				if (lua_getmetatable(pState, -1)) {
-					lua_pushnil(pState);
+					lua_pushnumber(pState,0); // set 0 and not nil to know that this mona object is death
 					lua_setfield(pState, -2, "|this");
 					lua_pop(pState, 1);
 				}

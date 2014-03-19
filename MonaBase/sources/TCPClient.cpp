@@ -115,6 +115,7 @@ void TCPClient::disconnect() {
 		return;
 	_disconnecting = true;
 	Exception ex;
+	_socket.flush(ex); // try to flush what is possible before disconnection!
 	_socket.shutdown(ex,Socket::SEND);
 }
 

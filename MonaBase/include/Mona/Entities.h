@@ -25,18 +25,17 @@ This file is a part of Mona.
 
 namespace Mona {
 
+struct CompareEntity {
+	bool operator()(const UInt8* a,const UInt8* b) const {
+		return std::memcmp(a,b,ID_SIZE)<0;
+	}
+};
+
 template<class EntityType>
 class Entities : virtual Object {
 public:
-	struct Compare {
-	   bool operator()(const UInt8* a,const UInt8* b) const {
-		   return std::memcmp(a,b,ID_SIZE)<0;
-	   }
-	};
 
-	typedef typename std::map<const UInt8*,EntityType*,Compare> Map;
-	typedef typename Map::const_iterator						Iterator;
-
+	typedef typename std::map<const UInt8*,EntityType*,CompareEntity>::const_iterator	Iterator;
 
 	Iterator begin() const { return _entities.begin(); }
 	Iterator end() const { return _entities.end(); }
@@ -79,7 +78,7 @@ public:
 	}
 
 private:
-	Map	_entities;
+	std::map<const UInt8*,EntityType*,CompareEntity> _entities;
 };
 
 

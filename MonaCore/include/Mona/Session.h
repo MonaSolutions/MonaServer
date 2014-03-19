@@ -82,13 +82,12 @@ protected:
 	virtual void		packetHandler(PacketReader& packet)=0;
 
 private:
-	void				checkAddress(const SocketAddress& address);
 	const std::string&  protocolName();
 
 	PoolThread*					_pDecodingThread;
 	mutable std::string			_name;
 	UInt32						_id;
-	Sessions*					_pSessions;
+	Sessions*					_pSessions; // !NULL if managed by Sessions!
 	UInt8						_sessionsOptions;
 	Protocol&					_protocol;
 };

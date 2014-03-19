@@ -28,7 +28,7 @@ using namespace std;
 
 namespace Mona {
 
-Session::Session(Protocol& protocol, Invoker& invoker, const shared_ptr<Peer>& pPeer, const char* name) : _pPeer(pPeer),peer(*_pPeer),_pSessions(NULL), dumpJustInDebug(false),
+Session::Session(Protocol& protocol, Invoker& invoker, const shared_ptr<Peer>& pPeer, const char* name) : _sessionsOptions(0),_pPeer(pPeer),peer(*_pPeer),_pSessions(NULL), dumpJustInDebug(false),
 	Expirable(this), _protocol(protocol), _name(name ? name : ""), invoker(invoker), _pDecodingThread(NULL), died(false), _id(0) {
 	((string&)peer.protocol) = protocol.name;
 	if(memcmp(peer.id,"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",ID_SIZE)==0)
@@ -36,7 +36,7 @@ Session::Session(Protocol& protocol, Invoker& invoker, const shared_ptr<Peer>& p
 	DEBUG("peer.id: ", Util::FormatHex(peer.id, ID_SIZE, invoker.buffer));
 }
 	
-Session::Session(Protocol& protocol, Invoker& invoker, const char* name) : dumpJustInDebug(false), _pSessions(NULL), _pPeer(new Peer((Handler&)invoker)),
+Session::Session(Protocol& protocol, Invoker& invoker, const char* name) : _sessionsOptions(0),dumpJustInDebug(false), _pSessions(NULL), _pPeer(new Peer((Handler&)invoker)),
 	Expirable(this),_protocol(protocol),_name(name ? name : ""), invoker(invoker), _pDecodingThread(NULL), died(false), _id(0), peer(*_pPeer) {
 	((string&)peer.protocol) = protocol.name;
 	if(memcmp(peer.id,"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",ID_SIZE)==0)

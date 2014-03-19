@@ -339,19 +339,17 @@ void SocketManager::run(Exception& exThread) {
 		_currentEvent = WSAGETSELECTEVENT(msg.lParam);
 		_sockfd = msg.wParam;
 		if (_currentEvent == FD_WRITE) {
+			_currentEvent = 0;
 			// protected for _sockets access
 			lock_guard<recursive_mutex> lock(_mutex);
 			auto& it = _sockets.find(_sockfd);
 			if (it != _sockets.end()) {
 				_ppSocket = it->second;
-				(*_ppSocket)->flushSenders(_currentException);
-				if (_currentException)
-					_currentEvent = 0;
+				(*_ppSocket)->flush(_currentException);
 			}
 		}
 		// FD_CONNECT | FD_ACCEPT | FD_CLOSE | FD_READ | FD_WRITE
-		// (_currentEvent>>2) => FD_CONNECT or FD_ACCEPT or FD_CLOSE (!FD_READ and !FD_WRITE)
-		if ((_currentEvent>>2) || _currentException || Socket::IOCTL(_exSkip, _sockfd, FIONREAD, 0)) {
+		if (_currentEvent==FD_READ && Socket::IOCTL(_exSkip, _sockfd, FIONREAD, 0) || _currentEvent || _currentException) {
 			if (_currentEvent != FD_CLOSE) // in close case, it's not an error!
 				_currentError = WSAGETSELECTERROR(msg.lParam);
 			Task::waitHandle();
@@ -411,7 +409,7 @@ void SocketManager::run(Exception& exThread) {
 				_ppSocket = (Socket**)event.data.ptr;
 				Socket* pSocket(*_ppSocket);
 				if(pSocket)
-					pSocket->flushSenders(_currentException);
+					pSocket->flush(_currentException);
 				_currentEvent &= ~EPOLLOUT;
 			}
 

@@ -38,7 +38,7 @@ public:
 	SocketAddress&			peerAddress(SocketAddress& address) const { std::lock_guard<std::mutex> lock(_mutex); return address.set(updatePeerAddress()); }
 
 	bool					bind(Exception& ex, const SocketAddress& address) { bool result = _socket.bind(ex, address); resetAddresses(); return result; }
-	void					close() { _socket.close(); resetAddresses(); }
+	void					close() { Exception ex; _socket.flush(ex); _socket.close(); resetAddresses(); }
 	bool					connect(Exception& ex, const SocketAddress& address) { bool result = _socket.connect(ex, address, _allowBroadcast);  resetAddresses(); return result; }
 	void					disconnect() { Exception ex; _socket.connect(ex, SocketAddress::Wildcard()); resetAddresses(); }
 

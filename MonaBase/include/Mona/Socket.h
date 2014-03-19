@@ -150,11 +150,11 @@ public:
 		return pThread;
 	}
 
+	bool flush(Exception& ex);
 	
 private:
 	bool canSend(Exception& ex);
 	bool addSender(Exception& ex, std::shared_ptr<SocketSender> pSender);
-	void flushSenders(Exception& ex);
 
 	// just for SocketManager class!
 	void onError(const Exception& ex);

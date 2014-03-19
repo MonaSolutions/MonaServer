@@ -42,14 +42,14 @@ public:
 	Sessions();
 	virtual ~Sessions();
 
-	UInt32	count() const { return _sessions.size(); }
+	UInt32	 count() const { return _sessions.size(); }
 
 	void	 updateAddress(Session& session, const SocketAddress& oldAddress);
 
 	Iterator begin() const { return _sessions.begin(); }
 	Iterator end() const { return _sessions.end(); }
 
-	void		manage();
+	void	 manage();
 
 	template<typename SessionType=Session>
 	SessionType* find(const SocketAddress& address) {
@@ -80,6 +80,7 @@ public:
 	template<typename SessionType, UInt8 options = BYID,typename ...Args>
 	SessionType& create(Args&&... args) {
 		SessionType* pSession = new SessionType(args ...);
+		pSession->_pSessions = this; // because managed by Sessions!
 		pSession->_id = _nextId;
 		_sessions[_nextId] = pSession;
 		if (options&BYPEER)
@@ -98,10 +99,10 @@ private:
 
 	void    remove(std::map<UInt32,Session*>::iterator it);
 
-	UInt32									_nextId;
-	std::map<UInt32,Session*>				_sessions;
-	Entities<Session>::Map					_sessionsByPeerId;
-	std::map<SocketAddress,Session*>		_sessionsByAddress;
+	UInt32											_nextId;
+	std::map<UInt32,Session*>						_sessions;
+	std::map<const UInt8*,Session*,CompareEntity>	_sessionsByPeerId;
+	std::map<SocketAddress,Session*>				_sessionsByAddress;
 };
 
 

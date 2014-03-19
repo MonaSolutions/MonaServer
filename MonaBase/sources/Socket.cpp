@@ -369,21 +369,23 @@ public:
 
 		
 	// Is called from one other thread than main thread (by the manager socket thread, so here socket is necessary managed, and _sockfd is good)
-	void flushSenders(Exception& ex) {
+	bool flush(Exception& ex) {
+		ASSERT_RETURN(_initialized, false);
 		lock_guard<recursive_mutex>	lock(_mutexManaged);
 		if (!_pManagedSocket)
-			return;
+			return true; // mean no Senders queue!!
 		lock_guard<mutex>	lockAsync(_mutexAsync);
 		while (!_senders.empty()) {
 			if (!_senders.front()->flush(ex,*_pSocket)) {
 				if (!_writing)
 					_writing = manager.startWrite(_sockfd,_pManagedSocket);
-				return;
+				return false;
 			}
 			_senders.pop_front();
 		}
 		if (_writing)
 			_writing = !manager.stopWrite(_sockfd,_pManagedSocket);
+		return true;
 	}
 
 	
@@ -497,7 +499,7 @@ bool Socket::onConnection() { return _pImpl->onConnection(); }
 
 bool		Socket::canSend(Exception& ex) { return _pImpl->canSend(ex); }
 bool		Socket::addSender(Exception& ex, std::shared_ptr<SocketSender> pSender) { return _pImpl->addSender(ex,pSender); }
-void		Socket::flushSenders(Exception& ex) {return _pImpl->flushSenders(ex);}
+bool		Socket::flush(Exception& ex) {return _pImpl->flush(ex);}
 
 SocketFile	Socket::acceptConnection(Exception& ex,SocketAddress& address) { return SocketFile(_pImpl->acceptConnection(ex,address)); }
 UInt32	 Socket::available(Exception& ex) const { return _pImpl->available(ex); }
