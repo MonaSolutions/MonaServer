@@ -65,9 +65,18 @@ bool RTMPSession::buildPacket(PoolBuffer& pBuffer,PacketReader& packet) {
 	}
 
 	switch(_handshaking) {
-		case 0:
-			packet.shrink(1537);
-			return packet.available() == 1537;
+		case 0: {
+			if (pBuffer->size() < 1537)
+				return false;
+			Exception ex;
+			_pHandshaker.reset(new RTMPHandshaker(peerAddress(), pBuffer));
+			send<RTMPHandshaker>(ex, _pHandshaker,NULL); // threaded!
+			if (ex) {
+				ERROR("RTMP Handshake, ", ex.error())
+				kill();
+			}
+			return true;
+		}
 		case 1:
 			if (packet.available() < 1536)
 				return false;
@@ -160,18 +169,6 @@ bool RTMPSession::buildPacket(PoolBuffer& pBuffer,PacketReader& packet) {
 	}
 
 	_pWriter = pWriter;
-
-	if (_handshaking == 0) {
-		if (_pHandshaker) // in processing, repeated packet
-			return true;
-		Exception ex;
-		_pHandshaker.reset(new RTMPHandshaker(peerAddress(), pBuffer));
-		send<RTMPHandshaker>(ex, _pHandshaker,NULL);
-		if (ex) {
-			ERROR("RTMP Handshake, ", ex.error())
-			kill();
-		}
-	}
 	return true;
 }
 

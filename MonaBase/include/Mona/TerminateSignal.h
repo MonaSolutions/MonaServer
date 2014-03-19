@@ -20,7 +20,7 @@ This file is a part of Mona.
 #pragma once
 
 #include "Mona/Mona.h"
-#include "Mona/Event.h"
+#include "Mona/Signal.h"
 
 namespace Mona {
 
@@ -31,7 +31,7 @@ public:
 	virtual void wait();
 	void set() { _Terminate.set(); }
 protected:
-    static Event			_Terminate;
+    static Signal			_Terminate;
 #if defined(_WIN32)
 	static int __stdcall	ConsoleCtrlHandler(unsigned long ctrlType);
 #else

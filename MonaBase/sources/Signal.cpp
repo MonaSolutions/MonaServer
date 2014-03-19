@@ -17,7 +17,7 @@ details (or else see http://www.gnu.org/licenses/).
 This file is a part of Mona.
 */
 
-#include "Mona/Event.h"
+#include "Mona/Signal.h"
 #include "Mona/Exceptions.h"
 
 
@@ -25,7 +25,7 @@ namespace Mona {
 
 using namespace std;
 
-bool Event::wait(UInt32 millisec) {
+bool Signal::wait(UInt32 millisec) {
 	cv_status result(cv_status::no_timeout);
 	unique_lock<mutex> lock(_mutex);
 	try {
@@ -36,23 +36,23 @@ bool Event::wait(UInt32 millisec) {
 				_condition.wait(lock);
 		}
 	} catch (exception& exc) {
-		FATAL_ERROR("Wait event failed, ", exc.what());
+		FATAL_ERROR("Wait signal failed, ", exc.what());
 	} catch (...) {
-		FATAL_ERROR("Wait event failed, unknown error");
+		FATAL_ERROR("Wait signal failed, unknown error");
 	}
 	if (_autoReset && _set)
 		_set = false;
 	return result == cv_status::no_timeout;
 }
 
-void Event::set() {
+void Signal::set() {
 	unique_lock<mutex> lock(_mutex);
 	_set = true;
 	_condition.notify_all();
 }
 
 
-void Event::reset() {
+void Signal::reset() {
 	unique_lock<mutex> lock(_mutex);
 	_set = false;
 }

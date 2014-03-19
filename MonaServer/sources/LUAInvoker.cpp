@@ -295,7 +295,7 @@ int LUAInvoker::Get(lua_State *pState) {
 		if(strcmp(name,"clients")==0) {
 			Script::Collection(pState,1,"clients",invoker.clients.count());
 		} else if (strcmp(name, "host") == 0) {
-			SCRIPT_WRITE_STRING(((ServerHandler&)invoker).host().c_str())
+			SCRIPT_WRITE_STRING(((MonaServer&)invoker).servers.host.c_str())
 		} else if (strcmp(name, "joinGroup") == 0) {
 			SCRIPT_WRITE_FUNCTION(&LUAInvoker::JoinGroup)
 		} else if (strcmp(name, "groups") == 0) {

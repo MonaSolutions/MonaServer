@@ -73,13 +73,13 @@ int LUABroadcaster::Item(lua_State *pState) {
 
 int LUABroadcaster::Broadcast(lua_State* pState) {
 	SCRIPT_CALLBACK(Broadcaster,broadcaster)
-		string handler(SCRIPT_READ_STRING(""));
-		if(handler.empty() || handler==".") {
+		const char* handler(SCRIPT_READ_STRING(""));
+		if(strlen(handler)==0 || strcmp(handler,".")==0) {
 			ERROR("handler of one sending server message can't be null or equal to '.'")
 		} else {
-			ServerMessage message(broadcaster.poolBuffers);
-			SCRIPT_READ_DATA(message)
-			broadcaster.broadcast(handler,message);
+			std::shared_ptr<ServerMessage> pMessage(new ServerMessage(handler,broadcaster.poolBuffers));
+			SCRIPT_READ_DATA(*pMessage)
+			broadcaster.broadcast(pMessage);
 		}
 	SCRIPT_CALLBACK_RETURN
 }

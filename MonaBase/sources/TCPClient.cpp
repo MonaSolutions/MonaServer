@@ -119,21 +119,23 @@ void TCPClient::disconnect() {
 }
 
 void TCPClient::close() {
-	lock_guard<recursive_mutex> lock(_mutex);
-	if (!_connected)
-		return;
-	_connected = false;
-	if (!_disconnecting) {
-		Exception ex;
-		_socket.shutdown(ex);
-	} else
-		 _disconnecting = false;
-	_socket.close();
-	_rest = 0;
-	_pBuffer.release();
-	 _address.reset();
-	 _peerAddress.reset();
-	onDisconnection(); // in last because can call a TCPClient::connect!
+	{
+		lock_guard<recursive_mutex> lock(_mutex);
+		if (!_connected)
+			return;
+		_connected = false;
+		if (!_disconnecting) {
+			Exception ex;
+			_socket.shutdown(ex);
+		} else
+			 _disconnecting = false;
+		_socket.close();
+		_rest = 0;
+		_pBuffer.release();
+		 _address.reset();
+		 _peerAddress.reset();
+	 }
+	onDisconnection(); // in last because can call a TCPClient::connect, or delete this
 }
 
 bool TCPClient::send(Exception& ex,const UInt8* data,UInt32 size) {

@@ -67,7 +67,7 @@ private:
 	Exception							_ex;
 
 	mutable  std::atomic<int>			_counter;
-	mutable  Event						_eventInit;
+	mutable  Signal						_initSignal;
 	mutable std::recursive_mutex		_mutex;
 
     mutable std::map<NET_SOCKET, Socket**>		_sockets;

@@ -37,18 +37,18 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
 
 SocketManager::SocketManager(TaskHandler& handler, const PoolBuffers& poolBuffers, PoolThreads& poolThreads, UInt32 bufferSize, const string& name) : poolBuffers(poolBuffers),
-   _selfHandler(false), poolThreads(poolThreads), _eventFD(0), _sockfd(NET_INVALID_SOCKET), _eventSystem(0), bufferSize(bufferSize), Startable(name), Task(handler), _currentEvent(0), _currentError(0), _eventInit(false), _ppSocket(NULL),_counter(0) {
+   _selfHandler(false), poolThreads(poolThreads), _eventFD(0), _sockfd(NET_INVALID_SOCKET), _eventSystem(0), bufferSize(bufferSize), Startable(name), Task(handler), _currentEvent(0), _currentError(0), _initSignal(false), _ppSocket(NULL),_counter(0) {
 
 }
 SocketManager::SocketManager(const PoolBuffers& poolBuffers, PoolThreads& poolThreads, UInt32 bufferSize, const string& name) : poolBuffers(poolBuffers),
-   _selfHandler(true), poolThreads(poolThreads), _eventFD(0), _sockfd(NET_INVALID_SOCKET), _eventSystem(0), bufferSize(bufferSize), Startable(name), Task((TaskHandler&)*this), _currentEvent(0), _currentError(0), _eventInit(false), _ppSocket(NULL),_counter(0) {
+   _selfHandler(true), poolThreads(poolThreads), _eventFD(0), _sockfd(NET_INVALID_SOCKET), _eventSystem(0), bufferSize(bufferSize), Startable(name), Task((TaskHandler&)*this), _currentEvent(0), _currentError(0), _initSignal(false), _ppSocket(NULL),_counter(0) {
 
 }
 
 bool SocketManager::start(Exception& ex) {
 	if (Startable::running())
 		return true;
-	_eventInit.reset();
+	_initSignal.reset();
 	TaskHandler::start();
 	return Startable::start(ex);
 }
@@ -57,7 +57,7 @@ void SocketManager::stop() {
 	if (!Startable::running())
 		return;
 	TaskHandler::stop();
-	_eventInit.wait();
+	_initSignal.wait();
 
 #if defined(_WIN32)
 	if (_eventSystem > 0)
@@ -77,7 +77,7 @@ Socket** SocketManager::add(Exception& ex,NET_SOCKET sockfd,Socket& socket) cons
 		return NULL;
 	}
 
-	_eventInit.wait();
+	_initSignal.wait();
 
 	if(_eventSystem==0) {
 		ex.set(Exception::SOCKET, name(), " hasn't been able to start, impossible to manage sockets");
@@ -155,7 +155,7 @@ void SocketManager::remove(NET_SOCKET sockfd) const {
 	if (!Startable::running())
 		return;
 
-	_eventInit.wait();
+	_initSignal.wait();
 
 	if (_eventSystem == 0) // keep it to avoid dead lock on sockets deletion! (and _sockets is necessary empty!)
 		return;
@@ -316,7 +316,7 @@ void SocketManager::run(Exception& exThread) {
 	}
 #endif
 
-	_eventInit.set();
+	_initSignal.set();
 	if (ex) { // here _eventSystem==0
 		if (!Task::waitHandle())
 			exThread.set(ex);

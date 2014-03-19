@@ -129,9 +129,6 @@
     <ClCompile Include="sources\FileSystem.cpp">
       <Filter>File</Filter>
     </ClCompile>
-    <ClCompile Include="sources\Event.cpp">
-      <Filter>Threading</Filter>
-    </ClCompile>
     <ClCompile Include="sources\TerminateSignal.cpp">
       <Filter>Application</Filter>
     </ClCompile>
@@ -174,6 +171,9 @@
     </ClCompile>
     <ClCompile Include="sources\Trigger.cpp">
       <Filter>Time</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\Signal.cpp">
+      <Filter>Threading</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -303,9 +303,6 @@
     <ClInclude Include="include\Mona\Binary.h">
       <Filter>IO</Filter>
     </ClInclude>
-    <ClInclude Include="include\Mona\Event.h">
-      <Filter>Threading</Filter>
-    </ClInclude>
     <ClInclude Include="include\Mona\Process.h">
       <Filter>Util</Filter>
     </ClInclude>
@@ -362,6 +359,12 @@
       <Filter>Time</Filter>
     </ClInclude>
     <ClInclude Include="include\Mona\Expirable.h">
+      <Filter>Threading</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\Signal.h">
+      <Filter>Threading</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\Event.h">
       <Filter>Threading</Filter>
     </ClInclude>
   </ItemGroup>

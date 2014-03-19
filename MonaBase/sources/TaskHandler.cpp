@@ -34,7 +34,7 @@ void TaskHandler::start() {
 void TaskHandler::stop() {
 	lock_guard<recursive_mutex> lock(_mutex);
 	_stop=true;
-	_event.set();
+	_signal.set();
 }
 
 bool TaskHandler::waitHandle(Task& task) {
@@ -46,7 +46,7 @@ bool TaskHandler::waitHandle(Task& task) {
 		_pTask = &task;
 	}
 	requestHandle();
-	return _event.wait();
+	return _signal.wait();
 }
 
 void TaskHandler::giveHandle(Exception& ex) {
@@ -55,7 +55,7 @@ void TaskHandler::giveHandle(Exception& ex) {
 		return;
 	_pTask->handle(ex);
 	_pTask=NULL;
-	_event.set();
+	_signal.set();
 }
 
 

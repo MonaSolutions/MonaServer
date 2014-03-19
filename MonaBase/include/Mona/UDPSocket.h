@@ -45,13 +45,13 @@ public:
 	bool					send(Exception& ex, const UInt8* data, UInt32 size);
 	bool					send(Exception& ex, const UInt8* data, UInt32 size, const SocketAddress& address);
 
-	template<typename SenderType>
-	bool send(Exception& ex, std::shared_ptr<SenderType>& pSender) {
-		return _socket.send<SenderType>(ex, pSender);
+	template<typename UDPSenderType>
+	bool send(Exception& ex, std::shared_ptr<UDPSenderType>& pSender) {
+		return _socket.send<UDPSenderType>(ex, pSender);
 	}
-	template<typename SenderType>
-	PoolThread* send(Exception& ex,const std::shared_ptr<SenderType>& pSender, PoolThread* pThread) {
-		return _socket.send<SenderType>(ex, pSender,pThread);
+	template<typename UDPSenderType>
+	PoolThread* send(Exception& ex,const std::shared_ptr<UDPSenderType>& pSender, PoolThread* pThread) {
+		return _socket.send<UDPSenderType>(ex, pSender,pThread);
 	}
 
 	const SocketManager&	manager() const { return _socket.manager(); }

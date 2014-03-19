@@ -44,13 +44,13 @@ public:
 	bool					send(Exception& ex, const UInt8* data, UInt32 size);
 	void					disconnect();
 
-	template<typename SenderType>
-	bool send(Exception& ex,const std::shared_ptr<SenderType>& pSender) {
-		return _socket.send<SenderType>(ex, pSender);
+	template<typename TCPSenderType>
+	bool send(Exception& ex,const std::shared_ptr<TCPSenderType>& pSender) {
+		return _socket.send<TCPSenderType>(ex, pSender);
 	}
-	template<typename SenderType>
-	PoolThread*	send(Exception& ex,const std::shared_ptr<SenderType>& pSender, PoolThread* pThread) {
-		return _socket.send<SenderType>(ex, pSender, pThread);
+	template<typename TCPSenderType>
+	PoolThread*	send(Exception& ex,const std::shared_ptr<TCPSenderType>& pSender, PoolThread* pThread) {
+		return _socket.send<TCPSenderType>(ex, pSender, pThread);
 	}
 
 	const SocketManager&	manager() const { return _socket.manager(); }

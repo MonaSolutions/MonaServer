@@ -25,9 +25,9 @@ This file is a part of Mona.
 namespace Mona {
 
 
-class Event : virtual Object {
+class Signal : virtual Object {
 public:
-	Event(bool autoReset=true) : _autoReset(autoReset), _set(false) {}
+	Signal(bool autoReset=true) : _autoReset(autoReset), _set(false) {}
 
 	void set();
 

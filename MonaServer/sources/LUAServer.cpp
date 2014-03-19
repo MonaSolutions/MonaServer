@@ -25,13 +25,13 @@ using namespace Mona;
 
 int LUAServer::Send(lua_State* pState) {
 	SCRIPT_CALLBACK(ServerConnection,server)
-		string handler(SCRIPT_READ_STRING(""));
-		if(handler.empty() || handler==".") {
+		const char* handler(SCRIPT_READ_STRING(""));
+		if(strlen(handler)==0 || strcmp(handler,".")==0) {
 			ERROR("handler of one sending server message can't be null or equal to '.'")
 		} else {
-			ServerMessage message(server.manager().poolBuffers);
-			SCRIPT_READ_DATA(message)
-			server.send(handler,message);
+			shared_ptr<ServerMessage> pMessage(new ServerMessage(handler,server.manager().poolBuffers));
+			SCRIPT_READ_DATA(*pMessage)
+			server.send(pMessage);
 		}
 	SCRIPT_CALLBACK_RETURN
 }
@@ -56,6 +56,8 @@ int LUAServer::Get(lua_State* pState) {
 			SCRIPT_WRITE_STRING(server.address.toString().c_str())
 		} else if(name=="port") {
 			SCRIPT_WRITE_FUNCTION(&LUAServer::Port)
+		} else if (name == "reject") {
+			server.disconnect(); // TODO display a error message on the server joiner side
 		} else if (name == "parameters") {
 			if(Script::Collection(pState, -1, "parameters", server.count())) {
 				for (auto& it : server) {

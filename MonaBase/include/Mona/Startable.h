@@ -20,7 +20,7 @@ This file is a part of Mona.
 #pragma once
 #include "Mona/Mona.h"
 #include "Mona/Exceptions.h"
-#include "Mona/Event.h"
+#include "Mona/Signal.h"
 #include <thread>
 
 
@@ -48,7 +48,7 @@ public:
 	void				stop();
 
 	WakeUpType			sleep(UInt32 millisec = 0);
-	void				wakeUp() { _wakeUpEvent.set(); }
+	void				wakeUp() { _wakeUpSignal.set(); }
 	
 
 	bool				running() const { return !_stop; }
@@ -69,7 +69,7 @@ private:
 	std::mutex				_mutex;
 	std::mutex				_mutexStop;
 	volatile bool			_stop;
-	Event					_wakeUpEvent;
+	Signal					_wakeUpSignal;
 	std::string				_name;
 	Priority				_priority;
 };

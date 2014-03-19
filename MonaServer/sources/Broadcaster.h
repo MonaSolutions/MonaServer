@@ -36,7 +36,7 @@ public:
 	ServerConnection* operator[](const std::string& address);
 	Mona::UInt32 count() const { return _connections.size(); }
 	
-	void broadcast(const std::string& handler,ServerMessage& message);
+	void broadcast(const std::shared_ptr<ServerMessage>& pMessage);
 
 	const Mona::PoolBuffers& poolBuffers;
 private:
@@ -61,8 +61,8 @@ inline ServerConnection* Broadcaster::operator[](Mona::UInt32 index) {
 	return *it;
 }
 
-inline void Broadcaster::broadcast(const std::string& handler,ServerMessage& message) {
+inline void Broadcaster::broadcast(const std::shared_ptr<ServerMessage>& pMessage) {
 	Iterator it;
 	for(it=begin();it!=end();++it)
-		(*it)->send(handler,message);
+		(*it)->send(pMessage);
 }

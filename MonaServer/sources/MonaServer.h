@@ -26,9 +26,10 @@ This file is a part of Mona.
 #include "Servers.h"
 
 
-class MonaServer : public Mona::Server, private ServiceHandler, private ServerHandler, private Mona::DatabaseLoader {
+class MonaServer : public Mona::Server, private ServiceHandler, private Mona::DatabaseLoader {
 public:
 	MonaServer(Mona::TerminateSignal& terminateSignal, Mona::UInt32 socketBufferSize, Mona::UInt16 threads, Mona::UInt16 serversPort, const std::string& serversTarget);
+	~MonaServer();
 
 	static const std::string				WWWPath;
 	static const std::string				DataPath;
@@ -54,12 +55,6 @@ private:
 	void					stopService(Service& service);
 
 
-	// ServerHandler implementation
-	void										connection(ServerConnection& server);
-	void										message(ServerConnection& server, const std::string& handler, Mona::PacketReader& packet);
-	void										disconnection(const ServerConnection& server);
-	const std::string&							host() { return _host; }
-	const std::map<std::string, Mona::UInt16>&	ports() { return _ports; }
 
 	//events
 	void					onStart();
@@ -87,14 +82,15 @@ private:
 	bool					onSubscribe(Mona::Client& client,const Mona::Listener& listener,std::string& error);
 	void					onUnsubscribe(Mona::Client& client,const Mona::Listener& listener);
 
+	Servers::OnConnection::Type		onServerConnection;
+	Servers::OnMessage::Type		onServerMessage;
+	Servers::OnDisconnection::Type	onServerDisconnection;
 
 	lua_State*					_pState;
 	Mona::TerminateSignal&		_terminateSignal;
 	std::unique_ptr<Service>	_pService;
 
 	std::set<Service*>					_servicesRunning;
-	std::map<std::string, Mona::UInt16>	_ports;
-	std::string							_host;
 	Mona::Database						_data;
 	bool								_firstData;
 };

@@ -21,7 +21,7 @@ This file is a part of Mona.
 
 #include "Mona/Mona.h"
 #include "Mona/Task.h"
-#include "Mona/Event.h"
+#include "Mona/Signal.h"
 #include <mutex>
 
 
@@ -45,7 +45,7 @@ private:
 	std::recursive_mutex	_mutex;
 	std::mutex				_mutexWait;
 	Task*					_pTask;
-	Event					_event;
+	Signal					_signal;
 	volatile bool			_stop;
 };
 

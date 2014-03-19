@@ -115,7 +115,7 @@ Startable::WakeUpType Startable::sleep(UInt32 millisec) {
 	if (_stop)
 		return STOP;
 	 WakeUpType result = WAKEUP;
-	 if (!_wakeUpEvent.wait(millisec))
+	 if (!_wakeUpSignal.wait(millisec))
 		 result = TIMEOUT;
 	if(_stop)
 		return STOP;
@@ -131,10 +131,10 @@ bool Startable::start(Exception& ex, Priority priority) {
 	if (_thread.joinable())
 		_thread.join();
 	try {
-		_wakeUpEvent.reset();
+		_wakeUpSignal.reset();
 		_stop = false;
 		_priority = priority;
-		_thread = thread(&Startable::process, ref(*this)); // start the thread
+		_thread = thread(&Startable::process, this); // start the thread
 	} catch (exception& exc) {
 		ex.set(Exception::THREAD, "Impossible to start the thread of ", _name, ", ", exc.what());
 		_stop = true;
@@ -162,7 +162,7 @@ void Startable::stop() {
 		}
 		_stop = true;
 	}
-	_wakeUpEvent.set();
+	_wakeUpSignal.set();
 	if (_thread.joinable())
 		_thread.join();
 }

@@ -28,7 +28,7 @@ This file is a part of Mona.
 namespace Mona {
 
 
-Event	TerminateSignal::_Terminate;
+Signal	TerminateSignal::_Terminate;
 
 #if defined(_WIN32)
 

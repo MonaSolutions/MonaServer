@@ -58,7 +58,7 @@ private:
 	// TCPClient implementation
 	UInt32			onReception(PoolBuffer& pBuffer);
 	void			onError(const Exception& ex);
-	void			onDisconnection() { Session::kill(); }
+	void			onDisconnection() { kill(); }
 
 	bool			_consumed;
 	bool			_decoding;

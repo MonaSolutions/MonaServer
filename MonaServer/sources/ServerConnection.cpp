@@ -26,12 +26,12 @@ using namespace std;
 using namespace Mona;
 
 
-ServerConnection::ServerConnection(const SocketManager& manager, ServerHandler& handler, ServersHandler& serversHandler,const SocketAddress& targetAddress) : address(targetAddress), _size(0), _handler(handler), TCPClient(manager), _connected(false), _serversHandler(serversHandler), isTarget(true) {
+ServerConnection::ServerConnection(const SocketManager& manager, const SocketAddress& targetAddress) : address(targetAddress), _size(0), TCPClient(manager), _connected(false), isTarget(true) {
 
 }
 
-ServerConnection::ServerConnection(const SocketAddress& peerAddress,SocketFile& file,const SocketManager& manager, ServerHandler& handler, ServersHandler& serversHandler) : address(peerAddress), _size(0), _handler(handler), TCPClient(peerAddress, file,manager), _connected(false), _serversHandler(serversHandler), isTarget(false) {
-	sendPublicAddress();
+ServerConnection::ServerConnection(const SocketAddress& peerAddress,SocketFile& file,const SocketManager& manager) : address(peerAddress), _size(0), TCPClient(peerAddress, file,manager), _connected(false), isTarget(false) {
+	
 }
 
 ServerConnection::~ServerConnection() {
@@ -45,24 +45,25 @@ UInt16 ServerConnection::port(const string& protocol) {
 	return it->second;
 }
 
-void ServerConnection::sendPublicAddress() {
-	ServerMessage message(manager().poolBuffers);
-	BinaryWriter& writer = message.packet;
-	writer.writeString(_handler.host());
-	writer.write8(_handler.ports().size());
-	map<string, UInt16>::const_iterator it0;
-	for(it0=_handler.ports().begin();it0!=_handler.ports().end();++it0) {
-		writer.writeString(it0->first);
-		writer.write16(it0->second);
+void ServerConnection::sendHello(const string& host,const map<string,UInt16>& ports) {
+	shared_ptr<ServerMessage> pMessage(new ServerMessage("",manager().poolBuffers));
+	BinaryWriter& writer = pMessage->packet;
+	writer.writeString(host);
+	writer.write8(ports.size());
+	/// ports
+	for(auto& it : ports) {
+		writer.writeString(it.first); // protocol
+		writer.write16(it.second); // port
 	}
+	/// properties
 	for(auto& it: *this) {
-		writer.writeString(it.first);
-		writer.writeString(it.second);
+		writer.writeString(it.first); // name
+		writer.writeString(it.second); // value
 	}
-	send("",message);
+	send(pMessage);
 }
 
-void ServerConnection::connect() {
+void ServerConnection::connect(const string& host,const map<string,UInt16>& ports) {
 	if(_connected)
 		return;
 	INFO("Attempt to join ", address.toString(), " server")
@@ -70,53 +71,47 @@ void ServerConnection::connect() {
 	bool success = false;
 	EXCEPTION_TO_LOG(success=TCPClient::connect(ex, address),"ServerConnection")
 	if (success)
-		sendPublicAddress();
+		sendHello(host,ports);
 }
 
-void ServerConnection::send(const string& handler,ServerMessage& message) {
-	string handlerName(handler);
-	if(handlerName.size()>255) {
-		handlerName.resize(255);
-		WARN("The server handler '",handlerName,"' truncated for 255 char (maximum acceptable size)")
+void ServerConnection::send(const shared_ptr<ServerMessage>& pMessage) {
+	if (!pMessage)
+		return;
+	string& handler(pMessage->_handler);
+	if(handler.size()>255) {
+		handler.resize(255);
+		WARN("The server handler '",handler,"' truncated for 255 char (maximum acceptable size)")
 	}
 
 	// Search handler!
 	UInt32 handlerRef = 0;
 	bool   writeRef = false;
-	if(!handlerName.empty()) {
-		map<string, UInt32>::iterator it = _sendingRefs.lower_bound(handlerName);
-		if(it!=_sendingRefs.end() && it->first==handlerName) {
+	if(!handler.empty()) {
+		map<string, UInt32>::iterator it = _sendingRefs.lower_bound(handler);
+		if(it!=_sendingRefs.end() && it->first==handler) {
 			handlerRef = it->second;
-			handlerName.clear();
+			handler.clear();
 			writeRef = true;
 		} else {
-			if(it!=_sendingRefs.begin())
-				--it;
 			handlerRef = _sendingRefs.size()+1;
-			_sendingRefs.insert(it, pair<string, UInt32>(handlerName, handlerRef));
+			_sendingRefs.insert(it, pair<string, UInt32>(handler, handlerRef));
 		}
 	}
 
-	UInt16 shift = handlerName.empty() ? Util::Get7BitValueSize(handlerRef) : handlerName.size();
-	shift = 300-(shift+5);
+	pMessage->_shift -= (handler.empty() ? Util::Get7BitValueSize(handlerRef) : handler.size());
 
-	PacketWriter& packet = message.packet;
+	BinaryWriter writer(pMessage->packet, pMessage->_shift);
 
-	UInt32 size = packet.size()-shift;
-
-	BinaryWriter writer(packet, shift);
-
-	writer.write32(size-4);
-	writer.writeString8(handlerName);
+	writer.write32(pMessage->size()-4);
+	writer.writeString8(handler);
 	if(writeRef)
 		writer.write7BitEncoded(handlerRef);
-	else if(handlerName.empty())
+	else if(handler.empty())
 		writer.write8(0);
-	writer.next(size);
 
-	DUMP_INTERN(writer.data() + 4, writer.size() - 4, "To ", address.toString()," server");
+	DUMP_INTERN(pMessage->data() + 4, pMessage->size() - 4, "To ", address.toString()," server");
 	Exception ex;
-	EXCEPTION_TO_LOG(TCPClient::send(ex,writer.data(),writer.size()),"Server ",address.toString());
+	EXCEPTION_TO_LOG(TCPClient::send(ex,pMessage),"Server ",address.toString());
 }
 
 
@@ -171,11 +166,11 @@ UInt32 ServerConnection::onReception(PoolBuffer& pBuffer) {
 		}
 		if(!_connected) {
 			_connected=true;
-			_serversHandler.connection(*this);
+			OnHello::raise(*this);
 			NOTE("Connection etablished with ",address.toString()," server ")
 		}
 	} else
-		_handler.message(*this,handler,packet);
+		OnMessage::raise(*this,handler,packet);
 
 	return rest;
 }
@@ -185,7 +180,7 @@ void ServerConnection::onDisconnection(){
 	_receivingRefs.clear();
 	if(_connected) {
 		_connected=false;
-		_serversHandler.disconnection(*this);
+		OnGoodbye::raise(*this);
 		if (_error.empty())
 			NOTE("Disconnection from ", address.toString(), " server ")
 		else
@@ -194,6 +189,5 @@ void ServerConnection::onDisconnection(){
 		((string&)host).clear();
 	}
 	_error.clear();
-	if (!isTarget)
-		delete this;
+	OnDisconnection::raise(*this);
 }

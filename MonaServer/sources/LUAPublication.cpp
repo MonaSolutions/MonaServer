@@ -48,7 +48,7 @@ void LUAPublicationBase::RemoveListener(lua_State* pState, const Listener& liste
 		lua_pushvalue(pState, -3); // listener table
 		lua_pushnil(pState);
 		lua_rawset(pState, -3); // rawset cause NewIndexProhibited
-		lua_pop(pState, 3);
+		lua_pop(pState, 2);
 	}
 }
 

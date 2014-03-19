@@ -23,35 +23,43 @@ This file is a part of Mona.
 #include "Mona/PacketReader.h"
 #include "Mona/TCPClient.h"
 #include "Mona/MapParameters.h"
+#include "Mona/TCPSender.h"
+#include "Mona/Event.h"
 
-class ServerMessage : public Mona::AMFWriter {
+class ServerMessage : public Mona::TCPSender,public Mona::AMFWriter {
+	friend class ServerConnection;
 public:
-	ServerMessage(const Mona::PoolBuffers& poolBuffers) : AMFWriter(poolBuffers) { packet.next(300); }
+	ServerMessage(const char* handler, const Mona::PoolBuffers& poolBuffers) : _shift(295), _handler(handler), AMFWriter(poolBuffers), TCPSender("ServerMessage") {
+		packet.next(300);
+	}
+	
+private:
+	std::string		_handler;
+	Mona::UInt16	_shift;
+
+	const Mona::UInt8*	data() { return packet.data()+_shift; }
+	Mona::UInt32		size() { return packet.size()-_shift; }
 };
+
 
 class ServerConnection;
-class ServerHandler {
-public:
-	virtual const std::string&	host()=0;
-	virtual const std::map<std::string,Mona::UInt16>& ports()=0;
-	virtual void connection(ServerConnection& server)=0;
-	virtual void message(ServerConnection& server,const std::string& handler,Mona::PacketReader& packet)=0;
-	virtual void disconnection(const ServerConnection& server)=0;
-};
+namespace Events {
+	struct OnHello : Mona::Event<ServerConnection&> {};
+	struct OnMessage : Mona::Event<ServerConnection&,const std::string&,Mona::PacketReader&> {};
+	struct OnGoodbye : Mona::Event<ServerConnection&> {};
+	struct OnDisconnection : Mona::Event<ServerConnection&> {};
+}
 
-class ServersHandler {
-public:
-	virtual void connection(ServerConnection& server)=0;
-	virtual void disconnection(ServerConnection& server)=0;
-};
-
-
-class ServerConnection : public Mona::TCPClient, public Mona::MapParameters  {
+class ServerConnection : public Mona::TCPClient, public Mona::MapParameters,
+		public Events::OnHello,
+		public Events::OnMessage,
+		public Events::OnGoodbye,
+		public Events::OnDisconnection {
 public:
 	// Target version
-	ServerConnection(const Mona::SocketManager& manager, ServerHandler& handler, ServersHandler& serversHandler,const Mona::SocketAddress& targetAddress);
+	ServerConnection(const Mona::SocketManager& manager,const Mona::SocketAddress& targetAddress);
 	// Initiator version
-	ServerConnection(const Mona::SocketAddress& peerAddress, Mona::SocketFile& file, const Mona::SocketManager& manager, ServerHandler& handler, ServersHandler& serversHandler);
+	ServerConnection(const Mona::SocketAddress& peerAddress, Mona::SocketFile& file, const Mona::SocketManager& manager);
 
 	~ServerConnection();
 
@@ -60,21 +68,21 @@ public:
 	const bool						isTarget;
 	Mona::UInt16					port(const std::string& protocol);
 
-	void			connect();
+	void			connect(const std::string& host,const std::map<std::string,Mona::UInt16>& ports);
 	bool			connected() { return _connected; }
 	void			disconnect() { TCPClient::disconnect(); }
+	void			close() { TCPClient::close(); }
 
-	void			send(const std::string& handler,ServerMessage& message);
+	void			send(const std::shared_ptr<ServerMessage>& pMessage);
+
+	void			sendHello(const std::string& host,const std::map<std::string,Mona::UInt16>& ports);
 
 private:
-	void			sendPublicAddress();
 
 	void			onError(const Mona::Exception& ex) {_error = ex.error();}
 	Mona::UInt32	onReception(Mona::PoolBuffer& pBuffer);
 	void			onDisconnection();
 
-	ServerHandler&						_handler;
-	ServersHandler&						_serversHandler;
 	std::map<std::string,Mona::UInt32>	_sendingRefs;
 	std::map<Mona::UInt32,std::string>	_receivingRefs;
 

@@ -124,7 +124,6 @@
     <ClCompile Include="sources\FilePath.cpp" />
     <ClCompile Include="sources\Files.cpp" />
     <ClCompile Include="sources\DNS.cpp" />
-    <ClCompile Include="sources\Event.cpp" />
     <ClCompile Include="sources\FileSystem.cpp" />
     <ClCompile Include="sources\FileWatcher.cpp" />
     <ClCompile Include="sources\HelpFormatter.cpp" />
@@ -150,6 +149,7 @@
     <ClCompile Include="sources\ServerApplication.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug|Win32'">false</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="sources\Signal.cpp" />
     <ClCompile Include="sources\Socket.cpp" />
     <ClCompile Include="sources\SocketAddress.cpp" />
     <ClCompile Include="sources\String.cpp" />
@@ -176,10 +176,10 @@
     <ClInclude Include="include\Mona\Crypto.h" />
     <ClInclude Include="include\Mona\Database.h" />
     <ClInclude Include="include\Mona\Date.h" />
+    <ClInclude Include="include\Mona\Event.h" />
     <ClInclude Include="include\Mona\FilePath.h" />
     <ClInclude Include="include\Mona\Files.h" />
     <ClInclude Include="include\Mona\DNS.h" />
-    <ClInclude Include="include\Mona\Event.h" />
     <ClInclude Include="include\Mona\Exceptions.h" />
     <ClInclude Include="include\Mona\FileSystem.h" />
     <ClInclude Include="include\Mona\FileWatcher.h" />
@@ -209,6 +209,7 @@
     <ClInclude Include="include\Mona\QualityOfService.h" />
     <ClInclude Include="include\Mona\ServerApplication.h" />
     <ClInclude Include="include\Mona\Expirable.h" />
+    <ClInclude Include="include\Mona\Signal.h" />
     <ClInclude Include="include\Mona\StopWatch.h" />
     <ClInclude Include="include\Mona\Socket.h" />
     <ClInclude Include="include\Mona\SocketAddress.h" />
