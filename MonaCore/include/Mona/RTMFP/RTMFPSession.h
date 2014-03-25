@@ -99,7 +99,6 @@ private:
 	void							initWriter(const std::shared_ptr<RTMFPWriter>& pWriter);
 	std::shared_ptr<RTMFPWriter>	changeWriter(RTMFPWriter& writer);
 	bool							canWriteFollowing(RTMFPWriter& writer) { return _pLastWriter == &writer; }
-	void							close() { failSignal(); }
 	UInt32							availableToWrite() { return RTMFP_MAX_PACKET_SIZE - (_pSender ? _pSender->packet.size() : RTMFP_HEADER_SIZE); }
 
 	BinaryWriter&					writeMessage(UInt8 type,UInt16 length,RTMFPWriter* pWriter=NULL);

@@ -410,9 +410,11 @@ void RTMFPSession::packetHandler(PacketReader& packet) {
 					flags = message.read8();
 
 				// Process request
-				if (pFlow)
+				if (pFlow && !_failed) {
 					pFlow->fragmentHandler(stage, deltaNAck, message, flags);
-
+					if (!peer.connected)
+						_failed=true; // If connection fails, log is already displayed, and so fail the whole session!
+				}
 				break;
 			}
 			default :
