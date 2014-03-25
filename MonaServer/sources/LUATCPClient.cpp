@@ -45,9 +45,9 @@ LUATCPClient::LUATCPClient(const SocketManager& manager,lua_State* pState) : _pS
 }
 
 LUATCPClient::~LUATCPClient() {
-	OnData::subscribe(_onData);
-	OnDisconnection::subscribe(_onDisconnection);
-	OnError::subscribe(_onError);
+	OnData::unsubscribe(_onData);
+	OnDisconnection::unsubscribe(_onDisconnection);
+	OnError::unsubscribe(_onError);
 }
 
 UInt32 LUATCPClient::onData(PoolBuffer& pBuffer) {
