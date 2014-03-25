@@ -39,7 +39,7 @@ namespace Mona {
 using namespace std;
 
 
-class TempPaths : virtual Object {
+class TempPaths : public virtual Object {
 public:
 	virtual ~TempPaths() {
 		for (const string& path : _paths)
@@ -78,7 +78,7 @@ FileSystem::Attributes& FileSystem::GetAttributes(Exception& ex,const string& pa
 		ex.set(Exception::FILE, "Path ", path, " doesn't exist");
 		return attributes;
 	}
-	attributes.lastModified.update(status.st_mtime*1000);
+	attributes.lastModified.update(status.st_mtime*1000ll);
 	if(!(attributes.isDirectory = (status.st_mode&S_IFDIR) ? true : false))
 		attributes.size = (UInt32)status.st_size;
 	return attributes;
@@ -91,7 +91,7 @@ Time& FileSystem::GetLastModified(Exception& ex, const string& path, Time& time)
 	if (::stat(MakeFile(file).c_str(), &status) != 0)
 		ex.set(Exception::FILE, "Path ", path, " doesn't exist");
 	else
-		time.update(status.st_mtime*1000);
+		time.update(status.st_mtime*1000ll);
 	return time;
 }
 

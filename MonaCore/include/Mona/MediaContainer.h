@@ -31,7 +31,7 @@ namespace Mona {
 
 class SubstreamMap;
 
-class MediaContainer : virtual Object {
+class MediaContainer : public virtual Object {
 public:
 
 	enum Track {

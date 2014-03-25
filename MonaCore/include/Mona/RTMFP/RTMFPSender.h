@@ -25,7 +25,7 @@ This file is a part of Mona.
 
 namespace Mona {
 
-class RTMFPSender : public UDPSender, virtual Object {
+class RTMFPSender : public UDPSender, public virtual Object {
 public:
 	RTMFPSender(const PoolBuffers& poolBuffers,const std::shared_ptr<RTMFPKey>& pEncryptKey): encoder(pEncryptKey,RTMFPEngine::ENCRYPT),UDPSender("RTMFPSender"),packet(poolBuffers),farId(0) {
 		packet.next(RTMFP_HEADER_SIZE);

@@ -38,12 +38,7 @@ HTTPSession::HTTPSession(const SocketAddress& peerAddress, SocketFile& file, Pro
 
 }
 
-
-HTTPSession::~HTTPSession() {
-	kill();
-}
-
-void HTTPSession::kill(){
+void HTTPSession::kill(bool shutdown){
 	if(died)
 		return;
 	if (_isWS)
@@ -52,7 +47,7 @@ void HTTPSession::kill(){
 		invoker.unsubscribe(peer, _pListener->publication.name());
 		_pListener = NULL;
 	}
-	WSSession::kill();
+	WSSession::kill(shutdown);
 }
 
 bool HTTPSession::buildPacket(PoolBuffer& pBuffer,PacketReader& packet) {

@@ -28,7 +28,7 @@ This file is a part of Mona.
 
 namespace Mona {
 
-class PoolThread : private Startable, virtual Object {
+class PoolThread : private Startable, public virtual Object {
 public:
 	PoolThread() : Startable("PoolThread" + std::to_string(++_Id)) {}
 	virtual ~PoolThread() {join();	}

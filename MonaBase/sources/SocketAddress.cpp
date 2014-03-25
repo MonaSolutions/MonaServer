@@ -42,7 +42,7 @@ public:
 };
 
 
-class IPv4SocketAddress : public SocketAddressCommon, virtual Object {
+class IPv4SocketAddress : public SocketAddressCommon, public virtual Object {
 public:
 	IPv4SocketAddress(const struct sockaddr_in* addr) : _host(addr->sin_addr) {
 		memcpy(&_addr, addr, sizeof(_addr));
@@ -69,7 +69,7 @@ private:
 };
 
 
-class IPv6SocketAddress : public SocketAddressCommon, virtual Object {
+class IPv6SocketAddress : public SocketAddressCommon, public virtual Object {
 public:
 	IPv6SocketAddress(const struct sockaddr_in6* addr) : _host(addr->sin6_addr, addr->sin6_scope_id) {
 		memcpy(&_addr, addr, sizeof(_addr));

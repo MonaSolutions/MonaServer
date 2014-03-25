@@ -25,16 +25,16 @@ This file is a part of Mona.
 
 
 
-namespace Events {
-	struct OnConnection : Mona::Event<ServerConnection&> {};
+namespace ServerEvents {
+	struct OnConnection : Mona::Event<void(ServerConnection&)> {};
 };
 
-class Servers : private Mona::TCPServer, public Broadcaster,
-		public Events::OnConnection,
-		public Events::OnMessage,
-		public Events::OnDisconnection {
+class Servers : public Broadcaster,
+		public ServerEvents::OnConnection,
+		public ServerEvents::OnMessage,
+		public ServerEvents::OnDisconnection {
 public:
-	Servers(Mona::UInt16 port,const Mona::SocketManager& manager,const std::string& targets);
+	Servers(Mona::UInt16 port,const std::string& targets,const Mona::SocketManager& manager);
 	virtual ~Servers();
 	
 	void manage();
@@ -44,6 +44,7 @@ public:
 	Broadcaster			initiators;
 	Broadcaster			targets;
 
+
 	std::string								host;
 	std::map<std::string, Mona::UInt16>		ports;
 
@@ -51,12 +52,10 @@ private:
 	Mona::UInt32		flush(const std::string& handler);
 	Mona::UInt32		flush(Mona::UInt32 handlerRef);
 
-	void				onConnection(Mona::Exception& ex, const Mona::SocketAddress& peerAddress, Mona::SocketFile& file);
-	void				onError(const Mona::Exception& ex) { WARN("Servers, ", ex.error()); }
+	Mona::TCPServer::OnConnection::Type		onConnection;
+	Mona::TCPServer::OnError::Type			onError;
 
 	ServerConnection::OnHello::Type			onServerHello;
-	ServerConnection::OnMessage::Type		onServerMessage;
-	ServerConnection::OnGoodbye::Type		onServerGoodbye;
 	ServerConnection::OnDisconnection::Type	onServerDisconnection;
 
 	Mona::UInt8								_manageTimes;
@@ -64,6 +63,7 @@ private:
 	std::set<ServerConnection*>				_targets;
 	std::set<ServerConnection*>				_clients;
 
+	Mona::TCPServer							_server;
 	Mona::SocketAddress						_address;
 };
 

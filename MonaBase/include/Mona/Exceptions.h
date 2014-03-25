@@ -26,7 +26,7 @@ This file is a part of Mona.
 
 namespace Mona {
 
-class Exception : virtual Object {
+class Exception : public virtual Object {
 public:
 	///// ADD TOO in Exceptions.cpp!!
 	enum Code {

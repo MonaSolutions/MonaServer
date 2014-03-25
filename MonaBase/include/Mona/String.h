@@ -30,7 +30,7 @@ namespace Mona {
 #define EXPAND_DATA_SIZE(VALUE)	(const UInt8*)VALUE"",(UInt32)(sizeof(VALUE)-1)
 
 template<typename Type>
-class Format : virtual Object {
+class Format : public virtual Object {
 public:
 	Format(const char* format, Type value) : value(value), format(format) {}
 	const Type	value;
@@ -57,7 +57,8 @@ public:
 	static std::vector<std::string>& Split(const std::string& value, const std::string& separators, std::vector<std::string>& values, int options = 0);
 	static std::string& Trim(std::string& value, TrimOption option = TRIM_BOTH);
 
-	static std::string&	ToLower(std::string& str);
+	static std::string&	ToLower(std::string& value);
+	static char*		ToLower(char* value);
 
 	static int ICompare(const char* value1, const char* value2,  std::size_t size = std::string::npos);
 	static int ICompare(const std::string& value1, const std::string& value2, std::size_t size = std::string::npos) { return ICompare(value1.empty() ? NULL : value1.c_str(), value2.empty() ? NULL : value2.c_str(), size); }

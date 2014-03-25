@@ -29,7 +29,7 @@ namespace Mona {
 
 class Session;
 
-class Decoding : public WorkThread, private Task, virtual Object {
+class Decoding : public WorkThread, private Task, public virtual Object {
 	friend class Session;
 	friend class TCPSession;
 public:

@@ -25,7 +25,14 @@ This file is a part of Mona.
 
 namespace Mona {
 
-class UDPSocket : private SocketEvents, virtual Object {
+namespace Events {
+	// Can be called by a separated thread!
+	struct OnPacket : Event<void(PoolBuffer&, const SocketAddress&)> {};
+};
+
+class UDPSocket : public virtual Object,
+	public Events::OnPacket,
+	public Events::OnError {
 public:
 	UDPSocket(const SocketManager& manager, bool allowBroadcast=false);
 	virtual ~UDPSocket();
@@ -37,10 +44,10 @@ public:
 	SocketAddress&			address(SocketAddress& address) const { std::lock_guard<std::mutex> lock(_mutex); return address.set(updateAddress()); }
 	SocketAddress&			peerAddress(SocketAddress& address) const { std::lock_guard<std::mutex> lock(_mutex); return address.set(updatePeerAddress()); }
 
-	bool					bind(Exception& ex, const SocketAddress& address) { bool result = _socket.bind(ex, address); resetAddresses(); return result; }
-	void					close() { Exception ex; _socket.flush(ex); _socket.close(); resetAddresses(); }
-	bool					connect(Exception& ex, const SocketAddress& address) { bool result = _socket.connect(ex, address, _allowBroadcast);  resetAddresses(); return result; }
-	void					disconnect() { Exception ex; _socket.connect(ex, SocketAddress::Wildcard()); resetAddresses(); }
+	bool					bind(Exception& ex, const SocketAddress& address);
+	void					close();
+	bool					connect(Exception& ex, const SocketAddress& address);
+	void					disconnect();
 
 	bool					send(Exception& ex, const UInt8* data, UInt32 size);
 	bool					send(Exception& ex, const UInt8* data, UInt32 size, const SocketAddress& address);
@@ -56,14 +63,12 @@ public:
 
 	const SocketManager&	manager() const { return _socket.manager(); }
 private:
-	virtual void			onReception(PoolBuffer& pBuffer, const SocketAddress& address) = 0;
+	Socket::OnReadable::Type	onReadable;
 
 	const SocketAddress&	updateAddress() const { if (_address) return _address;  Exception ex; _socket.address(ex, _address); return _address; }
 	const SocketAddress&	updatePeerAddress() const { if (_peerAddress) return _peerAddress; Exception ex; _socket.peerAddress(ex, _peerAddress); return _peerAddress; }
 	void					resetAddresses() {std::lock_guard<std::mutex> lock(_mutex);_address.reset();_peerAddress.reset();}
 
-	void					onReadable(Exception& ex,UInt32 available);
-	
 	const bool				_allowBroadcast;
 	Socket					_socket;
 	mutable std::mutex		_mutex;

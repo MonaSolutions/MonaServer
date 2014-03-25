@@ -22,13 +22,14 @@ This file is a part of Mona.
 #include "Mona/Mona.h"
 #include "Mona/Writer.h"
 #include "Mona/TCPSender.h"
+#include "Mona/TCPSession.h"
 #include "Mona/AMFWriter.h"
 #include "Mona/RTMP/RTMP.h"
 
 
 namespace Mona {
 
-class RTMPSender : public TCPSender, virtual Object {
+class RTMPSender : public TCPSender, public virtual Object {
 public:
 	RTMPSender(const PoolBuffers& poolBuffers) : _writer(poolBuffers),sizePos(0),headerSize(0),TCPSender("RTMPSender") {}
 
@@ -39,7 +40,7 @@ public:
 	UInt32				size() { return _writer.packet.size(); }
 
 
-	void				dump(RTMPChannel& channel,const SocketAddress& address) { pack(channel); Writer::DumpResponse(data(), size(), address); }
+	void				dump(RTMPChannel& channel,const SocketAddress& address) { pack(channel); Session::DumpResponse(data(), size(), address); }
 
 	AMFWriter&			writer(RTMPChannel& channel) { pack(channel); return _writer; }
 private:

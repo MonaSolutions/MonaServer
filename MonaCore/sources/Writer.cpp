@@ -29,13 +29,6 @@ namespace Mona {
 DataWriterNull      DataWriter::Null;
 Writer				Writer::Null(true);
 
-
-void Writer::DumpResponse(const UInt8* data, UInt32 size, const SocketAddress& address, bool justInDebug) {
-	// executed just in debug mode, or in dump mode
-	if (!justInDebug || (justInDebug&&Logs::GetLevel() >= 7))
-		DUMP(data, size, "Response to ", address.toString())
-}
-
 Writer::Writer(WriterHandler* pHandler) : _isNull(false),reliable(true),_state(CONNECTED) {
 	if (pHandler)
 		_handlers.insert(pHandler);

@@ -20,6 +20,7 @@ This file is a part of Mona.
 
 #include "Mona/Socket.h"
 
+
 using namespace std;
 
 namespace Mona {
@@ -101,13 +102,18 @@ public:
 			address.set((sockaddr&)addr);
 			return address;
 		}
-		Net::SetError(ex);
+
+		int err(Net::LastError());
+		if (err == NET_ENOTCONN && _connecting)
+			err = NET_EAGAIN;
+		Net::SetError(ex,err);
 		return address;
 	}
 
 	UInt32	available(Exception& ex) const { return ioctl(ex, FIONREAD, 0); }
 
 	bool initialized() { return _initialized; }
+	bool connected() { return _connected; }
 
 	const SocketManager&		manager;
 	const Socket::Type			type;
@@ -118,6 +124,7 @@ public:
 		type(type),
 		_initialized(false),
 		_connecting(false),
+		_connected(false),
 		_pManagedSocket(NULL),
 		manager(manager),
 		_writing(false),
@@ -130,13 +137,14 @@ public:
 		type(Socket::STREAM),
 		_initialized(true),
 		_connecting(false),
+		_connected(true),
 		_pManagedSocket(NULL),
 		manager(manager),
 		_writing(false),
 		SocketFile(file._sockfd) {
 
 		file._sockfd = NET_INVALID_SOCKET;
-		setNoSigPipe();
+		initSettings();
 	}
 
 	~SocketImpl() {
@@ -159,6 +167,7 @@ public:
 		lock_guard<mutex>	lockSenders(_mutexAsync);
 		_senders.clear();
 		_connecting = false;
+		_connected = false;
 	}
 
 	// Can be called by a separated thread (socketmanager handle thread)
@@ -195,11 +204,16 @@ public:
 		if (!_initialized && !init(ex, address.family()))
 			return false;
 
-		ioctl(ex,FIONBIO, 1); // set non blocking mode before bind
+		ioctl(ex,FIONBIO, 1); // set non blocking mode before connect
 
 		if (allowBroadcast && address.host().isAnyBroadcast())
 			setOption(ex, SOL_SOCKET, SO_BROADCAST,1); // ex is warning here
+
 	
+#if defined(_WIN32)
+		managed(ex); // warning (call before connect to receive FD_CONNECT event for Windows)
+#endif
+
 		int rc = ::connect(_sockfd, address.addr(), address.size());
 
 		if (rc) {
@@ -207,12 +221,17 @@ public:
 			if (err != NET_EINPROGRESS && err != NET_EWOULDBLOCK) {
 				Net::SetError(ex, err, address.toString());
 				return false;
-			} else {
-				lock_guard<mutex> lock(_mutexAsync);
-				_connecting = true;
 			}
 		}
+
+		lock_guard<mutex> lock(_mutexAsync);
+		if(rc)
+			_connecting = true;
+		_connected = true;
+
+#if !defined(_WIN32)
 		managed(ex); // warning
+#endif
 		return true;
 	}
 
@@ -273,19 +292,29 @@ public:
 			Net::SetError(ex);
 	}
 
-
+	
 	int sendBytes(Exception& ex, const void* buffer, int length, int flags) {
 		ASSERT_RETURN(_initialized, 0);
+
+#if defined(MSG_NOSIGNAL)
+		flags |=  MSG_NOSIGNAL;
+#endif
 
 		int rc;
 		do {
 			rc = ::send(_sockfd, reinterpret_cast<const char*>(buffer), length, flags);
 		} while (rc < 0 && Net::LastError() == NET_EINTR);
+
 		if (rc < 0) {
 			int err = Net::LastError();
-			if (err == NET_EAGAIN || err == NET_EWOULDBLOCK)
-				return 0;
-			Net::SetError(ex, err);
+			if (err == NET_EAGAIN || err == NET_EWOULDBLOCK || (err == NET_ENOTCONN && _connecting))
+				rc = 0;
+			else
+				Net::SetError(ex, err);
+		}
+		if (rc >= 0) {
+			lock_guard<mutex> lock(_mutexAsync);
+			_connecting = false;
 		}
 		return rc;
 	}
@@ -297,11 +326,17 @@ public:
 		do {
 			rc = ::recv(_sockfd, reinterpret_cast<char*>(buffer), length, flags);
 		} while (rc < 0 && Net::LastError() == NET_EINTR);
+		
 		if (rc < 0) {
 			int err = Net::LastError();
-			if (err == NET_EAGAIN || err == NET_EWOULDBLOCK)
-				return 0;
-			Net::SetError(ex, err);
+			if (err == NET_EAGAIN || err == NET_EWOULDBLOCK || (err == NET_ENOTCONN && _connecting))
+				rc = 0;
+			else
+				Net::SetError(ex, err);
+		}
+		if (rc >= 0) {
+			lock_guard<mutex> lock(_mutexAsync);
+			_connecting = false;
 		}
 		return rc;
 	}
@@ -315,6 +350,10 @@ public:
 
 		if (allowBroadcast && address.host().isAnyBroadcast())
 			setOption(ex, SOL_SOCKET, SO_BROADCAST,1); // ex is warning here
+
+#if defined(MSG_NOSIGNAL)
+		flags |=  MSG_NOSIGNAL;
+#endif
 
 		int rc;
 		do {
@@ -358,6 +397,7 @@ public:
 		lock_guard<mutex> lock(_mutexAsync);
 		return !_connecting && _senders.empty();
 	}
+
 	bool addSender(Exception& ex,const shared_ptr<SocketSender>& pSender) {
 		lock_guard<recursive_mutex>	lock(_mutexManaged);
 		if (!managed(ex)) // check init already, so _sockfd is good!
@@ -376,11 +416,15 @@ public:
 			return true; // mean no Senders queue!!
 		lock_guard<mutex>	lockAsync(_mutexAsync);
 		while (!_senders.empty()) {
-			if (!_senders.front()->flush(ex,*_pSocket)) {
+			shared_ptr<SocketSender>& pSender(_senders.front());
+			_mutexAsync.unlock();
+			if (!pSender->flush(ex,*_pSocket)) {
+				_mutexAsync.lock();
 				if (!_writing)
 					_writing = manager.startWrite(_sockfd,_pManagedSocket);
 				return false;
 			}
+			_mutexAsync.lock();
 			_senders.pop_front();
 		}
 		if (_writing)
@@ -413,20 +457,24 @@ private:
 		_sockfd = ::socket(family == IPAddress::IPv6 ? AF_INET6 : AF_INET, type, 0);
 		if (_sockfd == NET_INVALID_SOCKET)
 			return false;
-		setNoSigPipe();
-		return _initialized=true;
+		_initialized = true;
+		initSettings();
+		return _initialized;
 	}
 
-	void setNoSigPipe() {
+	void initSettings() {
+		Exception ex;
 #if defined(__MACH__) && defined(__APPLE__) || defined(__FreeBSD__)
 		// SIGPIPE sends a signal that if unhandled (which is the default)
-		// will crash the process. This only happens on UNIX, and not Linux.
+		// will crash the process.
 		//
 		// In order to have sockets behave the same across platforms, it is
 		// best to just ignore SIGPIPE all together.
-		Exception ex;
+		
 		setOption(ex,SOL_SOCKET, SO_NOSIGPIPE, 1);
 #endif
+		if (type==Socket::STREAM)
+			setNoDelay(ex,true); // to avoid the nagle algorhytme, ignore error if not possible
 	}
 	
 	template<typename Type>
@@ -462,6 +510,7 @@ private:
 	bool							_writing;
 	deque<shared_ptr<SocketSender>>	_senders;
 	volatile bool					_connecting;
+	volatile bool					_connected;
 
 	mutex							_mutexInit;
 	volatile bool					_initialized; // to protect _sockfd access
@@ -472,18 +521,28 @@ private:
 
 
 
-Socket::Socket(SocketEvents& events, const SocketManager& manager, Type type) : _owner(true),_events(events), _pImpl(new SocketImpl(*this,manager,type)) {}
-Socket::Socket(SocketFile& file,SocketEvents& events,const SocketManager& manager) : _owner(true),_events(events), _pImpl(new SocketImpl(*this,file,manager)) {
-	Exception ex; // TODO? ignore the error on the level, connected and initialized should be manageable
-	_pImpl->managed(ex);
-}
-Socket::Socket(const Socket& other) : _owner(false),_events(other._events), _pImpl(other._pImpl) {}
+Socket::Socket(const SocketManager& manager, Type type) : _hasToManage(false),_owner(true), _pImpl(new SocketImpl(*this,manager,type)) {}
+Socket::Socket(SocketFile& file,const SocketManager& manager) : _hasToManage(true),_owner(true), _pImpl(new SocketImpl(*this,file,manager)) {}
+Socket::Socket(const Socket& other) : _owner(false), _pImpl(other._pImpl),_hasToManage(false) {}
 
 
 Socket::~Socket() {
 	if (_owner && _pImpl->initialized())
 		_pImpl->release();
 }
+
+void Socket::onSubscribe() {
+	// readable subscription!
+	if (!_hasToManage)
+		return;
+	Exception ex;
+	_pImpl->managed(ex);
+	if (ex)
+		OnError::raise(ex);
+}
+
+bool Socket::initialized() const { return  _pImpl->initialized(); }
+bool Socket::connected() const { return  _pImpl->connected(); }
 
 void Socket::close() {
 	if (!_pImpl->initialized())
@@ -493,8 +552,8 @@ void Socket::close() {
 	_pImpl.reset(new SocketImpl(*this, _pImpl->manager, _pImpl->type));
 }
 
-void Socket::onError(const Exception& ex) { _events.onError(ex); }
-void Socket::onReadable(Exception& ex,UInt32 available) { _events.onReadable(ex,available); }
+void Socket::onError(const Exception& ex) { OnError::raise(ex); }
+void Socket::onReadable(Exception& ex,UInt32 available) { OnReadable::raise(ex,available); }
 bool Socket::onConnection() { return _pImpl->onConnection(); }
 
 bool		Socket::canSend(Exception& ex) { return _pImpl->canSend(ex); }
@@ -503,7 +562,15 @@ bool		Socket::flush(Exception& ex) {return _pImpl->flush(ex);}
 
 SocketFile	Socket::acceptConnection(Exception& ex,SocketAddress& address) { return SocketFile(_pImpl->acceptConnection(ex,address)); }
 UInt32	 Socket::available(Exception& ex) const { return _pImpl->available(ex); }
-bool Socket::connect(Exception& ex, const SocketAddress& address,bool allowBroadcast) { return _pImpl->connect(ex,address,allowBroadcast); }
+bool Socket::connect(Exception& ex, const SocketAddress& address,bool allowBroadcast) {
+	if (_pImpl->connected()) {
+		// close if already connected!!
+		if (_owner)
+			_pImpl->release();
+		_pImpl.reset(new SocketImpl(*this, _pImpl->manager, _pImpl->type));
+	}
+	return _pImpl->connect(ex,address,allowBroadcast);
+}
 bool Socket::bind(Exception& ex, const SocketAddress& address, bool reuseAddress) { return _pImpl->bind(ex,address,reuseAddress); }
 bool Socket::bindWithListen(Exception& ex, const SocketAddress& address, bool reuseAddress,int backlog)  { return _pImpl->bindWithListen(ex,address,reuseAddress,backlog); }
 void Socket::shutdown(Exception& ex, ShutdownType type) { return _pImpl->shutdown(ex,type); }

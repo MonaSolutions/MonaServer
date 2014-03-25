@@ -25,7 +25,7 @@ This file is a part of Mona.
 namespace Mona {
 
 template<class MapType>
-class MapWriter : public DataWriter, virtual Object {
+class MapWriter : public DataWriter, public virtual Object {
 public:
 	MapWriter() : _size(0) {
 		_it = _map.end();

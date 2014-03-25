@@ -51,7 +51,7 @@ static SERVICE_STATUS			_ServiceStatus;
 static SERVICE_STATUS_HANDLE	_ServiceStatusHandle(0);
 
 
-class ServiceTerminateSignal : virtual Object, public TerminateSignal {
+class ServiceTerminateSignal : public virtual Object, public TerminateSignal {
 public:
 	ServiceTerminateSignal() {
 		memset(&_ServiceStatus, 0, sizeof(_ServiceStatus));

@@ -26,7 +26,7 @@ using namespace std;
 
 namespace Mona {
 
-RTMPWriter::RTMPWriter(UInt8 id,TCPClient& client,std::shared_ptr<RTMPSender>& pSender,const shared_ptr<RC4_KEY>& pEncryptKey) : _pSender(pSender),_pEncryptKey(pEncryptKey),id(id), _isMain(false), _client(client) {
+RTMPWriter::RTMPWriter(UInt8 id,TCPSession& session,std::shared_ptr<RTMPSender>& pSender,const shared_ptr<RC4_KEY>& pEncryptKey) : _pSender(pSender),_pEncryptKey(pEncryptKey),id(id), _isMain(false), _session(session) {
 	// TODO _qos.add
 }
 
@@ -46,11 +46,11 @@ void RTMPWriter::flush(bool full) {
 	}
 	if(!_pSender || !_pSender->available())
 		return;
-	_pSender->dump(_channel,_client.peerAddress());
+	_pSender->dump(_channel,_session.peer.address);
 	Exception ex;
 	if (_pEncryptKey)
 		RC4(_pEncryptKey.get(), _pSender->size(), _pSender->data(), (UInt8*)_pSender->data());
-	EXCEPTION_TO_LOG(_client.send<RTMPSender>(ex, _pSender), "RTMPWriter flush")
+	EXCEPTION_TO_LOG(_session.send<RTMPSender>(ex, _pSender), "RTMPWriter flush")
 		
 	
 	_pSender.reset(); // release the shared buffer (poolBuffer of AMWriter)
@@ -113,7 +113,7 @@ AMFWriter& RTMPWriter::write(AMF::ContentType type,UInt32 time,PacketReader* pDa
 	_channel.type = type;
 
 	if (!_pSender)
-		_pSender.reset(new RTMPSender(_client.manager().poolBuffers));
+		_pSender.reset(new RTMPSender(_session.invoker.poolBuffers));
 
 	AMFWriter& writer = _pSender->writer(_channel);
 	BinaryWriter& data = writer.packet;

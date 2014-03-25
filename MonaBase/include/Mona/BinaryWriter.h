@@ -26,7 +26,7 @@ This file is a part of Mona.
 
 namespace Mona {
 
-class BinaryWriter : virtual Object {
+class BinaryWriter : public virtual Object {
 public:
 
 	BinaryWriter(BinaryWriter& other,UInt32 offset=0);

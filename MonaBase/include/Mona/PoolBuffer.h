@@ -25,7 +25,7 @@ This file is a part of Mona.
 
 namespace Mona {
 
-class PoolBuffer : virtual Object {
+class PoolBuffer : public virtual Object {
 public:
 	PoolBuffer(const PoolBuffers& poolBuffers,UInt32 size=0) : _size(size),poolBuffers(poolBuffers),_pBuffer(NULL) {}
 	virtual ~PoolBuffer() { release(); }

@@ -25,7 +25,7 @@ This file is a part of Mona.
 
 namespace Mona {
 
-class UDPSender : public SocketSender, virtual Object {
+class UDPSender : public SocketSender, public virtual Object {
 public:
 	UDPSender(const char* name,bool dump = false) : SocketSender(name),allowBroadcast(false) {}
 	UDPSender(const char* name,const UInt8* data, UInt32 size) : SocketSender(name,data, size),allowBroadcast(false) {}

@@ -27,9 +27,9 @@ int LUAServer::Send(lua_State* pState) {
 	SCRIPT_CALLBACK(ServerConnection,server)
 		const char* handler(SCRIPT_READ_STRING(""));
 		if(strlen(handler)==0 || strcmp(handler,".")==0) {
-			ERROR("handler of one sending server message can't be null or equal to '.'")
+			ERROR("Invalid '",handler,"' handler for the sending server message")
 		} else {
-			shared_ptr<ServerMessage> pMessage(new ServerMessage(handler,server.manager().poolBuffers));
+			shared_ptr<ServerMessage> pMessage(new ServerMessage(handler,server.poolBuffers()));
 			SCRIPT_READ_DATA(*pMessage)
 			server.send(pMessage);
 		}
@@ -45,20 +45,20 @@ int LUAServer::Port(lua_State* pState) {
 
 int LUAServer::Get(lua_State* pState) {
 	SCRIPT_CALLBACK(ServerConnection,server)
-		string name = SCRIPT_READ_STRING("");
-		if(name=="send") {
+		const char* name = SCRIPT_READ_STRING("");
+		if(strcmp(name,"send")==0) {
 			SCRIPT_WRITE_FUNCTION(&LUAServer::Send)
-		} else if(name=="host") {
+		} else if(strcmp(name,"host")==0) {
 			SCRIPT_WRITE_STRING(server.host.c_str())
-		} else if(name=="isTarget") {
+		} else if(strcmp(name,"isTarget")==0) {
 			SCRIPT_WRITE_BOOL(server.isTarget)
-		} else if(name=="address") {
+		} else if(strcmp(name,"address")==0) {
 			SCRIPT_WRITE_STRING(server.address.toString().c_str())
-		} else if(name=="port") {
+		} else if(strcmp(name,"port")==0) {
 			SCRIPT_WRITE_FUNCTION(&LUAServer::Port)
-		} else if (name == "reject") {
-			server.disconnect(); // TODO display a error message on the server joiner side
-		} else if (name == "parameters") {
+		} else if (strcmp(name,"reject")==0) {
+			server.reject(SCRIPT_READ_STRING("unknown error"));
+		} else if (strcmp(name,"parameters")==0) {
 			if(Script::Collection(pState, -1, "parameters", server.count())) {
 				for (auto& it : server) {
 					lua_pushstring(pState, it.first.c_str());

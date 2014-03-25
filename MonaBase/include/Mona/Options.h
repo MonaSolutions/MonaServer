@@ -26,7 +26,7 @@ This file is a part of Mona.
 
 namespace Mona {
 
-class Options : virtual Object {
+class Options : public virtual Object {
 public:
 	typedef std::set<Option>::const_iterator Iterator;
 

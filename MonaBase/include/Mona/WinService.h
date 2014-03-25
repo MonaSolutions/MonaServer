@@ -29,7 +29,7 @@ This file is a part of Mona.
 namespace Mona {
 
 
-class WinService : virtual Object {
+class WinService : public virtual Object {
 public:
 	enum Startup {
 		UNKNOWN,

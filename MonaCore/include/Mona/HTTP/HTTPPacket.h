@@ -27,7 +27,7 @@ This file is a part of Mona.
 
 namespace Mona {
 
-class HTTPPacket : virtual Object {
+class HTTPPacket : public virtual Object {
 public:
 
 	HTTPPacket(PoolBuffer& pBuffer);

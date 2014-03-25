@@ -21,15 +21,14 @@ This file is a part of Mona.
 
 #include "Mona/Mona.h"
 #include "Mona/FlashWriter.h"
-#include "Mona/TCPClient.h"
 #include "Mona/RTMP/RTMPSender.h"
 
 namespace Mona {
 
 
-class RTMPWriter : public FlashWriter, virtual Object {
+class RTMPWriter : public FlashWriter, public virtual Object {
 public:
-	RTMPWriter(UInt8 id,TCPClient& client,std::shared_ptr<RTMPSender>& pSender,const std::shared_ptr<RC4_KEY>& pEncryptKey);
+	RTMPWriter(UInt8 id,TCPSession& session,std::shared_ptr<RTMPSender>& pSender,const std::shared_ptr<RC4_KEY>& pEncryptKey);
 
 	const UInt8		id;
 	RTMPChannel		channel;
@@ -51,7 +50,7 @@ private:
 
 	RTMPChannel						_channel;
 	std::shared_ptr<RTMPSender>&	_pSender;
-	TCPClient&						_client;
+	TCPSession&						_session;
 	bool							_isMain;
 	const std::shared_ptr<RC4_KEY>	_pEncryptKey;
 	

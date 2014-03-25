@@ -22,17 +22,17 @@ This file is a part of Mona.
 #include "Mona/Mona.h"
 #include "Mona/Writer.h"
 #include "Mona/HTTP/HTTPSender.h"
-#include "Mona/TCPClient.h"
+#include "Mona/TCPSession.h"
 #include "Mona/MediaContainer.h"
 
 namespace Mona {
 
 
 
-class HTTPWriter : public Writer, virtual Object {
+class HTTPWriter : public Writer, public virtual Object {
 public:
 
-	HTTPWriter(TCPClient& tcpClient);
+	HTTPWriter(TCPSession& session);
 
 	std::shared_ptr<HTTPPacket>		pRequest;
 	Time							timeout;
@@ -63,12 +63,12 @@ private:
 	bool			writeMedia(MediaType type,UInt32 time,PacketReader& packet);
 	
 	HTTPSender& createSender() {
-		_senders.emplace_back(new HTTPSender(_tcpClient.address(),pRequest));
+		_senders.emplace_back(new HTTPSender(_session.peer.address,pRequest));
 		return *_senders.back();
 	}
 
 	std::unique_ptr<MediaContainer>				_pMedia;
-	TCPClient&									_tcpClient;
+	TCPSession&									_session;
 	PoolThread*									_pThread;
 	std::vector<std::shared_ptr<HTTPSender>>	_senders;
 	bool										_isMain;

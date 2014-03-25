@@ -27,7 +27,7 @@ This file is a part of Mona.
 namespace Mona {
 
 
-class AMFReader : public DataReader, virtual Object {
+class AMFReader : public DataReader, public virtual Object {
 public:
 	AMFReader(PacketReader& reader);
 

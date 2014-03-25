@@ -40,6 +40,7 @@ RTMFPHandshake::RTMFPHandshake(RTMFProtocol& protocol, Sessions& sessions, Invok
 RTMFPHandshake::~RTMFPHandshake() {
 	fail(""); // To avoid the failSignalo of RTMFPSession
 	clear();
+	kill(true); // true because if RTMFPHandshake is deleted it means that the sevrer is closing
 }
 
 void RTMFPHandshake::manage() {

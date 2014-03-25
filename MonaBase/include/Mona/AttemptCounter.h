@@ -25,7 +25,7 @@ This file is a part of Mona.
 
 namespace Mona {
 
-class Attempt : virtual Object {
+class Attempt : public virtual Object {
 public:
 	Attempt() : count(0) {}
 	virtual ~Attempt() {}
@@ -38,7 +38,7 @@ private:
 };
 
 
-class AttemptCounter : virtual Object {
+class AttemptCounter : public virtual Object {
 public:
 
 	virtual ~AttemptCounter();

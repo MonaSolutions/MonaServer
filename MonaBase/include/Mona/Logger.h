@@ -26,7 +26,7 @@ This file is a part of Mona.
 namespace Mona {
 
 
-class Logger : virtual Object {
+class Logger : public virtual Object {
 public:
 	
 	enum Level {

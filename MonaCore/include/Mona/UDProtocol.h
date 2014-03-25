@@ -26,33 +26,59 @@ This file is a part of Mona.
 
 namespace Mona {
 
-class UDProtocol : public Protocol, public UDPSocket, virtual Object {
+class UDProtocol : public Protocol, public virtual Object,
+	public Events::OnPacket,
+	public Events::OnError {
 public:
 	bool load(Exception& ex, const ProtocolParams& params);
 
-protected:
-	UDProtocol(const char* name, Invoker& invoker, Sessions& sessions) : UDPSocket(invoker.sockets), Protocol(name, invoker, sessions) {}
+	template<typename ProtocolType,typename UDPSenderType>
+	bool send(Exception& ex,const std::shared_ptr<UDPSenderType>& pSender) {
+		return _socket.send<UDPSenderType>(ex, pSender);
+	}
+	template<typename ProtocolType,typename UDPSenderType>
+	PoolThread*	send(Exception& ex,const std::shared_ptr<UDPSenderType>& pSender, PoolThread* pThread) {
+		return _socket.send<UDPSenderType>(ex, pSender, pThread);
+	}
 	
-private:
-	void		onReception(PoolBuffer& pBuffer,const SocketAddress& address);
-	void		onError(const Exception& ex) { WARN("Protocol ",name,", ", ex.error()); }
 
-	virtual void onPacket(PoolBuffer& pBuffer, const SocketAddress& address) = 0;
+protected:
+	UDProtocol(const char* name, Invoker& invoker, Sessions& sessions) : _socket(invoker.sockets), Protocol(name, invoker, sessions) {
+		if (!OnError::subscribed()) {
+			onError = [this](const Exception& ex) { WARN("Protocol ", this->name, ", ", ex.error()); };
+			_socket.OnError::subscribe(onError);
+		} else
+			_socket.OnError::subscribe(*this);
+
+		onPacket = [this](PoolBuffer& pBuffer, const SocketAddress& address) {
+			if(!auth(address))
+				return;
+			OnPacket::raise(pBuffer,address);
+		};
+		_socket.OnPacket::subscribe(onPacket);
+	}
+	virtual ~UDProtocol() {
+		if (onError)
+			_socket.OnError::unsubscribe(onError);
+		else
+			_socket.OnError::unsubscribe(*this);
+		_socket.OnPacket::unsubscribe(onPacket);
+	}
+
+private:
+	UDPSocket::OnError::Type	onError;
+	UDPSocket::OnPacket::Type	onPacket;
+
+	UDPSocket	_socket;
 };
 
 inline bool UDProtocol::load(Exception& ex, const ProtocolParams& params) {
 	SocketAddress address;
 	if (!address.setWithDNS(ex, params.host, params.port))
 		return false;
-	return bind(ex, address);
+	return _socket.bind(ex, address);
 }
 
-
-inline void	UDProtocol::onReception(PoolBuffer& pBuffer, const SocketAddress& address) {
-	if(!auth(address))
-		return;
-	onPacket(pBuffer,address);
-}
 
 
 } // namespace Mona

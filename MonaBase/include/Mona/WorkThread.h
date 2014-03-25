@@ -25,7 +25,7 @@ This file is a part of Mona.
 
 namespace Mona {
 
-class WorkThread : virtual Object {
+class WorkThread : public virtual Object {
 public:
 	WorkThread(const char* name) : name(name) {}
 

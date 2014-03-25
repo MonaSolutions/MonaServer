@@ -35,7 +35,7 @@ RTMFPSession::RTMFPSession(RTMFProtocol& protocol,
 				UInt32 farId,
 				const UInt8* decryptKey,
 				const UInt8* encryptKey,
-				const shared_ptr<Peer>& pPeer) : _failed(false),_pThread(NULL), _socket(protocol), farId(farId), Session(protocol, invoker, pPeer), _pDecryptKey(new RTMFPKey(decryptKey)), _pEncryptKey(new RTMFPKey(encryptKey)), _timesFailed(0), _timeSent(0), _nextRTMFPWriterId(0), _timesKeepalive(0), _pLastWriter(NULL), _prevEngineType(RTMFPEngine::NORMAL) {
+				const shared_ptr<Peer>& pPeer) : _failed(false),_pThread(NULL), farId(farId), Session(protocol, invoker, pPeer), _pDecryptKey(new RTMFPKey(decryptKey)), _pEncryptKey(new RTMFPKey(encryptKey)), _timesFailed(0), _timeSent(0), _nextRTMFPWriterId(0), _timesKeepalive(0), _pLastWriter(NULL), _prevEngineType(RTMFPEngine::NORMAL) {
 	_pFlowNull = new RTMFPFlow(0,"",peer,invoker,*this);
 }
 
@@ -44,12 +44,8 @@ RTMFPSession::RTMFPSession(RTMFProtocol& protocol,
 				UInt32 farId,
 				const UInt8* decryptKey,
 				const UInt8* encryptKey,
-				const char* name) : _failed(false),_pThread(NULL), _socket(protocol), farId(farId), Session(protocol, invoker,name), _pDecryptKey(new RTMFPKey(decryptKey)), _pEncryptKey(new RTMFPKey(encryptKey)), _timesFailed(0), _timeSent(0), _nextRTMFPWriterId(0), _timesKeepalive(0), _pLastWriter(NULL), _prevEngineType(RTMFPEngine::NORMAL) {
+				const char* name) : _failed(false),_pThread(NULL), farId(farId), Session(protocol, invoker,name), _pDecryptKey(new RTMFPKey(decryptKey)), _pEncryptKey(new RTMFPKey(encryptKey)), _timesFailed(0), _timeSent(0), _nextRTMFPWriterId(0), _timesKeepalive(0), _pLastWriter(NULL), _prevEngineType(RTMFPEngine::NORMAL) {
 	_pFlowNull = new RTMFPFlow(0,"",peer,invoker,*this);
-}
-
-RTMFPSession::~RTMFPSession() {
-	kill();
 }
 
 
@@ -68,7 +64,7 @@ void RTMFPSession::failSignal() {
 		kill();
 }
 
-void RTMFPSession::kill() {
+void RTMFPSession::kill(bool shutdown) {
 	if(!_failed)
 		failSignal();
 	if(died)
@@ -86,7 +82,7 @@ void RTMFPSession::kill() {
 		_pFlowNull = NULL;
 	}
 	
-	Session::kill();
+	Session::kill(shutdown);
 	
 	// delete flowWriters
 	_flowWriters.clear();
@@ -222,7 +218,7 @@ void RTMFPSession::flush(UInt8 marker,bool echoTime,RTMFPEngine::Type type) {
 		dumpResponse(packet.data() + 6, packet.size() - 6);
 
 		Exception ex;
-		_pThread = _socket.send<RTMFPSender>(ex, _pSender,_pThread);
+		_pThread = send<RTMFProtocol,RTMFPSender>(ex, _pSender,_pThread);
 		if (ex)
 			ERROR("RTMFP flush, ", ex.error());
 	}

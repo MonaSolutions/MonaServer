@@ -26,30 +26,34 @@ This file is a part of Mona.
 
 namespace Mona {
 
-class TCPServer : private SocketEvents, virtual Object {
+namespace Events {
+	// Can be called by a separated thread!
+	struct OnConnection : Event<void(Exception&,const SocketAddress&,SocketFile&)> {};
+};
+
+class TCPServer : public virtual Object,
+	public Events::OnError,
+	public Events::OnConnection {
 public:
 	TCPServer(const SocketManager& manager);
 	virtual ~TCPServer();
 
 	// unsafe-threading
-	const SocketAddress&	address() { return _address; }
+	const SocketAddress&	address() const { return _address; }
 	// safe-threading
-	SocketAddress&			address(SocketAddress& address){ std::lock_guard<std::recursive_mutex> lock(_mutex);  return address=_address; }
+	SocketAddress&			address(SocketAddress& address) const { std::lock_guard<std::mutex> lock(_mutex);  return address=_address; }
 
 	bool					start(Exception& ex, const SocketAddress& address);
 	bool					running() { return _running;  }
 	void					stop();
 
 	const SocketManager&	manager() const { return _socket.manager(); }
-protected:
-	void close() { stop(); }
+
 private:
-	virtual void	onConnection(Exception& ex,const SocketAddress& address,SocketFile& file) = 0;
-	// Can be called from one other thread
-	void			onReadable(Exception& ex,UInt32 available);
+	Socket::OnReadable::Type	onReadable;
 
 	Socket					_socket;
-	std::recursive_mutex	_mutex;
+	mutable std::mutex		_mutex;
 	volatile bool			_running;
 	SocketAddress			_address;
 	

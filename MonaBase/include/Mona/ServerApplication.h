@@ -26,7 +26,7 @@ This file is a part of Mona.
 namespace Mona {
 
 
-class ServerApplication : public Application, virtual Object {
+class ServerApplication : public Application, public virtual Object {
 public:
 	ServerApplication() : _isInteractive(true) { _PThis = this; }
 

@@ -26,7 +26,7 @@ This file is a part of Mona.
 namespace Mona {
 
 
-class MapParameters : virtual Object, public Parameters {
+class MapParameters : public virtual Object, public Parameters {
 public:
 	typedef std::unordered_map<std::string, std::string>::const_iterator Iterator;
 

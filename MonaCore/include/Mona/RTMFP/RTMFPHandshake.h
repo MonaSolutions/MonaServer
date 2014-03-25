@@ -28,7 +28,7 @@ This file is a part of Mona.
 
 namespace Mona {
 
-class HelloAttempt : public Attempt, virtual Object {
+class HelloAttempt : public Attempt, public virtual Object {
 public:
 	HelloAttempt() : pCookie(NULL) {
 	}
@@ -36,7 +36,7 @@ public:
 };
 
 class Sessions;
-class RTMFPHandshake : public RTMFPSession, private AttemptCounter, virtual Object {
+class RTMFPHandshake : public RTMFPSession, private AttemptCounter, public virtual Object {
 public:
 	RTMFPHandshake(RTMFProtocol& protocol, Sessions& sessions, Invoker& invoker);
 	virtual ~RTMFPHandshake();

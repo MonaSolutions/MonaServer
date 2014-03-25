@@ -25,7 +25,7 @@ This file is a part of Mona.
 namespace Mona {
 
 
-class Signal : virtual Object {
+class Signal : public virtual Object {
 public:
 	Signal(bool autoReset=true) : _autoReset(autoReset), _set(false) {}
 

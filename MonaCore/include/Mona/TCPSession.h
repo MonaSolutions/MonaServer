@@ -26,11 +26,12 @@ This file is a part of Mona.
 
 namespace Mona {
 
-class TCPSession : public Session, public TCPClient, virtual Object {
-protected:
-	TCPSession(const SocketAddress& peerAddress, SocketFile& file,Protocol& protocol,Invoker& invoker);
-	virtual ~TCPSession() { TCPClient::close(); }
+class TCPSession : public Session, public virtual Object {
+public:
+	
+	void kill(bool shutdown=false) { _client.disconnect(); Session::kill(shutdown); }
 
+	
 	template<typename DecodingType>
 	void decode(const std::shared_ptr<DecodingType>& pDecoding,const SocketAddress& address) {
 		WARN("TCP Session ", name(), " cannot updated its address (TCP session is in a connected way");
@@ -44,25 +45,39 @@ protected:
 		Session::decode(pDecoding);
 	}
 
-	void kill() { disconnect(); Session::kill(); }
-
-private:
 	void receive(PacketReader& packet, const SocketAddress& address) {
 		WARN("TCP Session ", name(), " cannot updated its address (TCP session is in a connected way");
 		Session::receive(packet);
 	}
 	void receive(PacketReader& packet);
 
+	template<typename TCPSenderType>
+	bool send(Exception& ex,const std::shared_ptr<TCPSenderType>& pSender) {
+		return _client.send<TCPSenderType>(ex, pSender);
+	}
+	template<typename TCPSenderType>
+	PoolThread*	send(Exception& ex,const std::shared_ptr<TCPSenderType>& pSender, PoolThread* pThread) {
+		return _client.send<TCPSenderType>(ex, pSender, pThread);
+	}
+
+protected:
+	TCPSession(const SocketAddress& peerAddress, SocketFile& file,Protocol& protocol,Invoker& invoker);
+	virtual ~TCPSession();
+
+
+private:
+
 	virtual bool	buildPacket(PoolBuffer& pBuffer,PacketReader& packet) = 0;
 
-	// TCPClient implementation
-	UInt32			onReception(PoolBuffer& pBuffer);
-	void			onError(const Exception& ex);
-	void			onDisconnection() { kill(); }
+	// TCPClient events
+	TCPClient::OnError::Type			onError;
+	TCPClient::OnData::Type				onData;
+	TCPClient::OnDisconnection::Type	onDisconnection;
 
 	bool			_consumed;
 	bool			_decoding;
 	std::deque<std::shared_ptr<Decoding>> _decodings;
+	TCPClient		_client;
 };
 
 

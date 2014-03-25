@@ -24,7 +24,7 @@
 
 namespace Mona {
 
-class XMLReader : public DataReader, virtual Object {
+class XMLReader : public DataReader, public virtual Object {
 public:
 	XMLReader(PacketReader& packet);
 
@@ -48,7 +48,7 @@ protected:
 
 	/// \brief Intern structure for ordering tags and subtags
 	/// and return the good type in followingType()
-	class TagXML : virtual Object {
+	class TagXML : public virtual Object {
 	public:
 		TagXML(const std::string& name) : tagName(name), arrayStarted(false) {}
 		virtual ~TagXML() {}

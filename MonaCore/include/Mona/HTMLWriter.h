@@ -25,7 +25,7 @@ This file is a part of Mona.
 namespace Mona {
 
 
-class HTMLWriter : public DataWriter, virtual Object {
+class HTMLWriter : public DataWriter, public virtual Object {
 public:
 	HTMLWriter(const PoolBuffers& buffers) : DataWriter(buffers) {}
 

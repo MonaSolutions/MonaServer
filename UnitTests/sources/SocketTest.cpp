@@ -40,15 +40,45 @@ private:
 
 class TCPEchoClient : public TCPClient {
 public:
-	TCPEchoClient(const SocketManager& manager,bool parallel) : testDisconnection(false),TCPClient(manager),_mutex(!parallel),parallel(parallel) {}
+	TCPEchoClient(const SocketManager& manager,bool parallel) : testDisconnection(false),TCPClient(manager),_mutex(!parallel),parallel(parallel) {
+		
+		onData = [this](PoolBuffer& pBuffer) {
+			lock_guard<Mutex> lock(_mutex);
+			if (pBuffer->size() < _datas.front().size())
+				return pBuffer->size(); // wait more data
+			UInt32 consumed(_datas.front().size());
+			CHECK(memcmp(_datas.front().data(), pBuffer->data(), consumed) == 0);
+			_datas.pop_front();
+			if (this->parallel)
+				_signal.set();
+			return pBuffer->size()-consumed; // rest
+		};
+
+		onError = [this](const Exception& ex) {
+			if (!testDisconnection)
+				FATAL_ERROR("TCPEchoClient, ", ex.error())
+		};
+
+		onDisconnection = [this](){
+			CHECK(!connected())
+			_signal.set();
+		};
+
+		OnError::subscribe(onError);
+		OnData::subscribe(onData);
+		OnDisconnection::subscribe(onDisconnection);
+	}
+
+	~TCPEchoClient() {
+		OnError::unsubscribe(onError);
+		OnData::unsubscribe(onData);
+		OnDisconnection::unsubscribe(onDisconnection);
+	}
+	
 
 	const bool parallel;
 	bool testDisconnection;
 
-	void onError(const Exception& ex) {
-		if (!testDisconnection)
-			FATAL_ERROR("TCPEchoClient, ", ex.error())
-	}
 
 	bool join() {
 		if (!parallel) {
@@ -57,7 +87,7 @@ public:
 			lock_guard<Mutex> lock(_mutex);
 			return _datas.empty();
 		}
-		while(_event.wait(20000)) {
+		while(_signal.wait(20000)) {
 			lock_guard<Mutex> lock(_mutex);
 			if (testDisconnection)
 				return !connected();
@@ -77,76 +107,42 @@ public:
 	}
 
 private:
-	UInt32 onReception(PoolBuffer& pBuffer) {
-		lock_guard<Mutex> lock(_mutex);
-		if (pBuffer->size() < _datas.front().size())
-			return pBuffer->size(); // wait more data
-		UInt32 consumed(_datas.front().size());
-		CHECK(memcmp(_datas.front().data(), pBuffer->data(), consumed) == 0);
-		_datas.pop_front();
-		if (parallel)
-			_event.set();
-		return pBuffer->size()-consumed; // rest
-	}
-
-	void onDisconnection(){
-		CHECK(!connected())
-		_event.set();
-	}
 	
 	deque<vector<UInt8>> _datas;
-	Event				_event;
+	Signal				_signal;
 	Mutex				_mutex;
+
+	OnData::Type			onData;
+	OnError::Type			onError;
+	OnDisconnection::Type	onDisconnection;
 };
 
 
 
-class TCPEchoServer : public TCPServer {
+
+class UDPEchoClient {
 public:
-	TCPEchoServer(const SocketManager& manager) : TCPServer(manager) {
+	UDPEchoClient(const SocketManager& manager,bool parallel) : _socket(manager) ,_mutex(!parallel),parallel(parallel) {
+		onError = [this](const Exception& ex) {
+			FATAL_ERROR("UDPEchoClient, ",ex.error());
+		};
+		onPacket = [this](PoolBuffer& pBuffer,const SocketAddress& address) {
+			lock_guard<Mutex> lock(_mutex);
+			CHECK(_address == address);
+			CHECK(_datas.front().size() == pBuffer->size() && memcmp(_datas.front().data(), pBuffer->data(), pBuffer->size()) == 0);
+			_datas.pop_front();
+			if (this->parallel)
+				_signal.set();
+		};
+		_socket.OnError::subscribe(onError);
+		_socket.OnPacket::subscribe(onPacket);
 	}
-
-private:
-	class Client : public TCPClient {
-	public:
-		Client(const SocketAddress& peerAddress,SocketFile& file,const SocketManager& manager) : TCPClient(peerAddress,file, manager) {}
-
-		void onError(const Exception& ex) {
-			FATAL_ERROR("Client, ",ex.error());
-		}
-	private:
-		UInt32 onReception(PoolBuffer& pBuffer) {
-			Exception ex;
-			CHECK(send(ex, pBuffer->data(), pBuffer->size()) && !ex);
-			return 0;
-		}
-
-		void onDisconnection() {CHECK(!connected())}
-
-	};
-
-	void onError(const Exception& ex) {
-		FATAL_ERROR("TCPServer, ",ex.error());
-	}
-
-	void onConnection(Exception& ex,const SocketAddress& address,SocketFile& file) {
-		CHECK(address && file);	
-		_clients.emplace_back(address,file,manager());
-	}
-
-	std::list<Client> _clients;
-
-};
-
-
-class UDPEchoClient : public UDPSocket {
-public:
-	UDPEchoClient(const SocketManager& manager,bool parallel) : UDPSocket(manager) ,_mutex(!parallel),parallel(parallel) {}
 	
 	const bool parallel;
 
-	void onError(const Exception& ex) {
-		FATAL_ERROR("UDPEchoClient, ",ex.error());
+	~UDPEchoClient() {
+		_socket.OnPacket::unsubscribe(onPacket);
+		_socket.OnError::unsubscribe(onError);
 	}
 
 	bool join() {
@@ -154,7 +150,7 @@ public:
 			lock_guard<Mutex> lock(_mutex);
 			return _datas.empty();
 		}
-		while(_event.wait(20000)) {
+		while(_signal.wait(20000)) {
 			lock_guard<Mutex> lock(_mutex);
 			if (_datas.empty())
 				return true;
@@ -163,7 +159,7 @@ public:
 	}
 
 	bool connect(Exception& ex, const SocketAddress& address) {
-		bool result = UDPSocket::connect(ex, address);
+		bool result = _socket.connect(ex, address);
 		lock_guard<Mutex> lock(_mutex);
 		_address.set(address);
 		return result;
@@ -175,46 +171,23 @@ public:
 			_datas.emplace_back(size);
 			memcpy(_datas.back().data(), data, size);
 		}
-		return send(ex, data, size);
+		return _socket.send(ex, data, size);
 	}
 
 private:
-	void onReception(PoolBuffer& pBuffer,const SocketAddress& address) {
-		lock_guard<Mutex> lock(_mutex);
-		CHECK(_address == address);
-		CHECK(_datas.front().size() == pBuffer->size() && memcmp(_datas.front().data(), pBuffer->data(), pBuffer->size()) == 0);
-		_datas.pop_front();
-		if (parallel)
-			_event.set();
-	}
 
+	UDPSocket::OnError::Type	onError;
+	UDPSocket::OnPacket::Type	onPacket;
+	
 	Mutex						_mutex;
 	std::deque<vector<UInt8>>   _datas;
-	Event					    _event;
+	Signal					    _signal;
 	SocketAddress				_address;
+	UDPSocket					_socket;
 };
 
 
-
-class UDPEchoServer : public UDPSocket {
-public:
-	UDPEchoServer(const SocketManager& manager) : UDPSocket(manager) {}
-
-private:
-	
-	void onError(const Exception& ex) {
-		FATAL_ERROR("UDPEchoServer, ",ex.error());
-	}
-
-	void onReception(PoolBuffer& pBuffer,const SocketAddress& address) {
-		Exception ex;
-		CHECK(send(ex,pBuffer->data(), pBuffer->size(), address) && !ex);
-	}
-};
-
-
-
-static Event TaskEvent;
+static Signal TaskEvent;
 class TaskHandlerSockets : public TaskHandler {
 public:
 	TaskHandlerSockets() {
@@ -251,11 +224,56 @@ static TaskHandlerSockets		TaskSockets;
 static SocketManager			Sockets(TaskSockets,Buffers,Threads);
 
 
-void TCPTest(SocketManager& sockets) {
-	Exception ex;
 
+class TCPConnection {
+public:
+	TCPConnection(const SocketAddress& peerAddress,SocketFile& file,const SocketManager& manager) : _client(peerAddress,file, manager) {
+		onData = [this](PoolBuffer& pBuffer) {
+			Exception ex;
+			CHECK(_client.send(ex, pBuffer->data(), pBuffer->size()) && !ex);
+			return 0;
+		};
+		onError = [this](const Exception& ex) {
+			FATAL_ERROR("Client, ",ex.error());
+		};
+		onDisconnection = [this](){
+			CHECK(!_client.connected());
+		};
+		_client.OnError::subscribe(onError);
+		_client.OnData::subscribe(onData);
+		_client.OnDisconnection::subscribe(onDisconnection);
+	}
+
+	~TCPConnection() {
+		_client.OnError::unsubscribe(onError);
+		_client.OnData::unsubscribe(onData);
+		_client.OnDisconnection::unsubscribe(onDisconnection);
+	}
+private:
+	TCPClient							_client;
+	TCPClient::OnData::Type				onData;
+	TCPClient::OnError::Type			onError;
+	TCPClient::OnDisconnection::Type	onDisconnection;
+};
+
+void TCPTest(SocketManager& sockets) {
+
+	TCPServer server(sockets);
+	list<TCPConnection> connections;
+
+	TCPServer::OnError::Type onError = [](const Exception& ex) {
+		FATAL_ERROR("TCPServer, ",ex.error());
+	};
+	TCPServer::OnConnection::Type onConnection = [&](Exception& ex, const SocketAddress& address, SocketFile& file) {
+		CHECK(address && file);
+		connections.emplace_back(address, file, sockets);
+	};
+	server.OnError::subscribe(onError);
+	server.OnConnection::subscribe(onConnection);
+
+	Exception ex;
 	SocketAddress host(IPAddress::Wildcard(),62435);
-	TCPEchoServer server(sockets);
+
 	CHECK(server.start(ex, host) && !ex);
 	server.stop();
 	CHECK(server.start(ex, host) && !ex);
@@ -263,7 +281,6 @@ void TCPTest(SocketManager& sockets) {
 	TCPEchoClient client(sockets, &sockets == &ParallelSockets);
 	SocketAddress target(IPAddress::Loopback(),host.port());
 	CHECK(client.connect(ex, target) && !ex && client.connected());
-
 	CHECK(client.echo(ex,EXPAND_DATA_SIZE("hi mathieu and thomas")) && !ex);
 	CHECK(client.echo(ex,(const UInt8*)Long0Data.c_str(),Long0Data.size()) && !ex);
 	CHECK(TaskSockets.join(client));
@@ -280,8 +297,8 @@ void TCPTest(SocketManager& sockets) {
 		CHECK(!ex)
 		if (!client.parallel) {
 			CHECK(client.connected());
-			client.address();
-			client.peerAddress();
+			CHECK(client.address());
+			CHECK(client.peerAddress()==unknown);
 			if (Util::Random<UInt8>()%2)
 				CHECK(client.send(ex,EXPAND_DATA_SIZE("salut")) && !ex)
 			CHECK(client.connected());
@@ -289,13 +306,26 @@ void TCPTest(SocketManager& sockets) {
 		CHECK(TaskSockets.join(client));
 	}
 	CHECK(!client.connected());
+
+	server.OnError::unsubscribe(onError);
+	server.OnConnection::unsubscribe(onConnection);
 }
 
 void UDPTest(SocketManager& sockets) {
-	Exception ex;
+	UDPSocket    server(sockets);
+	UDPSocket::OnError::Type onError([&](const Exception& ex) {
+		FATAL_ERROR("UDPEchoServer, ",ex.error());
+	});
+	UDPSocket::OnPacket::Type onPacket([&](PoolBuffer& pBuffer,const SocketAddress& address) {
+		Exception ex;
+		CHECK(server.send(ex,pBuffer->data(), pBuffer->size(), address) && !ex);
+	});
+	server.OnError::subscribe(onError);
+	server.OnPacket::subscribe(onPacket);
 
+	Exception ex;
 	SocketAddress	 host(IPAddress::Wildcard(),62435);
-	UDPEchoServer    server(sockets);
+
 	CHECK(server.bind(ex, host) && !ex);
 	server.close();
 	CHECK(server.bind(ex, host) && !ex);
@@ -307,6 +337,9 @@ void UDPTest(SocketManager& sockets) {
 	CHECK(client.echo(ex,EXPAND_DATA_SIZE("hi mathieu and thomas")) && !ex);
 	CHECK(client.echo(ex,(const UInt8*)Short0Data.c_str(),Short0Data.size()) && !ex);
 	CHECK(TaskSockets.join(client));
+
+	server.OnError::unsubscribe(onError);
+	server.OnPacket::unsubscribe(onPacket);
 }
 
 ADD_TEST(SocketTest, StartSockets) {

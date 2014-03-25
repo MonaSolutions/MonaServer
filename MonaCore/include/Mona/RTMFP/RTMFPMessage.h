@@ -26,7 +26,7 @@ This file is a part of Mona.
 namespace Mona {
 
 
-class RTMFPMessage : virtual Object {
+class RTMFPMessage : public virtual Object {
 public:
 
 	RTMFPMessage(bool repeatable) : repeatable(repeatable) {}
@@ -41,7 +41,7 @@ public:
 };
 
 
-class RTMFPMessageUnbuffered : public RTMFPMessage, virtual Object {
+class RTMFPMessageUnbuffered : public RTMFPMessage, public virtual Object {
 public:
 	RTMFPMessageUnbuffered(const UInt8* data, UInt32 size) : _data(data), _size(size),RTMFPMessage(false) {}
 	

@@ -22,17 +22,17 @@ This file is a part of Mona.
 #include "Mona/Mona.h"
 #include "Mona/Writer.h"
 #include "Mona/JSONReader.h"
-#include "Mona/TCPClient.h"
+#include "Mona/TCPSession.h"
 #include "Mona/WebSocket/WS.h"
 #include "Mona/WebSocket/WSSender.h"
 
 namespace Mona {
 
 
-class WSWriter : public Writer, virtual Object {
+class WSWriter : public Writer, public virtual Object {
 public:
 
-	WSWriter(TCPClient& client);
+	WSWriter(TCPSession& session);
 	
 	UInt16			ping;
 
@@ -52,7 +52,7 @@ public:
 private:
 	void			pack();
 	void			createReader(PacketReader& reader, std::shared_ptr<DataReader>& pReader) { pReader.reset(new JSONReader(reader)); }
-	void			createWriter(std::shared_ptr<DataWriter>& pWriter) { pWriter.reset(new JSONWriter(_client.manager().poolBuffers)); }
+	void			createWriter(std::shared_ptr<DataWriter>& pWriter) { pWriter.reset(new JSONWriter(_session.invoker.poolBuffers)); }
 	bool			hasToConvert(DataReader& reader) { return dynamic_cast<JSONReader*>(&reader) == NULL; }
 	bool			writeMedia(MediaType type,UInt32 time,PacketReader& data);
 
@@ -61,7 +61,7 @@ private:
 	JSONWriter&		newDataWriter(bool modeRaw=false);
 
 	UInt32									_sent;
-	TCPClient&								_client;
+	TCPSession&								_session;
 	std::vector<std::shared_ptr<WSSender>>	_senders;
 };
 

@@ -25,7 +25,7 @@ This file is a part of Mona.
 
 namespace Mona {
 
-class QualityOfService : virtual Object {
+class QualityOfService : public virtual Object {
 public:
 	QualityOfService();
 	virtual ~QualityOfService();
@@ -39,7 +39,7 @@ public:
 
 	static QualityOfService Null;
 private:
-	class Sample : virtual Object {
+	class Sample : public virtual Object {
 		public:
 			Sample(UInt32 success,UInt32 lost,UInt32 size) : success(success),lost(lost),size(size) {}
 			const Time		time;

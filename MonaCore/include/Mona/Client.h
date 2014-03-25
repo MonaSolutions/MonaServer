@@ -27,7 +27,7 @@ This file is a part of Mona.
 
 namespace Mona {
 
-class Client : public Entity, virtual Object {
+class Client : public Entity, public virtual Object {
 public:
 	Client() : _pWriter(NULL),ping(0),timesBeforeTurn(0),_pUserData(NULL) {}
 

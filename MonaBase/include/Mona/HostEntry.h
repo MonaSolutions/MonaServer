@@ -29,7 +29,7 @@ namespace Mona {
 	/// This class stores information about a host
 	/// such as host name, alias names and a list
 	/// of IP addresses.
-class HostEntry : virtual Object {
+class HostEntry : public virtual Object {
 public:
 	typedef std::vector<std::string> AliasList;
 	typedef std::vector<IPAddress>   AddressList;

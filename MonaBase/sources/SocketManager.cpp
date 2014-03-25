@@ -161,6 +161,7 @@ void SocketManager::remove(NET_SOCKET sockfd) const {
 		return;
 
 	lock_guard<recursive_mutex> lock(_mutex);
+
 	auto it = _sockets.find(sockfd);
 	if(it == _sockets.end())
 		return;
@@ -223,13 +224,9 @@ void SocketManager::handle(Exception& ex) {
 
 	if (_currentError != 0) {
 #if !defined(_WIN32)
-		if (_currentError == NET_EINTR) {
-			if(pSocket->onConnection()) {
-				if (*_ppSocket == NULL) // expired!
-					return;
-				static char Temp;
-				pSocket->receiveBytes(_currentException,&Temp,1); // to get the correct connection error!
-			}
+		if (_currentError == NET_EINTR && pSocket->onConnection()) {
+			char Temp;
+			pSocket->receiveBytes(_currentException,&Temp,1); // to get the correct connection error!
 		}
 #endif
 		if (!_currentException)
@@ -338,6 +335,7 @@ void SocketManager::run(Exception& exThread) {
 			continue;
 		_currentEvent = WSAGETSELECTEVENT(msg.lParam);
 		_sockfd = msg.wParam;
+
 		if (_currentEvent == FD_WRITE) {
 			_currentEvent = 0;
 			// protected for _sockets access
@@ -349,7 +347,7 @@ void SocketManager::run(Exception& exThread) {
 			}
 		}
 		// FD_CONNECT | FD_ACCEPT | FD_CLOSE | FD_READ | FD_WRITE
-		if (_currentEvent==FD_READ && Socket::IOCTL(_exSkip, _sockfd, FIONREAD, 0) || _currentEvent || _currentException) {
+		if (_currentEvent==FD_READ && Socket::IOCTL(_exSkip, _sockfd, FIONREAD, 0) || _currentEvent>>1 || _currentException) {
 			if (_currentEvent != FD_CLOSE) // in close case, it's not an error!
 				_currentError = WSAGETSELECTERROR(msg.lParam);
 			Task::waitHandle();

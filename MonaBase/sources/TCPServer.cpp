@@ -25,15 +25,29 @@ using namespace std;
 
 namespace Mona {
 
-TCPServer::TCPServer(const SocketManager& manager) : _running(false),_socket(*this,manager) {
+TCPServer::TCPServer(const SocketManager& manager) : _running(false),_socket(manager) {
+
+	onReadable = [this](Exception& ex,UInt32 available) {
+		SocketAddress address;
+		SocketFile file(_socket.acceptConnection(ex,address));
+		if (!file)
+			return;
+		OnConnection::raise(ex,address,file);
+	};
+
+	_socket.OnError::subscribe(*this);
+	_socket.OnReadable::subscribe(onReadable);
 }
 
 TCPServer::~TCPServer() {
-	stop();
+	_socket.OnReadable::unsubscribe(onReadable);
+	_socket.OnError::unsubscribe(*this);
+	if (_running)
+		_socket.close();
 }
 
 bool TCPServer::start(Exception& ex,const SocketAddress& address) {
-	lock_guard<recursive_mutex> lock(_mutex);
+	lock_guard<mutex> lock(_mutex);
 	if (_running) {
 		if (address == _address)
 			return true;
@@ -46,7 +60,7 @@ bool TCPServer::start(Exception& ex,const SocketAddress& address) {
 }
 
 void TCPServer::stop() {
-	lock_guard<recursive_mutex> lock(_mutex);
+	lock_guard<mutex> lock(_mutex);
 	if (!_running)
 		return;
 	_socket.close();
@@ -54,13 +68,7 @@ void TCPServer::stop() {
 	_running = false;
 }
 
-void TCPServer::onReadable(Exception& ex,UInt32 available) {
-	SocketAddress address;
-	SocketFile file(_socket.acceptConnection(ex,address));
-	if (!file)
-		return;
-	onConnection(ex,address,file);
-}
+
 
 
 } // namespace Mona

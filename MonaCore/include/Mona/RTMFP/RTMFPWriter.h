@@ -37,7 +37,7 @@ This file is a part of Mona.
 namespace Mona {
 
 class Invoker;
-class RTMFPWriter : public FlashWriter, virtual Object {
+class RTMFPWriter : public FlashWriter, public virtual Object {
 public:
 	RTMFPWriter(const std::string& signature, BandWriter& band, WriterHandler* pHandler = NULL);
 	RTMFPWriter(const std::string& signature,BandWriter& band,std::shared_ptr<RTMFPWriter>& pThis,WriterHandler* pHandler=NULL);

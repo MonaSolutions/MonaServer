@@ -31,7 +31,7 @@ This file is a part of Mona.
 namespace Mona {
 
 
-class Application : public MapParameters, public Logger, virtual Object {
+class Application : public MapParameters, public Logger, public virtual Object {
 public:
 	enum ExitCode {
 		EXIT_OK = 0,  /// successful termination

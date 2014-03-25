@@ -34,16 +34,12 @@ WSSession::WSSession(const SocketAddress& peerAddress, SocketFile& file, Protoco
 }
 
 
-WSSession::~WSSession() {
-	kill();
-}
-
-void WSSession::kill(){
+void WSSession::kill(bool shutdown){
 	if(died)
 		return;
 	closePublication();
 	closeSusbcription();
-	TCPSession::kill();
+	TCPSession::kill(shutdown);
 }
 
 void WSSession::closeSusbcription(){

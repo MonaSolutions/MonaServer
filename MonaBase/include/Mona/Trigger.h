@@ -26,7 +26,7 @@ This file is a part of Mona.
 namespace Mona {
 
 
-class Trigger : virtual Object{
+class Trigger : public virtual Object{
 public:
 	Trigger();
 	

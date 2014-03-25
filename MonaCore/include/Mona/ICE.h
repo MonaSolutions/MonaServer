@@ -30,7 +30,7 @@ namespace Mona {
 
 class Peer;
 class RelayServer;
-class ICE : virtual Object {
+class ICE : public virtual Object {
 public:
 	ICE(const Peer& initiator,const Peer& remote,const RelayServer& relay);
 	virtual ~ICE();

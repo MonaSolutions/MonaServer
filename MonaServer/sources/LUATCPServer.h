@@ -34,8 +34,9 @@ public:
 	static int	Destroy(lua_State* pState);
 private:
 	virtual ~LUATCPServer();
-	void		onError(const Mona::Exception& ex);
-	void		onConnection(Mona::Exception& ex, const Mona::SocketAddress& peerAddress, Mona::SocketFile& file);
+
+	OnError::Type		onError;
+	OnConnection::Type	onConnection;
 
 	static int	Start(lua_State* pState);
 	static int  Stop(lua_State* pState);

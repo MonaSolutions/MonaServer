@@ -25,23 +25,26 @@ using namespace std;
 using namespace Mona;
 
 LUATCPServer::LUATCPServer(const SocketManager& manager,lua_State* pState) : _pState(pState),TCPServer(manager) {
+	onError = [this](const Exception& ex) {
+		WARN("LUATCPServer, ", ex.error());
+	};
+
+	onConnection = [this](Exception& ex,const SocketAddress& peerAddress,SocketFile& file) {
+		SCRIPT_BEGIN(_pState)
+			SCRIPT_MEMBER_FUNCTION_BEGIN(LUATCPServer,*this,"onConnection")	
+				SCRIPT_NEW_OBJECT(LUATCPClient, LUATCPClient, new LUATCPClient(peerAddress,file,this->manager(),_pState))
+				SCRIPT_FUNCTION_CALL
+			SCRIPT_FUNCTION_END
+		SCRIPT_END
+	};
+
+	OnError::subscribe(onError);
+	OnConnection::subscribe(onConnection);
 }
 
 LUATCPServer::~LUATCPServer() {
-	close();
-}
-
-void LUATCPServer::onError(const Exception& ex) {
-	WARN("LUATCPServer, ", ex.error());
-}
-
-void LUATCPServer::onConnection(Exception& ex,const SocketAddress& peerAddress,SocketFile& file) {
-	SCRIPT_BEGIN(_pState)
-		SCRIPT_MEMBER_FUNCTION_BEGIN(LUATCPServer,*this,"onConnection")	
-			SCRIPT_NEW_OBJECT(LUATCPClient, LUATCPClient, new LUATCPClient(peerAddress,file,manager(),_pState))
-			SCRIPT_FUNCTION_CALL
-		SCRIPT_FUNCTION_END
-	SCRIPT_END
+	OnConnection::unsubscribe(onConnection);
+	OnError::unsubscribe(onError);
 }
 
 

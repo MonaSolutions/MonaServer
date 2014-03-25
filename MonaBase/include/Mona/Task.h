@@ -25,7 +25,7 @@ This file is a part of Mona.
 namespace Mona {
 
 class TaskHandler;
-class Task : virtual Object {
+class Task : public virtual Object {
 public:
 	Task(TaskHandler& handler);
 

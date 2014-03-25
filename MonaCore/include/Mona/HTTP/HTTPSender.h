@@ -43,7 +43,7 @@ namespace Mona {
 #define HTTP_END_HEADER(BINARYWRITER)  BINARYWRITER.writeRaw("\r\n");
 
 
-class HTTPSender : public TCPSender, virtual Object {
+class HTTPSender : public TCPSender, public virtual Object {
 public:
 	HTTPSender(const SocketAddress& address,const std::shared_ptr<HTTPPacket>& pRequest);
 

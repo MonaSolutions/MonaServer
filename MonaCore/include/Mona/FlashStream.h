@@ -28,7 +28,7 @@ This file is a part of Mona.
 namespace Mona {
 
 class Invoker;
-class FlashStream : virtual Object {
+class FlashStream : public virtual Object {
 public:
 	FlashStream(UInt32 id,Invoker& invoker,Peer& peer);
 	virtual ~FlashStream();

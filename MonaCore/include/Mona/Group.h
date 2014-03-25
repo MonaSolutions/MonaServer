@@ -25,7 +25,7 @@ This file is a part of Mona.
 namespace Mona {
 
 
-class Group : public Entity, virtual Object, public Entities<Client> {
+class Group : public Entity, public virtual Object, public Entities<Client> {
 public:
 	Group(const UInt8* id) : Entity(id) {}
 

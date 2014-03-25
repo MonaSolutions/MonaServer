@@ -26,7 +26,7 @@ This file is a part of Mona.
 
 namespace Mona {
 
-class WSSender : public TCPSender, virtual Object {
+class WSSender : public TCPSender, public virtual Object {
 public:
 	WSSender(const PoolBuffers& poolBuffers,bool modeRaw=false) : TCPSender("WSSender"), packaged(false),writer(poolBuffers,modeRaw) {}
 	

@@ -28,24 +28,56 @@ using namespace std;
 namespace Mona {
 
 
-UDPSocket::UDPSocket(const SocketManager& manager, bool allowBroadcast) : _socket(*this,manager,Socket::DATAGRAM), _allowBroadcast(allowBroadcast) {
+UDPSocket::UDPSocket(const SocketManager& manager, bool allowBroadcast) : _socket(manager,Socket::DATAGRAM), _allowBroadcast(allowBroadcast) {
+
+	onReadable = [this](Exception& ex,UInt32 available) {
+		if(available==0)
+			return;
+
+		PoolBuffer pBuffer(_socket.manager().poolBuffers,available);
+		SocketAddress address;
+		int size = _socket.receiveFrom(ex,pBuffer->data(), available, address);
+		if (ex || size <= 0)
+			return;
+		pBuffer->resize(size, true);
+
+		OnPacket::raise(pBuffer,address);
+	};
+	_socket.OnError::subscribe(*this);
+	_socket.OnReadable::subscribe(onReadable);
 }
 
 UDPSocket::~UDPSocket() {
-	close();
+	_socket.OnReadable::unsubscribe(onReadable);
+	_socket.OnError::unsubscribe(*this);
+	close(); // to try to flush in same time!
 }
 
-void UDPSocket::onReadable(Exception& ex,UInt32 available) {
-	if(available==0)
-		return;
 
-	PoolBuffer pBuffer(_socket.manager().poolBuffers,available);
-	SocketAddress address;
-	int size = _socket.receiveFrom(ex,pBuffer->data(), available, address);
-	if (ex || size <= 0)
-		return;
-	pBuffer->resize(size, true);
-	onReception(pBuffer,address);
+bool UDPSocket::connect(Exception& ex, const SocketAddress& address) {
+	bool result = _socket.connect(ex, address, _allowBroadcast); 
+	resetAddresses();
+	return result;
+}
+
+void UDPSocket::disconnect() {
+	Exception ex;
+	_socket.flush(ex); // try to flush the remaing packet
+	_socket.connect(ex, SocketAddress::Wildcard());
+	resetAddresses();
+}
+
+bool UDPSocket::bind(Exception& ex, const SocketAddress& address) {
+	bool result = _socket.bind(ex, address);
+	resetAddresses();
+	return result;
+}
+
+void UDPSocket::close() {
+	Exception ex;
+	_socket.flush(ex); // try to flush the remaing packet
+	_socket.close();
+	resetAddresses();
 }
 
 bool UDPSocket::send(Exception& ex, const UInt8* data, UInt32 size) {

@@ -24,7 +24,7 @@ This file is a part of Mona.
 
 namespace Mona {
 
-class Time : virtual Object {
+class Time : public virtual Object {
 public:
 
 	/// \brief Construct a Time instance with current time value

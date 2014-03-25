@@ -26,7 +26,7 @@ This file is a part of Mona.
 
 namespace Mona {
 
-class RTMPHandshaker : public TCPSender, virtual Object {
+class RTMPHandshaker : public TCPSender, public virtual Object {
 public:
 	RTMPHandshaker(const SocketAddress& address,PoolBuffer& pBuffer);
 

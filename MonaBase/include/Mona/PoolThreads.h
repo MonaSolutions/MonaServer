@@ -26,7 +26,7 @@ This file is a part of Mona.
 
 namespace Mona {
 
-class PoolThreads : virtual Object {
+class PoolThreads : public virtual Object {
 public:
 	PoolThreads(UInt16 threadsAvailable=0) {
 		if (threadsAvailable == 0)

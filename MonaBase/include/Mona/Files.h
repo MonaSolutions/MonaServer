@@ -27,7 +27,7 @@ This file is a part of Mona.
 namespace Mona {
 
 
-class Files : virtual Object {
+class Files : public virtual Object {
 public:
 	Files(Exception& ex, const std::string& path);
 

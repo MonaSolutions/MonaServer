@@ -29,15 +29,15 @@ namespace Mona {
 ///
 /// directory : The root path (should be a directory)
 /// path : The relative path (may be a directory or a file)
-class FilePath : virtual Object {
+class FilePath : public virtual Object {
 public:
 	FilePath() : _attributesLoaded(false) {}
 
 	template <typename ...Args>
-	FilePath(const std::string& value,Args&&... args) : _attributesLoaded(false) { set(value,args ...); }
+	FilePath(const std::string& value,Args... args) : _attributesLoaded(false) { set(value,args ...); }
 
 	template <typename ...Args>
-	FilePath(const char* value,Args&&... args) : _attributesLoaded(false) { set(value,args ...); }
+	FilePath(const char* value,Args... args) : _attributesLoaded(false) { set(value,args ...); }
 
 	FilePath& operator=(const FilePath& other);
 

@@ -29,7 +29,7 @@ namespace Mona {
 
 
 class Writer;
-class WriterHandler : virtual Object {	
+class WriterHandler : public virtual Object {	
 public:
 	virtual void	close(Writer& writer,int code){}
 };
@@ -52,8 +52,6 @@ public:
 		CLOSED
 	};
 
-	static void DumpResponse(const UInt8* data, UInt32 size, const SocketAddress& address, bool justInDebug = false);
-
 	bool					reliable;
 
 
@@ -63,7 +61,6 @@ public:
 	virtual Writer&			newWriter(WriterHandler& handler) { _handlers.insert(&handler); return *this; }
 
 	virtual State			state(State value=GET,bool minimal=false);
-
 
 	
 	/**	The main Writer of one session should close the entiere session

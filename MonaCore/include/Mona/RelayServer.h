@@ -28,10 +28,10 @@ This file is a part of Mona.
 namespace Mona {
 
 class Relay;
-class RelaySocket : public UDPSocket, virtual Object {
+class RelaySocket : public UDPSocket, public virtual Object {
 public:
 	RelaySocket(const SocketManager& manager,UInt16 port);
-	~RelaySocket() { close(); }
+	~RelaySocket();
 
 	typedef std::map<SocketAddress,Relay*> Addresses;
 
@@ -42,18 +42,16 @@ public:
 	const Addresses	addresses;
 	Time			timeout;
 private:
-	// executed in a parallel thread!
-	void	onReception(PoolBuffer& pBuffer, const SocketAddress& address);
-	// executed in a parallel thread!
-	void	onError(const Exception& exception) { DEBUG("Relay socket ", port, ", ",exception.error());} 
+	OnError::Type	onError; // executed in a parallel thread!
+	OnPacket::Type	onPacket; // executed in a parallel thread!
 	
 	std::mutex	_mutex;
 };
 
-class RelayServer : virtual Object {
+class RelayServer : public virtual Object {
 public:
 	RelayServer(const PoolBuffers& poolBuffers,PoolThreads& poolThreads,UInt32 bufferSize=0);
-	virtual ~RelayServer();
+	~RelayServer();
 	
 	UInt16 add(const Peer& peer1,const SocketAddress& address1,const Peer& peer2,const SocketAddress& address2,UInt16 timeout=120) const;
 	void remove(const Peer& peer) const;

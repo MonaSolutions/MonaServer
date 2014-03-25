@@ -23,7 +23,7 @@
 
 namespace Mona {
 
-class SOAPReader : public XMLReader, virtual Object {
+class SOAPReader : public XMLReader, public virtual Object {
 public:
 	SOAPReader(PacketReader& packet);
 

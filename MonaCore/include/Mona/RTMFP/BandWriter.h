@@ -25,7 +25,7 @@ This file is a part of Mona.
 namespace Mona {
 
 class RTMFPWriter;
-class BandWriter : virtual Object {
+class BandWriter : public virtual Object {
 public:
 	virtual const PoolBuffers&				poolBuffers() = 0;
 	virtual void							initWriter(const std::shared_ptr<RTMFPWriter>& pWriter)=0;

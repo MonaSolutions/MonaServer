@@ -27,7 +27,7 @@ This file is a part of Mona.
 namespace Mona {
 
 
-class HTTPHeaderReader : public DataReader, virtual Object {
+class HTTPHeaderReader : public DataReader, public virtual Object {
 public:
 	HTTPHeaderReader(std::vector<const char*>& headers);
 

@@ -26,7 +26,7 @@ This file is a part of Mona.
 
 namespace Mona {
 
-class RTMFPCookie : virtual Object {
+class RTMFPCookie : public virtual Object {
 public:
 	RTMFPCookie(RTMFPHandshake& handshake,Invoker& invoker,const std::string& tag,const std::shared_ptr<Peer>& pPeer);
 	

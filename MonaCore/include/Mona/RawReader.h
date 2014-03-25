@@ -26,7 +26,7 @@ This file is a part of Mona.
 namespace Mona {
 
 
-class RawReader : public DataReader, virtual Object {
+class RawReader : public DataReader, public virtual Object {
 public:
 	RawReader(PacketReader& packet) : DataReader(packet) {}
 

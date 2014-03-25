@@ -26,7 +26,7 @@ This file is a part of Mona.
 
 namespace Mona {
 
-class FlashWriter : public Writer, virtual Object {
+class FlashWriter : public Writer, public virtual Object {
 public:
 	// For AMF response!
 	double					callbackHandle;

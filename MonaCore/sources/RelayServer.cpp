@@ -25,7 +25,7 @@ using namespace std;
 
 namespace Mona {
 
-class Relay : virtual Object {
+class Relay : public virtual Object {
 public:
 	Relay(const Peer& peer1,const SocketAddress& address1,const Peer& peer2,const SocketAddress& address2,RelaySocket& socket,UInt16 timeout):
 	 socket(socket),timeout(timeout*1000),peer1(peer1),address1(address1),peer2(peer2),address2(address2),received(false) {}
@@ -41,7 +41,47 @@ public:
 
 
 RelaySocket::RelaySocket(const SocketManager& manager,UInt16 port) : UDPSocket(manager),port(port) {
-	
+
+	// executed in a parallel thread!
+	onError = [this](const Exception& ex) { DEBUG("Relay socket ", this->port, ", ", ex.error()); };
+
+	// executed in a parallel thread!
+	onPacket = [this](PoolBuffer& pBuffer, const SocketAddress& address) {
+		lock_guard<mutex> lock(_mutex);
+		Addresses::const_iterator itAddress = addresses.find(address);
+		if(itAddress==addresses.end()) {
+			DEBUG("Unknown relay ", address.toString()," address")
+			return;
+		}
+
+		Relay& relay = *itAddress->second;
+		if(!relay.received) {
+			relay.received=true;
+			INFO("Turn starting from ",relay.address1.toString()," to ",relay.address2.toString()," on ",this->port," relayed port")
+			((Peer&)relay.peer1).turnPeers().add((Peer&)relay.peer2);
+			((Peer&)relay.peer2).turnPeers().add((Peer&)relay.peer1);
+		}
+
+		SocketAddress destinator(relay.address1 == address ? relay.address2 : relay.address1);
+
+		DUMP(pBuffer->data(), pBuffer->size(), "Request from ", address.toString())
+		Exception ex;
+		send(ex, pBuffer->data(), pBuffer->size(), destinator);
+		if (ex) {
+			WARN("Relay packet (size=", pBuffer->size(), ") from ", address.toString(), " to ", destinator.toString()," on ",this->port,", ",ex.error())
+		} else {
+			relay.lastTime.update();
+			DEBUG("Relay packet (size=", pBuffer->size(), ") from ", address.toString(), " to ", destinator.toString()," on ",this->port)
+		}
+	};
+
+	OnError::subscribe(onError);
+	OnPacket::subscribe(onPacket);
+}
+
+RelaySocket::~RelaySocket() {
+	OnPacket::unsubscribe(onPacket);
+	OnError::unsubscribe(onError);
 }
 
 Relay& RelaySocket::createRelay(const Peer& peer1,const SocketAddress& address1,const Peer& peer2,const SocketAddress& address2,UInt16 timeout) {
@@ -64,37 +104,6 @@ UInt32 RelaySocket::releaseRelay(Relay& relay) {
 	delete &relay;
 	return addresses.size();
 }
-
-// executed in a parallel thread!
-void RelaySocket::onReception(PoolBuffer& pBuffer, const SocketAddress& address) {
-	lock_guard<mutex> lock(_mutex);
-	Addresses::const_iterator itAddress = addresses.find(address);
-	if(itAddress==addresses.end()) {
-		DEBUG("Unknown relay ", address.toString()," address")
-		return;
-	}
-
-	Relay& relay = *itAddress->second;
-	if(!relay.received) {
-		relay.received=true;
-		INFO("Turn starting from ",relay.address1.toString()," to ",relay.address2.toString()," on ",port," relayed port")
-		((Peer&)relay.peer1).turnPeers().add((Peer&)relay.peer2);
-		((Peer&)relay.peer2).turnPeers().add((Peer&)relay.peer1);
-	}
-
-	SocketAddress destinator(relay.address1 == address ? relay.address2 : relay.address1);
-
-	DUMP(pBuffer->data(), pBuffer->size(), "Request from ", address.toString())
-	Exception ex;
-	send(ex, pBuffer->data(), pBuffer->size(), destinator);
-	if (ex) {
-		WARN("Relay packet (size=", pBuffer->size(), ") from ", address.toString(), " to ", destinator.toString()," on ",port,", ",ex.error())
-	} else {
-		relay.lastTime.update();
-		DEBUG("Relay packet (size=", pBuffer->size(), ") from ", address.toString(), " to ", destinator.toString()," on ",port)
-	}
-}
-
 
 
 RelayServer::RelayServer(const PoolBuffers& poolBuffers,PoolThreads& poolThreads,UInt32 bufferSize) : _manager(poolBuffers,poolThreads,bufferSize,"RelayServer")  {

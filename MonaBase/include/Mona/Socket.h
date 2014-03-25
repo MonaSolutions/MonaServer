@@ -24,17 +24,11 @@ This file is a part of Mona.
 #include "Mona/SocketManager.h"
 #include "Mona/SocketSender.h"
 #include "Mona/PoolThreads.h"
+#include "Mona/Event.h"
 
 namespace Mona {
 
-class SocketEvents : virtual Object {
-public:
-	// Can be called by a separated thread!
-	virtual void onError(const Exception& ex) = 0;
-	// Can be called by a separated thread!
-	// if ex of onReadable is raised, it's given to onError
-	virtual void onReadable(Exception& ex,UInt32 available) = 0;
-};
+
 
 class SocketFile : virtual NullableObject {
 	friend class SocketImpl;
@@ -52,8 +46,20 @@ private:
 };
 
 
+namespace Events {
+	// Can be called by a separated thread!
+	struct OnError : Event<void(const Exception&)> {};
+	// Can be called by a separated thread!
+	// if ex of onReadable is raised, it's given to onError
+	struct OnReadable : Event<void(Exception&, UInt32)> {
+		void subscribe(const OnReadable::Type& function) { Event<void(Exception&, UInt32)>::subscribe(function); onSubscribe();}
+		void subscribe(OnReadable& other) { Event<void(Exception&, UInt32)>::subscribe(other); onSubscribe();}
+		virtual void onSubscribe() {}
+	};
+};
+
 class SocketImpl;
-class Socket : virtual Object {
+class Socket : public virtual Object, public Events::OnReadable, public Events::OnError {
 	friend class SocketManager;
 	friend class SocketImpl;
 public:
@@ -69,17 +75,18 @@ public:
 	};
 
 	// Creates a Socket
-	Socket(SocketEvents& events, const SocketManager& manager, Type type = STREAM);
+	Socket(const SocketManager& manager, Type type = STREAM);
 	// Create a socket from other socket
 	Socket(const Socket& other);
 	// Create a socket from SocketFile
-	Socket(SocketFile& file, SocketEvents& events, const SocketManager& manager);
+	Socket(SocketFile& file, const SocketManager& manager);
 
 	// Destroys the Socket (Closes the socket if it is still open)
 	virtual ~Socket();
 
 	const SocketManager&	manager() const;
-
+	bool initialized() const;
+	bool connected() const;
 	void close();
 
 	UInt32 available(Exception& ex) const;
@@ -135,6 +142,7 @@ public:
 		// and if it remains some data to write (flush returns false)
 		if (canSend(ex) && pSender->flush(ex, *this))
 			return true;
+
 		if (ex)
 			return false;
 		if (pSender->buffering(manager().poolBuffers))
@@ -153,6 +161,9 @@ public:
 	bool flush(Exception& ex);
 	
 private:
+
+	void onSubscribe();
+
 	bool canSend(Exception& ex);
 	bool addSender(Exception& ex, std::shared_ptr<SocketSender> pSender);
 
@@ -162,10 +173,10 @@ private:
 	bool onConnection();
 	
 
+
 	static int IOCTL(Exception& ex, NET_SOCKET sockfd, NET_IOCTLREQUEST request, int value);
 
-	
-	SocketEvents&				  _events;
+	const bool					  _hasToManage;
 	const bool					  _owner;
 	std::shared_ptr<SocketImpl>   _pImpl;
 

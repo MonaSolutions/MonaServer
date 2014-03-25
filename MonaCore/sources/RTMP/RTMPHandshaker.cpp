@@ -19,7 +19,7 @@ This file is a part of Mona.
 
 #include "Mona/RTMP/RTMPHandshaker.h"
 #include "Mona/DiffieHellman.h"
-#include "Mona/Writer.h"
+#include "Mona/Session.h"
 #include "Mona/RTMP/RTMP.h"
 
 using namespace std;
@@ -111,7 +111,7 @@ bool RTMPHandshaker::compute(Exception& ex) {
 		RTMP::WriteDigestAndKey(crypto,(UInt8*)_writer.data(),challengeKey,middle);
 	}
 
-	Writer::DumpResponse(data(), size(), _address,true);
+	Session::DumpResponse(data(), size(), _address,true);
 	return TCPSender::run(ex);
 }
 

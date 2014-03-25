@@ -30,7 +30,7 @@ namespace Mona {
 #define COOKIE_SIZE 0x40
 
 class RTMFPHandshake;
-class RTMFPCookieComputing : public WorkThread, private Task, virtual Object {
+class RTMFPCookieComputing : public WorkThread, private Task, public virtual Object {
 public:
 	RTMFPCookieComputing(RTMFPHandshake& handshake,Invoker& invoker);
 	

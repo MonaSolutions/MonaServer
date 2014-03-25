@@ -27,7 +27,7 @@ This file is a part of Mona.
 namespace Mona {
 
 class Publication;
-class Listener : virtual Object, WriterHandler {
+class Listener : public virtual Object, WriterHandler {
 public:
 	Listener(Publication& publication,Client& client,Writer& writer,bool unbuffered);
 	virtual ~Listener();

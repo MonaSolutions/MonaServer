@@ -254,7 +254,7 @@ public:
 	virtual ~Object() {};
 };
 
-class NullableObject : virtual Object {
+class NullableObject : public virtual Object {
 public:
 	NullableObject() {}
 	virtual operator bool() const = 0;

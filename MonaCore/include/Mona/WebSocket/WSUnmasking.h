@@ -26,7 +26,7 @@ This file is a part of Mona.
 namespace Mona {
 
 
-class WSUnmasking : public Decoding, virtual Object {
+class WSUnmasking : public Decoding, public virtual Object {
 public:
 	WSUnmasking(Invoker& invoker,const UInt8* data,UInt32 size,UInt8 type) : _type(type), Decoding("WSUnmasking",invoker,data,size) {}
 	

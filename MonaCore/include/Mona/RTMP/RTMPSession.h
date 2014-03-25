@@ -27,19 +27,18 @@ This file is a part of Mona.
 
 namespace Mona {
 
-class RTMPSession : public TCPSession, virtual Object {
+class RTMPSession : public TCPSession, public virtual Object {
 public:
 
 	RTMPSession(const SocketAddress& peerAddress, SocketFile& file, Protocol& protocol, Invoker& invoker);
-	virtual ~RTMPSession();
-
+	
 private:
 	bool			buildPacket(PoolBuffer& pBuffer,PacketReader& packet);
 	void			packetHandler(PacketReader& packet);
 	void			manage();
 	void			flush() { Session::flush(); if (_pStream) _pStream->flush(); }
 
-	void			kill();
+	void			kill(bool shutdown=false);
 	
 
 	void							readKeys();

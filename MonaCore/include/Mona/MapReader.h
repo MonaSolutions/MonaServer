@@ -26,7 +26,7 @@ This file is a part of Mona.
 namespace Mona {
 
 template<class IteratorType>
-class MapReader : public DataReader, virtual Object {
+class MapReader : public DataReader, public virtual Object {
 public:
 
 	template<typename MapType>

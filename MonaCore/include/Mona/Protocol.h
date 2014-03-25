@@ -28,7 +28,7 @@ This file is a part of Mona.
 namespace Mona {
 
 
-class Protocol : virtual Object {
+class Protocol : public virtual Object {
 	friend class Protocols;
 public:
 	const std::string name;
@@ -40,10 +40,12 @@ protected:
 
 	Invoker&		invoker;
 	Sessions&		sessions;
+
 private:
 	template<typename ParamsType>
 	bool	load(Exception& ex, const ParamsType& params) { return true; }
 	virtual void	manage() {}
+
 };
 
 inline bool Protocol::auth(const SocketAddress& address) {

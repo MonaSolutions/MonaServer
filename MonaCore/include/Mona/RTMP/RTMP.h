@@ -29,7 +29,7 @@ This file is a part of Mona.
 
 namespace Mona {
 
-class RTMPChannel : virtual Object {
+class RTMPChannel : public virtual Object {
 public:
 	RTMPChannel(): absoluteTime(0),time(0),bodySize(0),type(AMF::EMPTY),streamId(0){}
 	UInt32				bodySize;

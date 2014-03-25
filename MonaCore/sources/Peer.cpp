@@ -28,7 +28,7 @@ using namespace std;
 
 namespace Mona {
 
-class Member : virtual Object {
+class Member : public virtual Object {
 public:
 	Member(Writer* pWriter) : pWriter(pWriter){}
 	Writer*			pWriter;
@@ -59,6 +59,8 @@ bool Peer::exchangeMemberId(Group& group,Peer& peer,Writer* pWriter) {
 		CRITIC("A peer in a group without have its _groups collection associated")
 		return false;
 	}
+	if(!it->second)
+		return false;
 	return it->second->writeMember(*this);
 }
 

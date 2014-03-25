@@ -30,7 +30,7 @@ This file is a part of Mona.
 namespace Mona {
 
 
-class WinRegistryKey : virtual Object {
+class WinRegistryKey : public virtual Object {
 public:
 	typedef std::vector<std::string> Keys;
 	typedef std::vector<std::string> Values;

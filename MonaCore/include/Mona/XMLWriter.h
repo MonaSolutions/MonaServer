@@ -23,7 +23,7 @@
 namespace Mona {
 
 	
-class XMLWriter : public DataWriter, virtual Object {
+class XMLWriter : public DataWriter, public virtual Object {
 public:
 	XMLWriter(const PoolBuffers& buffers);
 
@@ -77,7 +77,7 @@ protected:
 	/*! \brief Intern class for managing tags
 	*	while writing
 	*/
-	class TagPos : virtual Object {
+	class TagPos : public virtual Object {
 	public:
 		TagPos(const std::string& val) : name(val), childs(false), arrayLevel(1), empty(false) {}
 		std::string name;

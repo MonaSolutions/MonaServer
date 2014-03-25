@@ -25,7 +25,7 @@ This file is a part of Mona.
 
 namespace Mona {
 
-class FileWatcher : virtual Object {
+class FileWatcher : public virtual Object {
 public:
 
 	template <typename ...Args>

@@ -70,6 +70,16 @@ string& String::ToLower(string& value) {
 	return value;
 }
 
+char* String::ToLower(char* value) {
+	const char* end = value+strlen(value);
+	while (value < end) {
+		(*value) = tolower(*value);
+		++value;
+	}
+	return value;
+}
+
+
 string& String::Trim(string& value, TrimOption option) {
 	int first = 0;
 	int last = value.size() - 1;

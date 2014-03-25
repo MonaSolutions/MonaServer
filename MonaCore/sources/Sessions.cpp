@@ -37,7 +37,8 @@ Sessions::~Sessions() {
 		WARN("sessions are deleting");
 	Iterator it;
 	for (it = begin(); it != end(); ++it) {
-		it->second->expire();  //to avoid that threads which have handle on this session continue to deliver their results
+		it->second->expire();
+		it->second->kill(true);
 		delete it->second;
 	}
 	_sessions.clear();
@@ -46,11 +47,15 @@ Sessions::~Sessions() {
 void Sessions::remove(map<UInt32,Session*>::iterator it) {
 	Session& session(*it->second);
 	DEBUG("Session ",session.name()," died");
+	UInt8 count(0);
 	if(session._sessionsOptions&BYPEER)
-		_sessionsByPeerId.erase(session.peer.id);
+		count += _sessionsByPeerId.erase(session.peer.id);
 	if(session._sessionsOptions&BYADDRESS)
-		_sessionsByAddress.erase(session.peer.address);
-	session.expire(); //to avoid that threads which have handle on this session continue to deliver their results
+		count += (_sessionsByAddress.erase(session.peer.address)+1);
+	if (session._sessionsOptions != count)
+		CRITIC("Session ",session.name()," deletion has kept at least one pointer in a sessions collection");
+	session.expire();
+	session.kill();
 	delete &session;
 	_sessions.erase(it);
 }

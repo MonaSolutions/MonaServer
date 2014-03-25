@@ -24,7 +24,7 @@ using namespace std;
 using namespace Mona;
 
 
-class ExpirableObject : public Expirable<ExpirableObject>, virtual Object {
+class ExpirableObject : public Expirable<ExpirableObject>, public virtual Object {
 public:
 	ExpirableObject() : Expirable(this) {}
 	virtual ~ExpirableObject() {

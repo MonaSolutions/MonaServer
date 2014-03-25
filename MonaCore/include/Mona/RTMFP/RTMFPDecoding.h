@@ -25,7 +25,7 @@ This file is a part of Mona.
 namespace Mona {
 
 
-class RTMFPDecoding : public Decoding, virtual Object {
+class RTMFPDecoding : public Decoding, public virtual Object {
 public:
 	RTMFPDecoding(Invoker& invoker,PoolBuffer& pBuffer,const std::shared_ptr<RTMFPKey>& pDecryptKey,RTMFPEngine::Type type) : Decoding("RTMFPDecoding",invoker,pBuffer),_decoder(pDecryptKey,RTMFPEngine::DECRYPT) {
 		_decoder.type = type;

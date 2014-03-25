@@ -31,7 +31,7 @@ This file is a part of Mona.
 namespace Mona {
 
 class RTMFProtocol;
-class RTMFPSession : public BandWriter,public Session, virtual Object {
+class RTMFPSession : public BandWriter,public Session, public virtual Object {
 public:
 
 	RTMFPSession(RTMFProtocol& protocol,
@@ -41,7 +41,6 @@ public:
 			const UInt8* encryptKey,
 			const std::shared_ptr<Peer>& pPeer);
 
-	virtual ~RTMFPSession();
 
 	void				p2pHandshake(const std::string& tag,const SocketAddress& address,UInt32 times,Session* pSession);
 
@@ -50,6 +49,7 @@ public:
 	void				decode(PoolBuffer& poolBuffer, const SocketAddress& address);
 
 	bool				failed() const { return _failed; }
+	void				kill(bool shutdown=false);
 
 protected:
 	RTMFPSession(RTMFProtocol& protocol,
@@ -67,8 +67,7 @@ protected:
 
 	template <typename ...Args>
 	void fail(Args&&... args) {
-		std::string error;
-		String::Format(error, args ...);
+		String::Format(invoker.buffer, args ...);
 
 		if (_failed)
 			return;
@@ -81,8 +80,8 @@ protected:
 		peer.unsubscribeGroups();
 
 		_failed = true;
-		if(!error.empty()) {
-			WARN("Client failed, ", error);
+		if(!invoker.buffer.empty()) {
+			WARN("Client failed, ", invoker.buffer);
 			failSignal();
 		}
 	
@@ -109,7 +108,6 @@ private:
 	RTMFPEngine::Type				prevEngineType() { return _prevEngineType; }
 	
 	bool							keepAlive();
-	void							kill();
 
 	RTMFPWriter*					writer(UInt64 id);
 	RTMFPFlow*						createFlow(UInt64 id,const std::string& signature);
@@ -132,7 +130,6 @@ private:
 	RTMFPEngine::Type								_prevEngineType;
 
 	std::shared_ptr<RTMFPSender>					_pSender;
-	UDPSocket&										_socket;
 
 	const std::shared_ptr<RTMFPKey>					_pDecryptKey;
 	const std::shared_ptr<RTMFPKey>					_pEncryptKey;

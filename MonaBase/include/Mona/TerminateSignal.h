@@ -25,7 +25,7 @@ This file is a part of Mona.
 namespace Mona {
 
 
-class TerminateSignal : virtual Object {
+class TerminateSignal : public virtual Object {
 public:
 	TerminateSignal();
 	virtual void wait();

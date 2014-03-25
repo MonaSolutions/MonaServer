@@ -25,7 +25,7 @@ This file is a part of Mona.
 namespace Mona {
 
 
-class SVGWriter : public DataWriter, virtual Object {
+class SVGWriter : public DataWriter, public virtual Object {
 public:
 	SVGWriter(const PoolBuffers& buffers) : DataWriter(buffers) {}
 

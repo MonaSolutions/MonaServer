@@ -27,32 +27,48 @@ This file is a part of Mona.
 namespace Mona {
 
 
-class TCProtocol :public Protocol, protected TCPServer , virtual Object {
+class TCProtocol : public Protocol , public virtual Object,
+	public Events::OnConnection,
+	public Events::OnError {
 public:
 	bool load(Exception& ex, const ProtocolParams& params);
 
 protected:
-	TCProtocol(const char* name, Invoker& invoker, Sessions& sessions) : TCPServer(invoker.sockets), Protocol(name, invoker, sessions) {}
+	TCProtocol(const char* name, Invoker& invoker, Sessions& sessions) : _server(invoker.sockets), Protocol(name, invoker, sessions) {
+		if (!OnError::subscribed()) {
+			onError = [this](const Exception& ex) { WARN("Protocol ", this->name, ", ", ex.error()); };
+			_server.OnError::subscribe(onError);
+		} else
+			_server.OnError::subscribe(*this);
+
+		onConnection = [this](Exception& ex,const SocketAddress& address,SocketFile& file) {
+			if(!auth(address))
+				return;
+			OnConnection::raise(ex,address,file);
+		};
+
+		_server.OnConnection::subscribe(onConnection);
+	}
+	virtual ~TCProtocol() {
+		if (onError)
+			_server.OnError::unsubscribe(onError);
+		else
+			_server.OnError::unsubscribe(*this);
+		_server.OnConnection::unsubscribe(onConnection);
+	}
 
 private:
+	TCPServer::OnError::Type	  onError;
+	TCPServer::OnConnection::Type onConnection;
 
-	void	onError(const Exception& ex) { WARN("Protocol ", name, ", ", ex.error()); }
-	void	onConnection(Exception& ex, const SocketAddress& address, SocketFile& file);
-
-	virtual void onClient(Exception& ex,const SocketAddress& address,SocketFile& file) = 0;
+	TCPServer _server;
 };
-
-inline void	TCProtocol::onConnection(Exception& ex,const SocketAddress& address,SocketFile& file) {
-	if(!auth(address))
-		return;
-	onClient(ex,address,file);
-}
 
 inline bool TCProtocol::load(Exception& ex, const ProtocolParams& params) {
 	SocketAddress address;
 	if (!address.setWithDNS(ex, params.host, params.port))
 		return false;
-	return start(ex, address);
+	return _server.start(ex, address);
 }
 
 

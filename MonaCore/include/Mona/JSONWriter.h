@@ -25,7 +25,7 @@ This file is a part of Mona.
 namespace Mona {
 
 
-class JSONWriter : public DataWriter, virtual Object {
+class JSONWriter : public DataWriter, public virtual Object {
 public:
 	JSONWriter(const PoolBuffers& buffers,bool modeRaw=false);
 

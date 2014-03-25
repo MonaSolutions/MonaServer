@@ -24,17 +24,33 @@ using namespace std;
 using namespace Mona;
 
 
-LUATCPClient::LUATCPClient(const SocketAddress& peerAddress,SocketFile& file,const SocketManager& manager, lua_State* pState) : _pState(pState), TCPClient(peerAddress, file, manager) {
+LUATCPClient::LUATCPClient(const SocketAddress& peerAddress,SocketFile& file,const SocketManager& manager, lua_State* pState) : _pState(pState), TCPClient(peerAddress, file, manager),
+	_onError([this](const Exception& ex) {_error = ex.error();}),
+	_onData([this](PoolBuffer& pBuffer) { return onData(pBuffer);}),
+	_onDisconnection([this]() {onDisconnection(); }) {
+
+	OnError::subscribe(_onError);
+	OnDisconnection::subscribe(_onDisconnection);
+	OnData::subscribe(_onData);
 }
 
-LUATCPClient::LUATCPClient(const SocketManager& manager,lua_State* pState) : _pState(pState),TCPClient(manager) {
+LUATCPClient::LUATCPClient(const SocketManager& manager,lua_State* pState) : _pState(pState),TCPClient(manager),
+	_onError([this](const Exception& ex) {_error = ex.error();}),
+	_onData([this](PoolBuffer& pBuffer) { return onData(pBuffer);}),
+	_onDisconnection([this]() {onDisconnection(); }) {
+
+	OnError::subscribe(_onError);
+	OnDisconnection::subscribe(_onDisconnection);
+	OnData::subscribe(_onData);
 }
 
 LUATCPClient::~LUATCPClient() {
-	close();
+	OnData::subscribe(_onData);
+	OnDisconnection::subscribe(_onDisconnection);
+	OnError::subscribe(_onError);
 }
 
-UInt32 LUATCPClient::onReception(PoolBuffer& pBuffer) {
+UInt32 LUATCPClient::onData(PoolBuffer& pBuffer) {
 	UInt32 rest(0);
 	SCRIPT_BEGIN(_pState)
 		SCRIPT_MEMBER_FUNCTION_BEGIN(LUATCPClient,*this,"onReception")

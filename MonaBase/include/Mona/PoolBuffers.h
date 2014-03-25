@@ -27,7 +27,7 @@ This file is a part of Mona.
 
 namespace Mona {
 
-class PoolBuffers : virtual Object {
+class PoolBuffers : public virtual Object {
 	friend class PoolBuffer;
 public:
 	PoolBuffers(UInt16 maximumCapacity = 32768);

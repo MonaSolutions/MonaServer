@@ -30,7 +30,7 @@ This file is a part of Mona.
 namespace Mona {
 
 class Socket;
-class SocketSender : public WorkThread, virtual Object {
+class SocketSender : public WorkThread, public virtual Object {
 	friend class Socket;
 	friend class SocketImpl;
 public:

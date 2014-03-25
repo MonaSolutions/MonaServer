@@ -161,7 +161,7 @@ bool HTTPSender::run(Exception& ex) {
 	}
 
 	/// Dump response
-	Writer::DumpResponse(data(), size(), _address);
+	Session::DumpResponse(data(), size(), _address);
 
 	/// Send
 	return TCPSender::run(ex);

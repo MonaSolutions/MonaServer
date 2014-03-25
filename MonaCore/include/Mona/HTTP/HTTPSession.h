@@ -33,12 +33,10 @@ class HTTPPacketReader;
 
 class HTTPSession :  public WSSession {
 public:
-
 	HTTPSession(const SocketAddress& peerAddress, SocketFile& file, Protocol& protocol, Invoker& invoker);
-	virtual ~HTTPSession();
 	
 private:
-	void			kill();
+	void			kill(bool shutdown=false);
 	void			manage();
 
 	bool								buildPacket(PoolBuffer& pBuffer,PacketReader& packet);

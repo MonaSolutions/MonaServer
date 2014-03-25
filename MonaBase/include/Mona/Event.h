@@ -21,60 +21,125 @@ This file is a part of Mona.
 
 #include "Mona/Mona.h"
 #include "Mona/Exceptions.h"
+#include "Mona/Logs.h"
 #include <set>
 
 namespace Mona {
 
-template<typename... ArgsType>
-class Event : virtual Object {
+template<typename Result,typename... ArgsType>
+class Event {
 private:
-	
-	struct Function : std::function<void(ArgsType...)> {
+
+	struct Function {
 		friend class Event;
 	public:
-		template< class... Args > 
-		Function(Args... args) : _isListening(false), std::function<void(ArgsType...)>(args...) {}
-		~Function() { if (_isListening) FATAL_ERROR("Deleting function is always listening its event"); }
+		Function() : _subscribed(false) {}
+		template<typename F> 
+		Function(F f) : _subscribed(false),_function(f) {}
+		Function(const Function& other) : _subscribed(false), _function(other._function) {}
+		~Function() { if (_subscribed) FATAL_ERROR("Deleting ", typeid(_function).name()," during event subscription"); }
+		template< typename F >
+		Function& operator=(F&& f) { if (_subscribed) FATAL_ERROR("Changing ", typeid(_function).name()," during event subscription"); _function.operator=(f); return *this; }
+		template< typename... Args >
+		Result operator()(Args&&... args) const { return _function(args ...); }
+		operator bool() const { return _function.operator bool(); }
 	private:
-		mutable bool _isListening;
+		std::function<Result(ArgsType...)>	_function;
+		mutable bool						_subscribed;
 	};
 
 
 public:
 	typedef Function Type;
 
-	void addListener(const Type& function) {
-		std::lock_guard<std::recursive_mutex> lock(_mutex);
-		if(_listeners.emplace(&function).second)
-			function._isListening = true;
+	bool subscribed() {
+		std::lock_guard<std::recursive_mutex> lock(*_pMutex);
+		return _pFunction || _pRelayer;
 	}
-	void addListener(const Type& function,std::unique_lock<std::recursive_mutex>& guard) {
-		guard = std::unique_lock<std::recursive_mutex>(_mutex);
-		if(_listeners.emplace(&function).second)
-			function._isListening = true;
+
+	void subscribe(const Type& function) {
+		if (!function)
+			return; // no change during listening, so if function is empty => useless listening
+		std::lock_guard<std::recursive_mutex> lock(*_pMutex);
+		if (_pFunction || _pRelayer)
+			FATAL_ERROR("Event ", typeid(*this).name()," subscription has already a subscriber");
+		function._subscribed = true;
+		_pFunction = &function;
 	}
-	void removeListener(const Type& function) {
-		std::lock_guard<std::recursive_mutex> lock(_mutex);
-		if(_listeners.erase(&function)>0)
-			function._isListening = false;
+	void subscribe(Event<Result(ArgsType...)>& event) {
+		std::lock_guard<std::recursive_mutex> lock(*_pMutex);
+		if (_pFunction || _pRelayer)
+			FATAL_ERROR("Event ", typeid(*this).name()," subscription has already a subscriber");
+		event._relayed = true;
+		_pRelayer = &event;
 	}
-	void removeListener(const Type& function,std::unique_lock<std::recursive_mutex>& guard) {
-		guard = std::unique_lock<std::recursive_mutex>(_mutex);
-		if(_listeners.erase(&function)>0)
-			function._isListening = false;
+	void unsubscribe(const Type& function) {
+		std::lock_guard<std::recursive_mutex> lock(*_pMutex);
+		function._subscribed = false;
+		_pFunction = NULL;
 	}
-	template <typename ...Args>
-	void raise(Args&&... args) { 
-		std::lock_guard<std::recursive_mutex> lock(_mutex);
-		for (const Type* pFunc : _listeners) {
-			if (*pFunc)
-				(*pFunc)(args ...);
-		}
+	void unsubscribe(Event<Result(ArgsType...)>& event) {
+		std::lock_guard<std::recursive_mutex> lock(*_pMutex);
+		event._relayed = false;
+		_pRelayer = NULL;
 	}
+	
+protected:
+	Event() : _pFunction(NULL),_relayed(false),_pRelayer(NULL),_pMutex(new std::recursive_mutex()) {}
+	virtual ~Event() {
+		if (_relayed)
+			FATAL_ERROR("Deleting function during event ", typeid(*this).name()," subscription");
+		if (_pFunction)
+			_pFunction->_subscribed = false;
+		if (_pRelayer)
+			_pRelayer->_relayed = false;
+	}
+
+
 private:
-	std::recursive_mutex	_mutex;
-	std::set<const Type*>	_listeners;
+	std::shared_ptr<std::recursive_mutex>	_pMutex;
+	const Type*								_pFunction;
+	Event<Result(ArgsType...)>*				_pRelayer;
+	bool									_relayed;
+
+	friend class Event<void(ArgsType ...)>;
+	friend class Event<Result(ArgsType ...)>;
 };
 
+
+template<typename... ArgsType>
+class Event<void(ArgsType ...)> : public Event<void,ArgsType ...>, public virtual Object  {
+public:
+	template <typename ...Args>
+	void raise(Args&&... args) {
+		std::shared_ptr<std::recursive_mutex> pMutex(Event<void,ArgsType ...>::_pMutex); // because the event can delete this!
+		std::lock_guard<std::recursive_mutex> lock(*pMutex);
+		if (Event<void,ArgsType ...>::_pRelayer)
+			Event<void,ArgsType ...>::_pRelayer->raise(args...);
+		else if (Event<void,ArgsType ...>::_pFunction)
+			(*Event<void,ArgsType ...>::_pFunction)(args ...);
+		else
+			DEBUG("Event ", typeid(*this).name()," without subscriber");
+	}
+};
+	
+
+template<typename Result,typename... ArgsType>
+class Event<Result(ArgsType ...)>: public Event<Result,ArgsType ...>, public virtual Object {
+public:
+	template <Result defaultResult,typename ...Args>
+	Result raise(Args&&... args) {
+		std::shared_ptr<std::recursive_mutex> pMutex(Event<Result,ArgsType ...>::_pMutex); // because the event can delete this!
+		std::lock_guard<std::recursive_mutex> lock(*pMutex);
+		if (Event<Result,ArgsType ...>::_pRelayer)
+			return Event<Result,ArgsType ...>::_pRelayer->raise<defaultResult>(args...);
+		else if (Event<Result, ArgsType ...>::_pFunction)
+			return (*Event<Result, ArgsType ...>::_pFunction)(args ...);
+		else
+			DEBUG("Event ", typeid(*this).name()," without subscriber");
+		return defaultResult;
+	}
+
+};
 
 } // namespace Mona

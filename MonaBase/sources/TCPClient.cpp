@@ -19,42 +19,77 @@ This file is a part of Mona.
 
 #include "Mona/TCPClient.h"
 #include "Mona/TCPSender.h"
+#include "Mona/Logs.h"
 
 using namespace std;
 
 
 namespace Mona {
 
-TCPClient::TCPClient(const SocketManager& manager) :  _disconnecting(false),_pBuffer(manager.poolBuffers),_connected(false), _socket(*this,manager), _rest(0) {
-
+TCPClient::TCPClient(const SocketManager& manager) :  onReadable([this](Exception& ex, UInt32 available) {receive(ex,available);}),_disconnecting(false),_pBuffer(manager.poolBuffers), _socket(manager), _rest(0) {
+	_socket.OnError::subscribe(*this);
+	_socket.OnReadable::subscribe(onReadable);
 }
 
-TCPClient::TCPClient(const SocketAddress& peerAddress, SocketFile& file,const SocketManager& manager) : _disconnecting(false),_peerAddress(peerAddress),_pBuffer(manager.poolBuffers), _connected(true), _rest(0), _socket(file,*this,manager) {
-
+TCPClient::TCPClient(const SocketAddress& peerAddress, SocketFile& file,const SocketManager& manager) : onReadable([this](Exception& ex, UInt32 available) {receive(ex,available);}),_disconnecting(false),_peerAddress(peerAddress),_pBuffer(manager.poolBuffers), _rest(0), _socket(file,manager) {
+	_socket.OnError::subscribe(*this);
+	_socket.OnReadable::subscribe(onReadable);
 }
 
 TCPClient::~TCPClient() {
+	_socket.OnReadable::unsubscribe(onReadable);
+	_socket.OnError::unsubscribe(*this);
 	close();
 }
 
 
-void TCPClient::onReadable(Exception& ex,UInt32 available) {
+// private method, call by onReadable
+void TCPClient::close() {
+	if (!_socket.connected())
+		return;
+	if (!_disconnecting) {
+		Exception ex;
+		_socket.flush(ex); // try to flush what is possible before disconnection!
+		_socket.shutdown(ex);
+	}
+	_disconnecting = false;
+	_socket.close();
+	_rest = 0;
+	_pBuffer.release();
+	{
+		lock_guard<mutex> lock(_mutex);
+		_address.reset();
+		_peerAddress.reset();
+	}
+	OnDisconnection::raise(); // in last because can delete this
+}
 
+
+bool TCPClient::connect(Exception& ex,const SocketAddress& address) {
+	lock_guard<mutex> lock(_mutex);
+	if (!_socket.connect(ex, address))
+		return false;
+	_peerAddress.set(address);
+	return true;
+}
+
+void TCPClient::receive(Exception& ex, UInt32 available) {
+	
 	if (available == 0) {
 		close(); // Graceful disconnection
 		return;
 	}
 
-	lock_guard<recursive_mutex> lock(_mutex);
-
 	if(available>(_pBuffer->size() - _rest))
 		_pBuffer->resize(_rest+available,true);
-
+	
 	Exception exRecv;
+	
 	int received = _socket.receiveBytes(exRecv,_pBuffer->data()+_rest, available);
+
 	if (received <= 0) {
 		if (exRecv)
-			onError(exRecv); // to be before onDisconnection!
+			OnError::raise(exRecv); // to be before onDisconnection!
 		close(); // Graceful disconnection
 		return;
 	} else if (exRecv)
@@ -66,9 +101,9 @@ void TCPClient::onReadable(Exception& ex,UInt32 available) {
 	while (_rest > 0) {
 
 		_pBuffer->resize(_rest,true);
-		UInt32 rest = onReception(_pBuffer);
+		UInt32 rest = OnData::raise<0>(_pBuffer);
 
-		 // To prevent the case where the buffer has been manipulated during onReception call
+			// To prevent the case where the buffer has been manipulated during onReception call
 		if(_pBuffer.empty())
 			rest = 0;
 		else if (_pBuffer->size() < _rest)
@@ -92,26 +127,11 @@ void TCPClient::onReadable(Exception& ex,UInt32 available) {
 
 		_rest = rest;
 	}
-
-}
-
-
-bool TCPClient::connect(Exception& ex,const SocketAddress& address) {
-	lock_guard<recursive_mutex> lock(_mutex);
-	if (_disconnecting) {
-		ex.set(Exception::SOCKET, "TCPClient is always connected to ", _peerAddress.toString(), ", call disconnect() before, and wait onDisconnection event");
-		return false;
-	}
-	_connected = _socket.connect(ex, address);
-	if (!_connected)
-		return false;
-	_peerAddress.set(address);
-	return true;
 }
 
 void TCPClient::disconnect() {
-	lock_guard<recursive_mutex> lock(_mutex);
-	if (_disconnecting)
+	lock_guard<mutex> lock(_mutex);
+	if (_disconnecting || !_socket.connected())
 		return;
 	_disconnecting = true;
 	Exception ex;
@@ -119,28 +139,8 @@ void TCPClient::disconnect() {
 	_socket.shutdown(ex,Socket::SEND);
 }
 
-void TCPClient::close() {
-	{
-		lock_guard<recursive_mutex> lock(_mutex);
-		if (!_connected)
-			return;
-		_connected = false;
-		if (!_disconnecting) {
-			Exception ex;
-			_socket.shutdown(ex);
-		} else
-			 _disconnecting = false;
-		_socket.close();
-		_rest = 0;
-		_pBuffer.release();
-		 _address.reset();
-		 _peerAddress.reset();
-	 }
-	onDisconnection(); // in last because can call a TCPClient::connect, or delete this
-}
-
 bool TCPClient::send(Exception& ex,const UInt8* data,UInt32 size) {
-	if(size==0)
+	if (size == 0)
 		return true;
 	shared_ptr<TCPSender> pSender(new TCPSender("TCPClient::send",data, size));
 	return _socket.send(ex, pSender);

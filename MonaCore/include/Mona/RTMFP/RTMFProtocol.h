@@ -26,17 +26,15 @@ This file is a part of Mona.
 
 namespace Mona {
 
-class RTMFProtocol : public UDProtocol, virtual Object  {
+class RTMFProtocol : public UDProtocol, public virtual Object  {
 public:
-	RTMFProtocol(const char* name, Invoker& invoker, Sessions& sessions) : UDProtocol(name, invoker, sessions) {}
-	~RTMFProtocol() { close(); }
+	RTMFProtocol(const char* name, Invoker& invoker, Sessions& sessions);
+	~RTMFProtocol();
 	
 	bool		load(Exception& ex, const RTMFPParams& params);
-
 private:
 	void		manage() { if (_pHandshake) _pHandshake->manage(); }
-	
-	void		onPacket(PoolBuffer& pBuffer, const SocketAddress& address);
+	UDProtocol::OnPacket::Type onPacket;
 
 	std::unique_ptr<RTMFPHandshake>	_pHandshake;
 };

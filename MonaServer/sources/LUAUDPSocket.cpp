@@ -25,25 +25,30 @@ using namespace Mona;
 
 
 LUAUDPSocket::LUAUDPSocket(const SocketManager& manager,bool allowBroadcast,lua_State* pState) : _pState(pState),UDPSocket(manager,allowBroadcast) {
+	
+	onError = [this](const Exception& ex) {
+		WARN("LUAUDPSocket, ", ex.error());
+	};
+
+	onPacket = [this](PoolBuffer& pBuffer, const SocketAddress& address) {
+		SCRIPT_BEGIN(_pState)
+			SCRIPT_MEMBER_FUNCTION_BEGIN(LUAUDPSocket,*this,"onReception")
+				SCRIPT_WRITE_BINARY(pBuffer->data(),pBuffer->size())
+				SCRIPT_WRITE_STRING(address.toString().c_str())
+				SCRIPT_FUNCTION_CALL
+			SCRIPT_FUNCTION_END
+		SCRIPT_END
+	};
+
+	OnError::subscribe(onError);
+	OnPacket::subscribe(onPacket);
 }
 
 LUAUDPSocket::~LUAUDPSocket() {
-	close();
+	OnPacket::unsubscribe(onPacket);
+	OnError::unsubscribe(onError);
 }
 
-void LUAUDPSocket::onError(const Exception& ex) {
-	WARN("LUAUDPSocket, ", ex.error());
-}
-
-void LUAUDPSocket::onReception(PoolBuffer& pBuffer, const SocketAddress& address) {
-	SCRIPT_BEGIN(_pState)
-		SCRIPT_MEMBER_FUNCTION_BEGIN(LUAUDPSocket,*this,"onReception")
-			SCRIPT_WRITE_BINARY(pBuffer->data(),pBuffer->size())
-			SCRIPT_WRITE_STRING(address.toString().c_str())
-			SCRIPT_FUNCTION_CALL
-		SCRIPT_FUNCTION_END
-	SCRIPT_END
-}
 
 int	LUAUDPSocket::Destroy(lua_State* pState) {
 	SCRIPT_DESTRUCTOR_CALLBACK(LUAUDPSocket,udp)

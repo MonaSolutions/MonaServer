@@ -30,7 +30,7 @@ using namespace std;
 namespace Mona {
 
 
-class RTMFPPacket : virtual Object {
+class RTMFPPacket : public virtual Object {
 public:
 	RTMFPPacket(const PoolBuffers& poolBuffers,PacketReader& fragment) : fragments(1),_pMessage(NULL),_pBuffer(poolBuffers,fragment.available()) {
 		if(_pBuffer->size()>0)
@@ -66,7 +66,7 @@ private:
 };
 
 
-class RTMFPFragment : public PoolBuffer, virtual Object{
+class RTMFPFragment : public PoolBuffer, public virtual Object{
 public:
 	RTMFPFragment(const PoolBuffers& poolBuffers,PacketReader& packet,UInt8 flags) : flags(flags),PoolBuffer(poolBuffers,packet.available()) {
 		packet.readRaw((*this)->data(),(*this)->size());

@@ -26,44 +26,42 @@ using namespace Mona;
 
 
 
-Servers::Servers(Mona::UInt16 port, const SocketManager& manager, const string& targets) : Broadcaster(manager.poolBuffers),targets(manager.poolBuffers),initiators(manager.poolBuffers),TCPServer(manager), _address(IPAddress::Wildcard(),port), _manageTimes(1) {
-	
+Servers::Servers(UInt16 port,const std::string& targets,const SocketManager& manager) : Broadcaster(manager.poolBuffers),targets(manager.poolBuffers),initiators(manager.poolBuffers),_address(IPAddress::Wildcard(), port),_server(manager), _manageTimes(1) {
 	
 	onServerHello = [this](ServerConnection& server) {
-		_connections.emplace(&server);
-		if(server.isTarget)
-			this->targets._connections.emplace(&server);
-		else
-			initiators._connections.emplace(&server);
+		if (_connections.emplace(&server).second) {
+			if(server.isTarget)
+				this->targets._connections.emplace(&server);
+			else
+				initiators._connections.emplace(&server);
+			NOTE("Connection etablished with ", server.address.toString(), " server");
+		} else {
+			Exception ex;
+			OnDisconnection::raise(ex,server);
+		}
+		if (!server.isTarget)
+			server.sendHello(host,ports);
 		OnConnection::raise(server);
 	};
-	
-	onServerMessage = [this](ServerConnection& server,const std::string& handler,Mona::PacketReader& message) {
-		OnMessage::raise(server,handler,message);
-	};
 
-	onServerGoodbye = [this](ServerConnection& server) {
+	onServerDisconnection = [this](Exception& ex,ServerConnection& server) { 
 		if (_connections.erase(&server) == 0) // not connected
-			return;
+		 	return;
 		if(server.isTarget)
 			this->targets._connections.erase(&server);
 		else
 			initiators._connections.erase(&server);
-		 OnDisconnection::raise(server);
-	};
 
+		if (ex)
+			ERROR("Disconnection from ", server.address.toString(), " server, ",ex.error())
+		else
+			NOTE("Disconnection from ", server.address.toString(), " server ")
 
-	onServerDisconnection = [this](ServerConnection& server) { 
-		if (_clients.erase(&server) > 0)
+		 OnDisconnection::raise(ex,server);
+
+		 if (_server.running() && _clients.erase(&server) > 0) // if !_server.running(), _clients is empty!
 			delete &server;
 	};
-
-	
-	
-	if (_address)
-		NOTE("Servers incoming connection enabled on port ", port)
-	else if (!targets.empty())
-		NOTE("Servers incoming connection disabled (servers.port==0)")
 
 	vector<string> values;
 	String::Split(targets, ";", values, String::SPLIT_IGNORE_EMPTY | String::SPLIT_TRIM);
@@ -79,23 +77,32 @@ Servers::Servers(Mona::UInt16 port, const SocketManager& manager, const string& 
 		bool success;
 		EXCEPTION_TO_LOG(success=address.set(ex, target), "Servers ", target, " target");
 		if (success) {
-			ServerConnection& server(**_targets.emplace(new ServerConnection(manager,address)).first);
+			ServerConnection& server(**_targets.emplace(new ServerConnection(_server.manager(),address)).first);
 			if (!query.empty())
 				Util::UnpackQuery(query, server);
-			server.OnHello::addListener(onServerHello);
-			server.OnMessage::addListener(onServerMessage);
-			server.OnGoodbye::addListener(onServerGoodbye);
-			server.OnDisconnection::addListener(onServerDisconnection);
+			server.OnHello::subscribe(onServerHello);
+			server.OnMessage::subscribe(*this);
+			server.OnDisconnection::subscribe(onServerDisconnection);
 		}
 	}
+
+	onConnection = [this](Exception& ex, const SocketAddress& peerAddress, SocketFile& file) {
+		ServerConnection& server(**_clients.emplace(new ServerConnection(peerAddress, file, _server.manager())).first);
+		server.OnHello::subscribe(onServerHello);
+		server.OnMessage::subscribe(*this);
+		server.OnDisconnection::subscribe(onServerDisconnection);
+	};
+
+	onError = [this](const Mona::Exception& ex) { WARN("Servers, ", ex.error()); };
+
+	_server.OnError::subscribe(onError);
+	_server.OnConnection::subscribe(onConnection);
 }
 
 Servers::~Servers() {
 	stop();
-	for (ServerConnection* pClient : _clients)
-		pClient->close(); // will be deleted by onDisconnection!
-	for (ServerConnection* pClient : _clients)
-		delete pClient; // client remaining? (no onDisconnection event!)
+	_server.OnError::unsubscribe(onError);
+	_server.OnConnection::unsubscribe(onConnection);
 	for (ServerConnection* pTarget : _targets)
 		delete pTarget;
 }
@@ -103,7 +110,7 @@ Servers::~Servers() {
 void Servers::manage() {
 	if(_targets.empty() || (--_manageTimes)!=0)
 		return;
-	_manageTimes = 5; // every 10 sec
+	_manageTimes = 8; // every 16 sec
 	for (ServerConnection* pTarget : _targets)
 		pTarget->connect(host, ports);
 }
@@ -112,27 +119,23 @@ void Servers::start() {
 	if (!_address)
 		return;
 	Exception ex;
-	EXCEPTION_TO_LOG(TCPServer::start(ex, _address), "Servers");
+	bool success(false);
+	EXCEPTION_TO_LOG(success=_server.start(ex, _address), "Servers");
+	if (success)
+		NOTE("Servers incoming connection on ", _address.toString(), " started");
 }
 
-
 void Servers::stop() {
-	TCPServer::stop();
+	if (!_server.running())
+		return;
+	NOTE("Servers incoming connection on ", _address.toString(), " stopped");
+	_server.stop();
 	_connections.clear();
 	targets._connections.clear();
 	initiators._connections.clear();
 	for (ServerConnection* pTarget : _targets)
-		pTarget->disconnect();
+		pTarget->close();
 	for (ServerConnection* pClient : _clients)
-		pClient->disconnect();
+		delete pClient;
+	_clients.clear();
 }
-
-void Servers::onConnection(Exception& ex, const SocketAddress& peerAddress, SocketFile& file) {
-	ServerConnection& server(**_clients.emplace(new ServerConnection(peerAddress, file, manager())).first);
-	server.OnHello::addListener(onServerHello);
-	server.OnMessage::addListener(onServerMessage);
-	server.OnGoodbye::addListener(onServerGoodbye);
-	server.OnDisconnection::addListener(onServerDisconnection);
-	server.sendHello(host,ports);
-}
-

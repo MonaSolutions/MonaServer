@@ -28,7 +28,7 @@ namespace Mona {
 
 class Sessions;
 class Protocol;
-class Session : virtual Object, public Expirable<Session> {
+class Session : public virtual Object, public Expirable<Session> {
 	friend class Sessions;
 
 private:
@@ -46,11 +46,11 @@ public:
 	Peer&				peer;
 	Invoker&			invoker;
 
-	bool				dumpJustInDebug;
-
 	const bool			died;
-
-	void dumpResponse(const UInt8* data, UInt32 size, bool justInDebug=false) { Writer::DumpResponse(data, size, peer.address, justInDebug); }
+	
+	bool				dumpJustInDebug;
+	static void	DumpResponse(const UInt8* data, UInt32 size, const SocketAddress& address, bool justInDebug = false);
+	void dumpResponse(const UInt8* data, UInt32 size, bool justInDebug=false) { DumpResponse(data, size, peer.address, justInDebug); }
 
 	template<typename DecodingType>
 	void decode(const std::shared_ptr<DecodingType>& pDecoding) {
@@ -70,8 +70,17 @@ public:
 	virtual void		receive(PacketReader& packet) { receiveWithoutFlush(packet); flush(); }
 	virtual void		receive(PacketReader& packet, const SocketAddress& address);
 
+	template<typename ProtocolType,typename SenderType>
+	bool send(Exception& ex,const std::shared_ptr<SenderType>& pSender) {
+		return ((ProtocolType&)_protocol).send<SenderType>(ex, pSender);
+	}
+	template<typename ProtocolType,typename SenderType>
+	PoolThread*	send(Exception& ex,const std::shared_ptr<SenderType>& pSender, PoolThread* pThread) {
+		return ((ProtocolType&)_protocol).send<SenderType>(ex, pSender, pThread);
+	}
+
 	virtual void		manage() {}
-	virtual void		kill();
+	virtual void		kill(bool shutdown=false);
 	virtual void		flush() { peer.writer().flush(); }
 
 protected:

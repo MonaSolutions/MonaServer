@@ -26,6 +26,35 @@ using namespace std;
 namespace Mona {
 
 
+RTMFProtocol::RTMFProtocol(const char* name, Invoker& invoker, Sessions& sessions) : UDProtocol(name, invoker, sessions) {
+
+	onPacket = [this](PoolBuffer& pBuffer,const SocketAddress& address) {
+		if (pBuffer->size() < RTMFP_MIN_PACKET_SIZE) {
+			ERROR("Invalid RTMFP packet");
+			return;
+		}
+		PacketReader packet(pBuffer->data(),pBuffer->size());
+		UInt32 id = RTMFP::Unpack(packet);
+		// TRACE("RTMFP Session ",id);
+		RTMFPSession* pSession = id == 0 ? _pHandshake.get() : this->sessions.find<RTMFPSession>(id);
+		if (!pSession) {
+			WARN("Unknown RTMFP session ", id);
+			return;
+		}
+		if (pSession->pRTMFPCookieComputing) {
+			_pHandshake->commitCookie(pSession->pRTMFPCookieComputing->value);
+			pSession->pRTMFPCookieComputing.reset();
+		}
+		pSession->decode(pBuffer, address);
+	};
+
+	OnPacket::subscribe(onPacket);
+}
+
+RTMFProtocol::~RTMFProtocol() {
+	OnPacket::unsubscribe(onPacket);
+}
+
 bool RTMFProtocol::load(Exception& ex, const RTMFPParams& params) {
 	if (!UDProtocol::load(ex, params))
 		return false;
@@ -35,32 +64,6 @@ bool RTMFProtocol::load(Exception& ex, const RTMFPParams& params) {
 	return true;
 }
 
-void RTMFProtocol::onPacket(PoolBuffer& pBuffer,const SocketAddress& address) {
-
-	if (pBuffer->size()<RTMFP_MIN_PACKET_SIZE) {
-		ERROR("Invalid RTMFP packet");
-		return;
-	}
-
-	PacketReader packet(pBuffer->data(),pBuffer->size());
-	UInt32 id = RTMFP::Unpack(packet);
-
-	// TRACE("RTMFP Session ",id);
-	
-	RTMFPSession* pSession = id == 0 ? _pHandshake.get() : sessions.find<RTMFPSession>(id);
-
-	if (!pSession) {
-		WARN("Unknown RTMFP session ", id);
-		return;
-	}
-	
-	if (pSession->pRTMFPCookieComputing) {
-		_pHandshake->commitCookie(pSession->pRTMFPCookieComputing->value);
-		pSession->pRTMFPCookieComputing.reset();
-	}
-
-	pSession->decode(pBuffer, address);
-}
 
 
 } // namespace Mona

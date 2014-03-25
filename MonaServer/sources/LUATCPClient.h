@@ -37,8 +37,12 @@ public:
 
 private:
 	void			onError(const Mona::Exception& ex) {_error = ex.error();}
-	Mona::UInt32	onReception(Mona::PoolBuffer& pBuffer);
+	Mona::UInt32	onData(Mona::PoolBuffer& pBuffer);
 	void			onDisconnection();
+
+	OnError::Type			_onError;
+	OnData::Type			_onData;
+	OnDisconnection::Type	_onDisconnection;
 
 	static int	Send(lua_State* pState);
 	static int  Connect(lua_State* pState);

@@ -26,7 +26,7 @@ This file is a part of Mona.
 namespace Mona {
 
 class Server;
-class ServerManager : private Task, public Startable, virtual Object {
+class ServerManager : private Task, public Startable, public virtual Object {
 public:
 	ServerManager(Server& server);
 	virtual ~ServerManager() {}

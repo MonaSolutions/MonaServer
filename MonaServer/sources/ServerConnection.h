@@ -43,18 +43,16 @@ private:
 
 
 class ServerConnection;
-namespace Events {
-	struct OnHello : Mona::Event<ServerConnection&> {};
-	struct OnMessage : Mona::Event<ServerConnection&,const std::string&,Mona::PacketReader&> {};
-	struct OnGoodbye : Mona::Event<ServerConnection&> {};
-	struct OnDisconnection : Mona::Event<ServerConnection&> {};
+namespace ServerEvents {
+	struct OnHello : Mona::Event<void(ServerConnection&)> {};
+	struct OnMessage : Mona::Event<void(ServerConnection&,const std::string&,Mona::PacketReader&)> {};
+	struct OnDisconnection : Mona::Event<void(Mona::Exception&,ServerConnection&)> {};
 }
 
-class ServerConnection : public Mona::TCPClient, public Mona::MapParameters,
-		public Events::OnHello,
-		public Events::OnMessage,
-		public Events::OnGoodbye,
-		public Events::OnDisconnection {
+class ServerConnection : public Mona::MapParameters,
+		public ServerEvents::OnHello,
+		public ServerEvents::OnMessage,
+		public ServerEvents::OnDisconnection {
 public:
 	// Target version
 	ServerConnection(const Mona::SocketManager& manager,const Mona::SocketAddress& targetAddress);
@@ -68,27 +66,33 @@ public:
 	const bool						isTarget;
 	Mona::UInt16					port(const std::string& protocol);
 
+	const Mona::PoolBuffers&  poolBuffers() const { return _pClient->manager().poolBuffers; }
+
 	void			connect(const std::string& host,const std::map<std::string,Mona::UInt16>& ports);
 	bool			connected() { return _connected; }
-	void			disconnect() { TCPClient::disconnect(); }
-	void			close() { TCPClient::close(); }
+
+	void			close();
 
 	void			send(const std::shared_ptr<ServerMessage>& pMessage);
-
 	void			sendHello(const std::string& host,const std::map<std::string,Mona::UInt16>& ports);
+	void			reject(const char* error);
 
 private:
 
-	void			onError(const Mona::Exception& ex) {_error = ex.error();}
-	Mona::UInt32	onReception(Mona::PoolBuffer& pBuffer);
+	Mona::UInt32	onData(Mona::PoolBuffer& pBuffer);
 	void			onDisconnection();
+
+	Mona::TCPClient::OnError::Type			_onError;
+	Mona::TCPClient::OnData::Type			_onData;
+	Mona::TCPClient::OnDisconnection::Type	_onDisconnection;
+
 
 	std::map<std::string,Mona::UInt32>	_sendingRefs;
 	std::map<Mona::UInt32,std::string>	_receivingRefs;
 
-	Mona::UInt32						_size;
 	bool								_connected;
 	std::map<std::string,Mona::UInt16>	_ports;
-	std::string							_error;
+	Mona::Exception						_ex;
+	std::unique_ptr<Mona::TCPClient>	_pClient;
 };
 

@@ -37,7 +37,7 @@ namespace Mona {
 #define RTMFP_TIMESTAMP_SCALE	4.0
 
 
-class RTMFPKey : virtual Object {
+class RTMFPKey : public virtual Object {
 public:
 	RTMFPKey(const UInt8* key) {memcpy(_key, key, RTMFP_KEY_SIZE);}
 	const UInt8* value() { return _key; }
@@ -46,7 +46,7 @@ private:
 	UInt8 _key[RTMFP_KEY_SIZE];	
 };
 
-class RTMFPEngine : virtual Object {
+class RTMFPEngine : public virtual Object {
 public:
 	enum Direction {
 		DECRYPT=0,

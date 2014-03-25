@@ -31,7 +31,7 @@ This file is a part of Mona.
 namespace Mona {
 
 class Socket;
-class SocketManager : private Task, private Startable, private TaskHandler, virtual Object {
+class SocketManager : private Task, private Startable, private TaskHandler, public virtual Object {
 	friend class SocketImpl;
 public:
 	SocketManager(TaskHandler& handler, const PoolBuffers& poolBuffers, PoolThreads& poolThreads, UInt32 bufferSize = 0, const std::string& name = "SocketManager");

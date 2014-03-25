@@ -28,7 +28,7 @@ namespace Mona {
 
 
 
-class Startable : virtual Object {
+class Startable : public virtual Object {
 public:
 	enum Priority {
 		PRIORITY_LOWEST=0,

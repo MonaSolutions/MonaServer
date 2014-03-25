@@ -24,7 +24,7 @@ This file is a part of Mona.
 namespace Mona {
 
 /// A chrono in microseconds
-class Stopwatch : virtual Object{
+class Stopwatch : public virtual Object{
 public:
 	Stopwatch() : _running(false) {}
 

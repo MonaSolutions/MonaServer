@@ -26,7 +26,7 @@ This file is a part of Mona.
 
 namespace Mona {
 
-class Publication : virtual Object {
+class Publication : public virtual Object {
 public:
 	Publication(const std::string& name);
 	virtual ~Publication();

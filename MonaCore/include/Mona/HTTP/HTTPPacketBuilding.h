@@ -25,7 +25,7 @@ This file is a part of Mona.
 
 namespace Mona {
 
-class HTTPPacketBuilding : public Decoding, virtual Object {
+class HTTPPacketBuilding : public Decoding, public virtual Object {
 public:
 	HTTPPacketBuilding(Invoker& invoker, PoolBuffer& pBuffer, const std::shared_ptr<PoolBuffer>& ppBuffer) : _ppBuffer(ppBuffer),pPacket(new HTTPPacket(*ppBuffer)),Decoding("HTTPPacketBuilding", invoker, pBuffer) {}
 

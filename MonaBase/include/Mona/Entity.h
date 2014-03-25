@@ -25,7 +25,7 @@ namespace Mona {
 
 #define ID_SIZE 0x20
 
-class Entity : virtual Object {
+class Entity : public virtual Object {
 public:
 	Entity() { std::memset(id, 0, ID_SIZE); }
 	Entity(const UInt8* id) { std::memcpy(this->id, id,ID_SIZE);	}

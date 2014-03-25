@@ -25,7 +25,7 @@ This file is a part of Mona.
 
 namespace Mona {
 
-class TCPSender : public SocketSender, virtual Object {
+class TCPSender : public SocketSender, public virtual Object {
 public:
 	TCPSender(const char* name) : SocketSender(name) {}
 	TCPSender(const char* name,const UInt8* data, UInt32 size) : SocketSender(name,data, size) {}

@@ -28,12 +28,10 @@ This file is a part of Mona.
 namespace Mona {
 
 
-class WSSession : public TCPSession, virtual Object {
+class WSSession : public TCPSession, public virtual Object {
 public:
 
 	WSSession(const SocketAddress& peerAddress, SocketFile& file, Protocol& protocol, Invoker& invoker);
-	virtual ~WSSession();
-
 
 	bool			buildPacket(PoolBuffer& pBuffer,PacketReader& packet);
 	void			packetHandler(PacketReader& packet);
@@ -94,7 +92,7 @@ public:
 
 protected:
 	WSWriter&		wsWriter() { return _writer; }
-	void			kill();
+	void			kill(bool shutdown=false);
 	Publication*	_pPublication;
 	Listener*		_pListener;
 	

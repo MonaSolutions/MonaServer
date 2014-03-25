@@ -39,29 +39,32 @@ const string MonaServer::WWWPath("./");
 const string MonaServer::DataPath("./");
 
 MonaServer::MonaServer(TerminateSignal& terminateSignal, UInt32 socketBufferSize, UInt16 threads, UInt16 serversPort, const string& serversTarget) :
-	Server(socketBufferSize, threads), servers(serversPort, sockets, serversTarget), _firstData(true),_data(this->poolBuffers),_terminateSignal(terminateSignal) {
+	Server(socketBufferSize, threads), servers(serversPort,serversTarget,sockets), _firstData(true),_data(this->poolBuffers),_terminateSignal(terminateSignal) {
 
 
 	onServerConnection = [this](ServerConnection& server) {
-		// sends actual services online to every connected servers
-		shared_ptr<ServerMessage> pMessage(new ServerMessage(".",poolBuffers));
-		for(const Service* pService : _servicesRunning)
-			pMessage->packet.writeString(pService->path);
-		servers.broadcast(pMessage);
-
 		Script::AddObject<ServerConnection, LUAServer>(_pState, server);
 		LUABroadcaster::AddServer(_pState,servers, server.address.toString());
 		LUABroadcaster::AddServer(_pState, server.isTarget ? servers.targets : servers.initiators, server.address.toString());
-		// TODO reject connection server!!!
+		bool error(false);
 		SCRIPT_BEGIN(_pService->open())
 			SCRIPT_FUNCTION_BEGIN("onServerConnection")
 				lua_pushvalue(_pState, 1); // server! (see Script::AddObject above)
 				SCRIPT_FUNCTION_CALL
 			SCRIPT_FUNCTION_END
-			if (SCRIPT_LAST_ERROR)
-				server.disconnect();  // TODO display the error message on the server joiner side
+			if (SCRIPT_LAST_ERROR) {
+				error = true;
+				server.reject(SCRIPT_LAST_ERROR);
+			}
 		SCRIPT_END
 		lua_pop(_pState, 1); // remove Script::AddObject<ServerConnection,... (see above)
+		if (error)
+			return;
+		// sends actual services online to the new server connected
+		shared_ptr<ServerMessage> pMessage(new ServerMessage(".",poolBuffers));
+		for(const Service* pService : _servicesRunning)
+			pMessage->packet.writeString(pService->path);
+		server.send(pMessage);
 	};
 
 	onServerMessage = [this](ServerConnection& server, const string& handler, PacketReader& packet) {
@@ -86,10 +89,12 @@ MonaServer::MonaServer(TerminateSignal& terminateSignal, UInt32 socketBufferSize
 		SCRIPT_END;
 	};
 
-	onServerDisconnection = [this](const ServerConnection& server) {
+	onServerDisconnection = [this](Exception& ex,const ServerConnection& server) {
 		SCRIPT_BEGIN(_pService->open())
 			SCRIPT_FUNCTION_BEGIN("onServerDisconnection")
 				SCRIPT_ADD_OBJECT(ServerConnection,LUAServer,server)
+				if (ex)
+					SCRIPT_WRITE_STRING(ex.error().c_str())
 				SCRIPT_FUNCTION_CALL
 			SCRIPT_FUNCTION_END
 		SCRIPT_END
@@ -99,16 +104,16 @@ MonaServer::MonaServer(TerminateSignal& terminateSignal, UInt32 socketBufferSize
 	};
 
 
-	servers.OnConnection::addListener(onServerConnection);
-	servers.OnMessage::addListener(onServerMessage);
-	servers.OnDisconnection::addListener(onServerDisconnection);
+	servers.OnConnection::subscribe(onServerConnection);
+	servers.OnMessage::subscribe(onServerMessage);
+	servers.OnDisconnection::subscribe(onServerDisconnection);
 }
 
 MonaServer::~MonaServer() {
 	stop();
-	servers.OnConnection::removeListener(onServerConnection);
-	servers.OnMessage::removeListener(onServerMessage);
-	servers.OnDisconnection::removeListener(onServerDisconnection);
+	servers.OnConnection::unsubscribe(onServerConnection);
+	servers.OnMessage::unsubscribe(onServerMessage);
+	servers.OnDisconnection::unsubscribe(onServerDisconnection);
 }
 
 
@@ -178,30 +183,32 @@ void MonaServer::createParametersCollection(const char* name,const MapParameters
 
 void MonaServer::startService(Service& service) {
 	_servicesRunning.insert(&service);
-	// Send running information for all connected servers
+
+	// Send running information for all connected servers (to refresh service related)
 	std::shared_ptr<ServerMessage> pMessage(new ServerMessage(".",poolBuffers));
 	pMessage->packet.writeString(service.path);
 	servers.broadcast(pMessage);
 	
 	SCRIPT_BEGIN(_pState)
-		Servers::Iterator it;
-		for(it=servers.begin();it!=servers.end();++it) {
+		for(ServerConnection* pServer : servers) {
 			SCRIPT_FUNCTION_BEGIN("onServerConnection")
-				SCRIPT_ADD_OBJECT(ServerConnection,LUAServer,**it)
+				SCRIPT_ADD_OBJECT(ServerConnection,LUAServer,*pServer)
 				SCRIPT_FUNCTION_CALL
 			SCRIPT_FUNCTION_END
+			if (SCRIPT_LAST_ERROR)
+				pServer->reject(SCRIPT_LAST_ERROR);
 		}
 	SCRIPT_END
+
 }
 void MonaServer::stopService(Service& service) {
 	_servicesRunning.erase(&service);
 
 	// Call all the onServerDisconnection event for every services where service.path is running
 	SCRIPT_BEGIN(_pState)
-		Servers::Iterator it;
-		for(it=servers.begin();it!=servers.end();++it) {
+		for(ServerConnection* pServer : servers) {
 			SCRIPT_FUNCTION_BEGIN("onServerDisconnection")
-				SCRIPT_ADD_OBJECT(ServerConnection,LUAServer,**it)
+				SCRIPT_ADD_OBJECT(ServerConnection,LUAServer,*pServer)
 				SCRIPT_FUNCTION_CALL
 			SCRIPT_FUNCTION_END
 		}
@@ -300,15 +307,18 @@ void MonaServer::onDataLoading(const string& path, const char* value, UInt32 siz
 
 
 void MonaServer::onStop() {
+	// disconnect before "servers.stop" to try to get a gracefull tcp close
+	for (ServerConnection* pServer : servers)
+		pServer->reject("Server is stopping");
 	// delete service before servers.stop() to avoid a crash bug
 	if(_pService)
 		_pService.reset();
-	servers.stop();
 	Script::CloseState(_pState);
 	if (_data.writing()) {
 		INFO("Database flushing...")
 		_data.flush();
 	}
+	servers.stop();
 	_terminateSignal.set();
 }
 
@@ -328,6 +338,7 @@ void MonaServer::manage() {
 
 void MonaServer::readLUAAddresses(const string& protocol,set<SocketAddress>& addresses) {
 	lua_pushnil(_pState);  // first key 
+	Script::Test(_pState);
 	while (lua_next(_pState, -2) != 0) {
 		// uses 'key' (at index -2) and 'value' (at index -1) 
 		readLUAAddress(protocol,addresses);
@@ -413,7 +424,7 @@ void MonaServer::onRendezVousUnknown(const string& protocol,const UInt8* id,set<
 			SCRIPT_WRITE_BINARY(id,ID_SIZE)
 			SCRIPT_FUNCTION_CALL
 			while(SCRIPT_CAN_READ) {
-				readLUAAddresses(protocol,addresses);
+				readLUAAddress(protocol,addresses);
 				SCRIPT_READ_NEXT
 			}
 		SCRIPT_FUNCTION_END
@@ -453,6 +464,10 @@ void MonaServer::onConnection(Exception& ex, Client& client,DataReader& paramete
 		ex.set(Exception::APPLICATION, "Applicaton ", client.path, " doesn't exist");
 		return;
 	}
+
+	// control script size to debug!
+	if (lua_gettop(_pState) > 0)
+		CRITIC("LUA stack corrupted");
 
 	Script::AddObject<Client, LUAClient>(_pState,client);
 

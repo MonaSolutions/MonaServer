@@ -27,7 +27,7 @@ This file is a part of Mona.
 namespace Mona {
 
 class UDProtocol;
-class Protocols : virtual Object {
+class Protocols : public virtual Object {
 public:
 	Protocols(Invoker& invoker) : _invoker(invoker) {}
 

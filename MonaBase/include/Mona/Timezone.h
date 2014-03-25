@@ -30,7 +30,7 @@ struct _SYSTEMTIME;
 
 namespace Mona {
 
-class Timezone : virtual Object {
+class Timezone : public virtual Object {
 public:
 
 	enum TimeType {
@@ -72,7 +72,7 @@ private:
 		operator bool() const { return type!=NIL; }
 	};
 
-	class Transition : virtual Object {
+	class Transition : public virtual Object {
 	public:
 		Transition(Int32 offset,bool isDST) : offset(offset),isDST(isDST) {}
 		const Int32  offset;

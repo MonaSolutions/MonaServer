@@ -18,14 +18,14 @@ This file is a part of Mona.
 */
 
 #include "Mona/HTTP/HTTPWriter.h"
-#include "Mona/HTTP/HTTP.h"
+#include "Mona/HTTP/HTTProtocol.h"
 #include "Mona/Logs.h"
 
 using namespace std;
 
 namespace Mona {
 
-HTTPWriter::HTTPWriter(TCPClient& tcpClient) : _tcpClient(tcpClient),_pThread(NULL),contentType(HTTP::CONTENT_TEXT),contentSubType("html; charset=utf-8") {
+HTTPWriter::HTTPWriter(TCPSession& session) : _session(session),_pThread(NULL),contentType(HTTP::CONTENT_TEXT),contentSubType("html; charset=utf-8") {
 	
 }
 
@@ -50,7 +50,7 @@ void HTTPWriter::close(int code) {
 	if (code >= 0) {
 		if (code > 0 && pRequest)
 			createSender().writeError(code,_buffer,true);
-		_tcpClient.disconnect();
+		_session.kill();
 	}
 	Writer::close(code);
 }
@@ -70,7 +70,7 @@ void HTTPWriter::flush(bool full) {
 
 	Exception ex;
 	for (shared_ptr<HTTPSender>& pSender : _senders) {
-		_pThread = _tcpClient.send<HTTPSender>(ex, pSender,_pThread);
+		_pThread = _session.send<HTTPSender>(ex, pSender,_pThread);
 		if (ex)
 			ERROR("HTTPSender flush, ", ex.error())
 	}
@@ -140,7 +140,7 @@ bool HTTPWriter::writeMedia(MediaType type,UInt32 time,PacketReader& packet) {
 		case VIDEO: {
 			if (!_pMedia)
 				return false;
-			_pMedia->write(createSender().writeRaw(_tcpClient.manager().poolBuffers),type,time,packet.current(), packet.available());
+			_pMedia->write(createSender().writeRaw(_session.invoker.poolBuffers),type,time,packet.current(), packet.available());
 			break;
 		}
 		default:

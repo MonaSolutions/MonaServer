@@ -34,15 +34,16 @@ This file is a part of Mona.
 
 namespace Mona {
 
-class Invoker : public Entity,public TaskHandler, virtual Object {
+class Invoker : public Entity,public TaskHandler, public virtual Object {
 	friend class FlashStream; // FlashStream manage _streams
 public:
 	// invocations
 	const Clients			clients;
 	const Entities<Group>	groups;
 	Publications			publications;
-	const SocketManager		sockets;
 	const RelayServer		relay;
+
+	const SocketManager		sockets;
 	PoolThreads				poolThreads;
 	const PoolBuffers		poolBuffers;
 

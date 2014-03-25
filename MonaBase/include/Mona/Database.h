@@ -33,7 +33,7 @@ public:
 	virtual void onDataLoading(const std::string& path, const char* value, UInt32 size) = 0;
 };
 
-class Database : private Startable, virtual Object {
+class Database : private Startable, public virtual Object {
 public:
 	Database(const PoolBuffers& poolBuffers,const char* name = "Database") : _poolBuffers(poolBuffers),Startable(name), _disableTransaction(false) {}
 
@@ -47,7 +47,7 @@ public:
 	bool writing() { return running(); }
 
 private:
-	class Entry : virtual Object {
+	class Entry : public virtual Object {
 	public:
 		Entry(const PoolBuffers& poolBuffers,const std::string& path) : pBuffer(poolBuffers),path(path), toRemove(true) {} // remove
 		Entry(const PoolBuffers& poolBuffers,const std::string& path, const UInt8* value, UInt32 size) : path(path), pBuffer(poolBuffers,size), toRemove(false) { // add

@@ -33,20 +33,15 @@ RTMPSession::RTMPSession(const SocketAddress& peerAddress, SocketFile& file, Pro
 	dumpJustInDebug = true;
 }
 
-
-RTMPSession::~RTMPSession() {
-	// TODO if(!died)
+void RTMPSession::kill(bool shutdown) {
+	if (died)
+		return;
+	// TODO if(shutdown)
 	// writeAMFError("Connect.AppShutdown","server is stopping");
 	//_writer.close(...);
 
-	kill();
-}
-
-void RTMPSession::kill() {
-	if (died)
-		return;
 	_pStream.reset();
-	Session::kill();
+	Session::kill(shutdown);
 }
 
 void RTMPSession::readKeys() {
@@ -69,7 +64,7 @@ bool RTMPSession::buildPacket(PoolBuffer& pBuffer,PacketReader& packet) {
 			if (pBuffer->size() < 1537)
 				return false;
 			Exception ex;
-			_pHandshaker.reset(new RTMPHandshaker(peerAddress(), pBuffer));
+			_pHandshaker.reset(new RTMPHandshaker(peer.address, pBuffer));
 			send<RTMPHandshaker>(ex, _pHandshaker,NULL); // threaded!
 			if (ex) {
 				ERROR("RTMP Handshake, ", ex.error())

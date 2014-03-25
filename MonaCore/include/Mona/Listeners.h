@@ -25,7 +25,7 @@ This file is a part of Mona.
 
 namespace Mona {
 
-class Listeners : virtual Object {
+class Listeners : public virtual Object {
 public:
 	Listeners(std::map<Client*,Listener*>&	listeners) : _listeners(listeners) {}
 	virtual ~Listeners() {}

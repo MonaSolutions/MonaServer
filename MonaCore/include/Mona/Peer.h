@@ -35,7 +35,7 @@ class Handler;
 class Publication;
 class Listener;
 class Member;
-class Peer : public Client, virtual Object {
+class Peer : public Client, public virtual Object {
 public:
 	Peer(Handler& handler);
 	virtual ~Peer();

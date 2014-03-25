@@ -24,7 +24,7 @@ This file is a part of Mona.
 
 namespace Mona {
 
-class Publications : virtual Object {
+class Publications : public virtual Object {
 public:
 	Publications(std::map<std::string,Publication>& publications) :  _publications(publications){}
 	virtual ~Publications(){}

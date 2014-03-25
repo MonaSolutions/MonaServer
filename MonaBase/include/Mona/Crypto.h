@@ -26,7 +26,7 @@ This file is a part of Mona.
 
 namespace Mona {
 
-class Crypto : virtual Object {
+class Crypto : public virtual Object {
 public:
 
 	Crypto() { HMAC_CTX_init(&_hmacCTX);}

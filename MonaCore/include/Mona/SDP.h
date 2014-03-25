@@ -34,7 +34,7 @@ struct SDPCandidate {
 	UInt16	mLineIndex;
 };
 
-class SDPMedia : virtual Object {
+class SDPMedia : public virtual Object {
 public:
 	SDPMedia(UInt16 port,const std::string& codec) : codec(codec),port(port) {}
 
@@ -44,7 +44,7 @@ public:
 };
 
 class Peer;
-class SDP : virtual Object {
+class SDP : public virtual Object {
 public:
 	SDP() : supportMsId(false), version(0), sessionId(0) {}
 	virtual ~SDP() { clearMedias(); }

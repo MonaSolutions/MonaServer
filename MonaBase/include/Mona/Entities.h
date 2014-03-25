@@ -32,7 +32,7 @@ struct CompareEntity {
 };
 
 template<class EntityType>
-class Entities : virtual Object {
+class Entities : public virtual Object {
 public:
 
 	typedef typename std::map<const UInt8*,EntityType*,CompareEntity>::const_iterator	Iterator;

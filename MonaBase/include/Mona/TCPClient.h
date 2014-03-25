@@ -25,24 +25,33 @@ This file is a part of Mona.
 
 namespace Mona {
 
+namespace Events {
+	// Can be called by a separated thread!
+	struct OnData : Event<UInt32(PoolBuffer&)> {};
+	struct OnDisconnection : Event<void()> {};
+};
 
-class TCPClient : private SocketEvents, virtual Object {
+class TCPClient : public virtual Object,
+	public Events::OnError,
+	public Events::OnData,
+	public Events::OnDisconnection {
 public:
 	TCPClient(const SocketManager& manager);
 	TCPClient(const SocketAddress& peerAddress,SocketFile& file,const SocketManager& manager);
 	virtual ~TCPClient();
 
 	// unsafe-threading
-	const SocketAddress&	address() const { std::lock_guard<std::recursive_mutex> lock(_mutex); return updateAddress(); }
-	const SocketAddress&	peerAddress() const {  std::lock_guard<std::recursive_mutex> lock(_mutex); return updatePeerAddress(); }
+	const SocketAddress&	address() const { std::lock_guard<std::mutex> lock(_mutex); return updateAddress(); }
+	const SocketAddress&	peerAddress() const {  std::lock_guard<std::mutex> lock(_mutex); return updatePeerAddress(); }
 	// safe-threading
-	SocketAddress&			address(SocketAddress& address) const { std::lock_guard<std::recursive_mutex> lock(_mutex); return address.set(updateAddress()); }
-	SocketAddress&			peerAddress(SocketAddress& address) const { std::lock_guard<std::recursive_mutex> lock(_mutex); return address.set(updatePeerAddress()); }
+	SocketAddress&			address(SocketAddress& address) const { std::lock_guard<std::mutex> lock(_mutex); return address.set(updateAddress()); }
+	SocketAddress&			peerAddress(SocketAddress& address) const { std::lock_guard<std::mutex> lock(_mutex); return address.set(updatePeerAddress()); }
 
 	bool					connect(Exception& ex, const SocketAddress& address);
-	bool					connected() { return _connected; }
+	bool					connected() { return _socket.connected(); }
 	bool					send(Exception& ex, const UInt8* data, UInt32 size);
 	void					disconnect();
+	void					close();
 
 	template<typename TCPSenderType>
 	bool send(Exception& ex,const std::shared_ptr<TCPSenderType>& pSender) {
@@ -54,27 +63,23 @@ public:
 	}
 
 	const SocketManager&	manager() const { return _socket.manager(); }
-protected:
-	void close();
+
 private:
-	
-	virtual UInt32			onReception(PoolBuffer& pBuffer) = 0;
-	virtual void			onError(const Exception& ex) = 0;
-	virtual void			onDisconnection() {}
+	void closeIntern();
 
 	const SocketAddress&	updateAddress() const { if (_address) return _address;  Exception ex; _socket.address(ex, _address); return _address; }
 	const SocketAddress&	updatePeerAddress() const { if (_peerAddress) return _peerAddress; Exception ex; _socket.peerAddress(ex, _peerAddress); return _peerAddress; }
 
-	void					onReadable(Exception& ex,UInt32 available);
+	void						receive(Exception& ex,UInt32 available);
+	Socket::OnReadable::Type	onReadable;
 
 	Socket					_socket;
 
-	volatile bool				_connected;
-	bool						_disconnecting;
+	bool					_disconnecting;
 
-	mutable std::recursive_mutex _mutex;
-	PoolBuffer					_pBuffer;
-	UInt32						_rest;
+	mutable std::mutex		_mutex;
+	PoolBuffer				_pBuffer;
+	UInt32					_rest;
 	mutable SocketAddress	_address;
 	mutable SocketAddress	_peerAddress;
 	

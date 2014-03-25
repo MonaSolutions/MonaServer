@@ -28,7 +28,7 @@ namespace Mona {
 
 // Error id
 
-class Handler : public Invoker, virtual Object {
+class Handler : public Invoker, public virtual Object {
 public:
 	//events	
 	virtual	void			onRendezVousUnknown(const std::string& protocol,const UInt8* id,std::set<SocketAddress>& addresses){}

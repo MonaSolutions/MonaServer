@@ -30,7 +30,7 @@ This file is a part of Mona.
 namespace Mona {
 
 template<typename ObjectType>
-class Expirable : virtual Object {
+class Expirable : public virtual Object {
 public:
 	Expirable() : _pOwner(NULL), _isOwner(false) {}
 

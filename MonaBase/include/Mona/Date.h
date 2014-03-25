@@ -26,7 +26,7 @@ This file is a part of Mona.
 namespace Mona {
 
 
-class Date : public Time, virtual Object {
+class Date : public Time, public virtual Object {
 public:
 	static const char* ISO8601_FORMAT; 		/// 2005-01-01T12:00:00+01:00 | 2005-01-01T11:00:00Z
 	static const char* ISO8601_FRAC_FORMAT;	/// 2005-01-01T12:00:00.000000+01:00 | 2005-01-01T11:00:00.000000Z

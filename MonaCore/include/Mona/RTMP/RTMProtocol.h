@@ -25,15 +25,17 @@ This file is a part of Mona.
 
 namespace Mona {
 
-class RTMProtocol : public TCProtocol, virtual Object {
+class RTMProtocol : public TCProtocol, public virtual Object {
 public:
-	RTMProtocol(const char* name, Invoker& invoker, Sessions& sessions) : TCProtocol(name, invoker, sessions) {}
-	~RTMProtocol() { stop(); }
-private:
-	// Create session
-	void onClient(Exception& ex,const SocketAddress& address,SocketFile& file) {
-		sessions.create<RTMPSession>(address,file,*this,invoker);
+	RTMProtocol(const char* name, Invoker& invoker, Sessions& sessions) : TCProtocol(name, invoker, sessions) {
+		onConnection = [this](Exception& ex,const SocketAddress& address,SocketFile& file) {
+			this->sessions.create<RTMPSession>(address,file,*this,this->invoker); // Create session
+		};
+		OnConnection::subscribe(onConnection);
 	}
+	~RTMProtocol() { OnConnection::unsubscribe(onConnection); }
+private:
+	TCProtocol::OnConnection::Type onConnection;
 };
 
 

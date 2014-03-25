@@ -47,7 +47,8 @@ Session::Session(Protocol& protocol, Invoker& invoker, const char* name) : _sess
 
 Session::~Session() {
 	expire();
-	kill();
+	if (!died)
+		CRITIC("Session ",name()," deleted without being killed")
 }
 
 const string& Session::name() const {
@@ -56,7 +57,7 @@ const string& Session::name() const {
 	return _name;
 }
 
-void Session::kill() {
+void Session::kill(bool shutdown) {
 	if(died)
 		return;
 	peer.onDisconnection();
@@ -80,6 +81,12 @@ void Session::receive(PacketReader& packet, const SocketAddress& address) {
 			_pSessions->updateAddress(*this, oldAddress);
 	}
 	receive(packet);
+}
+
+void Session::DumpResponse(const UInt8* data, UInt32 size, const SocketAddress& address, bool justInDebug) {
+	// executed just in debug mode, or in dump mode
+	if (!justInDebug || (justInDebug&&Logs::GetLevel() >= 7))
+		DUMP(data, size, "Response to ", address.toString())
 }
 
 const string&  Session::protocolName() {

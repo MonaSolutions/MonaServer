@@ -25,7 +25,7 @@ This file is a part of Mona.
 namespace Mona {
 
 
-class JSONReader : public DataReader, virtual Object {
+class JSONReader : public DataReader, public virtual Object {
 public:
 	JSONReader(PacketReader& packet);
 

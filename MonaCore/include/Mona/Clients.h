@@ -25,7 +25,7 @@ This file is a part of Mona.
 
 namespace Mona {
 
-class Clients : public Entities<Client>, virtual Object {
+class Clients : public Entities<Client>, public virtual Object {
 public:
 
 	Client* operator()(const UInt8* id) const { return Entities<Client>::operator()(id); }

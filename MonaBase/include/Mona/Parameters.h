@@ -24,7 +24,7 @@ This file is a part of Mona.
 
 namespace Mona {
 
-class Parameters : virtual Object {
+class Parameters : public virtual Object {
 public:
 
 	bool getString(const std::string& key, std::string& value) const;
