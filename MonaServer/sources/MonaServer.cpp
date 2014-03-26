@@ -185,9 +185,9 @@ void MonaServer::startService(Service& service) {
 	_servicesRunning.insert(&service);
 
 	// Send running information for all connected servers (to refresh service related)
-	std::shared_ptr<ServerMessage> pMessage(new ServerMessage(".",poolBuffers));
-	pMessage->packet.writeString(service.path);
-	servers.broadcast(pMessage);
+	PacketWriter writer(poolBuffers);
+	writer.writeString(service.path);
+	servers.broadcast(".",writer);
 	
 	SCRIPT_BEGIN(_pState)
 		for(ServerConnection* pServer : servers) {
@@ -355,8 +355,6 @@ void MonaServer::readLUAAddress(const string& protocol,set<SocketAddress>& addre
 	if(type==LUA_TTABLE) {
 		bool isConst;
 		Broadcaster* pBroadcaster = Script::ToObject<Broadcaster>(_pState,isConst);
-		if(!pBroadcaster)
-				pBroadcaster = Script::ToObject<Broadcaster>(_pState,isConst);
 		if(pBroadcaster) {
 			for (ServerConnection* pServer : *pBroadcaster) {
 				UInt16 port = pServer->port(protocol);

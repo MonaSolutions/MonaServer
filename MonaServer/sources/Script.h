@@ -309,6 +309,29 @@ public:
 			return NULL;
 		}
 
+
+		// check type correspondance
+		lua_getfield(pState,-1,"|type");
+		if (!lua_isstring(pState, -1)) {
+			lua_pop(pState,2);
+			if(!callback) return NULL;
+			SCRIPT_BEGIN(pState)
+				SCRIPT_ERROR("'this' invalid object (without type)")
+			SCRIPT_END
+			return NULL;
+		}
+		const char* temp(lua_tostring(pState, -1));
+		if (strcmp(typeid(Type).name(),temp) != 0) {
+			lua_pop(pState,2);
+			if(!callback) return NULL;
+			SCRIPT_BEGIN(pState)
+				SCRIPT_ERROR("'this' object doesn't match type ",typeid(Type).name())
+			SCRIPT_END
+			return NULL;
+		}
+		lua_pop(pState,1);
+
+
 		// already deleted?
 		lua_getfield(pState,-1,"|this");
 		Type* pThis = (Type*)lua_touserdata(pState, -1);
@@ -385,9 +408,13 @@ private:
 		// metatable
 		lua_newtable(pState); 
 	
-		// //this
+		// |this
 		lua_pushlightuserdata(pState,(void*)&object);
 		lua_setfield(pState,-2,"|this");
+
+		// |type
+		lua_pushstring(pState,typeid(Type).name());
+		lua_setfield(pState,-2,"|type");
 
 		// call => override operator ( )
 		lua_pushcfunction(pState, &Script::Call<LUAType>);

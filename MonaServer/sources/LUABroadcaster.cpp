@@ -77,9 +77,9 @@ int LUABroadcaster::Broadcast(lua_State* pState) {
 		if(strlen(handler)==0 || strcmp(handler,".")==0) {
 			ERROR("handler of one sending server message can't be null or equal to '.'")
 		} else {
-			std::shared_ptr<ServerMessage> pMessage(new ServerMessage(handler,broadcaster.poolBuffers));
-			SCRIPT_READ_DATA(*pMessage)
-			broadcaster.broadcast(pMessage);
+			AMFWriter writer(broadcaster.poolBuffers);
+			SCRIPT_READ_DATA(writer)
+			broadcaster.broadcast(handler,writer.packet);
 		}
 	SCRIPT_CALLBACK_RETURN
 }
