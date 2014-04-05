@@ -27,9 +27,9 @@ This file is a part of Mona.
 #include "LUABroadcaster.h"
 #include "LUADataTable.h"
 
-#define CONFIG_NUMBER(NAME)  parameters.getNumber(#NAME,params.NAME);parameters.setNumber(#NAME,params.NAME);
+#define CONFIG_NUMBER(NAME)  _configs.getNumber(#NAME,params.NAME);((Parameters&)_configs).setNumber(#NAME,params.NAME);
 
-#define CONFIG_PROTOCOL_NUMBER(PROTOCOL,NAME) parameters.getNumber(#PROTOCOL"."#NAME,params.PROTOCOL.NAME);parameters.setNumber(#PROTOCOL"."#NAME,params.PROTOCOL.NAME);if(#NAME=="port" && params.PROTOCOL.NAME>0) servers.ports[#PROTOCOL] = params.PROTOCOL.NAME;
+#define CONFIG_PROTOCOL_NUMBER(PROTOCOL,NAME) _configs.getNumber(#PROTOCOL"."#NAME,params.PROTOCOL.NAME);((Parameters&)_configs).setNumber(#PROTOCOL"."#NAME,params.PROTOCOL.NAME);
 
 using namespace std;
 using namespace Mona;
@@ -38,8 +38,8 @@ using namespace Mona;
 const string MonaServer::WWWPath("./");
 const string MonaServer::DataPath("./");
 
-MonaServer::MonaServer(TerminateSignal& terminateSignal, UInt32 socketBufferSize, UInt16 threads, UInt16 serversPort, const string& serversTarget) :
-	Server(socketBufferSize, threads), servers(serversPort,serversTarget,sockets), _firstData(true),_data(this->poolBuffers),_terminateSignal(terminateSignal) {
+MonaServer::MonaServer(TerminateSignal& terminateSignal, const MapParameters& configs) :
+	_configs(configs),Server(configs.getNumber<UInt32>("socketBufferSize"), configs.getNumber<UInt16>("threads")), servers(configs,sockets), _firstData(true),_data(this->poolBuffers),_terminateSignal(terminateSignal) {
 
 
 	onServerConnection = [this](ServerConnection& server) {
@@ -117,16 +117,14 @@ MonaServer::~MonaServer() {
 }
 
 
-bool MonaServer::start(MapParameters& parameters) {
+bool MonaServer::start() {
 	if(Server::running()) {
 		ERROR("Server is already running, call stop method before");
 		return false;
 	}
-	parameters.getString("host", servers.host);
-	servers.ports.clear();
 
 	string pathApp;
-	parameters.getString("application.dir", pathApp);
+	_configs.getString("application.dir", pathApp);
 	(string&)WWWPath = pathApp + "www";
 	(string&)DataPath = pathApp + "data";
 
@@ -141,15 +139,15 @@ bool MonaServer::start(MapParameters& parameters) {
 	ServerParams	params;
 
 	// RTMFP
-	parameters.getNumber("RTMFP.keepAliveServer",(double&)params.RTMFP.keepAliveServer);
+	_configs.getNumber("RTMFP.keepAliveServer",(double&)params.RTMFP.keepAliveServer);
 	if (params.RTMFP.keepAliveServer < 5) {
 		WARN("Value of RTMFP.keepAliveServer can't be less than 5 sec")
-			parameters.setNumber("RTMFP.keepAliveServer", 5);
+			((Parameters&)_configs).setNumber("RTMFP.keepAliveServer", 5);
 	}
-	parameters.getNumber("RTMFP.keepAlivePeer", (double&)params.RTMFP.keepAlivePeer);
+	_configs.getNumber("RTMFP.keepAlivePeer", (double&)params.RTMFP.keepAlivePeer);
 	if (params.RTMFP.keepAlivePeer < 5) {
 		WARN("Value of RTMFP.keepAlivePeer can't be less than 5 sec")
-			parameters.setNumber("RTMFP.keepAlivePeer", 5);
+			((Parameters&)_configs).setNumber("RTMFP.keepAlivePeer", 5);
 	}
 	CONFIG_PROTOCOL_NUMBER(RTMFP, port);
 	CONFIG_PROTOCOL_NUMBER(RTMFP, keepAliveServer);
@@ -161,7 +159,7 @@ bool MonaServer::start(MapParameters& parameters) {
 	// WebSocket
 	CONFIG_PROTOCOL_NUMBER(HTTP, port);
 
-	createParametersCollection("m.c", parameters);
+	createParametersCollection("m.c", _configs);
 	createParametersCollection("m.e", Util::Environment());
 
 	return Server::start(params);
@@ -356,24 +354,36 @@ void MonaServer::readLUAAddress(const string& protocol,set<SocketAddress>& addre
 		bool isConst;
 		Broadcaster* pBroadcaster = Script::ToObject<Broadcaster>(_pState,isConst);
 		if(pBroadcaster) {
+			
 			for (ServerConnection* pServer : *pBroadcaster) {
-				UInt16 port = pServer->port(protocol);
-				if (port > 0) {
-					IPAddress host;
-					if (host.set(ex, pServer->host))
-						addresses.emplace(host, port);
-					else if (ex)
-						goto EX;
-				}
+				string temp(protocol);
+				temp.append(".port");
+				UInt16 port(0);
+				if(!pServer->getNumber(temp,port) || port==0)
+					continue;
+				
+				if (!pServer->getString("host", temp))
+					temp = pServer->address.host();
+
+				IPAddress host;
+				if (host.set(ex, temp))
+					addresses.emplace(host, port);
+				else if (ex)
+					goto EX;
+		
 			}
 			return;
 		}
 		ServerConnection* pServer = Script::ToObject<ServerConnection>(_pState,isConst);
 		if(pServer) {
-			UInt16 port = pServer->port(protocol);
-			if (port > 0) {
+			string temp(protocol);
+			temp.append(".port");
+			UInt16 port(0);
+			if (pServer->getNumber(temp, port) && port > 0) {
+				if (!pServer->getString("host", temp))
+					temp = pServer->address.host();
 				IPAddress host;
-				if (host.set(ex, pServer->host))
+				if (host.set(ex, temp))
 					addresses.emplace(host, port);
 				else if (ex)
 					goto EX;

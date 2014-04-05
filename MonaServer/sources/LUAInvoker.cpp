@@ -294,8 +294,6 @@ int LUAInvoker::Get(lua_State *pState) {
 		const char* name = SCRIPT_READ_STRING("");
 		if(strcmp(name,"clients")==0) {
 			Script::Collection(pState,1,"clients",invoker.clients.count());
-		} else if (strcmp(name, "host") == 0) {
-			SCRIPT_WRITE_STRING(((MonaServer&)invoker).servers.host.c_str())
 		} else if (strcmp(name, "joinGroup") == 0) {
 			SCRIPT_WRITE_FUNCTION(&LUAInvoker::JoinGroup)
 		} else if (strcmp(name, "groups") == 0) {
@@ -350,6 +348,12 @@ int LUAInvoker::Get(lua_State *pState) {
 			lua_getglobal(pState, "m.s");
 		} else if (strcmp(name,"dir")==0) {
 			SCRIPT_WRITE_FUNCTION(&LUAInvoker::ListFiles)
+		} else {
+			lua_getmetatable(pState, LUA_GLOBALSINDEX);
+			lua_getfield(pState, -1,"m.c");
+			lua_replace(pState, -2);
+			lua_getfield(pState, -1,name);
+			lua_replace(pState, -2);
 		}
 	SCRIPT_CALLBACK_RETURN
 }

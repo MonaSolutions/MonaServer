@@ -24,18 +24,7 @@ using namespace std;
 namespace Mona {
 
 
-bool Net::CheckError(Exception& ex) {
-	int error = LastError();
-	if (error) {
-		SetError(ex, error);
-		return true;
-	}
-	return false;
-}
-
-
-void Net::SetError(Exception& ex, int error, const string& argument) {
-	string message;
+string& Net::GetErrorMessage(int error, string& message) {
 	switch (error) {
 	case NET_ESYSNOTREADY:
 		message.assign("Net subsystem not ready");
@@ -150,11 +139,7 @@ void Net::SetError(Exception& ex, int error, const string& argument) {
 	default:
 		message.assign("I/O error");
 	}
-
-	if (argument.empty())
-		ex.set(Exception::SOCKET, message);
-	else
-		ex.set(Exception::SOCKET, message, " (", argument, ')');
+	return message;
 }
 
 #if defined(_WIN32)

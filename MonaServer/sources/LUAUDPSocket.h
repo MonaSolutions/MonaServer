@@ -19,8 +19,9 @@ This file is a part of Mona.
 
 #pragma once
 
-#include "Script.h"
+
 #include "Mona/UDPSocket.h"
+#include "Script.h"
 
 class LUAUDPSocket : private Mona::UDPSocket {
 public:

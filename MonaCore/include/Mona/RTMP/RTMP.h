@@ -22,7 +22,7 @@ This file is a part of Mona.
 #include "Mona/Mona.h"
 #include "Mona/BinaryReader.h"
 #include "Mona/AMF.h"
-#include "Mona/Buffer.h"
+#include "Mona/PoolBuffer.h"
 #include "Mona/Crypto.h"
 #include <openssl/rc4.h>
 
@@ -31,12 +31,13 @@ namespace Mona {
 
 class RTMPChannel : public virtual Object {
 public:
-	RTMPChannel(): absoluteTime(0),time(0),bodySize(0),type(AMF::EMPTY),streamId(0){}
+	RTMPChannel(const PoolBuffers& poolBuffers): absoluteTime(0),time(0),bodySize(0),type(AMF::EMPTY),streamId(0),pBuffer(poolBuffers) {}
 	UInt32				bodySize;
 	UInt32				time;
 	UInt32				absoluteTime;
 	UInt32				streamId;
 	AMF::ContentType	type;
+	PoolBuffer			pBuffer;
 };
 
 

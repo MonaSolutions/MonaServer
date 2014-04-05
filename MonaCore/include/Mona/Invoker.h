@@ -20,17 +20,17 @@ This file is a part of Mona.
 #pragma once
 
 #include "Mona/Mona.h"
+#include "Mona/SocketManager.h"
+#include "Mona/RelayServer.h"
 #include "Mona/Group.h"
 #include "Mona/Publications.h"
 #include "Mona/Entities.h"
 #include "Mona/Clients.h"
-#include "Mona/SocketManager.h"
 #include "Mona/TaskHandler.h"
 #include "Mona/PoolThreads.h"
 #include "Mona/PoolBuffers.h"
 #include "Mona/ServerParams.h"
 #include "Mona/FlashMainStream.h"
-#include "Mona/RelayServer.h"
 
 namespace Mona {
 
@@ -51,12 +51,13 @@ public:
 	FlashStream&					flashStream(UInt32 id, Peer& peer,std::shared_ptr<FlashStream>& pStream);
 	void							destroyFlashStream(UInt32 id) { _streams.erase(id); }
 
-	Publication*			publish(Exception& ex,const std::string& name) { return publish(ex,myself(), name); }
+	Publication*			publish(Exception& ex,const std::string& name) { return publish(ex,myself(),name); }
 	void					unpublish(const std::string& name) { unpublish(myself(), name); }
 
 	Publication*			publish(Exception& ex,Peer& peer,const std::string& name);
 	void					unpublish(Peer& peer,const std::string& name);
-	Listener*				subscribe(Exception& ex,Peer& peer,const std::string& name,Writer& writer,double start=-2000);
+	Listener*				subscribe(Exception& ex,Peer& peer,std::string& name,Writer& writer);
+	Listener*				subscribe(Exception& ex,Peer& peer,const std::string& name,Writer& writer);
 	void					unsubscribe(Peer& peer,const std::string& name);
 
 	void					addBanned(const IPAddress& ip) { _bannedList.insert(ip); }
@@ -73,6 +74,8 @@ protected:
 	virtual ~Invoker();
 
 private:
+	std::string& publicationName(std::string& name,std::string& query);
+
 	virtual Peer&			myself()=0;
 
 	std::map<std::string,Publication>				_publications;

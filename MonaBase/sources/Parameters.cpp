@@ -33,6 +33,7 @@ bool Parameters::getString(const std::string& key, std::string& value) const {
 	return true;
 }
 
+
 bool Parameters::getBool(const string& key, bool& value) const {
 	const string* pTemp = getRaw(key);
 	if (!pTemp)

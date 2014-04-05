@@ -19,11 +19,11 @@ This file is a part of Mona.
 
 #pragma once
 
+#include "Mona/TCPClient.h"
+#include "Mona/TCPSender.h"
 #include "Mona/AMFWriter.h"
 #include "Mona/PacketReader.h"
-#include "Mona/TCPClient.h"
 #include "Mona/MapParameters.h"
-#include "Mona/TCPSender.h"
 #include "Mona/Event.h"
 
 class ServerMessage : public Mona::TCPSender,public Mona::AMFWriter {
@@ -55,26 +55,25 @@ class ServerConnection : public Mona::MapParameters,
 		public ServerEvents::OnDisconnection {
 public:
 	// Target version
-	ServerConnection(const Mona::SocketManager& manager,const Mona::SocketAddress& targetAddress);
+	ServerConnection(const Mona::SocketAddress& address,const Mona::SocketManager& manager);
 	// Initiator version
-	ServerConnection(const Mona::SocketAddress& peerAddress, Mona::SocketFile& file, const Mona::SocketManager& manager);
+	ServerConnection(const Mona::SocketAddress& address, Mona::SocketFile& file, const Mona::SocketManager& manager);
 
 	~ServerConnection();
 
-	const std::string				host;
 	const Mona::SocketAddress		address;
 	const bool						isTarget;
-	Mona::UInt16					port(const std::string& protocol);
+	Mona::MapParameters				properties;
 
 	const Mona::PoolBuffers&  poolBuffers() const { return _pClient->manager().poolBuffers; }
 
-	void			connect(const std::string& host,const std::map<std::string,Mona::UInt16>& ports);
+	void			connect(const Mona::MapParameters& configs);
 	bool			connected() { return _connected; }
 
 	void			close();
 
 	void			send(const std::shared_ptr<ServerMessage>& pMessage);
-	void			sendHello(const std::string& host,const std::map<std::string,Mona::UInt16>& ports);
+	void			sendHello(const Mona::MapParameters& configs);
 	void			reject(const char* error);
 
 private:
@@ -91,7 +90,6 @@ private:
 	std::map<Mona::UInt32,std::string>	_receivingRefs;
 
 	bool								_connected;
-	std::map<std::string,Mona::UInt16>	_ports;
 	Mona::Exception						_ex;
 	std::unique_ptr<Mona::TCPClient>	_pClient;
 };

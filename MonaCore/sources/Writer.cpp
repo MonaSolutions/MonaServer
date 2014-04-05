@@ -27,40 +27,33 @@ using namespace std;
 namespace Mona {
 
 DataWriterNull      DataWriter::Null;
-Writer				Writer::Null(true);
+Writer				Writer::Null;
 
-Writer::Writer(WriterHandler* pHandler) : _isNull(false),reliable(true),_state(CONNECTED) {
-	if (pHandler)
-		_handlers.insert(pHandler);
+Writer::Writer(State state) : _isNull(false),reliable(true),_state(state) {
 }
 
 Writer::Writer(Writer& writer) : _isNull(writer._isNull),reliable(writer.reliable),_state(writer._state) {
 }
 
-Writer::Writer(bool isNull) : _isNull(isNull), reliable(true), _state(CONNECTED) {
+Writer::Writer() : _isNull(true), reliable(true), _state(CLOSED) {
 }
 
 Writer::~Writer(){
-	close();
-}
-
-Writer::State Writer::state(State value, bool minimal) {
-	if (value == GET)
-		return _state;
-	return _state = value;
-}
-
-void Writer::close(int code) {
 	if(_state==CLOSED)
 		return;
-	state(CLOSED);
-	for (WriterHandler* pHandler : _handlers)
-		pHandler->close(*this, code);
-	_handlers.clear();
-	flush();
+	_state=CLOSED;
+	OnClose::raise(0);
 }
 
-bool Writer::writeMedia(MediaType type,UInt32 time,PacketReader& packet) {
+void Writer::close(Int32 code) {
+	if(_state==CLOSED)
+		return;
+	flush();
+	_state=CLOSED;
+	OnClose::raise(code);
+}
+
+bool Writer::writeMedia(MediaType type,UInt32 time,PacketReader& packet,Parameters& properties) {
 	ERROR("writeMedia method not supported by this protocol for ",Format<UInt8>("%.2x",(UInt8)type)," type")
 	return true;
 }

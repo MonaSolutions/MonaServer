@@ -96,7 +96,7 @@ Socket** SocketManager::add(Exception& ex,NET_SOCKET sockfd,Socket& socket) cons
 	int flags = FD_CONNECT | FD_ACCEPT | FD_CLOSE | FD_READ;
 	if (WSAAsyncSelect(sockfd, _eventSystem, 104, flags) != 0) {
 		delete ppSocket;
-		Net::SetError(ex);
+		Net::SetException(ex, Net::LastError());
 		return NULL;
 	}
 #else
@@ -108,7 +108,7 @@ Socket** SocketManager::add(Exception& ex,NET_SOCKET sockfd,Socket& socket) cons
 	 int res = epoll_ctl(_eventSystem, EPOLL_CTL_ADD,sockfd, &event);
 	if(res<0) {
 		delete ppSocket;
-        Net::SetError(ex);
+		Net::SetException(ex, Net::LastError());
 		return NULL;
 	}
 #endif
@@ -230,7 +230,7 @@ void SocketManager::handle(Exception& ex) {
 		}
 #endif
 		if (!_currentException)
-			Net::SetError(_currentException, _currentError);
+			Net::SetException(_currentException, _currentError);
 		pSocket->onError(_currentException);
 		_currentException.set(Exception::NIL);
 		if (*_ppSocket == NULL) // expired!
@@ -371,7 +371,7 @@ void SocketManager::run(Exception& exThread) {
 		int results = epoll_wait(_eventSystem,&events[0],events.size(), -1);
 
 		if(results<0 && errno!=NET_EINTR) {
-			Net::SetError(ex);
+			Net::SetException(ex, Net::LastError());
 			exThread.set(ex);
 			break;
 		}

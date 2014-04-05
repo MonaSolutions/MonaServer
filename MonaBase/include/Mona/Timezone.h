@@ -165,6 +165,7 @@ private:
 			time *= 1000;
 			bool isDST(types[id].isDST);
 			Int32 offset(types[id].offset*1000);
+
 			_Transitions.emplace(std::piecewise_construct, std::forward_as_tuple(time),std::forward_as_tuple(offset,isDST));
 			if (!isDST)
 				time += (stdOffset = offset);

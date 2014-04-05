@@ -35,6 +35,15 @@ private:
 	const std::shared_ptr<Peer> _pPeer; // before "peer" member to be created before it!!
 
 public:
+	enum {
+		NORMAL_DEATH=0,
+		SERVER_DEATH=0xFFFFFFFB,
+		SOCKET_DEATH=0xFFFFFFFC,
+		TIMEOUT_DEATH=0xFFFFFFFD,
+		REJECTED_DEATH=0xFFFFFFFE,
+		PROTOCOL_DEATH=0xFFFFFFFF
+	};
+
 	virtual ~Session();
 
 	UInt32				id()	const { return _id; }
@@ -80,7 +89,7 @@ public:
 	}
 
 	virtual void		manage() {}
-	virtual void		kill(bool shutdown=false);
+	virtual void		kill(UInt32 type=NORMAL_DEATH);
 	virtual void		flush() { peer.writer().flush(); }
 
 protected:

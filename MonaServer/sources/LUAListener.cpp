@@ -48,6 +48,25 @@ int LUAListener::Get(lua_State *pState) {
 			SCRIPT_WRITE_BOOL(listener.receiveVideo);
 		} else if(strcmp(name,"client")==0) {
 			SCRIPT_ADD_OBJECT(Client, LUAClient, listener.client);
+		} else if (strcmp(name,"properties")==0) {
+			if (Script::Collection(pState, 1, "properties", listener.count())) {
+				for (auto& it : listener) {
+					lua_pushstring(pState, it.first.c_str());
+					if (String::ICompare(it.second, "false") == 0 || String::ICompare(it.second, "nil") == 0)
+						lua_pushboolean(pState, 0);
+					else
+						lua_pushlstring(pState, it.second.c_str(), it.second.size());
+					lua_rawset(pState, -3); // rawset cause NewIndexProhibited
+				}
+			}
+		} else {
+			string value;
+			if(listener.getString(name,value)) {
+				if (String::ICompare(value, "false") == 0 || String::ICompare(value, "nil") == 0)
+					lua_pushboolean(pState, 0);
+				else
+					lua_pushlstring(pState, value.c_str(), value.size());
+			}
 		}
 	SCRIPT_CALLBACK_RETURN
 }

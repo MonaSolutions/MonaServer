@@ -25,7 +25,7 @@ This file is a part of Mona.
 namespace Mona {
 
 
-class BinaryReader : public virtual Object {
+class BinaryReader : public Binary, virtual public Object {
 public:
    
     BinaryReader(const UInt8* data,UInt32 size,Binary::Order byteOrder=Binary::ORDER_BIG_ENDIAN); // ORDER_BIG_ENDIAN==NETWORK_ENDIAN

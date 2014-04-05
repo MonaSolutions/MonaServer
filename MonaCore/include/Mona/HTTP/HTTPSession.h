@@ -36,7 +36,7 @@ public:
 	HTTPSession(const SocketAddress& peerAddress, SocketFile& file, Protocol& protocol, Invoker& invoker);
 	
 private:
-	void			kill(bool shutdown=false);
+	void			kill(UInt32 type=NORMAL_DEATH);
 	void			manage();
 
 	bool								buildPacket(PoolBuffer& pBuffer,PacketReader& packet);

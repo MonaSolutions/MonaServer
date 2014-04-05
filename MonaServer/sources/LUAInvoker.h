@@ -19,9 +19,9 @@ This file is a part of Mona.
 
 #pragma once
 
-#include "Script.h"
 #include "Mona/Peer.h"
 #include "Mona/Invoker.h"
+#include "Script.h"
 
 class LUAInvoker {
 public:

@@ -20,6 +20,7 @@ This file is a part of Mona.
 #pragma once
 
 #include "Mona/Mona.h"
+#include "Mona/SocketAddress.h"
 #include "Mona/Entity.h"
 #include "Mona/Writer.h"
 #include "Mona/Entities.h"

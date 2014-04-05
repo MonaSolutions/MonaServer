@@ -42,6 +42,7 @@ private:
 	bool			run(Exception& ex);
 };
 
+
 inline bool RTMFPSender::run(Exception& ex) {
 	RTMFP::Encode(encoder,packet);
 	RTMFP::Pack(packet,farId);

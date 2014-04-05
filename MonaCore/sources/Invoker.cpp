@@ -76,17 +76,18 @@ FlashStream& Invoker::flashStream(UInt32 id,Peer& peer,shared_ptr<FlashStream>& 
 }
 
 Publication* Invoker::publish(Exception& ex, Peer& peer,const string& name) {
-	auto it(_publications.emplace(piecewise_construct,forward_as_tuple(name),forward_as_tuple(name)).first);
-	Publication* pPublication = &it->second;
-	
-	pPublication->start(ex, peer);
+	MAP_FIND_OR_EMPLACE(_publications, it, name, name);
+	Publication& publication(it->second);
+	publication.start(ex, peer);
 	if (ex) {
-		if (!pPublication->publisher() && pPublication->listeners.count() == 0)
+		ERROR(ex.error())
+		if (!publication.publisher() && publication.listeners.count() == 0)
 			_publications.erase(it);
 		return NULL;
 	}
-	return pPublication;
+	return &publication;
 }
+
 
 void Invoker::unpublish(Peer& peer,const string& name) {
 	auto it = _publications.find(name);
@@ -100,11 +101,19 @@ void Invoker::unpublish(Peer& peer,const string& name) {
 		_publications.erase(it);
 }
 
-Listener* Invoker::subscribe(Exception& ex, Peer& peer,const string& name,Writer& writer,double start) {
-	auto it(_publications.emplace(piecewise_construct,forward_as_tuple(name),forward_as_tuple(name)).first);
+Listener* Invoker::subscribe(Exception& ex, Peer& peer,string& name,Writer& writer) {
+	string query;
+	Listener* pListener(subscribe(ex, peer, (const string&)publicationName(name, query), writer));
+	if (pListener)
+		Util::UnpackQuery(query, *pListener);
+	return pListener;
+}
+
+Listener* Invoker::subscribe(Exception& ex, Peer& peer,const string& name,Writer& writer) {
+	MAP_FIND_OR_EMPLACE(_publications, it, name, name);
 	Publication& publication(it->second);
-	Listener* pListener = publication.addListener(ex, peer,writer,start==-3000 ? true : false);
-	if (ex) {
+	Listener* pListener = publication.addListener(ex, peer,writer);
+	if (!pListener) {
 		if(!publication.publisher() && publication.listeners.count()==0)
 			_publications.erase(it);
 	}
@@ -121,6 +130,16 @@ void Invoker::unsubscribe(Peer& peer,const string& name) {
 	publication.removeListener(peer);
 	if(!publication.publisher() && publication.listeners.count()==0)
 		_publications.erase(it);
+}
+
+string& Invoker::publicationName(string& name,string& query) {
+	size_t found(name.find('?'));
+	if (found != string::npos) {
+		query = (&name[found]+1);
+		name.assign(name,0,found);
+	} else
+		query.clear();
+	return name;
 }
 
 

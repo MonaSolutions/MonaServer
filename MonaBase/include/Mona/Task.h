@@ -31,7 +31,7 @@ public:
 
 	virtual void	handle(Exception& ex)=0;
 protected:
-	bool waitHandle();
+	bool			waitHandle();
 private:
 	TaskHandler&	_handler;
 };

@@ -98,12 +98,10 @@ void Database::run(Exception& ex) {
 void Database::processEntry(Exception& ex,Entry& entry) {
 	string directory(_rootPath);
 	directory.append(entry.path);
+
 	// remove folder
-	Exception exRemove;
-	FileSystem::RemoveAll(exRemove, directory);
 	if (entry.toRemove) {
-		if(exRemove)
-			ex.set(exRemove);
+		FileSystem::Remove(ex, directory);
 		return;
 	}
 
@@ -121,12 +119,24 @@ void Database::processEntry(Exception& ex,Entry& entry) {
 	// write the file
 	string file(FileSystem::MakeDirectory(directory));
 	file.append(name);
-	ofstream ofile(file, ios::out | ios::binary);
-	if (!ofile.good()) {
-		ex.set(Exception::FILE, "Impossible to write file ", file);
-		return;
+	{	
+		// encapsulate to flush it
+		ofstream ofile(file, ios::out | ios::binary);
+		if (!ofile.good()) {
+			ex.set(Exception::FILE, "Impossible to write file ", file);
+			return;
+		}
+		ofile.write((const char*)entry.pBuffer->data(), entry.pBuffer->size());
 	}
-	ofile.write((const char*)entry.pBuffer->data(), entry.pBuffer->size());
+
+	// remove possible old value after writing (and possible folder inside directory)
+	Exception ignore;
+	Files files(ignore, directory);
+	for (const string& item : files) {
+		if (FileSystem::GetName(item, file) == name)
+			continue;
+		FileSystem::Remove(ignore,item);
+	}
 }
 
 
@@ -142,19 +152,21 @@ bool Database::loadDirectory(Exception& ex, const string& directory, const strin
 		string file(item);
 		if (FileSystem::Exists(FileSystem::MakeDirectory(file))) {
 			/// directory
-			hasData = loadDirectory(ex, file, path + "/" + FileSystem::GetName(file,name), loader);
+			hasData = loadDirectory(ex, file, path + "/" + FileSystem::GetName(item,name), loader);
 			continue;
 		}
 
+		FileSystem::GetName(FileSystem::MakeFile(file), name);
+
 		/// file
-		if (file.size() != 32) {
+		if (name.size() != 32) {
 			// just erase the file
-			FileSystem::Remove(file);
+			FileSystem::Remove(ex,file);
 			continue;
 		}
 
 		// read the file
-		ifstream ifile(FileSystem::MakeFile(file), ios::in | ios::binary | ios::ate);
+		ifstream ifile(file, ios::in | ios::binary | ios::ate);
 		if (!ifile.good()) {
 			ex.set(Exception::FILE, "Impossible to read file ", file);
 			continue;
@@ -170,9 +182,9 @@ bool Database::loadDirectory(Exception& ex, const string& directory, const strin
 		string value;
 		Util::FormatHex(result, sizeof(result), value);
 		// compare with file name
-		if (FileSystem::GetName(file,name) != value) {
+		if (name != value) {
 			// erase this data!
-			FileSystem::Remove(file);
+			FileSystem::Remove(ex,file);
 			continue;
 		}
 
@@ -181,7 +193,7 @@ bool Database::loadDirectory(Exception& ex, const string& directory, const strin
 
 	}
 	if (!hasData)
-		FileSystem::RemoveAll(ex,directory);
+		FileSystem::Remove(ex,directory);
 	return hasData;
 }
 

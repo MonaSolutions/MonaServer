@@ -40,7 +40,7 @@ RTMFPHandshake::RTMFPHandshake(RTMFProtocol& protocol, Sessions& sessions, Invok
 RTMFPHandshake::~RTMFPHandshake() {
 	fail(""); // To avoid the failSignalo of RTMFPSession
 	clear();
-	kill(true); // true because if RTMFPHandshake is deleted it means that the sevrer is closing
+	kill(SERVER_DEATH); // true because if RTMFPHandshake is deleted it means that the sevrer is closing
 }
 
 void RTMFPHandshake::manage() {
@@ -159,14 +159,16 @@ UInt8 RTMFPHandshake::handshakeHandler(UInt8 id,PacketReader& request,PacketWrit
 					/// Udp hole punching
 					UInt32 times = attempt(tag);
 
-					RTMFPSession* pSession = (times>0 || peer.address.host() == pSessionWanted->peer.address.host()) ? _sessions.find<RTMFPSession>(peer.address) : NULL;
+					RTMFPSession* pSession(NULL);
+					if(times > 0 || peer.address.host() == pSessionWanted->peer.address.host())
+						pSession = _sessions.find<RTMFPSession>(peer.address);
 					
 					pSessionWanted->p2pHandshake(tag,peer.address,times,pSession);
 
-					response.writeAddress(pSessionWanted->peer.address, true);
+					RTMFP::WriteAddress(response,pSessionWanted->peer.address, RTMFP::ADDRESS_PUBLIC);
 					DEBUG("P2P address initiator exchange, ",pSessionWanted->peer.address.toString());
 					for(const SocketAddress& address : pSessionWanted->peer.localAddresses) {
-						response.writeAddress(address,false);
+						RTMFP::WriteAddress(response,address, RTMFP::ADDRESS_LOCAL);
 						DEBUG("P2P address initiator exchange, ",address.toString());
 					}
 
@@ -181,7 +183,7 @@ UInt8 RTMFPHandshake::handshakeHandler(UInt8 id,PacketReader& request,PacketWrit
 								bool success(false);
 								EXCEPTION_TO_LOG(success=address.set(ex,invoker.buffer, port),"RTMFP turn impossible")
 								if (success)
-									response.writeAddress(address, false);
+									RTMFP::WriteAddress(response,address, RTMFP::ADDRESS_REDIRECTION);
 							} // else ERROR already display by RelayServer class
 						}
 					}
@@ -197,7 +199,7 @@ UInt8 RTMFPHandshake::handshakeHandler(UInt8 id,PacketReader& request,PacketWrit
 						continue;
 					if(peer.address == *it)
 						WARN("A client tries to connect to himself (same ",peer.address.toString()," address)");
-					response.writeAddress(*it,it==addresses.begin());
+					RTMFP::WriteAddress(response,*it,RTMFP::ADDRESS_REDIRECTION);
 					DEBUG("P2P address initiator exchange, ",it->toString());
 				}
 				return addresses.empty() ? 0 : 0x71;
@@ -225,9 +227,9 @@ UInt8 RTMFPHandshake::handshakeHandler(UInt8 id,PacketReader& request,PacketWrit
 							SocketAddress address;
 							EXCEPTION_TO_LOG(address.set(ex, peer.serverAddress),"RTMFP onHandshake redirection");
 							if (!ex)
-								response.writeAddress(address,it==addresses.begin());
+								RTMFP::WriteAddress(response, address, RTMFP::ADDRESS_REDIRECTION);
 						} else
-							response.writeAddress(*it,it==addresses.begin());
+							RTMFP::WriteAddress(response, *it, RTMFP::ADDRESS_REDIRECTION);
 					}
 					return 0x71;
 				}

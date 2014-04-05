@@ -19,12 +19,12 @@ This file is a part of Mona.
 
 #pragma once
 
-#include "Script.h"
 #include "Mona/Invoker.h"
 #include "Mona/Publication.h"
 #include "LUAListener.h"
 #include "LUAQualityOfService.h"
 #include "LUAClient.h"
+#include "Script.h"
 
 class LUAMyPublication;
 class LUAPublicationBase {

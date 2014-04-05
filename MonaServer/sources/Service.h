@@ -28,7 +28,7 @@ class ServiceHandler {
 public:
 	virtual void startService(Service& service){}
 	virtual void stopService(Service& service){}
-	virtual void assignData() {}
+	virtual const std::string& wwwPath() = 0;
 };
 
 

@@ -55,7 +55,11 @@ public:
 private:
 
 	// Set the exception according to the getaddrinfo() error code
-	static void SetAIError(Exception& ex, int error, const std::string& argument);
+	template <typename ...Args>
+	static void SetAIError(Exception& ex, int error, Args&&... args) {
+		ex.set(Exception::NETADDRESS, gai_strerror(error), args ...);
+	}
+
 };
 
 

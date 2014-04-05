@@ -54,9 +54,7 @@ public:
 	static bool			GetCurrent(std::string& path);
 	static bool			GetHome(std::string& path);
 
-	static void			RegisterForDeletion(const std::string& path);
-	static bool			Remove(const std::string& path);
-	static void			RemoveAll(Exception& ex, const std::string& path);
+	static bool			Remove(Exception& ex,const std::string& path);
 	static bool			Rename(const std::string& fromPath, const std::string& toPath) { return rename(fromPath.c_str(), toPath.c_str()) == 0; }
 	static bool			CreateDirectory(const std::string& path);
 	static void			CreateDirectories(Exception& ex, const std::string& path);

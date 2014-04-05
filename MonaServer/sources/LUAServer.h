@@ -19,8 +19,8 @@ This file is a part of Mona.
 
 #pragma once
 
-#include "Script.h"
 #include "ServerConnection.h"
+#include "Script.h"
 
 class LUAServer {
 public:
@@ -31,6 +31,5 @@ public:
 	static void Init(lua_State *pState, ServerConnection& server) {}
 private:
 	static int Send(lua_State* pState);
-	static int Port(lua_State* pState);
 
 };

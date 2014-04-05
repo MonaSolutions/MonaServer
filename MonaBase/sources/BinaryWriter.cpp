@@ -87,19 +87,6 @@ BinaryWriter& BinaryWriter::write64(UInt64 value) {
 	return writeRaw((const UInt8*)&value, sizeof(value));
 }
 
-BinaryWriter& BinaryWriter::writeAddress(const SocketAddress& address,bool publicFlag) {
-	UInt8 flag = publicFlag ? 0x02 : 0x01;
-	const IPAddress& host = address.host();
-	if (host.family() == IPAddress::IPv6)
-		flag |= 0x80;
-	NET_SOCKLEN size(host.size());
-	const UInt8* bytes = (const UInt8*)host.addr();
-	write8(flag);
-	for(int i=0;i<size;++i)
-		write8(bytes[i]);
-	return write16(address.port());
-}
-
 BinaryWriter& BinaryWriter::write7BitValue(UInt32 value) {
 	UInt8 shift = (Util::Get7BitValueSize(value)-1)*7;
 	bool max = false;

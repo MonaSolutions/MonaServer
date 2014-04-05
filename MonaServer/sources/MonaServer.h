@@ -22,13 +22,13 @@ This file is a part of Mona.
 #include "Mona/Server.h"
 #include "Mona/TerminateSignal.h"
 #include "Mona/Database.h"
-#include "Service.h"
 #include "Servers.h"
+#include "Service.h"
 
 
 class MonaServer : public Mona::Server, private ServiceHandler, private Mona::DatabaseLoader {
 public:
-	MonaServer(Mona::TerminateSignal& terminateSignal, Mona::UInt32 socketBufferSize, Mona::UInt16 threads, Mona::UInt16 serversPort, const std::string& serversTarget);
+	MonaServer(Mona::TerminateSignal& terminateSignal, const Mona::MapParameters& configs);
 	~MonaServer();
 
 	static const std::string				WWWPath;
@@ -36,7 +36,7 @@ public:
 
 	Servers									servers;
 
-	bool					start(Mona::MapParameters& parameters);
+	bool					start();
 
 private:
 	void					manage();
@@ -53,6 +53,7 @@ private:
 	// ServiceHandler implementation
 	void					startService(Service& service);
 	void					stopService(Service& service);
+	const std::string&		wwwPath() { return WWWPath; }
 
 
 
@@ -93,5 +94,6 @@ private:
 	std::set<Service*>					_servicesRunning;
 	Mona::Database						_data;
 	bool								_firstData;
+	const Mona::MapParameters&			_configs;
 };
 

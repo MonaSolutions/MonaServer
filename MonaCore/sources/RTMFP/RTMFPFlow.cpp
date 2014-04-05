@@ -77,7 +77,7 @@ public:
 
 RTMFPFlow::RTMFPFlow(UInt64 id,const string& signature,Peer& peer,Invoker& invoker,BandWriter& band) : _poolBuffers(invoker.poolBuffers),_numberLostFragments(0),id(id),_stage(0),_completed(false),_pPacket(NULL),_pStream(NULL),_band(band) {
 	
-	RTMFPWriter* pWriter = new RTMFPWriter(signature, band, _pWriter);
+	RTMFPWriter* pWriter = new RTMFPWriter(peer.connected ? Writer::OPENED : Writer::OPENING,signature, band, _pWriter);
 
 	if(signature.empty())
 		return;
@@ -199,7 +199,7 @@ void RTMFPFlow::commit() {
 	_pWriter->flush();
 }
 
-void RTMFPFlow::fragmentHandler(UInt64 _stage,UInt64 deltaNAck,PacketReader& fragment,UInt8 flags) {
+void RTMFPFlow::receive(UInt64 _stage,UInt64 deltaNAck,PacketReader& fragment,UInt8 flags) {
 	if(_completed)
 		return;
 
@@ -230,7 +230,7 @@ void RTMFPFlow::fragmentHandler(UInt64 _stage,UInt64 deltaNAck,PacketReader& fra
 				break;
 			// leave all stages <= _stage
 			PacketReader packet(it->second->data(),it->second->size());
-			fragmentSortedHandler(it->first,packet,it->second.flags);
+			onFragment(it->first,packet,it->second.flags);
 			if(it->second.flags&MESSAGE_END) {
 				complete();
 				return; // to prevent a crash bug!! (double fragments deletion)
@@ -251,7 +251,7 @@ void RTMFPFlow::fragmentHandler(UInt64 _stage,UInt64 deltaNAck,PacketReader& fra
 		} else
 			DEBUG("Stage ",_stage," on flow ",id," has already been received");
 	} else {
-		fragmentSortedHandler(nextStage++,fragment,flags);
+		onFragment(nextStage++,fragment,flags);
 		if(flags&MESSAGE_END)
 			complete();
 		auto it=_fragments.begin();
@@ -259,7 +259,7 @@ void RTMFPFlow::fragmentHandler(UInt64 _stage,UInt64 deltaNAck,PacketReader& fra
 			if( it->first > nextStage)
 				break;
 			PacketReader packet(it->second->data(), it->second->size());
-			fragmentSortedHandler(nextStage++,packet,it->second.flags);
+			onFragment(nextStage++,packet,it->second.flags);
 			if(it->second.flags&MESSAGE_END) {
 				complete();
 				return; // to prevent a crash bug!! (double fragments deletion)
@@ -270,7 +270,7 @@ void RTMFPFlow::fragmentHandler(UInt64 _stage,UInt64 deltaNAck,PacketReader& fra
 	}
 }
 
-void RTMFPFlow::fragmentSortedHandler(UInt64 _stage,PacketReader& fragment,UInt8 flags) {
+void RTMFPFlow::onFragment(UInt64 _stage,PacketReader& fragment,UInt8 flags) {
 	if(_stage<=this->_stage) {
 		ERROR("Stage ",_stage," not sorted on flow ",id);
 		return;
@@ -327,7 +327,11 @@ void RTMFPFlow::fragmentSortedHandler(UInt64 _stage,PacketReader& fragment,UInt8
 	}
 	UInt32 time(0);
 	AMF::ContentType type(unpack(*pMessage, time));
-	_pStream->process(type,time,*pMessage,*_pWriter,_numberLostFragments);
+	if (!_pStream->process(type, time, *pMessage, *_pWriter, _numberLostFragments)) {
+		complete(); // do already the delete _pPacket
+		return;
+	}
+
 	_numberLostFragments=0;
 
 	if(_pPacket) {

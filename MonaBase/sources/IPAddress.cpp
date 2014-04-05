@@ -22,9 +22,6 @@ This file is a part of Mona.
 #include "Mona/IPAddress.h"
 #include "Mona/String.h"
 #include "Mona/Util.h"
-#if !defined(WIN32)
-	#include <net/if.h>
-#endif
 
 using namespace std;
 

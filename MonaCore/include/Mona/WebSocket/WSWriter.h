@@ -36,7 +36,7 @@ public:
 	
 	UInt16			ping;
 
-	State			state(State value=GET,bool minimal=false);
+	void			abort() { _senders.clear(); }
 	void			flush(bool full=false);
 
 	DataWriter&		writeInvocation(const std::string& name);
@@ -47,14 +47,14 @@ public:
 	void			writePing() { write(WS::TYPE_PING, NULL, 0); }
 	UInt16			elapsedSincePing();
 	void			writePong(const UInt8* data, UInt32 size) { write(WS::TYPE_PONG, data, size); }
-	void			close(int code = WS::CODE_NORMAL_CLOSE);
+	void			close(Int32 code);
 
 private:
 	void			pack();
 	void			createReader(PacketReader& reader, std::shared_ptr<DataReader>& pReader) { pReader.reset(new JSONReader(reader)); }
 	void			createWriter(std::shared_ptr<DataWriter>& pWriter) { pWriter.reset(new JSONWriter(_session.invoker.poolBuffers)); }
 	bool			hasToConvert(DataReader& reader) { return dynamic_cast<JSONReader*>(&reader) == NULL; }
-	bool			writeMedia(MediaType type,UInt32 time,PacketReader& data);
+	bool			writeMedia(MediaType type,UInt32 time,PacketReader& data,Parameters& properties);
 
 	void			write(UInt8 type,const UInt8* data,UInt32 size);
 

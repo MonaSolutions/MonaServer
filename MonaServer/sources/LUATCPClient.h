@@ -19,9 +19,8 @@ This file is a part of Mona.
 
 #pragma once
 
-#include "Script.h"
 #include "Mona/TCPClient.h"
-
+#include "Script.h"
 
 class LUATCPClient : private Mona::TCPClient {
 public:
@@ -36,7 +35,6 @@ public:
 	static int	Destroy(lua_State* pState);
 
 private:
-	void			onError(const Mona::Exception& ex) {_error = ex.error();}
 	Mona::UInt32	onData(Mona::PoolBuffer& pBuffer);
 	void			onDisconnection();
 

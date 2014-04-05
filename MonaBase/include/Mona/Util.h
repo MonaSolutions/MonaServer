@@ -53,7 +53,11 @@ public:
 	static std::size_t UnpackUrl(const std::string& url, std::string& path, std::string& query) {std::string address; return UnpackUrl(url, address, path, query);}
 	static std::size_t UnpackUrl(const std::string& url, std::string& address, std::string& path, std::string& query);
 	
-	static Parameters& UnpackQuery(const std::string& query, Parameters& properties);
+	static Parameters& UnpackQuery(const std::string& query, Parameters& properties) { return UnpackQuery(query.data(), properties); }
+	static Parameters& UnpackQuery(const char* query, Parameters& properties);
+
+	static char DecodeURI(const char* value) { if (!value) return '%';  DecodeURI(value, value += strlen(value)); }
+	static char DecodeURI(const char* begin,const char* end);
 
 	static bool ReadIniFile(Exception& ex, const std::string& path, Parameters& parameters);
 
@@ -172,7 +176,6 @@ public:
 
 
 private:
-	static char DecodeURI(const std::string::const_iterator& it,const std::string::const_iterator& end);
 
 	static MapParameters	_Environment;
 	static std::mutex		_MutexEnvironment;

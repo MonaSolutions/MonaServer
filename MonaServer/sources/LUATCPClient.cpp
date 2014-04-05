@@ -53,7 +53,7 @@ LUATCPClient::~LUATCPClient() {
 UInt32 LUATCPClient::onData(PoolBuffer& pBuffer) {
 	UInt32 rest(0);
 	SCRIPT_BEGIN(_pState)
-		SCRIPT_MEMBER_FUNCTION_BEGIN(LUATCPClient,*this,"onReception")
+		SCRIPT_MEMBER_FUNCTION_BEGIN(LUATCPClient,*this,"onData")
 			SCRIPT_WRITE_BINARY(pBuffer->data(),pBuffer->size())
 			SCRIPT_FUNCTION_CALL
 			if (SCRIPT_CAN_READ)

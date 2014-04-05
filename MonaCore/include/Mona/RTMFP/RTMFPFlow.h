@@ -36,19 +36,22 @@ public:
 
 	const UInt64		id;
 
-	void				fragmentHandler(UInt64 stage,UInt64 deltaNAck,PacketReader& fragment,UInt8 flags);
+	bool critical() const { return _pWriter->critical; }
+
+	void				receive(UInt64 stage,UInt64 deltaNAck,PacketReader& fragment,UInt8 flags);
 	
 	void				commit();
 
 	void				fail(const std::string& error);
 
 	bool				consumed() { return _completed; }
-	void				complete();
 	
 private:
-	void				fragmentSortedHandler(UInt64 stage,PacketReader& fragment,UInt8 flags);
+	void				onFragment(UInt64 stage,PacketReader& fragment,UInt8 flags);
 	
 	AMF::ContentType	unpack(PacketReader& packet,UInt32& time);
+
+	void				complete();
 
 	bool							_completed;
 	BandWriter&						_band;

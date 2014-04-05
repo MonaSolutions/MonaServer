@@ -41,16 +41,16 @@ public:
 	const Mona::PoolBuffers& poolBuffers;
 private:
 	std::set<ServerConnection*>				_connections;
+	std::string								_buffer;
 };
 
 
 inline ServerConnection* Broadcaster::operator[](const std::string& address) {
-	Iterator it;
-	for(it=begin();it!=end();++it) {
-		if((*it)->address.toString()==address || (*it)->host==address)
-			return *it;
+	for(ServerConnection* pServer : _connections) {
+		if(pServer->address.toString()==address || (pServer->getString("host",_buffer) && _buffer==address))
+			return pServer;
 	}
-	return *it;
+	return NULL;
 }
 
 inline ServerConnection* Broadcaster::operator[](Mona::UInt32 index) {
@@ -62,10 +62,9 @@ inline ServerConnection* Broadcaster::operator[](Mona::UInt32 index) {
 }
 
 inline void Broadcaster::broadcast(const char* handler,Mona::PacketWriter& packet) {
-	Iterator it;
-	for (it = begin(); it != end(); ++it) {
+	for(ServerConnection* pServer : _connections) {
 		std::shared_ptr<ServerMessage> pMessage(new ServerMessage(handler,poolBuffers));
 		memcpy(pMessage->packet.buffer(packet.size()),packet.data(),packet.size());
-		(*it)->send(pMessage);
+		pServer->send(pMessage);
 	}
 }

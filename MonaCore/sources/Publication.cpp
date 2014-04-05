@@ -33,9 +33,11 @@ Publication::Publication(const string& name):_new(false),_name(name),_droppedFra
 
 Publication::~Publication() {
 	// delete _listeners!
-	map<Client*,Listener*>::iterator it;
-	for(it=_listeners.begin();it!=_listeners.end();++it)
-		delete it->second;
+	if (!_listeners.empty()) {
+		ERROR("Publication ",_name," with subscribers is deleting")
+		while (!_listeners.empty())
+			removeListener((Peer&)*_listeners.begin()->first);
+	}
 
 	DEBUG("Publication ",_name," deleted");
 }
@@ -44,7 +46,7 @@ void Publication::setBufferTime(UInt32 ms) {
 	// TODO?
 }
 
-Listener* Publication::addListener(Exception& ex, Peer& peer,Writer& writer,bool unbuffered) {
+Listener* Publication::addListener(Exception& ex, Peer& peer,Writer& writer) {
 	map<Client*,Listener*>::iterator it = _listeners.lower_bound(&peer);
 	if(it!=_listeners.end() && it->first==&peer) {
 		WARN("Already subscribed for publication ",_name);
@@ -52,7 +54,7 @@ Listener* Publication::addListener(Exception& ex, Peer& peer,Writer& writer,bool
 	}
 	if(it!=_listeners.begin())
 		--it;
-	Listener* pListener = new Listener(*this,peer,writer,unbuffered);
+	Listener* pListener = new Listener(*this,peer,writer);
 	string error;
 	if(peer.onSubscribe(*pListener,error)) {
 		_listeners.insert(it,pair<Client*,Listener*>(&peer,pListener));
@@ -63,7 +65,7 @@ Listener* Publication::addListener(Exception& ex, Peer& peer,Writer& writer,bool
 	if(error.empty())
 		error = "Not authorized to play " + _name;
 	delete pListener;
-	ex.set(Exception::NETWORK, error);
+	ex.set(Exception::APPLICATION, error);
 	return NULL;
 }
 
@@ -74,15 +76,15 @@ void Publication::removeListener(Peer& peer) {
 		return;
 	}
 	Listener* pListener = it->second;
-	peer.onUnsubscribe(*pListener);
 	_listeners.erase(it);
+	peer.onUnsubscribe(*pListener);
 	delete pListener;
 }
 
 
 void Publication::start(Exception& ex, Peer& peer) {
 	if(_pPublisher) { // has already a publisher
-		ex.set(Exception::NETWORK, _name, " is already publishing");
+		ex.set(Exception::SOFTWARE, _name, " is already publishing");
 		return;
 	}
 	_pPublisher = &peer;
@@ -91,7 +93,7 @@ void Publication::start(Exception& ex, Peer& peer) {
 		if(error.empty())
 			error = "Not allowed to publish " + _name;
 		_pPublisher=NULL;
-		ex.set(Exception::NETWORK, error);
+		ex.set(Exception::APPLICATION, error);
 		return;
 	}
 	_firstKeyFrame=false;
@@ -154,6 +156,8 @@ void Publication::pushAudio(PacketReader& packet,UInt32 time,UInt32 numberLostFr
 		return;
 	}
 
+	// TRACE("Time Audio ",time)
+
 	int pos = packet.position();
 	if(numberLostFragments>0)
 		INFO(numberLostFragments," audio fragments lost on publication ",_name);
@@ -161,6 +165,7 @@ void Publication::pushAudio(PacketReader& packet,UInt32 time,UInt32 numberLostFr
 
 	// save audio codec packet for future listeners
 	if (MediaCodec::AAC::IsCodecInfos(packet.current(),packet.available())) {
+		DEBUG("AAC codec infos received on publication ",_name)
 		// AAC codec && settings codec informations
 		_audioCodecBuffer.resize(packet.available(),false);
 		memcpy(_audioCodecBuffer.data(),packet.current(),packet.available());
@@ -180,6 +185,8 @@ void Publication::pushVideo(PacketReader& packet,UInt32 time,UInt32 numberLostFr
 		ERROR("Video packet pushed on '",_name,"' publication which has no publisher");
 		return;
 	}
+
+	// TRACE("Time Video ",time," => ",*(packet.current() + 1))
 	
 	// if some lost packet, it can be a keyframe, to avoid break video, we must wait next key frame
 	if(numberLostFragments>0)
@@ -194,9 +201,10 @@ void Publication::pushVideo(PacketReader& packet,UInt32 time,UInt32 numberLostFr
 		_firstKeyFrame = true;
 		// save video codec packet for future listeners
 		if (MediaCodec::H264::IsCodecInfos(packet.current(), packet.available())) {
+			DEBUG("H264 codec infos received on publication ",_name)
 			// h264 codec && settings codec informations
-			_videoCodecBuffer.resize(packet.available(),false);
-			memcpy(_videoCodecBuffer.data(),packet.current(),packet.available());
+			_videoCodecBuffer.resize(packet.available(), false);
+			memcpy(_videoCodecBuffer.data(), packet.current(), packet.available());
 		}
 	}
 

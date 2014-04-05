@@ -238,29 +238,37 @@ void ServerApplication::defineOptions(Exception& ex,Options& options) {
 //
 
 int ServerApplication::run(int argc, const char** argv) {
+	int result(EXIT_OK);
 	try {
 		bool runAsDaemon = isDaemon(argc, argv);
 		if (runAsDaemon)
 			beDaemon();
-        if(!init(argc, argv))
-			return EXIT_OK;
-
-		if (runAsDaemon) {
-			int rc = chdir("/");
-			if (rc != 0)
-				return EXIT_OSERR;
+		if(init(argc, argv)) {
+			if (runAsDaemon) {
+				int rc = chdir("/");
+				if (rc != 0)
+					result = EXIT_OSERR;
+			}
+			if(result!=EXIT_OK) {
+				TerminateSignal test;
+				result = main(test);
+			}
 		}
-
-        TerminateSignal test;
-        return main(test);
 	} catch (exception& ex) {
 		FATAL( ex.what());
-		return EXIT_SOFTWARE;
+		result = EXIT_SOFTWARE;
 	} catch (...) {
 		FATAL("Unknown error");
-		return EXIT_SOFTWARE;
+		result = EXIT_SOFTWARE;
 	}
+	if (!_pidFile.empty()) {
+		Exception ex;
+		FileSystem::Remove(ex,_pidFile);
+		ERROR("pid file deletion, ",ex.error());
+	}
+	return result;
 }
+
 
 
 bool ServerApplication::isDaemon(int argc, const char** argv) {
@@ -324,7 +332,7 @@ void ServerApplication::handlePidFile(Exception& ex,const string& value) {
 		return;
 	}
     ostr << Process::Id() << endl;
-	FileSystem::RegisterForDeletion(value);
+	_pidFile = value;
 }
 
 #endif

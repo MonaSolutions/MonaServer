@@ -49,7 +49,7 @@ public:
 	void				decode(PoolBuffer& poolBuffer, const SocketAddress& address);
 
 	bool				failed() const { return _failed; }
-	void				kill(bool shutdown=false);
+	void				kill(UInt32 type=NORMAL_DEATH);
 
 protected:
 	RTMFPSession(RTMFProtocol& protocol,
@@ -67,8 +67,6 @@ protected:
 
 	template <typename ...Args>
 	void fail(Args&&... args) {
-		String::Format(invoker.buffer, args ...);
-
 		if (_failed)
 			return;
 
@@ -80,8 +78,10 @@ protected:
 		peer.unsubscribeGroups();
 
 		_failed = true;
-		if(!invoker.buffer.empty()) {
-			WARN("Client failed, ", invoker.buffer);
+		std::string error;
+		String::Format(error, args ...);
+		if(!error.empty()) {
+			WARN("Client failed, ", error);
 			failSignal();
 		}
 	

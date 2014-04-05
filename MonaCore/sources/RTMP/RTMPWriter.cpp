@@ -26,7 +26,7 @@ using namespace std;
 
 namespace Mona {
 
-RTMPWriter::RTMPWriter(UInt8 id,TCPSession& session,std::shared_ptr<RTMPSender>& pSender,const shared_ptr<RC4_KEY>& pEncryptKey) : _pSender(pSender),_pEncryptKey(pEncryptKey),id(id), _isMain(false), _session(session) {
+RTMPWriter::RTMPWriter(UInt32 id,TCPSession& session,std::shared_ptr<RTMPSender>& pSender,const shared_ptr<RC4_KEY>& pEncryptKey) : _channel(session.invoker.poolBuffers),channel(session.invoker.poolBuffers),_pSender(pSender),_pEncryptKey(pEncryptKey),id(id), isMain(false), _session(session),FlashWriter(session.peer.connected ? OPENED : OPENING) {
 	// TODO _qos.add
 }
 
@@ -40,10 +40,6 @@ void RTMPWriter::writeProtocolSettings() {
 }
 
 void RTMPWriter::flush(bool full) {
-	if(state()==CONNECTING) {
-		ERROR("Violation policy, impossible to flush data on a connecting writer");
-		return;
-	}
 	if(!_pSender || !_pSender->available())
 		return;
 	_pSender->dump(_channel,_session.peer.address);
@@ -57,15 +53,6 @@ void RTMPWriter::flush(bool full) {
 }
 
 
-RTMPWriter::State RTMPWriter::state(State value,bool minimal) {
-	if (value==CONNECTED)
-		_isMain = true;
-	State state = Writer::state(value,minimal);
-	if (state == CONNECTED && minimal && _pSender)
-		_pSender.reset(); // release the shared buffer (poolBuffer of AMWriter)
-	return state;
-}
-
 void RTMPWriter::writeRaw(const UInt8* data,UInt32 size) {
 	if(size==0) {
 		ERROR("Data must have at minimum the AMF type in its first byte")
@@ -76,15 +63,17 @@ void RTMPWriter::writeRaw(const UInt8* data,UInt32 size) {
 	write(type,reader.read32(),&reader);
 }
 
-// TODO essayer de comprendre toutes les routes closes et leur close!
-void RTMPWriter::close(int code) {
-	if (_isMain && code>=0) {
-		if (code > 0)
+void RTMPWriter::close(Int32 code) {
+	if (code<0)
+		return;
+	if (isMain) {
+		if (code > 0) // TODO tester!
 			writeAMFError(code == 1 ? "NetConnection.Connect.IdleTimeout" : "NetConnection.Connect.AppShutdown", "Client closed by server side");
-		// TODO	kill RTMP session?
+		Writer::close();
+		_session.kill();
+		return;
 	}
 	Writer::close(code);
-	 
 }
 
 AMFWriter& RTMPWriter::write(AMF::ContentType type,UInt32 time,PacketReader* pData) {
@@ -117,9 +106,20 @@ AMFWriter& RTMPWriter::write(AMF::ContentType type,UInt32 time,PacketReader* pDa
 
 	AMFWriter& writer = _pSender->writer(_channel);
 	BinaryWriter& data = writer.packet;
-	data.write8((headerFlag<<6)| id);
 
 	_pSender->headerSize = 12 - 4*headerFlag;
+	if (id>319) {
+		_pSender->headerSize += 2;
+		data.write8((headerFlag<<6)| 1);
+		data.write8((id-64)&0x00FF);
+		data.write8((id-64)&0xFF00);
+	} else if (id > 63) {
+		++_pSender->headerSize;
+		data.write8((headerFlag<<6)| 0);
+		data.write8(id-64);
+	} else
+		data.write8((headerFlag<<6)| id);
+
 
 	if (_pSender->headerSize > 0) {
 		if (time<0xFFFFFF)

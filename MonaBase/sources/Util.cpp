@@ -176,11 +176,11 @@ size_t Util::UnpackUrl(const string& url, string& address, string& path, string&
 	return isFile ? (itField-path.begin()) : string::npos;
 }
 
-
-Parameters& Util::UnpackQuery(const string& query, Parameters& properties) {
-
-	auto it = query.begin();
-	auto end = query.end();
+Parameters& Util::UnpackQuery(const char* query, Parameters& properties) {
+	if (!query)
+		return properties;
+	const char* it = query;
+	const char* end = it+strlen(query);
 	while (it != end) {
 
 		// name
@@ -219,12 +219,14 @@ Parameters& Util::UnpackQuery(const string& query, Parameters& properties) {
 	return properties;
 }
 
-char Util::DecodeURI(const string::const_iterator& it,const string::const_iterator& end) {
-	auto itURI(it);
+char Util::DecodeURI(const char* begin,const char* end) {
+	if (!begin || end<begin || begin == end)
+		return '%'; // nothing, end!
+	const char* itURI(begin);
 	char hi = *itURI++;
-	if (it == end)
+	if (itURI == end)
 		return '%'; // syntax error
-	char lo = *it;
+	char lo = *begin;
 	char c;
 	if (hi >= '0' && hi <= '9')
 		c = hi - '0';

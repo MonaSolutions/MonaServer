@@ -20,11 +20,11 @@ This file is a part of Mona.
 #pragma once
 
 #include "Mona.h"
+#include "Mona/Net.h"
 #include "Mona/Startable.h"
 #include "Mona/TaskHandler.h"
 #include "Mona/PoolThreads.h"
 #include "Mona/PoolBuffers.h"
-#include "Mona/Net.h"
 #include <map>
 #include <atomic>
 

@@ -19,8 +19,9 @@ This file is a part of Mona.
 
 #pragma once
 
-#include "Script.h"
+
 #include "Mona/Group.h"
+#include "Script.h"
 
 class LUAGroup {
 public:
