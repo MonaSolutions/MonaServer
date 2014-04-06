@@ -89,7 +89,7 @@
       role="menu"
       aria-labelledby="dLabelLocalToc"><ul>
 <li><a class="reference internal" href="#">Scalability and load-balancing</a><ul>
-<li><a class="reference internal" href="#configurations">Configurations</a></li>
+<li><a class="reference internal" href="#configuration">Configuration</a></li>
 <li><a class="reference internal" href="#exchange-data-and-resources">Exchange data and resources</a></li>
 <li><a class="reference internal" href="#load-balancing-and-rendezvous-service">Load balancing and rendezvous service</a></li>
 </ul>
@@ -144,48 +144,50 @@
   <a class="reference external image-reference" href="https://github.com/MonaSolutions/MonaServer"><img alt="_images/githubBlack.png" class="align-right" src="_images/githubBlack.png" /></a>
 <div class="section" id="scalability-and-load-balancing">
 <h1><a class="toc-backref" href="#id7">Scalability and load-balancing</a><a class="headerlink" href="#scalability-and-load-balancing" title="Permalink to this headline">¶</a></h1>
-<p>Even if RTMFP is a P2P protocol, RTMFP has need to have a server end-point to negotiate the P2P connection between both clients. Then, RTMFP can be used just for its UDP based abilities, like real-time video/audio streaming, in a classical client-server way (without using P2P feature).
+<p>Even if RTMFP is a P2P protocol, RTMFP need a server end-point to negotiate the P2P connection between both clients. Then, RTMFP can be used just for its UDP based abilities, like real-time video/audio streaming, in a classical client-server way (without using P2P feature).
 For these reasons, server load is always applied and central availability required.
 Of course, one machine has always some hardware limitation (CPU/memory), and when load required becomes too important, a MonaServer instance can not be enough.</p>
-<p>To solve this loading requirement, a full framework included in Monaerver allows to make communicate multiple MonaServer instances, to enlarge computing and receiving capacity. It allows to configure a multiple MonaServer environment, it offers detection of server connection and disconnection, exchange of data between them, redirection of clients between servers to deploy a load-balacing software system for example, and some well-thought features to synchronise client informations for the rendez-vous service and the NetGroup RTMFP options. Every communication between servers is done in a raw TCP way.</p>
-<p>The main idea is simple: by default, <strong>each instance is an independant server and share nothing with others, it&#8217;s you who decides what are the resources that it has to share</strong> between all the server instances.</p>
+<p>To solve this loading requirement, a full framework included in MonaServer allows to make communicate multiple MonaServer instances, to enlarge computing and receiving capacity. It allows to configure a multiple MonaServer environment, it offers detection of server connection and disconnection, exchange of data between them, redirection of clients between servers to deploy a load-balacing software system for example, and some well-thought features to synchronise client informations for the rendez-vous service and the NetGroup RTMFP options. Every communication between servers is done in a raw TCP way.</p>
+<p>The main idea is simple: by default, <strong>each instance is an independant server and share nothing with others, YOU decide what are the resources to be shared</strong> between all the server instances.</p>
 <p>This page intends to describe every features of this framework illustrated with some code samples and context usage. Of course, the <a class="reference external" href="./api.html">Server Application, API</a> page lists all these feature but without code samples or any utilization context.</p>
-<p>Finally some piece of script code illustrates as uses it, to know how create a application server see <a class="reference external" href="./serveapp.html">Server Application</a> page.</p>
+<p>Finally some piece of script code illustrates how to use it, to know how to create an application server see <a class="reference external" href="./serveapp.html">Server Application</a> page.</p>
 <div class="contents topic" id="table-of-contents">
 <p class="topic-title first">Table of Contents</p>
 <ul class="simple">
 <li><a class="reference internal" href="#scalability-and-load-balancing" id="id7">Scalability and load-balancing</a><ul>
-<li><a class="reference internal" href="#configurations" id="id8">Configurations</a></li>
+<li><a class="reference internal" href="#configuration" id="id8">Configuration</a></li>
 <li><a class="reference internal" href="#exchange-data-and-resources" id="id9">Exchange data and resources</a></li>
 <li><a class="reference internal" href="#load-balancing-and-rendezvous-service" id="id10">Load balancing and rendezvous service</a></li>
 </ul>
 </li>
 </ul>
 </div>
-<div class="section" id="configurations">
-<h2><a class="toc-backref" href="#id8">Configurations</a><a class="headerlink" href="#configurations" title="Permalink to this headline">¶</a></h2>
-<p>Firstly to make communicate many instances of MonaServer, you have to configure them. The three following configurations allows to make working the multiple servers mode:</p>
+<div class="section" id="configuration">
+<h2><a class="toc-backref" href="#id8">Configuration</a><a class="headerlink" href="#configuration" title="Permalink to this headline">¶</a></h2>
+<p>Firstly to make communicate many instances of MonaServer, you have to configure them. The three following parameters allows to make working the multiple servers mode:</p>
 <ul class="simple">
-<li><em>publicAddress</em> to configure the public address server to make working the client redirections.</li>
+<li><em>publicAddress</em> to configurate the public address server to make working the client redirections.</li>
 <li><em>servers.port</em> to configure the port to receive incoming server connections.</li>
 <li><em>servers.targets</em> to configure the addresses of remote MonaServer instances trying to join.</li>
 </ul>
 <p>Here follows an illustration of one configuration with two servers:</p>
+<a class="reference internal image-reference" href="_images/TwoServersScalability.png"><img alt="_images/TwoServersScalability.png" class="align-center" src="_images/TwoServersScalability.png" style="width: 733px; height: 427px;" /></a>
 <div class="admonition warning">
 <p class="first admonition-title">Warning</p>
 <p class="last">Exchange between servers is done in a uncrypted TCP way, so to avoid an attack by the incoming port of B, its <em>servers.port</em> configured should be protected by a firewall to allow just a connection by an other server and nothing else.</p>
 </div>
-<p>A initializes here the connection to B (<em>server.targets</em> configured). A sees B as a target:</p>
+<p>Following scripts should be included in root <em>main.lua</em> file to be loaded at start.</p>
+<p><strong>A</strong> initializes here the connection to <strong>B</strong> (<em>server.targets</em> configured). <strong>A</strong> sees <strong>B</strong> as a target:</p>
 <div class="highlight-lua"><div class="highlight"><pre><span class="c1">-- Server application on A side</span>
 <span class="k">function</span> <span class="nf">onServerConnection</span><span class="p">(</span><span class="n">server</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">server</span><span class="p">.</span><span class="n">isTarget</span> <span class="k">then</span>
-                <span class="n">NOTE</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">Target gotten : &quot;</span><span class="o">..</span><span class="n">server</span><span class="p">.</span><span class="n">address</span><span class="o">..</span><span class="s2">&quot;</span><span class="s">(&quot;</span><span class="o">..</span><span class="n">server</span><span class="p">.</span><span class="n">publicAddress</span><span class="o">..</span><span class="s2">&quot;</span><span class="s"> for clients)&quot;</span>
+                <span class="n">NOTE</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">Target gotten : &quot;</span><span class="p">,</span> <span class="n">server</span><span class="p">.</span><span class="n">address</span><span class="p">,</span> <span class="s2">&quot;</span><span class="s"> (&quot;</span><span class="p">,</span> <span class="n">server</span><span class="p">.</span><span class="n">publicAddress</span><span class="p">,</span> <span class="s2">&quot;</span><span class="s"> for clients)&quot;</span><span class="p">)</span>
                 <span class="c1">-- displays &quot;Target gotten : 192.168.0.2 (www.hostB.com for clients)&quot;</span>
         <span class="k">end</span>
 <span class="k">end</span>
 </pre></div>
 </div>
-<p>B, who has a incoming port configured (1936), accepts the connection of A. B sees A as an initiator:</p>
+<p><strong>B</strong>, who has an incoming port configured (1936), accepts the connection of <strong>A</strong>. <strong>B</strong> sees <strong>A</strong> as an initiator:</p>
 <div class="highlight-lua"><div class="highlight"><pre><span class="c1">-- Server application on B side</span>
 <span class="k">function</span> <span class="nf">onServerConnection</span><span class="p">(</span><span class="n">server</span><span class="p">)</span>
         <span class="n">NOTE</span><span class="p">(</span><span class="n">server</span><span class="p">.</span><span class="n">isTarget</span><span class="p">)</span> <span class="c1">-- displays &quot;false&quot;</span>
@@ -196,8 +198,9 @@ Of course, one machine has always some hardware limitation (CPU/memory), and whe
 <p class="first admonition-title">Warning</p>
 <p class="last">If server A and B configures each other as its target, the two TCP connections will be created, causing confusion in server exchange:</p>
 </div>
+<a class="reference internal image-reference" href="_images/DoubleConnection.png"><img alt="_images/DoubleConnection.png" class="align-center" src="_images/DoubleConnection.png" style="width: 561px; height: 273px;" /></a>
 <p>This configuration system allows to scale an existing system horizontaly without having to restart server already running. Indeed, the first server started can configure its incoming server port (<em>servers.port</em>) and no target, and a new server can come to extend the system in putting the address of the first server in its <em>servers.targets</em> configuration.</p>
-<p>Of course, complex configurations are possible, with multiple server (and properties individual by server, see <em>Configurations</em> part of <a class="reference external" href="./installation.html">Installation</a> page):</p>
+<p>Of course, complex configurations are possible, with multiple servers (and properties individual by server, see <em>Configurations</em> part of <a class="reference external" href="./installation.html">Installation</a> page):</p>
 <div class="highlight-ini"><div class="highlight"><pre><span class="c1">;MonaServer.ini</span>
 <span class="na">publicAddress</span> <span class="o">=</span> <span class="s">www.myhost.com:1935</span>
 <span class="k">[servers]</span>
@@ -219,6 +222,15 @@ Of course, one machine has always some hardware limitation (CPU/memory), and whe
 <div class="admonition warning">
 <p class="first admonition-title">Warning</p>
 <p class="last">The server applications which have the same path (<em>www/myGame</em> on server A and on server B) are synchronized but reloaded always just on connection client. It means that if you edit the file <em>www/myGame/main.lua</em> on the server A, it rebuilds the server A version on new connection client, and tries to rebuild the server B version too (of course reloading is effective just if the server B version has changed too). But if you edit the server B version and that clients are always connected by the server A intermediate, you have to edit the server A version too to get a refresh of the server B application on connection client.</p>
+</div>
+<p>It is also possible to reject a server adding an error in the <em>onServerConnection</em> function :</p>
+<div class="highlight-lua"><div class="highlight"><pre><span class="k">function</span> <span class="nf">onServerConnection</span><span class="p">(</span><span class="n">server</span><span class="p">)</span>
+        <span class="c1">-- Reject all connections not comming from localhost</span>
+        <span class="k">if</span> <span class="n">server</span><span class="p">.</span><span class="n">address</span> <span class="n">is</span> <span class="ow">not</span> <span class="s2">&quot;</span><span class="s">127.0.0.1&quot;</span> <span class="k">then</span>
+                <span class="nb">error</span><span class="p">(</span><span class="n">server</span><span class="p">.</span><span class="n">address</span><span class="p">,</span> <span class="s2">&quot;</span><span class="s"> is trying to connect to the server =&gt; rejected&quot;</span><span class="p">)</span>
+        <span class="k">end</span>
+<span class="k">end</span>
+</pre></div>
 </div>
 </div>
 <div class="section" id="exchange-data-and-resources">
@@ -246,7 +258,8 @@ Of course, one machine has always some hardware limitation (CPU/memory), and whe
 <p>The main goal of this exchange mechanism is to share resource wanted between all the server instances.
 For example, if you use Mona to stream (by server bypass configuration, no P2P) to many subscribers, usually there are a small number of publishers and a very important number of subscribers. The server can support the publisher load, but could be saturated by the important number of listeners.
 One solution in this model case is to scale horizontaly the system to share the subscribers load.</p>
-<p>Here we have a configuration with three servers, but a fourth server could be added dynamically. The load-balacing system can be managed by a DNS way, but we have to share the publications between all three (or four) servers, otherwise one subscriber could not find one publication. Below following a complete <a class="reference external" href="./serveapp.html">Server Application</a> to share publications between all the servers.</p>
+<a class="reference internal image-reference" href="_images/ThreeServersExchange.png"><img alt="_images/ThreeServersExchange.png" class="align-center" src="_images/ThreeServersExchange.png" style="width: 785px; height: 461px;" /></a>
+<p>Here we have a configuration with three servers, but many others could be added dynamically. The load-balacing system can be managed by a DNS way, but we have to share the publications between all three (or more) servers, otherwise one subscriber could not find one publication. Below following a complete <a class="reference external" href="./serveapp.html">Server Application</a> to share publications between all the servers.</p>
 <div class="highlight-lua"><div class="highlight"><pre><span class="c1">-- following server (horizontal scaling)</span>
 <span class="n">_server</span> <span class="o">=</span> <span class="kc">nil</span>
 
@@ -259,7 +272,7 @@ One solution in this model case is to scale horizontaly the system to share the 
                 <span class="k">if</span> <span class="n">_server</span> <span class="k">then</span> <span class="nb">error</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">following server already connected&quot;</span><span class="p">)</span> <span class="k">end</span>
                 <span class="n">_server</span> <span class="o">=</span> <span class="n">server</span>
                 <span class="c1">-- informs the following server about my publications</span>
-                <span class="k">for</span> <span class="n">id</span><span class="p">,</span><span class="n">publication</span> <span class="k">in</span> <span class="n">mona</span><span class="p">.</span><span class="n">publications</span><span class="p">:</span><span class="nb">pairs</span><span class="p">()</span> <span class="k">do</span>
+                <span class="k">for</span> <span class="n">id</span><span class="p">,</span><span class="n">publication</span> <span class="k">in</span> <span class="nb">pairs</span><span class="p">(</span><span class="n">mona</span><span class="p">.</span><span class="n">publications</span><span class="p">)</span> <span class="k">do</span>
                         <span class="n">_server</span><span class="p">:</span><span class="n">send</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">publish&quot;</span><span class="p">,</span><span class="n">publication</span><span class="p">.</span><span class="n">name</span><span class="p">)</span>
                 <span class="k">end</span>
         <span class="k">else</span>
@@ -462,7 +475,7 @@ The idea is simple: you have to share every group inclusion informations between
       
     </p>
     <p>
-        &copy; Copyright 2013, Mathieu Poux &amp; Thomas Jammet.<br/>
+        &copy; Copyright 2014, Mathieu Poux &amp; Thomas Jammet.<br/>
       Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b2.<br/>
     </p>
   </div>

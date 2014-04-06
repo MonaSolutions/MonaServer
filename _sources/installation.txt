@@ -1,5 +1,5 @@
 
-.. image:: githubBlack.png
+.. image:: img/githubBlack.png
   :align: right
   :target: https://github.com/MonaSolutions/MonaServer
 
@@ -112,11 +112,9 @@ Configurations
 MonaServer is statically configured by an optional configuration *MonaServer.ini* file to put in the installation folder.
 Possible configurations are :
 
+- **host** : address like it will be seen by clients and other servers, this option is mandatory to make working all redirection features in multiple server configuration (see `Scalability and load-balancing <./scalability.html>`_).
 - **socketBufferSize** : allows to change the size in bytes of sockets reception and sending buffer. Increases this value if your operating system has a default value too lower for important loads.
 - **threads** : indicates the number of threads which will be allocated in the pool of threads of Mona. Usually it have to be equal to (or greather than) the number of cores on the host machine (virtual or physic cores). By default, an auto-detection system tries to determinate its value, but it can be perfectible on machine who owns hyper-threading technology, or on some operating systems.
-
-.. TODO does not exists anymore?
-.. - **publicAddress** : address like it will be seen by clients, this option is mandatory to make working all redirection features in multiple server configuration (see `Scalability and load-balancing <./scalability.html>`_).
  
 [application]
 ===================================

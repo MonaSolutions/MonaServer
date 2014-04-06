@@ -215,7 +215,13 @@ rtmfp://host:port/Games/myGame       -&gt;     MonaServer/www/Games/myGame/main.
 </div>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
-<p class="last">The root application is built and started on MonaServer start, whereas other server applications are started on first client connection.</p>
+<ul class="last simple">
+<li>The root application is built and started on MonaServer start, whereas other server applications are started on first client connection.</li>
+<li>Exceptionaly you can give root rigths to a child application with the function <strong>children()</strong> has shown below. It permits to start other applications at start.</li>
+</ul>
+</div>
+<div class="highlight-lua"><div class="highlight"><pre><span class="n">children</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">childapp&quot;</span><span class="p">)</span>
+</pre></div>
 </div>
 <p>Each application is identified by its <em>path</em>, which is exactly the <em>path</em> part of the RTMFP URL connection. In the example above, <em>root application</em> has an empty string for path, then the both others have respectively <em>/myApplication</em> and <em>/Games/myGame</em> for <em>path</em> values.</p>
 <p>Here a very simple first server application:</p>
@@ -230,7 +236,7 @@ rtmfp://host:port/Games/myGame       -&gt;     MonaServer/www/Games/myGame/main.
 </div>
 <div class="section" id="global-configurations">
 <h2><a class="toc-backref" href="#id11">Global configurations</a><a class="headerlink" href="#global-configurations" title="Permalink to this headline">¶</a></h2>
-<p><em>MonaServer.ini</em> file allows to give some global configuration values on MonaServer start-up (see <a class="reference external" href="./installation.html">Installation</a> page). To access for these values from script, use <em>mona.configs</em> property (see <em>Mona</em> object description in <a class="reference external" href="./api.html">Server Application, API</a> page to get more details). This system allows to create your own global configuration values and access for them in scripts.</p>
+<p><em>MonaServer.ini</em> file allows to give some global configuration values on MonaServer start-up (see <a class="reference external" href="./installation.html">Installation</a> page). To access for these values from script, use <em>mona.configs</em> property (see <em>Mona</em> object description in <a class="reference external" href="./api.html">Server Application, API</a> page to get more details). This system allows to create your own global configuration values and access to them in scripts.</p>
 <div class="highlight-ini"><div class="highlight"><pre><span class="c1">; MonaServer.ini file</span>
 <span class="na">port</span><span class="o">=</span><span class="s">19350 ; existing config</span>
 <span class="c1">; New custom config</span>
@@ -295,7 +301,7 @@ rtmfp://host:port/Games/myGame       -&gt;     MonaServer/www/Games/myGame/main.
 </div>
 <div class="admonition warning">
 <p class="first admonition-title">Warning</p>
-<p class="last">Events are functions called by the system (see <em>Events</em> part of <a class="reference external" href="./api.html">Server Application, API</a> page), if an application don&#8217;t definites <em>onConnection</em> event for example, on new client connection for this application, it&#8217;s the parent application which will receive the event. To avoid it, you have to overload the event in child application, and you can call also the parent version if need.</p>
+<p class="last">Events are functions called by the system (see <em>Events</em> part of <a class="reference external" href="./api.html">Server Application, API</a> page), if an application doesn&#8217;t define <em>onConnection</em> event for example, on new client connection for this application, it&#8217;s the parent application which will receive the event. To avoid it, you have to overload the event in child application, and you can call also the parent version if needed.</p>
 </div>
 <div class="highlight-lua"><div class="highlight"><pre><span class="c1">-- /Games script application</span>
 <span class="k">function</span> <span class="nf">onConnection</span><span class="p">(</span><span class="n">client</span><span class="p">,</span><span class="o">...</span><span class="p">)</span>
@@ -305,7 +311,7 @@ rtmfp://host:port/Games/myGame       -&gt;     MonaServer/www/Games/myGame/main.
 </div>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
-<p class="last">The keyword <em>super</em> is supported to refer to the the father application:</p>
+<p class="last">The keyword <em>super</em> is supported to refer to the the parent application:</p>
 </div>
 <div class="highlight-lua"><div class="highlight"><pre><span class="c1">-- /Games script application</span>
 <span class="k">function</span> <span class="nf">onConnection</span><span class="p">(</span><span class="n">client</span><span class="p">,</span><span class="o">...</span><span class="p">)</span>
@@ -765,7 +771,7 @@ The solution is to use logs macros :</p>
       
     </p>
     <p>
-        &copy; Copyright 2013, Mathieu Poux &amp; Thomas Jammet.<br/>
+        &copy; Copyright 2014, Mathieu Poux &amp; Thomas Jammet.<br/>
       Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b2.<br/>
     </p>
   </div>

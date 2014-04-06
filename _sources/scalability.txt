@@ -1,54 +1,58 @@
 
-.. image:: githubBlack.png
+.. image:: img/githubBlack.png
   :align: right
   :target: https://github.com/MonaSolutions/MonaServer
 
 Scalability and load-balancing
 ###################################
 
-Even if RTMFP is a P2P protocol, RTMFP has need to have a server end-point to negotiate the P2P connection between both clients. Then, RTMFP can be used just for its UDP based abilities, like real-time video/audio streaming, in a classical client-server way (without using P2P feature).
+Even if RTMFP is a P2P protocol, RTMFP need a server end-point to negotiate the P2P connection between both clients. Then, RTMFP can be used just for its UDP based abilities, like real-time video/audio streaming, in a classical client-server way (without using P2P feature).
 For these reasons, server load is always applied and central availability required.
 Of course, one machine has always some hardware limitation (CPU/memory), and when load required becomes too important, a MonaServer instance can not be enough.
 
-To solve this loading requirement, a full framework included in Monaerver allows to make communicate multiple MonaServer instances, to enlarge computing and receiving capacity. It allows to configure a multiple MonaServer environment, it offers detection of server connection and disconnection, exchange of data between them, redirection of clients between servers to deploy a load-balacing software system for example, and some well-thought features to synchronise client informations for the rendez-vous service and the NetGroup RTMFP options. Every communication between servers is done in a raw TCP way.
+To solve this loading requirement, a full framework included in MonaServer allows to make communicate multiple MonaServer instances, to enlarge computing and receiving capacity. It allows to configure a multiple MonaServer environment, it offers detection of server connection and disconnection, exchange of data between them, redirection of clients between servers to deploy a load-balacing software system for example, and some well-thought features to synchronise client informations for the rendez-vous service and the NetGroup RTMFP options. Every communication between servers is done in a raw TCP way.
 
-The main idea is simple: by default, **each instance is an independant server and share nothing with others, it's you who decides what are the resources that it has to share** between all the server instances.
+The main idea is simple: by default, **each instance is an independant server and share nothing with others, YOU decide what are the resources to be shared** between all the server instances.
 
 This page intends to describe every features of this framework illustrated with some code samples and context usage. Of course, the `Server Application, API <./api.html>`_ page lists all these feature but without code samples or any utilization context.
 
-Finally some piece of script code illustrates as uses it, to know how create a application server see `Server Application <./serveapp.html>`_ page.
+Finally some piece of script code illustrates how to use it, to know how to create an application server see `Server Application <./serveapp.html>`_ page.
 
 .. contents:: Table of Contents
 
-Configurations
+Configuration
 ***********************************
 
-Firstly to make communicate many instances of MonaServer, you have to configure them. The three following configurations allows to make working the multiple servers mode:
+Firstly to make communicate many instances of MonaServer, you have to configure them. The three following parameters allows to make working the multiple servers mode:
 
-- *publicAddress* to configure the public address server to make working the client redirections.
+- *publicAddress* to configurate the public address server to make working the client redirections.
 - *servers.port* to configure the port to receive incoming server connections.
 - *servers.targets* to configure the addresses of remote MonaServer instances trying to join.
 
 Here follows an illustration of one configuration with two servers:
 
-.. TODO see if we can do a ppt
-.. <center>![MonaServers](http://jazzmatazz.free.fr/Mona/MonaServers.PNG)</center>
+.. image:: img/TwoServersScalability.png
+  :height: 427
+  :width: 733
+  :align: center
 
 .. warning:: Exchange between servers is done in a uncrypted TCP way, so to avoid an attack by the incoming port of B, its *servers.port* configured should be protected by a firewall to allow just a connection by an other server and nothing else.
 
-A initializes here the connection to B (*server.targets* configured). A sees B as a target:
+Following scripts should be included in root *main.lua* file to be loaded at start.
+
+**A** initializes here the connection to **B** (*server.targets* configured). **A** sees **B** as a target:
 
 .. code-block:: lua
 
 	-- Server application on A side
 	function onServerConnection(server)
 		if server.isTarget then
-			NOTE("Target gotten : "..server.address.."("..server.publicAddress.." for clients)"
+			NOTE("Target gotten : ", server.address, " (", server.publicAddress, " for clients)")
 			-- displays "Target gotten : 192.168.0.2 (www.hostB.com for clients)"
 		end
 	end
 
-B, who has a incoming port configured (1936), accepts the connection of A. B sees A as an initiator:
+**B**, who has an incoming port configured (1936), accepts the connection of **A**. **B** sees **A** as an initiator:
 
 .. code-block:: lua
 
@@ -59,12 +63,14 @@ B, who has a incoming port configured (1936), accepts the connection of A. B see
 
 .. warning::  If server A and B configures each other as its target, the two TCP connections will be created, causing confusion in server exchange:
 
-.. TODO see if we can do a ppt
-.. <center>![MonaServers_DoubleConnection](http://jazzmatazz.free.fr/Mona/MonaServers_DoubleConnection.PNG)</center>
+.. image:: img/DoubleConnection.png
+  :height: 273
+  :width: 561
+  :align: center
 
 This configuration system allows to scale an existing system horizontaly without having to restart server already running. Indeed, the first server started can configure its incoming server port (*servers.port*) and no target, and a new server can come to extend the system in putting the address of the first server in its *servers.targets* configuration.
 
-Of course, complex configurations are possible, with multiple server (and properties individual by server, see *Configurations* part of `Installation <./installation.html>`_ page):
+Of course, complex configurations are possible, with multiple servers (and properties individual by server, see *Configurations* part of `Installation <./installation.html>`_ page):
 
 .. code-block:: ini
 
@@ -88,6 +94,16 @@ Of course, complex configurations are possible, with multiple server (and proper
 
 .. warning::  The server applications which have the same path (*www/myGame* on server A and on server B) are synchronized but reloaded always just on connection client. It means that if you edit the file *www/myGame/main.lua* on the server A, it rebuilds the server A version on new connection client, and tries to rebuild the server B version too (of course reloading is effective just if the server B version has changed too). But if you edit the server B version and that clients are always connected by the server A intermediate, you have to edit the server A version too to get a refresh of the server B application on connection client.
 
+It is also possible to reject a server adding an error in the *onServerConnection* function :
+
+.. code-block:: lua
+
+	function onServerConnection(server)
+		-- Reject all connections not comming from localhost
+		if server.address is not "127.0.0.1" then
+			error(server.address, " is trying to connect to the server => rejected")
+		end
+	end
 
 Exchange data and resources
 ***********************************
@@ -116,10 +132,12 @@ The main goal of this exchange mechanism is to share resource wanted between all
 For example, if you use Mona to stream (by server bypass configuration, no P2P) to many subscribers, usually there are a small number of publishers and a very important number of subscribers. The server can support the publisher load, but could be saturated by the important number of listeners.
 One solution in this model case is to scale horizontaly the system to share the subscribers load.
 
-.. TODO see if we can do a ppt
-.. <center>![MonaServers_Publication](http://jazzmatazz.free.fr/Mona/MonaServers_Publication.PNG)</center>
+.. image:: img/ThreeServersExchange.png
+  :height: 461
+  :width: 785
+  :align: center
 
-Here we have a configuration with three servers, but a fourth server could be added dynamically. The load-balacing system can be managed by a DNS way, but we have to share the publications between all three (or four) servers, otherwise one subscriber could not find one publication. Below following a complete `Server Application <./serveapp.html>`_ to share publications between all the servers.
+Here we have a configuration with three servers, but many others could be added dynamically. The load-balacing system can be managed by a DNS way, but we have to share the publications between all three (or more) servers, otherwise one subscriber could not find one publication. Below following a complete `Server Application <./serveapp.html>`_ to share publications between all the servers.
 
 .. code-block:: lua
 
@@ -135,7 +153,7 @@ Here we have a configuration with three servers, but a fourth server could be ad
 			if _server then error("following server already connected") end
 			_server = server
 			-- informs the following server about my publications
-			for id,publication in mona.publications:pairs() do
+			for id,publication in pairs(mona.publications) do
 				_server:send("publish",publication.name)
 			end
 		else
