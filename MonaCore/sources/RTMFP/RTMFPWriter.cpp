@@ -20,7 +20,7 @@ This file is a part of Mona.
 #include "Mona/RTMFP/RTMFPWriter.h"
 #include "Mona/Peer.h"
 #include "Mona/Util.h"
-#include "Mona/RTMFP/RTMFP.h"
+
 
 
 using namespace std;
@@ -29,18 +29,22 @@ using namespace std;
 namespace Mona {
 
 
-RTMFPWriter::RTMFPWriter(const string& signature, BandWriter& band, shared_ptr<RTMFPWriter>& pThis, WriterHandler* pHandler) : FlashWriter(pHandler), id(0), _band(band), _reseted(true), critical(false), _stage(0), _stageAck(0), _boundCount(0), flowId(0), signature(signature), _repeatable(0), _lostCount(0), _ackCount(0), _connectedSize(-1) {
+RTMFPWriter::RTMFPWriter(State state,const string& signature, BandWriter& band, shared_ptr<RTMFPWriter>& pThis) : FlashWriter(state), id(0), _band(band), _reseted(true), critical(false), _stage(0), _stageAck(0), _boundCount(0), flowId(0), signature(signature), _repeatable(0), _lostCount(0), _ackCount(0) {
 	pThis.reset(this);
 	_band.initWriter(pThis);
+	if (signature.empty())
+		open();
 }
 
-RTMFPWriter::RTMFPWriter(const string& signature, BandWriter& band, WriterHandler* pHandler) : FlashWriter(pHandler), id(0), _band(band), _reseted(true), critical(false), _stage(0), _stageAck(0), _boundCount(0), flowId(0), signature(signature), _repeatable(0), _lostCount(0), _ackCount(0), _connectedSize(-1) {
+RTMFPWriter::RTMFPWriter(State state,const string& signature, BandWriter& band) : FlashWriter(state), id(0), _band(band), _reseted(true), critical(false), _stage(0), _stageAck(0), _boundCount(0), flowId(0), signature(signature), _repeatable(0), _lostCount(0), _ackCount(0) {
 	shared_ptr<RTMFPWriter> pThis(this);
 	_band.initWriter(pThis);
+	if (signature.empty())
+		open();
 }
 
 RTMFPWriter::RTMFPWriter(RTMFPWriter& writer) : FlashWriter(writer),_band(writer._band),
-		critical(false),_repeatable(writer._repeatable),_reseted(true),_connectedSize(-1),
+		critical(false),_repeatable(writer._repeatable),_reseted(true),
 		_stage(writer._stage),_stageAck(writer._stageAck),id(writer.id),
 		_ackCount(writer._ackCount),_lostCount(writer._lostCount),
 		_boundCount(0),flowId(0),signature(writer.signature) {
@@ -79,10 +83,16 @@ void RTMFPWriter::clear() {
 	}
 }
 
-void RTMFPWriter::close(int code) {
+void RTMFPWriter::abort() {
+	for (RTMFPMessage* pMessage : _messages)
+		delete pMessage;
+	_messages.clear();
+}
+
+void RTMFPWriter::close(Int32 code) {
 	if(state()==CLOSED)
 		return;
-	if(_stage>0 || _connectedSize>0 || _messages.size()>0)
+	if(_stage>0 || _messages.size()>0)
 		createBufferedMessage(); // Send a MESSAGE_END just in the case where the receiver has been created (or will be created)
 	Writer::close(code);
 }
@@ -420,10 +430,10 @@ void RTMFPWriter::raiseMessage() {
 void RTMFPWriter::flush(bool full) {
 
 	if(_messagesSent.size()>100)
-		DEBUG("_messagesSent.size()=",_messagesSent.size());
+		TRACE("_messagesSent.size()=",_messagesSent.size());
 
-	if(state()==CONNECTING) {
-		ERROR("Violation policy, impossible to flush data on a connecting writer");
+	if(state()==OPENING) {
+		ERROR("Violation policy, impossible to flush data on a opening writer");
 		return;
 	}
 
@@ -495,23 +505,6 @@ void RTMFPWriter::flush(bool full) {
 		_band.flush();
 }
 
-RTMFPWriter::State RTMFPWriter::state(State value,bool minimal) {
-	if(value==GET)
-		return Writer::state(value,minimal);
-	if(value==CONNECTING) {
-		_connectedSize = _messages.size();
-	} else {
-		if(_connectedSize>=0 && (minimal || value==CLOSED)) {
-			while(_messages.size()>_connectedSize) {
-				delete _messages.back();
-				_messages.pop_back();
-			}
-		}
-		_connectedSize=-1;
-	}
-	return Writer::state(value,minimal);
-}
-
 RTMFPMessageBuffered& RTMFPWriter::createBufferedMessage() {
 	if (state() == CLOSED || signature.empty() || _band.failed()) {// signature.empty() means that we are on the writer of FlowNull
 		static RTMFPMessageBuffered MessageNull;
@@ -523,6 +516,8 @@ RTMFPMessageBuffered& RTMFPWriter::createBufferedMessage() {
 }
 
 AMFWriter& RTMFPWriter::write(AMF::ContentType type,UInt32 time,PacketReader* pPacket) {
+	if (type < AMF::AUDIO || type > AMF::VIDEO)
+		time = 0; // Because it can "dropped" the packet otherwise (like if the Writer was not reliable!)
 	if(pPacket && !reliable) {
 		UInt8 headerRequired(type==AMF::DATA ? 6 : 5);
 		if(pPacket->position()>=headerRequired) {
@@ -557,7 +552,7 @@ bool RTMFPWriter::writeMember(const Client& client) {
 }
 
 void RTMFPWriter::writeRaw(const UInt8* data,UInt32 size) {
-	if(reliable || state()==CONNECTING) {
+	if(reliable || state()==OPENING) {
 		createBufferedMessage().writer().packet.writeRaw(data,size);
 		return;
 	}
@@ -567,8 +562,8 @@ void RTMFPWriter::writeRaw(const UInt8* data,UInt32 size) {
 	flush();
 }
 
-bool RTMFPWriter::writeMedia(MediaType type,UInt32 time,PacketReader& packet) {
-	if(type==INIT) {
+bool RTMFPWriter::writeMedia(MediaType type,UInt32 time,PacketReader& packet,Parameters& properties) {
+	if(type==INIT && time!=Writer::DATA) {
 		// write bounds
 		AMFWriter& writer = write(AMF::RAW);
 		writer.packet.write16(0x22);
@@ -578,7 +573,7 @@ bool RTMFPWriter::writeMedia(MediaType type,UInt32 time,PacketReader& packet) {
 		_reseted=false;
 		++_boundCount;
 	}
-	bool result = FlashWriter::writeMedia(type,time,packet);
+	bool result = FlashWriter::writeMedia(type,time,packet,properties);
 	return _reseted ? false : result;
 }
 

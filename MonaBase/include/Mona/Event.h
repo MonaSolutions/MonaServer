@@ -21,7 +21,6 @@ This file is a part of Mona.
 
 #include "Mona/Mona.h"
 #include "Mona/Exceptions.h"
-#include "Mona/Logs.h"
 #include <set>
 
 namespace Mona {
@@ -118,8 +117,6 @@ public:
 			Event<void,ArgsType ...>::_pRelayer->raise(args...);
 		else if (Event<void,ArgsType ...>::_pFunction)
 			(*Event<void,ArgsType ...>::_pFunction)(args ...);
-		else
-			DEBUG("Event ", typeid(*this).name()," without subscriber");
 	}
 };
 	
@@ -135,8 +132,6 @@ public:
 			return Event<Result,ArgsType ...>::_pRelayer->raise<defaultResult>(args...);
 		else if (Event<Result, ArgsType ...>::_pFunction)
 			return (*Event<Result, ArgsType ...>::_pFunction)(args ...);
-		else
-			DEBUG("Event ", typeid(*this).name()," without subscriber");
 		return defaultResult;
 	}
 

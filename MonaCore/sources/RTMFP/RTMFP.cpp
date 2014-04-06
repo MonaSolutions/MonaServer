@@ -54,6 +54,18 @@ void RTMFPEngine::process(const UInt8* in,UInt8* out,int size) {
 }
 
 
+BinaryWriter& RTMFP::WriteAddress(BinaryWriter& writer,const SocketAddress& address,AddressType type) {
+	const IPAddress& host = address.host();
+	if (host.family() == IPAddress::IPv6)
+		writer.write8(type | 0x80);
+	else
+		writer.write8(type);
+	NET_SOCKLEN size(host.size());
+	const UInt8* bytes = (const UInt8*)host.addr();
+	for(int i=0;i<size;++i)
+		writer.write8(bytes[i]);
+	return writer.write16(address.port());
+}
 
 
 UInt16 RTMFP::CheckSum(PacketReader& packet) {

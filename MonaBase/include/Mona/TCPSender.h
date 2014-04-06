@@ -20,8 +20,9 @@ This file is a part of Mona.
 #pragma once
 
 #include "Mona/Mona.h"
-#include "Mona/SocketSender.h"
 #include "Mona/Socket.h"
+#include "Mona/SocketSender.h"
+
 
 namespace Mona {
 

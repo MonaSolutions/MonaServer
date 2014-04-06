@@ -40,12 +40,7 @@ bool AddOption(const string& fullName, const string& shortName, const string& de
 	if (!argName.empty())
 		opt.argument(argName, argRequired);
 
-	if (ex) {
-		DEBUG("Exception : ", ex.error());
-		return false;
-	}
-
-	return true;
+	return !ex;
 }
 
 bool ProcessArg(const char* arg, const function<void(Exception& ex, const std::string&, const std::string&)>& handler=nullptr) {

@@ -38,7 +38,7 @@ private:
 	void			manage();
 	void			flush() { Session::flush(); if (_pStream) _pStream->flush(); }
 
-	void			kill(bool shutdown=false);
+	void			kill(UInt32 type=NORMAL_DEATH);
 	
 
 	void							readKeys();
@@ -50,9 +50,10 @@ private:
 	UInt32							_winAckSize;
 	UInt32							_unackBytes;
 
-	std::map<UInt8,RTMPWriter>			_writers;
+	std::map<UInt32,RTMPWriter>			_writers;
 	std::unique_ptr<RTMPWriter>			_pController;
 	RTMPWriter*							_pWriter;
+	bool								_isRelative;
 	std::shared_ptr<RTMPSender>			_pSender;
 
 	std::shared_ptr<RTMPHandshaker>		_pHandshaker;

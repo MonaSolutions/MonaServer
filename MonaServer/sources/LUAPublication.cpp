@@ -44,7 +44,7 @@ void LUAPublicationBase::AddListener(lua_State* pState, const Listener& listener
 void LUAPublicationBase::RemoveListener(lua_State* pState, const Listener& listener) {
 	// -1 must be the listener table!
 	if (Script::FromObject<Mona::Publication>(pState, listener.publication)) {
-		Script::Collection(pState, -1, "listeners", listener.publication.listeners.count() - 1);
+		Script::Collection(pState, -1, "listeners", listener.publication.listeners.count());
 		lua_pushvalue(pState, -3); // listener table
 		lua_pushnil(pState);
 		lua_rawset(pState, -3); // rawset cause NewIndexProhibited

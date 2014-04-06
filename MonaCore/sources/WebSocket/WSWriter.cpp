@@ -26,14 +26,18 @@ using namespace std;
 
 namespace Mona {
 
-WSWriter::WSWriter(TCPSession& session) : ping(0),_session(session),_sent(0) {
+WSWriter::WSWriter(TCPSession& session) : ping(0),_session(session),_sent(0),Writer(session.peer.connected ? OPENED : OPENING) {
 	
 }
 
-void WSWriter::close(int type /* = WS::CODE_NORMAL_CLOSE */ ) {
-	if (type>=0) // user or normal closing
-		write(WS::TYPE_CLOSE, NULL, (UInt32)type);
-	Writer::close(type);
+void WSWriter::close(Int32 code) {
+	if (code < 0)
+		return;
+	if (code == 0)
+		code = WS::CODE_NORMAL_CLOSE;
+	write(WS::TYPE_CLOSE, NULL, (UInt32)code);
+	Writer::close(code);
+	_session.kill(code);
 }
 
 
@@ -62,10 +66,6 @@ void WSWriter::pack() {
 }
 
 void WSWriter::flush(bool full) {
-	if(state()==CONNECTING) {
-		ERROR("Violation policy, impossible to flush data on a connecting writer");
-		return;
-	}
 	if(_senders.empty())
 		return;
 	pack();
@@ -77,14 +77,6 @@ void WSWriter::flush(bool full) {
 		EXCEPTION_TO_LOG(_session.send<WSSender>(ex, pSender), "WSSender flush");
 	}
 	_senders.clear();
-}
-
-
-WSWriter::State WSWriter::state(State value,bool minimal) {
-	State state = Writer::state(value,minimal);
-	if(state==CONNECTED && minimal)
-		_senders.clear();
-	return state;
 }
 
 void WSWriter::write(UInt8 type,const UInt8* data,UInt32 size) {
@@ -134,7 +126,7 @@ DataWriter& WSWriter::writeMessage() {
 
 
 
-bool WSWriter::writeMedia(MediaType type,UInt32 time,PacketReader& packet) {
+bool WSWriter::writeMedia(MediaType type,UInt32 time,PacketReader& packet,Parameters& properties) {
 	if(state()==CLOSED)
 		return true;
 	switch(type) {
@@ -154,7 +146,7 @@ bool WSWriter::writeMedia(MediaType type,UInt32 time,PacketReader& packet) {
 		case INIT:
 			break;
 		default:
-			return Writer::writeMedia(type,time,packet);
+			return Writer::writeMedia(type,time,packet,properties);
 	}
 	return true;
 }

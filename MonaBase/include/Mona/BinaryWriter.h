@@ -20,13 +20,12 @@ This file is a part of Mona.
 #pragma once
 
 #include "Mona/Mona.h"
-#include "Mona/SocketAddress.h"
 #include "Mona/PoolBuffer.h"
 #include "Mona/Binary.h"
 
 namespace Mona {
 
-class BinaryWriter : public virtual Object {
+class BinaryWriter : public Binary, virtual public Object {
 public:
 
 	BinaryWriter(BinaryWriter& other,UInt32 offset=0);
@@ -42,6 +41,10 @@ public:
 		else
 			memcpy(buffer.data()+oldSize,value,buffer.size()-oldSize);
 		return writeRaw(args ...);
+	}
+	template <typename ...Args>
+	BinaryWriter& writeRaw(Binary& value, Args&&... args) {
+		return writeRaw(value.data(),value.size(), args ...);
 	}
 	template <typename ...Args>
 	BinaryWriter& writeRaw(const char* value, Args&&... args) {
@@ -70,15 +73,14 @@ public:
 	template<typename NumberType>
 	BinaryWriter& writeNumber(NumberType value) { return writeRaw(_flipBytes ? Binary::ReverseBytes((UInt8*)&value, sizeof(value)) : (const UInt8*)&value , sizeof(value)); }
 
-	BinaryWriter& writeAddress(const SocketAddress& address,bool publicFlag);
 	BinaryWriter& writeRandom(UInt32 count=1);
 	
 	virtual BinaryWriter&	clear(UInt32 size = 0) { buffer().resize(size, true); return *this; }
 	BinaryWriter&	next(UInt32 count = 1);
 	BinaryWriter&	clip(UInt32 offset) {buffer().clip(offset); return *this;}
 
-	const UInt8*	data() { return buffer().data(); }
-	UInt32			size() { return buffer().size(); }
+	const UInt8*	data() const { return const_cast<BinaryWriter*>(this)->buffer().data(); }
+	UInt32			size() const { return const_cast<BinaryWriter*>(this)->buffer().size(); }
 
 private:
 	

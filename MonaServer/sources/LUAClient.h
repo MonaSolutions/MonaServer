@@ -19,8 +19,8 @@ This file is a part of Mona.
 
 #pragma once
 
-#include "Script.h"
 #include "Mona/Client.h"
+#include "Script.h"
 
 class LUAClient {
 public:

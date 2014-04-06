@@ -23,19 +23,19 @@ This file is a part of Mona.
 #include "Mona/DataReader.h"
 #include "Mona/QualityOfService.h"
 #include "Mona/PacketReader.h"
-#include <set>
+#include "Mona/Parameters.h"
+#include "Mona/Event.h"
+
 
 namespace Mona {
 
-
-class Writer;
-class WriterHandler : public virtual Object {	
-public:
-	virtual void	close(Writer& writer,int code){}
+namespace Events {
+	struct OnClose : Event<void(Int32 code)> {};
 };
 
 class Client;
-class Writer : virtual NullableObject {
+class Writer : virtual NullableObject,
+	public Events::OnClose {
 public:
 	enum MediaType {
 		INIT=0,
@@ -46,9 +46,8 @@ public:
 		STOP
 	};
 	enum State {
-		GET,
-		CONNECTING,
-		CONNECTED,
+		OPENING,
+		OPENED,
 		CLOSED
 	};
 
@@ -58,17 +57,21 @@ public:
 	const QualityOfService&	qos() { return _qos; }
 
 
-	virtual Writer&			newWriter(WriterHandler& handler) { _handlers.insert(&handler); return *this; }
+	virtual Writer&			newWriter() { return *this; }
 
-	virtual State			state(State value=GET,bool minimal=false);
+	virtual void			abort() {} // must erase the queueing messages (don't change the writer state)
 
+	State					state() { return _state; }
+	void					open() { if(_state==OPENING) _state = OPENED;}
 	
 	/**	The main Writer of one session should close the entiere session
 		If code==0, it's a normal close
 		If code>0, it's a user close (from server application script)
 		If code<0, it's a system core close
 			-1 => Listener close!				*/
-	virtual void			close(int code=0);
+	virtual void			close(Int32 code=0);
+
+	
 
 	
 	/**	Call  by Multimedia framework on a writer Listener, on subscription. The first call takes a type=INIT parameter, 
@@ -77,7 +80,7 @@ public:
 		If it returns true, for every media type (AUDIO, VIDEO, DATA), an type=INIT call is invoked on start with time=MediaType,
 		and always publication name in packet.
 		Finally, every media data are passed (AUDIO, VIDEO and DATA), if the methods returns false, the cycle restart since the beginning */
-	virtual bool			writeMedia(MediaType type,UInt32 time,PacketReader& packet);
+	virtual bool			writeMedia(MediaType type,UInt32 time,PacketReader& packet,Parameters& properties);
 	virtual bool			writeMember(const Client& client);
 
     virtual DataWriter&		writeInvocation(const std::string& name){return DataWriter::Null;}
@@ -85,7 +88,7 @@ public:
 	virtual DataWriter&		writeResponse(UInt8 type){return writeMessage();}
 	virtual void			writeRaw(const UInt8* data,UInt32 size){}
 
-	virtual void			flush(bool full=false){}
+	virtual void			flush(bool full = false) {} // TODO change to return bool (return false if _state==CONNECTING), and not use an argument (just usefull for RTMFP)
 
 	virtual void			createReader(PacketReader& packet,std::shared_ptr<DataReader>& pReader) {}
 	virtual void			createWriter(std::shared_ptr<DataWriter>& pWriter) {}
@@ -96,18 +99,17 @@ public:
     static Writer			Null;
 
 protected:
-	Writer(WriterHandler* pHandler=NULL);
+	Writer(State state);
 	Writer(Writer& writer);
 	virtual ~Writer();
 
 	QualityOfService				_qos;
 	
 private:
-	Writer(bool isNull);
+	Writer();
 
-	std::set<WriterHandler*>		_handlers;
 	State							_state;
-	bool							_isNull;
+	const bool						_isNull;
 };
 
 

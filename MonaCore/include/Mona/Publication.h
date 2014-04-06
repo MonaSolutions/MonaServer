@@ -52,7 +52,7 @@ public:
 	void					pushVideo(PacketReader& packet,UInt32 time=0,UInt32 numberLostFragments=0);
 	void					pushData(DataReader& reader,UInt32 numberLostFragments=0);
 
-	Listener*				addListener(Exception& ex, Peer& peer,Writer& writer,bool unbuffered);
+	Listener*				addListener(Exception& ex, Peer& peer,Writer& writer);
 	void					removeListener(Peer& peer);
 
 	void					flush();

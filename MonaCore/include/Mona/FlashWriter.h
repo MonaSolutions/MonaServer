@@ -37,16 +37,19 @@ public:
 	AMFWriter&				writeAMFSuccess(const std::string& code, const std::string& description, bool withoutClosing = false) { return writeAMFState("_result", code, description, withoutClosing); }
 	AMFWriter&				writeAMFStatus(const std::string& code, const std::string& description, bool withoutClosing = false) { return writeAMFState("onStatus", code, description, withoutClosing); }
 	AMFWriter&				writeAMFError(const std::string& code, const std::string& description, bool withoutClosing = false) { return writeAMFState("_error", code, description, withoutClosing); }
-	bool					writeMedia(MediaType type,UInt32 time,PacketReader& packet);
+	bool					writeMedia(MediaType type,UInt32 time,PacketReader& packet,Parameters& properties);
 
 protected:
-	FlashWriter(WriterHandler* pHandler=NULL);
+	FlashWriter(State state);
 	FlashWriter(FlashWriter& writer);
 	virtual ~FlashWriter();
 
 	virtual AMFWriter&		write(AMF::ContentType type,UInt32 time=0,PacketReader* pPacket=NULL)=0;
 
 	AMFWriter&				writeAMFState(const std::string& name,const std::string& code,const std::string& description,bool withoutClosing=false);
+private:
+	std::string		_onAudio;
+	std::string		_onVideo;
 };
 
 

@@ -26,7 +26,7 @@ using namespace std;
 using namespace Mona;
 
 
-ServerConnection::ServerConnection(const SocketManager& manager, const SocketAddress& targetAddress) : address(targetAddress), _pClient(new TCPClient(manager)), _connected(false), isTarget(true),
+ServerConnection::ServerConnection(const SocketAddress& address,const SocketManager& manager) : address(address), _pClient(new TCPClient(manager)), _connected(false), isTarget(true),
 	_onError([this](const Mona::Exception& ex) { _ex.set(ex); }),
 	_onData([this](Mona::PoolBuffer& pBuffer) { return onData(pBuffer); }),
 	_onDisconnection([this]() { onDisconnection(); }) {
@@ -36,7 +36,7 @@ ServerConnection::ServerConnection(const SocketManager& manager, const SocketAdd
 	_pClient->OnData::subscribe(_onData);
 }
 
-ServerConnection::ServerConnection(const SocketAddress& peerAddress,SocketFile& file,const SocketManager& manager) : address(peerAddress), _pClient(new TCPClient(peerAddress,file,manager)), _connected(false), isTarget(false),
+ServerConnection::ServerConnection(const SocketAddress& address,SocketFile& file,const SocketManager& manager) : address(address), _pClient(new TCPClient(address,file,manager)), _connected(false), isTarget(false),
 	_onError([this](const Mona::Exception& ex) { _ex.set(ex); }),
 	_onData([this](Mona::PoolBuffer& pBuffer) { return onData(pBuffer); }),
 	_onDisconnection([this]() { onDisconnection(); }) {
@@ -52,26 +52,18 @@ ServerConnection::~ServerConnection() {
 	_pClient->OnError::unsubscribe(_onError);
 }
 
-UInt16 ServerConnection::port(const string& protocol) {
-	map<string, UInt16>::const_iterator it = _ports.find(protocol);
-	if(it==_ports.end())
-		return 0;
-	return it->second;
-}
 
-void ServerConnection::sendHello(const string& host,const map<string,UInt16>& ports) {
+void ServerConnection::sendHello(const MapParameters& configs) {
 	shared_ptr<ServerMessage> pMessage(new ServerMessage("",_pClient->manager().poolBuffers));
 	BinaryWriter& writer = pMessage->packet;
 	writer.writeBool(true);
-	writer.writeString(host);
-	writer.write8(ports.size());
-	/// ports
-	for(auto& it : ports) {
-		writer.writeString(it.first); // protocol
-		writer.write16(it.second); // port
+	/// configs
+	for(auto& it : configs) {
+		writer.writeString(it.first); // name
+		writer.writeString(it.second); // value
 	}
 	/// properties
-	for(auto& it: *this) {
+	for(auto& it : properties) {
 		writer.writeString(it.first); // name
 		writer.writeString(it.second); // value
 	}
@@ -97,7 +89,7 @@ void ServerConnection::close() {
 	_pClient->OnData::subscribe(_onData);
 }
 
-void ServerConnection::connect(const string& host,const map<string,UInt16>& ports) {
+void ServerConnection::connect(const MapParameters& configs) {
 	if(_connected)
 		return;
 	INFO("Attempt to join ", address.toString(), " server")
@@ -106,7 +98,7 @@ void ServerConnection::connect(const string& host,const map<string,UInt16>& port
 	bool success(false);
 	EXCEPTION_TO_LOG(success=_pClient->connect(ex, address),"ServerConnection to ", address.toString(), ", ");
 	if (success)
-		sendHello(host,ports);
+		sendHello(configs);
 }
 
 void ServerConnection::send(const shared_ptr<ServerMessage>& pMessage) {
@@ -187,22 +179,15 @@ UInt32 ServerConnection::onData(PoolBuffer& pBuffer) {
 				_pClient->disconnect();
 				return 0;
 			}
-			packet.readString((string&)host);
-			if(host.empty())
-				((string&)host) = address.host().toString();
-
-			UInt8 ports = packet.read8();
-			string protocol;
-			while(ports>0) {
-				packet.readString(protocol);
-				_ports[protocol] = packet.read16();
-				--ports;
-			}
+			MapParameters::clear();
+			/// properties itself
+			for(auto& it : properties)
+				setString(it.first,it.second);
+			/// configs
 			while(packet.available()) {
 				string key,value;
 				packet.readString(key);
-				packet.readString(value);
-				setString(key,value);
+				setString(key,packet.readString(value));
 			}
 			_connected = true;
 			OnHello::raise(*this);
@@ -225,7 +210,6 @@ void ServerConnection::onDisconnection(){
 	_receivingRefs.clear();
 	if(_connected)
 		_connected=false;
-	_ports.clear();
-	((string&)host).clear();
+	MapParameters::clear();
 	OnDisconnection::raise(_ex,*this); // in last because can delete this
 }

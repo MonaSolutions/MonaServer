@@ -135,7 +135,7 @@ public:
 	template<typename SocketSenderType>
 	bool send(Exception& ex,const std::shared_ptr<SocketSenderType>& pSender) {
 		// return if no data to send
-		if (!pSender->available())
+		if (!pSender || !pSender->available())
 			return true;
 
 		// We can write immediatly if there are no queue packets to write,
@@ -152,6 +152,8 @@ public:
 
 	template<typename SenderType>
 	PoolThread* send(Exception& ex,const std::shared_ptr<SenderType>& pSender, PoolThread* pThread) {
+		if (!pSender)
+			return pThread;
 		pSender->_pThis = pSender;
 		pSender->_pSocket.reset(new Socket(*this));
 		pThread = manager().poolThreads.enqueue<SenderType>(ex,pSender, pThread);

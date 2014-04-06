@@ -38,7 +38,7 @@ Sessions::~Sessions() {
 	Iterator it;
 	for (it = begin(); it != end(); ++it) {
 		it->second->expire();
-		it->second->kill(true);
+		it->second->kill(Session::SERVER_DEATH);
 		delete it->second;
 	}
 	_sessions.clear();
@@ -50,11 +50,11 @@ void Sessions::remove(map<UInt32,Session*>::iterator it) {
 	if (session._sessionsOptions&BYPEER) {
 		if (_sessionsByPeerId.erase(session.peer.id)==0) {
 			string buffer;
-			ERROR("Session ",session.name()," deletion unfound in peer sessions collection with key ",Util::FormatHex(session.peer.id,ID_SIZE,buffer));
-			for (auto it = _sessionsByPeerId.begin(); it != _sessionsByPeerId.end();++it) {
-				if (it->second == &session) {
+ 			ERROR("Session ",session.name()," deletion unfound in peer sessions collection with key ",Util::FormatHex(session.peer.id,ID_SIZE,buffer));
+ 			for (auto it = _sessionsByPeerId.begin(); it != _sessionsByPeerId.end();++it) {
+ 				if (it->second == &session) {
 					INFO("The correct key was ",Util::FormatHex(it->first,ID_SIZE,buffer));
-					_sessionsByPeerId.erase(it);
+ 					_sessionsByPeerId.erase(it);
 					break;
 				}
 			}
@@ -62,7 +62,6 @@ void Sessions::remove(map<UInt32,Session*>::iterator it) {
 	}
 	if (session._sessionsOptions&BYADDRESS) {
 		if (_sessionsByAddress.erase(session.peer.address)==0) {
-			string buffer;
 			ERROR("Session ",session.name()," deletion unfound in address sessions collection with key ",session.peer.address.toString());
 			for (auto it = _sessionsByAddress.begin(); it != _sessionsByAddress.end();++it) {
 				if (it->second == &session) {

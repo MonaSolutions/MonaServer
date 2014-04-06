@@ -59,9 +59,9 @@ void FlashStream::close(FlashWriter& writer,const string& error,int code) {
 	// TODO what doing for FlashStream?
 }
 
-void FlashStream::process(AMF::ContentType type,UInt32 time,PacketReader& packet,FlashWriter& writer,UInt32 numberLostFragments) {
+bool FlashStream::process(AMF::ContentType type,UInt32 time,PacketReader& packet,FlashWriter& writer,UInt32 numberLostFragments) {
 	if(type==AMF::EMPTY)
-		return;
+		return true;
 	
 	writer.callbackHandle = 0;
 
@@ -100,6 +100,7 @@ void FlashStream::process(AMF::ContentType type,UInt32 time,PacketReader& packet
 	if (ex)
 		close(writer,ex.error());
 	writer.callbackHandle = 0;
+	return !ex;
 }
 
 
@@ -110,16 +111,14 @@ void FlashStream::messageHandler(Exception& ex,const string& name,AMFReader& mes
 		string publication;
 		message.readString(publication);
 		// TODO implements completly NetStream.play method, with possible NetStream.play.failed too!
-		double start = -2000;
-		if(message.available())
-			start = message.readNumber();
-
 		Exception ex;
-		_pListener = invoker.subscribe(ex,peer,publication,writer,start);
+		_pListener = invoker.subscribe(ex,peer,publication,writer);
 		if (ex) {
 			writer.writeAMFStatus("NetStream.Play.Failed",ex.error());
 			return;
 		}
+		if(message.available())
+			_pListener->setNumber("unbuffered",message.readNumber()==-3000);
 
 		if(_bufferTime>0) {
 			// To do working the buffertime on receiver side

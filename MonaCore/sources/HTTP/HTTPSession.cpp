@@ -38,7 +38,7 @@ HTTPSession::HTTPSession(const SocketAddress& peerAddress, SocketFile& file, Pro
 
 }
 
-void HTTPSession::kill(bool shutdown){
+void HTTPSession::kill(UInt32 type){
 	if(died)
 		return;
 	if (_isWS)
@@ -47,14 +47,14 @@ void HTTPSession::kill(bool shutdown){
 		invoker.unsubscribe(peer, _pListener->publication.name());
 		_pListener = NULL;
 	}
-	WSSession::kill(shutdown);
+	WSSession::kill(type);
 }
 
 bool HTTPSession::buildPacket(PoolBuffer& pBuffer,PacketReader& packet) {
 	if(_isWS)
 		return WSSession::buildPacket(pBuffer,packet);
 	// consumes all!
-	shared_ptr<HTTPPacketBuilding> pHTTPPacketBuilding(new HTTPPacketBuilding(invoker,pBuffer, _ppBuffer));
+	shared_ptr<HTTPPacketBuilding> pHTTPPacketBuilding(new HTTPPacketBuilding(invoker,pBuffer,_ppBuffer));
 	_packets.emplace_back(pHTTPPacketBuilding->pPacket);
 	decode<HTTPPacketBuilding>(pHTTPPacketBuilding);
 	return true;
@@ -102,6 +102,8 @@ void HTTPSession::packetHandler(PacketReader& reader) {
 	peer.setPath(pPacket->path);
 	peer.setQuery(pPacket->query);
 	peer.setServerAddress(pPacket->serverAddress);
+	// erase previous parameters
+	peer.properties().clear();
 	peer.properties().setNumber("HTTPVersion", pPacket->version); // TODO check how is named for AMF
 	Util::UnpackQuery(peer.query,peer.properties());
 	
@@ -208,17 +210,10 @@ void HTTPSession::packetHandler(PacketReader& reader) {
 	if (ex)
 		_writer.close(ex);
 	else if(!peer.connected)
-		kill();
+		kill(REJECTED_DEATH);
 	else
 		_writer.timeout.update();
 
-	// erase request, we are in a pull mode (response just if request before)
-	if (_writer.pRequest) {
-		// erase previous parameters
-		peer.properties().clear();
-		// erase previous request
-		_writer.pRequest.reset();
-	}
 }
 
 void HTTPSession::manage() {
@@ -226,9 +221,9 @@ void HTTPSession::manage() {
 		WSSession::manage();
 		return;
 	}
-	// timeout http session
+	// timeout http session // TODO add a timeout for Listening HTTP session without media reception??
 	if (peer.connected && _options.timeout > 0 && !_pListener && _writer.timeout.isElapsed(_options.timeout))
-		kill();
+		kill(TIMEOUT_DEATH);
 }
 
 void HTTPSession::processOptions(Exception& ex,const shared_ptr<HTTPPacket>& pPacket) {

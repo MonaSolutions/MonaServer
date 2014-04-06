@@ -36,30 +36,19 @@ int LUAServer::Send(lua_State* pState) {
 	SCRIPT_CALLBACK_RETURN
 }
 
-int LUAServer::Port(lua_State* pState) {
-	SCRIPT_CALLBACK(ServerConnection,server)
-		SCRIPT_WRITE_INT(server.port(SCRIPT_READ_STRING("")))
-	SCRIPT_CALLBACK_RETURN
-}
-
-
 int LUAServer::Get(lua_State* pState) {
 	SCRIPT_CALLBACK(ServerConnection,server)
 		const char* name = SCRIPT_READ_STRING("");
 		if(strcmp(name,"send")==0) {
 			SCRIPT_WRITE_FUNCTION(&LUAServer::Send)
-		} else if(strcmp(name,"host")==0) {
-			SCRIPT_WRITE_STRING(server.host.c_str())
 		} else if(strcmp(name,"isTarget")==0) {
 			SCRIPT_WRITE_BOOL(server.isTarget)
 		} else if(strcmp(name,"address")==0) {
 			SCRIPT_WRITE_STRING(server.address.toString().c_str())
-		} else if(strcmp(name,"port")==0) {
-			SCRIPT_WRITE_FUNCTION(&LUAServer::Port)
 		} else if (strcmp(name,"reject")==0) {
 			server.reject(SCRIPT_READ_STRING("unknown error"));
-		} else if (strcmp(name,"parameters")==0) {
-			if(Script::Collection(pState, -1, "parameters", server.count())) {
+		} else if (strcmp(name,"configs")==0) {
+			if(Script::Collection(pState, 1, "configs", server.count())) {
 				for (auto& it : server) {
 					lua_pushstring(pState, it.first.c_str());
 					if (String::ICompare(it.second, "false") == 0 || String::ICompare(it.second, "nil") == 0)
@@ -71,9 +60,13 @@ int LUAServer::Get(lua_State* pState) {
 			}
 		} else {
 			string value;
-			server.getString(name, value);
-			if (server.getString(name, value))
-				SCRIPT_WRITE_STRING(value.c_str())
+			if (server.getString(name, value)) {
+				if (String::ICompare(value, "false") == 0 || String::ICompare(value, "nil") == 0)
+					lua_pushboolean(pState, 0);
+				else
+					lua_pushlstring(pState, value.c_str(), value.size());
+			}
+				
 		}
 	SCRIPT_CALLBACK_RETURN
 }

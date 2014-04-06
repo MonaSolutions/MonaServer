@@ -28,13 +28,14 @@ namespace Mona {
 
 class RTMPWriter : public FlashWriter, public virtual Object {
 public:
-	RTMPWriter(UInt8 id,TCPSession& session,std::shared_ptr<RTMPSender>& pSender,const std::shared_ptr<RC4_KEY>& pEncryptKey);
+	RTMPWriter(UInt32 id,TCPSession& session,std::shared_ptr<RTMPSender>& pSender,const std::shared_ptr<RC4_KEY>& pEncryptKey);
 
-	const UInt8		id;
+	const UInt32	id;
 	RTMPChannel		channel;
+	bool			isMain;
 
-	State			state(State value=GET,bool minimal=false);
-	void			close(int code=0);
+	void			abort() { if(_pSender) _pSender.reset();}
+	void			close(Int32 code=0);
 
 	void			writeRaw(const UInt8* data,UInt32 size);
 
@@ -51,7 +52,6 @@ private:
 	RTMPChannel						_channel;
 	std::shared_ptr<RTMPSender>&	_pSender;
 	TCPSession&						_session;
-	bool							_isMain;
 	const std::shared_ptr<RC4_KEY>	_pEncryptKey;
 	
 };

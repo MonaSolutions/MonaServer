@@ -92,7 +92,7 @@ public:
 
 protected:
 	WSWriter&		wsWriter() { return _writer; }
-	void			kill(bool shutdown=false);
+	void			kill(UInt32 type=NORMAL_DEATH);
 	Publication*	_pPublication;
 	Listener*		_pListener;
 	

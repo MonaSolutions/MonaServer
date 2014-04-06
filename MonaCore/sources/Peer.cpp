@@ -146,16 +146,14 @@ void Peer::onConnection(Exception& ex, Writer& writer,DataReader& parameters,Dat
 	if(!connected) {
 		_pWriter = &writer;
 
-		writer.state(Writer::CONNECTING);
 		_handler.onConnection(ex, *this,parameters,response);
 		if (!ex)
 			(bool&)connected = ((Clients&)_handler.clients).add(ex,*this);
 		if (ex) {
-			writer.state(Writer::CONNECTED,true);
+			writer.abort();
 			_pWriter = NULL;
-			return;
 		}
-		writer.state(Writer::CONNECTED);
+		writer.open(); // open even if "ex" to send error messages!
 	} else
 		ERROR("Client ", Util::FormatHex(id, ID_SIZE, _handler.buffer), " seems already connected!")
 }

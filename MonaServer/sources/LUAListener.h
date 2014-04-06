@@ -19,8 +19,8 @@ This file is a part of Mona.
 
 #pragma once
 
-#include "Script.h"
 #include "Mona/Listener.h"
+#include "Script.h"
 
 class LUAListener {
 public:

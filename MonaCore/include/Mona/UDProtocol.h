@@ -44,17 +44,16 @@ public:
 
 protected:
 	UDProtocol(const char* name, Invoker& invoker, Sessions& sessions) : _socket(invoker.sockets), Protocol(name, invoker, sessions) {
-		if (!OnError::subscribed()) {
-			onError = [this](const Exception& ex) { WARN("Protocol ", this->name, ", ", ex.error()); };
-			_socket.OnError::subscribe(onError);
-		} else
-			_socket.OnError::subscribe(*this);
-
 		onPacket = [this](PoolBuffer& pBuffer, const SocketAddress& address) {
 			if(!auth(address))
 				return;
 			OnPacket::raise(pBuffer,address);
 		};
+		if (!OnError::subscribed()) {
+			onError = [this](const Exception& ex) { DEBUG("Protocol ", this->name, ", ", ex.error()); };
+			_socket.OnError::subscribe(onError);
+		} else
+			_socket.OnError::subscribe(*this);
 		_socket.OnPacket::subscribe(onPacket);
 	}
 	virtual ~UDProtocol() {

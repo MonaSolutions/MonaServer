@@ -57,7 +57,7 @@ const string& Session::name() const {
 	return _name;
 }
 
-void Session::kill(bool shutdown) {
+void Session::kill(UInt32 type) {
 	if(died)
 		return;
 	peer.onDisconnection();

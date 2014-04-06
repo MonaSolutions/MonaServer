@@ -19,8 +19,9 @@ This file is a part of Mona.
 
 
 #include "Mona/SocketAddress.h"
-#include "Mona/String.h"
 #include "Mona/DNS.h"
+#include "Mona/String.h"
+
 
 using namespace std;
 

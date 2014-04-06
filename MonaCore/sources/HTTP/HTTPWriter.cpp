@@ -25,7 +25,7 @@ using namespace std;
 
 namespace Mona {
 
-HTTPWriter::HTTPWriter(TCPSession& session) : _session(session),_pThread(NULL),contentType(HTTP::CONTENT_TEXT),contentSubType("html; charset=utf-8") {
+HTTPWriter::HTTPWriter(TCPSession& session) : _session(session),_pThread(NULL),contentType(HTTP::CONTENT_TEXT),contentSubType("html; charset=utf-8"),Writer(session.peer.connected ? OPENED : OPENING) {
 	
 }
 
@@ -46,20 +46,16 @@ void HTTPWriter::close(const Exception& ex) {
 	close(code);
 }
 
-void HTTPWriter::close(int code) {
-	if (code >= 0) {
-		if (code > 0 && pRequest)
-			createSender().writeError(code,_buffer,true);
-		_session.kill();
-	}
+void HTTPWriter::close(Int32 code) {
+	if (code < 0)
+		return; // listener!
+	if (code > 0 && pRequest)
+		createSender().writeError(code,_buffer,true);
 	Writer::close(code);
+	_session.kill(code);
 }
 
 void HTTPWriter::flush(bool full) {
-	if(state()==CONNECTING) {
-		ERROR("Violation policy, impossible to flush data on a connecting writer");
-		return;
-	}
 
 	if(_senders.empty())
 		return;
@@ -77,13 +73,6 @@ void HTTPWriter::flush(bool full) {
 	_senders.clear();
 }
 
-
-HTTPWriter::State HTTPWriter::state(State value,bool minimal) {
-	State state = Writer::state(value,minimal);
-	if(state==CONNECTED && minimal)
-		_senders.clear();
-	return state;
-}
 
 DataWriter& HTTPWriter::write(const string& code, HTTP::ContentType type, const string& subType, const UInt8* data,UInt32 size) {
 	if(state()==CLOSED)
@@ -109,7 +98,7 @@ DataWriter& HTTPWriter::writeResponse(UInt8 type) {
 	return writeMessage();
 }
 
-bool HTTPWriter::writeMedia(MediaType type,UInt32 time,PacketReader& packet) {
+bool HTTPWriter::writeMedia(MediaType type,UInt32 time,PacketReader& packet,Parameters& properties) {
 	if(state()==CLOSED)
 		return true;
 	switch(type) {
@@ -130,7 +119,7 @@ bool HTTPWriter::writeMedia(MediaType type,UInt32 time,PacketReader& packet) {
 				ex.set(Exception::APPLICATION, "HTTP streaming for a ",pRequest->contentSubType," unsupported");
 			if (ex) {
 				close(ex);
-				break;
+				return false;
 			}
 			// write a HTTP header without content-length (data==NULL and size>0)
 			_pMedia->write(write("200", pRequest->contentType, pRequest->contentSubType, NULL, 1).packet);
@@ -144,7 +133,7 @@ bool HTTPWriter::writeMedia(MediaType type,UInt32 time,PacketReader& packet) {
 			break;
 		}
 		default:
-			return Writer::writeMedia(type,time,packet);
+			return Writer::writeMedia(type,time,packet,properties);
 	}
 	return true;
 }

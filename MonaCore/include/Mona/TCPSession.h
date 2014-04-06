@@ -29,9 +29,8 @@ namespace Mona {
 class TCPSession : public Session, public virtual Object {
 public:
 	
-	void kill(bool shutdown=false) { _client.disconnect(); Session::kill(shutdown); }
+	void kill(UInt32 type=NORMAL_DEATH) { _client.disconnect(); Session::kill(type); }
 
-	
 	template<typename DecodingType>
 	void decode(const std::shared_ptr<DecodingType>& pDecoding,const SocketAddress& address) {
 		WARN("TCP Session ", name(), " cannot updated its address (TCP session is in a connected way");

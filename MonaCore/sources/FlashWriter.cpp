@@ -29,7 +29,7 @@ using namespace std;
 namespace Mona {
 
 
-FlashWriter::FlashWriter(WriterHandler* pHandler) : callbackHandle(0),Writer(pHandler) {
+FlashWriter::FlashWriter(State state) : callbackHandle(0),Writer(state) {
 }
 
 FlashWriter::FlashWriter(FlashWriter& writer) : callbackHandle(writer.callbackHandle),Writer(writer) {
@@ -65,22 +65,46 @@ AMFWriter& FlashWriter::writeAMFState(const string& name,const string& code,cons
 }
 
 
-bool FlashWriter::writeMedia(MediaType type,UInt32 time,PacketReader& packet) {
+bool FlashWriter::writeMedia(MediaType type,UInt32 time,PacketReader& packet,Parameters& properties) {
+	
 	switch(type) {
 		case START:
-			writeAMFStatus("Play.PublishNotify",string((const char*)packet.current(),packet.available()) + " is now published");
+			writeAMFStatus("NetStream.Play.PublishNotify",string((const char*)packet.current(),packet.available()) + " is now published");
 			break;
 		case STOP:
-			writeAMFStatus("Play.UnpublishNotify",string((const char*)packet.current(),packet.available()) +" is now unpublished");
+			writeAMFStatus("NetStream.Play.UnpublishNotify",string((const char*)packet.current(),packet.available()) +" is now unpublished");
 			break;
 		case AUDIO:
-			write(AMF::AUDIO,time,&packet);
+			if (!_onAudio.empty()) {
+				AMFWriter& writer(write(AMF::DATA));
+				writer.amf0Preference = true;
+				writer.writeString(_onAudio);
+				writer.amf0Preference = false;
+				writer.writeNumber(time);
+				writer.writeBytes(packet.current(),packet.available());
+			} else
+				write(AMF::AUDIO,time,&packet);
 			break;
 		case VIDEO:
-			write(AMF::VIDEO,time,&packet);
+			if (!_onVideo.empty()) {
+				AMFWriter& writer(write(AMF::DATA));
+				writer.amf0Preference = true;
+				writer.writeString(_onVideo);
+				writer.amf0Preference = false;
+				writer.writeNumber(time);
+				writer.writeBytes(packet.current(),packet.available());
+				
+			} else
+				write(AMF::VIDEO,time,&packet);
 			break;
 		case DATA:
 			write(AMF::DATA,time,&packet);
+			break;
+		case INIT:
+			_onAudio.clear();
+			_onVideo.clear();
+			properties.getString("onAudio",_onAudio);
+			properties.getString("onVideo",_onVideo);
 			break;
 	}
 	return true;

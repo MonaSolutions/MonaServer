@@ -37,17 +37,8 @@ bool tryToNumber(const char * value, T expected) {
 
 	Exception ex;
 	T result = String::ToNumber<T>(ex, value);
-
-	if (ex) {
-		DEBUG("Exception in ToNumber(", value, ",", expected, ") : ", ex.error());
+	if (ex || result != expected)
 		return false;
-	}
-
-	if (result != expected) {
-		DEBUG("Invalid Result in ToNumber(", value, ",", expected, ") : ", result);
-		return false;
-	}
-
 	return true;
 }
 
@@ -56,17 +47,8 @@ template<>
 bool tryToNumber<float>(const char * value, float expected) {
 	Exception ex;
 	float result = String::ToNumber<float>(ex, value);
-
-	if (ex) {
-		DEBUG("Exception in ToNumber(", value, ",", expected, ") : ", ex.error());
+	if (ex || fabs(result - expected) > FLT_EPSILON)
 		return false;
-	}
-
-    if (fabs(result - expected) > FLT_EPSILON) {
-		DEBUG("Invalid Result in ToNumber(", value, ",", expected, ") : ", result);
-		return false;
-	}
-
 	return true;
 }
 
@@ -74,17 +56,8 @@ template<>
 bool tryToNumber<double>(const char * value, double expected) {
 	Exception ex;
 	double result = String::ToNumber<double>(ex, value);
-
-	if (ex) {
-		DEBUG("Exception in ToNumber(", value, ",", expected, ") : ", ex.error());
+	if (ex || fabs(result - expected) > DBL_EPSILON)
 		return false;
-	}
-
-    if (fabs(result - expected) > DBL_EPSILON) {
-		DEBUG("Invalid Result in ToNumber(", value, ",", expected, ") : ", result);
-		return false;
-	}
-
 	return true;
 }
 

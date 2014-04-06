@@ -24,7 +24,6 @@ This file is a part of Mona.
 #include <mutex>
 
 #if defined(_WIN32)
-#include <winsock2.h>
 #include <ws2tcpip.h>
 #define NET_INVALID_SOCKET  INVALID_SOCKET
 #define NET_SOCKET		    SOCKET
@@ -80,7 +79,7 @@ This file is a part of Mona.
 #include <sys/select.h>
 #endif
 #include <sys/ioctl.h>
-#if defined(_OS_FAMILY_VMS)
+#if defined(_OS_VMS)
 #include <inet.h>
 #else
 #include <arpa/inet.h>
@@ -88,7 +87,7 @@ This file is a part of Mona.
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <netdb.h>
-#if defined(_OS_FAMILY_UNIX)
+#if defined(_OS_UNIX)
 #include <net/if.h>
 #endif
 #if defined(sun) || defined(__APPLE__)
@@ -98,7 +97,7 @@ This file is a part of Mona.
 #define NET_INVALID_SOCKET  -1
 #define NET_SOCKET           int
 #define NET_SOCKLEN          socklen_t
-#if defined(_OS_FAMILY_BSD)
+#if defined(_OS_BSD)
 #define NET_IOCTLREQUEST     unsigned long
 #else
 #define NET_IOCTLREQUEST     int
@@ -158,7 +157,7 @@ This file is a part of Mona.
 #define NET_NO_DATA         NO_DATA
 #endif
 
-#if defined(_OS_FAMILY_BSD) || ( _OS == _OS_TRU64) || (_OS ==  _OS_AIX) || ( _OS ==  _OS_IRIX) || (_OS == _OS_QNX) || (_OS == _OS_VXWORKS)
+#if defined(_OS_BSD) || ( _OS == _OS_TRU64) || (_OS ==  _OS_AIX) || ( _OS ==  _OS_IRIX) || (_OS == _OS_QNX) || (_OS == _OS_VXWORKS)
 #define NET_HAVE_SALEN      1
 #endif
 
@@ -203,10 +202,15 @@ public:
 #else
 	static int  LastError() { return errno; }
 #endif
-	static bool CheckError(Exception& ex);
-    static void SetError(Exception& ex) { std::string message; SetError(ex, LastError(), message); }
-    static void SetError(Exception& ex, int error) { std::string message; SetError(ex, error, message); }
-	static void SetError(Exception& ex, int error, const std::string& argument);
+
+	static std::string& GetErrorMessage(int error, std::string& message);
+
+	template <typename ...Args>
+	static void SetException(Exception& ex, int error, Args&&... args) {
+		std::string message;
+		ex.set(Exception::SOCKET, GetErrorMessage(error,message), args ...);
+	}
+
 
 #if defined(_WIN32)
 	static bool InitializeNetwork(Exception& ex);

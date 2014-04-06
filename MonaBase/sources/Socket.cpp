@@ -86,7 +86,7 @@ public:
 			address.set((sockaddr&)addr);
 			return address;
 		}
-		Net::SetError(ex);
+		Net::SetException(ex,Net::LastError());
 		return address;
 	}
 
@@ -106,7 +106,7 @@ public:
 		int err(Net::LastError());
 		if (err == NET_ENOTCONN && _connecting)
 			err = NET_EAGAIN;
-		Net::SetError(ex,err);
+		Net::SetException(ex,err);
 		return address;
 	}
 
@@ -191,7 +191,7 @@ public:
 			sockfd = ::accept(_sockfd, (sockaddr*)&addr, &addrSize);  // TODO acceptEx?
 		} while (sockfd == NET_INVALID_SOCKET && Net::LastError() == NET_EINTR);
 		if (sockfd == NET_INVALID_SOCKET) {
-			Net::SetError(ex);
+			Net::SetException(ex, Net::LastError());
 			return NET_INVALID_SOCKET;
 		}
 		address.set((sockaddr&)addr);
@@ -219,7 +219,7 @@ public:
 		if (rc) {
 			int err = Net::LastError();
 			if (err != NET_EINPROGRESS && err != NET_EWOULDBLOCK) {
-				Net::SetError(ex, err, address.toString());
+				Net::SetException(ex, err," (address=",address.toString(),", allowBroadcast=",allowBroadcast,")");
 				return false;
 			}
 		}
@@ -250,7 +250,7 @@ public:
 		}
 		int rc = ::bind(_sockfd, address.addr(), address.size());
 		if (rc != 0) {
-			Net::SetError(ex, Net::LastError(), address.toString());
+			Net::SetException(ex, Net::LastError()," (address=",address.toString(),", reuseAddress=",reuseAddress,")");
 			return false;
 		}
 		managed(ex); // warning
@@ -271,13 +271,8 @@ public:
 			setReusePort(true);
 		}
 		int rc = ::bind(_sockfd, address.addr(), address.size());
-		if (rc != 0) {
-			Net::SetError(ex, Net::LastError(), address.toString());
-			return false;
-		}
-
-		if (::listen(_sockfd, backlog) != 0) {
-			Net::SetError(ex);
+		if (rc != 0 || ::listen(_sockfd, backlog) != 0) {
+			Net::SetException(ex, Net::LastError()," (address=",address.toString(),", reuseAddress=",reuseAddress,", backlog=",backlog,")");
 			return false;
 		}
 
@@ -289,7 +284,7 @@ public:
 	void shutdown(Exception& ex,Socket::ShutdownType type) {
 		ASSERT(_initialized)
 		if (::shutdown(_sockfd, type) != 0)
-			Net::SetError(ex);
+			Net::SetException(ex, Net::LastError()," (type=",type,")");
 	}
 
 	
@@ -310,7 +305,7 @@ public:
 			if (err == NET_EAGAIN || err == NET_EWOULDBLOCK || (err == NET_ENOTCONN && _connecting))
 				rc = 0;
 			else
-				Net::SetError(ex, err);
+				Net::SetException(ex, err," (length=",length,", flags=",flags,")");
 		}
 		if (rc >= 0) {
 			lock_guard<mutex> lock(_mutexAsync);
@@ -332,7 +327,7 @@ public:
 			if (err == NET_EAGAIN || err == NET_EWOULDBLOCK || (err == NET_ENOTCONN && _connecting))
 				rc = 0;
 			else
-				Net::SetError(ex, err);
+				Net::SetException(ex, err," (length=",length,", flags=",flags,")");
 		}
 		if (rc >= 0) {
 			lock_guard<mutex> lock(_mutexAsync);
@@ -363,7 +358,7 @@ public:
 			int err = Net::LastError();
 			if (err == NET_EAGAIN || err == NET_EWOULDBLOCK)
 				return 0;
-			Net::SetError(ex, err);
+			Net::SetException(ex, err," (length=",length,", flags=",flags,", address=",address.toString(),")");
 		}
 		return rc;
 	}
@@ -386,7 +381,7 @@ public:
 			int err = Net::LastError();
 			if (err == NET_EAGAIN || err == NET_EWOULDBLOCK)
 				return 0;
-			Net::SetError(ex, err);
+			Net::SetException(ex, err," (length=",length,", flags=",flags,")");
 		}
 		address.set((sockaddr&)addr);
 		return rc;
@@ -482,7 +477,7 @@ private:
 		ASSERT_RETURN(_initialized, value);
         NET_SOCKLEN length(sizeof(value));
 		if (::getsockopt(_sockfd, level, option, reinterpret_cast<char*>(&value), &length) == -1)
-			Net::SetError(ex);
+			Net::SetException(ex, Net::LastError()," (level=",level,", option=",option,", length=",length,")");
 		return value;
 	}
 	int	getOption(Exception& ex, int level, int option) const { int value; return getOption<int>(ex, level, option, value); }
@@ -492,7 +487,7 @@ private:
 		ASSERT(_initialized);
         NET_SOCKLEN length(sizeof(value));
 		if (::setsockopt(_sockfd, level, option, reinterpret_cast<const char*>(&value), length) == -1)
-			Net::SetError(ex);
+			Net::SetException(ex, Net::LastError()," (level=",level,", option=",option,", length=",length,")");
 	}
 	void setOption(Exception& ex, int level, int option, int value) { setOption<int>(ex, level, option, value); }
 
@@ -619,7 +614,7 @@ int Socket::IOCTL(Exception& ex,NET_SOCKET sockfd,NET_IOCTLREQUEST request,int v
 	int rc = ::ioctl(sockfd, request, &value);
 #endif
 	if (rc != 0)
-		Net::SetError(ex);
+		Net::SetException(ex, Net::LastError()," (request=",request,")");
 	return value;
 }
 

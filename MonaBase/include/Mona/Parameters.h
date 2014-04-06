@@ -27,7 +27,21 @@ namespace Mona {
 class Parameters : public virtual Object {
 public:
 
+	template<typename NumberType,NumberType defaultValue=0>
+	NumberType getNumber(const std::string& key) const {
+		NumberType result(defaultValue);
+		getNumber(key,result);
+		return result;
+	}
+	template<bool defaultValue=false>
+	bool getBool(const std::string& key) const {
+		bool result(defaultValue);
+		getBool(key,result);
+		return result;
+	}
+
 	bool getString(const std::string& key, std::string& value) const;
+	
 	template<typename NumberType>
 	bool getNumber(const std::string& key, NumberType& value) const {
 		const  std::string* pTemp = getRaw(key);

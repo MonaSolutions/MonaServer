@@ -19,9 +19,9 @@ This file is a part of Mona.
 
 #pragma once
 
-#include "Mona/TCPServer.h"
-#include "Mona/Logs.h"
+
 #include "Broadcaster.h"
+#include "Mona/TCPServer.h"
 
 
 
@@ -34,7 +34,7 @@ class Servers : public Broadcaster,
 		public ServerEvents::OnMessage,
 		public ServerEvents::OnDisconnection {
 public:
-	Servers(Mona::UInt16 port,const std::string& targets,const Mona::SocketManager& manager);
+	Servers(const Mona::MapParameters& configs,const Mona::SocketManager& manager);
 	virtual ~Servers();
 	
 	void manage();
@@ -44,9 +44,6 @@ public:
 	Broadcaster			initiators;
 	Broadcaster			targets;
 
-
-	std::string								host;
-	std::map<std::string, Mona::UInt16>		ports;
 
 private:
 	Mona::UInt32		flush(const std::string& handler);
@@ -64,6 +61,6 @@ private:
 	std::set<ServerConnection*>				_clients;
 
 	Mona::TCPServer							_server;
-	Mona::SocketAddress						_address;
+	const Mona::MapParameters&				_configs;
 };
 

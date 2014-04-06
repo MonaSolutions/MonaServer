@@ -54,7 +54,7 @@ ADD_TEST(FileSystemTest, Creation) {
 	CHECK(!FileSystem::Exists(Path2));
 	CHECK(FileSystem::Exists(Path2, true));
 
-	FileSystem::RemoveAll(ex,Path);
+	FileSystem::Remove(ex,Path);
 	CHECK(!ex);
 	CHECK(!FileSystem::Exists(Path,true));
 
@@ -67,7 +67,7 @@ ADD_TEST(FileSystemTest, Creation) {
 	Path2.assign(Path);
 	Path2.append("s/");
 	if (FileSystem::Exists(Path2))
-		CHECK(FileSystem::Remove(Path2));
+		CHECK(FileSystem::Remove(ex,Path2) && !ex);
 	CHECK(FileSystem::Rename(Path, Path2));
 	CHECK(!FileSystem::Exists(Path,true));
 	CHECK(FileSystem::Exists(Path2));
@@ -89,6 +89,7 @@ ADD_TEST(FileSystemTest, Properties) {
 }
 
 ADD_TEST(FileSystemTest, Deletion) {
-	CHECK(FileSystem::Remove(Path2));
+	Exception ex;
+	CHECK(FileSystem::Remove(ex,Path2) && !ex);
 }
 

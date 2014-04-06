@@ -72,10 +72,10 @@ void Decoding::handle(Exception& ex) {
 	if (!pSession)
 		return;
 	PacketReader packet(_current, _size);
-	if (_address.host().isWildcard())
-		pSession->receive(packet);
-	else
+	if (_address)
 		pSession->receive(packet, _address);
+	else
+		pSession->receive(packet);
 }
 
 

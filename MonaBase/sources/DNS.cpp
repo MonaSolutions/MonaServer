@@ -20,7 +20,6 @@ This file is a part of Mona.
 
 #include "Mona/DNS.h"
 #include "Mona/SocketAddress.h"
-#include "Mona/Socket.h"
 
 using namespace std;
 
@@ -42,7 +41,7 @@ bool DNS::HostByName(Exception& ex, const string& hostname, HostEntry& host) {
 		freeaddrinfo(pAI);
 		return true;
 	}
-	SetAIError(ex,rc, hostname);
+	SetAIError(ex,rc, " (hostname=",hostname,")");
 	return false;
 }
 
@@ -66,7 +65,7 @@ bool DNS::HostByAddress(Exception& ex,const IPAddress& address, HostEntry& host)
 			return true;
 		}
 	}
-	SetAIError(ex, rc, address.toString());
+	SetAIError(ex, rc, " (address=",address.toString(),")");
 	return false;
 }
 
@@ -101,13 +100,5 @@ bool DNS::HostName(Exception& ex,string& host) {
 	return false;
 }
 
-
-void DNS::SetAIError(Exception& ex, int error, const string& argument) {
-	// TODO tester!!!
-	if (argument.empty())
-		ex.set(Exception::NETADDRESS, gai_strerror(error));
-	else
-		ex.set(Exception::NETADDRESS, gai_strerror(error), " (", argument, ")");
-}
 
 } // namespace Mona

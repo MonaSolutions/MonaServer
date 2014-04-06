@@ -38,36 +38,12 @@ namespace Mona {
 
 using namespace std;
 
-
-class TempPaths : public virtual Object {
-public:
-	virtual ~TempPaths() {
-		for (const string& path : _paths)
-			FileSystem::Remove(path);
-	}
-
-	void add(const string& path) {
-		lock_guard<mutex> lock(_mutex);
-		_paths.insert(path);
-	}
-
-private:
-	set<string> _paths;
-	mutex       _mutex;
-};
-
-static TempPaths Temps;
-
 // TODO eliminate everywhere the VMS support!
 #if defined(_WIN32)
 const string FileSystem::_PathSeparator(";");
 #else
 const string FileSystem::_PathSeparator(":");
 #endif
-
-void FileSystem::RegisterForDeletion(const string& path) {
-	Temps.add(path);
-}
 
 FileSystem::Attributes& FileSystem::GetAttributes(Exception& ex,const string& path,Attributes& attributes) {
 	struct stat status;
@@ -156,25 +132,22 @@ bool FileSystem::CreateDirectory(const string& path) {
 #endif
 }
 
-bool FileSystem::Remove(const string& path) {
-	if (!Exists(path, true))
-		return true;
-#if defined(_WIN32)
-	if (remove(path.c_str()) == 0)
-		return true;
-	return RemoveDirectoryA(path.c_str()) != 0;
-#else
-	return remove(path.c_str())==0;
-#endif
-}
-
-void FileSystem::RemoveAll(Exception& ex,const string& path) {
+bool FileSystem::Remove(Exception& ex,const string& path) {
 	Exception exc;
-	Files files(exc, path); // if exception it's a file or a not existed folded
+	Files files(exc, path); // if exception it's a file or a not existed folder
 	for (const string& file : files)
-		RemoveAll(ex,file);
-	if (!Remove(path))
-		ex.set(Exception::FILE, "Impossible to remove ", path);
+		Remove(ex,file);
+
+	if (!Exists(path, true))
+		return !ex;
+	if (remove(path.c_str()) == 0)
+		return !ex;
+#if defined(_WIN32)
+	if (RemoveDirectoryA(path.c_str()) != 0)
+		return !ex;
+#endif
+	ex.set(Exception::FILE, "Impossible to remove ", path);
+	return false;
 }
 
 

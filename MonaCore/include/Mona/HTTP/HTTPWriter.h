@@ -20,9 +20,9 @@ This file is a part of Mona.
 #pragma once
 
 #include "Mona/Mona.h"
+#include "Mona/TCPSession.h"
 #include "Mona/Writer.h"
 #include "Mona/HTTP/HTTPSender.h"
-#include "Mona/TCPSession.h"
 #include "Mona/MediaContainer.h"
 
 namespace Mona {
@@ -37,14 +37,14 @@ public:
 	std::shared_ptr<HTTPPacket>		pRequest;
 	Time							timeout;
 
-	virtual State			state(State value=GET,bool minimal=false);
+	virtual void			abort() {_senders.clear();}
 	virtual void			flush(bool full=false);
 
 	virtual DataWriter&		writeInvocation(const std::string& name) { DataWriter& writer = write("200 OK", contentType, contentSubType); writer.writeString(name); return writer; }
 	virtual DataWriter&		writeMessage() { return write("200 OK", contentType, contentSubType); }
 	virtual DataWriter&		writeResponse(UInt8 type);
 	virtual void			writeRaw(const UInt8* data, UInt32 size) { write("200 OK", HTTP::CONTENT_TEXT,"plain; charset=utf-8",data,size); }
-	virtual void			close(int code=0);
+	virtual void			close(Int32 code=0);
 
 	DataWriter&		write(const std::string& code, HTTP::ContentType type=HTTP::CONTENT_TEXT, const std::string& subType="html; charset=utf-8",const UInt8* data=NULL,UInt32 size=0);
 
@@ -60,7 +60,7 @@ public:
 	HTTP::ContentType					contentType; ///< Content type for pull response
 	std::string							contentSubType; ///< Content sub type for pull response 
 private:
-	bool			writeMedia(MediaType type,UInt32 time,PacketReader& packet);
+	bool			writeMedia(MediaType type,UInt32 time,PacketReader& packet,Parameters& properties);
 	
 	HTTPSender& createSender() {
 		_senders.emplace_back(new HTTPSender(_session.peer.address,pRequest));

@@ -92,7 +92,7 @@ int LUAClient::Get(lua_State *pState) {
 		} else if(strcmp(name,"protocol")==0) {
 			SCRIPT_WRITE_STRING(client.protocol.c_str())
 		} else if (strcmp(name,"properties")==0) {
-			if (Script::Collection(pState, -1, "properties", client.properties.count())) {
+			if (Script::Collection(pState, 1, "properties", client.properties.count())) {
 				for (auto& it : client.properties) {
 					lua_pushstring(pState, it.first.c_str());
 					if (String::ICompare(it.second, "false") == 0 || String::ICompare(it.second, "nil") == 0)
@@ -104,8 +104,12 @@ int LUAClient::Get(lua_State *pState) {
 			}
 		} else {
 			string value;
-			if(client.properties.getString(name,value))
-				SCRIPT_WRITE_STRING(value.c_str())
+			if(client.properties.getString(name,value)) {
+				if (String::ICompare(value, "false") == 0 || String::ICompare(value, "nil") == 0)
+					lua_pushboolean(pState, 0);
+				else
+					lua_pushlstring(pState, value.c_str(), value.size());
+			}
 		}
 	SCRIPT_CALLBACK_RETURN
 }

@@ -20,12 +20,13 @@ This file is a part of Mona.
 #pragma once
 
 #include "Mona/Mona.h"
-#include "Mona/FlashWriter.h"
+#include "Mona/RTMFP/RTMFP.h"
 #include "Mona/Trigger.h"
 #include "Mona/AMFReader.h"
-#include "Mona/Logs.h"
 #include "Mona/RTMFP/BandWriter.h"
 #include "Mona/RTMFP/RTMFPMessage.h"
+#include "Mona/FlashWriter.h"
+#include "Mona/Logs.h"
 
 
 #define MESSAGE_HEADER			0x80
@@ -39,8 +40,8 @@ namespace Mona {
 class Invoker;
 class RTMFPWriter : public FlashWriter, public virtual Object {
 public:
-	RTMFPWriter(const std::string& signature, BandWriter& band, WriterHandler* pHandler = NULL);
-	RTMFPWriter(const std::string& signature,BandWriter& band,std::shared_ptr<RTMFPWriter>& pThis,WriterHandler* pHandler=NULL);
+	RTMFPWriter(State state,const std::string& signature, BandWriter& band);
+	RTMFPWriter(State state,const std::string& signature,BandWriter& band,std::shared_ptr<RTMFPWriter>& pThis);
 	virtual ~RTMFPWriter();
 
 	const UInt64		id;
@@ -48,7 +49,7 @@ public:
 	const UInt64		flowId;
 	const std::string	signature;
 
-	virtual Writer&		newWriter(WriterHandler& handler) { return *(new RTMFPWriter(signature, _band, &handler)); }
+	virtual Writer&		newWriter() { return *(new RTMFPWriter(state(),signature, _band)); }
 
 	void				flush(bool full=false);
 
@@ -68,15 +69,14 @@ public:
 		_reseted = true;
 	}
 
+	void				abort();
 	void				clear();
-	void				close(int code=0);
+	void				close(Int32 code=0);
 	bool				consumed() { return _messages.empty() && state() == CLOSED; }
 
 	UInt64				stage() { return _stage; }
 
-	State				state(State value=GET,bool minimal=false);
-
-	bool				writeMedia(MediaType type,UInt32 time,PacketReader& packet);
+	bool				writeMedia(MediaType type,UInt32 time,PacketReader& packet,Parameters& properties);
 	void				writeRaw(const UInt8* data,UInt32 size);
 	bool				writeMember(const Client& client);
 
@@ -96,7 +96,6 @@ private:
 
 	Trigger						_trigger;
 
-	int			 				_connectedSize;
 	std::deque<RTMFPMessage*>	_messages;
 	UInt64						_stage;
 	std::deque<RTMFPMessage*>	_messagesSent;

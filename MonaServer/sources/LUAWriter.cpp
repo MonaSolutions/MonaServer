@@ -26,15 +26,16 @@ using namespace Mona;
 
 
 
-LUAWriter::LUAWriter(lua_State* pState,Writer& writer):writer(writer.newWriter(*this)),_pState(pState) {
-}
-
-void LUAWriter::close(Writer& writer,int code){
-	SCRIPT_BEGIN(_pState)
-		Script::ClearObject<QualityOfService, LUAQualityOfService>(_pState, writer.qos());
-		Script::ClearObject<Writer, LUAWriter>(_pState, writer);
-	SCRIPT_END
-	delete this;
+LUAWriter::LUAWriter(lua_State* pState,Writer& writer):writer(writer),_pState(pState) {
+	onClose = [this](Int32 code) {
+		SCRIPT_BEGIN(_pState)
+			Script::ClearObject<QualityOfService, LUAQualityOfService>(_pState, this->writer.qos());
+			Script::ClearObject<Writer, LUAWriter>(_pState, this->writer);
+		SCRIPT_END
+		this->writer.unsubscribe(onClose);
+		delete this;
+	};
+	writer.subscribe(onClose);
 }
 
 int LUAWriter::Destroy(lua_State* pState) {
@@ -84,8 +85,8 @@ int LUAWriter::Set(lua_State *pState) {
 
 int LUAWriter::Flush(lua_State* pState) {
 	SCRIPT_CALLBACK(Writer,writer)
-		if(writer.state()==Writer::CONNECTING)
-			SCRIPT_ERROR("Violation policy, impossible to flush data on a connecting writer")
+		if(writer.state()==Writer::OPENING)
+			SCRIPT_ERROR("Violation policy, impossible to flush data on a opening writer")
 		else
 			writer.flush(SCRIPT_READ_BOOL(true));
 	SCRIPT_CALLBACK_RETURN
@@ -116,6 +117,6 @@ int LUAWriter::WriteRaw(lua_State* pState) {
 
 int LUAWriter::NewWriter(lua_State* pState) {
 	SCRIPT_CALLBACK(Writer,writer)
-		SCRIPT_NEW_OBJECT(Writer,LUAWriter,&(new LUAWriter(pState,writer))->writer)
+		SCRIPT_NEW_OBJECT(Writer,LUAWriter,&(new LUAWriter(pState,writer.newWriter()))->writer)
 	SCRIPT_CALLBACK_RETURN
 }

@@ -162,7 +162,13 @@ void Application::defineOptions(Exception& ex, Options& options) {
 
 	options.add(ex, "log", "l", "Log level argument, must be beetween 0 and 8 : nothing, fatal, critic, error, warn, note, info, debug, trace. Default value is 6 (info), all logs until info level are displayed.")
 		.argument("level")
-		.handler([this](Exception& ex, const string& value) { Exception exWarn; UInt8 level(6); Logs::SetLevel(String::ToNumber<UInt8>(exWarn, value,level)); if (exWarn) WARN("Bad level ",value," has to be a numeric value between 0 and 8 (see help)") });
+		.handler([this](Exception& ex, const string& value) { Exception exWarn;
+#if defined(_DEBUG)
+		UInt8 level(Logger::LEVEL_DEBUG);
+#else
+		UInt8 level(Logger::LEVEL_INFO);
+#endif
+		Logs::SetLevel(String::ToNumber<UInt8>(exWarn, value,level)); if (exWarn) WARN("Bad level ",value," has to be a numeric value between 0 and 8 (see help)") });
 
 	options.add(ex, "dump", "d", "Enables packet traces in logs. Optional arguments are 'intern' or 'all' respectively to displays just intern packet exchanged (between servers) or all packet process. If no argument is given, just outside packet process will be dumped.")
 		.argument("intern|all", false)
@@ -219,8 +225,8 @@ void Application::manageLogFiles() {
 		string path(_logPath);
 		if (num > 0)
 			String::Append(path,num);
-		if (!FileSystem::Remove(path))
-			WARN("Impossible to remove the " + path + " log file");
+		Exception ex;
+		EXCEPTION_TO_LOG(FileSystem::Remove(ex,path),"Log manager")
 		// rotate
 		string newPath;
 		while(--num>=0)

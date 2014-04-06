@@ -26,7 +26,11 @@ namespace Mona {
 
 Logger*			Logs::_PLogger(NULL);
 Logs::DumpMode	Logs::_DumpMode(DUMP_NOTHING);
+#if defined(_DEBUG)
+UInt8			Logs::_Level(Logger::LEVEL_DEBUG); // default log level
+#else
 UInt8			Logs::_Level(Logger::LEVEL_INFO); // default log level
+#endif
 Logger			Logs::_DefaultLogger;
 
 } // namespace Mona

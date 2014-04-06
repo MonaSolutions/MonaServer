@@ -34,12 +34,12 @@ WSSession::WSSession(const SocketAddress& peerAddress, SocketFile& file, Protoco
 }
 
 
-void WSSession::kill(bool shutdown){
+void WSSession::kill(UInt32 type){
 	if(died)
 		return;
 	closePublication();
 	closeSusbcription();
-	TCPSession::kill(shutdown);
+	TCPSession::kill(type);
 }
 
 void WSSession::closeSusbcription(){
@@ -130,7 +130,9 @@ void WSSession::packetHandler(PacketReader& packet) {
 		
 	}
 
-	if(!peer.connected || type==WS::TYPE_CLOSE)
+	if(!peer.connected)
+		kill(REJECTED_DEATH);
+	else if (type==WS::TYPE_CLOSE)
 		kill();
 	else
 		_writer.flush();

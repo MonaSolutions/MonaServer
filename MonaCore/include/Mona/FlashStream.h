@@ -37,7 +37,7 @@ public:
 	
 	void setBufferTime(UInt32 ms);
 
-	void		 process(AMF::ContentType type,UInt32 time,PacketReader& packet,FlashWriter& writer,UInt32 numberLostFragments=0);
+	bool		 process(AMF::ContentType type,UInt32 time,PacketReader& packet,FlashWriter& writer,UInt32 numberLostFragments=0);
 	virtual void flush();
 
 

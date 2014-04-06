@@ -56,7 +56,7 @@ TCPSession::TCPSession(const SocketAddress& peerAddress, SocketFile& file, Proto
 		return rest;
 	};
 
-	onDisconnection = [this]() { kill(); };
+	onDisconnection = [this]() { kill(SOCKET_DEATH); };
 
 
 	_client.OnError::subscribe(onError);

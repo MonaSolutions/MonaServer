@@ -63,6 +63,8 @@ private:
 	void handlePidFile(Exception& ex,const std::string& value);
     bool isDaemon(int argc, const char** argv);
 	void beDaemon();
+
+	std::string _pidFile;
 #endif
 };
 

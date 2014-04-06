@@ -61,10 +61,10 @@ void RTMFPSession::failSignal() {
 
 	// After 6 mn we can considerated that the session is died!
 	if(_timesFailed==10 || _recvTimestamp.isElapsed(360000))
-		kill();
+		kill(TIMEOUT_DEATH);
 }
 
-void RTMFPSession::kill(bool shutdown) {
+void RTMFPSession::kill(UInt32 type) {
 	if(!_failed)
 		failSignal();
 	if(died)
@@ -82,7 +82,7 @@ void RTMFPSession::kill(bool shutdown) {
 		_pFlowNull = NULL;
 	}
 	
-	Session::kill(shutdown);
+	Session::kill(type);
 	
 	// delete flowWriters
 	_flowWriters.clear();
@@ -112,16 +112,17 @@ void RTMFPSession::manage() {
 	// Raise RTMFPWriter
 	auto it=_flowWriters.begin();
 	while (it != _flowWriters.end()) {
+		shared_ptr<RTMFPWriter>& pWriter(it->second);
 		Exception ex;
-		it->second->manage(ex, invoker);
+		pWriter->manage(ex, invoker);
 		if (ex) {
-			if (it->second->critical) {
+			if (pWriter->critical) {
 				fail(ex.error());
 				break;
 			}
 			continue;
 		}
-		if (it->second->consumed()) {
+		if (pWriter->consumed()) {
 			_flowWriters.erase(it++);
 			continue;
 		}
@@ -175,7 +176,8 @@ void RTMFPSession::p2pHandshake(const string& tag,const SocketAddress& address,U
 
 	BinaryWriter& writer = writeMessage(0x0F,size);
 
-	writer.write8(0x22).write8(0x21).write8(0x0F).writeRaw(peer.id,ID_SIZE).writeAddress(*pAddress,index==0);
+	writer.write8(0x22).write8(0x21).write8(0x0F).writeRaw(peer.id, ID_SIZE);
+	RTMFP::WriteAddress(writer,*pAddress, index == 0 ? RTMFP::ADDRESS_PUBLIC : RTMFP::ADDRESS_LOCAL);
 	DEBUG("P2P address destinator exchange, ",pAddress->toString());
 	writer.writeRaw(tag);
 	flush();
@@ -411,9 +413,19 @@ void RTMFPSession::packetHandler(PacketReader& packet) {
 
 				// Process request
 				if (pFlow && !_failed) {
-					pFlow->fragmentHandler(stage, deltaNAck, message, flags);
-					if (!peer.connected)
+					bool wasConnected(peer.connected);
+					pFlow->receive(stage, deltaNAck, message, flags);
+					if (pFlow->critical() && pFlow->consumed()) {
 						_failed=true; // If connection fails, log is already displayed, and so fail the whole session!
+						if (!peer.connected) {
+							for (auto& it : _flowWriters)
+								it.second->abort();
+						}
+					}
+					if (!wasConnected && peer.connected) {
+						for (auto& it : _flowWriters)
+							it.second->open();
+					}
 				}
 				break;
 			}
@@ -455,8 +467,6 @@ RTMFPFlow* RTMFPSession::createFlow(UInt64 id,const string& signature) {
 		WARN("RTMFPFlow ",id," has already been created");
 		return it->second;
 	}
-	if(it!=_flows.begin())
-		--it;
 	return _flows.insert(it,pair<UInt64,RTMFPFlow*>(id,new RTMFPFlow(id,signature,peer,invoker,*this)))->second;
 }
 
@@ -470,7 +480,7 @@ void RTMFPSession::initWriter(const shared_ptr<RTMFPWriter>& pWriter) {
 }
 
 
-inline shared_ptr<RTMFPWriter> RTMFPSession::changeWriter(RTMFPWriter& writer) {
+shared_ptr<RTMFPWriter> RTMFPSession::changeWriter(RTMFPWriter& writer) {
 	auto it = _flowWriters.find(writer.id);
 	if (it == _flowWriters.end()) {
 		ERROR("RTMFPWriter ", writer.id, " change impossible on session ", name())

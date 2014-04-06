@@ -20,6 +20,7 @@ This file is a part of Mona.
 #pragma once
 
 #include "Mona/Mona.h"
+#include "Mona/SocketAddress.h"
 #include "Mona/PacketReader.h"
 #include "Mona/PacketWriter.h"
 #include "Mona/Time.h"
@@ -76,6 +77,15 @@ private:
 
 class RTMFP : virtual Static {
 public:
+	enum AddressType {
+		ADDRESS_UNSPECIFIED=0,
+		ADDRESS_LOCAL=1,
+		ADDRESS_PUBLIC=2,
+		ADDRESS_REDIRECTION=3
+	};
+
+	static BinaryWriter&		WriteAddress(BinaryWriter& writer, const SocketAddress& address, AddressType type=ADDRESS_UNSPECIFIED);
+
 	static UInt32				Unpack(PacketReader& packet);
 	static void					Pack(PacketWriter& packet,UInt32 farId);
 

@@ -27,9 +27,9 @@ This file is a part of Mona.
 namespace Mona {
 
 class Publication;
-class Listener : public virtual Object, WriterHandler {
+class Listener : public MapParameters, virtual Object {
 public:
-	Listener(Publication& publication,Client& client,Writer& writer,bool unbuffered);
+	Listener(Publication& publication,Client& client,Writer& writer);
 	virtual ~Listener();
 
 	void startPublishing();
@@ -61,10 +61,6 @@ private:
 	UInt32 	computeTime(UInt32 time);
 	PacketReader& publicationNamePacket() { _publicationNamePacket.reset(); return _publicationNamePacket; }
 
-	/// WriterHandler implementation
-	void	close(Writer& writer, int code);
-
-	bool					_unbuffered;
 	bool					_firstKeyFrame;
 	bool					_firstAudio;
 	bool					_firstVideo;

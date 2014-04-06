@@ -79,6 +79,7 @@ public:
 		VIDEO				=0x09,
 		DATA				=0x0F,
 		INVOCATION_AMF3		=0x11,
+		INFORMATIONS		=0x12,
 		INVOCATION			=0x14
 	};
 };
