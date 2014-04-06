@@ -245,8 +245,7 @@ JSONReader::Type JSONReader::followingType() {
 			return STRING;
 		}
 		Exception ex;
-		_date.update(ex, _text);
-		if (!ex) {
+		if (_date.update(ex, _text) && !ex) {
 			_last=2;
 			return DATE;
 		}

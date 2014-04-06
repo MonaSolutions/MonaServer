@@ -34,7 +34,7 @@ Servers::Servers(UInt16 port,const std::string& targets,const SocketManager& man
 				this->targets._connections.emplace(&server);
 			else
 				initiators._connections.emplace(&server);
-			NOTE("Connection etablished with ", server.address.toString(), " server");
+			NOTE("Connection established with ", server.address.toString(), " server");
 		} else {
 			Exception ex;
 			OnDisconnection::raise(ex,server);

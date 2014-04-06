@@ -1,0 +1,42 @@
+<html>
+<head>
+    <title>TCPSocket Client Test</title>
+    <script type="text/javascript">
+      var socket;
+      function createWebSocket() {
+        host = "ws://" + window.location.host + "/" + window.location.pathname;
+        
+        if(window.MozWebSocket)
+          window.WebSocket=window.MozWebSocket;
+        if(!window.WebSocket) {
+          window.document.getElementById("error").value = "Your browser don't support webSocket!";
+          return false;
+        }
+        socket = new WebSocket(host);
+        socket.onopen = function() { window.document.getElementById("error").value = 'socket opened'; }
+        socket.onclose = function() { window.document.getElementById("error").value = 'socket closed'; }
+        socket.onerror = function() { window.document.getElementById("error").value = 'An error occurs'; }
+        //socket.onmessage = function(msg){ window.document.getElementById("response").value = msg.data; }
+        
+        return true;
+      }
+       
+      function sendMessage() {
+        var data = window.document.getElementById("request").value;
+        data = JSON.stringify(["onMessage",data]);
+        socket.send(data);
+      }
+       
+      createWebSocket();
+    </script>
+</head>
+<body>
+<b>Status :</b> <input id="error" readonly=1 style="color:red"/> <input type="button" value="Refresh" onclick="createWebSocket();" />
+  <form name="Demo" action="" method="post">
+<textarea id="request" rows="10" style="width:100%">message</textarea>
+    <div>
+        <input type="button" value="Send" onclick="sendMessage();" />
+    </div>
+  </form>
+</body>
+<html>

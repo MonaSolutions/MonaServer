@@ -1,13 +1,13 @@
 .. Mona documentation master file
 
-.. image:: githubBlack.png
+.. image:: img/githubBlack.png
   :align: right
   :target: https://github.com/MonaSolutions/MonaServer
 
-Mona Documentation's Guide
-##############################
+MonaServer Documentation's Guide
+#################################
 
-Mona starts with the idea that protocols essentially serve the same aims : 
+MonaServer starts with the idea that protocols essentially serve the same aims : 
  - pull data (request + response),
  - push data (server -> client or client -> server),
  - read/write file (**VOD** and **RECORDING**),

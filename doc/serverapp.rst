@@ -1,5 +1,5 @@
 
-.. image:: githubBlack.png
+.. image:: img/githubBlack.png
   :align: right
   :target: https://github.com/MonaSolutions/MonaServer
 
@@ -22,7 +22,14 @@ For example, the address *rtmfp://host:port/myApplication* search its correspond
   rtmfp://host:port/myApplication      ->     MonaServer/www/myApplication/main.lua
   rtmfp://host:port/Games/myGame       ->     MonaServer/www/Games/myGame/main.lua
 
-.. note:: The root application is built and started on MonaServer start, whereas other server applications are started on first client connection.
+.. note::
+
+	- The root application is built and started on MonaServer start, whereas other server applications are started on first client connection.
+	- Exceptionaly you can give root rigths to a child application with the function **children()** has shown below. It permits to start other applications at start.
+
+.. code-block:: lua
+
+	children("childapp")
 
 Each application is identified by its *path*, which is exactly the *path* part of the RTMFP URL connection. In the example above, *root application* has an empty string for path, then the both others have respectively */myApplication* and */Games/myGame* for *path* values.
 
@@ -41,7 +48,7 @@ Here a very simple first server application:
 Global configurations
 ******************************
 
-*MonaServer.ini* file allows to give some global configuration values on MonaServer start-up (see `Installation <./installation.html>`_ page). To access for these values from script, use *mona.configs* property (see *Mona* object description in `Server Application, API <./api.html>`_ page to get more details). This system allows to create your own global configuration values and access for them in scripts.
+*MonaServer.ini* file allows to give some global configuration values on MonaServer start-up (see `Installation <./installation.html>`_ page). To access for these values from script, use *mona.configs* property (see *Mona* object description in `Server Application, API <./api.html>`_ page to get more details). This system allows to create your own global configuration values and access to them in scripts.
 
 .. code-block:: ini
 
@@ -57,7 +64,6 @@ Global configurations
   -- A script file
   print(mona.configs.port) -- displays "19350"
   print(mona.configs.myGroup.myConfig) -- displays "test"
-
 
 Communication between server applications
 ********************************************
@@ -120,7 +126,7 @@ On variable overloading (or function overloading), you can always access for the
   www:hello() -- displays "I am the root application"
 
 
-.. warning:: Events are functions called by the system (see *Events* part of `Server Application, API <./api.html>`_ page), if an application don't definites *onConnection* event for example, on new client connection for this application, it's the parent application which will receive the event. To avoid it, you have to overload the event in child application, and you can call also the parent version if need.
+.. warning:: Events are functions called by the system (see *Events* part of `Server Application, API <./api.html>`_ page), if an application doesn't define *onConnection* event for example, on new client connection for this application, it's the parent application which will receive the event. To avoid it, you have to overload the event in child application, and you can call also the parent version if needed.
 
 .. code-block:: lua
 
@@ -130,7 +136,7 @@ On variable overloading (or function overloading), you can always access for the
   end
 
 
-.. note:: The keyword *super* is supported to refer to the the father application:
+.. note:: The keyword *super* is supported to refer to the the parent application:
 
 .. code-block:: lua
 

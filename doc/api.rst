@@ -1,5 +1,5 @@
 
-.. image:: githubBlack.png
+.. image:: img/githubBlack.png
   :align: right
   :target: https://github.com/MonaSolutions/MonaServer
 

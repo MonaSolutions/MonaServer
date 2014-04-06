@@ -54,7 +54,7 @@ ADD_DEBUG_TEST(SocketAddressTest, Behavior) {
 
 	ex.set(Exception::NIL, "");
 
-	DEBUG_CHECK(sa.setWithDNS(ex,"www.appinf.com", 80));
+	DEBUG_CHECK(sa.setWithDNS(ex,"www.appinf.com", 80)); // TODO see if we keep this address
 	DEBUG_CHECK(sa.host().toString() == "50.57.108.29");
 	DEBUG_CHECK(sa.port() == 80);
 	DEBUG_CHECK(!ex);
@@ -120,4 +120,71 @@ ADD_TEST(SocketAddressTest, ComparaisonPerformance) {
 	SocketAddress sa2(sa);
 	if (sa < sa2)
 		CHECK(false)
+}
+
+ADD_DEBUG_TEST(SocketAddressTest, Behavior6) {
+	
+	SocketAddress sa;
+	Exception ex;
+
+	CHECK(!sa);
+	CHECK(sa.host().isWildcard());
+	CHECK(sa.port() == 0);
+
+	sa.set(ex,"1080::8:600:200A:425C", 100);
+	CHECK(sa.host().toString() == "1080::8:600:200A:425C");
+	CHECK(sa.port() == 100);
+
+	sa.set(ex, "1080::8:600:200A:425C", "100");
+	CHECK(sa.host().toString() == "1080::8:600:200A:425C");
+	CHECK(sa.port() == 100);
+
+
+	sa.set(ex, "1080::8:600:200A:425C", "ftp");
+	CHECK(sa.host().toString() == "1080::8:600:200A:425C");
+	CHECK(sa.port() == 21);
+
+	CHECK(!ex);
+
+	sa.set(ex,"1080::8:600:200A:425C", "f00bar");
+	CHECK(ex);
+
+	ex.set(Exception::NIL, "");
+
+	sa.set(ex,"1080::8:600:200A:FFFFF", 80);
+
+	CHECK(ex);
+	ex.set(Exception::NIL, "");
+
+	sa.set(ex, "1080::8:600:200A:425C", "80000");
+	
+	CHECK(ex);
+	ex.set(Exception::NIL, "");
+
+	sa.set(ex,"[1080::8:600:200A:425C]:88");
+	CHECK(sa.host().toString() == "1080::8:600:200A:425C");
+	CHECK(sa.port() == 88);
+
+	CHECK(!ex);
+
+	sa.set(ex, "[1080::8:600:200A:425C]");
+	CHECK(ex);
+	ex.set(Exception::NIL, "");
+
+	sa.set(ex,"[1080::8:600:200A:425C:88");
+	CHECK(ex);
+	ex.set(Exception::NIL, "");
+	
+	sa.set(ex,"1080::8:600:200A:425C", 100);
+	SocketAddress sa2;
+	sa2.set(ex,"[1080::8:600:200A:425C]:100");
+	CHECK(sa == sa2);
+
+	sa.set(ex,"1080::8:600:200A:425D", "99");
+	CHECK(sa2 < sa);
+
+	sa2.set(ex, "1080::8:600:200A:425D", "102");
+	CHECK(sa < sa2);
+
+	CHECK(!ex);
 }
