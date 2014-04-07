@@ -44,7 +44,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'Mona'
+project = u'MonaServer'
 copyright = u'2014, Mathieu Poux & Thomas Jammet'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -111,7 +111,9 @@ html_theme = 'bootstrap'
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
-#html_theme_options = {}
+#html_theme_options = {
+#'navbar_title' : '<img src="_images/logo_mona.png"/>',
+#}
 
 # Add any paths that contain custom themes here, relative to this directory.
 html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
