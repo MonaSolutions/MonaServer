@@ -185,7 +185,7 @@ T String::ToNumber(Exception& ex, const std::string& value, T result) {
 	if (comma > 0)
 		current /= comma;
 
-	if (current >= max) {
+	if (current > max) {
 		ex.set(Exception::FORMATTING, str, " exceeds maximum number capacity");
 		return false;
 	}

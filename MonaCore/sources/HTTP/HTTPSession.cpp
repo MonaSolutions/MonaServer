@@ -41,8 +41,6 @@ HTTPSession::HTTPSession(const SocketAddress& peerAddress, SocketFile& file, Pro
 void HTTPSession::kill(UInt32 type){
 	if(died)
 		return;
-	if (_isWS)
-		wsWriter().close(WS::CODE_ENDPOINT_GOING_AWAY);
 	if (_pListener) {
 		invoker.unsubscribe(peer, _pListener->publication.name());
 		_pListener = NULL;

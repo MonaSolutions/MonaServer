@@ -20,7 +20,10 @@ SOURCES = $(wildcard $(SRCDIR)*/*.cpp)
 OBJECT = $(SOURCES:sources/%.cpp=tmp/Release/%.o)
 OBJECTD = $(SOURCES:sources/%.cpp=tmp/Debug/%.o)
 
-rel:	
+# This line is used to ignore possibly existing folders release/debug
+.PHONY: release debug
+
+release:	
 	mkdir -p tmp/Release/
 	@make -k $(OBJECT)
 	@echo creating executable $(EXEC)

@@ -19,13 +19,14 @@ This file is a part of Mona.
 
 #include "Test.h"
 #include "Mona/SocketAddress.h"
+#include "Mona/Logs.h"
 
 using namespace std;
 using namespace Mona;
 
 
 
-ADD_DEBUG_TEST(SocketAddressTest, Behavior) {
+ADD_TEST(SocketAddressTest, Behavior) {
 	
 	SocketAddress sa;
 	Exception ex;
@@ -122,7 +123,7 @@ ADD_TEST(SocketAddressTest, ComparaisonPerformance) {
 		CHECK(false)
 }
 
-ADD_DEBUG_TEST(SocketAddressTest, Behavior6) {
+ADD_TEST(SocketAddressTest, Behavior6) {
 	
 	SocketAddress sa;
 	Exception ex;
@@ -143,6 +144,10 @@ ADD_DEBUG_TEST(SocketAddressTest, Behavior6) {
 	sa.set(ex, "1080::8:600:200A:425C", "ftp");
 	CHECK(sa.host().toString() == "1080::8:600:200A:425C");
 	CHECK(sa.port() == 21);
+
+	sa.set(ex, "1080::0001", "65535");
+	CHECK(sa.host().toString() == "1080::1");
+	CHECK(sa.port() == 65535);
 
 	CHECK(!ex);
 
@@ -186,5 +191,29 @@ ADD_DEBUG_TEST(SocketAddressTest, Behavior6) {
 	sa2.set(ex, "1080::8:600:200A:425D", "102");
 	CHECK(sa < sa2);
 
+	sa.set(ex,"1080::0001", "100");
+	sa2.set(ex, "1080::1", "100");
+	CHECK(sa == sa2);
+
 	CHECK(!ex);
+}
+
+const UInt32 MAX_UINT32 = 65536;
+
+ADD_TEST(SocketAddressTest, Comparisons6) {
+	string address, addressAndPort;
+	Exception ex;
+	SocketAddress sAddress1, sAddress2;
+
+	// Test of all 0:0:0:0:0:0:0:X formats
+	for (UInt32 firstPart = 1; firstPart < MAX_UINT32; firstPart++) {
+		String::Format(address, "0:0:0:0:0:0:0:", Format<UInt32>("%.X", firstPart));
+		String::Format(addressAndPort, "[", address, "]:1234");
+
+		sAddress1.set(ex, addressAndPort);
+		sAddress2.set(ex, address, 1234);
+
+		CHECK(!ex);
+		CHECK(sAddress1==sAddress2);
+	}
 }

@@ -83,10 +83,20 @@ public:
 		pSession->_pSessions = this; // because managed by Sessions!
 		pSession->_id = _nextId;
 		_sessions[_nextId] = pSession;
+
 		if (options&BYPEER)
 			_sessionsByPeerId[pSession->peer.id] = pSession;
-		if (options&BYADDRESS)
-			_sessionsByAddress[pSession->peer.address] = pSession;
+
+		if (options&BYADDRESS) {
+			auto it = _sessionsByAddress.lower_bound(pSession->peer.address);
+			if (it != _sessionsByAddress.end() && it->first == pSession->peer.address) {
+
+				WARN("Replacement of an existing ", pSession->protocolName()," session (address=", pSession->peer.address.toString(), ") during session creation")
+				it->second = pSession;
+			} else
+				_sessionsByAddress.emplace_hint(it, pSession->peer.address, pSession);
+		}
+
 		pSession->_sessionsOptions = options;
 		DEBUG("Session ", _nextId, " created");
 		do {
