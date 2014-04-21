@@ -28,8 +28,8 @@ Mona source code is cross-platform.
 In any case, you have to build **MonaBase** project in first, then **MonaCore** and then **MonaServer**.
 
 
-Dependencies
-***********************************
+Dependencies and requirements
+===================================
 
 Mona has the following dependencies :
  - OpenSSL_ is required.
@@ -37,21 +37,42 @@ Mona has the following dependencies :
 
 .. note:: LuaJIT_ is an alternative to the officiel LUA interpreter. It works really faster than LUA essentially because it compiles the LUA code to machine code during execution (see `LuaJIT performance <http://luajit.org/performance_x86.html>`_ about performance comparison).
 
+As **C++11** is used in MonaServer you need to install a compiler which is compatible. At least **gcc 4.8.2** on Linux and VS 2013 on Windows.
+
+LuaJIT installation
+===================================
+
+For several reasons some functionnalities of **LUA 52** are not allowed by default in luajit (like **#** or **pairs()**) so we recommend you to compile luajit by yourself and set the DLUAJIT_ENABLE_LUA52COMPAT option.
+
+- First download the latest release of LuaJIT_ (here with git) :
+    .. code-block:: sh
+
+        git clone http://luajit.org/git/luajit-2.0.git
+- Then set the DLUAJIT_ENABLE_LUA52COMPAT option :
+    + On Linux just search DLUAJIT_ENABLE_LUA52COMPAT in *src/Makefile* and uncomment the line
+    + On Windows search the line beginning with *@set LJCOMPILE=cl /nologo /c /O2 /W3 /D_CRT_SECURE_NO_DEPRECATE* and add the */DLUAJIT_ENABLE_LUA52COMPAT* option
+- Finally you can compile luajit (*make* or *src/msvcbuild.bat*)
+ 
+.. note:: On linux just run **sudo make install** to install luajit on the system.
+
 Windows Build
-***********************************
+===================================
+
+First follow the `LuaJIT installation`_ steps.
 
 Visual Studio 2013 solution and project files are included.
 It searchs external librairies in *External/lib* folder and external includes in *External/include* folder in the root *Mona* folder.
 So you must put OpenSSL_ and LuaJIT_ headers and libraries in these folders.
 You can find OpenSSL_ binaries for windows on Win32OpenSSL_.
 
-Unix build (Linux/OSX)
-***********************************
+Unix (Linux/OSX) Build
+===================================
 
-If your Unix system includes a package manager you can install quickly OpenSSL_ and LuaJIT_.
-Packages are usually named *libssl-dev* and *libluajit-5.1-dev*.
+First follow the `LuaJIT installation`_ steps.
 
-.. warning:: Use their *-dev* version to get header files required during Mona compilation.
+If your Unix system includes a package manager you can install quickly OpenSSL_. Package is usually named *libssl-dev*.
+
+.. warning:: You need to use the *-dev* version to get header files required during Mona compilation.
 
 Then, Mona built steps are easy:
 
@@ -75,8 +96,10 @@ To clean all, steps are naturally:
   $ cd ../MonaServer
   $ make clean
 
-Amazon EC2 AMI Install
-***********************************
+Amazon EC2 AMI Build
+===================================
+
+First follow the `LuaJIT installation`_ steps.
 
 Create a standard EC2 AMI with a new security group. Open up all UDP and at least TCP Ports 1935 in the Security Group.
 
@@ -88,11 +111,6 @@ Connect to the AMI and execute the following script:
   yum -y groupinstall "Development Tools"
   yum -y groupinstall "Development Libraries"
   yum -y install make
-  wget http://luajit.org/download/LuaJIT-2.0.0.tar.gz
-  tar zxf LuaJIT-2.0.0.tar.gz
-  cd LuaJIT-2.0.0
-  make
-  sudo make install
   wget https://github.com/MonaSolutions/MonaServer/archive/master.zip
   unzip Mona-master.zip
   cd Mona-master
@@ -105,6 +123,27 @@ Connect to the AMI and execute the following script:
   cd MonaServer
   make
   sudo ./MonaServer --daemon
+
+Raspberry PI (armv61) Build
+===================================
+
+You need to install a distibution where **gcc 4.8.2** is available. For now we have only founded Raspbian_ upgraded to the distribution *jessie*. Here is the protocol to install it correctly :
+
+- First download Raspbian_
+- Then write the distribution image on an SD Card (`How to write Raspberry Pi image to SD card <http://xmodulo.com/2013/11/write-raspberry-pi-image-sd-card.html>`_)
+- Start the raspberry pi and install raspbian
+- Update the /etc/apt/sources.list to have at least jessie (rather than wheezy)
+- Run theses steps to upgrade Raspbian_ :
+
+.. code-block:: sh
+
+    sudo aptitude update
+    sudo aptitude dist-upgrade
+    sudo rpi-update
+    reboot
+
+- Follow the `LuaJIT installation`_ steps
+- And then run `Unix (Linux/OSX) Build`_ steps
 
 Configurations
 ***********************************
@@ -244,3 +283,4 @@ To go more further, see `Server Application <./serveapp.html>`_ or `Samples <./s
 .. _OpenSSL : http://www.openssl.org/
 .. _`GNU General Public License` : http://www.gnu.org/licenses/
 .. _GIT : http://en.wikipedia.org/wiki/Git_(software)
+.. _Raspbian : http://downloads.raspberrypi.org/raspbian_latest

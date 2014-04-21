@@ -23,9 +23,9 @@ Finally some piece of script code illustrates how to use it, to know how to crea
 Configuration
 ***********************************
 
-Firstly to make communicate many instances of MonaServer, you have to configure them. The three following parameters allows to make working the multiple servers mode:
+Firstly to make communicate many instances of MonaServer, you have to configure them. The three following parameters permits the multiple servers mode:
 
-- *publicAddress* to configurate the public address server to make working the client redirections.
+- *host* to configurate the public address of the server which will be used in client redirections.
 - *servers.port* to configure the port to receive incoming server connections.
 - *servers.targets* to configure the addresses of remote MonaServer instances trying to join.
 
@@ -47,7 +47,7 @@ Following scripts should be included in root *main.lua* file to be loaded at sta
 	-- Server application on A side
 	function onServerConnection(server)
 		if server.isTarget then
-			NOTE("Target gotten : ", server.address, " (", server.publicAddress, " for clients)")
+			NOTE("Target gotten : ", server.address, " (", server.host, " for clients)")
 			-- displays "Target gotten : 192.168.0.2 (www.hostB.com for clients)"
 		end
 	end
@@ -75,7 +75,7 @@ Of course, complex configurations are possible, with multiple servers (and prope
 .. code-block:: ini
 
 	;MonaServer.ini
-	publicAddress = www.myhost.com:1935
+	host = www.myhost.com:1935
 	[servers]
 	targets = 192.168.0.2:1936?type=master;192.168.0.3:1936
 
@@ -142,19 +142,63 @@ Here we have a configuration with three servers, but many others could be added 
 .. code-block:: lua
 
 	-- following server (horizontal scaling)
-	_server = nil
-
+	_nextServer = nil
+	
 	-- number of subscribers (listeners) for this server
 	_subscribers = 0
-
+	
+	function onConnection(client,...)
+		INFO("Connection of a new client on ", mona.configs["host"])
+		
+		function client:onPublish(publication)
+			-- informs the following server about this publication
+			if _nextServer then _nextServer:send("publish", publication.name) end
+			
+			function publication:onVideo(time, packet)
+				if not _nextServer then return end
+				-- forward the video packet to the following server
+				_nextServer:send("video", publication.name, time, packet)
+			end
+			function publication:onAudio(time, packet)
+				if not _nextServer then return end
+				-- forward the audio packet to the following server
+				_nextServer:send("audio", publication.name, time, packet)
+			end
+			function publication:onData(name, packet)
+				INFO("onData : ", name, " - ", packet)
+				if not _nextServer then return end
+				-- forward the data packet to the following server
+				_nextServer:send("data", publication.name, name, packet)
+			end
+		end
+		
+		function client:onUnpublish(publication)
+			-- informs the following server about this unpublication
+			if _nextServer then _nextServer:send("unpublish",publication.name) end
+		end
+		
+		function client:onSubscribe(listener)        
+			-- if a following server exist, and if this server has more than 400 subscribers
+			-- redirect the client to the following server:
+			-- I send an error with the redirection server address in its description
+			INFO("Subscription of client ", client.address, " (_subscribers=", _subscribers, ")")
+			if _nextServer and _subscribers>=400 then error(_nextServer.host) end
+			_subscribers = _subscribers + 1
+		end
+		
+		function client:onUnsubscribe(listener)
+			_subscribers = _subscribers - 1
+		end
+	end
+	
 	function onServerConnection(server)
 		if server.isTarget then
 			-- incoming server is a following server!
-			if _server then error("following server already connected") end
-			_server = server
+			if _nextServer then error("following server already connected") end
+			_nextServer = server
 			-- informs the following server about my publications
 			for id,publication in pairs(mona.publications) do
-				_server:send("publish",publication.name)
+				_nextServer:send("publish",publication.name)
 			end
 		else
 			-- incoming server is a previous server, we have to create RPC function to receive
@@ -170,94 +214,58 @@ Here we have a configuration with three servers, but many others could be added 
 				if publication then publication:close() end
 				self.publications[name] = nil
 			end
-			function server:video(name,time,packet)
+			function server:video(name, time, packet)
 				local publication = self.publications[name]
 				-- give the video packet to our publication copy
-				if publication then publication:pushVideoPacket(time,packet) end
+				if publication then publication:pushVideo(packet, time) end
 			end
-			function server:audio(name,time,packet)
+			function server:audio(name, time, packet)
 				local publication = self.publications[name]
 				-- give the audio packet to our publication copy
-				if publication then publication:pushVideoPacket(time,packet) end
+				if publication then publication:pushAudio(packet, time) end
 			end
-			function server:data(name,time,packet)
+			function server:data(name, dataname, packet)
 				local publication = self.publications[name]
 				-- give the data packet to our publication copy
-				if publication then publication:pushVideoPacket(time,packet) end
+				if publication then publication:pushData(packet) end
 			end
 		end
 	end
-
+	
 	function onServerDisconnection(server)
 		if server.isTarget then
 			-- disconnected server was a following server!
-			_server = nil
+			_nextServer = nil
 			return
 		end
 		-- disconnected server was a previous server, close its publications
-		for id,publication in server.publications do
+		for id,publication in pairs(server.publications) do
 			publication:close()
 		end
 	end
 
-	function onPublish(client,publication)
-		-- informs the following server about this publication
-		if _server then _server:send("publish",publication.name) end
-	end
-
-	function onUnpublish(client,publication)
-		-- informs the following server about this unpublication
-		if _server then _server:send("unpublish",publication.name) end
-	end
-
-	function onSubscribe(client,listener)
-		-- if a following server exist, and if this server has more than 400 subscribers
-		-- redirect the client to the following server:
-		-- I send an error with the redirection server address in its description
-		if _server and _subscribers>=400 then error(_server.publicAddress) end
-		_subscribers = _subscribers + 1
-	end
-
-	function onUnsubscribe(client,listener)
-		_subscribers = _subscribers - 1
-	end
-	
-	function onVideoPacket(client,publication,time,packet)
-		if not _server then return end
-		-- forward the video packet to the following server
-		_server:send("video",publication.name,time,packet)
-	end
-
-	function onAudioPacket(client,publication,time,packet)
-		if not _server then return end
-		-- forward the audio packet to the following server
-		_server:send("audio",publication.name,time,packet)
-	end
-
-	function onDataPacket(client,publication,name,packet)
-		if not _server then return end
-		-- forward the data packet to the following server
-		_server:send("data",publication.name,time,packet)
-	end
-
-The line *if _server and _subscribers>=400 then error(_server.publicAddress) end* requires a specific client code to work, to redirect as wanted the new subscriber to the new server :
+The line *if _nextServer and _subscribers>=400 then error(_nextServer.host) end* requires a specific client code to work, to redirect as wanted the new subscriber to the new server :
 
 .. code-block:: as3
 
-  function onStatusEvent(event:NetStatusEvent):void {
-    switch(event.info.code) {
-      case "NetStream.Play.Failed":
-      _netConnection.close()
-      _netConnection.connect(event.info.description); // error desciption contains the redirection server address
-      break;
-    }
-  }
+	function onStatusEvent(event:NetStatusEvent):void {
+		switch(event.info.code) {
+			case "NetStream.Play.Failed":
+				var error:Array = event.info.description.split(" ");
+				if (error.length > 0) {
+					var host:String = "rtmfp://" + error[error.length-1];
+					_netConnection.close();
+					_netConnection.connect(host);
+				}
+				break;
+		}
+	}
 
 
 Load balancing and rendezvous service
 ******************************************
 
-In a load-balacing solution, usually we opt for hardware solution with a DNS which returns an address ip rotated on a list of addresses. You can realize it in a software way in using the *onHandshake* event (see `Server Application, API <./api.html>`_ page for complete details on this event):
+In a load-balancing solution, usually we opt for hardware solution with a DNS which returns an address ip rotated on a list of addresses. You can realize it in a software way using the *onHandshake* event (see `Server Application, API <./api.html>`_ page for complete details on this event):
 
 .. code-block:: lua
 
@@ -269,8 +277,8 @@ In a load-balacing solution, usually we opt for hardware solution with a DNS whi
 		return mona.servers(index) -- load-balacing system!
 	end
 
-Here the server doesn't accept any connection client, it redirects the cleint in handshake performing. There is no real benefits comparing with a hardware solution.
-An other possibility is of returning many server addresses to benefit of parallel connection behavior of RTMFP protocol.
+Here the server doesn't accept any connection client, it redirects the client in handshake performing. There is no real benefits comparing with a hardware solution.
+An other possibility is to return many server addresses to benefit of parallel connection behavior of RTMFP protocol.
 
 .. code-block:: lua
 

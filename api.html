@@ -5,7 +5,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Mona Server’s lua API &mdash; Mona 1 documentation</title>
+    <title>Mona Server’s lua API &mdash; MonaServer 1 documentation</title>
     
     <link rel="stylesheet" href="_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -29,7 +29,7 @@
     <script type="text/javascript" src="_static/js/jquery-fix.js"></script>
     <script type="text/javascript" src="_static/bootstrap-3.1.0/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
-    <link rel="top" title="Mona 1 documentation" href="index.html" />
+    <link rel="top" title="MonaServer 1 documentation" href="index.html" />
     <link rel="next" title="FAQ" href="faq.html" />
     <link rel="prev" title="Server Application Sockets" href="serversocket.html" />
 <meta charset='utf-8'>
@@ -50,7 +50,7 @@
           <span class="icon-bar"></span>
         </button>
         <a class="navbar-brand" href="index.html">
-          Mona</a>
+          MonaServer</a>
         <span class="navbar-text navbar-version pull-left"><b>1</b></span>
       </div>
 
@@ -177,21 +177,22 @@
 <li><a class="reference internal" href="#onstart-path">onStart(path)</a></li>
 <li><a class="reference internal" href="#onstop-path">onStop(path)</a></li>
 <li><a class="reference internal" href="#onconnection-client">onConnection(client,...)</a></li>
+<li><a class="reference internal" href="#client-onread-file-parameters">client:onRead(file, parameters...)</a></li>
+<li><a class="reference internal" href="#client-onmessage-parameters">client:onMessage(parameters...)</a></li>
+<li><a class="reference internal" href="#client-onjoingroup-group">client:onJoinGroup(group)</a></li>
+<li><a class="reference internal" href="#client-onunjoingroup-group">client:onUnjoinGroup(group)</a></li>
+<li><a class="reference internal" href="#client-onpublish-publication">client:onPublish(publication)</a></li>
+<li><a class="reference internal" href="#publication-onvideo-time-packet">publication:onVideo(time,packet)</a></li>
+<li><a class="reference internal" href="#publication-onaudiopacket-time-packet">publication:onAudioPacket(time,packet)</a></li>
+<li><a class="reference internal" href="#publication-ondatapacket-name-packet">publication:onDataPacket(name,packet)</a></li>
+<li><a class="reference internal" href="#client-onunpublish-publication">client:onUnpublish(publication)</a></li>
+<li><a class="reference internal" href="#client-onsubscribe-listener">client:onSubscribe(listener)</a></li>
+<li><a class="reference internal" href="#client-onunsubscribe-listener">client:onUnsubscribe(listener)</a></li>
 <li><a class="reference internal" href="#ondisconnection-client">onDisconnection(client)</a></li>
-<li><a class="reference internal" href="#onfailed-client-error">onFailed(client,error)</a></li>
-<li><a class="reference internal" href="#onjoingroup-client-group">onJoinGroup(client,group)</a></li>
-<li><a class="reference internal" href="#onunjoingroup-client-group">onUnjoinGroup(client,group)</a></li>
-<li><a class="reference internal" href="#onpublish-client-publication">onPublish(client,publication)</a></li>
-<li><a class="reference internal" href="#onunpublish-client-publication">onUnpublish(client,publication)</a></li>
-<li><a class="reference internal" href="#onvideopacket-client-publication-time-packet">onVideoPacket(client,publication,time,packet)</a></li>
-<li><a class="reference internal" href="#onaudiopacket-client-publication-time-packet">onAudioPacket(client,publication,time,packet)</a></li>
-<li><a class="reference internal" href="#ondatapacket-client-publication-name-packet">onDataPacket(client,publication,name,packet)</a></li>
-<li><a class="reference internal" href="#onsubscribe-client-listener">onSubscribe(client,listener)</a></li>
-<li><a class="reference internal" href="#onunsubscribe-client-listener">onUnsubscribe(client,listener)</a></li>
 <li><a class="reference internal" href="#ontypedobject-type-object">onTypedObject(type,object)</a></li>
 <li><a class="reference internal" href="#onmanage">onManage()</a></li>
 <li><a class="reference internal" href="#onrendezvousunknown-peerid">onRendezVousUnknown(peerId)</a></li>
-<li><a class="reference internal" href="#onhandshake-address-path-properties-attempts">onHandshake (address,path,properties,attempts)</a></li>
+<li><a class="reference internal" href="#onhandshake-address-path-properties-attempts">onHandshake(address,path,properties,attempts)</a></li>
 <li><a class="reference internal" href="#onserverconnection-server">onServerConnection(server)</a></li>
 <li><a class="reference internal" href="#onserverdisconnection-server">onServerDisconnection(server)</a></li>
 </ul>
@@ -281,23 +282,24 @@ To know how create a server application, and understand how it works, read <a cl
 <li><a class="reference internal" href="#onstart-path" id="id67">onStart(path)</a></li>
 <li><a class="reference internal" href="#onstop-path" id="id68">onStop(path)</a></li>
 <li><a class="reference internal" href="#onconnection-client" id="id69">onConnection(client,...)</a></li>
-<li><a class="reference internal" href="#ondisconnection-client" id="id70">onDisconnection(client)</a></li>
-<li><a class="reference internal" href="#onfailed-client-error" id="id71">onFailed(client,error)</a></li>
-<li><a class="reference internal" href="#onjoingroup-client-group" id="id72">onJoinGroup(client,group)</a></li>
-<li><a class="reference internal" href="#onunjoingroup-client-group" id="id73">onUnjoinGroup(client,group)</a></li>
-<li><a class="reference internal" href="#onpublish-client-publication" id="id74">onPublish(client,publication)</a></li>
-<li><a class="reference internal" href="#onunpublish-client-publication" id="id75">onUnpublish(client,publication)</a></li>
-<li><a class="reference internal" href="#onvideopacket-client-publication-time-packet" id="id76">onVideoPacket(client,publication,time,packet)</a></li>
-<li><a class="reference internal" href="#onaudiopacket-client-publication-time-packet" id="id77">onAudioPacket(client,publication,time,packet)</a></li>
-<li><a class="reference internal" href="#ondatapacket-client-publication-name-packet" id="id78">onDataPacket(client,publication,name,packet)</a></li>
-<li><a class="reference internal" href="#onsubscribe-client-listener" id="id79">onSubscribe(client,listener)</a></li>
-<li><a class="reference internal" href="#onunsubscribe-client-listener" id="id80">onUnsubscribe(client,listener)</a></li>
-<li><a class="reference internal" href="#ontypedobject-type-object" id="id81">onTypedObject(type,object)</a></li>
-<li><a class="reference internal" href="#onmanage" id="id82">onManage()</a></li>
-<li><a class="reference internal" href="#onrendezvousunknown-peerid" id="id83">onRendezVousUnknown(peerId)</a></li>
-<li><a class="reference internal" href="#onhandshake-address-path-properties-attempts" id="id84">onHandshake (address,path,properties,attempts)</a></li>
-<li><a class="reference internal" href="#onserverconnection-server" id="id85">onServerConnection(server)</a></li>
-<li><a class="reference internal" href="#onserverdisconnection-server" id="id86">onServerDisconnection(server)</a></li>
+<li><a class="reference internal" href="#client-onread-file-parameters" id="id70">client:onRead(file, parameters...)</a></li>
+<li><a class="reference internal" href="#client-onmessage-parameters" id="id71">client:onMessage(parameters...)</a></li>
+<li><a class="reference internal" href="#client-onjoingroup-group" id="id72">client:onJoinGroup(group)</a></li>
+<li><a class="reference internal" href="#client-onunjoingroup-group" id="id73">client:onUnjoinGroup(group)</a></li>
+<li><a class="reference internal" href="#client-onpublish-publication" id="id74">client:onPublish(publication)</a></li>
+<li><a class="reference internal" href="#publication-onvideo-time-packet" id="id75">publication:onVideo(time,packet)</a></li>
+<li><a class="reference internal" href="#publication-onaudiopacket-time-packet" id="id76">publication:onAudioPacket(time,packet)</a></li>
+<li><a class="reference internal" href="#publication-ondatapacket-name-packet" id="id77">publication:onDataPacket(name,packet)</a></li>
+<li><a class="reference internal" href="#client-onunpublish-publication" id="id78">client:onUnpublish(publication)</a></li>
+<li><a class="reference internal" href="#client-onsubscribe-listener" id="id79">client:onSubscribe(listener)</a></li>
+<li><a class="reference internal" href="#client-onunsubscribe-listener" id="id80">client:onUnsubscribe(listener)</a></li>
+<li><a class="reference internal" href="#ondisconnection-client" id="id81">onDisconnection(client)</a></li>
+<li><a class="reference internal" href="#ontypedobject-type-object" id="id82">onTypedObject(type,object)</a></li>
+<li><a class="reference internal" href="#onmanage" id="id83">onManage()</a></li>
+<li><a class="reference internal" href="#onrendezvousunknown-peerid" id="id84">onRendezVousUnknown(peerId)</a></li>
+<li><a class="reference internal" href="#onhandshake-address-path-properties-attempts" id="id85">onHandshake(address,path,properties,attempts)</a></li>
+<li><a class="reference internal" href="#onserverconnection-server" id="id86">onServerConnection(server)</a></li>
+<li><a class="reference internal" href="#onserverdisconnection-server" id="id87">onServerDisconnection(server)</a></li>
 </ul>
 </li>
 </ul>
@@ -686,7 +688,7 @@ To know how create a server application, and understand how it works, read <a cl
 <h4>properties<a class="headerlink" href="#id30" title="Permalink to this headline">¶</a></h4>
 <ul class="simple">
 <li><strong>address</strong> (read-only), name of the publication</li>
-<li><strong>publicAddress</strong> (read-only), name of the publication</li>
+<li><strong>host</strong> (read-only), name of the publication</li>
 <li><strong>isTarget</strong> (read-only), name of the publication</li>
 </ul>
 <div class="admonition note">
@@ -821,33 +823,64 @@ To know how create a server application, and understand how it works, read <a cl
 <span class="o">}</span>
 </pre></div>
 </div>
-</div>
-<div class="section" id="ondisconnection-client">
-<h3><a class="toc-backref" href="#id70">onDisconnection(client)</a><a class="headerlink" href="#ondisconnection-client" title="Permalink to this headline">¶</a></h3>
-<p>Call on client disconnection. <em>client</em> argument is the disconnected client.</p>
-<div class="admonition note">
-<p class="first admonition-title">Note</p>
-<p class="last">At this stage you can send no more data to the client, all writing to a flowWriter object of this client has no effect.</p>
-</div>
-</div>
-<div class="section" id="onfailed-client-error">
-<h3><a class="toc-backref" href="#id71">onFailed(client,error)</a><a class="headerlink" href="#onfailed-client-error" title="Permalink to this headline">¶</a></h3>
-<p>Call on client failing. <em>client</em> argument is the failed client, and <em>error</em> argument is the error message.</p>
-<div class="admonition note">
-<p class="first admonition-title">Note</p>
-<p class="last">At this stage you can send no more data to the client, all writing for a flowWriter object of this client has no effect.</p>
+<p>Functions below are member functions of clients objects so need to be declared under the onConnection scope like in this sample :</p>
+<div class="highlight-lua"><div class="highlight"><pre><span class="k">function</span> <span class="nf">onConnection</span><span class="p">(</span><span class="n">client</span><span class="p">)</span>
+
+        <span class="k">function</span> <span class="nf">client</span><span class="p">:</span><span class="n">onRead</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="n">parameters</span><span class="p">)</span>
+
+                <span class="n">NOTE</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">Sending file &#39;&quot;</span><span class="p">,</span> <span class="n">file</span><span class="p">,</span> <span class="s2">&quot;</span><span class="s">&#39; to client address &quot;</span><span class="p">,</span> <span class="n">client</span><span class="p">.</span><span class="n">address</span><span class="p">)</span>
+        <span class="k">end</span>
+<span class="k">end</span>
+</pre></div>
 </div>
 </div>
-<div class="section" id="onjoingroup-client-group">
-<h3><a class="toc-backref" href="#id72">onJoinGroup(client,group)</a><a class="headerlink" href="#onjoingroup-client-group" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="client-onread-file-parameters">
+<h3><a class="toc-backref" href="#id70">client:onRead(file, parameters...)</a><a class="headerlink" href="#client-onread-file-parameters" title="Permalink to this headline">¶</a></h3>
+<p>This event is used with <strong>HTTP</strong> protocol.</p>
+<p>Called when a client try to read a file on the server. The file should exists.
+Parameters should be used to perform REST functionnalities.</p>
+<p>You can also reject the connexion like this :</p>
+<div class="highlight-lua"><div class="highlight"><pre><span class="k">function</span> <span class="nf">client</span><span class="p">:</span><span class="n">onRead</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">file</span> <span class="o">~=</span> <span class="s2">&quot;</span><span class="s">index.html&quot;</span> <span class="k">then</span>
+                <span class="nb">error</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">Access to file &quot;</span><span class="p">,</span> <span class="n">file</span><span class="p">,</span> <span class="s2">&quot;</span><span class="s"> is forbidden)</span>
+        <span class="k">end</span>
+<span class="k">end</span>
+</pre></div>
+</div>
+<p>You can redirect to another file returning the file name as first parameter :</p>
+<div class="highlight-lua"><div class="highlight"><pre><span class="k">function</span> <span class="nf">client</span><span class="p">:</span><span class="n">onRead</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s2">&quot;</span><span class="s">newFile&quot;</span>
+<span class="k">end</span>
+</pre></div>
+</div>
+<p>Other parameters are treated as values for replacing templates <em>&lt;% property %&gt;</em> in file. So in this implementation each <em>&lt;% name %&gt;</em> element will be replaced by &#8220;robert&#8221; :</p>
+<div class="highlight-lua"><div class="highlight"><pre><span class="k">function</span> <span class="nf">client</span><span class="p">:</span><span class="n">onRead</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">file</span><span class="p">,</span> <span class="p">{</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;</span><span class="s">robert&quot;</span><span class="p">}</span>
+<span class="k">end</span>
+</pre></div>
+</div>
+<p>If you need to return a custom response you can return <em>nil</em> and write you response using the writer as below:</p>
+<div class="highlight-lua"><div class="highlight"><pre><span class="k">function</span> <span class="nf">client</span><span class="p">:</span><span class="n">onRead</span><span class="p">(</span><span class="n">file</span><span class="p">,</span><span class="n">parameters</span><span class="p">)</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">writer</span><span class="p">:</span><span class="n">writeRaw</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">hello&quot;</span><span class="p">);</span> <span class="c1">-- my custom response</span>
+        <span class="k">return</span> <span class="kc">nil</span>
+<span class="k">end</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="client-onmessage-parameters">
+<h3><a class="toc-backref" href="#id71">client:onMessage(parameters...)</a><a class="headerlink" href="#client-onmessage-parameters" title="Permalink to this headline">¶</a></h3>
+<p>Called when a client send a message to the server in pull or push mode (see <a class="reference external" href="./samples.html">Samples</a> page for more informations).</p>
+</div>
+<div class="section" id="client-onjoingroup-group">
+<h3><a class="toc-backref" href="#id72">client:onJoinGroup(group)</a><a class="headerlink" href="#client-onjoingroup-group" title="Permalink to this headline">¶</a></h3>
 <p>Call when a client creates or joins a <em>group</em> (a <a class="reference external" href="http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/net/NetGroup.html">NetGroup</a>). <em>client</em> argument is the client which is joining the <em>group</em> second argument (see <em>group</em> object in <em>Objects</em> part).</p>
 </div>
-<div class="section" id="onunjoingroup-client-group">
-<h3><a class="toc-backref" href="#id73">onUnjoinGroup(client,group)</a><a class="headerlink" href="#onunjoingroup-client-group" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="client-onunjoingroup-group">
+<h3><a class="toc-backref" href="#id73">client:onUnjoinGroup(group)</a><a class="headerlink" href="#client-onunjoingroup-group" title="Permalink to this headline">¶</a></h3>
 <p>Call when a client unjoins a <em>group</em> (a <a class="reference external" href="http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/net/NetGroup.html">NetGroup</a>). <em>client</em> argument is the client which is unjoining the <em>group</em> second argument (see <em>group</em> object in <em>Objects</em> part).</p>
 </div>
-<div class="section" id="onpublish-client-publication">
-<h3><a class="toc-backref" href="#id74">onPublish(client,publication)</a><a class="headerlink" href="#onpublish-client-publication" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="client-onpublish-publication">
+<h3><a class="toc-backref" href="#id74">client:onPublish(publication)</a><a class="headerlink" href="#client-onpublish-publication" title="Permalink to this headline">¶</a></h3>
 <p>Call when a publication starts. <em>client</em> is the client which starts the publication, and <em>publication</em> argument is the publication description (see <em>publication</em> object in <em>Objects</em> part).</p>
 <p>If you return <em>false</em> value on this event, it will send a <em>NetStream.Publish.Failed</em> status event with as <em>info.description</em> field a <em>&#8220;Not allowed to publish [name]&#8221;</em> message.
 Otherwise you can cutomize this message in raising one error in this context.</p>
@@ -871,41 +904,42 @@ Otherwise you can cutomize this message in raising one error in this context.</p
 <p class="first admonition-title">Warning</p>
 <p class="last">This event is not called for publications started from script code, it&#8217;s called only for client publications (see <em>publication</em> object in <em>Objects</em> part). Then of course, it&#8217;s called only in stream-to-server case (not in P2P case).</p>
 </div>
+<p>Functions below are function members of class Publication so must be implemented in the scope of the onPublish function.</p>
 </div>
-<div class="section" id="onunpublish-client-publication">
-<h3><a class="toc-backref" href="#id75">onUnpublish(client,publication)</a><a class="headerlink" href="#onunpublish-client-publication" title="Permalink to this headline">¶</a></h3>
-<p>Call when a publication stops. <em>client</em> is the client which have stopped the publication, and <em>publication</em> argument is the publication related.</p>
-<div class="admonition warning">
-<p class="first admonition-title">Warning</p>
-<p class="last">This event is not called for publications started from script code, it&#8217;s called only for client publications (see <em>publication</em> object in <em>Objects</em> part). Then of course, it&#8217;s called only in stream-to-server case (not in P2P case).</p>
-</div>
-</div>
-<div class="section" id="onvideopacket-client-publication-time-packet">
-<h3><a class="toc-backref" href="#id76">onVideoPacket(client,publication,time,packet)</a><a class="headerlink" href="#onvideopacket-client-publication-time-packet" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="publication-onvideo-time-packet">
+<h3><a class="toc-backref" href="#id75">publication:onVideo(time,packet)</a><a class="headerlink" href="#publication-onvideo-time-packet" title="Permalink to this headline">¶</a></h3>
 <p>Call on video packet reception for one publication. <em>time</em> is the time in milliseconds of this packet in the stream, and <em>packet</em> contains video data.</p>
 <div class="admonition warning">
 <p class="first admonition-title">Warning</p>
 <p class="last">This event is not called for publications started from script code, it&#8217;s called only for client publications (see <em>publication</em> object in <em>Objects</em> part). Then of course, it&#8217;s called only in stream-to-server case (not in P2P case).</p>
 </div>
 </div>
-<div class="section" id="onaudiopacket-client-publication-time-packet">
-<h3><a class="toc-backref" href="#id77">onAudioPacket(client,publication,time,packet)</a><a class="headerlink" href="#onaudiopacket-client-publication-time-packet" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="publication-onaudiopacket-time-packet">
+<h3><a class="toc-backref" href="#id76">publication:onAudioPacket(time,packet)</a><a class="headerlink" href="#publication-onaudiopacket-time-packet" title="Permalink to this headline">¶</a></h3>
 <p>Call on audio packet reception for one publication. <em>time</em> is the time in milliseconds of this packet in the stream, and <em>packet</em> contains audio data.</p>
 <div class="admonition warning">
 <p class="first admonition-title">Warning</p>
 <p class="last">This event is not called for publications started from script code, it&#8217;s called only for client publications (see <em>publication</em> object in <em>Objects</em> part). Then of course, it&#8217;s called only in stream-to-server case (not in P2P case).</p>
 </div>
 </div>
-<div class="section" id="ondatapacket-client-publication-name-packet">
-<h3><a class="toc-backref" href="#id78">onDataPacket(client,publication,name,packet)</a><a class="headerlink" href="#ondatapacket-client-publication-name-packet" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="publication-ondatapacket-name-packet">
+<h3><a class="toc-backref" href="#id77">publication:onDataPacket(name,packet)</a><a class="headerlink" href="#publication-ondatapacket-name-packet" title="Permalink to this headline">¶</a></h3>
 <p>Call on data packet reception for one publication. <em>name</em> is the invocation name, and <em>packet</em> contains raw data.</p>
 <div class="admonition warning">
 <p class="first admonition-title">Warning</p>
 <p class="last">This event is not called for publications started from script code, it&#8217;s called only for client publications (see <em>publication</em> object in <em>Objects</em> part). Then of course, it&#8217;s called only in stream-to-server case (not in P2P case).</p>
 </div>
 </div>
-<div class="section" id="onsubscribe-client-listener">
-<h3><a class="toc-backref" href="#id79">onSubscribe(client,listener)</a><a class="headerlink" href="#onsubscribe-client-listener" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="client-onunpublish-publication">
+<h3><a class="toc-backref" href="#id78">client:onUnpublish(publication)</a><a class="headerlink" href="#client-onunpublish-publication" title="Permalink to this headline">¶</a></h3>
+<p>Call when a publication stops. <em>client</em> is the client which have stopped the publication, and <em>publication</em> argument is the publication related.</p>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">This event is not called for publications started from script code, it&#8217;s called only for client publications (see <em>publication</em> object in <em>Objects</em> part). Then of course, it&#8217;s called only in stream-to-server case (not in P2P case).</p>
+</div>
+</div>
+<div class="section" id="client-onsubscribe-listener">
+<h3><a class="toc-backref" href="#id79">client:onSubscribe(listener)</a><a class="headerlink" href="#client-onsubscribe-listener" title="Permalink to this headline">¶</a></h3>
 <p>Call on new client subscription. First <em>client</em> argument is the client which starts the stream subscription, and <em>listener</em> describes the subscription (see <em>listener</em> object in <em>Objects</em> part).</p>
 <p>If you return <em>false</em> value on this event, it will send a <em>NetStream.Play.Failed</em> status event with as <em>info.description</em> field a <em>&#8220;Not authorized to play [name]&#8221;</em> message.
 Otherwise you can cutomize this message in raising one error in this context.</p>
@@ -933,8 +967,8 @@ Otherwise you can cutomize this message in raising one error in this context.</p
 </ul>
 </div>
 </div>
-<div class="section" id="onunsubscribe-client-listener">
-<h3><a class="toc-backref" href="#id80">onUnsubscribe(client,listener)</a><a class="headerlink" href="#onunsubscribe-client-listener" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="client-onunsubscribe-listener">
+<h3><a class="toc-backref" href="#id80">client:onUnsubscribe(listener)</a><a class="headerlink" href="#client-onunsubscribe-listener" title="Permalink to this headline">¶</a></h3>
 <p>Call on client unsubscription. First <em>client</em> argument is the client which stops the stream subscription, and <em>listener</em> describes the subscription closed (see <em>listener</em> object in <em>Objects</em> part).</p>
 <div class="admonition warning">
 <p class="first admonition-title">Warning</p>
@@ -944,16 +978,24 @@ Otherwise you can cutomize this message in raising one error in this context.</p
 </ul>
 </div>
 </div>
+<div class="section" id="ondisconnection-client">
+<h3><a class="toc-backref" href="#id81">onDisconnection(client)</a><a class="headerlink" href="#ondisconnection-client" title="Permalink to this headline">¶</a></h3>
+<p>Call on client disconnection. <em>client</em> argument is the disconnected client.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">At this stage you can send no more data to the client, all writing to a flowWriter object of this client has no effect.</p>
+</div>
+</div>
 <div class="section" id="ontypedobject-type-object">
-<h3><a class="toc-backref" href="#id81">onTypedObject(type,object)</a><a class="headerlink" href="#ontypedobject-type-object" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id82">onTypedObject(type,object)</a><a class="headerlink" href="#ontypedobject-type-object" title="Permalink to this headline">¶</a></h3>
 <p>This event is called on AMF unserialization of a typed object, it allows to link your own <a class="reference external" href="http://www.lua.org/">LUA</a> type with AMF typed object, or also customizes AMF serialization/unserialization. See <em>AMF and LUA types conversion</em> part of <a class="reference external" href="./serverapp.html">Server Application</a> page for more details.</p>
 </div>
 <div class="section" id="onmanage">
-<h3><a class="toc-backref" href="#id82">onManage()</a><a class="headerlink" href="#onmanage" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id83">onManage()</a><a class="headerlink" href="#onmanage" title="Permalink to this headline">¶</a></h3>
 <p>Call every two seconds, this event is available only in the <em>root</em> server application (<em>www/main.lua</em>). It allows easyly to get handle to manage your objects if need.</p>
 </div>
 <div class="section" id="onrendezvousunknown-peerid">
-<h3><a class="toc-backref" href="#id83">onRendezVousUnknown(peerId)</a><a class="headerlink" href="#onrendezvousunknown-peerid" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id84">onRendezVousUnknown(peerId)</a><a class="headerlink" href="#onrendezvousunknown-peerid" title="Permalink to this headline">¶</a></h3>
 <p>Allows to redirect a client who searchs a peerId that the rendezvous service doesn&#8217;t find. Usually you will redirect the client to one or multiple other MonaServer (see <a class="reference external" href="./scalability.html">Scalability and load-balancing</a> for more details on multiple servers usage). You can return an address, but also multiple address, or an array of addresses.</p>
 <div class="highlight-lua"><div class="highlight"><pre><span class="k">function</span> <span class="nf">onRendezVousUnknown</span><span class="p">(</span><span class="n">peerId</span><span class="p">)</span>
         <span class="k">return</span> <span class="mf">192.168.0.2</span><span class="p">:</span><span class="mi">1935</span>
@@ -988,7 +1030,7 @@ Otherwise you can cutomize this message in raising one error in this context.</p
 </div>
 </div>
 <div class="section" id="onhandshake-address-path-properties-attempts">
-<h3><a class="toc-backref" href="#id84">onHandshake (address,path,properties,attempts)</a><a class="headerlink" href="#onhandshake-address-path-properties-attempts" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id85">onHandshake(address,path,properties,attempts)</a><a class="headerlink" href="#onhandshake-address-path-properties-attempts" title="Permalink to this headline">¶</a></h3>
 <p>Allows to redirect the client to one other MonaServer (see <a class="reference external" href="./scalability.html">Scalability and load-balancing</a> for more details on multiple servers usage), in returning address(es) of redirection. About the returned value it works exactly same the returned value of <em>onRendezVousUnknown</em> event (see above).
 It&#8217;s called on the first packet received from one client (before the creation of its client object associated). First <em>address</em> argument is the address of the client, <em>path</em> argument indicates the path expression of connection, <em>properties</em> argument is a table with the HTTP parameters given in the URL of connection (see dynamic properties of <em>client</em> object description above) and <em>attempts</em> argument indicates the number of attempts of connection (starts to 1 and is incremented on each attempt).</p>
 <div class="highlight-as3"><div class="highlight"><pre><span class="n">_netConnection</span><span class="o">.</span><span class="na">connect</span><span class="o">(</span><span class="s2">&quot;rtmfp://localhost/myApplication?acceptableAttempts=2&quot;</span><span class="o">);</span>
@@ -1019,11 +1061,11 @@ It&#8217;s called on the first packet received from one client (before the creat
 </div>
 </div>
 <div class="section" id="onserverconnection-server">
-<h3><a class="toc-backref" href="#id85">onServerConnection(server)</a><a class="headerlink" href="#onserverconnection-server" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id86">onServerConnection(server)</a><a class="headerlink" href="#onserverconnection-server" title="Permalink to this headline">¶</a></h3>
 <p>Call on server connection, see <a class="reference external" href="./scalability.html">Scalability and load-balancing</a> for more details on multiple servers usage, or <em>server</em> object description above about the input argument.</p>
 </div>
 <div class="section" id="onserverdisconnection-server">
-<h3><a class="toc-backref" href="#id86">onServerDisconnection(server)</a><a class="headerlink" href="#onserverdisconnection-server" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id87">onServerDisconnection(server)</a><a class="headerlink" href="#onserverdisconnection-server" title="Permalink to this headline">¶</a></h3>
 <p>Call on server disconnection, see <a class="reference external" href="./scalability.html">Scalability and load-balancing</a> for more details on multiple servers usage, or <em>server</em> object description above about the input argument.</p>
 </div>
 </div>
