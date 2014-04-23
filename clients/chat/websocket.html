@@ -8,15 +8,16 @@
         try { // try to parse data
           data = JSON.parse(msg.data);
           if (data[0] == "onReception") {
-            onReception(data[1]);
+            onReception(data[1], data[2]);
           }
         } catch(exception) {}
       }
       
-      function onReception(message) {
+      // Write message in the text area and scroll up
+      function onReception(prompt, message) {
         
           var textArea = window.document.getElementById("response");
-          textArea.value += message + '\n';
+          textArea.value += prompt + message + '\n';
           textArea.scrollTop = textArea.scrollHeight;
       }
       
@@ -28,7 +29,9 @@
         
         var name = prompt("Please enter your name","User");
         if (name!=null) {
-          socket.send('["onIdentification","' + name + '"]');
+          var data = ["onIdentification", name];
+          data = JSON.stringify(data);
+          socket.send(data);
         }
       }
       
@@ -49,11 +52,13 @@
           alert("Your browser don't support webSocket!");
           return false;
         }
+        
         socket = new WebSocket(host);
         socket.onopen = onConnection;
         socket.onclose = onDisconnection;
         socket.onerror = function() { window.document.getElementById("error").value = 'An error occurs'; }
         socket.onmessage = onMessage;
+        return true;
       }
        
       // Send message event
@@ -69,15 +74,15 @@
     </script>
 </head>
 <body>
-<div style="height:100%; width:100%">
-<b>Status :</b> <input id="error" readonly=1 style="color:red"/> <input id="btConnect" type="button" value="Connect" onclick="createWebSocket();" />
-  <textarea style="height:90%; width:100%" id="response" cols="80" disabled></textarea>
-  <form name="Demo" action="" onsubmit="sendMessage(); return false">
-    <div style="width:100%">
-      <input type="text" id="message" style="width:90%"/>
-      <input type="button" value="Send" onclick="sendMessage();"/>
+    <div style="height:100%; width:100%">
+    <b>Status :</b> <input id="error" readonly=1 style="color:red"/> <input id="btConnect" type="button" value="Connect" onclick="createWebSocket();" />
+      <textarea style="height:90%; width:100%" id="response" cols="80" disabled></textarea>
+      <form name="Demo" action="" onsubmit="sendMessage(); return false">
+        <div style="width:100%">
+          <input type="text" id="message" style="width:90%"/>
+          <input type="button" value="Send" onclick="sendMessage();"/>
+        </div>
+      </form>
     </div>
-  </form>
-</div>
 </body>
 <html>

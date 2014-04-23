@@ -35,7 +35,7 @@ Servers::Servers(const MapParameters& configs,const SocketManager& manager) : _c
 				this->targets._connections.emplace(&server);
 			else
 				initiators._connections.emplace(&server);
-			NOTE("Connection etablished with ", server.address.toString(), " server");
+			NOTE("Connection established with ", server.address.toString(), " server");
 		} else {
 			Exception ex;
 			OnDisconnection::raise(ex,server);

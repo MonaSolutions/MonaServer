@@ -1,5 +1,5 @@
 
-.. image:: githubBlack.png
+.. image:: img/githubBlack.png
   :align: right
   :target: https://github.com/MonaSolutions/MonaServer
 
@@ -13,7 +13,7 @@ Usually to add sockets feature in LUA_, the extension LUASocket_ is used. But th
 - LUASocket_ don't work always fine on Windows.
 - It duplicates uselessly socket cross-platform features already provided by Mona in its core.
 
-For all these reason, I am making available a new LUA_ socket features mapping on Mona socket intern framework, with only non-blocking methods.
+For all these reason, we have made available a new LUA_ socket features mapping on Mona socket intern framework, with only non-blocking methods.
 
 .. contents:: Table of Contents
 
@@ -21,7 +21,7 @@ TCP Client
 ********************************
 
 To create a TCP client, call *mona:createTCPClient()* method (see *Mona* object description on `Server Application, API <./api.html>`_ page).
-Here a complete sample to understand its usage:
+Here is a complete sample to understand its usage:
 
 .. code-block:: lua
 
@@ -60,7 +60,7 @@ methods
 
 - **connect(host,port)**, connect to the *host:port* indicated. If this method fails, it returns an error message, otherwise it returns nothing.
 - **disconnect()**, shutdown the socket.
-- **send(data)**, send *data* (LUA_ string).
+- **send(data)**, send *data* (LUA_ string) to the TCP server.
 
 
 events
@@ -80,7 +80,7 @@ Here a complete sample to understand its usage:
 .. code-block:: lua
 
 	server = mona:createTCPServer()
-	function server:clientHandler(client)
+	function server:onConnection(client)
 		-- Here we have a TCPClient object, same usage than TCPClient
 		function client:onReception(data)
 			NOTE("Reception from "..self.peerAddress.." to "..self.address)
@@ -110,34 +110,7 @@ methods
 events
 =============================
 
-- **clientHandler(client)**, call on client connection. Client parameter is a TCP client as described in the precedent *TCP Client* part (see above).
-
-
-Mails feature
-********************************
-
-Actually, it boils down to send an email from server application script code.
-In first, you have to configure a SMTP server in MonaServer configurations (see `Installation <./installation.html>`_ page for a complete description of these configurations).
-
-.. code-block:: ini
-
-	;MonaServer.ini
-	[smtp]
-	host=smtp.isp.com
-	port=25
-	timeout=60
- 
-Then you have to use *mona.sendMail(sender,subject,content,...)* method to send an email from *sender* to recipients given in the last mutiple arguments field (see *Mona* object description on `Server Application, API <./api.html>`_ page). It returns a mail object which contains only one event, *onSent(error)*. You can use this event to get one notification on sent, and if *error* is not null it means that the send has failed.
-
-Here a simple sample:
-
-.. code-block:: lua
-
-	mail = mona:sendMail("test@domain","Hello","Mail sent from script code","test@domain")
-	function mail:onSent(err)
-		if err then ERROR(err) else NOTE("Sent") end
-	end
-
+- **onConnection(client)**, call on client connection. Client parameter is a TCP client as described in the precedent *TCP Client* part (see above).
 
 
 UDP Socket
@@ -154,7 +127,7 @@ Here a echo sample to understand its usage:
 		self:send(data,address) -- echo sample
 	end
 	err = socket:bind("0.0.0.0:1234") -- start the server
-	if error then ERROR(err) end
+	if err then ERROR(err) end
 
 Following a sample in a client form, in connected mode:
 
@@ -164,9 +137,9 @@ Following a sample in a client form, in connected mode:
 	function socket:onReception(data,address)
 		NOTE("Reception from "..address..": "..data)
 	end
-	socket:connect("0.0.0.0:1234")
+	socket:connect("127.0.0.1", 1234)
 	NOTE("UDP socket opened on ",socket.address," connected to ",socket.peerAddress)
-	socket:send("salut")
+	socket:send("hello")
 
 
 properties
@@ -178,9 +151,9 @@ properties
 methods
 =============================
 
-- **connect(address)**, connect to the *address* indicated. Then UDP packets can be sent without using *address* argument in *send* method (see below).
-- **bind(address)**, bind to the *address* indicated. It can not be done on a connected socket. If this method fails, it returns an error message, otherwise it returns nothing.
-- **send(data[,address])**, send *data* (LUA_ string) to the *address* indicated. This *address* argument can be omitted if the UDP socket is in a connected mode (see *connect* method above).
+- **connect(address[,port])**, connect to the *address* indicated. Then UDP packets can be sent without using *address* argument in *send* method (see below).
+- **bind(address[,port])**, bind to the *address* indicated. It can not be done on a connected socket. If this method fails, it returns an error message, otherwise it returns nothing.
+- **send(data[,address, port])**, send *data* (LUA_ string) to the *address* indicated. This *address* argument can be omitted if the UDP socket is in a connected mode (see *connect* method above).
 - **close()**, close the socket.
 
 events

@@ -1,5 +1,5 @@
 
-.. image:: githubBlack.png
+.. image:: img/githubBlack.png
   :align: right
   :target: https://github.com/MonaSolutions/MonaServer
 
@@ -415,7 +415,7 @@ properties
 -----------------
 
 - **address** (read-only), name of the publication
-- **publicAddress** (read-only), name of the publication
+- **host** (read-only), name of the publication
 - **isTarget** (read-only), name of the publication
 
 .. note:: *server* object can have other dynamic properties (as *client* object) which relates properties used during the server connection (see *Configurations* part of `Installation <./installation.html>`_ page).
@@ -563,34 +563,78 @@ It answers with a *NetConnection.Connect.Rejected* status event and close the cl
 		}
 	}
 
-onDisconnection(client)
-============================
+Functions below are member functions of clients objects so need to be declared under the onConnection scope like in this sample :
 
-Call on client disconnection. *client* argument is the disconnected client.
+.. code-block:: lua
 
-.. note:: At this stage you can send no more data to the client, all writing to a flowWriter object of this client has no effect.
+	function onConnection(client)
+		
+		function client:onRead(file, parameters)
+		
+			NOTE("Sending file '", file, "' to client address ", client.address)
+		end
+	end
 
+client:onRead(file, parameters...)
+====================================
 
-onFailed(client,error)
-============================
+This event is used with **HTTP** protocol.
 
-Call on client failing. *client* argument is the failed client, and *error* argument is the error message.
+Called when a client try to read a file on the server. The file should exists.
+Parameters should be used to perform REST functionnalities.
 
-.. note:: At this stage you can send no more data to the client, all writing for a flowWriter object of this client has no effect.
+You can also reject the connexion like this :
 
+.. code-block:: lua
 
-onJoinGroup(client,group)
-==============================
+	function client:onRead(file)
+		if file ~= "index.html" then
+			error("Access to file ", file, " is forbidden)
+		end
+	end
+
+You can redirect to another file returning the file name as first parameter :
+
+.. code-block:: lua
+
+	function client:onRead(file)
+		return "newFile"
+	end
+	
+Other parameters are treated as values for replacing templates *<% property %>* in file. So in this implementation each *<% name %>* element will be replaced by "robert" :
+
+.. code-block:: lua
+
+	function client:onRead(file)
+		return file, {name="robert"}
+	end
+
+If you need to return a custom response you can return *nil* and write you response using the writer as below:
+
+.. code-block:: lua
+
+	function client:onRead(file,parameters)
+		self.writer:writeRaw("hello"); -- my custom response
+		return nil
+	end
+
+client:onMessage(parameters...)
+====================================
+
+Called when a client send a message to the server in pull or push mode (see Samples_ page for more informations).
+
+client:onJoinGroup(group)
+====================================
 
 Call when a client creates or joins a *group* (a NetGroup_). *client* argument is the client which is joining the *group* second argument (see *group* object in *Objects* part).
 
-onUnjoinGroup(client,group)
-===============================
+client:onUnjoinGroup(group)
+====================================
 
 Call when a client unjoins a *group* (a NetGroup_). *client* argument is the client which is unjoining the *group* second argument (see *group* object in *Objects* part).
 
-onPublish(client,publication)
-===============================
+client:onPublish(publication)
+====================================
 
 Call when a publication starts. *client* is the client which starts the publication, and *publication* argument is the publication description (see *publication* object in *Objects* part).
 
@@ -617,40 +661,41 @@ Otherwise you can cutomize this message in raising one error in this context.
 
 .. warning:: This event is not called for publications started from script code, it's called only for client publications (see *publication* object in *Objects* part). Then of course, it's called only in stream-to-server case (not in P2P case).
 
+Functions below are function members of class Publication so must be implemented in the scope of the onPublish function.
 
-onUnpublish(client,publication)
-=====================================
-
-Call when a publication stops. *client* is the client which have stopped the publication, and *publication* argument is the publication related.
-
-.. warning:: This event is not called for publications started from script code, it's called only for client publications (see *publication* object in *Objects* part). Then of course, it's called only in stream-to-server case (not in P2P case).
-
-
-onVideoPacket(client,publication,time,packet)
-==================================================
+publication:onVideo(time,packet)
+====================================
 
 Call on video packet reception for one publication. *time* is the time in milliseconds of this packet in the stream, and *packet* contains video data.
 
 .. warning:: This event is not called for publications started from script code, it's called only for client publications (see *publication* object in *Objects* part). Then of course, it's called only in stream-to-server case (not in P2P case).
 
 
-onAudioPacket(client,publication,time,packet)
-===================================================
+publication:onAudioPacket(time,packet)
+=======================================
 
 Call on audio packet reception for one publication. *time* is the time in milliseconds of this packet in the stream, and *packet* contains audio data.
 
 .. warning:: This event is not called for publications started from script code, it's called only for client publications (see *publication* object in *Objects* part). Then of course, it's called only in stream-to-server case (not in P2P case).
 
 
-onDataPacket(client,publication,name,packet)
-===================================================
+publication:onDataPacket(name,packet)
+======================================
 
 Call on data packet reception for one publication. *name* is the invocation name, and *packet* contains raw data.
 
 .. warning:: This event is not called for publications started from script code, it's called only for client publications (see *publication* object in *Objects* part). Then of course, it's called only in stream-to-server case (not in P2P case).
 
-onSubscribe(client,listener)
-==============================
+
+client:onUnpublish(publication)
+====================================
+
+Call when a publication stops. *client* is the client which have stopped the publication, and *publication* argument is the publication related.
+
+.. warning:: This event is not called for publications started from script code, it's called only for client publications (see *publication* object in *Objects* part). Then of course, it's called only in stream-to-server case (not in P2P case).
+
+client:onSubscribe(listener)
+====================================
 
 Call on new client subscription. First *client* argument is the client which starts the stream subscription, and *listener* describes the subscription (see *listener* object in *Objects* part).
 
@@ -680,8 +725,8 @@ Otherwise you can cutomize this message in raising one error in this context.
  - This event is called only in stream-to-server case (not in P2P case).
  - The listener is added to the *listener.publication.listeners* list after this call, so the value *listener.publication.listeners.count* will return the old value, and only if onSubscribe accepts the new listener, will be incremented.
 
-onUnsubscribe(client,listener)
-=====================================
+client:onUnsubscribe(listener)
+====================================
 
 Call on client unsubscription. First *client* argument is the client which stops the stream subscription, and *listener* describes the subscription closed (see *listener* object in *Objects* part).
 
@@ -689,6 +734,14 @@ Call on client unsubscription. First *client* argument is the client which stops
 
  - This event is called only in stream-to-server case (not in P2P case).
  - The listener is removed to the *listener.publication.listeners* list after this call, so the value *listener.publication.listeners.count* will return the old value until the end of this call.
+
+
+onDisconnection(client)
+============================
+
+Call on client disconnection. *client* argument is the disconnected client.
+
+.. note:: At this stage you can send no more data to the client, all writing to a flowWriter object of this client has no effect.
 
 onTypedObject(type,object)
 =====================================
@@ -699,7 +752,6 @@ onManage()
 =====================================
 
 Call every two seconds, this event is available only in the *root* server application (*www/main.lua*). It allows easyly to get handle to manage your objects if need.
-
 
 onRendezVousUnknown(peerId)
 =====================================
@@ -742,7 +794,7 @@ Then you can return a *server* object or a *servers* object (see above for these
 .. note:: When this function returns multiple addresses, the client will receive all these addresses and will start multiple attempt in parallel to these servers.
 
 
-onHandshake (address,path,properties,attempts)
+onHandshake(address,path,properties,attempts)
 ===============================================
 
 Allows to redirect the client to one other MonaServer (see `Scalability and load-balancing <./scalability.html>`_ for more details on multiple servers usage), in returning address(es) of redirection. About the returned value it works exactly same the returned value of *onRendezVousUnknown* event (see above).
@@ -792,3 +844,4 @@ Call on server disconnection, see `Scalability and load-balancing <./scalability
 .. _IDataOutput: http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/utils/IDataOutput.html
 .. _IDataInput: http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/utils/IDataInput.html
 .. _Server Application: ./serverapp.html
+.. _Samples: ./samples.html

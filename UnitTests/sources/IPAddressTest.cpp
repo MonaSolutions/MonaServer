@@ -549,3 +549,46 @@ ADD_TEST(IPAddressTest, Relationals) {
 	CHECK(!(ip4 > ip1));
 	CHECK(!(ip4 >= ip1));
 }
+
+
+ADD_TEST(IPAddressTest, Relationals6) {
+
+	Exception ex;
+	IPAddress ip1;
+	CHECK(ip1.set(ex, "fe80::21f:5bff:fec6:6707"));
+	CHECK(!ex);
+	IPAddress ip2(ip1);
+	IPAddress ip3;
+	IPAddress ip4;
+	CHECK(ip4.set(ex, "2001:0db8:0000:85a3:0000:0000:ac1f:8001"));
+	CHECK(!ex);
+	IPAddress ip5;
+	CHECK(ip5.set(ex, "2001:0db8:0000:85a3::ac1f:8001"));
+	CHECK(!ex);
+	IPAddress ip6;
+	CHECK(ip6.set(ex, "2001:0db8:0:85a3:0:0:ac1f:8001"));
+	CHECK(!ex);
+	IPAddress ip7;
+	CHECK(ip7.set(ex, "2001:0db8:0:85a3::ac1f:8001"));
+	CHECK(!ex);
+
+	CHECK(ip4 == ip5);
+	CHECK(ip4 == ip6);
+	CHECK(ip4 == ip7);
+	CHECK(ip5 == ip6);
+	CHECK(ip5 == ip7);
+	CHECK(ip6 == ip7);
+	
+	CHECK(ip1 != ip4);
+	CHECK(ip1 == ip2);
+	CHECK(!(ip1 != ip2));
+	CHECK(!(ip1 == ip4));
+	CHECK(ip1 > ip4);
+	CHECK(ip1 >= ip4);
+	CHECK(ip4 < ip1);
+	CHECK(ip4 <= ip1);
+	CHECK(!(ip1 < ip4));
+	CHECK(!(ip1 <= ip4));
+	CHECK(!(ip4 > ip1));
+	CHECK(!(ip4 >= ip1));
+}

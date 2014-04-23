@@ -146,9 +146,9 @@ ADD_TEST(StringTest, TestFormat0) {
 	CHECK(String::Format(_Str, Format<long>("%05d", -123)) == "-0123");
 	CHECK(String::Format(_Str, Format<unsigned long>("%05d", 123)) == "00123");
 
-	CHECK(String::Format(_Str, Format<Int64>("%05d", 123)) == "00123");
-	CHECK(String::Format(_Str, Format<Int64>("%05d", -123)) == "-0123");
-	CHECK(String::Format(_Str, Format<UInt64>("%05d", 123)) == "00123");
+	CHECK(String::Format(_Str, Format<Int64>("%05lld", 123)) == "00123");
+	CHECK(String::Format(_Str, Format<Int64>("%05lld", -123)) == "-0123");
+	CHECK(String::Format(_Str, Format<UInt64>("%05llu", 123)) == "00123");
 }
 
 ADD_TEST(StringTest, TestFloat) {

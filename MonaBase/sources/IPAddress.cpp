@@ -57,7 +57,7 @@ public:
 };
 
 
-class IPv4Address : public IPAddressCommon, public virtual Object {
+class IPv4Address : public IPAddressCommon {
 public:
 
 	IPv4Address(const in_addr& addr) {
@@ -136,7 +136,7 @@ private:
 };
 
 
-class IPv6Address : public IPAddressCommon, public virtual Object {
+class IPv6Address : public IPAddressCommon {
 public:
 	IPv6Address(const in6_addr& addr, UInt32 scope = 0) : _scope(scope) {
 		memcpy(&_addr, &addr, sizeof(_addr));

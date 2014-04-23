@@ -242,8 +242,9 @@ public:
 
 		ioctl(ex,FIONBIO, 1); // set non blocking mode before bind
 
-		// TODO? if (address.family() == IPAddress::IPv6)
-			// setOption(ex, IPPROTO_IPV6, IPV6_V6ONLY, 1);
+		if (address.family() == IPAddress::IPv6)
+			setOption(ex, IPPROTO_IPV6, IPV6_V6ONLY, 1); // Used for OS like Linux which bind also IPV4 while binding IPV6
+
 		if (reuseAddress) {
 			setReuseAddress(ex,true);
 			setReusePort(true);
@@ -261,9 +262,9 @@ public:
 		if (!_initialized && !init(ex, address.family()))
 			return false;
 	
-	
-		// TODO? if (address.family() == IPAddress::IPv6)
-			// setOption(ex, IPPROTO_IPV6, IPV6_V6ONLY, 1);
+		if (address.family() == IPAddress::IPv6)
+			setOption(ex, IPPROTO_IPV6, IPV6_V6ONLY, 1); // Used for OS like Linux which bind also IPV4 while binding IPV6
+
 		ioctl(ex,FIONBIO, 1); // set non blocking mode before bind
 
 		if (reuseAddress) {

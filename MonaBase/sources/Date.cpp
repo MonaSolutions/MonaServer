@@ -787,6 +787,8 @@ bool Date::parseAuto(Exception& ex, const string& value) {
 		++length;
 	}
 
+	if (!digit)
+		return false;
 	if (length == 10)
 		return update(ex, value, SORTABLE_FORMAT);
 	if (length<10 || tPos==10)
