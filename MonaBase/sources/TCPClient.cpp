@@ -19,7 +19,6 @@ This file is a part of Mona.
 
 #include "Mona/TCPClient.h"
 #include "Mona/TCPSender.h"
-#include "Mona/Logs.h"
 
 using namespace std;
 

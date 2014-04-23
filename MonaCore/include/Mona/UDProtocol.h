@@ -50,7 +50,7 @@ protected:
 			OnPacket::raise(pBuffer,address);
 		};
 		if (!OnError::subscribed()) {
-			onError = [this](const Exception& ex) { DEBUG("Protocol ", this->name, ", ", ex.error()); };
+			onError = [this](const Exception& ex) { WARN("Protocol ", this->name, ", ", ex.error()); };
 			_socket.OnError::subscribe(onError);
 		} else
 			_socket.OnError::subscribe(*this);

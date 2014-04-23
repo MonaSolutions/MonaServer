@@ -31,7 +31,7 @@ namespace Mona {
 static const char* LocalhostV4("127.0.0.1"); // to accelerate the parse
 static const char* LocalhostV6("::1"); // to accelerate the parse
 
-class IPAddressCommon {
+class IPAddressCommon : public virtual Object {
 public:
 	virtual const void* addr() const = 0;
 	virtual NET_SOCKLEN size() const = 0;

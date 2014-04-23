@@ -76,7 +76,7 @@ FlashStream& Invoker::flashStream(UInt32 id,Peer& peer,shared_ptr<FlashStream>& 
 }
 
 Publication* Invoker::publish(Exception& ex, Peer& peer,const string& name) {
-	MAP_FIND_OR_EMPLACE(_publications, it, name, name);
+	MAP_FIND_OR_EMPLACE(_publications, it, name, name,poolBuffers);
 	Publication& publication(it->second);
 	publication.start(ex, peer);
 	if (ex) {
@@ -110,7 +110,7 @@ Listener* Invoker::subscribe(Exception& ex, Peer& peer,string& name,Writer& writ
 }
 
 Listener* Invoker::subscribe(Exception& ex, Peer& peer,const string& name,Writer& writer) {
-	MAP_FIND_OR_EMPLACE(_publications, it, name, name);
+	MAP_FIND_OR_EMPLACE(_publications, it, name, name,poolBuffers);
 	Publication& publication(it->second);
 	Listener* pListener = publication.addListener(ex, peer,writer);
 	if (!pListener) {

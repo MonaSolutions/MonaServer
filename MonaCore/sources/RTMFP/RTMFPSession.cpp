@@ -276,7 +276,7 @@ void RTMFPSession::packetHandler(PacketReader& packet) {
 				time += 0xFFFF-timeEcho;
 			timeEcho = 0;
 		}
-		peer.setPing((time-timeEcho)*(UInt16)RTMFP_TIMESTAMP_SCALE);
+		peer.setPing((time-timeEcho)*RTMFP_TIMESTAMP_SCALE);
 	}
 	else if(marker != 0xF9)
 		WARN("RTMFPPacket marker unknown : ", Format<UInt8>("%02x",marker));

@@ -539,17 +539,15 @@ void MonaServer::onDisconnection(const Client& client) {
 }
 
 void MonaServer::onMessage(Exception& ex, Client& client,const string& name,DataReader& reader, UInt8 responseType) {
-	String::Format(buffer,"Method '",name,"' not found");
+	bool done(false);
 	SCRIPT_BEGIN(openService(client))
 		SCRIPT_MEMBER_FUNCTION_BEGIN(Client,client,name.c_str())
 			SCRIPT_WRITE_DATA(reader,0)
-			buffer.clear();
-			SCRIPT_FUNCTION_CALL_WITHOUT_LOG
+			done=true;
+			SCRIPT_FUNCTION_CALL
 			if(SCRIPT_CAN_READ) {
 				DataWriter& writer = client.writer().writeResponse(responseType);
-				Script::ReadData(_pState, writer,1);
-				writer.endWrite();
-				++__args;
+				SCRIPT_READ_DATA(writer);
 			}
 		SCRIPT_FUNCTION_END
 		if(SCRIPT_LAST_ERROR) {
@@ -557,8 +555,10 @@ void MonaServer::onMessage(Exception& ex, Client& client,const string& name,Data
 			return;
 		}
 	SCRIPT_END
-	if(!buffer.empty())
-		ex.set(Exception::APPLICATION, buffer);
+	if (!done) {
+		ex.set(Exception::APPLICATION, "Method '",name,"' not found on application ", client.path);
+		ERROR(ex.error());
+	}
 }
 
 bool MonaServer::onRead(Exception& ex, Client& client,FilePath& filePath,DataReader& parameters,DataWriter& properties) { 

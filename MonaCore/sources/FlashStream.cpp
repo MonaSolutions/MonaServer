@@ -62,8 +62,6 @@ void FlashStream::close(FlashWriter& writer,const string& error,int code) {
 bool FlashStream::process(AMF::ContentType type,UInt32 time,PacketReader& packet,FlashWriter& writer,UInt32 numberLostFragments) {
 	if(type==AMF::EMPTY)
 		return true;
-	
-	writer.callbackHandle = 0;
 
 	Exception ex;
 	// if exception, it closes the connection, and print an ERROR message
@@ -129,7 +127,7 @@ void FlashStream::messageHandler(Exception& ex,const string& name,AMFReader& mes
 		}
 		writer.writeAMFStatus("NetStream.Play.Reset","Playing and resetting " + publication); // for entiere playlist
 		writer.writeAMFStatus("NetStream.Play.Start","Started playing " + publication); // for item
-		
+
 	} else if(name == "closeStream") {
 		disengage(&writer);
 	} else if(name=="publish") {
@@ -196,7 +194,7 @@ void FlashStream::audioHandler(Exception& ex, UInt32 time,PacketReader& packet, 
 		return;
 	}
 	if(_pPublication->publisher() == &peer)
-		_pPublication->pushAudio(packet,time,numberLostFragments);
+		_pPublication->pushAudio(time,packet,numberLostFragments);
 	else
 		WARN("an audio packet has been received on a stream ",id," which is not on owner of this publication, certainly a publication currently closing");
 }
@@ -207,7 +205,7 @@ void FlashStream::videoHandler(Exception& ex, UInt32 time,PacketReader& packet, 
 		return;
 	}
 	if(_pPublication->publisher() == &peer)
-		_pPublication->pushVideo(packet,time,numberLostFragments);
+		_pPublication->pushVideo(time,packet,numberLostFragments);
 	else
 		WARN("a video packet has been received on a stream ",id," which is not on owner of this publication, certainly a publication currently closing");
 }

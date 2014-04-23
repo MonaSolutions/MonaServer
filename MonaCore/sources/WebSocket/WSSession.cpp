@@ -37,6 +37,8 @@ WSSession::WSSession(const SocketAddress& peerAddress, SocketFile& file, Protoco
 void WSSession::kill(UInt32 type){
 	if(died)
 		return;
+	if (type!=Session::SOCKET_DEATH && _writer.state() != Writer::CLOSED)
+		_writer.close(type);
 	closePublication();
 	closeSusbcription();
 	TCPSession::kill(type);
@@ -120,19 +122,19 @@ void WSSession::packetHandler(PacketReader& packet) {
 				break;
 			default:
 				ex.set(Exception::PROTOCOL, Format<UInt8>("Type %#x unknown", type), WS::CODE_MALFORMED_PAYLOAD);
+				ERROR(ex.error());
 				break;
 		}
 		
-		if (ex) {
-			ERROR(ex.error());
-			_writer.close((ex.code()==Exception::APPLICATION || ex.code() == Exception::SOFTWARE) ? (int)WS::CODE_PROTOCOL_ERROR : (int)ex.code());	
-		}
-		
+		if (ex)
+			_writer.close((ex.code()==Exception::APPLICATION || ex.code() == Exception::SOFTWARE) ? WS::CODE_PROTOCOL_ERROR : ex.code());	
+
 	}
 
-	if(!peer.connected)
+	if (!peer.connected) {
+		_writer.close(WS::CODE_POLICY_VIOLATION);
 		kill(REJECTED_DEATH);
-	else if (type==WS::TYPE_CLOSE)
+	} else if (type==WS::TYPE_CLOSE)
 		kill();
 	else
 		_writer.flush();

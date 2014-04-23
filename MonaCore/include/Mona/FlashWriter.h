@@ -32,8 +32,9 @@ public:
 	double					callbackHandle;
 
 	BinaryWriter&			writeRaw() { return write(AMF::RAW).packet; }
-	AMFWriter&				writeMessage() { return writeInvocation("_result"); }
-	AMFWriter&				writeInvocation(const std::string& name);
+	AMFWriter&				writeMessage();
+	AMFWriter&				writeInvocation(const std::string& name) { return writeInvocation(name,0); }
+
 	AMFWriter&				writeAMFSuccess(const std::string& code, const std::string& description, bool withoutClosing = false) { return writeAMFState("_result", code, description, withoutClosing); }
 	AMFWriter&				writeAMFStatus(const std::string& code, const std::string& description, bool withoutClosing = false) { return writeAMFState("onStatus", code, description, withoutClosing); }
 	AMFWriter&				writeAMFError(const std::string& code, const std::string& description, bool withoutClosing = false) { return writeAMFState("_error", code, description, withoutClosing); }
@@ -45,7 +46,7 @@ protected:
 	virtual ~FlashWriter();
 
 	virtual AMFWriter&		write(AMF::ContentType type,UInt32 time=0,PacketReader* pPacket=NULL)=0;
-
+	AMFWriter&				writeInvocation(const std::string& name,double callback);
 	AMFWriter&				writeAMFState(const std::string& name,const std::string& code,const std::string& description,bool withoutClosing=false);
 private:
 	std::string		_onAudio;

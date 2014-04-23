@@ -132,11 +132,13 @@ bool FileSystem::CreateDirectory(const string& path) {
 #endif
 }
 
-bool FileSystem::Remove(Exception& ex,const string& path) {
-	Exception exc;
-	Files files(exc, path); // if exception it's a file or a not existed folder
-	for (const string& file : files)
-		Remove(ex,file);
+bool FileSystem::Remove(Exception& ex,const string& path,bool all) {
+	if (all) {
+		Exception exc;
+		Files files(exc, path); // if exception it's a file or a not existed folder
+		for (const string& file : files)
+			Remove(ex, file,true);
+	}
 
 	if (!Exists(path, true))
 		return !ex;

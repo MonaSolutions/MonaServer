@@ -92,7 +92,6 @@ private:
 
 	void					createReader(PacketReader& packet, std::shared_ptr<DataReader>& pReader) { pReader.reset(new AMFReader(packet)); }
 	void					createWriter(std::shared_ptr<DataWriter>& pWriter) { pWriter.reset(new AMFWriter(_band.poolBuffers()));pWriter->packet.next(6); }
-	bool					hasToConvert(DataReader& reader) { return dynamic_cast<AMFReader*>(&reader) == NULL; }
 
 	Trigger						_trigger;
 

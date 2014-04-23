@@ -32,6 +32,8 @@ public:
 
 	HTTPPacket(PoolBuffer& pBuffer);
 
+	Exception					exception;
+
 	std::vector<const char*>	headers;
 	const UInt8*				content;
 	UInt32						contentLength;

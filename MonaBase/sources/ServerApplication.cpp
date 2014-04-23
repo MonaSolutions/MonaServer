@@ -249,7 +249,7 @@ int ServerApplication::run(int argc, const char** argv) {
 				if (rc != 0)
 					result = EXIT_OSERR;
 			}
-			if(result!=EXIT_OK) {
+			if(result==EXIT_OK) {
 				TerminateSignal test;
 				result = main(test);
 			}

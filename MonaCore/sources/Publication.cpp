@@ -27,7 +27,7 @@ using namespace std;
 
 namespace Mona {
 
-Publication::Publication(const string& name):_new(false),_name(name),_droppedFrames(0),_firstKeyFrame(false),listeners(_listeners),_pPublisher(NULL) {
+Publication::Publication(const string& name,const PoolBuffers& poolBuffers): _audioCodecBuffer(poolBuffers),_videoCodecBuffer(poolBuffers),_new(false),_name(name),_lastTime(0),listeners(_listeners),_pPublisher(NULL) {
 	DEBUG("New publication ",_name);
 }
 
@@ -58,8 +58,9 @@ Listener* Publication::addListener(Exception& ex, Peer& peer,Writer& writer) {
 	string error;
 	if(peer.onSubscribe(*pListener,error)) {
 		_listeners.insert(it,pair<Client*,Listener*>(&peer,pListener));
-		if(_pPublisher)
+		if (_pPublisher)
 			pListener->startPublishing();
+
 		return pListener;
 	}
 	if(error.empty())
@@ -96,7 +97,7 @@ void Publication::start(Exception& ex, Peer& peer) {
 		ex.set(Exception::APPLICATION, error);
 		return;
 	}
-	_firstKeyFrame=false;
+	INFO("Publication ", _name, " started")
 	for(auto& it : _listeners)
 		it.second->startPublishing();
 	flush();
@@ -109,6 +110,7 @@ void Publication::stop(Peer& peer) {
 		ERROR("Unpublish '",_name,"' operation with a different publisher");
 		return;
 	}
+	INFO("Publication ", _name, " stopped")
 	for(auto& it : _listeners)
 		it.second->stopPublishing();
 	flush();
@@ -116,16 +118,17 @@ void Publication::stop(Peer& peer) {
 	_videoQOS.reset();
 	_audioQOS.reset();
 	_dataQOS.reset();
-	_videoCodecBuffer.clear();
-	_audioCodecBuffer.clear();
-	_droppedFrames=0;
+	_lastTime=0;
 	_pPublisher=NULL;
+	_videoCodecBuffer.release();
+	_audioCodecBuffer.release();
 	return;
 }
 
 void Publication::flush() {
 	if (!_new)
 		return;
+	_new = false;
 	map<Client*,Listener*>::const_iterator it;
 	for(it=_listeners.begin();it!=_listeners.end();++it)
 		it->second->flush();
@@ -150,37 +153,37 @@ void Publication::pushData(DataReader& reader,UInt32 numberLostFragments) {
 }
 
 
-void Publication::pushAudio(PacketReader& packet,UInt32 time,UInt32 numberLostFragments) {
+void Publication::pushAudio(UInt32 time,PacketReader& packet,UInt32 numberLostFragments) {
 	if(!_pPublisher) {
 		ERROR("Audio packet pushed on '",_name,"' publication which has no publisher");
 		return;
 	}
 
-	// TRACE("Time Audio ",time)
+//	TRACE("Time Audio ",time)
 
-	int pos = packet.position();
 	if(numberLostFragments>0)
 		INFO(numberLostFragments," audio fragments lost on publication ",_name);
 	_audioQOS.add(_pPublisher->ping,packet.available()+4,packet.fragments,numberLostFragments); // 4 for time encoded
 
 	// save audio codec packet for future listeners
-	if (MediaCodec::AAC::IsCodecInfos(packet.current(),packet.available())) {
+	if (MediaCodec::AAC::IsCodecInfos(packet)) {
 		DEBUG("AAC codec infos received on publication ",_name)
 		// AAC codec && settings codec informations
-		_audioCodecBuffer.resize(packet.available(),false);
-		memcpy(_audioCodecBuffer.data(),packet.current(),packet.available());
+		_audioCodecBuffer->resize(packet.available(),false);
+		memcpy(_audioCodecBuffer->data(),packet.current(),packet.available());
 	}
 
 	_new = true;
+	UInt32 pos = packet.position();
 	auto it = _listeners.begin();
 	while(it!=_listeners.end()) {
-		(it++)->second->pushAudioPacket(packet,time);  // listener can be removed in this call
+		(it++)->second->pushAudioPacket(time,packet);  // listener can be removed in this call
 		packet.reset(pos);
 	}
-	_pPublisher->onAudioPacket(*this,time,packet);
+	_pPublisher->onAudioPacket(*this,_lastTime=time,packet);
 }
 
-void Publication::pushVideo(PacketReader& packet,UInt32 time,UInt32 numberLostFragments) {
+void Publication::pushVideo(UInt32 time,PacketReader& packet,UInt32 numberLostFragments) {
 	if(!_pPublisher) {
 		ERROR("Video packet pushed on '",_name,"' publication which has no publisher");
 		return;
@@ -188,40 +191,29 @@ void Publication::pushVideo(PacketReader& packet,UInt32 time,UInt32 numberLostFr
 
 	// TRACE("Time Video ",time," => ",*(packet.current() + 1))
 	
-	// if some lost packet, it can be a keyframe, to avoid break video, we must wait next key frame
-	if(numberLostFragments>0)
-		_firstKeyFrame=false;
 
 	_videoQOS.add(_pPublisher->ping,packet.available()+4,packet.fragments,numberLostFragments); // 4 for time encoded
 	if(numberLostFragments>0)
 		INFO(numberLostFragments," video fragments lost on publication ",_name);
 
-	// is keyframe?
-	if (MediaCodec::IsKeyFrame(packet.current(), packet.available())) {
-		_firstKeyFrame = true;
-		// save video codec packet for future listeners
-		if (MediaCodec::H264::IsCodecInfos(packet.current(), packet.available())) {
-			DEBUG("H264 codec infos received on publication ",_name)
-			// h264 codec && settings codec informations
-			_videoCodecBuffer.resize(packet.available(), false);
-			memcpy(_videoCodecBuffer.data(), packet.current(), packet.available());
-		}
+
+	// save video codec packet for future listeners
+	if (MediaCodec::H264::IsCodecInfos(packet)) {
+		DEBUG("H264 codec infos received on publication ",_name)
+		// h264 codec && settings codec informations
+		_videoCodecBuffer->resize(packet.available(), false);
+		memcpy(_videoCodecBuffer->data(), packet.current(), packet.available());
 	}
 
-	if(!_firstKeyFrame) {
-		DEBUG("No key frame available on publication ",_name,", frame dropped to wait first key frame");
-		++_droppedFrames;
-		return;
-	}
 
 	_new = true;
-	int pos = packet.position();
+	UInt32 pos = packet.position();
 	auto it = _listeners.begin();
 	while(it!=_listeners.end()) {
-		(it++)->second->pushVideoPacket(packet,time); // listener can be removed in this call
+		(it++)->second->pushVideoPacket(time,packet); // listener can be removed in this call
 		packet.reset(pos);
 	}
-	_pPublisher->onVideoPacket(*this,time,packet);
+	_pPublisher->onVideoPacket(*this,_lastTime=time,packet);
 }
 
 

@@ -563,7 +563,7 @@ void RTMFPWriter::writeRaw(const UInt8* data,UInt32 size) {
 }
 
 bool RTMFPWriter::writeMedia(MediaType type,UInt32 time,PacketReader& packet,Parameters& properties) {
-	if(type==INIT && time!=Writer::DATA) {
+	if(type==INIT) {
 		// write bounds
 		AMFWriter& writer = write(AMF::RAW);
 		writer.packet.write16(0x22);

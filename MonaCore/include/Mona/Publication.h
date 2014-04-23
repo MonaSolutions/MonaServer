@@ -28,7 +28,7 @@ namespace Mona {
 
 class Publication : public virtual Object {
 public:
-	Publication(const std::string& name);
+	Publication(const std::string& name,const PoolBuffers& poolBuffers);
 	virtual ~Publication();
 
 	const std::string&		name() const { return _name; }
@@ -36,8 +36,6 @@ public:
 	Client*					publisher() const { return _pPublisher; }
 
 	const Listeners			listeners;
-
-	UInt32					droppedFrames() const { return _droppedFrames; }
 
 	const QualityOfService&	videoQOS() const { return _videoQOS; }
 	const QualityOfService&	audioQOS() const { return _audioQOS; }
@@ -48,8 +46,8 @@ public:
 	void					start(Exception& ex, Peer& peer);
 	void					stop(Peer& peer);
 
-	void					pushAudio(PacketReader& packet,UInt32 time=0,UInt32 numberLostFragments=0);
-	void					pushVideo(PacketReader& packet,UInt32 time=0,UInt32 numberLostFragments=0);
+	void					pushAudio(UInt32 time,PacketReader& packet,UInt32 numberLostFragments=0);
+	void					pushVideo(UInt32 time,PacketReader& packet,UInt32 numberLostFragments=0);
 	void					pushData(DataReader& reader,UInt32 numberLostFragments=0);
 
 	Listener*				addListener(Exception& ex, Peer& peer,Writer& writer);
@@ -57,23 +55,24 @@ public:
 
 	void					flush();
 
-	const Buffer&			audioCodecBuffer() const { return _audioCodecBuffer; }
-	const Buffer&			videoCodecBuffer() const { return _videoCodecBuffer; }
+	
+	const PoolBuffer&		audioCodecBuffer() const { return _audioCodecBuffer; }
+	const PoolBuffer&		videoCodecBuffer() const { return _videoCodecBuffer; }
+
 private:
 	Peer*								_pPublisher;
-	bool								_firstKeyFrame;
 	std::string							_name;
 	std::map<Client*,Listener*>			_listeners;
 
-	Buffer								_audioCodecBuffer;
-	Buffer								_videoCodecBuffer;
+	UInt32								_lastTime;
+	PoolBuffer							_audioCodecBuffer;
+	PoolBuffer							_videoCodecBuffer;
 
 	QualityOfService					_videoQOS;
 	QualityOfService					_audioQOS;
 	QualityOfService					_dataQOS;
 
-	UInt32						_droppedFrames;
-	bool						_new;
+	bool								_new;
 };
 
 

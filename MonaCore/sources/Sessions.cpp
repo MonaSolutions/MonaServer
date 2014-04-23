@@ -27,6 +27,32 @@ namespace Mona {
 
 
 Sessions::Sessions():_nextId(1) {
+	onAddressChange = [this](Session& session, const SocketAddress& oldAddress) {
+		INFO("Session ",session.name()," has changed its address, ",oldAddress.toString()," -> ",session.peer.address.toString());
+		if (!(session._sessionsOptions&BYADDRESS))
+			return;
+		if (_sessionsByAddress.erase(oldAddress) == 0)
+			WARN("Session ",session.name()," unfound with the address key ",oldAddress.toString());
+		auto it = _sessionsByAddress.lower_bound(session.peer.address);
+		if (it != _sessionsByAddress.end() && it->first == session.peer.address) {
+			it->second->expire();
+			it->second->kill();
+			removeByPeer(*it->second);
+			if (_sessions.erase(it->second->id()) == 0) {
+				ERROR("Session ", session.name(), " unfound with the id key ", it->second->id());
+				for (auto it2 = _sessions.begin(); it2 != _sessions.end();++it2) {
+					if (it2->second == &session) {
+						INFO("The correct key was ",it2->first);
+						_sessions.erase(it2);
+						break;
+					}
+				}
+			}
+			delete it->second;
+			_sessionsByAddress.erase(it);
+		}
+		_sessionsByAddress.emplace_hint(it,session.peer.address,&session);
+	};
 }
 
 Sessions::~Sessions() {
@@ -44,9 +70,7 @@ Sessions::~Sessions() {
 	_sessions.clear();
 }
 
-void Sessions::remove(map<UInt32,Session*>::iterator it) {
-	Session& session(*it->second);
-	DEBUG("Session ",session.name()," died");
+void Sessions::removeByPeer(Session& session) {
 	if (session._sessionsOptions&BYPEER) {
 		if (_sessionsByPeerId.erase(session.peer.id)==0) {
 			string buffer;
@@ -60,6 +84,12 @@ void Sessions::remove(map<UInt32,Session*>::iterator it) {
 			}
 		}
 	}
+}
+
+void Sessions::remove(map<UInt32,Session*>::iterator it) {
+	Session& session(*it->second);
+	DEBUG("Session ",session.name()," died");
+	removeByPeer(session);
 	if (session._sessionsOptions&BYADDRESS) {
 		if (_sessionsByAddress.erase(session.peer.address)==0) {
 			ERROR("Session ",session.name()," deletion unfound in address sessions collection with key ",session.peer.address.toString());
@@ -76,12 +106,6 @@ void Sessions::remove(map<UInt32,Session*>::iterator it) {
 	session.kill();
 	delete &session;
 	_sessions.erase(it);
-}
-
-void Sessions::updateAddress(Session& session, const SocketAddress& oldAddress) {
-	INFO("Session ",session.name()," has changed its address (",oldAddress.toString()," -> ",session.peer.address.toString(),")");
-	if(session._sessionsOptions&BYADDRESS && _sessionsByAddress.erase(oldAddress)>0)
-		_sessionsByAddress[session.peer.address] = &session;
 }
 
 

@@ -325,6 +325,7 @@ void SocketManager::run(Exception& exThread) {
 	MSG msg;
 	int result;
 	while ((result = GetMessage(&msg, _eventSystem, 0, 0)) > 0) {
+
 		if (msg.wParam == 0)
 			continue;
 		if (msg.message == 0) {
