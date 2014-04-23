@@ -40,3 +40,5 @@ DataReader::readString
 - Check que un LUa object publication create with cumulus::publish closes on nil assignation
 
 - Implements Proactor sockets models for windows, and use "splice" for linux socket
+
+- Vérifier Date auto parsing, pour quelque chose comme "toto"
