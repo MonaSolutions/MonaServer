@@ -152,7 +152,7 @@ This file is a part of Mona.
 #define _ARCH_IA32    0x01
 #define _ARCH_IA64    0x02
 #define _ARCH_MIPS    0x03
-#define _ARCH_PPC     0x04
+#define _ARCH_POWERPC 0x04
 #define _ARCH_POWER   0x05
 #define _ARCH_SPARC   0x06
 #define _ARCH_AMD64   0x07
@@ -177,7 +177,7 @@ This file is a part of Mona.
 #define _ARCH _ARCH_HPPA
 #define _ARCH_BIG_ENDIAN 1
 #elif defined(__PPC) || defined(__POWERPC__) || defined(__powerpc) || defined(__PPC__) || defined(__powerpc__) || defined(__ppc__) || defined(__ppc) || defined(_ARCH_PPC) || defined(_M_PPC)
-#define _ARCH _ARCH_PPC
+#define _ARCH _ARCH_POWERPC
 #define _ARCH_BIG_ENDIAN 1
 #elif defined(_POWER) || defined(_ARCH_PWR) || defined(_ARCH_PWR2) || defined(_ARCH_PWR3) || defined(_ARCH_PWR4) || defined(__THW_RS6000)
 #define _ARCH _ARCH_POWER

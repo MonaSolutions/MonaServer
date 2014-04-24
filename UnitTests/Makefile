@@ -35,11 +35,11 @@ debug:
 	@echo creating debugging executable $(EXEC)
 	@$(CC) -g -D_DEBUG $(CFLAGS) $(LDFLAGS) $(LIBDIR) -o $(EXEC) $(OBJECTD) $(LIBS)
 
-$(OBJECT): 
+$(OBJECT): tmp/Release/%.o: sources/%.cpp
 	@echo compiling $(@:tmp/Release/%.o=sources/%.cpp)
 	@$(CC) $(CFLAGS) $(INCLUDES) -c -o $(@) $(@:tmp/Release/%.o=sources/%.cpp)
 
-$(OBJECTD):
+$(OBJECTD): tmp/Debug/%.o: sources/%.cpp
 	@echo compiling $(@:tmp/Debug/%.o=sources/%.cpp)
 	@$(CC) -g -D_DEBUG $(CFLAGS) $(INCLUDES) -c -o $(@) $(@:tmp/Debug/%.o=sources/%.cpp)
 
