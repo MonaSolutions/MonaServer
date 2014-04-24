@@ -127,7 +127,7 @@ void WSSession::packetHandler(PacketReader& packet) {
 		}
 		
 		if (ex)
-			_writer.close((ex.code()==Exception::APPLICATION || ex.code() == Exception::SOFTWARE) ? WS::CODE_PROTOCOL_ERROR : ex.code());	
+			_writer.close((ex.code()==Exception::APPLICATION || ex.code() == Exception::SOFTWARE) ? (Int32)WS::CODE_PROTOCOL_ERROR : ex.code());	
 
 	}
 

@@ -94,7 +94,7 @@ public:
 
 		pSession->_sessionsOptions = options;
 
-		pSession->OnAddressChange::subscribe(onAddressChange);
+		pSession->Events::OnAddressChange::subscribe(onAddressChange);
 		DEBUG("Session ", _nextId, " created");
 		do {
 			++_nextId;
