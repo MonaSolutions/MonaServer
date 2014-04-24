@@ -28,11 +28,11 @@ debug:
 	@echo creating dynamic debug lib $(LIB)
 	@$(CC) -g -D_DEBUG $(CFLAGS) -fPIC $(SHARED) -o $(LIB) $(OBJECTD) $(LIBS)
 
-$(OBJECT):
+$(OBJECT): tmp/Release/%.o: sources/%.cpp
 	@echo compiling $(@:tmp/Release/%.o=sources/%.cpp)
 	@$(CC) $(CFLAGS) -fpic $(INCLUDES) -c -o $(@) $(@:tmp/Release/%.o=sources/%.cpp)
 
-$(OBJECTD):
+$(OBJECTD): tmp/Debug/%.o: sources/%.cpp
 	@echo compiling $(@:tmp/Debug/%.o=sources/%.cpp)
 	@$(CC) -g -D_DEBUG $(CFLAGS) -fpic $(INCLUDES) -c -o $(@) $(@:tmp/Debug/%.o=sources/%.cpp)
 
