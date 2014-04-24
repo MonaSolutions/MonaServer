@@ -32,11 +32,6 @@ void LUAGroup::AddClient(lua_State* pState, Group& group, Client& client, UInt8 
 	LUAClient::GetID(pState, client);
 	lua_pushvalue(pState, -3);
 	lua_rawset(pState, -3);
-	if (!client.name.empty()) {
-		lua_pushstring(pState, client.name.c_str());
-		lua_pushvalue(pState, -3);
-		lua_rawset(pState, -3); // rawset cause NewIndexProhibited
-	}
 	lua_pop(pState, 1);
 }
 
@@ -46,11 +41,6 @@ void LUAGroup::RemoveClient(lua_State* pState, Group& group, Client& client) {
 	LUAClient::GetID(pState, client);
 	lua_pushnil(pState);
 	lua_rawset(pState, -3);
-	if (!client.name.empty()) {
-		lua_pushstring(pState, client.name.c_str());
-		lua_pushnil(pState);
-		lua_rawset(pState, -3); // rawset cause NewIndexProhibited
-	}
 	lua_pop(pState, 1);
 }
 
@@ -80,23 +70,29 @@ int LUAGroup::Item(lua_State *pState) {
 
 int LUAGroup::Get(lua_State *pState) {
 	SCRIPT_CALLBACK(Group,group)
-		const char* name = SCRIPT_READ_STRING("");
-		if(strcmp(name,"id")==0) {
-			if (lua_getmetatable(pState, 1)) {
-				lua_getfield(pState, -1, "|id");
-				if (!lua_isstring(pState, -1)) {
-					lua_pop(pState, 1);
-					string hex;
-					lua_pushstring(pState, Mona::Util::FormatHex(group.id, ID_SIZE, hex).c_str());
-					lua_pushvalue(pState, -1);
-					lua_setfield(pState, -3,"|id");
+		const char* name = SCRIPT_READ_STRING(NULL);
+		if (name) {
+			if(strcmp(name,"id")==0) {
+				if (lua_getmetatable(pState, 1)) {
+					lua_getfield(pState, -1, "|id");
+					if (!lua_isstring(pState, -1)) {
+						lua_pop(pState, 1);
+						string hex;
+						lua_pushstring(pState, Mona::Util::FormatHex(group.id, ID_SIZE, hex).c_str());
+						lua_pushvalue(pState, -1);
+						lua_setfield(pState, -3,"|id");
+					}
+					lua_replace(pState, -2);
 				}
+			} else if (strcmp(name, "rawId") == 0) {
+				SCRIPT_WRITE_BINARY(group.id,ID_SIZE);
+			} else if (strcmp(name, "count") == 0) {
+				SCRIPT_WRITE_NUMBER(group.count());
+			} else {
+				Script::Collection(pState, 1, "|items", group.count());
+				lua_getfield(pState, -1, name);
 				lua_replace(pState, -2);
 			}
-		} else if (strcmp(name, "rawId") == 0) {
-			SCRIPT_WRITE_BINARY(group.id,ID_SIZE);
-		} else if (strcmp(name, "count") == 0) {
-			SCRIPT_WRITE_NUMBER(group.count());
 		}
 	SCRIPT_CALLBACK_RETURN
 }

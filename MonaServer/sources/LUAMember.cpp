@@ -39,13 +39,15 @@ int LUAMember::Release(lua_State* pState) {
 
 int LUAMember::Get(lua_State *pState) {
 	SCRIPT_CALLBACK(Peer,member)
-		const char* name = SCRIPT_READ_STRING("");
-		if (strcmp(name,"id")==0) {
-			LUAClient::GetID(pState,member);
-		} else if (strcmp(name, "rawId") == 0)
-			SCRIPT_WRITE_BINARY(member.id,ID_SIZE)
-		else if (strcmp(name, "release") == 0)
-			SCRIPT_WRITE_FUNCTION(&LUAMember::Release);
+		const char* name = SCRIPT_READ_STRING(NULL);
+		if(name) {
+			if (strcmp(name,"id")==0) {
+				LUAClient::GetID(pState,member);
+			} else if (strcmp(name, "rawId") == 0)
+				SCRIPT_WRITE_BINARY(member.id,ID_SIZE)
+			else if (strcmp(name, "release") == 0)
+				SCRIPT_WRITE_FUNCTION(&LUAMember::Release);
+		}
 	SCRIPT_CALLBACK_RETURN
 }
 

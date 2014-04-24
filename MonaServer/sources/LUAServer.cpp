@@ -25,8 +25,8 @@ using namespace Mona;
 
 int LUAServer::Send(lua_State* pState) {
 	SCRIPT_CALLBACK(ServerConnection,server)
-		const char* handler(SCRIPT_READ_STRING(""));
-		if(strlen(handler)==0 || strcmp(handler,".")==0) {
+		const char* handler(SCRIPT_READ_STRING(NULL));
+		if(!handler || strcmp(handler,".")==0) {
 			ERROR("Invalid '",handler,"' handler for the sending server message")
 		} else {
 			shared_ptr<ServerMessage> pMessage(new ServerMessage(handler,server.poolBuffers()));
@@ -38,35 +38,37 @@ int LUAServer::Send(lua_State* pState) {
 
 int LUAServer::Get(lua_State* pState) {
 	SCRIPT_CALLBACK(ServerConnection,server)
-		const char* name = SCRIPT_READ_STRING("");
-		if(strcmp(name,"send")==0) {
-			SCRIPT_WRITE_FUNCTION(&LUAServer::Send)
-		} else if(strcmp(name,"isTarget")==0) {
-			SCRIPT_WRITE_BOOL(server.isTarget)
-		} else if(strcmp(name,"address")==0) {
-			SCRIPT_WRITE_STRING(server.address.toString().c_str())
-		} else if (strcmp(name,"reject")==0) {
-			server.reject(SCRIPT_READ_STRING("unknown error"));
-		} else if (strcmp(name,"configs")==0) {
-			if(Script::Collection(pState, 1, "configs", server.count())) {
-				for (auto& it : server) {
-					lua_pushstring(pState, it.first.c_str());
-					if (String::ICompare(it.second, "false") == 0 || String::ICompare(it.second, "nil") == 0)
+		const char* name = SCRIPT_READ_STRING(NULL);
+		if(name) {
+			if(strcmp(name,"send")==0) {
+				SCRIPT_WRITE_FUNCTION(&LUAServer::Send)
+			} else if(strcmp(name,"isTarget")==0) {
+				SCRIPT_WRITE_BOOL(server.isTarget)
+			} else if(strcmp(name,"address")==0) {
+				SCRIPT_WRITE_STRING(server.address.toString().c_str())
+			} else if (strcmp(name,"reject")==0) {
+				server.reject(SCRIPT_READ_STRING("unknown error"));
+			} else if (strcmp(name,"configs")==0) {
+				if(Script::Collection(pState, 1, "configs", server.count())) {
+					for (auto& it : server) {
+						lua_pushstring(pState, it.first.c_str());
+						if (String::ICompare(it.second, "false") == 0 || String::ICompare(it.second, "nil") == 0)
+							lua_pushboolean(pState, 0);
+						else
+							lua_pushlstring(pState, it.second.c_str(), it.second.size());
+						lua_rawset(pState, -3); // rawset cause NewIndexProhibited
+					}
+				}
+			} else {
+				string value;
+				if (server.getString(name, value)) {
+					if (String::ICompare(value, "false") == 0 || String::ICompare(value, "nil") == 0)
 						lua_pushboolean(pState, 0);
 					else
-						lua_pushlstring(pState, it.second.c_str(), it.second.size());
-					lua_rawset(pState, -3); // rawset cause NewIndexProhibited
+						lua_pushlstring(pState, value.c_str(), value.size());
 				}
-			}
-		} else {
-			string value;
-			if (server.getString(name, value)) {
-				if (String::ICompare(value, "false") == 0 || String::ICompare(value, "nil") == 0)
-					lua_pushboolean(pState, 0);
-				else
-					lua_pushlstring(pState, value.c_str(), value.size());
-			}
 				
+			}
 		}
 	SCRIPT_CALLBACK_RETURN
 }

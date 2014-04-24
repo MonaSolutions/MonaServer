@@ -33,39 +33,41 @@ void LUAListener::Clear(lua_State* pState,const Listener& listener){
 
 int LUAListener::Get(lua_State *pState) {
 	SCRIPT_CALLBACK(Listener,listener)
-		const char* name = SCRIPT_READ_STRING("");
-		if(strcmp(name,"audioQOS")==0) {
-			SCRIPT_ADD_OBJECT(QualityOfService,LUAQualityOfService,listener.audioQOS())
-		} else if(strcmp(name,"videoQOS")==0) {
-			SCRIPT_ADD_OBJECT(QualityOfService, LUAQualityOfService, listener.videoQOS())
-		} else if (strcmp(name, "dataQOS") == 0) {
-			SCRIPT_ADD_OBJECT(QualityOfService, LUAQualityOfService, listener.dataQOS())
-		} else if(strcmp(name,"publication")==0) {
-			SCRIPT_ADD_OBJECT(Publication, LUAPublication<>, listener.publication);
-		} else if(strcmp(name,"receiveAudio")==0) {
-			SCRIPT_WRITE_BOOL(listener.receiveAudio);
-		} else if(strcmp(name,"receiveVideo")==0) {
-			SCRIPT_WRITE_BOOL(listener.receiveVideo);
-		} else if(strcmp(name,"client")==0) {
-			SCRIPT_ADD_OBJECT(Client, LUAClient, listener.client);
-		} else if (strcmp(name,"properties")==0) {
-			if (Script::Collection(pState, 1, "properties", listener.count())) {
-				for (auto& it : listener) {
-					lua_pushstring(pState, it.first.c_str());
-					if (String::ICompare(it.second, "false") == 0 || String::ICompare(it.second, "nil") == 0)
+		const char* name = SCRIPT_READ_STRING(NULL);
+		if (name) {
+			if(strcmp(name,"audioQOS")==0) {
+				SCRIPT_ADD_OBJECT(QualityOfService,LUAQualityOfService,listener.audioQOS())
+			} else if(strcmp(name,"videoQOS")==0) {
+				SCRIPT_ADD_OBJECT(QualityOfService, LUAQualityOfService, listener.videoQOS())
+			} else if (strcmp(name, "dataQOS") == 0) {
+				SCRIPT_ADD_OBJECT(QualityOfService, LUAQualityOfService, listener.dataQOS())
+			} else if(strcmp(name,"publication")==0) {
+				SCRIPT_ADD_OBJECT(Publication, LUAPublication<>, listener.publication);
+			} else if(strcmp(name,"receiveAudio")==0) {
+				SCRIPT_WRITE_BOOL(listener.receiveAudio);
+			} else if(strcmp(name,"receiveVideo")==0) {
+				SCRIPT_WRITE_BOOL(listener.receiveVideo);
+			} else if(strcmp(name,"client")==0) {
+				SCRIPT_ADD_OBJECT(Client, LUAClient, listener.client);
+			} else if (strcmp(name,"properties")==0) {
+				if (Script::Collection(pState, 1, "properties", listener.count())) {
+					for (auto& it : listener) {
+						lua_pushstring(pState, it.first.c_str());
+						if (String::ICompare(it.second, "false") == 0 || String::ICompare(it.second, "nil") == 0)
+							lua_pushboolean(pState, 0);
+						else
+							lua_pushlstring(pState, it.second.c_str(), it.second.size());
+						lua_rawset(pState, -3); // rawset cause NewIndexProhibited
+					}
+				}
+			} else {
+				string value;
+				if(listener.getString(name,value)) {
+					if (String::ICompare(value, "false") == 0 || String::ICompare(value, "nil") == 0)
 						lua_pushboolean(pState, 0);
 					else
-						lua_pushlstring(pState, it.second.c_str(), it.second.size());
-					lua_rawset(pState, -3); // rawset cause NewIndexProhibited
+						lua_pushlstring(pState, value.c_str(), value.size());
 				}
-			}
-		} else {
-			string value;
-			if(listener.getString(name,value)) {
-				if (String::ICompare(value, "false") == 0 || String::ICompare(value, "nil") == 0)
-					lua_pushboolean(pState, 0);
-				else
-					lua_pushlstring(pState, value.c_str(), value.size());
 			}
 		}
 	SCRIPT_CALLBACK_RETURN

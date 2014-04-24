@@ -135,27 +135,29 @@ int	LUAUDPSocket::Send(lua_State* pState) {
 
 int LUAUDPSocket::Get(lua_State* pState) {
 	SCRIPT_CALLBACK(LUAUDPSocket,udp)
-		const char* name = SCRIPT_READ_STRING("");
-		if(strcmp(name,"connect")==0) {
-			SCRIPT_WRITE_FUNCTION(&LUAUDPSocket::Connect)
-		} else if (strcmp(name, "disconnect") == 0) {
-			SCRIPT_WRITE_FUNCTION(&LUAUDPSocket::Disconnect)
-		} else if (strcmp(name, "close") == 0) {
-			SCRIPT_WRITE_FUNCTION(&LUAUDPSocket::Close)
-		} else if (strcmp(name, "send") == 0) {
-			SCRIPT_WRITE_FUNCTION(&LUAUDPSocket::Send)
-		} else if (strcmp(name, "bind") == 0) {
-			SCRIPT_WRITE_FUNCTION(&LUAUDPSocket::Bind)
-		} else if (strcmp(name, "address") == 0) {
-			if(!udp.address().host().isWildcard())
-				SCRIPT_WRITE_STRING(udp.address().toString().c_str())
-			else
-				SCRIPT_WRITE_NIL
-		} else if (strcmp(name, "peerAddress") == 0) {
-			if(!udp.peerAddress().host().isWildcard())
-				SCRIPT_WRITE_STRING(udp.peerAddress().toString().c_str())
-			else
-				SCRIPT_WRITE_NIL
+		const char* name = SCRIPT_READ_STRING(NULL);
+		if(name) {
+			if(strcmp(name,"connect")==0) {
+				SCRIPT_WRITE_FUNCTION(&LUAUDPSocket::Connect)
+			} else if (strcmp(name, "disconnect") == 0) {
+				SCRIPT_WRITE_FUNCTION(&LUAUDPSocket::Disconnect)
+			} else if (strcmp(name, "close") == 0) {
+				SCRIPT_WRITE_FUNCTION(&LUAUDPSocket::Close)
+			} else if (strcmp(name, "send") == 0) {
+				SCRIPT_WRITE_FUNCTION(&LUAUDPSocket::Send)
+			} else if (strcmp(name, "bind") == 0) {
+				SCRIPT_WRITE_FUNCTION(&LUAUDPSocket::Bind)
+			} else if (strcmp(name, "address") == 0) {
+				if(!udp.address().host().isWildcard())
+					SCRIPT_WRITE_STRING(udp.address().toString().c_str())
+				else
+					SCRIPT_WRITE_NIL
+			} else if (strcmp(name, "peerAddress") == 0) {
+				if(!udp.peerAddress().host().isWildcard())
+					SCRIPT_WRITE_STRING(udp.peerAddress().toString().c_str())
+				else
+					SCRIPT_WRITE_NIL
+			}
 		}
 	SCRIPT_CALLBACK_RETURN
 }

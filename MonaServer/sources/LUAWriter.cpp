@@ -52,23 +52,25 @@ int LUAWriter::Close(lua_State* pState) {
 
 int LUAWriter::Get(lua_State *pState) {
 	SCRIPT_CALLBACK(Writer,writer)
-		const char* name = SCRIPT_READ_STRING("");
-		if(strcmp(name,"reliable")==0) {
-			SCRIPT_WRITE_BOOL(writer.reliable)
-		} else if (strcmp(name, "flush") == 0) {
-			SCRIPT_WRITE_FUNCTION(&LUAWriter::Flush)
-		} else if (strcmp(name, "writeMessage") == 0) {
-			SCRIPT_WRITE_FUNCTION(&LUAWriter::WriteMessage)
-		} else if (strcmp(name, "writeInvocation") == 0) {
-			SCRIPT_WRITE_FUNCTION(&LUAWriter::WriteInvocation)
-		} else if (strcmp(name, "writeRaw") == 0) {
-			SCRIPT_WRITE_FUNCTION(&LUAWriter::WriteRaw)
-		} else if (strcmp(name, "newWriter") == 0) {
-			SCRIPT_WRITE_FUNCTION(&LUAWriter::NewWriter)
-		} else if (strcmp(name, "qos") == 0) {
-			SCRIPT_ADD_OBJECT(QualityOfService,LUAQualityOfService,writer.qos())
-		} else if (strcmp(name, "close") == 0) {
-			SCRIPT_WRITE_FUNCTION(&LUAWriter::Close)
+		const char* name = SCRIPT_READ_STRING(NULL);
+		if(name) {
+			if(strcmp(name,"reliable")==0) {
+				SCRIPT_WRITE_BOOL(writer.reliable)
+			} else if (strcmp(name, "flush") == 0) {
+				SCRIPT_WRITE_FUNCTION(&LUAWriter::Flush)
+			} else if (strcmp(name, "writeMessage") == 0) {
+				SCRIPT_WRITE_FUNCTION(&LUAWriter::WriteMessage)
+			} else if (strcmp(name, "writeInvocation") == 0) {
+				SCRIPT_WRITE_FUNCTION(&LUAWriter::WriteInvocation)
+			} else if (strcmp(name, "writeRaw") == 0) {
+				SCRIPT_WRITE_FUNCTION(&LUAWriter::WriteRaw)
+			} else if (strcmp(name, "newWriter") == 0) {
+				SCRIPT_WRITE_FUNCTION(&LUAWriter::NewWriter)
+			} else if (strcmp(name, "qos") == 0) {
+				SCRIPT_ADD_OBJECT(QualityOfService,LUAQualityOfService,writer.qos())
+			} else if (strcmp(name, "close") == 0) {
+				SCRIPT_WRITE_FUNCTION(&LUAWriter::Close)
+			}
 		}
 	SCRIPT_CALLBACK_RETURN
 }

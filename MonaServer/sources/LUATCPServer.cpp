@@ -81,15 +81,17 @@ int	LUATCPServer::Stop(lua_State* pState) {
 
 int LUATCPServer::Get(lua_State* pState) {
 	SCRIPT_CALLBACK(LUATCPServer,server)
-		const char* name = SCRIPT_READ_STRING("");
-		if(strcmp(name,"start")==0) {
-			SCRIPT_WRITE_FUNCTION(&LUATCPServer::Start)
-		} else if (strcmp(name, "stop") == 0) {
-			SCRIPT_WRITE_FUNCTION(&LUATCPServer::Stop)
-		} else if (strcmp(name, "address") == 0) {
-			SCRIPT_WRITE_STRING(server.address().toString().c_str())
-		} else if(strcmp(name,"running")==0)
-			SCRIPT_WRITE_BOOL(server.running())
+		const char* name = SCRIPT_READ_STRING(NULL);
+		if(name) {
+			if(strcmp(name,"start")==0) {
+				SCRIPT_WRITE_FUNCTION(&LUATCPServer::Start)
+			} else if (strcmp(name, "stop") == 0) {
+				SCRIPT_WRITE_FUNCTION(&LUATCPServer::Stop)
+			} else if (strcmp(name, "address") == 0) {
+				SCRIPT_WRITE_STRING(server.address().toString().c_str())
+			} else if(strcmp(name,"running")==0)
+				SCRIPT_WRITE_BOOL(server.running())
+		}
 	SCRIPT_CALLBACK_RETURN
 }
 

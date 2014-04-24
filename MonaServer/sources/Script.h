@@ -504,6 +504,18 @@ private:
 
 	template<class LUAType>
 	static int Call(lua_State* pState) {
+		if (lua_getmetatable(pState, 1)) {
+			lua_getfield(pState, -1, "|items");
+			lua_replace(pState, -2);
+			if (lua_istable(pState, -1)) {
+				lua_pushvalue(pState,2);
+				lua_gettable(pState, -2);
+				lua_replace(pState, -2);
+				return 1;
+			}
+			lua_pop(pState, 1);
+		}
+	
 		lua_pushstring(pState, "(");
 		lua_insert(pState, 2);
 		int result = LUAType::Get(pState);

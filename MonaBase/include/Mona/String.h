@@ -88,7 +88,7 @@ public:
 
 	// match le "char" cas
 	template <typename ...Args>
-	static std::string& Append(std::string& result, signed char value, Args&&... args) {
+	static std::string& Append(std::string& result, char value, Args&&... args) {
 		result.append(1,value);
 		return String::Append(result, args ...);
 	}
@@ -96,7 +96,7 @@ public:
 
 	/// \brief match "short" case
 	template <typename ...Args>
-	static std::string& Append(std::string& result, signed short value, Args&&... args) {
+	static std::string& Append(std::string& result, short value, Args&&... args) {
 		char buffer[64];
 		sprintf(buffer, "%hd", value);
 		result.append(buffer);
@@ -105,7 +105,7 @@ public:
 
 	/// \brief match "int" case
 	template <typename ...Args>
-	static std::string& Append(std::string& result, signed int value, Args&&... args) {
+	static std::string& Append(std::string& result, int value, Args&&... args) {
 		char buffer[64];
 		sprintf(buffer, "%d", value);
 		result.append(buffer);
@@ -114,7 +114,7 @@ public:
 
 	/// \brief match "long" case
 	template <typename ...Args>
-	static std::string& Append(std::string& result, signed long value, Args&&... args) {
+	static std::string& Append(std::string& result, long value, Args&&... args) {
 		char buffer[64];
 		sprintf(buffer, "%ld", value);
 		result.append(buffer);
@@ -159,7 +159,7 @@ public:
 
 	/// \brief match "Int64" case
 	template <typename ...Args>
-	static std::string& Append(std::string& result, signed long long value, Args&&... args) {
+	static std::string& Append(std::string& result, long long value, Args&&... args) {
 		char buffer[64];
 		sprintf(buffer, "%lld", value);
 		result.append(buffer);

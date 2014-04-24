@@ -31,7 +31,7 @@ private:
 
 ///// MAIN
 	int main(TerminateSignal& terminateSignal) {
-		
+
 		// starts the server
 		MonaServer server(terminateSignal, *this);
 		if (server.start()) {

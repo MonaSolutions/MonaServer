@@ -59,11 +59,6 @@ void LUAInvoker::AddClient(lua_State *pState, Invoker& invoker, Client& client) 
 	LUAClient::GetID(pState, client);
 	lua_pushvalue(pState, -4); // client table
 	lua_rawset(pState, -3); // rawset cause NewIndexProhibited
-	if (!client.name.empty()) {
-		lua_pushstring(pState, client.name.c_str());
-		lua_pushvalue(pState, -4);  // client table
-		lua_rawset(pState, -3); // rawset cause NewIndexProhibited
-	}
 	lua_pop(pState, 2);
 }
 
@@ -73,11 +68,6 @@ void LUAInvoker::RemoveClient(lua_State *pState, Invoker& invoker, const Client&
 	LUAClient::GetID(pState, client);
 	lua_pushnil(pState);
 	lua_rawset(pState, -3); // rawset cause NewIndexProhibited
-	if (!client.name.empty()) {
-		lua_pushstring(pState, client.name.c_str());
-		lua_pushnil(pState);
-		lua_rawset(pState, -3); // rawset cause NewIndexProhibited
-	}
 	lua_pop(pState, 2);
 }
 
@@ -291,69 +281,71 @@ int LUAInvoker::JoinGroup(lua_State* pState) {
 
 int LUAInvoker::Get(lua_State *pState) {
 	SCRIPT_CALLBACK(Invoker,invoker)
-		const char* name = SCRIPT_READ_STRING("");
-		if(strcmp(name,"clients")==0) {
-			Script::Collection(pState,1,"clients",invoker.clients.count());
-		} else if (strcmp(name, "joinGroup") == 0) {
-			SCRIPT_WRITE_FUNCTION(&LUAInvoker::JoinGroup)
-		} else if (strcmp(name, "groups") == 0) {
-			Script::Collection(pState, 1, "groups", invoker.groups.count());
-		} else if (strcmp(name, "publications") == 0) {
-			Script::Collection(pState, 1, "publications", invoker.publications.count());
-		} else if (strcmp(name, "publish") == 0) {
-			SCRIPT_WRITE_FUNCTION(&LUAInvoker::Publish)
-		} else if (strcmp(name, "toAMF") == 0) {
-			SCRIPT_WRITE_FUNCTION(&LUAInvoker::ToData<Mona::AMFWriter>)
-		} else if (strcmp(name, "toAMF0") == 0) {
-			SCRIPT_WRITE_FUNCTION(&LUAInvoker::ToAMF0)
-		} else if (strcmp(name, "fromAMF") == 0) {
-			SCRIPT_WRITE_FUNCTION(&LUAInvoker::FromData<Mona::AMFReader>)
-		} else if (strcmp(name, "toJSON") == 0) {
-			SCRIPT_WRITE_FUNCTION(&LUAInvoker::ToData<Mona::JSONWriter>)
-		} else if (strcmp(name, "fromJSON") == 0) {
-			SCRIPT_WRITE_FUNCTION(&LUAInvoker::FromData<Mona::JSONReader>)
-		} else if (strcmp(name, "toXML") == 0) {
-			SCRIPT_WRITE_FUNCTION(&LUAInvoker::ToData<Mona::XMLWriter>)
-		} else if (strcmp(name, "fromXML") == 0) {
-			SCRIPT_WRITE_FUNCTION(&LUAInvoker::FromData<XMLReader>)
-		} else if (strcmp(name, "absolutePath") == 0) {
-			SCRIPT_WRITE_FUNCTION(&LUAInvoker::AbsolutePath)
-		} else if (strcmp(name, "epochTime") == 0) {
-			SCRIPT_WRITE_NUMBER(Time::Now())
-		} else if (strcmp(name, "split") == 0) {
-			SCRIPT_WRITE_FUNCTION(&LUAInvoker::Split)
-		} else if (strcmp(name, "createUDPSocket") == 0) {
- 			SCRIPT_WRITE_FUNCTION(&LUAInvoker::CreateUDPSocket)
-		} else if (strcmp(name, "createTCPClient") == 0) {
-			SCRIPT_WRITE_FUNCTION(&LUAInvoker::CreateTCPClient)
-		} else if(strcmp(name,"createTCPServer")==0) {
-			SCRIPT_WRITE_FUNCTION(&LUAInvoker::CreateTCPServer)
-		} else if(strcmp(name,"md5")==0) {
-			SCRIPT_WRITE_FUNCTION(&LUAInvoker::Md5)
-		} else if(strcmp(name,"sha256")==0) {
-			SCRIPT_WRITE_FUNCTION(&LUAInvoker::Sha256)
-		} else if(strcmp(name,"addToBlacklist")==0) {
-			SCRIPT_WRITE_FUNCTION(&LUAInvoker::AddToBlacklist)
-		} else if(strcmp(name,"removeFromBlacklist")==0) {
-			SCRIPT_WRITE_FUNCTION(&LUAInvoker::RemoveFromBlacklist)
-		} else if (strcmp(name,"configs")==0) {
-			lua_getmetatable(pState, LUA_GLOBALSINDEX);
-			lua_getfield(pState, -1,"m.c");
-			lua_replace(pState, -2);
-		} else if (strcmp(name,"environments")==0) {
-			lua_getmetatable(pState, LUA_GLOBALSINDEX);
-			lua_getfield(pState, -1, "m.e");
-			lua_replace(pState, -2);
-		} else if(strcmp(name,"servers")==0) {
-			lua_getglobal(pState, "m.s");
-		} else if (strcmp(name,"dir")==0) {
-			SCRIPT_WRITE_FUNCTION(&LUAInvoker::ListFiles)
-		} else {
-			lua_getmetatable(pState, LUA_GLOBALSINDEX);
-			lua_getfield(pState, -1,"m.c");
-			lua_replace(pState, -2);
-			lua_getfield(pState, -1,name);
-			lua_replace(pState, -2);
+		const char* name = SCRIPT_READ_STRING(NULL);
+		if (name) {
+			if(strcmp(name,"clients")==0) {
+				Script::Collection(pState,1,"clients",invoker.clients.count());
+			} else if (strcmp(name, "joinGroup") == 0) {
+				SCRIPT_WRITE_FUNCTION(&LUAInvoker::JoinGroup)
+			} else if (strcmp(name, "groups") == 0) {
+				Script::Collection(pState, 1, "groups", invoker.groups.count());
+			} else if (strcmp(name, "publications") == 0) {
+				Script::Collection(pState, 1, "publications", invoker.publications.count());
+			} else if (strcmp(name, "publish") == 0) {
+				SCRIPT_WRITE_FUNCTION(&LUAInvoker::Publish)
+			} else if (strcmp(name, "toAMF") == 0) {
+				SCRIPT_WRITE_FUNCTION(&LUAInvoker::ToData<Mona::AMFWriter>)
+			} else if (strcmp(name, "toAMF0") == 0) {
+				SCRIPT_WRITE_FUNCTION(&LUAInvoker::ToAMF0)
+			} else if (strcmp(name, "fromAMF") == 0) {
+				SCRIPT_WRITE_FUNCTION(&LUAInvoker::FromData<Mona::AMFReader>)
+			} else if (strcmp(name, "toJSON") == 0) {
+				SCRIPT_WRITE_FUNCTION(&LUAInvoker::ToData<Mona::JSONWriter>)
+			} else if (strcmp(name, "fromJSON") == 0) {
+				SCRIPT_WRITE_FUNCTION(&LUAInvoker::FromData<Mona::JSONReader>)
+			} else if (strcmp(name, "toXML") == 0) {
+				SCRIPT_WRITE_FUNCTION(&LUAInvoker::ToData<Mona::XMLWriter>)
+			} else if (strcmp(name, "fromXML") == 0) {
+				SCRIPT_WRITE_FUNCTION(&LUAInvoker::FromData<XMLReader>)
+			} else if (strcmp(name, "absolutePath") == 0) {
+				SCRIPT_WRITE_FUNCTION(&LUAInvoker::AbsolutePath)
+			} else if (strcmp(name, "epochTime") == 0) {
+				SCRIPT_WRITE_NUMBER(Time::Now())
+			} else if (strcmp(name, "split") == 0) {
+				SCRIPT_WRITE_FUNCTION(&LUAInvoker::Split)
+			} else if (strcmp(name, "createUDPSocket") == 0) {
+ 				SCRIPT_WRITE_FUNCTION(&LUAInvoker::CreateUDPSocket)
+			} else if (strcmp(name, "createTCPClient") == 0) {
+				SCRIPT_WRITE_FUNCTION(&LUAInvoker::CreateTCPClient)
+			} else if(strcmp(name,"createTCPServer")==0) {
+				SCRIPT_WRITE_FUNCTION(&LUAInvoker::CreateTCPServer)
+			} else if(strcmp(name,"md5")==0) {
+				SCRIPT_WRITE_FUNCTION(&LUAInvoker::Md5)
+			} else if(strcmp(name,"sha256")==0) {
+				SCRIPT_WRITE_FUNCTION(&LUAInvoker::Sha256)
+			} else if(strcmp(name,"addToBlacklist")==0) {
+				SCRIPT_WRITE_FUNCTION(&LUAInvoker::AddToBlacklist)
+			} else if(strcmp(name,"removeFromBlacklist")==0) {
+				SCRIPT_WRITE_FUNCTION(&LUAInvoker::RemoveFromBlacklist)
+			} else if (strcmp(name,"configs")==0) {
+				lua_getmetatable(pState, LUA_GLOBALSINDEX);
+				lua_getfield(pState, -1,"m.c");
+				lua_replace(pState, -2);
+			} else if (strcmp(name,"environments")==0) {
+				lua_getmetatable(pState, LUA_GLOBALSINDEX);
+				lua_getfield(pState, -1, "m.e");
+				lua_replace(pState, -2);
+			} else if(strcmp(name,"servers")==0) {
+				lua_getglobal(pState, "m.s");
+			} else if (strcmp(name,"dir")==0) {
+				SCRIPT_WRITE_FUNCTION(&LUAInvoker::ListFiles)
+			} else {
+				lua_getmetatable(pState, LUA_GLOBALSINDEX);
+				lua_getfield(pState, -1,"m.c");
+				lua_replace(pState, -2);
+				lua_getfield(pState, -1,name);
+				lua_replace(pState, -2);
+			}
 		}
 	SCRIPT_CALLBACK_RETURN
 }

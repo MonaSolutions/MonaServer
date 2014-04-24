@@ -68,7 +68,17 @@ Group& Peer::joinGroup(const UInt8* id,Writer* pWriter) {
 	// create invoker.groups if need
 	Group& group(((Entities<Group>&)_handler.groups).create(id));
 
-	if (group.count() > 0) {
+	// group._clients and this->_groups insertions,
+	// before peer id exchange to be able in onJoinGroup to write message BEFORE group join
+	auto it = _groups.lower_bound(&group);
+	if(it!=_groups.end() && it->first==&group)
+		return group;
+	_groups.emplace_hint(it,&group,pWriter);
+	group.add(*this);
+	
+	onJoinGroup(group);
+	
+	if (group.count() > 1) {
 		// If  group includes already members, give 6 last members to the new comer
 		UInt8 count=6;
 		auto it = group.end();
@@ -81,15 +91,6 @@ Group& Peer::joinGroup(const UInt8* id,Writer* pWriter) {
 		} while(it!=group.begin());
 	}
 
-
-	// group._clients and this->_groups insertions
-	auto it = _groups.lower_bound(&group);
-	if(it!=_groups.end() && it->first==&group)
-		return group;
-
-	group.add(*this);
-	_groups.emplace_hint(it,&group,pWriter);
-	onJoinGroup(group);
 	return group;
 }
 
@@ -147,9 +148,14 @@ void Peer::onConnection(Exception& ex, Writer& writer,DataReader& parameters,Dat
 		_pWriter = &writer;
 
 		_handler.onConnection(ex, *this,parameters,response);
-		if (!ex)
+		if (!ex) {
 			(bool&)connected = ((Clients&)_handler.clients).add(ex,*this);
-		if (ex) {
+			if (!connected)
+				_handler.onDisconnection(*this);
+			else if (ex)
+				WARN(ex.error());
+		}
+		if (!connected) {
 			writer.abort();
 			_pWriter = NULL;
 		}
@@ -161,11 +167,11 @@ void Peer::onConnection(Exception& ex, Writer& writer,DataReader& parameters,Dat
 void Peer::onDisconnection() {
 	if (!connected)
 		return;
-	_pWriter = NULL;
 	(bool&)connected = false;
 	if (!((Clients&)_handler.clients).remove(*this))
 		ERROR("Client ", Util::FormatHex(id, ID_SIZE, _handler.buffer), " seems already disconnected!");
 	_handler.onDisconnection(*this);
+	_pWriter = NULL; // keep after the onDisconnection because otherise the LUA object client.writer can't be deleted!
 }
 
 void Peer::onMessage(Exception& ex, const string& name,DataReader& reader,UInt8 responseType) {

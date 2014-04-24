@@ -25,10 +25,9 @@ This file is a part of Mona.
 class LUABroadcaster {
 public:
 
-	static void Init(lua_State *pState, Broadcaster& broadcaster);
+	static void Init(lua_State *pState, Broadcaster& broadcaster) {}
 	static int Get(lua_State *pState);
 	static int Set(lua_State *pState);
-	static int Item(lua_State *pState);
 
 	// -1 must be the server table!
 	static void AddServer(lua_State* pState, Broadcaster& broadcaster, const std::string& address);

@@ -24,11 +24,6 @@ This file is a part of Mona.
 using namespace std;
 using namespace Mona;
 
-void LUABroadcaster::Init(lua_State *pState, Broadcaster& broadcaster) {
-	Script::Collection<Broadcaster, LUABroadcaster>(pState, -1, "|items", 0, &broadcaster);
-	lua_pop(pState, 1);
-}
-
 void LUABroadcaster::AddServer(lua_State* pState, Broadcaster& broadcaster, const string& address) {
 	// -1 must be the server table!
 	if (Script::FromObject(pState, broadcaster)) {
@@ -49,28 +44,6 @@ void LUABroadcaster::RemoveServer(lua_State* pState, Broadcaster& broadcaster, c
 	}
 }
 
-int LUABroadcaster::Item(lua_State *pState) {
-	// 1 => clients table
-	// 2 => parameter
-	if (!lua_isstring(pState, 2))
-		return 0;
-	Broadcaster* pBroadcaster = Script::GetCollector<Broadcaster>(pState, 1);
-	if (!pBroadcaster)
-		return 0;
-	ServerConnection* pServer = NULL;
-	if (lua_isnumber(pState,2)) {
-		UInt32 index = (UInt32)lua_tonumber(pState, 2);
-		if (index>0)
-			pServer = (*pBroadcaster)[--index];
-	} else
-		pServer = (*pBroadcaster)[lua_tostring(pState, 2)];
-	SCRIPT_BEGIN(pState)
-		if (pServer)
-			SCRIPT_ADD_OBJECT(ServerConnection, LUAServer, *pServer)
-	SCRIPT_END
-	return pServer ? 1 : 0;
-}
-
 int LUABroadcaster::Broadcast(lua_State* pState) {
 	SCRIPT_CALLBACK(Broadcaster,broadcaster)
 		const char* handler(SCRIPT_READ_STRING(""));
@@ -86,17 +59,30 @@ int LUABroadcaster::Broadcast(lua_State* pState) {
 
 int LUABroadcaster::Get(lua_State *pState) {
 	SCRIPT_CALLBACK(Broadcaster,broadcaster)
-		const char* name = SCRIPT_READ_STRING("");
-		if (strcmp(name, "broadcast") == 0)
-			SCRIPT_WRITE_FUNCTION(&LUABroadcaster::Broadcast)
-		else if (strcmp(name, "initiators")==0) {
-			Servers* pServers = dynamic_cast<Servers*>(&broadcaster);
-			if (pServers)
-				lua_getglobal(pState, "m.s.i");
-		} else if (strcmp(name, "targets") == 0) {
-			Servers* pServers = dynamic_cast<Servers*>(&broadcaster);
-			if (pServers)
-				lua_getglobal(pState, "m.s.t");
+		const char* name = SCRIPT_READ_STRING(NULL);
+		if (name) {
+			if (strcmp(name, "broadcast") == 0)
+				SCRIPT_WRITE_FUNCTION(&LUABroadcaster::Broadcast)
+			else if (strcmp(name, "initiators")==0) {
+				Servers* pServers = dynamic_cast<Servers*>(&broadcaster);
+				if (pServers)
+					lua_getglobal(pState, "m.s.i");
+			} else if (strcmp(name, "targets") == 0) {
+				Servers* pServers = dynamic_cast<Servers*>(&broadcaster);
+				if (pServers)
+					lua_getglobal(pState, "m.s.t");
+			} else {
+				ServerConnection* pServer = NULL;
+				if (lua_isnumber(pState,2)) {
+					UInt32 index = (UInt32)lua_tonumber(pState, 2);
+					if (index>0)
+						pServer = broadcaster[--index];
+				} else
+					pServer = broadcaster[name];
+				if (pServer) {
+					SCRIPT_ADD_OBJECT(ServerConnection, LUAServer, *pServer)
+				}
+			}
 		}
 	SCRIPT_CALLBACK_RETURN
 }

@@ -118,25 +118,27 @@ int	LUATCPClient::Send(lua_State* pState) {
 
 int LUATCPClient::Get(lua_State* pState) {
 	SCRIPT_CALLBACK(LUATCPClient,client)
-		const char* name = SCRIPT_READ_STRING("");
-		if(strcmp(name,"connect")==0) {
-			SCRIPT_WRITE_FUNCTION(&LUATCPClient::Connect)
-		} else if (strcmp(name, "disconnect") == 0) {
-			SCRIPT_WRITE_FUNCTION(&LUATCPClient::Disconnect)
-		} else if (strcmp(name, "send") == 0) {
-			SCRIPT_WRITE_FUNCTION(&LUATCPClient::Send)
-		} else if (strcmp(name, "address") == 0) {
-			if(client.connected())
-				SCRIPT_WRITE_STRING(client.address().toString().c_str())
-			else
-				SCRIPT_WRITE_NIL
-		} else if (strcmp(name, "peerAddress") == 0) {
-			if(client.connected())
-				SCRIPT_WRITE_STRING(client.peerAddress().toString().c_str())
-			else
-				SCRIPT_WRITE_NIL
-		} else if (strcmp(name, "connected") == 0)
-			SCRIPT_WRITE_BOOL(client.connected())
+		const char* name = SCRIPT_READ_STRING(NULL);
+		if(name) {
+			if(strcmp(name,"connect")==0) {
+				SCRIPT_WRITE_FUNCTION(&LUATCPClient::Connect)
+			} else if (strcmp(name, "disconnect") == 0) {
+				SCRIPT_WRITE_FUNCTION(&LUATCPClient::Disconnect)
+			} else if (strcmp(name, "send") == 0) {
+				SCRIPT_WRITE_FUNCTION(&LUATCPClient::Send)
+			} else if (strcmp(name, "address") == 0) {
+				if(client.connected())
+					SCRIPT_WRITE_STRING(client.address().toString().c_str())
+				else
+					SCRIPT_WRITE_NIL
+			} else if (strcmp(name, "peerAddress") == 0) {
+				if(client.connected())
+					SCRIPT_WRITE_STRING(client.peerAddress().toString().c_str())
+				else
+					SCRIPT_WRITE_NIL
+			} else if (strcmp(name, "connected") == 0)
+				SCRIPT_WRITE_BOOL(client.connected())
+		}
 	SCRIPT_CALLBACK_RETURN
 }
 

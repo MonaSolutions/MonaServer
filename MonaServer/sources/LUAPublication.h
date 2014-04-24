@@ -59,34 +59,36 @@ public:
 
 	static int Get(lua_State *pState) {
 		SCRIPT_CALLBACK(PublicationType, publication)
-			const char* name = SCRIPT_READ_STRING("");
-			Mona::Publication* pPublication = Publication(publication);
-			if (!pPublication) {
-				SCRIPT_ERROR("Publication ", name,", publication closed")
-			} else {
-				if(strcmp(name,"publisher")==0) {
-					if (pPublication->publisher())
-						SCRIPT_ADD_OBJECT(Mona::Client, LUAClient, *pPublication->publisher())
-				} else if(strcmp(name,"name")==0) {
-					SCRIPT_WRITE_STRING(pPublication->name().c_str())
-				} else if(strcmp(name,"listeners")==0) {
-					Script::Collection(pState, 1, "listeners", pPublication->listeners.count());
-				} else if(strcmp(name,"audioQOS")==0) {
-					SCRIPT_ADD_OBJECT(Mona::QualityOfService, LUAQualityOfService, pPublication->audioQOS())
-				} else if(strcmp(name,"videoQOS")==0) {
-					SCRIPT_ADD_OBJECT(Mona::QualityOfService,LUAQualityOfService,pPublication->videoQOS())
-				} else if(strcmp(name,"dataQOS")==0) {
-					SCRIPT_ADD_OBJECT(Mona::QualityOfService,LUAQualityOfService,pPublication->dataQOS())
-				} else if(strcmp(name,"close")==0) {
-					SCRIPT_WRITE_FUNCTION(&LUAPublication::Close)
-				} else if(strcmp(name,"pushAudio")==0) {
-					SCRIPT_WRITE_FUNCTION(&LUAPublication::PushAudio)
-				} else if(strcmp(name,"flush")==0) {
-					SCRIPT_WRITE_FUNCTION(&LUAPublication::Flush)
-				} else if(strcmp(name,"pushVideo")==0) {
-					SCRIPT_WRITE_FUNCTION(&LUAPublication::PushVideo)
-				} else if(strcmp(name,"pushData")==0) {
-					SCRIPT_WRITE_FUNCTION(&LUAPublication::PushData)
+			const char* name = SCRIPT_READ_STRING(NULL);
+			if(name) {
+				Mona::Publication* pPublication = Publication(publication);
+				if (!pPublication) {
+					SCRIPT_ERROR("Publication ", name,", publication closed")
+				} else {
+					if(strcmp(name,"publisher")==0) {
+						if (pPublication->publisher())
+							SCRIPT_ADD_OBJECT(Mona::Client, LUAClient, *pPublication->publisher())
+					} else if(strcmp(name,"name")==0) {
+						SCRIPT_WRITE_STRING(pPublication->name().c_str())
+					} else if(strcmp(name,"listeners")==0) {
+						Script::Collection(pState, 1, "listeners", pPublication->listeners.count());
+					} else if(strcmp(name,"audioQOS")==0) {
+						SCRIPT_ADD_OBJECT(Mona::QualityOfService, LUAQualityOfService, pPublication->audioQOS())
+					} else if(strcmp(name,"videoQOS")==0) {
+						SCRIPT_ADD_OBJECT(Mona::QualityOfService,LUAQualityOfService,pPublication->videoQOS())
+					} else if(strcmp(name,"dataQOS")==0) {
+						SCRIPT_ADD_OBJECT(Mona::QualityOfService,LUAQualityOfService,pPublication->dataQOS())
+					} else if(strcmp(name,"close")==0) {
+						SCRIPT_WRITE_FUNCTION(&LUAPublication::Close)
+					} else if(strcmp(name,"pushAudio")==0) {
+						SCRIPT_WRITE_FUNCTION(&LUAPublication::PushAudio)
+					} else if(strcmp(name,"flush")==0) {
+						SCRIPT_WRITE_FUNCTION(&LUAPublication::Flush)
+					} else if(strcmp(name,"pushVideo")==0) {
+						SCRIPT_WRITE_FUNCTION(&LUAPublication::PushVideo)
+					} else if(strcmp(name,"pushData")==0) {
+						SCRIPT_WRITE_FUNCTION(&LUAPublication::PushData)
+					}
 				}
 			}
 		SCRIPT_CALLBACK_RETURN
