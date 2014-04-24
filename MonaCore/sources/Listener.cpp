@@ -27,10 +27,10 @@ using namespace std;
 
 namespace Mona {
 
-Listener::Listener(Publication& publication,Client& client,Writer& writer) : _droppedFrames(0),
-	_writer(writer),publication(publication),_firstKeyFrame(false),receiveAudio(true),receiveVideo(true),client(client),
+Listener::Listener(Publication& publication,Client& client,Writer& writer) :
+   _writer(writer), publication(publication), receiveAudio(true), receiveVideo(true), client(client), _firstTime(true),
 	_pAudioWriter(NULL),_pVideoWriter(NULL),_pDataWriter(NULL),_publicationNamePacket((const UInt8*)publication.name().c_str(),publication.name().size()),
-	_time(0),_deltaTime(0),_addingTime(0),_bufferTime(0),_firstAudio(true),_firstVideo(true),_firstTime(true) {
+	_startTime(0),_codecInfosSent(false) {
 }
 
 Listener::~Listener() {
@@ -41,6 +41,10 @@ Listener::~Listener() {
 		_pVideoWriter->close(-1);
 	if(_pDataWriter)
 		_pDataWriter->close(-1);
+}
+
+void Listener::setBufferTime(UInt32 ms) {
+	WARN("Listener::setBufferTime not implemented");
 }
 
 const QualityOfService& Listener::audioQOS() const {
@@ -69,56 +73,29 @@ bool Listener::init() {
 	if (!_writer.writeMedia(Writer::INIT, 0, publicationNamePacket(),*this))// unsubscribe can be done here!
 		return false; // Here consider that the listener have to be closed by the caller
 
-	init(&_pAudioWriter, Writer::AUDIO);
-	init(&_pVideoWriter,Writer::VIDEO);
-	init(&_pDataWriter,Writer::DATA);
-	_time = 0;
-	_addingTime = 0;
-	_ts.update();
-	_firstTime = true;
+	_pAudioWriter = &_writer.newWriter();
+	_pAudioWriter->writeMedia(Writer::INIT, Writer::AUDIO, publicationNamePacket(),*this);
+	_pVideoWriter = &_writer.newWriter();
+	_pVideoWriter->writeMedia(Writer::INIT, Writer::VIDEO, publicationNamePacket(),*this);
+	_pDataWriter = &_writer.newWriter();
+	_pDataWriter->writeMedia(Writer::INIT, Writer::DATA, publicationNamePacket(),*this);
+	_pDataTypeName = typeid(*_pDataWriter).name();
+
+	
+	if(!publication.audioCodecBuffer().empty()) {
+		PacketReader audioCodecPacket(publication.audioCodecBuffer()->data(),publication.audioCodecBuffer()->size());
+		INFO("AAC codec infos sent to one listener of ", publication.name(), " publication")
+		pushAudioPacket(_startTime,audioCodecPacket);
+	}
+
+	if (getBool<false>("unbuffered")) {
+		_pAudioWriter->reliable = false;
+		_pVideoWriter->reliable = false;
+		_pDataWriter->reliable = false;
+	}
+
 	return true;
 }
-
-void Listener::init(Writer** ppWriter,Writer::MediaType type) {
-	if(*ppWriter == NULL)
-		*ppWriter = &_writer.newWriter();
-	(*ppWriter)->writeMedia(Writer::INIT, type, publicationNamePacket(),*this);
-	bool unbuffered;
-	if(getBool("unbuffered",unbuffered))
-		(*ppWriter)->reliable = !unbuffered;
-}
-
-UInt32 Listener::computeTime(UInt32 time) {
-	if(time==0)
-		time=(UInt32)_ts.elapsed();
-	if(_firstTime) { // first time, compute deltatime
-		_deltaTime = time;
-		_firstTime = false;
-		DEBUG("Deltatime assignment, ",_deltaTime);
-	}
-	if(_deltaTime>time) {
-		WARN("Subcription ",publication.name()," time ",time," inferior to deltaTime ",_deltaTime," (non increasing time)")
-		_deltaTime = time;
-	}
-	_time = time-_deltaTime+_addingTime;
-	TRACE("Time ",_time)
-	return _time;
-}
-
-void Listener::startPublishing() {
-	// publisher time will start to 0 here!
-	_writer.writeMedia(Writer::START,0,publicationNamePacket(),*this);
-	_firstKeyFrame=false;
-	_ts.update();
-}
-
-void Listener::stopPublishing() {
-	_deltaTime=0;
-	_addingTime = _time;
-	_droppedFrames = 0;
-	_writer.writeMedia(Writer::STOP,0,publicationNamePacket(),*this);
-}
-
 
 void Listener::pushDataPacket(DataReader& reader) {
 	if (!_pDataWriter && !init())
@@ -129,7 +106,7 @@ void Listener::pushDataPacket(DataReader& reader) {
 			return;
 	}
 
-	if(!_pDataWriter->hasToConvert(reader)) {
+	if(_pDataTypeName == typeid(reader).name()) {
 		if(!_pDataWriter->writeMedia(Writer::DATA,0,reader.packet,*this))
 			init();
 		return;
@@ -152,70 +129,55 @@ void Listener::pushDataPacket(DataReader& reader) {
 		init();
 }
 
-void Listener::pushVideoPacket(PacketReader& packet,UInt32 time) {
-	if(!receiveVideo) {
-		_firstKeyFrame=false;
-		_firstVideo=true;
+void Listener::pushVideoPacket(UInt32 time,PacketReader& packet) {
+	if(!receiveVideo && !MediaCodec::H264::IsCodecInfos(packet))
 		return;
+
+	if (!_codecInfosSent) {
+		if (MediaCodec::IsKeyFrame(packet)) {
+			if (!publication.videoCodecBuffer().empty() && !MediaCodec::H264::IsCodecInfos(packet)) {
+				PacketReader videoCodecPacket(publication.videoCodecBuffer()->data(), publication.videoCodecBuffer()->size());
+				INFO("H264 codec infos sent to one listener of ", publication.name(), " publication")
+				pushVideoPacket(time, videoCodecPacket);
+			}
+			_codecInfosSent = true;
+		} else if (_firstTime) {
+			DEBUG("Video frame dropped to wait first key frame");
+			return;
+		}
 	}
+	
+
 	if (!_pVideoWriter && !init())
 		return;
 
-	// key frame ?
-	if(MediaCodec::IsKeyFrame(packet.current(),packet.available()))
-		_firstKeyFrame=true;
-
-	if(!_firstKeyFrame) {
-		DEBUG("Video frame dropped to wait first key frame");
-		++_droppedFrames;
-		return;
+	if (_firstTime) {
+		_startTime = time;
+		_firstTime = false;
 	}
+	time -= _startTime;
 
-	time = computeTime(time);
-
-	if(_firstVideo) {
-		_firstVideo=false;
-		UInt32 size(0);
-		if(!MediaCodec::H264::IsCodecInfos(packet.current(),packet.available()) && (size=publication.videoCodecBuffer().size())>0) {
-			PacketReader videoCodecPacket(publication.videoCodecBuffer().data(),size);
-			// Reliable way for video codec packet!
-			bool reliable = _pVideoWriter->reliable;
-			_pVideoWriter->reliable = true;
-			DEBUG("H264 codec infos sent to one listener of ",publication.name()," publication")
-			if (!_pVideoWriter->writeMedia(Writer::VIDEO, time, videoCodecPacket,*this) && !init())
-				return;
-			_pVideoWriter->reliable = reliable;
-		}
-	}
+	TRACE("Video time ", time);
 
 	if(!_pVideoWriter->writeMedia(Writer::VIDEO,time,packet,*this))
 		init();
 }
 
 
-void Listener::pushAudioPacket(PacketReader& packet,UInt32 time) {
-	if(!receiveAudio) {
-		_firstAudio=true;
+void Listener::pushAudioPacket(UInt32 time,PacketReader& packet) {
+	if(!receiveAudio && !MediaCodec::AAC::IsCodecInfos(packet))
 		return;
-	}
+
 	if (!_pAudioWriter && !init())
 		return;
 
-	time = computeTime(time);
-
-	if(_firstAudio) {
-		_firstAudio=false;
-		UInt32 size(0);
-		if(!MediaCodec::AAC::IsCodecInfos(packet.current(),packet.available()) && (size=publication.audioCodecBuffer().size())>0) {
-			PacketReader audioCodecPacket(publication.audioCodecBuffer().data(),size);
-			// Reliable way for audio codec packet!
-			bool reliable = _pAudioWriter->reliable;
-			_pAudioWriter->reliable = true;
-			if (!_pAudioWriter->writeMedia(Writer::AUDIO, time, audioCodecPacket,*this) && !init())
-				return;
-			_pAudioWriter->reliable = reliable;
-		}
+	if (_firstTime) {
+		_startTime = time;
+		_firstTime = false;
 	}
+	time -= _startTime;
+
+	TRACE("Audio time ", time);
 
 	if(!_pAudioWriter->writeMedia(Writer::AUDIO,time,packet,*this))
 		init();

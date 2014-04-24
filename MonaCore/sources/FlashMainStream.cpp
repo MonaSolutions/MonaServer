@@ -169,10 +169,8 @@ void FlashMainStream::messageHandler(Exception& ex, const string& name,AMFReader
 	} else {
 		Exception exm;
 		peer.onMessage(exm, name, message);
-		if (exm) {
-			ERROR(exm.error());
+		if (exm)
 			writer.writeAMFError("NetConnection.Call.Failed", exm.error());
-		}
 	}
 	
 }

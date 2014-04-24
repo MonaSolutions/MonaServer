@@ -20,15 +20,13 @@ This file is a part of Mona.
 #pragma once
 
 #include "Mona/Mona.h"
-#include "Mona/Entities.h"
+#include "Mona/Session.h"
 #include "Mona/Util.h"
-#include "Mona/SocketAddress.h"
 #include "Mona/Logs.h"
-#include <cstddef>
+
 
 namespace Mona {
 
-class Session;
 class Sessions {
 public:
 	enum {
@@ -43,8 +41,6 @@ public:
 	virtual ~Sessions();
 
 	UInt32	 count() const { return _sessions.size(); }
-
-	void	 updateAddress(Session& session, const SocketAddress& oldAddress);
 
 	Iterator begin() const { return _sessions.begin(); }
 	Iterator end() const { return _sessions.end(); }
@@ -80,7 +76,6 @@ public:
 	template<typename SessionType, UInt8 options = BYID,typename ...Args>
 	SessionType& create(Args&&... args) {
 		SessionType* pSession = new SessionType(args ...);
-		pSession->_pSessions = this; // because managed by Sessions!
 		pSession->_id = _nextId;
 		_sessions[_nextId] = pSession;
 
@@ -98,6 +93,8 @@ public:
 		}
 
 		pSession->_sessionsOptions = options;
+
+		pSession->OnAddressChange::subscribe(onAddressChange);
 		DEBUG("Session ", _nextId, " created");
 		do {
 			++_nextId;
@@ -108,6 +105,9 @@ public:
 private:
 
 	void    remove(std::map<UInt32,Session*>::iterator it);
+	void	removeByPeer(Session& session);
+
+	Session::OnAddressChange::Type	onAddressChange;
 
 	UInt32											_nextId;
 	std::map<UInt32,Session*>						_sessions;

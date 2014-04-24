@@ -65,43 +65,43 @@ bool tryToNumber<double>(const char * value, double expected) {
 
 ADD_TEST(StringTest, General) {
 
-	for (Int8 c=0; c >= -10; ++c)
+	for (signed char c=0; c >= -10; ++c)
 		CHECK(isalpha(c) && (c>='a' && c<='z' || c>='A' && c<='Z') || c < 'A' || (c > 'Z' && c<'a') || c>'z')
 
-	for (Int8 c=0; c >= -10; ++c)
+	for (signed char c=0; c >= -10; ++c)
 		CHECK(isdigit(c) && c>='0' && c<='9' || c < '0' || c > '9')
 
-	for (Int8 c=0; c >= -10; ++c)
+	for (signed char c=0; c >= -10; ++c)
 		CHECK(isalnum(c) && (isalpha(c) || isdigit(c)) || (!isalpha(c) && !isdigit(c)))
 
-	for (Int8 c=0; c >= -10; ++c)
+	for (signed char c=0; c >= -10; ++c)
 		CHECK(isblank(c) && (c==' ' || c=='\t') || (c!=' ' && c!='\t'))
 
-	for (Int8 c=0; c >= -10; ++c)
+	for (signed char c=0; c >= -10; ++c)
 		CHECK(isspace(c) && (c>='\t' && c<='\r' || c==' ') || (c < '\t' || (c > '\r' && c!=' ')))
 
-	for (Int8 c=0; c >= -10; ++c)
+	for (signed char c=0; c >= -10; ++c)
 		CHECK(iscntrl(c) && (c<=0x1F || c==0x7F) || (c>0x1F && c!=0x7F))
 
-	for (Int8 c=0; c >= -10; ++c)
+	for (signed char c=0; c >= -10; ++c)
 		CHECK(isgraph(c) && c>='!' && c<='~' || c < '!' || c > '~')
 
-	for (Int8 c=0; c >= -10; ++c)
+	for (signed char c=0; c >= -10; ++c)
 		CHECK(islower(c) && c>='a' && c<='z' || c < 'a' || c > 'z')
 
-	for (Int8 c=0; c >= -10; ++c)
+	for (signed char c=0; c >= -10; ++c)
 		CHECK(isupper(c) && c>='A' && c<='Z' || c < 'A' || c > 'Z')
 
-	for (Int8 c=0; c >= -10; ++c)
+	for (signed char c=0; c >= -10; ++c)
 		CHECK(isprint(c) && c>=' ' && c<='~' || c < ' ' || c > '~')
 
-	for (Int8 c=0; c >= -10; ++c)
+	for (signed char c=0; c >= -10; ++c)
 		CHECK(isxdigit(c) && ((c>='A' && c<='F') || (c>='a' && c<='f') || isdigit(c)) || c<'0' || (c > '9' && c<'A') || (c > 'F' && c<'a') || c>'f')
 
-	for (Int8 c=0; c >= -10; ++c)
+	for (signed char c=0; c >= -10; ++c)
 		CHECK(tolower(c)==(c+32) || c < 'A' || c > 'Z')
 
-	for (Int8 c=0; c >= -10; ++c)
+	for (signed char c=0; c >= -10; ++c)
 		CHECK(toupper(c)==(c-32) || c < 'a' || c > 'z')
 	
 }

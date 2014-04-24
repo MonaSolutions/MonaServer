@@ -40,7 +40,7 @@ public:
 	UInt32				size() { return _writer.packet.size(); }
 
 
-	void				dump(RTMPChannel& channel,const SocketAddress& address) { pack(channel); Session::DumpResponse(data(), size(), address); }
+	void				dump(RTMPChannel& channel, const SocketAddress& address) { pack(channel); Session::DumpResponse(data(), size(), address); }
 
 	AMFWriter&			writer(RTMPChannel& channel) { pack(channel); return _writer; }
 private:

@@ -96,6 +96,7 @@ const UInt8* HTTPPacket::build(Exception& ex,PoolBuffer& pBuffer,const UInt8* da
 					// by default command == GET
 					if ((command = HTTP::ParseCommand(ex, signifiant)) == HTTP::COMMAND_UNKNOWN) {
 						_pBuffer.release();
+						exception.set(ex);
 						return NULL;
 					}
 					signifiant = NULL;
@@ -125,7 +126,7 @@ const UInt8* HTTPPacket::build(Exception& ex,PoolBuffer& pBuffer,const UInt8* da
 				if (step == CMD && (current-_pBuffer->data())>7) {
 					// not a HTTP valid packet, consumes all
 					_pBuffer.release();
-					ex.set(Exception::PROTOCOL, "unvalid HTTP packet");
+					exception.set(ex.set(Exception::PROTOCOL, "unvalid HTTP packet"));
 					return NULL;
 				}
 			} else

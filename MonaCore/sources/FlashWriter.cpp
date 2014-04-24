@@ -38,18 +38,25 @@ FlashWriter::FlashWriter(FlashWriter& writer) : callbackHandle(writer.callbackHa
 FlashWriter::~FlashWriter() {
 }
 
-AMFWriter& FlashWriter::writeInvocation(const string& name) {
+AMFWriter& FlashWriter::writeMessage() {
+	AMFWriter& writer(writeInvocation("_result",callbackHandle));
+	callbackHandle = 0;
+	return writer;
+}
+
+AMFWriter& FlashWriter::writeInvocation(const std::string& name,double callback) {
 	AMFWriter& writer = write(AMF::INVOCATION);
 	BinaryWriter& packet = writer.packet;
 	packet.write8(AMF_STRING);packet.writeString16(name);
 	packet.write8(AMF_NUMBER);
-	packet.writeNumber<double>(callbackHandle);
+	packet.writeNumber<double>(callback);
 	packet.write8(AMF_NULL); // for RTMP compatibility! (requiere it)
 	return writer;
 }
 
 AMFWriter& FlashWriter::writeAMFState(const string& name,const string& code,const string& description,bool withoutClosing) {
-	AMFWriter& writer = (AMFWriter&)writeInvocation(name);
+	AMFWriter& writer = (AMFWriter&)writeInvocation(name,callbackHandle);
+	callbackHandle = 0;
 	writer.amf0Preference=true;
 	writer.beginObject();
 	if(name=="_error")

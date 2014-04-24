@@ -217,7 +217,7 @@ void AMFWriter::beginObjectArray(UInt32 size) {
 	packet.write7BitValue((size << 1) | 1);
 	_references.emplace_back(AMF3_ARRAY);
 	_lastReference=_references.size();
-	_lastObjectReferences.emplace_back(_lastReference,false);
+	_lastObjectReferences.emplace_back(_lastReference,true);
 	_lastObjectReferences.emplace_back(_lastReference,false);
 }
 
@@ -244,12 +244,15 @@ void AMFWriter::endObject() {
 	_lastReference = objectRef.reference;
 	bool isObject = objectRef.isObject;
 	_lastObjectReferences.pop_back();
-	if(isObject && !_amf3) {
-		packet.write16(0); 
-		packet.write8(AMF_END_OBJECT);
-		return;
+	if(isObject) {
+		if(!_amf3) {
+			packet.write16(0); 
+			packet.write8(AMF_END_OBJECT);
+			return;
+		}
+		packet.write8(01); // end marker
 	}
-	packet.write8(AMF3_NULL);
+	
 	if(_lastObjectReferences.empty())
 		_amf3=false;
 }

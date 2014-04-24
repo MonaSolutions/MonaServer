@@ -25,7 +25,6 @@ This file is a part of Mona.
 #include "Mona/PacketWriter.h"
 #include "Mona/Time.h"
 #include <openssl/evp.h>
-#include <math.h>
 
 namespace Mona {
 
@@ -35,7 +34,7 @@ namespace Mona {
 #define RTMFP_HEADER_SIZE		11
 #define RTMFP_MIN_PACKET_SIZE	(RTMFP_HEADER_SIZE+1)
 #define RTMFP_MAX_PACKET_SIZE	1192
-#define RTMFP_TIMESTAMP_SCALE	4.0
+#define RTMFP_TIMESTAMP_SCALE	4
 
 
 class RTMFPKey : public virtual Object {
@@ -102,7 +101,7 @@ public:
 														 UInt8* responseKey);
 
 	static UInt16				TimeNow() { return Time(Mona::Time::Now()); }
-	static UInt16				Time(Int64 timeVal) { return (UInt32)round(timeVal / RTMFP_TIMESTAMP_SCALE); }
+	static UInt16				Time(Int64 timeVal) { return (timeVal / RTMFP_TIMESTAMP_SCALE)&0xFFFF; }
 
 private:
 	static UInt16				CheckSum(PacketReader& packet);

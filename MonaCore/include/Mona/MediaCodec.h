@@ -20,7 +20,7 @@ This file is a part of Mona.
 #pragma once
 
 #include "Mona/Mona.h"
-#include "Mona/BinaryWriter.h"
+#include "Mona/BinaryReader.h"
 
 
 namespace Mona {
@@ -29,19 +29,19 @@ namespace Mona {
 class MediaCodec : virtual Static {
 public:
 
-	static bool IsKeyFrame(const UInt8* data, UInt32 size) { return size>0 && (*data&0xF0)==0x10; }
+	static bool IsKeyFrame(BinaryReader& reader) { return reader.available()>0 && (*reader.current()&0xF0)==0x10; }
 	
 	class H264 : virtual Static {
 	public:
 		// To write header
-		static bool IsCodecInfos(const UInt8* data, UInt32 size) { return size>1 && *data == 0x17 && data[1] == 0; }
+		static bool IsCodecInfos(BinaryReader& reader) { return reader.available()>1 && *reader.current() == 0x17 && reader.current()[1] == 0; }
 
 	};
 
 	class AAC : virtual Static {
 	public:
 		// To write header
-		static bool IsCodecInfos(const UInt8* data, UInt32 size) { return size > 1 && (*data >> 4) == 0x0A && data[1] == 0; }
+		static bool IsCodecInfos(BinaryReader& reader) { return reader.available()>1 && (*reader.current() >> 4) == 0x0A && reader.current()[1] == 0; }
 
 	};
 

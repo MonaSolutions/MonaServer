@@ -32,11 +32,11 @@ public:
 	Listener(Publication& publication,Client& client,Writer& writer);
 	virtual ~Listener();
 
-	void startPublishing();
-	void stopPublishing(); 
+	void startPublishing() { _startTime = 0; _firstTime = true; _writer.writeMedia(Writer::START, 0, publicationNamePacket(), *this); }
+	void stopPublishing() { _writer.writeMedia(Writer::STOP, 0, publicationNamePacket(), *this); }
 
-	void pushAudioPacket(PacketReader& packet,UInt32 time=0); 
-	void pushVideoPacket(PacketReader& packet,UInt32 time=0);
+	void pushAudioPacket(UInt32 time,PacketReader& packet); 
+	void pushVideoPacket(UInt32 time,PacketReader& packet);
 	void pushDataPacket(DataReader& reader);
 
 	void flush();
@@ -47,36 +47,29 @@ public:
 	const Publication&	publication;
 	Client&				client;
 
-	UInt32					droppedFrames() const { return _droppedFrames; }
 	const QualityOfService&	videoQOS() const;
 	const QualityOfService&	audioQOS() const;
 	const QualityOfService&	dataQOS() const;
 
 	
-	void setBufferTime(UInt32 ms) { _bufferTime = ms; }
+	void setBufferTime(UInt32 ms);
+	
 
 private:
 	bool	init();
-	void	init(Writer** ppWriter,Writer::MediaType type);
-	UInt32 	computeTime(UInt32 time);
+	void	reset();
+
 	PacketReader& publicationNamePacket() { _publicationNamePacket.reset(); return _publicationNamePacket; }
 
-	bool					_firstKeyFrame;
-	bool					_firstAudio;
-	bool					_firstVideo;
+	UInt32 					_startTime;
 	bool					_firstTime;
-
-	UInt32 					_deltaTime;
-	UInt32 					_addingTime;
-	UInt32 					_time;
-	UInt32					_bufferTime;
-	Time					_ts;
+	bool					_codecInfosSent;
 	
 	Writer&					_writer;
 	Writer*					_pAudioWriter;
 	Writer*					_pVideoWriter;
 	Writer*					_pDataWriter;
-	UInt32					_droppedFrames;
+	const char*				_pDataTypeName;
 	PacketReader			_publicationNamePacket;
 };
 

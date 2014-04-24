@@ -45,7 +45,10 @@ void HTTPSession::kill(UInt32 type){
 		invoker.unsubscribe(peer, _pListener->publication.name());
 		_pListener = NULL;
 	}
-	WSSession::kill(type);
+	if (_isWS)
+		WSSession::kill(type);
+	else
+		TCPSession::kill(type);
 }
 
 bool HTTPSession::buildPacket(PoolBuffer& pBuffer,PacketReader& packet) {
@@ -59,8 +62,6 @@ bool HTTPSession::buildPacket(PoolBuffer& pBuffer,PacketReader& packet) {
 }
 
 const shared_ptr<HTTPPacket>& HTTPSession::packet() {
-	while (!_packets.empty() && _packets.front().unique())
-		_packets.pop_front();
 	if (_packets.empty())
 		return _writer.pRequest;
 	_writer.pRequest = _packets.front();
@@ -78,6 +79,11 @@ void HTTPSession::packetHandler(PacketReader& reader) {
 	const shared_ptr<HTTPPacket>& pPacket(packet());
 	if (!pPacket) {
 		ERROR("HTTPSession::packetHandler without http packet built");
+		return;
+	}
+
+	if (pPacket->exception) {
+		_writer.close(pPacket->exception);
 		return;
 	}
 
@@ -222,6 +228,8 @@ void HTTPSession::manage() {
 	// timeout http session // TODO add a timeout for Listening HTTP session without media reception??
 	if (peer.connected && _options.timeout > 0 && !_pListener && _writer.timeout.isElapsed(_options.timeout))
 		kill(TIMEOUT_DEATH);
+	else if (!_packets.empty() && _packets.front()->exception)
+		_writer.close(_packets.front()->exception);
 }
 
 void HTTPSession::processOptions(Exception& ex,const shared_ptr<HTTPPacket>& pPacket) {

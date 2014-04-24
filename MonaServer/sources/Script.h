@@ -312,7 +312,7 @@ public:
 
 		// check type correspondance
 		lua_getfield(pState,-1,"|type");
-		if (!lua_isstring(pState, -1)) {
+		if (!lua_islightuserdata(pState, -1)) {
 			lua_pop(pState,2);
 			if(!callback) return NULL;
 			SCRIPT_BEGIN(pState)
@@ -320,8 +320,7 @@ public:
 			SCRIPT_END
 			return NULL;
 		}
-		const char* temp(lua_tostring(pState, -1));
-		if (strcmp(typeid(Type).name(),temp) != 0) {
+		if (lua_touserdata(pState,-1)!=typeid(Type).name()) {
 			lua_pop(pState,2);
 			if(!callback) return NULL;
 			SCRIPT_BEGIN(pState)
@@ -413,7 +412,7 @@ private:
 		lua_setfield(pState,-2,"|this");
 
 		// |type
-		lua_pushstring(pState,typeid(Type).name());
+		lua_pushlightuserdata(pState,(void*)typeid(Type).name());
 		lua_setfield(pState,-2,"|type");
 
 		// call => override operator ( )

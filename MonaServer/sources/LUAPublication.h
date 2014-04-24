@@ -71,8 +71,6 @@ public:
 					SCRIPT_WRITE_STRING(pPublication->name().c_str())
 				} else if(strcmp(name,"listeners")==0) {
 					Script::Collection(pState, 1, "listeners", pPublication->listeners.count());
-				} else if(strcmp(name,"droppedFrames")==0) {
-					SCRIPT_WRITE_NUMBER(pPublication->droppedFrames())
 				} else if(strcmp(name,"audioQOS")==0) {
 					SCRIPT_ADD_OBJECT(Mona::QualityOfService, LUAQualityOfService, pPublication->audioQOS())
 				} else if(strcmp(name,"videoQOS")==0) {
@@ -123,11 +121,11 @@ private:
 			if (!pPublication)
 				SCRIPT_ERROR("Publication:pushAudio, publication closed")
 			else {
-				SCRIPT_READ_BINARY(pData, size)
 				Mona::UInt32 time = SCRIPT_READ_UINT(0);
+				SCRIPT_READ_BINARY(pData, size);
 				if (pData) {
 					Mona::PacketReader packet(pData, size);
-					pPublication->pushAudio(packet, time, SCRIPT_READ_UINT(0));
+					pPublication->pushAudio(time,packet, SCRIPT_READ_UINT(0));
 				}
 			}
 		SCRIPT_CALLBACK_RETURN
@@ -139,11 +137,11 @@ private:
 			if (!pPublication)
 				SCRIPT_ERROR("Publication:pushVideo, publication closed")
 			else {
-				SCRIPT_READ_BINARY(pData, size)
 				Mona::UInt32 time = SCRIPT_READ_UINT(0);
+				SCRIPT_READ_BINARY(pData, size);
 				if (pData) {
 					Mona::PacketReader packet(pData, size);
-					pPublication->pushVideo(packet, time, SCRIPT_READ_UINT(0));
+					pPublication->pushVideo(time,packet, SCRIPT_READ_UINT(0));
 				}
 			}
 		SCRIPT_CALLBACK_RETURN

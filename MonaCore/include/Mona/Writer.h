@@ -92,7 +92,6 @@ public:
 
 	virtual void			createReader(PacketReader& packet,std::shared_ptr<DataReader>& pReader) {}
 	virtual void			createWriter(std::shared_ptr<DataWriter>& pWriter) {}
-	virtual bool			hasToConvert(DataReader& reader) {return false;}
 
 	operator bool() const { return !_isNull; }
 

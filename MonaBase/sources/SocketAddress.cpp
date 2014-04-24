@@ -32,7 +32,7 @@ namespace Mona {
 // SocketAddressCommon
 //
 
-class SocketAddressCommon {
+class SocketAddressCommon : public virtual Object {
 public:
 	virtual const IPAddress&		host() const = 0;
 	virtual UInt16					port() const = 0;

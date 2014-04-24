@@ -56,16 +56,18 @@ public:
 
 
 	template <typename ...Args>
-	void set(Code code, Args&&... args) {
+	Exception& set(Code code, Args&&... args) {
 		_code = code;
 		String::Format(_error, args ...);
 		if (_code != Exception::NIL && _error.empty()) 
 			_error.assign(_CodeMessages[code]);
+		return *this;
 	}
 
-	void set(const Exception& other) {
+	Exception& set(const Exception& other) {
 		_code = other._code;
 		_error = other._error;
+		return *this;
 	}
 
 	operator bool() const { return _code != Exception::NIL; }

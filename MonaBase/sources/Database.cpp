@@ -101,7 +101,7 @@ void Database::processEntry(Exception& ex,Entry& entry) {
 
 	// remove folder
 	if (entry.toRemove) {
-		FileSystem::Remove(ex, directory);
+		FileSystem::Remove(ex, directory,true);
 		return;
 	}
 
@@ -135,7 +135,7 @@ void Database::processEntry(Exception& ex,Entry& entry) {
 	for (const string& item : files) {
 		if (FileSystem::GetName(item, file) == name)
 			continue;
-		FileSystem::Remove(ignore,item);
+		FileSystem::Remove(ignore,item,true);
 	}
 }
 
@@ -193,7 +193,7 @@ bool Database::loadDirectory(Exception& ex, const string& directory, const strin
 
 	}
 	if (!hasData)
-		FileSystem::Remove(ex,directory);
+		FileSystem::Remove(ex,directory,true);
 	return hasData;
 }
 

@@ -21,7 +21,9 @@ This file is a part of Mona.
 
 #include "Mona/Mona.h"
 #include "Mona/Exceptions.h"
-#include <set>
+#include <functional>
+#include <mutex>
+#include <memory>
 
 namespace Mona {
 
@@ -92,6 +94,10 @@ protected:
 			_pFunction->_subscribed = false;
 		if (_pRelayer)
 			_pRelayer->_relayed = false;
+	}
+
+	void lock(std::unique_lock<std::recursive_mutex>& guard) {
+		guard = std::unique_lock<std::recursive_mutex>(*_pMutex);
 	}
 
 

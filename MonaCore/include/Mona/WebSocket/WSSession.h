@@ -47,7 +47,7 @@ public:
 		if(!reader.isValid()) {
 			packet.reset();
 			RawReader rawReader(packet);
-			peer.onMessage(ex, "onMessage",rawReader, WS::TYPE_TEXT);
+			peer.onMessage(ex, "onMessage",rawReader,WS::TYPE_TEXT);
 			return;
 		}
 

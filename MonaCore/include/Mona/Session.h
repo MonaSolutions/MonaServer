@@ -26,9 +26,14 @@ This file is a part of Mona.
 
 namespace Mona {
 
-class Sessions;
+class Session;
+namespace Events {
+	struct OnAddressChange : Event<void(Session&,const SocketAddress&)> {};
+};
+
 class Protocol;
-class Session : public virtual Object, public Expirable<Session> {
+class Session : public virtual Object, public Expirable<Session>,
+	public Events::OnAddressChange {
 	friend class Sessions;
 
 private:
@@ -105,7 +110,6 @@ private:
 	PoolThread*					_pDecodingThread;
 	mutable std::string			_name;
 	UInt32						_id;
-	Sessions*					_pSessions; // !NULL if managed by Sessions!
 	UInt8						_sessionsOptions;
 	Protocol&					_protocol;
 };
