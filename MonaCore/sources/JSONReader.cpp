@@ -261,7 +261,12 @@ JSONReader::Type JSONReader::followingType() {
 		_bool = false;
 		return BOOLEAN;
 	}
-	return NUMBER;
+	if(isdigit(*cur) || *cur == '-' || *cur == '+')
+		return NUMBER;
+	else {
+		ERROR("JSON malformed, unexpected caracter '", *cur, "' at position ", packet.position())
+		return END;
+	}
 }
 
 const UInt8* JSONReader::current() {

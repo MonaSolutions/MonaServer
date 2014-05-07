@@ -119,7 +119,6 @@ void HTTPSession::packetHandler(PacketReader& reader) {
 			peer.onDisconnection();
 			_isWS=true;
 			((string&)this->peer.protocol) = "WebSocket";
-			((string&)protocol().name) = "WebSocket";
 
 			DataWriter& response = _writer.write("101 Switching Protocols", HTTP::CONTENT_ABSENT);
 			BinaryWriter& writer = response.packet;

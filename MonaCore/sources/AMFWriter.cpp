@@ -217,8 +217,8 @@ void AMFWriter::beginObjectArray(UInt32 size) {
 	packet.write7BitValue((size << 1) | 1);
 	_references.emplace_back(AMF3_ARRAY);
 	_lastReference=_references.size();
-	_lastObjectReferences.emplace_back(_lastReference,true);
 	_lastObjectReferences.emplace_back(_lastReference,false);
+	_lastObjectReferences.emplace_back(_lastReference,true);
 }
 
 void AMFWriter::beginMap(UInt32 size,bool weakKeys) {
