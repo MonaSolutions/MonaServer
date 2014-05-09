@@ -23,6 +23,7 @@ This file is a part of Mona.
 #include "Mona/Writer.h"
 #include "Mona/QualityOfService.h"
 #include "Mona/Client.h"
+#include "Mona/MapParameters.h"
 
 namespace Mona {
 

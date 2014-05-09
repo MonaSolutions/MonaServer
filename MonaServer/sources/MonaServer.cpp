@@ -27,9 +27,6 @@ This file is a part of Mona.
 #include "LUABroadcaster.h"
 #include "LUADataTable.h"
 
-#define CONFIG_NUMBER(NAME)  _configs.getNumber(#NAME,params.NAME);((Parameters&)_configs).setNumber(#NAME,params.NAME);
-
-#define CONFIG_PROTOCOL_NUMBER(PROTOCOL,NAME) _configs.getNumber(#PROTOCOL"."#NAME,params.PROTOCOL.NAME);((Parameters&)_configs).setNumber(#PROTOCOL"."#NAME,params.PROTOCOL.NAME);
 
 using namespace std;
 using namespace Mona;
@@ -38,8 +35,27 @@ using namespace Mona;
 const string MonaServer::WWWPath("./");
 const string MonaServer::DataPath("./");
 
-MonaServer::MonaServer(TerminateSignal& terminateSignal, const MapParameters& configs) :
-	_configs(configs),Server(configs.getNumber<UInt32>("socketBufferSize"), configs.getNumber<UInt16>("threads")), servers(configs,sockets), _firstData(true),_data(this->poolBuffers),_terminateSignal(terminateSignal) {
+MonaServer::MonaServer(TerminateSignal& terminateSignal, const Parameters& configs) :
+	Server(configs.getNumber<UInt32>("socketBufferSize"), configs.getNumber<UInt16>("threads")), servers(configs,sockets), _firstData(true),_data(this->poolBuffers),_terminateSignal(terminateSignal),
+	setLUAProperty([this](const string& key, const string& value) {
+		lua_pushstring(_pState,key.c_str());
+		if (String::ICompare(value, "false") == 0 || String::ICompare(value, "nil") == 0)
+			lua_pushboolean(_pState, 0);
+		else
+			lua_pushlstring(_pState, value.c_str(), value.size());
+		lua_rawset(_pState, -3);
+	}) {
+
+
+	Parameters::ForEach forEach([this](const string& key, const string& value) {
+		setString(key, value);
+	});
+	configs.iterate(forEach);
+
+	string pathApp;
+	configs.getString("application.dir", pathApp);
+	(string&)WWWPath = pathApp + "www";
+	(string&)DataPath = pathApp + "data";
 
 
 	onServerConnection = [this](ServerConnection& server) {
@@ -123,61 +139,13 @@ bool MonaServer::start() {
 		return false;
 	}
 
-	string pathApp;
-	_configs.getString("application.dir", pathApp);
-	(string&)WWWPath = pathApp + "www";
-	(string&)DataPath = pathApp + "data";
-
-
 	if (!FileSystem::CreateDirectory(WWWPath)) {
 		ERROR("Impossible to create application directory ", WWWPath);
 		return false;
 	}
 
-	_pState = Script::CreateState();
-
-	ServerParams	params;
-
-	// RTMFP
-	_configs.getNumber("RTMFP.keepAliveServer",(double&)params.RTMFP.keepAliveServer);
-	if (params.RTMFP.keepAliveServer < 5) {
-		WARN("Value of RTMFP.keepAliveServer can't be less than 5 sec")
-			((Parameters&)_configs).setNumber("RTMFP.keepAliveServer", 5);
-	}
-	_configs.getNumber("RTMFP.keepAlivePeer", (double&)params.RTMFP.keepAlivePeer);
-	if (params.RTMFP.keepAlivePeer < 5) {
-		WARN("Value of RTMFP.keepAlivePeer can't be less than 5 sec")
-			((Parameters&)_configs).setNumber("RTMFP.keepAlivePeer", 5);
-	}
-	CONFIG_PROTOCOL_NUMBER(RTMFP, port);
-	CONFIG_PROTOCOL_NUMBER(RTMFP, keepAliveServer);
-	CONFIG_PROTOCOL_NUMBER(RTMFP, keepAlivePeer);
-
-	// RTMP
-	CONFIG_PROTOCOL_NUMBER(RTMP, port);
-
-	// WebSocket
-	CONFIG_PROTOCOL_NUMBER(HTTP, port);
-
-	createParametersCollection("m.c", _configs);
-	createParametersCollection("m.e", Util::Environment());
-
-	return Server::start(params);
+	return Server::start();
 }
-
-void MonaServer::createParametersCollection(const char* name,const MapParameters& parameters) {
-	Script::Collection(_pState,LUA_GLOBALSINDEX, name, parameters.count());
-	for (auto& it : parameters) {
-		lua_pushstring(_pState,it.first.c_str());
-		if (String::ICompare(it.second, "false") == 0 || String::ICompare(it.second, "nil") == 0)
-			lua_pushboolean(_pState, 0);
-		else
-			lua_pushlstring(_pState, it.second.c_str(), it.second.size());
-		lua_rawset(_pState, -3);
-	}
-	lua_pop(_pState, 1);
-}
-
 
 void MonaServer::startService(Service& service) {
 	_servicesRunning.insert(&service);
@@ -215,11 +183,20 @@ void MonaServer::stopService(Service& service) {
 
 void MonaServer::onStart() {
 	
+	_pState = Script::CreateState();
+
 	// init root server application
 	_pService.reset(new Service(_pState, "", *this));
 
 	// init few global variable
 	SCRIPT_BEGIN(_pState)
+		// Configs + Environement
+		Script::Collection(_pState,LUA_GLOBALSINDEX, "m.c", count());
+		iterate(setLUAProperty);
+		Script::Collection(_pState,LUA_GLOBALSINDEX, "m.e", Util::Environment().count());
+		Util::Environment().iterate(setLUAProperty);
+		lua_pop(_pState, 2);
+
 		SCRIPT_ADD_OBJECT(Invoker, LUAInvoker, *this)
 		lua_setglobal(_pState,"mona");
 		SCRIPT_ADD_OBJECT(Broadcaster, LUABroadcaster, servers)
@@ -295,11 +272,7 @@ void MonaServer::onDataLoading(const string& path, const char* value, UInt32 siz
 	}
 
 	// set value
-	if (String::ICompare(value, "false") == 0 || String::ICompare(value, "nil") == 0)
-		lua_pushboolean(_pState, 0);
-	else
-		lua_pushlstring(_pState, value, size);
-	lua_setfield(_pState, -2,key.c_str());
+	setLUAProperty(key, value);
 	lua_pop(_pState, 1); // remove table
 }
 
@@ -335,8 +308,7 @@ void MonaServer::manage() {
 }
 
 void MonaServer::readLUAAddresses(const string& protocol,set<SocketAddress>& addresses) {
-	lua_pushnil(_pState);  // first key 
-	Script::Test(_pState);
+	lua_pushnil(_pState);  // first key
 	while (lua_next(_pState, -2) != 0) {
 		// uses 'key' (at index -2) and 'value' (at index -1) 
 		readLUAAddress(protocol,addresses);
@@ -345,74 +317,51 @@ void MonaServer::readLUAAddresses(const string& protocol,set<SocketAddress>& add
 }
 
 
-void MonaServer::readLUAAddress(const string& protocol,set<SocketAddress>& addresses) {
-	int type = lua_type(_pState,-1);
-	
+void MonaServer::readLUAAddress(const string& protocol, set<SocketAddress>& addresses) {
+	int type = lua_type(_pState, -1);
+
 	Exception ex;
 
-	if(type==LUA_TTABLE) {
+	if (type == LUA_TTABLE) {
 		bool isConst;
-		Broadcaster* pBroadcaster = Script::ToObject<Broadcaster>(_pState,isConst);
-		if(pBroadcaster) {
-			
-			for (ServerConnection* pServer : *pBroadcaster) {
-				string temp(protocol);
-				temp.append(".port");
-				UInt16 port(0);
-				if(!pServer->getNumber(temp,port) || port==0)
-					continue;
-				
-				if (!pServer->getString("host", temp))
-					temp = pServer->address.host();
-
-				IPAddress host;
-				if (host.set(ex, temp))
-					addresses.emplace(host, port);
-				else if (ex)
-					goto EX;
-		
-			}
-			return;
+		Broadcaster* pBroadcaster = Script::ToObject<Broadcaster>(_pState, isConst);
+		if (pBroadcaster) {
+			for (ServerConnection* pServer : *pBroadcaster)
+				readLUAServerAddress(protocol, addresses, *pServer);
+		} else {
+			ServerConnection* pServer = Script::ToObject<ServerConnection>(_pState, isConst);
+			if (pServer)
+				readLUAServerAddress(protocol, addresses, *pServer);
+			else
+				readLUAAddresses(protocol, addresses);
 		}
-		ServerConnection* pServer = Script::ToObject<ServerConnection>(_pState,isConst);
-		if(pServer) {
-			string temp(protocol);
-			temp.append(".port");
-			UInt16 port(0);
-			if (pServer->getNumber(temp, port) && port > 0) {
-				if (!pServer->getString("host", temp))
-					temp = pServer->address.host();
-				IPAddress host;
-				if (host.set(ex, temp))
-					addresses.emplace(host, port);
-				else if (ex)
-					goto EX;
-			}
-			return;
-		}
-		readLUAAddresses(protocol,addresses);
 	} else {
-		const char* addr = lua_tostring(_pState,-1);
+		const char* addr = lua_tostring(_pState, -1);
 		if (addr) {
 			if (String::ICompare(addr, "myself") == 0)
 				addresses.emplace(); // wilcard, will be changed to the server public address by the caller
-			else {
-				SocketAddress address;
-				if(address.set(ex,addr))
-					addresses.emplace(address);
-				else if (ex)
-					goto EX;
-			}
-			
+			else
+				addLUAAddress(addresses, addr);
 		}
 	}
-	return;
-EX:
-	SCRIPT_BEGIN(_pState)
-		SCRIPT_ERROR("Invalid address, ",ex.error());
-	SCRIPT_END
 }
 
+void MonaServer::readLUAServerAddress(const string& protocol, set<SocketAddress>& addresses,const ServerConnection& server) {
+	UInt16 port(0);
+	if (!server.getNumber(String::Format(buffer, protocol, ".port"), port))
+		server.getNumber(String::Format(buffer, protocol, ".defaultPort"), port);
+	if (port == 0) {
+		SCRIPT_BEGIN(_pState)
+			SCRIPT_ERROR("Impossible to determine ", protocol, " port of ", server.address.toString(), " server");
+		SCRIPT_END
+		return;
+	}
+
+	if (!server.getString(String::Format(buffer, protocol, ".publicHost"), buffer) && !server.getString("publicHost", buffer))
+		buffer = server.address.host().toString();
+
+	addLUAAddress(addresses,buffer, port);
+}
 
 lua_State* MonaServer::openService(const Client& client) {
 	Expirable<Service>* pExpirableService = client.getUserData<Expirable<Service>>();
@@ -439,7 +388,7 @@ void MonaServer::onRendezVousUnknown(const string& protocol,const UInt8* id,set<
 	SCRIPT_END
 }
 
-void MonaServer::onHandshake(const string& protocol,const SocketAddress& address,const string& path,const MapParameters& properties,UInt32 attempts,set<SocketAddress>& addresses) {
+void MonaServer::onHandshake(const string& protocol,const SocketAddress& address,const string& path,const Parameters& properties,UInt32 attempts,set<SocketAddress>& addresses) {
 	Expirable<Service> expirableService;
 	Service* pService = _pService->get(path, expirableService);
 	if (!pService)
@@ -450,10 +399,7 @@ void MonaServer::onHandshake(const string& protocol,const SocketAddress& address
 			SCRIPT_WRITE_STRING(address.toString().c_str())
 			SCRIPT_WRITE_STRING(path.c_str())
 			lua_newtable(_pState);
-			for(auto& it : properties) {
-				lua_pushlstring(_pState,it.second.c_str(),it.second.size());
-				lua_setfield(_pState,-2,it.first.c_str());
-			}
+			properties.iterate(setLUAProperty);
 			SCRIPT_WRITE_INT(attempts)
 			SCRIPT_FUNCTION_CALL
 			while(SCRIPT_CAN_READ) {
@@ -493,11 +439,11 @@ void MonaServer::onConnection(Exception& ex, Client& client,DataReader& paramete
 						if (lua_isstring(_pState, -2)) {
 							response.writePropertyName(lua_tostring(_pState,-2));
 							Script::ReadData(_pState,response,1);
-							response.endWrite();
 						} else
 							SCRIPT_WARN("key=value ignored because key is not a string value")
 						lua_pop(_pState,1);
 					}
+					response.endWrite(); // TODO remove! the caller can continue to write the response!
 					SCRIPT_READ_NEXT
 				} else
 					SCRIPT_ERROR("onConnection return argument ignored, it must be a table {key1=value1,key2=value2}")
@@ -538,27 +484,22 @@ void MonaServer::onDisconnection(const Client& client) {
 	delete pExpirableService;
 }
 
-void MonaServer::onMessage(Exception& ex, Client& client,const string& name,DataReader& reader, UInt8 responseType) {
-	bool done(false);
+bool MonaServer::onMessage(Exception& ex, Client& client,const string& name,DataReader& reader, UInt8 responseType) {
+	bool found(false);
 	SCRIPT_BEGIN(openService(client))
 		SCRIPT_MEMBER_FUNCTION_BEGIN(Client,client,name.c_str())
 			SCRIPT_WRITE_DATA(reader,0)
-			done=true;
+			found=true;
 			SCRIPT_FUNCTION_CALL
 			if(SCRIPT_CAN_READ) {
 				DataWriter& writer = client.writer().writeResponse(responseType);
 				SCRIPT_READ_DATA(writer);
 			}
 		SCRIPT_FUNCTION_END
-		if(SCRIPT_LAST_ERROR) {
+		if(SCRIPT_LAST_ERROR)
 			ex.set(Exception::SOFTWARE,SCRIPT_LAST_ERROR);
-			return;
-		}
 	SCRIPT_END
-	if (!done) {
-		ex.set(Exception::APPLICATION, "Method '",name,"' not found on application ", client.path);
-		ERROR(ex.error());
-	}
+	return found;
 }
 
 bool MonaServer::onRead(Exception& ex, Client& client,FilePath& filePath,DataReader& parameters,DataWriter& properties) { 

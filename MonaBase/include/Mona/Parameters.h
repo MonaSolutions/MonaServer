@@ -21,11 +21,14 @@ This file is a part of Mona.
 
 #include "Mona/Mona.h"
 #include "Mona/String.h"
+#include <functional>
 
 namespace Mona {
 
 class Parameters : public virtual Object {
 public:
+
+	typedef std::function<void(const std::string&, const std::string&)> ForEach;
 
 	template<typename NumberType,NumberType defaultValue=0>
 	NumberType getNumber(const std::string& key) const {
@@ -63,10 +66,19 @@ public:
 	}
 	void setBool(const std::string& key, bool value) {setRaw(key, value ? "true" : "false");}
 
+	void  iterate(ForEach& function) const { iteration(NULL, function); };
+	void  iterate(const std::string& prefix, ForEach& function) const { iteration(prefix.c_str(), function); };
+	void  iterate(const char* prefix, ForEach& function) const { iteration(prefix, function);};
+	
+	
+	virtual void clear() = 0;
+	virtual UInt32 count() const = 0;
+
 protected:
 	Parameters() {}
 
 private:
+	virtual void  iteration(const char* prefix,ForEach& function) const = 0;
 	virtual const std::string* getRaw(const std::string& key) const = 0;
 	// if value==NULL the property should be removed
 	virtual void setRaw(const std::string& key, const char* value) = 0;

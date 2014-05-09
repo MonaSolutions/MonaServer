@@ -25,11 +25,10 @@ This file is a part of Mona.
 
 namespace Mona {
 
-template<class IteratorType>
+template<class MapType>
 class MapReader : public DataReader, public virtual Object {
 public:
 
-	template<typename MapType>
 	MapReader(const MapType& map) : _objectReaden(false),_number(0),_begin(map.begin()),_it(map.begin()),_end(map.end()) {}
 
 	std::string&	readString(std::string& value) { value.assign(_it->second); ++_it; return value; }
@@ -74,12 +73,12 @@ public:
 	void			reset() { _it = _begin; _objectReaden=false; }
 
 private:
-	Date				_date;
-	double				_number;
-	IteratorType		_begin;
-	IteratorType		_it;
-	IteratorType		_end;
-	bool				_objectReaden; // to write a object without parameter if there is no map entries
+	Date					_date;
+	double					_number;
+	typename MapType::const_iterator	_begin;
+	typename MapType::const_iterator	_it;
+	typename MapType::const_iterator	_end;
+	bool					_objectReaden; // to write a object without parameter if there is no map entries
 };
 
 

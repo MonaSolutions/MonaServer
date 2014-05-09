@@ -26,7 +26,7 @@ using namespace Mona;
 
 
 
-Servers::Servers(const MapParameters& configs,const SocketManager& manager) : _configs(configs),Broadcaster(manager.poolBuffers),targets(manager.poolBuffers),initiators(manager.poolBuffers),_server(manager), _manageTimes(1) {
+Servers::Servers(const Parameters& configs,const SocketManager& manager) : _running(false),_configs(configs),Broadcaster(manager.poolBuffers),targets(manager.poolBuffers),initiators(manager.poolBuffers),_server(manager), _manageTimes(1) {
 
 
 	onServerHello = [this](ServerConnection& server) {
@@ -110,6 +110,8 @@ Servers::~Servers() {
 }
 
 void Servers::manage() {
+	if (!_running)
+		return;
 	if(_targets.empty() || (--_manageTimes)!=0)
 		return;
 	_manageTimes = 8; // every 16 sec
@@ -118,6 +120,7 @@ void Servers::manage() {
 }
 
 void Servers::start() {
+	_running = true;
 	if (_server.running())
 		return;
 
@@ -132,11 +135,11 @@ void Servers::start() {
 }
 
 void Servers::stop() {
-	if (!_server.running())
-		return;
-
-	NOTE("Servers incoming connection on ",_server.address().toString(), " stopped");
-	_server.stop();
+	_running = false;
+	if (_server.running()) {
+		NOTE("Servers incoming connection on ",_server.address().toString(), " stopped");
+		_server.stop();
+	}
 	_connections.clear();
 	targets._connections.clear();
 	initiators._connections.clear();

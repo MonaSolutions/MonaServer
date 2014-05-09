@@ -29,19 +29,18 @@ This file is a part of Mona.
 #include "Mona/TaskHandler.h"
 #include "Mona/PoolThreads.h"
 #include "Mona/PoolBuffers.h"
-#include "Mona/ServerParams.h"
 #include "Mona/FlashMainStream.h"
 
 namespace Mona {
 
-class Invoker : public Entity,public TaskHandler, public virtual Object {
+class Invoker : public Entity,public TaskHandler, public virtual Object, public MapParameters {
 	friend class FlashStream; // FlashStream manage _streams
 public:
 	// invocations
 	const Clients			clients;
 	const Entities<Group>	groups;
 	Publications			publications;
-	const RelayServer		relay;
+	const RelayServer		relayer;
 
 	const SocketManager		sockets;
 	PoolThreads				poolThreads;
@@ -64,8 +63,6 @@ public:
 	void					removeBanned(const IPAddress& ip) { _bannedList.erase(ip); }
 	void					clearBannedList() { _bannedList.clear(); }
 	bool					isBanned(const IPAddress& ip) { return _bannedList.find(ip) != _bannedList.end(); }
-
-	const ServerParams		params;
 
 	std::string				buffer;
 

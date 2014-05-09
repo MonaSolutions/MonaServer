@@ -38,8 +38,8 @@ using namespace std;
 namespace Mona {
 
 
-mutex			Util::_MutexEnvironment;
-MapParameters	Util::_Environment;
+mutex					Util::_MutexEnvironment;
+MapParameters			Util::_Environment;
 
 recursive_mutex			Util::_MutexThreadNames;
 map<THREAD_ID, string>	Util::_ThreadNames;
@@ -93,7 +93,7 @@ UInt8 Util::Get7BitValueSize(UInt64 value) {
 }
 
 // environment variables (TODO test on service windows!!)
-const MapParameters& Util::Environment() {
+const Parameters& Util::Environment() {
 	lock_guard<mutex> lock(_MutexEnvironment);
 	if (_Environment.count() > 0)
 		return _Environment;

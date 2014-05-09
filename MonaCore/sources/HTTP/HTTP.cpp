@@ -114,7 +114,6 @@ static const map<UInt16, const char*> CodeMessages({
 	{ 520, HTTP_CODE_520 }
 });
 
-const UInt32 HTTP::DefaultTimeout(7000); // 7 sec
 
 HTTP::ContentType HTTP::ExtensionToMIMEType(const string& extension, string& subType) {
 	// TODO Make a Static Array and complete extensions

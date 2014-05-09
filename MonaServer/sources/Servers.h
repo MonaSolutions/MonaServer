@@ -34,11 +34,11 @@ class Servers : public Broadcaster,
 		public ServerEvents::OnMessage,
 		public ServerEvents::OnDisconnection {
 public:
-	Servers(const Mona::MapParameters& configs,const Mona::SocketManager& manager);
+	Servers(const Mona::Parameters& configs,const Mona::SocketManager& manager);
 	virtual ~Servers();
 	
-	void manage();
 	void start();
+	void manage();
 	void stop();
 
 	Broadcaster			initiators;
@@ -56,11 +56,12 @@ private:
 	ServerConnection::OnDisconnection::Type	onServerDisconnection;
 
 	Mona::UInt8								_manageTimes;
+	bool									_running;
 
 	std::set<ServerConnection*>				_targets;
 	std::set<ServerConnection*>				_clients;
 
 	Mona::TCPServer							_server;
-	const Mona::MapParameters&				_configs;
+	const Mona::Parameters&					_configs;
 };
 

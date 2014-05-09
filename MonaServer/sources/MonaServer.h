@@ -28,7 +28,7 @@ This file is a part of Mona.
 
 class MonaServer : public Mona::Server, private ServiceHandler, private Mona::DatabaseLoader {
 public:
-	MonaServer(Mona::TerminateSignal& terminateSignal, const Mona::MapParameters& configs);
+	MonaServer(Mona::TerminateSignal& terminateSignal, const Mona::Parameters& configs);
 	~MonaServer();
 
 	static const std::string				WWWPath;
@@ -40,10 +40,29 @@ public:
 
 private:
 	void					manage();
-	void					createParametersCollection(const char* name, const Mona::MapParameters& parameters);
 
-	void					readLUAAddress(const std::string& protocol, std::set<Mona::SocketAddress> & addresses);
+	
 	void					readLUAAddresses(const std::string& protocol, std::set<Mona::SocketAddress>& addresses);
+	void					readLUAAddress(const std::string& protocol, std::set<Mona::SocketAddress> & addresses);
+	void					readLUAServerAddress(const std::string& protocol, std::set<Mona::SocketAddress>& addresses,const ServerConnection& server);
+
+	template<typename ...Args>
+	void addLUAAddress(std::set<Mona::SocketAddress>& addresses, Args&&... args) {
+		Mona::SocketAddress address;
+		Mona::Exception ex;
+		if (address.set(ex, args ...)) {
+			addresses.emplace(address);
+			if (ex) {
+				SCRIPT_BEGIN(_pState)
+					SCRIPT_WARN(ex.error());
+				SCRIPT_END
+			}
+		} else if (ex) {
+			SCRIPT_BEGIN(_pState)
+				SCRIPT_ERROR("Invalid address, ", ex.error());
+			SCRIPT_END
+		}
+	}
 
 	lua_State*				openService(const Mona::Client& client);
 
@@ -62,11 +81,11 @@ private:
 	void					onStop();
 
 	void					onRendezVousUnknown(const std::string& protocol, const Mona::UInt8* id, std::set<Mona::SocketAddress>& addresses);
-	void					onHandshake(const std::string& protocol, const Mona::SocketAddress& address, const std::string& path, const Mona::MapParameters& properties, Mona::UInt32 attempts, std::set<Mona::SocketAddress>& addresses);
+	void					onHandshake(const std::string& protocol, const Mona::SocketAddress& address, const std::string& path, const Mona::Parameters& properties, Mona::UInt32 attempts, std::set<Mona::SocketAddress>& addresses);
 
 	void					onConnection(Mona::Exception& ex, Mona::Client& client,Mona::DataReader& parameters,Mona::DataWriter& response);
 	void					onDisconnection(const Mona::Client& client);
-	void					onMessage(Mona::Exception& ex, Mona::Client& client,const std::string& name,Mona::DataReader& reader,Mona::UInt8 responseType);
+	bool					onMessage(Mona::Exception& ex, Mona::Client& client,const std::string& name,Mona::DataReader& reader,Mona::UInt8 responseType);
 	bool					onRead(Mona::Exception& ex, Mona::Client& client, Mona::FilePath& filePath, Mona::DataReader& parameters,Mona::DataWriter& properties);
 
 	void					onJoinGroup(Mona::Client& client,Mona::Group& group);
@@ -87,13 +106,16 @@ private:
 	Servers::OnMessage::Type		onServerMessage;
 	Servers::OnDisconnection::Type	onServerDisconnection;
 
+	Parameters::ForEach			setLUAProperty;
+
 	lua_State*					_pState;
 	Mona::TerminateSignal&		_terminateSignal;
 	std::unique_ptr<Service>	_pService;
 
-	std::set<Service*>					_servicesRunning;
-	Mona::Database						_data;
-	bool								_firstData;
-	const Mona::MapParameters&			_configs;
+	std::set<Service*>			_servicesRunning;
+	Mona::Database				_data;
+	bool						_firstData;
+
+	
 };
 

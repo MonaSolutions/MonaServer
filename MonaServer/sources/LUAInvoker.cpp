@@ -212,7 +212,7 @@ int	LUAInvoker::Sha256(lua_State *pState) {
 int	LUAInvoker::ToAMF0(lua_State *pState) {
 	SCRIPT_CALLBACK(Invoker,invoker)
 		AMFWriter writer(invoker.poolBuffers);
-		writer.amf0Preference=true;
+		writer.amf0=true;
 		SCRIPT_READ_DATA(writer)
 		SCRIPT_WRITE_BINARY(writer.packet.data(),writer.packet.size())
 	SCRIPT_CALLBACK_RETURN

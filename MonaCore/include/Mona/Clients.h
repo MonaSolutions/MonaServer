@@ -36,7 +36,7 @@ public:
 		return it->second;
 	}
 	bool add(Exception& ex,Client& client) {
-		if (client.properties.getString("name", (std::string&)client.name) && !client.name.empty()) {
+		if (client.properties().getString("name", (std::string&)client.name) && !client.name.empty()) {
 			if (!_clientsByName.emplace(client.name, &client).second) {
 				ex.set(Exception::PROTOCOL, "Client named ",client.name," exists already");
 				return false;

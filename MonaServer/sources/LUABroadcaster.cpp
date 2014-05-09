@@ -71,6 +71,8 @@ int LUABroadcaster::Get(lua_State *pState) {
 				Servers* pServers = dynamic_cast<Servers*>(&broadcaster);
 				if (pServers)
 					lua_getglobal(pState, "m.s.t");
+			} else if (strcmp(name, "count") == 0) {
+				SCRIPT_WRITE_NUMBER(broadcaster.count());
 			} else {
 				ServerConnection* pServer = NULL;
 				if (lua_isnumber(pState,2)) {

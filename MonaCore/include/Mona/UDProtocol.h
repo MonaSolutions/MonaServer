@@ -30,7 +30,7 @@ class UDProtocol : public Protocol, public virtual Object,
 	public Events::OnPacket,
 	public Events::OnError {
 public:
-	bool load(Exception& ex, const ProtocolParams& params);
+	bool load(Exception& ex,const std::string& host,UInt16 port);
 
 	template<typename ProtocolType,typename UDPSenderType>
 	bool send(Exception& ex,const std::shared_ptr<UDPSenderType>& pSender) {
@@ -71,9 +71,9 @@ private:
 	UDPSocket	_socket;
 };
 
-inline bool UDProtocol::load(Exception& ex, const ProtocolParams& params) {
+inline bool UDProtocol::load(Exception& ex,const std::string& host,UInt16 port) {
 	SocketAddress address;
-	if (!address.setWithDNS(ex, params.host, params.port))
+	if (!address.setWithDNS(ex, host, port))
 		return false;
 	return _socket.bind(ex, address);
 }

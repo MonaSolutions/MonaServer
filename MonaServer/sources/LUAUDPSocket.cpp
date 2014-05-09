@@ -32,7 +32,7 @@ LUAUDPSocket::LUAUDPSocket(const SocketManager& manager,bool allowBroadcast,lua_
 
 	onPacket = [this](PoolBuffer& pBuffer, const SocketAddress& address) {
 		SCRIPT_BEGIN(_pState)
-			SCRIPT_MEMBER_FUNCTION_BEGIN(LUAUDPSocket,*this,"onReception")
+			SCRIPT_MEMBER_FUNCTION_BEGIN(LUAUDPSocket,*this,"onPacket")
 				SCRIPT_WRITE_BINARY(pBuffer->data(),pBuffer->size())
 				SCRIPT_WRITE_STRING(address.toString().c_str())
 				SCRIPT_FUNCTION_CALL

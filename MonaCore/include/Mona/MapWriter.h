@@ -27,13 +27,11 @@ namespace Mona {
 template<class MapType>
 class MapWriter : public DataWriter, public virtual Object {
 public:
-	MapWriter() : _size(0) {
-		_it = _map.end();
-	}
+	MapWriter(MapType& map) : _map(map),_size(0),_isProperty(false) {}
 	void beginObject(const std::string& type = "", bool external = false) {}
 	void endObject() {}
 
-	void writePropertyName(const std::string& value) { _it = _map.emplace(value,"").first; }
+	void writePropertyName(const std::string& value) { _property = value; _isProperty=true; }
 
 	void beginArray(UInt32 size) {}
 	void endArray(){}
@@ -46,27 +44,27 @@ public:
 	void writeBytes(const UInt8* data, UInt32 size) { set((const char*)data, size); }
 
 	UInt32 size() const { return _size; }
-	UInt32 count() const { return _map.size(); }
-	typename MapType::const_iterator operator[](const std::string& key) { return _map.find(key); }
+	UInt32 count() const { return _map.count(); }
+	
 
-	typename MapType::const_iterator begin() { return _map.begin(); }
-	typename MapType::const_iterator end() { return _map.end(); }
-
-	void   clear() { _map.clear(); _size = 0; }
+	void   clear() { _map.clear(); _isProperty = false; _property.clear(); _size = 0; DataWriter::clear(); }
 private:
 	template <typename ...Args>
 	void set(Args&&... args) {
-		if (_it == _map.end())
-			_map.emplace(std::piecewise_construct, std::forward_as_tuple(args ...), std::forward_as_tuple(""));
-		else {
-			_it->second.assign(args ...);
-			_size += _it->second.size();;
-			_it = _map.end();
+		if (_isProperty) {
+			_map[_property].assign(args ...);
+			_isProperty = false;
+		} else {
+			_property.assign(args ...);
+			_map[_property].clear();
 		}
+		_property.clear();
 	}
 
-	MapType						_map;
-	typename MapType::iterator	_it;
+	std::string					_property;
+	bool						_isProperty;
+
+	MapType&					_map;
 	std::string					_buffer;
 	UInt32						_size;
 };

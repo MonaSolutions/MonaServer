@@ -106,7 +106,7 @@ void RTMFPSession::manage() {
 	}
 
 	// To accelerate the deletion of peer ghost (mainly for netgroup efficient), starts a keepalive server after 2 mn
-	if(_recvTimestamp.isElapsed(120000) && !keepAlive()) // TODO check it!
+	if(_recvTimestamp.isElapsed(120000) && !keepalive()) // TODO check it!
 		return;
 
 	// Raise RTMFPWriter
@@ -132,7 +132,7 @@ void RTMFPSession::manage() {
 	flush();
 }
 
-bool RTMFPSession::keepAlive() {
+bool RTMFPSession::keepalive() {
 	if(!peer.connected) {
 		fail("Timeout connection client");
 		return false;

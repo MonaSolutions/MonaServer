@@ -20,9 +20,8 @@ This file is a part of Mona.
 #pragma once
 
 #include "Mona/Mona.h"
-#include "Mona/ServerParams.h"
 #include "Mona/Protocol.h"
-
+#include <functional>
 
 namespace Mona {
 
@@ -36,19 +35,43 @@ public:
 	void manage() { for (std::unique_ptr<Protocol>& pProtocol : _protocols) pProtocol->manage(); }
 
 private:
-	template<class ProtocolType, class ParamsType,typename ...Args >
-	void loadProtocol(const char* name, const ParamsType& params, Sessions& sessions, Args&&... args) {
-		if(params.port==0)
+	template<class ProtocolType, typename ...Args >
+	void loadProtocol(const char* name, UInt16 port, Sessions& sessions, Args&&... args) {
+		_invoker.setNumber(String::Format(_invoker.buffer,name,".defaultPort"), port);
+		_invoker.getNumber(String::Format(_invoker.buffer,name,".port"), port);
+		if(port==0)
 			return;
 		std::unique_ptr<Protocol> pProtocol(new ProtocolType(name, _invoker, sessions, args ...));
+		// default parameters
+		pProtocol->setNumber("port", port);
+		_invoker.buffer.assign("0.0.0.0");
+		_invoker.getString("host", _invoker.buffer);
+		pProtocol->setString("host", _invoker.buffer);
+		if (_invoker.getString("publicHost",_invoker.buffer))
+			pProtocol->setString("publicHost",_invoker.buffer);
+
+		// invoker params to protocol params!
+		Parameters::ForEach forEach;
+		forEach = [&pProtocol](const std::string& key, const std::string& value) -> void {
+			pProtocol->setString(key, value);
+		};
+		_invoker.iterate(String::Format(_invoker.buffer,name,"."),forEach);
+
 		Exception ex;
 		bool success = false;
-		EXCEPTION_TO_LOG(success = ((ProtocolType*)pProtocol.get())->load(ex, params), name, " server")
+		pProtocol->getString("host", _invoker.buffer);
+		EXCEPTION_TO_LOG(success = ((ProtocolType*)pProtocol.get())->load(ex,_invoker.buffer,port), name, " server")
 		if (!success)
 			return;
-		NOTE(name, " server starts on ", params.port, " ", dynamic_cast<UDProtocol*>(pProtocol.get()) ? "UDP" : "TCP", " port");
+
+		// copy protocol params to invoker params
+		for (auto& it : *pProtocol)
+			_invoker.setString(String::Format(_invoker.buffer,name,".",it.first), it.second);
+
+		NOTE(name, " server starts on ",port, " ", dynamic_cast<UDProtocol*>(pProtocol.get()) ? "UDP" : "TCP", " port");
 		_protocols.emplace_back(pProtocol.release());
 	}
+
 
 	std::vector<std::unique_ptr<Protocol>>	_protocols;
 	Invoker&								_invoker;

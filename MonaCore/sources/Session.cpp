@@ -29,23 +29,29 @@ using namespace std;
 namespace Mona {
 
 Session::Session(Protocol& protocol, Invoker& invoker, const shared_ptr<Peer>& pPeer, const char* name) : _sessionsOptions(0),_pPeer(pPeer),peer(*_pPeer),dumpJustInDebug(false),
-	Expirable(this), _protocol(protocol), _name(name ? name : ""), invoker(invoker), _pDecodingThread(NULL), died(false), _id(0) {
+	Expirable(this), _protocol(protocol), _name(name ? name : ""), invoker(invoker), _pDecodingThread(NULL), died(false), _id(0),
+	onInitParameters([this](Parameters& parameters) { parameters.clear();  for (auto& it : _protocol) parameters.setString(it.first, it.second); }) {
 	((string&)peer.protocol) = protocol.name;
 	if(memcmp(peer.id,"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",ID_SIZE)==0)
 		Util::Random(peer.id,ID_SIZE);
-	DEBUG("peer.id: ", Util::FormatHex(peer.id, ID_SIZE, invoker.buffer));
+
+
+	peer.OnInitParameters::subscribe(onInitParameters);
+	DEBUG(peer.address.toString()," => peer.id ", Util::FormatHex(peer.id, ID_SIZE, invoker.buffer));
 }
 	
 Session::Session(Protocol& protocol, Invoker& invoker, const char* name) : _sessionsOptions(0),dumpJustInDebug(false), _pPeer(new Peer((Handler&)invoker)),
-	Expirable(this),_protocol(protocol),_name(name ? name : ""), invoker(invoker), _pDecodingThread(NULL), died(false), _id(0), peer(*_pPeer) {
+	Expirable(this),_protocol(protocol),_name(name ? name : ""), invoker(invoker), _pDecodingThread(NULL), died(false), _id(0), peer(*_pPeer),
+	onInitParameters([this](Parameters& parameters) { parameters.clear(); for (auto& it : _protocol) parameters.setString(it.first, it.second); }) {
 	((string&)peer.protocol) = protocol.name;
 	if(memcmp(peer.id,"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",ID_SIZE)==0)
 		Util::Random(peer.id, ID_SIZE);
-	DEBUG("peer.id: ", Util::FormatHex(peer.id, ID_SIZE, invoker.buffer));
+	DEBUG(peer.address.toString()," => peer.id ", Util::FormatHex(peer.id, ID_SIZE, invoker.buffer));
 }
 
 
 Session::~Session() {
+	peer.OnInitParameters::unsubscribe(onInitParameters);
 	expire();
 	if (!died)
 		CRITIC("Session ",name()," deleted without being killed")
@@ -60,6 +66,7 @@ const string& Session::name() const {
 void Session::kill(UInt32 type) {
 	if(died)
 		return;
+	peer.OnInitParameters::unsubscribe(onInitParameters);
 	peer.onDisconnection();
 	(bool&)died=true;
 }

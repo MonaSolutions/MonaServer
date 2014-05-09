@@ -104,7 +104,6 @@ class PacketReader;
 class HTTP : virtual Static {
 public:
 
-	static const UInt32 DefaultTimeout;
 
 	enum DataType {
 		HTML = 0,

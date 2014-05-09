@@ -23,6 +23,7 @@ This file is a part of Mona.
 #include "Mona/Peer.h"
 #include "Mona/Invoker.h"
 #include "Mona/Expirable.h"
+#include "Mona/Logs.h"
 
 namespace Mona {
 
@@ -106,6 +107,8 @@ protected:
 
 private:
 	const std::string&  protocolName();
+
+	Peer::OnInitParameters::Type onInitParameters;
 
 	PoolThread*					_pDecodingThread;
 	mutable std::string			_name;

@@ -62,7 +62,7 @@ private:
 
 	/// \brief  Write content file and replace the "<% key %>" field 
 	/// by relating parameters[key]
-	static void			ReplaceTemplateTags(PacketWriter& packet, std::ifstream& ifile, MapWriter<std::map<std::string,std::string>>& parameters);
+	void			replaceTemplateTags(PacketWriter& packet, std::ifstream& ifile);
 
 	bool								_isApp;
 	FilePath							_file;

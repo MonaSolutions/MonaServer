@@ -57,7 +57,8 @@ public:
 	std::string					secWebsocketKey;
 	std::string					secWebsocketAccept;
 
-	MapWriter<std::map<std::string,std::string>>	parameters; // For onRead returned value (return file,parameters)
+	MapParameters				parameters; // For onRead returned value (return file,parameters)
+	UInt32						sizeParameters;
 	
 	const PoolBuffers&			poolBuffers() { return _pBuffer.poolBuffers; }
 

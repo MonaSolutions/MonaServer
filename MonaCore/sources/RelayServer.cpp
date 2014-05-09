@@ -19,6 +19,7 @@ This file is a part of Mona.
 
 #include "Mona/RelayServer.h"
 #include "Mona/UDPSender.h"
+#include "Mona/Logs.h"
 
 using namespace std;
 
@@ -27,16 +28,18 @@ namespace Mona {
 
 class Relay : public virtual Object {
 public:
-	Relay(const Peer& peer1,const SocketAddress& address1,const Peer& peer2,const SocketAddress& address2,RelaySocket& socket,UInt16 timeout):
-	 socket(socket),timeout(timeout*1000),peer1(peer1),address1(address1),peer2(peer2),address2(address2),received(false) {}
-	const Peer&							peer1;
+	Relay(const SocketAddress& address1,const SocketAddress& address2,UInt16 timeout):
+	 _timeout(timeout*1000),address1(address1),address2(address2),_received(false) {}
 	const SocketAddress&				address1;
-	const Peer&							peer2;
 	const SocketAddress&				address2;
-	bool								received;
-	Time								lastTime;
-	Int64								timeout;
-	RelaySocket&						socket;
+	bool								obsolete() const { return _lastTime.isElapsed(_timeout); }
+	bool								received() const { return _received; }
+	bool								receive() { _lastTime.update(); if (_received) return false; return _received = true; }
+	void								setTimeout(UInt16 timeout) { _timeout = timeout; _lastTime.update(); }
+private:
+	Int64								_timeout;
+	Time								_lastTime;
+	bool								_received;
 };
 
 
@@ -48,31 +51,25 @@ RelaySocket::RelaySocket(const SocketManager& manager,UInt16 port) : UDPSocket(m
 	// executed in a parallel thread!
 	onPacket = [this](PoolBuffer& pBuffer, const SocketAddress& address) {
 		lock_guard<mutex> lock(_mutex);
-		Addresses::const_iterator itAddress = addresses.find(address);
-		if(itAddress==addresses.end()) {
+		auto it = _relayByAddress.find(address);
+		if(it==_relayByAddress.end()) {
 			DEBUG("Unknown relay ", address.toString()," address")
 			return;
 		}
 
-		Relay& relay = *itAddress->second;
-		if(!relay.received) {
-			relay.received=true;
+		Relay& relay(*it->second);
+		if(relay.receive())
 			INFO("Turn starting from ",relay.address1.toString()," to ",relay.address2.toString()," on ",this->port," relayed port")
-			((Peer&)relay.peer1).turnPeers().add((Peer&)relay.peer2);
-			((Peer&)relay.peer2).turnPeers().add((Peer&)relay.peer1);
-		}
 
 		SocketAddress destinator(relay.address1 == address ? relay.address2 : relay.address1);
 
-		DUMP(pBuffer->data(), pBuffer->size(), "Request from ", address.toString())
+		DUMP_INTERN(pBuffer->data(), pBuffer->size(), "Relayed from ", address.toString(), " to ",destinator.toString())
 		Exception ex;
 		send(ex, pBuffer->data(), pBuffer->size(), destinator);
-		if (ex) {
+		if (ex)
 			WARN("Relay packet (size=", pBuffer->size(), ") from ", address.toString(), " to ", destinator.toString()," on ",this->port,", ",ex.error())
-		} else {
-			relay.lastTime.update();
+		else
 			DEBUG("Relay packet (size=", pBuffer->size(), ") from ", address.toString(), " to ", destinator.toString()," on ",this->port)
-		}
 	};
 
 	OnError::subscribe(onError);
@@ -82,27 +79,51 @@ RelaySocket::RelaySocket(const SocketManager& manager,UInt16 port) : UDPSocket(m
 RelaySocket::~RelaySocket() {
 	OnPacket::unsubscribe(onPacket);
 	OnError::unsubscribe(onError);
+
+	for (Relay* pRelay : _relays)
+		delete pRelay;
 }
 
-Relay& RelaySocket::createRelay(const Peer& peer1,const SocketAddress& address1,const Peer& peer2,const SocketAddress& address2,UInt16 timeout) {
+bool RelaySocket::relay(const SocketAddress& address1,const SocketAddress& address2,UInt16 timeout) {
 	lock_guard<mutex> lock(_mutex);
-	Addresses::iterator it1 = ((Addresses&)addresses).emplace(address1,nullptr).first;
-	Addresses::iterator it2 = ((Addresses&)addresses).emplace(address2, nullptr).first;
-	return *(it1->second = it2->second = new Relay(peer1,it1->first,peer2,it2->first,*this,timeout));
-}
+	auto it1 = _relayByAddress.lower_bound(address1);
 
-UInt32 RelaySocket::releaseRelay(Relay& relay) {
-	lock_guard<mutex> lock(_mutex);
-	//remove turnPeers
-	if(relay.received) {
-		INFO("Turn finishing from ", relay.address1.toString(), " to ", relay.address2.toString(), " on ", port, " relayed port")
-		((Peer&)relay.peer1).turnPeers().remove((Peer&)relay.peer2);
-		((Peer&)relay.peer2).turnPeers().remove((Peer&)relay.peer1);
+	if(it1!=_relayByAddress.end() && it1->first==address1) {
+		if ((it1->second->address1 == address1 && it1->second->address2 == address2) || (it1->second->address1 == address2 && it1->second->address2 == address1)) {
+			it1->second->setTimeout(timeout);
+			return true; // this relay exists already!
+		}
+		return false;
 	}
-	((Addresses&)addresses).erase(relay.address1);
-	((Addresses&)addresses).erase(relay.address2);
-	delete &relay;
-	return addresses.size();
+
+	auto it2 = _relayByAddress.lower_bound(address2);
+	if (it2 != _relayByAddress.end() && it2->first == address2)
+		return false;
+
+	it1 = _relayByAddress.emplace_hint(it1,address1,nullptr);
+	it2 = _relayByAddress.emplace_hint(it2,address2,nullptr);
+	_relays.emplace_back(new Relay(it1->first,it2->first,timeout));
+	it1->second = it2->second = _relays.back();
+	return true;
+}
+
+bool RelaySocket::manage() {
+	lock_guard<mutex> lock(_mutex);
+	auto it = _relays.begin();
+	while (it != _relays.end()) {
+		Relay* pRelay(*it);
+		if (pRelay->obsolete()) {
+			if(pRelay->received())
+				INFO("Turn finishing from ", pRelay->address1.toString(), " to ", pRelay->address2.toString(), " on ", port, " relayed port")
+			_relayByAddress.erase(pRelay->address1);
+			_relayByAddress.erase(pRelay->address2);
+			it = _relays.erase(it);
+			delete pRelay;
+			continue;
+		}
+		++it;
+	}
+	return !_relays.empty();
 }
 
 
@@ -115,149 +136,78 @@ RelayServer::~RelayServer() {
 }
 
 void RelayServer::stop() {
-	{
-		lock_guard<mutex> lock(_mutex);
-		set<Relay*>::iterator it;
-		for(it=_relays.begin();it!=_relays.end();++it) {
-			Relay& relay(**it);
-			// remove Relay of peers
-			removePeerRelay(relay.peer1,relay);
-			removePeerRelay(relay.peer2,relay);
-			releaseRelay(relay);
-		}
-		_relays.clear();
-	}
+	for (RelaySocket* pSocket : _sockets)
+		delete pSocket;
+	_sockets.clear();
 	_manager.stop();
 };
 
-UInt16 RelayServer::add(const Peer& peer1,const SocketAddress& address1,const Peer& peer2,const SocketAddress& address2,UInt16 timeout) const {
-	if(peer1 == peer2) {
-		ERROR("Relay useless between the two same peer")
-		return 0;
-	}
+UInt16 RelayServer::relay(const SocketAddress& address1,const SocketAddress& address2,UInt16 timeout) const {
 
 	if(address1==address2) {
 		ERROR("Relay useless between the two same addresses")
 		return 0;
 	}
 
-	set<RelaySocket*,Compare>::iterator it;
-	RelaySocket* pSocket=NULL;
-	UInt16 port=59999; // TODO make configurable?
-	for(it=_sockets.begin();it!=_sockets.end();++it) {
-		port = (*it)->port;
-		RelaySocket::Addresses::const_iterator itRelay = (*it)->addresses.find(address1);
-		if(itRelay!=(*it)->addresses.end()) {
-			if((itRelay->second->address1==address1 && itRelay->second->address2==address2) || (itRelay->second->address1==address2 && itRelay->second->address2==address1))
-				return port; // this relay exists already!
-		} else if((itRelay = (*it)->addresses.find(address2)) == (*it)->addresses.end()) {
-			pSocket = *it; // can use the same socket!
-			break;
+	UInt16 port=60000; // TODO make configurable?
+	
+	auto it = _sockets.begin();
+	while (it != _sockets.end()) {
+		RelaySocket& socket(**it++);
+		while (port < socket.port) {
+			RelaySocket* pSocket(createSocket(it,port));
+			if (pSocket) {
+				if (pSocket->relay(address1, address2, timeout))
+					return pSocket->port;
+				delete pSocket;
+			}
+			++port;
 		}
+		if (socket.relay(address1, address2, timeout))
+			return socket.port;
+		++port;
 	}
 
-	while(!pSocket) { // if no found, means that we have to create a new socket
-		if(port==0xFFFF) {
-			ERROR("No more port available for a new relay");
-			return 0;
+	while(port>=60000) {  // TODO make configurable?
+		RelaySocket* pSocket(createSocket(it,port));
+		if (pSocket) {
+			if (pSocket->relay(address1, address2, timeout))
+				return pSocket->port;
+			delete pSocket;
 		}
 		++port;
-
-		SocketAddress address(IPAddress::Wildcard(), port);
-
-		Exception ex;
-		pSocket = new RelaySocket(_manager,port);
-		if (!pSocket->bind(ex, address)) {
-			delete pSocket;
-			DEBUG("Turn listening impossible on ", port, " port, ", ex.error())
-			continue;
-		}
-
-		if (ex)
-			WARN("Turn server listening on ", port," port, ",ex.error())
-		else
-			INFO("Turn server listening on ", port," port")
-
-		if (_sockets.empty())
-			it = _sockets.begin();
-		_sockets.emplace_hint(it, pSocket);
 	}
 
-	Relay* pRelay = &pSocket->createRelay(peer1,address1,peer2,address2,timeout);
-
-	_relays.insert(pRelay);
-	_peers[&peer1].insert(pRelay);
-	_peers[&peer2].insert(pRelay);
-
-	((Peer&)peer1).relayable = true;
-	((Peer&)peer2).relayable = true;
-
-	DEBUG("Relay between ", address1.toString(), " and ", address2.toString(), " on ,",port," port")
-
-	return port;
+	ERROR("No more port available for a new relay");
+	return 0;
 }
 
-void RelayServer::remove(const Peer& peer) const {
-	lock_guard<mutex> lock(_mutex);
-	map<const Peer*,set<Relay*> >::iterator it = _peers.find(&peer);
-	if(it==_peers.end())
-		return;
-	
-	set<Relay*>::iterator it2;
-	for(it2=it->second.begin();it2!=it->second.end();++it2) {
-		Relay& relay(**it2);
-		// remove Relay of remote peer
-		removePeerRelay(&relay.peer1==&peer ? relay.peer2 : relay.peer1,relay);
-		// remove relay
-		_relays.erase(&relay);
-		releaseRelay(relay);
+RelaySocket* RelayServer::createSocket(set<RelaySocket*,Compare>::const_iterator& it,UInt16 port) const {
+	SocketAddress address(IPAddress::Wildcard(), port);
+	Exception ex;
+	RelaySocket* pSocket = new RelaySocket(_manager,port);
+	if (!pSocket->bind(ex, address)) {
+		delete pSocket;
+		DEBUG("Turn listening impossible on ", port, " port, ", ex.error())
+		return NULL;
 	}
-
-	_peers.erase(it);
-	((Peer&)peer).relayable = false;
+	if (ex)
+		WARN("Turn server listening on ", port, " port, ", ex.error())
+	else
+		INFO("Turn server listening on ", port, " port")
+	_sockets.emplace_hint(it, pSocket);
+	return pSocket;
 }
 
 void RelayServer::manage() const {
-	lock_guard<mutex> lock(_mutex);
-	set<Relay*>::iterator it=_relays.begin();
-	while(it!=_relays.end()) {
-		Relay& relay(**it);
-		if(relay.lastTime.isElapsed(relay.timeout)) {
-			// remove Relay of peers
-			removePeerRelay(relay.peer1,relay);
-			removePeerRelay(relay.peer2,relay);
-			// remove relay
-			_relays.erase(it++);
-			releaseRelay(relay);
+	auto it = _sockets.begin();
+	while (it!=_sockets.end()) {
+		if (!(*it)->manage()) {
+			delete *it;
+			it = _sockets.erase(it);
 			continue;
 		}
 		++it;
-	}
-}
-
-void RelayServer::releaseRelay(Relay& relay) const {
-	// remove addresses (and socket if necessary)
-	set<RelaySocket*,Compare>::iterator it = _sockets.find(&relay.socket);
-	if(it!=_sockets.end()) {
-		RelaySocket& socket(**it);
-		if(socket.releaseRelay(relay)==0) {
-			socket.close();
-			socket.timeout.update();
-			delete *it;
-			_sockets.erase(it);
-		}
-	}
-}
-
-
-void RelayServer::removePeerRelay(const Peer& peer,Relay& relay) const {
-	map<const Peer*,set<Relay*> >::iterator it = _peers.find(&peer);
-	if(it!=_peers.end()) {
-		it->second.erase(&relay);
-		if(it->second.empty()) {
-			((Peer&)peer).relayable = false;
-			_peers.erase(it);
-		}
 	}
 }
 

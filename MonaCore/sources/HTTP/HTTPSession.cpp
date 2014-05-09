@@ -34,7 +34,7 @@ using namespace std;
 namespace Mona {
 
 
-HTTPSession::HTTPSession(const SocketAddress& peerAddress, SocketFile& file, Protocol& protocol, Invoker& invoker) : WSSession(peerAddress, file, protocol, invoker), _isWS(false), _writer(*this),_ppBuffer(new PoolBuffer(invoker.poolBuffers)), _pListener(NULL) {
+HTTPSession::HTTPSession(const SocketAddress& peerAddress, SocketFile& file, Protocol& protocol, Invoker& invoker) : _indexCanBeMethod(false),_indexDirectory(true),_timeout(0),WSSession(peerAddress, file, protocol, invoker), _isWS(false), _writer(*this),_ppBuffer(new PoolBuffer(invoker.poolBuffers)), _pListener(NULL) {
 
 }
 
@@ -106,7 +106,7 @@ void HTTPSession::packetHandler(PacketReader& reader) {
 	peer.setPath(pPacket->path);
 	peer.setQuery(pPacket->query);
 	peer.setServerAddress(pPacket->serverAddress);
-	// erase previous parameters
+	// erase previous properties
 	peer.properties().clear();
 	peer.properties().setNumber("HTTPVersion", pPacket->version); // TODO check how is named for AMF
 	Util::UnpackQuery(peer.query,peer.properties());
@@ -119,8 +119,7 @@ void HTTPSession::packetHandler(PacketReader& reader) {
 			peer.onDisconnection();
 			_isWS=true;
 			((string&)this->peer.protocol) = "WebSocket";
-			((string&)protocol().name) = "WebSocket";
-
+			
 			DataWriter& response = _writer.write("101 Switching Protocols", HTTP::CONTENT_ABSENT);
 			BinaryWriter& writer = response.packet;
 			HTTP_BEGIN_HEADER(writer)
@@ -132,11 +131,16 @@ void HTTPSession::packetHandler(PacketReader& reader) {
 			_writer.flush(true); // last HTTP flush for this connection, now we are in a WebSession mode!
 		} // TODO else
 	} else {
-		MapReader<MapParameters::Iterator> parameters(peer.properties());
+		MapReader<MapParameters> propertiesReader(peer.properties());
 
 		if (!peer.connected) {
-			_options.clear();
-			peer.onConnection(ex, _writer,parameters,_options);
+			peer.onConnection(ex, _writer,propertiesReader);
+			peer.parameters().getNumber("timeout",_timeout);
+			peer.parameters().getBool("index", _indexDirectory);
+			peer.parameters().getString("index", _index);
+			if(!_indexDirectory)
+				_indexCanBeMethod = _index.find_last_of('.')==string::npos;
+			propertiesReader.reset();
 		}
 
 		if (!ex && peer.connected) {
@@ -146,25 +150,26 @@ void HTTPSession::packetHandler(PacketReader& reader) {
 				// use index http option in the case of GET request on a directory
 				bool methodCalled(false);
 				// if no file in the path, try to invoke a method on client object
+
 				if (pPacket->filePos == string::npos) {
-					if (!_options.index.empty()) {
-						if (_options.indexCanBeMethod)
-							methodCalled = processMethod(ex, _options.index, parameters);
+					if (!_index.empty()) {
+						if (_indexCanBeMethod)
+							methodCalled = peer.onMessage(ex, _index, propertiesReader);
 
 						if (!methodCalled && !ex) {
 							// Redirect to the file (get name to prevent path insertion)
 							string nameFile;
-							filePath.appendPath('/', FileSystem::GetName(_options.index, nameFile));
+							filePath.appendPath('/', FileSystem::GetName(_index, nameFile));
 						}
-					} else if (!_options.indexDirectory)
+					} else if (!_indexDirectory)
 						ex.set(Exception::PERMISSION, "No authorization to see the content of ", peer.path, "/");
 				} else
-					methodCalled = processMethod(ex, filePath.name(), parameters);
+					methodCalled = peer.onMessage(ex, filePath.name(), propertiesReader);
 
 				// try to get a file if the client object had not method named like that
 				if (!methodCalled && !ex) {
-					parameters.reset();
-					if (peer.onRead(ex, filePath, parameters, pPacket->parameters) && !ex) {
+					MapWriter<MapParameters> parametersWriter(pPacket->parameters);
+					if (peer.onRead(ex, filePath, propertiesReader, parametersWriter) && !ex) {
 						// If onRead has been authorised, and that the file is a multimedia file, and it doesn't exists (no VOD, filePath.lastModified()==0 means "doesn't exists")
 						// Subscribe for a live stream with the basename file as stream name
 						if (filePath.lastModified() == 0) {
@@ -188,6 +193,7 @@ void HTTPSession::packetHandler(PacketReader& reader) {
 							_writer.writeFile(filePath, sortOptions, pPacket->filePos==string::npos);
 						}
 					}
+					pPacket->sizeParameters = parametersWriter.size();
 				}
 			}
 			////////////  HTTP POST  //////////////
@@ -226,7 +232,7 @@ void HTTPSession::manage() {
 		return;
 	}
 	// timeout http session // TODO add a timeout for Listening HTTP session without media reception??
-	if (peer.connected && _options.timeout > 0 && !_pListener && _writer.timeout.isElapsed(_options.timeout))
+	if (peer.connected && _timeout > 0 && !_pListener && _writer.timeout.isElapsed(_timeout))
 		kill(TIMEOUT_DEATH);
 	else if (!_packets.empty() && _packets.front()->exception)
 		_writer.close(_packets.front()->exception);
@@ -255,17 +261,6 @@ void HTTPSession::processOptions(Exception& ex,const shared_ptr<HTTPPacket>& pPa
 		HTTP_ADD_HEADER(writer,"Access-Control-Allow-Methods", "GET, HEAD, PUT, PATH, POST, OPTIONS")
 		HTTP_ADD_HEADER(writer,"Access-Control-Allow-Headers", "Content-Type")
 	HTTP_END_HEADER(writer)
-}
-
-bool HTTPSession::processMethod(Exception& ex, const string& name, MapReader<MapParameters::Iterator>& parameters) {
-
-	Exception exTry;
-	parameters.reset();
-	peer.onMessage(exTry, name, parameters);
-	if (exTry && exTry.code() == Exception::SOFTWARE)
-		ex.set(exTry);
-	
-	return !exTry;
 }
 
 } // namespace Mona

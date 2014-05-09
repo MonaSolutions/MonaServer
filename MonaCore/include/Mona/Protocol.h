@@ -20,7 +20,6 @@ This file is a part of Mona.
 #pragma once
 
 #include "Mona/Mona.h"
-#include "Mona/ServerParams.h"
 #include "Mona/Invoker.h"
 #include "Mona/Sessions.h"
 #include "Mona/Logs.h"
@@ -28,8 +27,9 @@ This file is a part of Mona.
 namespace Mona {
 
 
-class Protocol : public virtual Object {
+class Protocol : public virtual Object, public MapParameters {
 	friend class Protocols;
+	friend class Handler;
 public:
 	const std::string name;
 
@@ -43,7 +43,7 @@ protected:
 
 private:
 	template<typename ParamsType>
-	bool	load(Exception& ex, const ParamsType& params) { return true; }
+	bool	load(Exception& ex,const std::string& host,UInt16 port) { return true; }
 	virtual void	manage() {}
 
 };

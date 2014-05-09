@@ -30,8 +30,8 @@ using namespace Mona;
 
 void LUAClient::GetID(lua_State *pState, const Client& client) {
 	string key;
-	if (!client.properties.getString("|id", key))
-		((MapParameters&)client.properties).setString("|id", Util::FormatHex(client.id, ID_SIZE, key));
+	if (!client.properties().getString("|id", key))
+		((Peer&)client).properties().setString("|id", Util::FormatHex(client.id, ID_SIZE, key));
 	lua_pushstring(pState, key.c_str());
 }
 
@@ -93,8 +93,8 @@ int LUAClient::Get(lua_State *pState) {
 			} else if(strcmp(name,"protocol")==0) {
 				SCRIPT_WRITE_STRING(client.protocol.c_str())
 			} else if (strcmp(name,"properties")==0) {
-				if (Script::Collection(pState, 1, "properties", client.properties.count())) {
-					for (auto& it : client.properties) {
+				if (Script::Collection(pState, 1, "properties", client.properties().count())) {
+					for (auto& it : ((Peer&)client).properties()) {
 						lua_pushstring(pState, it.first.c_str());
 						if (String::ICompare(it.second, "false") == 0 || String::ICompare(it.second, "nil") == 0)
 							lua_pushboolean(pState, 0);
@@ -103,9 +103,23 @@ int LUAClient::Get(lua_State *pState) {
 						lua_rawset(pState, -3); // rawset cause NewIndexProhibited
 					}
 				}
+			} else if (strcmp(name,"parameters")==0 || client.protocol==name) {
+				if (Script::Collection(pState, 1, name, client.parameters().count())) {
+					Parameters::ForEach forEach(
+						[pState](const string& key, const string& value) {
+							lua_pushstring(pState, key.c_str());
+							if (String::ICompare(value, "false") == 0 || String::ICompare(value, "nil") == 0)
+								lua_pushboolean(pState, 0);
+							else
+								lua_pushlstring(pState, value.c_str(), value.size());
+							lua_rawset(pState, -3); // rawset cause NewIndexProhibited
+						}
+					);
+					client.parameters().iterate(forEach);
+				}
 			} else {
 				string value;
-				if(client.properties.getString(name,value)) {
+				if(client.properties().getString(name,value)) {
 					if (String::ICompare(value, "false") == 0 || String::ICompare(value, "nil") == 0)
 						lua_pushboolean(pState, 0);
 					else
@@ -118,11 +132,7 @@ int LUAClient::Get(lua_State *pState) {
 
 int LUAClient::Set(lua_State *pState) {
 	SCRIPT_CALLBACK(Client,client)
-		const char* name = SCRIPT_READ_STRING("");
-		if(strcmp(name,"timesBeforeTurn")==0) {
-			client.timesBeforeTurn = SCRIPT_READ_UINT(0);
-		} else
-			lua_rawset(pState,1); // consumes key and value
+		lua_rawset(pState,1); // consumes key and value
 	SCRIPT_CALLBACK_RETURN
 }
 

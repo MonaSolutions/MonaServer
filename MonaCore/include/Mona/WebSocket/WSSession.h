@@ -47,7 +47,8 @@ public:
 		if(!reader.isValid()) {
 			packet.reset();
 			RawReader rawReader(packet);
-			peer.onMessage(ex, "onMessage",rawReader,WS::TYPE_TEXT);
+			if (!peer.onMessage(ex, "onMessage", rawReader, WS::TYPE_TEXT))
+				ex.set(Exception::APPLICATION, "Method 'onMessage' not found on application ", peer.path);
 			return;
 		}
 
@@ -82,12 +83,13 @@ public:
 			} else if(_pPublication) {
 				reader.reset();
 				_pPublication->pushData(reader);
-			} else
-				peer.onMessage(ex, name,reader);
-			return;
+			} else if (!peer.onMessage(ex, name,reader))
+				ex.set(Exception::APPLICATION, "Method '",name,"' not found on application ", peer.path);
+		} else {
+			reader.reset();
+			if(!peer.onMessage(ex, "onMessage",reader))
+				ex.set(Exception::APPLICATION, "Method 'onMessage' not found on application ", peer.path);
 		}
-		reader.reset();
-		peer.onMessage(ex, "onMessage",reader);
 	}
 
 protected:

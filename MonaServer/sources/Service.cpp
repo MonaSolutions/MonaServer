@@ -222,6 +222,18 @@ bool Service::open(bool create) {
 			// metatable
 			lua_newtable(_pState);
 
+			// personnalize next function for object with |items data
+			lua_pushcfunction(_pState,&Script::Next);
+			lua_setfield(_pState,-2,"next");
+
+			// personnalize pairs function for object with |items data
+			lua_pushcfunction(_pState, &Script::Pairs);
+			lua_setfield(_pState, -2, "pairs");
+
+			// ipairs => override operator ipairs
+			lua_pushcfunction(_pState, &Script::IPairs);
+			lua_setfield(_pState, -2, "ipairs");
+
 #if !defined(_DEBUG)
 			// hide metatable
 			lua_pushstring(_pState, "change metatable of environment is prohibited");

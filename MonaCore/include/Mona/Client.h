@@ -23,18 +23,17 @@ This file is a part of Mona.
 #include "Mona/SocketAddress.h"
 #include "Mona/Entity.h"
 #include "Mona/Writer.h"
-#include "Mona/Entities.h"
-#include "Mona/MapParameters.h"
+#include "Mona/Parameters.h"
 
 namespace Mona {
 
 class Client : public Entity, public virtual Object {
 public:
-	Client() : _pWriter(NULL),ping(0),timesBeforeTurn(0),_pUserData(NULL) {}
+	Client() : _pWriter(NULL),ping(0),_pUserData(NULL) {}
 
 	const SocketAddress			address;
 	const std::string			protocol;
-
+	virtual const Parameters&	parameters() const =0;
 	const std::string			name;
 
 	template <typename DataType>
@@ -47,14 +46,9 @@ public:
 	
 	const std::string			path;
 	const std::string			query;
-	const MapParameters			properties;
 	const std::string			serverAddress;
 	const UInt16				ping;
-
-
-	UInt32						timesBeforeTurn;
-	const Entities<Client>		turnClients;
-
+	virtual const Parameters&	properties() const =0;
 
 	Writer&						writer() { return _pWriter ? *_pWriter : Writer::Null; }
 protected:

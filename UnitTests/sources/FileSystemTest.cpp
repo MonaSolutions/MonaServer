@@ -54,7 +54,7 @@ ADD_TEST(FileSystemTest, Creation) {
 	CHECK(!FileSystem::Exists(Path2));
 	CHECK(FileSystem::Exists(Path2, true));
 
-	FileSystem::Remove(ex,Path);
+	FileSystem::Remove(ex,Path,true);
 	CHECK(!ex);
 	CHECK(!FileSystem::Exists(Path,true));
 

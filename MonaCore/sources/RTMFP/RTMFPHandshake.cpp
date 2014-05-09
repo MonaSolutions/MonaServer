@@ -175,8 +175,9 @@ UInt8 RTMFPHandshake::handshakeHandler(UInt8 id,PacketReader& request,PacketWrit
 
 					// add the turn address (RelayServer) if possible and required
 					if (pSession && times>0) {
-						if(pSession->peer.timesBeforeTurn>=times) {
-							UInt16 port = invoker.relay.add(pSession->peer,pSession->peer.address,pSessionWanted->peer,pSessionWanted->peer.address);
+						UInt8 timesBeforeTurn(0);
+						if(pSession->peer.parameters().getNumber("timesBeforeTurn",timesBeforeTurn) && timesBeforeTurn>=times) {
+							UInt16 port = invoker.relayer.relay(pSession->peer.address,pSessionWanted->peer.address,20); // 20 sec de timeout is enough for RTMFP!
 							if(port>0) {
 								Exception ex;
 								SocketAddress address;
@@ -190,6 +191,7 @@ UInt8 RTMFPHandshake::handshakeHandler(UInt8 id,PacketReader& request,PacketWrit
 					}
 					return 0x71;
 				}
+
 
 				DEBUG("UDP Hole punching, session ", Util::FormatHex(peerId, ID_SIZE, invoker.buffer), " wanted not found")
 				set<SocketAddress> addresses;

@@ -24,7 +24,6 @@ using namespace std;
 using namespace Mona;
 
 static MapParameters Params;
-static MapParameters Params2;
 static string Buffer;
 
 

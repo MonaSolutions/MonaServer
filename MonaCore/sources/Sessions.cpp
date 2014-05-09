@@ -26,39 +26,30 @@ using namespace std;
 namespace Mona {
 
 
-Sessions::Sessions():_nextId(1) {
+Sessions::Sessions() {
 	onAddressChange = [this](Session& session, const SocketAddress& oldAddress) {
 		INFO("Session ",session.name()," has changed its address, ",oldAddress.toString()," -> ",session.peer.address.toString());
 		if (!(session._sessionsOptions&BYADDRESS))
 			return;
-		if (_sessionsByAddress.erase(oldAddress) == 0)
-			WARN("Session ",session.name()," unfound with the address key ",oldAddress.toString());
+		removeByAddress(oldAddress, session);
 		auto it = _sessionsByAddress.lower_bound(session.peer.address);
 		if (it != _sessionsByAddress.end() && it->first == session.peer.address) {
-			it->second->expire();
-			it->second->kill();
-			removeByPeer(*it->second);
-			if (_sessions.erase(it->second->id()) == 0) {
-				ERROR("Session ", session.name(), " unfound with the id key ", it->second->id());
-				for (auto it2 = _sessions.begin(); it2 != _sessions.end();++it2) {
-					if (it2->second == &session) {
-						INFO("The correct key was ",it2->first);
-						_sessions.erase(it2);
-						break;
-					}
-				}
+			if (it->second != &session) {
+				INFO("Session ", it->second->name(), " overloaded by ",session.name()," (by ",session.peer.address.toString(),")");
+				auto itSession = _sessions.find(it->second->_id);
+				if (itSession == _sessions.end())
+					CRITIC("Session overloaded ",it->second->name()," impossible to find in sessions collection")
+				else
+					remove(itSession);
+				it->second = &session;
 			}
-			delete it->second;
-			_sessionsByAddress.erase(it);
-		}
-		_sessionsByAddress.emplace_hint(it,session.peer.address,&session);
+		} else
+			_sessionsByAddress.emplace_hint(it, session.peer.address, &session);
 	};
 }
 
 Sessions::~Sessions() {
 	// delete sessions
-	_sessionsByAddress.clear();
-	_sessionsByPeerId.clear();
 	if (!_sessions.empty())
 		WARN("sessions are deleting");
 	Iterator it;
@@ -67,14 +58,34 @@ Sessions::~Sessions() {
 		it->second->kill(Session::SERVER_DEATH);
 		delete it->second;
 	}
-	_sessions.clear();
 }
 
-void Sessions::removeByPeer(Session& session) {
+void Sessions::removeByAddress(Session& session) {
+	if (session._sessionsOptions&BYADDRESS)
+		removeByAddress(session.peer.address, session);
+}
+
+void Sessions::removeByAddress(const SocketAddress& address,Session& session) {
+	if (_sessionsByAddress.erase(address)==0) {
+		ERROR("Session ",session.name()," unfound in address sessions collection with key ",address.toString());
+		for (auto it = _sessionsByAddress.begin(); it != _sessionsByAddress.end();++it) {
+			if (it->second == &session) {
+				INFO("The correct key was ",it->first.toString());
+				_sessionsByAddress.erase(it);
+				break;
+			}
+		}
+	}
+}
+
+void Sessions::remove(map<UInt32,Session*>::iterator it) {
+	Session& session(*it->second);
+	DEBUG("Session ",session.name()," died");
+
 	if (session._sessionsOptions&BYPEER) {
 		if (_sessionsByPeerId.erase(session.peer.id)==0) {
 			string buffer;
- 			ERROR("Session ",session.name()," deletion unfound in peer sessions collection with key ",Util::FormatHex(session.peer.id,ID_SIZE,buffer));
+ 			ERROR("Session ",session.name()," unfound in peer sessions collection with key ",Util::FormatHex(session.peer.id,ID_SIZE,buffer));
  			for (auto it = _sessionsByPeerId.begin(); it != _sessionsByPeerId.end();++it) {
  				if (it->second == &session) {
 					INFO("The correct key was ",Util::FormatHex(it->first,ID_SIZE,buffer));
@@ -84,26 +95,11 @@ void Sessions::removeByPeer(Session& session) {
 			}
 		}
 	}
-}
 
-void Sessions::remove(map<UInt32,Session*>::iterator it) {
-	Session& session(*it->second);
-	DEBUG("Session ",session.name()," died");
-	removeByPeer(session);
-	if (session._sessionsOptions&BYADDRESS) {
-		if (_sessionsByAddress.erase(session.peer.address)==0) {
-			ERROR("Session ",session.name()," deletion unfound in address sessions collection with key ",session.peer.address.toString());
-			for (auto it = _sessionsByAddress.begin(); it != _sessionsByAddress.end();++it) {
-				if (it->second == &session) {
-					INFO("The correct key was ",it->first.toString());
-					_sessionsByAddress.erase(it);
-					break;
-				}
-			}
-		}
-	}
+	removeByAddress(session);
 	session.expire();
 	session.kill();
+	_freeIds.emplace(session._id);
 	delete &session;
 	_sessions.erase(it);
 }

@@ -67,11 +67,6 @@ UInt32 RTMP::GetDHPos(const UInt8* data,bool middle) {
 const UInt8* RTMP::ValidateClient(Crypto& crypto,BinaryReader& reader,bool& middleKey) {
 	middleKey=false;
 	UInt32 position = reader.position();
-	if (reader.read32() == 0) {
-		WARN("This version of player doesn't support validation");
-		return NULL;
-	}
-	
 	const UInt8* keyChallenge = ValidateClientScheme(crypto,reader, false);
 	if (!keyChallenge) {
 		keyChallenge = ValidateClientScheme(crypto,reader, true);

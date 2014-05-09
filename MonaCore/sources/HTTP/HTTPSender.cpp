@@ -117,7 +117,7 @@ bool HTTPSender::run(Exception& ex) {
 
 						// TODO see if filter is correct
 						if (type == HTTP::CONTENT_TEXT && _pRequest->parameters.count())
-							ReplaceTemplateTags(packet, ifile, _pRequest->parameters);
+							replaceTemplateTags(packet, ifile);
 						else {
 
 							// push the entire file content to memory
@@ -247,7 +247,7 @@ BinaryWriter& HTTPSender::writeRaw(const PoolBuffers& poolBuffers) {
 	return _pWriter->packet;
 }
 
-void HTTPSender::ReplaceTemplateTags(PacketWriter& packet, ifstream& ifile, MapWriter<std::map<std::string,std::string>>& parameters) {
+void HTTPSender::replaceTemplateTags(PacketWriter& packet, ifstream& ifile) {
 
 	UInt32 pos = packet.size();
 	// get file content size
@@ -255,7 +255,7 @@ void HTTPSender::ReplaceTemplateTags(PacketWriter& packet, ifstream& ifile, MapW
 
 	// push the entire file content to memory
 	ifile.seekg(0);
-	char* current = (char*)packet.buffer(size+parameters.size()); // reserve more memory to change <%name%> field
+	char* current = (char*)packet.buffer(size+_pRequest->sizeParameters); // reserve more memory to change <%name%> field
 	ifile.read(current, size);
 	// iterate on content to replace "<% key %>" fields
 	UInt32 newSize(size);
@@ -303,8 +303,8 @@ void HTTPSender::ReplaceTemplateTags(PacketWriter& packet, ifstream& ifile, MapW
 				if (keyBegin)
 					key.assign(keyBegin, keyLength);
 				UInt32 available(current+1-signifiant);
-				auto it = parameters[key];
-				const string& value(it==parameters.end() ? String::Empty : it->second);
+				string value;
+				_pRequest->parameters.getString(key, value);
 				// give the size available required
 				if (available < value.size()) {
 					available = value.size()-available; // to add

@@ -20,6 +20,8 @@ This file is a part of Mona.
 #include "Mona/Peer.h"
 #include "Mona/Group.h"
 #include "Mona/Handler.h"
+#include "Mona/SplitWriter.h"
+#include "Mona/MapWriter.h"
 #include "Mona/Util.h"
 #include "Mona/Logs.h"
 
@@ -35,13 +37,11 @@ public:
 };
 
 
-Peer::Peer(Handler& handler) : _handler(handler), connected(false), relayable(false) {
+Peer::Peer(Handler& handler) : _handler(handler), connected(false) {
 }
 
 Peer::~Peer() {
 	unsubscribeGroups();
-	if(relayable)
-		_handler.relay.remove(*this);
 	for(auto& it: _ices) {
 		((Peer*)it.first)->_ices.erase(this);
 		delete it.second;
@@ -127,7 +127,7 @@ ICE& Peer::ice(const Peer& peer) {
 	}
 	if(it!=_ices.begin())
 		--it;
-	ICE& ice = *_ices.emplace_hint(it,&peer,new ICE(*this,peer,_handler.relay))->second; // is offer
+	ICE& ice = *_ices.emplace_hint(it,&peer,new ICE(*this,peer,_handler.relayer))->second; // is offer
 	((Peer&)peer)._ices[this] = &ice;
 	return ice;
 }
@@ -147,7 +147,13 @@ void Peer::onConnection(Exception& ex, Writer& writer,DataReader& parameters,Dat
 	if(!connected) {
 		_pWriter = &writer;
 
-		_handler.onConnection(ex, *this,parameters,response);
+		// reset default protocol parameters
+		OnInitParameters::raise(_parameters);
+
+		MapWriter<MapParameters> parametersWriter(_parameters);
+		SplitWriter parametersAndResponse(parametersWriter,response);
+
+		_handler.onConnection(ex, *this,parameters,parametersAndResponse);
 		if (!ex) {
 			(bool&)connected = ((Clients&)_handler.clients).add(ex,*this);
 			if (!connected)
@@ -174,30 +180,33 @@ void Peer::onDisconnection() {
 	_pWriter = NULL; // keep after the onDisconnection because otherise the LUA object client.writer can't be deleted!
 }
 
-void Peer::onMessage(Exception& ex, const string& name,DataReader& reader,UInt8 responseType) {
+bool Peer::onMessage(Exception& ex, const string& name,DataReader& reader,UInt8 responseType) {
 	if(connected)
-		_handler.onMessage(ex, *this, name, reader, responseType);
-	else
-		ERROR("RPC client before connection")
+		return _handler.onMessage(ex, *this, name, reader, responseType);
+	ERROR("RPC client before connection")
+	return false;
 }
 
 void Peer::onJoinGroup(Group& group) {
-	if(!connected)
-		return;
-	_handler.onJoinGroup(*this,group);
+	if(connected)
+		_handler.onJoinGroup(*this,group);
+	else
+		WARN("onJoinGroup on client not connected")
 }
 
 void Peer::onUnjoinGroup(Group& group) {
 	// group._clients suppression (this->_groups suppression must be done by the caller of onUnjoinGroup)
 	auto itPeer = group.find(id);
 	if (itPeer == group.end()) {
-		ERROR("Peer::onUnjoinGroup on a group which don't know this peer");
+		ERROR("onUnjoinGroup on a group which don't know this peer");
 		return;
 	}
 	itPeer = group.remove(itPeer);
 
 	if(connected)
 		_handler.onUnjoinGroup(*this,group);
+	else
+		WARN("onUnjoinGroup on client not connected")
 
 	if (group.count() == 0) {
 		((Entities<Group>&)_handler.groups).erase(group.id);

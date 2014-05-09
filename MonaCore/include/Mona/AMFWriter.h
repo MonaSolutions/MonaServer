@@ -53,14 +53,13 @@ public:
 	void writeNull();
 	void writeBytes(const UInt8* data,UInt32 size);
 
-	bool				amf0Preference;
+	bool				amf0;
 
 	static AMFWriter    Null;
 
 private:
-	AMFWriter() : _amf3(false), amf0Preference(false) {} // null version
+	AMFWriter() : _amf3(false), amf0(false) {} // null version
 
-	void writeInteger(Int32 value);
 	void writeText(const std::string& value);
 
 	std::map<std::string,UInt32>	_stringReferences;

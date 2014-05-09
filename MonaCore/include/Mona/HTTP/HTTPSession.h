@@ -21,7 +21,6 @@ This file is a part of Mona.
 
 #include "Mona/Mona.h"
 #include "Mona/WebSocket/WSSession.h"
-#include "Mona/HTTPOptionsWriter.h"
 #include "Mona/HTTP/HTTPWriter.h"
 #include "Mona/HTTP/HTTPPacket.h"
 #include "Mona/MapReader.h"
@@ -47,10 +46,6 @@ private:
 	/// Note: It is called when processMove is used before a SOAP request
 	void			processOptions(Exception& ex,const std::shared_ptr<HTTPPacket>& pPacket);
 
-	/// \brief Try to call the method with this name
-	/// \return true if method was call and no error occurs
-	bool			processMethod(Exception& ex, const std::string& name, MapReader<MapParameters::Iterator>& parameters);
-
 	HTTPWriter			_writer;
 	bool				_isWS;
 
@@ -59,7 +54,11 @@ private:
 	std::deque<std::shared_ptr<HTTPPacket>>			_packets;
 	std::shared_ptr<PoolBuffer>						_ppBuffer;
 
-	HTTPOptionsWriter								_options;
+	// options
+	UInt32				_timeout;
+	std::string			_index;
+	bool				_indexCanBeMethod;
+	bool				_indexDirectory;
 };
 
 

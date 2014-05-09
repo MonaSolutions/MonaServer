@@ -185,7 +185,6 @@
     <ClInclude Include="include\Mona\Invoker.h" />
     <ClInclude Include="include\Mona\Peer.h" />
     <ClInclude Include="include\Mona\Server.h" />
-    <ClInclude Include="include\Mona\ServerParams.h" />
     <ClInclude Include="include\Mona\Writer.h" />
     <ClInclude Include="include\Mona\XMLReader.h">
       <Filter>Serializers</Filter>
@@ -226,9 +225,6 @@
     <ClInclude Include="include\Mona\HTMLWriter.h">
       <Filter>Serializers</Filter>
     </ClInclude>
-    <ClInclude Include="include\Mona\HTTPOptionsWriter.h">
-      <Filter>Serializers</Filter>
-    </ClInclude>
     <ClInclude Include="include\Mona\MapReader.h">
       <Filter>Serializers</Filter>
     </ClInclude>
@@ -249,6 +245,9 @@
     </ClInclude>
     <ClInclude Include="include\Mona\MediaCodec.h">
       <Filter>Multimedia</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\SplitWriter.h">
+      <Filter>Serializers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -384,9 +383,6 @@
       <Filter>Serializers</Filter>
     </ClCompile>
     <ClCompile Include="sources\HTMLWriter.cpp">
-      <Filter>Serializers</Filter>
-    </ClCompile>
-    <ClCompile Include="sources\HTTPOptionsWriter.cpp">
       <Filter>Serializers</Filter>
     </ClCompile>
     <ClCompile Include="sources\MediaContainer.cpp">

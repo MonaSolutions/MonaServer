@@ -61,19 +61,19 @@ public:
 
 	~ServerConnection();
 
-	const Mona::SocketAddress		address;
-	const bool						isTarget;
-	Mona::MapParameters				properties;
+	const Mona::SocketAddress	address;
+	const bool					isTarget;
+	Mona::MapParameters			properties;
 
 	const Mona::PoolBuffers&  poolBuffers() const { return _pClient->manager().poolBuffers; }
 
-	void			connect(const Mona::MapParameters& configs);
+	void			connect(const Mona::Parameters& configs);
 	bool			connected() { return _connected; }
 
 	void			close();
 
 	void			send(const std::shared_ptr<ServerMessage>& pMessage);
-	void			sendHello(const Mona::MapParameters& configs);
+	void			sendHello(const Mona::Parameters& configs);
 	void			reject(const char* error);
 
 private:

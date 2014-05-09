@@ -42,8 +42,7 @@ public:
 	Server(UInt32 socketBufferSize=0,UInt16 threads=0);
 	virtual ~Server();
 
-	bool	start() { return start(params); }
-	bool	start(const ServerParams& params);
+	bool	start(Startable::Priority threadPriority=Startable::PRIORITY_HIGH);
 	void	stop() { Startable::stop(); }
 	bool	running() { return Startable::running(); }
 

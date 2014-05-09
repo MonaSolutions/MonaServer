@@ -122,7 +122,6 @@
     <ClInclude Include="include\Mona\Handler.h" />
     <ClInclude Include="include\Mona\HTMLWriter.h" />
     <ClInclude Include="include\Mona\HTTPHeaderReader.h" />
-    <ClInclude Include="include\Mona\HTTPOptionsWriter.h" />
     <ClInclude Include="include\Mona\HTTP\HTTPPacket.h" />
     <ClInclude Include="include\Mona\HTTP\HTTPPacketBuilding.h" />
     <ClInclude Include="include\Mona\ICE.h" />
@@ -137,9 +136,9 @@
     <ClInclude Include="include\Mona\RelayServer.h" />
     <ClInclude Include="include\Mona\SDP.h" />
     <ClInclude Include="include\Mona\Server.h" />
-    <ClInclude Include="include\Mona\ServerParams.h" />
     <ClInclude Include="include\Mona\SOAPReader.h" />
     <ClInclude Include="include\Mona\SOAPWriter.h" />
+    <ClInclude Include="include\Mona\SplitWriter.h" />
     <ClInclude Include="include\Mona\SVGWriter.h" />
     <ClInclude Include="include\Mona\TCProtocol.h" />
     <ClInclude Include="include\Mona\UDProtocol.h" />
@@ -209,7 +208,6 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='release|Win32'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug|Win32'">false</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="sources\HTTPOptionsWriter.cpp" />
     <ClCompile Include="sources\HTTP\HTTPPacket.cpp" />
     <ClCompile Include="sources\HTTP\HTTPSender.cpp" />
     <ClCompile Include="sources\ICE.cpp" />

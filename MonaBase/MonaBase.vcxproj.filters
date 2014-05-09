@@ -93,9 +93,6 @@
     <ClCompile Include="sources\Application.cpp">
       <Filter>Application</Filter>
     </ClCompile>
-    <ClCompile Include="sources\MapParameters.cpp">
-      <Filter>Util</Filter>
-    </ClCompile>
     <ClCompile Include="sources\Parameters.cpp">
       <Filter>Util</Filter>
     </ClCompile>
@@ -174,6 +171,9 @@
     </ClCompile>
     <ClCompile Include="sources\Signal.cpp">
       <Filter>Threading</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\MapParameters.cpp">
+      <Filter>Util</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

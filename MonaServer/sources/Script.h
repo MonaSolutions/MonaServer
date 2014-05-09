@@ -106,7 +106,10 @@ public:
 
 	static void			CloseState(lua_State* pState);
 	static lua_State*	CreateState();
-;
+
+	static int Next(lua_State* pState);
+	static int Pairs(lua_State* pState);
+	static int IPairs(lua_State* pState);
 
 	template<class CollectorType = Script, class LUAItemType = Script>
 	static bool Collection(lua_State* pState, int index,const char* field, Mona::UInt32 size, CollectorType* pCollector = NULL) {
@@ -340,9 +343,9 @@ public:
 			if(!callback) return NULL;
 			SCRIPT_BEGIN(pState)
 				if (isDeleted)
-					SCRIPT_ERROR("'this' object deleted")
+					SCRIPT_ERROR(typeid(Type).name()," object deleted")
 				else
-					SCRIPT_ERROR("'this' argument not present, call method with ':' colon operator")
+					SCRIPT_ERROR(typeid(Type).name()," argument not present, call method with ':' colon operator")
 			SCRIPT_END
 			return NULL;
 		}
@@ -422,14 +425,6 @@ private:
 		// len => override operator #
 		lua_pushcfunction(pState, &Script::Len);
 		lua_setfield(pState, -2, "__len");
-
-		// pairs => override operator pairs
-		lua_pushcfunction(pState, &Script::Pairs);
-		lua_setfield(pState, -2, "__pairs");
-
-		// ipairs => override operator ipairs
-		lua_pushcfunction(pState, &Script::Pairs);
-		lua_setfield(pState, -2, "__ipairs");
 
 		// get
 		lua_pushcfunction(pState,&LUAType::Get);
@@ -524,8 +519,7 @@ private:
 	}
 
 	static int Len(lua_State* pState);
-	static int Pairs(lua_State* pState);
-
+	static int INext(lua_State* pState);
 	static int Item(lua_State *pState) { return 0; }
 
 	static int Error(lua_State* pState);

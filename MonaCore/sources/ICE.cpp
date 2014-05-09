@@ -19,8 +19,8 @@ This file is a part of Mona.
 
 #include "Mona/ICE.h"
 #include "Mona/RelayServer.h"
+#include "Mona/Peer.h"
 #include "Mona/Logs.h"
-#include "Mona/String.h"
 
 using namespace std;
 
@@ -28,7 +28,7 @@ using namespace std;
 
 namespace Mona {
 
-ICE::ICE(const Peer& initiator,const Peer& remote,const RelayServer& relay) : _first(true),mediaIndex(0),_relay(relay),_type(INITIATOR),_publicHost(initiator.address.host().toString()),_initiator(initiator),_remote(remote) {
+ICE::ICE(const Peer& initiator,const Peer& remote,const RelayServer& relayer) : _first(true),mediaIndex(0),_relayer(relayer),_type(INITIATOR),_publicHost(initiator.address.host().toString()),_initiator(initiator),_remote(remote) {
 	SocketAddress::Split(remote.serverAddress, _serverRemoteHost);
 	SocketAddress::Split(initiator.serverAddress, _serverInitiatorHost);
 }
@@ -149,7 +149,7 @@ void ICE::fromSDPCandidate(const string& candidate,SDPCandidate& publicCandidate
 		if(currentAddresses.insert(address).second) {
 			set<SocketAddress>::const_iterator it;
 			for(it=remoteAddresses.begin();it!=remoteAddresses.end();++it) {
-				UInt16 port = _relay.add(_initiator,*it,_remote,address);
+				UInt16 port = _relayer.relay(*it,address,20); // TODO 20 sec?
 				if(port==0)
 					continue;
 				if(_relayPorts[mediaIndex][compoment].insert(port).second) {

@@ -127,15 +127,63 @@ void Script::CloseState(lua_State* pState) {
 		lua_close(pState);
 }
 
+int Script::Next(lua_State* pState) {
+	// 1 table
+	// [2 key] (optional)
+	if (lua_getmetatable(pState, 1)) {
+		lua_getfield(pState, -1, "|items");
+		lua_replace(pState, -2);
+		if (lua_istable(pState, -1))
+			lua_replace(pState, 1);
+		else
+			lua_pop(pState, 1);
+	}
+	if (lua_gettop(pState) < 2)
+		lua_pushnil(pState);
+	int results = lua_next(pState, 1);
+	if (results>0)
+		++results;
+	return results;
+}
+
+int Script::INext(lua_State* pState) {
+	// 1 table
+	// [2 key] (optional)
+	if (lua_gettop(pState) < 2)
+		lua_pushnumber(pState,1);
+	lua_pushvalue(pState, -1);
+	lua_gettable(pState, 1);
+	if (lua_isnil(pState, -1)) {
+		lua_replace(pState, -2);
+		return 1;
+	}
+	return 2;
+}
+
 int Script::Pairs(lua_State* pState) {
 	lua_getglobal(pState, "next");
 	if (lua_getmetatable(pState, 1)) {
 		lua_getfield(pState, -1, "|items");
+		lua_replace(pState, -2);
 		if (!lua_istable(pState, -1)) {
 			lua_pop(pState, 1);
 			lua_pushvalue(pState, 1);
 		}
+	} else
+		lua_pushvalue(pState, 1);
+	return 2;
+}
+
+int Script::IPairs(lua_State* pState) {
+	// 1 table
+	lua_pushcfunction(pState,&Script::INext);
+	if (lua_getmetatable(pState, 1)) {
+		lua_getfield(pState, -1, "|items");
 		lua_replace(pState, -2);
+		if (!lua_istable(pState, -1)) {
+			lua_pop(pState, 1);
+			lua_pushvalue(pState, 1);
+		}
 	} else
 		lua_pushvalue(pState, 1);
 	return 2;

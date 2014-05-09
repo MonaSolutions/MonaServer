@@ -23,14 +23,12 @@ This file is a part of Mona.
 #include "Mona/RTMFP/RTMFProtocol.h"
 #include "Mona/HTTP/HTTProtocol.h"
 
-
 namespace Mona {
-
-
+	
 void Protocols::load(Sessions& sessions) {
-	loadProtocol<RTMFProtocol, RTMFPParams>("RTMFP", _invoker.params.RTMFP, sessions);
-	loadProtocol<RTMProtocol, RTMPParams>("RTMP", _invoker.params.RTMP, sessions);
-	loadProtocol<HTTProtocol, HTTPParams>("HTTP", _invoker.params.HTTP, sessions);
+	loadProtocol<RTMFProtocol>("RTMFP", 1935, sessions);
+	loadProtocol<RTMProtocol>("RTMP", 1935, sessions);
+	loadProtocol<HTTProtocol>("HTTP", 80, sessions);
 }
 
 

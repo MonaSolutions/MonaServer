@@ -28,6 +28,10 @@ namespace Mona {
 
 RTMFProtocol::RTMFProtocol(const char* name, Invoker& invoker, Sessions& sessions) : UDProtocol(name, invoker, sessions) {
 
+	setNumber("keepalivePeer",   10);
+	setNumber("keepaliveServer", 15);
+	// timesBeforeTurn
+
 	onPacket = [this](PoolBuffer& pBuffer,const SocketAddress& address) {
 		if (pBuffer->size() < RTMFP_MIN_PACKET_SIZE) {
 			ERROR("Invalid RTMFP packet");
@@ -55,11 +59,21 @@ RTMFProtocol::~RTMFProtocol() {
 	OnPacket::unsubscribe(onPacket);
 }
 
-bool RTMFProtocol::load(Exception& ex, const RTMFPParams& params) {
-	if (!UDProtocol::load(ex, params))
+bool RTMFProtocol::load(Exception& ex,const string& host,UInt16 port) {
+
+	if (!UDProtocol::load(ex,host,port))
 		return false;
-	(UInt16&)params.keepAliveServer *= 1000;
-	(UInt16&)params.keepAlivePeer *= 1000;
+
+	
+	if (getNumber<UInt16,10>("keepalivePeer") < 5) {
+		WARN("Value of RTMFP.keepalivePeer can't be less than 5 sec")
+		setNumber("keepalivePeer", 5);
+	}
+	if (getNumber<UInt16,15>("keepaliveServer") < 5) {
+		WARN("Value of RTMFP.keepaliveServer can't be less than 5 sec")
+		setNumber("keepaliveServer", 5);
+	}
+
 	_pHandshake.reset(new RTMFPHandshake(*this, sessions, invoker));
 	return true;
 }

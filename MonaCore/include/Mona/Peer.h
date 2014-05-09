@@ -29,13 +29,18 @@ This file is a part of Mona.
 
 namespace Mona {
 
+namespace Events {
+	struct OnInitParameters : Event<void(Parameters&)> {};
+};
+
 
 class Group;
 class Handler;
 class Publication;
 class Listener;
 class Member;
-class Peer : public Client, public virtual Object {
+class Peer : public Client, public virtual Object,
+	public Events::OnInitParameters {
 public:
 	Peer(Handler& handler);
 	virtual ~Peer();
@@ -43,15 +48,14 @@ public:
 	std::set<SocketAddress>		localAddresses;
 	const bool					connected;
 
+	const Parameters&			parameters() const { return _parameters; }
+	const Parameters&			properties() const { return _properties; }
+	MapParameters&				properties() { return _properties; }
+	
 	void						setPath(const std::string& value) { ((std::string&)Client::path).assign(value); }
 	void						setQuery(const std::string& value) { ((std::string&)Client::query).assign(value); }
 	void						setServerAddress(const std::string& value) { ((std::string&)Client::serverAddress).assign(value); }
 	void						setPing(UInt16 value) { ((UInt16&)ping) = value; }
-	MapParameters&				properties() { return (MapParameters&)Client::properties; };
-
-
-	Entities<Client>&			turnPeers() { return (Entities<Client>&)turnClients; }
-	bool						relayable;
 
 	ICE&		ice(const Peer& peer);
 
@@ -64,9 +68,10 @@ public:
 	void onRendezVousUnknown(const UInt8* peerId,std::set<SocketAddress>& addresses);
 	void onHandshake(UInt32 attempts,std::set<SocketAddress>& addresses);
 
+	void onConnection(Exception& ex, Writer& writer, DataReader& parameters) { onConnection(ex, writer, parameters, DataWriter::Null); }
 	void onConnection(Exception& ex, Writer& writer,DataReader& parameters,DataWriter& response);
 	void onDisconnection();
-	void onMessage(Exception& ex, const std::string& name,DataReader& reader, UInt8 responseType=0);
+	bool onMessage(Exception& ex, const std::string& name,DataReader& reader, UInt8 responseType=0);
 
 	bool onPublish(const Publication& publication,std::string& error);
 	void onUnpublish(const Publication& publication);
@@ -93,6 +98,9 @@ private:
 	Handler&						_handler;
 	std::map<Group*,Writer*>		_groups;
 	std::map<const Peer*,ICE*>		_ices;
+	MapParameters					_parameters;
+	MapParameters					_properties;
+	
 };
 
 } // namespace Mona

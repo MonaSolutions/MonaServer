@@ -32,7 +32,7 @@ class Peer;
 class RelayServer;
 class ICE : public virtual Object {
 public:
-	ICE(const Peer& initiator,const Peer& remote,const RelayServer& relay);
+	ICE(const Peer& initiator,const Peer& remote,const RelayServer& relayer);
 	virtual ~ICE();
 
 	void			setCurrent(Peer& current);
@@ -59,7 +59,7 @@ private:
 	std::map<UInt16,std::map<UInt8,std::set<SocketAddress> > >	_remoteAddresses;
 	std::map<UInt16, std::map<UInt8,std::set<UInt16> > >		_relayPorts;
 	Time														_time;
-	const RelayServer&											_relay;
+	const RelayServer&											_relayer;
 	bool														_first;
 	Type														_type;
 	std::string													_publicHost;

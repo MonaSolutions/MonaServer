@@ -189,7 +189,8 @@ void Publication::pushVideo(UInt32 time,PacketReader& packet,UInt32 numberLostFr
 		return;
 	}
 
-	// TRACE("Time Video ",time," => ",*(packet.current() + 1))
+	// string buffer;
+	// TRACE("Time Video ",time," => ",Util::FormatHex(packet.current(),16,buffer))
 	
 
 	_videoQOS.add(_pPublisher->ping,packet.available()+4,packet.fragments,numberLostFragments); // 4 for time encoded

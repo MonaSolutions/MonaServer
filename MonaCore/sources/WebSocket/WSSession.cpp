@@ -104,7 +104,8 @@ void WSSession::packetHandler(PacketReader& packet) {
 		switch(type) {
 			case WS::TYPE_BINARY: {
 				RawReader reader(packet);
-				peer.onMessage(ex, "onMessage",reader,WS::TYPE_BINARY);
+				if(!peer.onMessage(ex, "onMessage",reader,WS::TYPE_BINARY))
+					ex.set(Exception::APPLICATION, "Method 'onMessage' not found on application ", peer.path);
 				break;
 			}
 			case WS::TYPE_TEXT: {

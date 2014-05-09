@@ -25,7 +25,6 @@ This file is a part of Mona.
 #include "Mona/Exceptions.h"
 #include "Mona/Buffer.h"
 #include "math.h"
-#include <map>
 #include <limits>
 #include <mutex>
 #include <thread>
@@ -62,7 +61,7 @@ public:
 	static bool ReadIniFile(Exception& ex, const std::string& path, Parameters& parameters);
 
 	static unsigned ProcessorCount() { unsigned result(std::thread::hardware_concurrency());  return result > 0 ? result : 1; }
-	static const MapParameters& Environment();
+	static const Parameters& Environment();
 
 	template<typename Type>
 	static Type Random() {
@@ -177,8 +176,8 @@ public:
 
 private:
 
-	static MapParameters	_Environment;
-	static std::mutex		_MutexEnvironment;
+	static MapParameters					_Environment;
+	static std::mutex						_MutexEnvironment;
 	
 	static std::map<THREAD_ID, std::string>	_ThreadNames;
 	static std::recursive_mutex				_MutexThreadNames;

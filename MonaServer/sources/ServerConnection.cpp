@@ -53,20 +53,19 @@ ServerConnection::~ServerConnection() {
 }
 
 
-void ServerConnection::sendHello(const MapParameters& configs) {
+void ServerConnection::sendHello(const Parameters& configs) {
 	shared_ptr<ServerMessage> pMessage(new ServerMessage("",_pClient->manager().poolBuffers));
 	BinaryWriter& writer = pMessage->packet;
 	writer.writeBool(true);
-	/// configs
-	for(auto& it : configs) {
-		writer.writeString(it.first); // name
-		writer.writeString(it.second); // value
-	}
-	/// properties
-	for(auto& it : properties) {
-		writer.writeString(it.first); // name
-		writer.writeString(it.second); // value
-	}
+
+	Parameters::ForEach forEach([&writer](const string& key, const string& value) {
+		writer.writeString(key); // name
+		writer.writeString(value); // value
+	});
+
+	configs.iterate(forEach); /// configs
+	properties.iterate(forEach); /// properties
+
 	send(pMessage);
 }
 
@@ -89,7 +88,7 @@ void ServerConnection::close() {
 	_pClient->OnData::subscribe(_onData);
 }
 
-void ServerConnection::connect(const MapParameters& configs) {
+void ServerConnection::connect(const Parameters& configs) {
 	if(_connected)
 		return;
 	INFO("Attempt to join ", address.toString(), " server")
@@ -114,7 +113,7 @@ void ServerConnection::send(const shared_ptr<ServerMessage>& pMessage) {
 	UInt32 handlerRef = 0;
 	bool   writeRef = false;
 	if(!handler.empty()) {
-		map<string, UInt32>::iterator it = _sendingRefs.lower_bound(handler);
+		auto it = _sendingRefs.lower_bound(handler);
 		if(it!=_sendingRefs.end() && it->first==handler) {
 			handlerRef = it->second;
 			handler.clear();
@@ -179,10 +178,12 @@ UInt32 ServerConnection::onData(PoolBuffer& pBuffer) {
 				_pClient->disconnect();
 				return 0;
 			}
-			MapParameters::clear();
+
 			/// properties itself
-			for(auto& it : properties)
+			MapParameters::clear();
+			for (auto& it : properties)
 				setString(it.first,it.second);
+
 			/// configs
 			while(packet.available()) {
 				string key,value;

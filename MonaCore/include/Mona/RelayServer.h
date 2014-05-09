@@ -20,10 +20,9 @@ This file is a part of Mona.
 #pragma once
 
 #include "Mona/Mona.h"
-#include "Mona/Peer.h"
 #include "Mona/UDPSocket.h"
 #include "Mona/SocketManager.h"
-#include "Mona/Logs.h"
+#include <set>
 
 namespace Mona {
 
@@ -33,19 +32,19 @@ public:
 	RelaySocket(const SocketManager& manager,UInt16 port);
 	~RelaySocket();
 
-	typedef std::map<SocketAddress,Relay*> Addresses;
+	bool	relay(const SocketAddress& address1,const SocketAddress& address2,UInt16 timeout);
+	bool	manage();
 
-	Relay&	createRelay(const Peer& peer1,const SocketAddress& address1,const Peer& peer2,const SocketAddress& address2,UInt16 timeout);
-	UInt32	releaseRelay(Relay& relay);
-
-	const UInt16	port;
-	const Addresses	addresses;
-	Time			timeout;
+	const UInt16		port;
+	
 private:
 	OnError::Type	onError; // executed in a parallel thread!
 	OnPacket::Type	onPacket; // executed in a parallel thread!
 	
-	std::mutex	_mutex;
+	mutable std::mutex				_mutex;
+	std::map<SocketAddress,Relay*>	_relayByAddress;
+	std::vector<Relay*>				_relays;
+	
 };
 
 class RelayServer : public virtual Object {
@@ -53,18 +52,14 @@ public:
 	RelayServer(const PoolBuffers& poolBuffers,PoolThreads& poolThreads,UInt32 bufferSize=0);
 	~RelayServer();
 	
-	UInt16 add(const Peer& peer1,const SocketAddress& address1,const Peer& peer2,const SocketAddress& address2,UInt16 timeout=120) const;
-	void remove(const Peer& peer) const;
+	UInt16	relay(const SocketAddress& address1,const SocketAddress& address2,UInt16 timeout) const;
 
-	void manage() const;
+	void	manage() const;
 
 	bool start(Exception& ex) { return _manager.start(ex); }
 	void stop();
 
 private:
-	void releaseRelay(Relay& relay) const;
-	void removePeerRelay(const Peer& peer,Relay& relay) const;
-	void sendingError();
 
 	struct Compare {
 	   bool operator()(RelaySocket* a,RelaySocket* b) const {
@@ -72,11 +67,10 @@ private:
 	   }
 	};
 
-	SocketManager										_manager;
-	mutable std::mutex									_mutex;
+	RelaySocket* createSocket(std::set<RelaySocket*, Compare>::const_iterator& it, UInt16 port) const;
 
-	mutable std::set<Relay*>							_relays;
-	mutable std::map<const Peer*,std::set<Relay*> >		_peers;
+	SocketManager										_manager;
+
 	mutable std::set<RelaySocket*,Compare>				_sockets;
 };
 

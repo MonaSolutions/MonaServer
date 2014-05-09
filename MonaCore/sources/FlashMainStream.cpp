@@ -82,7 +82,8 @@ void FlashMainStream::messageHandler(Exception& ex, const string& name,AMFReader
 				return;
 			}
 			
-			MapParameters& properties(peer.properties());
+			auto& properties(peer.properties());
+			properties.clear();
 			while((type=message.readItem(name))!=AMFReader::END) {
 				switch(type) {
 					case AMFReader::NIL:
@@ -115,23 +116,19 @@ void FlashMainStream::messageHandler(Exception& ex, const string& name,AMFReader
 				Util::UnpackQuery(peer.query, properties);
 			}
 
-			// Don't support AMF0 forced on NetConnection object because AMFWriter writes in AMF3 format
-			// But it's not a pb because NetConnection RTMFP works since flash player 10.0 only (which supports AMF3)
-			double objEncoding = 1;
-			if (properties.getNumber("objectEncoding", objEncoding) && objEncoding==0) {
-				ex.set(Exception::PROTOCOL, "ObjectEncoding client must be in a AMF3 format (not AMF0)");
-				return;
+			if (properties.getNumber<UInt32>("objectEncoding")==0) {
+				writer.amf0 = true;
+				WARN("Client ",peer.protocol," not compatible with AMF3, few complex object can be not supported");
 			}
 		}
 		message.startReferencing();
 
-
 		
 		// Check if the client is authorized
 		AMFWriter& response = writer.writeAMFSuccess("NetConnection.Connect.Success","Connection succeeded",true);
-		response.amf0Preference = true;
-		response.writeNumberProperty("objectEncoding",3.0);
-		response.amf0Preference = false;
+		response.amf0 = true;
+		response.writeNumberProperty("objectEncoding",writer.amf0 ? 0.0 : 3.0);
+		response.amf0 = writer.amf0;
 		peer.onConnection(ex, writer,message,response);
 		if (ex)
 			return;
@@ -152,14 +149,14 @@ void FlashMainStream::messageHandler(Exception& ex, const string& name,AMFReader
 		
 		BinaryWriter& response = writer.writeRaw();
 		response.write16(0x29); // Unknown!
-		response.write32(invoker.params.RTMFP.keepAliveServer);
-		response.write32(invoker.params.RTMFP.keepAlivePeer);
+		response.write32(peer.parameters().getNumber<UInt32>("keepaliveServer")*1000);
+		response.write32(peer.parameters().getNumber<UInt32>("keepalivePeer")*1000);
 
 	} else if(name == "createStream") {
 		shared_ptr<FlashStream>& pStream = invoker.createFlashStream(peer);
 		_streams.emplace(pStream->id, pStream);
 		AMFWriter& response(writer.writeMessage());
-		response.amf0Preference = true;
+		response.amf0 = true;
 		response.writeNumber(pStream->id);
 
 	} else if(name == "deleteStream") {
@@ -168,7 +165,8 @@ void FlashMainStream::messageHandler(Exception& ex, const string& name,AMFReader
 		invoker.destroyFlashStream(id);
 	} else {
 		Exception exm;
-		peer.onMessage(exm, name, message);
+		if(!peer.onMessage(exm, name, message))
+			exm.set(Exception::APPLICATION, "Method '",name,"' not found on application ", peer.path);
 		if (exm)
 			writer.writeAMFError("NetConnection.Call.Failed", exm.error());
 	}

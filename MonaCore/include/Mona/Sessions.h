@@ -76,17 +76,51 @@ public:
 	template<typename SessionType, UInt8 options = BYID,typename ...Args>
 	SessionType& create(Args&&... args) {
 		SessionType* pSession = new SessionType(args ...);
-		pSession->_id = _nextId;
-		_sessions[_nextId] = pSession;
 
-		if (options&BYPEER)
-			_sessionsByPeerId[pSession->peer.id] = pSession;
+		auto it = _freeIds.begin();
+		if (it != _freeIds.end()) {
+			pSession->_id = *it;
+			_freeIds.erase(it);
+		} else {
+			if (_sessions.empty())
+				pSession->_id = 1;
+			else {
+				auto itSession = _sessions.end();
+				--itSession;
+				pSession->_id = itSession->first+1;
+			}
+		}
+
+		while(!_sessions.emplace(pSession->_id, pSession).second) {
+			CRITIC("Bad computing session id, id ", pSession->_id, " already exists");
+			do {
+				++pSession->_id;
+			} while (find(pSession->_id));
+		}
+
+		if (options&BYPEER) {
+			auto it = _sessionsByPeerId.lower_bound(pSession->peer.id);
+			if (it != _sessionsByPeerId.end() && memcmp(it->first,pSession->peer.id,ID_SIZE)==0) {
+				INFO("Session ", it->second->name(), " overloaded by ",pSession->name()," (by peer id)");
+				auto itSession = _sessions.find(it->second->_id);
+				if (itSession == _sessions.end())
+					CRITIC("Session overloaded ",it->second->name()," impossible to find in sessions collection")
+				else
+					remove(itSession);
+				it->second = pSession;
+			} else
+				_sessionsByPeerId.emplace_hint(it, pSession->peer.id, pSession);
+		}
 
 		if (options&BYADDRESS) {
 			auto it = _sessionsByAddress.lower_bound(pSession->peer.address);
 			if (it != _sessionsByAddress.end() && it->first == pSession->peer.address) {
-
-				WARN("Replacement of an existing ", pSession->protocolName()," session (address=", pSession->peer.address.toString(), ") during session creation")
+				INFO("Session ", it->second->name(), " overloaded by ",pSession->name()," (by ",pSession->peer.address.toString(),")");
+				auto itSession = _sessions.find(it->second->_id);
+				if (itSession == _sessions.end())
+					CRITIC("Session overloaded ",it->second->name()," impossible to find in sessions collection")
+				else
+					remove(itSession);
 				it->second = pSession;
 			} else
 				_sessionsByAddress.emplace_hint(it, pSession->peer.address, pSession);
@@ -95,22 +129,20 @@ public:
 		pSession->_sessionsOptions = options;
 
 		pSession->Events::OnAddressChange::subscribe(onAddressChange);
-		DEBUG("Session ", _nextId, " created");
-		do {
-			++_nextId;
-		} while (_nextId == 0 && find(_nextId));
+		DEBUG("Session ", pSession->name(), " created");
 		return *pSession;
 	}
 
 private:
 
 	void    remove(std::map<UInt32,Session*>::iterator it);
-	void	removeByPeer(Session& session);
+	void	removeByAddress(Session& session);
+	void	removeByAddress(const SocketAddress& address, Session& session);
 
 	Session::OnAddressChange::Type	onAddressChange;
 
-	UInt32											_nextId;
 	std::map<UInt32,Session*>						_sessions;
+	std::set<UInt32>								_freeIds;
 	std::map<const UInt8*,Session*,CompareEntity>	_sessionsByPeerId;
 	std::map<SocketAddress,Session*>				_sessionsByAddress;
 };

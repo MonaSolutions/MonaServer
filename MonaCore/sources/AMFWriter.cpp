@@ -28,13 +28,12 @@ namespace Mona {
 
 AMFWriter   AMFWriter::Null;
 
-AMFWriter::AMFWriter(const PoolBuffers& poolBuffers) : DataWriter(poolBuffers),_amf3(false),amf0Preference(false) {
+AMFWriter::AMFWriter(const PoolBuffers& poolBuffers) : DataWriter(poolBuffers),_amf3(false),amf0(false) {
 
 }
 
 void AMFWriter::clear() {
 	_amf3=false;
-	amf0Preference=false;
 	_lastObjectReferences.clear();
 	_references.clear();
 	_stringReferences.clear();
@@ -57,7 +56,7 @@ bool AMFWriter::repeat(UInt32 reference) {
 void AMFWriter::writeString(const string& value) {
 	_lastReference=0;
 	if(!_amf3) {
-		if(amf0Preference) {
+		if(amf0) {
 			if(value.size()>65535) {
 				packet.write8(AMF_LONG_STRING);
 				packet.write32(value.size());
@@ -115,7 +114,7 @@ void AMFWriter::writeBoolean(bool value){
 void AMFWriter::writeDate(const Date& date){
 	_lastReference=0;
 	if(!_amf3) {
-		if(amf0Preference) {
+		if(amf0) {
 			packet.write8(AMF_DATE);
 			packet.writeNumber<double>((double)date);
 			packet.write16(0); // Timezone, useless in AMF0 format (always equals 0)
@@ -132,29 +131,29 @@ void AMFWriter::writeDate(const Date& date){
 
 void AMFWriter::writeNumber(double value){
 	_lastReference=0;
-	if(!amf0Preference && value<=AMF_MAX_INTEGER && round(value) == value) {
-		writeInteger((Int32)value);
+	if(!amf0 && value<=AMF_MAX_INTEGER && round(value) == value) {
+		// writeInteger
+		if(!_amf3)
+			packet.write8(AMF_AVMPLUS_OBJECT);
+		packet.write8(AMF3_INTEGER); // marker
+		if(value>AMF_MAX_INTEGER) {
+			ERROR("AMF Integer maximum value reached");
+			value=AMF_MAX_INTEGER;
+		} else if(value<0)
+			value+=(1<<29);
+		packet.write7BitValue((UInt32)value);
 		return;
 	}
 	packet.write8(_amf3 ? AMF3_NUMBER : AMF_NUMBER); // marker
 	packet.writeNumber<double>(value);
 }
 
-void AMFWriter::writeInteger(Int32 value){
-	if(!_amf3)
-		packet.write8(AMF_AVMPLUS_OBJECT);
-	packet.write8(AMF3_INTEGER); // marker
-	if(value>AMF_MAX_INTEGER) {
-		ERROR("AMF Integer maximum value reached");
-		value=AMF_MAX_INTEGER;
-	} else if(value<0)
-		value+=(1<<29);
-	packet.write7BitValue(value);
-}
-
 void AMFWriter::writeBytes(const UInt8* data,UInt32 size) {
-	if(!_amf3)
-		packet.write8(AMF_AVMPLUS_OBJECT); // switch in AMF3 format 
+	if (!_amf3) {
+		if (amf0)
+			WARN("Impossible to write a byte array in AMF0, switch to AMF3");
+		packet.write8(AMF_AVMPLUS_OBJECT); // switch in AMF3 format
+	}
 	packet.write8(AMF3_BYTEARRAY); // bytearray in AMF3 format!
 	packet.write7BitValue((size << 1) | 1);
 	_references.emplace_back(AMF3_BYTEARRAY);
@@ -165,15 +164,18 @@ void AMFWriter::writeBytes(const UInt8* data,UInt32 size) {
 void AMFWriter::beginObject(const string& type,bool external) {
 	_lastReference=0;
 	if(!_amf3) {
-		if(amf0Preference && !external) {
-			_lastObjectReferences.emplace_back(0,true);
-			if(type.empty())
-				packet.write8(AMF_BEGIN_OBJECT);
-			else {
-				packet.write8(AMF_BEGIN_TYPED_OBJECT);
-				writeString(type);
+		if(amf0) {
+			if (!external) {
+				_lastObjectReferences.emplace_back(0, true);
+				if (type.empty())
+					packet.write8(AMF_BEGIN_OBJECT);
+				else {
+					packet.write8(AMF_BEGIN_TYPED_OBJECT);
+					writeString(type);
+				}
+				return;
 			}
-			return;
+			WARN("Impossible to write an external object in AMF0, switch to AMF3");
 		}
 		packet.write8(AMF_AVMPLUS_OBJECT);
 		_amf3=true;
@@ -210,6 +212,8 @@ void AMFWriter::beginObject(const string& type,bool external) {
 void AMFWriter::beginObjectArray(UInt32 size) {
 	_lastReference=0;
 	if(!_amf3) {
+		if (amf0)
+			WARN("Impossible to write a mixed object in AMF0, switch to AMF3");
 		packet.write8(AMF_AVMPLUS_OBJECT);
 		_amf3=true;
 	}
@@ -217,13 +221,15 @@ void AMFWriter::beginObjectArray(UInt32 size) {
 	packet.write7BitValue((size << 1) | 1);
 	_references.emplace_back(AMF3_ARRAY);
 	_lastReference=_references.size();
-	_lastObjectReferences.emplace_back(_lastReference,true);
 	_lastObjectReferences.emplace_back(_lastReference,false);
+	_lastObjectReferences.emplace_back(_lastReference,true);
 }
 
 void AMFWriter::beginMap(UInt32 size,bool weakKeys) {
 	_lastReference=0;
 	if(!_amf3) {
+		if (amf0)
+			WARN("Impossible to write a map in AMF0, switch to AMF3");
 		packet.write8(AMF_AVMPLUS_OBJECT);
 		_amf3=true;
 	}

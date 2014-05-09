@@ -62,6 +62,9 @@ int LUADataTable::Get(lua_State *pState) {
 		if (!lua_isnil(pState, -1)) {
 			lua_getfield(pState, -1, lua_tostring(pState, 2));
 			lua_replace(pState, -2);
+		} else if (strcmp(lua_tostring(pState, 2), "count") == 0) {
+			lua_pushnumber(pState, table.count);
+			lua_replace(pState, -2);
 		}
 	} else
 		SCRIPT_ERROR("Key database entry must always be a string or a number"); // return nil

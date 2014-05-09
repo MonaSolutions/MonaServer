@@ -106,7 +106,7 @@ private:
 	void							flush(UInt8 marker,bool echoTime,RTMFPEngine::Type type);
 	RTMFPEngine::Type				prevEngineType() { return _prevEngineType; }
 	
-	bool							keepAlive();
+	bool							keepalive();
 
 	RTMFPWriter*					writer(UInt64 id);
 	RTMFPFlow*						createFlow(UInt64 id,const std::string& signature);

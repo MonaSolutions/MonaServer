@@ -31,7 +31,7 @@ class TCProtocol : public Protocol , public virtual Object,
 	public Events::OnConnection,
 	public Events::OnError {
 public:
-	bool load(Exception& ex, const ProtocolParams& params);
+	bool load(Exception& ex,const std::string& host,UInt16 port);
 
 protected:
 	TCProtocol(const char* name, Invoker& invoker, Sessions& sessions) : _server(invoker.sockets), Protocol(name, invoker, sessions) {
@@ -64,9 +64,9 @@ private:
 	TCPServer _server;
 };
 
-inline bool TCProtocol::load(Exception& ex, const ProtocolParams& params) {
+inline bool TCProtocol::load(Exception& ex,const std::string& host,UInt16 port) {
 	SocketAddress address;
-	if (!address.setWithDNS(ex, params.host, params.port))
+	if (!address.setWithDNS(ex, host, port))
 		return false;
 	return _server.start(ex, address);
 }

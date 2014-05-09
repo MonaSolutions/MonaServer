@@ -36,10 +36,7 @@ void ServerManager::run(Exception& ex) {
 	} while (sleep(2000) != STOP);
 }
 
-void ServerManager::handle(Exception& ex) {
-	_server.manage();
-	_server.relay.manage();
-}
+void ServerManager::handle(Exception& ex) { _server.manage(); }
 
 Server::Server(UInt32 socketBufferSize,UInt16 threads) : Startable("Server"),Handler(socketBufferSize,threads),_countClients(0),_protocols(*this),_manager(*this) {
 	if (socketBufferSize>0)
@@ -50,15 +47,14 @@ Server::~Server() {
 	stop();
 }
 
-bool Server::start(const ServerParams& params) {
+bool Server::start(Startable::Priority threadPriority) {
 	if(running()) {
 		ERROR("Server is already running, call stop method before");
 		return false;
 	}
-	(ServerParams&)this->params = params;
 	Exception ex;
 	bool result;
-	EXCEPTION_TO_LOG(result = Startable::start(ex, params.threadPriority), "Server");
+	EXCEPTION_TO_LOG(result = Startable::start(ex, threadPriority), "Server");
 	return result;
 }
 
@@ -70,7 +66,7 @@ void Server::run(Exception& exc) {
 		TaskHandler::start();
 
 		Exception exWarn;
-		if (((SocketManager&)sockets).start(exWarn) && ((RelayServer&)relay).start(exWarn)) {
+		if (((SocketManager&)sockets).start(exWarn) && ((RelayServer&)relayer).start(exWarn)) {
 			if (exWarn)
 				WARN(exWarn.error());
 
@@ -108,7 +104,7 @@ void Server::run(Exception& exc) {
 		_pSessions.reset();
 
 	// terminate relay server
-	((RelayServer&)relay).stop();
+	((RelayServer&)relayer).stop();
 
 	// unload protocol servers (close server socket)
 	_protocols.unload();
@@ -134,6 +130,7 @@ void Server::manage() {
 		_pSessions->manage();
 	if(clients.count() != _countClients)
 		INFO((_countClients=clients.count())," clients");
+	relayer.manage();
 }
 
 

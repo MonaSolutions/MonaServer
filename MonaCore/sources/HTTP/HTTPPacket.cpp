@@ -26,7 +26,7 @@ using namespace std;
 namespace Mona {
 
 
-HTTPPacket::HTTPPacket(PoolBuffer& pBuffer) : filePos(string::npos), _pBuffer(pBuffer),
+HTTPPacket::HTTPPacket(PoolBuffer& pBuffer) : filePos(string::npos),sizeParameters(0), _pBuffer(pBuffer),
 	content(NULL),
 	contentLength(0),
 	contentType(HTTP::CONTENT_ABSENT),
