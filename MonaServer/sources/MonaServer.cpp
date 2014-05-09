@@ -38,12 +38,11 @@ const string MonaServer::DataPath("./");
 MonaServer::MonaServer(TerminateSignal& terminateSignal, const Parameters& configs) :
 	Server(configs.getNumber<UInt32>("socketBufferSize"), configs.getNumber<UInt16>("threads")), servers(configs,sockets), _firstData(true),_data(this->poolBuffers),_terminateSignal(terminateSignal),
 	setLUAProperty([this](const string& key, const string& value) {
-		lua_pushstring(_pState,key.c_str());
 		if (String::ICompare(value, "false") == 0 || String::ICompare(value, "nil") == 0)
 			lua_pushboolean(_pState, 0);
 		else
 			lua_pushlstring(_pState, value.c_str(), value.size());
-		lua_rawset(_pState, -3);
+		lua_setfield(_pState, -2, key.c_str());
 	}) {
 
 
@@ -255,24 +254,26 @@ void MonaServer::onDataLoading(const string& path, const char* value, UInt32 siz
 		key.assign(values.back());
 		values.pop_back();
 	}
-	for (const string& value : values) {
+	for (const string& subpath : values) {
 		if (!lua_istable(_pState, -1)) {
 			lua_pop(_pState, 1);
 			WARN("Loading database entry ", path, " ignored because parent is not a table")
 				return;
 		}
-		lua_getfield(_pState, -1, value.c_str());
+		lua_getfield(_pState, -1, subpath.c_str());
 		if (lua_isnil(_pState, -1)) {
 			lua_pop(_pState, 1);
 			lua_newtable(_pState);
-			lua_setfield(_pState, -2, value.c_str());
-			lua_getfield(_pState, -1, value.c_str());
+			lua_setfield(_pState, -2, subpath.c_str());
+			lua_getfield(_pState, -1, subpath.c_str());
 		}
 		lua_replace(_pState, -2);
 	}
 
 	// set value
-	setLUAProperty(key, value);
+	string val(value, size);
+	setLUAProperty(key, val);
+
 	lua_pop(_pState, 1); // remove table
 }
 
