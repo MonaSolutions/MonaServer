@@ -251,9 +251,8 @@ JSONReader::Type JSONReader::followingType() {
 	// fill until the next ',' or '}' or ']'
 	const UInt8* begin(cur);
 	do {
-		packet.next(1);
-		cur = available() ? packet.current() : NULL;
-	} while (cur && cur[0] != ',' && cur[0] != '}' && cur[0] != ']');
+		packet.next(1); ++cur;
+	} while (available() && cur[0] != ',' && cur[0] != '}' && cur[0] != ']');
 	_text.assign((const char*)begin, cur - begin);
 	return NUMBER;
 }
