@@ -90,27 +90,13 @@ string& JSONReader::readString(string& value) {
 }
 
 double JSONReader::readNumber() {
-	const UInt8* cur = current();
-	if(!cur) {
-		ERROR("JSON number absent, no more data available")
-		return 0;
-	}
-
-	UInt32 available = packet.available();
-	const UInt8* first = cur;
-	while((available-(cur-first)) && (isdigit(*cur) || *cur=='.'))
-		cur++;
-
-	string value;
-	packet.readRaw(cur-first, value);
-
 	Exception ex;
-	double dval = String::ToNumber<double>(ex, value);
+	double result = String::ToNumber<double>(ex, _text);
 	if (ex) {
 		ERROR("JSON number malformed, ",ex.error());
 		return 0;
 	}
-	return dval;
+	return result;
 }
 
 bool JSONReader::readObject(string& type,bool& external) {
@@ -261,6 +247,14 @@ JSONReader::Type JSONReader::followingType() {
 		_bool = false;
 		return BOOLEAN;
 	}
+
+	// fill until the next ',' or '}' or ']'
+	const UInt8* begin(cur);
+	do {
+		packet.next(1);
+		cur = available() ? packet.current() : NULL;
+	} while (cur && cur[0] != ',' && cur[0] != '}' && cur[0] != ']');
+	_text.assign((const char*)begin, cur - begin);
 	return NUMBER;
 }
 
