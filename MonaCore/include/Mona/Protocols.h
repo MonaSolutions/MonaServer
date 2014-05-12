@@ -59,8 +59,9 @@ private:
 
 		Exception ex;
 		bool success = false;
-		pProtocol->getString("host", _invoker.buffer);
-		EXCEPTION_TO_LOG(success = ((ProtocolType*)pProtocol.get())->load(ex,_invoker.buffer,port), name, " server")
+		std::string host;
+		pProtocol->getString("host",host);
+		EXCEPTION_TO_LOG(success = ((ProtocolType*)pProtocol.get())->load(ex,host,port), name, " server")
 		if (!success)
 			return;
 
@@ -68,7 +69,7 @@ private:
 		for (auto& it : *pProtocol)
 			_invoker.setString(String::Format(_invoker.buffer,name,".",it.first), it.second);
 
-		NOTE(name, " server starts on ",port, " ", dynamic_cast<UDProtocol*>(pProtocol.get()) ? "UDP" : "TCP", " port");
+		NOTE(name, " server started on ",host,":",port, dynamic_cast<UDProtocol*>(pProtocol.get()) ? " (UDP)" : " (TCP)");
 		_protocols.emplace_back(pProtocol.release());
 	}
 

@@ -116,7 +116,7 @@ void FlashMainStream::messageHandler(Exception& ex, const string& name,AMFReader
 				Util::UnpackQuery(peer.query, properties);
 			}
 
-			if (properties.getNumber<UInt32>("objectEncoding")==0) {
+			if (properties.getNumber<UInt32,3>("objectEncoding")==0) {
 				writer.amf0 = true;
 				WARN("Client ",peer.protocol," not compatible with AMF3, few complex object can be not supported");
 			}

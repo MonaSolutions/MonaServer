@@ -135,12 +135,14 @@ void HTTPSession::packetHandler(PacketReader& reader) {
 
 		if (!peer.connected) {
 			peer.onConnection(ex, _writer,propertiesReader);
-			peer.parameters().getNumber("timeout",_timeout);
-			peer.parameters().getBool("index", _indexDirectory);
-			peer.parameters().getString("index", _index);
-			if(!_indexDirectory)
-				_indexCanBeMethod = _index.find_last_of('.')==string::npos;
-			propertiesReader.reset();
+			if (!ex) {
+				_timeout = peer.parameters().getNumber<UInt32, 7>("timeout") * 1000;
+				peer.parameters().getBool("index", _indexDirectory);
+				peer.parameters().getString("index", _index);
+				if(!_indexDirectory)
+					_indexCanBeMethod = _index.find_last_of('.')==string::npos;
+				propertiesReader.reset();
+			}
 		}
 
 		if (!ex && peer.connected) {
@@ -232,9 +234,10 @@ void HTTPSession::manage() {
 		return;
 	}
 	// timeout http session // TODO add a timeout for Listening HTTP session without media reception??
-	if (peer.connected && _timeout > 0 && !_pListener && _writer.timeout.isElapsed(_timeout))
+	if (peer.connected && _timeout > 0 && !_pListener && _writer.timeout.isElapsed(_timeout)) {
 		kill(TIMEOUT_DEATH);
-	else if (!_packets.empty() && _packets.front()->exception)
+		DEBUG("HTTP session ", name(), " timeout");
+	} else if (!_packets.empty() && _packets.front()->exception)
 		_writer.close(_packets.front()->exception);
 }
 
