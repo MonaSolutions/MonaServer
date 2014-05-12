@@ -73,8 +73,7 @@ private:
 
 	void						receive(Exception& ex,UInt32 available);
 	Socket::OnReadable::Type	onReadable;
-	Socket::OnSending::Type		onSending;
-
+	
 	Socket					_socket;
 
 	bool					_disconnecting;

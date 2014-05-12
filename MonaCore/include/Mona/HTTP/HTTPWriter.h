@@ -68,15 +68,14 @@ private:
 		return *_senders.back();
 	}
 
+	TCPSession::OnSending::Type					onSending;
+
 	std::unique_ptr<MediaContainer>				_pMedia;
 	TCPSession&									_session;
 	PoolThread*									_pThread;
 	std::vector<std::shared_ptr<HTTPSender>>	_senders;
 	bool										_isMain;
 	std::string									_buffer;
-
-	
-	TCPSession::OnSending::Type					onSending;
 };
 
 

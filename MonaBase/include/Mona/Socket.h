@@ -57,7 +57,7 @@ namespace Events {
 		virtual void onSubscribe() {}
 	};
 	// Can be called by a separated thread!
-	struct OnSending : Event<void(UInt32&)> {};
+	struct OnSending : Event<void(UInt32)> {};
 };
 
 class SocketImpl;
