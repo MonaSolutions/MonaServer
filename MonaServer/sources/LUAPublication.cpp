@@ -36,7 +36,7 @@ void LUAPublicationBase::AddListener(lua_State* pState, const Listener& listener
 		Script::Collection(pState, -1, "listeners", listener.publication.listeners.count() + 1);
 		lua_pushvalue(pState, indexListener);
 		lua_pushvalue(pState, -4); // client table
-		lua_rawset(pState, -3); // rawset cause NewIndexProhibited
+		lua_rawset(pState, -3);
 		lua_pop(pState, 2);
 	}
 }
@@ -47,7 +47,7 @@ void LUAPublicationBase::RemoveListener(lua_State* pState, const Listener& liste
 		Script::Collection(pState, -1, "listeners", listener.publication.listeners.count());
 		lua_pushvalue(pState, -3); // listener table
 		lua_pushnil(pState);
-		lua_rawset(pState, -3); // rawset cause NewIndexProhibited
+		lua_rawset(pState, -3);
 		lua_pop(pState, 2);
 	}
 }

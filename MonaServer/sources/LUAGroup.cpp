@@ -31,7 +31,7 @@ void LUAGroup::AddClient(lua_State* pState, Group& group, Client& client, UInt8 
 	Script::Collection(pState, indexGroup, "|items", group.count());
 	LUAClient::GetID(pState, client);
 	lua_pushvalue(pState, -3);
-	lua_rawset(pState, -3);
+	lua_settable(pState, -3);
 	lua_pop(pState, 1);
 }
 
@@ -40,7 +40,7 @@ void LUAGroup::RemoveClient(lua_State* pState, Group& group, Client& client) {
 	Script::Collection(pState, -1, "|items", group.count());
 	LUAClient::GetID(pState, client);
 	lua_pushnil(pState);
-	lua_rawset(pState, -3);
+	lua_settable(pState, -3);
 	lua_pop(pState, 1);
 }
 

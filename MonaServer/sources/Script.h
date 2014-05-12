@@ -111,6 +111,10 @@ public:
 	static int Pairs(lua_State* pState);
 	static int IPairs(lua_State* pState);
 
+	
+	static void SetProperty(lua_State* pState, const std::string& key, const std::string& value) { PushValue(pState, value); lua_setfield(pState, -2, key.c_str()); }
+	static void PushValue(lua_State* pState, const std::string& value);
+
 	template<class CollectorType = Script, class LUAItemType = Script>
 	static bool Collection(lua_State* pState, int index,const char* field, Mona::UInt32 size, CollectorType* pCollector = NULL) {
 		lua_getmetatable(pState, index);
@@ -125,8 +129,6 @@ public:
 			// metatable
 			lua_newtable(pState);
 			lua_pushvalue(pState, -1);
-			lua_pushcfunction(pState, &Script::NewIndexProhibited);
-			lua_setfield(pState, -2, "__newindex");
 			lua_pushcfunction(pState, &Script::Len);
 			lua_setfield(pState, -2, "__len");
 #if !defined(_DEBUG)
@@ -393,12 +395,6 @@ private:
 	static const char* ToPrint(lua_State* pState,std::string& out);
 	static void	ReadData(lua_State *pState,Mona::DataWriter& writer,Mona::UInt32 count,std::map<Mona::UInt64,Mona::UInt32>& references);
 	static void WriteData(lua_State *pState,Mona::DataReader::Type type,Mona::DataReader& reader);
-
-
-	static int NewIndexProhibited(lua_State *pState) {
-		// prohibited all users additions!
-		return 0;
-	}
 
 	template<class Type,class LUAType>
 	static void CreateObject(lua_State *pState, const Type& object) {

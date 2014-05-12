@@ -127,6 +127,14 @@ void Script::CloseState(lua_State* pState) {
 		lua_close(pState);
 }
 
+
+void Script::PushValue(lua_State* pState, const string& value) {
+	if (String::ICompare(value, "false") == 0 || String::ICompare(value, "nil") == 0)
+		lua_pushboolean(pState, 0);
+	else
+		lua_pushlstring(pState, value.c_str(), value.size());
+}
+
 int Script::Next(lua_State* pState) {
 	// 1 table
 	// [2 key] (optional)
@@ -148,9 +156,11 @@ int Script::Next(lua_State* pState) {
 
 int Script::INext(lua_State* pState) {
 	// 1 table
-	// [2 key] (optional)
+	// [2 index] (optional,start to 0)
 	if (lua_gettop(pState) < 2)
 		lua_pushnumber(pState,1);
+	else
+		lua_pushnumber(pState, lua_tonumber(pState,2)+1);
 	lua_pushvalue(pState, -1);
 	lua_gettable(pState, 1);
 	if (lua_isnil(pState, -1)) {

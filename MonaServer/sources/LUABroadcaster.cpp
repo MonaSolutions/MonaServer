@@ -28,18 +28,16 @@ void LUABroadcaster::AddServer(lua_State* pState, Broadcaster& broadcaster, cons
 	// -1 must be the server table!
 	if (Script::FromObject(pState, broadcaster)) {
 		Script::Collection(pState, -1, "|items", broadcaster.count());
-		lua_pushstring(pState, address.c_str());
-		lua_pushvalue(pState, -4);
-		lua_rawset(pState, -3); // rawset cause NewIndexProhibited
+		lua_pushvalue(pState, -3);
+		lua_setfield(pState, -2,address.c_str());
 		lua_pop(pState, 2);
 	}
 }
 void LUABroadcaster::RemoveServer(lua_State* pState, Broadcaster& broadcaster, const string& address) {
 	if (Script::FromObject(pState, broadcaster)) {
 		Script::Collection(pState, -1, "|items", broadcaster.count());
-		lua_pushstring(pState, address.c_str());
 		lua_pushnil(pState);
-		lua_rawset(pState, -3); // rawset cause NewIndexProhibited
+		lua_setfield(pState, -2,address.c_str());
 		lua_pop(pState, 2);
 	}
 }

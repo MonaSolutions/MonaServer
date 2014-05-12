@@ -58,7 +58,7 @@ void LUAInvoker::AddClient(lua_State *pState, Invoker& invoker, Client& client) 
 	Script::Collection(pState, -1, "clients", invoker.clients.count() + 1);
 	LUAClient::GetID(pState, client);
 	lua_pushvalue(pState, -4); // client table
-	lua_rawset(pState, -3); // rawset cause NewIndexProhibited
+	lua_settable(pState, -3);
 	lua_pop(pState, 2);
 }
 
@@ -67,7 +67,7 @@ void LUAInvoker::RemoveClient(lua_State *pState, Invoker& invoker, const Client&
 	Script::Collection(pState, -1, "clients", invoker.clients.count());
 	LUAClient::GetID(pState, client);
 	lua_pushnil(pState);
-	lua_rawset(pState, -3); // rawset cause NewIndexProhibited
+	lua_settable(pState, -3);
 	lua_pop(pState, 2);
 }
 
@@ -75,18 +75,16 @@ void LUAInvoker::AddPublication(lua_State *pState, Invoker& invoker, const Publi
 	// -1 must be the publication table!
 	lua_getglobal(pState, "mona");
 	Script::Collection(pState, -1, "publications", invoker.publications.count());
-	lua_pushstring(pState, publication.name().c_str());
-	lua_pushvalue(pState, -4);
-	lua_rawset(pState, -3); // rawset cause NewIndexProhibited
+	lua_pushvalue(pState, -3);
+	lua_setfield(pState, -2 ,publication.name().c_str());
 	lua_pop(pState, 2);
 }
 
 void LUAInvoker::RemovePublication(lua_State *pState, Invoker& invoker, const Publication& publication) {
 	lua_getglobal(pState, "mona");
 	Script::Collection(pState, -1, "publications", invoker.publications.count()-1);
-	lua_pushstring(pState, publication.name().c_str());
 	lua_pushnil(pState);
-	lua_rawset(pState, -3); // rawset cause NewIndexProhibited
+	lua_setfield(pState, -2 ,publication.name().c_str());
 	lua_pop(pState, 2);
 }
 
@@ -94,18 +92,16 @@ void LUAInvoker::AddGroup(lua_State *pState, Invoker& invoker, Group& group) {
 	// -1 must be the group table!
 	lua_getglobal(pState, "mona");
 	Script::Collection(pState, -1, "groups", invoker.groups.count());
-	lua_pushstring(pState,Util::FormatHex(group.id, ID_SIZE, invoker.buffer).c_str());
-	lua_pushvalue(pState, -4);
-	lua_rawset(pState, -3); // rawset cause NewIndexProhibited
+	lua_pushvalue(pState, -3);
+	lua_setfield(pState, -2 ,Util::FormatHex(group.id, ID_SIZE, invoker.buffer).c_str());
 	lua_pop(pState, 2);
 }
 
 void LUAInvoker::RemoveGroup(lua_State *pState, Invoker& invoker, const Group& group) {
 	lua_getglobal(pState, "mona");
 	Script::Collection(pState, -1, "groups", invoker.groups.count());
-	lua_pushstring(pState,Util::FormatHex(group.id, ID_SIZE,invoker.buffer).c_str());
 	lua_pushnil(pState);
-	lua_rawset(pState, -3); // rawset cause NewIndexProhibited
+	lua_setfield(pState, -2 ,Util::FormatHex(group.id, ID_SIZE, invoker.buffer).c_str());
 	lua_pop(pState, 2);
 }
 
