@@ -38,6 +38,7 @@ Mona project is under GPL license, please contact us for commercial licence at m
   scalability
   serversocket
   api
+  database
   faq
   
 .. _LuaJIT : http://luajit.org/

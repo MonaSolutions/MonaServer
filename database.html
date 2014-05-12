@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>The MonaServer Database System &mdash; MonaServer 1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/bootstrap-3.1.0/css/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="_static/bootstrap-3.1.0/css/bootstrap-theme.min.css" type="text/css" />
+    <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="_static/bootstrap-3.1.0/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
+    <link rel="top" title="MonaServer 1 documentation" href="index.html" />
+    <link rel="next" title="FAQ" href="faq.html" />
+    <link rel="prev" title="Mona Server’s lua API" href="api.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head>
+  <body>
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="index.html">
+          MonaServer</a>
+        <span class="navbar-text navbar-version pull-left"><b>1</b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            <li class="divider-vertical"></li>
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="samples.html">Samples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="serverapp.html">Server Application</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scalability.html">Scalability and load-balancing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="serversocket.html">Server Application Sockets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">Mona Server&#8217;s lua API</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">The MonaServer Database System</a></li>
+<li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a></li>
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"><ul>
+<li><a class="reference internal" href="#">The MonaServer Database System</a><ul>
+<li><a class="reference internal" href="#the-data-global-variable">The <em>data</em> global variable</a></li>
+<li><a class="reference internal" href="#how-does-it-works">How does it works?</a></li>
+</ul>
+</li>
+</ul>
+</ul>
+</li>
+              
+            
+            
+              
+                
+  <li>
+    <a href="api.html" title="Previous Chapter: Mona Server’s lua API"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm">&laquo; Mona Server’s lu...</span>
+    </a>
+  </li>
+  <li>
+    <a href="faq.html" title="Next Chapter: FAQ"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm">FAQ &raquo;</span>
+    </a>
+  </li>
+              
+            
+            
+            
+            
+              <li class="hidden-sm">
+<div id="sourcelink">
+  <a href="_sources/database.txt"
+     rel="nofollow">Source</a>
+</div></li>
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-12">
+      
+  <a class="reference external image-reference" href="https://github.com/MonaSolutions/MonaServer"><img alt="_images/githubBlack.png" class="align-right" src="_images/githubBlack.png" /></a>
+<div class="section" id="the-monaserver-database-system">
+<h1><a class="toc-backref" href="#id1">The MonaServer Database System</a><a class="headerlink" href="#the-monaserver-database-system" title="Permalink to this headline">¶</a></h1>
+<p>MonaServer gives you the possibility to save data in a <strong>NoSQL</strong> way.</p>
+<div class="contents topic" id="table-of-contents">
+<p class="topic-title first">Table of Contents</p>
+<ul class="simple">
+<li><a class="reference internal" href="#the-monaserver-database-system" id="id1">The MonaServer Database System</a><ul>
+<li><a class="reference internal" href="#the-data-global-variable" id="id2">The <em>data</em> global variable</a></li>
+<li><a class="reference internal" href="#how-does-it-works" id="id3">How does it works?</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="the-data-global-variable">
+<h2><a class="toc-backref" href="#id2">The <em>data</em> global variable</a><a class="headerlink" href="#the-data-global-variable" title="Permalink to this headline">¶</a></h2>
+<p><strong>data</strong> is the name of the global table variable that you need to assign.</p>
+<div class="highlight-lua"><div class="highlight"><pre><span class="k">function</span> <span class="nf">onConnection</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
+    <span class="n">data</span><span class="p">[</span><span class="s2">&quot;</span><span class="s">lastClientId&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">client</span><span class="p">.</span><span class="n">id</span>
+
+    <span class="o">#</span> <span class="n">save</span> <span class="n">each</span> <span class="n">client</span> <span class="n">connexion</span> <span class="n">time</span> <span class="k">in</span> <span class="n">a</span> <span class="n">table</span>
+    <span class="k">if</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;</span><span class="s">clientsConnexions&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="kc">nil</span> <span class="k">then</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;</span><span class="s">clientsConnexions&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span> <span class="k">end</span>
+    <span class="n">data</span><span class="p">[</span><span class="s2">&quot;</span><span class="s">clientsConnexions&quot;</span><span class="p">][</span><span class="o">#</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;</span><span class="s">clientsConnexions&quot;</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="nb">os.time</span><span class="p">()</span>
+<span class="k">end</span>
+</pre></div>
+</div>
+<p>And if you want to delete some old value you just have to affect <em>nil</em> to the corresponding key like this :</p>
+<div class="highlight-lua"><div class="highlight"><pre><span class="k">function</span> <span class="nf">clearLastClientId</span><span class="p">()</span>
+    <span class="n">data</span><span class="p">[</span><span class="s2">&quot;</span><span class="s">lastClientId&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">nil</span>
+<span class="k">end</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="how-does-it-works">
+<h2><a class="toc-backref" href="#id3">How does it works?</a><a class="headerlink" href="#how-does-it-works" title="Permalink to this headline">¶</a></h2>
+<p>This system permits fast data retrieving and does not allow data corruption as it use <strong>md5</strong> for integrity checking.</p>
+<p>Root application&#8217;s values (<strong>www</strong>) are stocked in the <strong>data</strong> directory and all sub-applications have their own sub-directory. With this thing in mind you can access to sub-applications&#8217;s data in each parents applications :</p>
+<div class="highlight-lua"><div class="highlight"><pre><span class="k">function</span> <span class="nf">onConnection</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;</span><span class="s">subapp&quot;</span><span class="p">]</span> <span class="k">then</span> <span class="n">INFO</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">sub data sample : &quot;</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;</span><span class="s">subapp&quot;</span><span class="p">][</span><span class="s2">&quot;</span><span class="s">sample&quot;</span><span class="p">])</span> <span class="k">end</span>
+<span class="k">end</span>
+</pre></div>
+</div>
+<p>And respectively you can access to parents&#8217;s data using the keyword <strong>super</strong> :</p>
+<div class="highlight-lua"><div class="highlight"><pre><span class="k">function</span> <span class="nf">onConnection</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
+
+    <span class="n">INFO</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">parent data : &quot;</span><span class="p">,</span> <span class="n">super</span><span class="p">.</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;</span><span class="s">parentValue&quot;</span><span class="p">])</span>
+<span class="k">end</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">The entire database is readed at MonaServer&#8217;s start.</p>
+</div>
+</div>
+</div>
+
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2014, Mathieu Poux &amp; Thomas Jammet.<br/>
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b2.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

@@ -119,6 +119,11 @@ methods
 - **split(expression,separator[,option])**, LUA_ has not real split operator, this function fills this gap. It splits the *expression* in relation with the *separator* term given, and returns tokens as a multiple result. A optional number argument indicates if you want to ignore empty tokens (*option* =1), or to remove leading and trailing whitespace from tokens (*option* =2), or the both in same time (*option* =3).
 - **files(dirName)**, return a LUA_ table containing objects of type *File*, see *File_* object thereafter.
 
+Data
+==================
+
+**data** is the global variable that permits you to have persistent values, see `Database`_ page to know how to use it.
+
 Clients
 ==================
 
@@ -601,7 +606,7 @@ You can redirect to another file returning the file name as first parameter :
 		return "newFile"
 	end
 	
-Other parameters are treated as values for replacing templates *<% property %>* in file. So in this implementation each *<% name %>* element will be replaced by "robert" :
+Other parameters are treated as values for replacing templates *<% property %>* in file. So with the script below each *<% name %>* element will be replaced by "robert" :
 
 .. code-block:: lua
 
@@ -845,3 +850,4 @@ Call on server disconnection, see `Scalability and load-balancing <./scalability
 .. _IDataInput: http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/utils/IDataInput.html
 .. _Server Application: ./serverapp.html
 .. _Samples: ./samples.html
+.. _Database: ./database.html
