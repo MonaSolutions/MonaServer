@@ -34,7 +34,8 @@ namespace Events {
 class TCPClient : public virtual Object,
 	public Events::OnError,
 	public Events::OnData,
-	public Events::OnDisconnection {
+	public Events::OnDisconnection,
+	public Events::OnSending {
 public:
 	TCPClient(const SocketManager& manager);
 	TCPClient(const SocketAddress& peerAddress,SocketFile& file,const SocketManager& manager);
@@ -72,6 +73,7 @@ private:
 
 	void						receive(Exception& ex,UInt32 available);
 	Socket::OnReadable::Type	onReadable;
+	Socket::OnSending::Type		onSending;
 
 	Socket					_socket;
 

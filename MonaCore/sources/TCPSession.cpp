@@ -58,16 +58,21 @@ TCPSession::TCPSession(const SocketAddress& peerAddress, SocketFile& file, Proto
 
 	onDisconnection = [this]() { kill(SOCKET_DEATH); };
 
+	onSending = [this](UInt32& rc) {
+		OnSending::raise(rc);
+	};
 
 	_client.OnError::subscribe(onError);
 	_client.OnData::subscribe(onData);
 	_client.OnDisconnection::subscribe(onDisconnection);
+	_client.OnSending::subscribe(onSending);
 }
 
 TCPSession::~TCPSession() {
 	_client.OnError::unsubscribe(onError);
 	_client.OnData::unsubscribe(onData);
 	_client.OnDisconnection::unsubscribe(onDisconnection);
+	_client.OnSending::unsubscribe(onSending);
 }
 
 void TCPSession::receive(PacketReader& packet) {

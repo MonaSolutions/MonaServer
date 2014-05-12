@@ -56,10 +56,12 @@ namespace Events {
 		void subscribe(OnReadable& other) { Event<void(Exception&, UInt32)>::subscribe(other); onSubscribe();}
 		virtual void onSubscribe() {}
 	};
+	// Can be called by a separated thread!
+	struct OnSending : Event<void(UInt32&)> {};
 };
 
 class SocketImpl;
-class Socket : public virtual Object, public Events::OnReadable, public Events::OnError {
+class Socket : public virtual Object, public Events::OnReadable, public Events::OnError, public Events::OnSending {
 	friend class SocketManager;
 	friend class SocketImpl;
 public:

@@ -33,6 +33,7 @@ class HTTPWriter : public Writer, public virtual Object {
 public:
 
 	HTTPWriter(TCPSession& session);
+	virtual ~HTTPWriter();
 
 	std::shared_ptr<HTTPPacket>		pRequest;
 	Time							timeout;
@@ -73,6 +74,9 @@ private:
 	std::vector<std::shared_ptr<HTTPSender>>	_senders;
 	bool										_isMain;
 	std::string									_buffer;
+
+	
+	TCPSession::OnSending::Type					onSending;
 };
 
 

@@ -25,19 +25,32 @@ using namespace std;
 
 namespace Mona {
 
-TCPClient::TCPClient(const SocketManager& manager) :  onReadable([this](Exception& ex, UInt32 available) {receive(ex,available);}),_disconnecting(false),_pBuffer(manager.poolBuffers), _socket(manager), _rest(0) {
+TCPClient::TCPClient(const SocketManager& manager) :  
+		onReadable([this](Exception& ex, UInt32 available) {receive(ex,available);}),
+		onSending([this](UInt32& rc) {
+			OnSending::raise(rc);
+		}),
+		_disconnecting(false),_pBuffer(manager.poolBuffers), _socket(manager), _rest(0) {
 	_socket.OnError::subscribe(*this);
 	_socket.OnReadable::subscribe(onReadable);
+	_socket.OnSending::subscribe(onSending);
 }
 
-TCPClient::TCPClient(const SocketAddress& peerAddress, SocketFile& file,const SocketManager& manager) : onReadable([this](Exception& ex, UInt32 available) {receive(ex,available);}),_disconnecting(false),_peerAddress(peerAddress),_pBuffer(manager.poolBuffers), _rest(0), _socket(file,manager) {
+TCPClient::TCPClient(const SocketAddress& peerAddress, SocketFile& file,const SocketManager& manager) : 
+		onReadable([this](Exception& ex, UInt32 available) {receive(ex,available);}),
+		onSending([this](UInt32& rc) {
+			OnSending::raise(rc);
+		}),
+		_disconnecting(false),_peerAddress(peerAddress),_pBuffer(manager.poolBuffers), _rest(0), _socket(file,manager) {
 	_socket.OnError::subscribe(*this);
 	_socket.OnReadable::subscribe(onReadable);
+	_socket.OnSending::subscribe(onSending);
 }
 
 TCPClient::~TCPClient() {
 	_socket.OnReadable::unsubscribe(onReadable);
 	_socket.OnError::unsubscribe(*this);
+	_socket.OnSending::unsubscribe(onSending);
 	close();
 }
 

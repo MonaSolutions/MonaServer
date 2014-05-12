@@ -25,8 +25,17 @@ using namespace std;
 
 namespace Mona {
 
-HTTPWriter::HTTPWriter(TCPSession& session) : _session(session),_pThread(NULL),contentType(HTTP::CONTENT_TEXT),contentSubType("html; charset=utf-8"),Writer(session.peer.connected ? OPENED : OPENING) {
-	
+HTTPWriter::HTTPWriter(TCPSession& session) : 
+		_session(session),_pThread(NULL),contentType(HTTP::CONTENT_TEXT),contentSubType("html; charset=utf-8"),Writer(session.peer.connected ? OPENED : OPENING),
+		onSending([this](UInt32& rc) {
+			timeout.update();
+		}) {
+
+	_session.OnSending::subscribe(onSending);
+}
+
+HTTPWriter::~HTTPWriter() {
+	_session.OnSending::unsubscribe(onSending);
 }
 
 void HTTPWriter::close(const Exception& ex) {
@@ -61,8 +70,6 @@ void HTTPWriter::flush(bool full) {
 		return;
 	// TODO _qos.add(ping,_sent);
 	// _sent=0;
-	
-	timeout.update();
 
 	Exception ex;
 	for (shared_ptr<HTTPSender>& pSender : _senders) {
