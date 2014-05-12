@@ -264,7 +264,7 @@ void MonaServer::onDataLoading(const string& path, const char* value, UInt32 siz
 	}
 
 	// set value
-	setLUAProperty(key, value);
+	Script::SetProperty(_pState,key, value,size);
 	lua_pop(_pState, 1); // remove table
 }
 

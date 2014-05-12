@@ -112,8 +112,10 @@ public:
 	static int IPairs(lua_State* pState);
 
 	
-	static void SetProperty(lua_State* pState, const std::string& key, const std::string& value) { PushValue(pState, value); lua_setfield(pState, -2, key.c_str()); }
-	static void PushValue(lua_State* pState, const std::string& value);
+	template <typename ...Args>
+	static void SetProperty(lua_State* pState, const std::string& key, Args&&... args) { PushValue(pState, args ...); lua_setfield(pState, -2, key.c_str()); }
+	static void PushValue(lua_State* pState, const std::string& value) { PushValue(pState, value.c_str(), value.size()); }
+	static void PushValue(lua_State* pState,const char* value, Mona::UInt32 size);
 
 	template<class CollectorType = Script, class LUAItemType = Script>
 	static bool Collection(lua_State* pState, int index,const char* field, Mona::UInt32 size, CollectorType* pCollector = NULL) {
