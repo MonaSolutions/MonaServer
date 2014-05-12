@@ -147,6 +147,7 @@ void WSSession::manage() {
 		_writer.writePing();
 		_time.update();
 	}
+	TCPSession::manage();
 }
 
 

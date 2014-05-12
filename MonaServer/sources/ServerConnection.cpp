@@ -53,7 +53,7 @@ ServerConnection::~ServerConnection() {
 }
 
 
-void ServerConnection::sendHello(const Parameters& configs) {
+void ServerConnection::sendHello(const Parameters& parameters) {
 	shared_ptr<ServerMessage> pMessage(new ServerMessage("",_pClient->manager().poolBuffers));
 	BinaryWriter& writer = pMessage->packet;
 	writer.writeBool(true);
@@ -63,7 +63,7 @@ void ServerConnection::sendHello(const Parameters& configs) {
 		writer.writeString(value); // value
 	});
 
-	configs.iterate(forEach); /// configs
+	parameters.iterate(forEach); /// configs
 	properties.iterate(forEach); /// properties
 
 	send(pMessage);
@@ -88,7 +88,7 @@ void ServerConnection::close() {
 	_pClient->OnData::subscribe(_onData);
 }
 
-void ServerConnection::connect(const Parameters& configs) {
+void ServerConnection::connect(const Parameters& parameters) {
 	if(_connected)
 		return;
 	INFO("Attempt to join ", address.toString(), " server")
@@ -97,7 +97,7 @@ void ServerConnection::connect(const Parameters& configs) {
 	bool success(false);
 	EXCEPTION_TO_LOG(success=_pClient->connect(ex, address),"ServerConnection to ", address.toString(), ", ");
 	if (success)
-		sendHello(configs);
+		sendHello(parameters);
 }
 
 void ServerConnection::send(const shared_ptr<ServerMessage>& pMessage) {

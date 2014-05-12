@@ -76,7 +76,8 @@ Group& Peer::joinGroup(const UInt8* id,Writer* pWriter) {
 	_groups.emplace_hint(it,&group,pWriter);
 	group.add(*this);
 	
-	onJoinGroup(group);
+	if (pWriter) // if pWriter==NULL it's a dummy member peer
+		onJoinGroup(group);
 	
 	if (group.count() > 1) {
 		// If  group includes already members, give 6 last members to the new comer
@@ -99,13 +100,13 @@ void Peer::unjoinGroup(Group& group) {
 	auto it = _groups.lower_bound(&group);
 	if (it == _groups.end() || it->first != &group)
 		return;
-	onUnjoinGroup(*it->first);
+	onUnjoinGroup(*it->first,it->second ? false : true);
 	_groups.erase(it);
 }
 
 void Peer::unsubscribeGroups() {
 	for (auto& it : _groups)
-		onUnjoinGroup(*it.first);
+		onUnjoinGroup(*it.first,it.second ? false : true);
 	_groups.clear();
 }
 
@@ -148,7 +149,11 @@ void Peer::onConnection(Exception& ex, Writer& writer,DataReader& parameters,Dat
 		_pWriter = &writer;
 
 		// reset default protocol parameters
-		OnInitParameters::raise(_parameters);
+		_parameters.clear();
+		Parameters::ForEach forEach([this](const string& key,const string& value) {
+			_parameters.setString(key,value);
+		});
+		_handler.iterate(protocol, forEach);
 
 		MapWriter<MapParameters> parametersWriter(_parameters);
 		SplitWriter parametersAndResponse(parametersWriter,response);
@@ -164,7 +169,8 @@ void Peer::onConnection(Exception& ex, Writer& writer,DataReader& parameters,Dat
 		if (!connected) {
 			writer.abort();
 			_pWriter = NULL;
-		}
+		} else
+			OnInitParameters::raise(_parameters);
 		writer.open(); // open even if "ex" to send error messages!
 	} else
 		ERROR("Client ", Util::FormatHex(id, ID_SIZE, _handler.buffer), " seems already connected!")
@@ -194,7 +200,7 @@ void Peer::onJoinGroup(Group& group) {
 		WARN("onJoinGroup on client not connected")
 }
 
-void Peer::onUnjoinGroup(Group& group) {
+void Peer::onUnjoinGroup(Group& group,bool dummy) {
 	// group._clients suppression (this->_groups suppression must be done by the caller of onUnjoinGroup)
 	auto itPeer = group.find(id);
 	if (itPeer == group.end()) {
@@ -203,10 +209,12 @@ void Peer::onUnjoinGroup(Group& group) {
 	}
 	itPeer = group.remove(itPeer);
 
-	if(connected)
-		_handler.onUnjoinGroup(*this,group);
-	else
-		WARN("onUnjoinGroup on client not connected")
+	if (!dummy) {
+		if(connected)
+			_handler.onUnjoinGroup(*this,group);
+		else
+			WARN("onUnjoinGroup on client not connected")
+	}
 
 	if (group.count() == 0) {
 		((Entities<Group>&)_handler.groups).erase(group.id);

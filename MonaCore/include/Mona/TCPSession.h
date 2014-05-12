@@ -26,8 +26,7 @@ This file is a part of Mona.
 
 namespace Mona {
 
-class TCPSession : public Session, public virtual Object,
-	public Events::OnSending {
+class TCPSession : public Session, public virtual Object {
 public:
 	
 	void kill(UInt32 type=NORMAL_DEATH) { _client.disconnect(); Session::kill(type); }
@@ -64,6 +63,7 @@ protected:
 	TCPSession(const SocketAddress& peerAddress, SocketFile& file,Protocol& protocol,Invoker& invoker);
 	virtual ~TCPSession();
 
+	void			manage();
 
 private:
 
@@ -73,6 +73,11 @@ private:
 	TCPClient::OnError::Type			onError;
 	TCPClient::OnData::Type				onData;
 	TCPClient::OnDisconnection::Type	onDisconnection;
+	TCPClient::OnSending::Type			onSending;
+	Peer::OnInitParameters::Type		onInitParameters;
+
+	Time			_time;
+	UInt32			_timeout;
 
 	bool			_consumed;
 	bool			_decoding;

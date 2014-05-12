@@ -249,10 +249,9 @@ void RTMPSession::packetHandler(PacketReader& packet) {
 }
 
 void RTMPSession::manage() {
-	if (!_pHandshaker)
-		return;
-	if (_pHandshaker->failed)
+	if (_pHandshaker && _pHandshaker->failed)
 		kill(PROTOCOL_DEATH);
+	TCPSession::manage();
 }
 
 

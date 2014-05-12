@@ -26,10 +26,31 @@ using namespace Mona;
 
 
 
-Servers::Servers(const Parameters& configs,const SocketManager& manager) : _running(false),_configs(configs),Broadcaster(manager.poolBuffers),targets(manager.poolBuffers),initiators(manager.poolBuffers),_server(manager), _manageTimes(1) {
+Servers::Servers(const SocketManager& manager) :
+	_running(false),Broadcaster(manager.poolBuffers),targets(manager.poolBuffers),initiators(manager.poolBuffers),_server(manager), _manageTimes(1) {
+}
 
+Servers::~Servers() {
+	stop();
+}
 
-	onServerHello = [this](ServerConnection& server) {
+void Servers::manage(const Parameters& parameters) {
+	if (!_running)
+		return;
+	if(_targets.empty() || (--_manageTimes)!=0)
+		return;
+	_manageTimes = 8; // every 16 sec
+	for (ServerConnection* pTarget : _targets)
+		pTarget->connect(parameters);
+}
+
+void Servers::start(const Parameters& parameters) {
+	if (_running)
+		stop();
+
+	_running = true;
+
+	onServerHello = [this,&parameters](ServerConnection& server) {
 		if (_connections.emplace(&server).second) {
 			if(server.isTarget)
 				this->targets._connections.emplace(&server);
@@ -41,7 +62,7 @@ Servers::Servers(const Parameters& configs,const SocketManager& manager) : _runn
 			OnDisconnection::raise(ex,server);
 		}
 		if (!server.isTarget)
-			server.sendHello(_configs);
+			server.sendHello(parameters);
 		OnConnection::raise(server);
 	};
 
@@ -67,7 +88,7 @@ Servers::Servers(const Parameters& configs,const SocketManager& manager) : _runn
 
 
 	string targets;
-	_configs.getString("servers.targets",targets);
+	parameters.getString("servers.targets",targets);
 	
 	vector<string> values;
 	String::Split(targets, ";", values, String::SPLIT_IGNORE_EMPTY | String::SPLIT_TRIM);
@@ -99,32 +120,9 @@ Servers::Servers(const Parameters& configs,const SocketManager& manager) : _runn
 
 	_server.OnError::subscribe(onError);
 	_server.OnConnection::subscribe(onConnection);
-}
 
-Servers::~Servers() {
-	stop();
-	_server.OnError::unsubscribe(onError);
-	_server.OnConnection::unsubscribe(onConnection);
-	for (ServerConnection* pTarget : _targets)
-		delete pTarget;
-}
 
-void Servers::manage() {
-	if (!_running)
-		return;
-	if(_targets.empty() || (--_manageTimes)!=0)
-		return;
-	_manageTimes = 8; // every 16 sec
-	for (ServerConnection* pTarget : _targets)
-		pTarget->connect(_configs);
-}
-
-void Servers::start() {
-	_running = true;
-	if (_server.running())
-		return;
-
-	SocketAddress address(IPAddress::Wildcard(), _configs.getNumber<UInt16>("servers.port"));
+	SocketAddress address(IPAddress::Wildcard(), parameters.getNumber<UInt16>("servers.port"));
 	if (!address)
 		return;
 	Exception ex;
@@ -135,6 +133,8 @@ void Servers::start() {
 }
 
 void Servers::stop() {
+	if (!_running)
+		return;
 	_running = false;
 	if (_server.running()) {
 		NOTE("Servers incoming connection on ",_server.address().toString(), " stopped");
@@ -143,9 +143,13 @@ void Servers::stop() {
 	_connections.clear();
 	targets._connections.clear();
 	initiators._connections.clear();
-	for (ServerConnection* pTarget : _targets)
-		pTarget->close();
 	for (ServerConnection* pClient : _clients)
 		delete pClient;
 	_clients.clear();
+	for (ServerConnection* pTarget : _targets)
+		delete pTarget;
+	_targets.clear();
+
+	_server.OnError::unsubscribe(onError);
+	_server.OnConnection::unsubscribe(onConnection);
 }

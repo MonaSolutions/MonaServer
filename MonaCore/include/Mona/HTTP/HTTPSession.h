@@ -55,7 +55,6 @@ private:
 	std::shared_ptr<PoolBuffer>						_ppBuffer;
 
 	// options
-	UInt32				_timeout;
 	std::string			_index;
 	bool				_indexCanBeMethod;
 	bool				_indexDirectory;

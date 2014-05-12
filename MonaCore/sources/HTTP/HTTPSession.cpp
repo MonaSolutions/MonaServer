@@ -34,7 +34,7 @@ using namespace std;
 namespace Mona {
 
 
-HTTPSession::HTTPSession(const SocketAddress& peerAddress, SocketFile& file, Protocol& protocol, Invoker& invoker) : _indexCanBeMethod(false),_indexDirectory(true),_timeout(0),WSSession(peerAddress, file, protocol, invoker), _isWS(false), _writer(*this),_ppBuffer(new PoolBuffer(invoker.poolBuffers)), _pListener(NULL) {
+HTTPSession::HTTPSession(const SocketAddress& peerAddress, SocketFile& file, Protocol& protocol, Invoker& invoker) : _indexCanBeMethod(false),_indexDirectory(true),WSSession(peerAddress, file, protocol, invoker), _isWS(false), _writer(*this),_ppBuffer(new PoolBuffer(invoker.poolBuffers)), _pListener(NULL) {
 
 }
 
@@ -135,8 +135,7 @@ void HTTPSession::packetHandler(PacketReader& reader) {
 
 		if (!peer.connected) {
 			peer.onConnection(ex, _writer,propertiesReader);
-			if (!ex) {
-				_timeout = peer.parameters().getNumber<UInt32, 7>("timeout") * 1000;
+			if (!ex && peer.connected) {
 				peer.parameters().getBool("index", _indexDirectory);
 				peer.parameters().getString("index", _index);
 				if(!_indexDirectory)
@@ -223,9 +222,6 @@ void HTTPSession::packetHandler(PacketReader& reader) {
 		_writer.close(ex);
 	else if(!peer.connected)
 		kill(REJECTED_DEATH);
-	else
-		_writer.timeout.update();
-
 }
 
 void HTTPSession::manage() {
@@ -233,12 +229,9 @@ void HTTPSession::manage() {
 		WSSession::manage();
 		return;
 	}
-	// timeout http session // TODO add a timeout for Listening HTTP session without media reception??
-	if (peer.connected && _timeout > 0 && !_pListener && _writer.timeout.isElapsed(_timeout)) {
-		kill(TIMEOUT_DEATH);
-		DEBUG("HTTP session ", name(), " timeout");
-	} else if (!_packets.empty() && _packets.front()->exception)
+	if (!_packets.empty() && _packets.front()->exception)
 		_writer.close(_packets.front()->exception);
+	TCPSession::manage();
 }
 
 void HTTPSession::processOptions(Exception& ex,const shared_ptr<HTTPPacket>& pPacket) {

@@ -36,7 +36,7 @@ const string MonaServer::WWWPath("./");
 const string MonaServer::DataPath("./");
 
 MonaServer::MonaServer(TerminateSignal& terminateSignal, const Parameters& configs) :
-	Server(configs.getNumber<UInt32>("socketBufferSize"), configs.getNumber<UInt16>("threads")), servers(configs,sockets), _firstData(true),_data(this->poolBuffers),_terminateSignal(terminateSignal),
+	Server(configs.getNumber<UInt32>("socketBufferSize"), configs.getNumber<UInt16>("threads")), servers(sockets), _firstData(true),_data(this->poolBuffers),_terminateSignal(terminateSignal),
 	setLUAProperty([this](const string& key, const string& value) { Script::SetProperty(_pState, key, value);}) {
 	
 	Parameters::ForEach forEach([this](const string& key, const string& value) {
@@ -213,7 +213,7 @@ void MonaServer::onStart() {
 	}
 	
 	// start servers
-	servers.start();
+	servers.start(*this);
 
 	// start the application (if exists)
 	_pService->watchFile();
@@ -288,7 +288,7 @@ void MonaServer::onStop() {
 
 void MonaServer::manage() {
 	Server::manage();
-	servers.manage();
+	servers.manage(*this);
 	if (!_pService)
 		return;
 	_pService->watchFile();

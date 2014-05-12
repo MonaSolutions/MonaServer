@@ -25,14 +25,22 @@ using namespace std;
 
 namespace Mona {
 
-TCPSession::TCPSession(const SocketAddress& peerAddress, SocketFile& file, Protocol& protocol, Invoker& invoker) : _client(peerAddress,file,invoker.sockets), Session(protocol, invoker),_consumed(false),_decoding(false) {
+TCPSession::TCPSession(const SocketAddress& peerAddress, SocketFile& file, Protocol& protocol, Invoker& invoker) : _timeout(protocol.getNumber<UInt32>("timeout")*1000), _client(peerAddress, file, invoker.sockets), Session(protocol, invoker), _consumed(false), _decoding(false) {
 	((SocketAddress&)peer.address).set(peerAddress);
+
+	onInitParameters = [this](const Parameters& parameters) {
+		if (parameters.getNumber("timeout", _timeout)) {
+			_timeout *= 1000;
+			_time.update();
+		}
+	};
 
 	onError = [this](const Exception& ex) { WARN("Protocol ", this->protocol().name, ", ", ex.error()); };
 
 	onData = [this](PoolBuffer& pBuffer)->UInt32 {
 		if (died)
 			return 0;
+		_time.update();
 		UInt32 size(pBuffer->size());
 		PacketReader packet(pBuffer->data(), size);
 		_decoding = false;
@@ -56,24 +64,27 @@ TCPSession::TCPSession(const SocketAddress& peerAddress, SocketFile& file, Proto
 		return rest;
 	};
 
+	onSending = [this](UInt32 size) { _time.update(); };
+
 	onDisconnection = [this]() { kill(SOCKET_DEATH); };
 
-
+	peer.OnInitParameters::subscribe(onInitParameters);
 	_client.OnError::subscribe(onError);
 	_client.OnDisconnection::subscribe(onDisconnection);
-	_client.OnSending::subscribe(*this);
+	_client.OnSending::subscribe(onSending);
 	_client.OnData::subscribe(onData);
 }
 
 TCPSession::~TCPSession() {
+	peer.OnInitParameters::unsubscribe(onInitParameters);
 	_client.OnData::unsubscribe(onData);
-	_client.OnSending::unsubscribe(*this);
+	_client.OnSending::unsubscribe(onSending);
 	_client.OnDisconnection::unsubscribe(onDisconnection);
 	_client.OnError::unsubscribe(onError);
 }
 
 void TCPSession::receive(PacketReader& packet) {
-	Session::receiveWithoutFlush(packet);
+	receiveWithoutFlush(packet);
 	bool empty = _decodings.empty();
 	while (!_decodings.empty() && _decodings.front().unique())
 		_decodings.pop_front();
@@ -83,6 +94,16 @@ void TCPSession::receive(PacketReader& packet) {
 		flush();
 		_consumed = true;
 	}
+}
+
+void TCPSession::manage() {
+	if (died)
+		return;
+	Session::manage();
+	if (_timeout > 0 && _time.isElapsed(_timeout)) {
+		kill(TIMEOUT_DEATH);
+		DEBUG(protocol().name, " timeout session ", name());
+	}	
 }
 
 

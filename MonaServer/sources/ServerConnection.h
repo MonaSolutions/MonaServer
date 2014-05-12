@@ -67,13 +67,13 @@ public:
 
 	const Mona::PoolBuffers&  poolBuffers() const { return _pClient->manager().poolBuffers; }
 
-	void			connect(const Mona::Parameters& configs);
+	void			connect(const Mona::Parameters& parameters);
 	bool			connected() { return _connected; }
 
 	void			close();
 
 	void			send(const std::shared_ptr<ServerMessage>& pMessage);
-	void			sendHello(const Mona::Parameters& configs);
+	void			sendHello(const Mona::Parameters& parameters);
 	void			reject(const char* error);
 
 private:

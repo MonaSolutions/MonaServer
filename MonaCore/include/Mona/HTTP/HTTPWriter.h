@@ -33,10 +33,8 @@ class HTTPWriter : public Writer, public virtual Object {
 public:
 
 	HTTPWriter(TCPSession& session);
-	virtual ~HTTPWriter();
-
+	
 	std::shared_ptr<HTTPPacket>		pRequest;
-	Time							timeout;
 
 	virtual void			abort() {_senders.clear();}
 	virtual void			flush(bool full=false);
@@ -67,8 +65,6 @@ private:
 		_senders.emplace_back(new HTTPSender(_session.peer.address,pRequest));
 		return *_senders.back();
 	}
-
-	TCPSession::OnSending::Type					onSending;
 
 	std::unique_ptr<MediaContainer>				_pMedia;
 	TCPSession&									_session;

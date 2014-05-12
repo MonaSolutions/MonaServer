@@ -108,8 +108,6 @@ protected:
 private:
 	const std::string&  protocolName();
 
-	Peer::OnInitParameters::Type onInitParameters;
-
 	PoolThread*					_pDecodingThread;
 	mutable std::string			_name;
 	UInt32						_id;

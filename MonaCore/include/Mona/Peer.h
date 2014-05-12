@@ -30,7 +30,7 @@ This file is a part of Mona.
 namespace Mona {
 
 namespace Events {
-	struct OnInitParameters : Event<void(Parameters&)> {};
+	struct OnInitParameters : Event<void(const Parameters&)> {};
 };
 
 
@@ -92,7 +92,7 @@ public:
 
 private:
 	void onJoinGroup(Group& group);
-	void onUnjoinGroup(Group& group);
+	void onUnjoinGroup(Group& group,bool dummy);
 	bool exchangeMemberId(Group& group,Peer& peer,Writer* pWriter);
 
 	Handler&						_handler;
