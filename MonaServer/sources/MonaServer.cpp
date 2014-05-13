@@ -340,11 +340,15 @@ void MonaServer::readLUAAddress(const string& protocol, set<SocketAddress>& addr
 
 void MonaServer::readLUAServerAddress(const string& protocol, set<SocketAddress>& addresses,const ServerConnection& server) {
 	UInt16 port(0);
-	if (!server.getNumber(String::Format(buffer, protocol, ".port"), port))
-		server.getNumber(String::Format(buffer, protocol, ".defaultPort"), port);
-	if (port == 0) {
+	if (!server.getNumber(String::Format(buffer, protocol, ".port"), port)) {
 		SCRIPT_BEGIN(_pState)
 			SCRIPT_ERROR("Impossible to determine ", protocol, " port of ", server.address.toString(), " server");
+		SCRIPT_END
+		return;
+	}
+	if (port == 0) {
+		SCRIPT_BEGIN(_pState)
+			SCRIPT_WARN("Server ",server.address.toString()," has ",protocol," disabled");
 		SCRIPT_END
 		return;
 	}

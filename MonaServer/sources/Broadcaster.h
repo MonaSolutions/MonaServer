@@ -47,7 +47,7 @@ private:
 
 inline ServerConnection* Broadcaster::operator[](const std::string& address) {
 	for(ServerConnection* pServer : _connections) {
-		if(pServer->address.toString()==address || (pServer->getString("host",_buffer) && _buffer==address))
+		if(pServer->address.toString()==address || (pServer->getString("publicHost",_buffer) && _buffer==address))
 			return pServer;
 	}
 	return NULL;

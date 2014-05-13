@@ -129,7 +129,7 @@ void Script::CloseState(lua_State* pState) {
 
 
 void Script::PushValue(lua_State* pState,const char* value, UInt32 size) {
-	if (String::ICompare(value, "false") == 0 || String::ICompare(value, "nil") == 0)
+	if (String::ICompare(value, "false",size) == 0 || String::ICompare(value, "nil",size) == 0)
 		lua_pushboolean(pState, 0);
 	else
 		lua_pushlstring(pState, value, size);

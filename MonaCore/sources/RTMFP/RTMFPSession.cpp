@@ -215,7 +215,7 @@ void RTMFPSession::flush(UInt8 marker,bool echoTime,RTMFPEngine::Type type) {
 		_pSender->address.set(peer.address);
 
 		if (packet.size() > RTMFP_MAX_PACKET_SIZE)
-			ERROR("Message exceeds max RTMFP packet size");
+			ERROR("Message exceeds max RTMFP packet size on session ",name()," (",packet.size(),">",RTMFP_MAX_PACKET_SIZE,")");
 
 		dumpResponse(packet.data() + 6, packet.size() - 6);
 

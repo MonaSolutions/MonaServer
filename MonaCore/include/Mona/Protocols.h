@@ -37,19 +37,15 @@ public:
 private:
 	template<class ProtocolType, typename ...Args >
 	void loadProtocol(const char* name, UInt16 port, Sessions& sessions, Args&&... args) {
-		_invoker.setNumber(String::Format(_invoker.buffer,name,".defaultPort"), port);
-		_invoker.getNumber(String::Format(_invoker.buffer,name,".port"), port);
+		if (!_invoker.getNumber(String::Format(_invoker.buffer, name, ".port"), port))
+			_invoker.setNumber(_invoker.buffer, port);
 		if(port==0)
 			return;
 		std::unique_ptr<Protocol> pProtocol(new ProtocolType(name, _invoker, sessions, args ...));
-		// default parameters
-		pProtocol->setNumber("port", port);
-		_invoker.buffer.assign("0.0.0.0");
-		_invoker.getString("host", _invoker.buffer);
-		pProtocol->setString("host", _invoker.buffer);
-		if (_invoker.getString("publicHost",_invoker.buffer))
-			pProtocol->setString("publicHost",_invoker.buffer);
 
+		std::string host("0.0.0.0");
+		_invoker.getString("host", host);
+	
 		// invoker params to protocol params!
 		Parameters::ForEach forEach;
 		forEach = [&pProtocol](const std::string& key, const std::string& value) -> void {
@@ -59,7 +55,6 @@ private:
 
 		Exception ex;
 		bool success = false;
-		std::string host;
 		pProtocol->getString("host",host);
 		EXCEPTION_TO_LOG(success = ((ProtocolType*)pProtocol.get())->load(ex,host,port), name, " server")
 		if (!success)

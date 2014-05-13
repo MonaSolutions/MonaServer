@@ -33,7 +33,7 @@ void MapParameters::iteration(const char* prefix, ForEach& function) const {
 	}
 	while (it != _map.end() && (prefixSize==0 || memcmp(prefix, it->first.c_str(), prefixSize) == 0)) {
 		if (prefixSize>0) {
-			std::string key(&it->first[prefixSize]);
+			const std::string key(&it->first[prefixSize]);
 			function(key, it->second);
 		} else
 			function(it->first, it->second);

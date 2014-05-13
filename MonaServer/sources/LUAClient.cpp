@@ -106,12 +106,8 @@ int LUAClient::Get(lua_State *pState) {
 				}
 			} else {
 				string value;
-				if(client.properties().getString(name,value)) {
-					if (String::ICompare(value, "false") == 0 || String::ICompare(value, "nil") == 0)
-						lua_pushboolean(pState, 0);
-					else
-						lua_pushlstring(pState, value.c_str(), value.size());
-				}
+				if (client.properties().getString(name, value))
+					Script::PushValue(pState,value);
 			}
 		}
 	SCRIPT_CALLBACK_RETURN
