@@ -153,7 +153,8 @@ void Peer::onConnection(Exception& ex, Writer& writer,DataReader& parameters,Dat
 		Parameters::ForEach forEach([this](const string& key,const string& value) {
 			_parameters.setString(key,value);
 		});
-		_handler.iterate(protocol, forEach);
+		String::Format(_handler.buffer, protocol, ".");
+		_handler.iterate(_handler.buffer, forEach);
 
 		MapWriter<MapParameters> parametersWriter(_parameters);
 		SplitWriter parametersAndResponse(parametersWriter,response);
