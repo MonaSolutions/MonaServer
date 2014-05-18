@@ -109,7 +109,19 @@ void HTTPSession::packetHandler(PacketReader& reader) {
 	// erase previous properties
 	peer.properties().clear();
 	peer.properties().setNumber("HTTPVersion", pPacket->version); // TODO check how is named for AMF
-	Util::UnpackQuery(peer.query,peer.properties());
+	// Add cookies to peer.properties
+	String::ForEach forEachCookie([this](const string::const_iterator& it1, const string::const_iterator& it2) {
+		string::const_iterator it(it1);
+		while(it != it2) {
+			if (*it == '=') { 
+				string key(it1, it), value((it+1), it2); 
+				peer.properties().setString(key, value);
+				break;
+			}
+			++it;
+		}
+	});
+	String::Split(pPacket->cookies, ";", forEachCookie, String::SPLIT_IGNORE_EMPTY | String::SPLIT_TRIM);
 	
 	/// Client onConnection
 	Exception ex;
@@ -131,7 +143,10 @@ void HTTPSession::packetHandler(PacketReader& reader) {
 			_writer.flush(true); // last HTTP flush for this connection, now we are in a WebSession mode!
 		} // TODO else
 	} else {
-		MapReader<MapParameters> propertiesReader(peer.properties());
+		// Create volatile parameters for POST & GET Queries
+		MapParameters queryParameters;
+		Util::UnpackQuery(peer.query, queryParameters);
+		MapReader<MapParameters> propertiesReader(queryParameters);
 
 		if (!peer.connected) {
 			peer.onConnection(ex, _writer,propertiesReader);

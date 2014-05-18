@@ -33,5 +33,7 @@ public:
 	static int Get(lua_State* pState);
 	static int Set(lua_State* pState);
 
+private:
+	static int SetCookie(lua_State* pState);
 };
 

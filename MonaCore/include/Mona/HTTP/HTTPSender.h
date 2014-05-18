@@ -45,7 +45,7 @@ namespace Mona {
 
 class HTTPSender : public TCPSender, public virtual Object {
 public:
-	HTTPSender(const SocketAddress& address,const std::shared_ptr<HTTPPacket>& pRequest);
+	HTTPSender(const SocketAddress& address,const std::shared_ptr<HTTPPacket>& pRequest,const Parameters& properties);
 
 	DataWriter&		writer(const std::string& code, HTTP::ContentType type, const std::string& subType,const UInt8* data,UInt32 size);
 	void			writeError(int code, const std::string& description,bool close=false);
@@ -72,6 +72,7 @@ private:
 	std::unique_ptr<DataWriter>			_pWriter;
 	std::string							_buffer;
 	SocketAddress						_address;
+	std::vector<std::string>			_cookies; /// Cookie to set in the next header
 };
 
 

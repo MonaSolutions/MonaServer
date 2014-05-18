@@ -32,7 +32,7 @@ const string String::Empty;
 	int String::output_exp_old_format = _set_output_format(_TWO_DIGIT_EXPONENT);
 #endif
 
-vector<string>& String::Split(const string& value, const string& separators, vector<string>& values, int options) {
+void String::Split(const string& value, const string& separators, const String::ForEach& handler, int options) {
 	string::const_iterator it1 = value.begin(), it2, it3, end = value.end();
 
 	while (it1 != end) {
@@ -53,14 +53,13 @@ vector<string>& String::Split(const string& value, const string& separators, vec
 		}
 		if (options & SPLIT_IGNORE_EMPTY) {
 			if (it3 != it1)
-				values.emplace_back(it1, it3);
+				handler(it1, it3);
 		} else
-			values.emplace_back(it1, it3);
+			handler(it1, it3);
 		it1 = it2;
 		if (it1 != end)
 			++it1;
 	}
-	return values;
 }
 
 string& String::ToLower(string& value) {
