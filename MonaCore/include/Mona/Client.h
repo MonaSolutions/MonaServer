@@ -64,7 +64,6 @@ public:
 	Writer&						writer() { return _pWriter ? *_pWriter : Writer::Null; }
 protected:
 	Writer*						_pWriter;
-	std::string					_buffer;
 private:
 	void*						_pUserData;
 };

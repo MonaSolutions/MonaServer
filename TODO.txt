@@ -41,4 +41,5 @@ DataReader::readString
 
 - Implements Proactor sockets models for windows, and use "splice" for linux socket
 
-- Vérifier Date auto parsing, pour quelque chose comme "toto"
+- Check Date auto parsing, pour quelque chose comme "toto"
+- Replace String::Split to use forEach version more faster 

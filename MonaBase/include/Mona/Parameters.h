@@ -58,7 +58,7 @@ public:
 	void erase(const std::string& key) { setRaw(key, NULL); }
 
 	void setString(const std::string& key, const std::string& value) {setRaw(key,value.c_str());}
-	void setString(const std::string& key, const char* value) {setRaw(key, value);}
+	void setString(const std::string& key, const char* value) {setRaw(key, value ? value : "");}
 	template<typename NumberType>
 	void setNumber(const std::string& key, NumberType value) {
 		std::string val;

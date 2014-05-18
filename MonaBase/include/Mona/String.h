@@ -55,17 +55,15 @@ public:
 		TRIM_RIGHT = 2
 	};
 
-	typedef std::function<void(const std::string::const_iterator&, const std::string::const_iterator&)> ForEach; /// String::Split function type handler
+	typedef std::function<void(const char*)> ForEach; /// String::Split function type handler
 
 	static std::vector<std::string>& Split(const std::string& value, const std::string& separators, std::vector<std::string>& values, int options = 0) {
-		String::ForEach emplace_back([&values](const std::string::const_iterator& it1, const std::string::const_iterator& it2) {
-			values.emplace_back(it1, it2);
-		});
-		String::Split(value, separators, emplace_back, options);
-
+		String::ForEach forEach([&values](const char* value) { values.emplace_back(value); });
+		String::Split(value, separators, forEach, options);
 		return values;
 	}
-	static void Split(const std::string& value, const std::string& separators, const String::ForEach& handler, int options = 0);
+	static UInt32 Split(const std::string& value, const std::string& separators, const String::ForEach& forEach, int options = 0);
+
 	static std::string& Trim(std::string& value, TrimOption option = TRIM_BOTH);
 
 	static std::string&	ToLower(std::string& value);

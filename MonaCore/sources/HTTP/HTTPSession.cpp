@@ -110,16 +110,19 @@ void HTTPSession::packetHandler(PacketReader& reader) {
 	peer.properties().clear();
 	peer.properties().setNumber("HTTPVersion", pPacket->version); // TODO check how is named for AMF
 	// Add cookies to peer.properties
-	String::ForEach forEachCookie([this](const string::const_iterator& it1, const string::const_iterator& it2) {
-		string::const_iterator it(it1);
-		while(it != it2) {
-			if (*it == '=') { 
-				string key(it1, it), value((it+1), it2); 
-				peer.properties().setString(key, value);
-				break;
-			}
-			++it;
+	String::ForEach forEachCookie([this](const char* key) {
+		const char* value = key;
+		// trim right
+		while (value && *value != '=' && !isblank(*value))
+			++value;
+		if (value) {
+			*(char*)value = '\0';
+			// trim left
+			do {
+				++value;
+			} while (value && (isblank(*value) || *value == '='));
 		}
+		peer.properties().setString(key, value);
 	});
 	String::Split(pPacket->cookies, ";", forEachCookie, String::SPLIT_IGNORE_EMPTY | String::SPLIT_TRIM);
 	
