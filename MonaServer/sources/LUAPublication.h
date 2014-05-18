@@ -71,7 +71,7 @@ public:
 					} else if(strcmp(name,"name")==0) {
 						SCRIPT_WRITE_STRING(pPublication->name().c_str())
 					} else if(strcmp(name,"listeners")==0) {
-						Script::Collection(pState, 1, "listeners", pPublication->listeners.count());
+						Script::Collection(pState, 1, "listeners");
 					} else if(strcmp(name,"audioQOS")==0) {
 						SCRIPT_ADD_OBJECT(Mona::QualityOfService, LUAQualityOfService, pPublication->audioQOS())
 					} else if(strcmp(name,"videoQOS")==0) {

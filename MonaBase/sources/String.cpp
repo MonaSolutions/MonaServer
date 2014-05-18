@@ -101,10 +101,12 @@ string& String::Trim(string& value, TrimOption option) {
 int String::ICompare(const char* value1, const char* value2,  size_t size) {
 	if (value1 == value2)
 		return 0;
-	if (value1 == NULL)
+	if (!value1 || !(*value1))
 		return -1;
-	if (value2 == NULL)
+	if (!value2 || !(*value2))
 		return 1;
+
+	// value1 and value2 size > 0
 
 	int f(0), l(0);
 	do {

@@ -42,6 +42,7 @@ private:
 
 	std::map<UInt32,std::shared_ptr<FlashStream>>	_streams;
 	Group*											_pGroup;
+	std::string										_buffer;
 };
 
 

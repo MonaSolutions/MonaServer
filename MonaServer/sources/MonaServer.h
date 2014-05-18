@@ -67,7 +67,7 @@ private:
 	lua_State*				openService(const Mona::Client& client);
 
 	// DatabaseLoader implementation
-	void					onDataLoading(const std::string& path, const char* value, Mona::UInt32 size);
+	void					onDataLoading(const std::string& path, const Mona::UInt8* value, Mona::UInt32 size);
 
 	// ServiceHandler implementation
 	void					startService(Service& service);

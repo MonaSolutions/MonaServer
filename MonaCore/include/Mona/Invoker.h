@@ -64,8 +64,6 @@ public:
 	void					clearBannedList() { _bannedList.clear(); }
 	bool					isBanned(const IPAddress& ip) { return _bannedList.find(ip) != _bannedList.end(); }
 
-	std::string				buffer;
-
 protected:
 	Invoker(UInt32 socketBufferSize,UInt16 threads);
 	virtual ~Invoker();
@@ -79,6 +77,7 @@ private:
 	std::set<IPAddress>								_bannedList;
 	UInt32											_nextId;
 	std::map<UInt32,std::shared_ptr<FlashStream> >	_streams;
+
 };
 
 

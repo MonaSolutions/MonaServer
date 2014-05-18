@@ -27,7 +27,7 @@ class LUAMember {
 public:	
 	static int Get(lua_State *pState);
 	static int Set(lua_State *pState);
-	static void Init(lua_State *pState, Mona::Peer& member) {}
+	static void Init(lua_State *pState, Mona::Peer& member);
 	static int Destroy(lua_State *pState);
 	static int Release(lua_State *pState);
 

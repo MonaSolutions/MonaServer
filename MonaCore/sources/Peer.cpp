@@ -153,7 +153,8 @@ void Peer::onConnection(Exception& ex, Writer& writer,DataReader& parameters,Dat
 		Parameters::ForEach forEach([this](const string& key,const string& value) {
 			_parameters.setString(key,value);
 		});
-		_handler.iterate(protocol, forEach);
+		string buffer;
+		_handler.iterate(String::Format(buffer,protocol,"."), forEach);
 
 		MapWriter<MapParameters> parametersWriter(_parameters);
 		SplitWriter parametersAndResponse(parametersWriter,response);
@@ -169,11 +170,13 @@ void Peer::onConnection(Exception& ex, Writer& writer,DataReader& parameters,Dat
 		if (!connected) {
 			writer.abort();
 			_pWriter = NULL;
-		} else
+		} else {
 			OnInitParameters::raise(_parameters);
+			DEBUG("Client ",address.toString()," connection")
+		}
 		writer.open(); // open even if "ex" to send error messages!
 	} else
-		ERROR("Client ", Util::FormatHex(id, ID_SIZE, _handler.buffer), " seems already connected!")
+		ERROR("Client ", Util::FormatHex(id, ID_SIZE, LOG_BUFFER), " seems already connected!")
 }
 
 void Peer::onDisconnection() {
@@ -181,7 +184,7 @@ void Peer::onDisconnection() {
 		return;
 	(bool&)connected = false;
 	if (!((Clients&)_handler.clients).remove(*this))
-		ERROR("Client ", Util::FormatHex(id, ID_SIZE, _handler.buffer), " seems already disconnected!");
+		ERROR("Client ", Util::FormatHex(id, ID_SIZE, LOG_BUFFER), " seems already disconnected!");
 	_handler.onDisconnection(*this);
 	_pWriter = NULL; // keep after the onDisconnection because otherise the LUA object client.writer can't be deleted!
 }

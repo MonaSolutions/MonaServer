@@ -111,8 +111,8 @@ void FlashMainStream::messageHandler(Exception& ex, const string& name,AMFReader
 				}
 			}
 
-			if (peer.path.empty() && properties.getString("tcUrl", invoker.buffer)) {
-				Util::UnpackUrl(invoker.buffer, (string&)peer.serverAddress,(string&)peer.path,(string&)peer.query);
+			if (peer.path.empty() && properties.getString("tcUrl",_buffer)) {
+				Util::UnpackUrl(_buffer, (string&)peer.serverAddress,(string&)peer.path,(string&)peer.query);
 				Util::UnpackQuery(peer.query, properties);
 			}
 
@@ -139,9 +139,9 @@ void FlashMainStream::messageHandler(Exception& ex, const string& name,AMFReader
 		peer.localAddresses.clear();
 		while(message.available()) {
 			SocketAddress address;
-			address.set(ex, message.readString(invoker.buffer));
+			address.set(ex, message.readString(_buffer));
 			if (ex) {
-				ERROR("Bad peer address ",invoker.buffer,", ",ex.error());
+				ERROR("Bad peer address ",_buffer,", ",ex.error());
 				continue;
 			}
 			peer.localAddresses.emplace(address);

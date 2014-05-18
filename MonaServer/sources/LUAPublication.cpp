@@ -33,10 +33,10 @@ void LUAPublicationBase::Clear(lua_State* pState, const Mona::Publication& publi
 void LUAPublicationBase::AddListener(lua_State* pState, const Listener& listener, UInt8 indexListener) {
 	// -1 must be the client table!
 	if (Script::FromObject<Mona::Publication>(pState, listener.publication)) {
-		Script::Collection(pState, -1, "listeners", listener.publication.listeners.count() + 1);
+		Script::Collection(pState, -1, "listeners");
 		lua_pushvalue(pState, indexListener);
 		lua_pushvalue(pState, -4); // client table
-		lua_rawset(pState, -3);
+		Script::FillCollection(pState, 1, listener.publication.listeners.count() + 1);
 		lua_pop(pState, 2);
 	}
 }
@@ -44,10 +44,10 @@ void LUAPublicationBase::AddListener(lua_State* pState, const Listener& listener
 void LUAPublicationBase::RemoveListener(lua_State* pState, const Listener& listener) {
 	// -1 must be the listener table!
 	if (Script::FromObject<Mona::Publication>(pState, listener.publication)) {
-		Script::Collection(pState, -1, "listeners", listener.publication.listeners.count());
+		Script::Collection(pState, -1, "listeners");
 		lua_pushvalue(pState, -3); // listener table
 		lua_pushnil(pState);
-		lua_rawset(pState, -3);
+		Script::FillCollection(pState, 1, listener.publication.listeners.count());
 		lua_pop(pState, 2);
 	}
 }

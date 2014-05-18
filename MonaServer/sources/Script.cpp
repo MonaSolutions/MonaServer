@@ -127,25 +127,83 @@ void Script::CloseState(lua_State* pState) {
 		lua_close(pState);
 }
 
-
-void Script::PushValue(lua_State* pState,const char* value, UInt32 size) {
-	if (String::ICompare(value, "false",size) == 0 || String::ICompare(value, "nil",size) == 0)
+void Script::PushValue(lua_State* pState,const char* value) {
+	if (String::ICompare(value, "false") || String::ICompare(value, "nil") == 0)
 		lua_pushboolean(pState, 0);
 	else
-		lua_pushlstring(pState, value, size);
+		lua_pushstring(pState, value);
+}
+
+void Script::PushValue(lua_State* pState,const UInt8* value, UInt32 size) {
+	if ((size==5 && String::ICompare((const char*)value, "false") == 0) || (size==3 && String::ICompare((const char*)value, "nil") == 0))
+		lua_pushboolean(pState, 0);
+	else
+		lua_pushlstring(pState, (const char*)value, size);
+}
+
+void Script::FillCollection(lua_State* pState, UInt32 size,UInt32 count) {
+	int index = -1-(size<<1); // index collection (-1-2*size)
+	
+	if (!lua_getmetatable(pState, index)) {
+		SCRIPT_BEGIN(pState)
+			SCRIPT_ERROR("Invalid collection to fill, no metatable")
+		SCRIPT_END
+		return;
+	}
+		
+	lua_getfield(pState, -1, "|items");
+	if (!lua_istable(pState, -1)) {
+		lua_pop(pState, 2);
+		SCRIPT_BEGIN(pState)
+			SCRIPT_ERROR("Invalid collection to fill, no |items field in metatable")
+		SCRIPT_END
+		return;
+	}
+
+	// update count
+	lua_pushnumber(pState,count);
+	lua_setfield(pState,-3,"|count");
+
+	lua_replace(pState, -2); // remove metatable
+	lua_insert(pState, index); // inset |item to the collection index, just before keys/values
+
+	while (size-- > 0) {
+		lua_settable(pState,index);
+		index += 2;
+	}
+
+	lua_pop(pState, 1); // remove |items table
+}
+
+int Script::IndexCollection(lua_State* pState) {
+	// 1 table
+	// 2 key
+	if (lua_getmetatable(pState, 1)) {
+		lua_getfield(pState, -1, "|items");
+		lua_replace(pState, -2);
+		if (lua_istable(pState, -1)) {
+			lua_pushvalue(pState, 2);
+			lua_gettable(pState, -2);
+			lua_replace(pState, -2);
+			return 1;
+		}
+		lua_pop(pState, 1);
+	}
+	return 0;
 }
 
 int Script::Next(lua_State* pState) {
 	// 1 table
 	// [2 key] (optional)
-	if (lua_getmetatable(pState, 1)) {
+	while (lua_getmetatable(pState,  1)) {
 		lua_getfield(pState, -1, "|items");
 		lua_replace(pState, -2);
-		if (lua_istable(pState, -1))
-			lua_replace(pState, 1);
-		else
+		if (!lua_istable(pState, -1)) {
 			lua_pop(pState, 1);
-	}
+			break;
+		}
+		lua_replace(pState, 1);
+	};
 	if (lua_gettop(pState) < 2)
 		lua_pushnil(pState);
 	int results = lua_next(pState, 1);
@@ -171,54 +229,61 @@ int Script::INext(lua_State* pState) {
 }
 
 int Script::Pairs(lua_State* pState) {
+	// 1 table
 	lua_getglobal(pState, "next");
-	if (lua_getmetatable(pState, 1)) {
+	while (lua_getmetatable(pState,  1)) {
 		lua_getfield(pState, -1, "|items");
 		lua_replace(pState, -2);
 		if (!lua_istable(pState, -1)) {
 			lua_pop(pState, 1);
-			lua_pushvalue(pState, 1);
+			break;
 		}
-	} else
-		lua_pushvalue(pState, 1);
+		lua_replace(pState, 1);
+	};
+	lua_pushvalue(pState, 1);
 	return 2;
 }
 
 int Script::IPairs(lua_State* pState) {
 	// 1 table
 	lua_pushcfunction(pState,&Script::INext);
-	if (lua_getmetatable(pState, 1)) {
+	while (lua_getmetatable(pState,  1)) {
 		lua_getfield(pState, -1, "|items");
 		lua_replace(pState, -2);
 		if (!lua_istable(pState, -1)) {
 			lua_pop(pState, 1);
-			lua_pushvalue(pState, 1);
+			break;
 		}
-	} else
-		lua_pushvalue(pState, 1);
+		lua_replace(pState, 1);
+	};
+	lua_pushvalue(pState, 1);
 	return 2;
 }
 
 int Script::Len(lua_State* pState) {
-	if (lua_getmetatable(pState, -1)) {
+	// 1 table
+	while (lua_getmetatable(pState, 1)) {
 		lua_getfield(pState, -1, "|count");
-		if (!lua_isnumber(pState, -1)) {
-			lua_pop(pState, 1);
-			lua_getfield(pState, -1, "|items");
-			if (lua_istable(pState, -1)) {
-				Len(pState);
-				lua_replace(pState, -2);
-			} else
-				lua_pushnumber(pState,lua_objlen(pState, -2));
+		if (lua_isnumber(pState, -1)) {
+			lua_replace(pState, -2);
+			return 1;
 		}
+		lua_pop(pState, 1);
+		lua_getfield(pState, -1, "|items");
 		lua_replace(pState, -2);
-	} else
-		lua_pushnumber(pState,lua_objlen(pState, -1));
+		if (!lua_istable(pState, -1)) {
+			lua_pop(pState, 1);
+			lua_pushnumber(pState, lua_objlen(pState, 1));
+			return 1;
+		}
+		lua_replace(pState, 1);
+	}
+	lua_objlen(pState, 1);
 	return 1;
 }
 
 
-void Script::WriteData(lua_State *pState,DataReader& reader,UInt32 count) {
+DataReader& Script::WriteData(lua_State *pState,DataReader& reader,UInt32 count) {
 	DataReader::Type type;
 	bool all=count==0;
 	if(all)
@@ -228,10 +293,11 @@ void Script::WriteData(lua_State *pState,DataReader& reader,UInt32 count) {
 		if(!all)
 			--count;
 	}
+	return reader;
 }
 
 
-void Script::WriteData(lua_State *pState,DataReader::Type type,DataReader& reader) {
+DataReader& Script::WriteData(lua_State *pState,DataReader::Type type,DataReader& reader) {
 	SCRIPT_BEGIN(pState)
 	switch(type) {
 		case DataReader::NIL:
@@ -382,14 +448,15 @@ void Script::WriteData(lua_State *pState,DataReader::Type type,DataReader& reade
 			break;
 	}
 	SCRIPT_END
+	return reader;
 }
 
-void Script::ReadData(lua_State* pState,DataWriter& writer,UInt32 count) {
+DataWriter& Script::ReadData(lua_State* pState,DataWriter& writer,UInt32 count) {
 	map<UInt64,UInt32> references;
-	ReadData(pState,writer,count,references);
+	return ReadData(pState,writer,count,references);
 }
 
-void Script::ReadData(lua_State* pState,DataWriter& writer,UInt32 count,map<UInt64,UInt32>& references) {
+DataWriter& Script::ReadData(lua_State* pState,DataWriter& writer,UInt32 count,map<UInt64,UInt32>& references) {
 	SCRIPT_BEGIN(pState)
 	int top = lua_gettop(pState);
 	Int32 args = top-count;
@@ -584,6 +651,7 @@ void Script::ReadData(lua_State* pState,DataWriter& writer,UInt32 count,map<UInt
 		}
 	}
 	SCRIPT_END
+	return writer;
 }
 
 const char* Script::ToPrint(lua_State* pState, string& out) {

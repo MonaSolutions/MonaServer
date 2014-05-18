@@ -42,7 +42,7 @@ bool SDP::build(Exception& ex, const string& text) {
 	String::Split(text, "\r\n", lines, String::SPLIT_IGNORE_EMPTY | String::SPLIT_TRIM);
 	for(string& line : lines) {
 
-		if(line[1] != '=') {
+		if(line.empty() || line[1] != '=') {
 			ex.set(Exception::FORMATTING, "SDP line ",line," malformed, second byte isn't an equal sign");
 			return false;
 		}

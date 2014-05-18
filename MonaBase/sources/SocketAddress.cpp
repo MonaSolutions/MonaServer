@@ -142,7 +142,7 @@ SocketAddress::SocketAddress(const struct sockaddr& addr) {
 		_pAddress.reset(new IPv4SocketAddress(reinterpret_cast<const struct sockaddr_in*>(&addr)));
 }
 
-SocketAddress::SocketAddress(const SocketAddress& other) : _pAddress(other._pAddress) {
+SocketAddress::SocketAddress(const SocketAddress& other) : _pAddress(other._pAddress),_toString(other._toString) {
 }
 
 void SocketAddress::reset() {
@@ -152,7 +152,7 @@ void SocketAddress::reset() {
 
 SocketAddress& SocketAddress::set(const SocketAddress& other) {
 	_pAddress = other._pAddress;
-	_toString.clear();
+	_toString = other._toString;
 	return *this;
 }
 

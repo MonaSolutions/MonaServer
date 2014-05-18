@@ -82,7 +82,7 @@ Buffer& DiffieHellman::computeSecret(Exception& ex, const UInt8* farPubKey, UInt
 	BIGNUM *bnFarPubKey = BN_bin2bn(farPubKey,farPubKeySize,NULL);
 	int i =BN_num_bits(_pDH->priv_key);
 	sharedSecret.resize(DH_KEY_SIZE,false);
-	int size = DH_compute_key(&sharedSecret[0], bnFarPubKey, _pDH);
+	int size = DH_compute_key(sharedSecret.data(), bnFarPubKey, _pDH);
 	if (size <= 0)
 		ex.set(Exception::MATH, "Diffie Hellman exchange failed, dh compute key error");
 	else if(size!=DH_KEY_SIZE)

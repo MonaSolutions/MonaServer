@@ -49,9 +49,10 @@ int LUAServer::Get(lua_State* pState) {
 			} else if (strcmp(name,"reject")==0) {
 				server.reject(SCRIPT_READ_STRING("unknown error"));
 			} else if (strcmp(name,"configs")==0) {
-				if(Script::Collection(pState, 1, "configs", server.count())) {
+				if(Script::Collection(pState, 1, "configs")) {
 					for (auto& it : server)
-						Script::SetProperty(pState,it.first,it.second);
+						Script::PushKeyValue(pState, it.first, it.second);
+					Script::FillCollection(pState, server.count());
 				}
 			} else {
 				string value;

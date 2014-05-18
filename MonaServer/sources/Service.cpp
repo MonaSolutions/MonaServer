@@ -25,7 +25,11 @@ This file is a part of Mona.
 using namespace std;
 using namespace Mona;
 
-Service::Service(lua_State* pState, const string& path, ServiceHandler& handler) : Expirable(this), _handler(handler), path(path), _pState(pState), FileWatcher(handler.wwwPath(),path,"main.lua"), _loaded(false) {
+Service::Service(lua_State* pState, ServiceHandler& handler) : _created(false), _packages(1),Expirable(this), _handler(handler), _pState(pState), FileWatcher(handler.wwwPath(),"main.lua"), _loaded(false) {
+	_packages[0].assign("www");
+}
+
+Service::Service(lua_State* pState, const string& path, ServiceHandler& handler) : _created(false), Expirable(this), _handler(handler), path(path), _pState(pState), FileWatcher(handler.wwwPath(),path,"main.lua"), _loaded(false) {
 	String::Split("www" + path, "/", _packages, String::SPLIT_IGNORE_EMPTY | String::SPLIT_TRIM);
 }
 
@@ -38,9 +42,14 @@ Service::~Service() {
 	close(true);
 }
 
-Service* Service::get(const string& path, Expirable<Service>& expirableService) {
+Service* Service::open(const string& path, Expirable<Service>& expirableService) {
+	if (!_created)
+		open(); // to guarantee that every father are opened at less one time!
+
 	// remove first '/'
-	string name = path[0] == '/' ? path.substr(1, path.size() - 1) : path;
+	string name;
+	if(!path.empty())
+		name.assign(path[0] == '/' ? path.substr(1, path.size() - 1) : path);
 
 	// substr first "service"
 	size_t pos = name.find('/');
@@ -60,13 +69,15 @@ Service* Service::get(const string& path, Expirable<Service>& expirableService) 
 	}
 
 	if (!nextPath.empty())
-		return pSubService->get(nextPath, expirableService);
+		return pSubService->open(nextPath, expirableService);
 
 	if (pSubService->watchFile() || FileSystem::Exists(pSubService->filePath.directory())) { // if file or folder exists, return the service
 		pSubService->shareThis(expirableService);
+		pSubService->open();
 		return pSubService;
 	}
-	// service doesn't exist
+
+	// service doesn't exist (and no children possible here!)
 	if (it != _services.end()) {
 		delete it->second;
 		_services.erase(it);
@@ -75,35 +86,22 @@ Service* Service::get(const string& path, Expirable<Service>& expirableService) 
 }
 
 
-int Service::Children(lua_State *pState) {
-	// 1 => table
-	// 2 => key
+int Service::Item(lua_State *pState) {
+	// 1 => children table
+	// 2 => key not found
 	// here it check the existing of the service
-	if (lua_isstring(pState, 2) && lua_getmetatable(pState, 1)) {
-		lua_getfield(pState, -1, "|service");
-		Service* pService = (Service*)lua_touserdata(pState, -1);
-		lua_pop(pState, 2);
-		const char* name = lua_tostring(pState, 2);
-		Expirable<Service> expirableService;
-		if (!pService || !(pService = pService->get(name, expirableService)))
-			return 0;
-		pService->open();
-		return 1;
-	}
-	return 0;
+	if (!lua_isstring(pState, 2))
+		return 0;
+	Service* pService = Script::GetCollector<Service>(pState,1);
+	if (!pService)
+		return 0;
+	const char* name = lua_tostring(pState, 2);
+	Expirable<Service> expirableService;
+	if (!pService->open(name, expirableService))
+		return 0;
+	return 1;
 }
 
-int Service::CountChildren(lua_State *pState) {
-	if (lua_getmetatable(pState, 1)) {
-		lua_getfield(pState, -1, "|service");
-		Service* pService = (Service*)lua_touserdata(pState, -1);
-		if (pService) {
-			lua_pushnumber(pState, pService->_services.size());
-			return 1;
-		}
-	}
-	return 0;
-}
 
 // Call when a key is not available in the service table
 int Service::Index(lua_State *pState) {
@@ -145,7 +143,7 @@ int Service::Index(lua_State *pState) {
 			}
 			lua_pop(pState, 1);
 		}
-		
+
 		// search in metatable (contains super, children, path, name, this,...)
 		lua_getfield(pState, -1, key);
 		if (!lua_isnil(pState, -1)) {
@@ -158,12 +156,8 @@ int Service::Index(lua_State *pState) {
 	// search in parent (inheriting)
 	lua_getfield(pState, -1, "super");
 	lua_replace(pState,-2);
-	if(lua_isnil(pState,-1))
+	if (lua_isnil(pState, -1))
 		return 1; // no parent (returns nil)
-	
-	lua_pushvalue(pState, LUA_GLOBALSINDEX);
-	int result = lua_equal(pState, -1, -2);
-	lua_pop(pState, 1);
 
 	lua_pushvalue(pState, 2);
 	lua_gettable(pState,-2);
@@ -171,32 +165,22 @@ int Service::Index(lua_State *pState) {
 	return 1;
 }
 
-lua_State* Service::open() {
-	lua_State* pResult = open(true) ? _pState : NULL;
-	lua_pop(_pState, 1);
-	return pResult;
-}
 
 bool Service::open(bool create) {
+	_created = create;
+
 	// get global metatable
 	lua_getmetatable(_pState, LUA_GLOBALSINDEX);
 	lua_pushvalue(_pState, LUA_GLOBALSINDEX);
 	lua_getmetatable(_pState, LUA_GLOBALSINDEX);
 
 	for (const string& value : _packages) {
-		
-		// get children table
-		lua_getfield(_pState, -1, "children");
-		if (!lua_istable(_pState, -1)) {
-			lua_pop(_pState, 1);
-			// set an empty children table
-			lua_newtable(_pState);
-			lua_pushvalue(_pState, -1);
-			lua_setfield(_pState, -3, "children");
-		}
 
 		const char* package = value.c_str();
-
+		
+		// get children collection to parent (can be _G, no collector required here!)
+		Script::Collection(_pState,-2,"children");
+		
 		lua_getfield(_pState, -1, package);
 		if (!lua_istable(_pState, -1)) {
 			if (!create) {
@@ -208,14 +192,18 @@ bool Service::open(bool create) {
 			// table environment
 			lua_newtable(_pState);
 
+			lua_pushvalue(_pState, -2); // children collection
+
 			// set child in children table of metatable of parent
-			lua_pushvalue(_pState, -1); // table environment
-			lua_setfield(_pState,-3,package);
+			lua_pushstring(_pState, package);
+			lua_pushvalue(_pState, -3); // table environment
+
+			Script::FillCollection(_pState,1, lua_objlen(_pState, -3)+1);
+			lua_pop(_pState, 1); // remove children
 		}
+		lua_replace(_pState, -2); // remove children	
 
-		lua_remove(_pState, -2); // remove children	
-
-		if (lua_getmetatable(_pState, -1)==0) {
+		if (!lua_getmetatable(_pState, -1)) {
 
 			//// create environment
 
@@ -240,6 +228,7 @@ bool Service::open(bool create) {
 			lua_setfield(_pState, -2, "__metatable");
 #endif
 
+			// set parent
 			lua_pushvalue(_pState,-4);
 			lua_setfield(_pState,-2,"super");
 
@@ -252,25 +241,9 @@ bool Service::open(bool create) {
 			lua_setfield(_pState, -2, "path");
 
 			// set this
-			lua_pushlightuserdata(_pState, this);
+			lua_pushvalue(_pState,-2);
 			lua_setfield(_pState, -2, "this");
 
-			// set children table
-			lua_newtable(_pState);
-			lua_newtable(_pState); // metatable
-#if !defined(_DEBUG)
-			lua_pushstring(_pState, "change metatable of map is prohibited");
-			lua_setfield(_pState, -2, "__metatable");
-#endif
-			lua_pushcfunction(_pState, &Service::CountChildren);
-			lua_setfield(_pState, -2, "__len");
-			lua_pushcfunction(_pState,&Service::Children);
-			lua_setfield(_pState, -2, "__call");
-			lua_pushlightuserdata(_pState, this);
-			lua_setfield(_pState, -2, "|service");
-			lua_setmetatable(_pState, -2);
-			lua_setfield(_pState, -2, "children");
-			
 			// set __index=Service::Index
 			lua_pushcfunction(_pState,&Service::Index);
 			lua_setfield(_pState,-2,"__index");
@@ -278,10 +251,16 @@ bool Service::open(bool create) {
 			// set metatable
 			lua_pushvalue(_pState, -1);
 			lua_setmetatable(_pState,-3);
+
+			// create children collection (collector required here!)
+			Script::Collection<Service>(_pState,-2,"children",this);
+			lua_pop(_pState, 1);
+
 			// in this scope the service table has been pushed
 		}
-		lua_remove(_pState, -3); // remove precedent metatable
-		lua_remove(_pState, -3); // remove precedent service table
+
+		lua_replace(_pState, -3); // remove precedent metatable
+		lua_replace(_pState, -3); // remove precedent service table
 	}
 
 	lua_pop(_pState, 1); // remove metatable
@@ -351,20 +330,27 @@ void Service::close(bool full) {
 			// Delete environment
 			if (lua_getmetatable(_pState, -1)) {
 				lua_getfield(_pState, -1, "super");
-				if (!lua_isnil(_pState, -1) && lua_getmetatable(_pState, -1)) {
-					lua_getfield(_pState, -1, "children");
+				if (lua_istable(_pState, -1)) {
+					Script::Collection(_pState, -1, "children");
+					lua_pushstring(_pState, _packages.back().c_str());
 					lua_pushnil(_pState);
-					lua_setfield(_pState, -2, (_packages[_packages.size() - 1]).c_str());
+					Script::FillCollection(_pState, 1, lua_objlen(_pState,-3)-1);
 					lua_pop(_pState, 1); // metatable of parent
 				}
 				lua_pop(_pState, 2);
 			}
 		} else
 			clearEnvironment();
-		lua_pop(_pState, 1);
+
+		lua_getmetatable(_pState, LUA_GLOBALSINDEX);
+		lua_pushnil(_pState);
+		lua_setfield(_pState, -2, "|env");
+
+		lua_pop(_pState, 2);
 		lua_gc(_pState, LUA_GCCOLLECT, 0);
 	}
 	_loaded = false;
+	_created = !full;
 }
 
 void Service::clearEnvironment() {

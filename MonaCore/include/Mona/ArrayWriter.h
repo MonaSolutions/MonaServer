@@ -24,19 +24,20 @@ This file is a part of Mona.
 
 namespace Mona {
 
-template<class MapType>
-class MapWriter : public DataWriter, public virtual Object {
+template<class ArrayType>
+class ArrayWriter : public DataWriter, public virtual Object {
 public:
-	MapWriter(MapType& map) : _map(map),_size(0),_isProperty(false) {}
+	ArrayWriter(ArrayType& array) : _array(array),_size(0),_isProperty(false) {}
+
 	void beginObject(const std::string& type = "", bool external = false) {}
 	void endObject() {}
 
-	void writePropertyName(const std::string& value) { _property = value; _isProperty=true; }
+	void writePropertyName(const std::string& value) {}
 
 	void beginArray(UInt32 size) {}
 	void endArray(){}
 
-	void writeDate(const Date& date) { set(date.toString(Date::SORTABLE_FORMAT,_buffer)); }
+	void writeDate(const Date& date) { set(String::Format(_buffer, date)); }
 	void writeNumber(double value) { set(String::Format(_buffer, value)); }
 	void writeString(const std::string& value) { set(value); }
 	void writeBoolean(bool value) { set( value ? "true" : "false");}
@@ -44,27 +45,21 @@ public:
 	void writeBytes(const UInt8* data, UInt32 size) { set((const char*)data, size); }
 
 	UInt32 size() const { return _size; }
-	UInt32 count() const { return _map.count(); }
+	UInt32 count() const { return _array.count(); }
 	
 
-	void   clear() { _map.clear(); _isProperty = false; _property.clear(); _size = 0; DataWriter::clear(); }
+	void   clear() { _array.clear(); _size = 0; DataWriter::clear(); }
 private:
 	template <typename ...Args>
 	void set(Args&&... args) {
-		if (_isProperty) {
-			_size += _map[_property].assign(args ...).size();
-			_isProperty = false;
-		} else {
-			_property.assign(args ...).size();
-			_map[_property].clear();
-		}
-		_property.clear();
+		_array.emplace_back(args ...);
+		_size += _array.back().size();
 	}
 
 	std::string					_property;
 	bool						_isProperty;
 
-	MapType&					_map;
+	ArrayType&					_array;
 	std::string					_buffer;
 	UInt32						_size;
 };

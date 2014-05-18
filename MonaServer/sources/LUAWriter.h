@@ -28,6 +28,7 @@ public:
 	Mona::Writer&		writer;
 
 	static void Init(lua_State *pState, Mona::Writer& writer) {}
+	static void Clear(lua_State* pState, const Mona::Writer& writer);
 	static int	Destroy(lua_State *pState);
 
 	static int Get(lua_State *pState);

@@ -239,11 +239,11 @@ void RTMPSession::packetHandler(PacketReader& packet) {
 			invoker.flashStream(channel.streamId, peer, _pStream).process(channel.type,channel.absoluteTime, reader,*_pWriter); // TODO peer.serverAddress?	
 			if (!connected && peer.connected)
 				_pWriter->isMain = true;
+			else if (!peer.connected)
+				kill(REJECTED_DEATH);	
 		}
 	}
 
-	if (!peer.connected)
-		kill(REJECTED_DEATH);	
 	_pWriter = NULL;
 	channel.pBuffer.release();
 }

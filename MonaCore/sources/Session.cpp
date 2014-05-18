@@ -34,7 +34,8 @@ Session::Session(Protocol& protocol, Invoker& invoker, const shared_ptr<Peer>& p
 	if(memcmp(peer.id,"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",ID_SIZE)==0)
 		Util::Random(peer.id,ID_SIZE);
 
-	DEBUG(peer.address.toString()," => peer.id ", Util::FormatHex(peer.id, ID_SIZE, invoker.buffer));
+	DEBUG("peer.id ", Util::FormatHex(peer.id, ID_SIZE, LOG_BUFFER));
+
 }
 	
 Session::Session(Protocol& protocol, Invoker& invoker, const char* name) : _sessionsOptions(0),dumpJustInDebug(false), _pPeer(new Peer((Handler&)invoker)),
@@ -42,8 +43,10 @@ Session::Session(Protocol& protocol, Invoker& invoker, const char* name) : _sess
 	((string&)peer.protocol) = protocol.name;
 	if(memcmp(peer.id,"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",ID_SIZE)==0)
 		Util::Random(peer.id, ID_SIZE);
-	DEBUG(peer.address.toString()," => peer.id ", Util::FormatHex(peer.id, ID_SIZE, invoker.buffer));
+	DEBUG("peer.id ", Util::FormatHex(peer.id, ID_SIZE, LOG_BUFFER));
+
 }
+
 
 
 Session::~Session() {

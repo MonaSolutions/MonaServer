@@ -18,30 +18,42 @@ This file is a part of Mona.
 */
 
 #include "LUAGroup.h"
-#include "LUAClient.h"
 #include "Mona/Invoker.h"
 #include "Mona/Util.h"
 
 using namespace std;
 using namespace Mona;
 
+void LUAGroup::Init(lua_State* pState, Group& group) {
+	lua_getmetatable(pState, -1);
+	string hex;
+	lua_pushstring(pState, Mona::Util::FormatHex(group.id, ID_SIZE, hex).c_str());
+	lua_setfield(pState, -2,"|id");
+	lua_pop(pState, 1);
+}
 
-void LUAGroup::AddClient(lua_State* pState, Group& group, Client& client, UInt8 indexGroup) {
+void LUAGroup::AddClient(lua_State* pState, Group& group, UInt8 indexGroup) {
 	// -1 must be the client table!
-	Script::Collection(pState, indexGroup, "|items", group.count());
-	LUAClient::GetID(pState, client);
+	Script::Collection(pState, indexGroup,"|items");
+	lua_getmetatable(pState, -2);
+	lua_getfield(pState, -1, "|id");
+	lua_replace(pState, -2);
 	lua_pushvalue(pState, -3);
-	lua_settable(pState, -3);
+	Script::FillCollection(pState, 1, group.count());
 	lua_pop(pState, 1);
 }
 
 void LUAGroup::RemoveClient(lua_State* pState, Group& group, Client& client) {
 	// -1 must be the group table!
-	Script::Collection(pState, -1, "|items", group.count());
-	LUAClient::GetID(pState, client);
+	if (!Script::FromObject<Client>(pState, client))
+		return;
+	Script::Collection(pState, -2,"|items");
+	lua_getmetatable(pState, -2);
+	lua_getfield(pState, -1, "|id");
+	lua_replace(pState, -2);
 	lua_pushnil(pState);
-	lua_settable(pState, -3);
-	lua_pop(pState, 1);
+	Script::FillCollection(pState, 1, group.count());
+	lua_pop(pState, 2);
 }
 
 int LUAGroup::Item(lua_State *pState) {
@@ -58,8 +70,8 @@ int LUAGroup::Item(lua_State *pState) {
 	if (size == ID_SIZE)
 		pGroup = pInvoker->groups(id);
 	else if (size == (ID_SIZE<<1)) {
-		pInvoker->buffer.assign((const char*)id,size);
-		pGroup = pInvoker->groups((const UInt8*)Util::UnformatHex(pInvoker->buffer).c_str());
+		string temp((const char*)id,size);
+		pGroup = pInvoker->groups((const UInt8*)Util::UnformatHex(temp).c_str());
 	}
 	SCRIPT_BEGIN(pState)
 		if (pGroup)
@@ -75,13 +87,6 @@ int LUAGroup::Get(lua_State *pState) {
 			if(strcmp(name,"id")==0) {
 				if (lua_getmetatable(pState, 1)) {
 					lua_getfield(pState, -1, "|id");
-					if (!lua_isstring(pState, -1)) {
-						lua_pop(pState, 1);
-						string hex;
-						lua_pushstring(pState, Mona::Util::FormatHex(group.id, ID_SIZE, hex).c_str());
-						lua_pushvalue(pState, -1);
-						lua_setfield(pState, -3,"|id");
-					}
 					lua_replace(pState, -2);
 				}
 			} else if (strcmp(name, "rawId") == 0) {
@@ -89,7 +94,7 @@ int LUAGroup::Get(lua_State *pState) {
 			} else if (strcmp(name, "count") == 0) {
 				SCRIPT_WRITE_NUMBER(group.count());
 			} else {
-				Script::Collection(pState, 1, "|items", group.count());
+				Script::Collection(pState, 1,"|items");
 				lua_getfield(pState, -1, name);
 				lua_replace(pState, -2);
 			}

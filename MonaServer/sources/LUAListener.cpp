@@ -50,9 +50,10 @@ int LUAListener::Get(lua_State *pState) {
 			} else if(strcmp(name,"client")==0) {
 				SCRIPT_ADD_OBJECT(Client, LUAClient, listener.client);
 			} else if (strcmp(name,"properties")==0) {
-				if (Script::Collection(pState, 1, "properties", listener.count())) {
+				if (Script::Collection(pState, 1, "properties")) {
 					for (auto& it : listener)
-						Script::SetProperty(pState,it.first,it.second);
+						Script::PushKeyValue(pState, it.first, it.second);
+					Script::FillCollection(pState, listener.count());
 				}
 			} else {
 				string value;

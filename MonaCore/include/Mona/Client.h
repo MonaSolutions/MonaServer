@@ -27,7 +27,12 @@ This file is a part of Mona.
 
 namespace Mona {
 
-class Client : public Entity, public virtual Object {
+namespace Events {
+	struct OnCallProperties : Event<bool(std::vector<std::string>&)> {};
+};
+
+class Client : public Entity, public virtual Object,
+	public Events::OnCallProperties {
 public:
 	Client() : _pWriter(NULL),ping(0),_pUserData(NULL) {}
 
@@ -49,10 +54,17 @@ public:
 	const std::string			serverAddress;
 	const UInt16				ping;
 	virtual const Parameters&	properties() const =0;
+	void						properties(std::vector<std::string>& items) {
+		if (OnCallProperties::raise<true>(items)) {
+			for (std::string& item : items)
+				if (!properties().getString(item, item)) item.assign("null");
+		}
+	}
 
 	Writer&						writer() { return _pWriter ? *_pWriter : Writer::Null; }
 protected:
 	Writer*						_pWriter;
+	std::string					_buffer;
 private:
 	void*						_pUserData;
 };

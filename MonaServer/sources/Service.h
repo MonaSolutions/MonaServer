@@ -34,16 +34,20 @@ public:
 
 class Service : public Mona::FileWatcher, public Mona::Expirable<Service> {
 public:
-	Service(lua_State* pState, const std::string& path, ServiceHandler& handler);
+	Service(lua_State* pState, ServiceHandler& handler);
 	virtual ~Service();
 
-	Service*			get(const std::string& path, Mona::Expirable<Service>& expirableService);
-	lua_State*			open();
+	
+	Service*			open(const std::string& path, Mona::Expirable<Service>& expirableService);
+	void				open() {open(true); lua_pop(_pState, 1); }
 
 	const std::string	path;
 	const std::string	lastError;
+
+	static int	Item(lua_State *pState);
+
 private:
-	Service(lua_State* pState, const std::string& path, ServiceHandler& handler,bool init);
+	Service(lua_State* pState, const std::string& path, ServiceHandler& handler);
 
 	bool		open(bool create);
 	void		close(bool full);
@@ -52,11 +56,10 @@ private:
 	void		clearFile() { close(false); }
 	void		clearEnvironment();
 
-	static int	Children(lua_State *pState);
-	static int	CountChildren(lua_State *pState);
 	static int	Index(lua_State* pState);
 
 	bool						_loaded;
+	bool						_created;
 	lua_State*					_pState;
 	std::vector<std::string>	_packages;
 

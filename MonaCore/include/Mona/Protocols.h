@@ -37,8 +37,9 @@ public:
 private:
 	template<class ProtocolType, typename ...Args >
 	void loadProtocol(const char* name, UInt16 port, Sessions& sessions, Args&&... args) {
-		if (!_invoker.getNumber(String::Format(_invoker.buffer, name, ".port"), port))
-			_invoker.setNumber(_invoker.buffer, port);
+		std::string buffer;
+		if (!_invoker.getNumber(String::Format(buffer, name, ".port"), port))
+			_invoker.setNumber(buffer, port);
 		if(port==0)
 			return;
 		std::unique_ptr<Protocol> pProtocol(new ProtocolType(name, _invoker, sessions, args ...));
@@ -46,12 +47,12 @@ private:
 		std::string host("0.0.0.0");
 		_invoker.getString("host", host);
 	
-		// invoker params to protocol params!
+		// configs to protocol params!
 		Parameters::ForEach forEach;
 		forEach = [&pProtocol](const std::string& key, const std::string& value) -> void {
 			pProtocol->setString(key, value);
 		};
-		_invoker.iterate(String::Format(_invoker.buffer,name,"."),forEach);
+		_invoker.iterate(String::Format(buffer,name,"."),forEach);
 
 		Exception ex;
 		bool success = false;
@@ -62,7 +63,7 @@ private:
 
 		// copy protocol params to invoker params
 		for (auto& it : *pProtocol)
-			_invoker.setString(String::Format(_invoker.buffer,name,".",it.first), it.second);
+			_invoker.setString(String::Format(buffer,name,".",it.first), it.second);
 
 		NOTE(name, " server started on ",host,":",port, dynamic_cast<UDProtocol*>(pProtocol.get()) ? " (UDP)" : " (TCP)");
 		_protocols.emplace_back(pProtocol.release());

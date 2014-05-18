@@ -26,11 +26,11 @@ This file is a part of Mona.
 class LUAGroup {
 public:
 
-	static void Init(lua_State *pState, Mona::Group& groups) {}
+	static void Init(lua_State *pState, Mona::Group& group);
 	static void Clear(lua_State* pState, const Mona::Group& group) {}
 
 	// -1 must be the client table!
-	static void AddClient(lua_State* pState, Mona::Group& group, Mona::Client& client, Mona::UInt8 indexGroup);
+	static void AddClient(lua_State* pState, Mona::Group& group, Mona::UInt8 indexGroup);
 	// -1 must be the group table!
 	static void RemoveClient(lua_State* pState, Mona::Group& group, Mona::Client& client);
 

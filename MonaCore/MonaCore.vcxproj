@@ -113,6 +113,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\Mona\ArrayReader.h" />
     <ClInclude Include="include\Mona\Client.h" />
     <ClInclude Include="include\Mona\Clients.h" />
     <ClInclude Include="include\Mona\CSSWriter.h" />
@@ -142,6 +143,7 @@
     <ClInclude Include="include\Mona\SVGWriter.h" />
     <ClInclude Include="include\Mona\TCProtocol.h" />
     <ClInclude Include="include\Mona\UDProtocol.h" />
+    <ClInclude Include="include\Mona\ArrayWriter.h" />
     <ClInclude Include="include\Mona\Writer.h" />
     <ClInclude Include="include\Mona\Protocol.h" />
     <ClInclude Include="include\Mona\Protocols.h" />

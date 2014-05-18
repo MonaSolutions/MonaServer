@@ -18,12 +18,18 @@ This file is a part of Mona.
 */
 
 #include "LUAMember.h"
-#include "LUAClient.h"
 #include "Mona/Util.h"
 
 using namespace Mona;
 using namespace std;
 
+void LUAMember::Init(lua_State* pState, Peer& member) {
+	lua_getmetatable(pState, -1);
+	string hex;
+	lua_pushstring(pState, Mona::Util::FormatHex(member.id, ID_SIZE, hex).c_str());
+	lua_setfield(pState, -2,"|id");
+	lua_pop(pState, 1);
+}
 
 int LUAMember::Destroy(lua_State* pState) {
 	SCRIPT_DESTRUCTOR_CALLBACK(Peer,member)
@@ -42,7 +48,10 @@ int LUAMember::Get(lua_State *pState) {
 		const char* name = SCRIPT_READ_STRING(NULL);
 		if(name) {
 			if (strcmp(name,"id")==0) {
-				LUAClient::GetID(pState,member);
+				if (lua_getmetatable(pState, 1)) {
+					lua_getfield(pState, -1, "|id");
+					lua_replace(pState, -2);
+				}
 			} else if (strcmp(name, "rawId") == 0)
 				SCRIPT_WRITE_BINARY(member.id,ID_SIZE)
 			else if (strcmp(name, "release") == 0)

@@ -39,69 +39,80 @@ This file is a part of Mona.
 using namespace std;
 using namespace Mona;
 
-
+// HERE JUST TO SET THE COLLECTOR FOR EVERY COLLECTIONS
 void LUAInvoker::Init(lua_State *pState, Invoker& invoker) {
-	// clients
-	Script::Collection<Invoker,LUAClient>(pState, -1, "clients",0,&invoker);
-	lua_pop(pState, 1);
-	// publications
-	Script::Collection<Invoker, LUAPublication<> >(pState, -1, "publications", 0, &invoker);
-	lua_pop(pState, 1);
-	// groups
-	Script::Collection<Invoker, LUAGroup>(pState, -1, "groups", 0, &invoker);
-	lua_pop(pState, 1);
+	Script::Collection<Invoker,LUAClient>(pState, -1, "clients",&invoker);
+	Script::Collection<Invoker, LUAPublication<> >(pState, -1, "publications", &invoker);
+	Script::Collection<Invoker, LUAGroup>(pState, -1, "groups", &invoker);
+
+	lua_pop(pState, 3);
 }
 
-void LUAInvoker::AddClient(lua_State *pState, Invoker& invoker, Client& client) {
+
+void LUAInvoker::AddClient(lua_State *pState, Invoker& invoker) {
 	// -1 must be the client table!
 	lua_getglobal(pState, "mona");
-	Script::Collection(pState, -1, "clients", invoker.clients.count() + 1);
-	LUAClient::GetID(pState, client);
+	Script::Collection(pState, -1, "clients");
+	lua_getmetatable(pState, -3);
+	lua_getfield(pState, -1, "|id");
+	lua_replace(pState, -2);
 	lua_pushvalue(pState, -4); // client table
-	lua_settable(pState, -3);
+	Script::FillCollection(pState, 1, invoker.clients.count() + 1);
 	lua_pop(pState, 2);
 }
 
-void LUAInvoker::RemoveClient(lua_State *pState, Invoker& invoker, const Client& client) {
+void LUAInvoker::RemoveClient(lua_State *pState, Invoker& invoker) {
+	// -1 must be the client table!
 	lua_getglobal(pState, "mona");
-	Script::Collection(pState, -1, "clients", invoker.clients.count());
-	LUAClient::GetID(pState, client);
+	Script::Collection(pState, -1, "clients");
+	lua_getmetatable(pState, -3);
+	lua_getfield(pState, -1, "|id");
+	lua_replace(pState, -2);
 	lua_pushnil(pState);
-	lua_settable(pState, -3);
+	Script::FillCollection(pState, 1, invoker.clients.count());
 	lua_pop(pState, 2);
 }
 
 void LUAInvoker::AddPublication(lua_State *pState, Invoker& invoker, const Publication& publication) {
 	// -1 must be the publication table!
 	lua_getglobal(pState, "mona");
-	Script::Collection(pState, -1, "publications", invoker.publications.count());
-	lua_pushvalue(pState, -3);
-	lua_setfield(pState, -2 ,publication.name().c_str());
+	Script::Collection(pState, -1, "publications");
+	lua_pushstring(pState,publication.name().c_str());
+	lua_pushvalue(pState, -4);
+	Script::FillCollection(pState, 1, invoker.publications.count());
 	lua_pop(pState, 2);
 }
 
 void LUAInvoker::RemovePublication(lua_State *pState, Invoker& invoker, const Publication& publication) {
 	lua_getglobal(pState, "mona");
-	Script::Collection(pState, -1, "publications", invoker.publications.count()-1);
+	Script::Collection(pState, -1, "publications");
+	lua_pushstring(pState,publication.name().c_str());
 	lua_pushnil(pState);
-	lua_setfield(pState, -2 ,publication.name().c_str());
+	Script::FillCollection(pState, 1, invoker.publications.count()-1);
 	lua_pop(pState, 2);
 }
 
-void LUAInvoker::AddGroup(lua_State *pState, Invoker& invoker, Group& group) {
+void LUAInvoker::AddGroup(lua_State *pState, Invoker& invoker) {
 	// -1 must be the group table!
 	lua_getglobal(pState, "mona");
-	Script::Collection(pState, -1, "groups", invoker.groups.count());
-	lua_pushvalue(pState, -3);
-	lua_setfield(pState, -2 ,Util::FormatHex(group.id, ID_SIZE, invoker.buffer).c_str());
+	Script::Collection(pState, -1, "groups");
+	lua_getmetatable(pState, -3);
+	lua_getfield(pState, -1, "|id");
+	lua_replace(pState, -2);
+	lua_pushvalue(pState, -4);
+	Script::FillCollection(pState, 1,invoker.groups.count());
 	lua_pop(pState, 2);
 }
 
-void LUAInvoker::RemoveGroup(lua_State *pState, Invoker& invoker, const Group& group) {
+void LUAInvoker::RemoveGroup(lua_State *pState, Invoker& invoker) {
+	// -1 must be the group table!
 	lua_getglobal(pState, "mona");
-	Script::Collection(pState, -1, "groups", invoker.groups.count());
+	Script::Collection(pState, -1, "groups");
+	lua_getmetatable(pState, -3);
+	lua_getfield(pState, -1, "|id");
+	lua_replace(pState, -2);
 	lua_pushnil(pState);
-	lua_setfield(pState, -2 ,Util::FormatHex(group.id, ID_SIZE, invoker.buffer).c_str());
+	Script::FillCollection(pState, 1,invoker.groups.count());
 	lua_pop(pState, 2);
 }
 
@@ -243,12 +254,13 @@ int	LUAInvoker::RemoveFromBlacklist(lua_State* pState) {
 int LUAInvoker::JoinGroup(lua_State* pState) {
 	SCRIPT_CALLBACK(Invoker, invoker)
 		SCRIPT_READ_BINARY(peerId, size)
+		Buffer buffer(ID_SIZE);
 		if (size == (ID_SIZE << 1)) {
-			invoker.buffer.assign((const char*)peerId,size);
-			Util::UnformatHex(invoker.buffer);
+			memcpy(buffer.data(),peerId,size);
+			peerId = Util::UnformatHex(buffer).data();
 		} else if (size != ID_SIZE) {
 			if (peerId) {
-				SCRIPT_ERROR("Bad member format id ", Util::FormatHex(peerId, size, invoker.buffer));
+				SCRIPT_ERROR("Bad member format id ", string((const char*)peerId, size));
 				peerId = NULL;
 			} else
 				SCRIPT_ERROR("Member id argument missing");
@@ -256,11 +268,11 @@ int LUAInvoker::JoinGroup(lua_State* pState) {
 		if (peerId) {
 			SCRIPT_READ_BINARY(groupId, size)
 			if (size == (ID_SIZE << 1)) {
-				invoker.buffer.assign((const char*)groupId,size);
-				Util::UnformatHex(invoker.buffer);
+				memcpy(buffer.data(),groupId,size);
+				groupId = Util::UnformatHex(buffer).data();
 			} else if (size != ID_SIZE) {
 				if (groupId) {
-					SCRIPT_ERROR("Bad group format id ", Util::FormatHex(groupId, size, invoker.buffer))
+					SCRIPT_ERROR("Bad group format id ", string((const char*)groupId, size))
 					groupId = NULL;
 				} else
 					SCRIPT_ERROR("Group id argument missing")
@@ -280,13 +292,13 @@ int LUAInvoker::Get(lua_State *pState) {
 		const char* name = SCRIPT_READ_STRING(NULL);
 		if (name) {
 			if(strcmp(name,"clients")==0) {
-				Script::Collection(pState,1,"clients",invoker.clients.count());
+				Script::Collection(pState,1,"clients");
 			} else if (strcmp(name, "joinGroup") == 0) {
 				SCRIPT_WRITE_FUNCTION(&LUAInvoker::JoinGroup)
 			} else if (strcmp(name, "groups") == 0) {
-				Script::Collection(pState, 1, "groups", invoker.groups.count());
+				Script::Collection(pState, 1, "groups");
 			} else if (strcmp(name, "publications") == 0) {
-				Script::Collection(pState, 1, "publications", invoker.publications.count());
+				Script::Collection(pState, 1, "publications");
 			} else if (strcmp(name, "publish") == 0) {
 				SCRIPT_WRITE_FUNCTION(&LUAInvoker::Publish)
 			} else if (strcmp(name, "toAMF") == 0) {

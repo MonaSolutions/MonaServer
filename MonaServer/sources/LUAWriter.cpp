@@ -28,12 +28,9 @@ using namespace Mona;
 
 LUAWriter::LUAWriter(lua_State* pState,Writer& writer):writer(writer),_pState(pState) {
 	onClose = [this](Int32 code) {
-		SCRIPT_BEGIN(_pState)
-			Script::ClearObject<QualityOfService, LUAQualityOfService>(_pState, this->writer.qos());
-			Script::ClearObject<Writer, LUAWriter>(_pState, this->writer);
-		SCRIPT_END
+		Clear(_pState, this->writer);
 		this->writer.unsubscribe(onClose);
-		delete this;
+		delete this; // delete LUAWriter instance!
 	};
 	writer.subscribe(onClose);
 }
@@ -42,6 +39,10 @@ int LUAWriter::Destroy(lua_State* pState) {
 	SCRIPT_DESTRUCTOR_CALLBACK(Writer,writer)
 		writer.close();
 	SCRIPT_CALLBACK_RETURN
+}
+
+void LUAWriter::Clear(lua_State* pState,const Writer& writer){
+	Script::ClearObject<QualityOfService, LUAQualityOfService>(pState, writer.qos());
 }
 
 int LUAWriter::Close(lua_State* pState) {

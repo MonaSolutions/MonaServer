@@ -27,7 +27,7 @@ using namespace Mona;
 
 class Loader : public DatabaseLoader {
 public:
-	void onDataLoading(const std::string& path, const char* value, UInt32 size) {
+	void onDataLoading(const std::string& path, const UInt8* value, UInt32 size) {
 		CHECK(strlen(path.c_str()) == 0 && size == 5 && memcmp("salut", value, size) == 0 ||
 				memcmp(path.c_str(), "/Test", 5) == 0 && size == 8 && memcmp("aur\0voir", value, size) == 0);
 	}

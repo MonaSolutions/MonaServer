@@ -74,9 +74,9 @@ public:
 		if (out.size() == 0)
 			return;
 		if (_PLogger)
-			_PLogger->dump(&out[0], out.size());
+			_PLogger->dump(out.data(), out.size());
 		else
-			_DefaultLogger.dump(&out[0], out.size());
+			_DefaultLogger.dump(out.data(), out.size());
 	}
 
 private:
@@ -89,7 +89,9 @@ private:
 #undef ERROR
 #undef DEBUG
 #undef TRACE
-#define LOG(LEVEL,FILE,LINE,...) { if(Mona::Logs::GetLevel()>=LEVEL) Mona::Logs::Log(LEVEL,FILE,LINE, __VA_ARGS__); }
+
+#define LOG_BUFFER	___buffer
+#define LOG(LEVEL,FILE,LINE,...) { if(Mona::Logs::GetLevel()>=LEVEL) { std::string ___buffer; Mona::Logs::Log(LEVEL,FILE,LINE, __VA_ARGS__); } }
 
 #define FATAL(...)	LOG(Mona::Logger::LEVEL_FATAL,__FILE__,__LINE__, __VA_ARGS__)
 #define CRITIC(...) LOG(Mona::Logger::LEVEL_CRITIC,__FILE__,__LINE__, __VA_ARGS__)

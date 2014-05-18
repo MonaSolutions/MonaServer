@@ -57,14 +57,14 @@ public:
 	bool hasKey(const std::string& key) { return getRaw(key) != NULL; }
 	void erase(const std::string& key) { setRaw(key, NULL); }
 
-	void setString(const std::string& key, const std::string& value) {setRaw(key, &value[0]);}
+	void setString(const std::string& key, const std::string& value) {setRaw(key,value.c_str());}
 	void setString(const std::string& key, const char* value) {setRaw(key, value);}
 	template<typename NumberType>
 	void setNumber(const std::string& key, NumberType value) {
 		std::string val;
 		setString(key, String::Format(val, value));
 	}
-	void setBool(const std::string& key, bool value) {setRaw(key, value ? "true" : "false");}
+	void setBool(const std::string& key, bool value) { setRaw(key, value ? "true" : "false"); }
 
 	void  iterate(ForEach& function) const { iteration(NULL, function); };
 	void  iterate(const std::string& prefix, ForEach& function) const { iteration(prefix.c_str(), function); };

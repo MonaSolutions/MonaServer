@@ -189,7 +189,7 @@ bool Database::loadDirectory(Exception& ex, const string& directory, const strin
 		}
 
 		hasData = true;
-		loader.onDataLoading(path, buffer.data(), buffer.size());
+		loader.onDataLoading(path, (const UInt8*)buffer.data(), buffer.size());
 
 	}
 	if (!hasData)

@@ -181,14 +181,15 @@ void HTTPSession::packetHandler(PacketReader& reader) {
 						}
 						if (!ex && !_pListener) {
 							 // for the case of one folder displayed, search sort arguments
+							string direction;
 							UInt8 sortOptions(HTTP::SORT_ASC);
-							 if (peer.properties().getString("N", invoker.buffer))
+							 if (peer.properties().getString("N", direction))
 								sortOptions |= HTTP::SORT_BY_NAME;
-							 else if (peer.properties().getString("M", invoker.buffer))
+							 else if (peer.properties().getString("M", direction))
 								sortOptions |= HTTP::SORT_BY_MODIFIED;
-							 else if (peer.properties().getString("S", invoker.buffer))
+							 else if (peer.properties().getString("S", direction))
 								sortOptions |= HTTP::SORT_BY_SIZE;
-							 if (invoker.buffer == "D")
+							 if (direction == "D")
 								 sortOptions |= HTTP::SORT_DESC;
 							 // HTTP get
 							_writer.writeFile(filePath, sortOptions, pPacket->filePos==string::npos);

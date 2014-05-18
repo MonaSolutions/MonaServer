@@ -54,7 +54,7 @@ public:
 	bool					reliable;
 
 
-	const QualityOfService&	qos() { return _qos; }
+	const QualityOfService&	qos() const { return _qos; }
 
 
 	virtual Writer&			newWriter() { return *this; }

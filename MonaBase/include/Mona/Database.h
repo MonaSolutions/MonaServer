@@ -30,7 +30,7 @@ namespace Mona {
 
 class DatabaseLoader {
 public:
-	virtual void onDataLoading(const std::string& path, const char* value, UInt32 size) = 0;
+	virtual void onDataLoading(const std::string& path, const UInt8* value, UInt32 size) = 0;
 };
 
 class Database : private Startable, public virtual Object {
