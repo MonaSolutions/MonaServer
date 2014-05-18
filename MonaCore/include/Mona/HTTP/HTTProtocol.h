@@ -31,6 +31,7 @@ public:
 
 		setNumber("timeout", 7); // 7 seconds
 		setString("index", ""); // index directory, if null => forbid directory index, otherwise redirection to index
+		invoker.setNumber("WebSocket.timeout", 120); // 120 sec, default Websocket timeout (ping is configured to 60sec)
 
 		onConnection = [this](Exception& ex,const SocketAddress& address,SocketFile& file) {
 			this->sessions.create<HTTPSession>(address,file,*this,this->invoker); // Create session

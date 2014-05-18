@@ -59,6 +59,8 @@ void HTTPPacket::parseHeader(Exception& ex,const char* key, const char* value) {
 		vector<string> values;
 		for (string& value : String::Split(value, ",", values, String::SPLIT_IGNORE_EMPTY | String::SPLIT_TRIM))
 			accessControlRequestMethod |= HTTP::ParseCommand(ex,value.c_str());
+	} else if (String::ICompare(key,"cookie")==0) {
+		cookies.assign(value);
 	}
 }
 	

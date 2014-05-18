@@ -33,6 +33,8 @@ public:
 	static int Set(lua_State* pState);
 
 private:
+	static int SetCookie(lua_State* pState);
+
 class LUAProperties {
 	static int Item(lua_State *pState);
 };

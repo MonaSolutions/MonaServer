@@ -93,6 +93,43 @@ int LUAClient::Item(lua_State *pState) {
 	return pClient ? 1 : 0;
 }
 
+int LUAClient::SetCookie(lua_State *pState) {
+	SCRIPT_CALLBACK(Client,client)
+ 		const char* key = SCRIPT_READ_STRING(NULL);
+		const char* value = SCRIPT_READ_STRING(NULL);
+		Int32 expiresOffset = SCRIPT_READ_INT(0);
+		const char* path = SCRIPT_READ_STRING(NULL);
+		const char* domain = SCRIPT_READ_STRING(NULL);
+		bool secure = SCRIPT_READ_BOOL(false);
+		bool httpOnly = SCRIPT_READ_BOOL(false);
+
+		if (!key)
+			SCRIPT_ERROR("cookie's key argument missing")
+		else if (!value)
+			SCRIPT_ERROR("cookie's value argument missing")
+		else {
+			string cookieKey, cookieValue;
+			String::Append(cookieKey, "cookies.", key);
+			String::Format(cookieValue, key, "=", value);
+
+			// Expiration Date in RFC 1123 Format
+			if (expiresOffset != 0) {
+				Date expiration(Date::Type::GMT);
+				expiration += expiresOffset*1000; // Now + signed offset
+				string dateExpiration;
+				String::Append(cookieValue, "; Expires=", expiration.toString(Date::RFC1123_FORMAT, dateExpiration));
+			}
+
+			if (path) String::Append(cookieValue, "; Path=", path);
+			if (domain) String::Append(cookieValue, "; Domain=", domain);
+			if (secure) String::Append(cookieValue, "; Secure");
+			if (httpOnly) String::Append(cookieValue, "; HttpOnly");
+
+			((Parameters&)client.properties()).setString(cookieKey, cookieValue);
+		}
+	SCRIPT_CALLBACK_RETURN
+}
+
 int LUAClient::Get(lua_State *pState) {
 	SCRIPT_CALLBACK(Client,client)
 		const char* name = SCRIPT_READ_STRING(NULL);
@@ -119,6 +156,8 @@ int LUAClient::Get(lua_State *pState) {
 				SCRIPT_WRITE_NUMBER(client.ping)
 			} else if(strcmp(name,"protocol")==0) {
 				SCRIPT_WRITE_STRING(client.protocol.c_str())
+			} else if (strcmp(name, "setCookie") == 0) {
+				SCRIPT_WRITE_FUNCTION(&LUAClient::SetCookie)
 			} else if (strcmp(name,"properties")==0) {
 				if (Script::Collection(pState, 1, "properties")) {
 					MapParameters& properties(((Peer&)client).properties());
