@@ -55,7 +55,7 @@ public:
 	const UInt16				ping;
 	virtual const Parameters&	properties() const =0;
 	void						properties(std::vector<std::string>& items) {
-		if (OnCallProperties::raise<true>(items)) {
+		if (!OnCallProperties::subscribed() || OnCallProperties::raise<false>(items)) {
 			for (std::string& item : items)
 				if (!properties().getString(item, item)) item.assign("null");
 		}
