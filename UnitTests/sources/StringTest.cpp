@@ -260,6 +260,55 @@ ADD_TEST(StringTest, Trim) {
 	CHECK(String::Trim(s, String::TRIM_BOTH) == "ab c");
 }
 
+ADD_TEST(StringTest, Split) {
+
+	int test = 0;
+	int i = 0;
+	String::ForEach forEach([&test, &i](const char* value) {
+		switch (test) {
+			case 0:
+				CHECK(strcmp(value, "bidule")==0)
+				break;
+			case 1: {
+				if (i == 0)
+					CHECK(strcmp(value, "abc ")==0)
+				else if (i == 1)
+					CHECK(strcmp(value, " def ")==0)
+				else if (i==2)
+					CHECK(strcmp(value, " ghi")==0)
+				else
+					CHECK(strcmp(value, "")==0)
+				break;
+			}
+			case 2: {
+				if (i == 0)
+					CHECK(strcmp(value, "abc")==0)
+				else if (i == 1)
+					CHECK(strcmp(value, "def")==0)
+				else
+					CHECK(strcmp(value, "ghi")==0)
+				break;
+			}
+			default:
+				FATAL_ERROR("No expected Split ", test, " test")
+		}
+		++i;
+	});
+
+	string s = "bidule"; test = 0; i = 0;
+	CHECK(String::Split(s,"|",forEach) == 1);
+	
+	s = "abc | def | ghi"; test = 1; i = 0;
+	CHECK(String::Split(s,"|",forEach) == 3);
+
+	s = "abc | def | ghi|"; test = 1; i = 0;
+	CHECK(String::Split(s,"|",forEach) == 4);
+	test = 1; i = 0;
+	CHECK(String::Split(s,"|",forEach,String::SPLIT_IGNORE_EMPTY) == 3);
+	test = 2; i = 0;
+	CHECK(String::Split(s,"|",forEach,String::SPLIT_IGNORE_EMPTY | String::SPLIT_TRIM) == 3);
+}
+
 ADD_TEST(StringTest, ToLower) {
 
 	string s = "ABC";

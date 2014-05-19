@@ -33,10 +33,13 @@ const string String::Empty;
 #endif
 
 UInt32 String::Split(const string& value, const string& separators, const String::ForEach& forEach, int options) {
-	string::const_iterator it1 = value.begin(), it2, it3, end = value.end();
+	const char* it1 = value.c_str();
+	const char* it2(NULL);
+	const char* it3(NULL);
+	const char* end(it1+value.size());
 	UInt32 count(0);
 
-	while (it1 != end) {
+	for(;;) {
 		if (options & SPLIT_TRIM) {
 			while (it1 != end && isspace(*it1))
 				++it1;
@@ -45,14 +48,14 @@ UInt32 String::Split(const string& value, const string& separators, const String
 		while (it2 != end && separators.find(*it2) == string::npos)
 			++it2;
 		it3 = it2;
-		if (it3 != it1 && (options & SPLIT_TRIM)) {
+		if ((options & SPLIT_TRIM) && it3 != it1) {
 			--it3;
 			while (it3 != it1 && isspace(*it3))
 				--it3;
 			if (!isspace(*it3))
 				++it3;
 		}
-		if (!(options&SPLIT_IGNORE_EMPTY) || it3 != it1) {
+		if (it3 != it1 || !(options&SPLIT_IGNORE_EMPTY)) {
 			char before(*it3);
 			((char&)*it3) = '\0';
 			forEach(&*it1);
@@ -60,9 +63,10 @@ UInt32 String::Split(const string& value, const string& separators, const String
 			++count;
 		}
 		it1 = it2;
-		if (it1 != end)
-			++it1;
-	}
+		if (it1 == end)
+			break;
+		++it1;
+	};
 	return count;
 }
 

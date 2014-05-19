@@ -50,6 +50,10 @@ int LUAClient::LUAProperties::Item(lua_State *pState) {
 
 void LUAClient::Init(lua_State* pState, Client& client) {
 	Script::Collection<Client,LUAClient>(pState, -1, "properties",&client); // here just to set collector
+	MapParameters& properties(((Peer&)client).properties());
+	for (auto& it : properties)
+		Script::PushKeyValue(pState, it.first, it.second);
+	Script::FillCollection(pState, properties.count());
 
 	lua_getmetatable(pState, -2);
 	string hex;
@@ -159,12 +163,7 @@ int LUAClient::Get(lua_State *pState) {
 			} else if (strcmp(name, "setCookie") == 0) {
 				SCRIPT_WRITE_FUNCTION(&LUAClient::SetCookie)
 			} else if (strcmp(name,"properties")==0) {
-				if (Script::Collection(pState, 1, "properties")) {
-					MapParameters& properties(((Peer&)client).properties());
-					for (auto& it : properties)
-						Script::PushKeyValue(pState, it.first, it.second);
-					Script::FillCollection(pState, properties.count());
-				}
+				Script::Collection(pState, 1, "properties");
 			} else if (strcmp(name,"parameters")==0 || client.protocol==name) {
 				if (Script::Collection(pState, 1, name)) {
 					Parameters::ForEach forEach([pState](const string& key, const string& value) {

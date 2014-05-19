@@ -43,3 +43,4 @@ DataReader::readString
 
 - Check Date auto parsing, pour quelque chose comme "toto"
 - Replace String::Split to use forEach version more faster 
+- Fix Windows service!
