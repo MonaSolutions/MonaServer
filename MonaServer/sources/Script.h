@@ -158,9 +158,6 @@ public:
 			lua_pushcfunction(pState, &Script::IndexCollection);
 			lua_setfield(pState, -2, "__index");
 
-			lua_pushcfunction(pState, &Script::IndexCollection);
-			lua_setfield(pState, -2, "__call");
-			
 			lua_newtable(pState);
 			lua_setfield(pState, -2, "|items");
 
@@ -480,10 +477,6 @@ private:
 		lua_pushlightuserdata(pState,(void*)typeid(Type).name());
 		lua_setfield(pState,-2,"|type");
 
-		// call => override operator ( )
-		lua_pushcfunction(pState, &Script::Call<LUAType>);
-		lua_setfield(pState,-2,"__call");
-
 		// len => override operator #
 		lua_pushcfunction(pState, &Script::Len);
 		lua_setfield(pState, -2, "__len");
@@ -560,29 +553,6 @@ private:
 		lua_pop(pState, 1);
 	}
 
-	template<class LUAType>
-	static int Call(lua_State* pState) {
-		// 1 => table
-		// ... => params
-		if (lua_getmetatable(pState, 1)) {
-			lua_getfield(pState, -1, "|items");
-			lua_replace(pState, -2);
-			if (lua_istable(pState, -1)) {
-				lua_pushvalue(pState,2);
-				lua_gettable(pState, -2);
-				lua_replace(pState, -2);
-				return 1;
-			}
-			lua_pop(pState, 1);
-		}
-	
-		lua_pushstring(pState, "(");
-		lua_insert(pState, 2);
-		int result = LUAType::Get(pState);
-		lua_remove(pState, 2);
-		return result;
-	}
-
 	template<class ObjectType>
 	class LUAObject {
 	public:
@@ -606,7 +576,8 @@ private:
 	static int Len(lua_State* pState);
 	static int INext(lua_State* pState);
 	static int IndexCollection(lua_State* pState);
-	static int Item(lua_State *pState) { return Script::IndexCollection(pState); }
+	static int Item(lua_State *pState);
+	
 
 	static int Error(lua_State* pState);
 	static int Warn(lua_State* pState);

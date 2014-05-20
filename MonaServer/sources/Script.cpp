@@ -217,6 +217,13 @@ void Script::ClearCollectionParameters(lua_State* pState, const char* field,cons
 		parameters.OnClear::unsubscribe(*pOnClear);
 }
 
+int Script::Item(lua_State *pState) {
+	SCRIPT_BEGIN(pState)
+		SCRIPT_ERROR("This collection doesn't implement call operator, use [] operator rather")
+	SCRIPT_END
+	return 0;
+}
+
 
 int Script::IndexCollection(lua_State* pState) {
 	// 1 table
