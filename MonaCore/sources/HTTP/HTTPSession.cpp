@@ -19,13 +19,14 @@ This file is a part of Mona.
 
 #include "Mona/HTTP/HTTPSession.h"
 #include "Mona/HTTP/HTTP.h"
+#include "Mona/HTTP/HTTPPacketBuilding.h"
 #include "Mona/HTTPHeaderReader.h"
+#include "Mona/ParameterWriter.h"
 #include "Mona/SOAPReader.h"
 #include "Mona/SOAPWriter.h"
 #include "Mona/Protocol.h"
 #include "Mona/Exceptions.h"
 #include "Mona/FileSystem.h"
-#include "Mona/HTTP/HTTPPacketBuilding.h"
 
 
 using namespace std;
@@ -187,8 +188,8 @@ void HTTPSession::packetHandler(PacketReader& reader) {
 
 				// try to get a file if the client object had not method named like that
 				if (!methodCalled && !ex) {
-					MapWriter<MapParameters> parametersWriter(pPacket->parameters);
-					if (peer.onRead(ex, filePath, propertiesReader, parametersWriter) && !ex) {
+					ParameterWriter parameterWriter(pPacket->parameters);
+					if (peer.onRead(ex, filePath, propertiesReader, parameterWriter) && !ex) {
 						// If onRead has been authorised, and that the file is a multimedia file, and it doesn't exists (no VOD, filePath.lastModified()==0 means "doesn't exists")
 						// Subscribe for a live stream with the basename file as stream name
 						if (filePath.lastModified() == 0) {
@@ -213,7 +214,7 @@ void HTTPSession::packetHandler(PacketReader& reader) {
 							_writer.writeFile(filePath, sortOptions, pPacket->filePos==string::npos);
 						}
 					}
-					pPacket->sizeParameters = parametersWriter.size();
+					pPacket->sizeParameters = parameterWriter.size();
 				}
 			}
 			////////////  HTTP POST  //////////////

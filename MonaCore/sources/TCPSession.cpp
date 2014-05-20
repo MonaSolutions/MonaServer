@@ -29,10 +29,8 @@ TCPSession::TCPSession(const SocketAddress& peerAddress, SocketFile& file, Proto
 	((SocketAddress&)peer.address).set(peerAddress);
 
 	onInitParameters = [this](const Parameters& parameters) {
-		if (parameters.getNumber("timeout", _timeout)) {
+		if (parameters.getNumber("timeout", _timeout))
 			_timeout *= 1000;
-			_time.update();
-		}
 	};
 
 	onError = [this](const Exception& ex) { WARN("Protocol ", this->protocol().name, ", ", ex.error()); };
@@ -40,7 +38,6 @@ TCPSession::TCPSession(const SocketAddress& peerAddress, SocketFile& file, Proto
 	onData = [this](PoolBuffer& pBuffer)->UInt32 {
 		if (died)
 			return 0;
-		_time.update();
 		UInt32 size(pBuffer->size());
 		PacketReader packet(pBuffer->data(), size);
 		_decoding = false;
@@ -64,21 +61,17 @@ TCPSession::TCPSession(const SocketAddress& peerAddress, SocketFile& file, Proto
 		return rest;
 	};
 
-	onSending = [this](UInt32 size) { _time.update(); };
-
 	onDisconnection = [this]() { kill(SOCKET_DEATH); };
 
 	peer.OnInitParameters::subscribe(onInitParameters);
 	_client.OnError::subscribe(onError);
 	_client.OnDisconnection::subscribe(onDisconnection);
-	_client.OnSending::subscribe(onSending);
 	_client.OnData::subscribe(onData);
 }
 
 TCPSession::~TCPSession() {
 	peer.OnInitParameters::unsubscribe(onInitParameters);
 	_client.OnData::unsubscribe(onData);
-	_client.OnSending::unsubscribe(onSending);
 	_client.OnDisconnection::unsubscribe(onDisconnection);
 	_client.OnError::unsubscribe(onError);
 }
@@ -100,7 +93,7 @@ void TCPSession::manage() {
 	if (died)
 		return;
 	Session::manage();
-	if (_timeout > 0 && _time.isElapsed(_timeout)) {
+	if (_timeout>_client.idleTime()) {
 		kill(TIMEOUT_DEATH);
 		DEBUG(protocol().name, " timeout session ", name());
 	}	

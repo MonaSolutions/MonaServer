@@ -90,23 +90,24 @@ void Servers::start(const Parameters& parameters) {
 	string targets;
 	parameters.getString("servers.targets",targets);
 	
-	vector<string> values;
-	String::Split(targets, ";", values, String::SPLIT_IGNORE_EMPTY | String::SPLIT_TRIM);
-	for (string& target : values) {
-		size_t found = target.find("?");
+	String::ForEach forEach( [this](const char* target) {
+		const char* query = strchr(target,'?');
+		if (query) {
+			*(char*)query = '\0';
+			++query;
+		}
 		SocketAddress address;
 		Exception ex;
 		bool success;
-		EXCEPTION_TO_LOG(success=address.set(ex, target.substr(0, found)), "Servers ", target, " target");
+		EXCEPTION_TO_LOG(success=address.set(ex, target), "Servers ", target, " target");
 		if (success) {
-			ServerConnection& server(**_targets.emplace(new ServerConnection(address,_server.manager())).first);
-			if (found != string::npos)
-				Util::UnpackQuery(target.substr(found + 1),server.properties);
+			ServerConnection& server(**_targets.emplace(new ServerConnection(address,_server.manager(),query)).first);
 			server.OnHello::subscribe(onServerHello);
 			server.OnMessage::subscribe(*this);
 			server.OnDisconnection::subscribe(onServerDisconnection);
 		}
-	}
+	});
+	String::Split(targets, ";", forEach, String::SPLIT_IGNORE_EMPTY | String::SPLIT_TRIM);
 
 
 	onConnection = [this](Exception& ex, const SocketAddress& peerAddress, SocketFile& file) {

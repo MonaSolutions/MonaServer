@@ -21,7 +21,6 @@ This file is a part of Mona.
 
 #include "Mona/Mona.h"
 #include "Mona/PoolBuffer.h"
-#include "Mona/MapWriter.h"
 #include "Mona/HTTP/HTTP.h"
 
 

@@ -34,12 +34,13 @@ namespace Events {
 class TCPClient : public virtual Object,
 	public Events::OnError,
 	public Events::OnData,
-	public Events::OnDisconnection,
-	public Events::OnSending {
+	public Events::OnDisconnection {
 public:
 	TCPClient(const SocketManager& manager);
 	TCPClient(const SocketAddress& peerAddress,SocketFile& file,const SocketManager& manager);
 	virtual ~TCPClient();
+
+	UInt32					idleTime() { std::lock_guard<std::mutex> lock(_mutexIdleTime); return (UInt32)_idleTime.elapsed(); }
 
 	// unsafe-threading
 	const SocketAddress&	address() const { std::lock_guard<std::mutex> lock(_mutex); return updateAddress(); }
@@ -73,16 +74,22 @@ private:
 
 	void						receive(Exception& ex,UInt32 available);
 	Socket::OnReadable::Type	onReadable;
+	Socket::OnSending::Type		onSending;
 	
 	Socket					_socket;
 
 	bool					_disconnecting;
+
+	mutable std::mutex		_mutexIdleTime;
+	mutable Time			_idleTime;
 
 	mutable std::mutex		_mutex;
 	PoolBuffer				_pBuffer;
 	UInt32					_rest;
 	mutable SocketAddress	_address;
 	mutable SocketAddress	_peerAddress;
+
+
 	
 };
 

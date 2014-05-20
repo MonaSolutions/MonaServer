@@ -26,22 +26,24 @@ using namespace std;
 namespace Mona {
 
 TCPClient::TCPClient(const SocketManager& manager) : _disconnecting(false),_pBuffer(manager.poolBuffers), _socket(manager), _rest(0),
-		onReadable([this](Exception& ex, UInt32 available) {receive(ex,available);}) {
+		onReadable([this](Exception& ex, UInt32 available) {receive(ex,available);}),
+		onSending([this](UInt32 size) {lock_guard<mutex> lock(_mutexIdleTime); _idleTime.update(); }) {
 	_socket.OnError::subscribe(*this);
-	_socket.OnSending::subscribe(*this);
+	_socket.OnSending::subscribe(onSending);
 	_socket.OnReadable::subscribe(onReadable);
 }
 
 TCPClient::TCPClient(const SocketAddress& peerAddress, SocketFile& file,const SocketManager& manager) : _disconnecting(false),_peerAddress(peerAddress),_pBuffer(manager.poolBuffers), _rest(0), _socket(file,manager), 
-		onReadable([this](Exception& ex, UInt32 available) {receive(ex,available);}) {
+		onReadable([this](Exception& ex, UInt32 available) {receive(ex,available);}),
+		onSending([this](UInt32 size) {lock_guard<mutex> lock(_mutexIdleTime); _idleTime.update(); }) {
 	_socket.OnError::subscribe(*this);
 	_socket.OnReadable::subscribe(onReadable);
-	_socket.OnSending::subscribe(*this);
+	_socket.OnSending::subscribe(onSending);
 }
 
 TCPClient::~TCPClient() {
 	_socket.OnReadable::unsubscribe(onReadable);
-	_socket.OnSending::unsubscribe(*this);
+	_socket.OnSending::unsubscribe(onSending);
 	_socket.OnError::unsubscribe(*this);
 	close();
 }
@@ -78,6 +80,9 @@ bool TCPClient::connect(Exception& ex,const SocketAddress& address) {
 
 void TCPClient::receive(Exception& ex, UInt32 available) {
 	
+	if (available>0)
+		onSending(0); // to update _idleTime
+
 	if (available == 0) {
 		close(); // Graceful disconnection
 		return;

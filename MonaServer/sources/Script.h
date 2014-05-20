@@ -19,7 +19,6 @@ This file is a part of Mona.
 
 #pragma once
 
-
 #include "Mona/DataReader.h"
 #include "Mona/DataWriter.h"
 #include "Mona/Logs.h"
@@ -122,9 +121,15 @@ public:
 
 	static void FillCollection(lua_State* pState, Mona::UInt32 size,Mona::UInt32 count);
 	static void FillCollection(lua_State* pState, Mona::UInt32 count) { FillCollection(pState, count, count); }
-	
+	static void ClearCollection(lua_State* pState, int index, const char* field);
+	static void ClearCollectionParameters(lua_State* pState,const char* field, const Mona::Parameters& parameters);
+
 	template<class CollectorType = Script, class LUAItemType = CollectorType>
 	static bool Collection(lua_State* pState, int index,const char* field, CollectorType* pCollector = NULL) {
+		if (!field) {
+			lua_pushnil(pState);
+			return false;
+		}
 		if (!lua_getmetatable(pState, index)) {
 			SCRIPT_BEGIN(pState)
 				SCRIPT_ERROR("Invalid ", field, " collection ",index," index, no metatable")
@@ -133,11 +138,13 @@ public:
 		}
 
 		bool creation(false);
+
 		// get collection table
 		lua_getfield(pState, -1, field);
 		if (!lua_istable(pState, -1)) {
-			creation = true;
 			lua_pop(pState, 1);
+
+			creation = true;
 
 			// create table
 			lua_newtable(pState);
@@ -150,7 +157,7 @@ public:
 
 			lua_pushcfunction(pState, &Script::IndexCollection);
 			lua_setfield(pState, -2, "__index");
-			
+
 			lua_newtable(pState);
 			lua_setfield(pState, -2, "|items");
 
@@ -190,6 +197,51 @@ public:
 		}
 		return pCollector;
 	}
+
+	
+	template<class CollectorType = Script, class LUAItemType = CollectorType,class ObjectType>
+	static void InitCollectionParameters(lua_State* pState, ObjectType& object,const char* field, const Mona::Parameters& parameters, CollectorType* pCollector = NULL) {
+		// index -1 must be the collection
+		Mona::Parameters::OnChange::Type* pOnChange = new Mona::Parameters::OnChange::Type([pState,&object,&parameters,field](const std::string& key, const char* value) {
+			if (Script::FromObject(pState, object)) {
+				Script::Collection(pState, -1, field);
+				lua_pushstring(pState, key.c_str());
+				if (value)
+					lua_pushstring(pState, value);
+				else
+					lua_pushnil(pState);
+				Script::FillCollection(pState, 1, parameters.count());
+				lua_pop(pState, 2);
+			}
+		});
+		Mona::Parameters::OnClear::Type* pOnClear = new Mona::Parameters::OnClear::Type([pState,&object,field]() {
+			if (Script::FromObject(pState, object)) {
+				Script::ClearCollection(pState, -1, field);
+				lua_pop(pState, 1);
+			}
+		});
+
+		lua_getmetatable(pState, -1);
+		std::string buffer;
+		Script::NewObject<Mona::Parameters::OnChange::Type,LUAObject<Mona::Parameters::OnChange::Type>>(pState,*pOnChange);
+		lua_setfield(pState, -2, Mona::String::Format(buffer,"|",field,"OnChange").c_str());
+		Script::NewObject<Mona::Parameters::OnClear::Type,LUAObject<Mona::Parameters::OnClear::Type>>(pState,*pOnClear);
+		lua_setfield(pState, -2, Mona::String::Format(buffer,"|",field,"OnClear").c_str());
+		lua_pop(pState, 1);
+
+		Script::Collection<CollectorType,LUAItemType>(pState, -1, field,pCollector);
+
+		Mona::Parameters::ForEach forEach([pState](const std::string& key, const std::string& value) {
+			Script::PushKeyValue(pState, key, value);
+		});
+		parameters.iterate(forEach);
+		Script::FillCollection(pState, parameters.count());
+
+		parameters.OnChange::subscribe(*pOnChange);
+		parameters.OnClear::subscribe(*pOnClear);
+		lua_pop(pState, 1);
+	}
+
 
 	template<class Type,class LUAType>
 	static void NewObject(lua_State *pState, Type& object) {
@@ -271,6 +323,7 @@ public:
 		Type* pObject = ToObject<Type>(pState, isConst); // required table in -1 index
 		if (!pObject)
 			return;
+		LUAType::Clear(pState, *pObject); // required table in -1 index
 		ClearObject<Type, LUAType>(pState, *pObject, false);
 		if (lua_getmetatable(pState, index)) {
 			// remove this
@@ -278,7 +331,6 @@ public:
 			lua_setfield(pState, -2, "|this");
 			lua_pop(pState, 1);
 		}
-		LUAType::Clear(pState, *pObject); // required table in -1 index
 		lua_pop(pState, 1);
 	}
 
@@ -425,10 +477,6 @@ private:
 		lua_pushlightuserdata(pState,(void*)typeid(Type).name());
 		lua_setfield(pState,-2,"|type");
 
-		// call => override operator ( )
-		lua_pushcfunction(pState, &Script::Call<LUAType>);
-		lua_setfield(pState,-2,"__call");
-
 		// len => override operator #
 		lua_pushcfunction(pState, &Script::Len);
 		lua_setfield(pState, -2, "__len");
@@ -505,33 +553,31 @@ private:
 		lua_pop(pState, 1);
 	}
 
-	template<class LUAType>
-	static int Call(lua_State* pState) {
-		// 1 => table
-		// ... => params
-		if (lua_getmetatable(pState, 1)) {
-			lua_getfield(pState, -1, "|items");
-			lua_replace(pState, -2);
-			if (lua_istable(pState, -1)) {
-				lua_pushvalue(pState,2);
-				lua_gettable(pState, -2);
-				lua_replace(pState, -2);
-				return 1;
-			}
-			lua_pop(pState, 1);
+	template<class ObjectType>
+	class LUAObject {
+	public:
+		static void Init(lua_State *pState, ObjectType& object) {}
+		static int	Destroy(lua_State* pState) {
+			SCRIPT_DESTRUCTOR_CALLBACK(ObjectType, obj)
+				delete &obj;
+			SCRIPT_CALLBACK_RETURN
 		}
-	
-		lua_pushstring(pState, "(");
-		lua_insert(pState, 2);
-		int result = LUAType::Get(pState);
-		lua_remove(pState, 2);
-		return result;
-	}
+		static int Get(lua_State* pState) {
+			SCRIPT_CALLBACK(ObjectType, obj)
+				SCRIPT_CALLBACK_RETURN
+		}
+		static int Set(lua_State* pState) {
+			SCRIPT_CALLBACK(ObjectType, obj)
+				lua_rawset(pState, 1); // consumes key and value
+			SCRIPT_CALLBACK_RETURN
+		}
+	};
 
 	static int Len(lua_State* pState);
 	static int INext(lua_State* pState);
 	static int IndexCollection(lua_State* pState);
-	static int Item(lua_State *pState) { return 0; }
+	static int Item(lua_State *pState);
+	
 
 	static int Error(lua_State* pState);
 	static int Warn(lua_State* pState);

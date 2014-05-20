@@ -136,6 +136,8 @@ int LUATCPClient::Get(lua_State* pState) {
 					SCRIPT_WRITE_STRING(client.peerAddress().toString().c_str())
 				else
 					SCRIPT_WRITE_NIL
+			} else if (strcmp(name, "idleTime") == 0) {
+					SCRIPT_WRITE_NUMBER(client.idleTime())
 			} else if (strcmp(name, "connected") == 0)
 				SCRIPT_WRITE_BOOL(client.connected())
 		}

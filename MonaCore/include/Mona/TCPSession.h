@@ -73,10 +73,8 @@ private:
 	TCPClient::OnError::Type			onError;
 	TCPClient::OnData::Type				onData;
 	TCPClient::OnDisconnection::Type	onDisconnection;
-	TCPClient::OnSending::Type			onSending;
 	Peer::OnInitParameters::Type		onInitParameters;
 
-	Time			_time;
 	UInt32			_timeout;
 
 	bool			_consumed;

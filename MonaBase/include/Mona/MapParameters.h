@@ -30,17 +30,16 @@ public:
 
 	typedef std::map<std::string,std::string>::const_iterator const_iterator;
 
-	std::string&		operator[](const std::string& key) { return _map[key]; }
 	const_iterator		begin() const { return _map.begin(); }
 	const_iterator		end() const { return _map.end(); }
 
-	UInt32				count() const { return _map.size(); }
-	void				clear() { _map.clear(); }
+	UInt32			count() const { return _map.size(); }
 
 private:
 	void				iteration(const char* prefix, ForEach& function) const;
-	const std::string*  getRaw(const std::string& key) const;
-	void				setRaw(const std::string& key, const char* value);
+	void				clearAll() { _map.clear(); }
+	const std::string*  getRaw(const std::string& key) const { auto it = _map.find(key); return it == _map.end() ? NULL : &it->second; }
+	bool				setRaw(const std::string& key, const char* value);
 
 	std::map<std::string,std::string>	_map;
 };

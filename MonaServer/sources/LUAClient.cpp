@@ -49,21 +49,21 @@ int LUAClient::LUAProperties::Item(lua_State *pState) {
 }
 
 void LUAClient::Init(lua_State* pState, Client& client) {
-	Script::Collection<Client,LUAClient>(pState, -1, "properties",&client); // here just to set collector
-	MapParameters& properties(((Peer&)client).properties());
-	for (auto& it : properties)
-		Script::PushKeyValue(pState, it.first, it.second);
-	Script::FillCollection(pState, properties.count());
+	Script::InitCollectionParameters<Client,LUAClient::LUAProperties>(pState,client,"properties",((Peer&)client).properties(),&client);
+	Script::InitCollectionParameters(pState,client,"parameters",client.parameters());
 
-	lua_getmetatable(pState, -2);
+	lua_getmetatable(pState, -1);
 	string hex;
 	lua_pushstring(pState, Mona::Util::FormatHex(client.id, ID_SIZE, hex).c_str());
 	lua_setfield(pState, -2,"|id");
-	
-	lua_pop(pState, 2);
+	lua_pop(pState, 1);
 }
 
+
 void LUAClient::Clear(lua_State* pState,const Client& client){
+	Script::ClearCollectionParameters(pState,"properties",((Peer&)client).properties());
+	Script::ClearCollectionParameters(pState,"parameters",client.parameters());
+
 	Script::ClearObject<Writer, LUAWriter>(pState, ((Client&)client).writer());
 	Script::ClearObject<QualityOfService, LUAQualityOfService>(pState, ((Client&)client).writer().qos());
 }
@@ -165,13 +165,7 @@ int LUAClient::Get(lua_State *pState) {
 			} else if (strcmp(name,"properties")==0) {
 				Script::Collection(pState, 1, "properties");
 			} else if (strcmp(name,"parameters")==0 || client.protocol==name) {
-				if (Script::Collection(pState, 1, name)) {
-					Parameters::ForEach forEach([pState](const string& key, const string& value) {
-						Script::PushKeyValue(pState, key, value);
-					});
-					client.parameters().iterate(forEach);
-					Script::FillCollection(pState, client.parameters().count());
-				}
+				Script::Collection(pState, 1, name);
 			} else {
 				string value;
 				if (client.properties().getString(name, value))

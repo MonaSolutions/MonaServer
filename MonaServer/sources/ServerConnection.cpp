@@ -26,10 +26,13 @@ using namespace std;
 using namespace Mona;
 
 
-ServerConnection::ServerConnection(const SocketAddress& address,const SocketManager& manager) : address(address), _pClient(new TCPClient(manager)), _connected(false), isTarget(true),
+ServerConnection::ServerConnection(const SocketAddress& address,const SocketManager& manager,const char* query) : address(address), _pClient(new TCPClient(manager)), _connected(false), isTarget(true),
 	_onError([this](const Mona::Exception& ex) { _ex.set(ex); }),
 	_onData([this](Mona::PoolBuffer& pBuffer) { return onData(pBuffer); }),
 	_onDisconnection([this]() { onDisconnection(); }) {
+
+	if (query)
+		Util::UnpackQuery(query,_properties);
 
 	_pClient->OnError::subscribe(_onError);
 	_pClient->OnDisconnection::subscribe(_onDisconnection);
@@ -64,7 +67,7 @@ void ServerConnection::sendHello(const Parameters& parameters) {
 	});
 
 	parameters.iterate(forEach); /// configs
-	properties.iterate(forEach); /// properties
+	_properties.iterate(forEach); /// properties
 
 	send(pMessage);
 }
@@ -181,7 +184,7 @@ UInt32 ServerConnection::onData(PoolBuffer& pBuffer) {
 
 			/// properties itself
 			MapParameters::clear();
-			for (auto& it : properties)
+			for (auto& it : _properties)
 				setString(it.first,it.second);
 
 			/// configs

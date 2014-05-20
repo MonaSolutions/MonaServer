@@ -20,14 +20,14 @@ This file is a part of Mona.
 #pragma once
 
 #include "Mona/Mona.h"
+#include "Mona/Parameters.h"
 #include "Mona/DataWriter.h"
 
 namespace Mona {
 
-template<class MapType>
-class MapWriter : public DataWriter, public virtual Object {
+class ParameterWriter : public DataWriter, public virtual Object {
 public:
-	MapWriter(MapType& map) : _map(map),_size(0),_isProperty(false) {}
+	ParameterWriter(Parameters& parameters) : _parameters(parameters),_size(0),_isProperty(false) {}
 	void beginObject(const std::string& type = "", bool external = false) {}
 	void endObject() {}
 
@@ -41,30 +41,33 @@ public:
 	void writeString(const std::string& value) { set(value); }
 	void writeBoolean(bool value) { set( value ? "true" : "false");}
 	void writeNull() { set("null"); }
-	void writeBytes(const UInt8* data, UInt32 size) { set((const char*)data, size); }
+	void writeBytes(const UInt8* data, UInt32 size) { std::string value((const char*)data, size); set(value); }
 
 	UInt32 size() const { return _size; }
-	UInt32 count() const { return _map.count(); }
+	UInt32 count() const { return _parameters.count(); }
 	
 
-	void   clear() { _map.clear(); _isProperty = false; _property.clear(); _size = 0; DataWriter::clear(); }
+	void   clear() {  _isProperty = false; _property.clear(); _size = 0; DataWriter::clear(); _parameters.clear(); }
 private:
-	template <typename ...Args>
-	void set(Args&&... args) {
+
+	UInt32 size(const std::string& value) { return value.size(); }
+	UInt32 size(const char* value) { return strlen(value); }
+
+	template <typename Type>
+	void set(Type&& value) {
 		if (_isProperty) {
-			_size += _map[_property].assign(args ...).size();
+			_parameters.setString(_property,value);
+			_size += size(value);
 			_isProperty = false;
-		} else {
-			_property.assign(args ...).size();
-			_map[_property].clear();
-		}
+		} else
+			_parameters.setString(_property,"");
 		_property.clear();
 	}
 
 	std::string					_property;
 	bool						_isProperty;
 
-	MapType&					_map;
+	Parameters&					_parameters;
 	std::string					_buffer;
 	UInt32						_size;
 };

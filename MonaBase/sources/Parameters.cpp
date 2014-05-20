@@ -25,6 +25,7 @@ using namespace std;
 
 namespace Mona {
 
+
 bool Parameters::getString(const std::string& key, std::string& value) const {
 	const string* pTemp = getRaw(key);
 	if (!pTemp)

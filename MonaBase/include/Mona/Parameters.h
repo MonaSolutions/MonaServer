@@ -21,11 +21,19 @@ This file is a part of Mona.
 
 #include "Mona/Mona.h"
 #include "Mona/String.h"
-#include <functional>
+#include "Mona/Event.h"
+
 
 namespace Mona {
 
-class Parameters : public virtual Object {
+namespace Events {
+	struct OnChange : Event<void(const std::string&,const char*)> {};
+	struct OnClear : Event<void()> {};
+};
+
+class Parameters : public virtual Object,
+	public Events::OnChange,
+	public Events::OnClear {
 public:
 
 	typedef std::function<void(const std::string&, const std::string&)> ForEach;
@@ -55,33 +63,38 @@ public:
 	bool getBool(const std::string& key, bool& value) const;
 
 	bool hasKey(const std::string& key) { return getRaw(key) != NULL; }
-	void erase(const std::string& key) { setRaw(key, NULL); }
+	void erase(const std::string& key) { setIntern(key, NULL); }
 
-	void setString(const std::string& key, const std::string& value) {setRaw(key,value.c_str());}
-	void setString(const std::string& key, const char* value) {setRaw(key, value ? value : "");}
+	void setString(const std::string& key, const std::string& value) {setIntern(key,value.c_str());}
+	void setString(const std::string& key, const char* value) {setIntern(key, value ? value : "");}
 	template<typename NumberType>
 	void setNumber(const std::string& key, NumberType value) {
 		std::string val;
 		setString(key, String::Format(val, value));
 	}
-	void setBool(const std::string& key, bool value) { setRaw(key, value ? "true" : "false"); }
+	void setBool(const std::string& key, bool value) { setIntern(key, value ? "true" : "false"); }
 
 	void  iterate(ForEach& function) const { iteration(NULL, function); };
 	void  iterate(const std::string& prefix, ForEach& function) const { iteration(prefix.c_str(), function); };
 	void  iterate(const char* prefix, ForEach& function) const { iteration(prefix, function);};
 	
 	
-	virtual void clear() = 0;
+	void clear() { clearAll(); OnClear::raise(); }
+
 	virtual UInt32 count() const = 0;
 
 protected:
 	Parameters() {}
 
 private:
+	
+	void setIntern(const std::string& key, const char* value) { if (setRaw(key, value)) OnChange::raise(key,value); }
+
 	virtual void  iteration(const char* prefix,ForEach& function) const = 0;
+	virtual void clearAll() = 0;
 	virtual const std::string* getRaw(const std::string& key) const = 0;
-	// if value==NULL the property should be removed
-	virtual void setRaw(const std::string& key, const char* value) = 0;
+	// if value==NULL the property should be removed, return true if something has changed
+	virtual bool setRaw(const std::string& key, const char* value) = 0;
 };
 
 

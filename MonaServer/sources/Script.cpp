@@ -128,7 +128,7 @@ void Script::CloseState(lua_State* pState) {
 }
 
 void Script::PushValue(lua_State* pState,const char* value) {
-	if (String::ICompare(value, "false") || String::ICompare(value, "nil") == 0)
+	if (String::ICompare(value, "false")==0 || String::ICompare(value, "nil") == 0)
 		lua_pushboolean(pState, 0);
 	else
 		lua_pushstring(pState, value);
@@ -150,7 +150,7 @@ void Script::FillCollection(lua_State* pState, UInt32 size,UInt32 count) {
 		SCRIPT_END
 		return;
 	}
-		
+
 	lua_getfield(pState, -1, "|items");
 	if (!lua_istable(pState, -1)) {
 		lua_pop(pState, 2);
@@ -174,6 +174,56 @@ void Script::FillCollection(lua_State* pState, UInt32 size,UInt32 count) {
 
 	lua_pop(pState, 1); // remove |items table
 }
+
+void Script::ClearCollection(lua_State* pState, int index,const char* field) {
+	if (!field)
+		return;
+		
+	if (!lua_getmetatable(pState, index)) {
+		SCRIPT_BEGIN(pState)
+			SCRIPT_ERROR("Invalid ", field, " collection ",index," index, no metatable")
+		SCRIPT_END
+		return;
+	}
+
+	// get collection table
+	lua_getfield(pState, -1, field);
+	if (lua_istable(pState, -1) && lua_getmetatable(pState, -1)) {
+
+		lua_newtable(pState);
+		lua_setfield(pState, -2, "|items");
+
+		lua_pushnumber(pState, 0);
+		lua_setfield(pState, -2, "|count");
+		lua_pop(pState, 1);
+	}
+	lua_pop(pState, 2);
+}
+
+void Script::ClearCollectionParameters(lua_State* pState, const char* field,const Parameters& parameters) {
+	// index -1 must be the collection
+	if (!lua_getmetatable(pState, -1))
+		return;
+	bool isConst(false);
+	string buffer;
+	lua_getfield(pState, -1, String::Format(buffer,"|",field,"OnChange").c_str());
+	Mona::Parameters::OnChange::Type* pOnChange(Script::ToObject<Mona::Parameters::OnChange::Type>(pState, isConst));
+	lua_getfield(pState, -2, String::Format(buffer,"|",field,"OnClear").c_str());
+	Mona::Parameters::OnClear::Type* pOnClear(Script::ToObject<Mona::Parameters::OnClear::Type>(pState, isConst));
+	lua_pop(pState, 3);
+	if (pOnChange)
+		parameters.OnChange::unsubscribe(*pOnChange);
+	if (pOnClear)
+		parameters.OnClear::unsubscribe(*pOnClear);
+}
+
+int Script::Item(lua_State *pState) {
+	SCRIPT_BEGIN(pState)
+		SCRIPT_ERROR("This collection doesn't implement call operator, use [] operator rather")
+	SCRIPT_END
+	return 0;
+}
+
 
 int Script::IndexCollection(lua_State* pState) {
 	// 1 table
