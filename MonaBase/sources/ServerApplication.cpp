@@ -50,46 +50,19 @@ ServerApplication*		ServerApplication::_PThis(NULL);
 static SERVICE_STATUS			_ServiceStatus;
 static SERVICE_STATUS_HANDLE	_ServiceStatusHandle(0);
 
-
-class ServiceTerminateSignal : public virtual Object, public TerminateSignal {
-public:
-	ServiceTerminateSignal() {
-		memset(&_ServiceStatus, 0, sizeof(_ServiceStatus));
-		_ServiceStatusHandle = RegisterServiceCtrlHandlerA("", ServiceControlHandler);
-		if (!_ServiceStatusHandle) {
-			FATAL_ERROR("Cannot register service control handler");
-			return;
-		}
-		_ServiceStatus.dwServiceType = SERVICE_WIN32;
-		_ServiceStatus.dwCurrentState = SERVICE_START_PENDING;
-		_ServiceStatus.dwControlsAccepted = SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_SHUTDOWN;
-		_ServiceStatus.dwWin32ExitCode = 0;
-		_ServiceStatus.dwServiceSpecificExitCode = 0;
-		_ServiceStatus.dwCheckPoint = 0;
-		_ServiceStatus.dwWaitHint = 0;
+void  ServerApplication::ServiceControlHandler(DWORD control) {
+	switch (control) {
+	case SERVICE_CONTROL_STOP:
+	case SERVICE_CONTROL_SHUTDOWN:
+		_ServiceStatus.dwCurrentState = SERVICE_STOP_PENDING;
 		SetServiceStatus(_ServiceStatusHandle, &_ServiceStatus);
+		_Terminate.set();
+		return;
+	case SERVICE_CONTROL_INTERROGATE:
+		break;
 	}
-
-	void wait() {
-		_Terminate.wait();
-	}
-
-	static void __stdcall ServiceControlHandler(DWORD control) {
-		switch (control) {
-		case SERVICE_CONTROL_STOP:
-		case SERVICE_CONTROL_SHUTDOWN:
-			_ServiceStatus.dwCurrentState = SERVICE_STOP_PENDING;
-			SetServiceStatus(_ServiceStatusHandle, &_ServiceStatus);
-			_Terminate.set();
-			return;
-		case SERVICE_CONTROL_INTERROGATE:
-			break;
-		}
-		SetServiceStatus(_ServiceStatusHandle, &_ServiceStatus);
-	}
-
-};
-
+	SetServiceStatus(_ServiceStatusHandle, &_ServiceStatus);
+}
 
 void ServerApplication::ServiceMain(DWORD argc, LPTSTR* argv) {
 
@@ -97,7 +70,7 @@ void ServerApplication::ServiceMain(DWORD argc, LPTSTR* argv) {
 	_PThis->_isInteractive = false;
 
 	memset(&_ServiceStatus, 0, sizeof(_ServiceStatus));
-	_ServiceStatusHandle = RegisterServiceCtrlHandlerA("", ServiceTerminateSignal::ServiceControlHandler);
+	_ServiceStatusHandle = RegisterServiceCtrlHandlerA("", ServiceControlHandler);
 	if (!_ServiceStatusHandle) {
 		FATAL_ERROR("Cannot register service control handler");
 		return;
@@ -115,7 +88,7 @@ void ServerApplication::ServiceMain(DWORD argc, LPTSTR* argv) {
 		if (_PThis->init(argc, const_cast<LPCSTR*>(argv))) {
 			_ServiceStatus.dwCurrentState = SERVICE_RUNNING;
 			SetServiceStatus(_ServiceStatusHandle, &_ServiceStatus);
-			int rc = _PThis->main(ServiceTerminateSignal());
+			int rc = _PThis->main(*_PThis);
 			_ServiceStatus.dwWin32ExitCode = rc ? ERROR_SERVICE_SPECIFIC_ERROR : 0;
 			_ServiceStatus.dwServiceSpecificExitCode = rc;
 		}
@@ -154,7 +127,7 @@ int ServerApplication::run(int argc, const char** argv) {
 				NOTE("The application is no more registered as a service");
 			return EXIT_OK;
 		}
-		return main(TerminateSignal());
+		return main(*_PThis);
 	} catch (exception& ex) {
 		FATAL(ex.what());
 		return EXIT_SOFTWARE;
@@ -250,8 +223,7 @@ int ServerApplication::run(int argc, const char** argv) {
 					result = EXIT_OSERR;
 			}
 			if(result==EXIT_OK) {
-				TerminateSignal test;
-				result = main(test);
+				result = main(*_PThis);
 			}
 		}
 	} catch (exception& ex) {

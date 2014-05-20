@@ -25,8 +25,7 @@ This file is a part of Mona.
 
 namespace Mona {
 
-
-class ServerApplication : public Application, public virtual Object {
+class ServerApplication : public Application, public virtual Object, private TerminateSignal {
 public:
 	ServerApplication() : _isInteractive(true) { _PThis = this; }
 
@@ -48,6 +47,7 @@ private:
 #if defined(_WIN32)
 
 	static void __stdcall ServiceMain(unsigned long argc, char** argv);
+	static void __stdcall ServiceControlHandler(DWORD control);
 
 	bool hasConsole();
 	bool isService();
