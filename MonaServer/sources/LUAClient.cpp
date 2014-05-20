@@ -49,7 +49,7 @@ int LUAClient::LUAProperties::Item(lua_State *pState) {
 }
 
 void LUAClient::Init(lua_State* pState, Client& client) {
-	Script::InitCollectionParameters(pState,client,"properties",((Peer&)client).properties());
+	Script::InitCollectionParameters<Client,LUAClient::LUAProperties>(pState,client,"properties",((Peer&)client).properties(),&client);
 	Script::InitCollectionParameters(pState,client,"parameters",client.parameters());
 
 	lua_getmetatable(pState, -1);

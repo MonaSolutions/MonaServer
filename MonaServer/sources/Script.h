@@ -202,11 +202,11 @@ public:
 	}
 
 	
-	template<class CollectorType>
-	static void InitCollectionParameters(lua_State* pState, CollectorType& collector,const char* field, const Mona::Parameters& parameters) {
+	template<class CollectorType = Script, class LUAItemType = CollectorType,class ObjectType>
+	static void InitCollectionParameters(lua_State* pState, ObjectType& object,const char* field, const Mona::Parameters& parameters, CollectorType* pCollector = NULL) {
 		// index -1 must be the collection
-		Mona::Parameters::OnChange::Type* pOnChange = new Mona::Parameters::OnChange::Type([pState,&collector,&parameters,field](const std::string& key, const char* value) {
-			if (Script::FromObject(pState, collector)) {
+		Mona::Parameters::OnChange::Type* pOnChange = new Mona::Parameters::OnChange::Type([pState,&object,&parameters,field](const std::string& key, const char* value) {
+			if (Script::FromObject(pState, object)) {
 				Script::Collection(pState, -1, field);
 				lua_pushstring(pState, key.c_str());
 				if (value)
@@ -217,8 +217,8 @@ public:
 				lua_pop(pState, 2);
 			}
 		});
-		Mona::Parameters::OnClear::Type* pOnClear = new Mona::Parameters::OnClear::Type([pState,&collector,field]() {
-			if (Script::FromObject(pState, collector)) {
+		Mona::Parameters::OnClear::Type* pOnClear = new Mona::Parameters::OnClear::Type([pState,&object,field]() {
+			if (Script::FromObject(pState, object)) {
 				Script::ClearCollection(pState, -1, field);
 				lua_pop(pState, 1);
 			}
@@ -232,7 +232,7 @@ public:
 		lua_setfield(pState, -2, Mona::String::Format(buffer,"|",field,"OnClear").c_str());
 		lua_pop(pState, 1);
 
-		Script::Collection(pState, -1, field);
+		Script::Collection<CollectorType,LUAItemType>(pState, -1, field,pCollector);
 
 		Mona::Parameters::ForEach forEach([pState](const std::string& key, const std::string& value) {
 			Script::PushKeyValue(pState, key, value);
