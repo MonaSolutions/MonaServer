@@ -227,14 +227,14 @@ public:
 		lua_getmetatable(pState, -1);
 		std::string buffer;
 		Script::NewObject<Mona::Parameters::OnChange::Type,LUAObject<Mona::Parameters::OnChange::Type>>(pState,*pOnChange);
-		lua_setfield(pState, -2, String::Format(buffer,"|",field,"OnChange").c_str());
+		lua_setfield(pState, -2, Mona::String::Format(buffer,"|",field,"OnChange").c_str());
 		Script::NewObject<Mona::Parameters::OnClear::Type,LUAObject<Mona::Parameters::OnClear::Type>>(pState,*pOnClear);
-		lua_setfield(pState, -2, String::Format(buffer,"|",field,"OnClear").c_str());
+		lua_setfield(pState, -2, Mona::String::Format(buffer,"|",field,"OnClear").c_str());
 		lua_pop(pState, 1);
 
 		Script::Collection(pState, -1, field);
 
-		Mona::Parameters::ForEach forEach([pState](const string& key, const string& value) {
+		Mona::Parameters::ForEach forEach([pState](const std::string& key, const std::string& value) {
 			Script::PushKeyValue(pState, key, value);
 		});
 		parameters.iterate(forEach);

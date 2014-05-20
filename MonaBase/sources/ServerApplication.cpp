@@ -250,8 +250,8 @@ int ServerApplication::run(int argc, const char** argv) {
 					result = EXIT_OSERR;
 			}
 			if(result==EXIT_OK) {
-				TerminateSignal test;
-				result = main(test);
+				TerminateSignal signal;
+				result = main(signal);
 			}
 		}
 	} catch (exception& ex) {
