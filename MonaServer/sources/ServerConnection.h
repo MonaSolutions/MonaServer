@@ -55,7 +55,7 @@ class ServerConnection : public Mona::MapParameters,
 		public ServerEvents::OnDisconnection {
 public:
 	// Target version
-	ServerConnection(const Mona::SocketAddress& address,const Mona::SocketManager& manager);
+	ServerConnection(const Mona::SocketAddress& address,const Mona::SocketManager& manager,const char* query);
 	// Initiator version
 	ServerConnection(const Mona::SocketAddress& address, Mona::SocketFile& file, const Mona::SocketManager& manager);
 
@@ -63,7 +63,6 @@ public:
 
 	const Mona::SocketAddress	address;
 	const bool					isTarget;
-	Mona::MapParameters			properties;
 
 	const Mona::PoolBuffers&  poolBuffers() const { return _pClient->manager().poolBuffers; }
 
@@ -80,6 +79,8 @@ private:
 
 	Mona::UInt32	onData(Mona::PoolBuffer& pBuffer);
 	void			onDisconnection();
+
+	Mona::MapParameters		_properties;
 
 	Mona::TCPClient::OnError::Type			_onError;
 	Mona::TCPClient::OnData::Type			_onData;

@@ -21,7 +21,7 @@ This file is a part of Mona.
 #include "Mona/Group.h"
 #include "Mona/Handler.h"
 #include "Mona/SplitWriter.h"
-#include "Mona/MapWriter.h"
+#include "Mona/ParameterWriter.h"
 #include "Mona/Util.h"
 #include "Mona/Logs.h"
 
@@ -156,10 +156,10 @@ void Peer::onConnection(Exception& ex, Writer& writer,DataReader& parameters,Dat
 		string buffer;
 		_handler.iterate(String::Format(buffer,protocol,"."), forEach);
 
-		MapWriter<MapParameters> parametersWriter(_parameters);
-		SplitWriter parametersAndResponse(parametersWriter,response);
+		ParameterWriter parameterWriter(_parameters);
+		SplitWriter parameterAndResponse(parameterWriter,response);
 
-		_handler.onConnection(ex, *this,parameters,parametersAndResponse);
+		_handler.onConnection(ex, *this,parameters,parameterAndResponse);
 		if (!ex) {
 			(bool&)connected = ((Clients&)_handler.clients).add(ex,*this);
 			if (!connected)

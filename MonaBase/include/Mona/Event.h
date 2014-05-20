@@ -53,12 +53,12 @@ private:
 public:
 	typedef Function Type;
 
-	bool subscribed() {
+	bool subscribed() const {
 		std::lock_guard<std::recursive_mutex> lock(*_pMutex);
 		return _pFunction || _pRelayer;
 	}
 
-	void subscribe(const Type& function) {
+	void subscribe(const Type& function) const {
 		if (!function)
 			return; // no change during listening, so if function is empty => useless listening
 		std::lock_guard<std::recursive_mutex> lock(*_pMutex);
@@ -67,20 +67,30 @@ public:
 		function._subscribed = true;
 		_pFunction = &function;
 	}
-	void subscribe(Event<Result(ArgsType...)>& event) {
+	void subscribe(Event<Result(ArgsType...)>& event) const {
 		std::lock_guard<std::recursive_mutex> lock(*_pMutex);
 		if (_pFunction || _pRelayer)
 			FATAL_ERROR("Event ", typeid(*this).name()," subscription has already a subscriber");
 		event._relayed = true;
 		_pRelayer = &event;
 	}
-	void unsubscribe(const Type& function) {
+	void unsubscribe(const Type& function) const {
 		std::lock_guard<std::recursive_mutex> lock(*_pMutex);
+		if (&function != _pFunction) {
+			if (function._subscribed)
+				FATAL_ERROR("Bad ", typeid(*this).name()," unsubscription function");
+			return;
+		}
 		function._subscribed = false;
 		_pFunction = NULL;
 	}
-	void unsubscribe(Event<Result(ArgsType...)>& event) {
+	void unsubscribe(Event<Result(ArgsType...)>& event) const {
 		std::lock_guard<std::recursive_mutex> lock(*_pMutex);
+		if (&event != _pRelayer) {
+			if (event._relayed)
+				FATAL_ERROR("Bad ", typeid(*this).name()," unsubscription event");
+			return;
+		}
 		event._relayed = false;
 		_pRelayer = NULL;
 	}
@@ -103,8 +113,8 @@ protected:
 
 private:
 	std::shared_ptr<std::recursive_mutex>	_pMutex;
-	const Type*								_pFunction;
-	Event<Result(ArgsType...)>*				_pRelayer;
+	mutable const Type*						_pFunction;
+	mutable Event<Result(ArgsType...)>*		_pRelayer;
 	bool									_relayed;
 
 	friend class Event<void(ArgsType ...)>;

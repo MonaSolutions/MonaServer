@@ -41,18 +41,11 @@ void MapParameters::iteration(const char* prefix, ForEach& function) const {
 	}
 }
 
-const string* MapParameters::getRaw(const string& key) const {
-	auto it = _map.find(key);
-	if (it != _map.end())
-		return &it->second;
-	return NULL;
-}
-
-void MapParameters::setRaw(const string& key, const char* value) {
-	if (value)
-		_map[key] = value;
-	else
-		_map.erase(key);
+bool MapParameters::setRaw(const string& key, const char* value) {
+	if (!value)
+		return _map.erase(key)>0;
+	_map[key].assign(value);
+	return true;
 }
 
 
