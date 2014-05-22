@@ -28,7 +28,7 @@ namespace Mona {
 class TerminateSignal : public virtual Object {
 public:
 	TerminateSignal();
-	virtual void wait();
+	void wait();
 	void set() { _Terminate.set(); }
 protected:
     static Signal			_Terminate;

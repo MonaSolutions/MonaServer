@@ -46,6 +46,10 @@ private:
 	/// Note: It is called when processMove is used before a SOAP request
 	void			processOptions(Exception& ex,const std::shared_ptr<HTTPPacket>& pPacket);
 
+	/// \brief Process GET & HEAD commands
+	/// Search for a method or a file whitch correspond to the _filePath
+	void			processGet(Exception& ex, const std::shared_ptr<HTTPPacket>& pPacket, MapReader<MapParameters>& propertiesReader);
+
 	HTTPWriter			_writer;
 	bool				_isWS;
 
@@ -54,10 +58,14 @@ private:
 	std::deque<std::shared_ptr<HTTPPacket>>			_packets;
 	std::shared_ptr<PoolBuffer>						_ppBuffer;
 
+	FilePath			_filePath; /// Path of the HTTP query
+
 	// options
 	std::string			_index;
 	bool				_indexCanBeMethod;
 	bool				_indexDirectory;
+
+	Client::OnCallProperties::Type	onCallProperties; /// client.properties() handler => add cookie to session
 };
 
 

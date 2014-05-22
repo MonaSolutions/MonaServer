@@ -62,7 +62,7 @@ private:
 	bool			writeMedia(MediaType type,UInt32 time,PacketReader& packet,Parameters& properties);
 	
 	HTTPSender& createSender() {
-		_senders.emplace_back(new HTTPSender(_session.peer.address,pRequest,_session.peer.properties()));
+		_senders.emplace_back(new HTTPSender(_session.peer.address,pRequest));
 		return *_senders.back();
 	}
 

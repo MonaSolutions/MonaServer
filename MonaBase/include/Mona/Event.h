@@ -62,14 +62,14 @@ public:
 		if (!function)
 			return; // no change during listening, so if function is empty => useless listening
 		std::lock_guard<std::recursive_mutex> lock(*_pMutex);
-		if (_pFunction || _pRelayer)
+		if ((_pFunction && _pFunction!=&function) || _pRelayer)
 			FATAL_ERROR("Event ", typeid(*this).name()," subscription has already a subscriber");
 		function._subscribed = true;
 		_pFunction = &function;
 	}
 	void subscribe(Event<Result(ArgsType...)>& event) const {
 		std::lock_guard<std::recursive_mutex> lock(*_pMutex);
-		if (_pFunction || _pRelayer)
+		if (_pFunction || (_pRelayer && _pRelayer != &event))
 			FATAL_ERROR("Event ", typeid(*this).name()," subscription has already a subscriber");
 		event._relayed = true;
 		_pRelayer = &event;

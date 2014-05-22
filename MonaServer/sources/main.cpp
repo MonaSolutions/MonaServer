@@ -30,7 +30,7 @@ class ServerMona : public ServerApplication  {
 private:
 
 ///// MAIN
-	int main(TerminateSignal& terminateSignal) {
+	int main(Mona::TerminateSignal& terminateSignal) {
 
 		// starts the server
 		MonaServer server(terminateSignal, *this);

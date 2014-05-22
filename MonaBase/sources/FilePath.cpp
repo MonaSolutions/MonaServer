@@ -25,12 +25,13 @@ using namespace std;
 
 FilePath& FilePath::operator=(const FilePath& other) {
 	if (_attributesLoaded = other._attributesLoaded)
-		_attributes.lastModified.update(other._attributes.lastModified); 
+		_attributes=other._attributes;
 	_extension = other._extension;
 	_fullPath = other._fullPath;
 	_directory = other._directory;
 	_path = other._path;
 	_name = other._name;
+	_baseName = other._baseName;
 	return *this;
 }
 
