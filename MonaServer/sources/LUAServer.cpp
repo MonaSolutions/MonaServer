@@ -36,28 +36,44 @@ int LUAServer::Send(lua_State* pState) {
 	SCRIPT_CALLBACK_RETURN
 }
 
+int LUAServer::Reject(lua_State* pState) {
+	SCRIPT_CALLBACK(ServerConnection,server)
+		server.reject(SCRIPT_READ_STRING("unknown error"));
+	SCRIPT_CALLBACK_RETURN
+}
+
+
+
+
 int LUAServer::Get(lua_State* pState) {
 	SCRIPT_CALLBACK(ServerConnection,server)
 		const char* name = SCRIPT_READ_STRING(NULL);
 		if(name) {
 			if(strcmp(name,"send")==0) {
-				SCRIPT_WRITE_FUNCTION(&LUAServer::Send)
+				SCRIPT_WRITE_FUNCTION(LUAServer::Send)
+				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if(strcmp(name,"isTarget")==0) {
 				SCRIPT_WRITE_BOOL(server.isTarget)
+				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if(strcmp(name,"address")==0) {
 				SCRIPT_WRITE_STRING(server.address.toString().c_str())
+				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if (strcmp(name,"reject")==0) {
-				server.reject(SCRIPT_READ_STRING("unknown error"));
+				SCRIPT_WRITE_FUNCTION(LUAServer::Reject)
+				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if (strcmp(name,"configs")==0) {
 				if(Script::Collection(pState, 1, "configs")) {
 					for (auto& it : server)
 						Script::PushKeyValue(pState, it.first, it.second);
-					Script::FillCollection(pState, server.count());
+					Script::FillCollection(pState, server.count(),server.count());
 				}
+				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else {
 				string value;
-				if (server.getString(name, value))
+				if (server.getString(name, value)) { 
 					Script::PushValue(pState, value);
+					SCRIPT_CALLBACK_FIX_INDEX(name)
+				}
 			}
 		}
 	SCRIPT_CALLBACK_RETURN

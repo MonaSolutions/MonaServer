@@ -44,9 +44,6 @@ int LUAFiles::Set(lua_State *pState) {
 	SCRIPT_CALLBACK_RETURN
 }
 
-
-void LUAFilePath::Init(lua_State* pState, LUAFilePath& filepath) {}
-
 int	LUAFilePath::Destroy(lua_State* pState) {
 	SCRIPT_DESTRUCTOR_CALLBACK(LUAFilePath, filepath)
 		delete &filepath;
@@ -60,18 +57,25 @@ int LUAFilePath::Get(lua_State *pState) {
 		if (name) {
 			if(strcmp(name,"fullPath")==0) {
 				SCRIPT_WRITE_STRING(filepath._path.fullPath().c_str())
+				SCRIPT_CALLBACK_FIX_INDEX(name)
 			}  else if(strcmp(name,"name")==0) {
 				SCRIPT_WRITE_STRING(filepath._path.name().c_str())
+				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if(strcmp(name,"baseName")==0) {
 				SCRIPT_WRITE_STRING(filepath._path.baseName().c_str())
+				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if(strcmp(name,"extension")==0) {
 				SCRIPT_WRITE_STRING(filepath._path.extension().c_str())
+				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if(strcmp(name,"size")==0) {
 				SCRIPT_WRITE_NUMBER(filepath._path.size())
+				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if(strcmp(name,"lastModified")==0) {
 				SCRIPT_WRITE_NUMBER(filepath._path.lastModified())
+				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if (strcmp(name,"isDirectory")==0) {
 				SCRIPT_WRITE_BOOL(filepath._path.isDirectory())
+				SCRIPT_CALLBACK_FIX_INDEX(name)
 			}
 		}
 	SCRIPT_CALLBACK_RETURN
@@ -79,8 +83,6 @@ int LUAFilePath::Get(lua_State *pState) {
 
 int LUAFilePath::Set(lua_State *pState) {
 	SCRIPT_CALLBACK(LUAFilePath, filepath)
-		const char* name = SCRIPT_READ_STRING("");
-		
 		lua_rawset(pState,1); // consumes key and value
 	SCRIPT_CALLBACK_RETURN
 }

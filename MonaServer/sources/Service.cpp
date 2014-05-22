@@ -90,12 +90,12 @@ int Service::Item(lua_State *pState) {
 	// 1 => children table
 	// 2 => key not found
 	// here it check the existing of the service
-	if (!lua_isstring(pState, 2))
+	const char* name = lua_tostring(pState, 2);
+	if (!name)
 		return 0;
 	Service* pService = Script::GetCollector<Service>(pState,1);
 	if (!pService)
 		return 0;
-	const char* name = lua_tostring(pState, 2);
 	Expirable<Service> expirableService;
 	if (!pService->open(name, expirableService))
 		return 0;
@@ -127,18 +127,17 @@ int Service::Index(lua_State *pState) {
 				lua_pop(pState, 1);
 				if (path.empty())
 					return 1; // return //data
-				vector<string> values;
-				String::Split(path, "/", values,String::SPLIT_IGNORE_EMPTY | String::SPLIT_TRIM);
-				for (const string& value : values) {
-					lua_getfield(pState,-1, value.c_str());
+				String::ForEach forEach([pState](const char* value){
+					lua_getfield(pState,-1, value);
 					if (lua_isnil(pState, -1)) {
 						lua_pop(pState, 1);
 						lua_newtable(pState);
-						lua_setfield(pState, -2, value.c_str());
-						lua_getfield(pState, -1, value.c_str());
+						lua_setfield(pState, -2, value);
+						lua_getfield(pState, -1, value);
 					}
 					lua_replace(pState, -2);
-				}
+				});
+				String::Split(path, "/", forEach,String::SPLIT_IGNORE_EMPTY | String::SPLIT_TRIM);
 				return 1;
 			}
 			lua_pop(pState, 1);
@@ -209,18 +208,6 @@ bool Service::open(bool create) {
 
 			// metatable
 			lua_newtable(_pState);
-
-			// personnalize next function for object with |items data
-			lua_pushcfunction(_pState,&Script::Next);
-			lua_setfield(_pState,-2,"next");
-
-			// personnalize pairs function for object with |items data
-			lua_pushcfunction(_pState, &Script::Pairs);
-			lua_setfield(_pState, -2, "pairs");
-
-			// ipairs => override operator ipairs
-			lua_pushcfunction(_pState, &Script::IPairs);
-			lua_setfield(_pState, -2, "ipairs");
 
 #if !defined(_DEBUG)
 			// hide metatable

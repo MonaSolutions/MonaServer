@@ -20,26 +20,33 @@ This file is a part of Mona.
 #include "LUAGroup.h"
 #include "Mona/Invoker.h"
 #include "Mona/Util.h"
+#include "LUAClient.h"
 
 using namespace std;
 using namespace Mona;
 
 void LUAGroup::Init(lua_State* pState, Group& group) {
+	// just for collector
+	Script::Collection<Group,LUAGroup>(pState, -1, "members",&group);
+	lua_setfield(pState, -2, "members");
+
 	lua_getmetatable(pState, -1);
 	string hex;
 	lua_pushstring(pState, Mona::Util::FormatHex(group.id, ID_SIZE, hex).c_str());
-	lua_setfield(pState, -2,"|id");
-	lua_pop(pState, 1);
+	lua_pushvalue(pState, -1);
+	lua_setfield(pState, -3,"|id");
+	lua_replace(pState, -2);
+	lua_setfield(pState, -2, "id");
 }
 
 void LUAGroup::AddClient(lua_State* pState, Group& group, UInt8 indexGroup) {
 	// -1 must be the client table!
-	Script::Collection(pState, indexGroup,"|items");
+	Script::Collection(pState, indexGroup, "members");
 	lua_getmetatable(pState, -2);
 	lua_getfield(pState, -1, "|id");
 	lua_replace(pState, -2);
 	lua_pushvalue(pState, -3);
-	Script::FillCollection(pState, 1, group.count());
+	Script::FillCollection(pState,1,group.count());
 	lua_pop(pState, 1);
 }
 
@@ -47,13 +54,38 @@ void LUAGroup::RemoveClient(lua_State* pState, Group& group, Client& client) {
 	// -1 must be the group table!
 	if (!Script::FromObject<Client>(pState, client))
 		return;
-	Script::Collection(pState, -2,"|items");
+	Script::Collection(pState, -2, "members");
 	lua_getmetatable(pState, -2);
 	lua_getfield(pState, -1, "|id");
 	lua_replace(pState, -2);
 	lua_pushnil(pState);
-	Script::FillCollection(pState, 1, group.count());
+	Script::FillCollection(pState,1,group.count());
 	lua_pop(pState, 2);
+}
+
+int LUAGroup::LUAMembers::Item(lua_State *pState) {
+	// 1 => members collection table
+	// 2 => parameter
+	if (!lua_isstring(pState, 2))
+		return 0;
+	Group* pGroup = Script::GetCollector<Group>(pState,1);
+	if (!pGroup)
+		return 0;
+	Client* pMember(NULL);
+	UInt32 size = lua_objlen(pState, 2);
+	const UInt8* id((const UInt8*)lua_tolstring(pState, 2,&size));
+	if (size == ID_SIZE)
+		pMember = (*pGroup)(id);
+	else if (size == (ID_SIZE << 1)) {
+		string temp((const char*)id,size);
+		pMember = (*pGroup)((const UInt8*)Util::UnformatHex(temp).c_str());
+	}
+
+	SCRIPT_BEGIN(pState)
+		if (pMember)
+			SCRIPT_ADD_OBJECT(Client, LUAClient,*pMember)
+	SCRIPT_END
+	return pMember ? 1 : 0;
 }
 
 int LUAGroup::Item(lua_State *pState) {
@@ -66,7 +98,7 @@ int LUAGroup::Item(lua_State *pState) {
 		return 0;
 	Group* pGroup(NULL);
 	UInt32 size = lua_objlen(pState, 2);
-	const UInt8* id = (const UInt8*)lua_tostring(pState, 2);
+	const UInt8* id((const UInt8*)lua_tolstring(pState, 2,&size));
 	if (size == ID_SIZE)
 		pGroup = pInvoker->groups(id);
 	else if (size == (ID_SIZE<<1)) {
@@ -80,23 +112,30 @@ int LUAGroup::Item(lua_State *pState) {
 	return pGroup ? 1 : 0;
 }
 
+int	LUAGroup::Size(lua_State* pState) {
+	SCRIPT_CALLBACK(Group,group)
+		SCRIPT_WRITE_NUMBER(group.count())
+	SCRIPT_CALLBACK_RETURN
+}
+
 int LUAGroup::Get(lua_State *pState) {
 	SCRIPT_CALLBACK(Group,group)
 		const char* name = SCRIPT_READ_STRING(NULL);
 		if (name) {
 			if(strcmp(name,"id")==0) {
-				if (lua_getmetatable(pState, 1)) {
-					lua_getfield(pState, -1, "|id");
-					lua_replace(pState, -2);
-				}
+				lua_getmetatable(pState, 1);
+				lua_getfield(pState, -1, "|id");
+				lua_replace(pState, -2);
+				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if (strcmp(name, "rawId") == 0) {
 				SCRIPT_WRITE_BINARY(group.id,ID_SIZE);
-			} else if (strcmp(name, "count") == 0) {
-				SCRIPT_WRITE_NUMBER(group.count());
-			} else {
-				Script::Collection(pState, 1,"|items");
-				lua_getfield(pState, -1, name);
-				lua_replace(pState, -2);
+				SCRIPT_CALLBACK_FIX_INDEX(name)
+			} else if (strcmp(name, "size") == 0) {
+				SCRIPT_WRITE_FUNCTION(LUAGroup::Size)
+				SCRIPT_CALLBACK_FIX_INDEX(name)
+			} else if (strcmp(name, "members") == 0) {
+				Script::Collection(pState, 1, "members");
+				SCRIPT_CALLBACK_FIX_INDEX(name)
 			}
 		}
 	SCRIPT_CALLBACK_RETURN

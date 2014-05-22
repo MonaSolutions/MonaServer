@@ -182,32 +182,30 @@ void MonaServer::onStart() {
 
 	// init few global variable
 	SCRIPT_BEGIN(_pState)
-		// Configs + Environement
-		lua_pushvalue(_pState, LUA_GLOBALSINDEX);
-		Parameters::ForEach pushProperty([this](const string& key, const string& value) {
-			Script::PushKeyValue(_pState,key, value);
-		});
-		Script::Collection(_pState,-1, "m.c");
-		iterate(pushProperty);
-		Script::FillCollection(_pState, count());
-
-		Script::Collection(_pState,-1, "m.e");
-		Util::Environment().iterate(pushProperty);
-		Script::FillCollection(_pState, Util::Environment().count());
-		lua_pop(_pState, 3);
-
 		SCRIPT_ADD_OBJECT(Invoker, LUAInvoker, *this)
-		lua_setglobal(_pState,"mona");
+
+		lua_getmetatable(_pState, -1);
 		SCRIPT_ADD_OBJECT(Broadcaster, LUABroadcaster, servers)
-		lua_setglobal(_pState, "m.s");
+
+		lua_getmetatable(_pState, -1);	
 		SCRIPT_ADD_OBJECT(Broadcaster, LUABroadcaster, servers.initiators)
-		lua_setglobal(_pState, "m.s.i");
+		lua_setfield(_pState, -2, "|initiators");
 		SCRIPT_ADD_OBJECT(Broadcaster, LUABroadcaster, servers.targets)
-		lua_setglobal(_pState, "m.s.t");
+		lua_setfield(_pState, -2, "|targets");
+		lua_pop(_pState, 1);
+
+		lua_pushvalue(_pState, -1);
+		lua_setfield(_pState, -3, "|servers");
+		lua_setfield(_pState, -3, "servers");
+		lua_pop(_pState, 1); // remove metatable
+		
+		lua_setglobal(_pState,"mona");
+
 		lua_getmetatable(_pState, LUA_GLOBALSINDEX);
 		SCRIPT_NEW_OBJECT(LUADataTable, LUADataTable, new LUADataTable(_data, _pService->path));
 		lua_setfield(_pState, -2, "|data");
 		lua_pop(_pState, 1);
+		
 	SCRIPT_END
 
 	// load database

@@ -121,11 +121,14 @@ int LUATCPClient::Get(lua_State* pState) {
 		const char* name = SCRIPT_READ_STRING(NULL);
 		if(name) {
 			if(strcmp(name,"connect")==0) {
-				SCRIPT_WRITE_FUNCTION(&LUATCPClient::Connect)
+				SCRIPT_WRITE_FUNCTION(LUATCPClient::Connect)
+				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if (strcmp(name, "disconnect") == 0) {
-				SCRIPT_WRITE_FUNCTION(&LUATCPClient::Disconnect)
+				SCRIPT_WRITE_FUNCTION(LUATCPClient::Disconnect)
+				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if (strcmp(name, "send") == 0) {
-				SCRIPT_WRITE_FUNCTION(&LUATCPClient::Send)
+				SCRIPT_WRITE_FUNCTION(LUATCPClient::Send)
+				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if (strcmp(name, "address") == 0) {
 				if(client.connected())
 					SCRIPT_WRITE_STRING(client.address().toString().c_str())

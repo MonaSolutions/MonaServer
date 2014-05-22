@@ -31,8 +31,6 @@ class LUAPublicationBase {
 public:
 	static void Clear(lua_State* pState, const Mona::Publication& publication);
 
-	static int Item(lua_State *pState);
-
 	// -1 must be the client table!
 	static void AddListener(lua_State* pState, const Mona::Listener& listener, Mona::UInt8 indexListener);
 	// -1 must be the listener table!
@@ -70,24 +68,34 @@ public:
 							SCRIPT_ADD_OBJECT(Mona::Client, LUAClient, *pPublication->publisher())
 					} else if(strcmp(name,"name")==0) {
 						SCRIPT_WRITE_STRING(pPublication->name().c_str())
+						SCRIPT_CALLBACK_FIX_INDEX(name)
 					} else if(strcmp(name,"listeners")==0) {
 						Script::Collection(pState, 1, "listeners");
+						SCRIPT_CALLBACK_FIX_INDEX(name)
 					} else if(strcmp(name,"audioQOS")==0) {
 						SCRIPT_ADD_OBJECT(Mona::QualityOfService, LUAQualityOfService, pPublication->audioQOS())
+						SCRIPT_CALLBACK_FIX_INDEX(name)
 					} else if(strcmp(name,"videoQOS")==0) {
 						SCRIPT_ADD_OBJECT(Mona::QualityOfService,LUAQualityOfService,pPublication->videoQOS())
+						SCRIPT_CALLBACK_FIX_INDEX(name)
 					} else if(strcmp(name,"dataQOS")==0) {
 						SCRIPT_ADD_OBJECT(Mona::QualityOfService,LUAQualityOfService,pPublication->dataQOS())
+						SCRIPT_CALLBACK_FIX_INDEX(name)
 					} else if(strcmp(name,"close")==0) {
-						SCRIPT_WRITE_FUNCTION(&LUAPublication::Close)
+						SCRIPT_WRITE_FUNCTION(LUAPublication::Close)
+						SCRIPT_CALLBACK_FIX_INDEX(name)
 					} else if(strcmp(name,"pushAudio")==0) {
-						SCRIPT_WRITE_FUNCTION(&LUAPublication::PushAudio)
+						SCRIPT_WRITE_FUNCTION(LUAPublication::PushAudio)
+						SCRIPT_CALLBACK_FIX_INDEX(name)
 					} else if(strcmp(name,"flush")==0) {
-						SCRIPT_WRITE_FUNCTION(&LUAPublication::Flush)
+						SCRIPT_WRITE_FUNCTION(LUAPublication::Flush)
+						SCRIPT_CALLBACK_FIX_INDEX(name)
 					} else if(strcmp(name,"pushVideo")==0) {
-						SCRIPT_WRITE_FUNCTION(&LUAPublication::PushVideo)
+						SCRIPT_WRITE_FUNCTION(LUAPublication::PushVideo)
+						SCRIPT_CALLBACK_FIX_INDEX(name)
 					} else if(strcmp(name,"pushData")==0) {
-						SCRIPT_WRITE_FUNCTION(&LUAPublication::PushData)
+						SCRIPT_WRITE_FUNCTION(LUAPublication::PushData)
+						SCRIPT_CALLBACK_FIX_INDEX(name)
 					}
 				}
 			}

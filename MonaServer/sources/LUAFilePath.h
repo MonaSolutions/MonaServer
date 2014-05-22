@@ -29,7 +29,7 @@ public:
 	
 	LUAFilePath(const std::string& path) : _path(path) {}
 
-	static void Init(lua_State *pState, LUAFilePath& filepath);
+	static void Init(lua_State *pState, LUAFilePath& filepath) {}
 	static int	Destroy(lua_State* pState);
 	static int	Get(lua_State *pState);
 	static int	Set(lua_State *pState);

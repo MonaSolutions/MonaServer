@@ -27,8 +27,10 @@ void LUAMember::Init(lua_State* pState, Peer& member) {
 	lua_getmetatable(pState, -1);
 	string hex;
 	lua_pushstring(pState, Mona::Util::FormatHex(member.id, ID_SIZE, hex).c_str());
-	lua_setfield(pState, -2,"|id");
-	lua_pop(pState, 1);
+	lua_pushvalue(pState, -1);
+	lua_setfield(pState, -3,"|id");
+	lua_replace(pState, -2);
+	lua_setfield(pState, -2, "id");
 }
 
 int LUAMember::Destroy(lua_State* pState) {
@@ -48,14 +50,17 @@ int LUAMember::Get(lua_State *pState) {
 		const char* name = SCRIPT_READ_STRING(NULL);
 		if(name) {
 			if (strcmp(name,"id")==0) {
-				if (lua_getmetatable(pState, 1)) {
-					lua_getfield(pState, -1, "|id");
-					lua_replace(pState, -2);
-				}
-			} else if (strcmp(name, "rawId") == 0)
+				lua_getmetatable(pState, 1);
+				lua_getfield(pState, -1, "|id");
+				lua_replace(pState, -2);
+				SCRIPT_CALLBACK_FIX_INDEX(name)
+			} else if (strcmp(name, "rawId") == 0) {
 				SCRIPT_WRITE_BINARY(member.id,ID_SIZE)
-			else if (strcmp(name, "release") == 0)
-				SCRIPT_WRITE_FUNCTION(&LUAMember::Release);
+				SCRIPT_CALLBACK_FIX_INDEX(name)
+			} else if (strcmp(name, "release") == 0) {
+				SCRIPT_WRITE_FUNCTION(LUAMember::Release);
+				SCRIPT_CALLBACK_FIX_INDEX(name)
+			}
 		}
 	SCRIPT_CALLBACK_RETURN
 }

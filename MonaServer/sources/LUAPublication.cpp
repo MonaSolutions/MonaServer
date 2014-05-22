@@ -71,24 +71,6 @@ void LUAPublicationBase::Close(lua_State *pState, LUAMyPublication& luaPublicati
 	luaPublication.closed = true;
 }
 
-int LUAPublicationBase::Item(lua_State *pState) {
-	// 1 => publications table
-	// 2 => parameter
-	Invoker* pInvoker = Script::GetCollector<Invoker>(pState, 1);
-	if (!pInvoker)
-		return 0;
-	int result(0);
-	SCRIPT_BEGIN(pState)
-	if (lua_isstring(pState, 2)) {
-		auto it = pInvoker->publications(lua_tostring(pState,2));
-		if (it != pInvoker->publications.end()) {
-			SCRIPT_ADD_OBJECT(Mona::Publication, LUAPublication<>, it->second);
-			++result;
-		}
-	}
-	SCRIPT_END
-	return result;
-}
 
 int LUAMyPublication::Destroy(lua_State* pState) {
 	SCRIPT_DESTRUCTOR_CALLBACK(LUAMyPublication, publication)

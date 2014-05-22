@@ -58,19 +58,26 @@ int LUAWriter::Get(lua_State *pState) {
 			if(strcmp(name,"reliable")==0) {
 				SCRIPT_WRITE_BOOL(writer.reliable)
 			} else if (strcmp(name, "flush") == 0) {
-				SCRIPT_WRITE_FUNCTION(&LUAWriter::Flush)
+				SCRIPT_WRITE_FUNCTION(LUAWriter::Flush)
+				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if (strcmp(name, "writeMessage") == 0) {
-				SCRIPT_WRITE_FUNCTION(&LUAWriter::WriteMessage)
+				SCRIPT_WRITE_FUNCTION(LUAWriter::WriteMessage)
+				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if (strcmp(name, "writeInvocation") == 0) {
-				SCRIPT_WRITE_FUNCTION(&LUAWriter::WriteInvocation)
+				SCRIPT_WRITE_FUNCTION(LUAWriter::WriteInvocation)
+				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if (strcmp(name, "writeRaw") == 0) {
-				SCRIPT_WRITE_FUNCTION(&LUAWriter::WriteRaw)
+				SCRIPT_WRITE_FUNCTION(LUAWriter::WriteRaw)
+				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if (strcmp(name, "newWriter") == 0) {
-				SCRIPT_WRITE_FUNCTION(&LUAWriter::NewWriter)
+				SCRIPT_WRITE_FUNCTION(LUAWriter::NewWriter)
+				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if (strcmp(name, "qos") == 0) {
 				SCRIPT_ADD_OBJECT(QualityOfService,LUAQualityOfService,writer.qos())
+				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if (strcmp(name, "close") == 0) {
-				SCRIPT_WRITE_FUNCTION(&LUAWriter::Close)
+				SCRIPT_WRITE_FUNCTION(LUAWriter::Close)
+				SCRIPT_CALLBACK_FIX_INDEX(name)
 			}
 		}
 	SCRIPT_CALLBACK_RETURN

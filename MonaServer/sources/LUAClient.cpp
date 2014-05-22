@@ -55,8 +55,10 @@ void LUAClient::Init(lua_State* pState, Client& client) {
 	lua_getmetatable(pState, -1);
 	string hex;
 	lua_pushstring(pState, Mona::Util::FormatHex(client.id, ID_SIZE, hex).c_str());
-	lua_setfield(pState, -2,"|id");
-	lua_pop(pState, 1);
+	lua_pushvalue(pState, -1);
+	lua_setfield(pState, -3,"|id");
+	lua_replace(pState, -2);
+	lua_setfield(pState, -2, "id");
 }
 
 
@@ -78,7 +80,7 @@ int LUAClient::Item(lua_State *pState) {
 		return 0;
 	Client* pClient(NULL);
 	UInt32 size = lua_objlen(pState, 2);
-	const char* id = lua_tostring(pState, 2);
+	const UInt8* id((const UInt8*)lua_tolstring(pState, 2,&size));
 	if (size == ID_SIZE)
 		pClient = pInvoker->clients(id);
 	else if (size == (ID_SIZE << 1)) {
@@ -87,7 +89,7 @@ int LUAClient::Item(lua_State *pState) {
 	}
 
 	if (!pClient) {
-		string name(id, size);
+		string name((const char*)id, size);
 		pClient = pInvoker->clients(name); // try by name!
 	}
 	SCRIPT_BEGIN(pState)
@@ -112,8 +114,8 @@ int LUAClient::SetCookie(lua_State *pState) {
 		else if (!value)
 			SCRIPT_ERROR("cookie's value argument missing")
 		else {
-			string cookieKey, cookieValue;
-			String::Append(cookieKey, "cookies.", key);
+			string cookieKey("cookies."), cookieValue;
+			cookieKey.append(key);
 			String::Format(cookieValue, key, "=", value);
 
 			// Expiration Date in RFC 1123 Format
@@ -141,31 +143,40 @@ int LUAClient::Get(lua_State *pState) {
 			if(strcmp(name,"writer")==0) {
 				SCRIPT_CALLBACK_NOTCONST_CHECK
 				SCRIPT_ADD_OBJECT(Writer,LUAWriter,client.writer())
+				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if(strcmp(name,"id")==0) {
-				if (lua_getmetatable(pState, 1)) {
-					lua_getfield(pState, -1, "|id");
-					lua_replace(pState, -2);
-				}
+				lua_getmetatable(pState, 1);
+				lua_getfield(pState, -1, "|id");
+				lua_replace(pState, -2);
+				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if(strcmp(name,"name")==0) {
 				SCRIPT_WRITE_STRING(client.name.c_str())
+				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if(strcmp(name,"rawId")==0) {
 				SCRIPT_WRITE_BINARY(client.id,ID_SIZE);
+				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if(strcmp(name,"path")==0) {
 				SCRIPT_WRITE_STRING(client.path.c_str())
+				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if(strcmp(name,"query")==0) {
 				SCRIPT_WRITE_STRING(client.query.c_str())
+				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if(strcmp(name,"address")==0) {
 				SCRIPT_WRITE_STRING(client.address.toString().c_str())
 			} else if(strcmp(name,"ping")==0) {
 				SCRIPT_WRITE_NUMBER(client.ping)
 			} else if(strcmp(name,"protocol")==0) {
 				SCRIPT_WRITE_STRING(client.protocol.c_str())
+				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if (strcmp(name, "setCookie") == 0) {
-				SCRIPT_WRITE_FUNCTION(&LUAClient::SetCookie)
+				SCRIPT_WRITE_FUNCTION(LUAClient::SetCookie)
+				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if (strcmp(name,"properties")==0) {
 				Script::Collection(pState, 1, "properties");
+				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if (strcmp(name,"parameters")==0 || client.protocol==name) {
 				Script::Collection(pState, 1, name);
+				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else {
 				string value;
 				if (client.properties().getString(name, value))

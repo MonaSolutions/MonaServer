@@ -31,5 +31,6 @@ public:
 	static void Init(lua_State *pState, ServerConnection& server) {}
 private:
 	static int Send(lua_State* pState);
+	static int Reject(lua_State* pState);
 
 };

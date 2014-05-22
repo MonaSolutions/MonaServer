@@ -351,12 +351,11 @@ bool Timezone::readTZDatabase(const string& path) {
 
 
 #if defined(_WIN32)
-void Timezone::fillDefaultTransitionRule(SYSTEMTIME& date,Timezone::TransitionRule& rule,Int32 offset,Int32 dstOffset,bool isDST) {
+void Timezone::fillDefaultTransitionRule(const SYSTEMTIME& date,Int32 offset,Int32 dstOffset,bool isDST,Timezone::TransitionRule& rule) {
 	if (date.wYear > 0) {
 		// it's a Transition (so no default rule... no daylight excepting for this year)
 		Date transitionDate((Int32)date.wYear, (UInt8)date.wMonth, (UInt8)date.wDay, (UInt8)date.wHour, (UInt8)date.wMinute, (UInt8)date.wSecond,0,Date::GMT);
-		_LocalTransitions.emplace(piecewise_construct, forward_as_tuple(transitionDate),forward_as_tuple(isDST ? dstOffset : offset,isDST));
-		_Transitions.emplace(piecewise_construct, forward_as_tuple(transitionDate-offset),forward_as_tuple(isDST ? dstOffset : offset,isDST));
+		_Transitions[(transitionDate-offset)].set(_LocalTransitions[transitionDate].set(isDST ? dstOffset : offset,isDST));
 		return;
 	}
 		
@@ -384,8 +383,8 @@ Timezone::Timezone() : _offset(0),_dstOffset(3600000) {
 		_dstOffset = (-(Int32)timezoneInfo.DaylightBias*60000);
 	_dstOffset += _offset;
 
-	fillDefaultTransitionRule(timezoneInfo.DaylightDate, _StartDST,_offset,_dstOffset,true);
-	fillDefaultTransitionRule(timezoneInfo.StandardDate, _EndDST,_offset,_dstOffset,false);
+	fillDefaultTransitionRule(timezoneInfo.DaylightDate,_offset,_dstOffset,true,_StartDST);
+	fillDefaultTransitionRule(timezoneInfo.StandardDate,_offset,_dstOffset,false,_EndDST);
 
 	int size(sizeof(timezoneInfo.TimeZoneKeyName));
 	_name.resize(size);
@@ -566,14 +565,14 @@ Int32 Timezone::localOffset(const Date& date,UInt32 clock,bool& isDST) {
 	}
 
 	if (_LocalTransitions.empty()) // no transitions, use default rule
-		return localOffsetUsingtRules(date, clock, isDST);
+		return localOffsetUsingRules(date, clock, isDST);
 
 
 	Int64 time(date.time()+date.offset());
 
 	auto it(_LocalTransitions.lower_bound(time)),end(_LocalTransitions.end());
 	if (it == _LocalTransitions.end()) // if it's the last transitions, use default rules
-		return localOffsetUsingtRules(date, clock, isDST);
+		return localOffsetUsingRules(date, clock, isDST);
 	if (it == _LocalTransitions.begin())
 		return _offset; // before every transition, so no daylight (in the past, no daylight saving time!)
 	if (it->first != time)
@@ -607,7 +606,7 @@ Int32 Timezone::localOffset(Int64 time, TimeType& timeType) {
 	return it->second.offset;
 }
 
-Int32 Timezone::localOffsetUsingtRules(const Date& date,UInt32 clock,bool& isDST) {
+Int32 Timezone::localOffsetUsingRules(const Date& date,UInt32 clock,bool& isDST) {
 	if (!_StartDST)
 		return _offset;  // no daylight
 
@@ -618,10 +617,10 @@ Int32 Timezone::localOffsetUsingtRules(const Date& date,UInt32 clock,bool& isDST
 	if (date.month() == _StartDST.month)
 		isDST = !isBeforeTransition(date,clock, _StartDST);
 	else if (_EndDST && date.month() == _EndDST.month)
-		isDST = isBeforeTransition(date, clock,_EndDST);
-	if (isDST)
-		return _dstOffset;
-	return _offset;
+		isDST = isBeforeTransition(date, clock, _EndDST);
+	else
+		isDST = true;
+	return isDST ? _dstOffset : _offset;
 }
 	
 bool Timezone::isBeforeTransition(const Date& date,UInt32 clock,const TransitionRule& rule) {

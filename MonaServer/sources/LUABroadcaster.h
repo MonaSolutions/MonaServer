@@ -25,7 +25,7 @@ This file is a part of Mona.
 class LUABroadcaster {
 public:
 
-	static void Init(lua_State *pState, Broadcaster& broadcaster) {}
+	static void Init(lua_State *pState, Broadcaster& broadcaster);
 	static int Get(lua_State *pState);
 	static int Set(lua_State *pState);
 
@@ -34,6 +34,7 @@ public:
 
 	static void RemoveServer(lua_State* pState, Broadcaster& broadcaster, const std::string& address);
 
-protected:
+private:
+	static int	Len(lua_State* pState);
 	static int Broadcast(lua_State *pState);
 };

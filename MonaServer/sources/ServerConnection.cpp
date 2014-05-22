@@ -118,13 +118,11 @@ void ServerConnection::send(const shared_ptr<ServerMessage>& pMessage) {
 	if(!handler.empty()) {
 		auto it = _sendingRefs.lower_bound(handler);
 		if(it!=_sendingRefs.end() && it->first==handler) {
-			handlerRef = it->second;
 			handler.clear();
 			writeRef = true;
-		} else {
-			handlerRef = _sendingRefs.size()+1;
-			_sendingRefs.insert(it, pair<string, UInt32>(handler, handlerRef));
-		}
+		} else
+			it = _sendingRefs.emplace_hint(it, handler, _sendingRefs.size()+1);
+		handlerRef = it->second;
 	}
 
 	pMessage->_shift -= (handler.empty() ? Util::Get7BitValueSize(handlerRef) : handler.size());

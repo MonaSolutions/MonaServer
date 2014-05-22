@@ -24,23 +24,35 @@ This file is a part of Mona.
 using namespace std;
 using namespace Mona;
 
+void LUABroadcaster::Init(lua_State *pState, Broadcaster& broadcaster) {
+	lua_getmetatable(pState, -1);
+	lua_pushcfunction(pState,&LUABroadcaster::Len);
+	lua_setfield(pState, -2, "__len");
+	lua_pop(pState, 1);
+}
+
+
+int	LUABroadcaster::Len(lua_State* pState) {
+	SCRIPT_CALLBACK(Broadcaster, broadcaster)
+		SCRIPT_WRITE_NUMBER(broadcaster.count())
+	SCRIPT_CALLBACK_RETURN
+}
+
 void LUABroadcaster::AddServer(lua_State* pState, Broadcaster& broadcaster, const string& address) {
 	// -1 must be the server table!
 	if (Script::FromObject(pState, broadcaster)) {
-		Script::Collection(pState, -1,"|items");
 		lua_pushstring(pState, address.c_str());
-		lua_pushvalue(pState, -4);
-		Script::FillCollection(pState,1, broadcaster.count());
-		lua_pop(pState, 2);
+		lua_pushvalue(pState, -3);
+		lua_rawset(pState, -3);
+		lua_pop(pState, 1);
 	}
 }
 void LUABroadcaster::RemoveServer(lua_State* pState, Broadcaster& broadcaster, const string& address) {
 	if (Script::FromObject(pState, broadcaster)) {
-		Script::Collection(pState, -1,"|items");
 		lua_pushstring(pState, address.c_str());
 		lua_pushnil(pState);
-		Script::FillCollection(pState,1, broadcaster.count());
-		lua_pop(pState, 2);
+		lua_rawset(pState, -3);
+		lua_pop(pState, 1);
 	}
 }
 
@@ -61,18 +73,18 @@ int LUABroadcaster::Get(lua_State *pState) {
 	SCRIPT_CALLBACK(Broadcaster,broadcaster)
 		const char* name = SCRIPT_READ_STRING(NULL);
 		if (name) {
-			if (strcmp(name, "broadcast") == 0)
-				SCRIPT_WRITE_FUNCTION(&LUABroadcaster::Broadcast)
-			else if (strcmp(name, "initiators")==0) {
-				Servers* pServers = dynamic_cast<Servers*>(&broadcaster);
-				if (pServers)
-					lua_getglobal(pState, "m.s.i");
+			if (strcmp(name, "broadcast") == 0) {
+				SCRIPT_WRITE_FUNCTION(LUABroadcaster::Broadcast)
+			} else if (strcmp(name, "initiators")==0) {
+				lua_getmetatable(pState, 1);
+				lua_getfield(pState, -1, "|initiators");
+				lua_replace(pState, -2);
 			} else if (strcmp(name, "targets") == 0) {
-				Servers* pServers = dynamic_cast<Servers*>(&broadcaster);
-				if (pServers)
-					lua_getglobal(pState, "m.s.t");
+				lua_getmetatable(pState, 1);
+				lua_getfield(pState, -1, "|targets");
+				lua_replace(pState, -2);
 			} else if (strcmp(name, "count") == 0) {
-				SCRIPT_WRITE_NUMBER(broadcaster.count());
+				SCRIPT_WRITE_NUMBER(broadcaster.count())
 			} else {
 				ServerConnection* pServer = NULL;
 				if (lua_isnumber(pState,2)) {
@@ -91,7 +103,7 @@ int LUABroadcaster::Get(lua_State *pState) {
 
 int LUABroadcaster::Set(lua_State *pState) {
 	SCRIPT_CALLBACK(Broadcaster,broadcaster)
-		lua_rawset(pState,1); // consumes key and value
+		SCRIPT_ERROR("Servers collection is read-only")
 	SCRIPT_CALLBACK_RETURN
 }
 

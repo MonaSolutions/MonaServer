@@ -51,16 +51,15 @@ void Servers::start(const Parameters& parameters) {
 	_running = true;
 
 	onServerHello = [this,&parameters](ServerConnection& server) {
-		if (_connections.emplace(&server).second) {
-			if(server.isTarget)
-				this->targets._connections.emplace(&server);
-			else
-				initiators._connections.emplace(&server);
-			NOTE("Connection established with ", server.address.toString(), " server");
-		} else {
-			Exception ex;
-			OnDisconnection::raise(ex,server);
+		if (!_connections.emplace(&server).second) {
+			ERROR("Server ", server.address.toString(), " already connected");
+			return;
 		}
+		if(server.isTarget)
+			this->targets._connections.emplace(&server);
+		else
+			initiators._connections.emplace(&server);
+		NOTE("Connection established with ", server.address.toString(), " server");
 		if (!server.isTarget)
 			server.sendHello(parameters);
 		OnConnection::raise(server);

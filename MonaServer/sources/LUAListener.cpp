@@ -42,21 +42,24 @@ int LUAListener::Get(lua_State *pState) {
 		const char* name = SCRIPT_READ_STRING(NULL);
 		if (name) {
 			if(strcmp(name,"audioQOS")==0) {
-				SCRIPT_ADD_OBJECT(QualityOfService,LUAQualityOfService,listener.audioQOS())
+				SCRIPT_ADD_OBJECT(QualityOfService,LUAQualityOfService,listener.audioQOS()) // can change
 			} else if(strcmp(name,"videoQOS")==0) {
-				SCRIPT_ADD_OBJECT(QualityOfService, LUAQualityOfService, listener.videoQOS())
+				SCRIPT_ADD_OBJECT(QualityOfService, LUAQualityOfService, listener.videoQOS()) // can change
 			} else if (strcmp(name, "dataQOS") == 0) {
-				SCRIPT_ADD_OBJECT(QualityOfService, LUAQualityOfService, listener.dataQOS())
+				SCRIPT_ADD_OBJECT(QualityOfService, LUAQualityOfService, listener.dataQOS()) // can change
 			} else if(strcmp(name,"publication")==0) {
 				SCRIPT_ADD_OBJECT(Publication, LUAPublication<>, listener.publication);
+				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if(strcmp(name,"receiveAudio")==0) {
-				SCRIPT_WRITE_BOOL(listener.receiveAudio);
+				SCRIPT_WRITE_BOOL(listener.receiveAudio); // can change
 			} else if(strcmp(name,"receiveVideo")==0) {
-				SCRIPT_WRITE_BOOL(listener.receiveVideo);
+				SCRIPT_WRITE_BOOL(listener.receiveVideo); // can change
 			} else if(strcmp(name,"client")==0) {
 				SCRIPT_ADD_OBJECT(Client, LUAClient, listener.client);
+				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if (strcmp(name,"properties")==0) {
 				Script::Collection(pState, 1, "properties");
+				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else {
 				string value;
 				if (listener.getString(name, value))

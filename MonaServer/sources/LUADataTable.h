@@ -32,20 +32,17 @@ public:
 	static void Init(lua_State *pState, LUADataTable& table);
 	static int	Destroy(lua_State* pState);
 
-	LUADataTable(Mona::Database& database, const std::string& path) : newInsertion(false),count(0), path(path), database(database) {}
+	LUADataTable(Mona::Database& database, const std::string& path) : count(0), path(path), database(database) {}
 
 	Mona::Database&			database;
 	const std::string		path;
 	Mona::UInt32			count;
-	std::set<std::string>	complexData;
-	bool					newInsertion;
 
 private:
-	static int NewIndex(lua_State *pState);
+	static int	Len(lua_State* pState);
 
-	const Mona::UInt8* serialize(lua_State* pState, int index, Mona::UInt32& size);
+	static const Mona::UInt8* Serialize(lua_State* pState, int index, Mona::UInt32& size);
 
-	std::string		_buffer;
 	
 };
 

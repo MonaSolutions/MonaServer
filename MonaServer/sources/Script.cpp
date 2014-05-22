@@ -151,70 +151,36 @@ void Script::FillCollection(lua_State* pState, UInt32 size,UInt32 count) {
 		return;
 	}
 
-	lua_getfield(pState, -1, "|items");
-	if (!lua_istable(pState, -1)) {
-		lua_pop(pState, 2);
-		SCRIPT_BEGIN(pState)
-			SCRIPT_ERROR("Invalid collection to fill, no |items field in metatable")
-		SCRIPT_END
-		return;
-	}
-
 	// update count
 	lua_pushnumber(pState,count);
-	lua_setfield(pState,-3,"|count");
+	lua_setfield(pState,-2,"|count");
 
-	lua_replace(pState, -2); // remove metatable
-	lua_insert(pState, index); // inset |item to the collection index, just before keys/values
+	lua_pop(pState,1); // remove metatable
 
 	while (size-- > 0) {
-		lua_settable(pState,index);
+		lua_rawset(pState,index);
 		index += 2;
 	}
-
-	lua_pop(pState, 1); // remove |items table
-}
-
-void Script::ClearCollection(lua_State* pState, int index,const char* field) {
-	if (!field)
-		return;
-		
-	if (!lua_getmetatable(pState, index)) {
-		SCRIPT_BEGIN(pState)
-			SCRIPT_ERROR("Invalid ", field, " collection ",index," index, no metatable")
-		SCRIPT_END
-		return;
-	}
-
-	// get collection table
-	lua_getfield(pState, -1, field);
-	if (lua_istable(pState, -1) && lua_getmetatable(pState, -1)) {
-
-		lua_newtable(pState);
-		lua_setfield(pState, -2, "|items");
-
-		lua_pushnumber(pState, 0);
-		lua_setfield(pState, -2, "|count");
-		lua_pop(pState, 1);
-	}
-	lua_pop(pState, 2);
 }
 
 void Script::ClearCollectionParameters(lua_State* pState, const char* field,const Parameters& parameters) {
 	// index -1 must be the collection
 	if (!lua_getmetatable(pState, -1))
 		return;
-	bool isConst(false);
 	string buffer;
 	lua_getfield(pState, -1, String::Format(buffer,"|",field,"OnChange").c_str());
-	Mona::Parameters::OnChange::Type* pOnChange(Script::ToObject<Mona::Parameters::OnChange::Type>(pState, isConst));
+	Parameters::OnChange::Type* pOnChange((Parameters::OnChange::Type*)lua_touserdata(pState, -1));
 	lua_getfield(pState, -2, String::Format(buffer,"|",field,"OnClear").c_str());
-	Mona::Parameters::OnClear::Type* pOnClear(Script::ToObject<Mona::Parameters::OnClear::Type>(pState, isConst));
+	Parameters::OnClear::Type* pOnClear((Parameters::OnClear::Type*)lua_touserdata(pState, -1));
 	lua_pop(pState, 3);
-	if (pOnChange)
+	if (pOnChange) {
 		parameters.OnChange::unsubscribe(*pOnChange);
-	if (pOnClear)
+		delete pOnChange;
+	}
+	if (pOnClear) {
 		parameters.OnClear::unsubscribe(*pOnClear);
+		delete pOnClear;
+	}
 }
 
 int Script::Item(lua_State *pState) {
@@ -228,107 +194,35 @@ int Script::Item(lua_State *pState) {
 int Script::IndexCollection(lua_State* pState) {
 	// 1 table
 	// 2 key
-	if (lua_getmetatable(pState, 1)) {
-		lua_getfield(pState, -1, "|items");
-		lua_replace(pState, -2);
-		if (lua_istable(pState, -1)) {
-			lua_pushvalue(pState, 2);
-			lua_gettable(pState, -2);
-			lua_replace(pState, -2);
-			return 1;
-		}
-		lua_pop(pState, 1);
+	const char* name(lua_tostring(pState, 2));
+	if (name && strcmp(name, "count")==0) {
+		lua_pushnumber(pState,lua_objlen(pState, 1));
+		return 1;
 	}
 	return 0;
 }
 
-int Script::Next(lua_State* pState) {
+int Script::NewIndexCollection(lua_State* pState) {
 	// 1 table
-	// [2 key] (optional)
-	while (lua_getmetatable(pState,  1)) {
-		lua_getfield(pState, -1, "|items");
-		lua_replace(pState, -2);
-		if (!lua_istable(pState, -1)) {
-			lua_pop(pState, 1);
-			break;
-		}
-		lua_replace(pState, 1);
-	};
-	if (lua_gettop(pState) < 2)
-		lua_pushnil(pState);
-	int results = lua_next(pState, 1);
-	if (results>0)
-		++results;
-	return results;
-}
-
-int Script::INext(lua_State* pState) {
-	// 1 table
-	// [2 index] (optional,start to 0)
-	if (lua_gettop(pState) < 2)
-		lua_pushnumber(pState,1);
-	else
-		lua_pushnumber(pState, lua_tonumber(pState,2)+1);
-	lua_pushvalue(pState, -1);
-	lua_gettable(pState, 1);
-	if (lua_isnil(pState, -1)) {
-		lua_replace(pState, -2);
-		return 1;
-	}
-	return 2;
-}
-
-int Script::Pairs(lua_State* pState) {
-	// 1 table
-	lua_getglobal(pState, "next");
-	while (lua_getmetatable(pState,  1)) {
-		lua_getfield(pState, -1, "|items");
-		lua_replace(pState, -2);
-		if (!lua_istable(pState, -1)) {
-			lua_pop(pState, 1);
-			break;
-		}
-		lua_replace(pState, 1);
-	};
-	lua_pushvalue(pState, 1);
-	return 2;
-}
-
-int Script::IPairs(lua_State* pState) {
-	// 1 table
-	lua_pushcfunction(pState,&Script::INext);
-	while (lua_getmetatable(pState,  1)) {
-		lua_getfield(pState, -1, "|items");
-		lua_replace(pState, -2);
-		if (!lua_istable(pState, -1)) {
-			lua_pop(pState, 1);
-			break;
-		}
-		lua_replace(pState, 1);
-	};
-	lua_pushvalue(pState, 1);
-	return 2;
+	// 2 key
+	// 3 value
+	SCRIPT_BEGIN(pState)
+		SCRIPT_ERROR("This collection is read-only")
+	SCRIPT_END
+	return 0;
 }
 
 int Script::Len(lua_State* pState) {
 	// 1 table
-	while (lua_getmetatable(pState, 1)) {
+	if(lua_getmetatable(pState, 1)) {
 		lua_getfield(pState, -1, "|count");
 		if (lua_isnumber(pState, -1)) {
 			lua_replace(pState, -2);
 			return 1;
 		}
-		lua_pop(pState, 1);
-		lua_getfield(pState, -1, "|items");
-		lua_replace(pState, -2);
-		if (!lua_istable(pState, -1)) {
-			lua_pop(pState, 1);
-			lua_pushnumber(pState, lua_objlen(pState, 1));
-			return 1;
-		}
-		lua_replace(pState, 1);
+		lua_pop(pState, 2);
 	}
-	lua_objlen(pState, 1);
+	lua_pushnumber(pState,lua_objlen(pState, 1));
 	return 1;
 }
 

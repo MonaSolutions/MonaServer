@@ -25,6 +25,7 @@ This file is a part of Mona.
 #include "LUAGroup.h"
 #include "LUAMember.h"
 #include "LUAFilePath.h"
+#include "LUABroadcaster.h"
 #include "Mona/Exceptions.h"
 #include "Mona/Files.h"
 #include "MonaServer.h"
@@ -42,10 +43,26 @@ using namespace Mona;
 // HERE JUST TO SET THE COLLECTOR FOR EVERY COLLECTIONS
 void LUAInvoker::Init(lua_State *pState, Invoker& invoker) {
 	Script::Collection<Invoker,LUAClient>(pState, -1, "clients",&invoker);
-	Script::Collection<Invoker, LUAPublication<> >(pState, -1, "publications", &invoker);
-	Script::Collection<Invoker, LUAGroup>(pState, -1, "groups", &invoker);
+	lua_setfield(pState, -2,"clients");
 
-	lua_pop(pState, 3);
+	Script::Collection<Invoker,LUAGroup>(pState, -1, "groups",&invoker);
+	lua_setfield(pState, -2,"groups");
+	
+	Parameters::ForEach pushProperty([pState](const string& key, const string& value) {
+		Script::PushKeyValue(pState,key, value);
+	});
+
+	// Configs
+	Script::Collection(pState,-1, "configs");
+	invoker.iterate(pushProperty);
+	Script::FillCollection(pState, invoker.count(),invoker.count());
+	lua_setfield(pState, -2,"configs");
+
+	// Environement
+	Script::Collection(pState,-1, "environment");
+	Util::Environment().iterate(pushProperty);
+	Script::FillCollection(pState, Util::Environment().count(),Util::Environment().count());
+	lua_setfield(pState, -2,"environment");
 }
 
 
@@ -53,11 +70,9 @@ void LUAInvoker::AddClient(lua_State *pState, Invoker& invoker) {
 	// -1 must be the client table!
 	lua_getglobal(pState, "mona");
 	Script::Collection(pState, -1, "clients");
-	lua_getmetatable(pState, -3);
-	lua_getfield(pState, -1, "|id");
-	lua_replace(pState, -2);
+	lua_getfield(pState, -3,"id");
 	lua_pushvalue(pState, -4); // client table
-	Script::FillCollection(pState, 1, invoker.clients.count() + 1);
+	Script::FillCollection(pState,1,invoker.clients.count() + 1);
 	lua_pop(pState, 2);
 }
 
@@ -69,7 +84,7 @@ void LUAInvoker::RemoveClient(lua_State *pState, Invoker& invoker) {
 	lua_getfield(pState, -1, "|id");
 	lua_replace(pState, -2);
 	lua_pushnil(pState);
-	Script::FillCollection(pState, 1, invoker.clients.count());
+	Script::FillCollection(pState,1,invoker.clients.count());
 	lua_pop(pState, 2);
 }
 
@@ -79,7 +94,7 @@ void LUAInvoker::AddPublication(lua_State *pState, Invoker& invoker, const Publi
 	Script::Collection(pState, -1, "publications");
 	lua_pushstring(pState,publication.name().c_str());
 	lua_pushvalue(pState, -4);
-	Script::FillCollection(pState, 1, invoker.publications.count());
+	Script::FillCollection(pState,1,invoker.publications.count());
 	lua_pop(pState, 2);
 }
 
@@ -88,7 +103,7 @@ void LUAInvoker::RemovePublication(lua_State *pState, Invoker& invoker, const Pu
 	Script::Collection(pState, -1, "publications");
 	lua_pushstring(pState,publication.name().c_str());
 	lua_pushnil(pState);
-	Script::FillCollection(pState, 1, invoker.publications.count()-1);
+	Script::FillCollection(pState,1,invoker.publications.count()-1);
 	lua_pop(pState, 2);
 }
 
@@ -96,11 +111,9 @@ void LUAInvoker::AddGroup(lua_State *pState, Invoker& invoker) {
 	// -1 must be the group table!
 	lua_getglobal(pState, "mona");
 	Script::Collection(pState, -1, "groups");
-	lua_getmetatable(pState, -3);
-	lua_getfield(pState, -1, "|id");
-	lua_replace(pState, -2);
+	lua_getfield(pState, -3, "id");
 	lua_pushvalue(pState, -4);
-	Script::FillCollection(pState, 1,invoker.groups.count());
+	Script::FillCollection(pState,1,invoker.groups.count());
 	lua_pop(pState, 2);
 }
 
@@ -112,7 +125,7 @@ void LUAInvoker::RemoveGroup(lua_State *pState, Invoker& invoker) {
 	lua_getfield(pState, -1, "|id");
 	lua_replace(pState, -2);
 	lua_pushnil(pState);
-	Script::FillCollection(pState, 1,invoker.groups.count());
+	Script::FillCollection(pState,1,invoker.groups.count());
 	lua_pop(pState, 2);
 }
 
@@ -293,66 +306,88 @@ int LUAInvoker::Get(lua_State *pState) {
 		if (name) {
 			if(strcmp(name,"clients")==0) {
 				Script::Collection(pState,1,"clients");
+				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if (strcmp(name, "joinGroup") == 0) {
-				SCRIPT_WRITE_FUNCTION(&LUAInvoker::JoinGroup)
+				SCRIPT_WRITE_FUNCTION(LUAInvoker::JoinGroup)
+				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if (strcmp(name, "groups") == 0) {
 				Script::Collection(pState, 1, "groups");
+				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if (strcmp(name, "publications") == 0) {
 				Script::Collection(pState, 1, "publications");
+				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if (strcmp(name, "publish") == 0) {
-				SCRIPT_WRITE_FUNCTION(&LUAInvoker::Publish)
+				SCRIPT_WRITE_FUNCTION(LUAInvoker::Publish)
+				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if (strcmp(name, "toAMF") == 0) {
-				SCRIPT_WRITE_FUNCTION(&LUAInvoker::ToData<Mona::AMFWriter>)
+				SCRIPT_WRITE_FUNCTION(LUAInvoker::ToData<Mona::AMFWriter>)
+				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if (strcmp(name, "toAMF0") == 0) {
-				SCRIPT_WRITE_FUNCTION(&LUAInvoker::ToAMF0)
+				SCRIPT_WRITE_FUNCTION(LUAInvoker::ToAMF0)
+				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if (strcmp(name, "fromAMF") == 0) {
-				SCRIPT_WRITE_FUNCTION(&LUAInvoker::FromData<Mona::AMFReader>)
+				SCRIPT_WRITE_FUNCTION(LUAInvoker::FromData<Mona::AMFReader>)
+				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if (strcmp(name, "toJSON") == 0) {
-				SCRIPT_WRITE_FUNCTION(&LUAInvoker::ToData<Mona::JSONWriter>)
+				SCRIPT_WRITE_FUNCTION(LUAInvoker::ToData<Mona::JSONWriter>)
+				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if (strcmp(name, "fromJSON") == 0) {
-				SCRIPT_WRITE_FUNCTION(&LUAInvoker::FromData<Mona::JSONReader>)
+				SCRIPT_WRITE_FUNCTION(LUAInvoker::FromData<Mona::JSONReader>)
+				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if (strcmp(name, "toXML") == 0) {
-				SCRIPT_WRITE_FUNCTION(&LUAInvoker::ToData<Mona::XMLWriter>)
+				SCRIPT_WRITE_FUNCTION(LUAInvoker::ToData<Mona::XMLWriter>)
+				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if (strcmp(name, "fromXML") == 0) {
-				SCRIPT_WRITE_FUNCTION(&LUAInvoker::FromData<XMLReader>)
+				SCRIPT_WRITE_FUNCTION(LUAInvoker::FromData<XMLReader>)
+				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if (strcmp(name, "absolutePath") == 0) {
-				SCRIPT_WRITE_FUNCTION(&LUAInvoker::AbsolutePath)
+				SCRIPT_WRITE_FUNCTION(LUAInvoker::AbsolutePath)
+				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if (strcmp(name, "epochTime") == 0) {
 				SCRIPT_WRITE_NUMBER(Time::Now())
 			} else if (strcmp(name, "split") == 0) {
-				SCRIPT_WRITE_FUNCTION(&LUAInvoker::Split)
+				SCRIPT_WRITE_FUNCTION(LUAInvoker::Split)
+				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if (strcmp(name, "createUDPSocket") == 0) {
- 				SCRIPT_WRITE_FUNCTION(&LUAInvoker::CreateUDPSocket)
+ 				SCRIPT_WRITE_FUNCTION(LUAInvoker::CreateUDPSocket)
+				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if (strcmp(name, "createTCPClient") == 0) {
-				SCRIPT_WRITE_FUNCTION(&LUAInvoker::CreateTCPClient)
+				SCRIPT_WRITE_FUNCTION(LUAInvoker::CreateTCPClient)
+				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if(strcmp(name,"createTCPServer")==0) {
-				SCRIPT_WRITE_FUNCTION(&LUAInvoker::CreateTCPServer)
+				SCRIPT_WRITE_FUNCTION(LUAInvoker::CreateTCPServer)
+				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if(strcmp(name,"md5")==0) {
-				SCRIPT_WRITE_FUNCTION(&LUAInvoker::Md5)
+				SCRIPT_WRITE_FUNCTION(LUAInvoker::Md5)
+				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if(strcmp(name,"sha256")==0) {
-				SCRIPT_WRITE_FUNCTION(&LUAInvoker::Sha256)
+				SCRIPT_WRITE_FUNCTION(LUAInvoker::Sha256)
+				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if(strcmp(name,"addToBlacklist")==0) {
-				SCRIPT_WRITE_FUNCTION(&LUAInvoker::AddToBlacklist)
+				SCRIPT_WRITE_FUNCTION(LUAInvoker::AddToBlacklist)
+				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if(strcmp(name,"removeFromBlacklist")==0) {
-				SCRIPT_WRITE_FUNCTION(&LUAInvoker::RemoveFromBlacklist)
+				SCRIPT_WRITE_FUNCTION(LUAInvoker::RemoveFromBlacklist)
+				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if (strcmp(name,"configs")==0) {
-				lua_getmetatable(pState, LUA_GLOBALSINDEX);
-				lua_getfield(pState, -1,"m.c");
-				lua_replace(pState, -2);
-			} else if (strcmp(name,"environments")==0) {
-				lua_getmetatable(pState, LUA_GLOBALSINDEX);
-				lua_getfield(pState, -1, "m.e");
-				lua_replace(pState, -2);
+				Script::Collection(pState,1, "configs");
+				SCRIPT_CALLBACK_FIX_INDEX(name)
+			} else if (strcmp(name,"environment")==0) {
+				Script::Collection(pState,1, "environment");
+				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if(strcmp(name,"servers")==0) {
-				lua_getglobal(pState, "m.s");
+				lua_getmetatable(pState, 1);
+				lua_getfield(pState, -1, "|servers");
+				lua_replace(pState, -2);
+				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if (strcmp(name,"dir")==0) {
-				SCRIPT_WRITE_FUNCTION(&LUAInvoker::ListFiles)
+				SCRIPT_WRITE_FUNCTION(LUAInvoker::ListFiles)
+				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else {
-				lua_getmetatable(pState, LUA_GLOBALSINDEX);
-				lua_getfield(pState, -1,"m.c");
-				lua_replace(pState, -2);
-				lua_getfield(pState, -1,name);
-				lua_replace(pState, -2);
+				string value;
+				if (invoker.getString(name, value))
+					Script::PushValue(pState,value);
+				SCRIPT_CALLBACK_FIX_INDEX(name)
 			}
 		}
 	SCRIPT_CALLBACK_RETURN

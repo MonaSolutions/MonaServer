@@ -47,8 +47,8 @@ public:
 
 	static Int32		LocalOffset(const Date& date, bool& isDST) { return _Timezone.localOffset(date,date.clock(),isDST); }
 	static Int32		LocalOffset(const Date& date, UInt32 clock, bool& isDST) { return _Timezone.localOffset(date,clock,isDST); }
-	static Int32		LocalOffsetUsingRules(const Date& date, bool& isDST) { return _Timezone.localOffsetUsingtRules(date,date.clock(),isDST); }
-	static Int32		LocalOffsetUsingRules(const Date& date, UInt32 clock, bool& isDST) { return _Timezone.localOffsetUsingtRules(date,clock,isDST); }
+	static Int32		LocalOffsetUsingRules(const Date& date, bool& isDST) { return _Timezone.localOffsetUsingRules(date,date.clock(),isDST); }
+	static Int32		LocalOffsetUsingRules(const Date& date, UInt32 clock, bool& isDST) { return _Timezone.localOffsetUsingRules(date,clock,isDST); }
 	static Int32		LocalOffset(Int64 time, TimeType& timeType) { return _Timezone.localOffset(time,timeType); }
 
 	static Int32		Offset(const std::string& code) { bool isDST(false);  return Offset(code, isDST); }
@@ -72,9 +72,10 @@ private:
 		operator bool() const { return type!=NIL; }
 	};
 
-	class Transition : public virtual Object {
-	public:
-		Transition(Int32 offset,bool isDST) : offset(offset),isDST(isDST) {}
+	struct Transition : public virtual Object {
+		Transition() : offset(0),isDST(false) {}
+		Transition& set(const Transition& other) { (Int32&)this->offset = other.offset; (bool&)this->isDST = other.isDST; return *this; }
+		Transition& set(Int32 offset, bool isDST) { (Int32&)this->offset = offset; (bool&)this->isDST = isDST; return *this; }
 		const Int32  offset;
 		const bool   isDST;
 	};
@@ -83,14 +84,14 @@ private:
 	Timezone();
 
 	Int32 localOffset(const Date& date,UInt32 clock,bool& isDST);
-	Int32 localOffsetUsingtRules(const Date& date,UInt32 clock,bool& isDST);
+	Int32 localOffsetUsingRules(const Date& date,UInt32 clock,bool& isDST);
 
 	Int32 localOffset(Int64 time, TimeType& timeType);
 
 
 	bool  isBeforeTransition(const Date& date,UInt32 clock,const TransitionRule& rule);
 #if defined(_WIN32)
-	void  fillDefaultTransitionRule(_SYSTEMTIME& date, Timezone::TransitionRule& rule, Int32 offset,Int32 dstOffset, bool isDST);
+	void  fillDefaultTransitionRule(const _SYSTEMTIME& date, Int32 offset,Int32 dstOffset, bool isDST,Timezone::TransitionRule& rule);
 #endif
 
 	Int32			   _offset;
@@ -163,15 +164,14 @@ private:
 			}
 			Int64 time(sizeof(Type) == 4 ? (Int32)reader.read32() : reader.read64());
 			time *= 1000;
-			bool isDST(types[id].isDST);
-			Int32 offset(types[id].offset*1000);
 
-			_Transitions.emplace(std::piecewise_construct, std::forward_as_tuple(time),std::forward_as_tuple(offset,isDST));
-			if (!isDST)
-				time += (stdOffset = offset);
+			// no "emplace" to override a possible transition existing with this time
+			Transition& transition(_Transitions[time].set(types[id].offset*1000,types[id].isDST));
+			if (!transition.isDST)
+				time += (stdOffset = transition.offset);
 			else
 				time += stdOffset;
-			_LocalTransitions.emplace(std::piecewise_construct, std::forward_as_tuple(time),std::forward_as_tuple(offset,isDST));
+			_LocalTransitions[time].set(transition);
 		}
 		reader.reset(end);
 
