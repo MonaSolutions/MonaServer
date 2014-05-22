@@ -38,17 +38,16 @@ namespace Mona {
 HTTPSession::HTTPSession(const SocketAddress& peerAddress, SocketFile& file, Protocol& protocol, Invoker& invoker) : _indexCanBeMethod(false),_indexDirectory(true),WSSession(peerAddress, file, protocol, invoker), _isWS(false), _writer(*this),_ppBuffer(new PoolBuffer(invoker.poolBuffers)), _pListener(NULL),
 	onCallProperties([this](vector<string>& items) {
 		UInt8 count = items.size();
-		const shared_ptr<HTTPPacket>& pPacket(packet());
 
-		if(!pPacket)
+		if(!_writer.pRequest)
 			ERROR("HTTPSession ",name()," process cookies without without upstream request")
-		else if (!count || items[0].empty())
-			ERROR("cookie's key argument missing")
-		else if (count == 1 || items[1].empty())
-			ERROR("cookie's value argument missing")
+		else if (!count)
+			ERROR("HTTPSession ",name(),", cookie's key argument missing")
+		else if (count == 1)
+			ERROR("HTTPSession ",name(),", ",items[0]," cookie's value argument missing")
 		else {
 			string setCookie;
-			string value(items[1]);
+			string& value(items[1]);
 			String::Format(setCookie, items[0], "=", value);
 
 			// Expiration Date in RFC 1123 Format
@@ -68,7 +67,7 @@ HTTPSession::HTTPSession(const SocketAddress& peerAddress, SocketFile& file, Pro
 			if (count > 5 && items[5] == "true") String::Append(setCookie, "; Secure");
 			if (count > 6 && items[6] == "true") String::Append(setCookie, "; HttpOnly");
 
-			pPacket->setCookies.emplace_back(setCookie);
+			_writer.pRequest->setCookies.emplace_back(setCookie);
 
 			// Return value from key added
 			items.clear();
@@ -100,16 +99,7 @@ bool HTTPSession::buildPacket(PoolBuffer& pBuffer,PacketReader& packet) {
 	_packets.emplace_back(pHTTPPacketBuilding->pPacket);
 	decode<HTTPPacketBuilding>(pHTTPPacketBuilding);
 	return true;
-}
-
-const shared_ptr<HTTPPacket>& HTTPSession::packet() {
-	if (_packets.empty())
-		return _writer.pRequest;
-	_writer.pRequest = _packets.front();
-	_packets.pop_front();
-	return _writer.pRequest;
-}
-	
+}	
 
 void HTTPSession::packetHandler(PacketReader& reader) {
 
@@ -117,7 +107,12 @@ void HTTPSession::packetHandler(PacketReader& reader) {
 	if(_isWS)
 		return WSSession::packetHandler(reader);
 
-	const shared_ptr<HTTPPacket>& pPacket(packet());
+	// Pop HTTPPacket (must be done just one time per handle!)
+	if (!_packets.empty()) {
+		_writer.pRequest = _packets.front();
+		_packets.pop_front();
+	}
+	const shared_ptr<HTTPPacket>& pPacket(_writer.pRequest);
 	if (!pPacket) {
 		ERROR("HTTPSession::packetHandler without http packet built");
 		return;
@@ -192,8 +187,7 @@ void HTTPSession::packetHandler(PacketReader& reader) {
 
 		// onConnection
 		if (!peer.connected) {
-			if (!peer.OnCallProperties::subscribed())
-				peer.OnCallProperties::subscribe(onCallProperties); // subscribe to client.properties(...)
+			peer.OnCallProperties::subscribe(onCallProperties); // subscribe to client.properties(...)
 
 			peer.onConnection(ex, _writer,propertiesReader);
 			if (!ex && peer.connected) {

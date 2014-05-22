@@ -38,9 +38,8 @@ private:
 	void			kill(UInt32 type=NORMAL_DEATH);
 	void			manage();
 
-	bool								buildPacket(PoolBuffer& pBuffer,PacketReader& packet);
-	const std::shared_ptr<HTTPPacket>&	packet();
-	void								packetHandler(PacketReader& packet);
+	bool			buildPacket(PoolBuffer& pBuffer,PacketReader& packet);
+	void			packetHandler(PacketReader& packet);
 
 	/// \brief Send the Option response
 	/// Note: It is called when processMove is used before a SOAP request
