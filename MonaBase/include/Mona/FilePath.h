@@ -62,12 +62,14 @@ public:
 		_attributesLoaded = false;
 		_directory.clear();
 		_path.clear();
+		_fullPath.clear();
 		append(args ...);
 	}
 
 	template <typename ...Args>
 	const std::string& setPath(Args&&... args) {
 		_path.clear();
+		_fullPath.clear();
 		return appendPath(args ...);
 	}
 
@@ -76,6 +78,7 @@ public:
 		_name.clear();
 		_baseName.clear();
 		_extension.clear();
+		_fullPath.clear();
 		_attributesLoaded = false;
 		return String::Append(_path,args ...);
 	}
@@ -83,12 +86,14 @@ public:
 	template <typename ...Args>
 	const std::string& setDirectory(Args&&... args) {
 		_directory.clear();
+		_fullPath.clear();
 		return appendDirectory(args ...);
 	}
 
 	template <typename ...Args>
 	const std::string& appendDirectory(Args&&... args) {
 		_attributesLoaded = false;
+		_fullPath.clear();
 		return String::Append(_directory,args ...);
 	}
 	
@@ -131,9 +136,9 @@ private:
 	std::string		_path;
 	std::string		_directory;
 
-	mutable std::string				_fullPath;
 	mutable std::string				_name;
 	mutable std::string				_baseName;
+	mutable std::string				_fullPath;
 	mutable std::string				_extension;
 	mutable FileSystem::Attributes	_attributes;
 	mutable bool					_attributesLoaded;

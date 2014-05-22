@@ -33,11 +33,7 @@ namespace Mona {
 
 
 
-HTTPSender::HTTPSender(const SocketAddress& address,const shared_ptr<HTTPPacket>& pRequest,const Parameters& properties) : _pRequest(pRequest),_address(address),_sizePos(0),TCPSender("TCPSender"),_sortOptions(0), _isApp(false) {
-	Parameters::ForEach forEachCookie([this](const std::string& key, const std::string& value) {
-		_cookies.emplace_back(value);
-	});
-	properties.iterate("cookies.", forEachCookie);
+HTTPSender::HTTPSender(const SocketAddress& address,const shared_ptr<HTTPPacket>& pRequest) : _pRequest(pRequest),_address(address),_sizePos(0),TCPSender("TCPSender"),_sortOptions(0), _isApp(false) {
 }
 
 void HTTPSender::writeError(int code,const string& description,bool close) {
@@ -96,9 +92,6 @@ bool HTTPSender::run(Exception& ex) {
 						BinaryWriter& writer = response.packet;
 						HTTP_BEGIN_HEADER(writer)
 							HTTP_ADD_HEADER(writer,"Last-Modified", date.toString(Date::HTTP_FORMAT, _buffer))
-							for(const string& cookie : _cookies) {
-								HTTP_ADD_HEADER(writer,"Set-Cookie", cookie)
-							}
 						HTTP_END_HEADER(writer)
 
 						HTTP::WriteDirectoryEntries(writer,_pRequest->serverAddress,_file.path(),files,_sortOptions);
@@ -119,9 +112,6 @@ bool HTTPSender::run(Exception& ex) {
 						PacketWriter& packet = response.packet;
 						HTTP_BEGIN_HEADER(packet)
 							HTTP_ADD_HEADER(packet,"Last-Modified", date.toString(Date::HTTP_FORMAT, _buffer))
-							for(const string& cookie : _cookies) {
-								HTTP_ADD_HEADER(packet,"Set-Cookie", cookie)
-							}
 						HTTP_END_HEADER(packet)
 
 						// TODO see if filter is correct
@@ -221,6 +211,11 @@ DataWriter& HTTPSender::writer(const string& code, HTTP::ContentType type, const
 	} else if (connection&HTTP::CONNECTION_CLOSE)
 		packet.writeRaw("\r\nConnection: close");
 
+	// Set Cookies
+	for(const string& cookie : _pRequest->setCookies) {
+		packet.writeRaw("\r\nSet-Cookie: ", cookie);
+	}
+
 	// Content Type
 	if (type != HTTP::CONTENT_ABSENT) {
 		packet.writeRaw("\r\nContent-Type: ");
@@ -239,11 +234,6 @@ DataWriter& HTTPSender::writer(const string& code, HTTP::ContentType type, const
 			//writer.writeRaw("\r\nContent-Length: 9999999999");
 			packet.writeRaw("\r\nCache-Control: no-cache, no-store\r\nPragma: no-cache");
 		}
-	}
-
-	// Set Cookies
-	for(const string& cookie : _cookies) {
-		packet.writeRaw("\r\nSet-Cookie: ", cookie);
 	}
 
 	packet.writeRaw("\r\n\r\n");

@@ -35,11 +35,51 @@ using namespace std;
 namespace Mona {
 
 
-HTTPSession::HTTPSession(const SocketAddress& peerAddress, SocketFile& file, Protocol& protocol, Invoker& invoker) : _indexCanBeMethod(false),_indexDirectory(true),WSSession(peerAddress, file, protocol, invoker), _isWS(false), _writer(*this),_ppBuffer(new PoolBuffer(invoker.poolBuffers)), _pListener(NULL) {
+HTTPSession::HTTPSession(const SocketAddress& peerAddress, SocketFile& file, Protocol& protocol, Invoker& invoker) : _indexCanBeMethod(false),_indexDirectory(true),WSSession(peerAddress, file, protocol, invoker), _isWS(false), _writer(*this),_ppBuffer(new PoolBuffer(invoker.poolBuffers)), _pListener(NULL),
+	onCallProperties([this](vector<string>& items) {
+		UInt8 count = items.size();
+		const shared_ptr<HTTPPacket>& pPacket(packet());
 
+		if(!pPacket)
+			ERROR("HTTPSession ",name()," process cookies without without upstream request")
+		else if (!count || items[0].empty())
+			ERROR("cookie's key argument missing")
+		else if (count == 1 || items[1].empty())
+			ERROR("cookie's value argument missing")
+		else {
+			string setCookie;
+			string value(items[1]);
+			String::Format(setCookie, items[0], "=", value);
+
+			// Expiration Date in RFC 1123 Format
+			if (count > 2) {
+
+				Int32 expiresOffset = 0;
+				if (String::ToNumber<Int32>(items[2], expiresOffset)) {
+					Date expiration(Date::Type::GMT);
+					expiration += expiresOffset*1000; // Now + signed offset
+					string dateExpiration;
+					String::Append(setCookie, "; Expires=", expiration.toString(Date::RFC1123_FORMAT, dateExpiration));
+				}
+			}
+
+			if (count > 3 && !items[3].empty()) String::Append(setCookie, "; Path=", items[3]);
+			if (count > 4 && !items[4].empty()) String::Append(setCookie, "; Domain=", items[4]);
+			if (count > 5 && items[5] == "true") String::Append(setCookie, "; Secure");
+			if (count > 6 && items[6] == "true") String::Append(setCookie, "; HttpOnly");
+
+			pPacket->setCookies.emplace_back(setCookie);
+
+			// Return value from key added
+			items.clear();
+			items.emplace_back(value);
+		}
+		return false;
+	}) {
 }
 
 void HTTPSession::kill(UInt32 type){
+	peer.OnCallProperties::unsubscribe(onCallProperties);
 	if(died)
 		return;
 	if (_pListener) {
@@ -72,10 +112,10 @@ const shared_ptr<HTTPPacket>& HTTPSession::packet() {
 	
 
 void HTTPSession::packetHandler(PacketReader& reader) {
-	if(_isWS) {
-		WSSession::packetHandler(reader);
-		return;
-	}
+
+	// WSSession?
+	if(_isWS)
+		return WSSession::packetHandler(reader);
 
 	const shared_ptr<HTTPPacket>& pPacket(packet());
 	if (!pPacket) {
@@ -83,10 +123,8 @@ void HTTPSession::packetHandler(PacketReader& reader) {
 		return;
 	}
 
-	if (pPacket->exception) {
-		_writer.close(pPacket->exception);
-		return;
-	}
+	if (pPacket->exception)
+		return _writer.close(pPacket->exception);
 
 	// HTTP is a simplex communication, so if request, remove possible old subscription
 	if (_pListener) {
@@ -94,8 +132,8 @@ void HTTPSession::packetHandler(PacketReader& reader) {
 		_pListener = NULL;
 	}
 
-	
-	FilePath filePath(pPacket->path);
+	// Rember full path and extract directory part
+	_filePath.set(pPacket->path);
 	if (pPacket->filePos != string::npos)
 		((string&)pPacket->path).erase(pPacket->filePos - 1);
 
@@ -127,10 +165,10 @@ void HTTPSession::packetHandler(PacketReader& reader) {
 	});
 	String::Split(pPacket->cookies, ";", forEachCookie, String::SPLIT_IGNORE_EMPTY | String::SPLIT_TRIM);
 	
-	/// Client onConnection
 	Exception ex;
+	// Upgrade protocol
 	if(pPacket->connection&HTTP::CONNECTION_UPGRADE) {
-		// Ugrade to WebSocket
+		// Upgrade to WebSocket
 		if (String::ICompare(pPacket->upgrade,"websocket")==0) {
 			peer.onDisconnection();
 			_isWS=true;
@@ -147,12 +185,16 @@ void HTTPSession::packetHandler(PacketReader& reader) {
 			_writer.flush(true); // last HTTP flush for this connection, now we are in a WebSession mode!
 		} // TODO else
 	} else {
-		// Create volatile parameters for POST & GET Queries
+		// Create volatile parameters from POST/GET/HEAD Queries
 		MapParameters queryParameters;
 		Util::UnpackQuery(peer.query, queryParameters);
 		MapReader<MapParameters> propertiesReader(queryParameters);
 
+		// onConnection
 		if (!peer.connected) {
+			if (!peer.OnCallProperties::subscribed())
+				peer.OnCallProperties::subscribe(onCallProperties); // subscribe to client.properties(...)
+
 			peer.onConnection(ex, _writer,propertiesReader);
 			if (!ex && peer.connected) {
 				peer.parameters().getBool("index", _indexDirectory);
@@ -163,61 +205,13 @@ void HTTPSession::packetHandler(PacketReader& reader) {
 			}
 		}
 
+		// onMessage/<method>/onRead
 		if (!ex && peer.connected) {
 
-			////////////  HTTP GET  //////////////
-			if ((pPacket->command == HTTP::COMMAND_HEAD ||pPacket->command == HTTP::COMMAND_GET)) {
-				// use index http option in the case of GET request on a directory
-				bool methodCalled(false);
-				// if no file in the path, try to invoke a method on client object
-
-				if (pPacket->filePos == string::npos) {
-					if (!_index.empty()) {
-						if (_indexCanBeMethod)
-							methodCalled = peer.onMessage(ex, _index, propertiesReader);
-
-						if (!methodCalled && !ex) {
-							// Redirect to the file (get name to prevent path insertion)
-							string nameFile;
-							filePath.appendPath('/', FileSystem::GetName(_index, nameFile));
-						}
-					} else if (!_indexDirectory)
-						ex.set(Exception::PERMISSION, "No authorization to see the content of ", peer.path, "/");
-				} else
-					methodCalled = peer.onMessage(ex, filePath.name(), propertiesReader);
-
-				// try to get a file if the client object had not method named like that
-				if (!methodCalled && !ex) {
-					ParameterWriter parameterWriter(pPacket->parameters);
-					if (peer.onRead(ex, filePath, propertiesReader, parameterWriter) && !ex) {
-						// If onRead has been authorised, and that the file is a multimedia file, and it doesn't exists (no VOD, filePath.lastModified()==0 means "doesn't exists")
-						// Subscribe for a live stream with the basename file as stream name
-						if (filePath.lastModified() == 0) {
-							if (pPacket->contentType == HTTP::CONTENT_ABSENT)
-								pPacket->contentType = HTTP::ExtensionToMIMEType(filePath.extension(),pPacket->contentSubType);
-							if ((pPacket->contentType == HTTP::CONTENT_VIDEO || pPacket->contentType == HTTP::CONTENT_AUDIO) && filePath.lastModified() == 0)
-								_pListener = invoker.subscribe(ex, peer, filePath.baseName(), _writer);
-						}
-						if (!ex && !_pListener) {
-							 // for the case of one folder displayed, search sort arguments
-							string direction;
-							UInt8 sortOptions(HTTP::SORT_ASC);
-							 if (peer.properties().getString("N", direction))
-								sortOptions |= HTTP::SORT_BY_NAME;
-							 else if (peer.properties().getString("M", direction))
-								sortOptions |= HTTP::SORT_BY_MODIFIED;
-							 else if (peer.properties().getString("S", direction))
-								sortOptions |= HTTP::SORT_BY_SIZE;
-							 if (direction == "D")
-								 sortOptions |= HTTP::SORT_DESC;
-							 // HTTP get
-							_writer.writeFile(filePath, sortOptions, pPacket->filePos==string::npos);
-						}
-					}
-					pPacket->sizeParameters = parameterWriter.size();
-				}
-			}
-			////////////  HTTP POST  //////////////
+			/// HTTP GET & HEAD
+			if ((pPacket->command == HTTP::COMMAND_HEAD ||pPacket->command == HTTP::COMMAND_GET))
+				processGet(ex, pPacket, propertiesReader);
+			// HTTP POST
 			else if (pPacket->command == HTTP::COMMAND_POST) {
 				PacketReader packetContent(pPacket->content, pPacket->contentLength);
 
@@ -227,14 +221,11 @@ void HTTPSession::packetHandler(PacketReader& reader) {
 
 				HTTP::ReadMessageFromType(ex, *this, pPacket, packetContent);
 			}
-			////////////  HTTP OPTIONS  ////////////// (it is due requested when Move Redirection is sent)
-			else if (pPacket->command == HTTP::COMMAND_OPTIONS) {
+			//  HTTP OPTIONS (it is due requested when Move Redirection is sent)
+			else if (pPacket->command == HTTP::COMMAND_OPTIONS)
 				processOptions(ex, pPacket);
-
-			} else
+			else
 				ex.set(Exception::PROTOCOL, "Unsupported command");
-
-
 		}
 	}
 
@@ -254,7 +245,7 @@ void HTTPSession::manage() {
 	TCPSession::manage();
 }
 
-void HTTPSession::processOptions(Exception& ex,const shared_ptr<HTTPPacket>& pPacket) {
+void HTTPSession::processOptions(Exception& ex, const shared_ptr<HTTPPacket>& pPacket) {
 
 	// Control methods quiested
 	if (pPacket->accessControlRequestMethod&HTTP::COMMAND_DELETE) {
@@ -265,18 +256,63 @@ void HTTPSession::processOptions(Exception& ex,const shared_ptr<HTTPPacket>& pPa
 	DataWriter& response = _writer.write("200 OK", HTTP::CONTENT_ABSENT);
 	BinaryWriter& writer = response.packet;
 
-	// TODO determine the protocol (https/http)
-	/*IPAddress serverAddress;
-	if (!serverAddress.set(ex, peer.serverAddress))
-		return;
-
-	String::Format(invoker.buffer, "http://", serverAddress.toString());*/
-
 	HTTP_BEGIN_HEADER(writer)
 		HTTP_ADD_HEADER(writer,"Access-Control-Allow-Origin", "*")
 		HTTP_ADD_HEADER(writer,"Access-Control-Allow-Methods", "GET, HEAD, PUT, PATH, POST, OPTIONS")
 		HTTP_ADD_HEADER(writer,"Access-Control-Allow-Headers", "Content-Type")
 	HTTP_END_HEADER(writer)
+}
+
+void HTTPSession::processGet(Exception& ex, const shared_ptr<HTTPPacket>& pPacket, MapReader<MapParameters>& propertiesReader) {
+	// use index http option in the case of GET request on a directory
+	bool methodCalled(false);
+
+	// 1 - priority on client method
+	if (pPacket->filePos == string::npos) {
+		if (!_index.empty()) {
+			if (_indexCanBeMethod)
+				methodCalled = peer.onMessage(ex, _index, propertiesReader);
+
+			if (!methodCalled && !ex) {
+				// Redirect to the file (get name to prevent path insertion)
+				string nameFile;
+				_filePath.appendPath('/', FileSystem::GetName(_index, nameFile));
+			}
+		} else if (!_indexDirectory)
+			ex.set(Exception::PERMISSION, "No authorization to see the content of ", peer.path, "/");
+	} else
+		methodCalled = peer.onMessage(ex, _filePath.name(), propertiesReader);
+
+	// 2 - try to get a file
+	if (!methodCalled && !ex) {
+		ParameterWriter parameterWriter(pPacket->parameters);
+		if (peer.onRead(ex, _filePath, propertiesReader, parameterWriter) && !ex) {
+			// If onRead has been authorised, and that the file is a multimedia file, and it doesn't exists (no VOD, filePath.lastModified()==0 means "doesn't exists")
+			// Subscribe for a live stream with the basename file as stream name
+			if (_filePath.lastModified() == 0) {
+				if (pPacket->contentType == HTTP::CONTENT_ABSENT)
+					pPacket->contentType = HTTP::ExtensionToMIMEType(_filePath.extension(),pPacket->contentSubType);
+				if ((pPacket->contentType == HTTP::CONTENT_VIDEO || pPacket->contentType == HTTP::CONTENT_AUDIO) && _filePath.lastModified() == 0)
+					_pListener = invoker.subscribe(ex, peer, _filePath.baseName(), _writer);
+			}
+			if (!ex && !_pListener) {
+					// for the case of one folder displayed, search sort arguments
+				string direction;
+				UInt8 sortOptions(HTTP::SORT_ASC);
+					if (peer.properties().getString("N", direction))
+					sortOptions |= HTTP::SORT_BY_NAME;
+					else if (peer.properties().getString("M", direction))
+					sortOptions |= HTTP::SORT_BY_MODIFIED;
+					else if (peer.properties().getString("S", direction))
+					sortOptions |= HTTP::SORT_BY_SIZE;
+					if (direction == "D")
+						sortOptions |= HTTP::SORT_DESC;
+					// HTTP get
+				_writer.writeFile(_filePath, sortOptions, pPacket->filePos==string::npos);
+			}
+		}
+		pPacket->sizeParameters = parameterWriter.size();
+	}
 }
 
 } // namespace Mona

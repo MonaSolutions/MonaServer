@@ -33,6 +33,9 @@ public:
 	/// \brief Construct a Time instance with defined time value
 	Time(Int64 time) : _time(time) {}
 
+	/// \brief Copy Constructor
+	virtual Time& operator=(const Time& other) { _time=other._time; return *this; }
+
 	/// \brief Time in Microseconds since epoch
 	operator Int64() const { return time(); }
 

@@ -93,7 +93,7 @@ void TCPSession::manage() {
 	if (died)
 		return;
 	Session::manage();
-	if (_timeout>_client.idleTime()) {
+	if (_timeout<_client.idleTime()) {
 		kill(TIMEOUT_DEATH);
 		DEBUG(protocol().name, " timeout session ", name());
 	}	

@@ -57,6 +57,7 @@ public:
 	std::string					secWebsocketAccept;
 
 	std::string					cookies; /// List of cookie key;value
+	std::vector<std::string>	setCookies; /// List of Set-cookie lines to add
 
 	MapParameters				parameters; // For onRead returned value (return file,parameters)
 	UInt32						sizeParameters;
