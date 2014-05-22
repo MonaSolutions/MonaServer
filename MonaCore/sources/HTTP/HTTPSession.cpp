@@ -46,7 +46,8 @@ HTTPSession::HTTPSession(const SocketAddress& peerAddress, SocketFile& file, Pro
 		else if (count == 1)
 			ERROR("HTTPSession ",name(),", ",items[0]," cookie's value argument missing")
 		else {
-			string setCookie;
+			_writer.pRequest->setCookies.emplace_back();
+			string& setCookie(_writer.pRequest->setCookies.back());
 			string& value(items[1]);
 			String::Format(setCookie, items[0], "=", value);
 
@@ -66,8 +67,6 @@ HTTPSession::HTTPSession(const SocketAddress& peerAddress, SocketFile& file, Pro
 			if (count > 4 && !items[4].empty()) String::Append(setCookie, "; Domain=", items[4]);
 			if (count > 5 && items[5] == "true") String::Append(setCookie, "; Secure");
 			if (count > 6 && items[6] == "true") String::Append(setCookie, "; HttpOnly");
-
-			_writer.pRequest->setCookies.emplace_back(setCookie);
 
 			// Return value from key added
 			items.clear();
