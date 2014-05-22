@@ -51,36 +51,13 @@ FlashStream* FlashMainStream::stream(UInt32 id) {
 	return it->second.get();
 }
 
-
-void FlashMainStream::close(FlashWriter& writer,const string& error,int code) {
-	switch(code) {
-		case Exception::SOFTWARE:
-			writer.writeAMFError("NetConnection.Connect.Rejected",error);
-			break;
-		case Exception::APPLICATION:
-			writer.writeAMFError("NetConnection.Connect.InvalidApp",error);
-			break;
-		default:
-			writer.writeAMFError("NetConnection.Connect.Failed",error);
-	}
-	if(!error.empty())
-		ERROR(error)
-	writer.writeInvocation("close");
-	writer.close();
-}
-
-
-void FlashMainStream::messageHandler(Exception& ex, const string& name,AMFReader& message,FlashWriter& writer) {
+void FlashMainStream::messageHandler(const string& name,AMFReader& message,FlashWriter& writer) {
 	if(name=="connect") {
 		message.stopReferencing();
 		AMFReader::Type type;
 		string name;
-		bool external=false;
-		if(message.readObject(name,external)) {
-			if(external) {
-				ex.set(Exception::PROTOCOL, "External type not acceptable for a connection message");
-				return;
-			}
+		bool external(false);
+		if(message.readObject(name,external) && !external) {
 			
 			auto& properties(peer.properties());
 			properties.clear();
@@ -107,7 +84,6 @@ void FlashMainStream::messageHandler(Exception& ex, const string& name,AMFReader
 					}
 					default:
 						message.next();
-						return;
 				}
 			}
 
@@ -121,6 +97,9 @@ void FlashMainStream::messageHandler(Exception& ex, const string& name,AMFReader
 				WARN("Client ",peer.protocol," not compatible with AMF3, few complex object can be not supported");
 			}
 		}
+		if(external)
+			ERROR("External type not acceptable for a connection message on flash stream ", id);
+
 		message.startReferencing();
 
 		
@@ -129,22 +108,36 @@ void FlashMainStream::messageHandler(Exception& ex, const string& name,AMFReader
 		response.amf0 = true;
 		response.writeNumberProperty("objectEncoding",writer.amf0 ? 0.0 : 3.0);
 		response.amf0 = writer.amf0;
+		Exception ex;
 		peer.onConnection(ex, writer,message,response);
-		if (ex)
+		if (ex) {
+			switch(ex.code()) {
+				case Exception::SOFTWARE:
+					writer.writeAMFError("NetConnection.Connect.Rejected",ex.error());
+					break;
+				case Exception::APPLICATION:
+					writer.writeAMFError("NetConnection.Connect.InvalidApp",ex.error());
+					break;
+				default:
+					writer.writeAMFError("NetConnection.Connect.Failed",ex.error());
+			}
+			writer.writeInvocation("close");
+			writer.close();
 			return;
+		}
+			
 		response.endObject();
 
 	} else if(name == "setPeerInfo") {
 
+		Exception ex;
+		bool ok(false);
 		peer.localAddresses.clear();
 		while(message.available()) {
 			SocketAddress address;
-			address.set(ex, message.readString(_buffer));
-			if (ex) {
-				ERROR("Bad peer address ",_buffer,", ",ex.error());
-				continue;
-			}
-			peer.localAddresses.emplace(address);
+			EXCEPTION_TO_LOG(ok=address.set(ex, message.readString(_buffer)),"Bad peer address ",_buffer);
+			if (ok)
+				peer.localAddresses.emplace(address);
 		}
 		
 		BinaryWriter& response = writer.writeRaw();
@@ -164,16 +157,16 @@ void FlashMainStream::messageHandler(Exception& ex, const string& name,AMFReader
 		_streams.erase(id);
 		invoker.destroyFlashStream(id);
 	} else {
-		Exception exm;
-		if(!peer.onMessage(exm, name, message))
-			exm.set(Exception::APPLICATION, "Method '",name,"' not found on application ", peer.path);
-		if (exm)
-			writer.writeAMFError("NetConnection.Call.Failed", exm.error());
+		// not close the main flash stream for that!
+		Exception ex;
+		if (!peer.onMessage(ex, name, message))
+			ERROR(ex.set(Exception::APPLICATION, "Method '", name, "' not found on application ", peer.path).error())
+		if (ex)
+			writer.writeAMFError("NetConnection.Call.Failed", ex.error());
 	}
-	
 }
 
-void FlashMainStream::rawHandler(Exception& ex,UInt8 type,PacketReader& packet,FlashWriter& writer) {
+void FlashMainStream::rawHandler(UInt8 type,PacketReader& packet,FlashWriter& writer) {
 
 	if(type==0x01) {
 		if(packet.available()>0) {

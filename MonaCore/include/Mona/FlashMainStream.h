@@ -35,10 +35,8 @@ public:
 
 private:
 
-	void	messageHandler(Exception& ex, const std::string& name, AMFReader& message, FlashWriter& writer);
-	void	rawHandler(Exception& ex, UInt8 type, PacketReader& packet, FlashWriter& writer);
-
-	void	close(FlashWriter& writer,const std::string& error,int code=0);
+	void	messageHandler(const std::string& name, AMFReader& message, FlashWriter& writer);
+	void	rawHandler(UInt8 type, PacketReader& packet, FlashWriter& writer);
 
 	std::map<UInt32,std::shared_ptr<FlashStream>>	_streams;
 	Group*											_pGroup;

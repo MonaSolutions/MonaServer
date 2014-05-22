@@ -427,7 +427,7 @@ void MonaServer::onConnection(Exception& ex, Client& client,DataReader& paramete
 	Expirable<Service> expirableService;
 	Service* pService = _pService->open(client.path, expirableService);
 	if (!pService) {
-		ex.set(Exception::APPLICATION, "Applicaton ", client.path, " doesn't exist");
+		ERROR(ex.set(Exception::APPLICATION, "Applicaton ", client.path, " doesn't exist").error());
 		return;
 	}
 
@@ -438,7 +438,7 @@ void MonaServer::onConnection(Exception& ex, Client& client,DataReader& paramete
 		SCRIPT_FUNCTION_BEGIN("onConnection")
 			lua_pushvalue(_pState, 1); // client! (see Script::AddObject above)
 			SCRIPT_WRITE_DATA(parameters,0)
-			SCRIPT_FUNCTION_CALL_WITHOUT_LOG
+			SCRIPT_FUNCTION_CALL
 			if(SCRIPT_CAN_READ) {
 				if(SCRIPT_NEXT_TYPE==LUA_TTABLE) {
 					lua_pushnil(_pState);  // first key 
@@ -470,7 +470,7 @@ void MonaServer::onConnection(Exception& ex, Client& client,DataReader& paramete
 	}
 	// connection failed
 	Script::RemoveObject<Client, LUAClient>(_pState,-1);
-	ex.set(Exception::SOFTWARE, error ? error : pService->lastError);
+	ERROR(ex.set(Exception::SOFTWARE, error ? error : pService->lastError).error());
 	lua_pop(_pState, 1); // remove Script::AddObject<Client .. (see above)
 }
 
@@ -515,6 +515,7 @@ bool MonaServer::onMessage(Exception& ex, Client& client,const string& name,Data
 }
 
 bool MonaServer::onRead(Exception& ex, Client& client,FilePath& filePath,DataReader& parameters,DataWriter& properties) { 
+
 	bool result = true;
 	filePath.setDirectory(WWWPath);
 	SCRIPT_BEGIN(openService(client))
@@ -554,6 +555,7 @@ bool MonaServer::onRead(Exception& ex, Client& client,FilePath& filePath,DataRea
 			return false;
 		}
 	SCRIPT_END
+
 	return result;
 }
 

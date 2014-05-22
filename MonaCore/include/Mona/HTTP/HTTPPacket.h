@@ -26,8 +26,17 @@ This file is a part of Mona.
 
 namespace Mona {
 
+class HTTPSendingInfos : public virtual Object {
+public:
+	HTTPSendingInfos() : sizeParameters(0) {}
+	std::vector<std::string>	setCookies; /// List of Set-cookie lines to add
+	MapParameters				parameters; // For onRead returned value (return file,parameters)
+	UInt32						sizeParameters;
+};
+
 class HTTPPacket : public virtual Object {
 public:
+	
 
 	HTTPPacket(PoolBuffer& pBuffer);
 
@@ -57,15 +66,15 @@ public:
 	std::string					secWebsocketAccept;
 
 	std::string					cookies; /// List of cookie key;value
-	std::vector<std::string>	setCookies; /// List of Set-cookie lines to add
 
-	MapParameters				parameters; // For onRead returned value (return file,parameters)
-	UInt32						sizeParameters;
-	
 	const PoolBuffers&			poolBuffers() { return _pBuffer.poolBuffers; }
 
 
 	const UInt8*				build(Exception& ex,PoolBuffer& pBuffer,const UInt8* data,UInt32& size);
+
+	HTTPSendingInfos&					sendingInfos() { if (!_pSendingInfos) _pSendingInfos.reset(new HTTPSendingInfos()); return *_pSendingInfos; }
+	std::shared_ptr<HTTPSendingInfos>	pullSendingInfos() { return std::move(_pSendingInfos); }
+	
 
 private:
 	void parseHeader(Exception& ex,const char* key, const char* value);
@@ -82,6 +91,9 @@ private:
 
 	PoolBuffer&	_pBuffer;
 	std::string	_buffer;
+
+	// For next HTTPSender
+	std::shared_ptr<HTTPSendingInfos> _pSendingInfos;
 };
 
 

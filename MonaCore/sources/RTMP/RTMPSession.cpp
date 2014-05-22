@@ -235,11 +235,10 @@ void RTMPSession::packetHandler(PacketReader& packet) {
 			_winAckSize = reader.read32();
 			break;
 		default: {
-			bool connected = peer.connected;
-			invoker.flashStream(channel.streamId, peer, _pStream).process(channel.type,channel.absoluteTime, reader,*_pWriter); // TODO peer.serverAddress?	
-			if (!connected && peer.connected)
+			 // TODO peer.serverAddress?	
+			if(invoker.flashStream(channel.streamId, peer, _pStream).process(channel.type,channel.absoluteTime, reader,*_pWriter) && peer.connected)
 				_pWriter->isMain = true;
-			else if (!peer.connected)
+			else
 				kill(REJECTED_DEATH);	
 		}
 	}

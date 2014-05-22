@@ -254,7 +254,6 @@ bool Service::open(bool create) {
 	lua_pushvalue(_pState, -1);
 	lua_setfield(_pState, -3, "|env");
 	lua_replace(_pState, -2);
-
 	return true;
 }
 

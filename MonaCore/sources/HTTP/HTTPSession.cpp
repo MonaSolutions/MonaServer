@@ -40,16 +40,15 @@ HTTPSession::HTTPSession(const SocketAddress& peerAddress, SocketFile& file, Pro
 		UInt8 count = items.size();
 
 		if(!_writer.pRequest)
-			ERROR("HTTPSession ",name()," process cookies without without upstream request")
+			ERROR("HTTPSession ",name()," process cookies without upstream request")
 		else if (!count)
 			ERROR("HTTPSession ",name(),", cookie's key argument missing")
 		else if (count == 1)
 			ERROR("HTTPSession ",name(),", ",items[0]," cookie's value argument missing")
 		else {
-			_writer.pRequest->setCookies.emplace_back();
-			string& setCookie(_writer.pRequest->setCookies.back());
-			string& value(items[1]);
-			String::Format(setCookie, items[0], "=", value);
+			string& setCookie(*_writer.pRequest->sendingInfos().setCookies.emplace(_writer.pRequest->sendingInfos().setCookies.end(), items[0]));
+			string value(items[1]);
+			String::Append(setCookie, "=", value);
 
 			// Expiration Date in RFC 1123 Format
 			if (count > 2) {
@@ -278,7 +277,7 @@ void HTTPSession::processGet(Exception& ex, const shared_ptr<HTTPPacket>& pPacke
 
 	// 2 - try to get a file
 	if (!methodCalled && !ex) {
-		ParameterWriter parameterWriter(pPacket->parameters);
+		ParameterWriter parameterWriter(pPacket->sendingInfos().parameters);
 		if (peer.onRead(ex, _filePath, propertiesReader, parameterWriter) && !ex) {
 			// If onRead has been authorised, and that the file is a multimedia file, and it doesn't exists (no VOD, filePath.lastModified()==0 means "doesn't exists")
 			// Subscribe for a live stream with the basename file as stream name
@@ -304,7 +303,7 @@ void HTTPSession::processGet(Exception& ex, const shared_ptr<HTTPPacket>& pPacke
 				_writer.writeFile(_filePath, sortOptions, pPacket->filePos==string::npos);
 			}
 		}
-		pPacket->sizeParameters = parameterWriter.size();
+		pPacket->sendingInfos().sizeParameters = parameterWriter.size();
 	}
 }
 

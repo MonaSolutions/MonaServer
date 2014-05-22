@@ -50,7 +50,7 @@ void HTTPWriter::close(Int32 code) {
 	if (code < 0)
 		return; // listener!
 	if (code > 0 && pRequest)
-		createSender().writeError(code,_buffer,true);
+		createSender(*pRequest).writeError(code,_buffer,true);
 	Writer::close(code);
 	_session.kill(code);
 }
@@ -71,11 +71,23 @@ void HTTPWriter::flush(bool full) {
 	_senders.clear();
 }
 
+void HTTPWriter::writeFile(const FilePath& file, UInt8 sortOptions, bool isApp) {
+		if (!pRequest) {
+			ERROR("No HTTP request to send file ",file.name())
+			return;
+		}
+		return createSender(*pRequest).writeFile(file,sortOptions,isApp);
+	}	
+
 
 DataWriter& HTTPWriter::write(const string& code, HTTP::ContentType type, const string& subType, const UInt8* data,UInt32 size) {
 	if(state()==CLOSED)
         return DataWriter::Null;
-	return createSender().writer(code, type, subType, data, size);
+	if (!pRequest) {
+		ERROR("No HTTP request to send this reply")
+		return DataWriter::Null;
+	}
+	return createSender(*pRequest).writer(code, type, subType, data, size);
 }
 
 DataWriter& HTTPWriter::writeResponse(UInt8 type) {
@@ -125,9 +137,9 @@ bool HTTPWriter::writeMedia(MediaType type,UInt32 time,PacketReader& packet,Para
 		}
 		case AUDIO:
 		case VIDEO: {
-			if (!_pMedia)
+			if (!_pMedia || !pRequest)
 				return false;
-			_pMedia->write(createSender().writeRaw(_session.invoker.poolBuffers),type,time,packet.current(), packet.available());
+			_pMedia->write(createSender(*pRequest).writeRaw(_session.invoker.poolBuffers),type,time,packet.current(), packet.available());
 			break;
 		}
 		default:

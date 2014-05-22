@@ -55,15 +55,10 @@ void FlashStream::disengage(FlashWriter* pWriter) {
 	}
 }
 
-void FlashStream::close(FlashWriter& writer,const string& error,int code) {
-	// TODO what doing for FlashStream?
-}
-
 bool FlashStream::process(AMF::ContentType type,UInt32 time,PacketReader& packet,FlashWriter& writer,UInt32 numberLostFragments) {
 	if(type==AMF::EMPTY)
-		return true;
+		return writer.state()!=Writer::CLOSED;
 
-	Exception ex;
 	// if exception, it closes the connection, and print an ERROR message
 	switch(type) {
 		case AMF::INVOCATION_AMF3:
@@ -74,35 +69,33 @@ bool FlashStream::process(AMF::ContentType type,UInt32 time,PacketReader& packet
 			writer.callbackHandle = reader.readNumber();
 			if(reader.followingType()==AMFReader::NIL)
 				reader.readNull();
-			messageHandler(ex,name,reader,writer);
+			messageHandler(name,reader,writer);
 			break;
 		}
 		case AMF::DATA: {
 			AMFReader reader(packet);
-			dataHandler(ex,reader, numberLostFragments);
+			dataHandler(reader, numberLostFragments);
 			break;
 		}
 		case AMF::AUDIO:
-			audioHandler(ex, time,packet, numberLostFragments);
+			audioHandler(time,packet, numberLostFragments);
 			break;
 		case AMF::VIDEO:
-			videoHandler(ex, time,packet, numberLostFragments);
+			videoHandler(time,packet, numberLostFragments);
 			break;
 		case AMF::ACK:
 			// nothing to do, a ack message says about how many bytes have been gotten by the peer
 			// RTMFP has a complexe ack mechanism and RTMP is TCP based, ack mechanism is in system layer => so useless
 			break;
 		default:
-			rawHandler(ex, type, packet, writer);
+			rawHandler(type, packet, writer);
 	}
-	if (ex)
-		close(writer,ex.error());
 	writer.callbackHandle = 0;
-	return !ex;
+	return writer.state()!=Writer::CLOSED;
 }
 
 
-void FlashStream::messageHandler(Exception& ex,const string& name,AMFReader& message,FlashWriter& writer) {
+void FlashStream::messageHandler(const string& name,AMFReader& message,FlashWriter& writer) {
 	if(name=="play") {
 		disengage(&writer);
 
@@ -160,7 +153,7 @@ void FlashStream::messageHandler(Exception& ex,const string& name,AMFReader& mes
 }
 
 
-void FlashStream::rawHandler(Exception& ex, UInt8 type, PacketReader& packet, FlashWriter& writer) {
+void FlashStream::rawHandler(UInt8 type, PacketReader& packet, FlashWriter& writer) {
 	if(packet.read16()==0x22) { // TODO Here we receive publication bounds (id + tracks), useless? maybe to record a file and sync tracks?
 		//TRACE("Bound ",id," : ",data.read32()," ",data.read32());
 		return;
@@ -176,7 +169,7 @@ void FlashStream::setBufferTime(UInt32 ms) {
 		_pListener->setBufferTime(ms);
 }
 
-void FlashStream::dataHandler(Exception& ex,DataReader& data, UInt32 numberLostFragments) {
+void FlashStream::dataHandler(DataReader& data, UInt32 numberLostFragments) {
 	if(!_pPublication) {
 		ERROR("a data packet has been received on a no publishing stream ",id);
 		return;
@@ -188,7 +181,7 @@ void FlashStream::dataHandler(Exception& ex,DataReader& data, UInt32 numberLostF
 }
 
 
-void FlashStream::audioHandler(Exception& ex, UInt32 time,PacketReader& packet, UInt32 numberLostFragments) {
+void FlashStream::audioHandler(UInt32 time,PacketReader& packet, UInt32 numberLostFragments) {
 	if(!_pPublication) {
 		WARN("an audio packet has been received on a no publishing stream ",id,", certainly a publication currently closing");
 		return;
@@ -199,7 +192,7 @@ void FlashStream::audioHandler(Exception& ex, UInt32 time,PacketReader& packet, 
 		WARN("an audio packet has been received on a stream ",id," which is not on owner of this publication, certainly a publication currently closing");
 }
 
-void FlashStream::videoHandler(Exception& ex, UInt32 time,PacketReader& packet, UInt32 numberLostFragments) {
+void FlashStream::videoHandler(UInt32 time,PacketReader& packet, UInt32 numberLostFragments) {
 	if(!_pPublication) {
 		WARN("a video packet has been received on a no publishing stream ",id,", certainly a publication currently closing");
 		return;

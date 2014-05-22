@@ -37,6 +37,7 @@ public:
 	
 	void setBufferTime(UInt32 ms);
 
+	// return flase if writer is closed!
 	bool		 process(AMF::ContentType type,UInt32 time,PacketReader& packet,FlashWriter& writer,UInt32 numberLostFragments=0);
 	virtual void flush();
 
@@ -51,13 +52,11 @@ protected:
 private:
 	void			disengage(FlashWriter* pWriter=NULL);
 
-	virtual void	messageHandler(Exception& ex, const std::string& name, AMFReader& message, FlashWriter& writer);
-	virtual void	rawHandler(Exception& ex, UInt8 type, PacketReader& data, FlashWriter& writer);
-	virtual void	dataHandler(Exception& ex,DataReader& data, UInt32 numberLostFragments);
-	virtual void	audioHandler(Exception& ex,UInt32 time, PacketReader& packet, UInt32 numberLostFragments);
-	virtual void	videoHandler(Exception& ex, UInt32 time,PacketReader& packet, UInt32 numberLostFragments);
-
-	virtual void	close(FlashWriter& writer,const std::string& error,int code=0);
+	virtual void	messageHandler(const std::string& name, AMFReader& message, FlashWriter& writer);
+	virtual void	rawHandler(UInt8 type, PacketReader& data, FlashWriter& writer);
+	virtual void	dataHandler(DataReader& data, UInt32 numberLostFragments);
+	virtual void	audioHandler(UInt32 time, PacketReader& packet, UInt32 numberLostFragments);
+	virtual void	videoHandler(UInt32 time,PacketReader& packet, UInt32 numberLostFragments);
 
 	Publication*	_pPublication;
 	Listener*		_pListener;

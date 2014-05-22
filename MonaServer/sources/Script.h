@@ -175,7 +175,9 @@ public:
 			lua_getmetatable(pState, -1);
 			lua_pushlightuserdata(pState, pCollector);
 			lua_setfield(pState, -2, "|collector");
-			lua_pushcfunction(pState, &LUAItemType::Item);
+			lua_pushvalue(pState, index<0 ? (index-3) : index);
+			lua_setfield(pState, -2, "|self"); // to remove self on call!
+			lua_pushcfunction(pState, &Script::ItemSafe<LUAItemType>);
 			lua_setfield(pState, -2, "__call");
 			lua_pop(pState, 1);
 		}
@@ -225,7 +227,7 @@ public:
 					lua_pop(pState, 1);
 				}
 				Script::FillCollection(pState, 0, 0);
-				lua_pop(pState, 1);
+				lua_pop(pState, 2);
 			}
 		});
 
@@ -560,11 +562,26 @@ private:
 		lua_pop(pState, 1);
 	}
 
+	template<class LUAItemType>
+	static int ItemSafe(lua_State *pState) {
+		// solve the problem of call with self collector:collection(..) in removing |self if is argument 2
+		// 1 collection
+		// 2 collector (self) or parameter
+		if (lua_istable(pState, 2)) {
+			if (lua_getmetatable(pState, 1)) {
+				lua_getfield(pState, -1, "|self");
+				if (lua_equal(pState, -1, 2))
+					lua_remove(pState, 2);
+				lua_pop(pState, 2);
+			}
+		}
+		return LUAItemType::Item(pState);
+	}
+	static int Item(lua_State *pState);
+
 	static int Len(lua_State* pState);
 	static int IndexCollection(lua_State* pState);
 	static int NewIndexCollection(lua_State* pState);
-	static int Item(lua_State *pState);
-	
 
 	static int Error(lua_State* pState);
 	static int Warn(lua_State* pState);

@@ -45,7 +45,7 @@ namespace Mona {
 
 class HTTPSender : public TCPSender, public virtual Object {
 public:
-	HTTPSender(const SocketAddress& address,const std::shared_ptr<HTTPPacket>& pRequest);
+	HTTPSender(const SocketAddress& address,HTTPPacket& request,const PoolBuffers& poolBuffers);
 
 	DataWriter&		writer(const std::string& code, HTTP::ContentType type, const std::string& subType,const UInt8* data,UInt32 size);
 	void			writeError(int code, const std::string& description,bool close=false);
@@ -62,16 +62,21 @@ private:
 
 	/// \brief  Write content file and replace the "<% key %>" field 
 	/// by relating parameters[key]
-	void			replaceTemplateTags(PacketWriter& packet, std::ifstream& ifile);
+	void			replaceTemplateTags(PacketWriter& packet, std::ifstream& ifile, const Parameters& parameters, UInt32 sizeParameters);
 
-	bool								_isApp;
-	FilePath							_file;
-	UInt8								_sortOptions;
-	const std::shared_ptr<HTTPPacket>	_pRequest;
-	UInt32								_sizePos;
-	std::unique_ptr<DataWriter>			_pWriter;
-	std::string							_buffer;
-	SocketAddress						_address;
+	const PoolBuffers&						_poolBuffers;
+	bool									_isApp;
+	FilePath								_file;
+	UInt8									_sortOptions;
+	const std::shared_ptr<HTTPSendingInfos> _pInfos;
+	UInt8									_connection;
+	HTTP::CommandType						_command;
+	Date									_ifModifiedSince;
+	std::string								_serverAddress;
+	UInt32									_sizePos;
+	std::unique_ptr<DataWriter>				_pWriter;
+	std::string								_buffer;
+	SocketAddress							_address;
 };
 
 

@@ -33,38 +33,42 @@ namespace Mona {
 
 
 
-HTTPSender::HTTPSender(const SocketAddress& address,const shared_ptr<HTTPPacket>& pRequest) : _pRequest(pRequest),_address(address),_sizePos(0),TCPSender("TCPSender"),_sortOptions(0), _isApp(false) {
+HTTPSender::HTTPSender(const SocketAddress& address, HTTPPacket& request,const PoolBuffers& poolBuffers) :
+	_serverAddress(request.serverAddress),
+	_ifModifiedSince(request.ifModifiedSince),
+	_connection(request.connection),
+	_command(request.command),
+	_pInfos(request.pullSendingInfos()),
+	_address(address),
+	_sizePos(0),
+	_sortOptions(0),
+	_isApp(false),
+	_poolBuffers(poolBuffers),
+	TCPSender("TCPSender") {
+
 }
 
 void HTTPSender::writeError(int code,const string& description,bool close) {
-	if (!_pRequest) {
-		ERROR("No HTTP request to send this error reply")
-		return;
-	}
 	_buffer.assign("Unknown error");
 	string title;
 	if (close)
-		_pRequest->connection = HTTP::CONNECTION_CLOSE;
+		_connection = HTTP::CONNECTION_CLOSE;
 	DataWriter& response = write(String::Format(title, code, " ", HTTP::CodeToMessage(code,_buffer)));
 	BinaryWriter& writer = response.packet;
 	HTML_BEGIN_COMMON_RESPONSE(writer, title)
 		writer.writeRaw(description.empty() ? title : description);
-	HTML_END_COMMON_RESPONSE(writer, _pRequest->serverAddress)
+	HTML_END_COMMON_RESPONSE(writer, _serverAddress)
 }
 
 
 bool HTTPSender::run(Exception& ex) {
-	if (!_pRequest && (!_pWriter || _sizePos>0)) { // accept just HTTPSender::writeRaw call, for media streaming
-		ex.set(Exception::PROTOCOL, "No HTTP request to send the reply");
-		return false;
-	}
 
 	if (!_pWriter) {
 
 		//// GET FILE
 		Date date;
 		// Not Modified => don't send the file
-		if (_file.lastModified()>0 && _pRequest->ifModifiedSince >= _file.lastModified()) {
+		if (_file.lastModified()>0 && _ifModifiedSince >= _file.lastModified()) {
 			write("304 Not Modified", HTTP::CONTENT_ABSENT);
 		} else {
 			// file doesn't exist
@@ -80,7 +84,7 @@ bool HTTPSender::run(Exception& ex) {
 						// Redirect to the real path of directory
 						DataWriter& response = write("301 Moved Permanently");
 						BinaryWriter& writer = response.packet;
-						String::Format(_buffer, "http://", _pRequest->serverAddress, _file.path(), '/');
+						String::Format(_buffer, "http://", _serverAddress, _file.path(), '/');
 						HTTP_BEGIN_HEADER(writer)
 							HTTP_ADD_HEADER(writer, "Location", _buffer)
 						HTTP_END_HEADER(writer)
@@ -94,7 +98,7 @@ bool HTTPSender::run(Exception& ex) {
 							HTTP_ADD_HEADER(writer,"Last-Modified", date.toString(Date::HTTP_FORMAT, _buffer))
 						HTTP_END_HEADER(writer)
 
-						HTTP::WriteDirectoryEntries(writer,_pRequest->serverAddress,_file.path(),files,_sortOptions);
+						HTTP::WriteDirectoryEntries(writer,_serverAddress,_file.path(),files,_sortOptions);
 					}
 				} 
 				// File
@@ -115,8 +119,8 @@ bool HTTPSender::run(Exception& ex) {
 						HTTP_END_HEADER(packet)
 
 						// TODO see if filter is correct
-						if (type == HTTP::CONTENT_TEXT && _pRequest->parameters.count())
-							replaceTemplateTags(packet, ifile);
+						if (type == HTTP::CONTENT_TEXT && _pInfos && _pInfos->parameters.count())
+							replaceTemplateTags(packet, ifile, _pInfos->parameters, _pInfos->sizeParameters);
 						else {
 
 							// push the entire file content to memory
@@ -153,7 +157,7 @@ bool HTTPSender::run(Exception& ex) {
 		String::Format(_buffer, end + 4 - content);
 		memcpy((UInt8*)packet.data()+_sizePos,_buffer.c_str(),_buffer.size());
 
-		if (_pRequest->command == HTTP::COMMAND_HEAD)
+		if (_command == HTTP::COMMAND_HEAD)
 			packet.clear(content-packet.data());
 		else
 			packet.clear(size);
@@ -171,12 +175,8 @@ DataWriter& HTTPSender::writer(const string& code, HTTP::ContentType type, const
 		ERROR("HTTP response already written");
 		return DataWriter::Null;
 	}
-	if (!_pRequest) {
-		ERROR("No HTTP request to write the reply");
-		return DataWriter::Null;
-	}
 
-	_pWriter.reset(type == HTTP::CONTENT_ABSENT ? new RawWriter(_pRequest->poolBuffers()) : HTTP::NewDataWriter(_pRequest->poolBuffers(),subType));
+	_pWriter.reset(type == HTTP::CONTENT_ABSENT ? new RawWriter(_poolBuffers) : HTTP::NewDataWriter(_poolBuffers,subType));
 
 	PacketWriter& packet = _pWriter->packet;
 
@@ -197,23 +197,23 @@ DataWriter& HTTPSender::writer(const string& code, HTTP::ContentType type, const
 	packet.writeRaw("\r\nServer: Mona");
 
 	// Connection type, same than request!
-	UInt8 connection = _pRequest->connection;
-	if (connection&HTTP::CONNECTION_KEEPALIVE) {
+	if (_connection&HTTP::CONNECTION_KEEPALIVE) {
 		packet.writeRaw("\r\nConnection: keep-alive");
-		if (connection&HTTP::CONNECTION_UPGRADE)
+		if (_connection&HTTP::CONNECTION_UPGRADE)
 			packet.writeRaw(", upgrade");
-		if (connection&HTTP::CONNECTION_CLOSE)
+		if (_connection&HTTP::CONNECTION_CLOSE)
 			packet.writeRaw(", close");
-	} else if (connection&HTTP::CONNECTION_UPGRADE) {
+	} else if (_connection&HTTP::CONNECTION_UPGRADE) {
 		packet.writeRaw("\r\nConnection: upgrade");
-		if (connection&HTTP::CONNECTION_CLOSE)
+		if (_connection&HTTP::CONNECTION_CLOSE)
 			packet.writeRaw(", close");
-	} else if (connection&HTTP::CONNECTION_CLOSE)
+	} else if (_connection&HTTP::CONNECTION_CLOSE)
 		packet.writeRaw("\r\nConnection: close");
 
 	// Set Cookies
-	for(const string& cookie : _pRequest->setCookies) {
-		packet.writeRaw("\r\nSet-Cookie: ", cookie);
+	if (_pInfos) {
+		for(const string& cookie : _pInfos->setCookies)
+			packet.writeRaw("\r\nSet-Cookie: ", cookie);
 	}
 
 	// Content Type
@@ -251,7 +251,7 @@ BinaryWriter& HTTPSender::writeRaw(const PoolBuffers& poolBuffers) {
 	return _pWriter->packet;
 }
 
-void HTTPSender::replaceTemplateTags(PacketWriter& packet, ifstream& ifile) {
+void HTTPSender::replaceTemplateTags(PacketWriter& packet, ifstream& ifile, const Parameters& parameters, UInt32 sizeParameters) {
 
 	UInt32 pos = packet.size();
 	// get file content size
@@ -259,7 +259,7 @@ void HTTPSender::replaceTemplateTags(PacketWriter& packet, ifstream& ifile) {
 
 	// push the entire file content to memory
 	ifile.seekg(0);
-	char* current = (char*)packet.buffer(size+_pRequest->sizeParameters); // reserve more memory to change <%name%> field
+	char* current = (char*)packet.buffer(size+sizeParameters); // reserve more memory to change <%name%> field
 	ifile.read(current, size);
 	// iterate on content to replace "<% key %>" fields
 	UInt32 newSize(size);
@@ -308,7 +308,7 @@ void HTTPSender::replaceTemplateTags(PacketWriter& packet, ifstream& ifile) {
 					key.assign(keyBegin, keyLength);
 				UInt32 available(current+1-signifiant);
 				string value;
-				_pRequest->parameters.getString(key, value);
+				parameters.getString(key, value);
 				// give the size available required
 				if (available < value.size()) {
 					available = value.size()-available; // to add

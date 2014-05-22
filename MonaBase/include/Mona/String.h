@@ -213,7 +213,7 @@ public:
 	template <typename ...Args>
 	static std::string& Append(std::string& result, const void* value, Args&&... args)	{
 		char buffer[64];
-		sprintf(buffer, sizeof(uintptr_t)>4 ? "%016llX" : "%08lX", value);
+		sprintf(buffer,"%p", value);
 		result.append(buffer);
 		return String::Append(result, args ...);
 	}

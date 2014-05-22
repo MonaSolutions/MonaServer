@@ -647,6 +647,13 @@ void Script::Test(lua_State* pState) {
 	for (i = 1; i <= top; i++) {  /* repeat for each level */
 		int t = lua_type(pState, i);
 		switch (t) {
+
+		case LUA_TNONE:  /* strings */
+			printf("none\n");
+			break;
+		case LUA_TNIL:  /* strings */
+			printf("nil\n");
+			break;
 		case LUA_TSTRING:  /* strings */
 			printf("string: '%s'\n", lua_tostring(pState, i));
 			break;
@@ -657,7 +664,7 @@ void Script::Test(lua_State* pState) {
 			printf("number: %g\n", lua_tonumber(pState, i));
 			break;
 		default:  /* other values */
-			printf("%s\n", lua_typename(pState, t));
+			printf("%s: %p\n", lua_typename(pState, t),lua_topointer(pState,i));
 			break;
 		}
 		printf("  ");  /* put a separator */
