@@ -619,9 +619,10 @@ Int32 Timezone::localOffsetUsingtRules(const Date& date,UInt32 clock,bool& isDST
 		isDST = !isBeforeTransition(date,clock, _StartDST);
 	else if (_EndDST && date.month() == _EndDST.month)
 		isDST = isBeforeTransition(date, clock,_EndDST);
-	if (isDST)
-		return _dstOffset;
-	return _offset;
+	else
+		isDST = true;
+	
+	return isDST? _dstOffset : _offset;
 }
 	
 bool Timezone::isBeforeTransition(const Date& date,UInt32 clock,const TransitionRule& rule) {

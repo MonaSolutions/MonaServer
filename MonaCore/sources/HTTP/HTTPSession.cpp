@@ -40,7 +40,7 @@ HTTPSession::HTTPSession(const SocketAddress& peerAddress, SocketFile& file, Pro
 		UInt8 count = items.size();
 		const shared_ptr<HTTPPacket>& pPacket(packet());
 
-		if(!pPacket)
+		if(!_writer.pRequest)
 			ERROR("HTTPSession ",name()," process cookies without without upstream request")
 		else if (!count || items[0].empty())
 			ERROR("cookie's key argument missing")
@@ -100,16 +100,7 @@ bool HTTPSession::buildPacket(PoolBuffer& pBuffer,PacketReader& packet) {
 	_packets.emplace_back(pHTTPPacketBuilding->pPacket);
 	decode<HTTPPacketBuilding>(pHTTPPacketBuilding);
 	return true;
-}
-
-const shared_ptr<HTTPPacket>& HTTPSession::packet() {
-	if (_packets.empty())
-		return _writer.pRequest;
-	_writer.pRequest = _packets.front();
-	_packets.pop_front();
-	return _writer.pRequest;
-}
-	
+}	
 
 void HTTPSession::packetHandler(PacketReader& reader) {
 
@@ -117,7 +108,12 @@ void HTTPSession::packetHandler(PacketReader& reader) {
 	if(_isWS)
 		return WSSession::packetHandler(reader);
 
-	const shared_ptr<HTTPPacket>& pPacket(packet());
+	// Pop HTTPPacket (must be done just one time per handle!)
+	if (!_packets.empty()) {
+		_writer.pRequest = _packets.front();
+		_packets.pop_front();
+	}
+	const shared_ptr<HTTPPacket>& pPacket(_writer.pRequest);
 	if (!pPacket) {
 		ERROR("HTTPSession::packetHandler without http packet built");
 		return;
