@@ -38,7 +38,6 @@ namespace Mona {
 HTTPSession::HTTPSession(const SocketAddress& peerAddress, SocketFile& file, Protocol& protocol, Invoker& invoker) : _indexCanBeMethod(false),_indexDirectory(true),WSSession(peerAddress, file, protocol, invoker), _isWS(false), _writer(*this),_ppBuffer(new PoolBuffer(invoker.poolBuffers)), _pListener(NULL),
 	onCallProperties([this](vector<string>& items) {
 		UInt8 count = items.size();
-		const shared_ptr<HTTPPacket>& pPacket(packet());
 
 		if(!_writer.pRequest)
 			ERROR("HTTPSession ",name()," process cookies without without upstream request")
@@ -68,7 +67,7 @@ HTTPSession::HTTPSession(const SocketAddress& peerAddress, SocketFile& file, Pro
 			if (count > 5 && items[5] == "true") String::Append(setCookie, "; Secure");
 			if (count > 6 && items[6] == "true") String::Append(setCookie, "; HttpOnly");
 
-			pPacket->setCookies.emplace_back(setCookie);
+			_writer.pRequest->setCookies.emplace_back(setCookie);
 
 			// Return value from key added
 			items.clear();
