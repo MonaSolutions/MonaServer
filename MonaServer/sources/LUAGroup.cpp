@@ -72,7 +72,7 @@ int LUAGroup::LUAMembers::Item(lua_State *pState) {
 	if (!pGroup)
 		return 0;
 	Client* pMember(NULL);
-	UInt32 size = lua_objlen(pState, 2);
+	size_t size = lua_objlen(pState, 2);
 	const UInt8* id((const UInt8*)lua_tolstring(pState, 2,&size));
 	if (size == ID_SIZE)
 		pMember = (*pGroup)(id);

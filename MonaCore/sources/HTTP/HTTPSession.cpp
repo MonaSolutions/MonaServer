@@ -76,9 +76,11 @@ HTTPSession::HTTPSession(const SocketAddress& peerAddress, SocketFile& file, Pro
 }
 
 void HTTPSession::kill(UInt32 type){
-	peer.OnCallProperties::unsubscribe(onCallProperties);
 	if(died)
 		return;
+
+	peer.OnCallProperties::unsubscribe(onCallProperties);
+
 	if (_pListener) {
 		invoker.unsubscribe(peer, _pListener->publication.name());
 		_pListener = NULL;

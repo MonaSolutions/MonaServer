@@ -54,14 +54,12 @@ void LUAInvoker::Init(lua_State *pState, Invoker& invoker) {
 
 	// Configs
 	Script::Collection(pState,-1, "configs");
-	invoker.iterate(pushProperty);
-	Script::FillCollection(pState, invoker.count(),invoker.count());
+	Script::FillCollection(pState, invoker.iterate(pushProperty));
 	lua_setfield(pState, -2,"configs");
 
 	// Environement
 	Script::Collection(pState,-1, "environment");
-	Util::Environment().iterate(pushProperty);
-	Script::FillCollection(pState, Util::Environment().count(),Util::Environment().count());
+	Script::FillCollection(pState, Util::Environment().iterate(pushProperty));
 	lua_setfield(pState, -2,"environment");
 }
 

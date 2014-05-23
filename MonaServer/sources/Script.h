@@ -123,6 +123,7 @@ public:
 	static void ClearCollectionParameters(lua_State* pState,const char* field, const Mona::Parameters& parameters);
 
 	static void FillCollection(lua_State* pState, Mona::UInt32 size, Mona::UInt32 count);
+	static void FillCollection(lua_State* pState, Mona::UInt32 size) { Script::FillCollection(pState, size, size); }
 
 	template<class CollectorType = Script, class LUAItemType = CollectorType>
 	static bool Collection(lua_State* pState, int index,const char* field, CollectorType* pCollector = NULL) {
@@ -243,8 +244,7 @@ public:
 		Mona::Parameters::ForEach forEach([pState](const std::string& key, const std::string& value) {
 			Script::PushKeyValue(pState, key, value);
 		});
-		parameters.iterate(forEach);
-		Script::FillCollection(pState, parameters.count(), parameters.count());
+		Script::FillCollection(pState, parameters.iterate(forEach));
 		lua_setfield(pState, -2,field);
 
 		parameters.OnChange::subscribe(*pOnChange);

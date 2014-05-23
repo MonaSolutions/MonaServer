@@ -65,7 +65,7 @@ int LUAServer::Get(lua_State* pState) {
 				if(Script::Collection(pState, 1, "configs")) {
 					for (auto& it : server)
 						Script::PushKeyValue(pState, it.first, it.second);
-					Script::FillCollection(pState, server.count(),server.count());
+					Script::FillCollection(pState, server.count());
 				}
 				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else {

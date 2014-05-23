@@ -36,7 +36,7 @@ public:
 	UInt32			count() const { return _map.size(); }
 
 private:
-	void				iteration(const char* prefix, ForEach& function) const;
+	UInt32				iteration(const char* prefix, ForEach& function) const;
 	void				clearAll() { _map.clear(); }
 	const std::string*  getRaw(const std::string& key) const { auto it = _map.find(key); return it == _map.end() ? NULL : &it->second; }
 	bool				setRaw(const std::string& key, const char* value);

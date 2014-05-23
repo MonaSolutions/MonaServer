@@ -24,21 +24,24 @@ using namespace std;
 
 namespace Mona {
 
-void MapParameters::iteration(const char* prefix, ForEach& function) const {
+UInt32 MapParameters::iteration(const char* prefix, ForEach& function) const {
 	auto it = _map.begin();
 	UInt32 prefixSize(0);
 	if (prefix) {
 		prefixSize = strlen(prefix);
 		it = _map.lower_bound(prefix);
 	}
+	UInt32 count(0);
 	while (it != _map.end() && (prefixSize==0 || memcmp(prefix, it->first.c_str(), prefixSize) == 0)) {
 		if (prefixSize>0) {
 			const std::string key(&it->first[prefixSize]);
 			function(key, it->second);
 		} else
 			function(it->first, it->second);
+		++count;
 		++it;
 	}
+	return count;
 }
 
 bool MapParameters::setRaw(const string& key, const char* value) {

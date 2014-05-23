@@ -30,15 +30,13 @@ void LUAPublicationBase::Clear(lua_State* pState, const Mona::Publication& publi
 	Script::ClearObject<QualityOfService, LUAQualityOfService>(pState, publication.videoQOS());
 }
 
-void LUAPublicationBase::AddListener(lua_State* pState, const Listener& listener, UInt8 indexListener) {
+void LUAPublicationBase::AddListener(lua_State* pState, UInt8 indexPublication, const Listener& listener, UInt8 indexListener) {
 	// -1 must be the client table!
-	if (Script::FromObject<Mona::Publication>(pState, listener.publication)) {
-		Script::Collection(pState, -1, "listeners");
-		lua_pushvalue(pState, indexListener);
-		lua_pushvalue(pState, -4); // client table
-		Script::FillCollection(pState, 1, listener.publication.listeners.count() + 1);
-		lua_pop(pState, 2);
-	}
+	Script::Collection(pState, indexPublication, "listeners");
+	lua_pushvalue(pState, indexListener);
+	lua_pushvalue(pState, -4); // client table
+	Script::FillCollection(pState, 1, listener.publication.listeners.count() + 1);
+	lua_pop(pState, 1);
 }
 
 void LUAPublicationBase::RemoveListener(lua_State* pState, const Listener& listener) {

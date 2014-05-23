@@ -74,9 +74,9 @@ public:
 	}
 	void setBool(const std::string& key, bool value) { setIntern(key, value ? "true" : "false"); }
 
-	void  iterate(ForEach& function) const { iteration(NULL, function); };
-	void  iterate(const std::string& prefix, ForEach& function) const { iteration(prefix.c_str(), function); };
-	void  iterate(const char* prefix, ForEach& function) const { iteration(prefix, function);};
+	UInt32  iterate(ForEach& function) const { return iteration(NULL, function); };
+	UInt32  iterate(const std::string& prefix, ForEach& function) const { return iteration(prefix.c_str(), function); };
+	UInt32  iterate(const char* prefix, ForEach& function) const { return iteration(prefix, function);};
 	
 	
 	void clear() { clearAll(); OnClear::raise(); }
@@ -90,7 +90,8 @@ private:
 	
 	void setIntern(const std::string& key, const char* value) { if (setRaw(key, value)) OnChange::raise(key,value); }
 
-	virtual void  iteration(const char* prefix,ForEach& function) const = 0;
+	virtual UInt32 iteration(const char* prefix,ForEach& function) const = 0;
+
 	virtual void clearAll() = 0;
 	virtual const std::string* getRaw(const std::string& key) const = 0;
 	// if value==NULL the property should be removed, return true if something has changed

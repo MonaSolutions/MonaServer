@@ -32,7 +32,7 @@ public:
 	static void Clear(lua_State* pState, const Mona::Publication& publication);
 
 	// -1 must be the client table!
-	static void AddListener(lua_State* pState, const Mona::Listener& listener, Mona::UInt8 indexListener);
+	static void AddListener(lua_State* pState, Mona::UInt8 indexPublication, const Mona::Listener& listener, Mona::UInt8 indexListener);
 	// -1 must be the listener table!
 	static void RemoveListener(lua_State* pState, const Mona::Listener& listener);
 
