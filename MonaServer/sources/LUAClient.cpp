@@ -79,7 +79,7 @@ int LUAClient::Item(lua_State *pState) {
 	if (!pInvoker)
 		return 0;
 	Client* pClient(NULL);
-	UInt32 size = lua_objlen(pState, 2);
+    size_t size = lua_objlen(pState, 2);
 	const UInt8* id((const UInt8*)lua_tolstring(pState, 2,&size));
 	if (size == ID_SIZE)
 		pClient = pInvoker->clients(id);
