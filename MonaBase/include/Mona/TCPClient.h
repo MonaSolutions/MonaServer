@@ -28,7 +28,7 @@ namespace Mona {
 namespace Events {
 	// Can be called by a separated thread!
 	struct OnData : Event<UInt32(PoolBuffer&)> {};
-	struct OnDisconnection : Event<void()> {};
+	struct OnDisconnection : Event<void(const SocketAddress&)> {};
 };
 
 class TCPClient : public virtual Object,

@@ -48,7 +48,7 @@ int LUAListener::Get(lua_State *pState) {
 			} else if (strcmp(name, "dataQOS") == 0) {
 				SCRIPT_ADD_OBJECT(QualityOfService, LUAQualityOfService, listener.dataQOS()) // can change
 			} else if(strcmp(name,"publication")==0) {
-				SCRIPT_ADD_OBJECT(Publication, LUAPublication<>, listener.publication);
+				SCRIPT_ADD_OBJECT(Publication, LUAPublication, listener.publication);
 				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if(strcmp(name,"receiveAudio")==0) {
 				SCRIPT_WRITE_BOOL(listener.receiveAudio); // can change
@@ -61,9 +61,9 @@ int LUAListener::Get(lua_State *pState) {
 				Script::Collection(pState, 1, "properties");
 				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else {
-				string value;
-				if (listener.getString(name, value))
-					Script::PushValue(pState, value);
+				Script::Collection(pState,1, "properties");
+				lua_getfield(pState, -1, name);
+				lua_replace(pState, -2);
 			}
 		}
 	SCRIPT_CALLBACK_RETURN

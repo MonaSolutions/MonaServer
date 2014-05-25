@@ -42,7 +42,14 @@ Service::~Service() {
 	close(true);
 }
 
-Service* Service::open(const string& path, Expirable<Service>& expirableService) {
+Service* Service::open(const std::string& path, Mona::Expirable<Service>& expirableService) {
+	Service* pService(open(expirableService, path)); 
+	if (pService)
+		lua_pop(_pState, 1);
+	return pService;
+}
+
+Service* Service::open(Expirable<Service>& expirableService,const string& path) {
 	if (!_created)
 		open(); // to guarantee that every father are opened at less one time!
 
@@ -69,11 +76,11 @@ Service* Service::open(const string& path, Expirable<Service>& expirableService)
 	}
 
 	if (!nextPath.empty())
-		return pSubService->open(nextPath, expirableService);
+		return pSubService->open(expirableService,nextPath);
 
 	if (pSubService->watchFile() || FileSystem::Exists(pSubService->filePath.directory())) { // if file or folder exists, return the service
 		pSubService->shareThis(expirableService);
-		pSubService->open();
+		pSubService->open(true);
 		return pSubService;
 	}
 
@@ -97,7 +104,7 @@ int Service::Item(lua_State *pState) {
 	if (!pService)
 		return 0;
 	Expirable<Service> expirableService;
-	if (!pService->open(name, expirableService))
+	if (!pService->open(expirableService,name))
 		return 0;
 	return 1;
 }
@@ -179,8 +186,9 @@ bool Service::open(bool create) {
 		
 		// get children collection to parent (can be _G, no collector required here!)
 		Script::Collection(_pState,-2,"children");
-		
-		lua_getfield(_pState, -1, package);
+		lua_pushstring(_pState, package);
+		lua_rawget(_pState, -2); // to avoid Script::IndexCollection
+
 		if (!lua_istable(_pState, -1)) {
 			if (!create) {
 				lua_pop(_pState, 5);
@@ -197,7 +205,7 @@ bool Service::open(bool create) {
 			lua_pushstring(_pState, package);
 			lua_pushvalue(_pState, -3); // table environment
 
-			Script::FillCollection(_pState,1, lua_objlen(_pState, -3)+1);
+			Script::FillCollection(_pState,1);
 			lua_pop(_pState, 1); // remove children
 		}
 		lua_replace(_pState, -2); // remove children	
@@ -320,8 +328,8 @@ void Service::close(bool full) {
 					Script::Collection(_pState, -1, "children");
 					lua_pushstring(_pState, _packages.back().c_str());
 					lua_pushnil(_pState);
-					Script::FillCollection(_pState, 1, lua_objlen(_pState,-3)-1);
-					lua_pop(_pState, 1); // metatable of parent
+					Script::FillCollection(_pState, 1);
+					lua_pop(_pState, 1);
 				}
 				lua_pop(_pState, 2);
 			}

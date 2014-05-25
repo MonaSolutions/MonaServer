@@ -69,11 +69,10 @@ int LUAServer::Get(lua_State* pState) {
 				}
 				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else {
-				string value;
-				if (server.getString(name, value)) { 
-					Script::PushValue(pState, value);
-					SCRIPT_CALLBACK_FIX_INDEX(name)
-				}
+				Script::Collection(pState,1, "pState");
+				lua_getfield(pState, -1, name);
+				lua_replace(pState, -2);
+				SCRIPT_CALLBACK_FIX_INDEX(name)
 			}
 		}
 	SCRIPT_CALLBACK_RETURN

@@ -462,7 +462,7 @@ void MonaServer::onConnection(Exception& ex, Client& client,DataReader& paramete
 	SCRIPT_END
 
 	if (!error && pService->lastError.empty()) {
-		LUAInvoker::AddClient(_pState,*this);
+		LUAInvoker::AddClient(_pState);
 		lua_pop(_pState, 1); // remove Script::AddObject<Client .. (see above)
 		// connection accepted
 		expirableService.shareThis(client.setUserData<Expirable<Service>>(*new Expirable<Service>()));
@@ -489,7 +489,7 @@ void MonaServer::onDisconnection(const Client& client) {
 		SCRIPT_END
 	}
 	if (Script::FromObject(_pState, client)) {
-		LUAInvoker::RemoveClient(_pState, *this);
+		LUAInvoker::RemoveClient(_pState);
 		Script::RemoveObject<Client, LUAClient>(_pState,-1);
 		lua_pop(_pState, 1);
 	}
@@ -562,29 +562,26 @@ bool MonaServer::onRead(Exception& ex, Client& client,FilePath& filePath,DataRea
 
 //// PUBLICATION_HANDLER /////
 bool MonaServer::onPublish(Client& client,const Publication& publication,string& error) {
-	Script::AddObject<Publication, LUAPublication<>>(_pState, publication);
-	if (client == this->id) {
-		LUAInvoker::AddPublication(_pState, *this, publication);
-		lua_pop(_pState, 1); // remove Script::AddObject<Publication,... (see above)
-		return true;
+	Script::AddObject<Publication, LUAPublication>(_pState, publication);
+	bool result(true);
+	if (client != this->id) {
+		SCRIPT_BEGIN(openService(client))
+			SCRIPT_MEMBER_FUNCTION_BEGIN(Client,client,"onPublish")
+				lua_pushvalue(_pState, 1); // publication! (see Script::AddObject above)
+				SCRIPT_FUNCTION_CALL
+				if(SCRIPT_CAN_READ)
+					result = SCRIPT_READ_BOOL(true);
+			SCRIPT_FUNCTION_END
+			if(SCRIPT_LAST_ERROR) {
+				error = SCRIPT_LAST_ERROR;
+				result = false;
+			}
+		SCRIPT_END
 	}
-	bool result=true;
-	SCRIPT_BEGIN(openService(client))
-		SCRIPT_MEMBER_FUNCTION_BEGIN(Client,client,"onPublish")
-			lua_pushvalue(_pState, 1); // publication! (see Script::AddObject above)
-			SCRIPT_FUNCTION_CALL
-			if(SCRIPT_CAN_READ)
-				result = SCRIPT_READ_BOOL(true);
-		SCRIPT_FUNCTION_END
-		if(SCRIPT_LAST_ERROR) {
-			error = SCRIPT_LAST_ERROR;
-			result = false;
-		}
-	SCRIPT_END
 	if (result)
-		LUAInvoker::AddPublication(_pState, *this, publication);
+		LUAInvoker::AddPublication(_pState, publication);
 	else if (publication.listeners.count() == 0)
-		Script::RemoveObject<Publication, LUAPublication<>>(_pState, -1);
+		Script::RemoveObject<Publication, LUAPublication>(_pState, -1);
 	lua_pop(_pState, 1); // remove Script::AddObject<Publication,... (see above)
 	return result;
 }
@@ -593,24 +590,24 @@ void MonaServer::onUnpublish(Client& client,const Publication& publication) {
 	if(client != this->id) {
 		SCRIPT_BEGIN(openService(client))
 			SCRIPT_MEMBER_FUNCTION_BEGIN(Client,client,"onUnpublish")
-				SCRIPT_ADD_OBJECT(Publication, LUAPublication<>, publication)
+				SCRIPT_ADD_OBJECT(Publication, LUAPublication, publication)
 				SCRIPT_FUNCTION_CALL
 			SCRIPT_FUNCTION_END
 		SCRIPT_END
 	}
-	LUAInvoker::RemovePublication(_pState, *this, publication);
+	LUAInvoker::RemovePublication(_pState, publication);
 	if (publication.listeners.count() == 0)
-		Script::RemoveObject<Publication, LUAPublication<>>(_pState, publication);
+		Script::RemoveObject<Publication, LUAPublication>(_pState, publication);
 }
 
 bool MonaServer::onSubscribe(Client& client,const Listener& listener,string& error) { 
 	Script::AddObject<Listener, LUAListener>(_pState, listener);
-	Script::AddObject<Publication, LUAPublication<> >(_pState, listener.publication);
+	Script::AddObject<Publication, LUAPublication>(_pState, listener.publication);
 	
 	bool result = true;
 	bool done(false);
 	SCRIPT_BEGIN(_pState)
-		SCRIPT_MEMBER_FUNCTION_WITH_OBJHANDLE_BEGIN(Client, client, "onSubscribe", LUAPublication<>::AddListener(_pState, 2, listener, 1); done = true;)
+		SCRIPT_MEMBER_FUNCTION_WITH_OBJHANDLE_BEGIN(Client, client, "onSubscribe", LUAPublication::AddListener(_pState, 2, 1); done = true;)
 			lua_pushvalue(_pState, 1); // listener! (see Script::AddObject above)
 			SCRIPT_FUNCTION_CALL
 			if (SCRIPT_CAN_READ)
@@ -622,12 +619,12 @@ bool MonaServer::onSubscribe(Client& client,const Listener& listener,string& err
 		}
 	SCRIPT_END
 	if (!result) {
-		LUAPublication<>::RemoveListener(_pState, listener);
+		LUAPublication::RemoveListener(_pState, listener.publication);
 		Script::RemoveObject<Listener, LUAListener>(_pState, listener);
 		if (!listener.publication.publisher() && listener.publication.listeners.count() == 0)
-			Script::RemoveObject<Publication, LUAPublication<>>(_pState, listener.publication);
+			Script::RemoveObject<Publication, LUAPublication>(_pState, listener.publication);
 	} else if (!done && Script::FromObject<Client>(_pState, client)) {
-		LUAPublication<>::AddListener(_pState, 2, listener, 1);
+		LUAPublication::AddListener(_pState, 2, 1);
 		lua_pop(_pState, 1);
 	}
 	lua_pop(_pState, 2); // remove Script::AddObject<Listener,... (see above) and Publication
@@ -639,24 +636,22 @@ void MonaServer::onUnsubscribe(Client& client,const Listener& listener) {
 	SCRIPT_BEGIN(_pState)
 		SCRIPT_MEMBER_FUNCTION_BEGIN(Client, client,"onUnsubscribe")
 			SCRIPT_ADD_OBJECT(Listener, LUAListener, listener)
-			LUAPublication<>::RemoveListener(_pState, listener);
+			LUAPublication::RemoveListener(_pState, listener.publication);
 			done = true;
 			SCRIPT_FUNCTION_CALL
 		SCRIPT_FUNCTION_END
 	SCRIPT_END
 
 	if (!listener.publication.publisher() && listener.publication.listeners.count() == 0)
-		Script::RemoveObject<Publication, LUAPublication<>>(_pState, listener.publication);
+		Script::RemoveObject<Publication, LUAPublication>(_pState, listener.publication);
 	else if (!done && Script::FromObject<Listener>(_pState, listener)) {
-		LUAPublication<>::RemoveListener(_pState, listener);
+		LUAPublication::RemoveListener(_pState, listener.publication);
 		lua_pop(_pState, 1);
 	}
 	Script::RemoveObject<Listener, LUAListener>(_pState, listener);
 }
 
 void MonaServer::onAudioPacket(Client& client,const Publication& publication,UInt32 time,PacketReader& packet) {
-	if(client == this->id)
-		return;
 	SCRIPT_BEGIN(_pState)
 		SCRIPT_MEMBER_FUNCTION_BEGIN(Publication, publication, "onAudio")
 			SCRIPT_WRITE_NUMBER(time)
@@ -667,8 +662,6 @@ void MonaServer::onAudioPacket(Client& client,const Publication& publication,UIn
 }
 
 void MonaServer::onVideoPacket(Client& client,const Publication& publication,UInt32 time,PacketReader& packet) {
-	if(client == this->id)
-		return;
 	SCRIPT_BEGIN(_pState)
 		SCRIPT_MEMBER_FUNCTION_BEGIN(Publication, publication, "onVideo")
 			SCRIPT_WRITE_NUMBER(time)
@@ -679,8 +672,6 @@ void MonaServer::onVideoPacket(Client& client,const Publication& publication,UIn
 }
 
 void MonaServer::onDataPacket(Client& client,const Publication& publication,DataReader& packet) {
-	if(client == this->id)
-		return;
 	SCRIPT_BEGIN(_pState)
 		SCRIPT_MEMBER_FUNCTION_BEGIN(Publication, publication, "onData")
 			SCRIPT_WRITE_DATA(packet,0)
@@ -690,8 +681,6 @@ void MonaServer::onDataPacket(Client& client,const Publication& publication,Data
 }
 
 void MonaServer::onFlushPackets(Client& client,const Publication& publication) {
-	if(client == this->id)
-		return;
 	SCRIPT_BEGIN(_pState)
 		SCRIPT_MEMBER_FUNCTION_BEGIN(Publication, publication, "onFlush")
 			SCRIPT_FUNCTION_CALL
@@ -701,16 +690,16 @@ void MonaServer::onFlushPackets(Client& client,const Publication& publication) {
 
 void MonaServer::onJoinGroup(Client& client,Group& group) {
 	Script::AddObject<Group, LUAGroup>(_pState, group);
-	LUAInvoker::AddGroup(_pState, *this);
+	LUAInvoker::AddGroup(_pState);
 	bool done(false);
 	SCRIPT_BEGIN(_pState)
-		SCRIPT_MEMBER_FUNCTION_WITH_OBJHANDLE_BEGIN(Client, client, "onJoinGroup", LUAGroup::AddClient(_pState, group, 1); done = true;)
+		SCRIPT_MEMBER_FUNCTION_WITH_OBJHANDLE_BEGIN(Client, client, "onJoinGroup", LUAGroup::AddClient(_pState, 1); done = true;)
 			lua_pushvalue(_pState, 1); // group! (see Script::AddObject above)
 			SCRIPT_FUNCTION_CALL
 		SCRIPT_FUNCTION_END
 	SCRIPT_END
 	if (!done && Script::FromObject<Client>(_pState, client)) {
-		LUAGroup::AddClient(_pState, group,1);
+		LUAGroup::AddClient(_pState,1);
 		lua_pop(_pState, 1);
 	}
 	lua_pop(_pState, 1); // remove Script::AddObject<Group,... (see above)	
@@ -721,19 +710,19 @@ void MonaServer::onUnjoinGroup(Client& client,Group& group) {
 	SCRIPT_BEGIN(_pState)
 		SCRIPT_MEMBER_FUNCTION_BEGIN(Client, client,"onUnjoinGroup")
 			SCRIPT_ADD_OBJECT(Group, LUAGroup, group)
-			LUAGroup::RemoveClient(_pState, group,client);
+			LUAGroup::RemoveClient(_pState,client);
 			done = true;
 			SCRIPT_FUNCTION_CALL
 		SCRIPT_FUNCTION_END
 	SCRIPT_END
 	if (group.count() == 0) {
 		if (Script::FromObject<Group>(_pState, group)) {
-			LUAInvoker::RemoveGroup(_pState, *this);
+			LUAInvoker::RemoveGroup(_pState);
 			Script::RemoveObject<Group, LUAGroup>(_pState,-1);
 			lua_pop(_pState, 1);
 		}
 	} else if (!done && Script::FromObject<Group>(_pState,group)) {
-		LUAGroup::RemoveClient(_pState, group, client);
+		LUAGroup::RemoveClient(_pState, client);
 		lua_pop(_pState, 1);
 	}
 }

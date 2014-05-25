@@ -39,7 +39,8 @@ namespace Mona {
 #define INFO_COLOR 15
 #define DEBUG_COLOR 7
 #define TRACE_COLOR 8
-#define SET_CONSOLE_TEXT_COLOR(color) SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), color)
+#define BEGIN_CONSOLE_TEXT_COLOR(color) static HANDLE ConsoleHandle(GetStdHandle(STD_OUTPUT_HANDLE)); SetConsoleTextAttribute(ConsoleHandle, color)
+#define END_CONSOLE_TEXT_COLOR			SetConsoleTextAttribute(ConsoleHandle, LevelColors[6])
 #else
 #define FATAL_COLOR "\033[01;31m"
 #define	CRITIC_COLOR "\033[01;31m"
@@ -49,7 +50,8 @@ namespace Mona {
 #define INFO_COLOR "\033[01;37m"
 #define DEBUG_COLOR "\033[0m"
 #define TRACE_COLOR "\033[01;30m"
-#define SET_CONSOLE_TEXT_COLOR(color) fprintf(stdout,"%s",color)
+#define BEGIN_CONSOLE_TEXT_COLOR(color) fprintf(stdout,"%s",color)
+#define END_CONSOLE_TEXT_COLOR			BEGIN_CONSOLE_TEXT_COLOR(LevelColors[6])
 #endif
 
 #if defined(_WIN32)
@@ -63,9 +65,9 @@ mutex Logger::_Mutex;
 void Logger::log(THREAD_ID threadId, const string& threadName, Level level, const char *filePath, string& shortFilePath, long line, string& message) {
 	lock_guard<mutex> lock(_Mutex);
 	level = (Level)(level - 1);
-	SET_CONSOLE_TEXT_COLOR(LevelColors[level]);
+	BEGIN_CONSOLE_TEXT_COLOR(LevelColors[level]);
 	printf("%s[%ld] %s\n", shortFilePath.c_str(), line, message.c_str());
-	SET_CONSOLE_TEXT_COLOR(LevelColors[6]);
+	END_CONSOLE_TEXT_COLOR;
 	cout.flush();
 }
 

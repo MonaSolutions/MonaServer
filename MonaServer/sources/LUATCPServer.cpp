@@ -56,8 +56,8 @@ int	LUATCPServer::Destroy(lua_State* pState) {
 
 int	LUATCPServer::Start(lua_State* pState) {
 	SCRIPT_CALLBACK(LUATCPServer, server)
-		string host("0.0.0.0");
-		if (SCRIPT_NEXT_TYPE == LUA_TSTRING)
+		const char* host("0.0.0.0");
+		if (!lua_isnumber(pState,2))
 			host = SCRIPT_READ_STRING(host);
 		UInt16 port = SCRIPT_READ_UINT(0);
 		Exception ex;

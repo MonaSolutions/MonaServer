@@ -36,7 +36,7 @@ public:
 
 private:
 	Mona::UInt32	onData(Mona::PoolBuffer& pBuffer);
-	void			onDisconnection();
+	void			onDisconnection(const Mona::SocketAddress& peerAddress);
 
 	OnError::Type			_onError;
 	OnData::Type			_onData;

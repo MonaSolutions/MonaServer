@@ -64,8 +64,8 @@ int	LUAUDPSocket::Close(lua_State* pState) {
 
 int	LUAUDPSocket::Connect(lua_State* pState) {
 	SCRIPT_CALLBACK(LUAUDPSocket,udp)
-		string host("127.0.0.1");
-		if (SCRIPT_NEXT_TYPE == LUA_TSTRING)
+		const char* host("127.0.0.1");
+		if (!lua_isnumber(pState,2))
 			host = SCRIPT_READ_STRING(host);
 		UInt16 port = SCRIPT_READ_UINT(0);
 		Exception ex;
@@ -91,8 +91,8 @@ int	LUAUDPSocket::Disconnect(lua_State* pState) {
 
 int	LUAUDPSocket::Bind(lua_State* pState) {
 	SCRIPT_CALLBACK(LUAUDPSocket,udp)
-		string host("0.0.0.0");
-		if (SCRIPT_NEXT_TYPE == LUA_TSTRING)
+		const char* host("0.0.0.0");
+		if (!lua_isnumber(pState,2))
 			host = SCRIPT_READ_STRING(host);
 		UInt16 port = SCRIPT_READ_UINT(0);
 		Exception ex;
@@ -112,12 +112,11 @@ int	LUAUDPSocket::Bind(lua_State* pState) {
 int	LUAUDPSocket::Send(lua_State* pState) {
 	SCRIPT_CALLBACK(LUAUDPSocket,udp)
 		SCRIPT_READ_BINARY(data,size)
-
 		Exception ex;
-		string host("127.0.0.1");
-		if (SCRIPT_NEXT_TYPE == LUA_TSTRING)
-			host = SCRIPT_READ_STRING("127.0.0.1");
 		if (SCRIPT_CAN_READ) {
+			const char* host("127.0.0.1");
+			if (!lua_isnumber(pState,3))
+				host = SCRIPT_READ_STRING(host);
 			UInt16 port = SCRIPT_READ_UINT(0);
 			SocketAddress address;
 			if (port == 0)

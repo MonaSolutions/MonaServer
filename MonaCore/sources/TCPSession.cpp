@@ -61,7 +61,7 @@ TCPSession::TCPSession(const SocketAddress& peerAddress, SocketFile& file, Proto
 		return rest;
 	};
 
-	onDisconnection = [this]() { kill(SOCKET_DEATH); };
+	onDisconnection = [this](const SocketAddress&) { kill(SOCKET_DEATH); };
 
 	peer.OnInitParameters::subscribe(onInitParameters);
 	_client.OnError::subscribe(onError);
@@ -93,7 +93,7 @@ void TCPSession::manage() {
 	if (died)
 		return;
 	Session::manage();
-	if (_timeout<_client.idleTime()) {
+	if (_timeout>0 && _client.idleTime()>_timeout) {
 		kill(TIMEOUT_DEATH);
 		DEBUG(protocol().name, " timeout session ", name());
 	}	

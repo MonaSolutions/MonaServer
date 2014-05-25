@@ -138,9 +138,9 @@ int LUAClient::Get(lua_State *pState) {
 				Script::Collection(pState, 1, name);
 				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else {
-				string value;
-				if (client.properties().getString(name, value))
-					Script::PushValue(pState,value);
+				Script::Collection(pState,1, "properties");
+				lua_getfield(pState, -1, name);
+				lua_replace(pState, -2);
 			}
 		}
 	SCRIPT_CALLBACK_RETURN

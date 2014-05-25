@@ -30,22 +30,23 @@ public:
 	static int Set(lua_State *pState);
 
 	// -1 must be the client table!
-	static void AddClient(lua_State *pState, Mona::Invoker& invoker);
+	static void AddClient(lua_State *pState);
 	// -1 must be the client table!
-	static void RemoveClient(lua_State *pState, Mona::Invoker& invoker);
+	static void RemoveClient(lua_State *pState);
 
 	// -1 must be the publication table!
-	static void AddPublication(lua_State *pState, Mona::Invoker& invoker, const Mona::Publication& publication);
-	static void RemovePublication(lua_State *pState, Mona::Invoker& invoker, const Mona::Publication& publication);
+	static void AddPublication(lua_State *pState, const Mona::Publication& publication);
+	static void RemovePublication(lua_State *pState, const Mona::Publication& publication);
 
 	// -1 must be the group table!
-	static void AddGroup(lua_State *pState, Mona::Invoker& invoker);
+	static void AddGroup(lua_State *pState);
 	// -1 must be the group table!
-	static void RemoveGroup(lua_State *pState, Mona::Invoker& invoker);
+	static void RemoveGroup(lua_State *pState);
 
 
 private:
 	static int  Split(lua_State *pState);
+	static int	Dump(lua_State *pState);
 	static int	Md5(lua_State *pState);
 	static int	ListFiles(lua_State *pState);
 	static int	Sha256(lua_State *pState);

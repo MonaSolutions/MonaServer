@@ -64,17 +64,17 @@ void LUAInvoker::Init(lua_State *pState, Invoker& invoker) {
 }
 
 
-void LUAInvoker::AddClient(lua_State *pState, Invoker& invoker) {
+void LUAInvoker::AddClient(lua_State *pState) {
 	// -1 must be the client table!
 	lua_getglobal(pState, "mona");
 	Script::Collection(pState, -1, "clients");
 	lua_getfield(pState, -3,"id");
 	lua_pushvalue(pState, -4); // client table
-	Script::FillCollection(pState,1,invoker.clients.count() + 1);
+	Script::FillCollection(pState,1);
 	lua_pop(pState, 2);
 }
 
-void LUAInvoker::RemoveClient(lua_State *pState, Invoker& invoker) {
+void LUAInvoker::RemoveClient(lua_State *pState) {
 	// -1 must be the client table!
 	lua_getglobal(pState, "mona");
 	Script::Collection(pState, -1, "clients");
@@ -82,40 +82,40 @@ void LUAInvoker::RemoveClient(lua_State *pState, Invoker& invoker) {
 	lua_getfield(pState, -1, "|id");
 	lua_replace(pState, -2);
 	lua_pushnil(pState);
-	Script::FillCollection(pState,1,invoker.clients.count());
+	Script::FillCollection(pState,1);
 	lua_pop(pState, 2);
 }
 
-void LUAInvoker::AddPublication(lua_State *pState, Invoker& invoker, const Publication& publication) {
+void LUAInvoker::AddPublication(lua_State *pState, const Publication& publication) {
 	// -1 must be the publication table!
 	lua_getglobal(pState, "mona");
 	Script::Collection(pState, -1, "publications");
 	lua_pushstring(pState,publication.name().c_str());
 	lua_pushvalue(pState, -4);
-	Script::FillCollection(pState,1,invoker.publications.count());
+	Script::FillCollection(pState,1);
 	lua_pop(pState, 2);
 }
 
-void LUAInvoker::RemovePublication(lua_State *pState, Invoker& invoker, const Publication& publication) {
+void LUAInvoker::RemovePublication(lua_State *pState, const Publication& publication) {
 	lua_getglobal(pState, "mona");
 	Script::Collection(pState, -1, "publications");
 	lua_pushstring(pState,publication.name().c_str());
 	lua_pushnil(pState);
-	Script::FillCollection(pState,1,invoker.publications.count()-1);
+	Script::FillCollection(pState,1);
 	lua_pop(pState, 2);
 }
 
-void LUAInvoker::AddGroup(lua_State *pState, Invoker& invoker) {
+void LUAInvoker::AddGroup(lua_State *pState) {
 	// -1 must be the group table!
 	lua_getglobal(pState, "mona");
 	Script::Collection(pState, -1, "groups");
 	lua_getfield(pState, -3, "id");
 	lua_pushvalue(pState, -4);
-	Script::FillCollection(pState,1,invoker.groups.count());
+	Script::FillCollection(pState,1);
 	lua_pop(pState, 2);
 }
 
-void LUAInvoker::RemoveGroup(lua_State *pState, Invoker& invoker) {
+void LUAInvoker::RemoveGroup(lua_State *pState) {
 	// -1 must be the group table!
 	lua_getglobal(pState, "mona");
 	Script::Collection(pState, -1, "groups");
@@ -123,7 +123,7 @@ void LUAInvoker::RemoveGroup(lua_State *pState, Invoker& invoker) {
 	lua_getfield(pState, -1, "|id");
 	lua_replace(pState, -2);
 	lua_pushnil(pState);
-	Script::FillCollection(pState,1,invoker.groups.count());
+	Script::FillCollection(pState,1);
 	lua_pop(pState, 2);
 }
 
@@ -132,10 +132,17 @@ int	LUAInvoker::Split(lua_State *pState) {
 	SCRIPT_CALLBACK(Invoker,invoker)
 		string expression = SCRIPT_READ_STRING("");
 		string separator = SCRIPT_READ_STRING("");
-		vector<string> values;
-		String::Split(expression, separator, values,SCRIPT_READ_UINT(0));
-		for(string& value : values)
-			SCRIPT_WRITE_STRING(value.c_str())
+		String::ForEach forEach([__pState](const char* value) {
+			SCRIPT_WRITE_STRING(value)
+		});
+		String::Split(expression, separator, forEach,SCRIPT_READ_UINT(0));
+	SCRIPT_CALLBACK_RETURN
+}
+
+int	LUAInvoker::Dump(lua_State *pState) {
+	SCRIPT_CALLBACK(Invoker, invoker)
+		SCRIPT_READ_BINARY(data, size)
+		Logs::Dump(data, SCRIPT_READ_UINT(size));
 	SCRIPT_CALLBACK_RETURN
 }
 
@@ -152,7 +159,11 @@ int	LUAInvoker::Publish(lua_State *pState) {
 	else {
 		if (ex)
 			SCRIPT_WARN(ex.error().c_str())
-		SCRIPT_NEW_OBJECT(LUAMyPublication, LUAMyPublication, new LUAMyPublication(*pPublication, invoker))
+		SCRIPT_NEW_OBJECT(Publication, LUAPublication, pPublication)
+		lua_getmetatable(pState, -1);
+		lua_pushlightuserdata(pState, &invoker);
+		lua_setfield(pState, -2,"|invoker");
+		lua_pop(pState, 1);
 	}
 	SCRIPT_CALLBACK_RETURN
 }
@@ -305,6 +316,9 @@ int LUAInvoker::Get(lua_State *pState) {
 			if(strcmp(name,"clients")==0) {
 				Script::Collection(pState,1,"clients");
 				SCRIPT_CALLBACK_FIX_INDEX(name)
+			} else if (strcmp(name, "dump") == 0) {
+				SCRIPT_WRITE_FUNCTION(LUAInvoker::Dump)
+				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if (strcmp(name, "joinGroup") == 0) {
 				SCRIPT_WRITE_FUNCTION(LUAInvoker::JoinGroup)
 				SCRIPT_CALLBACK_FIX_INDEX(name)
@@ -382,9 +396,9 @@ int LUAInvoker::Get(lua_State *pState) {
 				SCRIPT_WRITE_FUNCTION(LUAInvoker::ListFiles)
 				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else {
-				string value;
-				if (invoker.getString(name, value))
-					Script::PushValue(pState,value);
+				Script::Collection(pState,1, "configs");
+				lua_getfield(pState, -1, name);
+				lua_replace(pState, -2);
 				SCRIPT_CALLBACK_FIX_INDEX(name)
 			}
 		}

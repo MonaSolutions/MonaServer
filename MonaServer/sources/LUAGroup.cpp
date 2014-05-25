@@ -39,18 +39,18 @@ void LUAGroup::Init(lua_State* pState, Group& group) {
 	lua_setfield(pState, -2, "id");
 }
 
-void LUAGroup::AddClient(lua_State* pState, Group& group, UInt8 indexGroup) {
+void LUAGroup::AddClient(lua_State* pState, UInt8 indexGroup) {
 	// -1 must be the client table!
 	Script::Collection(pState, indexGroup, "members");
 	lua_getmetatable(pState, -2);
 	lua_getfield(pState, -1, "|id");
 	lua_replace(pState, -2);
 	lua_pushvalue(pState, -3);
-	Script::FillCollection(pState,1,group.count());
+	Script::FillCollection(pState,1);
 	lua_pop(pState, 1);
 }
 
-void LUAGroup::RemoveClient(lua_State* pState, Group& group, Client& client) {
+void LUAGroup::RemoveClient(lua_State* pState, Client& client) {
 	// -1 must be the group table!
 	if (!Script::FromObject<Client>(pState, client))
 		return;
@@ -59,7 +59,7 @@ void LUAGroup::RemoveClient(lua_State* pState, Group& group, Client& client) {
 	lua_getfield(pState, -1, "|id");
 	lua_replace(pState, -2);
 	lua_pushnil(pState);
-	Script::FillCollection(pState,1,group.count());
+	Script::FillCollection(pState,1);
 	lua_pop(pState, 2);
 }
 

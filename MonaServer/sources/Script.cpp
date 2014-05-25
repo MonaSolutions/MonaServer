@@ -141,26 +141,72 @@ void Script::PushValue(lua_State* pState,const UInt8* value, UInt32 size) {
 		lua_pushlstring(pState, (const char*)value, size);
 }
 
-void Script::FillCollection(lua_State* pState, UInt32 size,UInt32 count) {
+void Script::FillCollection(lua_State* pState, UInt32 size) {
 	int index = -1-(size<<1); // index collection (-1-2*size)
-	
-	if (!lua_getmetatable(pState, index)) {
-		SCRIPT_BEGIN(pState)
-			SCRIPT_ERROR("Invalid collection to fill, no metatable")
-		SCRIPT_END
-		return;
-	}
-
-	// update count
-	lua_pushnumber(pState,count);
-	lua_setfield(pState,-2,"|count");
-
-	lua_pop(pState,1); // remove metatable
-
+	int count(0);
 	while (size-- > 0) {
+		
+		if (lua_isstring(pState, -2)) { // key
+			const char* key(lua_tostring(pState, -2));
+			const char* sub(strchr(key, '.'));
+			if (sub) {
+				*(char*)sub = '\0';
+				Collection(pState, index, key);
+				*(char*)sub = '.';
+				lua_pushstring(pState, sub + 1); // sub key
+				lua_pushvalue(pState, -3); // value
+				FillCollection(pState, 1);
+				lua_pop(pState, 1);
+			}
+		}
+
+		// check if key exists already to update count
+		lua_pushvalue(pState, -2); // key
+		lua_rawget(pState, index-1);
+		if (!lua_isnil(pState, -1)) { // if old value exists
+			if (lua_isnil(pState, -2)) // if new value is nil (erasing)
+				--count;
+		} else if (lua_isnil(pState, -1))  // if old value doesn't exists
+			++count;
+		lua_pop(pState, 1);
+
 		lua_rawset(pState,index);
 		index += 2;
 	}
+	
+	// update count
+	if (!lua_getmetatable(pState, -1)) {
+		SCRIPT_BEGIN(pState)
+			SCRIPT_WARN("Impossible to update count value of this collection, no metatable")
+		SCRIPT_END
+		return;
+	}
+	lua_getfield(pState,-1,"|count");
+	lua_pushnumber(pState,lua_tonumber(pState,-1)+count);
+	lua_replace(pState, -2);
+	lua_setfield(pState,-2,"|count");
+	lua_pop(pState,1); // remove metatable
+
+}
+
+void Script::ClearCollection(lua_State* pState) {
+	// Clear content
+	lua_pushnil(pState);  // first key 
+	while (lua_next(pState, -2) != 0) {
+		// uses 'key' (at index -2) and 'value' (at index -1) 
+		// remove the raw!
+		lua_pushvalue(pState, -2); // duplicate key
+		lua_pushnil(pState);
+		lua_rawset(pState, -5);
+		lua_pop(pState, 1);
+	}
+
+	// update count
+	if (!lua_getmetatable(pState, -1))
+		return;
+	lua_pushnumber(pState, 0);
+	lua_setfield(pState, -2, "|count");
+	lua_pop(pState, 1);
 }
 
 void Script::ClearCollectionParameters(lua_State* pState, const char* field,const Parameters& parameters) {
@@ -195,9 +241,26 @@ int Script::IndexCollection(lua_State* pState) {
 	// 1 table
 	// 2 key
 	const char* name(lua_tostring(pState, 2));
-	if (name && strcmp(name, "count")==0) {
-		lua_pushnumber(pState,lua_objlen(pState, 1));
-		return 1;
+	if (name) {
+		// search possible sub key
+		if (lua_getmetatable(pState, 1)) {
+			lua_getfield(pState, -1, name);
+			lua_replace(pState, -2);
+			if (!lua_isnil(pState, -1)) {
+				lua_pushstring(pState, name);
+				lua_pushvalue(pState, -2);
+				lua_rawset(pState, 1);
+				return 1;
+			}
+			lua_pop(pState, 1);
+		}
+		if (strcmp(name, "count") == 0) {
+			lua_pushnumber(pState,lua_objlen(pState, 1));
+			lua_pushstring(pState, name);
+			lua_pushvalue(pState, -2);
+			lua_rawset(pState, 1);
+			return 1;
+		}
 	}
 	return 0;
 }

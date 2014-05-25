@@ -49,6 +49,7 @@ public:
 private:
 	Service(lua_State* pState, const std::string& path, ServiceHandler& handler);
 
+	Service*	open(Mona::Expirable<Service>& expirableService,const std::string& path);
 	bool		open(bool create);
 	void		close(bool full);
 

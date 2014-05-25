@@ -27,7 +27,7 @@ using namespace Mona;
 LUATCPClient::LUATCPClient(const SocketAddress& peerAddress,SocketFile& file,const SocketManager& manager, lua_State* pState) : _pState(pState), TCPClient(peerAddress, file, manager),
 	_onError([this](const Exception& ex) {_error = ex.error();}),
 	_onData([this](PoolBuffer& pBuffer) { return onData(pBuffer);}),
-	_onDisconnection([this]() {onDisconnection(); }) {
+	_onDisconnection([this](const SocketAddress& peerAddress) {onDisconnection(peerAddress); }) {
 
 	OnError::subscribe(_onError);
 	OnDisconnection::subscribe(_onDisconnection);
@@ -37,7 +37,7 @@ LUATCPClient::LUATCPClient(const SocketAddress& peerAddress,SocketFile& file,con
 LUATCPClient::LUATCPClient(const SocketManager& manager,lua_State* pState) : _pState(pState),TCPClient(manager),
 	_onError([this](const Exception& ex) {_error = ex.error();}),
 	_onData([this](PoolBuffer& pBuffer) { return onData(pBuffer);}),
-	_onDisconnection([this]() {onDisconnection(); }) {
+	_onDisconnection([this](const SocketAddress& peerAddress) {onDisconnection(peerAddress); }) {
 
 	OnError::subscribe(_onError);
 	OnDisconnection::subscribe(_onDisconnection);
@@ -63,9 +63,10 @@ UInt32 LUATCPClient::onData(PoolBuffer& pBuffer) {
 	return rest;
 }
 
-void LUATCPClient::onDisconnection(){
+void LUATCPClient::onDisconnection(const SocketAddress& peerAddress){
 	SCRIPT_BEGIN(_pState)
 		SCRIPT_MEMBER_FUNCTION_BEGIN(LUATCPClient,*this,"onDisconnection")
+			SCRIPT_WRITE_STRING(peerAddress.toString().c_str())
 			if (!_error.empty())
 				SCRIPT_WRITE_STRING(_error.c_str())
 			SCRIPT_FUNCTION_CALL
@@ -82,8 +83,8 @@ int	LUATCPClient::Destroy(lua_State* pState) {
 
 int	LUATCPClient::Connect(lua_State* pState) {
 	SCRIPT_CALLBACK(LUATCPClient,client)
-		string host("127.0.0.1");
-		if (SCRIPT_NEXT_TYPE == LUA_TSTRING)
+		const char* host("127.0.0.1");
+		if (!lua_isnumber(pState,2))
 			host = SCRIPT_READ_STRING(host);
 		UInt16 port = SCRIPT_READ_UINT(0);
 		Exception ex;

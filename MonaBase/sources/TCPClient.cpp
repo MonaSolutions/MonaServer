@@ -61,12 +61,14 @@ void TCPClient::close() {
 	_socket.close();
 	_rest = 0;
 	_pBuffer.release();
+	SocketAddress peerAddress;
 	{
 		lock_guard<mutex> lock(_mutex);
 		_address.reset();
+		peerAddress.set(_peerAddress);
 		_peerAddress.reset();
 	}
-	OnDisconnection::raise(); // in last because can delete this
+	OnDisconnection::raise(peerAddress); // in last because can delete this
 }
 
 
