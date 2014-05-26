@@ -29,14 +29,14 @@ class Clients : public Entities<Client>, public virtual Object {
 public:
 
 	Client* operator()(const UInt8* id) const { return Entities<Client>::operator()(id); }
-	Client* operator()(const std::string& name) const {
+	Client* operator()(const char* name) const {
 		std::map<std::string,Client*>::const_iterator it = _clientsByName.find(name);
 		if(it==_clientsByName.end())
 			return NULL;
 		return it->second;
 	}
 	bool add(Exception& ex,Client& client) {
-		if (client.properties().getString("name", (std::string&)client.name) && !client.name.empty()) {
+		if (!client.name.empty()) {
 			if (!_clientsByName.emplace(client.name, &client).second) {
 				ex.set(Exception::PROTOCOL, "Client named ",client.name," exists already");
 				return false;

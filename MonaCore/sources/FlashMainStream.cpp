@@ -60,7 +60,6 @@ void FlashMainStream::messageHandler(const string& name,AMFReader& message,Flash
 		if(message.readObject(name,external) && !external) {
 			
 			auto& properties(peer.properties());
-			properties.clear();
 			while((type=message.readItem(name))!=AMFReader::END) {
 				switch(type) {
 					case AMFReader::NIL:

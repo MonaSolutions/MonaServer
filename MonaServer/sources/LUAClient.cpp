@@ -88,10 +88,9 @@ int LUAClient::Item(lua_State *pState) {
 		pClient = pInvoker->clients((const UInt8*)Util::UnformatHex(temp).c_str());
 	}
 
-	if (!pClient) {
-		string name((const char*)id, size);
-		pClient = pInvoker->clients(name); // try by name!
-	}
+	if (!pClient)
+		pClient = pInvoker->clients((const char*)id); // try by name!
+
 	SCRIPT_BEGIN(pState)
 		if (pClient)
 			SCRIPT_ADD_OBJECT(Client, LUAClient,*pClient)

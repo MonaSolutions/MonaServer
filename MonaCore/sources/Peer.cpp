@@ -159,12 +159,15 @@ void Peer::onConnection(Exception& ex, Writer& writer,DataReader& parameters,Dat
 		ParameterWriter parameterWriter(_parameters);
 		SplitWriter parameterAndResponse(parameterWriter,response);
 
+		_properties.getString("name", (std::string&)name);
 		_handler.onConnection(ex, *this,parameters,parameterAndResponse);
 		if (!ex) {
 			(bool&)connected = ((Clients&)_handler.clients).add(ex,*this);
-			if (!connected)
+			if (!connected) {
+				if (ex)
+					ERROR(ex.error());
 				_handler.onDisconnection(*this);
-			else if (ex)
+			} else if (ex)
 				WARN(ex.error());
 		}
 		if (!connected) {
