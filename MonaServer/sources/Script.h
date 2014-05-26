@@ -318,15 +318,15 @@ public:
 		bool isConst;
 		lua_pushvalue(pState, index);
 		Type* pObject = ToObject<Type>(pState, isConst); // required table in -1 index
-		if (!pObject)
-			return;
-		LUAType::Clear(pState, *pObject); // required table in -1 index
-		ClearObject<Type, LUAType>(pState, *pObject, false);
-		if (lua_getmetatable(pState, index)) {
-			// remove this
-			lua_pushnumber(pState,0); // set 0 and not nil to know that this mona object is death
-			lua_setfield(pState, -2, "|this");
-			lua_pop(pState, 1);
+		if (pObject) {
+			LUAType::Clear(pState, *pObject); // required table in -1 index
+			ClearObject<Type, LUAType>(pState, *pObject, false);
+			if (lua_getmetatable(pState, index)) {
+				// remove this
+				lua_pushnumber(pState, 0); // set 0 and not nil to know that this mona object is death
+				lua_setfield(pState, -2, "|this");
+				lua_pop(pState, 1);
+			}
 		}
 		lua_pop(pState, 1);
 	}
@@ -462,6 +462,7 @@ private:
 
 		// record the pointer
 		lua_getfield(pState,-1,"|pointers");
+		bool creation(true);
 		if(lua_isnil(pState,-1)) {
 			lua_pop(pState,1);
 			lua_newtable(pState);
@@ -471,23 +472,24 @@ private:
 			lua_setfield(pState,-2,"__mode");
 			lua_setmetatable(pState,-2);
 			lua_setfield(pState,-3,"|pointers");
+			lua_replace(pState, -2); // remove metatable
 		} else {
+			lua_replace(pState, -2); // remove metatable
 			lua_pushlightuserdata(pState, (void*)&object);
 			lua_gettable(pState, -2);
-			if (lua_istable(pState, -1)) {
-				lua_replace(pState, -2);
-				lua_replace(pState, -2);
-				return;
-			}
-			lua_pop(pState, 1);
+			if (lua_istable(pState, -1) && lua_getmetatable(pState,-1))
+				creation = false;
+			else
+				lua_pop(pState, 1);
 		}
-		lua_replace(pState, -2);
 
-		// Create table to represent our object
-		lua_newtable(pState); 
+		if (creation) {
+			// Create table to represent our object
+			lua_newtable(pState);
 
-		// metatable
-		lua_newtable(pState); 
+			// metatable
+			lua_newtable(pState);
+		}
 	
 		// |this
 		lua_pushlightuserdata(pState,(void*)&object);
@@ -515,11 +517,14 @@ private:
 		lua_setfield(pState,-2,"__metatable");
 #endif
 
-		lua_setmetatable(pState,-2);
+		if (creation) {
+			lua_setmetatable(pState, -2);
 
-		lua_pushlightuserdata(pState, (void*)&object);
-		lua_pushvalue(pState, -2);
-		lua_settable(pState, -4);
+			lua_pushlightuserdata(pState, (void*)&object);
+			lua_pushvalue(pState, -2);
+			lua_settable(pState, -4);
+		} else
+			lua_pop(pState, 1); // remove metatable
 
 		lua_replace(pState, -2); // remove |pointers
 	}
