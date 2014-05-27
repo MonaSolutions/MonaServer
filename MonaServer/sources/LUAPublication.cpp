@@ -62,11 +62,8 @@ int LUAPublication::Close(lua_State *pState) {
 				else
 					SCRIPT_ERROR("You have not the handle on publication ", publication.name(), ", you can't close it")
 			SCRIPT_END
-		} else if (publication.publisher()) {
+		} else if (publication.publisher())
 			pInvoker->unpublish(publication.name());
-			lua_pushnumber(pState, 0);
-			lua_setfield(pState, -3, "|invoker");
-		}
 		lua_pop(pState, 2);
 	SCRIPT_CALLBACK_RETURN
 }

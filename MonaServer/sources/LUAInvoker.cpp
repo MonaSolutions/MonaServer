@@ -142,7 +142,8 @@ int	LUAInvoker::Split(lua_State *pState) {
 int	LUAInvoker::Dump(lua_State *pState) {
 	SCRIPT_CALLBACK(Invoker, invoker)
 		SCRIPT_READ_BINARY(data, size)
-		Logs::Dump(data, SCRIPT_READ_UINT(size));
+		UInt32 count(SCRIPT_READ_UINT(size));
+		Logs::Dump(data,count>size ? size : count);
 	SCRIPT_CALLBACK_RETURN
 }
 
@@ -152,7 +153,7 @@ int	LUAInvoker::Publish(lua_State *pState) {
 	string name = SCRIPT_READ_STRING("");
 	Exception ex;
 	
-	Publication* pPublication = invoker.publish(ex, name);
+	Publication* pPublication = invoker.publish(ex, name,strcmp(SCRIPT_READ_STRING("live"),"record")==0 ? Publication::RECORD : Publication::LIVE);
 
 	if (!pPublication)
 		SCRIPT_ERROR(ex ? ex.error().c_str() : "Unknown error")

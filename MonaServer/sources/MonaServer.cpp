@@ -514,12 +514,12 @@ bool MonaServer::onMessage(Exception& ex, Client& client,const string& name,Data
 	return found;
 }
 
-bool MonaServer::onRead(Exception& ex, Client& client,FilePath& filePath,DataReader& parameters,DataWriter& properties) { 
+bool MonaServer::onFileAccess(Exception& ex, Client& client, Client::FileAccessType type, FilePath& filePath,DataReader& parameters,DataWriter& properties) { 
 
 	bool result = true;
 	filePath.setDirectory(WWWPath);
 	SCRIPT_BEGIN(openService(client))
-		SCRIPT_MEMBER_FUNCTION_BEGIN(Client,client,"onRead")
+		SCRIPT_MEMBER_FUNCTION_BEGIN(Client,client,type==Client::FileAccessType::READ ? "onRead" : "onWrite")
 			SCRIPT_WRITE_STRING((client.path==filePath.path())? "" : filePath.name().c_str()) // "" if it is current application
 			SCRIPT_WRITE_DATA(parameters,0)
 			SCRIPT_FUNCTION_CALL

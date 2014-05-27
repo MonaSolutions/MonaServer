@@ -133,10 +133,10 @@ void FlashStream::messageHandler(const string& name,AMFReader& message,FlashWrit
 		if (query != string::npos)
 			publication = publication.substr(0, query); // TODO use query in Util::UnpackQuery for publication options?
 		if(message.available())
-			message.readString(type); // TODO recording publication feature!
+			message.readString(type); // TODO support "append" and "appendWithGap"
 
 		Exception ex;
-		_pPublication = invoker.publish(ex, peer,publication);
+		_pPublication = invoker.publish(ex, peer, publication, type == "record" ? Publication::RECORD : Publication::LIVE);
 		if (ex)
 			writer.writeAMFStatus("NetStream.Publish.BadName",ex.error());
 		else {

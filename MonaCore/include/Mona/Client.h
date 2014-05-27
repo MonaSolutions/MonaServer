@@ -34,6 +34,11 @@ namespace Events {
 class Client : public Entity, public virtual Object,
 	public Events::OnCallProperties {
 public:
+	enum FileAccessType {
+		READ,
+		WRITE
+	};
+
 	Client() : _pWriter(NULL),ping(0),_pUserData(NULL) {}
 
 	const SocketAddress			address;

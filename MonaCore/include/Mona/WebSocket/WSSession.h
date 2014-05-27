@@ -64,7 +64,14 @@ public:
 				reader.readString(name);
 				if(_pPublication)
 					invoker.unpublish(peer,_pPublication->name());
-				_pPublication = invoker.publish(ex, peer,name);
+				Publication::Type type(Publication::LIVE);
+				if (reader.followingType() == DataReader::STRING) {
+					std::string temp;
+					if(reader.readString(temp).compare("record") == 0)
+						 type = Publication::RECORD;
+				}
+					
+				_pPublication = invoker.publish(ex, peer,name,type);
 			} else if(name=="__play") {
 				if(reader.followingType()!=DataReader::STRING) {
 					ex.set(Exception::PROTOCOL, "__play method takes a stream name in first parameter",WS::CODE_MALFORMED_PAYLOAD);

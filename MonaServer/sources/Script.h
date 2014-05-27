@@ -72,8 +72,8 @@ extern "C" {
 
 #define SCRIPT_LAST_ERROR										__error
 
-#define SCRIPT_MEMBER_FUNCTION_BEGIN(TYPE,OBJ,MEMBER)			{ lua_getmetatable(__pState,LUA_GLOBALSINDEX); lua_getfield(__pState,-1,"|pointers");if(!lua_isnil(__pState,-1)) {lua_replace(__pState,-2);lua_pushlightuserdata(__pState,(void*)&OBJ); lua_gettable(__pState,-2);if(!lua_isnil(__pState,-1)) { lua_pushstring(__pState,MEMBER); lua_rawget(__pState,-2); lua_replace(__pState,-3);}} if(!lua_isfunction(__pState,-2))lua_pop(__pState,2);else {int __top=lua_gettop(__pState)-1;const char* __name = #TYPE"."#MEMBER;
-#define SCRIPT_MEMBER_FUNCTION_WITH_OBJHANDLE_BEGIN(TYPE,OBJ,MEMBER,OBJHANDLE)			{ lua_getmetatable(__pState,LUA_GLOBALSINDEX); lua_getfield(__pState,-1,"|pointers");if(!lua_isnil(__pState,-1)) {lua_replace(__pState,-2);lua_pushlightuserdata(__pState,(void*)&OBJ); lua_gettable(__pState,-2); {OBJHANDLE} if(!lua_isnil(__pState,-1)) { lua_pushstring(__pState,MEMBER); lua_rawget(__pState,-2); lua_replace(__pState,-3);}} if(!lua_isfunction(__pState,-2))lua_pop(__pState,2);else {int __top=lua_gettop(__pState)-1;const char* __name = #TYPE"."#MEMBER;
+#define SCRIPT_MEMBER_FUNCTION_BEGIN(TYPE,OBJ,MEMBER)			if(Script::FromObject<TYPE>(__pState,OBJ)) { lua_pushstring(__pState,MEMBER); lua_rawget(__pState,-2); lua_insert(__pState,-2); if(!lua_isfunction(__pState,-2)) lua_pop(__pState,2); else { int __top=lua_gettop(__pState)-1; const char* __name = #TYPE"."#MEMBER;
+#define SCRIPT_MEMBER_FUNCTION_WITH_OBJHANDLE_BEGIN(TYPE,OBJ,MEMBER,OBJHANDLE)			if(Script::FromObject<TYPE>(__pState,OBJ)) { {OBJHANDLE} lua_pushstring(__pState,MEMBER); lua_rawget(__pState,-2); lua_insert(__pState,-2); if(!lua_isfunction(__pState,-2)) lua_pop(__pState,2); else { int __top=lua_gettop(__pState)-1; const char* __name = #TYPE"."#MEMBER;
 #define SCRIPT_FUNCTION_BEGIN(NAME)								{ lua_getmetatable(__pState,LUA_GLOBALSINDEX); lua_getfield(__pState,-1,"|env"); lua_replace(__pState,-2); lua_getfield(__pState,lua_isnil(__pState,-1) ? LUA_GLOBALSINDEX : -1,NAME); lua_replace(__pState,-2); if(!lua_isfunction(__pState,-1)) lua_pop(__pState,1); else { int __top=lua_gettop(__pState); const char* __name = NAME;
 #define SCRIPT_FUNCTION_CALL_WITHOUT_LOG						if(lua_pcall(__pState,lua_gettop(__pState)-__top,LUA_MULTRET,0)!=0) { __error = lua_tostring(__pState,-1); lua_pop(__pState,1); } else {--__top;int __results=lua_gettop(__pState);int __args=__top;
 #define SCRIPT_FUNCTION_CALL									if(lua_pcall(__pState,lua_gettop(__pState)-__top,LUA_MULTRET,0)!=0) { SCRIPT_ERROR(__error = Script::LastError(__pState))} else {--__top;int __results=lua_gettop(__pState);int __args=__top;
@@ -325,6 +325,8 @@ public:
 				// remove this
 				lua_pushnumber(pState, 0); // set 0 and not nil to know that this mona object is death
 				lua_setfield(pState, -2, "|this");
+				lua_pushnil(pState);
+				lua_setfield(pState, -2, "__gc");
 				lua_pop(pState, 1);
 			}
 		}
@@ -548,6 +550,8 @@ private:
 				if (lua_getmetatable(pState, -1)) {
 					lua_pushnumber(pState,0); // set 0 and not nil to know that this mona object is death
 					lua_setfield(pState, -2, "|this");
+					lua_pushnil(pState);
+					lua_setfield(pState, -2, "__gc");
 					lua_pop(pState, 1);
 				}
 

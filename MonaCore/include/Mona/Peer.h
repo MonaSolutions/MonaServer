@@ -42,6 +42,7 @@ class Member;
 class Peer : public Client, public virtual Object,
 	public Events::OnInitParameters {
 public:
+
 	Peer(Handler& handler);
 	virtual ~Peer();
 
@@ -51,7 +52,7 @@ public:
 	const Parameters&			parameters() const { return _parameters; }
 	const Parameters&			properties() const { return _properties; }
 	MapParameters&				properties() { return _properties; }
-	
+
 	void						setPath(const std::string& value) { ((std::string&)Client::path).assign(value); }
 	void						setQuery(const std::string& value) { ((std::string&)Client::query).assign(value); }
 	void						setServerAddress(const std::string& value) { ((std::string&)Client::serverAddress).assign(value); }
@@ -60,37 +61,40 @@ public:
 	ICE&		ice(const Peer& peer);
 
 	void unsubscribeGroups();
-	Group& joinGroup(const UInt8* id,Writer* pWriter);
+	Group& joinGroup(const UInt8* id, Writer* pWriter);
 	void unjoinGroup(Group& group);
 
 
-// events
-	void onRendezVousUnknown(const UInt8* peerId,std::set<SocketAddress>& addresses);
-	void onHandshake(UInt32 attempts,std::set<SocketAddress>& addresses);
+	// events
+	void onRendezVousUnknown(const UInt8* peerId, std::set<SocketAddress>& addresses);
+	void onHandshake(UInt32 attempts, std::set<SocketAddress>& addresses);
 
 	void onConnection(Exception& ex, Writer& writer, DataReader& parameters) { onConnection(ex, writer, parameters, DataWriter::Null); }
-	void onConnection(Exception& ex, Writer& writer,DataReader& parameters,DataWriter& response);
+	void onConnection(Exception& ex, Writer& writer, DataReader& parameters, DataWriter& response);
 	void onDisconnection();
-	bool onMessage(Exception& ex, const std::string& name,DataReader& reader, UInt8 responseType=0);
+	bool onMessage(Exception& ex, const std::string& name, DataReader& reader, UInt8 responseType = 0);
 
-	bool onPublish(const Publication& publication,std::string& error);
+	bool onPublish(const Publication& publication, std::string& error);
 	void onUnpublish(const Publication& publication);
 
-	void onDataPacket(const Publication& publication,DataReader& packet);
-	void onAudioPacket(const Publication& publication,UInt32 time,PacketReader& packet);
-	void onVideoPacket(const Publication& publication,UInt32 time,PacketReader& packet);
+	void onDataPacket(const Publication& publication, DataReader& packet);
+	void onAudioPacket(const Publication& publication, UInt32 time, PacketReader& packet);
+	void onVideoPacket(const Publication& publication, UInt32 time, PacketReader& packet);
 	void onFlushPackets(const Publication& publication);
 
-	bool onSubscribe(const Listener& listener,std::string& error);
+	bool onSubscribe(const Listener& listener, std::string& error);
 	void onUnsubscribe(const Listener& listener);
 
 	/// \brief call the onRead lua function ang get result in properties
 	/// \param filePath : relative path to the file (important : the directory will be erase)
 	/// \param parameters : gives parameters to the function onRead()
 	/// \param properties : recieve output parameters returned by onRead()
-    bool onRead(Exception& ex, FilePath& filePath, DataReader& parameters,DataWriter& properties);
+	bool onRead(Exception& ex, FilePath& filePath, DataReader& parameters, DataWriter& properties) { return onFileAccess(ex, FileAccessType::READ, filePath, parameters, properties); }
+	bool onWrite(Exception& ex, FilePath& filePath, DataReader& parameters,DataWriter& properties) { return onFileAccess(ex, FileAccessType::WRITE, filePath, parameters, properties); }
 
 private:
+	bool onFileAccess(Exception& ex, FileAccessType type, FilePath& filePath, DataReader& parameters,DataWriter& properties);
+
 	void onJoinGroup(Group& group);
 	void onUnjoinGroup(Group& group,bool dummy);
 	bool exchangeMemberId(Group& group,Peer& peer,Writer* pWriter);

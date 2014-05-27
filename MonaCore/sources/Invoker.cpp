@@ -75,10 +75,10 @@ FlashStream& Invoker::flashStream(UInt32 id,Peer& peer,shared_ptr<FlashStream>& 
 	return *pStream;
 }
 
-Publication* Invoker::publish(Exception& ex, Peer& peer,const string& name) {
+Publication* Invoker::publish(Exception& ex, Peer& peer, const string& name, Publication::Type type) {
 	MAP_FIND_OR_EMPLACE(_publications, it, name, name,poolBuffers);
 	Publication& publication(it->second);
-	publication.start(ex, peer);
+	publication.start(ex, peer,type);
 	if (ex) {
 		ERROR(ex.error())
 		if (!publication.publisher() && publication.listeners.count() == 0)

@@ -83,7 +83,7 @@ void Publication::removeListener(Peer& peer) {
 }
 
 
-void Publication::start(Exception& ex, Peer& peer) {
+void Publication::start(Exception& ex, Peer& peer, Type type) {
 	if(_pPublisher) { // has already a publisher
 		ex.set(Exception::SOFTWARE, _name, " is already publishing");
 		return;

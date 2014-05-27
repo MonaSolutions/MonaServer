@@ -50,10 +50,10 @@ public:
 	FlashStream&					flashStream(UInt32 id, Peer& peer,std::shared_ptr<FlashStream>& pStream);
 	void							destroyFlashStream(UInt32 id) { _streams.erase(id); }
 
-	Publication*			publish(Exception& ex,const std::string& name) { return publish(ex,myself(),name); }
+	Publication*			publish(Exception& ex,const std::string& name, Publication::Type type) { return publish(ex,myself(),name,type); }
 	void					unpublish(const std::string& name) { unpublish(myself(), name); }
 
-	Publication*			publish(Exception& ex,Peer& peer,const std::string& name);
+	Publication*			publish(Exception& ex,Peer& peer,const std::string& name, Publication::Type type);
 	void					unpublish(Peer& peer,const std::string& name);
 	Listener*				subscribe(Exception& ex,Peer& peer,std::string& name,Writer& writer);
 	Listener*				subscribe(Exception& ex,Peer& peer,const std::string& name,Writer& writer);

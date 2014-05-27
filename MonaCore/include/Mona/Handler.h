@@ -30,13 +30,14 @@ namespace Mona {
 
 class Handler : public Invoker, public virtual Object {
 public:
+
 	//events	
 	virtual	void			onRendezVousUnknown(const std::string& protocol,const UInt8* id,std::set<SocketAddress>& addresses){}
 	virtual void			onHandshake(const std::string& protocol,const SocketAddress& address,const std::string& path,const Parameters& properties,UInt32 attempts,std::set<SocketAddress>& addresses){}
 	virtual void			onConnection(Exception& ex,Client& client,DataReader& parameters,DataWriter& response){} // Exception::SOFTWARE, Exception::APPLICATION
 	virtual void			onDisconnection(const Client& client){}
 	virtual bool			onMessage(Exception& ex, Client& client, const std::string& name, DataReader& reader, UInt8 responseType) { return false; } // Exception::SOFTWARE, Exception::APPLICATION
-	virtual bool			onRead(Exception& ex, Client& client,FilePath& filePath,DataReader& parameters,DataWriter& properties){return true;}  // Exception::SOFTWARE
+	virtual bool			onFileAccess(Exception& ex, Client& client,Client::FileAccessType type, FilePath& filePath,DataReader& parameters,DataWriter& properties){return true;}  // Exception::SOFTWARE
 
 	virtual void			onJoinGroup(Client& client,Group& group){}
 	virtual void			onUnjoinGroup(Client& client,Group& group){}

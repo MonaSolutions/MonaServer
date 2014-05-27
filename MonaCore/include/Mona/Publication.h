@@ -28,6 +28,11 @@ namespace Mona {
 
 class Publication : public virtual Object {
 public:
+	enum Type {
+		LIVE,
+		RECORD
+	};
+
 	Publication(const std::string& name,const PoolBuffers& poolBuffers);
 	virtual ~Publication();
 
@@ -43,7 +48,7 @@ public:
 
 	void					setBufferTime(UInt32 ms);
 
-	void					start(Exception& ex, Peer& peer);
+	void					start(Exception& ex, Peer& peer, Type type);
 	void					stop(Peer& peer);
 
 	void					pushAudio(UInt32 time,PacketReader& packet,UInt32 numberLostFragments=0);

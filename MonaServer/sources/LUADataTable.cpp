@@ -136,7 +136,7 @@ const UInt8* LUADataTable::Serialize(lua_State* pState, int index, UInt32& size)
 		}
 		case LUA_TNIL:
 			size = 3;
-			return (const UInt8*)"nil";
+			return (const UInt8*)"null";
 		default:
 			size = lua_objlen(pState, index);
 			return (const UInt8*)lua_tostring(pState, index);
