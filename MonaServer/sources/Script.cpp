@@ -214,11 +214,21 @@ void Script::ClearCollectionParameters(lua_State* pState, const char* field,cons
 	if (!lua_getmetatable(pState, -1))
 		return;
 	string buffer;
+
 	lua_getfield(pState, -1, String::Format(buffer,"|",field,"OnChange").c_str());
 	Parameters::OnChange::Type* pOnChange((Parameters::OnChange::Type*)lua_touserdata(pState, -1));
-	lua_getfield(pState, -2, String::Format(buffer,"|",field,"OnClear").c_str());
+	lua_pop(pState, 1);
+	lua_pushnil(pState);
+	lua_setfield(pState, -2, buffer.c_str());
+
+	lua_getfield(pState, -1, String::Format(buffer,"|",field,"OnClear").c_str());
 	Parameters::OnClear::Type* pOnClear((Parameters::OnClear::Type*)lua_touserdata(pState, -1));
-	lua_pop(pState, 3);
+	lua_pop(pState, 1);
+	lua_pushnil(pState);
+	lua_setfield(pState, -2, buffer.c_str());
+
+	lua_pop(pState, 1); // metatable
+
 	if (pOnChange) {
 		parameters.OnChange::unsubscribe(*pOnChange);
 		delete pOnChange;
