@@ -71,6 +71,7 @@ bool DiffieHellman::initialize(Exception& ex,bool reset) {
 	if (!DH_generate_key(_pDH)) {
 		ex.set(Exception::MATH,"Generation DH key failed");
 		DH_free(_pDH);
+		_pDH = NULL;
 	}
 	return !ex;
 }
@@ -80,11 +81,10 @@ Buffer& DiffieHellman::computeSecret(Exception& ex, const UInt8* farPubKey, UInt
 	if (!initialize(ex))
 		return sharedSecret;
 	BIGNUM *bnFarPubKey = BN_bin2bn(farPubKey,farPubKeySize,NULL);
-	int i =BN_num_bits(_pDH->priv_key);
 	sharedSecret.resize(DH_KEY_SIZE,false);
 	int size = DH_compute_key(sharedSecret.data(), bnFarPubKey, _pDH);
 	if (size <= 0)
-		ex.set(Exception::MATH, "Diffie Hellman exchange failed, dh compute key error");
+		ex.set(Exception::MATH, "Diffie Hellman exchange failed, DH compute key error");
 	else if(size!=DH_KEY_SIZE)
 		sharedSecret.resize(size,true);
 	BN_free(bnFarPubKey);
