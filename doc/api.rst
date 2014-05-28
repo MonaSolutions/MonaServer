@@ -1,8 +1,4 @@
 
-.. image:: img/githubBlack.png
-  :align: right
-  :target: https://github.com/MonaSolutions/MonaServer
-
 Mona Server's lua API
 ##############################
 
@@ -82,13 +78,13 @@ properties
 
 - **clients** (read-only), clients actually connected, see *clients* object thereafter.
 - **configs**, return a LUA_ table which contains Mona configurations, it means the *MonaServer.ini* content file, (see *Configurations* part of `Installation <./installation.html>`_ page) and also some others usefull parameters (application.path, application.baseName, and many others. To know really all its content, iterate on this table and print its content). One sample is given in *Global configurations* in `Server Application`_ page.
-- **environments**, return a LUA_ table which contains environment variables from the system.
+- **environment**, return a LUA_ table which contains environment variables from the system.
 - **epochTime** (read-only), gives the epoch time (since the Unix epoch, midnight, January 1, 1970) in milliseconds.
 - **groups** (read-only), existing groups (NetGroup_s running), see *groups* object thereafter.
 - **pulications** (read-only), server publications available, see *publications* object thereafter.
 - **servers** (read-only), MonaServer instances actually connected to the server, see *Servers_* object thereafter.
 
-example of access to a Mona global property :
+Example of access to a Mona global property :
 
 .. code-block:: lua
 
@@ -105,7 +101,7 @@ methods
 - **createTCPClient()**, return a TCP client, see `Server Application Sockets <./serversocket.html>`_ page for more details.
 - **createTCPServer()**, return a TCP server, see `Server Application Sockets <./serversocket.html>`_ page for more details.
 - **createUDPSocket([allowBroadcast])**, return a UDP socket. The optional boolean *allowBroadcast* argument allows broadcasting date by this socket (by default it's to *false*). See `Server Application Sockets <./serversocket.html>`_ page for more details.
-- **publish(name)**, publishs a server publication with the name given, this method returns a *Publication* object if successful, or *nil* otherwise. Indeed it can fail if a publication with the same name exists already. Read *publication* object thereafter to get more details on how push audio,video or data packet for this publication.
+- **publish(name)**, publishs a server publication with the name given, this method returns a *Publication* object if successful, or *nil* otherwise. Indeed it can fail if a publication with the same name exists already. Read Publication_ object thereafter to get more details on how push audio,video or data packet for this publication.
 - **fromAMF(data)**, convert the AMF data given in parameter in multiple LUA_ types relating (see *AMF and LUA types conversion* part of `Server Application`_ page to know how AMF/LUA_ conversion works). It returns multiple LUA_ data resulting.
 - **toAMF(...)**, convert the multiple LUA_ parameters given in a AMF format (see *AMF and LUA types conversion* part of `Server Application`_ page to know how AMF/LUA_ conversion works). It returns a string which contain data converted.
 - **toAMF0(...)**, exactly same that the precedent method, but with a conversion priority to AMF0 format (when possible).
@@ -117,7 +113,16 @@ methods
 - **sha256(...)**, computes and returns the SHA256 values from input values given as arguments.
 - **sendMail(sender,subject,content,...)**, send an email from *sender* to recipients given in the last mutiple arguments field. It returns a mail object which contains only one event, *onSent(error)* to get one notification on sent, see `Server Application Sockets <./serversocket.html>`_ page for more details.
 - **split(expression,separator[,option])**, LUA_ has not real split operator, this function fills this gap. It splits the *expression* in relation with the *separator* term given, and returns tokens as a multiple result. A optional number argument indicates if you want to ignore empty tokens (*option* =1), or to remove leading and trailing whitespace from tokens (*option* =2), or the both in same time (*option* =3).
-- **files(dirName)**, return a LUA_ table containing objects of type *File*, see *File_* object thereafter.
+- **dir(dirName)**, return a LUA_ table containing objects of type *File* in the *dirName* directory (relative to the **www** path), see File_ object thereafter.
+- **joinGroup(peerID, groupID)**, add Client_ with *peerID* to Group_ with *groupID*.
+- **dump(data[, size])**, dump data to the console and log file, if *size* is not specified it dump all the data.
+
+Example of access to a Mona global function :
+
+.. code-block:: lua
+
+	# Print congiguration array in a JSON format
+	INFO(mona:toJSON(mona.configs))
 
 Data
 ==================
@@ -136,7 +141,7 @@ methods
 
 .. note::
   
-  - You can use the **ipairs()** LUA_ function to iterate on the list of *clients*, keys are *client.id* and values are *client* object (see *client* object thereafter).
+  - You can use the **pairs()** LUA_ function to iterate on the list of *clients*, keys are *client.id* and values are *client* object (see *client* object thereafter).
   - And the "#" operator to get the number of clients.
 
 Client
@@ -150,14 +155,20 @@ properties
 - **id** (read-only), the client id in a readable string format, it has a size of 64 bytes.
 - **rawId** (read-only), the client id in a hexadecimal raw format, it has a size of 32 bytes.
 - **address** (read-only), address of the client.
-- **flashVersion** (read-only), string representing the client flash version.
-- **pageUrl** (read-only), URL of the page which has gotten the connection, it means the URL of the page which contains the *SWF* client.
-- **swfUrl** (read-only), URL of the *SWF* file which has gotten the connection.
-- **path** (read-only), *path* used in the RTMFP URL connection, it gives server application related (see `Server Application`_).
+- **path** (read-only), *path* used in the URL connection, it gives server application related (see `Server Application`_).
 - **ping** (read-only), client ping value.
-- **writer** (read-only), the main flowWriter to communicate with the client (see *FlowWriter* object thereafter).
+- **protocol** (read-only), client protocol name (HTTP, WebSocket, RTMP or RTMFP).
+- **query** (read-only), query part of the url (used in HTTP).
+- **writer** (read-only), the main flowWriter to communicate with the client (see FlowWriter_ object thereafter).
+- **properties** (read-only), dynamic properties of the client connection, depends on the protocol (see `Specific Protocol functionalities`_).
+- **parameters** (read-only), static parameters/configuration of the client protocol (**parameters** can be substituate by protocol name).
 
-.. note:: *client* object can have other dynamic properties which relates HTTP properties used in the URL of connection.
+.. note::
+
+  - You can use the **pairs()** LUA_ function to iterate on the lists *client.properties* and *client.parameters*.
+  - And the "#" operator to get the number of properties/parameters.
+
+In *client.properties* the word *properties* can be omitted to access directly to client's attributes. Here is a sample with an RTMFP connection :
 
 .. code-block:: as3
 
@@ -505,7 +516,7 @@ The first argument is the *path* of the application (see *Create a server applic
 onConnection(client,...)
 =============================
 
-Call on a new client connection. First argument is a client object (see *client* object description above), and following multiple arguments are AMF parameters given to *NetConnection:connect(address:String, ... parameters)* converted in LUA_ types (see *AMF and LUA types conversion* part of `Server Application`_ page to know how AMF/LUA_ conversion works).
+Call on a new client connection. First argument is a client object (see *client* object description above), and following arguments depend on the protocol (see `Specific Protocol functionalities`_).
 
 Finally you can return a table result to add some informations on connection (always with *AMF and LUA types conversion*, see `Server Application`_ page):
 
@@ -548,7 +559,7 @@ You can reject a client adding an error of connection:
 		}
 	}
 
-It answers with a *NetConnection.Connect.Rejected* status event and close the client connection. The *event.info.description* field contains your error message. Now if you reject a client with no error message, *event.info.description* field will contain "client rejected" by default.
+In RTMP&RTFMP it answers with a *NetConnection.Connect.Rejected* status event and close the client connection. The *event.info.description* field contains your error message. Now if you reject a client with no error message, *event.info.description* field will contain "client rejected" by default.
 
 .. code-block:: lua
 
@@ -851,3 +862,4 @@ Call on server disconnection, see `Scalability and load-balancing <./scalability
 .. _Server Application: ./serverapp.html
 .. _Samples: ./samples.html
 .. _Database: ./database.html
+.. _Specific Protocol functionalities: ./protocols.html

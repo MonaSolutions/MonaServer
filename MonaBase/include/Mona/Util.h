@@ -55,8 +55,8 @@ public:
 	static Parameters& UnpackQuery(const std::string& query, Parameters& properties) { return UnpackQuery(query.data(), properties); }
 	static Parameters& UnpackQuery(const char* query, Parameters& properties);
 
-	static char DecodeURI(const char* value) { if (!value) return '%';  DecodeURI(value, value += strlen(value)); }
-	static char DecodeURI(const char* begin,const char* end);
+	static char DecodeURI(const char*& value) { if (!value) return '%';  DecodeURI(value, value += strlen(value)); }
+	static char DecodeURI(const char*& begin,const char* end);
 
 	static bool ReadIniFile(Exception& ex, const std::string& path, Parameters& parameters);
 

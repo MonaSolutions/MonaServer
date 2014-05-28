@@ -1,8 +1,4 @@
 
-.. image:: img/githubBlack.png
-  :align: right
-  :target: https://github.com/MonaSolutions/MonaServer
-
 Server Application Sockets
 ##############################
 
@@ -21,7 +17,7 @@ TCP Client
 ********************************
 
 To create a TCP client, call *mona:createTCPClient()* method (see *Mona* object description on `Server Application, API <./api.html>`_ page).
-Here is a complete sample to understand its usage:
+Here's a complete sample to understand its usage:
 
 .. code-block:: lua
 
@@ -52,13 +48,13 @@ properties
 - **connected** (read-only), return *true* if the client is connected, otherwise return *false*.
 - **address** (read-only), address local of connection for this TCP socket.
 - **peerAddress** (read-only), peer address of connection for this TCP socket.
-- **error** (read-only), return the last error or *nil* if no error.
+- **idleTime** (read-only), return the time elapsed since the last packet has been sended.
 
 
 methods
 =============================
 
-- **connect(host,port)**, connect to the *host:port* indicated. If this method fails, it returns an error message, otherwise it returns nothing.
+- **connect(host[,port])**, connect to the *host:port* indicated. If this method fails, it returns an error message, otherwise it returns nothing.
 - **disconnect()**, shutdown the socket.
 - **send(data)**, send *data* (LUA_ string) to the TCP server.
 
@@ -66,7 +62,7 @@ methods
 events
 =============================
 
-- **onReception(data)**, call on data reception (data is a LUA_ string). Have to return the number of bytes remaining, it means that if you return *#data* (size of data received), on the next reception, *data* will contain precedent value concatenated with new data received.
+- **onData(data)**, call on data reception (data is a LUA_ string). Have to return the number of bytes remaining, it means that if you return *#data* (size of data received), on the next reception, *data* will contain precedent value concatenated with new data received.
 - **onDisconnection()**, call on socket disconnection.
 
 
@@ -75,7 +71,7 @@ TCP Server
 ********************************
 
 To create a TCP server, call *mona:createTCPServer()* method (see *Mona* object description on `Server Application, API <./api.html>`_ page).
-Here a complete sample to understand its usage:
+Here's a complete sample to understand its usage:
 
 .. code-block:: lua
 
@@ -96,14 +92,14 @@ Here a complete sample to understand its usage:
 properties
 =============================
 
-- **port** (read-only), return the listening port for the TCP server.
+- **address** (read-only), return the listening address and port for the TCP server.
 - **running** (read-only), return *true* if the TCP server is running.
 
 
 methods
 =============================
 
-- **start(port)**, start the TCP server on the port given. This method returns *true* if successful, otherwise it returns *false* and displays a *ERROR* log in MonaServer logs.
+- **start(address[, port])**, start the TCP server on the address and port given. This method returns *true* if successful, otherwise it returns *false* and displays a *ERROR* log in MonaServer logs.
 - **stop()**, stop the TCP server.
 
 
@@ -117,7 +113,7 @@ UDP Socket
 ********************************
 
 To create a UDP socket, call *mona:createUDPSocket([allowBroadcast])* method (see *Mona* object description on `Server Application, API <./api.html>`_ page).
-Here a echo sample to understand its usage:
+Here's an echo sample to understand its usage:
 
 .. code-block:: lua
 
@@ -152,6 +148,7 @@ methods
 =============================
 
 - **connect(address[,port])**, connect to the *address* indicated. Then UDP packets can be sent without using *address* argument in *send* method (see below).
+- **disconnect()**, disconnect the socket.
 - **bind(address[,port])**, bind to the *address* indicated. It can not be done on a connected socket. If this method fails, it returns an error message, otherwise it returns nothing.
 - **send(data[,address, port])**, send *data* (LUA_ string) to the *address* indicated. This *address* argument can be omitted if the UDP socket is in a connected mode (see *connect* method above).
 - **close()**, close the socket.
@@ -159,7 +156,7 @@ methods
 events
 =============================
 
-- **onReception(data,address)**, call on data reception (data is a LUA_ string). The *address* argument is the sender.
+- **onPacket(data,address)**, call on data reception (data is a LUA_ string). The *address* argument is the sender.
 
 
 Other protocols

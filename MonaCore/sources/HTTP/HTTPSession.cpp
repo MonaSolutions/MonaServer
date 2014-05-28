@@ -188,6 +188,7 @@ void HTTPSession::packetHandler(PacketReader& reader) {
 		// onConnection
 		if (!peer.connected) {
 			peer.OnCallProperties::subscribe(onCallProperties); // subscribe to client.properties(...)
+			queryParameters.getString("name", (string&)peer.name);
 
 			peer.onConnection(ex, _writer,propertiesReader);
 			if (!ex && peer.connected) {

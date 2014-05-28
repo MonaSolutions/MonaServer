@@ -1,19 +1,20 @@
 
-.. image:: img/githubBlack.png
-  :align: right
-  :target: https://github.com/MonaSolutions/MonaServer
-
 The MonaServer Database System
 ##############################
 
-MonaServer gives you the possibility to save data in a **NoSQL** way.
+MonaServer provides you with the ability to save data in a **NoSQL** way.
 
 .. contents:: Table of Contents
 
 The *data* global variable
 *******************************************
 
-**data** is the name of the global table variable that you need to assign.
+**data** is the name of the global table variable that performs read&write on the disk.
+
+Writing persistent data
+===========================================
+
+To write data in the database just assign the table **data**.
 
 .. code-block:: lua
 
@@ -25,13 +26,25 @@ The *data* global variable
         data["clientsConnexions"][#data["clientsConnexions"]+1] = os.time()
     end
     
-And if you want to delete some old value you just have to affect *nil* to the corresponding key like this :
+.. note:: If you want to delete some old value (or entire database) you just have to affect *nil* to the corresponding key like this :
 
 .. code-block:: lua
 
     function clearLastClientId()
         data["lastClientId"] = nil
     end
+
+Reading persistent data
+===========================================
+
+To access to a data value it is as simple as this :
+
+.. code-block:: lua
+
+    function onMessage(message)
+        NOTE("Last client ID : ", data["lastClientId"])
+    end
+
 
 How does it works?
 *******************************************

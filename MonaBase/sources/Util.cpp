@@ -198,9 +198,8 @@ Parameters& Util::UnpackQuery(const char* query, Parameters& properties) {
 		it = itEnd;
 		string value;
 		if (it!=end && *it != '&') { // if it's '='
-			++it;
 			// value
-			auto itEnd(it);
+			itEnd = ++it;
 			while (itEnd != end && *itEnd != '&') {
 				if (*itEnd == '+')
 					value += ' ';
@@ -210,23 +209,25 @@ Parameters& Util::UnpackQuery(const char* query, Parameters& properties) {
 					value += *itEnd;
 				++itEnd;
 			};
-			if (itEnd != end) // if it's '&'
-				++itEnd;
-			it = itEnd;
 		}
+		if (itEnd != end) // if it's '&'
+			++itEnd;
+		it = itEnd;
 		properties.setString(name,value);
 	}
 	return properties;
 }
 
-char Util::DecodeURI(const char* begin,const char* end) {
-	if (!begin || end<begin || begin == end)
+char Util::DecodeURI(const char*& begin,const char* end) {
+	if (!begin || end<begin || begin == end || *begin != '%')
 		return '%'; // nothing, end!
 	const char* itURI(begin);
-	char hi = *itURI++;
-	if (itURI == end)
+	if (++itURI == end) 
 		return '%'; // syntax error
-	char lo = *begin;
+	char hi = *itURI++;
+	if (itURI == end) 
+		return '%'; // syntax error
+	char lo = *itURI;
 	char c;
 	if (hi >= '0' && hi <= '9')
 		c = hi - '0';
@@ -245,6 +246,9 @@ char Util::DecodeURI(const char* begin,const char* end) {
 		c += lo - 'a' + 10;
 	else
 		return '%'; // syntax error
+
+	// Decoded! Assign next caracter & return the caracter decoded
+	begin=itURI;
 	return c;
 }
 

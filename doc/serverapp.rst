@@ -1,8 +1,4 @@
 
-.. image:: img/githubBlack.png
-  :align: right
-  :target: https://github.com/MonaSolutions/MonaServer
-
 Server Application
 ##############################
 
@@ -24,8 +20,8 @@ For example, the address *rtmfp://host:port/myApplication* search its correspond
 
 .. note::
 
-	- The root application is built and started on MonaServer start, whereas other server applications are started on first client connection.
-	- Exceptionaly you can give root rigths to a child application with the function **children()** has shown below. It permits to start other applications at start.
+	- The root application is built and started on MonaServer start, whereas other server applications are started on the first client connection.
+	- Exceptionaly you can give root rights to a child application with the function **children()** as shown below. It permits to start other applications at start.
 
 .. code-block:: lua
 
@@ -107,7 +103,7 @@ On variable overloading (or function overloading), you can always access for the
   print(test)          -- displays "I am myGame"
   print(Games.test)    -- displays "I am Games"
 
-.. note:: The root server application has for path an empty string, and is reached by the name *www*.
+.. note:: The root server application has for path an empty string.
 
 .. code-block:: lua
 
@@ -123,18 +119,8 @@ On variable overloading (or function overloading), you can always access for the
     print("I am /Games application")
   end
   hello() -- displays "I am /Games application"
-  www:hello() -- displays "I am the root application"
-
 
 .. warning:: Events are functions called by the system (see *Events* part of `Server Application, API <./api.html>`_ page), if an application doesn't define *onConnection* event for example, on new client connection for this application, it's the parent application which will receive the event. To avoid it, you have to overload the event in child application, and you can call also the parent version if needed.
-
-.. code-block:: lua
-
-  -- /Games script application
-  function onConnection(client,...)
-    return www:onConnection(client,...)
-  end
-
 
 .. note:: The keyword *super* is supported to refer to the the parent application:
 
@@ -144,6 +130,7 @@ On variable overloading (or function overloading), you can always access for the
   function onConnection(client,...)
     return super:onConnection(client,...)
   end
+  super:hello() -- displays "I am the root application"
 
 You can use *client.path* property to check if it's a client connected for this application or for one child application (see `Server Application, API <./api.html>`_ page for more details on *client* object description).
 
@@ -224,7 +211,7 @@ Note that returned result of the scripting function is a writing shortcut for:
     client.writer:writeMessage("Hello "..firstname.." "..name)
   end
 
-The both make exactly the same thing.
+They both make exactly the same thing.
 
 If the function is not available on the *client* object, it returns a *NetConnection.Call.Failed* status event with *Method 'test' not found* in description field. But you can also customize your own error event:
 
