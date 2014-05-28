@@ -60,9 +60,9 @@ public:
 
 	ICE&		ice(const Peer& peer);
 
-	void unsubscribeGroups();
-	Group& joinGroup(const UInt8* id, Writer* pWriter);
-	void unjoinGroup(Group& group);
+	void	unsubscribeGroups(const std::function<void(const Group& group)>& forEach=nullptr);
+	Group&  joinGroup(const UInt8* id, Writer* pWriter);
+	void    unjoinGroup(Group& group);
 
 
 	// events

@@ -39,7 +39,7 @@ void LUAGroup::Init(lua_State* pState, Group& group) {
 	lua_setfield(pState, -2, "id");
 }
 
-void LUAGroup::AddClient(lua_State* pState, UInt8 indexGroup) {
+void LUAGroup::AddClient(lua_State* pState, int indexGroup) {
 	// -1 must be the client table!
 	Script::Collection(pState, indexGroup, "members");
 	lua_getmetatable(pState, -2);

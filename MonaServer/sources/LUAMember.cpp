@@ -18,6 +18,8 @@ This file is a part of Mona.
 */
 
 #include "LUAMember.h"
+#include "LUAGroup.h"
+#include "LUAInvoker.h"
 #include "Mona/Util.h"
 
 using namespace Mona;
@@ -35,15 +37,31 @@ void LUAMember::Init(lua_State* pState, Peer& member) {
 
 int LUAMember::Destroy(lua_State* pState) {
 	SCRIPT_DESTRUCTOR_CALLBACK(Peer,member)
+		Clear(pState,member);
 		delete &member;
 	SCRIPT_CALLBACK_RETURN
 }
 
 int LUAMember::Release(lua_State* pState) {
-	SCRIPT_CALLBACK(Peer,member)
-		member.unsubscribeGroups();
+	SCRIPT_CALLBACK(Peer, member)
+		Clear(pState,member);
 	SCRIPT_CALLBACK_RETURN
 }
+
+void LUAMember::Clear(lua_State* pState, Peer& member) {
+	function<void(const Group& group)> forEach([pState,&member](const Group& group){
+		if (Script::FromObject(pState, group)) {
+			if (group.count() == 0) {
+				LUAInvoker::RemoveGroup(pState);
+				Script::RemoveObject<Group, LUAGroup>(pState,-1);
+			} else
+				LUAGroup::RemoveClient(pState, member);
+			lua_pop(pState, 1);
+		}
+	});
+	member.unsubscribeGroups(forEach);
+}
+
 
 int LUAMember::Get(lua_State *pState) {
 	SCRIPT_CALLBACK(Peer,member)

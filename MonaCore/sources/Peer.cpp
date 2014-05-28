@@ -104,9 +104,12 @@ void Peer::unjoinGroup(Group& group) {
 	_groups.erase(it);
 }
 
-void Peer::unsubscribeGroups() {
-	for (auto& it : _groups)
-		onUnjoinGroup(*it.first,it.second ? false : true);
+void Peer::unsubscribeGroups(const function<void(const Group& group)>& forEach) {
+	for (auto& it : _groups) {
+		onUnjoinGroup(*it.first, it.second ? false : true);
+		if (forEach)
+			forEach(*it.first);
+	}
 	_groups.clear();
 }
 

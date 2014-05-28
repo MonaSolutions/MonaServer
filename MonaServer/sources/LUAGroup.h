@@ -30,7 +30,7 @@ public:
 	static void Clear(lua_State* pState, const Mona::Group& group) {}
 
 	// -1 must be the client table!
-	static void AddClient(lua_State* pState, Mona::UInt8 indexGroup);
+	static void AddClient(lua_State* pState, int indexGroup);
 	// -1 must be the group table!
 	static void RemoveClient(lua_State* pState, Mona::Client& client);
 

@@ -29,9 +29,10 @@ public:
 	static int Set(lua_State *pState);
 	static void Init(lua_State *pState, Mona::Peer& member);
 	static int Destroy(lua_State *pState);
-	static int Release(lua_State *pState);
-
+	
 private:
+	static int  Release(lua_State *pState);
+	static void Clear(lua_State* pState, Mona::Peer& member);
 };
 
 

@@ -303,8 +303,12 @@ int LUAInvoker::JoinGroup(lua_State* pState) {
 			if (groupId) {
 				Peer* pPeer = new Peer((Handler&)invoker);
 				memcpy((void*)pPeer->id, peerId, ID_SIZE);
-				pPeer->joinGroup(groupId, NULL);
+				Group& group(pPeer->joinGroup(groupId, NULL));
+				Script::AddObject<Group, LUAGroup>(pState, group);
+				LUAInvoker::AddGroup(pState);
 				SCRIPT_NEW_OBJECT(Peer, LUAMember, pPeer)
+				LUAGroup::AddClient(pState, -2);
+				lua_replace(pState, -2);
 			}
 		}
 	SCRIPT_CALLBACK_RETURN

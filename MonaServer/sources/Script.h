@@ -282,14 +282,12 @@ public:
 		lua_replace(pState, -2);
 		lua_pushlightuserdata(pState, (void*)&object);
 		lua_gettable(pState, -2);
-		bool creation(false);
 		if(!lua_istable(pState,-1)) {
 			lua_pop(pState,1);
 			Pointer<Type, LUAType>(pState, object);
 			lua_pushlightuserdata(pState, (void*)&object);
 			lua_pushvalue(pState,-2);
 			lua_settable(pState,-4);
-			creation = true;
 		}
 		lua_replace(pState, -2);
 		
@@ -298,9 +296,6 @@ public:
 		lua_pushnil(pState);
 		lua_setfield(pState,-2,"|var");
 		lua_pop(pState, 1);
-
-		if (creation)
-			LUAType::Init(pState, (Type&)object);
 	}
 
 	template<class Type, class LUAType>
@@ -494,8 +489,14 @@ private:
 		}
 	
 		// |this
-		lua_pushlightuserdata(pState,(void*)&object);
-		lua_setfield(pState,-2,"|this");
+		bool init(false);
+		lua_getfield(pState, -1, "|this");
+		if (lua_touserdata(pState,-1)!=(void*)&object) {
+			lua_pushlightuserdata(pState,(void*)&object);
+			lua_setfield(pState,-3,"|this");
+			init = true;
+		}
+		lua_pop(pState, 1);
 
 		// |type
 		lua_pushlightuserdata(pState,(void*)typeid(Type).name());
@@ -529,6 +530,8 @@ private:
 			lua_pop(pState, 1); // remove metatable
 
 		lua_replace(pState, -2); // remove |pointers
+		if (init)
+			LUAType::Init(pState,(Type&)object);
 	}
 
 	template<class Type, class LUAType>
@@ -585,6 +588,7 @@ private:
 		}
 		return LUAItemType::Item(pState);
 	}
+
 	static int Item(lua_State *pState);
 
 	static int Len(lua_State* pState);
