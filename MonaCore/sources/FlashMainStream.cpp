@@ -130,13 +130,13 @@ void FlashMainStream::messageHandler(const string& name,AMFReader& message,Flash
 	} else if(name == "setPeerInfo") {
 
 		Exception ex;
-		bool ok(false);
 		peer.localAddresses.clear();
 		while(message.available()) {
 			SocketAddress address;
-			EXCEPTION_TO_LOG(ok=address.set(ex, message.readString(_buffer)),"Bad peer address ",_buffer);
-			if (ok)
+			if (address.set(ex, message.readString(_buffer)))
 				peer.localAddresses.emplace(address);
+			if (ex)
+				WARN("Peer address, ", ex.error())
 		}
 		
 		BinaryWriter& response = writer.writeRaw();

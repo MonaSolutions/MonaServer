@@ -51,8 +51,11 @@ bool RTMFPCookieComputing::run(Exception& ex) {
 
 	// It's our key public part
 	int size = _diffieHellman.publicKeySize(ex);
-	if (ex)
+	if (size<0) {
+		if (!ex)
+			ex.set(Exception::CRYPTO, "DH public key not initialized");
 		return false;
+	}
 	packet.write7BitLongValue(size+11);
 	UInt32 noncePos = packet.size();
 	packet.writeRaw(EXPAND_DATA_SIZE("\x03\x1A\x00\x00\x02\x1E\x00"));
@@ -65,6 +68,8 @@ bool RTMFPCookieComputing::run(Exception& ex) {
 	packet.write8(2-byte2);
 	packet.write8(0x0D);
 	packet.write8(0x02);
+	if (size>2000)
+		ERROR("RTMFP diffie hellman public key with an error size key of ",size) // TODO remove this log one time fixed!
 	_diffieHellman.readPublicKey(ex,packet.buffer(size));
 	packet.write8(0x58);
 

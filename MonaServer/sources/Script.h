@@ -247,16 +247,35 @@ public:
 
 	template<class Type,class LUAType>
 	static void NewObject(lua_State *pState, Type& object) {
+		lua_getmetatable(pState, LUA_GLOBALSINDEX);
+		lua_getfield(pState, -1,"|objects");
+		lua_replace(pState, -2);
+		bool init(false);
+		if (lua_istable(pState, -1)) {
+			lua_pushlightuserdata(pState, (void*)&object);
+			lua_gettable(pState, -2);
+			if (!lua_istable(pState, -1))
+				init = true;
+			lua_pop(pState,1);
+		} else
+			init = true;
+		lua_pop(pState,1); // remove global metatable
+		
 		Pointer<Type, LUAType>(pState, object);
 		// add desctructor
 		lua_newuserdata(pState, sizeof(void*));
 		lua_getmetatable(pState, -2);
+		lua_pushnumber(pState, 1);
+		lua_setfield(pState, -2, "|var"); // never const
 		lua_pushcfunction(pState, &LUAType::Destroy);
 		lua_setfield(pState, -2, "__gc"); // function in metatable
 		lua_pushvalue(pState, -2);
 		lua_setfield(pState, -2, "|gcThis"); // userdata in metatable
 		lua_setmetatable(pState, -2); // metatable of user data, as metatable as object
 		lua_pop(pState, 1);
+
+		if (init)
+			LUAType::Init(pState,(Type&)object);
 	}
 
 	template<class Type, class LUAType>
@@ -282,20 +301,26 @@ public:
 		lua_replace(pState, -2);
 		lua_pushlightuserdata(pState, (void*)&object);
 		lua_gettable(pState, -2);
+		bool creation(false);
 		if(!lua_istable(pState,-1)) {
 			lua_pop(pState,1);
 			Pointer<Type, LUAType>(pState, object);
 			lua_pushlightuserdata(pState, (void*)&object);
 			lua_pushvalue(pState,-2);
 			lua_settable(pState,-4);
+			creation = true;
 		}
 		lua_replace(pState, -2);
-		
-		lua_getmetatable(pState,-1);
-		// remove //var
-		lua_pushnil(pState);
-		lua_setfield(pState,-2,"|var");
-		lua_pop(pState, 1);
+
+		if (creation)
+			LUAType::Init(pState, (Type&)object);
+		else {
+			lua_getmetatable(pState,-1);
+			// remove //var
+			lua_pushnil(pState);
+			lua_setfield(pState,-2,"|var");
+			lua_pop(pState, 1);
+		}
 	}
 
 	template<class Type, class LUAType>
@@ -457,47 +482,16 @@ private:
 	static void Pointer(lua_State *pState, const Type& object) {
 		lua_getmetatable(pState, LUA_GLOBALSINDEX);
 
-		// record the pointer
-		lua_getfield(pState,-1,"|pointers");
-		bool creation(true);
-		if(lua_isnil(pState,-1)) {
-			lua_pop(pState,1);
-			lua_newtable(pState);
-			lua_pushvalue(pState,-1);
-			lua_newtable(pState);
-			lua_pushstring(pState,"v");
-			lua_setfield(pState,-2,"__mode");
-			lua_setmetatable(pState,-2);
-			lua_setfield(pState,-3,"|pointers");
-			lua_replace(pState, -2); // remove metatable
-		} else {
-			lua_replace(pState, -2); // remove metatable
-			lua_pushlightuserdata(pState, (void*)&object);
-			lua_gettable(pState, -2);
-			if (lua_istable(pState, -1) && lua_getmetatable(pState,-1))
-				creation = false;
-			else
-				lua_pop(pState, 1);
-		}
+		// Create table to represent our object
+		lua_newtable(pState);
 
-		if (creation) {
-			// Create table to represent our object
-			lua_newtable(pState);
+		// metatable
+		lua_newtable(pState);
 
-			// metatable
-			lua_newtable(pState);
-		}
-	
 		// |this
-		bool init(false);
-		lua_getfield(pState, -1, "|this");
-		if (lua_touserdata(pState,-1)!=(void*)&object) {
-			lua_pushlightuserdata(pState,(void*)&object);
-			lua_setfield(pState,-3,"|this");
-			init = true;
-		}
-		lua_pop(pState, 1);
-
+		lua_pushlightuserdata(pState,(void*)&object);
+		lua_setfield(pState,-2,"|this");
+	
 		// |type
 		lua_pushlightuserdata(pState,(void*)typeid(Type).name());
 		lua_setfield(pState,-2,"|type");
@@ -520,18 +514,28 @@ private:
 		lua_setfield(pState,-2,"__metatable");
 #endif
 
-		if (creation) {
-			lua_setmetatable(pState, -2);
+		lua_setmetatable(pState, -2);
 
-			lua_pushlightuserdata(pState, (void*)&object);
-			lua_pushvalue(pState, -2);
-			lua_settable(pState, -4);
-		} else
-			lua_pop(pState, 1); // remove metatable
+		// record the pointer
+		lua_getfield(pState,-2,"|pointers");
+		if(lua_isnil(pState,-1)) {
+			lua_pop(pState,1);
+			lua_newtable(pState); // table
+			lua_newtable(pState); // metatable
 
-		lua_replace(pState, -2); // remove |pointers
-		if (init)
-			LUAType::Init(pState,(Type&)object);
+			lua_pushstring(pState,"v");
+			lua_setfield(pState,-2,"__mode");
+
+			lua_setmetatable(pState,-2); // remove metatable
+
+			lua_pushvalue(pState,-1); // table
+			lua_setfield(pState,-4,"|pointers");  // remove table
+		}
+		lua_pushlightuserdata(pState, (void*)&object);
+		lua_pushvalue(pState, -3);
+		lua_settable(pState, -3);
+		lua_pop(pState,1); // remove |pointers
+		lua_replace(pState, -2); // remove global metatable
 	}
 
 	template<class Type, class LUAType>
@@ -590,7 +594,7 @@ private:
 	}
 
 	static int Item(lua_State *pState);
-
+	
 	static int Len(lua_State* pState);
 	static int IndexCollection(lua_State* pState);
 	static int NewIndexCollection(lua_State* pState);

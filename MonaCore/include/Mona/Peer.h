@@ -71,6 +71,7 @@ public:
 
 	void onConnection(Exception& ex, Writer& writer, DataReader& parameters) { onConnection(ex, writer, parameters, DataWriter::Null); }
 	void onConnection(Exception& ex, Writer& writer, DataReader& parameters, DataWriter& response);
+
 	void onDisconnection();
 	bool onMessage(Exception& ex, const std::string& name, DataReader& reader, UInt8 responseType = 0);
 
