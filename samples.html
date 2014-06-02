@@ -9,9 +9,9 @@
     
     <link rel="stylesheet" href="_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="_static/bootstrap-3.1.0/css/bootstrap.min.css" type="text/css" />
-    <link rel="stylesheet" href="_static/bootstrap-3.1.0/css/bootstrap-theme.min.css" type="text/css" />
+    <link rel="stylesheet" href="_static/bootswatch-3.1.0/cerulean/bootstrap.min.css" type="text/css" />
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
+    <link rel="stylesheet" href="_static/my-styles.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
@@ -31,11 +31,21 @@
     <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
     <link rel="top" title="MonaServer 1 documentation" href="index.html" />
     <link rel="next" title="Installation" href="installation.html" />
-    <link rel="prev" title="MonaServer Documentation’s Guide" href="index.html" />
-<meta charset='utf-8'>
-<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
-<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
-<meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="prev" title="Overview" href="index.html" />
+
+  <a href="https://github.com/MonaSolutions/MonaServer"
+     class="visible-desktop hidden-xs"><img
+    id="gh-banner"
+    style="position: absolute; top: 50px; right: 0; border: 0;"
+    src="_static/githubBlack.png"
+    alt="Fork us on GitHub"></a>
+  <script>
+    // Adjust image position with banner height
+    $(function () {
+      var navHeight = $(".navbar .container").css("height");
+      $("#gh-banner").css("top", navHeight);
+    });
+  </script>
 
   </head>
   <body>
@@ -74,6 +84,8 @@
 <li class="toctree-l1"><a class="reference internal" href="scalability.html">Scalability and load-balancing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="serversocket.html">Server Application Sockets</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">Mona Server&#8217;s lua API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="protocols.html">Specific Protocol Functionalities</a></li>
+<li class="toctree-l1"><a class="reference internal" href="database.html">The MonaServer Database System</a></li>
 <li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a></li>
 </ul>
 </ul>
@@ -127,7 +139,7 @@
               
                 
   <li>
-    <a href="index.html" title="Previous Chapter: MonaServer Documentation’s Guide"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm">&laquo; MonaServer Docum...</span>
+    <a href="index.html" title="Previous Chapter: Overview"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm">&laquo; Overview</span>
     </a>
   </li>
   <li>
@@ -165,11 +177,10 @@
   <div class="row">
     <div class="col-md-12">
       
-  <a class="reference external image-reference" href="https://github.com/MonaSolutions/MonaServer"><img alt="_images/githubBlack.png" class="align-right" src="_images/githubBlack.png" /></a>
-<div class="section" id="samples">
+  <div class="section" id="samples">
 <h1><a class="toc-backref" href="#id5">Samples</a><a class="headerlink" href="#samples" title="Permalink to this headline">¶</a></h1>
 <p>This page gives you several examples of what you can do with MonaServer. Others samples are available in the <em>clients</em> directory of MonaServer. You can copy or create a symbolic link of this directory in <em>www</em>.
-For more informations about functionalities see <a class="reference external" href="./serverapp.html">Server Application</a> page.</p>
+For more information about functionalities see <a class="reference external" href="./serverapp.html">Server Application</a> page.</p>
 <div class="contents topic" id="table-of-contents">
 <p class="topic-title first">Table of Contents</p>
 <ul class="simple">
@@ -207,7 +218,7 @@ For more informations about functionalities see <a class="reference external" hr
 </div>
 <div class="section" id="pull-data">
 <h2><a class="toc-backref" href="#id6">Pull Data</a><a class="headerlink" href="#pull-data" title="Permalink to this headline">¶</a></h2>
-<p>This part describe how to write a simple pull data client/server that support Websocket, Flash and Http with RPC-type communication.The real amazing part is the 7 lines of server application which support each protocol :</p>
+<p>This part describes how to write a simple pull data client/server that supports Websocket, Flash, and Http with RPC-type communication. The real amazing part is the 7 lines of server application which support each protocol :</p>
 <div class="section" id="server-part-lua">
 <h3><a class="toc-backref" href="#id7">Server part (lua)</a><a class="headerlink" href="#server-part-lua" title="Permalink to this headline">¶</a></h3>
 <div class="highlight-lua"><div class="highlight"><pre><span class="k">function</span> <span class="nf">onConnection</span><span class="p">(</span><span class="n">client</span><span class="p">,</span><span class="o">...</span><span class="p">)</span>
@@ -322,7 +333,7 @@ For more informations about functionalities see <a class="reference external" hr
 <span class="nt">&lt;html&gt;</span>
 </pre></div>
 </div>
-<p>Mona support both json and xml formats, so just replace the response and request with the lines below to have xml http rpc sample :</p>
+<p>Mona supports both json and xml formats, so just replace the response and request with the lines below to have xml http rpc sample :</p>
 <div class="highlight-js"><div class="highlight"><pre><span class="c1">// Manage the response</span>
 <span class="nx">xmlhttp</span><span class="p">.</span><span class="nx">onreadystatechange</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
   <span class="k">if</span> <span class="p">(</span><span class="nx">xmlhttp</span><span class="p">.</span><span class="nx">readyState</span> <span class="o">==</span> <span class="mi">4</span> <span class="o">&amp;&amp;</span> <span class="nx">xmlhttp</span><span class="p">.</span><span class="nx">status</span> <span class="o">==</span> <span class="mi">200</span><span class="p">)</span> <span class="p">{</span>
@@ -509,10 +520,10 @@ Brief description : When the flash client send a message to the server, this mes
 </div>
 <div class="section" id="p2p-channel">
 <h3><a class="toc-backref" href="#id18">P2P channel</a><a class="headerlink" href="#p2p-channel" title="Permalink to this headline">¶</a></h3>
-<p>This sample shows P2P file transfert and NetGroup usage over Object Replication functionnality.</p>
+<p>This sample shows P2P file transfert and NetGroup usage over Object Replication functionality.</p>
 <div class="section" id="id3">
 <h4><a class="toc-backref" href="#id19">Server part</a><a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h4>
-<p>Source below is the lua application. During test you should take attention to the sender of the file which could be any peer among the providers.</p>
+<p>Source below is the lua application. During the test you should take attention to the sender of the file which could be any peer among the providers.</p>
 <div class="highlight-lua"><div class="highlight"><pre><span class="n">peers</span> <span class="o">=</span> <span class="p">{}</span>
 
 <span class="k">function</span> <span class="nf">onConnection</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
@@ -864,7 +875,7 @@ Here is the file <em>P2PSharedObject.as</em>, the class file for objects that wi
 <div class="section" id="meeting-sample">
 <h3><a class="toc-backref" href="#id22">Meeting sample</a><a class="headerlink" href="#meeting-sample" title="Permalink to this headline">¶</a></h3>
 <p>The sources are available here: <a class="reference external" href="http://www.adobe.com/devnet/flashmediaserver/articles/real-time-collaboration.html">http://www.adobe.com/devnet/flashmediaserver/articles/real-time-collaboration.html</a></p>
-<p>Use only the client part of these souces, and for server side create the file MonaServer/www/meeting/main.lua with the following content:</p>
+<p>Use only the client part of these sources, and for server side create the file MonaServer/www/meeting/main.lua with the following content:</p>
 <div class="highlight-lua"><div class="highlight"><pre><span class="n">meeters</span> <span class="o">=</span> <span class="p">{}</span>
 
 <span class="k">function</span> <span class="nf">onConnection</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">userName</span><span class="p">,</span> <span class="n">meeting</span><span class="p">)</span>

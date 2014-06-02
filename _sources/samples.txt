@@ -1,20 +1,16 @@
 
-.. image:: img/githubBlack.png
-  :align: right
-  :target: https://github.com/MonaSolutions/MonaServer
-
 Samples
 ##############################
 
 This page gives you several examples of what you can do with MonaServer. Others samples are available in the *clients* directory of MonaServer. You can copy or create a symbolic link of this directory in *www*.
-For more informations about functionalities see `Server Application`_ page.
+For more information about functionalities see `Server Application`_ page.
 
 .. contents:: Table of Contents
 
 Pull Data
 ******************************
 
-This part describe how to write a simple pull data client/server that support Websocket, Flash and Http with RPC-type communication.The real amazing part is the 7 lines of server application which support each protocol :
+This part describes how to write a simple pull data client/server that supports Websocket, Flash, and Http with RPC-type communication. The real amazing part is the 7 lines of server application which support each protocol :
 
 Server part (lua)
 ==============================
@@ -135,7 +131,7 @@ Http client (JSON-RPC and XML-RPC)
   </body>
   <html>
 
-Mona support both json and xml formats, so just replace the response and request with the lines below to have xml http rpc sample :
+Mona supports both json and xml formats, so just replace the response and request with the lines below to have xml http rpc sample :
 
 .. code-block:: js
 
@@ -330,12 +326,12 @@ Now we are about to create a sample of publication with a flash publisher. For t
 P2P channel
 =====================================
 
-This sample shows P2P file transfert and NetGroup usage over Object Replication functionnality. 
+This sample shows P2P file transfert and NetGroup usage over Object Replication functionality. 
 
 Server part
 -------------------------------------
 
-Source below is the lua application. During test you should take attention to the sender of the file which could be any peer among the providers.
+Source below is the lua application. During the test you should take attention to the sender of the file which could be any peer among the providers.
 
 .. code-block:: lua
 
@@ -696,7 +692,7 @@ Meeting sample
 
 The sources are available here: http://www.adobe.com/devnet/flashmediaserver/articles/real-time-collaboration.html
 
-Use only the client part of these souces, and for server side create the file MonaServer/www/meeting/main.lua with the following content:
+Use only the client part of these sources, and for server side create the file MonaServer/www/meeting/main.lua with the following content:
 
 .. code-block:: lua
 

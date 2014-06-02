@@ -1,18 +1,12 @@
 
-.. image:: img/githubBlack.png
-  :align: right
-  :target: https://github.com/MonaSolutions/MonaServer
-
 Scalability and load-balancing
 ###################################
 
-Even if RTMFP is a P2P protocol, RTMFP need a server end-point to negotiate the P2P connection between both clients. Then, RTMFP can be used just for its UDP based abilities, like real-time video/audio streaming, in a classical client-server way (without using P2P feature).
-For these reasons, server load is always applied and central availability required.
-Of course, one machine has always some hardware limitation (CPU/memory), and when load required becomes too important, a MonaServer instance can not be enough.
+RTMFP (Real Time Media Flow Protocol) uses a server end-point to negotiate the P2P connection between clients. All media is sent directly between clients without routing it through the server, which provides extremely cost effective scalable deployments. While the media is transmitted between the clients, one server instance can only negotiate a maximum number of clients before the load becomes too heavy due to CPU/Memory limitations.
 
-To solve this loading requirement, a full framework included in MonaServer allows to make communicate multiple MonaServer instances, to enlarge computing and receiving capacity. It allows to configure a multiple MonaServer environment, it offers detection of server connection and disconnection, exchange of data between them, redirection of clients between servers to deploy a load-balacing software system for example, and some well-thought features to synchronise client informations for the rendez-vous service and the NetGroup RTMFP options. Every communication between servers is done in a raw TCP way.
+To resolve this issue, a full framework is included in MonaServer to enable communicatication between multiple MonaServer instances. The framework detects server connections and disconnections, manages exchanges of data between servers, manages load-balacing by redirecting clients, and has features to synchronise client information for the rendez-vous service and NetGroup RTMFP options. All communication between servers is done in a raw TCP way.
 
-The main idea is simple: by default, **each instance is an independant server and share nothing with others, YOU decide what are the resources to be shared** between all the server instances.
+The main idea is simple: by default, **each instance is an independent server and shares nothing with others, YOU decide what are the resources are to be shared** between all the server instances.
 
 This page intends to describe every features of this framework illustrated with some code samples and context usage. Of course, the `Server Application, API <./api.html>`_ page lists all these feature but without code samples or any utilization context.
 

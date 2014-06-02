@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Specific Protocol Functionalities &mdash; MonaServer 1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/bootswatch-3.1.0/cerulean/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
+    <link rel="stylesheet" href="_static/my-styles.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="_static/bootstrap-3.1.0/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
+    <link rel="top" title="MonaServer 1 documentation" href="index.html" />
+    <link rel="next" title="The MonaServer Database System" href="database.html" />
+    <link rel="prev" title="Mona Server’s lua API" href="api.html" />
+
+  <a href="https://github.com/MonaSolutions/MonaServer"
+     class="visible-desktop hidden-xs"><img
+    id="gh-banner"
+    style="position: absolute; top: 50px; right: 0; border: 0;"
+    src="_static/githubBlack.png"
+    alt="Fork us on GitHub"></a>
+  <script>
+    // Adjust image position with banner height
+    $(function () {
+      var navHeight = $(".navbar .container").css("height");
+      $("#gh-banner").css("top", navHeight);
+    });
+  </script>
+
+  </head>
+  <body>
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="index.html">
+          MonaServer</a>
+        <span class="navbar-text navbar-version pull-left"><b>1</b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            <li class="divider-vertical"></li>
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="samples.html">Samples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="serverapp.html">Server Application</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scalability.html">Scalability and load-balancing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="serversocket.html">Server Application Sockets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">Mona Server&#8217;s lua API</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">Specific Protocol Functionalities</a></li>
+<li class="toctree-l1"><a class="reference internal" href="database.html">The MonaServer Database System</a></li>
+<li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a></li>
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"><ul>
+<li><a class="reference internal" href="#">Specific Protocol Functionalities</a><ul>
+<li><a class="reference internal" href="#rtmp-rtmfp">RTMP &amp; RTMFP</a><ul>
+<li><a class="reference internal" href="#api-specificities">API specificities</a><ul>
+<li><a class="reference internal" href="#onconnection-parameters">onConnection parameters</a></li>
+<li><a class="reference internal" href="#client-properties">client.properties</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#http-websocket">HTTP &amp; WebSocket</a><ul>
+<li><a class="reference internal" href="#id1">API specificities</a><ul>
+<li><a class="reference internal" href="#id2">onConnection parameters</a></li>
+<li><a class="reference internal" href="#id3">client.properties</a></li>
+<li><a class="reference internal" href="#client-properties-key-value-expires-path-domain-secure-httponly">client.properties(key, value[, expires, path, domain, secure, httpOnly])</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</ul>
+</li>
+              
+            
+            
+              
+                
+  <li>
+    <a href="api.html" title="Previous Chapter: Mona Server’s lua API"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm">&laquo; Mona Server’s lu...</span>
+    </a>
+  </li>
+  <li>
+    <a href="database.html" title="Next Chapter: The MonaServer Database System"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm">The MonaServer D... &raquo;</span>
+    </a>
+  </li>
+              
+            
+            
+            
+            
+              <li class="hidden-sm">
+<div id="sourcelink">
+  <a href="_sources/protocols.txt"
+     rel="nofollow">Source</a>
+</div></li>
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-12">
+      
+  <div class="section" id="specific-protocol-functionalities">
+<h1><a class="toc-backref" href="#id4">Specific Protocol Functionalities</a><a class="headerlink" href="#specific-protocol-functionalities" title="Permalink to this headline">¶</a></h1>
+<p>In MonaServer we have taken the choice to give a powerfull <strong>generic</strong> access to protocols. For this reason we take importance to the choice of protocols implemented in order to fit well with our architecture.</p>
+<p>This page treat the specificities of each protocol implemented by MonaServer.</p>
+<div class="contents topic" id="table-of-contents">
+<p class="topic-title first">Table of Contents</p>
+<ul class="simple">
+<li><a class="reference internal" href="#specific-protocol-functionalities" id="id4">Specific Protocol Functionalities</a><ul>
+<li><a class="reference internal" href="#rtmp-rtmfp" id="id5">RTMP &amp; RTMFP</a><ul>
+<li><a class="reference internal" href="#api-specificities" id="id6">API specificities</a><ul>
+<li><a class="reference internal" href="#onconnection-parameters" id="id7">onConnection parameters</a></li>
+<li><a class="reference internal" href="#client-properties" id="id8">client.properties</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#http-websocket" id="id9">HTTP &amp; WebSocket</a><ul>
+<li><a class="reference internal" href="#id1" id="id10">API specificities</a><ul>
+<li><a class="reference internal" href="#id2" id="id11">onConnection parameters</a></li>
+<li><a class="reference internal" href="#id3" id="id12">client.properties</a></li>
+<li><a class="reference internal" href="#client-properties-key-value-expires-path-domain-secure-httponly" id="id13">client.properties(key, value[, expires, path, domain, secure, httpOnly])</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="rtmp-rtmfp">
+<h2><a class="toc-backref" href="#id5">RTMP &amp; RTMFP</a><a class="headerlink" href="#rtmp-rtmfp" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="api-specificities">
+<h3><a class="toc-backref" href="#id6">API specificities</a><a class="headerlink" href="#api-specificities" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="onconnection-parameters">
+<h4><a class="toc-backref" href="#id7">onConnection parameters</a><a class="headerlink" href="#onconnection-parameters" title="Permalink to this headline">¶</a></h4>
+<p>As it is said in the <a class="reference external" href="./api.html">LUA API</a> first parameter of <em>onConnection</em> is the <strong>Client</strong> object.</p>
+<p>Others ar AMF parameters given to <em>NetConnection:connect(address:String, ... parameters)</em> converted in <a class="reference external" href="http://www.lua.org/">LUA</a> types (see <em>AMF and LUA types conversion</em> part of <a class="reference external" href="./serverapp.html">Server Application</a> page to know how AMF/<a class="reference external" href="http://www.lua.org/">LUA</a> conversion works).</p>
+</div>
+<div class="section" id="client-properties">
+<h4><a class="toc-backref" href="#id8">client.properties</a><a class="headerlink" href="#client-properties" title="Permalink to this headline">¶</a></h4>
+<p>In RTMP &amp; RTMFP protocols the client properties are <strong>URL query parameters</strong> and standard informations given by flash client at connection.</p>
+<p>Here is a list of known flash client parameters :</p>
+<ul class="simple">
+<li><strong>swfUrl</strong> (read-only), URL of the SWF file which has gotten the connection.</li>
+<li><strong>tcUrl</strong> (read-only), RTMPF/RTMFP URL used to connect to this session.</li>
+<li><strong>pageUrl</strong> (read-only), URL of the page which has gotten the connection, it means the URL of the page which contains the SWF client.</li>
+<li><strong>flashVer</strong> (read-only), flash version of the client.</li>
+<li><strong>app</strong> (read-only), The Server application name the client is connected to.</li>
+<li><strong>fpad</strong> (read-only), True if proxy is being used.</li>
+<li><strong>audioCodecs</strong> (read-only), Indicates what audio codecs are supported.</li>
+<li><strong>videoCodecs</strong> (read-only), Indicates what video codecs are supported.</li>
+<li><strong>objectEnconding</strong> (read-only), AMF encoding method.</li>
+<li><strong>capabilities</strong> (read-only),</li>
+<li><strong>videoFunction</strong> (read-only), the SUPPORT_VID_CLIENT_SEEK constant.</li>
+</ul>
+<p>And here is a sample of RTMFP URL query parameters :</p>
+<p>... code-block:: as3</p>
+<blockquote>
+<div>_netConnection.connect(&#8220;rtmfp://localhost/myApplication?arg1=value1&amp;arg2=value2&#8221;);</div></blockquote>
+</div>
+</div>
+</div>
+<div class="section" id="http-websocket">
+<h2><a class="toc-backref" href="#id9">HTTP &amp; WebSocket</a><a class="headerlink" href="#http-websocket" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id1">
+<h3><a class="toc-backref" href="#id10">API specificities</a><a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id2">
+<h4><a class="toc-backref" href="#id11">onConnection parameters</a><a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h4>
+<p>As it is said in the <a class="reference external" href="./api.html">LUA API</a> first parameter of <em>onConnection</em> is the <strong>Client</strong> object.</p>
+<p>Other parameters are <strong>URL query parameters</strong> from the HTTP request.</p>
+</div>
+<div class="section" id="id3">
+<h4><a class="toc-backref" href="#id12">client.properties</a><a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h4>
+<p>With HTTP protocol the client properties maps cookies sended by client plus some connection properties :
+- <strong>HTTPVersion</strong> (read-only), the version of HTTP used.</p>
+</div>
+<div class="section" id="client-properties-key-value-expires-path-domain-secure-httponly">
+<h4><a class="toc-backref" href="#id13">client.properties(key, value[, expires, path, domain, secure, httpOnly])</a><a class="headerlink" href="#client-properties-key-value-expires-path-domain-secure-httponly" title="Permalink to this headline">¶</a></h4>
+<p>As <em>client.properties</em> maps cookies values you can also set cookies by using the <em>client.properties()</em> method. Parameters are :</p>
+<ul class="simple">
+<li><strong>key</strong>, the key name of the cookie.</li>
+<li><strong>value</strong>, a string representing the value of the cookie.</li>
+<li><strong>expires</strong> (optional), 0 by default, an integer value that represents the number of seconds (since now) that the client should keep the cookie.</li>
+<li><strong>path</strong> (optional), the server path on which the cookie applies.</li>
+<li><strong>domain</strong> (optional), the domain on which the cookie should be send.</li>
+<li><strong>secure</strong> (optional), true if the cookie should be send only on a securised connection.</li>
+<li><strong>httpOnly</strong> (optional), true if the cookie should be visible only by the HTTP protocol.</li>
+</ul>
+<p>The return value is the <strong>value</strong> parameter if the operation succeed.</p>
+<p>Here is an example of a cookie named <em>test</em> with a value of <em>value1</em> that should be sended by client for the 5 next minutes on each application (<em>&#8220;/&#8221;</em>), only for HTTP requests to the host <em>192.168.0.1</em> :</p>
+<div class="highlight-lua"><div class="highlight"><pre><span class="n">INFO</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">test : &quot;</span><span class="p">,</span> <span class="n">client</span><span class="p">.</span><span class="n">properties</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">test&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="s">value1&quot;</span><span class="p">,</span> <span class="mi">300</span><span class="p">,</span> <span class="s2">&quot;</span><span class="s">/&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="s">192.168.0.1&quot;</span><span class="p">,</span> <span class="kc">false</span><span class="p">,</span> <span class="kc">true</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">To unset a cookie on the client side you can set a negative value to the <strong>expires</strong> parameter.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2014, Mathieu Poux &amp; Thomas Jammet.<br/>
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b2.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

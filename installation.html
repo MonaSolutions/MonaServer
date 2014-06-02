@@ -9,9 +9,9 @@
     
     <link rel="stylesheet" href="_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="_static/bootstrap-3.1.0/css/bootstrap.min.css" type="text/css" />
-    <link rel="stylesheet" href="_static/bootstrap-3.1.0/css/bootstrap-theme.min.css" type="text/css" />
+    <link rel="stylesheet" href="_static/bootswatch-3.1.0/cerulean/bootstrap.min.css" type="text/css" />
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
+    <link rel="stylesheet" href="_static/my-styles.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
@@ -32,10 +32,20 @@
     <link rel="top" title="MonaServer 1 documentation" href="index.html" />
     <link rel="next" title="Server Application" href="serverapp.html" />
     <link rel="prev" title="Samples" href="samples.html" />
-<meta charset='utf-8'>
-<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
-<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
-<meta name="apple-mobile-web-app-capable" content="yes">
+
+  <a href="https://github.com/MonaSolutions/MonaServer"
+     class="visible-desktop hidden-xs"><img
+    id="gh-banner"
+    style="position: absolute; top: 50px; right: 0; border: 0;"
+    src="_static/githubBlack.png"
+    alt="Fork us on GitHub"></a>
+  <script>
+    // Adjust image position with banner height
+    $(function () {
+      var navHeight = $(".navbar .container").css("height");
+      $("#gh-banner").css("top", navHeight);
+    });
+  </script>
 
   </head>
   <body>
@@ -74,6 +84,8 @@
 <li class="toctree-l1"><a class="reference internal" href="scalability.html">Scalability and load-balancing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="serversocket.html">Server Application Sockets</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">Mona Server&#8217;s lua API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="protocols.html">Specific Protocol Functionalities</a></li>
+<li class="toctree-l1"><a class="reference internal" href="database.html">The MonaServer Database System</a></li>
 <li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a></li>
 </ul>
 </ul>
@@ -106,6 +118,7 @@
 <li><a class="reference internal" href="#rtmfp">[RTMFP]</a></li>
 <li><a class="reference internal" href="#rtmp">[RTMP]</a></li>
 <li><a class="reference internal" href="#http">[HTTP]</a></li>
+<li><a class="reference internal" href="#websocket">[WebSocket]</a></li>
 <li><a class="reference internal" href="#logs">[logs]</a></li>
 <li><a class="reference internal" href="#sample-of-monaserver-ini">Sample of MonaServer.ini</a></li>
 </ul>
@@ -164,10 +177,9 @@
   <div class="row">
     <div class="col-md-12">
       
-  <a class="reference external image-reference" href="https://github.com/MonaSolutions/MonaServer"><img alt="_images/githubBlack.png" class="align-right" src="_images/githubBlack.png" /></a>
-<div class="section" id="installation">
+  <div class="section" id="installation">
 <h1><a class="toc-backref" href="#id4">Installation</a><a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h1>
-<p>We remind you that Mona is licensed under the <a class="reference external" href="http://www.gnu.org/licenses/">GNU General Public License</a>, so <strong>MonaBase can&#8217;t be linked with any closed source project</strong>.</p>
+<p>We would like to remind you that Mona is licensed under the <a class="reference external" href="http://www.gnu.org/licenses/">GNU General Public License</a>, so <strong>MonaBase can&#8217;t be linked with any closed source project.</strong>.</p>
 <div class="contents topic" id="table-of-contents">
 <p class="topic-title first">Table of Contents</p>
 <ul class="simple">
@@ -189,13 +201,14 @@
 <li><a class="reference internal" href="#rtmfp" id="id17">[RTMFP]</a></li>
 <li><a class="reference internal" href="#rtmp" id="id18">[RTMP]</a></li>
 <li><a class="reference internal" href="#http" id="id19">[HTTP]</a></li>
-<li><a class="reference internal" href="#logs" id="id20">[logs]</a></li>
-<li><a class="reference internal" href="#sample-of-monaserver-ini" id="id21">Sample of MonaServer.ini</a></li>
+<li><a class="reference internal" href="#websocket" id="id20">[WebSocket]</a></li>
+<li><a class="reference internal" href="#logs" id="id21">[logs]</a></li>
+<li><a class="reference internal" href="#sample-of-monaserver-ini" id="id22">Sample of MonaServer.ini</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#launch" id="id22">Launch</a><ul>
-<li><a class="reference internal" href="#start" id="id23">Start</a></li>
-<li><a class="reference internal" href="#usage" id="id24">Usage</a></li>
+<li><a class="reference internal" href="#launch" id="id23">Launch</a><ul>
+<li><a class="reference internal" href="#start" id="id24">Start</a></li>
+<li><a class="reference internal" href="#usage" id="id25">Usage</a></li>
 </ul>
 </li>
 </ul>
@@ -207,12 +220,15 @@
 </div>
 <div class="section" id="download">
 <h2><a class="toc-backref" href="#id6">Download</a><a class="headerlink" href="#download" title="Permalink to this headline">¶</a></h2>
-<p>You can download entire sources in a <a class="reference external" href="https://github.com/MonaSolutions/MonaServer/zipball/master">zipball</a> way or use a client <a class="reference external" href="http://en.wikipedia.org/wiki/Git_(software)">GIT</a> with the following address: <a class="reference external" href="https://github.com/MonaSolutions/MonaServer.git">https://github.com/MonaSolutions/MonaServer.git</a>.</p>
+<p>You can download the entire sources with <a class="reference external" href="https://github.com/MonaSolutions/MonaServer/zipball/master">zipball</a> or by using a <a class="reference external" href="http://en.wikipedia.org/wiki/Git_(software)">GIT</a> Client with the following address: <a class="reference external" href="https://github.com/MonaSolutions/MonaServer.git">https://github.com/MonaSolutions/MonaServer.git</a>.</p>
 </div>
 <div class="section" id="build">
 <h2><a class="toc-backref" href="#id7">Build</a><a class="headerlink" href="#build" title="Permalink to this headline">¶</a></h2>
-<p>Mona source code is cross-platform.
-In any case, you have to build <strong>MonaBase</strong> project in first, then <strong>MonaCore</strong> and then <strong>MonaServer</strong>.</p>
+<p>The Mona source code is cross-platform.</p>
+<p>You <strong>must</strong> build Mona in the following order:
+#. :  <strong>MonaBase</strong>,
+#. :  <strong>MonaCore</strong>,
+#. :  <strong>MonaServer</strong>.</p>
 <div class="section" id="dependencies-and-requirements">
 <h3><a class="toc-backref" href="#id8">Dependencies and requirements</a><a class="headerlink" href="#dependencies-and-requirements" title="Permalink to this headline">¶</a></h3>
 <dl class="docutils">
@@ -225,13 +241,13 @@ In any case, you have to build <strong>MonaBase</strong> project in first, then 
 </dl>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
-<p class="last"><a class="reference external" href="http://luajit.org/">LuaJIT</a> is an alternative to the officiel LUA interpreter. It works really faster than LUA essentially because it compiles the LUA code to machine code during execution (see <a class="reference external" href="http://luajit.org/performance_x86.html">LuaJIT performance</a> about performance comparison).</p>
+<p class="last"><a class="reference external" href="http://luajit.org/">LuaJIT</a> is an alternative to the official LUA interpreter. It works faster than LUA essentially because it compiles the LUA code to machine code during execution (see <a class="reference external" href="http://luajit.org/performance_x86.html">LuaJIT performance</a> about performance comparison).</p>
 </div>
 <p>As <strong>C++11</strong> is used in MonaServer you need to install a compiler which is compatible. At least <strong>gcc 4.8.2</strong> on Linux and VS 2013 on Windows.</p>
 </div>
 <div class="section" id="luajit-installation">
 <h3><a class="toc-backref" href="#id9">LuaJIT installation</a><a class="headerlink" href="#luajit-installation" title="Permalink to this headline">¶</a></h3>
-<p>For several reasons some functionnalities of <strong>LUA 52</strong> are not allowed by default in luajit (like <strong>#</strong> or <strong>pairs()</strong>) so we recommend you to compile luajit by yourself and set the DLUAJIT_ENABLE_LUA52COMPAT option.</p>
+<p>For several reasons some functionalities of <strong>LUA 52</strong> are not allowed by default in luajit (like <strong>#</strong> or <strong>pairs()</strong>) so we recommend you to compile luajit by yourself and set the DLUAJIT_ENABLE_LUA52COMPAT option.</p>
 <ul>
 <li><dl class="first docutils">
 <dt>First download the latest release of <a class="reference external" href="http://luajit.org/">LuaJIT</a> (here with git) :</dt>
@@ -255,26 +271,26 @@ In any case, you have to build <strong>MonaBase</strong> project in first, then 
 </ul>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
-<p class="last">On linux just run <strong>sudo make install</strong> to install luajit on the system.</p>
+<p class="last">On Linux just run <strong>sudo make install</strong> to install luajit on the system.</p>
 </div>
 </div>
 <div class="section" id="windows-build">
 <h3><a class="toc-backref" href="#id10">Windows Build</a><a class="headerlink" href="#windows-build" title="Permalink to this headline">¶</a></h3>
 <p>First follow the <a class="reference internal" href="#luajit-installation">LuaJIT installation</a> steps.</p>
 <p>Visual Studio 2013 solution and project files are included.
-It searchs external librairies in <em>External/lib</em> folder and external includes in <em>External/include</em> folder in the root <em>Mona</em> folder.
+It searches external libraries in <em>External/lib</em> folder and external includes in <em>External/include</em> folder in the root <em>Mona</em> folder.
 So you must put <a class="reference external" href="http://www.openssl.org/">OpenSSL</a> and <a class="reference external" href="http://luajit.org/">LuaJIT</a> headers and libraries in these folders.
 You can find <a class="reference external" href="http://www.openssl.org/">OpenSSL</a> binaries for windows on <a class="reference external" href="http://www.slproweb.com/products/Win32OpenSSL.html">Win32OpenSSL</a>.</p>
 </div>
 <div class="section" id="unix-linux-osx-build">
 <h3><a class="toc-backref" href="#id11">Unix (Linux/OSX) Build</a><a class="headerlink" href="#unix-linux-osx-build" title="Permalink to this headline">¶</a></h3>
 <p>First follow the <a class="reference internal" href="#luajit-installation">LuaJIT installation</a> steps.</p>
-<p>If your Unix system includes a package manager you can install quickly <a class="reference external" href="http://www.openssl.org/">OpenSSL</a>. Package is usually named <em>libssl-dev</em>.</p>
+<p>If your Unix system includes a package manager you can quickly install <a class="reference external" href="http://www.openssl.org/">OpenSSL</a>. The package is usually named <em>libssl-dev</em>.</p>
 <div class="admonition warning">
 <p class="first admonition-title">Warning</p>
-<p class="last">You need to use the <em>-dev</em> version to get header files required during Mona compilation.</p>
+<p class="last">You need to use the <em>-dev</em> version to get the header files required during Mona compilation.</p>
 </div>
-<p>Then, Mona built steps are easy:</p>
+<p>To build Mona:</p>
 <div class="highlight-sh"><div class="highlight"><pre><span class="nb">cd </span>MonaBase
 make
 <span class="nb">cd</span> ../MonaCore
@@ -283,7 +299,7 @@ make
 make
 </pre></div>
 </div>
-<p>To clean all, steps are naturally:</p>
+<p>To clean:</p>
 <div class="highlight-sh"><div class="highlight"><pre><span class="nv">$ </span><span class="nb">cd </span>MonaBase
 <span class="nv">$ </span>make clean
 <span class="nv">$ </span><span class="nb">cd</span> ../MonaCore
@@ -319,7 +335,7 @@ sudo ./MonaServer --daemon
 </div>
 <div class="section" id="raspberry-pi-armv61-build">
 <h3><a class="toc-backref" href="#id13">Raspberry PI (armv61) Build</a><a class="headerlink" href="#raspberry-pi-armv61-build" title="Permalink to this headline">¶</a></h3>
-<p>You need to install a distibution where <strong>gcc 4.8.2</strong> is available. For now we have only founded <a class="reference external" href="http://downloads.raspberrypi.org/raspbian_latest">Raspbian</a> upgraded to the distribution <em>jessie</em>. Here is the protocol to install it correctly :</p>
+<p>You need to install a distibution where <strong>gcc 4.8.2</strong> is available. For now we have only found <a class="reference external" href="http://downloads.raspberrypi.org/raspbian_latest">Raspbian</a> upgraded to the distribution <em>jessie</em>. Here is the protocol to install it correctly :</p>
 <ul class="simple">
 <li>First download <a class="reference external" href="http://downloads.raspberrypi.org/raspbian_latest">Raspbian</a></li>
 <li>Then write the distribution image on an SD Card (<a class="reference external" href="http://xmodulo.com/2013/11/write-raspberry-pi-image-sd-card.html">How to write Raspberry Pi image to SD card</a>)</li>
@@ -357,11 +373,11 @@ Possible configurations are :</p>
 <div class="section" id="servers">
 <h3><a class="toc-backref" href="#id16">[servers]</a><a class="headerlink" href="#servers" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
-<li><strong>port</strong> : port to receive incoming server connection (in a multiple servers configuration, see <a class="reference external" href="./scalability.html">Scalability and load-balancing</a> for more details). If you don&#8217;t configure this port, no one MonaServer can etablish a connection therewith it.</li>
+<li><strong>port</strong> : port to receive incoming server connection (in a multiple servers configuration, see <a class="reference external" href="./scalability.html">Scalability and load-balancing</a> for more details). If you don&#8217;t configure this port, MonaServer cannot establish a connection with it.</li>
 </ul>
 <div class="admonition warning">
 <p class="first admonition-title">Warning</p>
-<p class="last">Exchange between servers is done in a uncrypted TCP way, so to avoid an attack by this incoming end point the <em>servers.port</em> should be protected by a firewall to allow just a connection by an other server and nothing else.</p>
+<p class="last">The exchange between servers is done in a unencrypted TCP way, so to avoid an attack by this incoming end point the <em>servers.port</em> should be protected by a firewall to allow just a connection by an other server and nothing else.</p>
 </div>
 <ul class="simple">
 <li><strong>targets</strong> : list of MonaServer addresses (separated by semicolons) to connect on start-up. When the server will start, it will try to etablish a connection to these addresses every 10 seconds (see <a class="reference external" href="./scalability.html">Scalability and load-balancing</a> for more details). Each token can include arguments through as a query url form:</li>
@@ -383,8 +399,8 @@ Possible configurations are :</p>
 <h3><a class="toc-backref" href="#id17">[RTMFP]</a><a class="headerlink" href="#rtmfp" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><strong>port</strong> : equals 1935 by default (RTMFP server default port), it is the port used by MonaServer to listen incoming RTMFP requests.</li>
-<li><strong>keepAliveServer</strong> : time in seconds for periodically sending packets keep-alive with server, 15s by default (valid value is from 5s to 255s).</li>
-<li><strong>keepAlivePeer</strong> : time in seconds for periodically sending packets keep-alive between peers, 10s by default (valid value is from 5s to 255s).</li>
+<li><strong>keepaliveServer</strong> : time in seconds for periodically sending packets keep-alive with server, 15s by default (valid value is from 5s to 255s).</li>
+<li><strong>keepalivePeer</strong> : time in seconds for periodically sending packets keep-alive between peers, 10s by default (valid value is from 5s to 255s).</li>
 </ul>
 </div>
 <div class="section" id="rtmp">
@@ -397,12 +413,20 @@ Possible configurations are :</p>
 <h3><a class="toc-backref" href="#id19">[HTTP]</a><a class="headerlink" href="#http" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><strong>port</strong> : equals 1935 by default (RTMFP server default port), it is the port used by MonaServer to listen incoming RTMFP requests.</li>
+<li><strong>timeout</strong> : 7 by default, it is the maximum time before server kills the connection when no data as been received.</li>
+<li><strong>index</strong> : the default index file of HTTP protocol, if it is specified it will redirect each connection to this index.</li>
+</ul>
+</div>
+<div class="section" id="websocket">
+<h3><a class="toc-backref" href="#id20">[WebSocket]</a><a class="headerlink" href="#websocket" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><strong>timeout</strong> : 120 by default, it is the maximum time before server kills the connection when no data as been received.</li>
 </ul>
 </div>
 <div class="section" id="logs">
-<h3><a class="toc-backref" href="#id20">[logs]</a><a class="headerlink" href="#logs" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id21">[logs]</a><a class="headerlink" href="#logs" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
-<li><strong>directory</strong> : directory where are written log files (<em>MonaServer/logs</em> by default).</li>
+<li><strong>directory</strong> : directory where the log files are written (<em>MonaServer/logs</em> by default).</li>
 <li><strong>name</strong> : name of log files (<em>log</em> by default).</li>
 <li><strong>rotation</strong> : number of files to keep in <em>logs</em> directory</li>
 </ul>
@@ -412,7 +436,7 @@ Possible configurations are :</p>
 </div>
 </div>
 <div class="section" id="sample-of-monaserver-ini">
-<h3><a class="toc-backref" href="#id21">Sample of MonaServer.ini</a><a class="headerlink" href="#sample-of-monaserver-ini" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id22">Sample of MonaServer.ini</a><a class="headerlink" href="#sample-of-monaserver-ini" title="Permalink to this headline">¶</a></h3>
 <div class="highlight-ini"><div class="highlight"><pre><span class="c1">;MonaServer.ini</span>
 <span class="na">socketBufferSize</span> <span class="o">=</span> <span class="s">114688</span>
 <span class="k">[RTMFP]</span>
@@ -428,11 +452,11 @@ Possible configurations are :</p>
 </div>
 </div>
 <div class="section" id="launch">
-<h2><a class="toc-backref" href="#id22">Launch</a><a class="headerlink" href="#launch" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#id23">Launch</a><a class="headerlink" href="#launch" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="start">
-<h3><a class="toc-backref" href="#id23">Start</a><a class="headerlink" href="#start" title="Permalink to this headline">¶</a></h3>
-<p>MonaServer includes some argument launch options, but by default MonaServer is optimized for a production running. Command-line options are useful during development and test usage. To get full description about launch arguments start MonaServer with <em>/help</em> argument on Windows or <em>&#8211;help</em> on Unix system.</p>
-<p>Otherwise, starts simply MonaServer application with administrative rights.</p>
+<h3><a class="toc-backref" href="#id24">Start</a><a class="headerlink" href="#start" title="Permalink to this headline">¶</a></h3>
+<p>MonaServer includes some argument launch options, but by default MonaServer is optimized for a production running. Command-line options are useful during development and test usage. To get full descriptions about the launch arguments start MonaServer with <em>/help</em> argument on Windows or <em>&#8211;help</em> on Unix system.</p>
+<p>Otherwise, simply start the MonaServer application with administrative rights.</p>
 <p>You can also start it as a Windows service:</p>
 <div class="highlight-sh"><div class="highlight"><pre>MonaServer.exe /registerService <span class="o">[</span>/displayName<span class="o">=</span>MonaServer /description<span class="o">=</span><span class="s2">&quot;Open Source RTMFP Server&quot;</span> /startup<span class="o">=</span>automatic<span class="o">]</span>
 </pre></div>
@@ -443,7 +467,7 @@ Possible configurations are :</p>
 </div>
 </div>
 <div class="section" id="usage">
-<h3><a class="toc-backref" href="#id24">Usage</a><a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id25">Usage</a><a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h3>
 <p>Flash client connects to MonaServer by the classical NetConnection way:</p>
 <div class="highlight-as3"><div class="highlight"><pre><span class="n">_netConnection</span><span class="o">.</span><span class="na">connect</span><span class="o">(</span><span class="s2">&quot;rtmfp://localhost/&quot;</span><span class="o">);</span>
 </pre></div>
@@ -453,7 +477,7 @@ Possible configurations are :</p>
 <div class="highlight-as3"><div class="highlight"><pre><span class="n">_netConnection</span><span class="o">.</span><span class="na">connect</span><span class="o">(</span><span class="s2">&quot;rtmfp://localhost/myApplication&quot;</span><span class="o">);</span>
 </pre></div>
 </div>
-<p>To go more further, see <a class="reference external" href="./serveapp.html">Server Application</a> or <a class="reference external" href="./samples.html">Samples</a> page.</p>
+<p>To learn more, read the <a class="reference external" href="./serveapp.html">Server Application</a> or <a class="reference external" href="./samples.html">Samples</a> page.</p>
 </div>
 </div>
 </div>

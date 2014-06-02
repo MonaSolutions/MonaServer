@@ -9,9 +9,9 @@
     
     <link rel="stylesheet" href="_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="_static/bootstrap-3.1.0/css/bootstrap.min.css" type="text/css" />
-    <link rel="stylesheet" href="_static/bootstrap-3.1.0/css/bootstrap-theme.min.css" type="text/css" />
+    <link rel="stylesheet" href="_static/bootswatch-3.1.0/cerulean/bootstrap.min.css" type="text/css" />
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
+    <link rel="stylesheet" href="_static/my-styles.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
@@ -32,10 +32,20 @@
     <link rel="top" title="MonaServer 1 documentation" href="index.html" />
     <link rel="next" title="Scalability and load-balancing" href="scalability.html" />
     <link rel="prev" title="Installation" href="installation.html" />
-<meta charset='utf-8'>
-<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
-<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
-<meta name="apple-mobile-web-app-capable" content="yes">
+
+  <a href="https://github.com/MonaSolutions/MonaServer"
+     class="visible-desktop hidden-xs"><img
+    id="gh-banner"
+    style="position: absolute; top: 50px; right: 0; border: 0;"
+    src="_static/githubBlack.png"
+    alt="Fork us on GitHub"></a>
+  <script>
+    // Adjust image position with banner height
+    $(function () {
+      var navHeight = $(".navbar .container").css("height");
+      $("#gh-banner").css("top", navHeight);
+    });
+  </script>
 
   </head>
   <body>
@@ -74,6 +84,8 @@
 <li class="toctree-l1"><a class="reference internal" href="scalability.html">Scalability and load-balancing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="serversocket.html">Server Application Sockets</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">Mona Server&#8217;s lua API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="protocols.html">Specific Protocol Functionalities</a></li>
+<li class="toctree-l1"><a class="reference internal" href="database.html">The MonaServer Database System</a></li>
 <li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a></li>
 </ul>
 </ul>
@@ -165,8 +177,7 @@
   <div class="row">
     <div class="col-md-12">
       
-  <a class="reference external image-reference" href="https://github.com/MonaSolutions/MonaServer"><img alt="_images/githubBlack.png" class="align-right" src="_images/githubBlack.png" /></a>
-<div class="section" id="server-application">
+  <div class="section" id="server-application">
 <h1><a class="toc-backref" href="#id9">Server Application</a><a class="headerlink" href="#server-application" title="Permalink to this headline">¶</a></h1>
 <p>MonaServer includes a powerfull script-engine (using <a class="reference external" href="http://www.lua.org/">LUA</a> langage) to create your own server applications. It allows to extend Mona behavior to add your specific needs in a flexible scripting-way.</p>
 <div class="contents topic" id="table-of-contents">
@@ -216,8 +227,8 @@ rtmfp://host:port/Games/myGame       -&gt;     MonaServer/www/Games/myGame/main.
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
 <ul class="last simple">
-<li>The root application is built and started on MonaServer start, whereas other server applications are started on first client connection.</li>
-<li>Exceptionaly you can give root rigths to a child application with the function <strong>children()</strong> has shown below. It permits to start other applications at start.</li>
+<li>The root application is built and started on MonaServer start, whereas other server applications are started on the first client connection.</li>
+<li>Exceptionaly you can give root rights to a child application with the function <strong>children()</strong> as shown below. It permits to start other applications at start.</li>
 </ul>
 </div>
 <div class="highlight-lua"><div class="highlight"><pre><span class="n">children</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">childapp&quot;</span><span class="p">)</span>
@@ -283,7 +294,7 @@ rtmfp://host:port/Games/myGame       -&gt;     MonaServer/www/Games/myGame/main.
 </div>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
-<p class="last">The root server application has for path an empty string, and is reached by the name <em>www</em>.</p>
+<p class="last">The root server application has for path an empty string.</p>
 </div>
 <div class="highlight-lua"><div class="highlight"><pre><span class="c1">-- &#39;/&#39; script application (the root server application)</span>
 <span class="k">function</span> <span class="nf">hello</span><span class="p">()</span>
@@ -296,18 +307,11 @@ rtmfp://host:port/Games/myGame       -&gt;     MonaServer/www/Games/myGame/main.
   <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">I am /Games application&quot;</span><span class="p">)</span>
 <span class="k">end</span>
 <span class="n">hello</span><span class="p">()</span> <span class="c1">-- displays &quot;I am /Games application&quot;</span>
-<span class="n">www</span><span class="p">:</span><span class="n">hello</span><span class="p">()</span> <span class="c1">-- displays &quot;I am the root application&quot;</span>
 </pre></div>
 </div>
 <div class="admonition warning">
 <p class="first admonition-title">Warning</p>
 <p class="last">Events are functions called by the system (see <em>Events</em> part of <a class="reference external" href="./api.html">Server Application, API</a> page), if an application doesn&#8217;t define <em>onConnection</em> event for example, on new client connection for this application, it&#8217;s the parent application which will receive the event. To avoid it, you have to overload the event in child application, and you can call also the parent version if needed.</p>
-</div>
-<div class="highlight-lua"><div class="highlight"><pre><span class="c1">-- /Games script application</span>
-<span class="k">function</span> <span class="nf">onConnection</span><span class="p">(</span><span class="n">client</span><span class="p">,</span><span class="o">...</span><span class="p">)</span>
-  <span class="k">return</span> <span class="n">www</span><span class="p">:</span><span class="n">onConnection</span><span class="p">(</span><span class="n">client</span><span class="p">,</span><span class="o">...</span><span class="p">)</span>
-<span class="k">end</span>
-</pre></div>
 </div>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
@@ -317,6 +321,7 @@ rtmfp://host:port/Games/myGame       -&gt;     MonaServer/www/Games/myGame/main.
 <span class="k">function</span> <span class="nf">onConnection</span><span class="p">(</span><span class="n">client</span><span class="p">,</span><span class="o">...</span><span class="p">)</span>
   <span class="k">return</span> <span class="n">super</span><span class="p">:</span><span class="n">onConnection</span><span class="p">(</span><span class="n">client</span><span class="p">,</span><span class="o">...</span><span class="p">)</span>
 <span class="k">end</span>
+<span class="n">super</span><span class="p">:</span><span class="n">hello</span><span class="p">()</span> <span class="c1">-- displays &quot;I am the root application&quot;</span>
 </pre></div>
 </div>
 <p>You can use <em>client.path</em> property to check if it&#8217;s a client connected for this application or for one child application (see <a class="reference external" href="./api.html">Server Application, API</a> page for more details on <em>client</em> object description).</p>
@@ -386,7 +391,7 @@ For example if <em>/Games</em> application would like to call a <em>load</em> fu
 <span class="k">end</span>
 </pre></div>
 </div>
-<p>The both make exactly the same thing.</p>
+<p>They both make exactly the same thing.</p>
 <p>If the function is not available on the <em>client</em> object, it returns a <em>NetConnection.Call.Failed</em> status event with <em>Method &#8216;test&#8217; not found</em> in description field. But you can also customize your own error event:</p>
 <div class="highlight-lua"><div class="highlight"><pre><span class="k">function</span> <span class="nf">client</span><span class="p">:</span><span class="n">test</span><span class="p">(</span><span class="n">name</span><span class="p">,</span><span class="n">firstname</span><span class="p">)</span>
   <span class="k">if</span> <span class="ow">not</span> <span class="n">firstname</span> <span class="k">then</span> <span class="nb">error</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">test function takes two arguments&quot;</span><span class="p">)</span> <span class="k">end</span>

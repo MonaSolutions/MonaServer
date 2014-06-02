@@ -1,12 +1,8 @@
 
-.. image:: img/githubBlack.png
-  :align: right
-  :target: https://github.com/MonaSolutions/MonaServer
-
 Installation
 ###################################
 
-We remind you that Mona is licensed under the `GNU General Public License`_, so **MonaBase can't be linked with any closed source project**.
+We would like to remind you that Mona is licensed under the `GNU General Public License`_, so **MonaBase can't be linked with any closed source project.**.
 
 .. contents:: Table of Contents
 
@@ -14,19 +10,24 @@ Binaries
 ***********************************
 
 .. TODO
-.. A `Windows 32bits binary <http://jazzmatazz.free.fr/Mona/MonaServer.zip>`_ version is made available mainly to test MonaServer. But a Linux built from sources is certainly more appropriated for a production usage. If you download this version, you can go to *Configurations* part of this document and skipping the both following part.
+.. A `32-bit Windows binary <http://jazzmatazz.free.fr/Mona/MonaServer.zip>`_ has been provided to quickly test MonaServer. We recommend
+.. you compile a Linux version from the sources for production use. If you download the Windows 32-bit binary, then you can skip down to the
+.. *Configurations* section of this document.
 
 Download
 ***********************************
 
-You can download entire sources in a `zipball <https://github.com/MonaSolutions/MonaServer/zipball/master>`_ way or use a client GIT_ with the following address: https://github.com/MonaSolutions/MonaServer.git.
+You can download the entire sources with `zipball <https://github.com/MonaSolutions/MonaServer/zipball/master>`_ or by using a GIT_ Client with the following address: https://github.com/MonaSolutions/MonaServer.git.
 
 Build
 ***********************************
 
-Mona source code is cross-platform.
-In any case, you have to build **MonaBase** project in first, then **MonaCore** and then **MonaServer**.
+The Mona source code is cross-platform.
 
+You **must** build Mona in the following order: 
+#. :  **MonaBase**, 
+#. :  **MonaCore**, 
+#. :  **MonaServer**.
 
 Dependencies and requirements
 ===================================
@@ -35,14 +36,14 @@ Mona has the following dependencies :
  - OpenSSL_ is required.
  - LuaJIT_ is required.
 
-.. note:: LuaJIT_ is an alternative to the officiel LUA interpreter. It works really faster than LUA essentially because it compiles the LUA code to machine code during execution (see `LuaJIT performance <http://luajit.org/performance_x86.html>`_ about performance comparison).
+.. note:: LuaJIT_ is an alternative to the official LUA interpreter. It works faster than LUA essentially because it compiles the LUA code to machine code during execution (see `LuaJIT performance <http://luajit.org/performance_x86.html>`_ about performance comparison).
 
 As **C++11** is used in MonaServer you need to install a compiler which is compatible. At least **gcc 4.8.2** on Linux and VS 2013 on Windows.
 
 LuaJIT installation
 ===================================
 
-For several reasons some functionnalities of **LUA 52** are not allowed by default in luajit (like **#** or **pairs()**) so we recommend you to compile luajit by yourself and set the DLUAJIT_ENABLE_LUA52COMPAT option.
+For several reasons some functionalities of **LUA 52** are not allowed by default in luajit (like **#** or **pairs()**) so we recommend you to compile luajit by yourself and set the DLUAJIT_ENABLE_LUA52COMPAT option.
 
 - First download the latest release of LuaJIT_ (here with git) :
     .. code-block:: sh
@@ -53,7 +54,7 @@ For several reasons some functionnalities of **LUA 52** are not allowed by defau
     + On Windows search the line beginning with *@set LJCOMPILE=cl /nologo /c /O2 /W3 /D_CRT_SECURE_NO_DEPRECATE* and add the */DLUAJIT_ENABLE_LUA52COMPAT* option
 - Finally you can compile luajit (*make* or *src/msvcbuild.bat*)
  
-.. note:: On linux just run **sudo make install** to install luajit on the system.
+.. note:: On Linux just run **sudo make install** to install luajit on the system.
 
 Windows Build
 ===================================
@@ -61,7 +62,7 @@ Windows Build
 First follow the `LuaJIT installation`_ steps.
 
 Visual Studio 2013 solution and project files are included.
-It searchs external librairies in *External/lib* folder and external includes in *External/include* folder in the root *Mona* folder.
+It searches external libraries in *External/lib* folder and external includes in *External/include* folder in the root *Mona* folder.
 So you must put OpenSSL_ and LuaJIT_ headers and libraries in these folders.
 You can find OpenSSL_ binaries for windows on Win32OpenSSL_.
 
@@ -70,11 +71,11 @@ Unix (Linux/OSX) Build
 
 First follow the `LuaJIT installation`_ steps.
 
-If your Unix system includes a package manager you can install quickly OpenSSL_. Package is usually named *libssl-dev*.
+If your Unix system includes a package manager you can quickly install OpenSSL_. The package is usually named *libssl-dev*.
 
-.. warning:: You need to use the *-dev* version to get header files required during Mona compilation.
+.. warning:: You need to use the *-dev* version to get the header files required during Mona compilation.
 
-Then, Mona built steps are easy:
+To build Mona:
 
 .. code-block:: sh
 
@@ -85,7 +86,7 @@ Then, Mona built steps are easy:
   cd ../MonaServer
   make
 
-To clean all, steps are naturally:
+To clean:
 
 .. code-block:: sh
 
@@ -127,7 +128,7 @@ Connect to the AMI and execute the following script:
 Raspberry PI (armv61) Build
 ===================================
 
-You need to install a distibution where **gcc 4.8.2** is available. For now we have only founded Raspbian_ upgraded to the distribution *jessie*. Here is the protocol to install it correctly :
+You need to install a distibution where **gcc 4.8.2** is available. For now we have only found Raspbian_ upgraded to the distribution *jessie*. Here is the protocol to install it correctly :
 
 - First download Raspbian_
 - Then write the distribution image on an SD Card (`How to write Raspberry Pi image to SD card <http://xmodulo.com/2013/11/write-raspberry-pi-image-sd-card.html>`_)
@@ -163,9 +164,9 @@ Possible configurations are :
 [servers]
 ===================================
 
-- **port** : port to receive incoming server connection (in a multiple servers configuration, see `Scalability and load-balancing <./scalability.html>`_ for more details). If you don't configure this port, no one MonaServer can etablish a connection therewith it.
+- **port** : port to receive incoming server connection (in a multiple servers configuration, see `Scalability and load-balancing <./scalability.html>`_ for more details). If you don't configure this port, MonaServer cannot establish a connection with it.
 
-.. warning::  Exchange between servers is done in a uncrypted TCP way, so to avoid an attack by this incoming end point the *servers.port* should be protected by a firewall to allow just a connection by an other server and nothing else.
+.. warning::  The exchange between servers is done in a unencrypted TCP way, so to avoid an attack by this incoming end point the *servers.port* should be protected by a firewall to allow just a connection by an other server and nothing else.
  
 - **targets** : list of MonaServer addresses (separated by semicolons) to connect on start-up. When the server will start, it will try to etablish a connection to these addresses every 10 seconds (see `Scalability and load-balancing <./scalability.html>`_ for more details). Each token can include arguments through as a query url form:
 
@@ -189,9 +190,9 @@ It will create dynamic properties on *server* object (see *server* object descri
 
 - **port** : equals 1935 by default (RTMFP server default port), it is the port used by MonaServer to listen incoming RTMFP requests.
 
-- **keepAliveServer** : time in seconds for periodically sending packets keep-alive with server, 15s by default (valid value is from 5s to 255s).
+- **keepaliveServer** : time in seconds for periodically sending packets keep-alive with server, 15s by default (valid value is from 5s to 255s).
 
-- **keepAlivePeer** : time in seconds for periodically sending packets keep-alive between peers, 10s by default (valid value is from 5s to 255s).
+- **keepalivePeer** : time in seconds for periodically sending packets keep-alive between peers, 10s by default (valid value is from 5s to 255s).
 
 [RTMP]
 ===================================
@@ -202,18 +203,18 @@ It will create dynamic properties on *server* object (see *server* object descri
 ===================================
 
 - **port** : equals 1935 by default (RTMFP server default port), it is the port used by MonaServer to listen incoming RTMFP requests.
+- **timeout** : 7 by default, it is the maximum time before server kills the connection when no data as been received.
+- **index** : the default index file of HTTP protocol, if it is specified it will redirect each connection to this index.
 
-.. TODO not available anymore?
-.. smtp
-.. ===================================
-.. - **smtp.host** : configure a SMTP host to use mails feature provided by Mona in server application (see `Server application, Sockets <./serversocket.html>`_ page for more details about mails feature). By default the value is *localhost*.
-.. - **smtp.port** : configure a SMTP port to use mails feature provided by Mona in server application (see `Server application, Sockets <./serversocket.html>`_ page for more details about mails feature). By default the value is 25.
-.. - **smtp.timeout** : configure a SMTP timeout session in seconds to use mails feature provided by Mona in server application (see `Server application, Sockets <./serversocket.html>`_ page for more details about mails feature). By default the value is 60 seconds.
+[WebSocket]
+===================================
+
+- **timeout** : 120 by default, it is the maximum time before server kills the connection when no data as been received.
 
 [logs]
 ===================================
 
-- **directory** : directory where are written log files (*MonaServer/logs* by default).
+- **directory** : directory where the log files are written (*MonaServer/logs* by default).
 - **name** : name of log files (*log* by default).
 - **rotation** : number of files to keep in *logs* directory 
  
@@ -242,9 +243,9 @@ Launch
 Start
 ===================================
 
-MonaServer includes some argument launch options, but by default MonaServer is optimized for a production running. Command-line options are useful during development and test usage. To get full description about launch arguments start MonaServer with */help* argument on Windows or *--help* on Unix system.
+MonaServer includes some argument launch options, but by default MonaServer is optimized for a production running. Command-line options are useful during development and test usage. To get full descriptions about the launch arguments start MonaServer with */help* argument on Windows or *--help* on Unix system.
 
-Otherwise, starts simply MonaServer application with administrative rights.
+Otherwise, simply start the MonaServer application with administrative rights.
 
 You can also start it as a Windows service:
 
@@ -276,7 +277,7 @@ The path used allows you to connect for your desired `Server Application <./serv
 
     _netConnection.connect("rtmfp://localhost/myApplication");
 
-To go more further, see `Server Application <./serveapp.html>`_ or `Samples <./samples.html>`_ page.
+To learn more, read the `Server Application <./serveapp.html>`_ or `Samples <./samples.html>`_ page.
 
 .. _Win32OpenSSL : http://www.slproweb.com/products/Win32OpenSSL.html
 .. _LuaJIT : http://luajit.org/

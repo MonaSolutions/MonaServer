@@ -9,9 +9,9 @@
     
     <link rel="stylesheet" href="_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="_static/bootstrap-3.1.0/css/bootstrap.min.css" type="text/css" />
-    <link rel="stylesheet" href="_static/bootstrap-3.1.0/css/bootstrap-theme.min.css" type="text/css" />
+    <link rel="stylesheet" href="_static/bootswatch-3.1.0/cerulean/bootstrap.min.css" type="text/css" />
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
+    <link rel="stylesheet" href="_static/my-styles.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
@@ -32,10 +32,20 @@
     <link rel="top" title="MonaServer 1 documentation" href="index.html" />
     <link rel="next" title="Server Application Sockets" href="serversocket.html" />
     <link rel="prev" title="Server Application" href="serverapp.html" />
-<meta charset='utf-8'>
-<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
-<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
-<meta name="apple-mobile-web-app-capable" content="yes">
+
+  <a href="https://github.com/MonaSolutions/MonaServer"
+     class="visible-desktop hidden-xs"><img
+    id="gh-banner"
+    style="position: absolute; top: 50px; right: 0; border: 0;"
+    src="_static/githubBlack.png"
+    alt="Fork us on GitHub"></a>
+  <script>
+    // Adjust image position with banner height
+    $(function () {
+      var navHeight = $(".navbar .container").css("height");
+      $("#gh-banner").css("top", navHeight);
+    });
+  </script>
 
   </head>
   <body>
@@ -74,6 +84,8 @@
 <li class="toctree-l1 current"><a class="current reference internal" href="">Scalability and load-balancing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="serversocket.html">Server Application Sockets</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">Mona Server&#8217;s lua API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="protocols.html">Specific Protocol Functionalities</a></li>
+<li class="toctree-l1"><a class="reference internal" href="database.html">The MonaServer Database System</a></li>
 <li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a></li>
 </ul>
 </ul>
@@ -141,14 +153,11 @@
   <div class="row">
     <div class="col-md-12">
       
-  <a class="reference external image-reference" href="https://github.com/MonaSolutions/MonaServer"><img alt="_images/githubBlack.png" class="align-right" src="_images/githubBlack.png" /></a>
-<div class="section" id="scalability-and-load-balancing">
+  <div class="section" id="scalability-and-load-balancing">
 <h1><a class="toc-backref" href="#id7">Scalability and load-balancing</a><a class="headerlink" href="#scalability-and-load-balancing" title="Permalink to this headline">¶</a></h1>
-<p>Even if RTMFP is a P2P protocol, RTMFP need a server end-point to negotiate the P2P connection between both clients. Then, RTMFP can be used just for its UDP based abilities, like real-time video/audio streaming, in a classical client-server way (without using P2P feature).
-For these reasons, server load is always applied and central availability required.
-Of course, one machine has always some hardware limitation (CPU/memory), and when load required becomes too important, a MonaServer instance can not be enough.</p>
-<p>To solve this loading requirement, a full framework included in MonaServer allows to make communicate multiple MonaServer instances, to enlarge computing and receiving capacity. It allows to configure a multiple MonaServer environment, it offers detection of server connection and disconnection, exchange of data between them, redirection of clients between servers to deploy a load-balacing software system for example, and some well-thought features to synchronise client informations for the rendez-vous service and the NetGroup RTMFP options. Every communication between servers is done in a raw TCP way.</p>
-<p>The main idea is simple: by default, <strong>each instance is an independant server and share nothing with others, YOU decide what are the resources to be shared</strong> between all the server instances.</p>
+<p>RTMFP (Real Time Media Flow Protocol) uses a server end-point to negotiate the P2P connection between clients. All media is sent directly between clients without routing it through the server, which provides extremely cost effective scalable deployments. While the media is transmitted between the clients, one server instance can only negotiate a maximum number of clients before the load becomes too heavy due to CPU/Memory limitations.</p>
+<p>To resolve this issue, a full framework is included in MonaServer to enable communicatication between multiple MonaServer instances. The framework detects server connections and disconnections, manages exchanges of data between servers, manages load-balacing by redirecting clients, and has features to synchronise client information for the rendez-vous service and NetGroup RTMFP options. All communication between servers is done in a raw TCP way.</p>
+<p>The main idea is simple: by default, <strong>each instance is an independent server and shares nothing with others, YOU decide what are the resources are to be shared</strong> between all the server instances.</p>
 <p>This page intends to describe every features of this framework illustrated with some code samples and context usage. Of course, the <a class="reference external" href="./api.html">Server Application, API</a> page lists all these feature but without code samples or any utilization context.</p>
 <p>Finally some piece of script code illustrates how to use it, to know how to create an application server see <a class="reference external" href="./serveapp.html">Server Application</a> page.</p>
 <div class="contents topic" id="table-of-contents">
