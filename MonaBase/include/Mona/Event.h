@@ -34,6 +34,7 @@ private:
 
 	struct Function {
 		friend class Event;
+
 	public:
 		Function() : _pTrigger(NULL) {}
 		template<typename F> 
@@ -114,6 +115,8 @@ protected:
 
 
 private:
+	void setTrigger(Event* pTrigger) { if(_pFunction) _pFunction->_pTrigger = pTrigger; }
+
 	std::shared_ptr<std::recursive_mutex>	_pMutex;
 	mutable const Type*						_pFunction;
 	mutable Event<Result(ArgsType...)>*		_pRelayer;
@@ -134,9 +137,9 @@ public:
 		if (Event<void,ArgsType ...>::_pRelayer)
 			Event<void,ArgsType ...>::_pRelayer->raise(args...);
 		else if (Event<void, ArgsType ...>::_pFunction) {
-			Event<void, ArgsType ...>::_pFunction->_pTrigger = this;
+			Event<void, ArgsType ...>::setTrigger(this);
 			(*Event<void, ArgsType ...>::_pFunction)(args ...);
-			Event<void, ArgsType ...>::_pFunction->_pTrigger = NULL;
+			Event<void, ArgsType ...>::setTrigger(NULL);
 		}
 	}
 };
@@ -152,9 +155,9 @@ public:
 		if (Event<Result,ArgsType ...>::_pRelayer)
 			return Event<Result,ArgsType ...>::_pRelayer->raise<defaultResult>(args...);
 		else if (Event<Result, ArgsType ...>::_pFunction) {
-			Event<Result, ArgsType ...>::_pFunction->_pTrigger = this;
+			Event<Result, ArgsType ...>::setTrigger(this);
 			Result result((*Event<Result, ArgsType ...>::_pFunction)(args ...));
-			Event<Result, ArgsType ...>::_pFunction->_pTrigger = NULL;
+			Event<Result, ArgsType ...>::setTrigger(NULL);
 			return result;
 		}
 		return defaultResult;
