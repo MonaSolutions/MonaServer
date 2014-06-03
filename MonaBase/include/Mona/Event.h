@@ -24,6 +24,7 @@ This file is a part of Mona.
 #include <functional>
 #include <mutex>
 #include <memory>
+#include <set>
 
 namespace Mona {
 
@@ -34,19 +35,26 @@ private:
 	struct Function {
 		friend class Event;
 	public:
-		Function() : _subscribed(false) {}
+		Function() : _pTrigger(NULL) {}
 		template<typename F> 
-		Function(F f) : _subscribed(false),_function(f) {}
-		Function(const Function& other) : _subscribed(false), _function(other._function) {}
-		~Function() { if (_subscribed) FATAL_ERROR("Deleting ", typeid(_function).name()," during event subscription"); }
+		Function(F f) : _function(f),_pTrigger(NULL) {}
+		Function(const Function& other) : _function(other._function),_pTrigger(NULL) {}
+		~Function() { if (!_events.empty()) FATAL_ERROR("Deleting ", typeid(_function).name()," during ",_events.size()," event subscription"); }
 		template< typename F >
-		Function& operator=(F&& f) { if (_subscribed) FATAL_ERROR("Changing ", typeid(_function).name()," during event subscription"); _function.operator=(f); return *this; }
+		Function& operator=(F&& f) { if (!_events.empty()) FATAL_ERROR("Changing ", typeid(_function).name()," during ",_events.size()," event subscription"); _function.operator=(f); return *this; }
 		template< typename... Args >
 		Result operator()(Args&&... args) const { return _function(args ...); }
 		operator bool() const { return _function.operator bool(); }
+
+		template<typename TriggerType>
+		TriggerType* trigger() { return _pTrigger; }
+
+		void unsubscribe() const { while(!_events.empty()) (*_events.begin())->unsubscribe(*this); }
 	private:
 		std::function<Result(ArgsType...)>	_function;
-		mutable bool						_subscribed;
+		mutable std::set<const Event*>		_events;
+		mutable Event*						_pTrigger;
+
 	};
 
 
@@ -64,7 +72,7 @@ public:
 		std::lock_guard<std::recursive_mutex> lock(*_pMutex);
 		if ((_pFunction && _pFunction!=&function) || _pRelayer)
 			FATAL_ERROR("Event ", typeid(*this).name()," subscription has already a subscriber");
-		function._subscribed = true;
+		function._events.emplace(this);
 		_pFunction = &function;
 	}
 	void subscribe(Event<Result(ArgsType...)>& event) const {
@@ -76,21 +84,15 @@ public:
 	}
 	void unsubscribe(const Type& function) const {
 		std::lock_guard<std::recursive_mutex> lock(*_pMutex);
-		if (&function != _pFunction) {
-			if (function._subscribed)
-				FATAL_ERROR("Bad ", typeid(*this).name()," unsubscription function");
-			return;
-		}
-		function._subscribed = false;
+		if (_pRelayer || (_pFunction && _pFunction != &function))
+			FATAL_ERROR("Bad ", typeid(*this).name()," unsubscription function");
+		function._events.erase(this);
 		_pFunction = NULL;
 	}
 	void unsubscribe(Event<Result(ArgsType...)>& event) const {
 		std::lock_guard<std::recursive_mutex> lock(*_pMutex);
-		if (&event != _pRelayer) {
-			if (event._relayed)
-				FATAL_ERROR("Bad ", typeid(*this).name()," unsubscription event");
-			return;
-		}
+		if (_pFunction || (_pRelayer && _pRelayer != &event))
+			FATAL_ERROR("Bad ", typeid(*this).name()," unsubscription event");
 		event._relayed = false;
 		_pRelayer = NULL;
 	}
@@ -101,7 +103,7 @@ protected:
 		if (_relayed)
 			FATAL_ERROR("Deleting function during event ", typeid(*this).name()," subscription");
 		if (_pFunction)
-			_pFunction->_subscribed = false;
+			_pFunction->_events.erase(this);
 		if (_pRelayer)
 			_pRelayer->_relayed = false;
 	}
@@ -131,8 +133,11 @@ public:
 		std::lock_guard<std::recursive_mutex> lock(*pMutex);
 		if (Event<void,ArgsType ...>::_pRelayer)
 			Event<void,ArgsType ...>::_pRelayer->raise(args...);
-		else if (Event<void,ArgsType ...>::_pFunction)
-			(*Event<void,ArgsType ...>::_pFunction)(args ...);
+		else if (Event<void, ArgsType ...>::_pFunction) {
+			Event<void, ArgsType ...>::_pFunction->_pTrigger = this;
+			(*Event<void, ArgsType ...>::_pFunction)(args ...);
+			Event<void, ArgsType ...>::_pFunction->_pTrigger = NULL;
+		}
 	}
 };
 	
@@ -146,8 +151,12 @@ public:
 		std::lock_guard<std::recursive_mutex> lock(*pMutex);
 		if (Event<Result,ArgsType ...>::_pRelayer)
 			return Event<Result,ArgsType ...>::_pRelayer->raise<defaultResult>(args...);
-		else if (Event<Result, ArgsType ...>::_pFunction)
-			return (*Event<Result, ArgsType ...>::_pFunction)(args ...);
+		else if (Event<Result, ArgsType ...>::_pFunction) {
+			Event<Result, ArgsType ...>::_pFunction->_pTrigger = this;
+			Result result((*Event<Result, ArgsType ...>::_pFunction)(args ...));
+			Event<Result, ArgsType ...>::_pFunction->_pTrigger = NULL;
+			return result;
+		}
 		return defaultResult;
 	}
 

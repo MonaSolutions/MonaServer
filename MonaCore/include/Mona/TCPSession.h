@@ -39,8 +39,7 @@ public:
 
 	template<typename DecodingType>
 	void decode(const std::shared_ptr<DecodingType>& pDecoding) {
-		_decodings.emplace_back(pDecoding);
-		_decoding = true;
+		++_receptions.back();
 		Session::decode(pDecoding);
 	}
 
@@ -77,10 +76,8 @@ private:
 
 	UInt32			_timeout;
 
-	bool			_consumed;
-	bool			_decoding;
-	std::deque<std::shared_ptr<Decoding>> _decodings;
-	TCPClient		_client;
+	std::deque<UInt32>	_receptions;
+	TCPClient			_client;
 };
 
 

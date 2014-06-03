@@ -24,11 +24,12 @@ This file is a part of Mona.
 
 class LUAServer {
 public:
-	static void Clear(lua_State* pState, const ServerConnection& server) {}
+	static void Init(lua_State *pState, ServerConnection& server) {}
+	static void Clear(lua_State* pState, ServerConnection& server) {}
 	static int Get(lua_State* pState);
 	static int Set(lua_State* pState);
 
-	static void Init(lua_State *pState, ServerConnection& server) {}
+	
 private:
 	static int Send(lua_State* pState);
 	static int Reject(lua_State* pState);

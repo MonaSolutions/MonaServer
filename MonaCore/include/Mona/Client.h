@@ -39,18 +39,16 @@ public:
 		WRITE
 	};
 
-	Client() : _pWriter(NULL),ping(0),_pUserData(NULL) {}
+	Client() : _pWriter(NULL),ping(0),_data(0) {}
 
 	const SocketAddress			address;
 	const std::string			protocol;
 	virtual const Parameters&	parameters() const =0;
 	const std::string			name;
 
-	template <typename DataType>
-	DataType*					getUserData() const { return (DataType*)_pUserData; }
-
-	template <typename DataType>
-	DataType&					setUserData(DataType& data) { _pUserData = &data; return data; }
+	 // user data (custom data)
+	double						data() const { return _data; }
+	double						data(double value) { return _data = value; }
 
 	// Alterable in class children Peer
 	
@@ -70,7 +68,7 @@ public:
 protected:
 	Writer*						_pWriter;
 private:
-	void*						_pUserData;
+	double						_data;
 };
 
 

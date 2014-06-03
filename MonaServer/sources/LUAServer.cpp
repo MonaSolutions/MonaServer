@@ -69,7 +69,7 @@ int LUAServer::Get(lua_State* pState) {
 				}
 				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else {
-				Script::Collection(pState,1, "pState");
+				Script::Collection(pState,1, "configs");
 				lua_getfield(pState, -1, name);
 				lua_replace(pState, -2);
 				SCRIPT_CALLBACK_FIX_INDEX(name)

@@ -29,17 +29,20 @@ using namespace std;
 namespace Mona {
 
 Session::Session(Protocol& protocol, Invoker& invoker, const shared_ptr<Peer>& pPeer, const char* name) : _sessionsOptions(0),_pPeer(pPeer),peer(*_pPeer),dumpJustInDebug(false),
-	Expirable(this), _protocol(protocol), _name(name ? name : ""), invoker(invoker), _pDecodingThread(NULL), died(false), _id(0) {
+	_protocol(protocol), _name(name ? name : ""), invoker(invoker), _pDecodingThread(NULL), died(false), _id(0),
+	onDecoded([this](PacketReader& packet, const SocketAddress& address) { if (address) receive(packet, address); else receive(packet); }) {
+
 	((string&)peer.protocol) = protocol.name;
 	if(memcmp(peer.id,"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",ID_SIZE)==0)
 		Util::Random(peer.id,ID_SIZE);
 
 	DEBUG("peer.id ", Util::FormatHex(peer.id, ID_SIZE, LOG_BUFFER));
-
 }
 	
 Session::Session(Protocol& protocol, Invoker& invoker, const char* name) : _sessionsOptions(0),dumpJustInDebug(false), _pPeer(new Peer((Handler&)invoker)),
-	Expirable(this),_protocol(protocol),_name(name ? name : ""), invoker(invoker), _pDecodingThread(NULL), died(false), _id(0), peer(*_pPeer) {
+	_protocol(protocol),_name(name ? name : ""), invoker(invoker), _pDecodingThread(NULL), died(false), _id(0), peer(*_pPeer),
+	onDecoded([this](PacketReader& packet,const SocketAddress& address) { if (address) receive(packet, address); else receive(packet); }) {
+
 	((string&)peer.protocol) = protocol.name;
 	if(memcmp(peer.id,"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",ID_SIZE)==0)
 		Util::Random(peer.id, ID_SIZE);
@@ -47,10 +50,8 @@ Session::Session(Protocol& protocol, Invoker& invoker, const char* name) : _sess
 
 }
 
-
-
 Session::~Session() {
-	expire();
+	onDecoded.unsubscribe();
 	if (!died)
 		CRITIC("Session ",name()," deleted without being killed")
 }
@@ -68,14 +69,6 @@ void Session::kill(UInt32 type) {
 	(bool&)died=true;
 }
 
-void Session::receiveWithoutFlush(PacketReader& packet) {
-	if(died)
-		return;
-	if (!dumpJustInDebug || (dumpJustInDebug && Logs::GetLevel()>=7))
-		DUMP(packet.data(),packet.size(),"Request from ",peer.address.toString())
-	packetHandler(packet);
-}
-
 void Session::receive(PacketReader& packet, const SocketAddress& address) {
 	// if address  has changed (possible in UDP), update it
 	if (address != peer.address) {
@@ -85,6 +78,16 @@ void Session::receive(PacketReader& packet, const SocketAddress& address) {
 			OnAddressChange::raise(*this, oldAddress);
 	}
 	receive(packet);
+}
+
+
+void Session::receive(PacketReader& packet) {
+	if(died)
+		return;
+	if (!dumpJustInDebug || (dumpJustInDebug && Logs::GetLevel()>=7))
+		DUMP(packet.data(),packet.size(),"Request from ",peer.address.toString())
+	packetHandler(packet);
+	flush();
 }
 
 void Session::DumpResponse(const UInt8* data, UInt32 size, const SocketAddress& address, bool justInDebug) {

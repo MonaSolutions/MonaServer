@@ -26,6 +26,7 @@ class LUABroadcaster {
 public:
 
 	static void Init(lua_State *pState, Broadcaster& broadcaster);
+	static void Clear(lua_State* pState, Broadcaster& broadcaster) {}
 	static int Get(lua_State *pState);
 	static int Set(lua_State *pState);
 
@@ -36,5 +37,5 @@ public:
 
 private:
 	static int	Len(lua_State* pState);
-	static int Broadcast(lua_State *pState);
+	static int  Broadcast(lua_State *pState);
 };

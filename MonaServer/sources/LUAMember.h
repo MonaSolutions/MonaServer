@@ -25,14 +25,15 @@ This file is a part of Mona.
 
 class LUAMember {
 public:	
+	static void Init(lua_State *pState, Mona::Peer& member);
+	static void Clear(lua_State* pState, Mona::Peer& member);
+
 	static int Get(lua_State *pState);
 	static int Set(lua_State *pState);
-	static void Init(lua_State *pState, Mona::Peer& member);
-	static int Destroy(lua_State *pState);
 	
 private:
+	static void Release(lua_State* pState, Mona::Peer& member);
 	static int  Release(lua_State *pState);
-	static void Clear(lua_State* pState, Mona::Peer& member);
 };
 
 

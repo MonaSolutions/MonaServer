@@ -25,7 +25,7 @@ This file is a part of Mona.
 class LUAQualityOfService {
 public:
 	static void Init(lua_State *pState, Mona::QualityOfService& qos) {}
-	static void Clear(lua_State* pState, const Mona::QualityOfService& qos) {}
+	static void Clear(lua_State* pState, Mona::QualityOfService& qos) {}
 
 	static int Get(lua_State *pState);
 	static int Set(lua_State *pState);

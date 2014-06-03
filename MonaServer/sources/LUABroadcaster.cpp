@@ -93,9 +93,8 @@ int LUABroadcaster::Get(lua_State *pState) {
 						pServer = broadcaster[--index];
 				} else
 					pServer = broadcaster[name];
-				if (pServer) {
-					SCRIPT_ADD_OBJECT(ServerConnection, LUAServer, *pServer)
-				}
+				if (pServer)
+					Script::AddObject<LUAServer>(pState, *pServer);
 			}
 		}
 	SCRIPT_CALLBACK_RETURN

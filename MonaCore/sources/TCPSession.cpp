@@ -25,8 +25,10 @@ using namespace std;
 
 namespace Mona {
 
-TCPSession::TCPSession(const SocketAddress& peerAddress, SocketFile& file, Protocol& protocol, Invoker& invoker) : _timeout(protocol.getNumber<UInt32>("timeout")*1000), _client(peerAddress, file, invoker.sockets), Session(protocol, invoker), _consumed(false), _decoding(false) {
+TCPSession::TCPSession(const SocketAddress& peerAddress, SocketFile& file, Protocol& protocol, Invoker& invoker) :  _timeout(protocol.getNumber<UInt32>("timeout") * 1000), _client(peerAddress, file, invoker.sockets), Session(protocol, invoker) {
 	((SocketAddress&)peer.address).set(peerAddress);
+
+	_receptions.emplace_back(0);
 
 	onInitParameters = [this](const Parameters& parameters) {
 		if (parameters.getNumber("timeout", _timeout))
@@ -40,24 +42,26 @@ TCPSession::TCPSession(const SocketAddress& peerAddress, SocketFile& file, Proto
 			return 0;
 		UInt32 size(pBuffer->size());
 		PacketReader packet(pBuffer->data(), size);
-		_decoding = false;
+		UInt32 receptions(_receptions.back());
 		if (!buildPacket(pBuffer,packet)) {
-			if (!_decoding && _consumed) {
-				flush(); // flush
-				_consumed = false;
+			if (_receptions.size()>1 && _receptions.front() > 0 && (--_receptions.front()) == 0) {
+				_receptions.pop_front();
+				flush();
 			}
 			return size;
 		}
 
+		bool noDecoding(receptions == _receptions.back());
+	
 		UInt32 rest = size - packet.position() - packet.available();
-		if (!_decoding) {
-			receiveWithoutFlush(packet);
-			if (rest == 0) {
-				flush(); // flush
-				_consumed = false;
-			} else
-				_consumed = true;
+		if (rest==0)
+			_receptions.emplace_back(0);
+
+		if (noDecoding) {
+			++_receptions.back();
+			receive(packet);
 		}
+
 		return rest;
 	};
 
@@ -77,15 +81,10 @@ TCPSession::~TCPSession() {
 }
 
 void TCPSession::receive(PacketReader& packet) {
-	receiveWithoutFlush(packet);
-	bool empty = _decodings.empty();
-	while (!_decodings.empty() && _decodings.front().unique())
-		_decodings.pop_front();
-	if (!_decodings.empty())
-		_decodings.pop_front();
-	if (!empty && _decodings.empty()) {
-		flush();
-		_consumed = true;
+	Session::receive(packet);
+	if (_receptions.size()>1 && _receptions.front() > 0 && (--_receptions.front()) == 0) {
+		_receptions.pop_front();
+		return flush();
 	}
 }
 

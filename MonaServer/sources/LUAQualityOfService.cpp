@@ -29,11 +29,11 @@ int LUAQualityOfService::Get(lua_State *pState) {
 		const char* name = SCRIPT_READ_STRING(NULL);
 		if(name) {
 			if (strcmp(name,"lostRate")==0) {
-				SCRIPT_WRITE_NUMBER(qos.lostRate)
+				SCRIPT_WRITE_NUMBER(qos.lostRate) // change
 			} else if (strcmp(name, "byteRate") == 0) {
-				SCRIPT_WRITE_NUMBER(qos.byteRate)
+				SCRIPT_WRITE_NUMBER(qos.byteRate) // change
 			} else if (strcmp(name, "latency") == 0) {
-				SCRIPT_WRITE_NUMBER(qos.latency)
+				SCRIPT_WRITE_NUMBER(qos.latency) // change
 			}
 		}
 	SCRIPT_CALLBACK_RETURN

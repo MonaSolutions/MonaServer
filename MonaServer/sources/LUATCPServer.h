@@ -31,7 +31,7 @@ public:
 	static int Set(lua_State* pState);
 
 	static void Init(lua_State *pState, LUATCPServer& server) {}
-	static int	Destroy(lua_State* pState);
+	static void	Clear(lua_State* pState, LUATCPServer& server);
 private:
 	virtual ~LUATCPServer();
 

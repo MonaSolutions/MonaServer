@@ -36,12 +36,11 @@ public:
 
 
 	static void Init(lua_State *pState, Mona::Publication& publication) {}
-
+	static void Clear(lua_State* pState, Mona::Publication& publication);
 	static int Get(lua_State* pState);
 	static int Set(lua_State* pState);
 
-	static void Clear(lua_State* pState, const Mona::Publication& publication);
-	static int Destroy(lua_State *pState);
+	
 protected:
 	static int PushVideo(lua_State *pState);
 	static int PushAudio(lua_State *pState);

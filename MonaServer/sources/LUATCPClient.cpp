@@ -73,12 +73,11 @@ void LUATCPClient::onDisconnection(const SocketAddress& peerAddress){
 		SCRIPT_FUNCTION_END
 	SCRIPT_END
 	_error.clear();
+	Script::ClearObject<LUATCPClient>(_pState, *this);
 }
 
-int	LUATCPClient::Destroy(lua_State* pState) {
-	SCRIPT_DESTRUCTOR_CALLBACK(LUATCPClient,client)
-		delete &client;
-	SCRIPT_CALLBACK_RETURN
+void LUATCPClient::Clear(lua_State* pState, LUATCPClient& client) {
+	delete &client;
 }
 
 int	LUATCPClient::Connect(lua_State* pState) {
@@ -132,18 +131,14 @@ int LUATCPClient::Get(lua_State* pState) {
 				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if (strcmp(name, "address") == 0) {
 				if(client.connected())
-					SCRIPT_WRITE_STRING(client.address().toString().c_str())
-				else
-					SCRIPT_WRITE_NIL
+					SCRIPT_WRITE_STRING(client.address().toString().c_str()) // change
 			} else if (strcmp(name, "peerAddress") == 0) {
 				if(client.connected())
-					SCRIPT_WRITE_STRING(client.peerAddress().toString().c_str())
-				else
-					SCRIPT_WRITE_NIL
+					SCRIPT_WRITE_STRING(client.peerAddress().toString().c_str()) // change
 			} else if (strcmp(name, "idleTime") == 0) {
-					SCRIPT_WRITE_NUMBER(client.idleTime())
+				SCRIPT_WRITE_NUMBER(client.idleTime())  // change
 			} else if (strcmp(name, "connected") == 0)
-				SCRIPT_WRITE_BOOL(client.connected())
+				SCRIPT_WRITE_BOOL(client.connected())  // change
 		}
 	SCRIPT_CALLBACK_RETURN
 }

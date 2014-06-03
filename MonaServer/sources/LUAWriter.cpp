@@ -17,8 +17,8 @@ details (or else see http://www.gnu.org/licenses/).
 This file is a part of Mona.
 */
 
-#include "LUAWriter.h"
 #include "Service.h"
+#include "LUAWriter.h"
 #include "LUAQualityOfService.h"
 
 using namespace std;
@@ -35,14 +35,9 @@ LUAWriter::LUAWriter(lua_State* pState,Writer& writer):writer(writer),_pState(pS
 	writer.subscribe(onClose);
 }
 
-int LUAWriter::Destroy(lua_State* pState) {
-	SCRIPT_DESTRUCTOR_CALLBACK(Writer,writer)
-		writer.close();
-	SCRIPT_CALLBACK_RETURN
-}
-
-void LUAWriter::Clear(lua_State* pState,const Writer& writer){
-	Script::ClearObject<QualityOfService, LUAQualityOfService>(pState, writer.qos());
+void LUAWriter::Clear(lua_State* pState,Writer& writer){
+	Script::ClearObject<LUAQualityOfService>(pState, writer.qos());
+	writer.close();
 }
 
 int LUAWriter::Close(lua_State* pState) {
@@ -56,7 +51,7 @@ int LUAWriter::Get(lua_State *pState) {
 		const char* name = SCRIPT_READ_STRING(NULL);
 		if(name) {
 			if(strcmp(name,"reliable")==0) {
-				SCRIPT_WRITE_BOOL(writer.reliable)
+				SCRIPT_WRITE_BOOL(writer.reliable)  // change
 			} else if (strcmp(name, "flush") == 0) {
 				SCRIPT_WRITE_FUNCTION(LUAWriter::Flush)
 				SCRIPT_CALLBACK_FIX_INDEX(name)
@@ -73,7 +68,7 @@ int LUAWriter::Get(lua_State *pState) {
 				SCRIPT_WRITE_FUNCTION(LUAWriter::NewWriter)
 				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if (strcmp(name, "qos") == 0) {
-				SCRIPT_ADD_OBJECT(QualityOfService,LUAQualityOfService,writer.qos())
+				Script::AddObject<LUAQualityOfService>(pState,writer.qos());
 				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if (strcmp(name, "close") == 0) {
 				SCRIPT_WRITE_FUNCTION(LUAWriter::Close)
@@ -126,7 +121,7 @@ int LUAWriter::WriteRaw(lua_State* pState) {
 
 
 int LUAWriter::NewWriter(lua_State* pState) {
-	SCRIPT_CALLBACK(Writer,writer)
-		SCRIPT_NEW_OBJECT(Writer,LUAWriter,&(new LUAWriter(pState,writer.newWriter()))->writer)
+	SCRIPT_CALLBACK(Writer, writer)
+		Script::NewObject<LUAWriter>(pState, (new LUAWriter(pState, writer.newWriter()))->writer);
 	SCRIPT_CALLBACK_RETURN
 }

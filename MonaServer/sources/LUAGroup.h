@@ -27,7 +27,7 @@ class LUAGroup {
 public:
 
 	static void Init(lua_State *pState, Mona::Group& group);
-	static void Clear(lua_State* pState, const Mona::Group& group) {}
+	static void Clear(lua_State* pState, Mona::Group& group) {}
 
 	// -1 must be the client table!
 	static void AddClient(lua_State* pState, int indexGroup);

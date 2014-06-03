@@ -122,7 +122,6 @@
     <ClCompile Include="sources\OptionsTest.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="sources\ExpirableTest.cpp" />
     <ClCompile Include="sources\SocketAddressTest.cpp" />
     <ClCompile Include="sources\StopWatchTest.cpp" />
     <ClCompile Include="sources\StringTest.cpp">

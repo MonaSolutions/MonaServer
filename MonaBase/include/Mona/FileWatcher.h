@@ -20,7 +20,6 @@ This file is a part of Mona.
 #pragma once
 
 #include "Mona/Mona.h"
-#include "Mona/Time.h"
 #include "Mona/FilePath.h"
 
 namespace Mona {
@@ -29,7 +28,7 @@ class FileWatcher : public virtual Object {
 public:
 
 	template <typename ...Args>
-	FileWatcher(Args&&... args) : _delay(0),filePath(args ...), _lastModified(0), _exists(false) {}
+	FileWatcher(Args&&... args) : filePath(args ...), _lastModified(0), _exists(false) {}
 	
 
 	/// look if the file has changed, call clearFile if doesn't exist anymore, or call clearFile and loadFile if file has change
@@ -42,7 +41,6 @@ private:
 	virtual void clearFile() = 0;
 
 	Mona::Time	_lastModified;
-	Mona::Time	_delay;
 	bool		_exists;
 };
 
