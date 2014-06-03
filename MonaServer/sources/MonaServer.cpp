@@ -429,7 +429,6 @@ void MonaServer::onConnection(Exception& ex, Client& client,DataReader& paramete
 
 	Script::AddObject<LUAClient>(_pState,client);
 
-	const char* error(NULL);
 	SCRIPT_BEGIN(_pState)
 		SCRIPT_FUNCTION_BEGIN("onConnection",pService->reference())
 			lua_pushvalue(_pState, 1); // client! (see Script::AddObject above)
@@ -454,20 +453,19 @@ void MonaServer::onConnection(Exception& ex, Client& client,DataReader& paramete
 			}
 		SCRIPT_FUNCTION_END
 		if(SCRIPT_LAST_ERROR)
-			error = strlen(SCRIPT_LAST_ERROR)>0 ? SCRIPT_LAST_ERROR : "client rejected";	
+			ex.set(Exception::SOFTWARE, strlen(SCRIPT_LAST_ERROR)>0 ? SCRIPT_LAST_ERROR : "client rejected");
 	SCRIPT_END
 
-	if (!error) {
-		LUAInvoker::AddClient(_pState);
-		// connection accepted
-		openService(*pService,client);
+	if (ex) {
+		Script::ClearObject<LUAClient>(_pState,client);
 		lua_pop(_pState, 1); // remove Script::AddObject<Client .. (see above)
 		return;
 	}
 
-	// connection failed
-	Script::ClearObject<LUAClient>(_pState,client);
-	lua_pop(_pState, 1); // remove Script::AddObject<Client .. (see above)
+	LUAInvoker::AddClient(_pState);
+	// connection accepted
+	openService(*pService,client);
+	lua_pop(_pState, 1); // remove Script::AddObject<Client .. (see above)	
 }
 
 lua_State* MonaServer::openService(const Service& service, Client& client) {
