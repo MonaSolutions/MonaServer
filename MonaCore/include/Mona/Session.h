@@ -69,7 +69,7 @@ public:
 
 	template<typename DecodingType>
 	void decode(const std::shared_ptr<DecodingType>& pDecoding) {
-		pDecoding->OnDecoded::subscribe(onDecoded);
+		pDecoding->Events::OnDecoded::subscribe(onDecoded);
 		Exception ex;
 		_pDecodingThread = invoker.poolThreads.enqueue<DecodingType>(ex, pDecoding, _pDecodingThread);
 		if (ex)
