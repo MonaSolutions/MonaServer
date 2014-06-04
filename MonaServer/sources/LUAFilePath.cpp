@@ -22,13 +22,8 @@ This file is a part of Mona.
 using namespace std;
 using namespace Mona;
 
-void LUAFiles::Init(lua_State* pState, LUAFiles& files) {
-}
-
-int	LUAFiles::Destroy(lua_State* pState) {
-	SCRIPT_DESTRUCTOR_CALLBACK(LUAFiles, files)
-		delete &files;
-	SCRIPT_CALLBACK_RETURN
+void LUAFiles::Clear(lua_State* pState, LUAFiles& files) {
+	delete &files;
 }
 
 int LUAFiles::Get(lua_State *pState) {
@@ -44,37 +39,35 @@ int LUAFiles::Set(lua_State *pState) {
 	SCRIPT_CALLBACK_RETURN
 }
 
-int	LUAFilePath::Destroy(lua_State* pState) {
-	SCRIPT_DESTRUCTOR_CALLBACK(LUAFilePath, filepath)
-		delete &filepath;
-	SCRIPT_CALLBACK_RETURN
+void LUAFilePath::Clear(lua_State* pState, LUAFilePath& filePath) {
+	delete &filePath;
 }
 
 int LUAFilePath::Get(lua_State *pState) {
-	SCRIPT_CALLBACK(LUAFilePath, filepath)
+	SCRIPT_CALLBACK(LUAFilePath, filePath)
 		const char* name = SCRIPT_READ_STRING(NULL);
 		
 		if (name) {
 			if(strcmp(name,"fullPath")==0) {
-				SCRIPT_WRITE_STRING(filepath._path.fullPath().c_str())
+				SCRIPT_WRITE_STRING(filePath._path.fullPath().c_str())
 				SCRIPT_CALLBACK_FIX_INDEX(name)
 			}  else if(strcmp(name,"name")==0) {
-				SCRIPT_WRITE_STRING(filepath._path.name().c_str())
+				SCRIPT_WRITE_STRING(filePath._path.name().c_str())
 				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if(strcmp(name,"baseName")==0) {
-				SCRIPT_WRITE_STRING(filepath._path.baseName().c_str())
+				SCRIPT_WRITE_STRING(filePath._path.baseName().c_str())
 				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if(strcmp(name,"extension")==0) {
-				SCRIPT_WRITE_STRING(filepath._path.extension().c_str())
+				SCRIPT_WRITE_STRING(filePath._path.extension().c_str())
 				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if(strcmp(name,"size")==0) {
-				SCRIPT_WRITE_NUMBER(filepath._path.size())
+				SCRIPT_WRITE_NUMBER(filePath._path.size())
 				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if(strcmp(name,"lastModified")==0) {
-				SCRIPT_WRITE_NUMBER(filepath._path.lastModified())
+				SCRIPT_WRITE_NUMBER(filePath._path.lastModified())
 				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if (strcmp(name,"isDirectory")==0) {
-				SCRIPT_WRITE_BOOL(filepath._path.isDirectory())
+				SCRIPT_WRITE_BOOL(filePath._path.isDirectory())
 				SCRIPT_CALLBACK_FIX_INDEX(name)
 			}
 		}

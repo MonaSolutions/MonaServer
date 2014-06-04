@@ -62,9 +62,6 @@ void FlashMainStream::messageHandler(const string& name,AMFReader& message,Flash
 			auto& properties(peer.properties());
 			while((type=message.readItem(name))!=AMFReader::END) {
 				switch(type) {
-					case AMFReader::NIL:
-						message.readNull();
-						break;
 					case AMFReader::BOOLEAN:
 						properties.setBool(name,message.readBoolean());
 						break;

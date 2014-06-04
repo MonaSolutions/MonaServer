@@ -65,7 +65,7 @@ void Servers::start(const Parameters& parameters) {
 		OnConnection::raise(server);
 	};
 
-	onServerDisconnection = [this](Exception& ex,ServerConnection& server) { 
+	onServerDisconnection = [this](const Exception& ex,ServerConnection& server) { 
 		if (_connections.erase(&server) > 0) {
 			// connected
 			if (server.isTarget)
@@ -76,7 +76,7 @@ void Servers::start(const Parameters& parameters) {
 			if (ex)
 				ERROR("Disconnection from ", server.address.toString(), " server, ", ex.error())
 			else
-			NOTE("Disconnection from ", server.address.toString(), " server ")
+				NOTE("Disconnection from ", server.address.toString(), " server ")
 
 			OnDisconnection::raise(ex, server);
 		}

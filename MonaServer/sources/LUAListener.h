@@ -26,7 +26,7 @@ class LUAListener {
 public:
 
 	static void Init(lua_State *pState, Mona::Listener& listener);
-	static void Clear(lua_State* pState,const Mona::Listener& listener);
+	static void Clear(lua_State* pState, Mona::Listener& listener);
 	static int Get(lua_State *pState);
 	static int Set(lua_State *pState);
 

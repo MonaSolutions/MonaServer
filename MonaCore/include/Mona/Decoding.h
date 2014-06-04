@@ -22,19 +22,21 @@ This file is a part of Mona.
 #include "Mona/Mona.h"
 #include "Mona/Invoker.h"
 #include "Mona/PoolBuffer.h"
-#include "Mona/Expirable.h"
-
 
 namespace Mona {
 
-class Session;
 
-class Decoding : public WorkThread, private Task, public virtual Object {
-	friend class Session;
-	friend class TCPSession;
+namespace Events {
+	struct OnDecoded : Event<void(PacketReader&,const SocketAddress& address)> {};
+};
+
+class Decoding : public WorkThread, private Task, public virtual Object,
+	public Events::OnDecoded {
 public:
 	Decoding(const char* name,Invoker& invoker,const UInt8* data,UInt32 size);
 	Decoding(const char* name,Invoker& invoker,PoolBuffer& pBuffer);
+
+	SocketAddress	address;
 
 private:
 	// If return true, packet is pass to the session.
@@ -47,8 +49,6 @@ private:
 	void			handle(Exception& ex);
 
 	PoolBuffer						_pBuffer;
-	Expirable<Session>				_expirableSession;
-	SocketAddress					_address;
 	UInt32							_size;
 	const UInt8*					_current;
 };

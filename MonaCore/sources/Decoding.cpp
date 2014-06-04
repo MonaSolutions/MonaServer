@@ -18,8 +18,7 @@ This file is a part of Mona.
 */
 
 #include "Mona/Decoding.h"
-#include "Mona/Session.h"
-
+#include "Mona/Logs.h"
 
 using namespace std;
 
@@ -67,15 +66,8 @@ bool Decoding::run(Exception& exc) {
 }
 
 void Decoding::handle(Exception& ex) {
-	unique_lock<mutex> lock;
-	Session* pSession = _expirableSession.safeThis(lock);
-	if (!pSession)
-		return;
 	PacketReader packet(_current, _size);
-	if (_address)
-		pSession->receive(packet, _address);
-	else
-		pSession->receive(packet);
+	OnDecoded::raise(packet,address);
 }
 
 

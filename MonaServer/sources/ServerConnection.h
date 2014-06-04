@@ -46,7 +46,7 @@ class ServerConnection;
 namespace ServerEvents {
 	struct OnHello : Mona::Event<void(ServerConnection&)> {};
 	struct OnMessage : Mona::Event<void(ServerConnection&,const std::string&,Mona::PacketReader&)> {};
-	struct OnDisconnection : Mona::Event<void(Mona::Exception&,ServerConnection&)> {};
+	struct OnDisconnection : Mona::Event<void(const Mona::Exception&,ServerConnection&)> {};
 }
 
 class ServerConnection : public Mona::MapParameters,

@@ -114,7 +114,6 @@ void Publication::stop(Peer& peer) {
 	for(auto& it : _listeners)
 		it.second->stopPublishing();
 	flush();
-	peer.onUnpublish(*this);
 	_videoQOS.reset();
 	_audioQOS.reset();
 	_dataQOS.reset();
@@ -122,7 +121,7 @@ void Publication::stop(Peer& peer) {
 	_pPublisher=NULL;
 	_videoCodecBuffer.release();
 	_audioCodecBuffer.release();
-	return;
+	peer.onUnpublish(*this);
 }
 
 void Publication::flush() {

@@ -31,8 +31,8 @@ LUATCPServer::LUATCPServer(const SocketManager& manager,lua_State* pState) : _pS
 
 	onConnection = [this](Exception& ex,const SocketAddress& peerAddress,SocketFile& file) {
 		SCRIPT_BEGIN(_pState)
-			SCRIPT_MEMBER_FUNCTION_BEGIN(LUATCPServer,*this,"onConnection")	
-				SCRIPT_NEW_OBJECT(LUATCPClient, LUATCPClient, new LUATCPClient(peerAddress,file,this->manager(),_pState))
+			SCRIPT_MEMBER_FUNCTION_BEGIN(LUATCPServer, *this, "onConnection")
+				Script::AddObject<LUATCPClient>(_pState,*new LUATCPClient(peerAddress, file, this->manager(), _pState),true);
 				SCRIPT_FUNCTION_CALL
 			SCRIPT_FUNCTION_END
 		SCRIPT_END
@@ -48,10 +48,8 @@ LUATCPServer::~LUATCPServer() {
 }
 
 
-int	LUATCPServer::Destroy(lua_State* pState) {
-	SCRIPT_DESTRUCTOR_CALLBACK(LUATCPServer,server)
-		delete &server;
-	SCRIPT_CALLBACK_RETURN
+void LUATCPServer::Clear(lua_State* pState, LUATCPServer& server) {
+	delete &server;
 }
 
 int	LUATCPServer::Start(lua_State* pState) {
@@ -90,9 +88,9 @@ int LUATCPServer::Get(lua_State* pState) {
 				SCRIPT_WRITE_FUNCTION(LUATCPServer::Stop)
 				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if (strcmp(name, "address") == 0) {
-				SCRIPT_WRITE_STRING(server.address().toString().c_str())
+				SCRIPT_WRITE_STRING(server.address().toString().c_str())  // change
 			} else if(strcmp(name,"running")==0)
-				SCRIPT_WRITE_BOOL(server.running())
+				SCRIPT_WRITE_BOOL(server.running())  // change
 		}
 	SCRIPT_CALLBACK_RETURN
 }

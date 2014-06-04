@@ -22,7 +22,7 @@ This file is a part of Mona.
 #include "Mona/Mona.h"
 #include "Mona/Peer.h"
 #include "Mona/Invoker.h"
-#include "Mona/Expirable.h"
+#include "Mona/Decoding.h"
 #include "Mona/Logs.h"
 
 namespace Mona {
@@ -33,7 +33,7 @@ namespace Events {
 };
 
 class Protocol;
-class Session : public virtual Object, public Expirable<Session>,
+class Session : public virtual Object,
 	public Events::OnAddressChange {
 	friend class Sessions;
 
@@ -69,7 +69,7 @@ public:
 
 	template<typename DecodingType>
 	void decode(const std::shared_ptr<DecodingType>& pDecoding) {
-		shareThis(pDecoding->_expirableSession);
+		pDecoding->Events::OnDecoded::subscribe(onDecoded);
 		Exception ex;
 		_pDecodingThread = invoker.poolThreads.enqueue<DecodingType>(ex, pDecoding, _pDecodingThread);
 		if (ex)
@@ -78,11 +78,11 @@ public:
 
 	template<typename DecodingType>
 	void decode(const std::shared_ptr<DecodingType>& pDecoding,const SocketAddress& address) {
-		pDecoding->_address.set(address);
+		pDecoding->address.set(address);
 		decode(pDecoding);
 	}
 
-	virtual void		receive(PacketReader& packet) { receiveWithoutFlush(packet); flush(); }
+	virtual void		receive(PacketReader& packet);
 	virtual void		receive(PacketReader& packet, const SocketAddress& address);
 
 	template<typename ProtocolType,typename SenderType>
@@ -102,12 +102,16 @@ protected:
 	Session(Protocol& protocol,Invoker& invoker, const char* name=NULL);
 	Session(Protocol& protocol, Invoker& invoker, const std::shared_ptr<Peer>& pPeer, const char* name = NULL);
 
-	void				receiveWithoutFlush(PacketReader& packet);
-	virtual void		packetHandler(PacketReader& packet)=0;
+	template<typename DecodingType> 
+	DecodingType* decoder() { return onDecoded.trigger<DecodingType>(); }
 
 private:
-	const std::string&  protocolName();
+	virtual void		packetHandler(PacketReader& packet)=0;
 
+
+	const std::string&			protocolName();
+	Decoding::OnDecoded::Type	onDecoded;
+	
 	PoolThread*					_pDecodingThread;
 	mutable std::string			_name;
 	UInt32						_id;

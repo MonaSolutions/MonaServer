@@ -119,6 +119,7 @@ lua_State* Script::CreateState() {
 #endif
 	lua_setmetatable(pState, LUA_GLOBALSINDEX);
 
+
 	return pState;
 }
 
@@ -300,13 +301,13 @@ int Script::Len(lua_State* pState) {
 }
 
 
-DataReader& Script::WriteData(lua_State *pState,DataReader& reader,UInt32 count) {
+DataReader& Script::WriteData(lua_State *pState,DataReader& reader,int reference,UInt32 count) {
 	DataReader::Type type;
 	bool all=count==0;
 	if(all)
 		count=1;
 	while(count>0 && (type = reader.followingType())!=DataReader::END) {
-		WriteData(pState,type,reader);
+		WriteData(pState,type,reader,reference);
 		if(!all)
 			--count;
 	}
@@ -314,7 +315,7 @@ DataReader& Script::WriteData(lua_State *pState,DataReader& reader,UInt32 count)
 }
 
 
-DataReader& Script::WriteData(lua_State *pState,DataReader::Type type,DataReader& reader) {
+DataReader& Script::WriteData(lua_State *pState,DataReader::Type type,DataReader& reader,int reference) {
 	SCRIPT_BEGIN(pState)
 	switch(type) {
 		case DataReader::NIL:
@@ -368,7 +369,7 @@ DataReader& Script::WriteData(lua_State *pState,DataReader::Type type,DataReader
 				UInt32 index=0;
 				string name;
 				while((type=reader.readItem(name))!=DataReader::END) {
-					WriteData(pState,type,reader);
+					WriteData(pState,type,reader,reference);
 					if(name.empty())
 						lua_rawseti(pState,-2,++index);
 					else
@@ -390,8 +391,8 @@ DataReader& Script::WriteData(lua_State *pState,DataReader::Type type,DataReader
 				}
 				string name;
 				while((type=reader.readKey())!=DataReader::END) {
-					WriteData(pState,type,reader);
-					WriteData(pState,reader.readValue(),reader);
+					WriteData(pState,type,reader,reference);
+					WriteData(pState,reader.readValue(),reader,reference);
 					lua_rawset(pState,-3);
 				}
 				lua_pushnumber(pState,size);
@@ -405,7 +406,7 @@ DataReader& Script::WriteData(lua_State *pState,DataReader::Type type,DataReader
 			if(reader.readObject(objectType,external)) {
 				lua_newtable(pState);
 				if(!objectType.empty()) {
-					lua_pushlstring(pState,objectType.c_str(),objectType.size());
+					lua_pushstring(pState,objectType.c_str());
 					lua_setfield(pState,-2,"__type");
 				} else if(external) {
 					SCRIPT_ERROR("Impossible to deserialize the external object without a type")
@@ -413,7 +414,7 @@ DataReader& Script::WriteData(lua_State *pState,DataReader::Type type,DataReader
 				}
 				string name;
 				while((type=reader.readItem(name))!=DataReader::END) {
-					WriteData(pState,type,reader);
+					WriteData(pState,type,reader,reference);
 					lua_setfield(pState,-2,name.c_str());
 				}
 				lua_getfield(pState,-1,"__type");
@@ -423,9 +424,9 @@ DataReader& Script::WriteData(lua_State *pState,DataReader::Type type,DataReader
 				if(!objectType.empty()) {
 					int top = lua_gettop(pState);
 					// function
-					SCRIPT_FUNCTION_BEGIN("onTypedObject")
+					SCRIPT_FUNCTION_BEGIN("onTypedObject",reference)
 						// type argument
-						lua_pushlstring(pState,objectType.c_str(),objectType.size());
+						lua_pushstring(pState,objectType.c_str());
 						// table argument
 						lua_pushvalue(pState,top);
 						SCRIPT_FUNCTION_CALL

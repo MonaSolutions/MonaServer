@@ -78,7 +78,10 @@ void ServerConnection::reject(const char* error) {
 	shared_ptr<ServerMessage> pMessage(new ServerMessage("",_pClient->manager().poolBuffers));
 	BinaryWriter& writer = pMessage->packet;
 	writer.writeBool(false);
-	writer.writeString(error);
+	if (error)
+		writer.writeString(error);
+	else
+		writer.writeString("Unknown error");
 	send(pMessage);
 	_pClient->disconnect();
 }

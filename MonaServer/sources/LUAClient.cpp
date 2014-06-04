@@ -44,7 +44,7 @@ int LUAClient::LUAProperties::Item(lua_State *pState) {
 	Script::ReadData(pState,writer,lua_gettop(pState)-1).endWrite();
 	pClient->properties(items);
 	ArrayReader<vector<string>> reader(items);
-	Script::WriteData(pState,reader);
+	Script::WriteData(pState,reader,LUA_NOREF);
 	return items.size();
 }
 
@@ -62,12 +62,12 @@ void LUAClient::Init(lua_State* pState, Client& client) {
 }
 
 
-void LUAClient::Clear(lua_State* pState,const Client& client){
+void LUAClient::Clear(lua_State* pState,Client& client){
 	Script::ClearCollectionParameters(pState,"properties",((Peer&)client).properties());
 	Script::ClearCollectionParameters(pState,"parameters",client.parameters());
 
-	Script::ClearObject<Writer, LUAWriter>(pState, ((Client&)client).writer());
-	Script::ClearObject<QualityOfService, LUAQualityOfService>(pState, ((Client&)client).writer().qos());
+	Script::ClearObject<LUAWriter>(pState, ((Client&)client).writer());
+	Script::ClearObject<LUAQualityOfService>(pState, ((Client&)client).writer().qos());
 }
 
 int LUAClient::Item(lua_State *pState) {
@@ -91,11 +91,10 @@ int LUAClient::Item(lua_State *pState) {
 	if (!pClient)
 		pClient = pInvoker->clients((const char*)id); // try by name!
 
-	SCRIPT_BEGIN(pState)
-		if (pClient)
-			SCRIPT_ADD_OBJECT(Client, LUAClient,*pClient)
-	SCRIPT_END
-	return pClient ? 1 : 0;
+	if (!pClient)
+		return 0;
+	Script::AddObject<LUAClient>(pState,*pClient);
+	return 1;
 }
 
 int LUAClient::Get(lua_State *pState) {
@@ -104,7 +103,7 @@ int LUAClient::Get(lua_State *pState) {
 		if (name) {
 			if(strcmp(name,"writer")==0) {
 				SCRIPT_CALLBACK_NOTCONST_CHECK
-				SCRIPT_ADD_OBJECT(Writer,LUAWriter,client.writer())
+				Script::AddObject<LUAWriter>(pState,client.writer());
 				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if(strcmp(name,"id")==0) {
 				lua_getmetatable(pState, 1);

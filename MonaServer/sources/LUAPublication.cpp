@@ -24,11 +24,6 @@ using namespace std;
 using namespace Mona;
 
 
-void LUAPublication::Clear(lua_State* pState, const Publication& publication) {
-	Script::ClearObject<QualityOfService, LUAQualityOfService>(pState, publication.dataQOS());
-	Script::ClearObject<QualityOfService, LUAQualityOfService>(pState, publication.audioQOS());
-	Script::ClearObject<QualityOfService, LUAQualityOfService>(pState, publication.videoQOS());
-}
 
 void LUAPublication::AddListener(lua_State* pState, UInt8 indexPublication, UInt8 indexListener) {
 	// -1 must be the client table!
@@ -50,10 +45,28 @@ void LUAPublication::RemoveListener(lua_State* pState, const Publication& public
 	}
 }
 
+void LUAPublication::Clear(lua_State* pState, Publication& publication) {
+	Script::ClearObject<LUAQualityOfService>(pState, publication.dataQOS());
+	Script::ClearObject<LUAQualityOfService>(pState, publication.audioQOS());
+	Script::ClearObject<LUAQualityOfService>(pState, publication.videoQOS());
+
+	if (publication.publisher()) {
+		lua_getmetatable(pState, -1);
+		lua_getfield(pState, -1, "|invoker");
+		lua_replace(pState, -2);
+		Invoker* pInvoker = (Invoker*)lua_touserdata(pState, -1);
+		if (pInvoker)
+			pInvoker->unpublish(publication.name());
+		lua_pop(pState, 1);
+	}
+}
+
 int LUAPublication::Close(lua_State *pState) {
 	SCRIPT_CALLBACK(Publication, publication)
 		lua_getmetatable(pState, 1);
 		lua_getfield(pState, -1, "|invoker");
+		lua_replace(pState, -2);
+
 		Invoker* pInvoker = (Invoker*)lua_touserdata(pState, -1);
 		if (!pInvoker) {
 			SCRIPT_BEGIN(pState)
@@ -64,24 +77,10 @@ int LUAPublication::Close(lua_State *pState) {
 			SCRIPT_END
 		} else if (publication.publisher())
 			pInvoker->unpublish(publication.name());
-		lua_pop(pState, 2);
-	SCRIPT_CALLBACK_RETURN
-}
 
-// just call in the case where publication.publisher()==invoker
-int LUAPublication::Destroy(lua_State* pState) {
-	SCRIPT_DESTRUCTOR_CALLBACK(Publication, publication)
-		lua_getmetatable(pState, 1);
-		lua_getfield(pState, -1, "|invoker");
-		lua_replace(pState, -2);
-		Invoker* pInvoker = (Invoker*)lua_touserdata(pState, -1);
-		if (pInvoker && publication.publisher())
-			pInvoker->unpublish(publication.name());
 		lua_pop(pState, 1);
 	SCRIPT_CALLBACK_RETURN
 }
-
-
 
 int	LUAPublication::PushAudio(lua_State *pState) {
 	SCRIPT_CALLBACK(Publication, publication)
@@ -143,7 +142,7 @@ int LUAPublication::Get(lua_State *pState) {
 		if(name) {
 			if(strcmp(name,"publisher")==0) {
 				if (publication.publisher())
-					SCRIPT_ADD_OBJECT(Client, LUAClient, *publication.publisher())
+					Script::AddObject<LUAClient>(pState, *publication.publisher()); // can change
 			} else if(strcmp(name,"name")==0) {
 				SCRIPT_WRITE_STRING(publication.name().c_str())
 				SCRIPT_CALLBACK_FIX_INDEX(name)
@@ -151,13 +150,13 @@ int LUAPublication::Get(lua_State *pState) {
 				Script::Collection(pState, 1, "listeners");
 				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if(strcmp(name,"audioQOS")==0) {
-				SCRIPT_ADD_OBJECT(QualityOfService, LUAQualityOfService, publication.audioQOS())
+				Script::AddObject<LUAQualityOfService>(pState, publication.audioQOS());
 				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if(strcmp(name,"videoQOS")==0) {
-				SCRIPT_ADD_OBJECT(QualityOfService,LUAQualityOfService,publication.videoQOS())
+				Script::AddObject<LUAQualityOfService>(pState, publication.videoQOS());
 				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if(strcmp(name,"dataQOS")==0) {
-				SCRIPT_ADD_OBJECT(QualityOfService,LUAQualityOfService,publication.dataQOS())
+				Script::AddObject<LUAQualityOfService>(pState, publication.dataQOS());
 				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if(strcmp(name,"close")==0) {
 				SCRIPT_WRITE_FUNCTION(LUAPublication::Close)

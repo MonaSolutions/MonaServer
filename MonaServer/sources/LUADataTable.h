@@ -26,11 +26,11 @@ This file is a part of Mona.
 class LUADataTable {
 public:
 
+	static void Init(lua_State *pState, LUADataTable& table);
+	static void	Clear(lua_State* pState, LUADataTable& table);
 	static int Get(lua_State *pState);
 	static int Set(lua_State *pState);
 
-	static void Init(lua_State *pState, LUADataTable& table);
-	static int	Destroy(lua_State* pState);
 
 	LUADataTable(Mona::Database& database, const std::string& path) : count(0), path(path), database(database) {}
 

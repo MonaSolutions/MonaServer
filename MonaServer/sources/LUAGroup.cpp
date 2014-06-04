@@ -81,11 +81,10 @@ int LUAGroup::LUAMembers::Item(lua_State *pState) {
 		pMember = (*pGroup)((const UInt8*)Util::UnformatHex(temp).c_str());
 	}
 
-	SCRIPT_BEGIN(pState)
-		if (pMember)
-			SCRIPT_ADD_OBJECT(Client, LUAClient,*pMember)
-	SCRIPT_END
-	return pMember ? 1 : 0;
+	if (!pMember)
+		return 0;
+	Script::AddObject<LUAClient>(pState, *pMember);
+	return 1;
 }
 
 int LUAGroup::Item(lua_State *pState) {
@@ -105,11 +104,10 @@ int LUAGroup::Item(lua_State *pState) {
 		string temp((const char*)id,size);
 		pGroup = pInvoker->groups((const UInt8*)Util::UnformatHex(temp).c_str());
 	}
-	SCRIPT_BEGIN(pState)
-		if (pGroup)
-			SCRIPT_ADD_OBJECT(Group, LUAGroup, *pGroup)
-	SCRIPT_END
-	return pGroup ? 1 : 0;
+	if (!pGroup)
+		return 0;
+	Script::AddObject<LUAGroup>(pState, *pGroup);
+	return 1;
 }
 
 int	LUAGroup::Size(lua_State* pState) {

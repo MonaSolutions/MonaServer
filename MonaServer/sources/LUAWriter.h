@@ -19,8 +19,8 @@ This file is a part of Mona.
 
 #pragma once
 
-#include "Script.h"
 #include "Mona/Writer.h"
+#include "Script.h"
 
 class LUAWriter {
 public:
@@ -28,8 +28,7 @@ public:
 	Mona::Writer&		writer;
 
 	static void Init(lua_State *pState, Mona::Writer& writer) {}
-	static void Clear(lua_State* pState, const Mona::Writer& writer);
-	static int	Destroy(lua_State *pState);
+	static void Clear(lua_State* pState, Mona::Writer& writer);
 
 	static int Get(lua_State *pState);
 	static int Set(lua_State *pState);

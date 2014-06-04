@@ -358,9 +358,6 @@
     <ClInclude Include="include\Mona\Timezone.h">
       <Filter>Time</Filter>
     </ClInclude>
-    <ClInclude Include="include\Mona\Expirable.h">
-      <Filter>Threading</Filter>
-    </ClInclude>
     <ClInclude Include="include\Mona\Signal.h">
       <Filter>Threading</Filter>
     </ClInclude>

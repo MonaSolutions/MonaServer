@@ -26,6 +26,7 @@ This file is a part of Mona.
 class LUAInvoker {
 public:
 	static void Init(lua_State *pState, Mona::Invoker& invoker);
+	static void Clear(lua_State* pState, Mona::Invoker& invoker) {}
 	static int Get(lua_State *pState);
 	static int Set(lua_State *pState);
 

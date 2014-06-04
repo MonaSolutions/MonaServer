@@ -20,8 +20,9 @@ This file is a part of Mona.
 #pragma once
 
 #include "Mona/FileWatcher.h"
-#include "Mona/Expirable.h"
+#include "Mona/Client.h"
 #include "Script.h"
+
 
 class Service;
 class ServiceHandler {
@@ -32,25 +33,26 @@ public:
 };
 
 
-class Service : public Mona::FileWatcher, public Mona::Expirable<Service> {
+class Service : private Mona::FileWatcher {
 public:
 	Service(lua_State* pState, ServiceHandler& handler);
 	virtual ~Service();
 
-	
-	Service*			open(const std::string& path, Mona::Expirable<Service>& expirableService);
-	void				open() {open(true); lua_pop(_pState, 1); }
+	int					reference() const { return _reference; }
 
+	Service*			open(Mona::Exception& ex);
+	Service*			open(Mona::Exception& ex, const std::string& path);
+
+	const std::string   name;
 	const std::string	path;
-	const std::string	lastError;
 
 	static int	Item(lua_State *pState);
 
 private:
-	Service(lua_State* pState, const std::string& path, ServiceHandler& handler);
+	Service(lua_State* pState, Service& parent, const std::string& name, ServiceHandler& handler);
 
-	Service*	open(Mona::Expirable<Service>& expirableService,const std::string& path);
 	bool		open(bool create);
+	void		setReference(int reference);
 	void		close(bool full);
 
 	void		loadFile();
@@ -59,10 +61,11 @@ private:
 
 	static int	Index(lua_State* pState);
 
-	bool						_loaded;
-	bool						_created;
+	Mona::Exception				_ex;
+	int							_reference;
+	Service*					_pParent;
 	lua_State*					_pState;
-	std::vector<std::string>	_packages;
+	Mona::Time					_lastCheck;
 
 	std::map<std::string,Service*>	_services;
 	ServiceHandler&					_handler;

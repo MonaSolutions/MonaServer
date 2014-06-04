@@ -160,7 +160,8 @@ int	LUAInvoker::Publish(lua_State *pState) {
 	else {
 		if (ex)
 			SCRIPT_WARN(ex.error().c_str())
-		SCRIPT_NEW_OBJECT(Publication, LUAPublication, pPublication)
+		Script::AddObject<LUAPublication>(pState, *pPublication, true); // add a destructor
+		Script::ClearObject<LUAPublication>(pState, *pPublication); // remove of registry table (remove just persitent version because there is a destructor now)
 		lua_getmetatable(pState, -1);
 		lua_pushlightuserdata(pState, &invoker);
 		lua_setfield(pState, -2,"|invoker");
@@ -176,20 +177,20 @@ int	LUAInvoker::AbsolutePath(lua_State *pState) {
 }
 
 int	LUAInvoker::CreateUDPSocket(lua_State *pState) {
-	SCRIPT_CALLBACK(Invoker,invoker)
-		SCRIPT_NEW_OBJECT(LUAUDPSocket,LUAUDPSocket,new LUAUDPSocket(invoker.sockets,SCRIPT_READ_BOOL(false),pState))
+	SCRIPT_CALLBACK(Invoker, invoker)
+		Script::NewObject<LUAUDPSocket>(pState, *new LUAUDPSocket(invoker.sockets, SCRIPT_READ_BOOL(false), pState));
 	SCRIPT_CALLBACK_RETURN
 }
 
 int	LUAInvoker::CreateTCPClient(lua_State *pState) {
 	SCRIPT_CALLBACK(Invoker,invoker)
-		SCRIPT_NEW_OBJECT(LUATCPClient, LUATCPClient, new LUATCPClient(invoker.sockets, pState))
+		Script::NewObject<LUATCPClient>(pState, *new LUATCPClient(invoker.sockets, pState));
 	SCRIPT_CALLBACK_RETURN
 }
 
 int	LUAInvoker::CreateTCPServer(lua_State *pState) {
 	SCRIPT_CALLBACK(Invoker,invoker)
-		SCRIPT_NEW_OBJECT(LUATCPServer, LUATCPServer, new LUATCPServer(invoker.sockets, pState))
+		Script::NewObject<LUATCPServer>(pState, *new LUATCPServer(invoker.sockets, pState));
 	SCRIPT_CALLBACK_RETURN
 }
 
@@ -215,9 +216,9 @@ int LUAInvoker::ListFiles(lua_State *pState) {
 		Exception ex;
 		Files dir(ex, path);
 		UInt32 index = 0;
-		SCRIPT_NEW_OBJECT(LUAFiles, LUAFiles, new LUAFiles())
+		Script::NewObject<LUAFiles>(pState, *new LUAFiles());
 		for(auto itFile = dir.begin(); itFile != dir.end(); ++itFile) {
-			SCRIPT_NEW_OBJECT(LUAFilePath, LUAFilePath, new LUAFilePath(*itFile))
+			Script::NewObject<LUAFilePath>(pState, *new LUAFilePath(*itFile));
 			lua_rawseti(pState,-2,++index);
 		}
 	SCRIPT_CALLBACK_RETURN
@@ -304,9 +305,9 @@ int LUAInvoker::JoinGroup(lua_State* pState) {
 				Peer* pPeer = new Peer((Handler&)invoker);
 				memcpy((void*)pPeer->id, peerId, ID_SIZE);
 				Group& group(pPeer->joinGroup(groupId, NULL));
-				Script::AddObject<Group, LUAGroup>(pState, group);
+				Script::AddObject<LUAGroup>(pState, group);
 				LUAInvoker::AddGroup(pState);
-				SCRIPT_NEW_OBJECT(Peer, LUAMember, pPeer)
+				Script::NewObject<LUAMember>(pState, *pPeer);
 				LUAGroup::AddClient(pState, -2);
 				lua_replace(pState, -2);
 			}
@@ -361,7 +362,7 @@ int LUAInvoker::Get(lua_State *pState) {
 				SCRIPT_WRITE_FUNCTION(LUAInvoker::AbsolutePath)
 				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if (strcmp(name, "epochTime") == 0) {
-				SCRIPT_WRITE_NUMBER(Time::Now())
+				SCRIPT_WRITE_NUMBER(Time::Now()) // change
 			} else if (strcmp(name, "split") == 0) {
 				SCRIPT_WRITE_FUNCTION(LUAInvoker::Split)
 				SCRIPT_CALLBACK_FIX_INDEX(name)

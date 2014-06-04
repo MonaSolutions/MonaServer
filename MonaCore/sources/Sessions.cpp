@@ -54,7 +54,6 @@ Sessions::~Sessions() {
 		WARN("sessions are deleting");
 	Iterator it;
 	for (it = begin(); it != end(); ++it) {
-		it->second->expire();
 		it->second->kill(Session::SERVER_DEATH);
 		delete it->second;
 	}
@@ -97,7 +96,6 @@ void Sessions::remove(map<UInt32,Session*>::iterator it) {
 	}
 
 	removeByAddress(session);
-	session.expire();
 	session.kill();
 	_freeIds.emplace(session._id);
 	delete &session;

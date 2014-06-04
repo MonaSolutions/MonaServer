@@ -31,7 +31,7 @@ public:
 	static int Set(lua_State* pState);
 
 	static void Init(lua_State *pState, LUAUDPSocket& socket) {}
-	static int	Destroy(lua_State* pState);
+	static void	Clear(lua_State* pState, LUAUDPSocket& socket);
 
 private:
 	virtual ~LUAUDPSocket();
