@@ -41,10 +41,6 @@ public:
 	static bool			Exists(const std::string& path,bool any=false);
 	static bool			IsAbsolute(const std::string& path);
 	
-	/// Doesn't work for a folder
-	static UInt32		GetSize(Exception& ex,const std::string& path);
-
-	static Time&		GetLastModified(Exception& ex,const std::string& path, Time& time);
 	static Attributes&	GetAttributes(Exception& ex, const std::string& path, Attributes& attributes);
 
 	static std::string& GetName(const std::string& path, std::string& value);
@@ -66,6 +62,12 @@ public:
 	static std::vector<std::string>&	Unpack(const std::string& path, std::vector<std::string>& values);
 	static std::string&					Pack(const std::vector<std::string>& values, std::string& path);
 
+	/// Cross-platform stat function (to support utf8 names)
+#if defined(WIN32)
+	static int Stat(const std::string& path, struct _stat* status);
+#else
+	static int Stat(const std::string& path, struct stat* status);
+#endif
 	
 private:
 	static const std::string _PathSeparator;

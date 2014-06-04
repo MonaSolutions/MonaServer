@@ -72,12 +72,13 @@ void HTTPWriter::flush(bool full) {
 }
 
 void HTTPWriter::writeFile(const FilePath& file, UInt8 sortOptions, bool isApp) {
-		if (!pRequest) {
-			ERROR("No HTTP request to send file ",file.name())
-			return;
-		}
-		return createSender(*pRequest).writeFile(file,sortOptions,isApp);
-	}	
+
+	if (!pRequest) {
+		ERROR("No HTTP request to send file ",file.name())
+		return;
+	}
+	return createSender(*pRequest).writeFile(file,sortOptions,isApp);
+}	
 
 
 DataWriter& HTTPWriter::write(const string& code, HTTP::ContentType type, const string& subType, const UInt8* data,UInt32 size) {

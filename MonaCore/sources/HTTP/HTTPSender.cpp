@@ -73,7 +73,7 @@ bool HTTPSender::run(Exception& ex) {
 		} else {
 			// file doesn't exist
 			if (_file.lastModified()==0)
-				writeError(404, String::Format(_buffer,"File ", _file.path(), " doesn't exist"));
+				writeError(404, String::Format(_buffer,"The requested URL ", _file.path(), " was not found on this server"));
 			else {
 				Exception exIgnore;
 				Files files(exIgnore, _file.fullPath());
@@ -103,7 +103,13 @@ bool HTTPSender::run(Exception& ex) {
 				} 
 				// File
 				else {
+#if defined(_WIN32)
+					wchar_t wFile[_MAX_PATH];
+					MultiByteToWideChar(CP_UTF8, 0, _file.fullPath().c_str(), -1, wFile, _MAX_PATH);
+					ifstream ifile(wFile, ios::in | ios::binary | ios::ate);
+#else
 					ifstream ifile(_file.fullPath(), ios::in | ios::binary | ios::ate);
+#endif
 					if (!ifile.good()) {
 						exIgnore.set(Exception::NIL, "Impossible to open ", _file.path(), " file");
 						writeError(423,  exIgnore.error());
@@ -262,7 +268,7 @@ void HTTPSender::replaceTemplateTags(PacketWriter& packet, ifstream& ifile, cons
 	char* current = (char*)packet.buffer(size+sizeParameters); // reserve more memory to change <%name%> field
 	ifile.read(current, size);
 	// iterate on content to replace "<% key %>" fields
-	UInt32 newSize(size);
+	const char* begin = current;
 	const char* end = current + size;
 	UInt8 step(0);
 	char* signifiant(NULL);
@@ -312,13 +318,13 @@ void HTTPSender::replaceTemplateTags(PacketWriter& packet, ifstream& ifile, cons
 				// give the size available required
 				if (available < value.size()) {
 					available = value.size()-available; // to add
-					newSize += available;
-					memmove(current+1,current+1+available,end-current-1);
+					memmove(current+1+available,current+1,end-current-1);
+					end += available;
 					current += available-1;
 				} else if (available>value.size()) {
 					available = available-value.size(); // to remove
-					newSize -= available;
-					memcpy(current+1-available,current+1,end-current-1);
+                    memmove(current+1-available,current+1,end-current-1);
+					end -= available;
 					current -= available-1;
 				}
 				// replace <% key %> by value
@@ -330,7 +336,7 @@ void HTTPSender::replaceTemplateTags(PacketWriter& packet, ifstream& ifile, cons
 	}
 
 	// resize final stream
-	packet.clear(pos+newSize);
+	packet.clear(pos+(end-begin));
 }
 
 } // namespace Mona

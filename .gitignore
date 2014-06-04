@@ -47,5 +47,4 @@ Debug
 /MonaServer/MonaServer.files
 /MonaServer/MonaServer.includes
 _build
-_static
 www

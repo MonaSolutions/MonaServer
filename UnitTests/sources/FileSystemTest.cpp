@@ -79,9 +79,6 @@ ADD_TEST(FileSystemTest, Properties) {
 	FileSystem::Attributes attributes;
 	FileSystem::GetAttributes(ex, Path2,attributes);
 	CHECK(!ex)
-	Time lastModified;
-	CHECK(FileSystem::GetLastModified(ex, Path2,lastModified)==attributes.lastModified && !ex);
-	CHECK(attributes.size==0 && FileSystem::GetSize(ex, Path2)==0 && ex);
 	string value;
 	CHECK(FileSystem::GetName(Path2,value)==".MonaFileSystemTests");
 	CHECK(FileSystem::GetBaseName(Path2,value)=="");

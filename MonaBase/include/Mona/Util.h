@@ -55,6 +55,8 @@ public:
 	static Parameters& UnpackQuery(const std::string& query, Parameters& properties) { return UnpackQuery(query.data(), properties); }
 	static Parameters& UnpackQuery(const char* query, Parameters& properties);
 
+	static void EncodeURI(const std::string& str, std::string& encodedStr);
+
 	static char DecodeURI(const char*& value) { if (!value) return '%';  DecodeURI(value, value += strlen(value)); }
 	static char DecodeURI(const char*& begin,const char* end);
 
@@ -182,6 +184,7 @@ private:
 	static std::map<THREAD_ID, std::string>	_ThreadNames;
 	static std::recursive_mutex				_MutexThreadNames;
 
+	static const std::string				_RESERVED;
 	static const char						_B64Table[65];
 	static const char						_ReverseB64Table[128];
 };

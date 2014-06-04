@@ -187,8 +187,12 @@ void HTTPSession::packetHandler(PacketReader& reader) {
 
 		// onConnection
 		if (!peer.connected) {
+			// Assign name
+			string buffer;
+			queryParameters.getString("name", buffer);
+			peer.properties().setString("name", buffer);
+			
 			peer.OnCallProperties::subscribe(onCallProperties); // subscribe to client.properties(...)
-			queryParameters.getString("name", (string&)peer.name);
 
 			peer.onConnection(ex, _writer,propertiesReader);
 			if (!ex && peer.connected) {
@@ -282,6 +286,7 @@ void HTTPSession::processGet(Exception& ex, const shared_ptr<HTTPPacket>& pPacke
 	if (!methodCalled && !ex) {
 		ParameterWriter parameterWriter(pPacket->sendingInfos().parameters);
 		if (peer.onRead(ex, _filePath, propertiesReader, parameterWriter) && !ex) {
+			pPacket->sendingInfos().sizeParameters = parameterWriter.size();
 			// If onRead has been authorised, and that the file is a multimedia file, and it doesn't exists (no VOD, filePath.lastModified()==0 means "doesn't exists")
 			// Subscribe for a live stream with the basename file as stream name
 			if (_filePath.lastModified() == 0) {
@@ -306,7 +311,6 @@ void HTTPSession::processGet(Exception& ex, const shared_ptr<HTTPPacket>& pPacke
 				_writer.writeFile(_filePath, sortOptions, pPacket->filePos==string::npos);
 			}
 		}
-		pPacket->sendingInfos().sizeParameters = parameterWriter.size();
 	}
 }
 

@@ -51,6 +51,7 @@ Timezone::TransitionRule		Timezone::_StartDST;
 Timezone::TransitionRule		Timezone::_EndDST;
 Timezone						Timezone::_Timezone; // to guarantee that it will be build after _Environment
 
+const std::string Util::_RESERVED           = "%<>{}|\\\"^`#?";
 
 const char Util::_B64Table[65] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
@@ -118,8 +119,8 @@ size_t Util::UnpackUrl(const string& url, string& address, string& path, string&
 	path.clear();
 	query.clear();
 
-	auto it = url.begin();
-	auto end = url.end();
+	const char* it = url.c_str();
+	const char* const end = it+url.size();
 	// Get address
 	while (it != end) {
 		if (*it == '/' || *it == '\\') // no address, just path
@@ -141,39 +142,42 @@ size_t Util::UnpackUrl(const string& url, string& address, string& path, string&
 	}
 
 	// Normalize path => replace // by / and \ by / AND remove the last '/'
-	path.assign(it,end);
 	bool isFile(false);
-    auto itPath(path.begin());
-	auto itField(itPath);
-    while (itPath != path.end()) {
-        if (*itPath == '?') {
-			// query
-			query.assign(++itPath,path.end());
-			// remove query part from path
-			path.resize(path.size()-(path.end()-itPath)-1);
+	size_t lastPos = 0; /// Position of last '/'
+    while (it != end) {
+		// Extract query part
+        if (*it == '?') {
+			query.assign(++it,end);
 			// remove last slashes
 			while (!path.empty() && (path.back() == '/' || path.back() == '\\'))
 				path.resize(path.size() - 1);
 			break;
 		}
-        if (*itPath == '/' || *itPath == '\\') {
-            ++itPath;
-            while (itPath != path.end() && (*itPath == '/' || *itPath == '\\'))
-                itPath = path.erase(itPath); // erase multiple slashes
-		   isFile = false;
-           if (itPath == path.end()) {
-				// remove the last /
-                path.erase(--itPath);
-				break;
+		// Add slash
+        if (*it == '/' || *it == '\\') {
+            ++it;
+            while (it != end && (*it == '/' || *it == '\\'))
+                ++it;
+			isFile = false;
+			if (it != end) {
+				path += '/'; // We don't add the last slash
+				lastPos = path.size();
 			}
-			itField = itPath;
-		} else {
-			itPath++;
+		} 
+		// Add current character
+		else {
+			if (*it == '+')
+				path += ' ';
+			else if (*it == '%')
+				path += DecodeURI(it,end);
+			else
+				path += *it;
+			++it;
 			if (!isFile)
 				isFile = true;
 		}
 	}
-	return isFile ? (itField-path.begin()) : string::npos;
+	return isFile ? lastPos : string::npos;
 }
 
 Parameters& Util::UnpackQuery(const char* query, Parameters& properties) {
@@ -216,6 +220,27 @@ Parameters& Util::UnpackQuery(const char* query, Parameters& properties) {
 		properties.setString(name,value);
 	}
 	return properties;
+}
+
+void Util::EncodeURI(const std::string& str, std::string& encodedStr) {
+
+	for (std::string::const_iterator it = str.begin(); it != str.end(); ++it)
+	{
+		char c = *it;
+		if ((c >= 'a' && c <= 'z') || 
+		    (c >= 'A' && c <= 'Z') || 
+		    (c >= '0' && c <= '9') ||
+		    c == '-' || c == '_' || 
+		    c == '.' || c == '~')
+		{
+			encodedStr += c;
+		}
+		else if (c <= 0x20 || c >= 0x7F || _RESERVED.find(c) != std::string::npos)
+		{
+			String::Append(encodedStr, '%', Format<UInt8>("%2X", (UInt8)c));
+		}
+		else encodedStr += c;
+	}
 }
 
 char Util::DecodeURI(const char*& begin,const char* end) {

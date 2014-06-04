@@ -36,8 +36,12 @@ Files::Files(Exception& ex, const string& path) : _directory(path) {
 #if defined(_WIN32)
 	string directory(_directory);
 	directory.append("*");
-	WIN32_FIND_DATA	fileData;
-	HANDLE	fileHandle = FindFirstFile(directory.c_str(), &fileData);
+
+	wchar_t wDirectory[_MAX_PATH];
+	MultiByteToWideChar(CP_UTF8, 0, directory.c_str(), -1, wDirectory, _MAX_PATH);
+	
+	WIN32_FIND_DATAW fileData;
+	HANDLE	fileHandle = FindFirstFileW(wDirectory, &fileData);
 	if (fileHandle == INVALID_HANDLE_VALUE) {
 		if ((err = GetLastError()) != ERROR_NO_MORE_FILES) {
 			ex.set(Exception::FILE, "Impossible to open directory ",_directory);
@@ -46,11 +50,13 @@ Files::Files(Exception& ex, const string& path) : _directory(path) {
 		return;
 	}
 	do {
-		if (strcmp(fileData.cFileName, ".") != 0 && strcmp(fileData.cFileName, "..") != 0) {
+		if (wcscmp(fileData.cFileName, L".") != 0 && wcscmp(fileData.cFileName, L"..") != 0) {
 			_files.emplace_back(_directory);
-			_files.back().append(fileData.cFileName);
+			char file[_MAX_FNAME];
+			WideCharToMultiByte(CP_UTF8, 0, fileData.cFileName, -1, file, _MAX_FNAME, NULL, NULL);
+			_files.back().append(file);
 		}
-	} while (FindNextFile(fileHandle, &fileData) != 0);
+	} while (FindNextFileW(fileHandle, &fileData) != 0);
 	FindClose(fileHandle);
 #else
 	DIR* pDirectory = opendir(_directory.c_str());
