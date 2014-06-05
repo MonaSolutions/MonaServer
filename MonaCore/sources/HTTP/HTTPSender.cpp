@@ -19,7 +19,6 @@ This file is a part of Mona.
 
 #include "Mona/HTTP/HTTPSender.h"
 #include "Mona/FileSystem.h"
-#include "Mona/Files.h"
 #include "Mona/RawWriter.h"
 #include "Mona/Logs.h"
 #include "Mona/HTTP/HTTPWriter.h"
@@ -74,67 +73,64 @@ bool HTTPSender::run(Exception& ex) {
 			// file doesn't exist
 			if (_file.lastModified()==0)
 				writeError(404, String::Format(_buffer,"The requested URL ", _file.path(), " was not found on this server"));
+			// Folder
+			else if (_file.isDirectory()) {
+				// Connected to parent => redirect to url + '/'
+				if (!_isApp) {
+					// Redirect to the real path of directory
+					DataWriter& response = write("301 Moved Permanently");
+					BinaryWriter& writer = response.packet;
+					String::Format(_buffer, "http://", _serverAddress, _file.path(), '/');
+					HTTP_BEGIN_HEADER(writer)
+						HTTP_ADD_HEADER(writer, "Location", _buffer)
+					HTTP_END_HEADER(writer)
+					HTML_BEGIN_COMMON_RESPONSE(writer, "Moved Permanently")
+						writer.writeRaw("The document has moved <a href=\"", _buffer, "\">here</a>.");
+					HTML_END_COMMON_RESPONSE(writer, _buffer)
+				} else {
+					DataWriter& response = write("200 OK", HTTP::CONTENT_TEXT, "html; charset=utf-8");
+					BinaryWriter& writer = response.packet;
+					HTTP_BEGIN_HEADER(writer)
+						HTTP_ADD_HEADER(writer,"Last-Modified", date.toString(Date::HTTP_FORMAT, _buffer))
+					HTTP_END_HEADER(writer)
+
+					HTTP::WriteDirectoryEntries(writer, _serverAddress, _file.fullPath(), _file.path(), _sortOptions);
+				}
+			} 
+			// File
 			else {
-				Exception exIgnore;
-				Files files(exIgnore, _file.fullPath());
-				// Folder
-				if (!exIgnore) {
-					// Connected to parent => redirect to url + '/'
-					if (!_isApp) {
-						// Redirect to the real path of directory
-						DataWriter& response = write("301 Moved Permanently");
-						BinaryWriter& writer = response.packet;
-						String::Format(_buffer, "http://", _serverAddress, _file.path(), '/');
-						HTTP_BEGIN_HEADER(writer)
-							HTTP_ADD_HEADER(writer, "Location", _buffer)
-						HTTP_END_HEADER(writer)
-						HTML_BEGIN_COMMON_RESPONSE(writer, "Moved Permanently")
-							writer.writeRaw("The document has moved <a href=\"", _buffer, "\">here</a>.");
-						HTML_END_COMMON_RESPONSE(writer, _buffer)
-					} else {
-						DataWriter& response = write("200 OK",HTTP::CONTENT_TEXT,"html; charset=ansi");
-						BinaryWriter& writer = response.packet;
-						HTTP_BEGIN_HEADER(writer)
-							HTTP_ADD_HEADER(writer,"Last-Modified", date.toString(Date::HTTP_FORMAT, _buffer))
-						HTTP_END_HEADER(writer)
-
-						HTTP::WriteDirectoryEntries(writer,_serverAddress,_file.path(),files,_sortOptions);
-					}
-				} 
-				// File
-				else {
 #if defined(_WIN32)
-					wchar_t wFile[_MAX_PATH];
-					MultiByteToWideChar(CP_UTF8, 0, _file.fullPath().c_str(), -1, wFile, _MAX_PATH);
-					ifstream ifile(wFile, ios::in | ios::binary | ios::ate);
+				wchar_t wFile[_MAX_PATH];
+				MultiByteToWideChar(CP_UTF8, 0, _file.fullPath().c_str(), -1, wFile, _MAX_PATH);
+				ifstream ifile(wFile, ios::in | ios::binary | ios::ate);
 #else
-					ifstream ifile(_file.fullPath(), ios::in | ios::binary | ios::ate);
+				ifstream ifile(_file.fullPath(), ios::in | ios::binary | ios::ate);
 #endif
-					if (!ifile.good()) {
-						exIgnore.set(Exception::NIL, "Impossible to open ", _file.path(), " file");
-						writeError(423,  exIgnore.error());
-					} else {
-						// determine the content-type
-						string subType;
-						HTTP::ContentType type = HTTP::ExtensionToMIMEType(_file.extension(), subType);	
+				if (!ifile.good()) {
+					Exception ex;
+					ex.set(Exception::NIL, "Impossible to open ", _file.path(), " file");
+					writeError(423,  ex.error());
+				} else {
+					// determine the content-type
+					string subType;
+					HTTP::ContentType type = HTTP::ExtensionToMIMEType(_file.extension(), subType);	
 
-						DataWriter& response = write("200 OK", type,subType);
-						PacketWriter& packet = response.packet;
-						HTTP_BEGIN_HEADER(packet)
-							HTTP_ADD_HEADER(packet,"Last-Modified", date.toString(Date::HTTP_FORMAT, _buffer))
-						HTTP_END_HEADER(packet)
+					DataWriter& response = write("200 OK", type,subType);
+					PacketWriter& packet = response.packet;
+					HTTP_BEGIN_HEADER(packet)
+						HTTP_ADD_HEADER(packet,"Last-Modified", date.toString(Date::HTTP_FORMAT, _buffer))
+					HTTP_END_HEADER(packet)
 
-						// TODO see if filter is correct
-						if (type == HTTP::CONTENT_TEXT && _pInfos && _pInfos->parameters.count())
-							replaceTemplateTags(packet, ifile, _pInfos->parameters, _pInfos->sizeParameters);
-						else {
+					// TODO see if filter is correct
+					if (type == HTTP::CONTENT_TEXT && _pInfos && _pInfos->parameters.count())
+						replaceTemplateTags(packet, ifile, _pInfos->parameters, _pInfos->sizeParameters);
+					else {
 
-							// push the entire file content to memory
-							UInt32 size = (UInt32)ifile.tellg();
-							ifile.seekg(0);
-							char* current = (char*)packet.buffer(size); // reserve memory for file
-							ifile.read(current, size);
-						}
+						// push the entire file content to memory
+						UInt32 size = (UInt32)ifile.tellg();
+						ifile.seekg(0);
+						char* current = (char*)packet.buffer(size); // reserve memory for file
+						ifile.read(current, size);
 					}
 				}
 			}

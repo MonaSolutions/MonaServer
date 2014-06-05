@@ -37,6 +37,11 @@ public:
 		bool	isDirectory;
 	};
 
+	typedef std::function<void(const std::string&)> ForEach; /// FileSystem::ListDir function type handler
+
+	/// Iterate over files under directory path
+	static void			Paths(Exception& ex, const std::string& path, const FileSystem::ForEach& forEach);
+
 	/// In giving a path with /, it tests one folder existance, otherwise file existance (test windows device without / => C:)
 	static bool			Exists(const std::string& path,bool any=false);
 	static bool			IsAbsolute(const std::string& path);

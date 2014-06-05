@@ -21,7 +21,6 @@ This file is a part of Mona.
 
 #include "Mona/Mona.h"
 #include "Mona/BinaryWriter.h"
-#include "Mona/Files.h"
 #include "Mona/MapParameters.h"
 #include "Mona/FilePath.h"
 #include "Mona/DataWriter.h"
@@ -165,7 +164,7 @@ public:
 	static std::string&	CodeToMessage(UInt16 code,std::string& message);
 
 	static DataWriter* NewDataWriter(const PoolBuffers& poolBuffers,const std::string& subType);
-	static void WriteDirectoryEntries(BinaryWriter& writer, const std::string& serverAddress, const std::string& path, const Files& entries,UInt8 sortOptions);
+	static void WriteDirectoryEntries(BinaryWriter& writer, const std::string& serverAddress, const std::string& fullPath, const std::string& path, UInt8 sortOptions);
 	
 	static void			ReadMessageFromType(Exception& ex, HTTPSession& caller, const std::shared_ptr<HTTPPacket>& httpPacket, PacketReader& packet);
 

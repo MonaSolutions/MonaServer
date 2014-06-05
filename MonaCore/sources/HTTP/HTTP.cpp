@@ -299,7 +299,19 @@ private:
 };
 
 
-void HTTP::WriteDirectoryEntries(BinaryWriter& writer, const string& serverAddress, const std::string& path, const Files& entries,UInt8 sortOptions) {
+void HTTP::WriteDirectoryEntries(BinaryWriter& writer, const string& serverAddress, const std::string& fullPath, const std::string& path, UInt8 sortOptions) {
+
+	Exception ex;
+	vector<FilePath*> files;
+	FileSystem::ForEach forEach([&files](const string& filePath){
+		files.emplace_back(new FilePath(filePath));
+	});
+
+	FileSystem::Paths(ex, fullPath, forEach);
+	if (ex) {
+		WARN(ex.error())
+		return;
+	}
 
 	char sort[] = "D";
 	if (sortOptions&SORT_DESC)
@@ -319,12 +331,8 @@ void HTTP::WriteDirectoryEntries(BinaryWriter& writer, const string& serverAddre
 		writer.writeRaw("<tr><td><a href=\"http://", serverAddress,path,"/..\">Parent directory</a></td><td>&nbsp;-</td><td>&nbsp;&nbsp;-</td></tr>\n");
 
 	// Sort entries
-	vector<FilePath*> files(entries.count());
-	int i = 0;
-	for (const string& entry : entries)
-		files[i++] = new FilePath(entry);
 	EntriesComparator comparator(sortOptions);
-	std::sort(files.begin(), files.end(),comparator);
+	std::sort(files.begin(), files.end(), comparator);
 
 	// Write entries
 	for (const FilePath* pFile : files) {

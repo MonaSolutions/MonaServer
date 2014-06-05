@@ -26,7 +26,7 @@ using namespace std;
 namespace Mona {
 
 HTTPWriter::HTTPWriter(TCPSession& session) : 
-		_session(session),_pThread(NULL),contentType(HTTP::CONTENT_TEXT),contentSubType("html; charset=utf-8"),Writer(session.peer.connected ? OPENED : OPENING) {
+		_session(session),_pThread(NULL),contentType(HTTP::CONTENT_TEXT),contentSubType("html"),Writer(session.peer.connected ? OPENED : OPENING) {
 }
 
 void HTTPWriter::close(const Exception& ex) {
@@ -94,17 +94,17 @@ DataWriter& HTTPWriter::write(const string& code, HTTP::ContentType type, const 
 DataWriter& HTTPWriter::writeResponse(UInt8 type) {
 	switch (type) {
 		case HTTP::RAW:
-			return write("200 OK",HTTP::CONTENT_TEXT,"plain; charset=utf-8");
+			return write("200 OK",HTTP::CONTENT_TEXT,"plain");
 		case HTTP::XML:
-			return write("200 OK", HTTP::CONTENT_APPLICATON,"xml; charset=utf-8");
+			return write("200 OK", HTTP::CONTENT_APPLICATON,"xml");
 		case HTTP::JSON:
-			return write("200 OK", HTTP::CONTENT_APPLICATON,"json; charset=utf-8");
+			return write("200 OK", HTTP::CONTENT_APPLICATON,"json");
 		case HTTP::SOAP:
-			return write("200 OK", HTTP::CONTENT_APPLICATON,"soap+xml; charset=utf-8");
+			return write("200 OK", HTTP::CONTENT_APPLICATON,"soap+xml");
 		case HTTP::CSS:
-			return write("200 OK", HTTP::CONTENT_TEXT,"css; charset=utf-8");
+			return write("200 OK", HTTP::CONTENT_TEXT,"css");
 		case HTTP::SVG:
-			return write("200 OK", HTTP::CONTENT_IMAGE,"svg+xml; charset=utf-8");
+			return write("200 OK", HTTP::CONTENT_IMAGE,"svg+xml");
 	}
 	return writeMessage();
 }

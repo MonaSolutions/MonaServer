@@ -22,7 +22,6 @@ This file is a part of Mona.
 #include "Script.h"
 #include "Mona/Time.h"
 #include "Mona/FilePath.h"
-#include "Mona/Files.h"
 
 class LUAFilePath {
 public:

@@ -27,7 +27,6 @@ This file is a part of Mona.
 #include "LUAFilePath.h"
 #include "LUABroadcaster.h"
 #include "Mona/Exceptions.h"
-#include "Mona/Files.h"
 #include "MonaServer.h"
 #include <openssl/evp.h>
 #include "Mona/JSONReader.h"
@@ -213,14 +212,17 @@ int	LUAInvoker::Md5(lua_State *pState) {
 int LUAInvoker::ListFiles(lua_State *pState) {
 	SCRIPT_CALLBACK(Invoker,invoker)
 		string path(MonaServer::WWWPath + "/" + SCRIPT_READ_STRING("") + "/");
-		Exception ex;
-		Files dir(ex, path);
+		
 		UInt32 index = 0;
 		Script::NewObject<LUAFiles>(pState, *new LUAFiles());
-		for(auto itFile = dir.begin(); itFile != dir.end(); ++itFile) {
-			Script::NewObject<LUAFilePath>(pState, *new LUAFilePath(*itFile));
+		
+		FileSystem::ForEach forEach([&pState, &index](const string& pathFile){
+			Script::NewObject<LUAFilePath>(pState, *new LUAFilePath(pathFile));
 			lua_rawseti(pState,-2,++index);
-		}
+		});
+
+		Exception ex;
+		FileSystem::Paths(ex, path, forEach);
 	SCRIPT_CALLBACK_RETURN
 }
 

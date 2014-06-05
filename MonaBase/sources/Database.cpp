@@ -18,7 +18,6 @@ This file is a part of Mona.
 */
 
 #include "Mona/Database.h"
-#include "Mona/Files.h"
 #include "Mona/FileSystem.h"
 #include "Mona/Util.h"
 #include <fstream>
@@ -131,45 +130,42 @@ void Database::processEntry(Exception& ex,Entry& entry) {
 
 	// remove possible old value after writing (and possible folder inside directory)
 	Exception ignore;
-	Files files(ignore, directory);
-	for (const string& item : files) {
-		if (FileSystem::GetName(item, file) == name)
-			continue;
-		FileSystem::Remove(ignore,item,true);
-	}
+	FileSystem::ForEach forEach([&ignore, name, &file](const string& path){
+
+		if (FileSystem::GetName(path, file) != name)
+			FileSystem::Remove(ignore, path, true);
+	});
+
+	FileSystem::Paths(ignore, directory, forEach);
 }
 
 
 bool Database::loadDirectory(Exception& ex, const string& directory, const string& path, DatabaseLoader& loader) {
 	Exception ignore; // no exception here, it can be created more later (simply "no data" boolean returned)
-	Files files(ignore, directory);
-	if (ignore)
-		return false; //no data here
-
 	string name;
 	bool hasData = false;
-	for (const string& item : files) {
-		string file(item);
-		if (FileSystem::Exists(FileSystem::MakeDirectory(file))) {
-			/// directory
-			hasData = loadDirectory(ex, file, path + "/" + FileSystem::GetName(item,name), loader);
-			continue;
-		}
 
-		FileSystem::GetName(FileSystem::MakeFile(file), name);
+	FileSystem::ForEach forEach([&ex, this, &hasData, path, &loader, &name](const string& filePath) {
+		/// directory
+		string dir(filePath);
+		FileSystem::GetName(filePath, name);
+		if (FileSystem::Exists(FileSystem::MakeDirectory(dir))) {
+			hasData = loadDirectory(ex, dir, path + "/" + name, loader);
+			return;
+		}
 
 		/// file
 		if (name.size() != 32) {
 			// just erase the file
-			FileSystem::Remove(ex,file);
-			continue;
+			FileSystem::Remove(ex,filePath);
+			return;
 		}
 
 		// read the file
-		ifstream ifile(file, ios::in | ios::binary | ios::ate);
+		ifstream ifile(filePath, ios::in | ios::binary | ios::ate);
 		if (!ifile.good()) {
-			ex.set(Exception::FILE, "Impossible to read file ", file);
-			continue;
+			ex.set(Exception::FILE, "Impossible to read file ", filePath);
+			return;
 		}
 		UInt32 size = (UInt32)ifile.tellg();
 		ifile.seekg(0);
@@ -184,14 +180,18 @@ bool Database::loadDirectory(Exception& ex, const string& directory, const strin
 		// compare with file name
 		if (name != value) {
 			// erase this data!
-			FileSystem::Remove(ex,file);
-			continue;
+			FileSystem::Remove(ex,filePath);
+			return;
 		}
 
 		hasData = true;
 		loader.onDataLoading(path, (const UInt8*)buffer.data(), buffer.size());
+	});
 
-	}
+	FileSystem::Paths(ignore, directory, forEach);
+	if (ignore)
+		return false; //no data here
+
 	if (!hasData)
 		FileSystem::Remove(ex,directory,true);
 	return hasData;

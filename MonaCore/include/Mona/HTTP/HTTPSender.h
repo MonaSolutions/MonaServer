@@ -58,7 +58,7 @@ public:
 private:
 	bool			run(Exception& ex);
 
-	DataWriter&		write(const std::string& code, HTTP::ContentType type = HTTP::CONTENT_TEXT, const std::string& subType = "html; charset=utf-8") { return writer(code, type, subType, NULL, 0); }
+	DataWriter&		write(const std::string& code, HTTP::ContentType type = HTTP::CONTENT_TEXT, const std::string& subType = "html") { return writer(code, type, subType, NULL, 0); }
 
 	/// \brief  Write content file and replace the "<% key %>" field 
 	/// by relating parameters[key]

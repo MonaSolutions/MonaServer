@@ -25,12 +25,12 @@ This file is a part of Mona.
     #include "windows.h"
 	#include "direct.h"
 #else
+    #include "dirent.h"
 	#include <unistd.h>
     #include "limits.h"
     #include "pwd.h"
 #endif
 #include "Mona/FileSystem.h"
-#include "Mona/Files.h"
 #include <set>
 
 
@@ -49,9 +49,7 @@ const string FileSystem::_PathSeparator(":");
 int FileSystem::Stat(const string& path, struct _stat* status) {
 	wchar_t wFile[_MAX_PATH];
 	MultiByteToWideChar(CP_UTF8, 0, path.c_str(), -1, wFile, _MAX_PATH);
-	wstring wfile(wFile);
-
-	return _wstat(wfile.c_str(), status);
+	return _wstat(wFile, status);
 }
 #else
 int FileSystem::Stat(const string& path, struct stat* status) {
@@ -121,12 +119,18 @@ void FileSystem::CreateDirectories(Exception& ex,const string& path) {
 
 
 bool FileSystem::CreateDirectory(const string& path) {
+#if defined(_WIN32)
+	struct _stat status;
+#else
 	struct stat status;
+#endif
 	string file(path);
-	if (::stat(MakeFile(file).c_str(), &status) == 0) // exists already
+	if (Stat(MakeFile(file), &status) == 0) // exists already
 		return status.st_mode&S_IFDIR ? true : false;
 #if defined(_WIN32)
-	return _mkdir(path.c_str()) == 0;
+	wchar_t wFile[_MAX_PATH];
+	MultiByteToWideChar(CP_UTF8, 0, path.c_str(), -1, wFile, _MAX_PATH);
+	return _wmkdir(wFile) == 0;
 #else
     return mkdir(path.c_str(),S_IRWXU | S_IRWXG | S_IRWXO) == 0;
 #endif
@@ -134,10 +138,10 @@ bool FileSystem::CreateDirectory(const string& path) {
 
 bool FileSystem::Remove(Exception& ex,const string& path,bool all) {
 	if (all) {
-		Exception exc;
-		Files files(exc, path); // if exception it's a file or a not existed folder
-		for (const string& file : files)
-			Remove(ex, file,true);
+		FileSystem::ForEach forEach([&ex](const string& filePath){
+			Remove(ex, filePath, true);
+		});
+		Paths(ex, path, forEach); // if exception it's a file or a not existent folder
 	}
 
 	if (!Exists(path, true))
@@ -145,13 +149,59 @@ bool FileSystem::Remove(Exception& ex,const string& path,bool all) {
 	if (remove(path.c_str()) == 0)
 		return !ex;
 #if defined(_WIN32)
-	if (RemoveDirectoryA(path.c_str()) != 0)
+	wchar_t wFile[_MAX_PATH];
+	MultiByteToWideChar(CP_UTF8, 0, path.c_str(), -1, wFile, _MAX_PATH);
+	if (RemoveDirectoryW(wFile) != 0)
 		return !ex;
 #endif
 	ex.set(Exception::FILE, "Impossible to remove ", path);
 	return false;
 }
 
+void FileSystem::Paths(Exception& ex, const string& path, const FileSystem::ForEach& forEach) {
+	int err = 0;
+	string directory(path);
+	FileSystem::MakeDirectory(directory);
+#if defined(_WIN32)
+	directory.append("*");
+
+	wchar_t wDirectory[_MAX_PATH];
+	MultiByteToWideChar(CP_UTF8, 0, directory.c_str(), -1, wDirectory, _MAX_PATH);
+	
+	WIN32_FIND_DATAW fileData;
+	HANDLE	fileHandle = FindFirstFileW(wDirectory, &fileData);
+	if (fileHandle == INVALID_HANDLE_VALUE) {
+		if ((err = GetLastError()) != ERROR_NO_MORE_FILES) {
+			ex.set(Exception::FILE, "The system cannot find the directory ", path);
+			return;
+		}
+		return;
+	}
+	do {
+		if (wcscmp(fileData.cFileName, L".") != 0 && wcscmp(fileData.cFileName, L"..") != 0) {
+			char file[_MAX_FNAME];
+			WideCharToMultiByte(CP_UTF8, 0, fileData.cFileName, -1, file, _MAX_FNAME, NULL, NULL);
+			string pathFile(path);
+			forEach(String::Append(MakeDirectory(pathFile), file));
+		}
+	} while (FindNextFileW(fileHandle, &fileData) != 0);
+	FindClose(fileHandle);
+#else
+	DIR* pDirectory = opendir(directory.c_str());
+	if (!pDirectory) {
+		ex.set(Exception::FILE, "The system cannot find the directory ",directory);
+		return;
+	}
+	struct dirent* pEntry(NULL);
+	while(pEntry = readdir(pDirectory)) {
+		if (strcmp(pEntry->d_name, ".")!=0 && strcmp(pEntry->d_name, "..")!=0) {
+			string pathFile(directory);
+            forEach(String::Append(pathFile, pEntry->d_name));
+		}
+	}
+	closedir(pDirectory);
+#endif
+}
 
 string& FileSystem::GetName(const string& path, string& value) {
 	value.assign(path);

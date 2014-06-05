@@ -122,7 +122,6 @@
     <ClCompile Include="sources\Date.cpp" />
     <ClCompile Include="sources\Exceptions.cpp" />
     <ClCompile Include="sources\FilePath.cpp" />
-    <ClCompile Include="sources\Files.cpp" />
     <ClCompile Include="sources\DNS.cpp" />
     <ClCompile Include="sources\FileSystem.cpp" />
     <ClCompile Include="sources\FileWatcher.cpp" />
@@ -178,7 +177,6 @@
     <ClInclude Include="include\Mona\Date.h" />
     <ClInclude Include="include\Mona\Event.h" />
     <ClInclude Include="include\Mona\FilePath.h" />
-    <ClInclude Include="include\Mona\Files.h" />
     <ClInclude Include="include\Mona\DNS.h" />
     <ClInclude Include="include\Mona\Exceptions.h" />
     <ClInclude Include="include\Mona\FileSystem.h" />
