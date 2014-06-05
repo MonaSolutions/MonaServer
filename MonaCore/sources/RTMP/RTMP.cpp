@@ -47,14 +47,17 @@ const UInt8 FMSKey[] = {
 
 UInt8	 AlignData[1536];
 
-UInt32 RTMP::GetDigestPos(const UInt8* data,bool middle) {
+UInt16 RTMP::GetDigestPos(const UInt8* data, bool middle) {
 	UInt16 pos = 13;
 	if(middle)
 		pos += 764;
-	return ((data[pos-4] + data[pos-3] + data[pos-2] + data[pos-1])%728)+pos;
+	pos += ((data[pos-4] + data[pos-3] + data[pos-2] + data[pos-1])%728);
+	if (pos > (1505-HMAC_KEY_SIZE))
+		pos = 0;
+	return pos;
 }
 
-UInt32 RTMP::GetDHPos(const UInt8* data,bool middle) {
+UInt16 RTMP::GetDHPos(const UInt8* data,bool middle) {
 	UInt16 pos = 772;
 	if(!middle)
 		pos += 764;
@@ -79,12 +82,18 @@ const UInt8* RTMP::ValidateClient(Crypto& crypto,BinaryReader& reader,bool& midd
 const UInt8* RTMP::ValidateClientScheme(Crypto& crypto,BinaryReader& reader,bool middleKey) {
 	reader.reset();
 	UInt16 pos = GetDigestPos(reader.current(),middleKey);
+	if (pos == 0)
+		return NULL;
 
 	UInt8 content[1504];
 	reader.reset(1);
 	memcpy(content, reader.current(), pos-1);
 	reader.reset(pos);
-	memcpy(content+pos-1, reader.current()+HMAC_KEY_SIZE,reader.available()-HMAC_KEY_SIZE);
+	UInt16 size(reader.available() - HMAC_KEY_SIZE);
+	--pos;
+	if (size > (sizeof(content)-pos))
+		return NULL;
+	memcpy(content + pos, reader.current()+HMAC_KEY_SIZE,size);
 
 	UInt8 hash[HMAC_KEY_SIZE];
 	crypto.hmac(EVP_sha256(),FPKey,sizeof(FPKey),content,sizeof(content),hash);
@@ -96,7 +105,7 @@ const UInt8* RTMP::ValidateClientScheme(Crypto& crypto,BinaryReader& reader,bool
 
 
 void RTMP::WriteDigestAndKey(Crypto& crypto,UInt8* data,const UInt8* challengeKey,bool middleKey) {
-	UInt32 serverDigestOffset = RTMP::GetDigestPos(data, middleKey);
+	UInt16 serverDigestOffset = RTMP::GetDigestPos(data, middleKey);
 
 	UInt8 content[1504];
 	memcpy(content, data+1, serverDigestOffset-1);

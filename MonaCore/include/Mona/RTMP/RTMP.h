@@ -49,8 +49,8 @@ public:
 		DEFAULT_WIN_ACKSIZE = 131072 // TODO default value?
 	};
 
-	static UInt32			GetDigestPos(const UInt8* data,bool middle);
-	static UInt32			GetDHPos(const UInt8* data,bool middle);
+	static UInt16			GetDigestPos(const UInt8* data,bool middle);
+	static UInt16			GetDHPos(const UInt8* data,bool middle);
 	static const UInt8*		ValidateClient(Crypto& crypto,BinaryReader& reader,bool& middleKey);
 	static void				WriteDigestAndKey(Crypto& crypto,UInt8* data,const UInt8* challengeKey,bool middleKey);
 	static void				ComputeRC4Keys(Crypto& crypto,const UInt8* pubKey,UInt32 pubKeySize,const UInt8* farPubKey,UInt32 farPubKeySize,const Buffer& sharedSecret,RC4_KEY& decryptKey,RC4_KEY& encryptKey);
