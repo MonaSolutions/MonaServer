@@ -95,9 +95,7 @@ bool HTTPSession::buildPacket(PoolBuffer& pBuffer,PacketReader& packet) {
 	if(_isWS)
 		return WSSession::buildPacket(pBuffer,packet);
 	// consumes all!
-	shared_ptr<HTTPPacketBuilding> pHTTPPacketBuilding(new HTTPPacketBuilding(invoker,pBuffer,_ppBuffer));
-	_packets.emplace_back(pHTTPPacketBuilding->pPacket);
-	decode<HTTPPacketBuilding>(pHTTPPacketBuilding);
+	_packets.emplace_back(decode<HTTPPacketBuilding>(pBuffer,_ppBuffer).pPacket);
 	return true;
 }	
 

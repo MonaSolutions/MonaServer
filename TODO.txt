@@ -44,6 +44,7 @@ DataReader::readString
 - Check Date auto parsing, pour quelque chose comme "toto"
 - Replace String::Split to use forEach version more faster 
 - Fix Windows service!
+- Faire le tour des set pour remplacer par des unordered_set quand entier 
 
 Buffer -> vérifier tous les resize, pour voir si ça dépasse la limite possible du systeme
 File -> prend un path en parametre, et peut faire un read  + write asynchrone ou synchrone

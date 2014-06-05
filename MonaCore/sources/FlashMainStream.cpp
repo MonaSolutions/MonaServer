@@ -186,21 +186,19 @@ void FlashMainStream::rawHandler(UInt8 type,PacketReader& packet,FlashWriter& wr
 		// setBufferTime
 		UInt32 streamId = packet.read32();
 		if(streamId==0) {
-			setBufferTime(packet.read32());
+			bufferTime(packet.read32());
 			return;
 		}
-		FlashStream* pStream = stream(streamId); // TODO checker!
+		FlashStream* pStream = stream(streamId);
 		if (!pStream) {
 			ERROR("setBufferTime message for a unknown ",streamId," stream")
 			return;
 		}
-		UInt32 ms = packet.read32();
-		INFO("setBufferTime ",ms," on stream ",pStream->id)
 		// To do working the buffertime on receiver side
 		BinaryWriter& raw = writer.writeRaw();
 		raw.write16(0);
 		raw.write32(pStream->id);
-		pStream->setBufferTime(ms);
+		pStream->bufferTime(packet.read32());
 		return;
 	}
 

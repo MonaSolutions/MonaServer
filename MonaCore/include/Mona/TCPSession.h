@@ -30,17 +30,17 @@ class TCPSession : public Session, public virtual Object {
 public:
 	
 	void kill(UInt32 type=NORMAL_DEATH) { _client.disconnect(); Session::kill(type); }
-
-	template<typename DecodingType>
-	void decode(const std::shared_ptr<DecodingType>& pDecoding,const SocketAddress& address) {
+	
+	template <typename DecodingType, typename ...Args>
+	DecodingType& decode(const SocketAddress& address, Args&&... args) {
 		WARN("TCP Session ", name(), " cannot updated its address (TCP session is in a connected way");
-		decode(pDecoding);
+		return decode<DecodingType>(args ...);
 	}
 
-	template<typename DecodingType>
-	void decode(const std::shared_ptr<DecodingType>& pDecoding) {
+	template <typename DecodingType, typename ...Args>
+	DecodingType& decode(Args&&... args) {
 		++_receptions.back();
-		Session::decode(pDecoding);
+		return Session::decode<DecodingType>(args ...);
 	}
 
 	void receive(PacketReader& packet, const SocketAddress& address) {

@@ -33,7 +33,7 @@ namespace Events {
 };
 
 class Protocol;
-class Session : public virtual Object,
+class Session : public Expirable<Session>, public virtual Object,
 	public Events::OnAddressChange {
 	friend class Sessions;
 
@@ -64,22 +64,19 @@ public:
 	const bool			died;
 	
 	bool				dumpJustInDebug;
+
+
 	static void	DumpResponse(const UInt8* data, UInt32 size, const SocketAddress& address, bool justInDebug = false);
 	void dumpResponse(const UInt8* data, UInt32 size, bool justInDebug=false) { DumpResponse(data, size, peer.address, justInDebug); }
 
-	template<typename DecodingType>
-	void decode(const std::shared_ptr<DecodingType>& pDecoding) {
-		pDecoding->Events::OnDecoded::subscribe(onDecoded);
+	template <typename DecodingType, typename ...Args>
+	DecodingType& decode(Args&&... args) {
+		std::shared_ptr<DecodingType> pDecoding(new DecodingType(invoker, *this, args ...));
 		Exception ex;
 		_pDecodingThread = invoker.poolThreads.enqueue<DecodingType>(ex, pDecoding, _pDecodingThread);
 		if (ex)
 			ERROR("Impossible to decode packet of protocol ", protocolName(), " on session ", name(), ", ", ex.error());
-	}
-
-	template<typename DecodingType>
-	void decode(const std::shared_ptr<DecodingType>& pDecoding,const SocketAddress& address) {
-		pDecoding->address.set(address);
-		decode(pDecoding);
+		return *pDecoding;
 	}
 
 	virtual void		receive(PacketReader& packet);
@@ -102,16 +99,13 @@ protected:
 	Session(Protocol& protocol,Invoker& invoker, const char* name=NULL);
 	Session(Protocol& protocol, Invoker& invoker, const std::shared_ptr<Peer>& pPeer, const char* name = NULL);
 
-	template<typename DecodingType> 
-	DecodingType* decoder() { return onDecoded.trigger<DecodingType>(); }
-
 private:
+
 	virtual void		packetHandler(PacketReader& packet)=0;
 
-
 	const std::string&			protocolName();
-	Decoding::OnDecoded::Type	onDecoded;
-	
+
+
 	PoolThread*					_pDecodingThread;
 	mutable std::string			_name;
 	UInt32						_id;

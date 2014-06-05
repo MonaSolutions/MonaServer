@@ -68,8 +68,6 @@ Service* Service::open(Exception& ex) {
 		_lastCheck.update();
 		if (!watchFile() && !Mona::FileSystem::Exists(filePath.directory()))
 			_ex.set(Exception::APPLICATION, "Applicaton ", path, " doesn't exist").error();
-		if (_ex)
-			ERROR(_ex.error()) // log just every 2 sec (not saturate error logs)
 	}
 	
 	if (_ex) {
@@ -288,14 +286,8 @@ int Service::Item(lua_State *pState) {
 		return 0;
 	Service* pService = Script::GetCollector<Service>(pState,1);
 	Exception ex;
-	if (!pService || !(pService=pService->open(ex, name))) {
-		if (ex) {
-			SCRIPT_BEGIN(pState)
-				SCRIPT_ERROR(ex.error())
-			SCRIPT_END
-		}
+	if (!pService || !(pService=pService->open(ex, name)))
 		return 0;
-	}
 	lua_rawgeti(pState, LUA_REGISTRYINDEX, pService->reference());
 	return 1;
 }

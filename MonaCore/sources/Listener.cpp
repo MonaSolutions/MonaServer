@@ -43,10 +43,6 @@ Listener::~Listener() {
 		_pDataWriter->close(-1);
 }
 
-void Listener::setBufferTime(UInt32 ms) {
-	WARN("Listener::setBufferTime not implemented");
-}
-
 const QualityOfService& Listener::audioQOS() const {
 	if(!_pAudioWriter)
 		return QualityOfService::Null;

@@ -30,7 +30,7 @@ namespace Mona {
 
 Session::Session(Protocol& protocol, Invoker& invoker, const shared_ptr<Peer>& pPeer, const char* name) : _sessionsOptions(0),_pPeer(pPeer),peer(*_pPeer),dumpJustInDebug(false),
 	_protocol(protocol), _name(name ? name : ""), invoker(invoker), _pDecodingThread(NULL), died(false), _id(0),
-	onDecoded([this](PacketReader& packet, const SocketAddress& address) { if (address) receive(packet, address); else receive(packet); }) {
+	Expirable<Session>(this) {
 
 	((string&)peer.protocol) = protocol.name;
 	if(memcmp(peer.id,"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",ID_SIZE)==0)
@@ -41,7 +41,7 @@ Session::Session(Protocol& protocol, Invoker& invoker, const shared_ptr<Peer>& p
 	
 Session::Session(Protocol& protocol, Invoker& invoker, const char* name) : _sessionsOptions(0),dumpJustInDebug(false), _pPeer(new Peer((Handler&)invoker)),
 	_protocol(protocol),_name(name ? name : ""), invoker(invoker), _pDecodingThread(NULL), died(false), _id(0), peer(*_pPeer),
-	onDecoded([this](PacketReader& packet,const SocketAddress& address) { if (address) receive(packet, address); else receive(packet); }) {
+	Expirable<Session>(this) {
 
 	((string&)peer.protocol) = protocol.name;
 	if(memcmp(peer.id,"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",ID_SIZE)==0)
@@ -51,7 +51,7 @@ Session::Session(Protocol& protocol, Invoker& invoker, const char* name) : _sess
 }
 
 Session::~Session() {
-	onDecoded.unsubscribe();
+	expire();
 	if (!died)
 		CRITIC("Session ",name()," deleted without being killed")
 }

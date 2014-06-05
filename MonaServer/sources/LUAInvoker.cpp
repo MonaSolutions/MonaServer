@@ -154,12 +154,8 @@ int	LUAInvoker::Publish(lua_State *pState) {
 	Exception ex;
 	
 	Publication* pPublication = invoker.publish(ex, name,strcmp(SCRIPT_READ_STRING("live"),"record")==0 ? Publication::RECORD : Publication::LIVE);
-
-	if (!pPublication)
-		SCRIPT_ERROR(ex ? ex.error().c_str() : "Unknown error")
-	else {
-		if (ex)
-			SCRIPT_WARN(ex.error().c_str())
+	// ex.error already displayed!
+	if(pPublication) {
 		Script::AddObject<LUAPublication>(pState, *pPublication, true); // add a destructor
 		Script::ClearObject<LUAPublication>(pState, *pPublication); // remove of registry table (remove just persitent version because there is a destructor now)
 		lua_getmetatable(pState, -1);

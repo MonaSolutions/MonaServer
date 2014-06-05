@@ -364,5 +364,8 @@
     <ClInclude Include="include\Mona\Event.h">
       <Filter>Threading</Filter>
     </ClInclude>
+    <ClInclude Include="include\Mona\Expirable.h">
+      <Filter>Threading</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -27,7 +27,7 @@ namespace Mona {
 
 class HTTPPacketBuilding : public Decoding, public virtual Object {
 public:
-	HTTPPacketBuilding(Invoker& invoker, PoolBuffer& pBuffer, const std::shared_ptr<PoolBuffer>& ppBuffer) : _ppBuffer(ppBuffer),pPacket(new HTTPPacket(*ppBuffer)),Decoding("HTTPPacketBuilding", invoker, pBuffer) {}
+	HTTPPacketBuilding(Invoker& invoker, const Session& session, PoolBuffer& pBuffer, const std::shared_ptr<PoolBuffer>& ppBuffer) : _ppBuffer(ppBuffer),pPacket(new HTTPPacket(*ppBuffer)),Decoding(invoker, session, "HTTPPacketBuilding", pBuffer) {}
 
 	const std::shared_ptr<HTTPPacket> pPacket;
 private:

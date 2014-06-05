@@ -42,9 +42,6 @@ Publication::~Publication() {
 	DEBUG("Publication ",_name," deleted");
 }
 
-void Publication::setBufferTime(UInt32 ms) {
-	// TODO?
-}
 
 Listener* Publication::addListener(Exception& ex, Peer& peer,Writer& writer) {
 	map<Client*,Listener*>::iterator it = _listeners.lower_bound(&peer);

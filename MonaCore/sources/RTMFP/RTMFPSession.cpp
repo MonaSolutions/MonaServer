@@ -18,7 +18,6 @@ This file is a part of Mona.
 */
 
 #include "Mona/RTMFP/RTMFPSession.h"
-#include "Mona/RTMFP/RTMFPDecoding.h"
 #include "Mona/RTMFP/RTMFPFlow.h"
 #include "Mona/RTMFP/RTMFProtocol.h"
 #include "Mona/Util.h"
@@ -181,12 +180,6 @@ void RTMFPSession::p2pHandshake(const string& tag,const SocketAddress& address,U
 	DEBUG("P2P address destinator exchange, ",pAddress->toString());
 	writer.writeRaw(tag);
 	flush();
-}
-
-void RTMFPSession::decode(PoolBuffer& poolBuffer, const SocketAddress& address) {
-	_prevEngineType = farId == 0 ? RTMFPEngine::DEFAULT : RTMFPEngine::NORMAL;
-	shared_ptr<RTMFPDecoding> pRTMFPDecoding(new RTMFPDecoding(invoker, poolBuffer,_pDecryptKey,_prevEngineType));
-	Session::decode<RTMFPDecoding>(pRTMFPDecoding,address);
 }
 
 void RTMFPSession::flush(UInt8 marker,bool echoTime,RTMFPEngine::Type type) {

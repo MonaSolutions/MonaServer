@@ -36,7 +36,7 @@ void PoolThread::run(Exception& exc) {
 		WakeUpType wakeUpType = sleep(120000); // 2 mn sec of timeout
 		
 		for (;;) {
-			WorkThread* pWork;
+			shared_ptr<WorkThread> pWork;
 			{
 				lock_guard<mutex> lock(_mutex);
 				if(_jobs.empty()) {
@@ -46,7 +46,8 @@ void PoolThread::run(Exception& exc) {
 					}
 					break;
 				}
-				pWork = _jobs.front().get();
+				pWork = move(_jobs.front());
+				_jobs.pop_front();
 			}
 
 			try {
@@ -58,10 +59,6 @@ void PoolThread::run(Exception& exc) {
 				ERROR(pWork->name,", unknown error");
 			}
 
-			{
-				lock_guard<mutex> lock(_mutex);
-				_jobs.pop_front();
-			}
 		}
 	}
 }
