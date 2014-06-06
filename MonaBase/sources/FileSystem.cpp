@@ -141,7 +141,8 @@ bool FileSystem::Remove(Exception& ex,const string& path,bool all) {
 		FileSystem::ForEach forEach([&ex](const string& filePath){
 			Remove(ex, filePath, true);
 		});
-		Paths(ex, path, forEach); // if exception it's a file or a not existent folder
+		Exception ignore;
+		Paths(ignore, path, forEach); // if exception it's a file or a not existent folder
 	}
 
 	if (!Exists(path, true))
