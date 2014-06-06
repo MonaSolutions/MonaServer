@@ -84,10 +84,9 @@ bool WSSession::buildPacket(PoolBuffer& pBuffer,PacketReader& packet) {
 
 	packet.shrink(size);
 
-	if (lengthByte & 0x80) {
-		shared_ptr<WSUnmasking> pWSUnmasking(new WSUnmasking(invoker, packet.current(),packet.available(), type));
-		decode<WSUnmasking>(pWSUnmasking);
-	} else {
+	if (lengthByte & 0x80)
+		decode<WSUnmasking>(packet.current(),packet.available(), type);
+	else {
 		packet.reset(packet.position()-1);
 		*(UInt8*)packet.current() = type;
 	}

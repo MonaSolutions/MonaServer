@@ -424,8 +424,11 @@ void MonaServer::onHandshake(const string& protocol,const SocketAddress& address
 //// CLIENT_HANDLER /////
 void MonaServer::onConnection(Exception& ex, Client& client,DataReader& parameters,DataWriter& response) {
 	Service* pService = _pService->open(ex,client.path);
-	if (!pService)
+	if (!pService) {
+		if (ex)
+			ERROR(ex.error())
 		return;
+	}
 
 	Script::AddObject<LUAClient>(_pState,client);
 

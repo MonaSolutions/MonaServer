@@ -46,8 +46,6 @@ public:
 	const QualityOfService&	audioQOS() const { return _audioQOS; }
 	const QualityOfService&	dataQOS() const { return _dataQOS; }
 
-	void					setBufferTime(UInt32 ms);
-
 	void					start(Exception& ex, Peer& peer, Type type);
 	void					stop(Peer& peer);
 

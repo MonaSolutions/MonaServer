@@ -63,6 +63,11 @@ bool RTMPSession::buildPacket(PoolBuffer& pBuffer,PacketReader& packet) {
 		case 0: {
 			if (pBuffer->size() < 1537)
 				return false;
+			if (pBuffer->size() > 1537) {
+				ERROR("RTMP Handshake unknown");
+				kill(PROTOCOL_DEATH);
+				return true;
+			}
 			Exception ex;
 			_pHandshaker.reset(new RTMPHandshaker(peer.address, pBuffer));
 			send<RTMPHandshaker>(ex, _pHandshaker,NULL); // threaded!

@@ -176,6 +176,7 @@
     <ClInclude Include="include\Mona\Database.h" />
     <ClInclude Include="include\Mona\Date.h" />
     <ClInclude Include="include\Mona\Event.h" />
+    <ClInclude Include="include\Mona\Expirable.h" />
     <ClInclude Include="include\Mona\FilePath.h" />
     <ClInclude Include="include\Mona\DNS.h" />
     <ClInclude Include="include\Mona\Exceptions.h" />

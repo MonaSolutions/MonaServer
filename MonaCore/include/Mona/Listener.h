@@ -52,10 +52,6 @@ public:
 	const QualityOfService&	audioQOS() const;
 	const QualityOfService&	dataQOS() const;
 
-	
-	void setBufferTime(UInt32 ms);
-	
-
 private:
 	bool	init();
 	void	reset();

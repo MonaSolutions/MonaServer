@@ -35,7 +35,8 @@ public:
 
 	const UInt32	id;
 	
-	void setBufferTime(UInt32 ms);
+	UInt32 bufferTime(UInt32 ms);
+	UInt32 bufferTime() const { return _bufferTime; }
 
 	// return flase if writer is closed!
 	bool		 process(AMF::ContentType type,UInt32 time,PacketReader& packet,FlashWriter& writer,UInt32 numberLostFragments=0);

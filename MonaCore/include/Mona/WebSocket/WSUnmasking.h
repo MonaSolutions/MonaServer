@@ -28,7 +28,7 @@ namespace Mona {
 
 class WSUnmasking : public Decoding, public virtual Object {
 public:
-	WSUnmasking(Invoker& invoker,const UInt8* data,UInt32 size,UInt8 type) : _type(type), Decoding("WSUnmasking",invoker,data,size) {}
+	WSUnmasking(Invoker& invoker, const Session& session, const UInt8* data,UInt32 size,UInt8 type) : _type(type), Decoding(invoker,session,"WSUnmasking",data,size) {}
 	
 private:
 	bool					decode(Exception& ex, PacketReader& packet, UInt32 times);

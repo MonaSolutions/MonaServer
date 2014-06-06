@@ -26,6 +26,7 @@ This file is a part of Mona.
 #include "Mona/RTMFP/RTMFPWriter.h"
 #include "Mona/RTMFP/RTMFPSender.h"
 #include "Mona/RTMFP/RTMFPCookieComputing.h"
+#include "Mona/RTMFP/RTMFPDecoding.h"
 #include "Mona/Time.h"
 
 namespace Mona {
@@ -46,7 +47,7 @@ public:
 
 	std::shared_ptr<RTMFPCookieComputing>	pRTMFPCookieComputing;
 
-	void				decode(PoolBuffer& poolBuffer, const SocketAddress& address);
+	void				decode(PoolBuffer& poolBuffer, const SocketAddress& address) { Session::decode<RTMFPDecoding>(address,poolBuffer,_pDecryptKey,(_prevEngineType = (farId == 0 ? RTMFPEngine::DEFAULT : RTMFPEngine::NORMAL))); }
 
 	bool				failed() const { return _failed; }
 	void				kill(UInt32 type=NORMAL_DEATH);

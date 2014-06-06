@@ -116,7 +116,7 @@ void FlashStream::messageHandler(const string& name,AMFReader& message,FlashWrit
 			BinaryWriter& raw = writer.writeRaw();
 			raw.write16(0);
 			raw.write32(id);
-			_pListener->setBufferTime(_bufferTime);
+			_pListener->setNumber("bufferTime",_bufferTime);
 		}
 		writer.writeAMFStatus("NetStream.Play.Reset","Playing and resetting " + publication); // for entiere playlist
 		writer.writeAMFStatus("NetStream.Play.Start","Started playing " + publication); // for item
@@ -139,11 +139,8 @@ void FlashStream::messageHandler(const string& name,AMFReader& message,FlashWrit
 		_pPublication = invoker.publish(ex, peer, publication, type == "record" ? Publication::RECORD : Publication::LIVE);
 		if (ex)
 			writer.writeAMFStatus("NetStream.Publish.BadName",ex.error());
-		else {
-			if(_bufferTime>0)
-				_pPublication->setBufferTime(_bufferTime);
+		else
 			writer.writeAMFStatus("NetStream.Publish.Start",publication +" is now published");
-		}
 	} else if(_pListener && name=="receiveAudio") {
 		_pListener->receiveAudio = message.readBoolean();
 	} else if(_pListener && name=="receiveVideo") {
@@ -161,12 +158,12 @@ void FlashStream::rawHandler(UInt8 type, PacketReader& packet, FlashWriter& writ
 	ERROR("Raw message ",type," unknown on stream ",id);
 }
 
-void FlashStream::setBufferTime(UInt32 ms) {
+UInt32 FlashStream::bufferTime(UInt32 ms) {
 	_bufferTime = ms;
-	if(_pPublication)
-		_pPublication->setBufferTime(ms);
+	INFO("setBufferTime ", ms, "ms on stream ",id)
 	if(_pListener)
-		_pListener->setBufferTime(ms);
+		_pListener->setNumber("bufferTime",ms);
+	return _bufferTime;
 }
 
 void FlashStream::dataHandler(DataReader& data, UInt32 numberLostFragments) {

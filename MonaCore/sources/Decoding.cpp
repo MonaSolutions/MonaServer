@@ -18,20 +18,31 @@ This file is a part of Mona.
 */
 
 #include "Mona/Decoding.h"
-#include "Mona/Logs.h"
+#include "Mona/Session.h"
 
 using namespace std;
 
 namespace Mona {
 
-Decoding::Decoding(const char* name,Invoker& invoker,const UInt8* data,UInt32 size) :
-	_size(size),WorkThread(name),Task(invoker), _pBuffer(invoker.poolBuffers,size) {
+Decoding::Decoding(Invoker& invoker, const Session& session, const SocketAddress& address, const char* name,const UInt8* data,UInt32 size) :
+	_size(size),WorkThread(name),Task(invoker), _pBuffer(invoker.poolBuffers,size),_address(address), _expirableSession(session) {
 	memcpy(_pBuffer->data(), data,size);
 	_current = _pBuffer->data();
 }
 
-Decoding::Decoding(const char* name,Invoker& invoker,PoolBuffer& pBuffer) :
-	_pBuffer(invoker.poolBuffers),WorkThread(name),Task(invoker),_size(pBuffer->size()),_current(pBuffer->data()) {
+Decoding::Decoding(Invoker& invoker, const Session& session, const SocketAddress& address, const char* name, PoolBuffer& pBuffer) :
+	_pBuffer(invoker.poolBuffers),WorkThread(name),Task(invoker),_size(pBuffer->size()),_current(pBuffer->data()),_address(address), _expirableSession(session) {
+	_pBuffer.swap(pBuffer);
+}
+
+Decoding::Decoding(Invoker& invoker, const Session& session, const char* name,const UInt8* data,UInt32 size) :
+	_size(size),WorkThread(name),Task(invoker), _pBuffer(invoker.poolBuffers,size),_expirableSession(session) {
+	memcpy(_pBuffer->data(), data,size);
+	_current = _pBuffer->data();
+}
+
+Decoding::Decoding(Invoker& invoker, const Session& session, const char* name, PoolBuffer& pBuffer) :
+	_pBuffer(invoker.poolBuffers),WorkThread(name),Task(invoker),_size(pBuffer->size()),_current(pBuffer->data()),_expirableSession(session) {
 	_pBuffer.swap(pBuffer);
 }
 
@@ -56,6 +67,7 @@ bool Decoding::run(Exception& exc) {
 		}
 		if (ex)
 			WARN(name,", ",ex.error())
+
 		waitHandle();
 
 		_current += _size;
@@ -66,8 +78,15 @@ bool Decoding::run(Exception& exc) {
 }
 
 void Decoding::handle(Exception& ex) {
+	unique_lock<mutex> lock;
+	Session* pSession = _expirableSession.safeThis(lock);
+	if (!pSession)
+		return;
 	PacketReader packet(_current, _size);
-	OnDecoded::raise(packet,address);
+	if (_address)
+		pSession->receive(packet, _address);
+	else
+		pSession->receive(packet);
 }
 
 

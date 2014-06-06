@@ -37,6 +37,8 @@ public:
 
 	template<typename WorkThreadType>
 	void push(Exception& ex,const std::shared_ptr<WorkThreadType>& pWork) {
+		if (!pWork)
+			return;
 		std::lock_guard<std::mutex> lock(_mutex);
 		if (!running() && !start(ex))
 			return;
