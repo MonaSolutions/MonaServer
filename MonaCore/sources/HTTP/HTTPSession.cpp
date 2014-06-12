@@ -182,6 +182,7 @@ void HTTPSession::packetHandler(PacketReader& reader) {
 		MapParameters queryParameters;
 		Util::UnpackQuery(peer.query, queryParameters);
 		MapReader<MapParameters> propertiesReader(queryParameters);
+		// TODO add the content of post request as volatile parameters in addition of before (SplitReader + TypeReader)
 
 		// onConnection
 		if (!peer.connected) {
@@ -189,7 +190,7 @@ void HTTPSession::packetHandler(PacketReader& reader) {
 			string buffer;
 			queryParameters.getString("name", buffer);
 			peer.properties().setString("name", buffer);
-			
+
 			peer.OnCallProperties::subscribe(onCallProperties); // subscribe to client.properties(...)
 
 			peer.onConnection(ex, _writer,propertiesReader);

@@ -51,6 +51,8 @@ public:
 	static std::string& GetName(const std::string& path, std::string& value);
 	static std::string& GetBaseName(const std::string& path, std::string& value);
 	static std::string& GetExtension(const std::string& path,std::string& value);
+	static UInt32		GetSize(Exception& ex,const std::string& path);
+	static Time&		GetLastModified(Exception& ex,const std::string& path, Time& time);
 	static bool			GetCurrentApplication(std::string& path);
 	static bool			GetCurrent(std::string& path);
 	static bool			GetHome(std::string& path);
@@ -67,13 +69,6 @@ public:
 	static std::vector<std::string>&	Unpack(const std::string& path, std::vector<std::string>& values);
 	static std::string&					Pack(const std::vector<std::string>& values, std::string& path);
 
-	/// Cross-platform stat function (to support utf8 names)
-#if defined(WIN32)
-	static int Stat(const std::string& path, struct _stat* status);
-#else
-	static int Stat(const std::string& path, struct stat* status);
-#endif
-	
 private:
 	static const std::string _PathSeparator;
 };

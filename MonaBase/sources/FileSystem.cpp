@@ -45,31 +45,32 @@ const string FileSystem::_PathSeparator(";");
 const string FileSystem::_PathSeparator(":");
 #endif
 
+#if defined(_WIN32)
+typedef struct _stat Status;
+#else
+typedef struct stat  Status;
+#endif
+
+
+static bool Stat(const string& path, Status& status) {
 #if defined (_WIN32)
-int FileSystem::Stat(const string& path, struct _stat* status) {
 	wchar_t wFile[_MAX_PATH];
 	MultiByteToWideChar(CP_UTF8, 0, path.c_str(), -1, wFile, _MAX_PATH);
-	return _wstat(wFile, status);
-}
+	return _wstat(wFile, &status)==0;
 #else
-int FileSystem::Stat(const string& path, struct stat* status) {
-    return ::stat(path.c_str(), status);
-}
+	return ::stat(path.c_str(), &status)==0;
 #endif
+}
+
 
 FileSystem::Attributes& FileSystem::GetAttributes(Exception& ex,const string& path,Attributes& attributes) {
 
-#if defined(_WIN32)
-	struct _stat64i32 status;
+	Status status;
 	status.st_mtime = attributes.lastModified/1000;
 	status.st_size = attributes.size;
-#else
-	struct stat status;
-	status.st_mtime = attributes.lastModified/1000;
-	status.st_size = attributes.size;
-#endif
+
 	string file(path);
-	if (Stat(MakeFile(file), &status) != 0) {
+	if (!Stat(MakeFile(file), status)) {
 		ex.set(Exception::FILE, "Path ", path, " doesn't exist");
 		return attributes;
 	}
@@ -80,14 +81,9 @@ FileSystem::Attributes& FileSystem::GetAttributes(Exception& ex,const string& pa
 }
 
 bool FileSystem::Exists(const string& path, bool any) {
-#if defined(_WIN32)
-	struct _stat status;
-#else
-	struct stat status;
-#endif
+	Status status;
 	string file(path);
-	int result = Stat(MakeFile(file), &status);
-	if (result != 0)
+	if (!Stat(MakeFile(file), status))
 		return false;
 	if (any)
 		return true;
@@ -119,13 +115,9 @@ void FileSystem::CreateDirectories(Exception& ex,const string& path) {
 
 
 bool FileSystem::CreateDirectory(const string& path) {
-#if defined(_WIN32)
-	struct _stat status;
-#else
-	struct stat status;
-#endif
+	Status status;
 	string file(path);
-	if (Stat(MakeFile(file), &status) == 0) // exists already
+	if (Stat(MakeFile(file), status)) // exists already
 		return status.st_mode&S_IFDIR ? true : false;
 #if defined(_WIN32)
 	wchar_t wFile[_MAX_PATH];
@@ -202,6 +194,30 @@ void FileSystem::Paths(Exception& ex, const string& path, const FileSystem::ForE
 	}
 	closedir(pDirectory);
 #endif
+}
+
+Time& FileSystem::GetLastModified(Exception& ex, const string& path, Time& time) {
+	Status status;
+	status.st_mtime = time/1000;
+	string file(path);
+	if (Stat(MakeFile(file).c_str(), status) != 0)
+		ex.set(Exception::FILE, "Path ", path, " doesn't exist");
+	else
+		time.update(status.st_mtime*1000ll);
+	return time;
+}
+
+UInt32 FileSystem::GetSize(Exception& ex,const string& path) {
+	Status status;
+	status.st_size = 0;
+	string file(path);
+	if (Stat(MakeFile(file).c_str(), status) != 0)
+		ex.set(Exception::FILE, "File ", path, " doesn't exist");
+	else if (status.st_mode&S_IFDIR) // folder, no GetSize possible
+		ex.set(Exception::FILE, "GetSize works just on file, and ", path, " is a folder");
+	if (ex)
+		status.st_size = 0; // Cause on linux, for a folder, it's equal to 4096...
+	return (UInt32)status.st_size;
 }
 
 string& FileSystem::GetName(const string& path, string& value) {
