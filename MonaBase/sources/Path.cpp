@@ -17,38 +17,27 @@ details (or else see http://www.gnu.org/licenses/).
 This file is a part of Mona.
 */
 
-#include "Mona/FilePath.h"
+#include "Mona/Path.h"
 
 namespace Mona {
 
 using namespace std;
 
-FilePath& FilePath::operator=(const FilePath& other) {
+Path& Path::operator=(const Path& other) {
 	if (_attributesLoaded = other._attributesLoaded)
 		_attributes=other._attributes;
 	_extension = other._extension;
-	_fullPath = other._fullPath;
-	_directory = other._directory;
 	_path = other._path;
 	_name = other._name;
 	_baseName = other._baseName;
 	return *this;
 }
 
-const string& FilePath::fullPath() const {
-	if (_fullPath.empty()) {
-		_fullPath.assign(_directory);
-		_fullPath.append(_path);
-	}
-	return _fullPath;
-}
-
-
-const FileSystem::Attributes& FilePath::attributes() const {
+const FileSystem::Attributes& Path::attributes() const {
 	if (_attributesLoaded)
 		return _attributes;
 	Exception ex;
-	FileSystem::GetAttributes(ex, fullPath(), _attributes);
+	FileSystem::GetAttributes(ex, _path, _attributes);
 	_attributesLoaded = !ex;
 	return _attributes;
 }

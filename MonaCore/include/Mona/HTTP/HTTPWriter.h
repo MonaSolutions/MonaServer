@@ -51,7 +51,7 @@ public:
 	/// \param file path of the file
 	/// \param sortOptions Sort options for directory listing
 	/// \param isApp True if file is an application
-	void			writeFile(const FilePath& file, UInt8 sortOptions, bool isApp);
+	void			writeFile(const Path& file, UInt8 sortOptions, bool isApp);
 
 	void			close(const Exception& ex);
 	
@@ -61,7 +61,7 @@ public:
 private:
 	bool			writeMedia(MediaType type,UInt32 time,PacketReader& packet,Parameters& properties);
 	
-	HTTPSender& createSender(HTTPPacket& request) { return **_senders.emplace(_senders.end(),new HTTPSender(_session.peer.address,request,_session.invoker.poolBuffers)); }
+	HTTPSender& createSender(HTTPPacket& request) { return **_senders.emplace(_senders.end(),new HTTPSender(_session.peer.address,request,_session.invoker.poolBuffers,_session.peer.path)); }
 
 	std::unique_ptr<MediaContainer>				_pMedia;
 	TCPSession&									_session;

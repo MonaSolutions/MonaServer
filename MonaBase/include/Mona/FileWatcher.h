@@ -20,7 +20,7 @@ This file is a part of Mona.
 #pragma once
 
 #include "Mona/Mona.h"
-#include "Mona/FilePath.h"
+#include "Mona/Path.h"
 
 namespace Mona {
 
@@ -35,7 +35,7 @@ public:
 	/// return true if file exists
 	bool	watchFile();
 
-	const FilePath	filePath;
+	const Path	filePath;
 private:
 	virtual void loadFile() = 0;
 	virtual void clearFile() = 0;

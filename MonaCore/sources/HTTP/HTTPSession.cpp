@@ -194,10 +194,11 @@ void HTTPSession::packetHandler(PacketReader& reader) {
 
 			peer.onConnection(ex, _writer,propertiesReader);
 			if (!ex && peer.connected) {
-				peer.parameters().getBool("index", _indexDirectory);
-				peer.parameters().getString("index", _index);
-				if(!_indexDirectory)
+				// If index is boolean we don't interpret it as a filename
+				if (!peer.parameters().getBool("index", _indexDirectory)) {
+					peer.parameters().getString("index", _index);
 					_indexCanBeMethod = _index.find_last_of('.')==string::npos;
+				}
 				propertiesReader.reset();
 			}
 		}
@@ -273,7 +274,7 @@ void HTTPSession::processGet(Exception& ex, const shared_ptr<HTTPPacket>& pPacke
 			if (!methodCalled && !ex) {
 				// Redirect to the file (get name to prevent path insertion)
 				string nameFile;
-				_filePath.appendPath('/', FileSystem::GetName(_index, nameFile));
+				_filePath.append('/', FileSystem::GetName(_index, nameFile));
 			}
 		} else if (!_indexDirectory)
 			ex.set(Exception::PERMISSION, "No authorization to see the content of ", peer.path, "/");

@@ -57,7 +57,7 @@ private:
 	std::deque<std::shared_ptr<HTTPPacket>>			_packets;
 	std::shared_ptr<PoolBuffer>						_ppBuffer;
 
-	FilePath			_filePath; /// Path of the HTTP query
+	Path				_filePath; /// Path of the HTTP query
 
 	// options
 	std::string			_index;

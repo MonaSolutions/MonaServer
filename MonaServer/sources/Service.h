@@ -43,10 +43,9 @@ public:
 	Service*			open(Mona::Exception& ex);
 	Service*			open(Mona::Exception& ex, const std::string& path);
 
-	const std::string   name;
-	const std::string	path;
-
 	static int	Item(lua_State *pState);
+
+	const std::string	path;
 
 private:
 	Service(lua_State* pState, Service& parent, const std::string& name, ServiceHandler& handler);
@@ -66,6 +65,8 @@ private:
 	Service*					_pParent;
 	lua_State*					_pState;
 	Mona::Time					_lastCheck;
+
+	const std::string   _name;
 
 	std::map<std::string,Service*>	_services;
 	ServiceHandler&					_handler;

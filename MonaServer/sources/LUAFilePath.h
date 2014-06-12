@@ -21,7 +21,7 @@ This file is a part of Mona.
 
 #include "Script.h"
 #include "Mona/Time.h"
-#include "Mona/FilePath.h"
+#include "Mona/Path.h"
 
 class LUAFilePath {
 public:
@@ -34,7 +34,7 @@ public:
 	static int	Set(lua_State *pState);
 
 private:
-	Mona::FilePath	_path;
+	Mona::Path	_path;
 	
 };
 

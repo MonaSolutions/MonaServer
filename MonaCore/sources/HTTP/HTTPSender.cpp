@@ -32,7 +32,7 @@ namespace Mona {
 
 
 
-HTTPSender::HTTPSender(const SocketAddress& address, HTTPPacket& request,const PoolBuffers& poolBuffers) :
+HTTPSender::HTTPSender(const SocketAddress& address, HTTPPacket& request,const PoolBuffers& poolBuffers, const string& relativePath) :
 	_serverAddress(request.serverAddress),
 	_ifModifiedSince(request.ifModifiedSince),
 	_connection(request.connection),
@@ -43,6 +43,7 @@ HTTPSender::HTTPSender(const SocketAddress& address, HTTPPacket& request,const P
 	_sortOptions(0),
 	_isApp(false),
 	_poolBuffers(poolBuffers),
+	_appPath(relativePath),
 	TCPSender("TCPSender") {
 
 }
@@ -72,7 +73,7 @@ bool HTTPSender::run(Exception& ex) {
 		} else {
 			// file doesn't exist
 			if (_file.lastModified()==0)
-				writeError(404, String::Format(_buffer,"The requested URL ", _file.path(), " was not found on this server"));
+				writeError(404, "");
 			// Folder
 			else if (_file.isDirectory()) {
 				// Connected to parent => redirect to url + '/'
@@ -80,7 +81,7 @@ bool HTTPSender::run(Exception& ex) {
 					// Redirect to the real path of directory
 					DataWriter& response = write("301 Moved Permanently");
 					BinaryWriter& writer = response.packet;
-					String::Format(_buffer, "http://", _serverAddress, _file.path(), '/');
+					String::Format(_buffer, "http://", _serverAddress, _appPath, '/');
 					HTTP_BEGIN_HEADER(writer)
 						HTTP_ADD_HEADER(writer, "Location", _buffer)
 					HTTP_END_HEADER(writer)
@@ -94,7 +95,7 @@ bool HTTPSender::run(Exception& ex) {
 						HTTP_ADD_HEADER(writer,"Last-Modified", date.toString(Date::HTTP_FORMAT, _buffer))
 					HTTP_END_HEADER(writer)
 
-					HTTP::WriteDirectoryEntries(writer, _serverAddress, _file.fullPath(), _file.path(), _sortOptions);
+					HTTP::WriteDirectoryEntries(writer, _serverAddress, _file.fullPath(), _appPath, _sortOptions);
 				}
 			} 
 			// File
@@ -108,7 +109,7 @@ bool HTTPSender::run(Exception& ex) {
 #endif
 				if (!ifile.good()) {
 					Exception ex;
-					ex.set(Exception::NIL, "Impossible to open ", _file.path(), " file");
+					ex.set(Exception::NIL, "Impossible to open ", _appPath, "/", _file.name(), " file");
 					writeError(423,  ex.error());
 				} else {
 					// determine the content-type

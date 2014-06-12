@@ -113,7 +113,6 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="sources\ExpirableTest.cpp" />
-    <ClCompile Include="sources\FilePathTest.cpp" />
     <ClCompile Include="sources\FileSystemTest.cpp" />
     <ClCompile Include="sources\IPAddressTest.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
@@ -123,6 +122,7 @@
     <ClCompile Include="sources\OptionsTest.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="sources\PathTest.cpp" />
     <ClCompile Include="sources\SocketAddressTest.cpp" />
     <ClCompile Include="sources\StopWatchTest.cpp" />
     <ClCompile Include="sources\StringTest.cpp">

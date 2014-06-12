@@ -273,10 +273,11 @@ void Peer::onUnsubscribe(const Listener& listener) {
 	WARN("Unsubscription client before connection")
 }
 
-bool Peer::onFileAccess(Exception& ex, FileAccessType type, FilePath& filePath,DataReader& parameters,DataWriter& properties) {
+bool Peer::onFileAccess(Exception& ex, FileAccessType type, Path& filePath,DataReader& parameters,DataWriter& properties) {
+	string relativePath(filePath.fullPath());
 	if(connected)
-		return _handler.onFileAccess(ex,*this, type, filePath,parameters,properties);
-	ERROR("File '",filePath.path(),"' access by a not connected client")
+		return _handler.onFileAccess(ex,*this, type, filePath, parameters, properties);
+	ERROR("File '", relativePath, "' access by a not connected client")
 	return false;
 }
 

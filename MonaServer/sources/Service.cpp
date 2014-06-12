@@ -25,11 +25,11 @@ This file is a part of Mona.
 using namespace std;
 using namespace Mona;
 
-Service::Service(lua_State* pState, ServiceHandler& handler) : _lastCheck(0), _reference(LUA_REFNIL), _pParent(NULL), _handler(handler), _pState(pState), FileWatcher(handler.wwwPath(),"main.lua") {
+Service::Service(lua_State* pState, ServiceHandler& handler) : _lastCheck(0), _reference(LUA_REFNIL), _pParent(NULL), _handler(handler), _pState(pState), FileWatcher(handler.wwwPath(), "/main.lua") {
 
 }
 
-Service::Service(lua_State* pState, Service& parent, const string& name, ServiceHandler& handler) : _lastCheck(0), _reference(LUA_REFNIL), _pParent(&parent), _handler(handler), _pState(pState), FileWatcher(handler.wwwPath(),parent.path,"/",name,"main.lua") {
+Service::Service(lua_State* pState, Service& parent, const string& name, ServiceHandler& handler) : _name(name), _lastCheck(0), _reference(LUA_REFNIL), _pParent(&parent), _handler(handler), _pState(pState), FileWatcher(handler.wwwPath(),parent.path,'/',name,"/main.lua") {
 	String::Format((string&)path,parent.path,"/",name);
 }
 
@@ -66,7 +66,7 @@ void Service::setReference(int reference) {
 Service* Service::open(Exception& ex) {
 	if (_lastCheck.isElapsed(2000)) { // already checked there is less of 2 sec!
 		_lastCheck.update();
-		if (!watchFile() && !Mona::FileSystem::Exists(filePath.directory()))
+		if (!watchFile() && !Mona::FileSystem::Exists(filePath.fullPath().substr(0, filePath.fullPath().find("main.lua"))))
 			_ex.set(Exception::APPLICATION, "Applicaton ", path, " doesn't exist").error();
 	}
 	
@@ -144,7 +144,7 @@ bool Service::open(bool create) {
 		lua_rawgeti(_pState, LUA_REGISTRYINDEX, _pParent->reference());
 		// fill children of parent!
 		Script::Collection(_pState,-1,"children");
-		lua_pushstring(_pState, name.c_str());
+		lua_pushstring(_pState, _name.c_str());
 		lua_pushvalue(_pState, -5);
 		Script::FillCollection(_pState, 1);
 		lua_pop(_pState, 1); // remove children collection
@@ -153,7 +153,7 @@ bool Service::open(bool create) {
 	lua_setfield(_pState,-2,"super");
 
 	// set name
-	lua_pushstring(_pState, name.c_str());
+	lua_pushstring(_pState, _name.c_str());
 	lua_setfield(_pState, -2, "name");
 
 	// set path
@@ -240,7 +240,7 @@ void Service::close(bool full) {
 				lua_getfield(_pState, -1, "super");
 				if (lua_istable(_pState, -1)) {
 					Script::Collection(_pState, -1, "children");
-					lua_pushstring(_pState, name.c_str());
+					lua_pushstring(_pState, _name.c_str());
 					lua_pushnil(_pState);
 					Script::FillCollection(_pState, 1);
 					lua_pop(_pState, 1);

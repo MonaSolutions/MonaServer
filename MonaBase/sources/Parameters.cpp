@@ -40,9 +40,18 @@ bool Parameters::getBool(const string& key, bool& value) const {
 	if (!pTemp)
 		return false;
 	int number;
+	bool res = true;
 	// true if number !=0 or if not equals to "false", "no" or "off"
-	value = String::ToNumber<int>(*pTemp, number) && (number != 0) || (String::ICompare(*pTemp, "false") != 0 && String::ICompare(*pTemp, "no") != 0 && String::ICompare(*pTemp, "off") != 0);
-	return true;
+	if (String::ToNumber<int>(*pTemp, number)) 
+		value = number != 0;
+	else if (String::ICompare(*pTemp, "false") == 0 || String::ICompare(*pTemp, "no") == 0 || String::ICompare(*pTemp, "off") == 0)
+		value = false;
+	else if (String::ICompare(*pTemp, "true") == 0 || String::ICompare(*pTemp, "yes") == 0 || String::ICompare(*pTemp, "on") == 0)
+		value = true;
+	else
+		res = false;
+
+	return res;
 }
 
 } // namespace Mona

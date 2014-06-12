@@ -531,13 +531,15 @@ bool MonaServer::onMessage(Exception& ex, Client& client,const string& name,Data
 	return found;
 }
 
-bool MonaServer::onFileAccess(Exception& ex, Client& client, Client::FileAccessType type, FilePath& filePath,DataReader& parameters,DataWriter& properties) { 
+bool MonaServer::onFileAccess(Exception& ex, Client& client, Client::FileAccessType type, Path& filePath,DataReader& parameters,DataWriter& properties) { 
 
 	bool result = true;
-	filePath.setDirectory(WWWPath);
+	string name;
+	if (client.path!=filePath.fullPath()) // "" if it is current application
+		name.assign(filePath.name());
 	SCRIPT_BEGIN(loadService(client))
 		SCRIPT_MEMBER_FUNCTION_BEGIN(Client,client,type==Client::FileAccessType::READ ? "onRead" : "onWrite")
-			SCRIPT_WRITE_STRING((client.path==filePath.path())? "" : filePath.name().c_str()) // "" if it is current application
+			SCRIPT_WRITE_STRING(name.c_str())
 			SCRIPT_WRITE_DATA(parameters,0)
 			SCRIPT_FUNCTION_CALL
 			if(SCRIPT_CAN_READ) {
@@ -546,10 +548,7 @@ bool MonaServer::onFileAccess(Exception& ex, Client& client, Client::FileAccessT
 					SCRIPT_READ_NIL
 				} else {
 					// Redirect to the file (get name to prevent path insertion)
-					string name;
-					FileSystem::GetName(SCRIPT_READ_STRING(filePath.path()), name);
-					if (!name.empty()) // to avoid for root app to give "/" instead of ""
-						filePath.setPath(client.path,"/",name);
+					FileSystem::GetName(SCRIPT_READ_STRING(name), name);
 				}
 				if(SCRIPT_NEXT_TYPE==LUA_TTABLE) {
 					lua_pushnil(_pState);  // first key 
@@ -573,6 +572,9 @@ bool MonaServer::onFileAccess(Exception& ex, Client& client, Client::FileAccessT
 		}
 	SCRIPT_END
 
+	filePath.set(WWWPath, client.path);
+	if (!name.empty())
+		filePath.append('/', name);
 	return result;
 }
 

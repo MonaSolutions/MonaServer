@@ -28,16 +28,18 @@ using namespace Mona;
 
 LUAWriter::LUAWriter(lua_State* pState,Writer& writer):writer(writer),_pState(pState) {
 	onClose = [this](Int32 code) {
-		Clear(_pState, this->writer);
 		this->writer.unsubscribe(onClose);
+		Clear(_pState, this->writer);
 		delete this; // delete LUAWriter instance!
 	};
 	writer.subscribe(onClose);
 }
 
 void LUAWriter::Clear(lua_State* pState,Writer& writer){
+	// Can be called by garbage for newWriter or onDisconnection for mainWriter
 	Script::ClearObject<LUAQualityOfService>(pState, writer.qos());
-	writer.close();
+	if (writer.subscribed()) // means that it's a secondary writer (newWriter)
+		writer.close(); // close the secondary writer
 }
 
 int LUAWriter::Close(lua_State* pState) {
@@ -105,7 +107,8 @@ int LUAWriter::WriteMessage(lua_State* pState) {
 
 int LUAWriter::WriteInvocation(lua_State* pState) {
 	SCRIPT_CALLBACK(Writer,writer)
-		SCRIPT_READ_DATA(writer.writeInvocation(SCRIPT_READ_STRING("")))
+		DataWriter& dataWriter = writer.writeInvocation(SCRIPT_READ_STRING(""));
+		SCRIPT_READ_DATA(dataWriter)
 	SCRIPT_CALLBACK_RETURN
 }
 
@@ -122,6 +125,10 @@ int LUAWriter::WriteRaw(lua_State* pState) {
 
 int LUAWriter::NewWriter(lua_State* pState) {
 	SCRIPT_CALLBACK(Writer, writer)
-		Script::NewObject<LUAWriter>(pState, (new LUAWriter(pState, writer.newWriter()))->writer);
+		Writer& newWriter(writer.newWriter());
+		if (&newWriter == &writer)
+			lua_pushvalue(pState, 1); // return the same writer
+		else
+			Script::NewObject<LUAWriter>(pState, (new LUAWriter(pState, newWriter))->writer); // manage with garbage collector a new writer
 	SCRIPT_CALLBACK_RETURN
 }

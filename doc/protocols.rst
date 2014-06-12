@@ -14,6 +14,21 @@ RTMP & RTMFP
 API specificities
 ===========================================
 
+onConnection returned array
+-------------------------------------------
+
+Parameters can be sended to the client on connection by returning them in an associative array. Here is an example :
+
+.. code-block:: lua
+
+	function onConnection(client,...)
+		return {message="welcome",id=1}
+	end
+
+Some parameters are specific to RTMP :
+
+- **timeout** , timeout in seconds. It overloads the timeout parameter from the configuration file (see `Installation`_).
+
 onConnection parameters
 -------------------------------------------
 
@@ -26,7 +41,7 @@ client.properties
 
 In RTMP & RTMFP protocols the client properties are **URL query parameters** and standard informations given by flash client at connection.
 
-Here is a list of known flash client parameters :
+Here is a list of known static flash client parameters :
 
 - **swfUrl** (read-only), URL of the SWF file which has gotten the connection.
 - **tcUrl** (read-only), RTMPF/RTMFP URL used to connect to this session.
@@ -40,9 +55,9 @@ Here is a list of known flash client parameters :
 - **capabilities** (read-only), 
 - **videoFunction** (read-only), the SUPPORT_VID_CLIENT_SEEK constant.
 
-And here is a sample of RTMFP URL query parameters :
+And here is a sample of RTMFP URL query parameters sended by a flash client :
 
-... code-block:: as3
+.. code-block:: as3
 
 	_netConnection.connect("rtmfp://localhost/myApplication?arg1=value1&arg2=value2");
 
@@ -51,6 +66,25 @@ HTTP & WebSocket
 
 API specificities
 ===========================================
+
+onConnection returned array
+-------------------------------------------
+
+Some specific parameters can be set returning an associative array like this :
+
+.. code-block:: lua
+
+	function onConnection(client,...)
+		return {index="index.html", timeout=7}
+	end
+
+Here is the list of the possible common parameters :
+
+- **timeout** , timeout in seconds. It overloads the timeout parameter from the configuration file (see `Installation`_).
+
+And here the HTTP-only parameters :
+
+- **index**, true by default. If *true* the Server will send a view of the application's directory, otherwise return a *404 error* file. If it is a string MonaServer will try to return the corresponding file in the application's directory.
 
 onConnection parameters
 -------------------------------------------
@@ -80,7 +114,7 @@ As *client.properties* maps cookies values you can also set cookies by using the
 
 The return value is the **value** parameter if the operation succeed.
 
-Here is an example of a cookie named *test* with a value of *value1* that should be sended by client for the 5 next minutes on each application (*"/"*), only for HTTP requests to the host *192.168.0.1* :
+Here is an example of a cookie named *test* with a value of *value1* that should be sended by client for the 5 next minutes on each application (*"/"*) only for HTTP requests to the host *192.168.0.1* :
 
 .. code-block:: lua
 
@@ -88,6 +122,7 @@ Here is an example of a cookie named *test* with a value of *value1* that should
 
 .. note:: To unset a cookie on the client side you can set a negative value to the **expires** parameter.
 
+.. _Installation: ./installation.html
 .. _Server Application: ./serverapp.html
 .. _LUA API: ./api.html
 .. _LUA: http://www.lua.org/

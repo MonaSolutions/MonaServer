@@ -71,7 +71,7 @@ void HTTPWriter::flush(bool full) {
 	_senders.clear();
 }
 
-void HTTPWriter::writeFile(const FilePath& file, UInt8 sortOptions, bool isApp) {
+void HTTPWriter::writeFile(const Path& file, UInt8 sortOptions, bool isApp) {
 
 	if (!pRequest) {
 		ERROR("No HTTP request to send file ",file.name())

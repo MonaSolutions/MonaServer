@@ -22,7 +22,7 @@ This file is a part of Mona.
 #include "Mona/Mona.h"
 #include "Mona/TCPSender.h"
 #include "Mona/Writer.h"
-#include "Mona/FilePath.h"
+#include "Mona/Path.h"
 #include "Mona/HTTP/HTTP.h"
 #include "Mona/HTTP/HTTPPacket.h"
 #include "Mona/Client.h"
@@ -45,11 +45,11 @@ namespace Mona {
 
 class HTTPSender : public TCPSender, public virtual Object {
 public:
-	HTTPSender(const SocketAddress& address,HTTPPacket& request,const PoolBuffers& poolBuffers);
+	HTTPSender(const SocketAddress& address,HTTPPacket& request,const PoolBuffers& poolBuffers,const std::string& relativePath);
 
 	DataWriter&		writer(const std::string& code, HTTP::ContentType type, const std::string& subType,const UInt8* data,UInt32 size);
 	void			writeError(int code, const std::string& description,bool close=false);
-	void			writeFile(const FilePath& file, UInt8 sortOptions, bool isApp) { _file = file; _sortOptions = sortOptions; _isApp = isApp; }
+	void			writeFile(const Path& file, UInt8 sortOptions, bool isApp) { _file = file; _sortOptions = sortOptions; _isApp = isApp; }
 
 	const UInt8*	data() { return _pWriter ? _pWriter->packet.data() : NULL; }
 	UInt32			size() { return _pWriter ? _pWriter->packet.size() : 0; }
@@ -66,7 +66,8 @@ private:
 
 	const PoolBuffers&						_poolBuffers;
 	bool									_isApp;
-	FilePath								_file;
+	Path									_file;
+	const std::string						_appPath; /// \ Relative path of the application
 	UInt8									_sortOptions;
 	const std::shared_ptr<HTTPSendingInfos> _pInfos;
 	UInt8									_connection;

@@ -6,12 +6,12 @@
 * JSON Data for deserialization
 */
  var jsontestsdata = [
-  {"msg":'{"x":10,"y":10,"width":100,"height":100}', "expected":'{"x":10,"y":10,"width":100,"height":100}'},
-  {"msg":'[10,10,100,100]', "expected":'[10,10,100,100]'},
-  {"msg":'[{"x":10,"y":10},100,100]', "expected":'[{"x":10,"y":10},100,100]'},
-  {"msg":'[100,100,{"x":10,"y":10}]', "expected":'[100,100,{"x":10,"y":10}]'},
-  {"msg":'[{"x":[100,100],"y":[10,10]}]', "expected":'[{"x":[100,100],"y":[10,10]}]'},
-  {"msg":'[{"x":[{"y":[10,10]},15]},25]', "expected":'[{"x":[{"y":[10,10]},15]},25]'}
+  {"msg":[{"x":10,"y":10,"width":100,"height":100}], "expected":[{"x":10,"y":10,"width":100,"height":100}]},
+  {"msg":[[10,10,100,100]], "expected":[[10,10,100,100]]},
+  {"msg":[[{"x":10,"y":10},100,100]], "expected":[[{"x":10,"y":10},100,100]]},
+  {"msg":[[100,100,{"x":10,"y":10}]], "expected":[[100,100,{"x":10,"y":10}]]},
+  {"msg":[[{"x":[100,100],"y":[10,10]}]], "expected":[[{"x":[100,100],"y":[10,10]}]]},
+  {"msg":[[{"x":[{"y":[10,10]},15]},25]], "expected":[[{"x":[{"y":[10,10]},15]},25]]}
  ];
  
  /**
@@ -35,24 +35,58 @@ var xmltestsdata = [
 ];
 
 /** 
+* Return true if object1 is  object 2
+*/
+function equals(object1, object2) {
+    
+    // First we check size of objects
+    if (Object.keys(object1).length != Object.keys(object2).length)
+        return false;
+    
+    // Then we check each elements
+    for (var prop in object1) {
+        if (typeof object1[prop] === 'object') {
+            // Recursive call
+            if (!equals(object1[prop], object2[prop]))
+                return false;
+        } else if (object1[prop] != object2[prop])
+                return false;
+    }
+    
+    return true;
+}
+
+/** 
 * Run one test
 * \param name Name of the Test
 * \param data Matrix containing data to send and result expected
-* \param subtitle name of the test (type of data)
+* \param mode type of data
 */
-function runDeserializeTest(subtitle, data) {
+function runDeserializeTest(mode, data) {
   
   for (var i=0; i < data.length; i++) {
   
-    var result = send(data[i].msg);
-    if(data[i].expected != result) {
+    var strExpected = data[i].expected;
+    var isOK = false;
+    var result;
+    if (mode == "xml") {
+        result = send(data[i].msg, "text/xml");
+        isOK = data[i].expected == result;
+    }
+    else {// JSON
+        result = send(JSON.stringify(data[i].msg), "application/json");
+        isOK = equals(data[i].expected, JSON.parse(result));
+        strExpected = JSON.stringify(data[i].expected);
+    }
     
-      var error = "Test[" + i + "] : '" + data[i].expected + "' expected and '" + result + "' received";
-      TEST_ERROR("Deserialization", subtitle, error);
+    if(!isOK) {
+    
+      var error = "Test[" + i + "] : '" + strExpected + "' expected and '" + result + "' received";
+      TEST_ERROR("Deserialization", mode, error);
       return;
     }
   }
-  TEST_OK("Deserialization", subtitle, data.length);
+  TEST_OK("Deserialization", mode, data.length);
 }
 
 /** 
@@ -66,7 +100,7 @@ function runSerializationTests(mode) {
   var i = 0;
   do {
   
-    result = send("<__array><__noname>onSerialize</__noname><__noname>" + mode + "</__noname></__array>");
+    result = send("<__array><__noname>onSerialize</__noname><__noname>" + mode + "</__noname></__array>", "text/xml");
     i++;
   } while (result == "continue");
   
