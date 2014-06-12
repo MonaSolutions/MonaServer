@@ -67,6 +67,16 @@ Objects are kind of array or map, so you can iterate between elements of objects
 		INFO(index,value)
 	end
 
+Application properties
+========================
+
+- **name** (read-only), the name of the application.
+- **path** (read-only), the path of the current application.
+- **this** (read-only), the current application's object.
+- **super** (read-only), an object giving acces to members and functions of the parent application.
+- **children** (read-only), an associative array containing children applications as values and their names as keys (only already loaded children are availables).
+
+See `Server Application`_ to have more information of communication between applications.
 
 Mona
 ====================
@@ -77,8 +87,8 @@ properties
 -----------------
 
 - **clients** (read-only), clients actually connected, see *clients* object thereafter.
-- **configs**, return a LUA_ table which contains Mona configurations, it means the *MonaServer.ini* content file, (see *Configurations* part of `Installation <./installation.html>`_ page) and also some others usefull parameters (application.path, application.baseName, and many others. To know really all its content, iterate on this table and print its content). One sample is given in *Global configurations* in `Server Application`_ page.
-- **environment**, return a LUA_ table which contains environment variables from the system.
+- **configs** (read-only), return a LUA_ table which contains Mona configurations, it means the *MonaServer.ini* content file, (see *Configurations* part of `Installation <./installation.html>`_ page) and also some others usefull parameters (application.path, application.baseName, and many others. To know really all its content, iterate on this table and print its content). One sample is given in *Global configurations* in `Server Application`_ page.
+- **environment** (read-only), return a LUA_ table which contains environment variables from the system.
 - **epochTime** (read-only), gives the epoch time (since the Unix epoch, midnight, January 1, 1970) in milliseconds.
 - **groups** (read-only), existing groups (NetGroup_s running), see *groups* object thereafter.
 - **pulications** (read-only), server publications available, see *publications* object thereafter.
@@ -518,7 +528,7 @@ onConnection(client,...)
 
 Call on a new client connection. First argument is a client object (see *client* object description above), and following arguments depend on the protocol (see `Specific Protocol functionalities`_).
 
-Finally you can return a table result to add some informations on connection (always with *AMF and LUA types conversion*, see `Server Application`_ page):
+Finally you can return a table result to add some informations on connection (see `Specific Protocol functionalities`_):
 
 .. code-block:: lua
 
