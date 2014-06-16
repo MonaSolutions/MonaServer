@@ -25,12 +25,11 @@ This file is a part of Mona.
 using namespace std;
 using namespace Mona;
 
-
-Service::Service(lua_State* pState, ServiceHandler& handler) : _lastCheck(0), _reference(LUA_REFNIL), _pParent(NULL), _handler(handler), _pState(pState), FileWatcher(handler.wwwPath(),"main.lua") {
+Service::Service(lua_State* pState, ServiceHandler& handler) : _lastCheck(0), _reference(LUA_REFNIL), _pParent(NULL), _handler(handler), _pState(pState), FileWatcher(handler.wwwPath(), "/main.lua") {
 
 }
 
-Service::Service(lua_State* pState, Service& parent, const string& name, ServiceHandler& handler) : _lastCheck(0), _reference(LUA_REFNIL), _pParent(&parent), _handler(handler), _pState(pState), FileWatcher(handler.wwwPath(),parent.path,"/",name,"main.lua") {
+Service::Service(lua_State* pState, Service& parent, const string& name, ServiceHandler& handler) : name(name), _lastCheck(0), _reference(LUA_REFNIL), _pParent(&parent), _handler(handler), _pState(pState), FileWatcher(handler.wwwPath(),parent.path,'/',name,"/main.lua") {
 	String::Format((string&)path,parent.path,"/",name);
 }
 
@@ -67,7 +66,7 @@ void Service::setReference(int reference) {
 Service* Service::open(Exception& ex) {
 	if (_lastCheck.isElapsed(2000)) { // already checked there is less of 2 sec!
 		_lastCheck.update();
-		if (!watchFile() && !Mona::FileSystem::Exists(filePath.directory()))
+		if (!watchFile() && !FileSystem::Exists(filePath.parent()))
 			_ex.set(Exception::APPLICATION, "Applicaton ", path, " doesn't exist").error();
 	}
 	
@@ -197,7 +196,7 @@ void Service::loadFile() {
 	SCRIPT_BEGIN(_pState)
 
 		lua_rawgeti(_pState, LUA_REGISTRYINDEX, _reference);
-		if(luaL_loadfile(_pState,filePath.fullPath().c_str())!=0) {
+		if(luaL_loadfile(_pState,filePath.toString().c_str())!=0) {
 			const char* error = Script::LastError(_pState);
 			SCRIPT_ERROR(error)
 			_ex.set(Exception::SOFTWARE, error);
@@ -252,7 +251,7 @@ void Service::close(bool full) {
 					lua_pop(_pState, 1);
 				}
 				lua_pushnumber(_pState, 0);
-				lua_setfield(_pState, -2, "this");
+				lua_setfield(_pState, -2, "|this");
 				lua_pop(_pState, 2);
 			}
 			setReference(LUA_REFNIL);

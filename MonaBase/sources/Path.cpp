@@ -17,35 +17,32 @@ details (or else see http://www.gnu.org/licenses/).
 This file is a part of Mona.
 */
 
-#pragma once
+#include "Mona/Path.h"
 
-#include "Script.h"
-#include "Mona/Time.h"
-#include "Mona/FilePath.h"
+namespace Mona {
 
-class LUAFilePath {
-public:
-	
-	LUAFilePath(const std::string& path) : _path(path) {}
+using namespace std;
 
-	static void Init(lua_State *pState, LUAFilePath& filePath) {}
-	static void	Clear(lua_State* pState, LUAFilePath& filePath);
-	static int	Get(lua_State *pState);
-	static int	Set(lua_State *pState);
+Path& Path::operator=(const Path& other) {
+	if (_attributesLoaded = other._attributesLoaded)
+		_attributes=other._attributes;
+	_extension = other._extension;
+	_path = other._path;
+	_name = other._name;
+	_baseName = other._baseName;
+	_parent = other._parent;
+	return *this;
+}
 
-private:
-	Mona::FilePath	_path;
-	
-};
+const FileSystem::Attributes& Path::attributes() const {
+	if (_attributesLoaded)
+		return _attributes;
+	Exception ex;
+	FileSystem::GetAttributes(ex, _path, _attributes);
+	_attributesLoaded = !ex;
+	return _attributes;
+}
 
-class LUAFiles {
-public:
 
-	LUAFiles() {}
 
-	static void Init(lua_State *pState, LUAFiles& filePath) {}
-	static void	Clear(lua_State* pState, LUAFiles& filePath);
-	static int	Get(lua_State *pState);
-	static int	Set(lua_State *pState);
-};
-
+} // namespace Mona

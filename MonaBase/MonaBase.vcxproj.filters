@@ -136,9 +136,6 @@
     <ClCompile Include="sources\Exceptions.cpp">
       <Filter>Util</Filter>
     </ClCompile>
-    <ClCompile Include="sources\FilePath.cpp">
-      <Filter>File</Filter>
-    </ClCompile>
     <ClCompile Include="sources\PoolBuffers.cpp">
       <Filter>IO</Filter>
     </ClCompile>
@@ -171,6 +168,9 @@
     </ClCompile>
     <ClCompile Include="sources\MapParameters.cpp">
       <Filter>Util</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\Path.cpp">
+      <Filter>File</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -310,9 +310,6 @@
     <ClInclude Include="include\Mona\Database.h">
       <Filter>File</Filter>
     </ClInclude>
-    <ClInclude Include="include\Mona\FilePath.h">
-      <Filter>File</Filter>
-    </ClInclude>
     <ClInclude Include="include\Mona\PacketReader.h">
       <Filter>IO</Filter>
     </ClInclude>
@@ -360,6 +357,9 @@
     </ClInclude>
     <ClInclude Include="include\Mona\Expirable.h">
       <Filter>Threading</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\Path.h">
+      <Filter>File</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

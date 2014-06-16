@@ -22,7 +22,7 @@ This file is a part of Mona.
 #include "Mona/Mona.h"
 #include "Mona/BinaryWriter.h"
 #include "Mona/MapParameters.h"
-#include "Mona/FilePath.h"
+#include "Mona/Path.h"
 #include "Mona/DataWriter.h"
 
 namespace Mona {
@@ -161,7 +161,7 @@ public:
 
 	static ContentType	ExtensionToMIMEType(const std::string& extension, std::string& subType);
 
-	static std::string&	CodeToMessage(UInt16 code,std::string& message);
+	static const char*	CodeToMessage(UInt16 code);
 
 	static DataWriter* NewDataWriter(const PoolBuffers& poolBuffers,const std::string& subType);
 	static void WriteDirectoryEntries(BinaryWriter& writer, const std::string& serverAddress, const std::string& fullPath, const std::string& path, UInt8 sortOptions);
@@ -169,7 +169,7 @@ public:
 	static void			ReadMessageFromType(Exception& ex, HTTPSession& caller, const std::shared_ptr<HTTPPacket>& httpPacket, PacketReader& packet);
 
 private:
-	static void WriteDirectoryEntry(BinaryWriter& writer, const std::string& serverAddress,const std::string& path,const FilePath& entry);
+	static void WriteDirectoryEntry(BinaryWriter& writer, const std::string& serverAddress,const std::string& path,const Path& entry);
 };
 
 

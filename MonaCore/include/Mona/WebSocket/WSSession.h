@@ -99,6 +99,14 @@ public:
 		}
 	}
 
+	/// \brief Read plain text message
+	void readRawMessage(Exception& ex, PacketReader& packet) {
+
+		RawReader reader(packet);
+		if(!peer.onMessage(ex, "onMessage", reader))
+			ex.set(Exception::APPLICATION, "Method 'onMessage' not found on application ", peer.path);
+	}
+
 protected:
 	WSWriter&		wsWriter() { return _writer; }
 	void			kill(UInt32 type=NORMAL_DEATH);

@@ -54,7 +54,7 @@
     <ClInclude Include="sources\LUADataTable.h">
       <Filter>LUAClass</Filter>
     </ClInclude>
-    <ClInclude Include="sources\LUAFilePath.h">
+    <ClInclude Include="sources\LUAPath.h">
       <Filter>LUAClass</Filter>
     </ClInclude>
   </ItemGroup>
@@ -111,7 +111,7 @@
     <ClCompile Include="sources\LUADataTable.cpp">
       <Filter>LUAClass</Filter>
     </ClCompile>
-    <ClCompile Include="sources\LUAFilePath.cpp">
+    <ClCompile Include="sources\LUAPath.cpp">
       <Filter>LUAClass</Filter>
     </ClCompile>
   </ItemGroup>

@@ -35,7 +35,7 @@ using namespace std;
 namespace Mona {
 
 
-HTTPSession::HTTPSession(const SocketAddress& peerAddress, SocketFile& file, Protocol& protocol, Invoker& invoker) : _indexCanBeMethod(false),_indexDirectory(true),WSSession(peerAddress, file, protocol, invoker), _isWS(false), _writer(*this),_ppBuffer(new PoolBuffer(invoker.poolBuffers)), _pListener(NULL),
+HTTPSession::HTTPSession(const SocketAddress& peerAddress, SocketFile& file, Protocol& protocol, Invoker& invoker) : _indexDirectory(true),WSSession(peerAddress, file, protocol, invoker), _isWS(false), _writer(*this),_ppBuffer(new PoolBuffer(invoker.poolBuffers)), _pListener(NULL),
 	onCallProperties([this](vector<string>& items) {
 		UInt8 count = items.size();
 
@@ -189,15 +189,16 @@ void HTTPSession::packetHandler(PacketReader& reader) {
 			string buffer;
 			queryParameters.getString("name", buffer);
 			peer.properties().setString("name", buffer);
-
+			_index.clear(); // default value
+			_indexDirectory = true; // default value
 			peer.OnCallProperties::subscribe(onCallProperties); // subscribe to client.properties(...)
 
 			peer.onConnection(ex, _writer,propertiesReader);
 			if (!ex && peer.connected) {
-				peer.parameters().getBool("index", _indexDirectory);
-				peer.parameters().getString("index", _index);
-				if(!_indexDirectory)
-					_indexCanBeMethod = _index.find_last_of('.')==string::npos;
+
+				if (!peer.parameters().getBool("index", _indexDirectory))
+					peer.parameters().getString("index", _index);
+
 				propertiesReader.reset();
 			}
 		}
@@ -267,13 +268,13 @@ void HTTPSession::processGet(Exception& ex, const shared_ptr<HTTPPacket>& pPacke
 	// 1 - priority on client method
 	if (pPacket->filePos == string::npos) {
 		if (!_index.empty()) {
-			if (_indexCanBeMethod)
+			if (_index.find_last_of('.')==string::npos) // can be method!
 				methodCalled = peer.onMessage(ex, _index, propertiesReader);
 
 			if (!methodCalled && !ex) {
 				// Redirect to the file (get name to prevent path insertion)
 				string nameFile;
-				_filePath.appendPath('/', FileSystem::GetName(_index, nameFile));
+				_filePath.append('/', FileSystem::GetName(_index, nameFile));
 			}
 		} else if (!_indexDirectory)
 			ex.set(Exception::PERMISSION, "No authorization to see the content of ", peer.path, "/");

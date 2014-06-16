@@ -37,12 +37,18 @@ bool Parameters::getString(const std::string& key, std::string& value) const {
 
 bool Parameters::getBool(const string& key, bool& value) const {
 	const string* pTemp = getRaw(key);
-	if (!pTemp)
-		return false;
-	int number;
-	// true if number !=0 or if not equals to "false", "no" or "off"
-	value = String::ToNumber<int>(*pTemp, number) && (number != 0) || (String::ICompare(*pTemp, "false") != 0 && String::ICompare(*pTemp, "no") != 0 && String::ICompare(*pTemp, "off") != 0);
-	return true;
+	if (pTemp) {
+		if (pTemp->empty() || String::ICompare(*pTemp, "0") == 0 || String::ICompare(*pTemp, "false") == 0 || String::ICompare(*pTemp, "no") == 0 || String::ICompare(*pTemp, "off") == 0) {
+			value = false;
+			return true;
+		}
+		if (String::ICompare(*pTemp, "1") == 0 || String::ICompare(*pTemp, "true") == 0 || String::ICompare(*pTemp, "yes") == 0 || String::ICompare(*pTemp, "on") == 0) {
+			value = true;
+			return true;
+		}
+	}
+	return false;
 }
+
 
 } // namespace Mona

@@ -151,10 +151,11 @@ bool FileSystem::Remove(Exception& ex,const string& path,bool all) {
 	return false;
 }
 
-void FileSystem::Paths(Exception& ex, const string& path, const FileSystem::ForEach& forEach) {
+UInt32 FileSystem::Paths(Exception& ex, const string& path, const FileSystem::ForEach& forEach) {
 	int err = 0;
 	string directory(path);
 	FileSystem::MakeDirectory(directory);
+	UInt32 count(0);
 #if defined(_WIN32)
 	directory.append("*");
 
@@ -166,15 +167,16 @@ void FileSystem::Paths(Exception& ex, const string& path, const FileSystem::ForE
 	if (fileHandle == INVALID_HANDLE_VALUE) {
 		if ((err = GetLastError()) != ERROR_NO_MORE_FILES) {
 			ex.set(Exception::FILE, "The system cannot find the directory ", path);
-			return;
+			return count;
 		}
-		return;
+		return count;
 	}
 	do {
 		if (wcscmp(fileData.cFileName, L".") != 0 && wcscmp(fileData.cFileName, L"..") != 0) {
 			char file[_MAX_FNAME];
 			WideCharToMultiByte(CP_UTF8, 0, fileData.cFileName, -1, file, _MAX_FNAME, NULL, NULL);
 			string pathFile(path);
+			++count;
 			forEach(String::Append(MakeDirectory(pathFile), file));
 		}
 	} while (FindNextFileW(fileHandle, &fileData) != 0);
@@ -183,17 +185,19 @@ void FileSystem::Paths(Exception& ex, const string& path, const FileSystem::ForE
 	DIR* pDirectory = opendir(directory.c_str());
 	if (!pDirectory) {
 		ex.set(Exception::FILE, "The system cannot find the directory ",directory);
-		return;
+		return count;
 	}
 	struct dirent* pEntry(NULL);
 	while(pEntry = readdir(pDirectory)) {
 		if (strcmp(pEntry->d_name, ".")!=0 && strcmp(pEntry->d_name, "..")!=0) {
 			string pathFile(directory);
+			++count;
             forEach(String::Append(pathFile, pEntry->d_name));
 		}
 	}
 	closedir(pDirectory);
 #endif
+	return count;
 }
 
 Time& FileSystem::GetLastModified(Exception& ex, const string& path, Time& time) {
@@ -254,35 +258,17 @@ string& FileSystem::GetExtension(const string& path, string& value) {
 string& FileSystem::MakeFile(string& path) {
 	string::size_type size = path.size();
 #if defined(_WIN32)
-	while (size>0 && (path[size - 1] == '\\' || path[size - 1] == '/'))
+	while (size>0 && (path.back() == '\\' || path.back() == '/'))
 		path.resize(--size);
-	// Device special case
-	if (size==2 && path.back()==':')
-		path.append("/");
 #else
-	while (size>0 && path[size - 1] == '/')
+	while (size>0 && path.back() == '/')
 		path.resize(--size);
 #endif
 	return path;
 }
 
-string& FileSystem::MakeDirectory(string& path) {
-	string::size_type size = path.size();
-#if defined(_WIN32)
-	while (size>0 && path[size - 1] == '\\')
-		path.resize(--size);
-	if (size == 0) {
-		path.assign("C:");
-		size=2;
-	}
-#endif
-	if (size > 0 && path[size - 1] != '/')
-		path.append("/");
-	return path;
-}
-
-string& FileSystem::Parent(string& path) {
-	auto separator = path.find_last_of("/\\");
+string& FileSystem::GetParent(string& path) {
+	auto separator = MakeFile(path).find_last_of("/\\");
 	if (separator != string::npos)
 		path.erase(separator+1); // keep the "/" (= folder!)
 	return path;

@@ -24,7 +24,7 @@ This file is a part of Mona.
 #include "LUATCPServer.h"
 #include "LUAGroup.h"
 #include "LUAMember.h"
-#include "LUAFilePath.h"
+#include "LUAPath.h"
 #include "LUABroadcaster.h"
 #include "Mona/Exceptions.h"
 #include "MonaServer.h"
@@ -252,20 +252,22 @@ int	LUAInvoker::Md5(lua_State *pState) {
 	SCRIPT_CALLBACK_RETURN
 }
 
-int LUAInvoker::ListFiles(lua_State *pState) {
-	SCRIPT_CALLBACK(Invoker,invoker)
-		string path(MonaServer::WWWPath + "/" + SCRIPT_READ_STRING("") + "/");
+int LUAInvoker::ListPaths(lua_State *pState) {
+	SCRIPT_CALLBACK(Invoker, invoker)
+		string directory(MonaServer::WWWPath);
+		String::Format(directory,SCRIPT_READ_STRING(""),"/");
 		
 		UInt32 index = 0;
-		Script::NewObject<LUAFiles>(pState, *new LUAFiles());
-		
-		FileSystem::ForEach forEach([&pState, &index](const string& pathFile){
-			Script::NewObject<LUAFilePath>(pState, *new LUAFilePath(pathFile));
+		lua_newtable(pState);
+		FileSystem::ForEach forEach([&pState, &index](const string& path){
+			Script::NewObject<LUAPath>(pState, *new Path(path));
 			lua_rawseti(pState,-2,++index);
 		});
 
 		Exception ex;
-		FileSystem::Paths(ex, path, forEach);
+		FileSystem::Paths(ex, directory, forEach);
+		if (ex)
+			lua_pushstring(pState,ex.error().c_str());
 	SCRIPT_CALLBACK_RETURN
 }
 
@@ -443,8 +445,8 @@ int LUAInvoker::Get(lua_State *pState) {
 				lua_getfield(pState, -1, "|servers");
 				lua_replace(pState, -2);
 				SCRIPT_CALLBACK_FIX_INDEX(name)
-			} else if (strcmp(name,"dir")==0) {
-				SCRIPT_WRITE_FUNCTION(LUAInvoker::ListFiles)
+			} else if (strcmp(name,"listPaths")==0) {
+				SCRIPT_WRITE_FUNCTION(LUAInvoker::ListPaths)
 				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else {
 				Script::Collection(pState,1, "configs");

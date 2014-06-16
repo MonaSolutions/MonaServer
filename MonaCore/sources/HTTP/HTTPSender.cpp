@@ -32,7 +32,7 @@ namespace Mona {
 
 
 
-HTTPSender::HTTPSender(const SocketAddress& address, HTTPPacket& request,const PoolBuffers& poolBuffers) :
+HTTPSender::HTTPSender(const SocketAddress& address, HTTPPacket& request,const PoolBuffers& poolBuffers, const string& relativePath) :
 	_serverAddress(request.serverAddress),
 	_ifModifiedSince(request.ifModifiedSince),
 	_connection(request.connection),
@@ -43,22 +43,18 @@ HTTPSender::HTTPSender(const SocketAddress& address, HTTPPacket& request,const P
 	_sortOptions(0),
 	_isApp(false),
 	_poolBuffers(poolBuffers),
+	_appPath(relativePath),
 	TCPSender("TCPSender") {
 
 }
 
-void HTTPSender::writeError(int code,const string& description,bool close) {
-	_buffer.assign("Unknown error");
-	string title;
-	if (close)
-		_connection = HTTP::CONNECTION_CLOSE;
-	DataWriter& response = write(String::Format(title, code, " ", HTTP::CodeToMessage(code,_buffer)));
-	BinaryWriter& writer = response.packet;
-	HTML_BEGIN_COMMON_RESPONSE(writer, title)
-		writer.writeRaw(description.empty() ? title : description);
-	HTML_END_COMMON_RESPONSE(writer, _serverAddress)
+void HTTPSender::onSent(Socket& socket) {
+	if (_connection != HTTP::CONNECTION_CLOSE)
+		return;
+	// disconnect socket if _connection==HTTP::CONNECTION_CLOSE
+	Exception ex;
+	socket.shutdown(ex,Socket::SEND);
 }
-
 
 bool HTTPSender::run(Exception& ex) {
 
@@ -72,7 +68,7 @@ bool HTTPSender::run(Exception& ex) {
 		} else {
 			// file doesn't exist
 			if (_file.lastModified()==0)
-				writeError(404, String::Format(_buffer,"The requested URL ", _file.path(), " was not found on this server"));
+				writeError(404, "The requested URL ", _file.toString(), " was not found on this server");
 			// Folder
 			else if (_file.isDirectory()) {
 				// Connected to parent => redirect to url + '/'
@@ -80,7 +76,7 @@ bool HTTPSender::run(Exception& ex) {
 					// Redirect to the real path of directory
 					DataWriter& response = write("301 Moved Permanently");
 					BinaryWriter& writer = response.packet;
-					String::Format(_buffer, "http://", _serverAddress, _file.path(), '/');
+					String::Format(_buffer, "http://", _serverAddress, _appPath, '/');
 					HTTP_BEGIN_HEADER(writer)
 						HTTP_ADD_HEADER(writer, "Location", _buffer)
 					HTTP_END_HEADER(writer)
@@ -94,23 +90,21 @@ bool HTTPSender::run(Exception& ex) {
 						HTTP_ADD_HEADER(writer,"Last-Modified", date.toString(Date::HTTP_FORMAT, _buffer))
 					HTTP_END_HEADER(writer)
 
-					HTTP::WriteDirectoryEntries(writer, _serverAddress, _file.fullPath(), _file.path(), _sortOptions);
+					HTTP::WriteDirectoryEntries(writer, _serverAddress, _file.toString(), _appPath, _sortOptions);
 				}
 			} 
 			// File
 			else {
 #if defined(_WIN32)
 				wchar_t wFile[_MAX_PATH];
-				MultiByteToWideChar(CP_UTF8, 0, _file.fullPath().c_str(), -1, wFile, _MAX_PATH);
+				MultiByteToWideChar(CP_UTF8, 0, _file.toString().c_str(), -1, wFile, _MAX_PATH);
 				ifstream ifile(wFile, ios::in | ios::binary | ios::ate);
 #else
 				ifstream ifile(_file.fullPath(), ios::in | ios::binary | ios::ate);
 #endif
-				if (!ifile.good()) {
-					Exception ex;
-					ex.set(Exception::NIL, "Impossible to open ", _file.path(), " file");
-					writeError(423,  ex.error());
-				} else {
+				if (!ifile.good())
+					writeError(423, "Impossible to open ", _appPath, "/", _file.name(), " file");
+				else {
 					// determine the content-type
 					string subType;
 					HTTP::ContentType type = HTTP::ExtensionToMIMEType(_file.extension(), subType);	
@@ -190,8 +184,7 @@ DataWriter& HTTPSender::writer(const string& code, HTTP::ContentType type, const
 	packet.writeRaw(code);
 	if (String::ToNumber<UInt16>(code, value)) {
 		packet.writeRaw(" ");
-		_buffer.assign("Unknown");
-		packet.writeRaw(HTTP::CodeToMessage(value, _buffer));
+		packet.writeRaw(HTTP::CodeToMessage(value));
 	}
 
 	// Date + Mona

@@ -107,7 +107,8 @@ int LUAWriter::WriteMessage(lua_State* pState) {
 
 int LUAWriter::WriteInvocation(lua_State* pState) {
 	SCRIPT_CALLBACK(Writer,writer)
-		SCRIPT_READ_DATA(writer.writeInvocation(SCRIPT_READ_STRING("")))
+		DataWriter& dataWriter = writer.writeInvocation(SCRIPT_READ_STRING(""));
+		SCRIPT_READ_DATA(dataWriter)
 	SCRIPT_CALLBACK_RETURN
 }
 
@@ -128,6 +129,6 @@ int LUAWriter::NewWriter(lua_State* pState) {
 		if (&newWriter == &writer)
 			lua_pushvalue(pState, 1); // return the same writer
 		else
-			Script::NewObject<LUAWriter>(pState, (new LUAWriter(pState, newWriter))->writer);  // manage with garbage collector a new writer
+			Script::NewObject<LUAWriter>(pState, (new LUAWriter(pState, newWriter))->writer); // manage with garbage collector a new writer
 	SCRIPT_CALLBACK_RETURN
 }

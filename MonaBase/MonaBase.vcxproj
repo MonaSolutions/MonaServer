@@ -121,7 +121,6 @@
     <ClCompile Include="sources\Database.cpp" />
     <ClCompile Include="sources\Date.cpp" />
     <ClCompile Include="sources\Exceptions.cpp" />
-    <ClCompile Include="sources\FilePath.cpp" />
     <ClCompile Include="sources\DNS.cpp" />
     <ClCompile Include="sources\FileSystem.cpp" />
     <ClCompile Include="sources\FileWatcher.cpp" />
@@ -142,6 +141,7 @@
     </ClCompile>
     <ClCompile Include="sources\Options.cpp" />
     <ClCompile Include="sources\Parameters.cpp" />
+    <ClCompile Include="sources\Path.cpp" />
     <ClCompile Include="sources\PoolBuffers.cpp" />
     <ClCompile Include="sources\Process.cpp" />
     <ClCompile Include="sources\QualityOfService.cpp" />
@@ -177,7 +177,6 @@
     <ClInclude Include="include\Mona\Date.h" />
     <ClInclude Include="include\Mona\Event.h" />
     <ClInclude Include="include\Mona\Expirable.h" />
-    <ClInclude Include="include\Mona\FilePath.h" />
     <ClInclude Include="include\Mona\DNS.h" />
     <ClInclude Include="include\Mona\Exceptions.h" />
     <ClInclude Include="include\Mona\FileSystem.h" />
@@ -202,6 +201,7 @@
     <ClInclude Include="include\Mona\MapParameters.h" />
     <ClInclude Include="include\Mona\Option.h" />
     <ClInclude Include="include\Mona\Options.h" />
+    <ClInclude Include="include\Mona\Path.h" />
     <ClInclude Include="include\Mona\PoolBuffer.h" />
     <ClInclude Include="include\Mona\PoolBuffers.h" />
     <ClInclude Include="include\Mona\Process.h" />

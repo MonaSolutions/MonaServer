@@ -200,11 +200,11 @@ DataWriter* HTTP::NewDataWriter(const PoolBuffers& poolBuffers,const string& sub
 	return new RawWriter(poolBuffers);
 }
 
-string& HTTP::CodeToMessage(UInt16 code, string& message) {
+const char* HTTP::CodeToMessage(UInt16 code) {
 	auto found = CodeMessages.find(code);
 	if (found != CodeMessages.end())
-		message.assign(found->second);
-	return message;
+		return found->second;
+	return "Unknown";
 }
 
 HTTP::CommandType HTTP::ParseCommand(Exception& ex,const char* value) {
@@ -280,7 +280,7 @@ class EntriesComparator {
 public:
 	EntriesComparator(UInt8 options) : _options(options) {}
 
-	bool operator() (const FilePath* pFile1,const FilePath* pFile2) {
+	bool operator() (const Path* pFile1,const Path* pFile2) {
 		if (_options&HTTP::SORT_BY_SIZE)
 			return _options&HTTP::SORT_ASC ? pFile1->size() < pFile2->size() : pFile2->size() < pFile1->size();
 		if (_options&HTTP::SORT_BY_MODIFIED)
@@ -302,9 +302,9 @@ private:
 void HTTP::WriteDirectoryEntries(BinaryWriter& writer, const string& serverAddress, const std::string& fullPath, const std::string& path, UInt8 sortOptions) {
 
 	Exception ex;
-	vector<FilePath*> files;
+	vector<Path*> files;
 	FileSystem::ForEach forEach([&files](const string& filePath){
-		files.emplace_back(new FilePath(filePath));
+		files.emplace_back(new Path(filePath));
 	});
 
 	FileSystem::Paths(ex, fullPath, forEach);
@@ -335,8 +335,8 @@ void HTTP::WriteDirectoryEntries(BinaryWriter& writer, const string& serverAddre
 	std::sort(files.begin(), files.end(), comparator);
 
 	// Write entries
-	for (const FilePath* pFile : files) {
-		WriteDirectoryEntry(writer,serverAddress,path, *pFile);
+	for (const Path* pFile : files) {
+		WriteDirectoryEntry(writer, serverAddress, path, *pFile);
 		delete pFile;
 	}
 
@@ -344,7 +344,7 @@ void HTTP::WriteDirectoryEntries(BinaryWriter& writer, const string& serverAddre
 	writer.writeRaw("</table></body></html>");
 }
 
-void HTTP::WriteDirectoryEntry(BinaryWriter& writer,const string& serverAddress,const string& path,const FilePath& entry) {
+void HTTP::WriteDirectoryEntry(BinaryWriter& writer,const string& serverAddress,const string& path,const Path& entry) {
 	string size,date;
 	if (entry.isDirectory())
 		size.assign("-");
@@ -375,8 +375,9 @@ void HTTP::ReadMessageFromType(Exception& ex, HTTPSession& caller, const shared_
 	// JSON
 	else if (httpPacket->contentType == HTTP::CONTENT_APPLICATON && String::ICompare(httpPacket->contentSubType,EXPAND_SIZE("json"))==0)
 		caller.readMessage<JSONReader>(ex, packet);
-	
 	// TODO other types
+	else
+		caller.readRawMessage(ex, packet);
 }
 
 } // namespace Mona

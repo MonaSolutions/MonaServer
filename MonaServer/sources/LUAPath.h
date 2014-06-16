@@ -19,29 +19,15 @@ This file is a part of Mona.
 
 #pragma once
 
-#include "Mona/Mona.h"
+#include "Script.h"
 #include "Mona/Path.h"
 
-namespace Mona {
-
-class FileWatcher : public virtual Object {
+class LUAPath {
 public:
-
-	template <typename ...Args>
-	FileWatcher(Args&&... args) : filePath(args ...), _lastModified(0), _exists(false) {}
-	
-
-	/// look if the file has changed, call clearFile if doesn't exist anymore, or call clearFile and loadFile if file has change
-	/// return true if file exists
-	bool	watchFile();
-
-	const Path	filePath;
+	static void Init(lua_State *pState, Mona::Path& path);
+	static void	Clear(lua_State* pState, Mona::Path& path);
+	static int	Get(lua_State *pState);
+	static int	Set(lua_State *pState);
 private:
-	virtual void loadFile() = 0;
-	virtual void clearFile() = 0;
-
-	Mona::Time	_lastModified;
-	bool		_exists;
+	static int  Call(lua_State* pState);
 };
-
-} // namespace Mona

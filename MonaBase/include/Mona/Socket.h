@@ -137,8 +137,12 @@ public:
 	template<typename SocketSenderType>
 	bool send(Exception& ex,const std::shared_ptr<SocketSenderType>& pSender) {
 		// return if no data to send
-		if (!pSender || !pSender->available())
+		if (!pSender)
 			return true;
+		if(!pSender->available()) {
+			pSender->onSent(*this);
+			return true;
+		}
 
 		// We can write immediatly if there are no queue packets to write,
 		// and if it remains some data to write (flush returns false)

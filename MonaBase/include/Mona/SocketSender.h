@@ -58,6 +58,7 @@ private:
 	//// TO OVERLOAD ////////
 
 	virtual	UInt32					send(Exception& ex,Socket& socket,const UInt8* data, UInt32 size) = 0;
+	virtual void					onSent(Socket& socket) {}
 
 	std::unique_ptr<Socket>		_pSocket;
 	std::weak_ptr<SocketSender>	_pThis;

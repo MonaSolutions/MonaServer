@@ -13,14 +13,7 @@ indexSerialize = 1
 
 function onConnection(client,...)
 	
-	INFO("New client on FunctionalTests (protocol : ", client.protocol, ")")
-  
-  function client:onRead(file)
-    
-    if file == "" and client.protocol == "HTTP" then
-      return "index.html"
-    end
-  end
+  INFO("New client on FunctionalTests (protocol : ", client.protocol, ")")
   
   function client:onSerialize(mode)
     
@@ -55,8 +48,11 @@ function onConnection(client,...)
   end
   
   function client:onMessage(data)
+	NOTE(path)
     INFO("Message : ", mona:toJSON(data))
 
-    return data
-	end
+    client.writer:writeMessage(data)
+  end
+  
+  return {index="index.html",timeout=7}
 end

@@ -202,7 +202,7 @@ It will create dynamic properties on *server* object (see *server* object descri
 [HTTP]
 ===================================
 
-- **port** : equals 1935 by default (RTMFP server default port), it is the port used by MonaServer to listen incoming RTMFP requests.
+- **port** : equals 80 by default (HTTP server default port), it is the port used by MonaServer to listen incoming HTTP requests.
 - **timeout** : 7 by default, it is the maximum time before server kills the connection when no data as been received.
 - **index** : the default index file of HTTP protocol, if it is specified it will redirect each connection to this index.
 

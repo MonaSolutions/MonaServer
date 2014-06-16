@@ -17,65 +17,71 @@ details (or else see http://www.gnu.org/licenses/).
 This file is a part of Mona.
 */
 
-#include "LUAFilePath.h"
+#include "LUAPath.h"
 
 using namespace std;
 using namespace Mona;
 
-void LUAFiles::Clear(lua_State* pState, LUAFiles& files) {
-	delete &files;
+
+
+void LUAPath::Init(lua_State* pState, Path& path) {
+	lua_getmetatable(pState, -1);
+	lua_setfield(pState, -2, "__call");
+	lua_pushcfunction(pState, &LUAPath::Call);
+	lua_pop(pState, 1);
 }
 
-int LUAFiles::Get(lua_State *pState) {
-	SCRIPT_CALLBACK(LUAFiles, filepath)
-		const char* name = SCRIPT_READ_STRING("");
+void LUAPath::Clear(lua_State* pState, Path& path) {
+	delete &path;
+}
+
+int LUAPath::Call(lua_State* pState) {
+	SCRIPT_CALLBACK(Path, path)
+		if (!SCRIPT_CAN_READ) {
+			SCRIPT_WRITE_STRING(path.toString().c_str())
+		} else {
+			string result(path.toString());
+			const char* piece;
+			while ((piece = SCRIPT_READ_STRING(NULL)))
+				result.append(piece);
+			SCRIPT_WRITE_STRING(result.c_str())
+		}
 	SCRIPT_CALLBACK_RETURN
 }
 
-int LUAFiles::Set(lua_State *pState) {
-	SCRIPT_CALLBACK(LUAFiles, files)
-		const char* name = SCRIPT_READ_STRING("");
-		lua_rawset(pState,1); // consumes key and value
-	SCRIPT_CALLBACK_RETURN
-}
-
-void LUAFilePath::Clear(lua_State* pState, LUAFilePath& filePath) {
-	delete &filePath;
-}
-
-int LUAFilePath::Get(lua_State *pState) {
-	SCRIPT_CALLBACK(LUAFilePath, filePath)
+int LUAPath::Get(lua_State *pState) {
+	SCRIPT_CALLBACK(Path, path)
 		const char* name = SCRIPT_READ_STRING(NULL);
 		
 		if (name) {
-			if(strcmp(name,"fullPath")==0) {
-				SCRIPT_WRITE_STRING(filePath._path.fullPath().c_str())
-				SCRIPT_CALLBACK_FIX_INDEX(name)
-			}  else if(strcmp(name,"name")==0) {
-				SCRIPT_WRITE_STRING(filePath._path.name().c_str())
+			if(strcmp(name,"name")==0) {
+				SCRIPT_WRITE_STRING(path.name().c_str())
 				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if(strcmp(name,"baseName")==0) {
-				SCRIPT_WRITE_STRING(filePath._path.baseName().c_str())
+				SCRIPT_WRITE_STRING(path.baseName().c_str())
+				SCRIPT_CALLBACK_FIX_INDEX(name)
+			} else if(strcmp(name,"parent")==0) {
+				SCRIPT_WRITE_STRING(path.parent().c_str())
 				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if(strcmp(name,"extension")==0) {
-				SCRIPT_WRITE_STRING(filePath._path.extension().c_str())
+				SCRIPT_WRITE_STRING(path.extension().c_str())
 				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if(strcmp(name,"size")==0) {
-				SCRIPT_WRITE_NUMBER(filePath._path.size())
+				SCRIPT_WRITE_NUMBER(path.size())
 				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if(strcmp(name,"lastModified")==0) {
-				SCRIPT_WRITE_NUMBER(filePath._path.lastModified())
+				SCRIPT_WRITE_NUMBER(path.lastModified())
 				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if (strcmp(name,"isDirectory")==0) {
-				SCRIPT_WRITE_BOOL(filePath._path.isDirectory())
+				SCRIPT_WRITE_BOOL(path.isDirectory())
 				SCRIPT_CALLBACK_FIX_INDEX(name)
 			}
 		}
 	SCRIPT_CALLBACK_RETURN
 }
 
-int LUAFilePath::Set(lua_State *pState) {
-	SCRIPT_CALLBACK(LUAFilePath, filepath)
+int LUAPath::Set(lua_State *pState) {
+	SCRIPT_CALLBACK(Path, path)
 		lua_rawset(pState,1); // consumes key and value
 	SCRIPT_CALLBACK_RETURN
 }

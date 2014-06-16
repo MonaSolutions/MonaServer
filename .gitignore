@@ -48,3 +48,5 @@ Debug
 /MonaServer/MonaServer.includes
 _build
 www
+data
+logs

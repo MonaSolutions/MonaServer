@@ -50,32 +50,30 @@ bool SocketSender::run(Exception& ex) {
 
 
 bool SocketSender::flush(Exception& ex,Socket& socket) {
-	if(!available())
-		return true;
+	if (available()) {
 
-	UInt32 size;
-	const UInt8* data;
-	if (_ppBuffer) {
-		size = (*_ppBuffer)->size();
-		data = (*_ppBuffer)->data();
-	} else {
-		size = this->size();
-		data = this->data();
+		UInt32 size;
+		const UInt8* data;
+		if (_ppBuffer) {
+			size = (*_ppBuffer)->size();
+			data = (*_ppBuffer)->data();
+		} else {
+			size = this->size();
+			data = this->data();
+		}
+
+		_position += send(ex,socket,data + _position, size - _position);
+
+		if (ex) // terminate the sender
+			_position = size;
+		// everything has been sent
+		if (_position >= size) {
+			if (_ppBuffer)
+				_ppBuffer->release();
+		} else if (buffering(socket.manager().poolBuffers))
+			return false;
 	}
-
-	_position += send(ex,socket,data + _position, size - _position);
-
-	if (ex) // terminate the sender
-		_position = size;
-	// everything has been sent
-	if (_position >= size) {
-		if (_ppBuffer)
-			_ppBuffer->release();
-		return true;
-	}
-
-	if (buffering(socket.manager().poolBuffers))
-		return false;
+	onSent(socket);
 	return true;
 }
 

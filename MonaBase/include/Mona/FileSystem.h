@@ -40,7 +40,7 @@ public:
 	typedef std::function<void(const std::string&)> ForEach; /// FileSystem::ListDir function type handler
 
 	/// Iterate over files under directory path
-	static void			Paths(Exception& ex, const std::string& path, const FileSystem::ForEach& forEach);
+	static UInt32		Paths(Exception& ex, const std::string& path, const FileSystem::ForEach& forEach);
 
 	/// In giving a path with /, it tests one folder existance, otherwise file existance (test windows device without / => C:)
 	static bool			Exists(const std::string& path,bool any=false);
@@ -53,6 +53,8 @@ public:
 	static std::string& GetExtension(const std::string& path,std::string& value);
 	static UInt32		GetSize(Exception& ex,const std::string& path);
 	static Time&		GetLastModified(Exception& ex,const std::string& path, Time& time);
+	static std::string&	GetParent(std::string& path);
+
 	static bool			GetCurrentApplication(std::string& path);
 	static bool			GetCurrent(std::string& path);
 	static bool			GetHome(std::string& path);
@@ -61,10 +63,9 @@ public:
 	static bool			Rename(const std::string& fromPath, const std::string& toPath) { return rename(fromPath.c_str(), toPath.c_str()) == 0; }
 	static bool			CreateDirectory(const std::string& path);
 	static void			CreateDirectories(Exception& ex, const std::string& path);
-	static std::string&	MakeDirectory(std::string& path);
+	static std::string&	MakeDirectory(std::string& path) { return MakeFile(path).append("/");  }
 	static std::string&	MakeFile(std::string& path);
 	
-	static std::string&					Parent(std::string& path);
 	static bool							ResolveFileWithPaths(const std::string& paths, std::string& file);
 	static std::vector<std::string>&	Unpack(const std::string& path, std::vector<std::string>& values);
 	static std::string&					Pack(const std::vector<std::string>& values, std::string& path);

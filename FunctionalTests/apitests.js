@@ -18,14 +18,15 @@ function print(message, style) {
 
 // Macros for writing message on the result viewer
 function ERROR(message) { print(message, "color:#FF0000;"); }
-function INFO(message) { print(message, "color:#00FF00;"); }
+function NOTE(message) { print(message, "color:#00FF00;"); }
+function INFO(message) { print(message, "color:#CCCCCC;"); }
 function TEST_ERROR(name, subname, message) { ERROR("Test " + name + "::" + subname + " ERROR :"); ERROR(message); }
-function TEST_OK(name, subname, count) { INFO("Test " + name + "::" + subname + " OK (" + count + " tests)"); }
+function TEST_OK(name, subname, count) { NOTE("Test " + name + "::" + subname + " OK (" + count + " tests)"); }
 
 /** 
 * HTTP Send message
 */
-function send(message) {
+function send(message, contentType) {
   var xmlhttp = new XMLHttpRequest();
   xmlhttp.open('POST', "", false); // synchronous
   
@@ -42,7 +43,7 @@ function send(message) {
       }
   }
   // Send the POST request
-  xmlhttp.setRequestHeader("Content-Type", "text/xml");
+  xmlhttp.setRequestHeader("Content-Type", contentType);
   xmlhttp.send(message);  
   
   return result;
@@ -108,6 +109,7 @@ function initList() {
 
   // Load tests files dynamically
   readJsScript("serialization.js");
+  readJsScript("http.js");
 }
 
 /** 

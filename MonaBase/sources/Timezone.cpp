@@ -538,7 +538,7 @@ Timezone::Timezone() : _offset(0),_dstOffset(3600000) {
 	}
 
 	if (FileSystem::GetCurrentApplication(path)) {
-		FileSystem::Parent(path).append("zoneinfo/").append(_name);
+		FileSystem::GetParent(path).append("zoneinfo/").append(_name);
 		if(readTZDatabase(path))
 			return;
 	}

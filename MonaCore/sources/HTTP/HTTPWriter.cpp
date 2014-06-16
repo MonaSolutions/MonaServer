@@ -42,7 +42,7 @@ void HTTPWriter::close(const Exception& ex) {
 			code = 503;
 			break;
 	}
-	_buffer.assign(ex.error());
+	_lastError.assign(ex.error());
 	close(code);
 }
 
@@ -50,9 +50,10 @@ void HTTPWriter::close(Int32 code) {
 	if (code < 0)
 		return; // listener!
 	if (code > 0 && pRequest)
-		createSender(*pRequest).writeError(code,_buffer,true);
+		createSender(*pRequest).writeError(_lastError,code);
+	else
+		_session.kill(code); // kill just if no message is send
 	Writer::close(code);
-	_session.kill(code);
 }
 
 void HTTPWriter::flush(bool full) {
@@ -71,7 +72,7 @@ void HTTPWriter::flush(bool full) {
 	_senders.clear();
 }
 
-void HTTPWriter::writeFile(const FilePath& file, UInt8 sortOptions, bool isApp) {
+void HTTPWriter::writeFile(const Path& file, UInt8 sortOptions, bool isApp) {
 
 	if (!pRequest) {
 		ERROR("No HTTP request to send file ",file.name())
