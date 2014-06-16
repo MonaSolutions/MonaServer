@@ -100,7 +100,7 @@ bool HTTPSender::run(Exception& ex) {
 				MultiByteToWideChar(CP_UTF8, 0, _file.toString().c_str(), -1, wFile, _MAX_PATH);
 				ifstream ifile(wFile, ios::in | ios::binary | ios::ate);
 #else
-				ifstream ifile(_file.fullPath(), ios::in | ios::binary | ios::ate);
+				ifstream ifile(_file.toString(), ios::in | ios::binary | ios::ate);
 #endif
 				if (!ifile.good())
 					writeError(423, "Impossible to open ", _appPath, "/", _file.name(), " file");
