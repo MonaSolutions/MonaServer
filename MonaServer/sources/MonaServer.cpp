@@ -243,7 +243,7 @@ void MonaServer::onDataLoading(const string& path, const UInt8* value, UInt32 si
 	}
 	// get table and set key
 	lua_pushvalue(_pState,LUA_REGISTRYINDEX);
-	const char* key("|data");
+	string key("|data");
 	if (!path.empty()) {
 		lua_getfield(_pState, LUA_REGISTRYINDEX, "|data");
 		lua_replace(_pState, -2);
@@ -256,7 +256,7 @@ void MonaServer::onDataLoading(const string& path, const UInt8* value, UInt32 si
 	vector<string> fields;
 	String::Split(path, "/", fields, String::SPLIT_IGNORE_EMPTY | String::SPLIT_TRIM);
 	if (!fields.empty()) {
-		key = fields.back().c_str();
+		key = move(fields.back());
 		fields.pop_back();
 	}
 	for (const string& field : fields) {
@@ -277,7 +277,7 @@ void MonaServer::onDataLoading(const string& path, const UInt8* value, UInt32 si
 
 	// set value
 	Script::PushValue(_pState,value,size);
-	lua_setfield(_pState, -2, key);
+	lua_setfield(_pState, -2, key.c_str());
 	lua_pop(_pState, 1); // remove table
 }
 

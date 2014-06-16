@@ -42,10 +42,5 @@ public:
 private:
 	static int	Size(lua_State* pState);
 
-	class LUAMembers {
-	public:
-		static int Item(lua_State *pState);
-	};
-
 };
 

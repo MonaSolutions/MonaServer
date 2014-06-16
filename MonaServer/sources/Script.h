@@ -119,8 +119,8 @@ public:
 	static void FillCollection(lua_State* pState, Mona::UInt32 size);
 	static void ClearCollection(lua_State* pState);
 
-	template<typename CollectorType = Script, typename LUAItemType = CollectorType>
-	static bool Collection(lua_State* pState, int index,const char* field, CollectorType* pCollector = NULL) {
+	template<typename LUAItemType = Script>
+	static bool Collection(lua_State* pState, int index,const char* field) {
 		if (!field) {
 			lua_pushnil(pState);
 			return false;
@@ -148,20 +148,27 @@ public:
 			// metatable
 			lua_newtable(pState);
 
-			lua_pushcfunction(pState, &Script::Len);
+			lua_pushcfunction(pState, &Script::LenCollection);
 			lua_setfield(pState, -2, "__len");
 
 			lua_pushcfunction(pState, &Script::IndexCollection);
 			lua_setfield(pState, -2, "__index");
 
-			lua_pushcfunction(pState, &Script::NewIndexCollection);
-			lua_setfield(pState, -2, "__newindex");
-
 			lua_pushnumber(pState, 0);
 			lua_setfield(pState, -2, "|count");
 
+			lua_newtable(pState);
+			lua_newtable(pState);
 			lua_pushstring(pState,"v");
 			lua_setfield(pState,-2,"__mode");
+			lua_setmetatable(pState, -2);
+			lua_setfield(pState, -2, "|items");
+
+			lua_pushvalue(pState, index<0 ? (index-3) : index);
+			lua_setfield(pState, -2, "|self"); // to remove self on call, and get collector on __call
+
+			lua_pushcfunction(pState, &Script::ItemSafe<LUAItemType>);
+			lua_setfield(pState, -2, "__call");
 
 #if !defined(_DEBUG)
 			lua_pushstring(pState, "change metatable of datatable values is prohibited");
@@ -173,35 +180,12 @@ public:
 			lua_setfield(pState, -3, field);
 		}
 
-		if (pCollector) {
-			lua_getmetatable(pState, -1);
-			lua_pushlightuserdata(pState, pCollector);
-			lua_setfield(pState, -2, "|collector");
-			lua_pushvalue(pState, index<0 ? (index-3) : index);
-			lua_setfield(pState, -2, "|self"); // to remove self on call!
-			lua_pushcfunction(pState, &Script::ItemSafe<LUAItemType>);
-			lua_setfield(pState, -2, "__call");
-			lua_pop(pState, 1);
-		}
-
 		lua_replace(pState, -2); // collection replace metatable
 		return creation;
 	}
-
-	template<typename CollectorType>
-	static CollectorType* GetCollector(lua_State *pState, int index) {
-		CollectorType* pCollector = NULL;
-		if (lua_getmetatable(pState, index)) {
-			lua_getfield(pState, -1, "|collector");
-			pCollector = (CollectorType*)lua_touserdata(pState, -1);
-			lua_pop(pState, 2);
-		}
-		return pCollector;
-	}
-
 	
-	template<typename CollectorType = Script, typename LUAItemType = CollectorType,typename ObjectType>
-	static void InitCollectionParameters(lua_State* pState, ObjectType& object,const char* field, const Mona::Parameters& parameters, CollectorType* pCollector = NULL) {
+	template<typename LUAItemType = Script,typename ObjectType>
+	static void InitCollectionParameters(lua_State* pState, ObjectType& object,const char* field, const Mona::Parameters& parameters) {
 		// index -1 must be the collector
 		Mona::Parameters::OnChange::Type* pOnChange = new Mona::Parameters::OnChange::Type([pState,&object,&parameters,field](const std::string& key, const char* value) {
 			if (Script::FromObject(pState, object)) {
@@ -231,7 +215,7 @@ public:
 		lua_setfield(pState, -2, Mona::String::Format(buffer,"|",field,"OnClear").c_str());
 		lua_pop(pState, 1);
 
-		Script::Collection<CollectorType,LUAItemType>(pState, -1, field, pCollector);
+		Script::Collection<LUAItemType>(pState, -1, field);
 		Mona::Parameters::ForEach forEach([pState](const std::string& key, const std::string& value) {
 			Script::PushKeyValue(pState, key, value);
 		});
@@ -454,10 +438,6 @@ private:
 		lua_pushlightuserdata(pState,(void*)&object);
 		lua_setfield(pState,-2,"|this");
 
-		// len => override operator #
-		lua_pushcfunction(pState, &Script::Len);
-		lua_setfield(pState, -2, "__len");
-
 		// get
 		lua_pushcfunction(pState,&LUAType::Get);
 		lua_setfield(pState,-2,"__index");
@@ -529,25 +509,27 @@ private:
 
 	template<typename LUAItemType>
 	static int ItemSafe(lua_State *pState) {
-		// solve the problem of call with self collector:collection(..) in removing |self if is argument 2
+		// Add the collector (self) in second arguments if not present!
+		// And Remove the collection
 		// 1 collection
-		// 2 collector (self) or parameter
-		if (lua_istable(pState, 2)) {
-			if (lua_getmetatable(pState, 1)) {
-				lua_getfield(pState, -1, "|self");
-				if (lua_equal(pState, -1, 2))
-					lua_remove(pState, 2);
-				lua_pop(pState, 2);
-			}
+		// 2 collector (self) or parameters
+		if (lua_getmetatable(pState, 1)) {
+			lua_getfield(pState, -1, "|self");
+			lua_replace(pState, -2);
+			if (lua_istable(pState, -1)) {
+				if (!lua_equal(pState, -1, 2))
+					lua_insert(pState, 2);
+				lua_remove(pState, 1); // remove collection
+			} else
+				lua_pop(pState, 1);
 		}
 		return LUAItemType::Item(pState);
 	}
 
 	static int Item(lua_State *pState);
 	
-	static int Len(lua_State* pState);
+	static int LenCollection(lua_State* pState);
 	static int IndexCollection(lua_State* pState);
-	static int NewIndexCollection(lua_State* pState);
 
 	static int Error(lua_State* pState);
 	static int Warn(lua_State* pState);

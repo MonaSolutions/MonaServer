@@ -26,6 +26,8 @@ void LUADataTable::Init(lua_State* pState, LUADataTable& table) {
 	lua_getmetatable(pState, -1);
 	lua_pushcfunction(pState,&LUADataTable::Len);
 	lua_setfield(pState, -2, "__len");
+	lua_newtable(pState);
+	lua_setfield(pState,-2, "|items");
 	lua_pop(pState, 1);
 }
 
@@ -42,69 +44,82 @@ int	LUADataTable::Len(lua_State* pState) {
 int LUADataTable::Get(lua_State *pState) {
 	SCRIPT_CALLBACK(LUADataTable, table)
 		const char* name = SCRIPT_READ_STRING(NULL);
-		if (name && strcmp(name, "count") == 0) {
-			SCRIPT_WRITE_NUMBER(table.count)
+		if (name) {
+			lua_getmetatable(pState, 1);
+			lua_getfield(pState, -1, "|items");
+			lua_replace(pState, -2);
+			lua_getfield(pState, -1, name);
+			lua_replace(pState, -2);
+			if (lua_isnil(pState,-1) && strcmp(name, "count") == 0)
+				SCRIPT_WRITE_NUMBER(table.count)
 		}
 	SCRIPT_CALLBACK_RETURN
 }
 
 int LUADataTable::Set(lua_State *pState) {
 	SCRIPT_CALLBACK(LUADataTable, table);
-		if (SCRIPT_NEXT_TYPE == LUA_TSTRING || SCRIPT_NEXT_TYPE == LUA_TNUMBER) {
-			const char* name = SCRIPT_READ_STRING(NULL);
-			if (name) {
-				Int8 removing = SCRIPT_NEXT_TYPE==LUA_TNIL ? 1 : 0;
-				string path;
-				String::Format(path, table.path, '/', name);
-				if (!removing) {
-					lua_getfield(pState, 1, name);
-					if (lua_istable(pState, -1)) {
-						SCRIPT_ERROR("Complex type exists already on ", path, ", for secure reasons delete explicitly this entry with a nil assignation before override")
-						removing = -1;
-					}
-					lua_pop(pState, 1);
+		const char* name = SCRIPT_READ_STRING(NULL);
+		if (name) {
+			Int8 removing = SCRIPT_NEXT_TYPE==LUA_TNIL ? 1 : 0;
+			string path;
+			String::Format(path, table.path, '/', name);
+			if (!removing) {
+				lua_getfield(pState, 1, name);
+				if (lua_istable(pState, -1)) {
+					SCRIPT_ERROR("Complex type exists already on ", path, ", for secure reasons delete explicitly this entry with a nil assignation before override")
+					removing = -1;
 				}
+				lua_pop(pState, 1);
+			}
 				
-				if (removing>=0) {
-					if (SCRIPT_NEXT_TYPE==LUA_TTABLE) {
-						lua_pushstring(pState, name);
-						Script::NewObject<LUADataTable,LUADataTable>(pState,*new LUADataTable(table.database, path));
-						// table iteration
-						lua_pushnil(pState);  // first key 
-						while (lua_next(pState, 3) != 0) {
-							// uses 'key' (at index -2) and 'value' (at index -1) 
-							lua_pushvalue(pState, -2); // duplicate key
-							lua_pushvalue(pState, -2); // duplicate value
-							lua_settable(pState, -5);
-							lua_pop(pState, 1);
-						}
-						// memory
-						lua_rawset(pState, 1);
-					} else {
-						// Primitive type!
-						Exception ex;
-						bool success = false;
-						if (removing) {
-							success = table.database.remove(ex, path);
-						} else {
-							UInt32 size(0);
-							const UInt8* value = Serialize(pState,3,size);
-							success = table.database.add(ex, path, value , size);
-						}
-						if (success) {
-							// memory
-							lua_pushstring(pState, name);
-							lua_pushvalue(pState, 3); // value
-							lua_rawset(pState, 1);
-							 if (ex)
-								SCRIPT_WARN("Database entry ", path, " writing, ", ex.error())
-						} else
-							SCRIPT_ERROR("Database entry ", path, " writing, ", ex.error())
+			if (removing>=0) {
+				if (SCRIPT_NEXT_TYPE==LUA_TTABLE) {
+					lua_getmetatable(pState, 1);
+					lua_getfield(pState, -1, "|items");
+
+					lua_pushstring(pState, name);
+					Script::NewObject<LUADataTable,LUADataTable>(pState,*new LUADataTable(table.database, path));
+
+					// table iteration
+					lua_pushnil(pState);  // first key 
+					while (lua_next(pState, 3) != 0) {
+						// uses 'key' (at index -2) and 'value' (at index -1) 
+						lua_pushvalue(pState, -2); // duplicate key
+						lua_pushvalue(pState, -2); // duplicate value
+						lua_settable(pState, -5);
+						lua_pop(pState, 1);
 					}
+
+					// memory
+					lua_rawset(pState, -3);
+					lua_pop(pState, 2);
+				} else {
+					// Primitive type!
+					Exception ex;
+					bool success = false;
+					if (removing) {
+						success = table.database.remove(ex, path);
+					} else {
+						UInt32 size(0);
+						const UInt8* value = Serialize(pState,3,size);
+						success = table.database.add(ex, path, value , size);
+					}
+					if (success) {
+						// memory
+						lua_getmetatable(pState, 1);
+						lua_getfield(pState, -1, "|items");
+						lua_pushstring(pState, name);
+						lua_pushvalue(pState, 3); // value
+						lua_rawset(pState, -3);
+						lua_pop(pState, 2);
+						if (ex)
+							SCRIPT_WARN("Database entry ", path, " writing, ", ex.error())
+					} else
+						SCRIPT_ERROR("Database entry ", path, " writing, ", ex.error())
 				}
+			}
 				
 			
-			}
 		} else
 			SCRIPT_ERROR("Key database entry must be a string or a number");
 	SCRIPT_CALLBACK_RETURN;

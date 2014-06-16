@@ -28,6 +28,8 @@ void LUABroadcaster::Init(lua_State *pState, Broadcaster& broadcaster) {
 	lua_getmetatable(pState, -1);
 	lua_pushcfunction(pState,&LUABroadcaster::Len);
 	lua_setfield(pState, -2, "__len");
+	lua_newtable(pState);
+	lua_setfield(pState,-2, "|items");
 	lua_pop(pState, 1);
 }
 
@@ -41,18 +43,21 @@ int	LUABroadcaster::Len(lua_State* pState) {
 void LUABroadcaster::AddServer(lua_State* pState, Broadcaster& broadcaster, const string& address) {
 	// -1 must be the server table!
 	if (Script::FromObject(pState, broadcaster)) {
-		lua_pushstring(pState, address.c_str());
-		lua_pushvalue(pState, -3);
-		lua_rawset(pState, -3);
-		lua_pop(pState, 1);
+		lua_getmetatable(pState, -1);
+		lua_getfield(pState, -1, "|items");
+		lua_pushvalue(pState, -4);
+		lua_setfield(pState, -2, address.c_str());
+		lua_pop(pState, 3);
 	}
 }
+
 void LUABroadcaster::RemoveServer(lua_State* pState, Broadcaster& broadcaster, const string& address) {
 	if (Script::FromObject(pState, broadcaster)) {
-		lua_pushstring(pState, address.c_str());
+		lua_getmetatable(pState, -1);
+		lua_getfield(pState, -1, "|items");
 		lua_pushnil(pState);
-		lua_rawset(pState, -3);
-		lua_pop(pState, 1);
+		lua_setfield(pState, -2, address.c_str());
+		lua_pop(pState, 3);
 	}
 }
 
@@ -75,14 +80,17 @@ int LUABroadcaster::Get(lua_State *pState) {
 		if (name) {
 			if (strcmp(name, "broadcast") == 0) {
 				SCRIPT_WRITE_FUNCTION(LUABroadcaster::Broadcast)
+				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if (strcmp(name, "initiators")==0) {
 				lua_getmetatable(pState, 1);
 				lua_getfield(pState, -1, "|initiators");
 				lua_replace(pState, -2);
+				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if (strcmp(name, "targets") == 0) {
 				lua_getmetatable(pState, 1);
 				lua_getfield(pState, -1, "|targets");
 				lua_replace(pState, -2);
+				SCRIPT_CALLBACK_FIX_INDEX(name)
 			} else if (strcmp(name, "count") == 0) {
 				SCRIPT_WRITE_NUMBER(broadcaster.count())
 			} else {

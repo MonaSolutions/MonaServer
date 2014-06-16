@@ -39,12 +39,59 @@ This file is a part of Mona.
 using namespace std;
 using namespace Mona;
 
+
+
+int LUAInvoker::LUAClients::Item(lua_State *pState) {
+	SCRIPT_CALLBACK(Invoker,invoker)
+
+		if (lua_isstring(pState, 2)) {
+			Client* pClient(NULL);
+			SCRIPT_READ_BINARY(id,size)
+			if (size == ID_SIZE)
+				pClient = invoker.clients(id);
+			else if (size == (ID_SIZE << 1)) {
+				Buffer buffer((UInt8*)id, size);
+				pClient = invoker.clients(Util::UnformatHex(buffer).data());
+			}
+
+			if (!pClient)
+				pClient = invoker.clients((const char*)id); // try by name!
+
+			if (pClient)
+				Script::AddObject<LUAClient>(pState,*pClient);
+		}
+
+	SCRIPT_CALLBACK_RETURN
+}
+
+
+int LUAInvoker::LUAGroups::Item(lua_State *pState) {
+	SCRIPT_CALLBACK(Invoker,invoker)
+
+		if (lua_isstring(pState, 2)) {
+			Group* pGroup(NULL);
+			SCRIPT_READ_BINARY(id,size)
+			if (size == ID_SIZE)
+				pGroup = invoker.groups(id);
+			else if (size == (ID_SIZE << 1)) {
+				Buffer buffer((UInt8*)id, size);
+				pGroup = invoker.groups(Util::UnformatHex(buffer).data());
+			}
+
+			if (pGroup)
+				Script::AddObject<LUAGroup>(pState,*pGroup);
+		}
+
+	SCRIPT_CALLBACK_RETURN
+}
+
+
 // HERE JUST TO SET THE COLLECTOR FOR EVERY COLLECTIONS
 void LUAInvoker::Init(lua_State *pState, Invoker& invoker) {
-	Script::Collection<Invoker,LUAClient>(pState, -1, "clients",&invoker);
+	Script::Collection<LUAClients>(pState, -1, "clients");
 	lua_setfield(pState, -2,"clients");
 
-	Script::Collection<Invoker,LUAGroup>(pState, -1, "groups",&invoker);
+	Script::Collection<LUAGroups>(pState, -1, "groups");
 	lua_setfield(pState, -2,"groups");
 	
 	Parameters::ForEach pushProperty([pState](const string& key, const string& value) {

@@ -126,11 +126,14 @@ void FlashMainStream::messageHandler(const string& name,AMFReader& message,Flash
 
 	} else if(name == "setPeerInfo") {
 
-		Exception ex;
 		peer.localAddresses.clear();
 		while(message.available()) {
 			SocketAddress address;
-			if (address.set(ex, message.readString(_buffer)))
+			Exception ex;
+			_buffer.clear();
+			if (message.readString(_buffer).empty())
+				continue;
+			if (address.set(ex, _buffer))
 				peer.localAddresses.emplace(address);
 			if (ex)
 				WARN("Peer address, ", ex.error())

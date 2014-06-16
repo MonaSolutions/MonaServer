@@ -110,6 +110,12 @@ lua_State* Script::CreateState() {
 	lua_setglobal(pState,"DEBUG");
 	lua_pushcfunction(pState,&Script::Trace);
 	lua_setglobal(pState,"TRACE");
+	lua_pushcfunction(pState, &Script::Pairs);
+	lua_setglobal(pState, "pairs");
+	lua_pushcfunction(pState, &Script::IPairs);
+	lua_setglobal(pState, "ipairs");
+	lua_pushcfunction(pState, &Script::Next);
+	lua_setglobal(pState, "next");
 
 	// set global metatable
 	lua_newtable(pState);
@@ -144,6 +150,26 @@ void Script::PushValue(lua_State* pState,const UInt8* value, UInt32 size) {
 
 void Script::FillCollection(lua_State* pState, UInt32 size) {
 	int index = -1-(size<<1); // index collection (-1-2*size)
+
+	if (!lua_getmetatable(pState, index)) {
+		SCRIPT_BEGIN(pState)
+			SCRIPT_ERROR("Invalid collection to fill, no metatable")
+		SCRIPT_END
+		return;
+	}
+
+	lua_getfield(pState, -1, "|items");
+	if (!lua_istable(pState, -1)) {
+		lua_pop(pState, 2);
+		SCRIPT_BEGIN(pState)
+			SCRIPT_ERROR("Invalid collection to fill, no |items field in metatable")
+		SCRIPT_END
+		return;
+	}
+
+	lua_insert(pState, index-1); // insert |item to the collection index, just before keys/values
+	lua_insert(pState, index-1); // insert metatable just before |items
+
 	int count(0);
 	while (size-- > 0) {
 		
@@ -152,9 +178,9 @@ void Script::FillCollection(lua_State* pState, UInt32 size) {
 			const char* sub(strchr(key, '.'));
 			if (sub) {
 				*(char*)sub = '\0';
-				Collection(pState, index, key);
+				Collection(pState, index-2, key);
 				*(char*)sub = '.';
-				lua_pushstring(pState, sub + 1); // sub key
+				lua_pushstring(pState, sub + 1);
 				lua_pushvalue(pState, -3); // value
 				FillCollection(pState, 1);
 				lua_pop(pState, 1);
@@ -174,14 +200,9 @@ void Script::FillCollection(lua_State* pState, UInt32 size) {
 		lua_rawset(pState,index);
 		index += 2;
 	}
-	
-	// update count
-	if (!lua_getmetatable(pState, -1)) {
-		SCRIPT_BEGIN(pState)
-			SCRIPT_WARN("Impossible to update count value of this collection, no metatable")
-		SCRIPT_END
-		return;
-	}
+
+	lua_pop(pState, 1); // remove |items
+
 	lua_getfield(pState,-1,"|count");
 	lua_pushnumber(pState,lua_tonumber(pState,-1)+count);
 	lua_replace(pState, -2);
@@ -191,22 +212,16 @@ void Script::FillCollection(lua_State* pState, UInt32 size) {
 }
 
 void Script::ClearCollection(lua_State* pState) {
-	// Clear content
-	lua_pushnil(pState);  // first key 
-	while (lua_next(pState, -2) != 0) {
-		// uses 'key' (at index -2) and 'value' (at index -1) 
-		// remove the raw!
-		lua_pushvalue(pState, -2); // duplicate key
-		lua_pushnil(pState);
-		lua_rawset(pState, -5);
-		lua_pop(pState, 1);
-	}
-
-	// update count
-	if (!lua_getmetatable(pState, -1))
+	// get collection table
+	if (!lua_istable(pState, -1) && !lua_getmetatable(pState, -1))
 		return;
+
+	lua_newtable(pState);
+	lua_setfield(pState, -2, "|items");
+
 	lua_pushnumber(pState, 0);
 	lua_setfield(pState, -2, "|count");
+	
 	lua_pop(pState, 1);
 }
 
@@ -251,42 +266,41 @@ int Script::Item(lua_State *pState) {
 int Script::IndexCollection(lua_State* pState) {
 	// 1 table
 	// 2 key
-	const char* name(lua_tostring(pState, 2));
-	if (name) {
-		// search possible sub key
-		if (lua_getmetatable(pState, 1)) {
-			lua_getfield(pState, -1, name);
+
+	if (lua_getmetatable(pState, 1)) {
+
+		lua_getfield(pState, -1, "|items");
+		// |items
+
+		lua_pushvalue(pState, 2); // key
+		lua_gettable(pState, -2);
+		// result!
+
+		if (lua_isnil(pState, -1)) { // if no result
+			// check sub key
+			lua_pushvalue(pState, 2); // key
+			lua_gettable(pState, -4); // table
 			lua_replace(pState, -2);
-			if (!lua_isnil(pState, -1)) {
-				lua_pushstring(pState, name);
-				lua_pushvalue(pState, -2);
-				lua_rawset(pState, 1);
-				return 1;
-			}
-			lua_pop(pState, 1);
 		}
-		if (strcmp(name, "count") == 0) {
-			lua_pushnumber(pState,lua_objlen(pState, 1));
-			lua_pushstring(pState, name);
-			lua_pushvalue(pState, -2);
-			lua_rawset(pState, 1);
-			return 1;
+
+		lua_replace(pState, -2);
+		lua_replace(pState, -2);
+	} else
+		lua_pushnil(pState);
+
+
+	if (lua_isnil(pState, -1)) {
+		const char* name = lua_tostring(pState,2);
+		if (name && strcmp(name, "count") == 0) {
+			lua_pushnumber(pState, lua_objlen(pState, 1));
+			lua_replace(pState, -2);
 		}
 	}
-	return 0;
+
+	return 1;
 }
 
-int Script::NewIndexCollection(lua_State* pState) {
-	// 1 table
-	// 2 key
-	// 3 value
-	SCRIPT_BEGIN(pState)
-		SCRIPT_ERROR("This collection is read-only")
-	SCRIPT_END
-	return 0;
-}
-
-int Script::Len(lua_State* pState) {
+int Script::LenCollection(lua_State* pState) {
 	// 1 table
 	if(lua_getmetatable(pState, 1)) {
 		lua_getfield(pState, -1, "|count");
@@ -298,6 +312,63 @@ int Script::Len(lua_State* pState) {
 	}
 	lua_pushnumber(pState,lua_objlen(pState, 1));
 	return 1;
+}
+
+int Script::Next(lua_State* pState) {
+	// 1 table
+	// [2 key] (optional)
+	if (lua_getmetatable(pState,  1)) {
+		lua_getfield(pState, -1, "|items");
+		lua_replace(pState, -2);
+		if (!lua_istable(pState, -1))
+			lua_pop(pState, 1);
+		else
+			lua_replace(pState, 1);
+	};
+	if (lua_gettop(pState) < 2)
+		lua_pushnil(pState);
+	int results = lua_next(pState, 1);
+	if (results>0)
+		++results;
+	return results;
+}
+
+static int INext(lua_State* pState) {
+	// 1 table
+	// [2 index] (optional,start to 0)
+	if (lua_getmetatable(pState,  1)) {
+		lua_getfield(pState, -1, "|items");
+		lua_replace(pState, -2);
+		if (!lua_istable(pState, -1))
+			lua_pop(pState, 1);
+		else
+			lua_replace(pState, 1);
+	};
+	if (lua_gettop(pState) < 2)
+		lua_pushnumber(pState,1);
+	else
+		lua_pushnumber(pState, lua_tonumber(pState,2)+1);
+	lua_pushvalue(pState, -1);
+	lua_gettable(pState, 1);
+	if (lua_isnil(pState, -1)) {
+		lua_replace(pState, -2);
+		return 1;
+	}
+	return 2;
+}
+
+int Script::Pairs(lua_State* pState) {
+	// 1 table
+	lua_pushcfunction(pState,&Next);
+	lua_pushvalue(pState, 1);
+	return 2;
+}
+
+int Script::IPairs(lua_State* pState) {
+	// 1 table
+	lua_pushcfunction(pState,&INext);
+	lua_pushvalue(pState, 1);
+	return 2;
 }
 
 

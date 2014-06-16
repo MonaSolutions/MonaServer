@@ -18,7 +18,7 @@ This file is a part of Mona.
 */
 
 #include "LUAClient.h"
-#include "Mona/Invoker.h"
+#include "Mona/Peer.h"
 #include "Mona/ArrayReader.h"
 #include "Mona/ArrayWriter.h"
 #include "Mona/Util.h"
@@ -29,27 +29,22 @@ This file is a part of Mona.
 using namespace std;
 using namespace Mona;
 
-int LUAClient::LUAProperties::Item(lua_State *pState) {
-	// 1 => properties table
-	// ... => parameters
-	if (!lua_isstring(pState, 2))
-		return 0;
-	Client* pClient = Script::GetCollector<Client>(pState,1);
-	if (!pClient)
-		return 0;
+int LUAClient::Item(lua_State *pState) {
+	SCRIPT_CALLBACK(Client,client)
 
-	vector<string> items;
-	ArrayWriter<vector<string>> writer(items);
+		vector<string> items;
+		ArrayWriter<vector<string>> writer(items);
 
-	Script::ReadData(pState,writer,lua_gettop(pState)-1).endWrite();
-	pClient->properties(items);
-	ArrayReader<vector<string>> reader(items);
-	Script::WriteData(pState,reader,LUA_NOREF);
-	return items.size();
+		SCRIPT_READ_DATA(writer);
+		client.properties(items);
+		ArrayReader<vector<string>> reader(items);
+		SCRIPT_WRITE_DATA(reader,0);
+
+	SCRIPT_CALLBACK_RETURN
 }
 
 void LUAClient::Init(lua_State* pState, Client& client) {
-	Script::InitCollectionParameters<Client,LUAClient::LUAProperties>(pState,client,"properties",((Peer&)client).properties(),&client);
+	Script::InitCollectionParameters<LUAClient>(pState,client,"properties",((Peer&)client).properties());
 	Script::InitCollectionParameters(pState,client,"parameters",client.parameters());
 
 	lua_getmetatable(pState, -1);
@@ -70,32 +65,6 @@ void LUAClient::Clear(lua_State* pState,Client& client){
 	Script::ClearObject<LUAQualityOfService>(pState, ((Client&)client).writer().qos());
 }
 
-int LUAClient::Item(lua_State *pState) {
-	// 1 => clients table
-	// 2 => parameter
-	if (!lua_isstring(pState, 2))
-		return 0;
-	Invoker* pInvoker = Script::GetCollector<Invoker>(pState,1);
-	if (!pInvoker)
-		return 0;
-	Client* pClient(NULL);
-	size_t size = lua_objlen(pState, 2);
-	const UInt8* id((const UInt8*)lua_tolstring(pState, 2,&size));
-	if (size == ID_SIZE)
-		pClient = pInvoker->clients(id);
-	else if (size == (ID_SIZE << 1)) {
-		string temp((const char*)id,size);
-		pClient = pInvoker->clients((const UInt8*)Util::UnformatHex(temp).c_str());
-	}
-
-	if (!pClient)
-		pClient = pInvoker->clients((const char*)id); // try by name!
-
-	if (!pClient)
-		return 0;
-	Script::AddObject<LUAClient>(pState,*pClient);
-	return 1;
-}
 
 int LUAClient::Get(lua_State *pState) {
 	SCRIPT_CALLBACK(Client,client)

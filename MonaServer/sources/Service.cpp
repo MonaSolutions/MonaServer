@@ -25,6 +25,7 @@ This file is a part of Mona.
 using namespace std;
 using namespace Mona;
 
+
 Service::Service(lua_State* pState, ServiceHandler& handler) : _lastCheck(0), _reference(LUA_REFNIL), _pParent(NULL), _handler(handler), _pState(pState), FileWatcher(handler.wwwPath(),"main.lua") {
 
 }
@@ -168,15 +169,19 @@ bool Service::open(bool create) {
 	lua_pushcfunction(_pState,&Service::Index);
 	lua_setfield(_pState,-2,"__index");
 
+	lua_pushlightuserdata(_pState,this);
+	lua_setfield(_pState,-2,"|this");
+
 	// set metatable
 	lua_setmetatable(_pState,-2);
 
 	// create children collection (collector required here!)
-	Script::Collection<Service>(_pState,-1,"children",this);
+	Script::Collection<Service>(_pState,-1,"children");
 	lua_pop(_pState, 1);
 
 	// record in registry
 	setReference(luaL_ref(_pState, LUA_REGISTRYINDEX));
+
 
 	return true;
 }
@@ -234,6 +239,7 @@ void Service::close(bool full) {
 		}
 
 		lua_rawgeti(_pState, LUA_REGISTRYINDEX, _reference);
+		clearEnvironment();
 		if (full) {
 			// Delete environment
 			if (lua_getmetatable(_pState, -1)) {
@@ -245,11 +251,12 @@ void Service::close(bool full) {
 					Script::FillCollection(_pState, 1);
 					lua_pop(_pState, 1);
 				}
+				lua_pushnumber(_pState, 0);
+				lua_setfield(_pState, -2, "this");
 				lua_pop(_pState, 2);
 			}
 			setReference(LUA_REFNIL);
-		} else
-			clearEnvironment();
+		}
 		lua_pop(_pState, 1);
 
 		lua_gc(_pState, LUA_GCCOLLECT, 0);
@@ -276,20 +283,19 @@ void Service::clearEnvironment() {
 
 
 int Service::Item(lua_State *pState) {
-	// 1 => children table
-	// 2 => key not found
+	SCRIPT_CALLBACK(Service,service)
+	// 1 => environment table
+	// 2 => children not found
 	// here it check the existing of the service
-	if (!lua_isstring(pState,2))
-		return 0;
-	string name(lua_tostring(pState, 2));
-	if (name.empty())
-		return 0;
-	Service* pService = Script::GetCollector<Service>(pState,1);
-	Exception ex;
-	if (!pService || !(pService=pService->open(ex, name)))
-		return 0;
-	lua_rawgeti(pState, LUA_REGISTRYINDEX, pService->reference());
-	return 1;
+	if (lua_isstring(pState, 2)) {
+		string name(lua_tostring(pState, 2));
+		if (!name.empty()) {
+			Exception ex;
+			Service* pService(service.open(ex, name));
+			lua_rawgeti(pState, LUA_REGISTRYINDEX, pService->reference());
+		}
+	}
+	SCRIPT_CALLBACK_RETURN
 }
 
 

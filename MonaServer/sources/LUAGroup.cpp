@@ -27,7 +27,7 @@ using namespace Mona;
 
 void LUAGroup::Init(lua_State* pState, Group& group) {
 	// just for collector
-	Script::Collection<Group,LUAGroup>(pState, -1, "members",&group);
+	Script::Collection<LUAGroup>(pState, -1, "members");
 	lua_setfield(pState, -2, "members");
 
 	lua_getmetatable(pState, -1);
@@ -63,52 +63,26 @@ void LUAGroup::RemoveClient(lua_State* pState, Client& client) {
 	lua_pop(pState, 2);
 }
 
-int LUAGroup::LUAMembers::Item(lua_State *pState) {
-	// 1 => members collection table
-	// 2 => parameter
-	if (!lua_isstring(pState, 2))
-		return 0;
-	Group* pGroup = Script::GetCollector<Group>(pState,1);
-	if (!pGroup)
-		return 0;
-	Client* pMember(NULL);
-	size_t size = lua_objlen(pState, 2);
-	const UInt8* id((const UInt8*)lua_tolstring(pState, 2,&size));
-	if (size == ID_SIZE)
-		pMember = (*pGroup)(id);
-	else if (size == (ID_SIZE << 1)) {
-		string temp((const char*)id,size);
-		pMember = (*pGroup)((const UInt8*)Util::UnformatHex(temp).c_str());
-	}
-
-	if (!pMember)
-		return 0;
-	Script::AddObject<LUAClient>(pState, *pMember);
-	return 1;
-}
-
 int LUAGroup::Item(lua_State *pState) {
-	// 1 => groups table
-	// 2 => parameter
-	if (!lua_isstring(pState, 2))
-		return 0;
-	Invoker* pInvoker = Script::GetCollector<Invoker>(pState,1);
-	if (!pInvoker)
-		return 0;
-	Group* pGroup(NULL);
-    size_t size = lua_objlen(pState, 2);
-	const UInt8* id((const UInt8*)lua_tolstring(pState, 2,&size));
-	if (size == ID_SIZE)
-		pGroup = pInvoker->groups(id);
-	else if (size == (ID_SIZE<<1)) {
-		string temp((const char*)id,size);
-		pGroup = pInvoker->groups((const UInt8*)Util::UnformatHex(temp).c_str());
-	}
-	if (!pGroup)
-		return 0;
-	Script::AddObject<LUAGroup>(pState, *pGroup);
-	return 1;
+	SCRIPT_CALLBACK(Group,group)
+
+		if (lua_isstring(pState, 2)) {
+			Client* pMember(NULL);
+			SCRIPT_READ_BINARY(id,size)
+			if (size == ID_SIZE)
+				pMember = group(id);
+			else if (size == (ID_SIZE << 1)) {
+				Buffer buffer((UInt8*)id, size);
+				pMember = group(Util::UnformatHex(buffer).data());
+			}
+
+			if (pMember)
+				Script::AddObject<LUAClient>(pState,*pMember);
+		}
+
+	SCRIPT_CALLBACK_RETURN
 }
+
 
 int	LUAGroup::Size(lua_State* pState) {
 	SCRIPT_CALLBACK(Group,group)

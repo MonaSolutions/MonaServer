@@ -85,4 +85,15 @@ private:
 	static int	Publish(lua_State *pState);
 	static int	JoinGroup(lua_State *pState);
 	static int	AbsolutePath(lua_State *pState);
+
+	class LUAClients {
+	public:
+		static int Item(lua_State *pState);
+	};
+
+	class LUAGroups {
+	public:
+		static int Item(lua_State *pState);
+	};
+
 };

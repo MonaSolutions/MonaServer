@@ -182,8 +182,7 @@ void HTTPSession::packetHandler(PacketReader& reader) {
 		MapParameters queryParameters;
 		Util::UnpackQuery(peer.query, queryParameters);
 		MapReader<MapParameters> propertiesReader(queryParameters);
-		// TODO add the content of post request as volatile parameters in addition of before (SplitReader + TypeReader)
-
+		
 		// onConnection
 		if (!peer.connected) {
 			// Assign name
