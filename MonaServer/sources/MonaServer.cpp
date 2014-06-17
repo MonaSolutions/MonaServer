@@ -575,6 +575,7 @@ bool MonaServer::onFileAccess(Exception& ex, Client& client, Client::FileAccessT
 	filePath.set(WWWPath, client.path);
 	if (!name.empty())
 		filePath.append('/', name);
+
 	return result;
 }
 

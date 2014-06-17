@@ -73,6 +73,7 @@ HTTPSession::HTTPSession(const SocketAddress& peerAddress, SocketFile& file, Pro
 		}
 		return false;
 	}) {
+	peer.OnCallProperties::subscribe(onCallProperties); // subscribe to client.properties(...)
 }
 
 void HTTPSession::kill(UInt32 type){
@@ -191,7 +192,6 @@ void HTTPSession::packetHandler(PacketReader& reader) {
 			peer.properties().setString("name", buffer);
 			_index.clear(); // default value
 			_indexDirectory = true; // default value
-			peer.OnCallProperties::subscribe(onCallProperties); // subscribe to client.properties(...)
 
 			peer.onConnection(ex, _writer,propertiesReader);
 			if (!ex && peer.connected) {

@@ -213,10 +213,14 @@ void Script::FillCollection(lua_State* pState, UInt32 size) {
 
 void Script::ClearCollection(lua_State* pState) {
 	// get collection table
-	if (!lua_istable(pState, -1) && !lua_getmetatable(pState, -1))
+	if (!lua_getmetatable(pState, -1))
 		return;
 
 	lua_newtable(pState);
+	lua_newtable(pState);
+	lua_pushstring(pState,"v");
+	lua_setfield(pState,-2,"__mode");
+	lua_setmetatable(pState, -2);
 	lua_setfield(pState, -2, "|items");
 
 	lua_pushnumber(pState, 0);
