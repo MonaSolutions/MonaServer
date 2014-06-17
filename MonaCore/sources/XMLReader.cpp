@@ -51,8 +51,7 @@ XMLReader::XMLReader(PacketReader& packet) : DataReader(packet),_last(NIL),_dval
 			// Delete </__array> from the end
 			if(cur>=first && (cur-first) > 9 && *cur== '>') {
 				cur -= 9;
-				_tagName.resize(10);
-				memcpy((UInt8*)_tagName.data(), cur, 10);
+				_tagName.assign((char*)cur, 10);
 				if (_tagName == "</__array>")
 		 			packet.shrink(cur-first);
 			}
@@ -254,8 +253,7 @@ DataReader::Type XMLReader::followingType() {
 		do {
 			packet.next();
 		} while((cur=packet.current()) && *cur!='>' && (cur==first || *cur!='/') && !isspace(*cur));
-		_tagName.resize(cur-first);
-		memcpy((UInt8*)_tagName.data(), first, cur-first);
+		_tagName.assign((char*)first, cur-first);
 
 		// Got to next char
 		cur=current();
@@ -372,8 +370,7 @@ XMLReader::Type XMLReader::parsePrimitive(const UInt8* cur) {
 		return END;
 	}
 
-	_value.resize(cur-first);
-	memcpy((UInt8*)_value.data(), first, cur-first);
+	_value.assign((char*)first, cur-first);
 	String::Trim(_value);
 
 	Type type = STRING;
@@ -445,9 +442,7 @@ bool XMLReader::nextTagIsSame(const string& name) {
 
 	const UInt8* cur=current();
 	if (packet.available() > name.size() + 3) {
-		string tmp;
-		tmp.resize(name.size()+3);
-		memcpy((UInt8*)tmp.data(), cur, name.size() + 3);
+		string tmp((char*)cur, name.size() + 3);
 
 		// Next tag has the same name : return ARRAY
 		string tagOpen;
