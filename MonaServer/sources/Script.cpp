@@ -225,6 +225,8 @@ void Script::ClearCollection(lua_State* pState) {
 
 	lua_pushnumber(pState, 0);
 	lua_setfield(pState, -2, "|count");
+
+	lua_pop(pState, 1);
 }
 
 void Script::ClearCollectionParameters(lua_State* pState, const char* field,const Parameters& parameters) {
