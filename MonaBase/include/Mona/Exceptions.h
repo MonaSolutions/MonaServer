@@ -99,7 +99,7 @@ private:
 		#define		FATAL_ERROR(...)				{std::string __error;Mona::String::Format(__error,## __VA_ARGS__).c_str();__assert_fail(__error.c_str(),__FILE__,__LINE__,NULL);}
 	#endif
 #else
-	#define		FATAL_ASSERT(CONDITION)				if(!(CONDITION)) {throw std::runtime_error( #CONDITION ," assertion, " __FILE__ "[" LINE_STRING "]");}
+	#define		FATAL_ASSERT(CONDITION)				if(!(CONDITION)) {throw std::runtime_error( #CONDITION " assertion, " __FILE__ "[" LINE_STRING "]");}
 	#define		FATAL_ERROR(...)					{std::string __error; throw std::runtime_error(Mona::String::Format(__error,## __VA_ARGS__,", " __FILE__ "[" LINE_STRING "]"));}
 #endif
 
