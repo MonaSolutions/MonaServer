@@ -63,19 +63,20 @@ int LUADataTable::Set(lua_State *pState) {
 			Int8 removing = SCRIPT_NEXT_TYPE==LUA_TNIL ? 1 : 0;
 			string path;
 			String::Format(path, table.path, '/', name);
+
+			lua_getmetatable(pState, 1);
+			lua_getfield(pState, -1, "|items");
+			lua_getfield(pState, -1, name); // old value
+
 			if (!removing) {
-				lua_getfield(pState, 1, name);
 				if (lua_istable(pState, -1)) {
 					SCRIPT_ERROR("Complex type exists already on ", path, ", for secure reasons delete explicitly this entry with a nil assignation before override")
 					removing = -1;
 				}
-				lua_pop(pState, 1);
 			}
 				
 			if (removing>=0) {
 				if (SCRIPT_NEXT_TYPE==LUA_TTABLE) {
-					lua_getmetatable(pState, 1);
-					lua_getfield(pState, -1, "|items");
 
 					lua_pushstring(pState, name);
 					Script::NewObject<LUADataTable,LUADataTable>(pState,*new LUADataTable(table.database, path));
@@ -91,34 +92,34 @@ int LUADataTable::Set(lua_State *pState) {
 					}
 
 					// memory
-					lua_rawset(pState, -3);
-					lua_pop(pState, 2);
+					lua_rawset(pState, -4);
+					
 				} else {
 					// Primitive type!
 					Exception ex;
 					bool success = false;
 					if (removing) {
-						success = table.database.remove(ex, path);
+						if ((success = table.database.remove(ex, path)) && !lua_isnil(pState, -1))
+							--table.count;
 					} else {
 						UInt32 size(0);
 						const UInt8* value = Serialize(pState,3,size);
-						success = table.database.add(ex, path, value , size);
+						if((success = table.database.add(ex, path, value , size)) && lua_isnil(pState, -1))
+							++table.count;
 					}
 					if (success) {
 						// memory
-						lua_getmetatable(pState, 1);
-						lua_getfield(pState, -1, "|items");
 						lua_pushstring(pState, name);
 						lua_pushvalue(pState, 3); // value
-						lua_rawset(pState, -3);
-						lua_pop(pState, 2);
+						lua_rawset(pState, -4);
 						if (ex)
 							SCRIPT_WARN("Database entry ", path, " writing, ", ex.error())
 					} else
 						SCRIPT_ERROR("Database entry ", path, " writing, ", ex.error())
 				}
 			}
-				
+			
+			lua_pop(pState, 3);
 			
 		} else
 			SCRIPT_ERROR("Key database entry must be a string or a number");
