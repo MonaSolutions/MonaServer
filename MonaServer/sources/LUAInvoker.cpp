@@ -255,7 +255,7 @@ int	LUAInvoker::Md5(lua_State *pState) {
 int LUAInvoker::ListPaths(lua_State *pState) {
 	SCRIPT_CALLBACK(Invoker, invoker)
 		string directory(MonaServer::WWWPath);
-		String::Format(directory,SCRIPT_READ_STRING(""),"/");
+		String::Append(directory,"/",SCRIPT_READ_STRING(""),"/");
 		
 		UInt32 index = 0;
 		lua_newtable(pState);
@@ -267,7 +267,7 @@ int LUAInvoker::ListPaths(lua_State *pState) {
 		Exception ex;
 		FileSystem::Paths(ex, directory, forEach);
 		if (ex)
-			lua_pushstring(pState,ex.error().c_str());
+			SCRIPT_ERROR(ex.error().c_str());
 	SCRIPT_CALLBACK_RETURN
 }
 

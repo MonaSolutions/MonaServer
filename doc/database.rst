@@ -1,5 +1,5 @@
 
-The MonaServer Database System
+The NoSQL Database System
 ##############################
 
 MonaServer provides you with the ability to save data in a **NoSQL** way.
@@ -33,6 +33,13 @@ To write data in the database just assign the table **data**.
     function clearLastClientId()
         data["lastClientId"] = nil
     end
+
+.. note::
+
+    - You can use the **pairs()** LUA_ function to iterate on **data** or any subarray of **data**.
+    - And the "#" operator to get the number of elements (it's an exception where objects properties are counted in the array size).
+    
+.. warning:: You must notice that each numbers in **data** are converted to string, so you have to use **tonumber** in order to get there number value.
 
 Reading persistent data
 ===========================================
