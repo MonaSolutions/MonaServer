@@ -85,7 +85,7 @@
 <li class="toctree-l1"><a class="reference internal" href="serversocket.html">Server Application Sockets</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="">Mona Server&#8217;s lua API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="protocols.html">Specific Protocol Functionalities</a></li>
-<li class="toctree-l1"><a class="reference internal" href="database.html">The MonaServer Database System</a></li>
+<li class="toctree-l1"><a class="reference internal" href="database.html">The NoSQL Database System</a></li>
 <li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a></li>
 </ul>
 </ul>
@@ -417,7 +417,7 @@ To know how create a server application, and understand how it works, read <a cl
 <li><strong>sha256(...)</strong>, computes and returns the SHA256 values from input values given as arguments.</li>
 <li><strong>sendMail(sender,subject,content,...)</strong>, send an email from <em>sender</em> to recipients given in the last mutiple arguments field. It returns a mail object which contains only one event, <em>onSent(error)</em> to get one notification on sent, see <a class="reference external" href="./serversocket.html">Server Application Sockets</a> page for more details.</li>
 <li><strong>split(expression,separator[,option])</strong>, <a class="reference external" href="http://www.lua.org/">LUA</a> has not real split operator, this function fills this gap. It splits the <em>expression</em> in relation with the <em>separator</em> term given, and returns tokens as a multiple result. A optional number argument indicates if you want to ignore empty tokens (<em>option</em> =1), or to remove leading and trailing whitespace from tokens (<em>option</em> =2), or the both in same time (<em>option</em> =3).</li>
-<li><strong>dir(dirName)</strong>, return a <a class="reference external" href="http://www.lua.org/">LUA</a> table containing objects of type <em>File</em> in the <em>dirName</em> directory (relative to the <strong>www</strong> path), see <a class="reference internal" href="#file">File</a> object thereafter.</li>
+<li><strong>listPaths(dirName)</strong>, return a <a class="reference external" href="http://www.lua.org/">LUA</a> table containing objects of type <em>File</em> in the <em>dirName</em> directory (relative to the <strong>www</strong> path), see <a class="reference internal" href="#file">File</a> object thereafter.</li>
 <li><strong>joinGroup(peerID, groupID)</strong>, add <a class="reference internal" href="#client">Client</a> with <em>peerID</em> to <a class="reference internal" href="#group">Group</a> with <em>groupID</em>.</li>
 <li><strong>dump(data[, size])</strong>, dump data to the console and log file, if <em>size</em> is not specified it dump all the data.</li>
 </ul>

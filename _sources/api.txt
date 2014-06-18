@@ -123,7 +123,7 @@ methods
 - **sha256(...)**, computes and returns the SHA256 values from input values given as arguments.
 - **sendMail(sender,subject,content,...)**, send an email from *sender* to recipients given in the last mutiple arguments field. It returns a mail object which contains only one event, *onSent(error)* to get one notification on sent, see `Server Application Sockets <./serversocket.html>`_ page for more details.
 - **split(expression,separator[,option])**, LUA_ has not real split operator, this function fills this gap. It splits the *expression* in relation with the *separator* term given, and returns tokens as a multiple result. A optional number argument indicates if you want to ignore empty tokens (*option* =1), or to remove leading and trailing whitespace from tokens (*option* =2), or the both in same time (*option* =3).
-- **dir(dirName)**, return a LUA_ table containing objects of type *File* in the *dirName* directory (relative to the **www** path), see File_ object thereafter.
+- **listPaths(dirName)**, return a LUA_ table containing objects of type *File* in the *dirName* directory (relative to the **www** path), see File_ object thereafter.
 - **joinGroup(peerID, groupID)**, add Client_ with *peerID* to Group_ with *groupID*.
 - **dump(data[, size])**, dump data to the console and log file, if *size* is not specified it dump all the data.
 
