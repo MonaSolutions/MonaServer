@@ -26,6 +26,8 @@ This file is a part of Mona.
 #include "LUAMember.h"
 #include "LUAPath.h"
 #include "LUABroadcaster.h"
+#include "LUASocketAddress.h"
+#include "LUAIPAddress.h"
 #include "Mona/Exceptions.h"
 #include "MonaServer.h"
 #include <openssl/evp.h>
@@ -40,50 +42,44 @@ using namespace std;
 using namespace Mona;
 
 
+class LUAClients {
+public:
+	static int Item(lua_State *pState) {
+		SCRIPT_CALLBACK(Invoker, invoker)
 
-int LUAInvoker::LUAClients::Item(lua_State *pState) {
-	SCRIPT_CALLBACK(Invoker,invoker)
-
-		if (lua_isstring(pState, 2)) {
-			Client* pClient(NULL);
-			SCRIPT_READ_BINARY(id,size)
-			if (size == ID_SIZE)
-				pClient = invoker.clients(id);
-			else if (size == (ID_SIZE << 1)) {
-				Buffer buffer((UInt8*)id, size);
-				pClient = invoker.clients(Util::UnformatHex(buffer).data());
+			if (lua_isstring(pState, 2)) {
+				SCRIPT_READ_BINARY(id, size)
+				Client* pClient(NULL);
+				if (Script::ToRawId(id, size))
+					pClient = invoker.clients(id);
+				if (!pClient)
+					pClient = invoker.clients((const char*)id); // try by name
+				if (pClient)
+					Script::AddObject<LUAClient>(pState, *pClient);
 			}
 
-			if (!pClient)
-				pClient = invoker.clients((const char*)id); // try by name!
-
-			if (pClient)
-				Script::AddObject<LUAClient>(pState,*pClient);
-		}
-
-	SCRIPT_CALLBACK_RETURN
-}
+		SCRIPT_CALLBACK_RETURN
+	}
+};
 
 
-int LUAInvoker::LUAGroups::Item(lua_State *pState) {
-	SCRIPT_CALLBACK(Invoker,invoker)
+class LUAGroups {
+public:
+	static int Item(lua_State *pState) {
+		SCRIPT_CALLBACK(Invoker, invoker)
 
-		if (lua_isstring(pState, 2)) {
-			Group* pGroup(NULL);
-			SCRIPT_READ_BINARY(id,size)
-			if (size == ID_SIZE)
-				pGroup = invoker.groups(id);
-			else if (size == (ID_SIZE << 1)) {
-				Buffer buffer((UInt8*)id, size);
-				pGroup = invoker.groups(Util::UnformatHex(buffer).data());
+			if (lua_isstring(pState, 2)) {
+				SCRIPT_READ_BINARY(id, size)
+					Group* pGroup(NULL);
+				if (Script::ToRawId(id, size))
+					pGroup = invoker.groups(id);
+				if (pGroup)
+					Script::AddObject<LUAGroup>(pState, *pGroup);
 			}
 
-			if (pGroup)
-				Script::AddObject<LUAGroup>(pState,*pGroup);
-		}
-
-	SCRIPT_CALLBACK_RETURN
-}
+		SCRIPT_CALLBACK_RETURN
+	}
+};
 
 
 // HERE JUST TO SET THE COLLECTOR FOR EVERY COLLECTIONS
@@ -202,7 +198,8 @@ int	LUAInvoker::Publish(lua_State *pState) {
 	Publication* pPublication = invoker.publish(ex, name,strcmp(SCRIPT_READ_STRING("live"),"record")==0 ? Publication::RECORD : Publication::LIVE);
 	// ex.error already displayed!
 	if(pPublication) {
-		Script::AddObject<LUAPublication>(pState, *pPublication, true); // add a destructor
+		Script::AddObject<LUAPublication>(pState, *pPublication); // no new because already added by invoker.publish
+		Script::AttachDestructor<LUAPublication>(pState, *pPublication); // add a destructor
 		Script::ClearObject<LUAPublication>(pState, *pPublication); // remove of registry table (remove just persitent version because there is a destructor now)
 		lua_getmetatable(pState, -1);
 		lua_pushlightuserdata(pState, &invoker);
@@ -215,6 +212,48 @@ int	LUAInvoker::Publish(lua_State *pState) {
 int	LUAInvoker::AbsolutePath(lua_State *pState) {
 	SCRIPT_CALLBACK(Invoker,invoker)
 		SCRIPT_WRITE_STRING((MonaServer::WWWPath + "/" + SCRIPT_READ_STRING("") + "/").c_str())
+	SCRIPT_CALLBACK_RETURN
+}
+
+
+int	LUAInvoker::CreateIPAddress(lua_State *pState) {
+	SCRIPT_CALLBACK_TRY(Invoker, invoker)
+		if (!SCRIPT_CAN_READ) {
+			Script::AddObject<LUAIPAddress>(pState, IPAddress::Wildcard());
+		} else {
+			Exception ex;
+			IPAddress* pAddress = new IPAddress();
+			if (LUAIPAddress::Read(ex, pState, SCRIPT_READ_NEXT, *pAddress)) {
+				Script::NewObject<LUAIPAddress>(pState, *pAddress);
+				if (ex)
+					SCRIPT_WARN(ex.error());
+			} else {
+				delete pAddress;
+				if (ex)
+					SCRIPT_CALLBACK_THROW(ex.error().c_str())
+			}
+		}
+	SCRIPT_CALLBACK_RETURN
+}
+
+
+int	LUAInvoker::CreateSocketAddress(lua_State *pState) {
+	SCRIPT_CALLBACK_TRY(Invoker, invoker)
+		if (!SCRIPT_CAN_READ) {
+			Script::AddObject<LUASocketAddress>(pState, SocketAddress::Wildcard());
+		} else {
+			Exception ex;
+			SocketAddress* pAddress = new SocketAddress();
+			if (LUASocketAddress::Read(ex, pState, SCRIPT_READ_NEXT, *pAddress)) {
+				Script::NewObject<LUASocketAddress>(pState, *pAddress);
+				if (ex)
+					SCRIPT_WARN(ex.error());
+			} else {
+				delete pAddress;
+				if (ex)
+					SCRIPT_CALLBACK_THROW(ex.error().c_str())
+			}
+		}
 	SCRIPT_CALLBACK_RETURN
 }
 
@@ -255,7 +294,7 @@ int	LUAInvoker::Md5(lua_State *pState) {
 int LUAInvoker::ListPaths(lua_State *pState) {
 	SCRIPT_CALLBACK(Invoker, invoker)
 		string directory(MonaServer::WWWPath);
-		String::Format(directory,SCRIPT_READ_STRING(""),"/");
+		String::Format(directory,"/",SCRIPT_READ_STRING(""),"/");
 		
 		UInt32 index = 0;
 		lua_newtable(pState);
@@ -263,11 +302,11 @@ int LUAInvoker::ListPaths(lua_State *pState) {
 			Script::NewObject<LUAPath>(pState, *new Path(path));
 			lua_rawseti(pState,-2,++index);
 		});
-
+		
 		Exception ex;
 		FileSystem::Paths(ex, directory, forEach);
 		if (ex)
-			lua_pushstring(pState,ex.error().c_str());
+			SCRIPT_ERROR(ex.error());
 	SCRIPT_CALLBACK_RETURN
 }
 
@@ -299,12 +338,14 @@ int	LUAInvoker::ToAMF0(lua_State *pState) {
 int	LUAInvoker::AddToBlacklist(lua_State* pState) {
 	SCRIPT_CALLBACK(Invoker,invoker)	
 		while(SCRIPT_CAN_READ) {
-			IPAddress address;
 			Exception ex;
-			bool success;
-			EXCEPTION_TO_LOG(success=address.set(ex, SCRIPT_READ_STRING("")), "Blacklist entry")
-			if (success)
+			IPAddress address;
+			if (LUAIPAddress::Read(ex, pState, SCRIPT_READ_NEXT, address)) {
+				if (ex)
+					SCRIPT_WARN(ex.error())
 				invoker.addBanned(address);
+			} else
+				SCRIPT_ERROR(ex.error())
 		}
 	SCRIPT_CALLBACK_RETURN
 }
@@ -312,43 +353,35 @@ int	LUAInvoker::AddToBlacklist(lua_State* pState) {
 int	LUAInvoker::RemoveFromBlacklist(lua_State* pState) {
 	SCRIPT_CALLBACK(Invoker,invoker)
 		while(SCRIPT_CAN_READ) {
-			IPAddress address;
 			Exception ex;
-			bool success;
-			EXCEPTION_TO_LOG(success = address.set(ex, SCRIPT_READ_STRING("")), "Blacklist entry")
-			if (success)
+			IPAddress address;
+			if (LUAIPAddress::Read(ex, pState, SCRIPT_READ_NEXT, address)) {
+				if (ex)
+					SCRIPT_WARN(ex.error())
 				invoker.removeBanned(address);
+			} else
+				SCRIPT_ERROR(ex.error())
 		}
 	SCRIPT_CALLBACK_RETURN
 }
 
 int LUAInvoker::JoinGroup(lua_State* pState) {
 	SCRIPT_CALLBACK(Invoker, invoker)
+
 		SCRIPT_READ_BINARY(peerId, size)
-		Buffer buffer(ID_SIZE);
-		if (size == (ID_SIZE << 1)) {
-			memcpy(buffer.data(),peerId,size);
-			peerId = Util::UnformatHex(buffer).data();
-		} else if (size != ID_SIZE) {
-			if (peerId) {
-				SCRIPT_ERROR("Bad member format id ", string((const char*)peerId, size));
-				peerId = NULL;
-			} else
-				SCRIPT_ERROR("Member id argument missing");
-		}
-		if (peerId) {
+		if (!peerId)
+			SCRIPT_ERROR("Member id argument missing")
+		else if (!Script::ToRawId(peerId, size))
+			SCRIPT_ERROR("Bad member format id ", string((const char*)peerId, size))
+		else {
+
 			SCRIPT_READ_BINARY(groupId, size)
-			if (size == (ID_SIZE << 1)) {
-				memcpy(buffer.data(),groupId,size);
-				groupId = Util::UnformatHex(buffer).data();
-			} else if (size != ID_SIZE) {
-				if (groupId) {
-					SCRIPT_ERROR("Bad group format id ", string((const char*)groupId, size))
-					groupId = NULL;
-				} else
-					SCRIPT_ERROR("Group id argument missing")
-			}
-			if (groupId) {
+			if (!groupId)
+				SCRIPT_ERROR("Group id argument missing")
+			else if (!Script::ToRawId(groupId, size))
+				SCRIPT_ERROR("Bad group format id ", string((const char*)groupId, size))
+			else {
+
 				Peer* pPeer = new Peer((Handler&)invoker);
 				memcpy((void*)pPeer->id, peerId, ID_SIZE);
 				Group& group(pPeer->joinGroup(groupId, NULL));
@@ -357,10 +390,19 @@ int LUAInvoker::JoinGroup(lua_State* pState) {
 				Script::NewObject<LUAMember>(pState, *pPeer);
 				LUAGroup::AddClient(pState, -2);
 				lua_replace(pState, -2);
+
 			}
 		}
+
 	SCRIPT_CALLBACK_RETURN
 }
+
+int	LUAInvoker::Time(lua_State *pState) {
+	SCRIPT_CALLBACK(Invoker,invoker)
+		SCRIPT_WRITE_NUMBER(Time::Now())
+	SCRIPT_CALLBACK_RETURN
+}
+
 
 int LUAInvoker::Get(lua_State *pState) {
 	SCRIPT_CALLBACK(Invoker,invoker)
@@ -368,91 +410,98 @@ int LUAInvoker::Get(lua_State *pState) {
 		if (name) {
 			if(strcmp(name,"clients")==0) {
 				Script::Collection(pState,1,"clients");
-				SCRIPT_CALLBACK_FIX_INDEX(name)
+				SCRIPT_CALLBACK_FIX_INDEX
 			} else if (strcmp(name, "dump") == 0) {
 				SCRIPT_WRITE_FUNCTION(LUAInvoker::Dump)
-				SCRIPT_CALLBACK_FIX_INDEX(name)
+				SCRIPT_CALLBACK_FIX_INDEX
 			} else if (strcmp(name, "joinGroup") == 0) {
 				SCRIPT_WRITE_FUNCTION(LUAInvoker::JoinGroup)
-				SCRIPT_CALLBACK_FIX_INDEX(name)
+				SCRIPT_CALLBACK_FIX_INDEX
 			} else if (strcmp(name, "groups") == 0) {
 				Script::Collection(pState, 1, "groups");
-				SCRIPT_CALLBACK_FIX_INDEX(name)
+				SCRIPT_CALLBACK_FIX_INDEX
 			} else if (strcmp(name, "publications") == 0) {
 				Script::Collection(pState, 1, "publications");
-				SCRIPT_CALLBACK_FIX_INDEX(name)
+				SCRIPT_CALLBACK_FIX_INDEX
 			} else if (strcmp(name, "publish") == 0) {
 				SCRIPT_WRITE_FUNCTION(LUAInvoker::Publish)
-				SCRIPT_CALLBACK_FIX_INDEX(name)
+				SCRIPT_CALLBACK_FIX_INDEX
 			} else if (strcmp(name, "toAMF") == 0) {
 				SCRIPT_WRITE_FUNCTION(LUAInvoker::ToData<Mona::AMFWriter>)
-				SCRIPT_CALLBACK_FIX_INDEX(name)
+				SCRIPT_CALLBACK_FIX_INDEX
 			} else if (strcmp(name, "toAMF0") == 0) {
 				SCRIPT_WRITE_FUNCTION(LUAInvoker::ToAMF0)
-				SCRIPT_CALLBACK_FIX_INDEX(name)
+				SCRIPT_CALLBACK_FIX_INDEX
 			} else if (strcmp(name, "fromAMF") == 0) {
 				SCRIPT_WRITE_FUNCTION(LUAInvoker::FromData<Mona::AMFReader>)
-				SCRIPT_CALLBACK_FIX_INDEX(name)
+				SCRIPT_CALLBACK_FIX_INDEX
 			} else if (strcmp(name, "toJSON") == 0) {
 				SCRIPT_WRITE_FUNCTION(LUAInvoker::ToData<Mona::JSONWriter>)
-				SCRIPT_CALLBACK_FIX_INDEX(name)
+				SCRIPT_CALLBACK_FIX_INDEX
 			} else if (strcmp(name, "fromJSON") == 0) {
 				SCRIPT_WRITE_FUNCTION(LUAInvoker::FromData<Mona::JSONReader>)
-				SCRIPT_CALLBACK_FIX_INDEX(name)
+				SCRIPT_CALLBACK_FIX_INDEX
 			} else if (strcmp(name, "toXML") == 0) {
 				SCRIPT_WRITE_FUNCTION(LUAInvoker::ToData<Mona::XMLWriter>)
-				SCRIPT_CALLBACK_FIX_INDEX(name)
+				SCRIPT_CALLBACK_FIX_INDEX
 			} else if (strcmp(name, "fromXML") == 0) {
 				SCRIPT_WRITE_FUNCTION(LUAInvoker::FromData<XMLReader>)
-				SCRIPT_CALLBACK_FIX_INDEX(name)
+				SCRIPT_CALLBACK_FIX_INDEX
 			} else if (strcmp(name, "absolutePath") == 0) {
 				SCRIPT_WRITE_FUNCTION(LUAInvoker::AbsolutePath)
-				SCRIPT_CALLBACK_FIX_INDEX(name)
-			} else if (strcmp(name, "epochTime") == 0) {
-				SCRIPT_WRITE_NUMBER(Time::Now()) // change
+				SCRIPT_CALLBACK_FIX_INDEX
+			} else if (strcmp(name, "time") == 0) {
+				SCRIPT_WRITE_FUNCTION(LUAInvoker::Time)
+				SCRIPT_CALLBACK_FIX_INDEX
 			} else if (strcmp(name, "split") == 0) {
 				SCRIPT_WRITE_FUNCTION(LUAInvoker::Split)
-				SCRIPT_CALLBACK_FIX_INDEX(name)
+				SCRIPT_CALLBACK_FIX_INDEX
+			} else if (strcmp(name, "createIPAddress") == 0) {
+ 				SCRIPT_WRITE_FUNCTION(LUAInvoker::CreateIPAddress)
+				SCRIPT_CALLBACK_FIX_INDEX
+			} else if (strcmp(name, "createSocketAddress") == 0) {
+ 				SCRIPT_WRITE_FUNCTION(LUAInvoker::CreateSocketAddress)
+				SCRIPT_CALLBACK_FIX_INDEX
 			} else if (strcmp(name, "createUDPSocket") == 0) {
  				SCRIPT_WRITE_FUNCTION(LUAInvoker::CreateUDPSocket)
-				SCRIPT_CALLBACK_FIX_INDEX(name)
+				SCRIPT_CALLBACK_FIX_INDEX
 			} else if (strcmp(name, "createTCPClient") == 0) {
 				SCRIPT_WRITE_FUNCTION(LUAInvoker::CreateTCPClient)
-				SCRIPT_CALLBACK_FIX_INDEX(name)
+				SCRIPT_CALLBACK_FIX_INDEX
 			} else if(strcmp(name,"createTCPServer")==0) {
 				SCRIPT_WRITE_FUNCTION(LUAInvoker::CreateTCPServer)
-				SCRIPT_CALLBACK_FIX_INDEX(name)
+				SCRIPT_CALLBACK_FIX_INDEX
 			} else if(strcmp(name,"md5")==0) {
 				SCRIPT_WRITE_FUNCTION(LUAInvoker::Md5)
-				SCRIPT_CALLBACK_FIX_INDEX(name)
+				SCRIPT_CALLBACK_FIX_INDEX
 			} else if(strcmp(name,"sha256")==0) {
 				SCRIPT_WRITE_FUNCTION(LUAInvoker::Sha256)
-				SCRIPT_CALLBACK_FIX_INDEX(name)
+				SCRIPT_CALLBACK_FIX_INDEX
 			} else if(strcmp(name,"addToBlacklist")==0) {
 				SCRIPT_WRITE_FUNCTION(LUAInvoker::AddToBlacklist)
-				SCRIPT_CALLBACK_FIX_INDEX(name)
+				SCRIPT_CALLBACK_FIX_INDEX
 			} else if(strcmp(name,"removeFromBlacklist")==0) {
 				SCRIPT_WRITE_FUNCTION(LUAInvoker::RemoveFromBlacklist)
-				SCRIPT_CALLBACK_FIX_INDEX(name)
+				SCRIPT_CALLBACK_FIX_INDEX
 			} else if (strcmp(name,"configs")==0) {
 				Script::Collection(pState,1, "configs");
-				SCRIPT_CALLBACK_FIX_INDEX(name)
+				SCRIPT_CALLBACK_FIX_INDEX
 			} else if (strcmp(name,"environment")==0) {
 				Script::Collection(pState,1, "environment");
-				SCRIPT_CALLBACK_FIX_INDEX(name)
+				SCRIPT_CALLBACK_FIX_INDEX
 			} else if(strcmp(name,"servers")==0) {
 				lua_getmetatable(pState, 1);
 				lua_getfield(pState, -1, "|servers");
 				lua_replace(pState, -2);
-				SCRIPT_CALLBACK_FIX_INDEX(name)
+				SCRIPT_CALLBACK_FIX_INDEX
 			} else if (strcmp(name,"listPaths")==0) {
 				SCRIPT_WRITE_FUNCTION(LUAInvoker::ListPaths)
-				SCRIPT_CALLBACK_FIX_INDEX(name)
+				SCRIPT_CALLBACK_FIX_INDEX
 			} else {
 				Script::Collection(pState,1, "configs");
 				lua_getfield(pState, -1, name);
 				lua_replace(pState, -2);
-				SCRIPT_CALLBACK_FIX_INDEX(name)
+				SCRIPT_CALLBACK_FIX_INDEX
 			}
 		}
 	SCRIPT_CALLBACK_RETURN

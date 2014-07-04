@@ -46,7 +46,7 @@ void RTMPWriter::flush(bool full) {
 	Exception ex;
 	if (_pEncryptKey)
 		RC4(_pEncryptKey.get(), _pSender->size(), _pSender->data(), (UInt8*)_pSender->data());
-	EXCEPTION_TO_LOG(_session.send<RTMPSender>(ex, _pSender), "RTMPWriter flush")
+	EXCEPTION_TO_LOG(_session.send<RTMPSender>(ex, qos(), _pSender), "RTMPWriter flush")
 		
 	
 	_pSender.reset(); // release the shared buffer (poolBuffer of AMWriter)

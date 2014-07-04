@@ -63,12 +63,12 @@ ADD_TEST(IPAddressTest, StringConv6) {
 	CHECK(_IpAddress.set(ex, "1080:0:0:0:8:600:200A:425C"));
 	CHECK(!ex);
 	CHECK(_IpAddress.family() == IPAddress::IPv6);
-	CHECK(_IpAddress.toString() == "1080::8:600:200A:425C");
+	CHECK(_IpAddress.toString() == "1080::8:600:200a:425c");
 	
-	CHECK(_IpAddress.set(ex, "1080::8:600:200A:425C"));
+	CHECK(_IpAddress.set(ex, "1080::8:600:200a:425c"));
 	CHECK(!ex);
 	CHECK(_IpAddress.family() == IPAddress::IPv6);
-	CHECK(_IpAddress.toString() == "1080::8:600:200A:425C");
+	CHECK(_IpAddress.toString() == "1080::8:600:200a:425c");
 	
 	CHECK(_IpAddress.set(ex, "::192.168.1.120"));
 	CHECK(!ex);

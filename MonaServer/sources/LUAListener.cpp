@@ -55,10 +55,10 @@ int LUAListener::Get(lua_State *pState) {
 				SCRIPT_WRITE_BOOL(listener.receiveVideo); // can change
 			} else if(strcmp(name,"client")==0) {
 				Script::AddObject<LUAClient>(pState, listener.client);
-				SCRIPT_CALLBACK_FIX_INDEX(name)
+				SCRIPT_CALLBACK_FIX_INDEX
 			} else if (strcmp(name,"properties")==0) {
 				Script::Collection(pState, 1, "properties");
-				SCRIPT_CALLBACK_FIX_INDEX(name)
+				SCRIPT_CALLBACK_FIX_INDEX
 			} else {
 				Script::Collection(pState,1, "properties");
 				lua_getfield(pState, -1, name);

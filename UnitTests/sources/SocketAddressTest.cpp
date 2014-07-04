@@ -133,16 +133,16 @@ ADD_TEST(SocketAddressTest, Behavior6) {
 	CHECK(sa.port() == 0);
 
 	sa.set(ex,"1080::8:600:200A:425C", 100);
-	CHECK(sa.host().toString() == "1080::8:600:200A:425C");
+	CHECK(sa.host().toString() == "1080::8:600:200a:425c");
 	CHECK(sa.port() == 100);
 
 	sa.set(ex, "1080::8:600:200A:425C", "100");
-	CHECK(sa.host().toString() == "1080::8:600:200A:425C");
+	CHECK(sa.host().toString() == "1080::8:600:200a:425c");
 	CHECK(sa.port() == 100);
 
 
 	sa.set(ex, "1080::8:600:200A:425C", "ftp");
-	CHECK(sa.host().toString() == "1080::8:600:200A:425C");
+	CHECK(sa.host().toString() == "1080::8:600:200a:425c");
 	CHECK(sa.port() == 21);
 
 	sa.set(ex, "1080::0001", "65535");
@@ -167,7 +167,7 @@ ADD_TEST(SocketAddressTest, Behavior6) {
 	ex.set(Exception::NIL, "");
 
 	sa.set(ex,"[1080::8:600:200A:425C]:88");
-	CHECK(sa.host().toString() == "1080::8:600:200A:425C");
+	CHECK(sa.host().toString() == "1080::8:600:200a:425c");
 	CHECK(sa.port() == 88);
 
 	CHECK(!ex);

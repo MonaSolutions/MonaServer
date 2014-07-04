@@ -29,9 +29,9 @@ namespace Mona {
 class FlashWriter : public Writer, public virtual Object {
 public:
 	// For AMF response!
-	double					callbackHandle;
+	
 	bool					amf0;
-
+	
 	BinaryWriter&			writeRaw() { return write(AMF::RAW).packet; }
 	AMFWriter&				writeMessage();
 	AMFWriter&				writeInvocation(const std::string& name) { return writeInvocation(name,0); }
@@ -41,6 +41,11 @@ public:
 	AMFWriter&				writeAMFError(const std::string& code, const std::string& description, bool withoutClosing = false) { return writeAMFState("_error", code, description, withoutClosing); }
 	bool					writeMedia(MediaType type,UInt32 time,PacketReader& packet,Parameters& properties);
 
+	void					writePing() { writeRaw().write16(0x0006).write32((UInt32)Time::Now()); }
+	void					writePong(UInt32 pingTime) { writeRaw().write16(0x0007).write32(pingTime); }
+
+	void					setCallbackHandle(double value) { _callbackHandle = value; _callbackHandleOnAbort = 0; }
+	virtual void			abort() { _callbackHandle = _callbackHandleOnAbort; } // must erase the queueing messages (don't change the writer state)
 protected:
 	FlashWriter(State state);
 	FlashWriter(FlashWriter& writer);
@@ -52,6 +57,8 @@ protected:
 private:
 	std::string		_onAudio;
 	std::string		_onVideo;
+	double			_callbackHandleOnAbort;
+	double			_callbackHandle;
 };
 
 

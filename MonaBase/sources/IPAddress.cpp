@@ -421,9 +421,6 @@ bool IPAddress::isLoopback() const {
 bool IPAddress::isMulticast() const {
 	return _pIPAddress->isMulticast();
 }
-bool IPAddress::isUnicast() const {
-	return !isWildcard() && !isAnyBroadcast() && !isMulticast();
-}
 bool IPAddress::isLinkLocal() const {
 	return _pIPAddress->isLinkLocal();
 }

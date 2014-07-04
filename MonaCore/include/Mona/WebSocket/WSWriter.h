@@ -33,8 +33,6 @@ class WSWriter : public Writer, public virtual Object {
 public:
 
 	WSWriter(TCPSession& session);
-	
-	UInt16			ping;
 
 	void			abort() { _senders.clear(); }
 	void			flush(bool full=false);
@@ -45,7 +43,6 @@ public:
 	void			writeRaw(const UInt8* data, UInt32 size) { write(WS::TYPE_TEXT, data, size); }
 
 	void			writePing() { write(WS::TYPE_PING, NULL, 0); }
-	UInt16			elapsedSincePing();
 	void			writePong(const UInt8* data, UInt32 size) { write(WS::TYPE_PONG, data, size); }
 	void			close(Int32 code);
 
@@ -60,7 +57,6 @@ private:
 
 	JSONWriter&		newDataWriter(bool modeRaw=false);
 
-	UInt32									_sent;
 	TCPSession&								_session;
 	std::vector<std::shared_ptr<WSSender>>	_senders;
 };

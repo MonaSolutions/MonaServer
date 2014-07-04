@@ -118,7 +118,6 @@ private:
 	void			closePublication();
 
 	WSWriter		_writer;
-	Time			_time;
 };
 
 

@@ -29,18 +29,20 @@ using namespace std;
 namespace Mona {
 
 
-FlashWriter::FlashWriter(State state) : callbackHandle(0),Writer(state),amf0(false) {
+FlashWriter::FlashWriter(State state) : _callbackHandleOnAbort(0),_callbackHandle(0),Writer(state),amf0(false) {
 }
 
-FlashWriter::FlashWriter(FlashWriter& writer) : callbackHandle(writer.callbackHandle),Writer(writer),amf0(writer.amf0) {
+FlashWriter::FlashWriter(FlashWriter& writer) : _callbackHandle(writer._callbackHandle),_callbackHandleOnAbort(0),Writer(writer),amf0(writer.amf0) {
+	writer._callbackHandle = 0;
 }
 
 FlashWriter::~FlashWriter() {
 }
 
+
 AMFWriter& FlashWriter::writeMessage() {
-	AMFWriter& writer(writeInvocation("_result",callbackHandle));
-	callbackHandle = 0;
+	AMFWriter& writer(writeInvocation("_result",_callbackHandleOnAbort = _callbackHandle));
+	_callbackHandle = 0;
 	return writer;
 }
 
@@ -56,8 +58,8 @@ AMFWriter& FlashWriter::writeInvocation(const std::string& name,double callback)
 }
 
 AMFWriter& FlashWriter::writeAMFState(const string& name,const string& code,const string& description,bool withoutClosing) {
-	AMFWriter& writer = (AMFWriter&)writeInvocation(name,callbackHandle);
-	callbackHandle = 0;
+	AMFWriter& writer = (AMFWriter&)writeInvocation(name,_callbackHandleOnAbort = _callbackHandle);
+	_callbackHandle = 0;
 	writer.amf0=true;
 	writer.beginObject();
 	if(name=="_error")

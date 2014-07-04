@@ -96,16 +96,20 @@ void Startable::process() {
 	}
 #endif
 
+#if !defined(_DEBUG)
 	try {
+#endif
 		Exception ex;
 		run(ex);
 		if (ex)
 			CRITIC("Startable thread ", _name, ", ", ex.error());
+#if !defined(_DEBUG)
 	} catch (exception& ex) {
 		CRITIC("Startable thread ", _name, ", ", ex.what());
 	} catch (...) {
 		CRITIC("Startable thread ", _name, ", error unknown");
 	}
+#endif
 	lock_guard<mutex> lock(_mutexStop);
 	_stop = true;
 }

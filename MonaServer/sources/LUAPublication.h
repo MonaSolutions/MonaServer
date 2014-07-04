@@ -37,6 +37,7 @@ public:
 
 	static void Init(lua_State *pState, Mona::Publication& publication) {}
 	static void Clear(lua_State* pState, Mona::Publication& publication);
+	static void Delete(lua_State* pState, Mona::Publication& publication);
 	static int Get(lua_State* pState);
 	static int Set(lua_State* pState);
 

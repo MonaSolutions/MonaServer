@@ -35,7 +35,7 @@ void LUAMember::Init(lua_State* pState, Peer& member) {
 	lua_setfield(pState, -2, "id");
 }
 
-void LUAMember::Clear(lua_State* pState, Peer& member) {
+void LUAMember::Delete(lua_State* pState, Peer& member) {
 	Release(pState, member);
 	delete &member;
 }
@@ -55,7 +55,7 @@ void LUAMember::Release(lua_State* pState, Peer& member) {
 }
 
 int LUAMember::Release(lua_State* pState) {
-	SCRIPT_CALLBACK(Peer, member)
+	SCRIPT_CALLBACK(Peer,member)
 		Release(pState,member);
 	SCRIPT_CALLBACK_RETURN
 }
@@ -68,13 +68,13 @@ int LUAMember::Get(lua_State *pState) {
 				lua_getmetatable(pState, 1);
 				lua_getfield(pState, -1, "|id");
 				lua_replace(pState, -2);
-				SCRIPT_CALLBACK_FIX_INDEX(name)
+				SCRIPT_CALLBACK_FIX_INDEX
 			} else if (strcmp(name, "rawId") == 0) {
 				SCRIPT_WRITE_BINARY(member.id,ID_SIZE)
-				SCRIPT_CALLBACK_FIX_INDEX(name)
+				SCRIPT_CALLBACK_FIX_INDEX
 			} else if (strcmp(name, "release") == 0) {
 				SCRIPT_WRITE_FUNCTION(LUAMember::Release);
-				SCRIPT_CALLBACK_FIX_INDEX(name)
+				SCRIPT_CALLBACK_FIX_INDEX
 			}
 		}
 	SCRIPT_CALLBACK_RETURN

@@ -57,6 +57,12 @@
     <ClInclude Include="sources\LUAPath.h">
       <Filter>LUAClass</Filter>
     </ClInclude>
+    <ClInclude Include="sources\LUASocketAddress.h">
+      <Filter>LUAClass</Filter>
+    </ClInclude>
+    <ClInclude Include="sources\LUAIPAddress.h">
+      <Filter>LUAClass</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="sources\LUABroadcaster.cpp">
@@ -112,6 +118,12 @@
       <Filter>LUAClass</Filter>
     </ClCompile>
     <ClCompile Include="sources\LUAPath.cpp">
+      <Filter>LUAClass</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\LUASocketAddress.cpp">
+      <Filter>LUAClass</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\LUAIPAddress.cpp">
       <Filter>LUAClass</Filter>
     </ClCompile>
   </ItemGroup>

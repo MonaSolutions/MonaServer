@@ -33,6 +33,7 @@ public:
 
 	static void Init(lua_State *pState, LUATCPClient& client) {}
 	static void	Clear(lua_State* pState, LUATCPClient& client);
+	static void	Delete(lua_State* pState, LUATCPClient& client) { delete &client; }
 
 private:
 	Mona::UInt32	onData(Mona::PoolBuffer& pBuffer);

@@ -36,6 +36,7 @@ public:
 	virtual UInt32						availableToWrite()=0;
 	virtual BinaryWriter&				writeMessage(UInt8 type,UInt16 length,RTMFPWriter* pWriter=NULL)=0;
 	virtual void						flush(bool full=true)=0;
+	virtual UInt16						ping() const = 0;
 	
 };
 

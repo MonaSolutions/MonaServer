@@ -24,6 +24,7 @@ This file is a part of Mona.
 #include "Mona/Util.h"
 #include "LUAWriter.h"
 #include "LUAQualityOfService.h"
+#include "LUASocketAddress.h"
 
 
 using namespace std;
@@ -63,6 +64,7 @@ void LUAClient::Clear(lua_State* pState,Client& client){
 
 	Script::ClearObject<LUAWriter>(pState, ((Client&)client).writer());
 	Script::ClearObject<LUAQualityOfService>(pState, ((Client&)client).writer().qos());
+	Script::ClearObject<LUASocketAddress>(pState, client.address);
 }
 
 
@@ -73,37 +75,40 @@ int LUAClient::Get(lua_State *pState) {
 			if(strcmp(name,"writer")==0) {
 				SCRIPT_CALLBACK_NOTCONST_CHECK
 				Script::AddObject<LUAWriter>(pState,client.writer());
-				SCRIPT_CALLBACK_FIX_INDEX(name)
+				SCRIPT_CALLBACK_FIX_INDEX
 			} else if(strcmp(name,"id")==0) {
 				lua_getmetatable(pState, 1);
 				lua_getfield(pState, -1, "|id");
 				lua_replace(pState, -2);
-				SCRIPT_CALLBACK_FIX_INDEX(name)
+				SCRIPT_CALLBACK_FIX_INDEX
 			} else if(strcmp(name,"name")==0) {
 				SCRIPT_WRITE_STRING(client.name.c_str())
-				SCRIPT_CALLBACK_FIX_INDEX(name)
+				SCRIPT_CALLBACK_FIX_INDEX
 			} else if(strcmp(name,"rawId")==0) {
 				SCRIPT_WRITE_BINARY(client.id,ID_SIZE);
-				SCRIPT_CALLBACK_FIX_INDEX(name)
+				SCRIPT_CALLBACK_FIX_INDEX
 			} else if(strcmp(name,"path")==0) {
 				SCRIPT_WRITE_STRING(client.path.c_str())
-				SCRIPT_CALLBACK_FIX_INDEX(name)
+				SCRIPT_CALLBACK_FIX_INDEX
 			} else if(strcmp(name,"query")==0) {
 				SCRIPT_WRITE_STRING(client.query.c_str())
-				SCRIPT_CALLBACK_FIX_INDEX(name)
+				SCRIPT_CALLBACK_FIX_INDEX
 			} else if(strcmp(name,"address")==0) {
-				SCRIPT_WRITE_STRING(client.address.toString().c_str())
+				Script::AddObject<LUASocketAddress>(pState, client.address);
+				SCRIPT_CALLBACK_FIX_INDEX
 			} else if(strcmp(name,"ping")==0) {
-				SCRIPT_WRITE_NUMBER(client.ping)
+				SCRIPT_WRITE_NUMBER(client.ping())  // can change
+			} else if(name=="elapsedFromReception") {
+				SCRIPT_WRITE_NUMBER(client.lastReceptionTime.elapsed())  // can change
 			} else if(strcmp(name,"protocol")==0) {
 				SCRIPT_WRITE_STRING(client.protocol.c_str())
-				SCRIPT_CALLBACK_FIX_INDEX(name)
+				SCRIPT_CALLBACK_FIX_INDEX
 			} else if (strcmp(name,"properties")==0) {
 				Script::Collection(pState, 1, "properties");
-				SCRIPT_CALLBACK_FIX_INDEX(name)
+				SCRIPT_CALLBACK_FIX_INDEX
 			} else if (strcmp(name,"parameters")==0 || client.protocol==name) {
 				Script::Collection(pState, 1, name);
-				SCRIPT_CALLBACK_FIX_INDEX(name)
+				SCRIPT_CALLBACK_FIX_INDEX
 			} else {
 				Script::Collection(pState,1, "properties");
 				lua_getfield(pState, -1, name);

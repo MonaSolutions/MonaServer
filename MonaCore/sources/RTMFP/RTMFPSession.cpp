@@ -59,7 +59,7 @@ void RTMFPSession::failSignal() {
 	flush(false); // We send immediatly the fail message
 
 	// After 6 mn we can considerated that the session is died!
-	if(_timesFailed==10 || _recvTimestamp.isElapsed(360000))
+	if(_timesFailed==10 || peer.lastReceptionTime.isElapsed(360000))
 		kill(TIMEOUT_DEATH);
 }
 
@@ -91,21 +91,19 @@ void RTMFPSession::manage() {
 	if(died)
 		return;
 
-	Session::manage();
-
 	if (_failed) {
 		failSignal();
 		return;
 	}
 
 	// After 6 mn we considerate than the session has failed
-	if(_recvTimestamp.isElapsed(360000)) {
+	if(peer.lastReceptionTime.isElapsed(360000)) {
 		fail("Timeout no client message");
 		return;
 	}
 
 	// To accelerate the deletion of peer ghost (mainly for netgroup efficient), starts a keepalive server after 2 mn
-	if(_recvTimestamp.isElapsed(120000) && !keepalive()) // TODO check it!
+	if(peer.lastReceptionTime.isElapsed(120000) && !keepalive()) // TODO check it!
 		return;
 
 	// Raise RTMFPWriter
@@ -128,7 +126,7 @@ void RTMFPSession::manage() {
 		++it;
 	}
 
-	flush();
+	Session::manage();
 }
 
 bool RTMFPSession::keepalive() {
@@ -190,7 +188,7 @@ void RTMFPSession::flush(UInt8 marker,bool echoTime,RTMFPEngine::Type type) {
 		PacketWriter& packet(_pSender->packet);
 	
 		// After 30 sec, send packet without echo time
-		if(_recvTimestamp.isElapsed(30000))
+		if(peer.lastReceptionTime.isElapsed(30000))
 			echoTime = false;
 
 		if(echoTime)
@@ -200,8 +198,8 @@ void RTMFPSession::flush(UInt8 marker,bool echoTime,RTMFPEngine::Type type) {
 
 		BinaryWriter writer(packet, 6);
 		writer.write8(marker).write16(RTMFP::TimeNow());
-		if(echoTime)
-			writer.write16(_timeSent+RTMFP::Time(_recvTimestamp.elapsed()));
+		if (echoTime)
+			writer.write16(_timeSent+RTMFP::Time(peer.lastReceptionTime.elapsed()));
 
 		_pSender->farId = farId;
 		_pSender->encoder.type = type;
@@ -250,8 +248,6 @@ BinaryWriter& RTMFPSession::writeMessage(UInt8 type, UInt16 length, RTMFPWriter*
 }
 
 void RTMFPSession::packetHandler(PacketReader& packet) {
-
-	_recvTimestamp.update();
 
 	// Read packet
 	UInt8 marker = packet.read8()|0xF0;
@@ -408,13 +404,6 @@ void RTMFPSession::packetHandler(PacketReader& packet) {
 				if (pFlow && !_failed) {
 					bool wasConnected(peer.connected);
 					pFlow->receive(stage, deltaNAck, message, flags);
-					if (pFlow->critical() && pFlow->consumed()) {
-						_failed=true; // If connection fails, log is already displayed, and so fail the whole session!
-						if (!peer.connected) {
-							for (auto& it : _flowWriters)
-								it.second->abort();
-						}
-					}
 					if (!wasConnected && peer.connected) {
 						for (auto& it : _flowWriters)
 							it.second->open();
@@ -430,10 +419,17 @@ void RTMFPSession::packetHandler(PacketReader& packet) {
 		packet.next(size);
 		type = packet.available()>0 ? packet.read8() : 0xFF;
 
-		// Commit RTMFPFlow
+		// Commit RTMFPFlow (pFlow means 0x11 or 0x10 message)
 		if(pFlow && type!= 0x11) {
 			pFlow->commit();
 			if(pFlow->consumed()) {
+				if (pFlow->critical()) {
+					_failed=true; // If connection fails, log is already displayed, and so fail the whole session!
+					if (!peer.connected) {
+						for (auto& it : _flowWriters)
+							it.second->abort();
+					}
+				}
 				_flows.erase(pFlow->id);
 				delete pFlow;
 			}

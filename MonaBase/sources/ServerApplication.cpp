@@ -84,7 +84,10 @@ void ServerApplication::ServiceMain(DWORD argc, LPTSTR* argv) {
 	_ServiceStatus.dwWaitHint = 0;
 	SetServiceStatus(_ServiceStatusHandle, &_ServiceStatus);
 
+#if !defined(_DEBUG)
 	try {
+#endif
+
 		if (_PThis->init(argc, const_cast<LPCSTR*>(argv))) {
 			_ServiceStatus.dwCurrentState = SERVICE_RUNNING;
 			SetServiceStatus(_ServiceStatusHandle, &_ServiceStatus);
@@ -92,6 +95,8 @@ void ServerApplication::ServiceMain(DWORD argc, LPTSTR* argv) {
 			_ServiceStatus.dwWin32ExitCode = rc ? ERROR_SERVICE_SPECIFIC_ERROR : 0;
 			_ServiceStatus.dwServiceSpecificExitCode = rc;
 		}
+
+#if !defined(_DEBUG)
 	} catch (exception& ex) {
 		FATAL(ex.what());
 		_ServiceStatus.dwWin32ExitCode = ERROR_SERVICE_SPECIFIC_ERROR;
@@ -101,13 +106,17 @@ void ServerApplication::ServiceMain(DWORD argc, LPTSTR* argv) {
 		_ServiceStatus.dwWin32ExitCode = ERROR_SERVICE_SPECIFIC_ERROR;
 		_ServiceStatus.dwServiceSpecificExitCode = EXIT_SOFTWARE;
 	}
+#endif
+
 	_ServiceStatus.dwCurrentState = SERVICE_STOPPED;
 	SetServiceStatus(_ServiceStatusHandle, &_ServiceStatus);
 }
 
 
 int ServerApplication::run(int argc, const char** argv) {
+#if !defined(_DEBUG)
 	try {
+#endif
 		if (!hasConsole() && isService())
 			return 0;
 		if (!init(argc, argv))
@@ -128,6 +137,7 @@ int ServerApplication::run(int argc, const char** argv) {
 			return EXIT_OK;
 		}
 		return main(*_PThis);
+#if !defined(_DEBUG)
 	} catch (exception& ex) {
 		FATAL(ex.what());
 		return EXIT_SOFTWARE;
@@ -135,6 +145,7 @@ int ServerApplication::run(int argc, const char** argv) {
 		FATAL("Unknown error");
 		return EXIT_SOFTWARE;
 	}
+#endif
 }
 
 
@@ -212,7 +223,9 @@ void ServerApplication::defineOptions(Exception& ex,Options& options) {
 
 int ServerApplication::run(int argc, const char** argv) {
 	int result(EXIT_OK);
+#if !defined(_DEBUG)
 	try {
+#endif
 		bool runAsDaemon = isDaemon(argc, argv);
 		if (runAsDaemon)
 			beDaemon();
@@ -226,6 +239,7 @@ int ServerApplication::run(int argc, const char** argv) {
 				result = main(*_PThis);
 			}
 		}
+#if !defined(_DEBUG)
 	} catch (exception& ex) {
 		FATAL( ex.what());
 		result = EXIT_SOFTWARE;
@@ -233,6 +247,7 @@ int ServerApplication::run(int argc, const char** argv) {
 		FATAL("Unknown error");
 		result = EXIT_SOFTWARE;
 	}
+#endif
 	if (!_pidFile.empty()) {
 		Exception ex;
 		FileSystem::Remove(ex,_pidFile);

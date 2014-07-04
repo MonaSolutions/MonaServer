@@ -42,6 +42,7 @@ map<Exception::Code, const char*> Exception::_CodeMessages ({
 	{ Exception::SYSTEM, "System error" },
 	{ Exception::MATH, "Math error" },
 	{ Exception::CRYPTO, "Crypto error" },
+	{ Exception::PERMISSION, "Permission error" },
 	{ Exception::ASSERT, "Assert error" }
 });
 

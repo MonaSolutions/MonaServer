@@ -34,7 +34,7 @@ public:
 	RTMPChannel		channel;
 	bool			isMain;
 
-	void			abort() { if(_pSender) _pSender.reset();}
+	void			abort() { if(_pSender) _pSender.reset(); FlashWriter::abort(); }
 	void			close(Int32 code=0);
 
 	void			writeRaw(const UInt8* data,UInt32 size);

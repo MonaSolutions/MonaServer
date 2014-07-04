@@ -56,7 +56,14 @@ public:
 	void						setPath(const std::string& value) { ((std::string&)Client::path).assign(value); }
 	void						setQuery(const std::string& value) { ((std::string&)Client::query).assign(value); }
 	void						setServerAddress(const std::string& value) { ((std::string&)Client::serverAddress).assign(value); }
-	void						setPing(UInt16 value) { ((UInt16&)ping) = value; }
+
+	template<typename PingType>
+	void						setPing(PingType value) { _ping = (value>0xFFFF ? 0xFFFF : (value==0 ? 1 : (UInt16)value)); _pingProcessing = false; _pingTime.update(); }
+	UInt16						ping() const;
+	bool						ping(UInt32 obsoleteDelay);
+	void						pong();
+
+	void						updateLastReception() { ((Time&)lastReceptionTime).update();  }
 
 	ICE&		ice(const Peer& peer);
 
@@ -66,14 +73,13 @@ public:
 
 
 	// events
-	void onRendezVousUnknown(const UInt8* peerId, std::set<SocketAddress>& addresses);
-	void onHandshake(UInt32 attempts, std::set<SocketAddress>& addresses);
-
 	void onConnection(Exception& ex, Writer& writer, DataReader& parameters) { onConnection(ex, writer, parameters, DataWriter::Null); }
 	void onConnection(Exception& ex, Writer& writer, DataReader& parameters, DataWriter& response);
-
 	void onDisconnection();
-	bool onMessage(Exception& ex, const std::string& name, DataReader& reader, UInt8 responseType = 0);
+
+	void onRendezVousUnknown(const UInt8* peerId, std::set<SocketAddress>& addresses);
+	void onHandshake(UInt32 attempts, std::set<SocketAddress>& addresses);
+	void onAddressChanged(const SocketAddress& oldAddress);
 
 	bool onPublish(const Publication& publication, std::string& error);
 	void onUnpublish(const Publication& publication);
@@ -86,6 +92,7 @@ public:
 	bool onSubscribe(const Listener& listener, std::string& error);
 	void onUnsubscribe(const Listener& listener);
 
+	bool onMessage(Exception& ex, const std::string& name, DataReader& reader, UInt8 responseType = 0);
 	/// \brief call the onRead lua function ang get result in properties
 	/// \param filePath : relative path to the file (important : the directory will be erase)
 	/// \param parameters : gives parameters to the function onRead()
@@ -105,6 +112,10 @@ private:
 	std::map<const Peer*,ICE*>		_ices;
 	MapParameters					_parameters;
 	MapParameters					_properties;
+
+	UInt16							_ping;
+	Time							_pingTime;
+	bool							_pingProcessing;
 	
 };
 

@@ -51,28 +51,34 @@ int LUAServer::Get(lua_State* pState) {
 		if(name) {
 			if(strcmp(name,"send")==0) {
 				SCRIPT_WRITE_FUNCTION(LUAServer::Send)
-				SCRIPT_CALLBACK_FIX_INDEX(name)
+				SCRIPT_CALLBACK_FIX_INDEX
 			} else if(strcmp(name,"isTarget")==0) {
 				SCRIPT_WRITE_BOOL(server.isTarget)
-				SCRIPT_CALLBACK_FIX_INDEX(name)
+				SCRIPT_CALLBACK_FIX_INDEX
 			} else if(strcmp(name,"address")==0) {
 				SCRIPT_WRITE_STRING(server.address.toString().c_str())
-				SCRIPT_CALLBACK_FIX_INDEX(name)
+				SCRIPT_CALLBACK_FIX_INDEX
+			} else if (strcmp(name, "host") == 0) {
+				SCRIPT_WRITE_STRING(server.address.host().toString().c_str())
+				SCRIPT_CALLBACK_FIX_INDEX
+			} else if (strcmp(name, "port") == 0) {
+				SCRIPT_WRITE_NUMBER(server.address.port())
+				SCRIPT_CALLBACK_FIX_INDEX
 			} else if (strcmp(name,"reject")==0) {
 				SCRIPT_WRITE_FUNCTION(LUAServer::Reject)
-				SCRIPT_CALLBACK_FIX_INDEX(name)
+				SCRIPT_CALLBACK_FIX_INDEX
 			} else if (strcmp(name,"configs")==0) {
 				if(Script::Collection(pState, 1, "configs")) {
 					for (auto& it : server)
 						Script::PushKeyValue(pState, it.first, it.second);
 					Script::FillCollection(pState, server.count());
 				}
-				SCRIPT_CALLBACK_FIX_INDEX(name)
+				SCRIPT_CALLBACK_FIX_INDEX
 			} else {
 				Script::Collection(pState,1, "configs");
 				lua_getfield(pState, -1, name);
 				lua_replace(pState, -2);
-				SCRIPT_CALLBACK_FIX_INDEX(name)
+				SCRIPT_CALLBACK_FIX_INDEX
 			}
 		}
 	SCRIPT_CALLBACK_RETURN

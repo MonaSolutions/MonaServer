@@ -18,6 +18,7 @@ This file is a part of Mona.
 */
 
 #include "LUAUDPSocket.h"
+#include "LUASocketAddress.h"
 #include "Service.h"
 
 using namespace std;
@@ -50,11 +51,12 @@ LUAUDPSocket::~LUAUDPSocket() {
 }
 
 void LUAUDPSocket::Clear(lua_State* pState, LUAUDPSocket& socket) {
-	delete &socket;
+	Script::ClearObject<LUASocketAddress>(pState, socket.address());
+	Script::ClearObject<LUASocketAddress>(pState, socket.peerAddress());
 }
 
 int	LUAUDPSocket::Close(lua_State* pState) {
-	SCRIPT_CALLBACK(LUAUDPSocket,udp)
+	SCRIPT_CALLBACK(LUAUDPSocket, udp)
 		udp.close();
 	SCRIPT_CALLBACK_RETURN
 }
@@ -84,48 +86,46 @@ int	LUAUDPSocket::Disconnect(lua_State* pState) {
 	SCRIPT_CALLBACK_RETURN
 }
 
-
-
 int	LUAUDPSocket::Bind(lua_State* pState) {
 	SCRIPT_CALLBACK(LUAUDPSocket,udp)
-		const char* host("0.0.0.0");
-		if (!lua_isnumber(pState,2))
-			host = SCRIPT_READ_STRING(host);
-		UInt16 port = SCRIPT_READ_UINT(0);
 		Exception ex;
 		SocketAddress address;
-		if (port == 0)
-			address.set(ex, host);
-		else
-			address.set(ex, host, port);
-		if (!ex)
-			udp.bind(ex, address);
-		if (ex)
-			SCRIPT_WRITE_STRING(ex.error().c_str())
+		if (LUASocketAddress::Read(ex, pState, SCRIPT_READ_NEXT, address) && udp.bind(ex, address)) {
+			if (ex)
+				SCRIPT_WARN(ex.error())
+			SCRIPT_WRITE_BOOL(true)
+		} else {
+			SCRIPT_ERROR(ex.error())
+			SCRIPT_WRITE_BOOL(false)
+		}
 	SCRIPT_CALLBACK_RETURN
 }
-
 
 int	LUAUDPSocket::Send(lua_State* pState) {
 	SCRIPT_CALLBACK(LUAUDPSocket,udp)
 		SCRIPT_READ_BINARY(data,size)
+
 		Exception ex;
+
 		if (SCRIPT_CAN_READ) {
-			const char* host("127.0.0.1");
-			if (!lua_isnumber(pState,3))
-				host = SCRIPT_READ_STRING(host);
-			UInt16 port = SCRIPT_READ_UINT(0);
-			SocketAddress address;
-			if (port == 0)
-				address.set(ex, host);
-			else
-				address.set(ex, host, port);
-			if (!ex)
-				udp.send(ex, data,size,address);
-		} else
-			udp.send(ex,data, size);
-		if (ex)
-			SCRIPT_WRITE_STRING(ex.error().c_str())
+			SocketAddress address(IPAddress::Loopback(),0);
+			if (LUASocketAddress::Read(ex, pState, SCRIPT_READ_NEXT, address) && udp.send(ex, data,size,address)) {
+				if (ex)
+					SCRIPT_WARN(ex.error())
+				SCRIPT_WRITE_BOOL(true)
+			} else {
+				SCRIPT_ERROR(ex.error())
+				SCRIPT_WRITE_BOOL(false)
+			}
+		} else if (udp.send(ex, data, size)) {
+			if (ex)
+				SCRIPT_WARN(ex.error())
+				SCRIPT_WRITE_BOOL(true)
+		} else {
+			SCRIPT_ERROR(ex.error())
+			SCRIPT_WRITE_BOOL(false)
+		}
+
 	SCRIPT_CALLBACK_RETURN
 }
 
@@ -135,25 +135,25 @@ int LUAUDPSocket::Get(lua_State* pState) {
 		if(name) {
 			if(strcmp(name,"connect")==0) {
 				SCRIPT_WRITE_FUNCTION(LUAUDPSocket::Connect)
-				SCRIPT_CALLBACK_FIX_INDEX(name)
+				SCRIPT_CALLBACK_FIX_INDEX
 			} else if (strcmp(name, "disconnect") == 0) {
 				SCRIPT_WRITE_FUNCTION(LUAUDPSocket::Disconnect)
-				SCRIPT_CALLBACK_FIX_INDEX(name)
+				SCRIPT_CALLBACK_FIX_INDEX
 			} else if (strcmp(name, "close") == 0) {
 				SCRIPT_WRITE_FUNCTION(LUAUDPSocket::Close)
-				SCRIPT_CALLBACK_FIX_INDEX(name)
+				SCRIPT_CALLBACK_FIX_INDEX
 			} else if (strcmp(name, "send") == 0) {
 				SCRIPT_WRITE_FUNCTION(LUAUDPSocket::Send)
-				SCRIPT_CALLBACK_FIX_INDEX(name)
+				SCRIPT_CALLBACK_FIX_INDEX
 			} else if (strcmp(name, "bind") == 0) {
 				SCRIPT_WRITE_FUNCTION(LUAUDPSocket::Bind)
-				SCRIPT_CALLBACK_FIX_INDEX(name)
+				SCRIPT_CALLBACK_FIX_INDEX
 			} else if (strcmp(name, "address") == 0) {
-				if(!udp.address().host().isWildcard())
-					SCRIPT_WRITE_STRING(udp.address().toString().c_str())  // change
+				Script::AddObject<LUASocketAddress>(pState, udp.address());
+				SCRIPT_CALLBACK_FIX_INDEX
 			} else if (strcmp(name, "peerAddress") == 0) {
-				if(!udp.peerAddress().host().isWildcard())
-					SCRIPT_WRITE_STRING(udp.peerAddress().toString().c_str())  // change
+				Script::AddObject<LUASocketAddress>(pState, udp.peerAddress());
+				SCRIPT_CALLBACK_FIX_INDEX
 			}
 		}
 	SCRIPT_CALLBACK_RETURN

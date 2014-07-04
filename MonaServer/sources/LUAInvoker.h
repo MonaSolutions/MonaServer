@@ -57,9 +57,9 @@ private:
 	template<typename DataType>
 	static int	ToData(lua_State *pState) {
 		SCRIPT_CALLBACK(Mona::Invoker,invoker)
-		DataType writer(invoker.poolBuffers);
-		SCRIPT_READ_DATA(writer)
-		SCRIPT_WRITE_BINARY(writer.packet.data(),writer.packet.size())
+			DataType writer(invoker.poolBuffers);
+			SCRIPT_READ_DATA(writer)
+			SCRIPT_WRITE_BINARY(writer.packet.data(),writer.packet.size())
 		SCRIPT_CALLBACK_RETURN
 	}
 
@@ -68,32 +68,25 @@ private:
 	template<typename DataType>
 	static int	FromData(lua_State *pState) {
 		SCRIPT_CALLBACK(Mona::Invoker,invoker)
-		SCRIPT_READ_BINARY(data,size)
-		Mona::PacketReader packet(data,size);
-		DataType reader(packet);
-		SCRIPT_WRITE_DATA(reader,SCRIPT_READ_UINT(0))
+			SCRIPT_READ_BINARY(data,size)
+			Mona::PacketReader packet(data,size);
+			DataType reader(packet);
+			SCRIPT_WRITE_DATA(reader,SCRIPT_READ_UINT(0))
 		SCRIPT_CALLBACK_RETURN
 	}
 
+	static int	Time(lua_State *pState);
 	static int	ToAMF0(lua_State *pState);
 	static int	AddToBlacklist(lua_State *pState);
 	static int	RemoveFromBlacklist(lua_State *pState);
 
+	static int  CreateSocketAddress(lua_State *pState);
+	static int	CreateIPAddress(lua_State *pState);
 	static int  CreateUDPSocket(lua_State *pState);
 	static int	CreateTCPServer(lua_State *pState);
 	static int	CreateTCPClient(lua_State *pState);
 	static int	Publish(lua_State *pState);
 	static int	JoinGroup(lua_State *pState);
 	static int	AbsolutePath(lua_State *pState);
-
-	class LUAClients {
-	public:
-		static int Item(lua_State *pState);
-	};
-
-	class LUAGroups {
-	public:
-		static int Item(lua_State *pState);
-	};
 
 };

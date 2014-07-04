@@ -66,7 +66,7 @@ bool FlashStream::process(AMF::ContentType type,UInt32 time,PacketReader& packet
 			string name;
 			AMFReader reader(packet);
 			reader.readString(name);
-			writer.callbackHandle = reader.readNumber();
+			writer.setCallbackHandle(reader.readNumber());
 			if(reader.followingType()==AMFReader::NIL)
 				reader.readNull();
 			messageHandler(name,reader,writer);
@@ -90,7 +90,7 @@ bool FlashStream::process(AMF::ContentType type,UInt32 time,PacketReader& packet
 		default:
 			rawHandler(type, packet, writer);
 	}
-	writer.callbackHandle = 0;
+	writer.setCallbackHandle(0);
 	return writer.state()!=Writer::CLOSED;
 }
 

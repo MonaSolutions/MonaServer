@@ -167,6 +167,7 @@ void FlashMainStream::messageHandler(const string& name,AMFReader& message,Flash
 
 void FlashMainStream::rawHandler(UInt8 type,PacketReader& packet,FlashWriter& writer) {
 
+	// join group
 	if(type==0x01) {
 		if(packet.available()>0) {
 			UInt32 size = packet.read7BitValue()-1;
@@ -183,10 +184,12 @@ void FlashMainStream::rawHandler(UInt8 type,PacketReader& packet,FlashWriter& wr
 		}
 		return;
 	}
+	
 
 	UInt16 flag = packet.read16();
+
+	// setBufferTime
 	if(flag==0x03) {
-		// setBufferTime
 		UInt32 streamId = packet.read32();
 		if(streamId==0) {
 			bufferTime(packet.read32());
@@ -202,6 +205,19 @@ void FlashMainStream::rawHandler(UInt8 type,PacketReader& packet,FlashWriter& wr
 		raw.write16(0);
 		raw.write32(pStream->id);
 		pStream->bufferTime(packet.read32());
+		return;
+	}
+
+	
+	 // ping message
+	if(flag==0x06) {
+		writer.writePong(packet.read32());
+		return;
+	}
+
+	 // pong message
+	if(flag==0x07) {
+		peer.pong();
 		return;
 	}
 

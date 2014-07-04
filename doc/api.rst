@@ -89,7 +89,6 @@ properties
 - **clients** (read-only), clients actually connected, see *clients* object thereafter.
 - **configs** (read-only), return a LUA_ table which contains Mona configurations, it means the *MonaServer.ini* content file, (see *Configurations* part of `Installation <./installation.html>`_ page) and also some others usefull parameters (application.path, application.baseName, and many others. To know really all its content, iterate on this table and print its content). One sample is given in *Global configurations* in `Server Application`_ page.
 - **environment** (read-only), return a LUA_ table which contains environment variables from the system.
-- **epochTime** (read-only), gives the epoch time (since the Unix epoch, midnight, January 1, 1970) in milliseconds.
 - **groups** (read-only), existing groups (NetGroup_s running), see *groups* object thereafter.
 - **pulications** (read-only), server publications available, see *publications* object thereafter.
 - **servers** (read-only), MonaServer instances actually connected to the server, see *Servers_* object thereafter.
@@ -125,6 +124,7 @@ methods
 - **split(expression,separator[,option])**, LUA_ has not real split operator, this function fills this gap. It splits the *expression* in relation with the *separator* term given, and returns tokens as a multiple result. A optional number argument indicates if you want to ignore empty tokens (*option* =1), or to remove leading and trailing whitespace from tokens (*option* =2), or the both in same time (*option* =3).
 - **dir(dirName)**, return a LUA_ table containing objects of type *File* in the *dirName* directory (relative to the **www** path), see File_ object thereafter.
 - **joinGroup(peerID, groupID)**, add Client_ with *peerID* to Group_ with *groupID*.
+- **time()**, gives the epoch time (since the Unix epoch, midnight, January 1, 1970) in milliseconds.
 - **dump(data[, size])**, dump data to the console and log file, if *size* is not specified it dump all the data.
 
 Example of access to a Mona global function :

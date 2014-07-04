@@ -26,7 +26,7 @@ using namespace std;
 
 namespace Mona {
 
-WSWriter::WSWriter(TCPSession& session) : ping(0),_session(session),_sent(0),Writer(session.peer.connected ? OPENED : OPENING) {
+WSWriter::WSWriter(TCPSession& session) : _session(session),Writer(session.peer.connected ? OPENED : OPENING) {
 	
 }
 
@@ -61,7 +61,6 @@ void WSWriter::pack() {
 	packet.clip(10-WS::HeaderSize(size));
 	BinaryWriter headerWriter(packet);
 	packet.clear(WS::WriteHeader(WS::TYPE_TEXT,size,headerWriter)+size);
-	_sent += packet.size();
 	sender.packaged = true;
 }
 
@@ -69,12 +68,10 @@ void WSWriter::flush(bool full) {
 	if(_senders.empty())
 		return;
 	pack();
-	_qos.add(ping,_sent);
-	_sent=0;
 	Exception ex;
 	for (shared_ptr<WSSender>& pSender : _senders) {
 		_session.dumpResponse(pSender->data(),pSender->size());
-		EXCEPTION_TO_LOG(_session.send<WSSender>(ex, pSender), "WSSender flush");
+		EXCEPTION_TO_LOG(_session.send<WSSender>(ex, qos(), pSender), "WSSender flush");
 	}
 	_senders.clear();
 }

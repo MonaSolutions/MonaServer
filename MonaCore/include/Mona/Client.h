@@ -39,7 +39,7 @@ public:
 		WRITE
 	};
 
-	Client() : _pWriter(NULL),ping(0),_data(0) {}
+	Client() : _pWriter(NULL),_data(0) {}
 
 	const SocketAddress			address;
 	const std::string			protocol;
@@ -55,7 +55,9 @@ public:
 	const std::string			path;
 	const std::string			query;
 	const std::string			serverAddress;
-	const UInt16				ping;
+	
+	const Time					lastReceptionTime;
+	virtual UInt16				ping() const = 0;
 	virtual const Parameters&	properties() const =0;
 	void						properties(std::vector<std::string>& items) {
 		if (!OnCallProperties::subscribed() || OnCallProperties::raise<false>(items)) {

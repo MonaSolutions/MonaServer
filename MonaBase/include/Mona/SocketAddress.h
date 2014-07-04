@@ -48,6 +48,7 @@ public:
 	/// Creates a SocketAddress from an IP address and a port number.
 	SocketAddress(const IPAddress& host, UInt16 port);
 	SocketAddress& set(const IPAddress& host, UInt16 port);
+	SocketAddress& set(Exception& ex, const IPAddress& host, const std::string& port) { return set(host, resolveService(ex, port)); }
 	
 	/// set SocketAddress from an IP address and a port number.
 	bool set(Exception& ex, const std::string& host, UInt16 port) { return setIntern(ex, host, port,false); }

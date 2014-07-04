@@ -87,6 +87,7 @@ void RTMFPWriter::abort() {
 	for (RTMFPMessage* pMessage : _messages)
 		delete pMessage;
 	_messages.clear();
+	FlashWriter::abort();
 }
 
 void RTMFPWriter::close(Int32 code) {
@@ -272,7 +273,7 @@ void RTMFPWriter::acknowledgment(PacketReader& packet) {
 			if(message.repeatable)
 				--_repeatable;
 			if(_ackCount>0) {
-				_qos.add((UInt32)message.sendingTime,message.size(),_ackCount,_lostCount);
+				_qos.add(_ackCount+_lostCount,_lostCount);
 				_ackCount=_lostCount=0;
 			}
 			delete *it;
@@ -491,12 +492,12 @@ void RTMFPWriter::flush(bool full) {
 
 			
 			message.fragments[fragments] = _stage;
-			message.sendingTime.update();
 			available -= contentSize;
 			fragments += contentSize;
 
 		} while(available>0);
 
+		_qos.add(message.size(),_band.ping());
 		_messagesSent.emplace_back(&message);
 		_messages.pop_front();
 	}

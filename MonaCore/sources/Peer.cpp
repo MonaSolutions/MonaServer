@@ -37,7 +37,7 @@ public:
 };
 
 
-Peer::Peer(Handler& handler) : _handler(handler), connected(false) {
+Peer::Peer(Handler& handler) : _ping(0),_pingTime(0),_pingProcessing(false),_handler(handler), connected(false) {
 }
 
 Peer::~Peer() {
@@ -46,6 +46,29 @@ Peer::~Peer() {
 		((Peer*)it.first)->_ices.erase(this);
 		delete it.second;
 	}
+}
+
+UInt16 Peer::ping() const {
+	if (!_pingProcessing)
+		return _ping;
+	Int64 elapsed(_pingTime.elapsed());
+	if (elapsed<_ping)
+		return _ping;
+	return (elapsed > 0xFFFF) ? 0xFFFF : (UInt16)elapsed;
+}
+
+bool Peer::ping(UInt32 obsoleteDelay) {
+	if (_pingProcessing || !_pingTime.isElapsed(obsoleteDelay))
+		return false;
+	_pingProcessing = true;
+	_pingTime.update();
+	return true;
+}
+
+void Peer::pong() {
+	if (!_pingProcessing)
+		return;
+	setPing(_pingTime.elapsed());
 }
 
 
@@ -183,6 +206,12 @@ void Peer::onConnection(Exception& ex, Writer& writer,DataReader& parameters,Dat
 		writer.open(); // open even if "ex" to send error messages!
 	} else
 		ERROR("Client ", Util::FormatHex(id, ID_SIZE, LOG_BUFFER), " seems already connected!")
+}
+
+void Peer::onAddressChanged(const SocketAddress& oldAddress) {
+	if(connected)
+		return _handler.onAddressChanged(*this,oldAddress);
+	ERROR("Client address change before connection")
 }
 
 void Peer::onDisconnection() {

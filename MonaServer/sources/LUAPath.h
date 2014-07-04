@@ -24,10 +24,9 @@ This file is a part of Mona.
 
 class LUAPath {
 public:
-	static void Init(lua_State *pState, Mona::Path& path);
-	static void	Clear(lua_State* pState, Mona::Path& path);
+	static void Init(lua_State *pState, Mona::Path& path) {}
+	static void	Clear(lua_State* pState, Mona::Path& path) {}
+	static void	Delete(lua_State* pState, Mona::Path& path) {delete &path;}
 	static int	Get(lua_State *pState);
 	static int	Set(lua_State *pState);
-private:
-	static int  Call(lua_State* pState);
 };

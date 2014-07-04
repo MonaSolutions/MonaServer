@@ -18,6 +18,7 @@ This file is a part of Mona.
 */
 
 #include "LUATCPClient.h"
+#include "LUASocketAddress.h"
 #include "Service.h"
 
 using namespace std;
@@ -77,25 +78,24 @@ void LUATCPClient::onDisconnection(const SocketAddress& peerAddress){
 }
 
 void LUATCPClient::Clear(lua_State* pState, LUATCPClient& client) {
-	delete &client;
+	Script::ClearObject<LUASocketAddress>(pState, client.address());
+	Script::ClearObject<LUASocketAddress>(pState, client.peerAddress());
 }
 
 int	LUATCPClient::Connect(lua_State* pState) {
 	SCRIPT_CALLBACK(LUATCPClient,client)
-		const char* host("127.0.0.1");
-		if (!lua_isnumber(pState,2))
-			host = SCRIPT_READ_STRING(host);
-		UInt16 port = SCRIPT_READ_UINT(0);
+
 		Exception ex;
-		SocketAddress address;
-		if (port == 0)
-			address.set(ex,host);
-		else
-			address.set(ex, host, port);
-		if (!ex)
-			client.connect(ex, address);
-		if (ex)
-			SCRIPT_WRITE_STRING(ex.error().c_str())
+		SocketAddress address(IPAddress::Loopback(),0);
+		if (LUASocketAddress::Read(ex, pState, SCRIPT_READ_NEXT, address) && client.connect(ex, address)) {
+			if (ex)
+				SCRIPT_WARN(ex.error())
+			SCRIPT_WRITE_BOOL(true)
+		} else {
+			SCRIPT_ERROR(ex.error())
+			SCRIPT_WRITE_BOOL(false)
+		}
+
 	SCRIPT_CALLBACK_RETURN
 }
 
@@ -122,19 +122,19 @@ int LUATCPClient::Get(lua_State* pState) {
 		if(name) {
 			if(strcmp(name,"connect")==0) {
 				SCRIPT_WRITE_FUNCTION(LUATCPClient::Connect)
-				SCRIPT_CALLBACK_FIX_INDEX(name)
+				SCRIPT_CALLBACK_FIX_INDEX
 			} else if (strcmp(name, "disconnect") == 0) {
 				SCRIPT_WRITE_FUNCTION(LUATCPClient::Disconnect)
-				SCRIPT_CALLBACK_FIX_INDEX(name)
+				SCRIPT_CALLBACK_FIX_INDEX
 			} else if (strcmp(name, "send") == 0) {
 				SCRIPT_WRITE_FUNCTION(LUATCPClient::Send)
-				SCRIPT_CALLBACK_FIX_INDEX(name)
+				SCRIPT_CALLBACK_FIX_INDEX
 			} else if (strcmp(name, "address") == 0) {
-				if(client.connected())
-					SCRIPT_WRITE_STRING(client.address().toString().c_str()) // change
+				Script::AddObject<LUASocketAddress>(pState, client.address());
+				SCRIPT_CALLBACK_FIX_INDEX
 			} else if (strcmp(name, "peerAddress") == 0) {
-				if(client.connected())
-					SCRIPT_WRITE_STRING(client.peerAddress().toString().c_str()) // change
+				Script::AddObject<LUASocketAddress>(pState, client.peerAddress());
+				SCRIPT_CALLBACK_FIX_INDEX
 			} else if (strcmp(name, "idleTime") == 0) {
 				SCRIPT_WRITE_NUMBER(client.idleTime())  // change
 			} else if (strcmp(name, "connected") == 0)

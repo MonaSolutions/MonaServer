@@ -76,20 +76,17 @@ private:
 
 ///// MAIN
 	int main() {
-		try {
 
-			string module;
-			argument("loop", _loop);
-			if (!argument("module", module))
-				runSelectedModule();
-			else if (module=="all")
-				PoolTest::PoolTestInstance().runAll(_loop);
-			else
-				PoolTest::PoolTestInstance().run(module,_loop);
-		}
-		catch (exception& ex) {
-			FATAL(ex.what())
-		}
+		string module;
+		argument("loop", _loop);
+		if (!argument("module", module))
+			runSelectedModule();
+		else if (module=="all")
+			PoolTest::PoolTestInstance().runAll(_loop);
+		else
+			PoolTest::PoolTestInstance().run(module,_loop);
+		
+
         NOTE("END OF TESTS");
         cout << "Press any key to exit";
         getchar();

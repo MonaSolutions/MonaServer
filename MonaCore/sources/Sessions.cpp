@@ -27,7 +27,7 @@ namespace Mona {
 
 
 Sessions::Sessions() {
-	onAddressChange = [this](Session& session, const SocketAddress& oldAddress) {
+	onAddressChanged = [this](Session& session, const SocketAddress& oldAddress) {
 		INFO("Session ",session.name()," has changed its address, ",oldAddress.toString()," -> ",session.peer.address.toString());
 		if (!(session._sessionsOptions&BYADDRESS))
 			return;

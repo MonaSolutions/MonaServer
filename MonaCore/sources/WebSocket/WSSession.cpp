@@ -118,7 +118,7 @@ void WSSession::packetHandler(PacketReader& packet) {
 				_writer.writePong(packet.current(),packet.available());
 				break;
 			case WS::TYPE_PONG:
-				peer.setPing(_writer.ping = (UInt16)_time.elapsed());
+				peer.pong();
 				break;
 			default:
 				ex.set(Exception::PROTOCOL, Format<UInt8>("Type %#x unknown", type), WS::CODE_MALFORMED_PAYLOAD);
@@ -142,10 +142,8 @@ void WSSession::packetHandler(PacketReader& packet) {
 
 
 void WSSession::manage() {
-	if(peer.connected && _time.isElapsed(60000)) { // 1 mn
+	if(peer.connected && peer.ping(40000)) // 40 sec
 		_writer.writePing();
-		_time.update();
-	}
 	TCPSession::manage();
 }
 

@@ -26,50 +26,74 @@ namespace Mona {
 
 QualityOfService QualityOfService::Null;
 
-QualityOfService::QualityOfService() : lostRate(0),byteRate(0),latency(0),_num(0),_den(0),_size(0) {
-}
-
-
-QualityOfService::~QualityOfService() {
-	reset();
-}
-
-void QualityOfService::add(UInt32 ping,UInt32 size,UInt32 success,UInt32 lost) {
-
-	(UInt32&)latency = ping/2;
-
-	_num += lost;
-	_den += (lost+success);
-	_size += size;
-
-	while(!_samples.empty()) {
-		Sample& sample(_samples.front());
-		if(!sample.time.isElapsed(5000)) // 5 secondes
-			break;
-		_den -= (sample.success+sample.lost);
-		_num -= sample.lost;
-		_size -= sample.size;
-		_samples.pop_front();
-	}
-	_samples.emplace_back(success,lost,size);
-	
-	double elapsed = (double)(*_samples.begin()).time.elapsed();
-
-	(double&)byteRate = (double)_size;
-	if(elapsed>0)
-		(double&)byteRate = _size/elapsed*1000;
-
-	(double&)lostRate = 0;
-	if(_den>0)
-		(double&)lostRate = _num/(double)_den;
+QualityOfService::QualityOfService() : _sampleInterval(4000),lostRate(0),byteRate(0),latency(0),_lost(0),_count(0),_size(0),_latency(0),_latencyCount(0) {
 }
 
 void QualityOfService::reset() {
 	(double&)lostRate = 0;
 	(double&)byteRate = 0;
 	(UInt32&)latency = 0;
-	_size=_num=_den=0;
-	_samples.clear();
+	_latencyCount=_latency=_size=_count=_lost=0;
+	_sendSamples.clear();
+	_lostSamples.clear();
+}
+
+void QualityOfService::add(UInt32 count, UInt32 lost) {
+	
+	if (lost > count)
+		lost = count;
+
+	while(!_lostSamples.empty()) {
+		LostSample& sample(_lostSamples.front());
+		if(!sample.time.isElapsed(_sampleInterval))
+			break;
+		_lost -= sample.lost;
+		_count -= sample.count;
+		_lostSamples.pop_front();
+	}
+
+	_lost += lost;
+	_count += count;
+	_lostSamples.emplace_back(count,lost);
+
+	(double&)lostRate = 0;
+	if (_count > 0)
+		(double&)lostRate = _lost / (double)_count;
+}
+
+void QualityOfService::add(UInt32 size, UInt16 ping, UInt32 count, UInt32 lost) {
+
+	if (count > 0)
+		add(count, lost);
+
+	while(!_sendSamples.empty()) {
+		SendSample& sample(_sendSamples.front());
+		if(!sample.time.isElapsed(_sampleInterval))
+			break;
+		_size -= sample.size;
+		if (sample.latency) {
+			_latency -= sample.latency;
+			--_latencyCount;
+		}
+		_sendSamples.pop_front();
+	}
+
+	_size += size;
+	_sendSamples.emplace_back(size,ping);
+	
+	(double&)byteRate = (double)_size;
+	double elapsed = (double)_sendSamples.front().time.elapsed();
+	if (elapsed > 0)
+		(double&)byteRate = (_size / elapsed) * 1000;
+
+	SendSample& sample(_sendSamples.back());
+	if (sample.latency) {
+		_latency += sample.latency;
+		++_latencyCount;
+		(UInt32&)latency = _latency / _latencyCount;
+
+	}
+
 }
 
 

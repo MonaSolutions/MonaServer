@@ -139,7 +139,7 @@ void Publication::pushData(DataReader& reader,UInt32 numberLostFragments) {
 
 	_new = true;
 	int pos = reader.packet.position();
-	_dataQOS.add(_pPublisher->ping,reader.available()+4,reader.packet.fragments,numberLostFragments); // 4 for time encoded
+	_dataQOS.add(reader.available()+4,_pPublisher->ping(),reader.packet.fragments,numberLostFragments); // 4 for time encoded
 	auto it = _listeners.begin();
 	while(it!=_listeners.end()) {
 		(it++)->second->pushDataPacket(reader);   // listener can be removed in this call
@@ -159,7 +159,7 @@ void Publication::pushAudio(UInt32 time,PacketReader& packet,UInt32 numberLostFr
 
 	if(numberLostFragments>0)
 		INFO(numberLostFragments," audio fragments lost on publication ",_name);
-	_audioQOS.add(_pPublisher->ping,packet.available()+4,packet.fragments,numberLostFragments); // 4 for time encoded
+	_audioQOS.add(packet.available()+4,_pPublisher->ping(),packet.fragments,numberLostFragments); // 4 for time encoded
 
 	// save audio codec packet for future listeners
 	if (MediaCodec::AAC::IsCodecInfos(packet)) {
@@ -189,7 +189,7 @@ void Publication::pushVideo(UInt32 time,PacketReader& packet,UInt32 numberLostFr
 	// TRACE("Time Video ",time," => ",Util::FormatHex(packet.current(),16,buffer))
 	
 
-	_videoQOS.add(_pPublisher->ping,packet.available()+4,packet.fragments,numberLostFragments); // 4 for time encoded
+	_videoQOS.add(packet.available()+4,_pPublisher->ping(),packet.fragments,numberLostFragments); // 4 for time encoded
 	if(numberLostFragments>0)
 		INFO(numberLostFragments," video fragments lost on publication ",_name);
 

@@ -25,7 +25,7 @@ using namespace std;
 
 namespace Mona {
 
-TCPSession::TCPSession(const SocketAddress& peerAddress, SocketFile& file, Protocol& protocol, Invoker& invoker) :  _timeout(protocol.getNumber<UInt32>("timeout") * 1000), _client(peerAddress, file, invoker.sockets), Session(protocol, invoker) {
+TCPSession::TCPSession(const SocketAddress& peerAddress, SocketFile& file, Protocol& protocol, Invoker& invoker) : _timeout(protocol.getNumber<UInt32>("timeout") * 1000), _client(peerAddress, file, invoker.sockets), Session(protocol, invoker) {
 	((SocketAddress&)peer.address).set(peerAddress);
 
 	_receptions.emplace_back(0);
@@ -35,7 +35,7 @@ TCPSession::TCPSession(const SocketAddress& peerAddress, SocketFile& file, Proto
 			_timeout *= 1000;
 	};
 
-	onError = [this](const Exception& ex) { WARN("Protocol ", this->protocol().name, ", ", ex.error()); };
+	onError = [this](const Exception& ex) { WARN(name(), ", ", ex.error()); };
 
 	onData = [this](PoolBuffer& pBuffer)->UInt32 {
 		if (died)
@@ -80,6 +80,7 @@ TCPSession::~TCPSession() {
 	_client.OnError::unsubscribe(onError);
 }
 
+
 void TCPSession::receive(PacketReader& packet) {
 	Session::receive(packet);
 	if (_receptions.size()>1 && _receptions.front() > 0 && (--_receptions.front()) == 0) {
@@ -91,11 +92,11 @@ void TCPSession::receive(PacketReader& packet) {
 void TCPSession::manage() {
 	if (died)
 		return;
-	Session::manage();
 	if (_timeout>0 && _client.idleTime()>_timeout) {
 		kill(TIMEOUT_DEATH);
-		DEBUG(protocol().name, " timeout session ", name());
+		DEBUG(name(), " timeout");
 	}	
+	Session::manage();
 }
 
 

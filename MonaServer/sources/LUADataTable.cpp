@@ -31,12 +31,8 @@ void LUADataTable::Init(lua_State* pState, LUADataTable& table) {
 	lua_pop(pState, 1);
 }
 
-void LUADataTable::Clear(lua_State* pState, LUADataTable& table) {
-	delete &table;
-}
-
 int	LUADataTable::Len(lua_State* pState) {
-	SCRIPT_CALLBACK(LUADataTable, table)
+	SCRIPT_CALLBACK(LUADataTable,table)
 		SCRIPT_WRITE_NUMBER(table.count)
 	SCRIPT_CALLBACK_RETURN
 }
@@ -78,7 +74,7 @@ int LUADataTable::Set(lua_State *pState) {
 			if (removing>=0) {
 				if (SCRIPT_NEXT_TYPE==LUA_TTABLE) {
 
-					lua_pushstring(pState, name);
+					lua_pushvalue(pState, 2); // name
 					Script::NewObject<LUADataTable,LUADataTable>(pState,*new LUADataTable(table.database, path));
 
 					// table iteration
@@ -109,7 +105,7 @@ int LUADataTable::Set(lua_State *pState) {
 					}
 					if (success) {
 						// memory
-						lua_pushstring(pState, name);
+						lua_pushvalue(pState, 2); // name
 						lua_pushvalue(pState, 3); // value
 						lua_rawset(pState, -4);
 						if (ex)

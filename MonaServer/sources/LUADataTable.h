@@ -27,7 +27,9 @@ class LUADataTable {
 public:
 
 	static void Init(lua_State *pState, LUADataTable& table);
-	static void	Clear(lua_State* pState, LUADataTable& table);
+	static void	Clear(lua_State* pState, LUADataTable& table) {}
+	static void	Delete(lua_State* pState, LUADataTable& table) { delete &table; }
+
 	static int Get(lua_State *pState);
 	static int Set(lua_State *pState);
 

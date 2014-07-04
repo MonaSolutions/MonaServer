@@ -25,6 +25,37 @@ This file is a part of Mona.
 using namespace std;
 using namespace Mona;
 
+class Clients {
+public:
+	static int Item(lua_State *pState) {
+		SCRIPT_CALLBACK(Service,service)	
+
+			if (lua_isstring(pState, 2)) {
+
+				SCRIPT_READ_BINARY(id, size)
+		
+				Script::Collection<Service>(pState, 1, "clients");
+				
+				if (Script::ToId(id, size)) {
+					lua_pushlstring(pState,(const char*) id, size);
+					lua_gettable(pState, -2);
+				} else
+					lua_pushnil(pState);
+
+				if (lua_isnil(pState,-1) && Script::GetCollection(pState, -2, "clientsByName")) {
+					// try by name
+					lua_pop(pState, 1);
+					lua_getfield(pState, -1,(const char*) id);
+					lua_replace(pState, -2); // remove clientsByName collection
+				}
+
+				lua_replace(pState, -2); // remove clients collection
+			}
+
+		SCRIPT_CALLBACK_RETURN
+	}
+};
+
 Service::Service(lua_State* pState, ServiceHandler& handler) : _lastCheck(0), _reference(LUA_REFNIL), _pParent(NULL), _handler(handler), _pState(pState), FileWatcher(handler.wwwPath(), "/main.lua") {
 
 }
@@ -48,14 +79,14 @@ void Service::setReference(int reference) {
 	if (_reference != LUA_REFNIL) {
 		lua_rawgeti(_pState, LUA_REGISTRYINDEX, _reference);
 		Script::Collection(_pState, -1, "clients");
-		bool isConst;
 		lua_pushnil(_pState);  // first key 
 		while (lua_next(_pState, -2) != 0) {
-			// uses 'key' (at index -2) and 'value' (at index -1) 
-			Client* pClient(Script::ToObject<Client>(_pState, isConst));
+			bool isConst;
+			// uses 'key' (at index -2) and 'value' (at index -1)
+			Client* pClient = Script::ToObject<Client>(_pState, isConst);
 			if (pClient)
 				pClient->data(LUA_REFNIL);
-			lua_pop(_pState, 1);
+			lua_pop(_pState, 2);
 		}
 		lua_pop(_pState, 2);
 		luaL_unref(_pState, LUA_REGISTRYINDEX, _reference);
@@ -66,8 +97,8 @@ void Service::setReference(int reference) {
 Service* Service::open(Exception& ex) {
 	if (_lastCheck.isElapsed(2000)) { // already checked there is less of 2 sec!
 		_lastCheck.update();
-		if (!watchFile() && !FileSystem::Exists(filePath.parent()))
-			_ex.set(Exception::APPLICATION, "Applicaton ", path, " doesn't exist").error();
+		if (!watchFile() && !path.empty() && !FileSystem::Exists(filePath.parent())) // no path/main.lua file, no main service, no path folder
+			_ex.set(Exception::APPLICATION, "Applicaton ", path, " doesn't exist");
 	}
 	
 	if (_ex) {
@@ -111,7 +142,7 @@ Service* Service::open(Exception& ex, const string& path) {
 		return pSubService;
 
 	// service doesn't exist (and no children possible here!)
-	if (it != _services.end() && _ex.code() == Exception::APPLICATION) {
+	if (it != _services.end() && ex.code() == Exception::APPLICATION) {
 		delete it->second;
 		_services.erase(it);
 	}
@@ -134,7 +165,7 @@ bool Service::open(bool create) {
 
 #if !defined(_DEBUG)
 	// hide metatable
-	lua_pushstring(_pState, "change metatable of environment is prohibited");
+	lua_pushliteral(_pState, "change metatable of environment is prohibited");
 	lua_setfield(_pState, -2, "__metatable");
 #endif
 
@@ -168,14 +199,21 @@ bool Service::open(bool create) {
 	lua_pushcfunction(_pState,&Service::Index);
 	lua_setfield(_pState,-2,"__index");
 
+	 // to be able to call SCRIPT_CALLBACK
 	lua_pushlightuserdata(_pState,this);
 	lua_setfield(_pState,-2,"|this");
+	lua_pushlightuserdata(_pState,(void*)&typeid(Service));
+	lua_setfield(_pState,-2,"|type");
 
 	// set metatable
 	lua_setmetatable(_pState,-2);
 
 	// create children collection (collector required here!)
 	Script::Collection<Service>(_pState,-1,"children");
+	lua_pop(_pState, 1);
+
+	// create clients table
+	Script::Collection<Clients>(_pState, -1, "clients");
 	lua_pop(_pState, 1);
 
 	// record in registry
@@ -186,8 +224,6 @@ bool Service::open(bool create) {
 }
 
 void Service::loadFile() {
-	if (_ex)
-		return;
 
 	open(true);
 	
@@ -197,9 +233,7 @@ void Service::loadFile() {
 
 		lua_rawgeti(_pState, LUA_REGISTRYINDEX, _reference);
 		if(luaL_loadfile(_pState,filePath.toString().c_str())!=0) {
-			const char* error = Script::LastError(_pState);
-			SCRIPT_ERROR(error)
-			_ex.set(Exception::SOFTWARE, error);
+			_ex.set(Exception::SOFTWARE, Script::LastError(_pState));
 			lua_pop(_pState,1); // remove environment
 			return;
 		}
@@ -279,8 +313,6 @@ void Service::clearEnvironment() {
 
 
 
-
-
 int Service::Item(lua_State *pState) {
 	SCRIPT_CALLBACK(Service,service)
 	// 1 => environment table
@@ -334,7 +366,7 @@ int Service::Index(lua_State *pState) {
 				}
 
 				// set data for the application!
-				lua_pushstring(pState,"data");
+				lua_pushvalue(pState, 2);
 				lua_pushvalue(pState, -2);
 				lua_rawset(pState, 1);
 				return 1;
@@ -347,7 +379,7 @@ int Service::Index(lua_State *pState) {
 		if (!lua_isnil(pState, -1)) {
 			lua_replace(pState, -2);
 			// recort to accelerate the access
-			lua_pushstring(pState,key);
+			lua_pushvalue(pState, 2);
 			lua_pushvalue(pState, -2);
 			lua_rawset(pState, 1);
 			return 1;

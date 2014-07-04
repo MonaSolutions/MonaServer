@@ -98,54 +98,57 @@ public:
 	bool isBroadcast() const;
 	bool isAnyBroadcast() const;
 	
-	// Returns true iff the address is a loopback address
+	// Returns true if the address is a loopback address
 	// 127.0.0.1 for IPv4, ::1 for IPv6
 	bool isLoopback() const;
 	
-	// Returns true iff the address is a multicast address
+	// Returns true if the address is a multicast address
 	// 224.0.0.0 to 239.255.255.255 for IPv4, FFxx:x:x:x:x:x:x:x range for IPv6
 	bool isMulticast() const;
 		
-	// Returns true iff the address is a unicast address (if it is neither a wildcard, broadcast or multicast address)
-	bool isUnicast() const;
+	// Returns true if the address is a unicast address (if it is neither a wildcard, broadcast or multicast address)
+	bool isUnicast() const { return !isWildcard() && !isAnyBroadcast() && !isMulticast(); }
 		
-	// Returns true iff the address is a link local unicast address
+	// Returns true if the address is a link local unicast address
 	// 169.254.0.0/16 range for IPv4, 1111 1110 10 as the first 10 bits followed by 54 zeros for IPv6
 	bool isLinkLocal() const;
 		
-	// Returns true iff the address is a site local unicast address
+	// Returns true if the address is a site local unicast address
 	// 10.0.0.0/24, 192.168.0.0/16 or 172.16.0.0 to 172.31.255.255 ranges for IPv4, 1111 1110 11 as the first 10 bits, followed by 38 zeros for IPv6
 	bool isSiteLocal() const;
 		
-	// Returns true iff the address is IPv4 compatible (for IPv6 the address must be in the ::x:x range)
+	// Returns true if the address is IPv4 compatible (for IPv6 the address must be in the ::x:x range)
 	bool isIPv4Compatible() const;
 
-	// Returns true iff the address is an IPv4 mapped IPv6 address (For IPv6, the address must be in the ::FFFF:x:x range)
+	// Returns true if the address is an IPv4 mapped IPv6 address (For IPv6, the address must be in the ::FFFF:x:x range)
 	bool isIPv4Mapped() const;
 
-	// Returns true iff the address is a well-known multicast address
+	// Returns true if the address is a well-known multicast address
 	// 224.0.0.0/8 range for IPv4, FF0x:x:x:x:x:x:x:x range for IPv6
 	bool isWellKnownMC() const;
 	
-	// Returns true iff the address is a node-local multicast address
+	// Returns true if the address is a node-local multicast address
 	// Always false for IPv4, node-local multicast addresses are in the FFx1:x:x:x:x:x:x:x range for IPv6
 	bool isNodeLocalMC() const;
 
-	// Returns true iff the address is a link-local multicast address
+	// Returns true if the address is a link-local multicast address
 	// 224.0.0.0/24 range for IPv4, FFx2:x:x:x:x:x:x:x range for IPv6
 	bool isLinkLocalMC() const;
 
-	// Returns true iff the address is a site-local multicast address
+	// Returns true if the address is a site-local multicast address
 	// 239.255.0.0/16 range for IPv4, FFx5:x:x:x:x:x:x:x for IPv6
 	bool isSiteLocalMC() const;
 
-	// Returns true iff the address is a organization-local multicast address
+	// Returns true if the address is a organization-local multicast address
 	// 239.192.0.0/16 range for IPv4, FFx8:x:x:x:x:x:x:x range for IPv6
 	bool isOrgLocalMC() const;
 
-	// Returns true iff the address is a global multicast address
+	// Returns true if the address is a global multicast address
 	// 224.0.1.0 to 238.255.255.255 range for IPv4, FFxF:x:x:x:x:x:x:x range for IPv6
 	bool isGlobalMC() const;
+
+	// Returns true if the address is local
+	bool isLocal() const { return isWildcard() || isLoopback() || isSiteLocal() || isLinkLocal() || isAnyBroadcast() || isNodeLocalMC() || isLinkLocalMC() || isSiteLocalMC() || isOrgLocalMC(); }
 	
 	bool operator == (const IPAddress& addr) const;	
 	bool operator != (const IPAddress& addr) const { return !operator==(addr); }

@@ -49,16 +49,18 @@ void LUAPublication::Clear(lua_State* pState, Publication& publication) {
 	Script::ClearObject<LUAQualityOfService>(pState, publication.dataQOS());
 	Script::ClearObject<LUAQualityOfService>(pState, publication.audioQOS());
 	Script::ClearObject<LUAQualityOfService>(pState, publication.videoQOS());
+}
 
-	if (publication.publisher()) {
-		lua_getmetatable(pState, -1);
-		lua_getfield(pState, -1, "|invoker");
-		lua_replace(pState, -2);
-		Invoker* pInvoker = (Invoker*)lua_touserdata(pState, -1);
-		if (pInvoker)
-			pInvoker->unpublish(publication.name());
-		lua_pop(pState, 1);
-	}
+void LUAPublication::Delete(lua_State* pState, Publication& publication) {
+	if (!publication.publisher())
+		return;
+	lua_getmetatable(pState, -1);
+	lua_getfield(pState, -1, "|invoker");
+	lua_replace(pState, -2);
+	Invoker* pInvoker = (Invoker*)lua_touserdata(pState, -1);
+	if (pInvoker)
+		pInvoker->unpublish(publication.name());
+	lua_pop(pState, 1);
 }
 
 int LUAPublication::Close(lua_State *pState) {
@@ -67,16 +69,15 @@ int LUAPublication::Close(lua_State *pState) {
 		lua_getfield(pState, -1, "|invoker");
 		lua_replace(pState, -2);
 
+		Script::DetachDestructor(pState,1);
+
 		Invoker* pInvoker = (Invoker*)lua_touserdata(pState, -1);
 		if (!pInvoker) {
 			SCRIPT_BEGIN(pState)
-				if (lua_isnumber(pState,-1))
-					SCRIPT_ERROR("This publication ", publication.name()," handle has already been closed")
-				else
-					SCRIPT_ERROR("You have not the handle on publication ", publication.name(), ", you can't close it")
+				SCRIPT_ERROR("You have not the handle on publication ", publication.name(), ", you can't close it")
 			SCRIPT_END
 		} else if (publication.publisher())
-			pInvoker->unpublish(publication.name());
+			pInvoker->unpublish(publication.name()); // call LUAPublication::Clear (because no destructor)
 
 		lua_pop(pState, 1);
 	SCRIPT_CALLBACK_RETURN
@@ -145,34 +146,34 @@ int LUAPublication::Get(lua_State *pState) {
 					Script::AddObject<LUAClient>(pState, *publication.publisher()); // can change
 			} else if(strcmp(name,"name")==0) {
 				SCRIPT_WRITE_STRING(publication.name().c_str())
-				SCRIPT_CALLBACK_FIX_INDEX(name)
+				SCRIPT_CALLBACK_FIX_INDEX
 			} else if(strcmp(name,"listeners")==0) {
 				Script::Collection(pState, 1, "listeners");
-				SCRIPT_CALLBACK_FIX_INDEX(name)
+				SCRIPT_CALLBACK_FIX_INDEX
 			} else if(strcmp(name,"audioQOS")==0) {
 				Script::AddObject<LUAQualityOfService>(pState, publication.audioQOS());
-				SCRIPT_CALLBACK_FIX_INDEX(name)
+				SCRIPT_CALLBACK_FIX_INDEX
 			} else if(strcmp(name,"videoQOS")==0) {
 				Script::AddObject<LUAQualityOfService>(pState, publication.videoQOS());
-				SCRIPT_CALLBACK_FIX_INDEX(name)
+				SCRIPT_CALLBACK_FIX_INDEX
 			} else if(strcmp(name,"dataQOS")==0) {
 				Script::AddObject<LUAQualityOfService>(pState, publication.dataQOS());
-				SCRIPT_CALLBACK_FIX_INDEX(name)
+				SCRIPT_CALLBACK_FIX_INDEX
 			} else if(strcmp(name,"close")==0) {
 				SCRIPT_WRITE_FUNCTION(LUAPublication::Close)
-				SCRIPT_CALLBACK_FIX_INDEX(name)
+				SCRIPT_CALLBACK_FIX_INDEX
 			} else if(strcmp(name,"pushAudio")==0) {
 				SCRIPT_WRITE_FUNCTION(LUAPublication::PushAudio)
-				SCRIPT_CALLBACK_FIX_INDEX(name)
+				SCRIPT_CALLBACK_FIX_INDEX
 			} else if(strcmp(name,"flush")==0) {
 				SCRIPT_WRITE_FUNCTION(LUAPublication::Flush)
-				SCRIPT_CALLBACK_FIX_INDEX(name)
+				SCRIPT_CALLBACK_FIX_INDEX
 			} else if(strcmp(name,"pushVideo")==0) {
 				SCRIPT_WRITE_FUNCTION(LUAPublication::PushVideo)
-				SCRIPT_CALLBACK_FIX_INDEX(name)
+				SCRIPT_CALLBACK_FIX_INDEX
 			} else if(strcmp(name,"pushData")==0) {
 				SCRIPT_WRITE_FUNCTION(LUAPublication::PushData)
-				SCRIPT_CALLBACK_FIX_INDEX(name)
+				SCRIPT_CALLBACK_FIX_INDEX
 			}
 		}
 	SCRIPT_CALLBACK_RETURN

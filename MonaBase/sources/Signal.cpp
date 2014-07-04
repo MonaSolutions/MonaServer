@@ -28,18 +28,22 @@ using namespace std;
 bool Signal::wait(UInt32 millisec) {
 	cv_status result(cv_status::no_timeout);
 	unique_lock<mutex> lock(_mutex);
+#if !defined(_DEBUG)
 	try {
+#endif
 		while (!_set && result == cv_status::no_timeout) {
 			if (millisec > 0)
 				result = _condition.wait_for(lock, std::chrono::milliseconds(millisec));
 			else
 				_condition.wait(lock);
 		}
+#if !defined(_DEBUG)
 	} catch (exception& exc) {
 		FATAL_ERROR("Wait signal failed, ", exc.what());
 	} catch (...) {
 		FATAL_ERROR("Wait signal failed, unknown error");
 	}
+#endif
 	if (_autoReset && _set)
 		_set = false;
 	return result == cv_status::no_timeout;

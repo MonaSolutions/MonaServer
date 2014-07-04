@@ -96,6 +96,7 @@ private:
 	void							packetHandler(PacketReader& packet);
 
 	// Implementation of BandWriter
+	UInt16 ping() const				{ return peer.ping(); }
 	const PoolBuffers&				poolBuffers() { return invoker.poolBuffers; }
 	void							initWriter(const std::shared_ptr<RTMFPWriter>& pWriter);
 	std::shared_ptr<RTMFPWriter>	changeWriter(RTMFPWriter& writer);
@@ -114,9 +115,7 @@ private:
 
 	void							failSignal();
 
-	Time											_recvTimestamp;
 	UInt16											_timeSent;
-	
 	bool											_failed;
 	UInt8											_timesFailed;
 	UInt8											_timesKeepalive;

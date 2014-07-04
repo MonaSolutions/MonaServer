@@ -178,10 +178,13 @@ void Application::defineOptions(Exception& ex, Options& options) {
 }
 
 int Application::run(int argc, const char* argv[]) {
+#if !defined(_DEBUG)
 	try {
+#endif
 		if (!init(argc, argv))
 			return EXIT_OK;
 		return main();
+#if !defined(_DEBUG)
 	} catch (exception& ex) {
 		FATAL(ex.what());
 		return EXIT_SOFTWARE;
@@ -189,6 +192,7 @@ int Application::run(int argc, const char* argv[]) {
 		FATAL("Unknown error");
 		return EXIT_SOFTWARE;
 	}
+#endif
 }
 
 void Application::log(THREAD_ID threadId, const string& threadName, Level level, const char *filePath, string& shortFilePath, long line, string& message) {

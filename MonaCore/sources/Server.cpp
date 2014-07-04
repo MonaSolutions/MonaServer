@@ -62,7 +62,11 @@ void Server::run(Exception& exc) {
 	_countClients = 0;
 
 	Exception ex;
+
+#if !defined(_DEBUG)
 	try {
+#endif
+
 		TaskHandler::start();
 
 		Exception exWarn;
@@ -87,11 +91,13 @@ void Server::run(Exception& exc) {
 		if (ex)
 			FATAL("Server, ", ex.error());
 		
+#if !defined(_DEBUG)
 	} catch (exception& ex) {
 		FATAL("Server, ",ex.what());
 	} catch (...) {
 		FATAL("Server, unknown error");
 	}
+#endif
 	 
 	// terminate the tasks (forced to do immediatly, because no more "giveHandle" is called)
 	TaskHandler::stop();

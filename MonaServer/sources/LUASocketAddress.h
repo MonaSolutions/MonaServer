@@ -19,28 +19,18 @@ This file is a part of Mona.
 
 #pragma once
 
-#include "Mona/TCPServer.h"
+#include "Mona/SocketAddress.h"
 #include "Script.h"
 
-
-class LUATCPServer : private Mona::TCPServer {
+class LUASocketAddress {
 public:
-	LUATCPServer(const Mona::SocketManager& manager,lua_State* pState);
+	static void Init(lua_State *pState, Mona::SocketAddress& address);
+	static void	Clear(lua_State* pState, Mona::SocketAddress& address);
+	static void	Delete(lua_State* pState, Mona::SocketAddress& address) { delete &address; }
+	static int	Get(lua_State *pState);
+	static int	Set(lua_State *pState);
 
-	static int Get(lua_State* pState);
-	static int Set(lua_State* pState);
-
-	static void Init(lua_State *pState, LUATCPServer& server) {}
-	static void	Clear(lua_State* pState, LUATCPServer& server);
-	static void	Delete(lua_State* pState, LUATCPServer& server) { delete &server; }
+	static bool Read(Mona::Exception& ex, lua_State *pState, int& index, Mona::SocketAddress& address);
 private:
-	virtual ~LUATCPServer();
-
-	OnError::Type		onError;
-	OnConnection::Type	onConnection;
-
-	static int	Start(lua_State* pState);
-	static int  Stop(lua_State* pState);
-
-	lua_State*			_pState;
+	static int	Call(lua_State *pState);
 };

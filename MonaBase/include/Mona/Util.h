@@ -125,7 +125,8 @@ public:
 	enum HexOption {
 		HEX_CPP=1,
 		HEX_TRIM_LEFT=2,
-		HEX_APPEND=4
+		HEX_APPEND=4,
+		HEX_UPPER_CASE=8
 	};
 
 	template <typename BufferType>
@@ -146,6 +147,8 @@ public:
 
 		buffer.resize((size-i) * ((options&HEX_CPP) ? 4 : 2) - (skipLeft ? 1 : 0) + j);
 
+		UInt8 ref(options&HEX_UPPER_CASE ? '7' : 'W');
+
 		UInt8 value;
 		for (i; i < size; ++i) {
 			if (options&HEX_CPP) {
@@ -154,11 +157,11 @@ public:
 			}
 			value = data[i] >> 4;
 			if (!skipLeft)
-				buffer[j++] = (value>9 ? (value + '7') : '0' + value);
+				buffer[j++] = (value>9 ? (value + ref) : '0' + value);
 			else
 				skipLeft = false;
 			value = data[i] & 0x0F;
-			buffer[j++] = (value > 9 ? (value + '7') : '0' + value);
+			buffer[j++] = (value > 9 ? (value + ref) : '0' + value);
 		}
 		return buffer;
 	}
@@ -167,8 +170,8 @@ public:
 	static BufferType& UnformatHex(BufferType& buffer) {
 		UInt32 j(0),i(0),size(buffer.size());
 		while(j<size) {
-			UInt8 first = buffer[j++];
-			UInt8 second = j == size ? '0' : buffer[j++];
+			UInt8 first = toupper(buffer[j++]);
+			UInt8 second = j == size ? '0' : toupper(buffer[j++]);
 			buffer[i++] = ((first - (first<='9' ? '0' : '7')) << 4) | ((second - (second<='9' ? '0' : '7')) & 0x0F);
 		}
 		buffer.resize(i);

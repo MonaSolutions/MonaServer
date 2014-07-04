@@ -255,6 +255,8 @@ void RTMPSession::packetHandler(PacketReader& packet) {
 void RTMPSession::manage() {
 	if (_pHandshaker && _pHandshaker->failed)
 		kill(PROTOCOL_DEATH);
+	else if (peer.connected && _pController && peer.ping(30000)) // 30 sec
+		_pController->writePing();
 	TCPSession::manage();
 }
 

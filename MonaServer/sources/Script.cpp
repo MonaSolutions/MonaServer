@@ -18,6 +18,7 @@ This file is a part of Mona.
 */
 
 #include "Script.h"
+#include "Mona/Entity.h"
 #include "Mona/Logs.h"
 #include "Mona/Util.h"
 #include <math.h>
@@ -43,43 +44,37 @@ const char* Script::LastError(lua_State *pState) {
 
 int Script::Error(lua_State *pState) {
 	SCRIPT_BEGIN(pState)
-		string msg;
-		SCRIPT_LOG(Mona::Logger::LEVEL_ERROR,__FILE__,__LINE__, false, ToPrint(pState,msg))
+		SCRIPT_LOG(Mona::Logger::LEVEL_ERROR,__FILE__,__LINE__, false, ToPrint(pState,LOG_BUFFER))
 	SCRIPT_END
 	return 0;
 }
 int Script::Warn(lua_State *pState) {
 	SCRIPT_BEGIN(pState)
-		string msg;
-		SCRIPT_LOG(Mona::Logger::LEVEL_WARN,__FILE__,__LINE__, false, ToPrint(pState,msg))
+		SCRIPT_LOG(Mona::Logger::LEVEL_WARN,__FILE__,__LINE__, false, ToPrint(pState,LOG_BUFFER))
 	SCRIPT_END
 	return 0;
 }
 int Script::Note(lua_State *pState) {
 	SCRIPT_BEGIN(pState)
-		string msg;
-		SCRIPT_LOG(Mona::Logger::LEVEL_NOTE,__FILE__,__LINE__, false, ToPrint(pState,msg))
+		SCRIPT_LOG(Mona::Logger::LEVEL_NOTE,__FILE__,__LINE__, false, ToPrint(pState,LOG_BUFFER))
 	SCRIPT_END
 	return 0;
 }
 int Script::Info(lua_State *pState) {
 	SCRIPT_BEGIN(pState)
-		string msg;
-		SCRIPT_LOG(Mona::Logger::LEVEL_INFO,__FILE__,__LINE__, false, ToPrint(pState,msg))
+		SCRIPT_LOG(Mona::Logger::LEVEL_INFO,__FILE__,__LINE__, false, ToPrint(pState,LOG_BUFFER))
 	SCRIPT_END
 	return 0;
 }
 int Script::Debug(lua_State *pState) {
 	SCRIPT_BEGIN(pState)
-		string msg;
-		SCRIPT_LOG(Mona::Logger::LEVEL_DEBUG,__FILE__,__LINE__, false, ToPrint(pState,msg))
+		SCRIPT_LOG(Mona::Logger::LEVEL_DEBUG,__FILE__,__LINE__, false, ToPrint(pState,LOG_BUFFER))
 	SCRIPT_END
 	return 0;
 }
 int Script::Trace(lua_State *pState) {
 	SCRIPT_BEGIN(pState)
-		string msg;
-		SCRIPT_LOG(Mona::Logger::LEVEL_TRACE,__FILE__,__LINE__, false, ToPrint(pState,msg))
+		SCRIPT_LOG(Mona::Logger::LEVEL_TRACE,__FILE__,__LINE__, false, ToPrint(pState,LOG_BUFFER))
 	SCRIPT_END
 	return 0;
 }
@@ -87,8 +82,7 @@ int Script::Trace(lua_State *pState) {
 
 int Script::Panic(lua_State *pState) {
 	SCRIPT_BEGIN(pState)
-		string msg;
-		SCRIPT_FATAL(ToPrint(pState,msg));
+		SCRIPT_FATAL(ToPrint(pState,LOG_BUFFER));
 	SCRIPT_END
 	return 1;
 }
@@ -120,7 +114,7 @@ lua_State* Script::CreateState() {
 	// set global metatable
 	lua_newtable(pState);
 #if !defined(_DEBUG)
-	lua_pushstring(pState, "change metatable of global environment is prohibited");
+	lua_pushliteral(pState, "change metatable of global environment is prohibited");
 	lua_setfield(pState, -2, "__metatable");
 #endif
 	lua_setmetatable(pState, LUA_GLOBALSINDEX);
@@ -146,6 +140,19 @@ void Script::PushValue(lua_State* pState,const UInt8* value, UInt32 size) {
 		lua_pushboolean(pState, 0);
 	else
 		lua_pushlstring(pState, (const char*)value, size);
+}
+
+ bool Script::GetCollection(lua_State* pState, int index,const char* field) {
+	if (!field || !lua_getmetatable(pState, index))
+		return false;
+	// get collection table
+	lua_getfield(pState, -1, field);
+	lua_replace(pState, -2); // remove metatable
+	if (!lua_istable(pState, -1)) {
+		lua_pop(pState, 1);
+		return false;
+	}
+	return true;
 }
 
 void Script::FillCollection(lua_State* pState, UInt32 size) {
@@ -218,7 +225,7 @@ void Script::ClearCollection(lua_State* pState) {
 
 	lua_newtable(pState);
 	lua_newtable(pState);
-	lua_pushstring(pState,"v");
+	lua_pushliteral(pState,"v");
 	lua_setfield(pState,-2,"__mode");
 	lua_setmetatable(pState, -2);
 	lua_setfield(pState, -2, "|items");
@@ -318,6 +325,18 @@ int Script::LenCollection(lua_State* pState) {
 	return 1;
 }
 
+int Script::CollectionToString(lua_State* pState) {
+	// 1 - table
+	lua_getfield(pState, 1, "__tostring");
+	if (!lua_isstring(pState, -1)) {
+		lua_pop(pState, 1); 
+		std::string buffer("Collection_");
+		lua_pushstring(pState,String::Append(buffer, lua_topointer(pState, 1)).c_str());
+	}
+	return 1;
+}
+
+
 int Script::Next(lua_State* pState) {
 	// 1 table
 	// [2 key] (optional)
@@ -375,6 +394,30 @@ int Script::IPairs(lua_State* pState) {
 	return 2;
 }
 
+
+bool Script::ToId(const UInt8* data, UInt32& size) {
+	if (size == (ID_SIZE << 1))
+		return true;
+	if (size ==ID_SIZE) {
+		Buffer buffer((UInt8*)data, size);
+		Util::UnformatHex(buffer);
+		size = (ID_SIZE << 1);
+		return  true;
+	}
+	return false;
+}
+
+bool Script::ToRawId(const UInt8* data, UInt32& size) {
+	if (size == ID_SIZE)
+		return true;
+	if (size == (ID_SIZE << 1)) {
+		Buffer buffer((UInt8*)data, size);
+		Util::UnformatHex(buffer);
+		size = ID_SIZE;
+		return  true;
+	}
+	return false;
+}
 
 DataReader& Script::WriteData(lua_State *pState,DataReader& reader,int reference,UInt32 count) {
 	DataReader::Type type;
@@ -460,7 +503,7 @@ DataReader& Script::WriteData(lua_State *pState,DataReader::Type type,DataReader
 				lua_newtable(pState);
 				if(weakKeys) {
 					lua_newtable(pState);
-					lua_pushstring(pState,"k");
+					lua_pushliteral(pState,"k");
 					lua_setfield(pState,-2,"__mode");
 					lua_setmetatable(pState,-2);
 				}
@@ -750,40 +793,46 @@ DataWriter& Script::ReadData(lua_State* pState,DataWriter& writer,UInt32 count,m
 const char* Script::ToPrint(lua_State* pState, string& out) {
 	int top = lua_gettop(pState);
 	int args = 0;
-	while(args++<top) {
-		string pointer;
-		switch (lua_type(pState, args)) {
-			case LUA_TLIGHTUSERDATA:
-				pointer = "userdata_";
-				break;
-			case LUA_TFUNCTION:
-				pointer = "function_";
-				break;
-			case LUA_TUSERDATA:
-				pointer = "userdata_";
-				break;
-			case LUA_TTHREAD:
-				pointer = "thread_";
-				break;
-			case LUA_TTABLE: {
-				pointer = "table_";
-				break;
-			}
-			case LUA_TBOOLEAN: {
-				out += lua_toboolean(pState,args) ? "(true)" : "(false)";
-				continue;
-			}
-			case LUA_TNIL: {
-				out += "(null)";
-				continue;
+	while (args++ < top)
+		ToString(pState,args,out);
+	return out.c_str();
+}
+
+string& Script::ToString(lua_State* pState, int index, string& out) {
+	switch (lua_type(pState, index)) {
+		case LUA_TTABLE: {
+			if (lua_getmetatable(pState, index)) {
+				lua_getfield(pState, -1, "__tostring");
+				lua_replace(pState, -2);
+				if (lua_isfunction(pState, -1)) {
+					lua_pushvalue(pState, index);
+					lua_call(pState, 1, 1);
+					if (lua_isstring(pState, -1)) {
+						out += lua_tostring(pState,-1);
+						lua_pop(pState, 1);
+						break;
+					}
+				}
+				lua_pop(pState, 1);
 			}
 		}
-		if(pointer.empty())
-			out += lua_tostring(pState,args);
-		else
-			String::Append(out, pointer, lua_topointer(pState, args));
+		default:
+			String::Append(out, lua_typename(pState,index), "_", lua_topointer(pState, index));
+			break;
+		case LUA_TBOOLEAN: {
+			out += lua_toboolean(pState,index) ? "(true)" : "(false)";
+			break;
+		}
+		case LUA_TNIL: {
+			out += "(null)";
+			break;
+		}
+		case LUA_TNUMBER:
+		case LUA_TSTRING:
+			out += lua_tostring(pState,index);
+			break;
 	}
-	return out.c_str();
+	return out;
 }
 
 

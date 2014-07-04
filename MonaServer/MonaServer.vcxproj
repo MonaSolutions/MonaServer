@@ -116,7 +116,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="sources\LUADataTable.h" />
+    <ClInclude Include="sources\LUAIPAddress.h" />
     <ClInclude Include="sources\LUAPath.h" />
+    <ClInclude Include="sources\LUASocketAddress.h" />
     <ClInclude Include="sources\MonaServer.h" />
     <ClInclude Include="sources\Script.h" />
     <ClInclude Include="sources\Service.h" />
@@ -139,7 +141,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="sources\LUADataTable.cpp" />
+    <ClCompile Include="sources\LUAIPAddress.cpp" />
     <ClCompile Include="sources\LUAPath.cpp" />
+    <ClCompile Include="sources\LUASocketAddress.cpp" />
     <ClCompile Include="sources\main.cpp" />
     <ClCompile Include="sources\MonaServer.cpp" />
     <ClCompile Include="sources\Script.cpp" />

@@ -128,7 +128,7 @@ public:
 
 		pSession->_sessionsOptions = options;
 
-		pSession->Events::OnAddressChange::subscribe(onAddressChange);
+		pSession->Events::OnAddressChanged::subscribe(onAddressChanged);
 		DEBUG("Session ", pSession->name(), " created");
 		return *pSession;
 	}
@@ -139,7 +139,7 @@ private:
 	void	removeByAddress(Session& session);
 	void	removeByAddress(const SocketAddress& address, Session& session);
 
-	Session::OnAddressChange::Type	onAddressChange;
+	Session::OnAddressChanged::Type	onAddressChanged;
 
 	std::map<UInt32,Session*>						_sessions;
 	std::set<UInt32>								_freeIds;

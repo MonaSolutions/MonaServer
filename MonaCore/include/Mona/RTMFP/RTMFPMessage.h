@@ -36,8 +36,6 @@ public:
 
 	std::map<UInt32,UInt64>	fragments;
 	const bool				repeatable;
-
-	Time					sendingTime;
 };
 
 

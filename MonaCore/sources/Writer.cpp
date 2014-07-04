@@ -48,8 +48,8 @@ Writer::~Writer(){
 void Writer::close(Int32 code) {
 	if(_state==CLOSED)
 		return;
+	_state=CLOSED; // before flush to get MESSAGE_END!
 	flush();
-	_state=CLOSED;
 	OnClose::raise(code);
 }
 

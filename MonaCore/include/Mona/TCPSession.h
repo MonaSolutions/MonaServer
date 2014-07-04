@@ -33,7 +33,7 @@ public:
 	
 	template <typename DecodingType, typename ...Args>
 	DecodingType& decode(const SocketAddress& address, Args&&... args) {
-		WARN("TCP Session ", name(), " cannot updated its address (TCP session is in a connected way");
+		WARN(name(), " cannot updated its address (TCP session is in a connected way");
 		return decode<DecodingType>(args ...);
 	}
 
@@ -44,17 +44,19 @@ public:
 	}
 
 	void receive(PacketReader& packet, const SocketAddress& address) {
-		WARN("TCP Session ", name(), " cannot updated its address (TCP session is in a connected way");
+		WARN(name(), " cannot updated its address (TCP session is in a connected way");
 		Session::receive(packet);
 	}
 	void receive(PacketReader& packet);
 
 	template<typename TCPSenderType>
-	bool send(Exception& ex,const std::shared_ptr<TCPSenderType>& pSender) {
+	bool send(Exception& ex,const QualityOfService& qos,const std::shared_ptr<TCPSenderType>& pSender) {
+		((QualityOfService&)qos).add(pSender->size(),peer.ping());
 		return _client.send<TCPSenderType>(ex, pSender);
 	}
 	template<typename TCPSenderType>
-	PoolThread*	send(Exception& ex,const std::shared_ptr<TCPSenderType>& pSender, PoolThread* pThread) {
+	PoolThread*	send(Exception& ex,const QualityOfService& qos,const std::shared_ptr<TCPSenderType>& pSender, PoolThread* pThread) {
+		((QualityOfService&)qos).add(pSender->size(),peer.ping());
 		return _client.send<TCPSenderType>(ex, pSender, pThread);
 	}
 
@@ -63,6 +65,11 @@ protected:
 	virtual ~TCPSession();
 
 	void			manage();
+
+	template<typename TCPSenderType>
+	bool send(Exception& ex,const std::shared_ptr<TCPSenderType>& pSender) { return _client.send<TCPSenderType>(ex, pSender); }
+	template<typename TCPSenderType>
+	PoolThread*	send(Exception& ex,const std::shared_ptr<TCPSenderType>& pSender, PoolThread* pThread) { return _client.send<TCPSenderType>(ex, pSender, pThread); }
 
 private:
 
@@ -74,7 +81,8 @@ private:
 	TCPClient::OnDisconnection::Type	onDisconnection;
 	Peer::OnInitParameters::Type		onInitParameters;
 
-	UInt32			_timeout;
+
+	UInt32				_timeout;
 
 	std::deque<UInt32>	_receptions;
 	TCPClient			_client;

@@ -19,6 +19,7 @@ This file is a part of Mona.
 
 #include "LUATCPServer.h"
 #include "LUATCPClient.h"
+#include "LUASocketAddress.h"
 #include "Service.h"
 
 using namespace std;
@@ -32,7 +33,9 @@ LUATCPServer::LUATCPServer(const SocketManager& manager,lua_State* pState) : _pS
 	onConnection = [this](Exception& ex,const SocketAddress& peerAddress,SocketFile& file) {
 		SCRIPT_BEGIN(_pState)
 			SCRIPT_MEMBER_FUNCTION_BEGIN(LUATCPServer, *this, "onConnection")
-				Script::AddObject<LUATCPClient>(_pState,*new LUATCPClient(peerAddress, file, this->manager(), _pState),true);
+				LUATCPClient* pClient = new LUATCPClient(peerAddress, file, this->manager(), _pState);
+				Script::AddObject<LUATCPClient>(_pState,*pClient);
+				Script::AttachDestructor<LUATCPClient>(_pState,*pClient); // add a destructor
 				SCRIPT_FUNCTION_CALL
 			SCRIPT_FUNCTION_END
 		SCRIPT_END
@@ -49,25 +52,21 @@ LUATCPServer::~LUATCPServer() {
 
 
 void LUATCPServer::Clear(lua_State* pState, LUATCPServer& server) {
-	delete &server;
+	Script::ClearObject<LUASocketAddress>(pState, server.address());
 }
 
 int	LUATCPServer::Start(lua_State* pState) {
-	SCRIPT_CALLBACK(LUATCPServer, server)
-		const char* host("0.0.0.0");
-		if (!lua_isnumber(pState,2))
-			host = SCRIPT_READ_STRING(host);
-		UInt16 port = SCRIPT_READ_UINT(0);
+	SCRIPT_CALLBACK(LUATCPServer,server)
 		Exception ex;
 		SocketAddress address;
-		if (port == 0)
-			address.set(ex, host);
-		else
-			address.set(ex, host, port);
-		if (!ex)
-			server.start(ex, address);
-		if (ex)
-			SCRIPT_WRITE_STRING(ex.error().c_str())
+		if (LUASocketAddress::Read(ex, pState, SCRIPT_READ_NEXT, address) && server.start(ex, address)) {
+			if (ex)
+				SCRIPT_WARN(ex.error())
+			SCRIPT_WRITE_BOOL(true)
+		} else {
+			SCRIPT_ERROR(ex.error())
+			SCRIPT_WRITE_BOOL(false)
+		}
 	SCRIPT_CALLBACK_RETURN
 }
 
@@ -83,12 +82,13 @@ int LUATCPServer::Get(lua_State* pState) {
 		if(name) {
 			if(strcmp(name,"start")==0) {
 				SCRIPT_WRITE_FUNCTION(LUATCPServer::Start)
-				SCRIPT_CALLBACK_FIX_INDEX(name)
+				SCRIPT_CALLBACK_FIX_INDEX
 			} else if (strcmp(name, "stop") == 0) {
 				SCRIPT_WRITE_FUNCTION(LUATCPServer::Stop)
-				SCRIPT_CALLBACK_FIX_INDEX(name)
+				SCRIPT_CALLBACK_FIX_INDEX
 			} else if (strcmp(name, "address") == 0) {
-				SCRIPT_WRITE_STRING(server.address().toString().c_str())  // change
+				Script::AddObject<LUASocketAddress>(pState, server.address());
+				SCRIPT_CALLBACK_FIX_INDEX
 			} else if(strcmp(name,"running")==0)
 				SCRIPT_WRITE_BOOL(server.running())  // change
 		}

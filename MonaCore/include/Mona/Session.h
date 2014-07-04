@@ -29,12 +29,12 @@ namespace Mona {
 
 class Session;
 namespace Events {
-	struct OnAddressChange : Event<void(Session&,const SocketAddress&)> {};
+	struct OnAddressChanged : Event<void(Session&,const SocketAddress&)> {};
 };
 
 class Protocol;
 class Session : public Expirable<Session>, public virtual Object,
-	public Events::OnAddressChange {
+	public Events::OnAddressChanged {
 	friend class Sessions;
 
 private:
@@ -91,7 +91,7 @@ public:
 		return ((ProtocolType&)_protocol).send<SenderType>(ex, pSender, pThread);
 	}
 
-	virtual void		manage() {}
+	virtual void		manage() { flush(); }
 	virtual void		kill(UInt32 type=NORMAL_DEATH);
 	virtual void		flush() { peer.writer().flush(); }
 

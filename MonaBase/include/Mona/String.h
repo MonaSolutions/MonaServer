@@ -230,8 +230,7 @@ public:
             snprintf(buffer, sizeof(buffer), custom.format, custom.value);
 		}
 		catch (...) {
-			// TODO remove the loop => ERROR("String formatting error during Append(...)");
-			return result;
+			return String::Append(result, args ...);
 		}
 		result.append(buffer);
 		return String::Append(result, args ...);

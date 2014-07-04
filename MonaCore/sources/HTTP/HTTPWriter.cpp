@@ -65,7 +65,7 @@ void HTTPWriter::flush(bool full) {
 
 	Exception ex;
 	for (shared_ptr<HTTPSender>& pSender : _senders) {
-		_pThread = _session.send<HTTPSender>(ex, pSender,_pThread);
+		_pThread = _session.send<HTTPSender>(ex, qos(),pSender,_pThread);
 		if (ex)
 			ERROR("HTTPSender flush, ", ex.error())
 	}

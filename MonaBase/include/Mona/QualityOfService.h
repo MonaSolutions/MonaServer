@@ -28,30 +28,44 @@ namespace Mona {
 class QualityOfService : public virtual Object {
 public:
 	QualityOfService();
-	virtual ~QualityOfService();
 
-	void add(UInt32 ping,UInt32 size,UInt32 success=0,UInt32 lost=0);
+	void add(UInt32 size, UInt16 ping, UInt32 count = 0, UInt32 lost = 0);
+	void add(UInt32 count, UInt32 lost);
 	void reset();
 
 	const double		lostRate;
 	const double		byteRate;
-	const UInt32	latency;
+	const UInt32		latency;
 
 	static QualityOfService Null;
 private:
-	class Sample : public virtual Object {
+
+	class SendSample : public virtual Object {
 		public:
-			Sample(UInt32 success,UInt32 lost,UInt32 size) : success(success),lost(lost),size(size) {}
-			const Time		time;
-			const UInt32	success;
-			const UInt32	lost;
-			const UInt32	size;
+			SendSample(UInt32 size, UInt16 ping) : latency(ping>>1),size(size) {}
+			Time	time;
+			UInt32	size;
+			UInt16	latency;
 	};
 
-	std::deque<Sample>	_samples;
-	UInt32		_size;
-	UInt32		_num;
-	UInt32		_den;
+	class LostSample : public virtual Object {
+		public:
+			LostSample(UInt32 count, UInt32 lost) : count(count),lost(lost) {}
+			Time	time;
+			UInt32	count;
+			UInt32	lost;
+	};
+
+	std::deque<SendSample>	_sendSamples;
+	std::deque<LostSample>	_lostSamples;
+
+	UInt32				_size;
+	UInt32				_latency;
+	UInt32				_latencyCount;
+	UInt32				_count;
+	UInt32				_lost;
+
+	const UInt32		_sampleInterval;
 };
 
 

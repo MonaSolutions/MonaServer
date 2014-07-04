@@ -50,14 +50,20 @@ void PoolThread::run(Exception& exc) {
 				_jobs.pop_front();
 			}
 
+
+#if !defined(_DEBUG)
 			try {
+#endif
 				Exception ex;
 				EXCEPTION_TO_LOG(pWork->run(ex),pWork->name);
+
+#if !defined(_DEBUG)
 			} catch (exception& ex) {
 				ERROR(pWork->name,", ",ex.what());
 			} catch (...) {
 				ERROR(pWork->name,", unknown error");
 			}
+#endif
 
 		}
 	}

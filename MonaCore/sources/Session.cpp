@@ -58,7 +58,7 @@ Session::~Session() {
 
 const string& Session::name() const {
 	if(_name.empty())
-		String::Format(_name, _id);
+		String::Format(_name, _protocol.name," session ",_id);
 	return _name;
 }
 
@@ -74,8 +74,11 @@ void Session::receive(PacketReader& packet, const SocketAddress& address) {
 	if (address != peer.address) {
 		SocketAddress oldAddress(peer.address);
 		((SocketAddress&)peer.address).set(address);
-		if (id() != 0) // id!=0 if session is managed by _sessions
-			OnAddressChange::raise(*this, oldAddress);
+		if (id() != 0) {// id!=0 if session is managed by _sessions
+			OnAddressChanged::raise(*this, oldAddress);
+			if (!died)
+				peer.onAddressChanged(oldAddress);
+		}
 	}
 	receive(packet);
 }
@@ -84,6 +87,7 @@ void Session::receive(PacketReader& packet, const SocketAddress& address) {
 void Session::receive(PacketReader& packet) {
 	if(died)
 		return;
+	peer.updateLastReception();
 	if (!dumpJustInDebug || (dumpJustInDebug && Logs::GetLevel()>=7))
 		DUMP(packet.data(),packet.size(),"Request from ",peer.address.toString())
 	packetHandler(packet);

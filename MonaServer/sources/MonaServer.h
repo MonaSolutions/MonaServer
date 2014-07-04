@@ -41,28 +41,9 @@ public:
 private:
 	void					manage();
 
-	
-	void					readLUAAddresses(const std::string& protocol, std::set<Mona::SocketAddress>& addresses);
-	void					readLUAAddress(const std::string& protocol, std::set<Mona::SocketAddress> & addresses);
-	void					readLUAServerAddress(const std::string& protocol, std::set<Mona::SocketAddress>& addresses,const ServerConnection& server);
 
-	template<typename ...Args>
-	void addLUAAddress(std::set<Mona::SocketAddress>& addresses, Args&&... args) {
-		Mona::SocketAddress address;
-		Mona::Exception ex;
-		if (address.set(ex, args ...)) {
-			addresses.emplace(address);
-			if (ex) {
-				SCRIPT_BEGIN(_pState)
-					SCRIPT_WARN(ex.error());
-				SCRIPT_END
-			}
-		} else if (ex) {
-			SCRIPT_BEGIN(_pState)
-				SCRIPT_ERROR("Invalid address, ", ex.error());
-			SCRIPT_END
-		}
-	}
+	void					readAddressRedirection(const std::string& protocol, int& index, std::set<Mona::SocketAddress> & addresses);
+
 
 	lua_State*				openService(const Service& service, Mona::Client& client);
 	lua_State*				loadService(const Mona::Client& client) { return (_pState && client.data() != LUA_REFNIL) ? _pState : NULL; }
@@ -87,6 +68,7 @@ private:
 
 	void					onConnection(Mona::Exception& ex, Mona::Client& client,Mona::DataReader& parameters,Mona::DataWriter& response);
 	void					onDisconnection(const Mona::Client& client);
+	void					onAddressChanged(Mona::Client& client, const Mona::SocketAddress& oldAddress);
 	bool					onMessage(Mona::Exception& ex, Mona::Client& client,const std::string& name,Mona::DataReader& reader,Mona::UInt8 responseType);
 	bool					onFileAccess(Mona::Exception& ex, Mona::Client& client, Mona::Client::FileAccessType type, Mona::Path& filePath, Mona::DataReader& parameters,Mona::DataWriter& properties);
 

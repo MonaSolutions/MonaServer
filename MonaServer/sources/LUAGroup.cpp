@@ -67,15 +67,10 @@ int LUAGroup::Item(lua_State *pState) {
 	SCRIPT_CALLBACK(Group,group)
 
 		if (lua_isstring(pState, 2)) {
-			Client* pMember(NULL);
 			SCRIPT_READ_BINARY(id,size)
-			if (size == ID_SIZE)
+			Client* pMember(NULL);
+			if (Script::ToRawId(id, size))
 				pMember = group(id);
-			else if (size == (ID_SIZE << 1)) {
-				Buffer buffer((UInt8*)id, size);
-				pMember = group(Util::UnformatHex(buffer).data());
-			}
-
 			if (pMember)
 				Script::AddObject<LUAClient>(pState,*pMember);
 		}
@@ -98,16 +93,16 @@ int LUAGroup::Get(lua_State *pState) {
 				lua_getmetatable(pState, 1);
 				lua_getfield(pState, -1, "|id");
 				lua_replace(pState, -2);
-				SCRIPT_CALLBACK_FIX_INDEX(name)
+				SCRIPT_CALLBACK_FIX_INDEX
 			} else if (strcmp(name, "rawId") == 0) {
 				SCRIPT_WRITE_BINARY(group.id,ID_SIZE);
-				SCRIPT_CALLBACK_FIX_INDEX(name)
+				SCRIPT_CALLBACK_FIX_INDEX
 			} else if (strcmp(name, "size") == 0) {
 				SCRIPT_WRITE_FUNCTION(LUAGroup::Size)
-				SCRIPT_CALLBACK_FIX_INDEX(name)
+				SCRIPT_CALLBACK_FIX_INDEX
 			} else if (strcmp(name, "members") == 0) {
 				Script::Collection(pState, 1, "members");
-				SCRIPT_CALLBACK_FIX_INDEX(name)
+				SCRIPT_CALLBACK_FIX_INDEX
 			}
 		}
 	SCRIPT_CALLBACK_RETURN
