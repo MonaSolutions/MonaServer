@@ -98,8 +98,8 @@ int LUAClient::Get(lua_State *pState) {
 				SCRIPT_CALLBACK_FIX_INDEX
 			} else if(strcmp(name,"ping")==0) {
 				SCRIPT_WRITE_NUMBER(client.ping())  // can change
-			} else if(name=="elapsedFromReception") {
-				SCRIPT_WRITE_NUMBER(client.lastReceptionTime.elapsed())  // can change
+			} else if(strcmp(name,"lastReceptionTime")==0) {
+				SCRIPT_WRITE_NUMBER(client.lastReceptionTime)  // can change
 			} else if(strcmp(name,"protocol")==0) {
 				SCRIPT_WRITE_STRING(client.protocol.c_str())
 				SCRIPT_CALLBACK_FIX_INDEX
