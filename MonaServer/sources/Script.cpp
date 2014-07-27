@@ -799,7 +799,8 @@ const char* Script::ToPrint(lua_State* pState, string& out) {
 }
 
 string& Script::ToString(lua_State* pState, int index, string& out) {
-	switch (lua_type(pState, index)) {
+	int type = lua_type(pState, index);
+	switch (type) {
 		case LUA_TTABLE: {
 			if (lua_getmetatable(pState, index)) {
 				lua_getfield(pState, -1, "__tostring");
@@ -817,7 +818,7 @@ string& Script::ToString(lua_State* pState, int index, string& out) {
 			}
 		}
 		default:
-			String::Append(out, lua_typename(pState,index), "_", lua_topointer(pState, index));
+			String::Append(out, lua_typename(pState,type), "_", lua_topointer(pState, index));
 			break;
 		case LUA_TBOOLEAN: {
 			out += lua_toboolean(pState,index) ? "(true)" : "(false)";

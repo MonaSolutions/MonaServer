@@ -512,7 +512,7 @@ private:
 			else if (lua_isnil(pState, 2))
 				SCRIPT_WRITE_BOOL(!object)
 			else
-				SCRIPT_ERROR("Comparison impossible between one ",typeid(Type).name()," and one ",lua_typename(pState,2))
+				SCRIPT_ERROR("Comparison impossible between one ",typeid(Type).name()," and one ",lua_typename(pState,lua_type(pState,2)))
 		SCRIPT_CALLBACK_RETURN
 	}
 
@@ -524,7 +524,7 @@ private:
 			if (pObject)
 				SCRIPT_WRITE_BOOL(object < *pObject)
 			else
-				SCRIPT_ERROR("Comparison impossible between one ",typeid(Type).name()," and one ",lua_typename(pState,2))
+				SCRIPT_ERROR("Comparison impossible between one ",typeid(Type).name()," and one ",lua_typename(pState,lua_type(pState,2)))
 		SCRIPT_CALLBACK_RETURN
 	}
 
@@ -538,7 +538,7 @@ private:
 			else if (lua_isnil(pState, 2))
 				SCRIPT_WRITE_BOOL(!object)
 			else
-				SCRIPT_ERROR("Comparison impossible between one ",typeid(Type).name()," and one ",lua_typename(pState,2))
+				SCRIPT_ERROR("Comparison impossible between one ",typeid(Type).name()," and one ",lua_typename(pState,lua_type(pState,2)))
 		SCRIPT_CALLBACK_RETURN
 	}
 
