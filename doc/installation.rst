@@ -24,7 +24,8 @@ Build
 
 The Mona source code is cross-platform.
 
-You **must** build Mona in the following order: 
+You **must** build Mona in the following order:
+
 #. :  **MonaBase**, 
 #. :  **MonaCore**, 
 #. :  **MonaServer**.
