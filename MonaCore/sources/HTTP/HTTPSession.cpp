@@ -96,7 +96,8 @@ bool HTTPSession::buildPacket(PoolBuffer& pBuffer,PacketReader& packet) {
 	if(_isWS)
 		return WSSession::buildPacket(pBuffer,packet);
 	// consumes all!
-	_packets.emplace_back(decode<HTTPPacketBuilding>(pBuffer,_ppBuffer).pPacket);
+	auto it = _packets.emplace(_packets.end(), new HTTPPacket(_ppBuffer));
+	decode<HTTPPacketBuilding>(pBuffer,*it);
 	return true;
 }	
 
@@ -107,15 +108,18 @@ void HTTPSession::packetHandler(PacketReader& reader) {
 		return WSSession::packetHandler(reader);
 
 	// Pop HTTPPacket (must be done just one time per handle!)
-	if (!_packets.empty()) {
-		_writer.pRequest = _packets.front();
-		_packets.pop_front();
-	}
-	const shared_ptr<HTTPPacket>& pPacket(_writer.pRequest);
-	if (!pPacket) {
+	if (_packets.empty()) {
 		ERROR("HTTPSession::packetHandler without http packet built");
 		return;
 	}
+	
+	 // Exception in decoding => close session without response
+	if (_packets.front()->exception) {
+		_packets.pop_front();
+		return _writer.close(0);
+	}
+	const shared_ptr<HTTPPacket>& pPacket(_writer.pRequest = _packets.front());
+	_packets.pop_front();
 
 	if (pPacket->exception)
 		return _writer.close(pPacket->exception);
@@ -234,12 +238,9 @@ void HTTPSession::packetHandler(PacketReader& reader) {
 }
 
 void HTTPSession::manage() {
-	if(_isWS) {
-		WSSession::manage();
-		return;
-	}
-	if (!_packets.empty() && _packets.front()->exception)
-		_writer.close(_packets.front()->exception);
+	if(_isWS)
+		return WSSession::manage();
+
 	TCPSession::manage();
 }
 

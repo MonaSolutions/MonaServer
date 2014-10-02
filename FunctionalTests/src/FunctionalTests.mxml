@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Application xmlns:fx="http://ns.adobe.com/mxml/2009" 
+				xmlns:mx="library://ns.adobe.com/flex/mx" layout="absolute" minWidth="955" minHeight="600" applicationComplete="init()" >
+	<fx:Declarations>
+	</fx:Declarations>
+	
+	<fx:Script>
+		<![CDATA[
+			import flash.utils.getTimer;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.core.FlexGlobals;
+			
+			private var applicationDefault:String = null;
+			private var hostDefault:String = null;
+			
+			[Bindable] public var arrayTests:ArrayCollection = new ArrayCollection();
+			private var mapTests:Object = new Object();
+			
+			public var _currentTest:int = 0;
+			public var _timeStart:int = 0; // Time in msec when the test has been started
+			
+			// Console functions
+			public function INFO(message:String):void { console.htmlText += "<p>" + message + "</p>"; }
+			public function SUCCESS(message:String):void { console.htmlText += "<p><b>" + message + "<b></p>"; }
+			public function ERROR(message:String):void { console.htmlText += "<p><b><i>ERROR : " + message + "</i></b></p>"; }
+			
+			private function init():void {
+				// Initiate parameters
+				applicationDefault = FlexGlobals.topLevelApplication.parameters.pathname;
+				hostDefault = FlexGlobals.topLevelApplication.parameters.host;
+				
+				INFO("Starting FunctionalTests from host http://" + hostDefault + applicationDefault);
+				
+				addTest(new TestHTTP(this, hostDefault, applicationDefault));
+				addTest(new TestHTTPReconnect(this, hostDefault, applicationDefault));
+				addTest(new TestBadRequests(this, hostDefault));
+				addTest(new SerializationJSON(this, hostDefault));
+				addTest(new SerializationXML(this, hostDefault));
+				addTest(new DeserializationJSON(this, hostDefault, applicationDefault));
+				addTest(new DeserializationXML(this, hostDefault, applicationDefault));
+			}
+			
+			public function addTest(test:Test):void {
+				
+				arrayTests.addItem(test.testName);
+				mapTests[test.testName] = test;
+			}
+			
+			public function run():void {
+				
+				listTests.enabled = false;
+				btRun.enabled = false;
+				_currentTest = 0;
+				runTest(_currentTest);
+			}
+			
+			public function runTest(index:int):void {
+				
+				var items:Array = listTests.selectedItems;
+				if (index < items.length) {
+					var test:Test = mapTests[items[index]];
+					
+					SUCCESS("Running " + test.testName + " (" + test.description + ")...");
+					_timeStart = getTimer();
+					test.run(asyncResult);
+				}
+				else {// End of tests!
+					listTests.enabled = true;
+					btRun.enabled = true;
+				}
+			}
+			
+			public function asyncResult(error:String):void {
+				
+				var items:Array = listTests.selectedItems;
+				var test:Test = mapTests[items[_currentTest]];
+				
+				if (error == "") { // Success : Go to next Test
+					SUCCESS("Test " + test.testName + " OK (" + (getTimer()-_timeStart) + "ms)");
+					_currentTest += 1;
+					runTest(_currentTest);
+				} else {  // Error : End of tests!
+					ERROR(error);
+					listTests.enabled = true;
+					btRun.enabled = true;
+				}
+			}
+		]]>
+	</fx:Script>	
+	<mx:VBox x="10" y="10" width="935" height="580">
+		<mx:HBox width="100%">
+			<mx:TextArea id="console" width="720" height="518" editable="false"/>
+			<mx:List id="listTests" width="204" height="517" dataProvider="{arrayTests}" allowMultipleSelection="true"></mx:List>
+		</mx:HBox>
+		<mx:HBox width="100%">
+			<mx:Spacer width="100%"/>
+			<mx:Button id="btRun" label="Run" click="run()"/>
+		</mx:HBox>
+	</mx:VBox>
+</mx:Application>

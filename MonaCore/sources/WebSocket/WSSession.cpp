@@ -95,6 +95,9 @@ bool WSSession::buildPacket(PoolBuffer& pBuffer,PacketReader& packet) {
 
 
 void WSSession::packetHandler(PacketReader& packet) {
+	if (!packet.available())
+		return ;
+
 	UInt8 type = 0;
 	Exception ex;
 	if(peer.connected) {

@@ -70,13 +70,12 @@ public:
 	void dumpResponse(const UInt8* data, UInt32 size, bool justInDebug=false) { DumpResponse(data, size, peer.address, justInDebug); }
 
 	template <typename DecodingType, typename ...Args>
-	DecodingType& decode(Args&&... args) {
+	void decode(Args&&... args) {
 		std::shared_ptr<DecodingType> pDecoding(new DecodingType(invoker, *this, args ...));
 		Exception ex;
 		_pDecodingThread = invoker.poolThreads.enqueue<DecodingType>(ex, pDecoding, _pDecodingThread);
 		if (ex)
 			ERROR("Impossible to decode packet of protocol ", protocolName(), " on session ", name(), ", ", ex.error());
-		return *pDecoding;
 	}
 
 	virtual void		receive(PacketReader& packet);

@@ -473,18 +473,19 @@ methods
 File
 =============
 
-*File* object gives some properties of a file in the file system. *File* objects are created on a *mona:files(...)* call.
+*File* object gives some properties of a file in the file system. *File* objects are created on a *mona:listPaths(...)* call.
 
 properties
 -----------------
 
-- **fullPath** (read-only), full path of the file
 - **name** (read-only), name of the file
 - **baseName** (read-only), name of the file, without extension
+- **parent** (read-only), name of the parent directory
 - **extension** (read-only), extension of the file
 - **size** (read-only), size of the file
 - **lastModified** (read-only), date of last modification (in seconds)
 - **isDirectory** (read-only), true if the file is a directory
+- **value** (read-only), full path of the file
 
 Events
 **************

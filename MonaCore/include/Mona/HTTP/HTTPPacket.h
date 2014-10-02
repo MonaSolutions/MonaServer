@@ -38,7 +38,7 @@ class HTTPPacket : public virtual Object {
 public:
 	
 
-	HTTPPacket(PoolBuffer& pBuffer);
+	HTTPPacket(const std::shared_ptr<PoolBuffer>& ppBuffer);
 
 	Exception					exception;
 
@@ -67,7 +67,7 @@ public:
 
 	std::string					cookies; /// List of cookie key;value
 
-	const PoolBuffers&			poolBuffers() { return _pBuffer.poolBuffers; }
+	const PoolBuffers&			poolBuffers() { return _ppBuffer->poolBuffers; }
 
 
 	const UInt8*				build(Exception& ex,PoolBuffer& pBuffer,const UInt8* data,UInt32& size);
@@ -89,11 +89,11 @@ private:
 		LINE_RETURN,
 	};
 
-	PoolBuffer&	_pBuffer;
-	std::string	_buffer;
+	const std::shared_ptr<PoolBuffer>	_ppBuffer;
+	std::string							_buffer;
 
 	// For next HTTPSender
-	std::shared_ptr<HTTPSendingInfos> _pSendingInfos;
+	std::shared_ptr<HTTPSendingInfos>	_pSendingInfos;
 };
 
 

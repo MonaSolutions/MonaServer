@@ -26,7 +26,7 @@ using namespace std;
 namespace Mona {
 
 
-HTTPPacket::HTTPPacket(PoolBuffer& pBuffer) : filePos(string::npos), _pBuffer(pBuffer),
+HTTPPacket::HTTPPacket(const shared_ptr<PoolBuffer>& ppBuffer) : filePos(string::npos), _ppBuffer(ppBuffer),
 	content(NULL),
 	contentLength(0),
 	contentType(HTTP::CONTENT_ABSENT),
@@ -66,18 +66,18 @@ void HTTPPacket::parseHeader(Exception& ex,const char* key, const char* value) {
 	
 const UInt8* HTTPPacket::build(Exception& ex,PoolBuffer& pBuffer,const UInt8* data,UInt32& size) {
 	/// append data
-	if (!_pBuffer.empty()) {
-		UInt32 oldSize = _pBuffer->size();
-		_pBuffer->resize(oldSize+size,true);
-		memcpy(_pBuffer->data()+oldSize, data,size);
+	if (!_ppBuffer->empty()) {
+		UInt32 oldSize = (*_ppBuffer)->size();
+		(*_ppBuffer)->resize(oldSize+size,true);
+		memcpy((*_ppBuffer)->data()+oldSize, data,size);
 	} else
-		_pBuffer.swap(pBuffer); // exchange the buffers
+		_ppBuffer->swap(pBuffer); // exchange the buffers
 
 	/// read data
 	UInt8				newLineCount(0);
 	ReadingStep			step(CMD);
-	UInt8*				current(_pBuffer->data());
-	UInt8*				end(current+_pBuffer->size());
+	UInt8*				current((*_ppBuffer)->data());
+	UInt8*				end(current+(*_ppBuffer)->size());
 	const char*			signifiant(NULL);
 	const char*			key(NULL);
 
@@ -97,7 +97,7 @@ const UInt8* HTTPPacket::build(Exception& ex,PoolBuffer& pBuffer,const UInt8* da
 				if (step == CMD) {
 					// by default command == GET
 					if ((command = HTTP::ParseCommand(ex, signifiant)) == HTTP::COMMAND_UNKNOWN) {
-						_pBuffer.release();
+						_ppBuffer->release();
 						exception.set(ex);
 						return NULL;
 					}
@@ -125,10 +125,10 @@ const UInt8* HTTPPacket::build(Exception& ex,PoolBuffer& pBuffer,const UInt8* da
 			} else if (step == CMD || step == PATH || step == VERSION) {
 				if (!signifiant)
 					signifiant = (const char*)current;
-				if (step == CMD && (current-_pBuffer->data())>7) {
+				if (step == CMD && (current-(*_ppBuffer)->data())>7) {
 					// not a HTTP valid packet, consumes all
-					_pBuffer.release();
-					exception.set(ex.set(Exception::PROTOCOL, "unvalid HTTP packet"));
+					_ppBuffer->release();
+					exception.set(ex.set(Exception::PROTOCOL, "invalid HTTP packet"));
 					return NULL;
 				}
 			} else
@@ -164,18 +164,18 @@ const UInt8* HTTPPacket::build(Exception& ex,PoolBuffer& pBuffer,const UInt8* da
 		return NULL;  // wait next data
 
 	// exchange the buffers
-	pBuffer.swap(_pBuffer);
+	pBuffer.swap(*_ppBuffer);
 
 	UInt32 rest = end-current-1;
 	if (rest == 0) {
-		_pBuffer.release(); // release buffer
+		_ppBuffer->release(); // release buffer
 		size = pBuffer->size();
 		return pBuffer->data();
 	}
 
 	// prepare next iteration
-	_pBuffer->resize(rest,false);
-	memcpy(_pBuffer->data(), current + 1, rest);
+	(*_ppBuffer)->resize(rest,false);
+	memcpy((*_ppBuffer)->data(), current + 1, rest);
 	
 
 	// shrink data

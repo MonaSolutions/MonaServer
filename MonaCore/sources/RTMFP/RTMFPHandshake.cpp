@@ -83,6 +83,8 @@ void RTMFPHandshake::clear() {
 }
 
 void RTMFPHandshake::packetHandler(PacketReader& packet) {
+	if (!packet.available())
+		return ;
 
 	UInt8 marker = packet.read8();
 	if(marker!=0x0b) {

@@ -483,8 +483,10 @@ bool Date::update(Exception& ex, const string& value, const char* format) {
 				break;
 			case 'b':
 			case 'B':
-				if ((month=parseMonth(it, end))==0 && optional!=0)
+				if ((month=parseMonth(it, end))==0 && optional==0) {
 					ex.set(Exception::FORMATTING, "Impossible to parse ", string(it, end), " as a valid month");
+					return false;
+				}
 				break;
 			case 'd':
 			case 'e':
@@ -523,8 +525,10 @@ bool Date::update(Exception& ex, const string& value, const char* format) {
 				break;
 			case 'a':
 			case 'A':
-				if(!parseAMPM(hour,it, end) && optional!=0)
+				if(!parseAMPM(hour,it, end) && optional!=0) {
 					ex.set(Exception::FORMATTING, "Impossible to parse ", string(it, end), " as a valid AM/PM information");
+					return false;
+				}
 				break;
 			case 'M':
 				PARSE_NUMBER_N(minute, 2);

@@ -248,6 +248,8 @@ BinaryWriter& RTMFPSession::writeMessage(UInt8 type, UInt16 length, RTMFPWriter*
 }
 
 void RTMFPSession::packetHandler(PacketReader& packet) {
+	if (!packet.available())
+		return ;
 
 	// Read packet
 	UInt8 marker = packet.read8()|0xF0;

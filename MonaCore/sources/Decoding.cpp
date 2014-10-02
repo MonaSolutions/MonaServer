@@ -63,6 +63,9 @@ bool Decoding::run(Exception& exc) {
 		if (!(_current = decodeRaw(ex, _pBuffer, times++, _current, _size))) {
 			if (ex)
 				ERROR(name,", ",ex.error())
+
+			_size = 0;
+			waitHandle();
 			break;
 		}
 		if (ex)
