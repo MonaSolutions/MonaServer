@@ -90,7 +90,7 @@ private:
 		LINE_RETURN,
 	};
 
-	const std::shared_ptr<PoolBuffer>	 _ppBuffer;
+	const std::shared_ptr<PoolBuffer>	_ppBuffer;
 
 	// For next HTTPSender
 	std::shared_ptr<HTTPSendingInfos>	_pSendingInfos;
