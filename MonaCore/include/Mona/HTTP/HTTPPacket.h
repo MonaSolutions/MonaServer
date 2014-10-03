@@ -68,7 +68,7 @@ public:
 
 	std::string					cookies; /// List of cookie key;value
 
-	const PoolBuffers&			poolBuffers() { return (*_ppBuffer).poolBuffers; }
+	const PoolBuffers&			poolBuffers() { return _ppBuffer->poolBuffers; }
 
 
 	const UInt8*				build(Exception& ex,PoolBuffer& pBuffer,const UInt8* data,UInt32& size);

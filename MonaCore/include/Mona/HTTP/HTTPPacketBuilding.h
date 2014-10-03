@@ -32,7 +32,7 @@ public:
 private:
 	const UInt8* decodeRaw(Exception& ex, PoolBuffer& pBuffer, UInt32 times,const UInt8* data,UInt32& size) { return _pPacket->build(ex,pBuffer,data,size); }
 
-	const std::shared_ptr<HTTPPacket> _pPacket;
+	const std::shared_ptr<HTTPPacket>	_pPacket;
 };
 
 

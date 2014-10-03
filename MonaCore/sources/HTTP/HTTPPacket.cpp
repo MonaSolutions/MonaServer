@@ -134,7 +134,7 @@ const UInt8* HTTPPacket::build(Exception& ex,PoolBuffer& pBuffer,const UInt8* da
 				if (step == CMD && (current-(*_ppBuffer)->data())>7) {
 					// not a HTTP valid packet, consumes all
 					_ppBuffer->release();
-					exception.set(ex.set(Exception::PROTOCOL, "unvalid HTTP packet"));
+					exception.set(ex.set(Exception::PROTOCOL, "invalid HTTP packet"));
 					return NULL;
 				}
 			} else

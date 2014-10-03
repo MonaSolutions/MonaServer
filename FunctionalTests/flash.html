@@ -23,51 +23,42 @@
         <style type="text/css" media="screen"> 
             html, body  { height:100%; }
             body { margin:0; padding:0; overflow:auto; text-align:center; 
-                   background-color: #ffffff; }   
+                   background-color: #869ca7; }   
             object:focus { outline:none; }
             #flashContent { display:none; }
         </style>
         
         <!-- Enable Browser History by replacing useBrowserHistory tokens with two hyphens -->
         <!-- BEGIN Browser History required section -->
-        <link rel="stylesheet" type="text/css" href="history/history.css" />
-        <script type="text/javascript" src="history/history.js"></script>
+        <link rel="stylesheet" type="text/css" href="bin-debug/history/history.css" />
+        <script type="text/javascript" src="bin-debug/history/history.js"></script>
         <!-- END Browser History required section -->  
             
-        <script type="text/javascript" src="swfobject.js"></script>
+        <script type="text/javascript" src="bin-debug/swfobject.js"></script>
         <script type="text/javascript">
             // For version detection, set to min. required Flash Player version, or 0 (or 0.0.0), for no version detection. 
             var swfVersionStr = "11.1.0";
             // To use express install, set to playerProductInstall.swf, otherwise the empty string. 
-            var xiSwfUrlStr = "playerProductInstall.swf";
+            var xiSwfUrlStr = "bin-debug/playerProductInstall.swf";
             var flashvars = {};
             
-            /* ---------- BEGIN PERSONALIZATION MONA ---------- */
-            
-            // Added to get dynamically host and path of the app to connect with (HTTP hosted by Mona)
+            // ---------------- Added to get dynamically host and path of the app to connect with (HTTP hosted by Mona) ----------------- 
             flashvars.host=window.location.hostname;
             var path = window.location.pathname;
-            flashvars.pathname=path.substring(0,path.lastIndexOf('/'));
-            
-            // Get the username
-            flashvars.Name = prompt("Please enter your name","User");
-            if (flashvars.Name == "")
-            	exit;
-            
-            /* ---------- END PERSONALIZATION MONA ---------- */
+            flashvars.pathname=path; //.substring(0,path.lastIndexOf('/'));
             
             var params = {};
             params.quality = "high";
-            params.bgcolor = "#ffffff";
+            params.bgcolor = "#869ca7";
             params.allowscriptaccess = "sameDomain";
             params.allowfullscreen = "true";
             var attributes = {};
-            attributes.id = "VideoPhone";
-            attributes.name = "VideoPhone";
+            attributes.id = "FunctionalTests";
+            attributes.name = "FunctionalTests";
             attributes.align = "middle";
             swfobject.embedSWF(
-                "VideoPhone.swf", "flashContent", 
-                "520", "680", 
+                "bin-debug/FunctionalTests.swf", "flashContent", 
+                "100%", "100%", 
                 swfVersionStr, xiSwfUrlStr, 
                 flashvars, params, attributes);
             // JavaScript enabled so display the flashContent div in case it is not replaced with a swf object.
@@ -92,16 +83,16 @@
         </div>
         
         <noscript>
-            <object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000" width="520" height="680" id="VideoPhone">
-                <param name="movie" value="VideoPhone.swf" />
+            <object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000" width="100%" height="100%" id="FunctionalTests">
+                <param name="movie" value="bin-debug/FunctionalTests.swf" />
                 <param name="quality" value="high" />
-                <param name="bgcolor" value="#ffffff" />
+                <param name="bgcolor" value="#869ca7" />
                 <param name="allowScriptAccess" value="sameDomain" />
                 <param name="allowFullScreen" value="true" />
                 <!--[if !IE]>-->
-                <object type="application/x-shockwave-flash" data="VideoPhone.swf" width="520" height="680">
+                <object type="application/x-shockwave-flash" data="bin-debug/FunctionalTests.swf" width="100%" height="100%">
                     <param name="quality" value="high" />
-                    <param name="bgcolor" value="#ffffff" />
+                    <param name="bgcolor" value="#869ca7" />
                     <param name="allowScriptAccess" value="sameDomain" />
                     <param name="allowFullScreen" value="true" />
                 <!--<![endif]-->

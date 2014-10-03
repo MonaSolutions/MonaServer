@@ -564,7 +564,7 @@ bool Date::update(Exception& ex, const char* current, size_t size, const char* f
 		switch (*format) {
 			default:
 				if (optional == 0)
-					ex.set(Exception::FORMATTING, "Unknown date %c pattern",*format);
+					ex.set(Exception::FORMATTING, "Unknown date ",*format," pattern");
 				break;
 			case '%': // to catch %% case
 				if (c != '%')

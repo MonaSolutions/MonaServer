@@ -34,7 +34,7 @@ public:
 	template <typename DecodingType, typename ...Args>
 	void decode(Args&&... args) {
 		++_receptions.back();
-		return Session::decode<DecodingType>(args ...);
+		Session::decode<DecodingType>(args ...);
 	}
 
 	void receive(PacketReader& packet, const SocketAddress& address) {
