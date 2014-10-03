@@ -63,6 +63,11 @@
     <ClInclude Include="sources\LUAIPAddress.h">
       <Filter>LUAClass</Filter>
     </ClInclude>
+    <ClInclude Include="sources\ScriptWriter.h" />
+    <ClInclude Include="sources\ScriptReader.h" />
+    <ClInclude Include="sources\LUAXML.h">
+      <Filter>LUAClass</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="sources\LUABroadcaster.cpp">
@@ -124,6 +129,11 @@
       <Filter>LUAClass</Filter>
     </ClCompile>
     <ClCompile Include="sources\LUAIPAddress.cpp">
+      <Filter>LUAClass</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\ScriptWriter.cpp" />
+    <ClCompile Include="sources\ScriptReader.cpp" />
+    <ClCompile Include="sources\LUAXML.cpp">
       <Filter>LUAClass</Filter>
     </ClCompile>
   </ItemGroup>

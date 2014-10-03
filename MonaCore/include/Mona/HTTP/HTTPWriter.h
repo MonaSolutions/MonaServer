@@ -39,13 +39,13 @@ public:
 	virtual void			abort() {_senders.clear();}
 	virtual void			flush(bool full=false);
 
-	virtual DataWriter&		writeInvocation(const std::string& name) { DataWriter& writer = write("200 OK", contentType, contentSubType); writer.writeString(name); return writer; }
-	virtual DataWriter&		writeMessage() { return write("200 OK", contentType, contentSubType); }
-	virtual DataWriter&		writeResponse(UInt8 type);
+	virtual DataWriter&		writeInvocation(const char* name) { DataWriter& writer(writeMessage()); writer.writeString(name,strlen(name)); return writer; }
+	virtual DataWriter&		writeMessage();
+	virtual DataWriter&		writeResponse(UInt8 type) { return writeMessage(); }
 	virtual void			writeRaw(const UInt8* data, UInt32 size) { write("200 OK", HTTP::CONTENT_TEXT,"plain",data,size); }
 	virtual void			close(Int32 code=0);
 
-	DataWriter&		write(const std::string& code, HTTP::ContentType type=HTTP::CONTENT_TEXT, const std::string& subType="html",const UInt8* data=NULL,UInt32 size=0);
+	DataWriter&		write(const std::string& code, HTTP::ContentType type=HTTP::CONTENT_ABSENT, const char* subType=NULL,const UInt8* data=NULL,UInt32 size=0);
 
 	/// \brief create a Sender and write the file in parameter
 	/// \param file path of the file
@@ -54,12 +54,9 @@ public:
 	void			writeFile(const Path& file, UInt8 sortOptions, bool isApp);
 
 	void			close(const Exception& ex);
-	
-	
-	HTTP::ContentType					contentType; ///< Content type for pull response
-	std::string							contentSubType; ///< Content sub type for pull response 
+
 private:
-	bool			writeMedia(MediaType type,UInt32 time,PacketReader& packet,Parameters& properties);
+	bool			writeMedia(MediaType type,UInt32 time,PacketReader& packet,const Parameters& properties);
 	
 	HTTPSender& createSender(HTTPPacket& request) { return **_senders.emplace(_senders.end(),new HTTPSender(_session.peer.address,request,_session.invoker.poolBuffers,_session.peer.path)); }
 

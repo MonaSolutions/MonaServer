@@ -24,12 +24,13 @@ This file is a part of Mona.
 using namespace std;
 using namespace Mona;
 
-
+static string _Buffer;
 
 ADD_TEST(SocketAddressTest, Behavior) {
 	
 	SocketAddress sa;
 	Exception ex;
+	
 
 	CHECK(!sa);
 	CHECK(sa.host().isWildcard());
@@ -70,27 +71,24 @@ ADD_TEST(SocketAddressTest, Behavior) {
 	CHECK(ex);
 	ex.set(Exception::NIL, "");
 
-	sa.set(ex,"192.168.2.120:88");
+	sa.set(ex,_Buffer.assign("192.168.2.120:88"));
 	CHECK(sa.host().toString() == "192.168.2.120");
 	CHECK(sa.port() == 88);
 
-	sa.set(ex, "[192.168.2.120]:88");
-	CHECK(sa.host().toString() == "192.168.2.120");
-	CHECK(sa.port() == 88);
-
-	CHECK(!ex);
-
+	sa.set(ex, _Buffer.assign("[192.168.2.120]:88"));
+	CHECK(ex);
+	ex.set(Exception::NIL, "");
 	sa.set(ex, "[192.168.2.260]");
 	CHECK(ex);
 	ex.set(Exception::NIL, "");
 
-	sa.set(ex,"[192.168.2.260:88");
+	sa.set(ex,_Buffer.assign("[192.168.2.260:88"));
 	CHECK(ex);
 	ex.set(Exception::NIL, "");
 	
 	sa.set(ex,"192.168.1.100", 100);
 	SocketAddress sa2;
-	sa2.set(ex,"192.168.1.100:100");
+	sa2.set(ex,_Buffer.assign("192.168.1.100:100"));
 	CHECK(sa == sa2);
 
 	sa.set(ex,"192.168.1.101", "99");
@@ -166,23 +164,23 @@ ADD_TEST(SocketAddressTest, Behavior6) {
 	CHECK(ex);
 	ex.set(Exception::NIL, "");
 
-	sa.set(ex,"[1080::8:600:200A:425C]:88");
+	sa.set(ex,_Buffer.assign("[1080::8:600:200A:425C]:88"));
 	CHECK(sa.host().toString() == "1080::8:600:200a:425c");
 	CHECK(sa.port() == 88);
 
 	CHECK(!ex);
 
-	sa.set(ex, "[1080::8:600:200A:425C]");
+	sa.set(ex, _Buffer.assign("[1080::8:600:200A:425C]"));
 	CHECK(ex);
 	ex.set(Exception::NIL, "");
 
-	sa.set(ex,"[1080::8:600:200A:425C:88");
+	sa.set(ex,_Buffer.assign("[1080::8:600:200A:425C:88]"));
 	CHECK(ex);
 	ex.set(Exception::NIL, "");
 	
 	sa.set(ex,"1080::8:600:200A:425C", 100);
 	SocketAddress sa2;
-	sa2.set(ex,"[1080::8:600:200A:425C]:100");
+	sa2.set(ex,_Buffer.assign("[1080::8:600:200A:425C]:100"));
 	CHECK(sa == sa2);
 
 	sa.set(ex,"1080::8:600:200A:425D", "99");

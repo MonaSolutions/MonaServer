@@ -26,245 +26,404 @@ using namespace std;
 
 namespace Mona {
 
-bool JSONReader::isValid() {
 
-	// Not tested yet?
-	if (!_validated) {
-		const UInt8* cur = current();
-		_isValid = (packet.available() > 0) && (cur[0]=='{' || cur[0]=='[');
-		_validated=true;
-	}
+JSONReader::JSONReader(PacketReader& packet,const PoolBuffers& poolBuffers) : _pos(packet.position()),_pBuffer(poolBuffers),DataReader(packet),_isValid(false) {
 
-	return _isValid;
-}
+	// check first '[' and last ']' or '{ and '}'
 
-
-JSONReader::JSONReader(PacketReader& packet) : DataReader(packet),_bool(false),_last(0),_validated(false),_isValid(false) {
-
-	if (!isValid())
+	const UInt8* cur = current();
+	if (!cur)
+		return;
+	bool isArray(*cur=='[');
+	if (!isArray && *cur != '{')
 		return;
 
-	// Ignore first '[' and last ']'
-	if(followingType()==ARRAY) {
-		if(readArray(_pos) && packet.available()>0) {
-			const UInt8* cur = packet.current()+packet.available()-1;
-
-			while(cur>=packet.current() && isspace(*cur))
-				--cur;
-			if(cur>=packet.current() && *cur== ']')
-		 		packet.shrink(cur-packet.current());
-		}
-	}
+	packet.next();
 	_pos = packet.position();
-}
 
+	if (!(cur = current()))
+		return;
 
-void JSONReader::reset() {
-	packet.reset(_pos);
-	_text.clear();
-	_bool = false;
-	_last =0;
-}
-
-const UInt8* JSONReader::readBytes(UInt32& size) {
-	_last=0;
-	size = _text.size();
-	return (const UInt8*)_text.c_str();
-}
-
-bool JSONReader::readBoolean() {
-	packet.next(_bool ? 4 : 5);
-	return _bool;
-}
-
-Date& JSONReader::readDate(Date& date) {
-	_last=0;
-	return date = _date;
-}
-
-string& JSONReader::readString(string& value) {
-	_last=0;
-	value.assign(_text);
-	_text.clear();
-	return value;
-}
-
-double JSONReader::readNumber() {
-	Exception ex;
-	double result = String::ToNumber<double>(ex, _text);
-	if (ex) {
-		ERROR("JSON number malformed, ",ex.error());
-		return 0;
-	}
-	return result;
-}
-
-bool JSONReader::readObject(string& type,bool& external) {
-	const UInt8* cur = current();
-	if(!cur) {
-		ERROR("JSON array absent, no more data available")
-		return false;
-	}
-	packet.next(1);
-	external=false;
-	if(cur[0]=='{')
-		return true;
-	ERROR("Char ",Format<UInt8>("%.2x",cur[0])," doesn't start a JSON object");
-	return false;
-}
-
-bool JSONReader::readArray(UInt32& size) {
-	UInt8* cur = (UInt8*)current();
-	if(!cur) {
-		ERROR("JSON array absent, no more data available")
-		return false;
-	}
-	packet.next(1);
-	if(cur[0]=='[') {
-		UInt32 available = packet.available();
-		if(available==0) {
-			ERROR("JSON array without termination char")
-			packet.next(1);
-			return false;
-		}
-		size=0;
-		bool isString=false;
-		++cur;
-		while(isString || (*cur)!=']') {
+	const UInt8* end(cur + packet.available());
 	
-			if((*cur)=='"') {
-				isString=!isString;
-				if(size==0)
-					size=1;
-			} else if(!isString) {
-				if((*cur)==',') {
-					if(size==0)
-						++size;
-					++size;
-				} else if(size==0 && !isspace(*cur))
-					size=1;
+	while (end-- > cur) {
+		if (!isspace(*end)) {
+			if (isArray) {
+				if (*end == ']') {
+					_isValid = true;
+					packet.shrink(end-cur);
+				}
+			} else if (*end == '}') {
+				_isValid = true;
+				packet.shrink(end-cur);
 			}
-
-			if(--available==0)
-				break;
-			++cur;
+			return;
 		}
-		if(isString) {
-			ERROR("JSON string without termination char")
-			packet.next(packet.available());
-			return false;
-		}
-		return true;
 	}
-	ERROR("Char ",Format<UInt8>("%.2x",cur[0])," doesn't start a JSON array");
-	return false;
-}
-
-JSONReader::Type JSONReader::readItem(string& name) {
-	const UInt8* cur = current();
-	if(!cur) {
-		// TODO is it really an error?
-		ERROR("JSON item absent, no more data available")
-		return END;
-	}
-	if(cur[0]=='}' || cur[0]==']') {
-		packet.next(1);
-		cur = current();
-		if(cur && cur[0]==',')
-			packet.next(1);
-		return END;
-	}
-	_bool=false;
-	Type type = followingType();
-	if(type==STRING && _bool) { // is key
-		_bool = readString(name) == "__raw";
-		type = followingType();
-		_bool = false;
-	}
-	return type;
 }
 
 
-JSONReader::Type JSONReader::followingType() {
-	if(_last==1)
-		return STRING;
-	if(_last==2)
-		return DATE;
-	if(!_text.empty())
-		_text.clear();
-	if(!available())
+UInt8 JSONReader::followingType() {
+	if (!_isValid)
 		return END;
 
 	const UInt8* cur = current();
 	if(!cur)
 		return END;
-	if(cur[0]==',' || cur[0]=='}' || cur[0]==']') {
-		packet.next(1);
-		return followingType();
-	}
-	if(cur[0]=='{')
-		return OBJECT;
-	if(cur[0]=='[')
-		return ARRAY;
-	if(cur[0]=='"') {
-		packet.next(1);
-		UInt32 pos = packet.position();
 
-		while((cur=current()) && cur[0]!='"')
-			packet.next(cur[0]=='\\' ? 2 : 1);
-		if(!available()) {
-			ERROR("JSON malformed, marker \" end of text not found");
+	if (*cur == ',') {
+		// avoid two following comma
+		packet.next();
+		cur = current();
+		if (!cur) {
+			ERROR("JSON malformed, no end");
 			return END;
 		}
+		if (*cur == ',' || *cur == '}' || *cur == ']') {
+			ERROR("JSON malformed, double comma without any value between");
+			packet.next(packet.available());
+			return END;
+		}
+		return followingType();
+	}
 
-		UInt32 size = packet.position()-pos;
-		packet.reset(pos);
-		packet.readRaw(size,_text);
-		if(_bool)
-			Util::FromBase64(_text);
-		packet.next(1); // skip the second '"'
-		cur = current();
-		_last=1; // String marker
-		if(cur && cur[0]==':') {
-			packet.next(1);
-			_bool=true;
-			return STRING;
-		}
+	if (*cur == '{')
+		return OBJECT;
+
+	if(*cur=='[')
+		return ARRAY;
+
+	if(*cur=='}' || *cur==']') {
+		packet.next(packet.available());
+		ERROR("JSON malformed, marker ",*cur," without beginning");
+		return END;
+	}
+
+	
+	if(*cur=='"') {
+		const char* value(jumpToString(_size));
+		if (!value)
+			return END;
 		Exception ex;
-		if (_date.update(ex, _text) && !ex) {
-			_last=2;
+		if (_date.update(ex,value,_size))
 			return DATE;
-		}
 		return STRING;
 	}
-	if(memcmp(cur,"null",4)==0)
-		return NIL;
-	if(memcmp(cur,"true",4)==0) {
-		_bool = true;
+
+	// necessary one char
+	UInt32 available(packet.available());
+	_size = 0;
+	const char* value((const char*)cur);
+	do {
+		--available;
+		++_size;
+		++cur;
+	} while (available && *cur != ',' && *cur != '}' && *cur != ']');
+
+	if (_size == 4) {
+		if (String::ICompare(value, "true",4) == 0) {
+			_number = 1;
+			return BOOLEAN;
+		}
+		if(String::ICompare(value, "null",4) == 0)
+			return NIL;
+	} else if (_size == 5 && String::ICompare(value, "false",5) == 0) {
+		_number = 0;
 		return BOOLEAN;
 	}
-	if(memcmp(cur,"false",5)==0) {
-		_bool = false;
-		return BOOLEAN;
+	if (String::ToNumber(value,_size, _number))
+		return NUMBER;
+
+	ERROR("JSON malformed, unknown ",string(value,_size)," value");
+	packet.next(packet.available());
+	return END;
+}
+
+
+bool JSONReader::readOne(UInt8 type, DataWriter& writer) {
+
+	switch (type) {
+
+		case STRING:
+			packet.next(1); // skip "
+			writer.writeString(STR packet.current(), _size);
+			packet.next(_size+1); // skip string"
+			return true;
+
+		case NUMBER:
+			packet.next(_size);
+			writer.writeNumber(_number);
+			return true;
+
+		case BOOLEAN:
+			packet.next(_size);
+			writer.writeBoolean(_number!=0);
+			return true;
+
+		case DATE:
+			packet.next(_size+2); // "date"
+			writer.writeDate(_date);
+			return true;
+
+		case NIL:
+			packet.next(4); // null
+			writer.writeNull();
+			return true;
+
+		case ARRAY: {
+			packet.next(); // skip [
+			// count number of elements
+			UInt32 count(0);
+			countArrayElement(count);
+			// write array
+			writer.beginArray(count);
+			while (count-- > 0) {
+				if(!readNext(writer))
+					writer.writeNull();
+			}
+			writer.endArray();
+			// skip ]
+			current();
+			packet.next();
+
+			return true;
+		}
 	}
 
-	// fill until the next ',' or '}' or ']'
-	const UInt8* begin(cur);
-	do {
-		packet.next(1); ++cur;
-	} while (available() && cur[0] != ',' && cur[0] != '}' && cur[0] != ']');
-	_text.assign((const char*)begin, cur - begin);
-	return NUMBER;
+	// Object
+	packet.next(); // skip {
+
+	bool started(false);
+	const UInt8* cur(NULL);
+	while ((cur=current()) && *cur != '}') {
+
+		if (started) {
+			if (*cur != ',') {
+				// skip comma , (2nd iteration)
+				ERROR("JSON malformed, comma object separator absent");
+				packet.next(packet.available());
+				writer.endObject();
+				return true;
+			}
+			packet.next();
+			cur = current();
+			if (!cur)
+				break;
+		}
+
+		const char* name(jumpToString(_size));
+		if (!name) {
+			if (!started)
+				return  false;
+			writer.endObject();
+			return true;
+		}
+		packet.next(2+_size); // skip "string"
+
+		if (!jumpTo(':')) {
+			if (!started)
+				return  false;
+			writer.endObject();
+			return true;
+		}
+		packet.next();
+
+		// write key
+		if (!started) {
+			if (!(cur = current())) {
+				ERROR("JSON malformed, value object of property ",string(name, _size)," absent");
+				return false;
+			}
+			if (*cur == '"') {
+
+				if (_size >= 4 && String::ICompare(name + (_size - 4), EXPAND("type"))==0) { // finish by "type" ("__type")
+					UInt32 size;
+					const char* value(jumpToString(size));
+					if (!value)
+						return false;
+					packet.next(2+size); // skip "string"
+					SCOPED_STRINGIFY(value,size, writer.beginObject( value) )
+					started = true;
+					continue;
+				}
+				
+				if (_size >= 3 && String::ICompare(name + (_size - 3), EXPAND("raw"))==0) { // finish by "raw" ("__raw")
+					UInt32 size;
+					const char* value(jumpToString(size));
+					if (!value)
+						return false;
+					if (Util::FromBase64((const UInt8*)value, size, *_pBuffer)) {
+						packet.next(2 + size); // skip "string"
+						writer.writeBytes(_pBuffer->data(), _pBuffer->size());
+						ignoreObjectRest();
+						return true;
+					}
+					WARN("JSON raw ", string(name, _size), " data must be in a base64 encoding format to be acceptable");
+				}
+			}
+
+			writer.beginObject();
+			started = true;
+		}
+
+		SCOPED_STRINGIFY(name, _size, writer.writePropertyName(name))
+	
+		// write value
+		if (!readNext(writer)) {
+			// here necessary position is at the end of the packet
+			writer.writeNull();
+			writer.endObject();
+			return true;
+		}
+
+	}
+
+	if (!started)
+		writer.beginObject();
+	writer.endObject();
+
+	if (cur)
+		packet.next(); // skip }
+	else
+		ERROR("JSON malformed, no object } end marker");
+
+	return true;
+}
+
+const char* JSONReader::jumpToString(UInt32& size) {
+	if (!jumpTo('"'))
+		return NULL;
+	const UInt8* cur(packet.current()+1);
+	const UInt8* end(cur+packet.available()-1);
+	size = 0;
+	while (cur<end && *cur != '"') {
+		if (*cur== '\\') {
+			++size;
+			if (++cur == end)
+				break;
+		}
+		++size;
+		++cur;
+	}
+	if(cur==end) {
+		packet.next(packet.available());
+		ERROR("JSON malformed, marker \" end of text not found");
+		return NULL;
+	}
+	return (const char*)packet.current() + 1;
+}
+
+bool JSONReader::jumpTo(char marker) {
+	const UInt8* cur(current());
+	if (!cur || *cur != marker) {
+		ERROR("JSON malformed, marker ", marker , " unfound");
+		packet.next(packet.available());
+		return false;
+	}
+	return cur != NULL;
 }
 
 const UInt8* JSONReader::current() {
-	while(available() && isspace(*packet.current()))
+	while(packet.available() && isspace(*packet.current()))
 		packet.next(1);
-	if(!available())
+	if(!packet.available())
 		return NULL;
 	return packet.current();
 }
 
 
+bool JSONReader::countArrayElement(UInt32& count) {
+	count = 0;
+	const UInt8* cur(current());
+	const UInt8* end(cur+packet.available());
+	UInt32 inner(0);
+	bool nothing(true);
+	bool done(false);
+	while (cur<end && (inner || *cur != ']')) {
+
+		// skip string
+		if (*cur == '"') {
+			while (++cur<end && *cur != '"') {
+				if (*cur== '\\') {
+					if (++cur == end)
+						break;
+				}
+			}
+			if(cur==end) {
+				packet.next(packet.available());
+				ERROR("JSON malformed, marker \" end of text not found");
+				return false;
+			}
+			nothing = false;
+		} else if (*cur == '{' || *cur == '[') {
+			++inner;
+			nothing = true;
+		} else if (*cur == ']' || *cur == '}') {
+			if (inner == 0) {
+				packet.next(packet.available());
+				ERROR("JSON malformed, marker ", *cur, " without beginning");
+				return false;
+			}
+			--inner;
+			nothing = false;
+		} else if (*cur == ',') {
+			if (nothing) {
+				packet.next(packet.available());
+				ERROR("JSON malformed, comma separator without value before");
+				return false;
+			}
+			nothing = true;
+			if(inner==0)
+				done = false;
+		} else if (!isspace(*cur))
+			nothing = false;
+
+		if (inner == 0 && !done && !nothing) {
+			++count;
+			done = true;
+		}
+		++cur;
+	}
+	if (cur==end) {
+		ERROR("JSON malformed, marker ] end of array not found");
+		return false;
+	}
+	return true;
+}
+
+
+void JSONReader::ignoreObjectRest() {
+	UInt8 c;
+	UInt32 inner(0);
+	while (packet.available() && (inner || (c=packet.read8()) != '}')) {
+
+		// skip string
+		if (c == '"') {
+			while (packet.available() && (c=packet.read8()) != '"') {
+				if (c== '\\') {
+					if (packet.available()==0)
+						break;
+					packet.next();
+				}
+			}
+			if(packet.available()==0) {
+				packet.next(packet.available());
+				ERROR("JSON malformed, marker \" end of text not found");
+				return;
+			}
+		} else if (c == '{' || c == '[') {
+			++inner;
+		} else if (c == ']' || c == '}') {
+			if (inner == 0) {
+				packet.next(packet.available());
+				ERROR("JSON malformed, marker ", c, " without beginning");
+				return;
+			}
+			--inner;
+		}
+	}
+	if (packet.available()==0)
+		ERROR("JSON malformed, marker } end of object not found");
+}
 
 } // namespace Mona

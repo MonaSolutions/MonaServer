@@ -30,15 +30,21 @@ public:
    
     BinaryReader(const UInt8* data,UInt32 size,Binary::Order byteOrder=Binary::ORDER_BIG_ENDIAN); // ORDER_BIG_ENDIAN==NETWORK_ENDIAN
 
+	
+	UInt8*			read(UInt32 size, UInt8* buffer);
+	char*			read(UInt32 size, char*  buffer) { return (char*)read(size,(UInt8*)buffer); }
+	char			read() { return _current==_end ? 0 : *_current++; }
+	template<typename BufferType>
+	BufferType&		read(UInt32 size, BufferType& buffer) {
+		buffer.resize(size);
+		read(size,(UInt8*)buffer.data());
+		return buffer;
+	}
+
 	UInt32			read7BitValue();
 	UInt64			read7BitLongValue();
 	UInt32			read7BitEncoded();
-	UInt8*			readRaw(UInt8* value, UInt32 size);
-	char*			readRaw(char* value, UInt32 size) { return (char*)readRaw((UInt8*)value, size); }
-	std::string&	readRaw(UInt32 size, std::string& value);
-	std::string&	readString(std::string& value) { return readRaw(read7BitEncoded(),value); }
-	std::string&	readString8(std::string& value) { return readRaw(read8(), value);}
-	std::string&	readString16(std::string& value) { return readRaw(read16(), value); }
+	std::string&	readString(std::string& value) { return read(read7BitEncoded(),value); }
 	UInt8			read8() { return _current==_end ? 0 : *_current++; }
 	UInt16			read16();
 	UInt32			read24();
@@ -48,9 +54,9 @@ public:
 	template<typename NumberType>
 	NumberType		readNumber() {
 		NumberType value;
-		readRaw((UInt8*)&value, sizeof(value));
+		read(sizeof(value),(UInt8*)&value);
 		if (_flipBytes)
-			Binary::ReverseBytes((UInt8*)&value, sizeof(value));
+			Binary::ReverseBytes(&value, sizeof(value));
 		return value;
 	}
 
@@ -61,6 +67,8 @@ public:
 
 	const UInt8*	current() const { return _current; }
 	UInt32			available() const { return _end-_current; }
+
+	// beware, data() can be null
 	const UInt8*	data() const { return _data; }
 	UInt32			size() const { return _size; }
 

@@ -43,7 +43,7 @@ bool AddOption(const string& fullName, const string& shortName, const string& de
 	return !ex;
 }
 
-bool ProcessArg(const char* arg, const function<void(Exception& ex, const std::string&, const std::string&)>& handler=nullptr) {
+bool ProcessArg(const char* arg, const Options::ForEach& handler=nullptr) {
     const char* argv[] = {"", arg};
 	
 	Exception ex;
@@ -143,7 +143,7 @@ ADD_TEST(OptionsTest, TestOptionsAdd) {
 	CHECK(!GetOption("include-dir"));
 }
 
-void TestProcessInclude(Exception& ex, const string& name, const string& value) {
+void TestProcessInclude(const string& name, const string& value) {
 	CHECK(name == "include-dir");
 	static int i = 0;
     static const char* res[] = {
@@ -155,12 +155,12 @@ void TestProcessInclude(Exception& ex, const string& name, const string& value) 
 	CHECK(value == res[i++]);
 }
 
-void TestProcessVerbose(Exception& ex, const string& name, const string& value) {
+void TestProcessVerbose(const string& name, const string& value) {
 	CHECK(name == "verbose");
 	CHECK(value.empty());
 }
 
-void TestProcessOptimize(Exception& ex, const string& name, const string& value) {
+void TestProcessOptimize(const string& name, const string& value) {
 	CHECK(name == "optimize");
 	static int counter = 0;
 	if (++counter < 3)

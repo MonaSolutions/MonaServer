@@ -24,6 +24,7 @@ This file is a part of Mona.
 #include "Mona/QualityOfService.h"
 #include "Mona/Client.h"
 #include "Mona/MapParameters.h"
+#include "Mona/DataReader.h"
 
 namespace Mona {
 
@@ -36,9 +37,10 @@ public:
 	void startPublishing() { _startTime = 0; _firstTime = true; _writer.writeMedia(Writer::START, 0, publicationNamePacket(), *this); }
 	void stopPublishing() { _writer.writeMedia(Writer::STOP, 0, publicationNamePacket(), *this); }
 
-	void pushAudioPacket(UInt32 time,PacketReader& packet); 
-	void pushVideoPacket(UInt32 time,PacketReader& packet);
-	void pushDataPacket(DataReader& reader);
+	void pushAudio(UInt32 time,PacketReader& packet); 
+	void pushVideo(UInt32 time,PacketReader& packet);
+	void pushData(DataReader& packet);
+	void pushProperties(const Parameters& properties,PacketReader& infos);
 
 	void flush();
 
@@ -57,7 +59,7 @@ private:
 	void	reset();
 
 	PacketReader& publicationNamePacket() { _publicationNamePacket.reset(); return _publicationNamePacket; }
-
+	
 	UInt32 					_startTime;
 	bool					_firstTime;
 	bool					_codecInfosSent;
@@ -65,9 +67,9 @@ private:
 	Writer&					_writer;
 	Writer*					_pAudioWriter;
 	Writer*					_pVideoWriter;
-	Writer*					_pDataWriter;
-	const char*				_pDataTypeName;
-	PacketReader			_publicationNamePacket;
+	Writer*						_pDataWriter;
+	std::unique_ptr<DataWriter>  _pConvertorWriter;
+	PacketReader				_publicationNamePacket;
 };
 
 

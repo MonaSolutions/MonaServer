@@ -27,18 +27,23 @@ namespace Mona {
 
 class PacketWriter: public BinaryWriter, virtual NullableObject {
 public:
-	PacketWriter(const PoolBuffers& poolBuffers) : _ppBuffer(new PoolBuffer(poolBuffers)),BinaryWriter(NULL,0) {}
-	PacketWriter() : BinaryWriter(NULL,0) {} // NULL
+	PacketWriter(Buffer& buffer) : _buffer(buffer),BinaryWriter(NULL,0) {}
+	PacketWriter(const PoolBuffers& poolBuffers) : _ppBuffer(new PoolBuffer(poolBuffers)),BinaryWriter(NULL,0),_buffer(Buffer::Null) {}
 
 	UInt8* buffer(UInt32 size) { UInt32 pos(this->size()); next(size); return (UInt8*)data()+pos; }
 
-	BinaryWriter&	clear(UInt32 size = 0) { BinaryWriter::clear(size); if (_ppBuffer && _ppBuffer->empty()) _ppBuffer->release(); return *this; }
+	PacketWriter&	resize(UInt32 size) { return clear(size); }
+	PacketWriter&	clear(UInt32 size = 0) { BinaryWriter::clear(size); if (_ppBuffer && _ppBuffer->empty()) _ppBuffer->release(); return *this; }
 
-	operator bool() const { return _ppBuffer ? true : false; }
+	operator bool() const { return (_ppBuffer || _buffer) ? true : false; }
+
+	static PacketWriter Null;
+
 private:
-	Buffer&	buffer() { return _ppBuffer ? **_ppBuffer : Buffer::Null; }
+	Buffer&	buffer() { return _ppBuffer ? **_ppBuffer : _buffer; }
 
 	std::unique_ptr<PoolBuffer>		_ppBuffer;
+	Buffer&							_buffer;
 };
 
 

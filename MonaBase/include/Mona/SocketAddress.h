@@ -48,19 +48,30 @@ public:
 	/// Creates a SocketAddress from an IP address and a port number.
 	SocketAddress(const IPAddress& host, UInt16 port);
 	SocketAddress& set(const IPAddress& host, UInt16 port);
-	SocketAddress& set(Exception& ex, const IPAddress& host, const std::string& port) { return set(host, resolveService(ex, port)); }
+	SocketAddress& set(Exception& ex, const IPAddress& host, const std::string& port) { return set(host, resolveService(ex, port.c_str())); }
+	SocketAddress& set(Exception& ex, const IPAddress& host, const char* port) { return set(host, resolveService(ex, port)); }
 	
 	/// set SocketAddress from an IP address and a port number.
-	bool set(Exception& ex, const std::string& host, UInt16 port) { return setIntern(ex, host, port,false); }
-	bool setWithDNS(Exception& ex, const std::string& host, UInt16 port) { return setIntern(ex, host, port,true); }
+	bool set(Exception& ex, const std::string& host, UInt16 port) { return setIntern(ex, host.c_str(), port,false); }
+	bool set(Exception& ex, const char* host, UInt16 port) { return setIntern(ex, host, port,false); }
+	bool setWithDNS(Exception& ex, const std::string& host, UInt16 port) { return setIntern(ex, host.c_str(), port,true); }
+	bool setWithDNS(Exception& ex, const char* host, UInt16 port) { return setIntern(ex, host, port,true); }
 
 	/// set SocketAddress from an IP address and a service name or port number
-	bool set(Exception& ex, const std::string& host, const std::string& port) { return setIntern(ex, host, resolveService(ex,port),false); }
-	bool setWithDNS(Exception& ex, const std::string& host, const std::string& port) { return setIntern(ex, host, resolveService(ex,port),true); }
+	bool set(Exception& ex, const std::string& host, const std::string& port) { return setIntern(ex, host.c_str(), resolveService(ex,port.c_str()),false); }
+	bool set(Exception& ex, const char* host,		 const std::string& port) { return setIntern(ex, host, resolveService(ex,port.c_str()),false); }
+	bool set(Exception& ex, const std::string& host, const char* port) { return setIntern(ex, host.c_str(), resolveService(ex,port),false); }
+	bool set(Exception& ex, const char* host,		 const char* port) { return setIntern(ex, host, resolveService(ex,port),false); }
+	bool setWithDNS(Exception& ex, const std::string& host, const std::string& port) { return setIntern(ex, host.c_str(), resolveService(ex,port.c_str()),true); }
+	bool setWithDNS(Exception& ex, const char* host,		const std::string& port) { return setIntern(ex, host, resolveService(ex,port.c_str()),true); }
+	bool setWithDNS(Exception& ex, const std::string& host, const char* port) { return setIntern(ex, host.c_str(), resolveService(ex,port),true); }
+	bool setWithDNS(Exception& ex, const char* host,		const char* port) { return setIntern(ex, host, resolveService(ex,port),true); }
 
 	/// set SocketAddress from an IP address or host name and a port number/service name
-	bool set(Exception& ex, const std::string& hostAndPort) { return setIntern(ex, hostAndPort, false); }
-	bool setWithDNS(Exception& ex, const std::string& hostAndPort) { return setIntern(ex, hostAndPort, true); }
+	bool set(Exception& ex, const std::string& hostAndPort) { return setIntern(ex, hostAndPort.c_str(), false); }
+	bool set(Exception& ex, const char* hostAndPort) { return setIntern(ex, hostAndPort, false); }
+	bool setWithDNS(Exception& ex, const std::string& hostAndPort) { return setIntern(ex, hostAndPort.c_str(), true); }
+	bool setWithDNS(Exception& ex, const char* hostAndPort) { return setIntern(ex, hostAndPort, true); }
 	
 	void reset();
 
@@ -84,13 +95,14 @@ public:
 	// Returns a wildcard IPv4 or IPv6 address (0.0.0.0)
 	static const SocketAddress& Wildcard(IPAddress::Family family = IPAddress::IPv4);
 
+	static UInt16 SplitLiteral(const char* value, std::string& host);
+	static UInt16 SplitLiteral(const std::string& value, std::string& host) { return SplitLiteral(value.data(),host); }
 
-	static UInt16	Split(const std::string& address,std::string& host);
 private:
-	bool setIntern(Exception& ex,const std::string& host, UInt16 port,bool resolveHost);
-	bool setIntern(Exception& ex, const std::string& hostAndPort, bool resolveHost);
+	bool setIntern(Exception& ex,const char* host, UInt16 port,bool resolveHost);
+	bool setIntern(Exception& ex,const char* hostAndPort, bool resolveHost);
 
-	UInt16 resolveService(Exception& ex, const std::string& service);
+	UInt16 resolveService(Exception& ex, const char* service);
 
 	std::shared_ptr<SocketAddressCommon>	_pAddress;
 	mutable std::string						_toString;

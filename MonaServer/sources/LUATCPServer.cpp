@@ -59,7 +59,7 @@ int	LUATCPServer::Start(lua_State* pState) {
 	SCRIPT_CALLBACK(LUATCPServer,server)
 		Exception ex;
 		SocketAddress address;
-		if (LUASocketAddress::Read(ex, pState, SCRIPT_READ_NEXT, address) && server.start(ex, address)) {
+		if (LUASocketAddress::Read(ex, pState, SCRIPT_READ_NEXT(1), address) && server.start(ex, address)) {
 			if (ex)
 				SCRIPT_WARN(ex.error())
 			SCRIPT_WRITE_BOOL(true)

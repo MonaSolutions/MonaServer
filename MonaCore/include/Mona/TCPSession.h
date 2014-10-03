@@ -30,15 +30,9 @@ class TCPSession : public Session, public virtual Object {
 public:
 	
 	void kill(UInt32 type=NORMAL_DEATH) { _client.disconnect(); Session::kill(type); }
-	
-	template <typename DecodingType, typename ...Args>
-	DecodingType& decode(const SocketAddress& address, Args&&... args) {
-		WARN(name(), " cannot updated its address (TCP session is in a connected way");
-		return decode<DecodingType>(args ...);
-	}
 
 	template <typename DecodingType, typename ...Args>
-	DecodingType& decode(Args&&... args) {
+	void decode(Args&&... args) {
 		++_receptions.back();
 		return Session::decode<DecodingType>(args ...);
 	}

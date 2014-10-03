@@ -19,6 +19,9 @@ This file is a part of Mona.
 
 #include "Mona/Publication.h"
 #include "Mona/MediaCodec.h"
+#include "Mona/ParameterWriter.h"
+#include "Mona/SplitWriter.h"
+#include "Mona/Peer.h"
 #include "Mona/Logs.h"
 
 using namespace std;
@@ -27,7 +30,7 @@ using namespace std;
 
 namespace Mona {
 
-Publication::Publication(const string& name,const PoolBuffers& poolBuffers): _audioCodecBuffer(poolBuffers),_videoCodecBuffer(poolBuffers),_new(false),_name(name),_lastTime(0),listeners(_listeners),_pPublisher(NULL) {
+Publication::Publication(const string& name,const PoolBuffers& poolBuffers): _propertiesInfos(poolBuffers),_running(false),poolBuffers(poolBuffers),_audioCodecBuffer(poolBuffers),_videoCodecBuffer(poolBuffers),_new(false),_name(name),_lastTime(0),listeners(_listeners) {
 	DEBUG("New publication ",_name);
 }
 
@@ -38,87 +41,77 @@ Publication::~Publication() {
 		while (!_listeners.empty())
 			removeListener((Peer&)*_listeners.begin()->first);
 	}
-
+	if (_running)
+		ERROR("Publication ",_name," running is deleting")
 	DEBUG("Publication ",_name," deleted");
 }
 
 
-Listener* Publication::addListener(Exception& ex, Peer& peer,Writer& writer) {
-	map<Client*,Listener*>::iterator it = _listeners.lower_bound(&peer);
-	if(it!=_listeners.end() && it->first==&peer) {
+Listener* Publication::addListener(Exception& ex, Client& client,Writer& writer) {
+	map<Client*,Listener*>::iterator it = _listeners.lower_bound(&client);
+	if(it!=_listeners.end() && it->first==&client) {
 		WARN("Already subscribed for publication ",_name);
 		return it->second;
 	}
 	if(it!=_listeners.begin())
 		--it;
-	Listener* pListener = new Listener(*this,peer,writer);
-	string error;
-	if(peer.onSubscribe(*pListener,error)) {
-		_listeners.insert(it,pair<Client*,Listener*>(&peer,pListener));
-		if (_pPublisher)
+	Listener* pListener = new Listener(*this,client,writer);
+	if(((Peer&)client).onSubscribe(ex,*pListener)) {
+		_listeners.insert(it,pair<Client*,Listener*>(&client,pListener));
+		if (_running) {
 			pListener->startPublishing();
-
+			if (_properties.count() > 0) {
+				PacketReader reader(_propertiesInfos.packet.data(),_propertiesInfos.packet.size());
+				pListener->pushProperties(_properties, reader);
+			}
+		}
 		return pListener;
 	}
-	if(error.empty())
-		error = "Not authorized to play " + _name;
+	if(!ex)
+		ex.set(Exception::APPLICATION,"Not authorized to play ",_name);
 	delete pListener;
-	ex.set(Exception::APPLICATION, error);
 	return NULL;
 }
 
-void Publication::removeListener(Peer& peer) {
-	map<Client*,Listener*>::iterator it = _listeners.find(&peer);
+void Publication::removeListener(Client& client) {
+	map<Client*,Listener*>::iterator it = _listeners.find(&client);
 	if(it==_listeners.end()) {
 		WARN("Already unsubscribed of publication ",_name);
 		return;
 	}
 	Listener* pListener = it->second;
 	_listeners.erase(it);
-	peer.onUnsubscribe(*pListener);
+	((Peer&)client).onUnsubscribe(*pListener);
 	delete pListener;
 }
 
 
-void Publication::start(Exception& ex, Peer& peer, Type type) {
-	if(_pPublisher) { // has already a publisher
-		ex.set(Exception::SOFTWARE, _name, " is already publishing");
+void Publication::start(Type type) {
+	if (_running)
 		return;
-	}
-	_pPublisher = &peer;
-	string error;
-	if(!peer.onPublish(*this,error)) {
-		if(error.empty())
-			error = "Not allowed to publish " + _name;
-		_pPublisher=NULL;
-		ex.set(Exception::APPLICATION, error);
-		return;
-	}
 	INFO("Publication ", _name, " started")
+	_running = true;
 	for(auto& it : _listeners)
 		it.second->startPublishing();
 	flush();
 }
 
-void Publication::stop(Peer& peer) {
-	if(!_pPublisher)
+void Publication::stop() {
+	if(!_running)
 		return; // already done
-	if(_pPublisher!=&peer) {
-		ERROR("Unpublish '",_name,"' operation with a different publisher");
-		return;
-	}
 	INFO("Publication ", _name, " stopped")
 	for(auto& it : _listeners)
 		it.second->stopPublishing();
 	flush();
+	_properties.clear();
+	_propertiesInfos.clear();
 	_videoQOS.reset();
 	_audioQOS.reset();
 	_dataQOS.reset();
 	_lastTime=0;
-	_pPublisher=NULL;
+	_running=false;
 	_videoCodecBuffer.release();
 	_audioCodecBuffer.release();
-	peer.onUnpublish(*this);
 }
 
 void Publication::flush() {
@@ -128,38 +121,37 @@ void Publication::flush() {
 	map<Client*,Listener*>::const_iterator it;
 	for(it=_listeners.begin();it!=_listeners.end();++it)
 		it->second->flush();
-	_pPublisher->onFlushPackets(*this);
+	OnFlush::raise(*this);
 }
 
-void Publication::pushData(DataReader& reader,UInt32 numberLostFragments) {
-	if(!_pPublisher) {
-		ERROR("Data packet pushed on '",_name,"' publication which has no publisher");
+void Publication::pushData(DataReader& reader, UInt16 ping, double lostRate) {
+	if(!_running) {
+		ERROR("Data packet pushed on '",_name,"' publication stopped");
 		return;
 	}
 
 	_new = true;
-	int pos = reader.packet.position();
-	_dataQOS.add(reader.available()+4,_pPublisher->ping(),reader.packet.fragments,numberLostFragments); // 4 for time encoded
+	_dataQOS.add(reader.available()+4,ping,lostRate); // 4 for time encoded
 	auto it = _listeners.begin();
 	while(it!=_listeners.end()) {
-		(it++)->second->pushDataPacket(reader);   // listener can be removed in this call
-		reader.packet.reset(pos);
+		(it++)->second->pushData(reader);   // listener can be removed in this call
+		reader.reset();
 	}
-	_pPublisher->onDataPacket(*this,reader);
+	OnData::raise(*this, reader);
 }
 
 
-void Publication::pushAudio(UInt32 time,PacketReader& packet,UInt32 numberLostFragments) {
-	if(!_pPublisher) {
-		ERROR("Audio packet pushed on '",_name,"' publication which has no publisher");
+void Publication::pushAudio(UInt32 time,PacketReader& packet, UInt16 ping, double lostRate) {
+	if(!_running) {
+		ERROR("Audio packet pushed on '",_name,"' publication stopped");
 		return;
 	}
 
 //	TRACE("Time Audio ",time)
 
-	if(numberLostFragments>0)
-		INFO(numberLostFragments," audio fragments lost on publication ",_name);
-	_audioQOS.add(packet.available()+4,_pPublisher->ping(),packet.fragments,numberLostFragments); // 4 for time encoded
+	if(lostRate)
+		INFO((UInt8)(lostRate*100),"% of audio information lost on publication ",_name);
+	_audioQOS.add(packet.available()+4,ping,lostRate); // 4 for time encoded
 
 	// save audio codec packet for future listeners
 	if (MediaCodec::AAC::IsCodecInfos(packet)) {
@@ -173,15 +165,15 @@ void Publication::pushAudio(UInt32 time,PacketReader& packet,UInt32 numberLostFr
 	UInt32 pos = packet.position();
 	auto it = _listeners.begin();
 	while(it!=_listeners.end()) {
-		(it++)->second->pushAudioPacket(time,packet);  // listener can be removed in this call
+		(it++)->second->pushAudio(time,packet);  // listener can be removed in this call
 		packet.reset(pos);
 	}
-	_pPublisher->onAudioPacket(*this,_lastTime=time,packet);
+	OnAudio::raise(*this, _lastTime=time, packet);
 }
 
-void Publication::pushVideo(UInt32 time,PacketReader& packet,UInt32 numberLostFragments) {
-	if(!_pPublisher) {
-		ERROR("Video packet pushed on '",_name,"' publication which has no publisher");
+void Publication::pushVideo(UInt32 time,PacketReader& packet, UInt16 ping, double lostRate) {
+	if(!_running) {
+		ERROR("Video packet pushed on '",_name,"' publication stopped");
 		return;
 	}
 
@@ -189,9 +181,9 @@ void Publication::pushVideo(UInt32 time,PacketReader& packet,UInt32 numberLostFr
 	// TRACE("Time Video ",time," => ",Util::FormatHex(packet.current(),16,buffer))
 	
 
-	_videoQOS.add(packet.available()+4,_pPublisher->ping(),packet.fragments,numberLostFragments); // 4 for time encoded
-	if(numberLostFragments>0)
-		INFO(numberLostFragments," video fragments lost on publication ",_name);
+	_videoQOS.add(packet.available()+4,ping,lostRate); // 4 for time encoded
+	if(lostRate)
+		INFO((UInt8)(lostRate*100),"% video fragments lost on publication ",_name);
 
 
 	// save video codec packet for future listeners
@@ -207,10 +199,34 @@ void Publication::pushVideo(UInt32 time,PacketReader& packet,UInt32 numberLostFr
 	UInt32 pos = packet.position();
 	auto it = _listeners.begin();
 	while(it!=_listeners.end()) {
-		(it++)->second->pushVideoPacket(time,packet); // listener can be removed in this call
+		(it++)->second->pushVideo(time,packet); // listener can be removed in this call
 		packet.reset(pos);
 	}
-	_pPublisher->onVideoPacket(*this,_lastTime=time,packet);
+	OnVideo::raise(*this, _lastTime=time, packet);
+}
+
+void Publication::writeProperties(const char* handler,DataReader& reader)  {
+	if (!_running) {
+		ERROR("Properties can't be writing on ",_name," publication stopped");
+		return;
+	}
+
+	_properties.clear();
+	_propertiesInfos.clear();
+
+	if (handler) {
+		_propertiesInfos.writeString(handler,strlen(handler));
+	
+		ParameterWriter writer(_properties);
+		SplitWriter writers(writer, _propertiesInfos);
+		reader.read(writers);
+	}
+	auto it = _listeners.begin();
+	while (it != _listeners.end()) {
+		PacketReader reader(_propertiesInfos.packet.data(),_propertiesInfos.packet.size());
+		(it++)->second->pushProperties(_properties, reader);  // listener can be removed in this call
+	}
+	OnProperties::raise(*this,_properties);
 }
 
 

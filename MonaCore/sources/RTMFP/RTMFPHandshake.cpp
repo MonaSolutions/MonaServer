@@ -99,7 +99,7 @@ void RTMFPHandshake::packetHandler(PacketReader& packet) {
 	response.next(3); // type and size
 	UInt8 idResponse = handshakeHandler(id,packet,response);
 	if(idResponse>0)
-		BinaryWriter(response,oldSize).write8(idResponse).write16(response.size()-oldSize-3);
+		BinaryWriter(response.data()+oldSize,3).write8(idResponse).write16(response.size()-oldSize-3);
 	else
 		response.clear(oldSize);
 }
@@ -142,12 +142,12 @@ UInt8 RTMFPHandshake::handshakeHandler(UInt8 id,PacketReader& request,PacketWrit
 			UInt8 type = request.read8();
 
 			string epd;
-			request.readRaw(epdLen,epd);
+			request.read(epdLen,epd);
 
 			string tag;
-			request.readRaw(16,tag);
-			response.writeString8(tag);
-			
+			request.read(16,tag);
+			response.write8(tag.size()).write(tag);
+		
 			if(type == 0x0f) {
 
 				const UInt8* peerId = (const UInt8*)epd.c_str();
@@ -178,15 +178,15 @@ UInt8 RTMFPHandshake::handshakeHandler(UInt8 id,PacketReader& request,PacketWrit
 						UInt8 timesBeforeTurn(0);
 						if(pSession->peer.parameters().getNumber("timesBeforeTurn",timesBeforeTurn) && timesBeforeTurn>=times) {
 							UInt16 port = invoker.relayer.relay(pSession->peer.address,pSessionWanted->peer.address,20); // 20 sec de timeout is enough for RTMFP!
-							if(port>0) {
+							if (port > 0) {
+								string host;
+								SocketAddress::SplitLiteral(pSession->peer.serverAddress, host);
+								bool success(false);
 								Exception ex;
 								SocketAddress address;
-								string addr;
-								SocketAddress::Split(pSession->peer.serverAddress,addr);
-								bool success(false);
-								EXCEPTION_TO_LOG(success=address.set(ex,addr, port),"RTMFP turn impossible")
+								EXCEPTION_TO_LOG(success=address.set(ex,host, port),"RTMFP turn impossible")
 								if (success)
-									RTMFP::WriteAddress(response,address, RTMFP::ADDRESS_REDIRECTION);
+									RTMFP::WriteAddress(response, address, RTMFP::ADDRESS_REDIRECTION);
 							} // else ERROR already display by RelayServer class
 						}
 					}
@@ -255,9 +255,9 @@ UInt8 RTMFPHandshake::handshakeHandler(UInt8 id,PacketReader& request,PacketWrit
 				}
 				// response
 				response.write8(COOKIE_SIZE);
-				response.writeRaw(pCookie->value(),COOKIE_SIZE);
+				response.write(pCookie->value(),COOKIE_SIZE);
 				// instance id (certificat in the middle)
-				response.writeRaw(_certificat,sizeof(_certificat));
+				response.write(_certificat,sizeof(_certificat));
 				return 0x70;
 
 			} else

@@ -26,8 +26,10 @@ namespace Mona {
 
 SubstreamMap & SubstreamMap::addSub(UInt32 pos, UInt32 size) {
 
-	if (size && pos < _size && pos+size <= _size)
-		_listSubs.push_back(std::make_pair((UInt8*)_data+pos, size));
+	if (size && pos < _size && pos + size <= _size) {
+		_listSubs.emplace_back((UInt8*)_data + pos, size);
+		_totalSize += size;
+	}
 	return *this;
 }
 
@@ -56,13 +58,5 @@ UInt32 SubstreamMap::readNextSub(UInt8*& pos, UInt32 maxsize) {
 	return readed;
 }
 
-UInt32 SubstreamMap::totalSize() {
-
-	UInt32 total = 0;
-	for(auto sub : _listSubs)
-		total += sub.second;
-
-	return total;
-}
 
 } // namespace Mona

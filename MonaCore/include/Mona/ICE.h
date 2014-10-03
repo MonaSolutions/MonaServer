@@ -24,6 +24,7 @@ This file is a part of Mona.
 #include "Mona/SDP.h"
 #include "Mona/Util.h"
 #include "Mona/Time.h"
+#include "Mona/DataReader.h"
 #include <set>
 
 namespace Mona {
@@ -44,7 +45,7 @@ public:
 	void			reset();
 	bool			obsolete() { return _time.isElapsed(120000); }
 
-	static bool ProcessSDPPacket(DataReader& packet,Peer& current,Writer& currentWriter,Peer& remote,Writer& remoteWriter);
+	// TODO static bool ProcessSDPPacket(DataReader& packet,Peer& current,Writer& currentWriter,Peer& remote,Writer& remoteWriter);
 
 private:
 	enum Type {

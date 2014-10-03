@@ -47,7 +47,7 @@ private:
 		operator bool() const { return _function.operator bool(); }
 	private:
 		std::function<Result(ArgsType...)>	_function;
-		mutable std::atomic<UInt32>				_subscriptions;
+		mutable std::atomic<UInt32>			_subscriptions;
 	};
 
 

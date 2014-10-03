@@ -22,63 +22,125 @@ This file is a part of Mona.
 #include "Mona/Mona.h"
 #include "Mona/PacketReader.h"
 #include "Mona/DataWriter.h"
-#include "Mona/Date.h"
 
 namespace Mona {
 
+class DataReaderNull;
 
-class DataReader : virtual NullableObject {
+class DataReader : public virtual NullableObject {
 public:
-	enum Type {
-		NIL=0,
+	enum {
+		END=0,
+		NIL,
 		BOOLEAN,
 		NUMBER,
 		STRING,
 		DATE,
-		ARRAY,
-		OBJECT,
 		BYTES,
-		MAP,
-		END
+		OTHER
 	};
-	
-	virtual Type				followingType()=0;
 
-	virtual std::string&		readString(std::string& value)=0;	
-	virtual double				readNumber()=0;
-	virtual bool				readBoolean()=0;
-	virtual const UInt8*		readBytes(UInt32& size)=0;
-	virtual Date&				readDate(Date& date) = 0;
-	virtual void				readNull()=0;
+	void			next() { read(DataWriter::Null,1); }
 
-	virtual bool				readObject(std::string& type,bool& external)=0;
-	virtual bool				readArray(UInt32& size)=0;
-	virtual Type				readItem(std::string& name)=0;
+	// return the number of writing success on writer object
+	// can be override to capture many reading on the same writer
+	virtual UInt32	read(DataWriter& writer,UInt32 count=END);
 
-	virtual bool				readMap(UInt32& size,bool& weakKeys);
-	virtual Type				readKey() { return followingType(); }
-	virtual Type				readValue() { return followingType(); }
+	bool			read(UInt8 type, DataWriter& writer);
+	bool			available() { return nextType()!=END; }
 
-	virtual bool				available() { return packet.available() > 0; }
+////  OPTIONAL DEFINE ////
+	virtual void	reset() { packet.reset(_pos); }
+////////////////////
 
-	virtual void				reset() { packet.reset(_pos); }
 
-	void						next();
-	void						read(DataWriter& writer,UInt32 count=0);
+	bool			readString(std::string& value) { return read(STRING,wrapper(&value)); }
+	bool			readNumber(double& number) {  return read(NUMBER,wrapper(&number)); }
+	bool			readBoolean(bool& value) {  return read(BOOLEAN,wrapper(&value)); }
+	bool			readDate(Date& date)  {  return read(DATE,wrapper(&date)); }
+	bool			readNull() { return read(NIL,wrapper(NULL)); }
+	template <typename BufferType>
+	bool			readBytes(BufferType& buffer) { BytesWriter<BufferType> writer(buffer); return read(BYTES, writer); }
+
+	operator bool() const { return packet; }
 
 	PacketReader&				packet;
 
-	operator bool() const { return packet; }
+	static DataReaderNull		Null;
 
 protected:
 	DataReader(PacketReader& packet);
 	DataReader(); // Null
 
+
+	bool			readNext(DataWriter& writer);
+
 private:
-	void						read(Type type,DataWriter& writer);
+	
+////  TO DEFINE ////
+	// must return true if something has been written in DataWriter object (so if DataReader has always something to read and write, !=END)
+	virtual bool	readOne(UInt8 type, DataWriter& writer) = 0;
+	virtual UInt8	followingType()=0;
+////////////////////
+
+
+	UInt8			nextType() { if (_nextType == END) _nextType = followingType(); return _nextType; }
 
 	UInt32						_pos;
-	static PacketReader			_PacketReaderNull;
+	UInt8						_nextType;
+	
+	class WrapperWriter : public DataWriter {
+	public:
+		UInt64	beginObject(const char* type) { return 0; }
+		void	endObject() {}
+		void	writePropertyName(const char* value) {}
+		UInt64	beginArray(UInt32 size) { return 0; }
+		void	endArray() {}
+
+		UInt64	writeDate(const Date& date) { if(pData) ((Date*)pData)->update(date); return 0; }
+		void	writeNumber(double value) { if(pData) *((double*)pData) = value; }
+		void	writeString(const char* value, UInt32 size) { if(pData)  ((std::string*)pData)->assign(value,size); }
+		void	writeBoolean(bool value) { if(pData)  *((bool*)pData) = value; }
+		void	writeNull() {}
+		UInt64	writeBytes(const UInt8* data, UInt32 size) { return 0; }
+
+		void*	pData;
+	};
+
+	template<typename BufferType>
+	class BytesWriter : public DataWriter {
+	public:
+		BytesWriter(BufferType& buffer) : _buffer(buffer), _position((UInt32)buffer.size()) {}
+		UInt64	beginObject(const char* type, UInt32 size) { return 0; }
+		void	endObject() {}
+		void	writePropertyName(const char* value, UInt32 size) {}
+		UInt64	beginArray(UInt32 size) { return 0; }
+		void	endArray() {}
+
+		UInt64	writeDate(const Date& date) { Int64 time(date.time()); write(&time, sizeof(time)); return 0; }
+		void	writeNumber(double value) { write(&value, sizeof(value)); }
+		void	writeString(const char* value, UInt32 size) { write(value, size); }
+		void	writeBoolean(bool value) { write(&value, sizeof(value)); }
+		void	writeNull() {}
+		UInt64	writeBytes(const UInt8* data, UInt32 size) { write(data, size); return 0; }
+	private:
+		void	write(void* data, UInt32 size) { _buffer.resize(_position + size,true); memcpy(_buffer.data() + _position, data, size); _position += size; }
+
+		BufferType&  _buffer;
+		UInt32		 _position;
+	};
+
+	DataWriter&					wrapper(void* pData) { _wrapper.pData = pData; return _wrapper; }
+	WrapperWriter				_wrapper;
+};
+
+class DataReaderNull : public DataReader {
+public:
+	DataReaderNull() {}
+
+private:
+	bool	readOne(UInt8 type, DataWriter& writer) { return false; }
+	UInt8	followingType() { return END; }
 };
 
 

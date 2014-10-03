@@ -22,7 +22,7 @@ This file is a part of Mona.
 #include "Mona/Mona.h"
 #include "Mona/TCPSession.h"
 #include "Mona/WebSocket/WSWriter.h"
-#include "Mona/RawReader.h"
+#include "Mona/StringReader.h"
 
 
 namespace Mona {
@@ -40,72 +40,7 @@ public:
 
 	/// \brief Read message and call method if needed
 	/// \param packet Content message to read
-	template<typename ReaderType>
-	void readMessage(Exception& ex, PacketReader& packet) {
-
-		ReaderType reader(packet);
-		if(!reader.isValid()) {
-			packet.reset();
-			RawReader rawReader(packet);
-			if (!peer.onMessage(ex, "onMessage", rawReader, WS::TYPE_TEXT))
-				ex.set(Exception::APPLICATION, "Method 'onMessage' not found on application ", peer.path);
-			return;
-		}
-
-		if (reader.followingType()==DataReader::STRING) {
-
-			std::string name;
-			reader.readString(name);
-			if(name=="__publish") {
-				if(reader.followingType()!=DataReader::STRING) {
-					ex.set(Exception::PROTOCOL, "__publish method takes a stream name in first parameter",WS::CODE_MALFORMED_PAYLOAD);
-					return;
-				}
-				reader.readString(name);
-				if(_pPublication)
-					invoker.unpublish(peer,_pPublication->name());
-				Publication::Type type(Publication::LIVE);
-				if (reader.followingType() == DataReader::STRING) {
-					std::string temp;
-					if(reader.readString(temp).compare("record") == 0)
-						 type = Publication::RECORD;
-				}
-					
-				_pPublication = invoker.publish(ex, peer,name,type);
-			} else if(name=="__play") {
-				if(reader.followingType()!=DataReader::STRING) {
-					ex.set(Exception::PROTOCOL, "__play method takes a stream name in first parameter",WS::CODE_MALFORMED_PAYLOAD);
-					return;
-				}
-				reader.readString(name);
-					
-				closeSusbcription();
-			} else if(name=="__closePublish")
-				closePublication();
-			else if(name=="__closePlay")
-				closeSusbcription();
-			else if (name == "__close") {
-				closePublication();
-				closeSusbcription();
-			} else if(_pPublication) {
-				reader.reset();
-				_pPublication->pushData(reader);
-			} else if (!peer.onMessage(ex, name,reader))
-				ex.set(Exception::APPLICATION, "Method '",name,"' not found on application ", peer.path);
-		} else {
-			reader.reset();
-			if(!peer.onMessage(ex, "onMessage",reader))
-				ex.set(Exception::APPLICATION, "Method 'onMessage' not found on application ", peer.path);
-		}
-	}
-
-	/// \brief Read plain text message
-	void readRawMessage(Exception& ex, PacketReader& packet) {
-
-		RawReader reader(packet);
-		if(!peer.onMessage(ex, "onMessage", reader))
-			ex.set(Exception::APPLICATION, "Method 'onMessage' not found on application ", peer.path);
-	}
+	void			readMessage(Exception& ex, DataReader& reader, UInt8 responseType=0);
 
 protected:
 	WSWriter&		wsWriter() { return _writer; }

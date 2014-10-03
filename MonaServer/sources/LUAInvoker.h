@@ -21,7 +21,8 @@ This file is a part of Mona.
 
 #include "Mona/Peer.h"
 #include "Mona/Invoker.h"
-#include "Script.h"
+#include "ScriptReader.h"
+#include "ScriptWriter.h"
 
 class LUAInvoker {
 public:
@@ -58,22 +59,35 @@ private:
 	static int	ToData(lua_State *pState) {
 		SCRIPT_CALLBACK(Mona::Invoker,invoker)
 			DataType writer(invoker.poolBuffers);
-			SCRIPT_READ_DATA(writer)
+			SCRIPT_READ_NEXT(ScriptReader(pState, SCRIPT_READ_AVAILABLE).read(writer));
 			SCRIPT_WRITE_BINARY(writer.packet.data(),writer.packet.size())
 		SCRIPT_CALLBACK_RETURN
 	}
 
 	/// \brief Generic function for serialization
 	/// DataType -> lua
-	template<typename DataType>
+	template<typename DataReaderType>
 	static int	FromData(lua_State *pState) {
 		SCRIPT_CALLBACK(Mona::Invoker,invoker)
 			SCRIPT_READ_BINARY(data,size)
 			Mona::PacketReader packet(data,size);
-			DataType reader(packet);
-			SCRIPT_WRITE_DATA(reader,SCRIPT_READ_UINT(0))
+			ScriptWriter writer(pState);
+			DataReaderType(packet).read(writer);
 		SCRIPT_CALLBACK_RETURN
 	}
+	template<typename DataReaderType>
+	static int	FromDataWithBuffers(lua_State *pState) {
+		SCRIPT_CALLBACK(Mona::Invoker,invoker)
+			SCRIPT_READ_BINARY(data,size)
+			Mona::PacketReader packet(data,size);
+			ScriptWriter writer(pState);
+			DataReaderType(packet, invoker.poolBuffers).read(writer);
+		SCRIPT_CALLBACK_RETURN
+	}
+
+	static int	FromXML(lua_State *pState);
+	static int	ToXML(lua_State *pState);
+	static int	FromQuery(lua_State *pState);
 
 	static int	Time(lua_State *pState);
 	static int	ToAMF0(lua_State *pState);

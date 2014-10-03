@@ -29,23 +29,43 @@ namespace Mona {
 class RTMFPMessage : public virtual Object {
 public:
 
-	RTMFPMessage(bool repeatable) : repeatable(repeatable) {}
+	RTMFPMessage(bool repeatable) : repeatable(repeatable),_frontSize(0) {}
+	RTMFPMessage(AMF::ContentType type, UInt32 time, bool repeatable) :   _frontSize(type==AMF::EMPTY ? 0 : (type==AMF::DATA ? 6 : 5)), repeatable(repeatable) {
+		if (type == AMF::EMPTY)
+			return;
+		_front[0] = type;
+		if (time>0) {
+			BinaryWriter writer(&_front[1], 4);
+			writer.write32(time);
+		}
+		if (type == AMF::DATA)
+			_front[5] = 0;
+	}
 
-	virtual const UInt8*	data()=0;
-	virtual UInt32			size()=0;
+	const UInt8*	front()  const { return _front;  }
+	UInt8			frontSize() const { return _frontSize; }
+
+	virtual const UInt8*	body()  const = 0;
+	virtual UInt32			bodySize() const = 0;
+
+	UInt32					size() const { return frontSize()+bodySize(); }
 
 	std::map<UInt32,UInt64>	fragments;
 	const bool				repeatable;
+private:
+	UInt8					_front[6];
+	UInt8					_frontSize;
 };
 
 
 class RTMFPMessageUnbuffered : public RTMFPMessage, public virtual Object {
 public:
 	RTMFPMessageUnbuffered(const UInt8* data, UInt32 size) : _data(data), _size(size),RTMFPMessage(false) {}
-	
+	RTMFPMessageUnbuffered(AMF::ContentType type, UInt32 time,const UInt8* data, UInt32 size) : _data(data), _size(size),RTMFPMessage(type,time,false) {}
+
 private:
-	const UInt8*	data() { return _data; }
-	UInt32			size() { return _size; }
+	const UInt8*	body() const { return _data; }
+	UInt32			bodySize() const { return _size; }
 
 	UInt32			_size;
 	const UInt8*	_data;
@@ -58,7 +78,7 @@ public:
 	RTMFPMessageBuffered(const PoolBuffers& poolBuffers,bool repeatable) : _pWriter(new AMFWriter(poolBuffers)),RTMFPMessage(repeatable) {}
 	RTMFPMessageBuffered() : _pWriter(&AMFWriter::Null),RTMFPMessage(false) {}
 	
-	virtual ~RTMFPMessageBuffered() { if (_pWriter != &AMFWriter::Null) delete _pWriter; }
+	virtual ~RTMFPMessageBuffered() { if (*_pWriter) delete _pWriter; }
 
 	AMFWriter&		writer() { return *_pWriter; }
 
@@ -66,8 +86,8 @@ public:
 
 private:
 
-	const UInt8*	data() { return _pWriter->packet.data(); }
-	UInt32			size() { return _pWriter->packet.size(); }
+	const UInt8*	body() const { return _pWriter->packet.data(); }
+	UInt32			bodySize() const { return _pWriter->packet.size(); }
 
 	AMFWriter*		_pWriter;
 

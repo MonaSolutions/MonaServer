@@ -23,7 +23,7 @@ This file is a part of Mona.
 #include "Mona/WebSocket/WSSession.h"
 #include "Mona/HTTP/HTTPWriter.h"
 #include "Mona/HTTP/HTTPPacket.h"
-#include "Mona/MapReader.h"
+#include "Mona/QueryReader.h"
 
 
 namespace Mona {
@@ -47,7 +47,7 @@ private:
 
 	/// \brief Process GET & HEAD commands
 	/// Search for a method or a file whitch correspond to the _filePath
-	void			processGet(Exception& ex, const std::shared_ptr<HTTPPacket>& pPacket, MapReader<MapParameters>& propertiesReader);
+	void			processGet(Exception& ex, const std::shared_ptr<HTTPPacket>& pPacket, QueryReader& parameters);
 
 	HTTPWriter			_writer;
 	bool				_isWS;

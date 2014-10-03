@@ -90,7 +90,7 @@ int	LUAUDPSocket::Bind(lua_State* pState) {
 	SCRIPT_CALLBACK(LUAUDPSocket,udp)
 		Exception ex;
 		SocketAddress address;
-		if (LUASocketAddress::Read(ex, pState, SCRIPT_READ_NEXT, address) && udp.bind(ex, address)) {
+		if (LUASocketAddress::Read(ex, pState, SCRIPT_READ_NEXT(1), address) && udp.bind(ex, address)) {
 			if (ex)
 				SCRIPT_WARN(ex.error())
 			SCRIPT_WRITE_BOOL(true)
@@ -107,9 +107,9 @@ int	LUAUDPSocket::Send(lua_State* pState) {
 
 		Exception ex;
 
-		if (SCRIPT_CAN_READ) {
+		if (SCRIPT_READ_AVAILABLE) {
 			SocketAddress address(IPAddress::Loopback(),0);
-			if (LUASocketAddress::Read(ex, pState, SCRIPT_READ_NEXT, address) && udp.send(ex, data,size,address)) {
+			if (LUASocketAddress::Read(ex, pState, SCRIPT_READ_NEXT(1), address) && udp.send(ex, data,size,address)) {
 				if (ex)
 					SCRIPT_WARN(ex.error())
 				SCRIPT_WRITE_BOOL(true)

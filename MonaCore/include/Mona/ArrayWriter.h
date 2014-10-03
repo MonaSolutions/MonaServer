@@ -27,40 +27,30 @@ namespace Mona {
 template<class ArrayType>
 class ArrayWriter : public DataWriter, public virtual Object {
 public:
-	ArrayWriter(ArrayType& array) : _array(array),_size(0),_isProperty(false) {}
+	ArrayWriter(ArrayType& array) : _array(array),_size(0) {}
 
-	void beginObject(const std::string& type = "", bool external = false) {}
-	void endObject() {}
+	UInt64 beginObject(const char* type = NULL) { return 0; }
+	void   writePropertyName(const char* value) {}
+	void   endObject() {}
 
-	void writePropertyName(const std::string& value) {}
+	UInt64 beginArray(UInt32 size) { return 0; }
+	void   endArray(){}
 
-	void beginArray(UInt32 size) {}
-	void endArray(){}
-
-	void writeDate(const Date& date) { set(String::Format(_buffer, date)); }
-	void writeNumber(double value) { set(String::Format(_buffer, value)); }
-	void writeString(const std::string& value) { set(value); }
-	void writeBoolean(bool value) { set( value ? "true" : "false");}
-	void writeNull() { set("null"); }
-	void writeBytes(const UInt8* data, UInt32 size) { set((const char*)data, size); }
+	void   writeNumber(double value) { _array.emplace_back();  _size += String::Format(_array.back(), value).size(); }
+	void   writeString(const char* value, UInt32 size) { _array.emplace_back(value, size);  _size += size; }
+	void   writeBoolean(bool value) { _array.emplace_back(); _size += String::Format(_array.back(), value).size();}
+	void   writeNull() { _array.emplace_back(EXPAND("null"));  _size += 4; }
+	UInt64 writeDate(const Date& date) { writeNumber((double)date); return 0; }
+	UInt64 writeBytes(const UInt8* data, UInt32 size) { _array.emplace_back(STR data, size); _size += size; return 0; }
 
 	UInt32 size() const { return _size; }
 	UInt32 count() const { return _array.count(); }
 	
-
 	void   clear() { _array.clear(); _size = 0; DataWriter::clear(); }
-private:
-	template <typename ...Args>
-	void set(Args&&... args) {
-		_array.emplace_back(args ...);
-		_size += _array.back().size();
-	}
 
-	std::string					_property;
-	bool						_isProperty;
+private:
 
 	ArrayType&					_array;
-	std::string					_buffer;
 	UInt32						_size;
 };
 

@@ -75,29 +75,46 @@ FlashStream& Invoker::flashStream(UInt32 id,Peer& peer,shared_ptr<FlashStream>& 
 	return *pStream;
 }
 
-Publication* Invoker::publish(Exception& ex, Peer& peer, const string& name, Publication::Type type) {
+
+Publication* Invoker::publish(Exception& ex, const string& name, Publication::Type type, Peer* pPeer) {
 	MAP_FIND_OR_EMPLACE(_publications, it, name, name,poolBuffers);
 	Publication& publication(it->second);
-	publication.start(ex, peer,type);
-	if (ex) {
-		ERROR(ex.error())
-		if (!publication.publisher() && publication.listeners.count() == 0)
-			_publications.erase(it);
+
+	if(publication.running()) { // is already publishing
+		ex.set(Exception::SOFTWARE, name, " is already publishing");
 		return NULL;
 	}
-	return &publication;
+
+	if(pPeer ? pPeer->onPublish(ex,publication) : onPublish(ex,publication)) {
+		publication.start(type);
+		return &publication;
+	}
+
+	if(!ex)
+		ex.set(Exception::APPLICATION, "Not allowed to publish ",name);
+	if (publication.listeners.count() == 0)
+		_publications.erase(it);
+	return NULL;
 }
 
 
-void Invoker::unpublish(Peer& peer,const string& name) {
+void Invoker::unpublish(const string& name,Peer* pPeer) {
+
 	auto it = _publications.find(name);
 	if(it == _publications.end()) {
 		DEBUG("The publication '",name,"' doesn't exist, unpublish useless");
 		return;
 	}
 	Publication& publication(it->second);
-	publication.stop(peer);
-	if(!publication.publisher() && publication.listeners.count()==0)
+	if (publication.running()) {
+		if (pPeer)
+			pPeer->onUnpublish(publication);
+		else
+			onUnpublish(publication);
+		publication.stop();
+	}
+	
+	if(publication.listeners.count()==0)
 		_publications.erase(it);
 }
 
@@ -114,7 +131,7 @@ Listener* Invoker::subscribe(Exception& ex, Peer& peer,const string& name,Writer
 	Publication& publication(it->second);
 	Listener* pListener = publication.addListener(ex, peer,writer);
 	if (!pListener) {
-		if(!publication.publisher() && publication.listeners.count()==0)
+		if(!publication.running() && publication.listeners.count()==0)
 			_publications.erase(it);
 	}
 	return pListener;
@@ -128,7 +145,7 @@ void Invoker::unsubscribe(Peer& peer,const string& name) {
 	}
 	Publication& publication(it->second);
 	publication.removeListener(peer);
-	if(!publication.publisher() && publication.listeners.count()==0)
+	if(!publication.running() && publication.listeners.count()==0)
 		_publications.erase(it);
 }
 

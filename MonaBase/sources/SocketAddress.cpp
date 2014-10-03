@@ -174,38 +174,21 @@ SocketAddress& SocketAddress::set(const struct sockaddr& addr) {
 	return *this;
 }
 
-bool SocketAddress::setIntern(Exception& ex,const string& hostAndPort,bool resolveHost) {
-	ASSERT_RETURN(!hostAndPort.empty(),false);
+bool SocketAddress::setIntern(Exception& ex,const char* hostAndPort,bool resolveHost) {
+	ASSERT_RETURN(hostAndPort,false);
 
-	string host, port;
-	auto it  = hostAndPort.begin();
-	auto end = hostAndPort.end();
-	if (*it == '[') {
-		++it;
-		while (it != end && *it != ']')
-			host += *it++;
-		if (it == end) {
-			ex.set(Exception::NETADDRESS,"Malformed IPv6 address ", hostAndPort);
-			return false;
-		}
-		++it;
-	} else {
-		while (it != end && *it != ':')
-			host += *it++;
-	}
-	if (it != end && *it == ':') {
-		++it;
-		while (it != end)
-			port += *it++;
-	}
-	else {
+	const char* colon(strrchr(hostAndPort,':'));
+	if (!colon) {
 		ex.set(Exception::NETADDRESS, "Missing port number in ", hostAndPort);
 		return false;
 	}
-	return setIntern(ex,host, resolveService(ex,port),resolveHost);
+	(char&)*colon = 0;
+	bool result(setIntern(ex,hostAndPort, resolveService(ex,colon+1),resolveHost));
+	(char&)*colon = ':';
+	return result;
 }
 
-bool SocketAddress::setIntern(Exception& ex,const string& host, UInt16 port,bool resolveHost) {
+bool SocketAddress::setIntern(Exception& ex,const char* host, UInt16 port,bool resolveHost) {
 	IPAddress ip;
 	Exception ignore;
 	if (ip.set(ignore, host)) {
@@ -285,13 +268,13 @@ const string& SocketAddress::toString() const {
 }
 
 
-UInt16 SocketAddress::resolveService(Exception& ex,const string& service) {
+UInt16 SocketAddress::resolveService(Exception& ex,const char* service) {
 	UInt16 port=0;
 	if (String::ToNumber<UInt16>(service,port))
 		return port;
 	if (!Net::InitializeNetwork(ex))
 		return 0;
-	struct servent* se = getservbyname(service.c_str(), NULL);
+	struct servent* se = getservbyname(service, NULL);
 	if (se)
 		return ntohs(se->s_port);
 	ex.set(Exception::NETADDRESS, "Service ", service, " unknown");
@@ -299,20 +282,17 @@ UInt16 SocketAddress::resolveService(Exception& ex,const string& service) {
 }
 
 
-UInt16 SocketAddress::Split(const string& address,string& host) {
-	auto found = address.find(':');
-	host = address.substr(0, found);
-	UInt16 port(0);
-	if (found != string::npos) {
-		address.substr(0, found);
-		if (++found < address.size())
-			String::ToNumber(address.substr(found), port);
-	}
-	return port;
-}
-
 const SocketAddress& SocketAddress::Wildcard(IPAddress::Family family) {
 	return family == IPAddress::IPv6 ? _Addressv6Wildcard : _Addressv4Wildcard;
+}
+
+UInt16 SocketAddress::SplitLiteral(const char* value,string& host) {
+	UInt16 port(0);
+	host.assign(value);
+	const char* colon(strchr(value,':'));
+	if (colon && String::ToNumber(colon+1, port)) // check if it's really a marker port colon (could be a IPv6 colon)
+		host.resize(colon-value);
+	return port;
 }
 
 }	// namespace Mona

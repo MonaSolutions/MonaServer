@@ -59,7 +59,7 @@ void WSWriter::pack() {
 	PacketWriter& packet = writer.packet;
 	UInt32 size = packet.size()-10;
 	packet.clip(10-WS::HeaderSize(size));
-	BinaryWriter headerWriter(packet);
+	BinaryWriter headerWriter(packet.data(),packet.size());
 	packet.clear(WS::WriteHeader(WS::TYPE_TEXT,size,headerWriter)+size);
 	sender.packaged = true;
 }
@@ -94,16 +94,16 @@ void WSWriter::write(UInt8 type,const UInt8* data,UInt32 size) {
 		return;
 	}
 	WS::WriteHeader((WS::MessageType)type,size,writer);
-	writer.writeRaw(data,size);
+	writer.write(data,size);
 }
 
 
 
-DataWriter& WSWriter::writeInvocation(const std::string& name) {
+DataWriter& WSWriter::writeInvocation(const char* name) {
 	if(state()==CLOSED)
         return DataWriter::Null;
 	JSONWriter& invocation = newDataWriter();
-	invocation.writeString(name);
+	invocation.writeString(name,strlen(name));
 	return invocation;
 }
 
@@ -123,21 +123,18 @@ DataWriter& WSWriter::writeMessage() {
 
 
 
-bool WSWriter::writeMedia(MediaType type,UInt32 time,PacketReader& packet,Parameters& properties) {
+bool WSWriter::writeMedia(MediaType type,UInt32 time,PacketReader& packet,const Parameters& properties) {
 	if(state()==CLOSED)
 		return true;
 	switch(type) {
 		case START:
-			writeInvocation("__publishing").writeString(string((const char*)packet.current(),packet.available()));
+			writeInvocation("__publishing").writeString((const char*)packet.current(),packet.available());
 			break;
 		case STOP:
-			writeInvocation("__unpublishing").writeString(string((const char*)packet.current(),packet.available()));
+			writeInvocation("__unpublishing").writeString((const char*)packet.current(),packet.available());
 			break;
 		case DATA: {
-			JSONWriter& writer = newDataWriter();
-			writer.packet.write8('[');
-			writer.packet.writeRaw(packet.current(),packet.available());
-			writer.packet.write8(']');
+			newDataWriter().packet.write8('[').write(packet.current(),packet.available()).write8(']');
 			break;
 		}
 		case INIT:

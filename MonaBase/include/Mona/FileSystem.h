@@ -40,19 +40,35 @@ public:
 	typedef std::function<void(const std::string&)> ForEach; /// FileSystem::ListDir function type handler
 
 	/// Iterate over files under directory path
-	static UInt32		Paths(Exception& ex, const std::string& path, const FileSystem::ForEach& forEach);
+	static UInt32	Paths(Exception& ex, const std::string& path, const ForEach& forEach) { return Paths(ex, path.c_str(), forEach); }
+	static UInt32	Paths(Exception& ex, const char* path, const ForEach& forEach);
 
 	/// In giving a path with /, it tests one folder existance, otherwise file existance (test windows device without / => C:)
-	static bool			Exists(const std::string& path,bool any=false);
+	static bool			Exists(const std::string& path, bool any = false) { return Exists(path.c_str(), any); }
+	static bool			Exists(const char* path, bool any = false);
 	static bool			IsAbsolute(const std::string& path);
+	static bool			IsAbsolute(const char* path);
 	
-	static Attributes&	GetAttributes(Exception& ex, const std::string& path, Attributes& attributes);
+	static Attributes&	GetAttributes(Exception& ex, const std::string& path, Attributes& attributes) { return GetAttributes(ex,path.data(),attributes); }
+	static Attributes&	GetAttributes(Exception& ex, const char* path, Attributes& attributes);
 
-	static std::string& GetName(const std::string& path, std::string& value);
-	static std::string& GetBaseName(const std::string& path, std::string& value);
-	static std::string& GetExtension(const std::string& path,std::string& value);
-	static UInt32		GetSize(Exception& ex,const std::string& path);
-	static Time&		GetLastModified(Exception& ex,const std::string& path, Time& time);
+	static std::string& GetName(const char* path, std::string& value);
+	static std::string& GetName(const std::string& path, std::string& value) { return GetName(path.c_str(), value); }
+	static const char*	GetName(const char* path);
+	static const char*	GetName(const std::string& path) { return GetName(path.c_str()); }
+
+	static std::string& GetBaseName(const char* path, std::string& value);
+	static std::string& GetBaseName(const std::string& path, std::string& value)  { return GetBaseName(path.c_str(), value); }
+
+	static std::string& GetExtension(const char* path,std::string& value);
+	static std::string& GetExtension(const std::string& path,std::string& value)  { return GetExtension(path.c_str(), value); }
+	static const char*  GetExtension(const char* path);
+	static const char*  GetExtension(const std::string& path)  { return GetExtension(path.c_str()); }
+
+	static UInt32		GetSize(Exception& ex,const char* path);
+	static UInt32		GetSize(Exception& ex, const std::string& path) { return GetSize(ex, path); }
+	static Time&		GetLastModified(Exception& ex,const std::string& path, Time& time) { return GetLastModified(ex, path.c_str(),time); }
+	static Time&		GetLastModified(Exception& ex, const char* path, Time& time);
 	static std::string&	GetParent(std::string& path);
 
 	static bool			GetCurrentApplication(std::string& path);
@@ -61,17 +77,18 @@ public:
 
 	static bool			Remove(Exception& ex,const std::string& path,bool all=false);
 	static bool			Rename(const std::string& fromPath, const std::string& toPath) { return rename(fromPath.c_str(), toPath.c_str()) == 0; }
-	static bool			CreateDirectory(const std::string& path);
+	static bool			CreateDirectory(const std::string& path) { return CreateDirectory(path.c_str()); }
+	static bool			CreateDirectory(const char* path);
 	static void			CreateDirectories(Exception& ex, const std::string& path);
 	static std::string&	MakeDirectory(std::string& path) { return MakeFile(path).append("/");  }
 	static std::string&	MakeFile(std::string& path);
 	
-	static bool							ResolveFileWithPaths(const std::string& paths, std::string& file);
-	static std::vector<std::string>&	Unpack(const std::string& path, std::vector<std::string>& values);
+	static bool							ResolveFileWithPaths(const char* paths, std::string& file);
+	static bool							ResolveFileWithPaths(const std::string& paths, std::string& file) { return ResolveFileWithPaths(paths.data(), file); }
+	static std::vector<std::string>&	Unpack(const std::string& path, std::vector<std::string>& values) { return Unpack(path.c_str(), values); }
+	static std::vector<std::string>&	Unpack(const char* path, std::vector<std::string>& values);
 	static std::string&					Pack(const std::vector<std::string>& values, std::string& path);
 
-private:
-	static const std::string _PathSeparator;
 };
 
 

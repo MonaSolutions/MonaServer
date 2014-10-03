@@ -21,6 +21,7 @@ This file is a part of Mona.
 
 #include "Mona/Mona.h"
 #include "Mona/BinaryWriter.h"
+#include <map>
 
 
 namespace Mona {

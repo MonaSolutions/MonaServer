@@ -28,6 +28,8 @@ This file is a part of Mona.
 #include "LUADataTable.h"
 #include "LUASocketAddress.h"
 #include "LUAIPAddress.h"
+#include "ScriptWriter.h"
+#include "ScriptReader.h"
 
 
 using namespace std;
@@ -52,6 +54,60 @@ MonaServer::MonaServer(TerminateSignal& terminateSignal, const Parameters& confi
 	(string&)WWWPath = pathApp + "www";
 	(string&)DataPath = pathApp + "data";
 
+	onPublicationData = [this](const Publication& publication,DataReader& data) {
+		SCRIPT_BEGIN(_pState)
+			SCRIPT_MEMBER_FUNCTION_BEGIN(Publication, publication, "onData")
+				ScriptWriter writer(_pState);
+				data.read(writer);
+				SCRIPT_FUNCTION_CALL
+			SCRIPT_FUNCTION_END
+		SCRIPT_END
+	};
+
+	onPublicationAudio = [this](const Publication& publication,UInt32 time,PacketReader& packet) {
+		SCRIPT_BEGIN(_pState)
+			SCRIPT_MEMBER_FUNCTION_BEGIN(Publication, publication, "onAudio")
+				SCRIPT_WRITE_NUMBER(time)
+				SCRIPT_WRITE_BINARY(packet.current(),packet.available())
+				SCRIPT_FUNCTION_CALL
+			SCRIPT_FUNCTION_END
+		SCRIPT_END
+	};
+
+	onPublicationVideo = [this](const Publication& publication,UInt32 time,PacketReader& packet) {
+		SCRIPT_BEGIN(_pState)
+			SCRIPT_MEMBER_FUNCTION_BEGIN(Publication, publication, "onVideo")
+				SCRIPT_WRITE_NUMBER(time)
+				SCRIPT_WRITE_BINARY(packet.current(),packet.available())
+				SCRIPT_FUNCTION_CALL
+			SCRIPT_FUNCTION_END
+		SCRIPT_END
+	};
+
+	onPublicationFlush = [this](const Publication& publication) {
+		SCRIPT_BEGIN(_pState)
+			SCRIPT_MEMBER_FUNCTION_BEGIN(Publication, publication, "onFlush")
+				SCRIPT_FUNCTION_CALL
+			SCRIPT_FUNCTION_END
+		SCRIPT_END
+	};
+
+
+	onPublicationProperties = [this](const Publication& publication, const Parameters& properties) {
+		SCRIPT_BEGIN(_pState)
+			SCRIPT_MEMBER_FUNCTION_BEGIN(Publication, publication, "onProperties")
+				Script::Collection(_pState, -1, "properties");		
+				Parameters::ForEach forEach([this](const std::string& key, const std::string& value) {
+					Script::PushKeyValue(_pState, key, value);
+				});
+				Script::FillCollection(_pState, properties.iterate(forEach));
+				lua_pushvalue(_pState,-1); // properties collection
+				lua_setfield(_pState,-3,"properties"); // fix on publication object
+				SCRIPT_FUNCTION_CALL
+			SCRIPT_FUNCTION_END
+		SCRIPT_END
+	};
+
 
 	onServerConnection = [this](ServerConnection& server) {
 		Script::AddObject<LUAServer>(_pState, server);
@@ -69,11 +125,11 @@ MonaServer::MonaServer(TerminateSignal& terminateSignal, const Parameters& confi
 			SCRIPT_FUNCTION_BEGIN("onServerConnection",_pService->reference())
 				lua_pushvalue(_pState, 1); // server! (see Script::AddObject above)
 				SCRIPT_FUNCTION_CALL
+				if (SCRIPT_FUNCTION_ERROR) {
+					error = true;
+					server.reject(SCRIPT_FUNCTION_ERROR);
+				}
 			SCRIPT_FUNCTION_END
-			if (SCRIPT_LAST_ERROR) {
-				error = true;
-				server.reject(SCRIPT_LAST_ERROR);
-			}
 		SCRIPT_END
 		lua_pop(_pState, 1); // remove Script::AddObject<ServerConnection,... (see above)
 		if (error)
@@ -98,8 +154,8 @@ MonaServer::MonaServer(TerminateSignal& terminateSignal, const Parameters& confi
 		}
 		SCRIPT_BEGIN(_pState)
 			SCRIPT_MEMBER_FUNCTION_BEGIN(ServerConnection, server, handler.c_str());
-				AMFReader amf(packet);
-				SCRIPT_WRITE_DATA(amf, 0);
+				ScriptWriter writer(_pState);
+				AMFReader(packet).read(writer);
 				SCRIPT_FUNCTION_CALL;
 			SCRIPT_FUNCTION_END;
 		SCRIPT_END;
@@ -163,9 +219,9 @@ void MonaServer::startService(Service& service) {
 			SCRIPT_FUNCTION_BEGIN("onServerConnection",_pService->reference())
 				Script::AddObject<LUAServer>(_pState, *pServer);
 				SCRIPT_FUNCTION_CALL
+				if (SCRIPT_FUNCTION_ERROR)
+					pServer->reject(SCRIPT_FUNCTION_ERROR);
 			SCRIPT_FUNCTION_END
-			if (SCRIPT_LAST_ERROR)
-				pServer->reject(SCRIPT_LAST_ERROR);
 		}
 	SCRIPT_END
 
@@ -245,7 +301,6 @@ void MonaServer::onDataLoading(const string& path, const UInt8* value, UInt32 si
 	}
 	// get table and set key
 	lua_pushvalue(_pState,LUA_REGISTRYINDEX);
-	string key("|data");
 	if (!path.empty()) {
 		lua_getfield(_pState, LUA_REGISTRYINDEX, "|data");
 		lua_replace(_pState, -2);
@@ -255,31 +310,37 @@ void MonaServer::onDataLoading(const string& path, const UInt8* value, UInt32 si
 			return;
 		}
 	}
-	vector<string> fields;
-	String::Split(path, "/", fields, String::SPLIT_IGNORE_EMPTY | String::SPLIT_TRIM);
-	if (!fields.empty()) {
-		key = move(fields.back());
-		fields.pop_back();
-	}
-	for (const string& field : fields) {
+
+	const char* key(FileSystem::GetName(path));
+	string newPath(path);
+	if (strlen(key)==0)
+		key = "|data";
+	else
+		FileSystem::GetParent(newPath);
+		
+
+	String::ForEach forEach([this,&path](UInt32 index, const char* field) {
 		if (!lua_istable(_pState, -1)) {
 			lua_pop(_pState, 1);
 			WARN("Loading database entry ", path, " ignored because parent is not a table")
-				return;
+				return false;
 		}
-		lua_getfield(_pState, -1, field.c_str());
+		lua_getfield(_pState, -1, field);
 		if (lua_isnil(_pState, -1)) {
 			lua_pop(_pState, 1);
 			lua_newtable(_pState);
-			lua_setfield(_pState, -2, field.c_str());
-			lua_getfield(_pState, -1, field.c_str());
+			lua_setfield(_pState, -2, field);
+			lua_getfield(_pState, -1, field);
 		}
 		lua_replace(_pState, -2);
-	}
+		return true;
+	});
+	if (String::Split(path, "/", forEach, String::SPLIT_IGNORE_EMPTY | String::SPLIT_TRIM) == string::npos)
+		return;
 
 	// set value
 	Script::PushValue(_pState,value,size);
-	lua_setfield(_pState, -2, key.c_str());
+	lua_setfield(_pState, -2, key);
 	lua_pop(_pState, 1); // remove table
 }
 
@@ -329,7 +390,7 @@ void MonaServer::readAddressRedirection(const string& protocol, int& index, set<
 		Exception ex;
 		SocketAddress address;
 
-		if (lua_isstring(_pState, index)) {
+		if (lua_type(_pState, index)==LUA_TSTRING) { // lua_type because can be encapsulated in a lua_next
 			if (String::ICompare(lua_tostring(_pState, index), "myself") == 0) {
 				addresses.emplace(); // wilcard, will be changed to the server public address by the caller
 				return;
@@ -395,8 +456,8 @@ void MonaServer::onRendezVousUnknown(const string& protocol,const UInt8* id,set<
 			SCRIPT_WRITE_STRING(protocol.c_str())
 			SCRIPT_WRITE_BINARY(id,ID_SIZE)
 			SCRIPT_FUNCTION_CALL
-			while(SCRIPT_CAN_READ)
-				readAddressRedirection(protocol,SCRIPT_READ_NEXT,addresses);
+			while(SCRIPT_READ_AVAILABLE)
+				readAddressRedirection(protocol,SCRIPT_READ_NEXT(1),addresses);
 		SCRIPT_FUNCTION_END
 	SCRIPT_END
 }
@@ -415,8 +476,8 @@ void MonaServer::onHandshake(const string& protocol,const SocketAddress& address
 			properties.iterate(setLUAProperty);
 			SCRIPT_WRITE_INT(attempts)
 			SCRIPT_FUNCTION_CALL
-			while(SCRIPT_CAN_READ)
-				readAddressRedirection(protocol,SCRIPT_READ_NEXT,addresses);
+			while(SCRIPT_READ_AVAILABLE)
+				readAddressRedirection(protocol,SCRIPT_READ_NEXT(1),addresses);
 		SCRIPT_FUNCTION_END
 	SCRIPT_END
 }
@@ -435,28 +496,31 @@ void MonaServer::onConnection(Exception& ex, Client& client,DataReader& paramete
 	SCRIPT_BEGIN(_pState)
 		SCRIPT_FUNCTION_BEGIN("onConnection",pService->reference())
 			lua_pushvalue(_pState, 1); // client! (see Script::AddObject above)
-			SCRIPT_WRITE_DATA(parameters,0)
+			ScriptWriter writer(_pState);
+			parameters.read(writer);
 			SCRIPT_FUNCTION_CALL
-			if(SCRIPT_CAN_READ) {
+			if (SCRIPT_FUNCTION_ERROR)
+					ex.set(Exception::SOFTWARE, strlen(SCRIPT_FUNCTION_ERROR)>0 ? SCRIPT_FUNCTION_ERROR : "client rejected");
+			else if(SCRIPT_READ_AVAILABLE) {
 				if(SCRIPT_NEXT_TYPE==LUA_TTABLE) {
+
 					lua_pushnil(_pState);  // first key 
 					while (lua_next(_pState, -2) != 0) {
 						// uses 'key' (at index -2) and 'value' (at index -1) 
-						if (lua_isstring(_pState, -2)) {
+						if (lua_type(_pState, -2)==LUA_TSTRING) { // lua_type because can be encapsulated in a lua_next
 							response.writePropertyName(lua_tostring(_pState,-2));
-							Script::ReadData(_pState,response,1);
+							if (!ScriptReader(_pState, 1).read(response))
+								response.writeNull();
 						} else
-							SCRIPT_WARN("key=value ignored because key is not a string value")
+							SCRIPT_WARN("onConnection property ignored because key is not a string value")
 						lua_pop(_pState,1);
 					}
-					response.endWrite(); // TODO remove! the caller can continue to write the response!
-					SCRIPT_READ_NEXT;
+
+					SCRIPT_READ_NEXT(1);
 				} else
-					SCRIPT_ERROR("onConnection return argument ignored, it must be a table {key1=value1,key2=value2}")
+					SCRIPT_ERROR("onConnection properties returned must be a table {prop1=value1,prop2=value2}")
 			}
 		SCRIPT_FUNCTION_END
-		if(SCRIPT_LAST_ERROR)
-			ex.set(Exception::SOFTWARE, strlen(SCRIPT_LAST_ERROR)>0 ? SCRIPT_LAST_ERROR : "client rejected");
 	SCRIPT_END
 
 	if (ex) {
@@ -548,16 +612,16 @@ bool MonaServer::onMessage(Exception& ex, Client& client,const string& name,Data
 	bool found(false);
 	SCRIPT_BEGIN(loadService(client))
 		SCRIPT_MEMBER_FUNCTION_BEGIN(Client,client,name.c_str())
-			SCRIPT_WRITE_DATA(reader,0)
+			ScriptWriter writer(_pState);
+			reader.read(writer);
 			found=true;
 			SCRIPT_FUNCTION_CALL
-			if(SCRIPT_CAN_READ) {
-				DataWriter& writer = client.writer().writeResponse(responseType);
-				SCRIPT_READ_DATA(writer);
-			}
+			if(SCRIPT_FUNCTION_ERROR)
+				ex.set(Exception::SOFTWARE,SCRIPT_FUNCTION_ERROR);
+			else if (SCRIPT_READ_AVAILABLE)
+				SCRIPT_READ_NEXT(ScriptReader(_pState, SCRIPT_READ_NEXT(SCRIPT_READ_AVAILABLE)).read(client.writer().writeResponse(responseType)));
 		SCRIPT_FUNCTION_END
-		if(SCRIPT_LAST_ERROR)
-			ex.set(Exception::SOFTWARE,SCRIPT_LAST_ERROR);
+		
 	SCRIPT_END
 	return found;
 }
@@ -571,9 +635,13 @@ bool MonaServer::onFileAccess(Exception& ex, Client& client, Client::FileAccessT
 	SCRIPT_BEGIN(loadService(client))
 		SCRIPT_MEMBER_FUNCTION_BEGIN(Client,client,type==Client::FileAccessType::READ ? "onRead" : "onWrite")
 			SCRIPT_WRITE_STRING(name.c_str())
-			SCRIPT_WRITE_DATA(parameters,0)
+			ScriptWriter writer(_pState);
+			parameters.read(writer);
 			SCRIPT_FUNCTION_CALL
-			if(SCRIPT_CAN_READ) {
+			if (SCRIPT_FUNCTION_ERROR) {
+				ex.set(Exception::SOFTWARE, SCRIPT_FUNCTION_ERROR);
+				result = false;
+			} else if(SCRIPT_READ_AVAILABLE) {
 				if (SCRIPT_NEXT_TYPE == LUA_TNIL) {
 					result=false;
 					SCRIPT_READ_NIL
@@ -585,22 +653,19 @@ bool MonaServer::onFileAccess(Exception& ex, Client& client, Client::FileAccessT
 					lua_pushnil(_pState);  // first key 
 					while (lua_next(_pState, -2) != 0) {
 						// uses 'key' (at index -2) and 'value' (at index -1) 
-						if (lua_isstring(_pState, -2)) {
+						if (lua_type(_pState,-2)==LUA_TSTRING) {
 							properties.writePropertyName(lua_tostring(_pState,-2));
-							Script::ReadData(_pState,properties,1);
-							properties.endWrite(); // TODO remove the caller can continue to write the properties
+							if (!ScriptReader(_pState, 1).read(properties))
+								properties.writeNull();
 						} else
 							SCRIPT_WARN("key=value ignored because key is not a string value")
 						lua_pop(_pState,1);
 					}
-					SCRIPT_READ_NEXT;
-				}
+					SCRIPT_READ_NEXT(1);
+				} else
+					SCRIPT_ERROR(type==Client::FileAccessType::READ ? "onRead" : "onWrite"," properties returned must be a table {prop1=value1,prop2=value2}")
 			}
 		SCRIPT_FUNCTION_END
-		if (SCRIPT_LAST_ERROR) {
-			ex.set(Exception::SOFTWARE, SCRIPT_LAST_ERROR);
-			return false;
-		}
 	SCRIPT_END
 
 	filePath.set(WWWPath, client.path);
@@ -612,67 +677,81 @@ bool MonaServer::onFileAccess(Exception& ex, Client& client, Client::FileAccessT
 
 
 //// PUBLICATION_HANDLER /////
-bool MonaServer::onPublish(Client& client,const Publication& publication,string& error) {
+bool MonaServer::onPublish(Exception& ex, const Publication& publication, Client* pClient) {
 	Script::AddObject<LUAPublication>(_pState, publication);
 	bool result(true);
-	if (client != this->id) {
-		SCRIPT_BEGIN(loadService(client))
-			SCRIPT_MEMBER_FUNCTION_BEGIN(Client,client,"onPublish")
+	if (pClient) {
+		SCRIPT_BEGIN(loadService(*pClient))
+			SCRIPT_MEMBER_FUNCTION_BEGIN(Client,*pClient,"onPublish")
 				lua_pushvalue(_pState, 1); // publication! (see Script::AddObject above)
 				SCRIPT_FUNCTION_CALL
-				if(SCRIPT_CAN_READ)
+				if(SCRIPT_FUNCTION_ERROR) {
+					ex.set(Exception::APPLICATION, SCRIPT_FUNCTION_ERROR);
+					result = false;
+				} else if(SCRIPT_READ_AVAILABLE)
 					result = SCRIPT_READ_BOOL(true);
 			SCRIPT_FUNCTION_END
-			if(SCRIPT_LAST_ERROR) {
-				error = SCRIPT_LAST_ERROR;
-				result = false;
-			}
 		SCRIPT_END
 	}
-	if (result)
+	if (result) {
 		LUAInvoker::AddPublication(_pState, publication);
-	else if (publication.listeners.count() == 0)
+
+		publication.OnAudio::subscribe(onPublicationAudio);
+		publication.OnVideo::subscribe(onPublicationVideo);
+		publication.OnData::subscribe(onPublicationData);
+		publication.OnFlush::subscribe(onPublicationFlush);
+		publication.OnProperties::subscribe(onPublicationProperties);
+
+	} else if (publication.listeners.count() == 0)
 		Script::ClearObject<LUAPublication>(_pState, publication);
 	lua_pop(_pState, 1); // remove Script::AddObject<Publication,... (see above)
 	return result;
 }
 
-void MonaServer::onUnpublish(Client& client,const Publication& publication) {
-	if (client != this->id) {	
-		SCRIPT_BEGIN(loadService(client))
-			SCRIPT_MEMBER_FUNCTION_BEGIN(Client,client,"onUnpublish")
+void MonaServer::onUnpublish(const Publication& publication, Client* pClient) {
+	if (pClient) {	
+		SCRIPT_BEGIN(loadService(*pClient))
+			SCRIPT_MEMBER_FUNCTION_BEGIN(Client,*pClient,"onUnpublish")
 				Script::AddObject<LUAPublication>(_pState, publication);
 				SCRIPT_FUNCTION_CALL
 			SCRIPT_FUNCTION_END
 		SCRIPT_END
 	}
 	LUAInvoker::RemovePublication(_pState, publication);
+
+	publication.OnAudio::unsubscribe(onPublicationAudio);
+	publication.OnVideo::unsubscribe(onPublicationVideo);
+	publication.OnData::unsubscribe(onPublicationData);
+	publication.OnFlush::unsubscribe(onPublicationFlush);
+	publication.OnProperties::unsubscribe(onPublicationProperties);
+
 	if (publication.listeners.count() == 0)
 		Script::ClearObject<LUAPublication>(_pState, publication);
 }
 
-bool MonaServer::onSubscribe(Client& client,const Listener& listener,string& error) { 
+bool MonaServer::onSubscribe(Exception& ex, Client& client,const Listener& listener) { 
 	Script::AddObject<LUAListener>(_pState, listener);
 	Script::AddObject<LUAPublication>(_pState, listener.publication);
 	
 	bool result = true;
 	bool done(false);
 	SCRIPT_BEGIN(_pState)
-		SCRIPT_MEMBER_FUNCTION_WITH_OBJHANDLE_BEGIN(Client, client, "onSubscribe", LUAPublication::AddListener(_pState, 2, 1); done = true;)
+		SCRIPT_MEMBER_FUNCTION_BEGIN(Client, client, "onSubscribe")
+			LUAPublication::AddListener(_pState, 2, 1);
+			done = true;
 			lua_pushvalue(_pState, 1); // listener! (see Script::AddObject above)
 			SCRIPT_FUNCTION_CALL
-			if (SCRIPT_CAN_READ)
+			if (SCRIPT_FUNCTION_ERROR) {
+				ex.set(Exception::APPLICATION,SCRIPT_FUNCTION_ERROR);
+				result = false;
+			} else if (SCRIPT_READ_AVAILABLE)
 				result = SCRIPT_READ_BOOL(true);
 		SCRIPT_FUNCTION_END
-		if (SCRIPT_LAST_ERROR) {
-			error = SCRIPT_LAST_ERROR;
-			result = false;
-		}
 	SCRIPT_END
 	if (!result) {
 		LUAPublication::RemoveListener(_pState, listener.publication);
 		Script::ClearObject<LUAListener>(_pState, listener);
-		if (!listener.publication.publisher() && listener.publication.listeners.count() == 0)
+		if (!listener.publication.running() && listener.publication.listeners.count() == 0)
 			Script::ClearObject<LUAPublication>(_pState, listener.publication);
 	} else if (!done && Script::FromObject<Client>(_pState, client)) {
 		LUAPublication::AddListener(_pState, 2, 1);
@@ -693,7 +772,7 @@ void MonaServer::onUnsubscribe(Client& client,const Listener& listener) {
 		SCRIPT_FUNCTION_END
 	SCRIPT_END
 
-	if (!listener.publication.publisher() && listener.publication.listeners.count() == 0)
+	if (!listener.publication.running() && listener.publication.listeners.count() == 0)
 		Script::ClearObject<LUAPublication>(_pState, listener.publication);
 	else if (!done && Script::FromObject<Listener>(_pState, listener)) {
 		LUAPublication::RemoveListener(_pState, listener.publication);
@@ -702,49 +781,15 @@ void MonaServer::onUnsubscribe(Client& client,const Listener& listener) {
 	Script::ClearObject<LUAListener>(_pState, listener);
 }
 
-void MonaServer::onAudioPacket(Client& client,const Publication& publication,UInt32 time,PacketReader& packet) {
-	SCRIPT_BEGIN(_pState)
-		SCRIPT_MEMBER_FUNCTION_BEGIN(Publication, publication, "onAudio")
-			SCRIPT_WRITE_NUMBER(time)
-			SCRIPT_WRITE_BINARY(packet.current(),packet.available())
-			SCRIPT_FUNCTION_CALL
-		SCRIPT_FUNCTION_END
-	SCRIPT_END
-}
-
-void MonaServer::onVideoPacket(Client& client,const Publication& publication,UInt32 time,PacketReader& packet) {
-	SCRIPT_BEGIN(_pState)
-		SCRIPT_MEMBER_FUNCTION_BEGIN(Publication, publication, "onVideo")
-			SCRIPT_WRITE_NUMBER(time)
-			SCRIPT_WRITE_BINARY(packet.current(),packet.available())
-			SCRIPT_FUNCTION_CALL
-		SCRIPT_FUNCTION_END
-	SCRIPT_END
-}
-
-void MonaServer::onDataPacket(Client& client,const Publication& publication,DataReader& packet) {
-	SCRIPT_BEGIN(_pState)
-		SCRIPT_MEMBER_FUNCTION_BEGIN(Publication, publication, "onData")
-			SCRIPT_WRITE_DATA(packet,0)
-			SCRIPT_FUNCTION_CALL
-		SCRIPT_FUNCTION_END
-	SCRIPT_END
-}
-
-void MonaServer::onFlushPackets(Client& client,const Publication& publication) {
-	SCRIPT_BEGIN(_pState)
-		SCRIPT_MEMBER_FUNCTION_BEGIN(Publication, publication, "onFlush")
-			SCRIPT_FUNCTION_CALL
-		SCRIPT_FUNCTION_END
-	SCRIPT_END
-}
 
 void MonaServer::onJoinGroup(Client& client,Group& group) {
 	Script::AddObject<LUAGroup>(_pState, group);
 	LUAInvoker::AddGroup(_pState);
 	bool done(false);
 	SCRIPT_BEGIN(_pState)
-		SCRIPT_MEMBER_FUNCTION_WITH_OBJHANDLE_BEGIN(Client, client, "onJoinGroup", LUAGroup::AddClient(_pState, 1); done = true;)
+		SCRIPT_MEMBER_FUNCTION_BEGIN(Client, client, "onJoinGroup")
+			LUAGroup::AddClient(_pState, 1);
+			done = true;
 			lua_pushvalue(_pState, 1); // group! (see Script::AddObject above)
 			SCRIPT_FUNCTION_CALL
 		SCRIPT_FUNCTION_END

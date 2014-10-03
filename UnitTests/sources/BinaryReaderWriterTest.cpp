@@ -29,9 +29,9 @@ static Buffer _Buffer(128);
 void Write(BinaryWriter& writer) {
 
 	bool bval = true;
-	writer.writeRaw((const UInt8*)&bval, sizeof(bval));
+	writer.write(&bval, sizeof(bval));
 	bval = false;
-	writer.writeRaw((const UInt8*)&bval, sizeof(bval));
+	writer.write(&bval, sizeof(bval));
 	writer.write8('a');
 	writer.write16(-100);
 	writer.write16(50000);
@@ -44,15 +44,9 @@ void Write(BinaryWriter& writer) {
 	writer.write64(1234567890);
 
 	float fVal = 1.5;
-	writer.writeRaw((const UInt8*)&fVal, sizeof(fVal));
+	writer.write(&fVal, sizeof(fVal));
 	double dVal = -1.5;
-	writer.writeRaw((const UInt8*)&dVal, sizeof(dVal));
-
-	writer.writeString8("foo");
-	writer.writeString8("");
-
-	writer.writeString8(std::string("bar"));
-	writer.writeString8(std::string());
+	writer.write(&dVal, sizeof(dVal));
 
 	writer.write7BitValue(100);
 	writer.write7BitValue(1000);
@@ -66,15 +60,15 @@ void Write(BinaryWriter& writer) {
 	writer.write7BitLongValue(100000);
 	writer.write7BitLongValue(1000000);
 
-	writer.writeRaw("RAW");
+	writer.write("RAW");
 }
 
 
 void Read(BinaryReader& reader) {
 	bool b;
-	reader.readRaw((char*)&b, sizeof(b));
+	reader.read(sizeof(b), (char*)&b);
 	CHECK(b);
-	reader.readRaw((char*)&b, sizeof(b));
+	reader.read(sizeof(b), (char*)&b);
 	CHECK(!b);
 
 	char c = reader.read8();
@@ -105,22 +99,12 @@ void Read(BinaryReader& reader) {
 	CHECK(uint64v == 1234567890);
 
 	float floatv;
-	reader.readRaw((char *)&floatv, sizeof(floatv));
+	reader.read(sizeof(floatv), (char *)&floatv);
 	CHECK(floatv == 1.5);
 
 	double doublev;
-	reader.readRaw((char *)&doublev, sizeof(doublev));
+	reader.read(sizeof(doublev), (char *)&doublev);
 	CHECK(doublev == -1.5);
-
-	std::string str;
-	reader.readString8(str);
-	CHECK(str == "foo");
-	reader.readString8(str);
-	CHECK(str == "");
-	reader.readString8(str);
-	CHECK(str == "bar");
-	reader.readString8(str);
-	CHECK(str == "");
 
 	UInt32 uint32v = reader.read7BitValue();
 	CHECK(uint32v == 100);
@@ -144,8 +128,7 @@ void Read(BinaryReader& reader) {
 	uint64v = reader.read7BitLongValue();
 	CHECK(uint64v == 1000000);
 
-	reader.readRaw(3, str);
-	CHECK(str == "RAW");
+	CHECK(String::ICompare((const char*)reader.current(),"RAW")==0);
 }
 
 

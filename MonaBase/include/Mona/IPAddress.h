@@ -66,10 +66,12 @@ public:
 	IPAddress& set(const in6_addr& addr, UInt32 scope = 0);
 
 	// Set an IPAddress from the string containing an IP address in presentation format (dotted decimal for IPv4, hex string for IPv6).
-	bool set(Exception& ex, const std::string& addr);
+	bool set(Exception& ex, const char* address);
+	bool set(Exception& ex, const std::string& address) { return set(ex, address.data()); }
 
 	// Set an IPAddress from the string containing an IP address in presentation format (dotted decimal for IPv4, hex string for IPv6).
-	bool set(Exception& ex, const std::string& addr, Family family);
+	bool set(Exception& ex, const char* address, Family family);
+	bool set(Exception& ex, const std::string& address, Family family) { return set(ex, address.data(),family); }
 
 	void reset();
 

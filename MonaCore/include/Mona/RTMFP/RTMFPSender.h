@@ -36,8 +36,8 @@ public:
 	PacketWriter	packet;
 
 private:
-	const UInt8*	data() { return packet.size() < RTMFP_MIN_PACKET_SIZE ? NULL : packet.data(); }
-	UInt32			size() { return packet.size(); }
+	const UInt8*	data() const { return packet.size() < RTMFP_MIN_PACKET_SIZE ? NULL : packet.data(); }
+	UInt32			size() const { return packet.size(); }
 	
 	bool			run(Exception& ex);
 };

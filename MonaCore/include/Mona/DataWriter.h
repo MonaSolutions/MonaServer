@@ -29,53 +29,50 @@ class DataWriterNull;
 
 class DataWriter : virtual NullableObject {
 public:
+////  TO DEFINE ////
+	virtual UInt64 beginObject(const char* type=NULL)=0;
+	virtual void   writePropertyName(const char* value)=0;
+	virtual void   endObject()=0;
 
-	virtual void beginObject(const std::string& type="",bool external=false)=0;
-	virtual void endObject()=0;
+	virtual UInt64 beginArray(UInt32 size)=0;
+	virtual void   endArray()=0;
 
-	virtual void writePropertyName(const std::string& value)=0;
+	virtual void   writeNumber(double value)=0;
+	virtual void   writeString(const char* value, UInt32 size)=0;
+	virtual void   writeBoolean(bool value)=0;
+	virtual void   writeNull()=0;
+	virtual UInt64 writeDate(const Date& date)=0;
+	virtual UInt64 writeBytes(const UInt8* data, UInt32 size)=0;
+////////////////////
 
-	virtual void beginArray(UInt32 size)=0;
-	virtual void endArray()=0;
 
-	virtual void writeDate(const Date& date)=0;
-	virtual void writeNumber(double value)=0;
-	virtual void writeString(const std::string& value)=0;
-	virtual void writeBoolean(bool value)=0;
-	virtual void writeNull()=0;
-	virtual void writeBytes(const UInt8* data,UInt32 size)=0;
-
+////  OPTIONAL DEFINE ////
 	// if serializer don't support a mixed object, set the object as the first element of the array
-	virtual void beginObjectArray(UInt32 size) { beginArray(size); beginObject(); }
+	virtual UInt64 beginObjectArray(UInt32 size) { UInt64 ref(beginArray(size+1)); beginObject(); return ref; }
 
-	virtual void beginMap(UInt32 size, bool weakKeys = false) { beginObject(); }
-	virtual void endMap() { endObject(); }
+	virtual UInt64 beginMap(Exception& ex, UInt32 size, bool weakKeys = false) { ex.set(Exception::FORMATTING,typeid(*this).name()," doesn't support map type, a object will be written rather");  return beginObject(); }
+	virtual void   endMap() { endObject(); }
 
-	virtual bool repeat(UInt32 reference) { return false; }
-	virtual void clear();
+	virtual void   clear() { packet.clear(); }
+	virtual bool   repeat(UInt64 reference) { return false; }
 
-	/// \brief Called for eventual ending treatment
-	virtual void endWrite() {}
+////////////////////
 
-	UInt32		 lastReference() { return _lastReference; }
+	void		   writeNullProperty(const char* name) { writePropertyName(name); writeNull(); }
+	void		   writeDateProperty(const char* name,const Date& date) { writePropertyName(name); writeDate(date); }
+	void		   writeNumberProperty(const char* name,double value) { writePropertyName(name); writeNumber(value); }
+	void		   writeBooleanProperty(const char* name,bool value) { writePropertyName(name); writeBoolean(value); }
+	void		   writeStringProperty(const char* name, const char* value, std::size_t size = std::string::npos) { writePropertyName(name); writeString(value, size==std::string::npos ? strlen(value) : size); }
+	void		   writeStringProperty(const char* name,const std::string& value) { writePropertyName(name); writeString(value.data(), value.size()); }
 
-	void		 writeNullProperty(const std::string& name);
-	void		 writeDateProperty(const std::string& name,const Date& date);
-	void		 writeNumberProperty(const std::string& name,double value);
-	void		 writeBooleanProperty(const std::string& name,bool value);
-	void		 writeStringProperty(const std::string& name,const std::string& value);
-		
-	PacketWriter packet;
+	PacketWriter   packet;
 
 	operator bool() const { return packet; }
 
     static DataWriterNull Null;
 protected:
-	DataWriter(const PoolBuffers& poolBuffers): packet(poolBuffers),_lastReference(0){}
-	DataWriter() : _lastReference(0){} // Null
-
-	UInt32					_lastReference;
-
+	DataWriter(const PoolBuffers& poolBuffers): packet(poolBuffers) {}
+	DataWriter() : packet(Buffer::Null) {} // Null
 };
 
 
@@ -83,21 +80,19 @@ class DataWriterNull : public DataWriter {
 public:
 	DataWriterNull() {}
 
-private:
-    void beginObject(const std::string& type="",bool external=false){}
+	UInt64 beginObject(const char* type = NULL) { return 0;  }
+	void writePropertyName(const char* value){}
     void endObject(){}
 
-    void writePropertyName(const std::string& value){}
-
-    void beginArray(UInt32 size){}
+    UInt64 beginArray(UInt32 size){ return 0; }
     void endArray(){}
-
-    void writeDate(const Date& date){}
-    void writeNumber(double value){}
-    void writeString(const std::string& value){}
-    void writeBoolean(bool value){}
-    void writeNull(){}
-    void writeBytes(const UInt8* data,UInt32 size){}
+   
+    void   writeNumber(double value){}
+    void   writeString(const char* value, UInt32 size){}
+    void   writeBoolean(bool value){}
+    void   writeNull(){}
+	UInt64 writeDate(const Date& date){ return 0; }
+    UInt64 writeBytes(const UInt8* data,UInt32 size){ return 0;}
 };
 
 

@@ -22,53 +22,56 @@ This file is a part of Mona.
 #include "Mona/Mona.h"
 #include "Mona/Parameters.h"
 #include "Mona/DataWriter.h"
+#include "Mona/DataReader.h"
 
 namespace Mona {
 
+
 class ParameterWriter : public DataWriter, public virtual Object {
 public:
-	ParameterWriter(Parameters& parameters) : _parameters(parameters),_size(0),_isProperty(false) {}
-	void beginObject(const std::string& type = "", bool external = false) {}
-	void endObject() {}
 
-	void writePropertyName(const std::string& value) { _property = value; _isProperty=true; }
+	ParameterWriter(Parameters& parameters) : _index(0),_parameters(parameters),_size(0),_isProperty(false) {}
+	UInt64 beginObject(const char* type = NULL) { return 0; }
+	void   endObject() {}
 
-	void beginArray(UInt32 size) {}
-	void endArray(){}
+	void writePropertyName(const char* value) { _property.assign(value); _isProperty=true; }
 
-	void writeDate(const Date& date) { set(date.toString(Date::SORTABLE_FORMAT,_buffer)); }
-	void writeNumber(double value) { set(String::Format(_buffer, value)); }
-	void writeString(const std::string& value) { set(value); }
-	void writeBoolean(bool value) { set( value ? "true" : "false");}
-	void writeNull() { set("null"); }
-	void writeBytes(const UInt8* data, UInt32 size) { std::string value((const char*)data, size); set(value); }
+	UInt64 beginArray(UInt32 size) { return 0; }
+	void   endArray(){}
+
+	void writeNumber(double value) { std::string buffer;  set(String::Format(buffer, value)); }
+	void writeString(const char* value, UInt32 size) { set(value, size); }
+	void writeBoolean(bool value) { set(value ? "true" : "false");}
+	void writeNull() { set("null",4); }
+	UInt64 writeDate(const Date& date) { writeNumber((double)date); return 0; }
+	UInt64 writeBytes(const UInt8* data, UInt32 size) { set(STR data, size); return 0; }
 
 	UInt32 size() const { return _size; }
 	UInt32 count() const { return _parameters.count(); }
 	
 
-	void   clear() {  _isProperty = false; _property.clear(); _size = 0; DataWriter::clear(); _parameters.clear(); }
+	void   clear() { _index = 0; _isProperty = false; _property.clear(); _size = 0; DataWriter::clear(); _parameters.clear(); }
 private:
 
 	UInt32 size(const std::string& value) { return value.size(); }
 	UInt32 size(const char* value) { return strlen(value); }
+	UInt32 size(const char* value, std::size_t size) { return size; }
 
-	template <typename Type>
-	void set(Type&& value) {
-		if (_isProperty) {
-			_parameters.setString(_property,value);
-			_size += size(value);
-			_isProperty = false;
-		} else
-			_parameters.setString(_property,"");
+	template <typename ...Args>
+	void set(Args&&... args) {
+		if (!_isProperty)
+			String::Format(_property, _index++);
+		_parameters.setString(_property,args ...);
+		_size += size(args ...);
+		_isProperty = false;
 		_property.clear();
 	}
 
 	std::string					_property;
 	bool						_isProperty;
+	UInt32						_index;
 
 	Parameters&					_parameters;
-	std::string					_buffer;
 	UInt32						_size;
 };
 

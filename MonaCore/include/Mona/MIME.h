@@ -21,31 +21,16 @@ This file is a part of Mona.
 
 #include "Mona/Mona.h"
 #include "Mona/DataWriter.h"
+#include "Mona/DataReader.h"
 
 namespace Mona {
 
-
-class SVGWriter : public DataWriter, public virtual Object {
+class MIME : virtual Static {
 public:
-	SVGWriter(const PoolBuffers& buffers) : DataWriter(buffers) {}
-
-	void beginObject(const std::string& type = "", bool external = false) {}
-	void endObject() {}
-
-	void writePropertyName(const std::string& value) {}
-
-	void beginArray(UInt32 size) {}
-	void endArray() {}
-
-	void writeDate(const Date& date) {}
-	void writeNumber(double value) {}
-	void writeString(const std::string& value) {}
-	void writeBoolean(bool value) {}
-	void writeNull() {}
-	void writeBytes(const UInt8* data,UInt32 size) {}
-
-	void	clear() {}
+	static bool CreateDataReader(const char* type, PacketReader& packet,const PoolBuffers& poolBuffers,std::unique_ptr<DataReader>& pReader);
+	static bool CreateDataWriter(const char* type, const PoolBuffers& poolBuffers,std::unique_ptr<DataWriter>& pWriter);
 };
+
 
 
 

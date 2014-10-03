@@ -26,7 +26,7 @@ using namespace std;
 namespace Mona {
 
 HTTPWriter::HTTPWriter(TCPSession& session) : 
-		_session(session),_pThread(NULL),contentType(HTTP::CONTENT_TEXT),contentSubType("html"),Writer(session.peer.connected ? OPENED : OPENING) {
+		_session(session),_pThread(NULL),Writer(session.peer.connected ? OPENED : OPENING) {
 }
 
 void HTTPWriter::close(const Exception& ex) {
@@ -82,7 +82,7 @@ void HTTPWriter::writeFile(const Path& file, UInt8 sortOptions, bool isApp) {
 }	
 
 
-DataWriter& HTTPWriter::write(const string& code, HTTP::ContentType type, const string& subType, const UInt8* data,UInt32 size) {
+DataWriter& HTTPWriter::write(const string& code, HTTP::ContentType type, const char* subType, const UInt8* data,UInt32 size) {
 	if(state()==CLOSED)
         return DataWriter::Null;
 	if (!pRequest) {
@@ -92,25 +92,13 @@ DataWriter& HTTPWriter::write(const string& code, HTTP::ContentType type, const 
 	return createSender(*pRequest).writer(code, type, subType, data, size);
 }
 
-DataWriter& HTTPWriter::writeResponse(UInt8 type) {
-	switch (type) {
-		case HTTP::RAW:
-			return write("200 OK",HTTP::CONTENT_TEXT,"plain");
-		case HTTP::XML:
-			return write("200 OK", HTTP::CONTENT_APPLICATON,"xml");
-		case HTTP::JSON:
-			return write("200 OK", HTTP::CONTENT_APPLICATON,"json");
-		case HTTP::SOAP:
-			return write("200 OK", HTTP::CONTENT_APPLICATON,"soap+xml");
-		case HTTP::CSS:
-			return write("200 OK", HTTP::CONTENT_TEXT,"css");
-		case HTTP::SVG:
-			return write("200 OK", HTTP::CONTENT_IMAGE,"svg+xml");
-	}
-	return writeMessage();
+DataWriter& HTTPWriter::writeMessage() {
+	if (pRequest && pRequest->contentType != HTTP::CONTENT_ABSENT)
+		return write("200 OK", pRequest->contentType, pRequest->contentSubType.c_str(),NULL,pRequest->rawSerialization ? 2 : 0);
+	return write("200 OK", HTTP::CONTENT_APPLICATON , "json");
 }
 
-bool HTTPWriter::writeMedia(MediaType type,UInt32 time,PacketReader& packet,Parameters& properties) {
+bool HTTPWriter::writeMedia(MediaType type,UInt32 time,PacketReader& packet,const Parameters& properties) {
 	if(state()==CLOSED)
 		return true;
 	switch(type) {
@@ -133,8 +121,8 @@ bool HTTPWriter::writeMedia(MediaType type,UInt32 time,PacketReader& packet,Para
 				close(ex);
 				return false;
 			}
-			// write a HTTP header without content-length (data==NULL and size>0)
-			_pMedia->write(write("200", pRequest->contentType, pRequest->contentSubType, NULL, 1).packet);
+			// write a HTTP header without content-length (data==NULL and size==1)
+			_pMedia->write(write("200", pRequest->contentType, pRequest->contentSubType.c_str(), NULL, 1).packet);
 			break;
 		}
 		case AUDIO:

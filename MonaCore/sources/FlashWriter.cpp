@@ -20,6 +20,7 @@ This file is a part of Mona.
 #include "Mona/FlashWriter.h"
 #include "Mona/AMF.h"
 #include "Mona/Util.h"
+#include "Mona/AMFReader.h"
 #include "Mona/Logs.h"
 
 
@@ -46,18 +47,17 @@ AMFWriter& FlashWriter::writeMessage() {
 	return writer;
 }
 
-AMFWriter& FlashWriter::writeInvocation(const std::string& name,double callback) {
+AMFWriter& FlashWriter::writeInvocation(const char* name, double callback) {
 	AMFWriter& writer = write(AMF::INVOCATION);
 	BinaryWriter& packet = writer.packet;
-	packet.write8(AMF_STRING);packet.writeString16(name);
-	packet.write8(AMF_NUMBER);
-	packet.writeNumber<double>(callback);
+	packet.write8(AMF_STRING).write16(strlen(name)).write(name);
+	packet.write8(AMF_NUMBER).writeNumber<double>(callback);
 	packet.write8(AMF_NULL); // for RTMP compatibility! (requiere it)
 	writer.amf0 = amf0;
 	return writer;
 }
 
-AMFWriter& FlashWriter::writeAMFState(const string& name,const string& code,const string& description,bool withoutClosing) {
+AMFWriter& FlashWriter::writeAMFState(const char* name,const char* code,const string& description,bool withoutClosing) {
 	AMFWriter& writer = (AMFWriter&)writeInvocation(name,_callbackHandleOnAbort = _callbackHandle);
 	_callbackHandle = 0;
 	writer.amf0=true;
@@ -67,7 +67,7 @@ AMFWriter& FlashWriter::writeAMFState(const string& name,const string& code,cons
 	else
 		writer.writeStringProperty("level","status");
 	writer.writeStringProperty("code",code);
-	writer.writeStringProperty("description",description);
+	writer.writeStringProperty("description", description);
 	writer.amf0 = amf0;
 	if(!withoutClosing)
 		writer.endObject();
@@ -75,7 +75,7 @@ AMFWriter& FlashWriter::writeAMFState(const string& name,const string& code,cons
 }
 
 
-bool FlashWriter::writeMedia(MediaType type,UInt32 time,PacketReader& packet,Parameters& properties) {
+bool FlashWriter::writeMedia(MediaType type,UInt32 time,PacketReader& packet,const Parameters& properties) {
 	
 	switch(type) {
 		case START:
@@ -88,7 +88,7 @@ bool FlashWriter::writeMedia(MediaType type,UInt32 time,PacketReader& packet,Par
 			if (!_onAudio.empty()) {
 				AMFWriter& writer(write(AMF::DATA));
 				writer.amf0 = true;
-				writer.writeString(_onAudio);
+				writer.writeString(_onAudio.data(),_onAudio.size());
 				writer.amf0 = false;
 				writer.writeNumber(time);
 				writer.writeBytes(packet.current(),packet.available());
@@ -99,7 +99,7 @@ bool FlashWriter::writeMedia(MediaType type,UInt32 time,PacketReader& packet,Par
 			if (!_onVideo.empty()) {
 				AMFWriter& writer(write(AMF::DATA));
 				writer.amf0 = true;
-				writer.writeString(_onVideo);
+				writer.writeString(_onVideo.data(),_onVideo.size());
 				writer.amf0 = false;
 				writer.writeNumber(time);
 				writer.writeBytes(packet.current(),packet.available());
@@ -119,6 +119,18 @@ bool FlashWriter::writeMedia(MediaType type,UInt32 time,PacketReader& packet,Par
 			} else
 				WARN("Impossible to handle onAudio and onVideo properties on a AMF0 stream")
 			break;
+		case PROPERTIES: {
+			
+			AMFWriter& writer = write(AMF::INFORMATIONS,0);
+			AMFReader reader(packet);
+			if(!reader.read(DataReader::STRING, writer))
+				writer.writeString(EXPAND("onMetaData"));
+
+			reader.read(writer);
+			break;
+		}
+		default:
+			return Writer::writeMedia(type,time,packet,properties);
 	}
 	return true;
 }

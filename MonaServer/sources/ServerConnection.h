@@ -37,8 +37,8 @@ private:
 	std::string		_handler;
 	Mona::UInt16	_shift;
 
-	const Mona::UInt8*	data() { return packet.data()+_shift; }
-	Mona::UInt32		size() { return packet.size()-_shift; }
+	Mona::UInt8*	data() { return packet.data()+_shift; }
+	Mona::UInt32	size() const { return packet.size()-_shift; }
 };
 
 

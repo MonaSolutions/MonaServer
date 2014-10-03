@@ -147,7 +147,7 @@ AMFWriter& RTMPWriter::write(AMF::ContentType type,UInt32 time,PacketReader* pDa
 	}
 
 	if(pData) {
-		data.writeRaw(pData->current(),pData->available());
+		data.write(pData->current(),pData->available());
         return AMFWriter::Null;
 	}
 	return writer;

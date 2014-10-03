@@ -21,7 +21,8 @@ This file is a part of Mona.
 #include "Mona/WebSocket/WS.h"
 #include "Mona/WebSocket/WSUnmasking.h"
 #include "Mona/JSONReader.h"
-#include "Mona/RawReader.h"
+#include "Mona/StringReader.h"
+#include "Mona/MIME.h"
 
 
 using namespace std;
@@ -102,13 +103,17 @@ void WSSession::packetHandler(PacketReader& packet) {
 		
 		switch(type) {
 			case WS::TYPE_BINARY: {
-				RawReader reader(packet);
-				if(!peer.onMessage(ex, "onMessage",reader,WS::TYPE_BINARY))
-					ex.set(Exception::APPLICATION, "Method 'onMessage' not found on application ", peer.path);
+				StringReader reader(packet);
+				readMessage(ex, reader, WS::TYPE_BINARY);
 				break;
 			}
 			case WS::TYPE_TEXT: {
-				readMessage<JSONReader>(ex, packet);
+				unique_ptr<DataReader> pReader;
+				if (!MIME::CreateDataReader("json", packet, invoker.poolBuffers, pReader)) {
+					pReader.reset(new StringReader(packet));
+					readMessage(ex,*pReader, WS::TYPE_BINARY);
+				} else
+					readMessage(ex,*pReader);
 				break;
 			}
 			case WS::TYPE_CLOSE:
@@ -138,6 +143,69 @@ void WSSession::packetHandler(PacketReader& packet) {
 		kill();
 	else
 		_writer.flush();
+}
+
+
+void WSSession::readMessage(Exception& ex, DataReader& reader, UInt8 responseType) {
+
+	std::string name("onMessage");
+	
+	if (typeid(reader).name() != typeid(StringReader).name() && reader.readString(name)) {
+
+		if(name=="__publish") {
+			if(!reader.readString(name)) {
+				ex.set(Exception::PROTOCOL, "__publish method takes a stream name in first parameter",WS::CODE_MALFORMED_PAYLOAD);
+				return;
+			}
+			if(_pPublication)
+				invoker.unpublish(peer,_pPublication->name());
+			Publication::Type type(Publication::LIVE);
+			std::string mode;
+			if (reader.readString(mode)) {
+				if(String::ICompare(mode,"record") == 0)
+						type = Publication::RECORD;
+			}
+			_pPublication = invoker.publish(ex, peer,name,type);
+			return;
+
+		}
+		
+		if(name=="__play") {
+			if(!reader.readString(name)) {
+				ex.set(Exception::PROTOCOL, "__play method takes a stream name in first parameter",WS::CODE_MALFORMED_PAYLOAD);
+				return;
+			}	
+			closeSusbcription();
+			_pListener = invoker.subscribe(ex, peer,name,_writer);
+			return;
+		}
+		
+		if (name == "__closePublish") {
+			closePublication();
+			return;
+		}
+
+		if (name == "__closePlay") {
+			closeSusbcription();
+			return;
+		}
+
+		if (name == "__close") {
+			closePublication();
+			closeSusbcription();
+			return;
+		}
+
+		if (_pPublication) {
+			reader.reset();
+			_pPublication->pushData(reader, peer.ping());
+			return;
+		}
+
+	}
+
+	if(!peer.onMessage(ex, name,reader,responseType))
+		ex.set(Exception::APPLICATION, "Method '",name,"' not found on application ", peer.path);
 }
 
 

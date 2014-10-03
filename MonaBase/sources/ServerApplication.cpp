@@ -202,15 +202,15 @@ void ServerApplication::defineOptions(Exception& ex,Options& options) {
 
 	options.add(ex, "name", "n", "Specify a display name for the service (only with /registerService).")
 		.argument("name")
-		.handler([this](Exception& ex,const string& value) { _displayName = value; });
+		.handler([this](Exception& ex, const string& value) { _displayName = value; return true; });
 
 	options.add(ex, "description", "d", "Specify a description for the service (only with /registerService).")
 		.argument("text")
-		.handler([this](Exception& ex, const string& value) { _description = value; });
+		.handler([this](Exception& ex, const string& value) { _description = value; return true; });
 
 	options.add(ex, "startup", "s", "Specify the startup mode for the service (only with /registerService).")
 		.argument("automatic|manual")
-		.handler([this](Exception& ex, const string& value) {_startup = String::ICompare(value, "auto", 4) == 0 ? "auto" : "manual"; });
+		.handler([this](Exception& ex, const string& value) {_startup = String::ICompare(value, "auto", 4) == 0 ? "auto" : "manual"; return true; });
 
 	Application::defineOptions(ex, options);
 }
@@ -302,11 +302,11 @@ void ServerApplication::beDaemon() {
 
 void ServerApplication::defineOptions(Exception& ex, Options& options) {
     options.add(ex, "daemon", "d", "Run application as a daemon.")
-        .handler([this](Exception& ex, const string& value) { setBool("application.runAsDaemon", true); });
+        .handler([this](Exception& ex, const string& value) { setBool("application.runAsDaemon", true); return true; });
 
     options.add(ex, "pidfile", "p", "Write the process ID of the application to given file.")
 		.argument("path")
-        .handler([this](Exception& ex, const string& value) { handlePidFile(ex, value); } );
+        .handler([this](Exception& ex, const string& value) { handlePidFile(ex, value); return true; } );
 
     Application::defineOptions(ex, options);
 }

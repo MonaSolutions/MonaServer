@@ -27,7 +27,7 @@ This file is a part of Mona.
 namespace Mona {
 
 namespace Events {
-	struct OnChange : Event<void(const std::string&,const char*)> {};
+	struct OnChange : Event<void(const char* key, const char* value)> {};
 	struct OnClear : Event<void()> {};
 };
 
@@ -37,11 +37,14 @@ class Parameters : public virtual Object,
 public:
 
 	/*! Return false if key doesn't exist (and don't change 'value'), otherwise return true and assign string 'value' */
-	bool getString(const std::string& key, std::string& value) const;
+	bool getString(const std::string& key, std::string& value) const { return getString(key.c_str(), value); }
+	bool getString(const char* key, std::string& value) const;
 
 	/*! Return false if key doesn't exist or if it's not a numeric type, otherwise return true and assign numeric 'value' */
 	template<typename NumberType>
-	bool getNumber(const std::string& key, NumberType& value) const {
+	bool getNumber(const std::string& key, NumberType& value) const { return getNumber<NumberType>(key.c_str(), value); }
+	template<typename NumberType>
+	bool getNumber(const char* key, NumberType& value) const {
 		const  std::string* pTemp = getRaw(key);
 		if (!pTemp)
 			return false;
@@ -49,11 +52,15 @@ public:
 	}
 
 	/*! Return false if key doesn't exist or if it's not a boolean type, otherwise return true and assign boolean 'value' */
-	bool getBool(const std::string& key, bool& value) const;
+	bool getBool(const std::string& key, bool& value) const { return getBool(key.c_str(), value); }
+	bool getBool(const char* key, bool& value) const;
+
 
 	/*! A short version of getNumber with template default argument to get value as returned result */
 	template<typename NumberType,NumberType defaultValue=0>
-	NumberType getNumber(const std::string& key) const {
+	NumberType getNumber(const std::string& key) const { return getNumber<NumberType,defaultValue>(key.c_str()); }
+	template<typename NumberType,NumberType defaultValue=0>
+	NumberType getNumber(const char* key) const {
 		NumberType result(defaultValue);
 		getNumber(key,result);
 		return result;
@@ -61,31 +68,42 @@ public:
 
 	/*! A short version of getBool with template default argument to get value as returned result */
 	template<bool defaultValue=false>
-	bool getBool(const std::string& key) const {
+	bool getBool(const std::string& key) const { return getBool<defaultValue>(key.c_str()); }
+	template<bool defaultValue=false>
+	bool getBool(const char* key) const {
 		bool result(defaultValue);
 		getBool(key,result);
 		return result;
 	}
 
 
+	bool hasKey(const std::string& key) { return getRaw(key.c_str()) != NULL; }
+	bool hasKey(const char* key) { return getRaw(key) != NULL; }
 
-	bool hasKey(const std::string& key) { return getRaw(key) != NULL; }
-	void erase(const std::string& key) { setIntern(key, NULL); }
+	void erase(const std::string& key) { setIntern(key.c_str(),NULL); }
+	void erase(const char* key) { setIntern(key,NULL); }
 
-	void setString(const std::string& key, const std::string& value) {setIntern(key,value.c_str());}
-	void setString(const std::string& key, const char* value) {setIntern(key, value ? value : "");}
+	void setString(const std::string& key, const std::string& value) {setIntern(key.c_str(),value.c_str(),value.size());}
+	void setString(const char* key, const std::string& value) { setIntern(key,value.c_str(),value.size());}
+	void setString(const std::string& key, const char* value, std::size_t size = std::string::npos) { setIntern(key.c_str(), value ? value : String::Empty.c_str(),size); }
+	void setString(const char* key, const char* value, std::size_t size = std::string::npos) { setIntern(key, value ? value : String::Empty.c_str(),size);}
+
 	template<typename NumberType>
-	void setNumber(const std::string& key, NumberType value) {
+	void setNumber(const std::string& key, NumberType value) { setNumber<NumberType>(key.c_str(), value); }
+	template<typename NumberType>
+	void setNumber(const char* key, NumberType value) {
 		std::string val;
 		setString(key, String::Format(val, value));
 	}
-	void setBool(const std::string& key, bool value) { setIntern(key, value ? "true" : "false"); }
+
+	void setBool(const std::string& key, bool value) { setIntern(key.c_str(), value ? "true" : "false"); }
+	void setBool(const char* key, bool value) { setIntern(key, value ? "true" : "false"); }
 
 	typedef std::function<void(const std::string&, const std::string&)> ForEach;
 
-	UInt32  iterate(ForEach& function) const { return iteration(NULL, function); };
-	UInt32  iterate(const std::string& prefix, ForEach& function) const { return iteration(prefix.c_str(), function); };
-	UInt32  iterate(const char* prefix, ForEach& function) const { return iteration(prefix, function);};
+	UInt32  iterate(const ForEach& function) const { return iteration(NULL, function); };
+	UInt32  iterate(const std::string& prefix, const ForEach& function) const { return iteration(prefix.c_str(), function); };
+	UInt32  iterate(const char* prefix, const ForEach& function) const { return iteration(prefix, function);};
 	
 	
 	void clear() { clearAll(); OnClear::raise(); }
@@ -98,14 +116,14 @@ protected:
 
 private:
 	
-	void setIntern(const std::string& key, const char* value) { if (setRaw(key, value)) OnChange::raise(key,value); }
+	void setIntern(const char* key, const char* value, std::size_t size = std::string::npos);
 
-	virtual UInt32 iteration(const char* prefix,ForEach& function) const = 0;
+	virtual UInt32 iteration(const char* prefix,const ForEach& function) const = 0;
 
 	virtual void clearAll() = 0;
-	virtual const std::string* getRaw(const std::string& key) const = 0;
+	virtual const std::string* getRaw(const char* key) const = 0;
 	// if value==NULL the property should be removed, return true if something has changed
-	virtual bool setRaw(const std::string& key, const char* value) = 0;
+	virtual const std::string* setRaw(const char* key, const char* value, UInt32 size) = 0;
 };
 
 

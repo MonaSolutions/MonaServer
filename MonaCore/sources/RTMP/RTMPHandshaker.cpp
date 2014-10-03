@@ -57,7 +57,7 @@ bool RTMPHandshaker::compute(Exception& ex) {
 		//generate random data
 		_writer.writeRandom(1536);
 		// write data
-		_writer.writeRaw(packet.current(),packet.available());
+		_writer.write(packet.current(),packet.available());
 	} else {
 
 		/// Complexe Handshake ///

@@ -168,6 +168,7 @@
     <ClCompile Include="sources\UDPSocket.cpp" />
     <ClCompile Include="sources\WinRegistryKey.cpp" />
     <ClCompile Include="sources\WinService.cpp" />
+    <ClCompile Include="sources\XMLParser.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Mona\Binary.h" />
@@ -233,6 +234,7 @@
     <ClInclude Include="include\Mona\TCPServer.h" />
     <ClInclude Include="include\Mona\UDPSender.h" />
     <ClInclude Include="include\Mona\UDPSocket.h" />
+    <ClInclude Include="include\Mona\XMLParser.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -33,8 +33,8 @@ public:
 	JSONWriter		writer;
 	bool			packaged;
 
-	const UInt8*	data() { return writer.packet.data(); }
-	UInt32			size() { return writer.packet.size(); }
+	const UInt8*	data() const { return writer.packet.data(); }
+	UInt32			size() const { return writer.packet.size(); }
 
 };
 

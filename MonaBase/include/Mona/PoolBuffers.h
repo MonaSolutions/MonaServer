@@ -30,7 +30,7 @@ namespace Mona {
 class PoolBuffers : public virtual Object {
 	friend class PoolBuffer;
 public:
-	PoolBuffers(UInt16 maximumCapacity = 32768);
+	PoolBuffers(UInt32 maximumCapacity = 131072);
 	virtual ~PoolBuffers();
 
 	void clear() { clear(false); }
@@ -43,7 +43,7 @@ private:
 				
 	mutable std::deque<Buffer*>	_buffers;
 	mutable std::mutex			_mutex;
-	UInt16						_maximumCapacity;
+	UInt32						_maximumCapacity;
 	mutable Time				_lastEmptyTime;
 };
 

@@ -25,115 +25,44 @@ using namespace std;
 
 namespace Mona {
 
-PacketReader	DataReader::_PacketReaderNull;
+DataReaderNull  DataReader::Null;
 
-DataReader::DataReader() : packet(_PacketReaderNull),_pos(0) {
 
-}
-
-DataReader::DataReader(PacketReader& packet): packet(packet),_pos(packet.position()) {
+DataReader::DataReader() : packet(PacketReader::Null),_pos(0),_nextType(END) {
 
 }
 
+DataReader::DataReader(PacketReader& packet): packet(packet),_pos(packet.position()),_nextType(END) {
 
-bool DataReader::readMap(UInt32& size,bool& weakKeys) {
-	bool external;
-	string type;
-	return readObject(type,external);
 }
 
-void DataReader::next() {
-	DataWriterNull writerNull;
-	read(writerNull,1);
+bool DataReader::readNext(DataWriter& writer) {
+	UInt8 type(nextType());
+	_nextType = END; // to prevent recursive readNext call (and refresh followingType call)
+	if(type!=END)
+		return readOne(type, writer);
+	return false;
 }
 
 
-void DataReader::read(DataWriter& writer,UInt32 count) {
-	Type type;
-	bool all=count==0;
-	if(all)
-		count=1;
-	while(count>0 && (type = followingType())!=END) {
-		read(type,writer);
-		if(!all)
-			--count;
+UInt32 DataReader::read(DataWriter& writer, UInt32 count) {
+	bool all(count == END);
+	UInt32 results(0);
+	UInt8 type(END);
+	while ((all || count-- > 0) && readNext(writer))
+		++results;
+	return results;
+}
+
+bool DataReader::read(UInt8 type, DataWriter& writer) {
+	if (nextType() != type)
+		return false;
+	UInt32 count(read(writer, 1));
+	if (count>1) {
+		WARN(typeid(*this).name(), " has written many object for just one reading of type ",type);
+		return true;
 	}
+	return count==1;
 }
-
-void DataReader::read(Type type,DataWriter& writer) {
-	switch(type) {
-		case NIL:
-			readNull();
-			writer.writeNull();
-			break;
-		case BOOLEAN:
-			writer.writeBoolean(readBoolean());
-			break;
-		case NUMBER:
-			writer.writeNumber(readNumber());
-			break;
-		case STRING: {
-			string value;
-			writer.writeString(readString(value));
-			break;
-		}
-		case DATE: {
-			Date date;
-			writer.writeDate(readDate(date));
-			break;
-		}
-		case BYTES: {
-			UInt32 size;
-			const UInt8* bytes = readBytes(size);
-			writer.writeBytes(bytes,size);
-			break;
-		}
-		case ARRAY: {
-			UInt32 size;
-			if(readArray(size)) {
-				writer.beginArray(size);
-				string name;
-				while((type=readItem(name))!=END) {
-					if(!name.empty())
-						writer.writePropertyName(name);
-					read(type,writer);
-				}
-				writer.endArray();
-			}
-			break;
-		}
-		case MAP: {
-			bool weakKeys=false;
-			UInt32 size=0;
-			if(readMap(size,weakKeys)) {
-				writer.beginMap(size,weakKeys);
-				while((type=readKey())!=END) {
-					read(type,writer);
-					read(readValue(),writer);
-				}
-				writer.endMap();
-			}
-			break;
-		}
-		case OBJECT: {
-			string objectType;
-			bool external=false; // TODO what's happen when external==true (ArrayList in AMF for example)
-			if(readObject(objectType,external)) {
-				writer.beginObject(objectType,external);
-				string name;
-				while((type = readItem(name))!=END) {
-					writer.writePropertyName(name);
-					read(type,writer);
-				}
-				writer.endObject();
-			}
-			break;
-		}	 
-		default:
-			ERROR("Unknown DataReader ",Format<UInt8>("%.2x",(UInt8)type)," type");
-	}
-}
-
-
 
 } // namespace Mona

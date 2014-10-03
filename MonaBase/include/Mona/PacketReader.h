@@ -28,14 +28,11 @@ namespace Mona {
 
 class PacketReader: public BinaryReader, virtual NullableObject {
 public:
-	PacketReader(const UInt8* data, UInt32 size) : isNull(true),fragments(0),BinaryReader(data,size) {}
-	PacketReader() : fragments(0),isNull(true),BinaryReader(NULL,0) {} // NULL
+	PacketReader(const UInt8* data, UInt32 size) : BinaryReader(data,size) {}
 
-	operator bool() const { return !isNull; }
+	operator bool() const { return !data(); }
 
-	const UInt32	fragments;
-private:
-	bool isNull;
+	static PacketReader Null;
 };
 
 

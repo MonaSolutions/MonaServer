@@ -39,7 +39,7 @@ public:
 	UInt32 bufferTime() const { return _bufferTime; }
 
 	// return flase if writer is closed!
-	bool		 process(AMF::ContentType type,UInt32 time,PacketReader& packet,FlashWriter& writer,UInt32 numberLostFragments=0);
+	bool		 process(AMF::ContentType type,UInt32 time,PacketReader& packet,FlashWriter& writer,double lostRate=0);
 	virtual void flush();
 
 
@@ -55,9 +55,9 @@ private:
 
 	virtual void	messageHandler(const std::string& name, AMFReader& message, FlashWriter& writer);
 	virtual void	rawHandler(UInt8 type, PacketReader& data, FlashWriter& writer);
-	virtual void	dataHandler(DataReader& data, UInt32 numberLostFragments);
-	virtual void	audioHandler(UInt32 time, PacketReader& packet, UInt32 numberLostFragments);
-	virtual void	videoHandler(UInt32 time,PacketReader& packet, UInt32 numberLostFragments);
+	virtual void	dataHandler(DataReader& data, double lostRate);
+	virtual void	audioHandler(UInt32 time, PacketReader& packet, double lostRate);
+	virtual void	videoHandler(UInt32 time,PacketReader& packet, double lostRate);
 
 	Publication*	_pPublication;
 	Listener*		_pListener;

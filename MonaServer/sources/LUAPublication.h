@@ -42,10 +42,39 @@ public:
 	static int Set(lua_State* pState);
 
 	
-protected:
+private:
+	
 	static int PushVideo(lua_State *pState);
 	static int PushAudio(lua_State *pState);
-	static int PushData(lua_State *pState);
+	static int PushAMF0Data(lua_State *pState);
 	static int Flush(lua_State *pState);
 	static int Close(lua_State *pState);
+	static int WriteProperties(lua_State *pState);
+
+	template<typename DataReaderType>
+	static int	PushData(lua_State *pState) {
+		SCRIPT_CALLBACK(Mona::Publication, publication)
+			if (publication.running()) {
+				SCRIPT_READ_BINARY(data,size)
+				Mona::PacketReader packet(data, size);
+				DataReaderType reader(packet);
+				publication.pushData(reader);
+			} else
+				SCRIPT_ERROR("No data can be pushed on ", publication.name(), " publication stopped")
+		SCRIPT_CALLBACK_RETURN
+	}
+
+	template<typename DataReaderType>
+	static int	PushDataWithBuffers(lua_State *pState) {
+		SCRIPT_CALLBACK(Mona::Publication, publication)
+			if (publication.running()) {
+				SCRIPT_READ_BINARY(data,size)
+				Mona::PacketReader packet(data, size);
+				DataReaderType reader(packet,publication.poolBuffers);
+				publication.pushData(reader);
+			} else
+				SCRIPT_ERROR("No data can be pushed on ", publication.name(), " publication stopped")
+		SCRIPT_CALLBACK_RETURN
+	}
+
 };

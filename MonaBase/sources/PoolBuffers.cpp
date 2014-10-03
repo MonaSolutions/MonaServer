@@ -27,9 +27,9 @@ using namespace std;
 
 namespace Mona {
 
-PoolBuffers::PoolBuffers(UInt16 maximumCapacity) : _maximumCapacity(maximumCapacity) {
+PoolBuffers::PoolBuffers(UInt32 maximumCapacity) : _maximumCapacity(maximumCapacity) {
 	// at least one buffer
-	_buffers.emplace_back(new Buffer(0));
+	_buffers.emplace_back(new Buffer());
 }
 
 PoolBuffers::~PoolBuffers() {
@@ -43,7 +43,7 @@ void PoolBuffers::clear(bool deleting) {
 	_buffers.clear();
 	// at least one buffer
 	if (!deleting)
-		_buffers.emplace_back(new Buffer(0));
+		_buffers.emplace_back(new Buffer());
 }
 
 // static atomic_int n;
@@ -60,7 +60,7 @@ Buffer* PoolBuffers::beginBuffer(UInt32 size) const {
 		_buffers.pop_front();
 		// at least one buffer
 		if (_buffers.empty()) {
-			_buffers.emplace_back(new Buffer(0));
+			_buffers.emplace_back(new Buffer());
 			_lastEmptyTime.update();
 		}
 	}

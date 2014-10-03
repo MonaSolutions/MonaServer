@@ -20,23 +20,22 @@ This file is a part of Mona.
 #pragma once
 
 #include "Mona/Mona.h"
-#include <map>
+#include "Mona/Binary.h"
 
 namespace Mona {
 
-class Buffer : virtual NullableObject {
+class Buffer : public Binary, virtual public NullableObject {
 public:
-	Buffer(UInt32 size = 0) : _offset(0),_capacity(size==0 ? 64 : size), _size(size) {_data = _buffer = new UInt8[_capacity]();}
+	Buffer() : _offset(0),_capacity(32), _size(0) {_data = _buffer = new UInt8[_capacity]();}
+	Buffer(UInt32 size) : _offset(0),_capacity(size), _size(size) {_data = _buffer = new UInt8[_capacity]();}
 	Buffer(UInt8* buffer,UInt32 size) : _offset(0),_buffer(NULL),_data(buffer),_capacity(size), _size(size) {}
 	virtual ~Buffer() { if (_buffer) delete [] _buffer; }
-
-	const UInt8		operator[](UInt32 index) const { return _data[index >= _size ? (_size-1) : index]; }
-	UInt8&			operator[](UInt32 index) { return _data[index >= _size ? (_size-1) : index]; }
 
 	void			clip(UInt32 offset);
 	bool			resize(UInt32 size, bool preserveContent=false);
 	void			clear();
 
+	// beware, data() can be null
 	UInt8*			data() { return _data; }
 	const UInt8*	data() const { return _data; }
 	UInt32			size() const { return _size; }

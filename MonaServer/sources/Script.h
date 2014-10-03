@@ -19,8 +19,6 @@ This file is a part of Mona.
 
 #pragma once
 
-#include "Mona/DataReader.h"
-#include "Mona/DataWriter.h"
 #include "Mona/Logs.h"
 #include <map>
 
@@ -45,8 +43,8 @@ extern "C" {
 #define SCRIPT_DEBUG(...)	SCRIPT_LOG(Mona::Logger::LEVEL_DEBUG,__FILE__,__LINE__, true, __VA_ARGS__)
 #define SCRIPT_TRACE(...)	SCRIPT_LOG(Mona::Logger::LEVEL_TRACE,__FILE__,__LINE__, true, __VA_ARGS__)
 
-#define SCRIPT_CALLBACK(TYPE,OBJ)								{int __args=1;lua_State* __pState = pState; bool __thisIsConst=false; TYPE* pObj = Script::ToObject<TYPE>(__pState,__thisIsConst,1,true);if(!pObj) return 0; TYPE& OBJ = *pObj;int __results=lua_gettop(__pState); int __top(LUA_NOREF); int __reference(LUA_NOREF);
-#define SCRIPT_CALLBACK_TRY(TYPE,OBJ)							{int __args=1;lua_State* __pState = pState; bool __thisIsConst=false; TYPE* pObj = Script::ToObject<TYPE>(__pState,__thisIsConst,1,true);if(!pObj) return 0; TYPE& OBJ = *pObj;int __results=lua_gettop(__pState); int __top(LUA_NOREF); int __reference(LUA_NOREF); bool __canRaise(SCRIPT_NEXT_TYPE == LUA_TFUNCTION); if(__canRaise) SCRIPT_READ_NEXT;
+#define SCRIPT_CALLBACK(TYPE,OBJ)								{int __args=1;lua_State* __pState = pState; bool __thisIsConst=false; TYPE* pObj = Script::ToObject<TYPE>(__pState,__thisIsConst,1,true);if(!pObj) return 0; TYPE& OBJ = *pObj;int __results=lua_gettop(__pState); int __top(LUA_NOREF); 
+#define SCRIPT_CALLBACK_TRY(TYPE,OBJ)							{int __args=1;lua_State* __pState = pState; bool __thisIsConst=false; TYPE* pObj = Script::ToObject<TYPE>(__pState,__thisIsConst,1,true);if(!pObj) return 0; TYPE& OBJ = *pObj;int __results=lua_gettop(__pState); int __top(LUA_NOREF); bool __canRaise(SCRIPT_NEXT_TYPE == LUA_TFUNCTION); if(__canRaise) ++__args;
 
 #define SCRIPT_CALLBACK_NOTCONST_CHECK							{ if(__thisIsConst) {SCRIPT_ERROR("const object can't call this method") return 0;} }
 #define SCRIPT_CALLBACK_FIX_INDEX								{ lua_pushvalue(__pState,2); lua_pushvalue(__pState, -2); lua_rawset(__pState, 1);}
@@ -55,9 +53,16 @@ extern "C" {
 #define SCRIPT_CALLBACK_RETURN									__results= lua_gettop(__pState)-__results; return (__results>=0 ? __results : 0);}
 
 
-#define SCRIPT_BEGIN(STATE)										if(lua_State* __pState = STATE) { const char* __error=NULL; int __top(LUA_NOREF);
+#define SCRIPT_BEGIN(STATE)										if(lua_State* __pState = STATE) { int __top(LUA_NOREF);
 
-#define SCRIPT_WRITE_DATA(READER,COUNT)							Script::WriteData(__pState,READER,__reference,COUNT);
+#define SCRIPT_MEMBER_FUNCTION_BEGIN(TYPE,OBJ,MEMBER)			if(Script::FromObject<TYPE>(__pState,OBJ)) { lua_pushstring(__pState, MEMBER); lua_rawget(__pState,-2); lua_insert(__pState,-2); if(!lua_isfunction(__pState,-2)) lua_pop(__pState,2); else { int __top=lua_gettop(__pState)-1; const char* __name = #TYPE"."#MEMBER;
+#define SCRIPT_FUNCTION_BEGIN(NAME,REFERENCE)					{ if(REFERENCE==LUA_NOREF) { if(__top==LUA_NOREF) lua_pushvalue(__pState, LUA_ENVIRONINDEX); else lua_getfenv(__pState,lua_gettop(__pState)-__top-2); } else lua_rawgeti(__pState, LUA_REGISTRYINDEX, REFERENCE); lua_getfield(__pState,lua_istable(__pState,-1) ? -1 : LUA_GLOBALSINDEX,NAME); lua_replace(__pState,-2); if(!lua_isfunction(__pState,-1)) lua_pop(__pState,1); else { int __top=lua_gettop(__pState); const char* __name = NAME;
+#define SCRIPT_FUNCTION_CALL_WITHOUT_LOG						const char* __error=NULL; if(lua_pcall(__pState,lua_gettop(__pState)-__top,LUA_MULTRET,0)) { __error = lua_tostring(__pState,-1); lua_pop(__pState,1); } --__top; int __results=lua_gettop(__pState); int __args=__top;
+#define SCRIPT_FUNCTION_CALL									const char* __error=NULL; if(lua_pcall(__pState,lua_gettop(__pState)-__top,LUA_MULTRET,0)) SCRIPT_ERROR(__error = Script::LastError(__pState)); --__top; int __results=lua_gettop(__pState); int __args=__top;
+#define SCRIPT_FUNCTION_NULL_CALL								lua_pop(__pState,lua_gettop(__pState)-__top+1);--__top;int __results=lua_gettop(__pState);int __args=__top;
+#define SCRIPT_FUNCTION_ERROR									__error
+#define SCRIPT_FUNCTION_END										lua_pop(__pState,__results-__top);__args = __results-__args; if(__args>0) SCRIPT_WARN(__args," arguments not required on '",__name,"' results") else if(__args<0) SCRIPT_WARN(-__args," missing arguments on '",__name,"' results") } }
+
 #define SCRIPT_WRITE_STRING(VALUE)								lua_pushstring(__pState,VALUE);
 #define SCRIPT_WRITE_BINARY(VALUE,SIZE)							lua_pushlstring(__pState,(const char*)VALUE,SIZE);
 #define SCRIPT_WRITE_BOOL(VALUE)								lua_pushboolean(__pState,VALUE);
@@ -66,27 +71,17 @@ extern "C" {
 #define SCRIPT_WRITE_INT(VALUE)									lua_pushinteger(__pState,(lua_Integer)VALUE);
 #define SCRIPT_WRITE_NIL										lua_pushnil(__pState);
 
-#define SCRIPT_LAST_ERROR										__error
+#define SCRIPT_READ_AVAILABLE									(__results-__args)
+#define SCRIPT_READ_NEXT(COUNT)									(__args+=COUNT, __args = (__args>__results) ? __results : __args)
+#define SCRIPT_NEXT_TYPE										(SCRIPT_READ_AVAILABLE ? lua_type(__pState,__args+1) : LUA_TNONE)
 
-#define SCRIPT_MEMBER_FUNCTION_BEGIN(TYPE,OBJ,MEMBER)			if(Script::FromObject<TYPE>(__pState,OBJ)) { lua_pushstring(__pState, MEMBER); lua_rawget(__pState,-2); lua_insert(__pState,-2); if(!lua_isfunction(__pState,-2)) lua_pop(__pState,2); else { int __top=lua_gettop(__pState)-1; const char* __name = #TYPE"."#MEMBER; int __reference(LUA_NOREF);
-#define SCRIPT_MEMBER_FUNCTION_WITH_OBJHANDLE_BEGIN(TYPE,OBJ,MEMBER,OBJHANDLE)			if(Script::FromObject<TYPE>(__pState,OBJ)) { {OBJHANDLE} lua_pushliteral(__pState,MEMBER); lua_rawget(__pState,-2); lua_insert(__pState,-2); if(!lua_isfunction(__pState,-2)) lua_pop(__pState,2); else { int __top=lua_gettop(__pState)-1; const char* __name = #TYPE"."#MEMBER; int __reference(LUA_NOREF);
-#define SCRIPT_FUNCTION_BEGIN(NAME,REFERENCE)					{ if(REFERENCE==LUA_NOREF) { if(__top==LUA_NOREF) lua_pushvalue(__pState, LUA_ENVIRONINDEX); else lua_getfenv(__pState,lua_gettop(__pState)-__top-2); } else lua_rawgeti(__pState, LUA_REGISTRYINDEX, REFERENCE); lua_getfield(__pState,lua_istable(__pState,-1) ? -1 : LUA_GLOBALSINDEX,NAME); lua_replace(__pState,-2); if(!lua_isfunction(__pState,-1)) lua_pop(__pState,1); else { int __top=lua_gettop(__pState); const char* __name = NAME; int __reference(REFERENCE);
-#define SCRIPT_FUNCTION_CALL_WITHOUT_LOG						if(lua_pcall(__pState,lua_gettop(__pState)-__top,LUA_MULTRET,0)!=0) { __error = lua_tostring(__pState,-1); lua_pop(__pState,1); } else {--__top;int __results=lua_gettop(__pState);int __args=__top;
-#define SCRIPT_FUNCTION_CALL									if(lua_pcall(__pState,lua_gettop(__pState)-__top,LUA_MULTRET,0)!=0) { SCRIPT_ERROR(__error = Script::LastError(__pState))} else {--__top;int __results=lua_gettop(__pState);int __args=__top;
-#define SCRIPT_FUNCTION_NULL_CALL								{ lua_pop(__pState,lua_gettop(__pState)-__top+1);--__top;int __results=lua_gettop(__pState);int __args=__top;
-#define SCRIPT_FUNCTION_END										lua_pop(__pState,__results-__top);__args = __results-__args; if(__args>0) SCRIPT_WARN(__args," arguments not required on '",__name,"' results") else if(__args<0) SCRIPT_WARN(-__args," missing arguments on '",__name,"' results") } } }
-
-#define SCRIPT_CAN_READ											((__results-__args)>0)
-#define SCRIPT_NEXT_TYPE										(SCRIPT_CAN_READ ? lua_type(__pState,__args+1) : LUA_TNONE)
-#define SCRIPT_READ_NIL											if(SCRIPT_CAN_READ) {__args++;};
+#define SCRIPT_READ_NIL											if(__args<__results) {++__args;};
 #define SCRIPT_READ_BOOL(DEFAULT)								((__results-(__args++))<=0 ? DEFAULT : (lua_toboolean(__pState,__args)==0 ? false : true))
 #define SCRIPT_READ_STRING(DEFAULT)								((__results-(__args++))<=0 ? DEFAULT : (lua_isstring(__pState,__args) ? lua_tostring(__pState,__args) : DEFAULT))
 #define SCRIPT_READ_BINARY(VALUE,SIZE)							Mona::UInt32 SIZE = 0;const Mona::UInt8* VALUE = NULL;if((__results-(__args++))>0 && lua_isstring(__pState,__args)) { VALUE = (const Mona::UInt8*)lua_tostring(__pState,__args);SIZE = lua_objlen(__pState,__args);}
 #define SCRIPT_READ_UINT(DEFAULT)								(Mona::UInt32)((__results-(__args++))<=0 ? DEFAULT : (lua_isnumber(__pState,__args) ? (Mona::UInt32)lua_tonumber(__pState,__args) : DEFAULT))
 #define SCRIPT_READ_INT(DEFAULT)								(Mona::Int32)((__results-(__args++))<=0 ? DEFAULT : (lua_isnumber(__pState,__args) ? (Mona::Int32)lua_tointeger(__pState,__args) : DEFAULT))
-#define SCRIPT_READ_DOUBLE(DEFAULT)								(double)((__results-(__args++))<=0 ? DEFAULT : (lua_isnumber(__pState,__args) ? lua_tonumber(__pState,__args) : DEFAULT))
-#define SCRIPT_READ_DATA(WRITER)								Script::ReadData(__pState,WRITER,__results-__args).endWrite(); __args=__results;
-#define SCRIPT_READ_NEXT										++__args
+#define SCRIPT_READ_DOUBLE(DEFAULT)								(double)((__results-(__args++))<=0 ? DEFAULT : (lua_isnumber(__pState,__args) ? lua_tonumber(__pState,__args) : DEFAULT))							
 
 #define SCRIPT_END												}
 
@@ -99,9 +94,6 @@ public:
 
 	static bool			ToRawId(const Mona::UInt8* data, Mona::UInt32& size);
 	static bool			ToId(const Mona::UInt8* data, Mona::UInt32& size);
-
-	static Mona::DataReader& WriteData(lua_State *pState,Mona::DataReader& reader,int reference,Mona::UInt32 count=0);
-	static Mona::DataWriter& ReadData(lua_State *pState,Mona::DataWriter& writer,Mona::UInt32 count);
 
 	static void			CloseState(lua_State* pState);
 	static lua_State*	CreateState();
@@ -196,10 +188,10 @@ public:
 	template<typename LUAItemType = Script,typename ObjectType>
 	static void InitCollectionParameters(lua_State* pState, ObjectType& object,const char* field, const Mona::Parameters& parameters) {
 		// index -1 must be the collector
-		Mona::Parameters::OnChange::Type* pOnChange = new Mona::Parameters::OnChange::Type([pState,&object,&parameters,field](const std::string& key, const char* value) {
+		Mona::Parameters::OnChange::Type* pOnChange = new Mona::Parameters::OnChange::Type([pState,&object,&parameters,field](const char* key, const char* value) {
 			if (Script::FromObject(pState, object)) {
 				Script::Collection(pState, -1, field);
-				lua_pushstring(pState, key.c_str());
+				lua_pushstring(pState, key);
 				if (value)
 					lua_pushstring(pState, value);
 				else
@@ -483,9 +475,6 @@ public:
 	static lua_Debug	LuaDebug;
 
 private:
-
-	static Mona::DataWriter&	ReadData(lua_State *pState,Mona::DataWriter& writer,Mona::UInt32 count,std::map<Mona::UInt64,Mona::UInt32>& references);
-	static Mona::DataReader&	WriteData(lua_State *pState,Mona::DataReader::Type type,Mona::DataReader& reader,int reference);
 
 	static const char*	ToPrint(lua_State* pState,std::string& out);
 	static std::string&	ToString(lua_State* pState, int index, std::string& out);

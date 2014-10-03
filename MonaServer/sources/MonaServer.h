@@ -75,20 +75,22 @@ private:
 	void					onJoinGroup(Mona::Client& client,Mona::Group& group);
 	void					onUnjoinGroup(Mona::Client& client,Mona::Group& group);
 
-	bool					onPublish(Mona::Client& client,const Mona::Publication& publication,std::string& error);
-	void					onUnpublish(Mona::Client& client,const Mona::Publication& publication);
+	bool					onPublish(Mona::Exception& ex,const Mona::Publication& publication, Mona::Client* pClient);
+	void					onUnpublish(const Mona::Publication& publication, Mona::Client* pClient);
 
-	void					onAudioPacket(Mona::Client& client, const Mona::Publication& publication, Mona::UInt32 time, Mona::PacketReader& packet);
-	void					onVideoPacket(Mona::Client& client, const Mona::Publication& publication, Mona::UInt32 time, Mona::PacketReader& packet);
-	void					onDataPacket(Mona::Client& client,const Mona::Publication& publication,Mona::DataReader& packet);
-	void					onFlushPackets(Mona::Client& client,const Mona::Publication& publication);
-
-	bool					onSubscribe(Mona::Client& client,const Mona::Listener& listener,std::string& error);
+	bool					onSubscribe(Mona::Exception& ex, Mona::Client& client,const Mona::Listener& listener);
 	void					onUnsubscribe(Mona::Client& client,const Mona::Listener& listener);
 
 	Servers::OnConnection::Type		onServerConnection;
 	Servers::OnMessage::Type		onServerMessage;
 	Servers::OnDisconnection::Type	onServerDisconnection;
+
+	Mona::Publication::OnData::Type			onPublicationData;
+	Mona::Publication::OnAudio::Type		onPublicationAudio;
+	Mona::Publication::OnVideo::Type		onPublicationVideo;
+	Mona::Publication::OnFlush::Type		onPublicationFlush;
+	Mona::Publication::OnProperties::Type	onPublicationProperties;
+
 
 	Parameters::ForEach			setLUAProperty;
 

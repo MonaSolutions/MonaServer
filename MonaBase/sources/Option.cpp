@@ -55,7 +55,7 @@ Option::Option(const char* fullName, const char* shortName, const string& descri
 	_argRequired(argRequired) {
 }
 
-Option& Option::handler(const function<void(Exception& ex,const string& value)>& function) {
+Option& Option::handler(const Handler& function) {
 	_handler = function;
 	return *this;
 }

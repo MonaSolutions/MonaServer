@@ -17,38 +17,40 @@ details (or else see http://www.gnu.org/licenses/).
 This file is a part of Mona.
 */
 
-#include "Mona/DataWriter.h"
+#include "Mona/QueryWriter.h"
+
 
 using namespace std;
 
 
 namespace Mona {
 
-void DataWriter::writeNullProperty(const string& name) {
-	writePropertyName(name);
-	writeNull();
-}
-void DataWriter::writeDateProperty(const string& name,const Date& date) {
-	writePropertyName(name);
-	writeDate(date);
-}
-void DataWriter::writeNumberProperty(const string& name,double value) {
-	writePropertyName(name);
-	writeNumber(value);
-}
-void DataWriter::writeBooleanProperty(const string& name,bool value) {
-	writePropertyName(name);
-	writeBoolean(value);
-}
-void DataWriter::writeStringProperty(const string& name,const string& value) {
-	writePropertyName(name);
-	writeString(value);
-}
-void DataWriter::clear() {
-	_lastReference=0;
-	packet.clear();
+const char* QueryWriter::query() const {
+	((BinaryWriter&)packet).write8(0);
+	const char* query(STR packet.data());
+	((BinaryWriter&)packet).clear(packet.size() - 1);
+	return query;
 }
 
+PacketWriter& QueryWriter::writer() {
+	if (_isProperty) {
+		packet.write("=");
+		_isProperty = false;
+	} else if (!_first)
+		packet.write("&");
+	else
+		_first = false;
+	return packet;
+}
+
+void QueryWriter::writePropertyName(const char* value) {
+	if (!_first)
+		packet.write("&"); 
+	else
+		_first = false;
+	Util::EncodeURI(value, packet);
+	_isProperty = true;
+}
 
 
 } // namespace Mona

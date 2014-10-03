@@ -309,8 +309,11 @@ public:
 				Net::SetException(ex, err," (length=",length,", flags=",flags,")");
 		}
 		if (rc >= 0) {
-			if (rc > 0)
-				_pSocket->OnSending::raise((UInt32)rc);
+			if (rc > 0) {
+				lock_guard<recursive_mutex>	lock(_mutexManaged);
+				if (_pSocket)
+					_pSocket->OnSending::raise((UInt32)rc);
+			}
 			lock_guard<mutex> lock(_mutexAsync);
 			_connecting = false;
 		}
@@ -363,8 +366,11 @@ public:
 				return 0;
 			Net::SetException(ex, err," (length=",length,", flags=",flags,", address=",address.toString(),")");
 		}
-		else if (rc > 0)
-			_pSocket->OnSending::raise((UInt32)rc);
+		else if (rc > 0) {
+			lock_guard<recursive_mutex>	lock(_mutexManaged);
+			if (_pSocket)
+				_pSocket->OnSending::raise((UInt32)rc);
+		}
 
 		return rc;
 	}

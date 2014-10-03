@@ -20,6 +20,7 @@ This file is a part of Mona.
 #include "LUABroadcaster.h"
 #include "LUAServer.h"
 #include "Servers.h"
+#include "ScriptReader.h"
 
 using namespace std;
 using namespace Mona;
@@ -68,7 +69,7 @@ int LUABroadcaster::Broadcast(lua_State* pState) {
 			ERROR("handler of one sending server message can't be null or equal to '.'")
 		} else {
 			AMFWriter writer(broadcaster.poolBuffers);
-			SCRIPT_READ_DATA(writer)
+			SCRIPT_READ_NEXT(ScriptReader(pState, SCRIPT_READ_AVAILABLE).read(writer));
 			broadcaster.broadcast(handler,writer.packet);
 		}
 	SCRIPT_CALLBACK_RETURN

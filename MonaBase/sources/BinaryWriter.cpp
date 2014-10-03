@@ -26,10 +26,6 @@ using namespace std;
 
 namespace Mona {
 
-BinaryWriter::BinaryWriter(BinaryWriter& other,UInt32 offset) : _flipBytes(other._flipBytes),_buffer((UInt8*)other.data()+offset,other.size()-offset) {
-	_buffer.resize(0,true);
-}
-
 
 BinaryWriter::BinaryWriter(UInt8* buffer, UInt32 size,Binary::Order byteOrder) : _buffer(buffer,size) {
 	_buffer.resize(0,true);
@@ -40,8 +36,19 @@ BinaryWriter::BinaryWriter(UInt8* buffer, UInt32 size,Binary::Order byteOrder) :
 #endif
 }
 
+
+BinaryWriter& BinaryWriter::write(const void* value, UInt32 size) {
+	Buffer& buffer = this->buffer();
+	UInt32 oldSize(buffer.size());
+	if(buffer.resize(size+oldSize, true))
+		memcpy(buffer.data()+oldSize,value,size);
+	else
+		memcpy(buffer.data()+oldSize,value,buffer.size()-oldSize);
+	return *this;
+}
+
 BinaryWriter& BinaryWriter::writeRandom(UInt32 count) {
-	for (UInt32 i = 0; i < count; ++i)
+	while(count--)
 		write8(Util::Random<UInt8>());
 	return *this;
 }
@@ -66,25 +73,25 @@ BinaryWriter& BinaryWriter::write7BitEncoded(UInt32 value) {
 BinaryWriter& BinaryWriter::write16(UInt16 value) {
 	if (_flipBytes)
 		value = Binary::Flip16(value);
-	return writeRaw((const UInt8*)&value, sizeof(value));
+	return write(&value, sizeof(value));
 }
 
 BinaryWriter& BinaryWriter::write24(UInt32 value) {
 	if (_flipBytes)
 		value = Binary::Flip24(value);
-	return writeRaw((const UInt8*)&value, 3);
+	return write(&value, 3);
 }
 
 BinaryWriter& BinaryWriter::write32(UInt32 value) {
 	if (_flipBytes)
 		value = Binary::Flip32(value);
-	return writeRaw((const UInt8*)&value, sizeof(value));
+	return write(&value, sizeof(value));
 }
 
 BinaryWriter& BinaryWriter::write64(UInt64 value) {
 	if (_flipBytes)
 		value = Binary::Flip64(value);
-	return writeRaw((const UInt8*)&value, sizeof(value));
+	return write(&value, sizeof(value));
 }
 
 BinaryWriter& BinaryWriter::write7BitValue(UInt32 value) {

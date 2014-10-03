@@ -20,31 +20,25 @@ This file is a part of Mona.
 #pragma once
 
 #include "Mona/Mona.h"
-#include "Mona/DataWriter.h"
+#include "Mona/DataReader.h"
+
 
 namespace Mona {
 
 
-class HTMLWriter : public DataWriter, public virtual Object {
+class StringReader : public DataReader, public virtual Object {
 public:
-	HTMLWriter(const PoolBuffers& buffers) : DataWriter(buffers) {}
+	StringReader(PacketReader& packet) : DataReader(packet) {}
+private:
+	UInt8 followingType() { return packet.available() ? STRING : END; }
 
-	void beginObject(const std::string& type = "", bool external = false) {}
-	void endObject() {}
+	bool readOne(UInt8 type, DataWriter& writer) {
+		// read/write all
+		writer.writeString(STR packet.current(),packet.available());
+		packet.next(packet.available());
+		return true;
+	}
 
-	void writePropertyName(const std::string& value) {}
-
-	void beginArray(UInt32 size) {}
-	void endArray() {}
-
-	void writeDate(const Date& date) {}
-	void writeNumber(double value) {}
-	void writeString(const std::string& value) { packet.writeRaw(value); }
-	void writeBoolean(bool value) {}
-	void writeNull() {}
-	void writeBytes(const UInt8* data,UInt32 size) {}
-
-	void	clear() {}
 };
 
 

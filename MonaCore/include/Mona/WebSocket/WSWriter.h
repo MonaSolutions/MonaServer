@@ -21,7 +21,6 @@ This file is a part of Mona.
 
 #include "Mona/Mona.h"
 #include "Mona/Writer.h"
-#include "Mona/JSONReader.h"
 #include "Mona/TCPSession.h"
 #include "Mona/WebSocket/WS.h"
 #include "Mona/WebSocket/WSSender.h"
@@ -37,7 +36,7 @@ public:
 	void			abort() { _senders.clear(); }
 	void			flush(bool full=false);
 
-	DataWriter&		writeInvocation(const std::string& name);
+	DataWriter&		writeInvocation(const char* name);
 	DataWriter&		writeMessage();
 	DataWriter&		writeResponse(UInt8 type);
 	void			writeRaw(const UInt8* data, UInt32 size) { write(WS::TYPE_TEXT, data, size); }
@@ -48,10 +47,8 @@ public:
 
 private:
 	void			pack();
-	void			createReader(PacketReader& reader, std::shared_ptr<DataReader>& pReader) { pReader.reset(new JSONReader(reader)); }
-	void			createWriter(std::shared_ptr<DataWriter>& pWriter) { pWriter.reset(new JSONWriter(_session.invoker.poolBuffers)); }
 
-	bool			writeMedia(MediaType type,UInt32 time,PacketReader& data,Parameters& properties);
+	bool			writeMedia(MediaType type,UInt32 time,PacketReader& data,const Parameters& properties);
 
 	void			write(UInt8 type,const UInt8* data,UInt32 size);
 

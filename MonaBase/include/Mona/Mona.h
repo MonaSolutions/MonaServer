@@ -26,6 +26,12 @@ This file is a part of Mona.
 
 /////  Usefull macros and patchs   //////
 
+#define BIN		(UInt8*)
+#define STR		(char*)
+
+// BEWARE, be sure that DATA[SIZE] exists! (if DATA must be a allocation of >= (SIZE+1))
+#define SCOPED_STRINGIFY(DATA,SIZE,INNER_CODE)	{ char& __end((char&)(DATA)[SIZE]); char __prev(__end); __end = 0; INNER_CODE; __end = __prev; }
+
 #define STRINGIZE(x) STRINGIZE2(x)
 #define STRINGIZE2(x) #x
 #define LINE_STRING STRINGIZE(__LINE__)
@@ -220,8 +226,6 @@ namespace Mona {
 void DetectMemoryLeak();
 
 
-
-
 ///// TYPES /////
 
 typedef int8_t			Int8;
@@ -261,6 +265,8 @@ public:
 	virtual operator bool() const = 0;
 };
 
+static UInt32 abs(double value) { return (UInt32)std::abs((long long int)value); }
+
 ////// ASCII ////////
 
 class ASCII : virtual Static {
@@ -276,7 +282,8 @@ public:
 		LOWER    = 0x0080,
 		UPPER    = 0x0100,
 		GRAPH    = 0x0200,
-		PRINT    = 0x0400
+		PRINT    = 0x0400,
+		XML		 = 0x0800
 	};
 
 	static UInt8 ToLower(char value) { return Is(value, UPPER) ? (value + 32) : value; }
@@ -300,8 +307,31 @@ static bool ispunct(char value) { return ASCII::Is(value,ASCII::PUNCT); }
 static bool isspace(char value) { return  ASCII::Is(value,ASCII::SPACE); }
 static bool isupper(char value) { return ASCII::Is(value,ASCII::UPPER); }
 static bool isxdigit(char value) { return ASCII::Is(value,ASCII::HEXDIGIT); }
+static bool isxml(char value) { return ASCII::Is(value,ASCII::XML); }
 static char tolower(char value) { return ASCII::ToLower(value); }
 static char toupper(char value) { return ASCII::ToUpper(value); }
+
+const char* strrpbrk(const char* value, const char* markers);
+
+template <typename BufferType>
+static BufferType& AppendData(BufferType& buffer, const void* data, UInt32 size) {
+	if (!buffer.data()) // to expect null writer 
+		buffer;
+	UInt32 oldSize(buffer.size());
+	buffer.resize(oldSize + size);
+	memcpy((UInt8*)buffer.data() + oldSize, data, size);
+	return buffer;
+}
+
+template <typename BufferType>
+static BufferType& AppendString(BufferType& buffer, const char* data) {
+	return AppendData<BufferType>(buffer,data,strlen(data));
+}
+
+template <typename BufferType>
+static BufferType& AppendString(BufferType& buffer, const std::string& data) {
+	return AppendData<BufferType>(buffer,data.data(), data.size());
+}
 
 
 

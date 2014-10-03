@@ -28,51 +28,36 @@ using namespace std;
 namespace Mona {
 
 
-HTTPHeaderReader::HTTPHeaderReader(vector<const char*>& headers): _bool(false),_date(0),_header(headers.begin()),_headers(headers) {
-}
+bool HTTPHeaderReader::readOne(UInt8 type, DataWriter& writer) {
 
-
-void HTTPHeaderReader::reset() {
-	_header = _headers.begin();
-	_value.clear();
-	_date.update(0);
-	_bool=false;
-}
-
-HTTPHeaderReader::Type HTTPHeaderReader::readItem(string& name) {
-	if (_header == _headers.end())
-		return END;
-
-	name.assign(*_header++);
-	if (_header == _headers.end())
-		return NIL;
-
-	_value.assign(*_header++);
-
-	if (String::ICompare(_value, "false") == 0) {
-		_bool = false;
-		return BOOLEAN;
+	writer.beginObject();
+	writer.writePropertyName(*_header);
+	++_header;
+	if (++_header == _headers.end() || String::ICompare(*_header,"null")==0)
+		writer.writeNull();
+	else {
+		if (String::ICompare(*_header, "false") == 0)
+			writer.writeBoolean(false);
+		else if (String::ICompare(*_header, "true") == 0)
+			writer.writeBoolean(true);
+		else {
+			Exception ex;
+			Date date;
+			if (date.update(ex, *_header)) {
+				if (ex)
+					WARN("HTTPHeaderReader date, ", ex.error())
+					writer.writeDate(date);
+			} else {
+				double number(0);
+				if (String::ToNumber(*_header, number))
+					writer.writeNumber(number);
+				else
+					writer.writeString(*_header,strlen(*_header));
+			}
+		}
 	}
-	if (String::ICompare(_value, "true") == 0) {
-		_bool = true;
-		return BOOLEAN;
-	}
-	if (String::ICompare(_value,"null")==0)
-		return NIL;
-	Exception ex;
-	_date.update(ex, _value);
-	if (!ex)
-		return DATE;
-	return STRING; // string or number are the same thing in LUA
-}
-
-
-double HTTPHeaderReader::readNumber() {
-	Exception ex;
-	double value  = String::ToNumber<double>(ex, _value);
-	if (ex)
-		ERROR("Not a number, ",ex.error());
-	return value;
+	writer.endObject();
+	return true;
 }
 
 

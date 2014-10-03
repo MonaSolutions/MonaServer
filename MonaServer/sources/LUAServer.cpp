@@ -18,6 +18,7 @@ This file is a part of Mona.
 */
 
 #include "LUAServer.h"
+#include "ScriptReader.h"
 
 using namespace std;
 using namespace Mona;
@@ -30,7 +31,7 @@ int LUAServer::Send(lua_State* pState) {
 			ERROR("Invalid '",handler,"' handler for the sending server message")
 		} else {
 			shared_ptr<ServerMessage> pMessage(new ServerMessage(handler,server.poolBuffers()));
-			SCRIPT_READ_DATA(*pMessage)
+			SCRIPT_READ_NEXT(ScriptReader(pState, SCRIPT_READ_AVAILABLE).read(*pMessage));
 			server.send(pMessage);
 		}
 	SCRIPT_CALLBACK_RETURN

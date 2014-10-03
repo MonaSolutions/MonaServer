@@ -77,7 +77,7 @@ void RTMFPWriter::clear() {
 		_messagesSent.pop_front();
 	}
 	if(_stage>0) {
-		createBufferedMessage(); // Send a MESSAGE_ABANDONMENT just in the case where the receiver has been created
+		createMessage(); // Send a MESSAGE_ABANDONMENT just in the case where the receiver has been created
 		flush();
 		_trigger.stop();
 	}
@@ -94,7 +94,7 @@ void RTMFPWriter::close(Int32 code) {
 	if(state()==CLOSED)
 		return;
 	if(_stage>0 || _messages.size()>0)
-		createBufferedMessage(); // Send a MESSAGE_END just in the case where the receiver has been created (or will be created)
+		createMessage(); // Send a MESSAGE_END just in the case where the receiver has been created (or will be created)
 	Writer::close(code);
 }
 
@@ -262,7 +262,7 @@ void RTMFPWriter::acknowledgment(PacketReader& packet) {
 			// Write packet
 			size-=3;  // type + timestamp removed, before the "writeMessage"
 			flush(_band.writeMessage(header ? 0x10 : 0x11,(UInt16)size)
-				,stage,flags,header,message.data()+fragment,contentSize);
+				,stage,flags,header,message,fragment,contentSize);
 			header=false;
 			--lostCount;
 			++lostStage;
@@ -272,10 +272,11 @@ void RTMFPWriter::acknowledgment(PacketReader& packet) {
 		if(message.fragments.empty()) {
 			if(message.repeatable)
 				--_repeatable;
-			if(_ackCount>0) {
-				_qos.add(_ackCount+_lostCount,_lostCount);
+			if(_ackCount || _lostCount) {
+				_qos.add(_lostCount / (_lostCount + _ackCount));
 				_ackCount=_lostCount=0;
 			}
+			
 			delete *it;
 			it=_messagesSent.erase(it);
 		} else
@@ -323,7 +324,7 @@ UInt32 RTMFPWriter::headerSize(UInt64 stage) { // max size header = 50
 }
 
 
-void RTMFPWriter::flush(BinaryWriter& writer,UInt64 stage,UInt8 flags,bool header,const UInt8* data,UInt16 size) {
+void RTMFPWriter::flush(BinaryWriter& writer,UInt64 stage,UInt8 flags,bool header,const RTMFPMessage& message, UInt32 offset, UInt16 size) {
 	if(_stageAck==0 && header)
 		flags |= MESSAGE_HEADER;
 	if(size==0)
@@ -342,7 +343,7 @@ void RTMFPWriter::flush(BinaryWriter& writer,UInt64 stage,UInt8 flags,bool heade
 
 		// signature
 		if(_stageAck==0) {
-			writer.writeString8(signature);
+			writer.write8(signature.size()).write(signature);
 			// No write this in the case where it's a new flow!
 			if(flowId>0) {
 				writer.write8(1+Util::Get7BitValueSize(flowId)); // following size
@@ -351,11 +352,23 @@ void RTMFPWriter::flush(BinaryWriter& writer,UInt64 stage,UInt8 flags,bool heade
 			}
 			writer.write8(0); // marker of end for this part
 		}
-
 	}
 
-	if (size > 0)
-		writer.writeRaw(data, size);
+	if (size == 0)
+		return;
+
+	if (offset < message.frontSize()) {
+		UInt8 count = message.frontSize()-offset;
+		if (size<count)
+			count = (UInt8)size;
+		writer.write(message.front()+offset,count);
+		size -= count;
+		if (size == 0)
+			return;
+		offset += count;
+	}
+
+	writer.write(message.body()+offset-message.frontSize(), size);
 }
 
 void RTMFPWriter::raiseMessage() {
@@ -418,7 +431,7 @@ void RTMFPWriter::raiseMessage() {
 			// Write packet
 			size-=3;  // type + timestamp removed, before the "writeMessage"
 			flush(_band.writeMessage(header ? 0x10 : 0x11,(UInt16)size)
-				,stage++,flags,header,message.data()+fragment,contentSize);
+				,stage++,flags,header,message,fragment,contentSize);
 			available -= contentSize;
 			header=false;
 		}
@@ -488,7 +501,7 @@ void RTMFPWriter::flush(bool full) {
 
 			// Write packet
 			size-=3; // type + timestamp removed, before the "writeMessage"
-			flush(_band.writeMessage(head ? 0x10 : 0x11,(UInt16)size,this),_stage,flags,head,message.data()+fragments,contentSize);
+			flush(_band.writeMessage(head ? 0x10 : 0x11,(UInt16)size,this),_stage,flags,head,message,fragments,contentSize);
 
 			
 			message.fragments[fragments] = _stage;
@@ -506,7 +519,7 @@ void RTMFPWriter::flush(bool full) {
 		_band.flush();
 }
 
-RTMFPMessageBuffered& RTMFPWriter::createBufferedMessage() {
+RTMFPMessageBuffered& RTMFPWriter::createMessage() {
 	if (state() == CLOSED || signature.empty() || _band.failed()) {// signature.empty() means that we are on the writer of FlowNull
 		static RTMFPMessageBuffered MessageNull;
 		return MessageNull;
@@ -519,42 +532,29 @@ RTMFPMessageBuffered& RTMFPWriter::createBufferedMessage() {
 AMFWriter& RTMFPWriter::write(AMF::ContentType type,UInt32 time,PacketReader* pPacket) {
 	if (type < AMF::AUDIO || type > AMF::VIDEO)
 		time = 0; // Because it can "dropped" the packet otherwise (like if the Writer was not reliable!)
-	if(pPacket && !reliable) {
-		UInt8 headerRequired(type==AMF::DATA ? 6 : 5);
-		if(pPacket->position()>=headerRequired) {
-			pPacket->reset(pPacket->position()-headerRequired);
-			BinaryWriter writer((UInt8*)pPacket->current(),headerRequired);
-			writer.write8(type);
-			writer.write32(time);
-			if(type==AMF::DATA)
-				writer.write8(0);
-			writeRaw(pPacket->current(),pPacket->available());
-            return AMFWriter::Null;
-		}
-		DEBUG("Written unbuffered impossible, it requires 6 head bytes available on MemoryReader given");
+	if(pPacket && !reliable && state()==OPENED && !_band.failed() && !signature.empty()) {
+		_messages.emplace_back(new RTMFPMessageUnbuffered(type,time,pPacket->current(),pPacket->available()));
+		flush();
+        return AMFWriter::Null;
 	}
-	
-	AMFWriter& amf = createBufferedMessage().writer();
-	BinaryWriter& packet = amf.packet;
-	packet.write8(type);
-	packet.write32(time);
+	AMFWriter& amf = createMessage().writer();
+	BinaryWriter& binary(amf.packet);
+	binary.write8(type).write32(time);
 	if(type==AMF::DATA)
-		packet.write8(0);
+		binary.write8(0);
 	if(pPacket)
-		packet.writeRaw(pPacket->current(),pPacket->available());
+		binary.write(pPacket->current(),pPacket->available());
 	return amf;
 }
 
 bool RTMFPWriter::writeMember(const Client& client) {
-	RTMFPMessageBuffered& message(createBufferedMessage());
-	message.writer().packet.write8(0x0b); // unknown
-	message.writer().packet.writeRaw(client.id,ID_SIZE);
+	createMessage().writer().packet.write8(0x0b).write(client.id,ID_SIZE); // 0x0b unknown
 	return true;
 }
 
 void RTMFPWriter::writeRaw(const UInt8* data,UInt32 size) {
 	if(reliable || state()==OPENING) {
-		createBufferedMessage().writer().packet.writeRaw(data,size);
+		createMessage().writer().packet.write(data,size);
 		return;
 	}
 	if(state()==CLOSED || signature.empty() || _band.failed()) // signature.empty() means that we are on the writer of FlowNull
@@ -563,14 +563,13 @@ void RTMFPWriter::writeRaw(const UInt8* data,UInt32 size) {
 	flush();
 }
 
-bool RTMFPWriter::writeMedia(MediaType type,UInt32 time,PacketReader& packet,Parameters& properties) {
+bool RTMFPWriter::writeMedia(MediaType type,UInt32 time,PacketReader& packet,const Parameters& properties) {
 	if(type==INIT) {
 		// write bounds
 		AMFWriter& writer = write(AMF::RAW);
 		writer.packet.write16(0x22);
 		DEBUG("Writing ",id," bound ",_boundCount);
-		writer.packet.write32(_boundCount);
-		writer.packet.write32(3); // 3 tracks!
+		writer.packet.write32(_boundCount).write32(3); // 3 tracks!
 		_reseted=false;
 		++_boundCount;
 	}

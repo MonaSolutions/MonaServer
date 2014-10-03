@@ -19,11 +19,11 @@
     <Filter Include="IO">
       <UniqueIdentifier>{b8ef9199-65ab-4084-aec1-dacb203c793c}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Crypto">
-      <UniqueIdentifier>{835ec284-f947-44d1-8dfc-2022d87d1c83}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Time">
       <UniqueIdentifier>{f8abdd34-07f1-42b7-a62f-5840cdcacea3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Application\Crypto">
+      <UniqueIdentifier>{835ec284-f947-44d1-8dfc-2022d87d1c83}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -143,10 +143,10 @@
       <Filter>IO</Filter>
     </ClCompile>
     <ClCompile Include="sources\DiffieHellman.cpp">
-      <Filter>Crypto</Filter>
+      <Filter>Application\Crypto</Filter>
     </ClCompile>
     <ClCompile Include="sources\Crypto.cpp">
-      <Filter>Crypto</Filter>
+      <Filter>Application\Crypto</Filter>
     </ClCompile>
     <ClCompile Include="sources\Process.cpp">
       <Filter>Util</Filter>
@@ -171,6 +171,9 @@
     </ClCompile>
     <ClCompile Include="sources\Path.cpp">
       <Filter>File</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\XMLParser.cpp">
+      <Filter>Util</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -326,10 +329,10 @@
       <Filter>IO</Filter>
     </ClInclude>
     <ClInclude Include="include\Mona\DiffieHellman.h">
-      <Filter>Crypto</Filter>
+      <Filter>Application\Crypto</Filter>
     </ClInclude>
     <ClInclude Include="include\Mona\Crypto.h">
-      <Filter>Crypto</Filter>
+      <Filter>Application\Crypto</Filter>
     </ClInclude>
     <ClInclude Include="include\Mona\SubstreamMap.h">
       <Filter>IO</Filter>
@@ -360,6 +363,9 @@
     </ClInclude>
     <ClInclude Include="include\Mona\Path.h">
       <Filter>File</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\XMLParser.h">
+      <Filter>Util</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

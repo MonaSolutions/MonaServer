@@ -29,6 +29,11 @@ class ServerMona : public ServerApplication  {
 
 private:
 
+	void defineOptions(Exception& ex, Options& options) {
+		options.acceptUnknownOption = true;
+		ServerApplication::defineOptions(ex, options);
+	}
+
 ///// MAIN
 	int main(Mona::TerminateSignal& terminateSignal) {
 

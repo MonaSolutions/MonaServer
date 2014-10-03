@@ -29,8 +29,8 @@ using namespace std;
 namespace Mona {
 
 ICE::ICE(const Peer& initiator,const Peer& remote,const RelayServer& relayer) : _first(true),mediaIndex(0),_relayer(relayer),_type(INITIATOR),_publicHost(initiator.address.host().toString()),_initiator(initiator),_remote(remote) {
-	SocketAddress::Split(remote.serverAddress, _serverRemoteHost);
-	SocketAddress::Split(initiator.serverAddress, _serverInitiatorHost);
+	SocketAddress::SplitLiteral(remote.serverAddress, _serverRemoteHost);
+	SocketAddress::SplitLiteral(initiator.serverAddress, _serverInitiatorHost);
 }
 
 ICE::~ICE() {
@@ -89,45 +89,62 @@ void ICE::fromSDPCandidate(const string& candidate,SDPCandidate& publicCandidate
 		end = &candidate[candidate.size()-2];
 	} while(memcmp(end,"\\r",2)==0 || memcmp(end,"\\n",2)==0);
 
-	vector<string> fields;
-	String::Split(candidate, " ", fields, String::SPLIT_IGNORE_EMPTY | String::SPLIT_TRIM);
-	UInt8 index=0;
+	string& content(publicCandidate.candidate);
+	UInt32 compoment(0);
 	string port;
-	const string* pHost=NULL;
 	bool isTCP=false;
-	string& content=publicCandidate.candidate;
-	UInt32 compoment=0;
-	for(string& field : fields) {
+	string host;
+
+	String::ForEach forEach([this,&content,&isTCP,&compoment,&port,&host](UInt32 index, const char* value) {
 		if(index>0)
 			content.append(" ");
-		if(++index==2) {
-			Exception ex;
-			compoment = String::ToNumber<UInt32>(ex, field);
-			content += field;
-		} else if (index == 3 && String::ICompare(field, "tcp") == 0) {
-			isTCP = true;
-			content += field;
-		} else if(index==4)
-			content += "1845501695";
-		else if(index==5) {
-			content += _publicHost; // address
-			pHost = &field;
-		} else if(index==6) {
-			content += field;
-			port = field; // port	
-		} else if(index==8 && String::ICompare(field,"host")!=0) {
-			content.clear();
-			return;
-		} else
-			content += field;
-	}
+
+		switch (index) {
+			case 2:
+				compoment = String::ToNumber(value,compoment);
+				content += value;
+				break;
+			case 3:
+				if (String::ICompare(value, "tcp") == 0)
+					isTCP = true;
+				content += value;
+				break;
+			case 4:
+				content += "1845501695";
+				break;
+			case 5:
+				content += _publicHost; // address
+				host = value;
+				break;
+			case 6:
+				content += value; // address
+				port = value; // port
+				break;
+			case 8:
+				if (String::ICompare(value, "host") != 0) {
+					content.clear();
+					return false;
+				}
+				content += value;
+				break;
+			default:
+				content += value;
+				break;
+		}
+
+		return true;
+	});
+
+	if (String::Split(candidate, " ", forEach, String::SPLIT_IGNORE_EMPTY | String::SPLIT_TRIM) == string::npos)
+		return;
+
 	if(!content.empty()) {
 		//content.clear();
 		content.append("\\r\\n");
 		publicCandidate.mLineIndex = mediaIndex;
 	}
 
-	DEBUG(_type==INITIATOR ? "Offer" : "Anwser"," candidate ",mediaIndex,"[",compoment,"] ",isTCP ? "TCP" : "UDP"," ",pHost ? pHost->c_str() : "?",":",port)
+	DEBUG(_type==INITIATOR ? "Offer" : "Anwser"," candidate ",mediaIndex,"[",compoment,"] ",isTCP ? "TCP" : "UDP"," ",host.empty() ? "?" : host,":",port)
 
 	if(relayed && !isTCP && !port.empty()) {
 		// informations usefull just for relay line!
@@ -168,7 +185,7 @@ void ICE::fromSDPCandidate(const string& candidate,SDPCandidate& publicCandidate
 	}
 }
 
-
+/* TODO (remplacer par un SDPReader ou ICEReader?)
 bool ICE::ProcessSDPPacket(DataReader& packet,Peer& current,Writer& currentWriter,Peer& remote,Writer& remoteWriter) {
 	if(packet.followingType()!=DataReader::STRING) {
 		packet.reset();
@@ -216,7 +233,7 @@ bool ICE::ProcessSDPPacket(DataReader& packet,Peer& current,Writer& currentWrite
 					found = candidate.candidate.find("192.168.56.1");
 				if(found!=string::npos)
 					writer.writeString(candidate.candidate.replace(found,12,"192.168.1.17"));
-				else*/
+				else*//*
 				writer.writeString(candidate.candidate);
 				continue;
 			} else if(type!=DataReader::STRING || prop!="sdp") {
@@ -235,11 +252,11 @@ bool ICE::ProcessSDPPacket(DataReader& packet,Peer& current,Writer& currentWrite
 				if(pos != lastPos) {
 					const string line(content.data()+lastPos,pos-lastPos);
 					ice.fromSDPLine(line,candidate,relayCurrentCandidates,relayRemoteCandidates);
-					/* To test without host candidates
+					*//* To test without host candidates
 					if(line.compare(0,12,"a=candidate:")==0) {
 						content.erase(lastPos,pos-lastPos+4);
 						pos -= (line.size()+4);
-					}*/
+					}*//*
 					if(!candidate.candidate.empty()) {
 						content.insert(lastPos,candidate.candidate);
 						pos += candidate.candidate.size();
@@ -273,7 +290,7 @@ bool ICE::ProcessSDPPacket(DataReader& packet,Peer& current,Writer& currentWrite
 
 	return true;
 }
-
+*/
 
 
 } // namespace Mona

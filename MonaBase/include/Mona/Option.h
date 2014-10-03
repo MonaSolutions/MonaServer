@@ -38,8 +38,9 @@ public:
 	Option(const char* fullName, const char* shortName, const std::string& description, bool required, const std::string& argName, bool argRequired = false);
 		/// Creates an option with the given properties.
 
+	typedef std::function<bool(Exception& ex, const std::string& value)> Handler;
 
-	Option& handler(const std::function<void(Exception& ex,const std::string& value)>& function);
+	Option& handler(const Handler& function);
 		/// Sets the handler option
 	
 	Option& description(const std::string& text);
@@ -103,7 +104,7 @@ private:
 	std::string		_argName;
 	bool			_argRequired;
 
-	std::function<void(Exception& ex,const std::string& value)>	_handler;
+	Handler	_handler;
 };
 
 

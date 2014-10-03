@@ -19,6 +19,11 @@ This file is a part of Mona.
 
 
 #include "LUAPublication.h"
+#include "Mona/JSONReader.h"
+#include "Mona/AMFReader.h"
+#include "Mona/StringReader.h"
+#include "Mona/XMLRPCReader.h"
+#include "ScriptReader.h"
 
 using namespace std;
 using namespace Mona;
@@ -52,7 +57,7 @@ void LUAPublication::Clear(lua_State* pState, Publication& publication) {
 }
 
 void LUAPublication::Delete(lua_State* pState, Publication& publication) {
-	if (!publication.publisher())
+	if (!publication.running())
 		return;
 	lua_getmetatable(pState, -1);
 	lua_getfield(pState, -1, "|invoker");
@@ -76,7 +81,7 @@ int LUAPublication::Close(lua_State *pState) {
 			SCRIPT_BEGIN(pState)
 				SCRIPT_ERROR("You have not the handle on publication ", publication.name(), ", you can't close it")
 			SCRIPT_END
-		} else if (publication.publisher())
+		} else if (publication.running())
 			pInvoker->unpublish(publication.name()); // call LUAPublication::Clear (because no destructor)
 
 		lua_pop(pState, 1);
@@ -105,34 +110,34 @@ int	LUAPublication::PushVideo(lua_State *pState) {
 	SCRIPT_CALLBACK_RETURN
 }
 
+int	LUAPublication::PushAMF0Data(lua_State *pState) {
+	SCRIPT_CALLBACK(Publication, publication)
+		if (publication.running()) {
+			AMFWriter writer(publication.poolBuffers);
+			writer.amf0=true;
+			SCRIPT_READ_NEXT(ScriptReader(pState, SCRIPT_READ_AVAILABLE).read(writer));
+			PacketReader packet(writer.packet.data(), writer.packet.size());
+			AMFReader reader(packet);
+			publication.pushData(reader);
+		} else
+			SCRIPT_ERROR("No data can be pushed on ", publication.name(), " publication stopped")
+	SCRIPT_CALLBACK_RETURN
+}
+
 int	LUAPublication::Flush(lua_State *pState) {
 	SCRIPT_CALLBACK(Publication, publication)
 		publication.flush();
 	SCRIPT_CALLBACK_RETURN
 }
 
-
-int	LUAPublication::PushData(lua_State *pState) {
+int LUAPublication::WriteProperties(lua_State *pState) {
 	SCRIPT_CALLBACK(Publication, publication)
-		Client* pPublisher = publication.publisher();
-		if (pPublisher) {
-			std::shared_ptr<DataWriter> pWriter;
-			pPublisher->writer().createWriter(pWriter);
-			if (pWriter) {
-				UInt32 offset = pWriter->packet.size();
-				SCRIPT_READ_DATA(*pWriter)
-				PacketReader packet(pWriter->packet.data(), pWriter->packet.size());
-				packet.next(offset);
-				std::shared_ptr<DataReader> pReader;
-				pPublisher->writer().createReader(packet, pReader);
-				if (pReader)
-					publication.pushData(*pReader);
-				else
-					SCRIPT_ERROR("The publisher of ", publication.name(), " publication has no reader type to push data, use a typed pushData version rather");
-			} else
-				SCRIPT_ERROR("The publisher of ", publication.name(), " publication has no writer type to push data, use a typed pushData version rather");
-		} else
-			SCRIPT_ERROR("No data can be pushed on the ", publication.name(), " publication without a publisher")
+		const char* handler(SCRIPT_READ_STRING(NULL));
+		ScriptReader reader(pState, SCRIPT_READ_AVAILABLE);
+		if (handler)
+			publication.writeProperties(handler, reader);
+		else
+			publication.writeProperties(handler, reader);
 	SCRIPT_CALLBACK_RETURN
 }
 
@@ -141,9 +146,8 @@ int LUAPublication::Get(lua_State *pState) {
 	SCRIPT_CALLBACK(Publication, publication)
 		const char* name = SCRIPT_READ_STRING(NULL);
 		if(name) {
-			if(strcmp(name,"publisher")==0) {
-				if (publication.publisher())
-					Script::AddObject<LUAClient>(pState, *publication.publisher()); // can change
+			if(strcmp(name,"running")==0) {
+				SCRIPT_WRITE_BOOL(publication.running())
 			} else if(strcmp(name,"name")==0) {
 				SCRIPT_WRITE_STRING(publication.name().c_str())
 				SCRIPT_CALLBACK_FIX_INDEX
@@ -171,8 +175,31 @@ int LUAPublication::Get(lua_State *pState) {
 			} else if(strcmp(name,"pushVideo")==0) {
 				SCRIPT_WRITE_FUNCTION(LUAPublication::PushVideo)
 				SCRIPT_CALLBACK_FIX_INDEX
+			} else if(strcmp(name,"pushAMFData")==0) {
+				SCRIPT_WRITE_FUNCTION(LUAPublication::PushData<Mona::AMFReader>)
+				SCRIPT_CALLBACK_FIX_INDEX
+			} else if(strcmp(name,"pushAMF0Data")==0) {
+				SCRIPT_WRITE_FUNCTION(LUAPublication::PushAMF0Data)
+				SCRIPT_CALLBACK_FIX_INDEX
+			} else if(strcmp(name,"pushXMLRPCData")==0) {
+				SCRIPT_WRITE_FUNCTION(LUAPublication::PushDataWithBuffers<Mona::XMLRPCReader>)
+				SCRIPT_CALLBACK_FIX_INDEX
+			} else if(strcmp(name,"pushJSONData")==0) {
+				SCRIPT_WRITE_FUNCTION(LUAPublication::PushDataWithBuffers<Mona::JSONReader>)
+				SCRIPT_CALLBACK_FIX_INDEX
 			} else if(strcmp(name,"pushData")==0) {
-				SCRIPT_WRITE_FUNCTION(LUAPublication::PushData)
+				SCRIPT_WRITE_FUNCTION(LUAPublication::PushData<Mona::StringReader>)
+				SCRIPT_CALLBACK_FIX_INDEX
+			} else if (strcmp(name,"writeProperties")==0) {
+				SCRIPT_WRITE_FUNCTION(LUAPublication::WriteProperties)
+				SCRIPT_CALLBACK_FIX_INDEX
+			} else if (strcmp(name,"properties")==0) {
+				Script::Collection(pState, 1, "properties");
+				SCRIPT_CALLBACK_FIX_INDEX
+			} else {
+				Script::Collection(pState,1, "properties");
+				lua_getfield(pState, -1, name);
+				lua_replace(pState, -2);
 				SCRIPT_CALLBACK_FIX_INDEX
 			}
 		}

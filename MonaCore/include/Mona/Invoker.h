@@ -50,11 +50,11 @@ public:
 	FlashStream&					flashStream(UInt32 id, Peer& peer,std::shared_ptr<FlashStream>& pStream);
 	void							destroyFlashStream(UInt32 id) { _streams.erase(id); }
 
-	Publication*			publish(Exception& ex,const std::string& name, Publication::Type type) { return publish(ex,myself(),name,type); }
-	void					unpublish(const std::string& name) { unpublish(myself(), name); }
+	Publication*			publish(Exception& ex, const std::string& name, Publication::Type type) { return publish(ex, name, type,NULL); }
+	void					unpublish(const std::string& name) { unpublish(name, NULL); }
 
-	Publication*			publish(Exception& ex,Peer& peer,const std::string& name, Publication::Type type);
-	void					unpublish(Peer& peer,const std::string& name);
+	Publication*			publish(Exception& ex, Peer& peer, const std::string& name, Publication::Type type) { return publish(ex, name, type, &peer); }
+	void					unpublish(Peer& peer, const std::string& name) { unpublish(name,&peer);  }
 	Listener*				subscribe(Exception& ex,Peer& peer,std::string& name,Writer& writer);
 	Listener*				subscribe(Exception& ex,Peer& peer,const std::string& name,Writer& writer);
 	void					unsubscribe(Peer& peer,const std::string& name);
@@ -69,9 +69,13 @@ protected:
 	virtual ~Invoker();
 
 private:
-	std::string& publicationName(std::string& name,std::string& query);
+	Publication*			publish(Exception& ex,const std::string& name, Publication::Type type,Peer* pPeer);
+	void					unpublish(const std::string& name, Peer* pPeer);
 
-	virtual Peer&			myself()=0;
+	std::string&			publicationName(std::string& name,std::string& query);
+
+	virtual bool			onPublish(Exception& ex, const Publication& publication) = 0;
+	virtual void			onUnpublish(const Publication& publication) = 0;
 
 	std::map<std::string,Publication>				_publications;
 	std::set<IPAddress>								_bannedList;

@@ -76,7 +76,7 @@ static const map<string, pair<Int32, bool>> Timezones({
 	{ "CHAST", { 12*3600000 + 270000, false } },
 	{ "CHOT", { 8*3600000, false } },
 	{ "CHOST", { 9*3600000, true } },
-	{ "CHsT", { 10*3600000, false } },
+	{ "CHST", { 10*3600000, false } },
 	{ "CIT", { 8*3600000, false } },
 	{ "CKT", { -10*3600000, false } },
 	{ "CLST", { -3*3600000, true } },
@@ -653,8 +653,8 @@ bool Timezone::isBeforeTransition(const Date& date,UInt32 clock,const Transition
 	return clock<rule.clock;
 }
 
-Int32 Timezone::Offset(const string& code,bool& isDST) {
-	if (code == "Z" || code == "GMT" || code == "UTC") {
+Int32 Timezone::Offset(const char* code ,bool& isDST) {
+	if (String::ICompare(code,"Z")==0 || String::ICompare(code,"GMT")==0 || String::ICompare(code,"UTC")==0) {
 		isDST = false;
 		return Date::GMT;
 	}

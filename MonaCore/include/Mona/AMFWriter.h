@@ -27,52 +27,48 @@ This file is a part of Mona.
 namespace Mona {
 
 
-class AMFWriter : public DataWriter {
+class AMFWriter : public DataWriter, public virtual Object {
 public:
 	AMFWriter(const PoolBuffers& poolBuffers);
 
-	bool repeat(UInt32 reference);
+	bool repeat(UInt64 reference);
 	void clear();
 
-	void beginObject(const std::string& type="",bool external=false);
-	void endObject();
+	UInt64 beginObject(const char* type=NULL);
+	void   writePropertyName(const char* value);
+	void   endObject() { endComplex(true); }
 
-	void beginMap(UInt32 size,bool weakKeys=false);
-	void endMap() { endObject(); }
+	UInt64 beginArray(UInt32 size);
+	void   endArray() { endComplex(false); }
 
-	void writePropertyName(const std::string& value);
+	UInt64 beginObjectArray(UInt32 size);
 
-	void beginArray(UInt32 size) { beginObjectArray(size); endObject(); }
-	void beginObjectArray(UInt32 size);
-	void endArray() { endObject(); }
+	UInt64 beginMap(Exception& ex, UInt32 size,bool weakKeys=false);
+	void   endMap() { endComplex(false); }
 
-	void writeDate(const Date& date);
-	void writeNumber(double value);
-	void writeString(const std::string& value);
-	void writeBoolean(bool value);
-	void writeNull();
-	void writeBytes(const UInt8* data,UInt32 size);
-
+	void   writeNumber(double value);
+	void   writeString(const char* value, UInt32 size);
+	void   writeBoolean(bool value);
+	void   writeNull();
+	UInt64 writeDate(const Date& date);
+	UInt64 writeBytes(const UInt8* data,UInt32 size);
+	
 	bool				amf0;
 
 	static AMFWriter    Null;
 
 private:
+	void endComplex(bool isObject);
+
 	AMFWriter() : _amf3(false), amf0(false) {} // null version
 
-	void writeText(const std::string& value);
+	void writeText(const char* value,UInt32 size);
 
 	std::map<std::string,UInt32>	_stringReferences;
 	std::vector<UInt8>				_references;
+	UInt32							_amf0References;
 	bool							_amf3;
-
-	
-	struct ObjectRef {
-		ObjectRef(UInt32 reference,bool isObject) : reference(reference),isObject(isObject) {}
-		const UInt32	reference;
-		const bool		isObject;
-	};
-	std::vector<ObjectRef>			_lastObjectReferences;
+	std::vector<bool>				_levels; // true if amf3
 };
 
 

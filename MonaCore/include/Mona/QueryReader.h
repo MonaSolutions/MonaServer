@@ -21,30 +21,38 @@ This file is a part of Mona.
 
 #include "Mona/Mona.h"
 #include "Mona/DataReader.h"
-
+#include "Mona/Util.h"
 
 namespace Mona {
 
 
-class RawReader : public DataReader, public virtual Object {
+class QueryReader : public DataReader, public virtual Object {
 public:
-	RawReader(PacketReader& packet) : DataReader(packet) {}
 
-	std::string&		readString(std::string& value) { return packet.readRaw(packet.available(), value); }
-	double				readNumber() {return 0;}
-	bool				readBoolean() {return false;}
-	Date&				readDate(Date& date) { return date; }
-	void				readNull() {}
-	const UInt8*		readBytes(UInt32& size) {return NULL;}
+	QueryReader(const char* query) :  _query(query),_current(_query),_type(END) {}
 
-	bool				readObject(std::string& type,bool& external) {return false;}
-	bool				readArray(UInt32& size) {return false;}
-	Type				readItem(std::string& name) {return END;}
+	const char* query() const { return _query; }
+	void		reset() { _current = _query; _type = END; }
+
+private:
+	enum {
+		OBJECT =	OTHER
+	};
 	
-	Type				followingType() { return available() ? STRING : END; }
+	UInt8	followingType();
+	bool	readOne(UInt8 type, DataWriter& writer);
 
+	void	writeValue(UInt8 type, DataWriter& writer);
+	UInt8   valueType();
+
+	const char* _query;
+	const char* _current;
+	std::string _property;
+	std::string _value;
+	Date		_date;
+	double		_number;
+	UInt8		_type;
 };
-
 
 
 } // namespace Mona

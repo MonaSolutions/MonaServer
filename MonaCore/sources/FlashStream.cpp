@@ -19,6 +19,7 @@ This file is a part of Mona.
 
 #include "Mona/FlashStream.h"
 #include "Mona/Invoker.h"
+#include "Mona/ParameterWriter.h"
 #include "Mona/Util.h"
 #include "Mona/Logs.h"
 
@@ -55,33 +56,43 @@ void FlashStream::disengage(FlashWriter* pWriter) {
 	}
 }
 
-bool FlashStream::process(AMF::ContentType type,UInt32 time,PacketReader& packet,FlashWriter& writer,UInt32 numberLostFragments) {
+bool FlashStream::process(AMF::ContentType type,UInt32 time,PacketReader& packet,FlashWriter& writer,double lostRate) {
 	if(type==AMF::EMPTY)
 		return writer.state()!=Writer::CLOSED;
 
 	// if exception, it closes the connection, and print an ERROR message
 	switch(type) {
+		case AMF::INFORMATIONS: {
+			string name;
+			AMFReader reader(packet);
+			reader.readString(name);
+			messageHandler(name,reader,writer);
+			break;
+		}
 		case AMF::INVOCATION_AMF3:
 		case AMF::INVOCATION: {
 			string name;
 			AMFReader reader(packet);
 			reader.readString(name);
-			writer.setCallbackHandle(reader.readNumber());
-			if(reader.followingType()==AMFReader::NIL)
-				reader.readNull();
+			double number(0);
+			reader.readNumber(number);
+			writer.setCallbackHandle(number);
+			reader.readNull();
 			messageHandler(name,reader,writer);
 			break;
 		}
 		case AMF::DATA: {
 			AMFReader reader(packet);
-			dataHandler(reader, numberLostFragments);
+			dataHandler(reader, lostRate);
 			break;
 		}
 		case AMF::AUDIO:
-			audioHandler(time,packet, numberLostFragments);
+			audioHandler(time,packet, lostRate);
 			break;
 		case AMF::VIDEO:
-			videoHandler(time,packet, numberLostFragments);
+			videoHandler(time,packet, lostRate);
+			break;
+		
 			break;
 		case AMF::ACK:
 			// nothing to do, a ack message says about how many bytes have been gotten by the peer
@@ -95,58 +106,67 @@ bool FlashStream::process(AMF::ContentType type,UInt32 time,PacketReader& packet
 }
 
 
-void FlashStream::messageHandler(const string& name,AMFReader& message,FlashWriter& writer) {
-	if(name=="play") {
+void FlashStream::messageHandler(const string& name, AMFReader& message, FlashWriter& writer) {
+	if (name == "play") {
 		disengage(&writer);
 
 		string publication;
 		message.readString(publication);
 		// TODO implements completly NetStream.play method, with possible NetStream.play.failed too!
 		Exception ex;
-		_pListener = invoker.subscribe(ex,peer,publication,writer);
+		_pListener = invoker.subscribe(ex, peer, publication, writer);
 		if (ex) {
-			writer.writeAMFStatus("NetStream.Play.Failed",ex.error());
+			writer.writeAMFStatus("NetStream.Play.Failed", ex.error());
 			return;
 		}
-		if(message.available())
-			_pListener->setNumber("unbuffered",message.readNumber()==-3000);
+		double number;
+		if (message.readNumber(number))
+			_pListener->setNumber("unbuffered", number == -3000);
 
-		if(_bufferTime>0) {
+		if (_bufferTime > 0) {
 			// To do working the buffertime on receiver side
 			BinaryWriter& raw = writer.writeRaw();
 			raw.write16(0);
 			raw.write32(id);
-			_pListener->setNumber("bufferTime",_bufferTime);
+			_pListener->setNumber("bufferTime", _bufferTime);
 		}
-		writer.writeAMFStatus("NetStream.Play.Reset","Playing and resetting " + publication); // for entiere playlist
-		writer.writeAMFStatus("NetStream.Play.Start","Started playing " + publication); // for item
+		writer.writeAMFStatus("NetStream.Play.Reset", "Playing and resetting " + publication); // for entiere playlist
+		writer.writeAMFStatus("NetStream.Play.Start", "Started playing " + publication); // for item
 
-	} else if(name == "closeStream") {
+	} else if (name == "closeStream") {
 		disengage(&writer);
-	} else if(name=="publish") {
+	} else if (name == "publish") {
 
 		disengage(&writer);
 
-		string type,publication;
+		string type, publication;
 		message.readString(publication);
 		size_t query = publication.find('?');
 		if (query != string::npos)
 			publication = publication.substr(0, query); // TODO use query in Util::UnpackQuery for publication options?
-		if(message.available())
+		if (message.available())
 			message.readString(type); // TODO support "append" and "appendWithGap"
 
 		Exception ex;
 		_pPublication = invoker.publish(ex, peer, publication, type == "record" ? Publication::RECORD : Publication::LIVE);
-		if (ex)
-			writer.writeAMFStatus("NetStream.Publish.BadName",ex.error());
-		else
-			writer.writeAMFStatus("NetStream.Publish.Start",publication +" is now published");
-	} else if(_pListener && name=="receiveAudio") {
-		_pListener->receiveAudio = message.readBoolean();
-	} else if(_pListener && name=="receiveVideo") {
-		_pListener->receiveVideo = message.readBoolean();
+		if (ex) {
+			writer.writeAMFStatus("NetStream.Publish.BadName", ex.error());
+			_pPublication = NULL;
+		} else
+			writer.writeAMFStatus("NetStream.Publish.Start", publication + " is now published");
+	} else if (_pListener && name == "receiveAudio") {
+		message.readBoolean(_pListener->receiveAudio);
+	} else if (_pListener && name == "receiveVideo") {
+		message.readBoolean(_pListener->receiveVideo);
+	} else if (_pPublication && name == "@setDataFrame") {
+		// metadata
+		string handler;
+		message.readString(handler);
+		_pPublication->writeProperties(handler.c_str(), message);
+	} else if (_pPublication && name == "@clearDataFrame") {
+		_pPublication->clearProperties();
 	} else
-		ERROR("RTMFPMessage '",name,"' unknown on stream ",id);
+		ERROR("Message '",name,"' unknown on stream ",id);
 }
 
 
@@ -166,42 +186,33 @@ UInt32 FlashStream::bufferTime(UInt32 ms) {
 	return _bufferTime;
 }
 
-void FlashStream::dataHandler(DataReader& data, UInt32 numberLostFragments) {
+void FlashStream::dataHandler(DataReader& data, double lostRate) {
 	if(!_pPublication) {
-		ERROR("a data packet has been received on a no publishing stream ",id);
+		ERROR("a data packet has been received on a no publishing stream ",id,", certainly a publication currently closing");
 		return;
 	}
-	if(_pPublication->publisher() == &peer)
-		_pPublication->pushData(data,numberLostFragments);
-	else
-		WARN("a data packet has been received on a stream ",id," which is not on owner of this publication, certainly a publication currently closing");
+	_pPublication->pushData(data,peer.ping(),lostRate);
 }
 
 
-void FlashStream::audioHandler(UInt32 time,PacketReader& packet, UInt32 numberLostFragments) {
+void FlashStream::audioHandler(UInt32 time,PacketReader& packet, double lostRate) {
 	if(!_pPublication) {
 		WARN("an audio packet has been received on a no publishing stream ",id,", certainly a publication currently closing");
 		return;
 	}
-	if(_pPublication->publisher() == &peer)
-		_pPublication->pushAudio(time,packet,numberLostFragments);
-	else
-		WARN("an audio packet has been received on a stream ",id," which is not on owner of this publication, certainly a publication currently closing");
+	_pPublication->pushAudio(time,packet,peer.ping(),lostRate);
 }
 
-void FlashStream::videoHandler(UInt32 time,PacketReader& packet, UInt32 numberLostFragments) {
+void FlashStream::videoHandler(UInt32 time,PacketReader& packet, double lostRate) {
 	if(!_pPublication) {
 		WARN("a video packet has been received on a no publishing stream ",id,", certainly a publication currently closing");
 		return;
 	}
-	if(_pPublication->publisher() == &peer)
-		_pPublication->pushVideo(time,packet,numberLostFragments);
-	else
-		WARN("a video packet has been received on a stream ",id," which is not on owner of this publication, certainly a publication currently closing");
+	_pPublication->pushVideo(time,packet,peer.ping(),lostRate);
 }
 
 void FlashStream::flush() {
-	if(_pPublication && _pPublication->publisher() == &peer)
+	if(_pPublication)
 		_pPublication->flush();
 }
 

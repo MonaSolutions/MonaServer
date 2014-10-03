@@ -41,7 +41,7 @@ string& WS::ComputeKey(string& key) {
 void WS::Unmask(BinaryReader& reader) {
 	UInt32 i;
 	UInt8 mask[4];
-	reader.readRaw(mask,sizeof(mask));
+	reader.read(sizeof(mask),mask);
 	UInt8* bytes = (UInt8*)reader.current();
 	for(i=0;i<reader.available();++i)
 		bytes[i] ^= mask[i%4];

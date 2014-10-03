@@ -29,8 +29,8 @@ class QualityOfService : public virtual Object {
 public:
 	QualityOfService();
 
-	void add(UInt32 size, UInt16 ping, UInt32 count = 0, UInt32 lost = 0);
-	void add(UInt32 count, UInt32 lost);
+	void add(UInt32 size, UInt16 ping,double lostRate = 0);
+	void add(double lostRate);
 	void reset();
 
 	const double		lostRate;
@@ -50,10 +50,9 @@ private:
 
 	class LostSample : public virtual Object {
 		public:
-			LostSample(UInt32 count, UInt32 lost) : count(count),lost(lost) {}
+			LostSample(double lost) : lost(lost) {}
 			Time	time;
-			UInt32	count;
-			UInt32	lost;
+			double	lost;
 	};
 
 	std::deque<SendSample>	_sendSamples;
@@ -62,8 +61,7 @@ private:
 	UInt32				_size;
 	UInt32				_latency;
 	UInt32				_latencyCount;
-	UInt32				_count;
-	UInt32				_lost;
+	double				_lost;
 
 	const UInt32		_sampleInterval;
 };

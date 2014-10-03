@@ -25,10 +25,6 @@ using namespace std;
 namespace Mona {
 
 
-Options::Options() : _pOption(NULL){
-}
-
-
 const Option& Options::get(const string& name) const {
 	auto result = _options.find(Option(name.c_str(), ""));
 	if (result == _options.end())
@@ -36,15 +32,15 @@ const Option& Options::get(const string& name) const {
 	return *result;
 }
 
-bool Options::process(Exception& ex, int argc, const char* argv[], const function<void(Exception& ex,const string&, const string&)>& handler) {
+bool Options::process(Exception& ex, int argc, const char* argv[], const ForEach& forEach) {
 	_pOption = NULL;
 	string name, value;
 	set<string> alreadyReaden;
 	for (int i = 1; i < argc; ++i) {
-		if (process(ex,argv[i], name, value, alreadyReaden) && !ex && handler)
-			handler(ex,name, value);
-		if (ex)
+		if (!process(ex, argv[i], name, value, alreadyReaden))
 			return false;
+		if (forEach)
+			forEach(name, value);
 	}
 
 	if (_pOption) {
@@ -53,7 +49,7 @@ bool Options::process(Exception& ex, int argc, const char* argv[], const functio
 	}
 		
 	for (const Option& option : _options) {
-		string lowerName;
+		string lowerName(option.fullName());
 		if (option.required() && alreadyReaden.find(String::ToLower(lowerName)) == alreadyReaden.end()) {
 			ex.set(Exception::OPTION, "Option ", option.fullName(), " required");
 			return false;
@@ -62,28 +58,26 @@ bool Options::process(Exception& ex, int argc, const char* argv[], const functio
 	return true;
 }
 
-bool Options::process(Exception& ex,const string& argument, string& name, string& value, set<string>& alreadyReaden) {
-	string::const_iterator it = argument.begin();
-	string::const_iterator end = argument.end();
+bool Options::process(Exception& ex,const char* argument, string& name, string& value, set<string>& alreadyReaden) {
 
 	if (!_pOption) {
-		if (it == end || (*it != '-' && *it != '/') || ++it == end)
+		if (*argument==0 || (*argument != '-' && *argument != '/') || *++argument == 0)
 			return false;
 		// second -?
-		if (*it == '-' && ++it == end)
+		if (*argument == '-' && *++argument == 0)
 			return false;
 
-		string::const_iterator itEnd = it;
+		const char* itEnd = argument;
 
-		while (itEnd != end && *itEnd != ':' && *itEnd != '=')
+		while (*itEnd && *itEnd != ':' && *itEnd != '=')
 			++itEnd;
 
-		if (it == itEnd) {
+		if (argument == itEnd) {
 			ex.set(Exception::OPTION, "Empty option");
 			return false;
 		}
 			
-		name.assign(it, itEnd);
+		name.assign(argument, itEnd);
 
 		auto itOption = _options.find(Option(name.c_str(),""));
 		if (itOption == _options.end()) {
@@ -93,10 +87,20 @@ bool Options::process(Exception& ex,const string& argument, string& name, string
 					break;
 			}
 			if (itOption == _options.end()) {
-				ex.set(Exception::OPTION, "Unknown ", name, " option");
-				return false;
-			}
-			name.assign(itOption->fullName());
+				if (!acceptUnknownOption) {
+					ex.set(Exception::OPTION, "Unknown ", name, " option");
+					return false;
+				}
+	
+				// name is necessary the full name here!
+				auto result = _options.emplace(name.c_str(), name.c_str());
+				if (!result.second) {
+					ex.set(Exception::OPTION, "Option ", name," duplicated with ", result.first->fullName(), " (", result.first->shortName(), ")");
+					return false;
+				}
+				itOption = result.first;
+			} else
+				name.assign(itOption->fullName());
 		}
 
 		_pOption = &*itOption;
@@ -108,26 +112,27 @@ bool Options::process(Exception& ex,const string& argument, string& name, string
 		}
 		alreadyReaden.insert(lowerName);
 
-		if(itEnd!=end)
+		if(*itEnd)
 			++itEnd;
 
-		if (itEnd == end && _pOption->argumentRequired())
+		if (*itEnd == 0 && _pOption->argumentRequired())
 			return false;
 
-		it = itEnd;
+		argument = itEnd;
 	}
 
-	if (it == end && _pOption->argumentRequired()) {
+	if (*argument == 0 && _pOption->argumentRequired()) {
 		_pOption = NULL;
 		ex.set(Exception::ARGUMENT, _pOption->fullName(), " requires ", _pOption->argumentName());
 		return false;
 	}
 
-	value.assign(it, end);
+	value.assign(argument);
+	bool result(true);
 	if (_pOption->_handler)
-		_pOption->_handler(ex, value);
+		result = _pOption->_handler(ex, value);
 	_pOption = NULL;
-	return !ex;
+	return result;
 }
 
 

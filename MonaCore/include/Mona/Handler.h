@@ -43,27 +43,20 @@ public:
 	virtual void			onJoinGroup(Client& client,Group& group){}
 	virtual void			onUnjoinGroup(Client& client,Group& group){}
 
-	virtual bool			onPublish(Client& client,const Publication& publication,std::string& error){return true;}
-	virtual void			onUnpublish(Client& client,const Publication& publication){}
+	virtual bool			onPublish(Exception& ex,const Publication& publication, Client* pClient){return true;}
+	virtual void			onUnpublish(const Publication& publication, Client* pClient){}
 
-	virtual void			onDataPacket(Client& client,const Publication& publication,DataReader& packet){}
-	virtual void			onAudioPacket(Client& client,const Publication& publication,UInt32 time,PacketReader& packet){}
-	virtual void			onVideoPacket(Client& client,const Publication& publication,UInt32 time,PacketReader& packet){}
-	virtual void			onFlushPackets(Client& client,const Publication& publication){}
-
-	virtual bool			onSubscribe(Client& client,const Listener& listener,std::string& error){return true;}
+	virtual bool			onSubscribe(Exception& ex, Client& client,const Listener& listener){return true;}
 	virtual void			onUnsubscribe(Client& client,const Listener& listener){}
 
 protected:
-	Handler(UInt32 socketBufferSize, UInt16 threads) : _myself(*this), Invoker(socketBufferSize, threads) {
-		Util::Random(id, ID_SIZE); // Allow to publish in intern (Invoker is the publisher)
-		(bool&)_myself.connected=true;
-		std::memcpy((UInt8*)myself().id,id,ID_SIZE);
-	}
-	virtual ~Handler(){}
+	Handler(UInt32 socketBufferSize, UInt16 threads) : Invoker(socketBufferSize, threads) {}
+
 private:
-	Peer&					myself() { return _myself; }
-	Peer					_myself;
+	
+	virtual bool			onPublish(Exception& ex,const Publication& publication){return onPublish(ex,publication,NULL);}
+	virtual void			onUnpublish(const Publication& publication) { onUnpublish(publication, NULL); }
+
 };
 
 

@@ -22,11 +22,11 @@ This file is a part of Mona.
 #include "Mona/HTTP/HTTPPacketBuilding.h"
 #include "Mona/HTTPHeaderReader.h"
 #include "Mona/ParameterWriter.h"
-#include "Mona/SOAPReader.h"
-#include "Mona/SOAPWriter.h"
+#include "Mona/QueryReader.h"
 #include "Mona/Protocol.h"
 #include "Mona/Exceptions.h"
 #include "Mona/FileSystem.h"
+#include "Mona/MIME.h"
 
 
 using namespace std;
@@ -96,7 +96,8 @@ bool HTTPSession::buildPacket(PoolBuffer& pBuffer,PacketReader& packet) {
 	if(_isWS)
 		return WSSession::buildPacket(pBuffer,packet);
 	// consumes all!
-	_packets.emplace_back(decode<HTTPPacketBuilding>(pBuffer,_ppBuffer).pPacket);
+	_packets.emplace_back(new HTTPPacket(_ppBuffer));
+	decode<HTTPPacketBuilding>(pBuffer, _packets.back());
 	return true;
 }	
 
@@ -106,19 +107,19 @@ void HTTPSession::packetHandler(PacketReader& reader) {
 	if(_isWS)
 		return WSSession::packetHandler(reader);
 
-	// Pop HTTPPacket (must be done just one time per handle!)
-	if (!_packets.empty()) {
-		_writer.pRequest = _packets.front();
-		_packets.pop_front();
-	}
-	const shared_ptr<HTTPPacket>& pPacket(_writer.pRequest);
-	if (!pPacket) {
+	if (_packets.empty()) {
 		ERROR("HTTPSession::packetHandler without http packet built");
 		return;
 	}
 
-	if (pPacket->exception)
-		return _writer.close(pPacket->exception);
+	// invalid packet?
+	Exception ex;
+	if (ex.set(_packets.front()->exception))
+		return _writer.close(ex);
+
+	// Pop HTTPPacket (must be done just one time per handle!)
+	const shared_ptr<HTTPPacket>& pPacket(_writer.pRequest = _packets.front());
+	_packets.pop_front();
 
 	// HTTP is a simplex communication, so if request, remove possible old subscription
 	if (_pListener) {
@@ -143,23 +144,23 @@ void HTTPSession::packetHandler(PacketReader& reader) {
 	peer.properties().clear();
 	peer.properties().setNumber("HTTPVersion", pPacket->version); // TODO check how is named for AMF
 	// Add cookies to peer.properties
-	String::ForEach forEachCookie([this](const char* key) {
+	String::ForEach forEachCookie([this](UInt32 index,const char* key) {
 		const char* value = key;
 		// trim right
 		while (value && *value != '=' && !isblank(*value))
 			++value;
 		if (value) {
-			*(char*)value = '\0';
+			(char&)*value = 0;
 			// trim left
 			do {
 				++value;
 			} while (value && (isblank(*value) || *value == '='));
 		}
 		peer.properties().setString(key, value);
+		return true;
 	});
 	String::Split(pPacket->cookies, ";", forEachCookie, String::SPLIT_IGNORE_EMPTY | String::SPLIT_TRIM);
 	
-	Exception ex;
 	// Upgrade protocol
 	if(pPacket->connection&HTTP::CONNECTION_UPGRADE) {
 		// Upgrade to WebSocket
@@ -168,38 +169,41 @@ void HTTPSession::packetHandler(PacketReader& reader) {
 			_isWS=true;
 			((string&)this->peer.protocol) = "WebSocket";
 			
-			DataWriter& response = _writer.write("101 Switching Protocols", HTTP::CONTENT_ABSENT);
-			BinaryWriter& writer = response.packet;
-			HTTP_BEGIN_HEADER(writer)
-				HTTP_ADD_HEADER(writer,"Upgrade","WebSocket")
-				HTTP_ADD_HEADER(writer,"Sec-WebSocket-Accept", WS::ComputeKey(pPacket->secWebsocketKey))
-			HTTP_END_HEADER(writer)
+			DataWriter& response = _writer.write("101 Switching Protocols");
+			HTTP_BEGIN_HEADER(response.packet)
+				HTTP_ADD_HEADER("Upgrade",EXPAND("WebSocket"))
+				HTTP_ADD_HEADER("Sec-WebSocket-Accept", WS::ComputeKey(pPacket->secWebsocketKey))
+			HTTP_END_HEADER
 			HTTPHeaderReader reader(pPacket->headers);
 			peer.onConnection(ex, wsWriter(),reader,response);
 			_writer.flush(true); // last HTTP flush for this connection, now we are in a WebSession mode!
 		} // TODO else
 	} else {
 		// Create volatile parameters from POST/GET/HEAD Queries
-		MapParameters queryParameters;
-		Util::UnpackQuery(peer.query, queryParameters);
-		MapReader<MapParameters> propertiesReader(queryParameters);
+		QueryReader parameters(peer.query.c_str());
 		
 		// onConnection
 		if (!peer.connected) {
 			// Assign name
-			string buffer;
-			queryParameters.getString("name", buffer);
-			peer.properties().setString("name", buffer);
+			Util::ForEachParameter forEach([this](const string& key, const char* value) {
+				if (key == "name") {
+					peer.properties().setString("name", value);
+					return false;
+				}
+				return true;
+			});
+			Util::UnpackQuery(peer.query, forEach);
+	
 			_index.clear(); // default value
 			_indexDirectory = true; // default value
 
-			peer.onConnection(ex, _writer,propertiesReader);
+			peer.onConnection(ex, _writer,parameters);
 			if (!ex && peer.connected) {
 
 				if (!peer.parameters().getBool("index", _indexDirectory))
 					peer.parameters().getString("index", _index);
 
-				propertiesReader.reset();
+				parameters.reset();
 			}
 		}
 
@@ -208,16 +212,16 @@ void HTTPSession::packetHandler(PacketReader& reader) {
 
 			/// HTTP GET & HEAD
 			if ((pPacket->command == HTTP::COMMAND_HEAD ||pPacket->command == HTTP::COMMAND_GET))
-				processGet(ex, pPacket, propertiesReader);
+				processGet(ex, pPacket, parameters);
 			// HTTP POST
 			else if (pPacket->command == HTTP::COMMAND_POST) {
-				PacketReader packetContent(pPacket->content, pPacket->contentLength);
-
-				// Get output format from input
-				_writer.contentType = pPacket->contentType;
-				_writer.contentSubType = pPacket->contentSubType;
-
-				HTTP::ReadMessageFromType(ex, *this, pPacket, packetContent);
+				PacketReader packet(pPacket->content, pPacket->contentLength);
+				unique_ptr<DataReader> pReader;
+				if (!MIME::CreateDataReader(pPacket->contentSubType.c_str(), packet, invoker.poolBuffers, pReader)) {
+					pReader.reset(new StringReader(packet));
+					pPacket->rawSerialization = true;
+				}
+				readMessage(ex,*pReader);
 			}
 			//  HTTP OPTIONS (it is due requested when Move Redirection is sent)
 			else if (pPacket->command == HTTP::COMMAND_OPTIONS)
@@ -234,11 +238,10 @@ void HTTPSession::packetHandler(PacketReader& reader) {
 }
 
 void HTTPSession::manage() {
-	if(_isWS) {
-		WSSession::manage();
-		return;
-	}
-	if (!_packets.empty() && _packets.front()->exception)
+	if(_isWS)
+		return WSSession::manage();
+
+	if (!_packets.empty() && _packets.front().unique() && _packets.front()->exception)
 		_writer.close(_packets.front()->exception);
 	TCPSession::manage();
 }
@@ -251,17 +254,14 @@ void HTTPSession::processOptions(Exception& ex, const shared_ptr<HTTPPacket>& pP
 		return;
 	}
 
-	DataWriter& response = _writer.write("200 OK", HTTP::CONTENT_ABSENT);
-	BinaryWriter& writer = response.packet;
-
-	HTTP_BEGIN_HEADER(writer)
-		HTTP_ADD_HEADER(writer,"Access-Control-Allow-Origin", "*")
-		HTTP_ADD_HEADER(writer,"Access-Control-Allow-Methods", "GET, HEAD, PUT, PATH, POST, OPTIONS")
-		HTTP_ADD_HEADER(writer,"Access-Control-Allow-Headers", "Content-Type")
-	HTTP_END_HEADER(writer)
+	HTTP_BEGIN_HEADER(_writer.write("200 OK").packet)
+		HTTP_ADD_HEADER("Access-Control-Allow-Origin", "*")
+		HTTP_ADD_HEADER("Access-Control-Allow-Methods", EXPAND("GET, HEAD, PUT, PATH, POST, OPTIONS"))
+		HTTP_ADD_HEADER("Access-Control-Allow-Headers", EXPAND("Content-Type"))
+	HTTP_END_HEADER
 }
 
-void HTTPSession::processGet(Exception& ex, const shared_ptr<HTTPPacket>& pPacket, MapReader<MapParameters>& propertiesReader) {
+void HTTPSession::processGet(Exception& ex, const shared_ptr<HTTPPacket>& pPacket, QueryReader& parameters) {
 	// use index http option in the case of GET request on a directory
 	bool methodCalled(false);
 
@@ -269,22 +269,19 @@ void HTTPSession::processGet(Exception& ex, const shared_ptr<HTTPPacket>& pPacke
 	if (pPacket->filePos == string::npos) {
 		if (!_index.empty()) {
 			if (_index.find_last_of('.')==string::npos) // can be method!
-				methodCalled = peer.onMessage(ex, _index, propertiesReader);
+				methodCalled = peer.onMessage(ex, _index, parameters);
 
-			if (!methodCalled && !ex) {
-				// Redirect to the file (get name to prevent path insertion)
-				string nameFile;
-				_filePath.append('/', FileSystem::GetName(_index, nameFile));
-			}
+			if (!methodCalled && !ex) // Redirect to the file (get name to prevent path insertion)
+				_filePath.append('/', FileSystem::GetName(_index));
 		} else if (!_indexDirectory)
 			ex.set(Exception::PERMISSION, "No authorization to see the content of ", peer.path, "/");
 	} else
-		methodCalled = peer.onMessage(ex, _filePath.name(), propertiesReader);
+		methodCalled = peer.onMessage(ex, _filePath.name(), parameters);
 
 	// 2 - try to get a file
 	if (!methodCalled && !ex) {
 		ParameterWriter parameterWriter(pPacket->sendingInfos().parameters);
-		if (peer.onRead(ex, _filePath, propertiesReader, parameterWriter) && !ex) {
+		if (peer.onRead(ex, _filePath, parameters, parameterWriter) && !ex) {
 			pPacket->sendingInfos().sizeParameters = parameterWriter.size();
 			// If onRead has been authorised, and that the file is a multimedia file, and it doesn't exists (no VOD, filePath.lastModified()==0 means "doesn't exists")
 			// Subscribe for a live stream with the basename file as stream name

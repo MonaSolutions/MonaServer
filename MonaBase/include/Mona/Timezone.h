@@ -51,8 +51,10 @@ public:
 	static Int32		LocalOffsetUsingRules(const Date& date, UInt32 clock, bool& isDST) { return _Timezone.localOffsetUsingRules(date,clock,isDST); }
 	static Int32		LocalOffset(Int64 time, TimeType& timeType) { return _Timezone.localOffset(time,timeType); }
 
-	static Int32		Offset(const std::string& code) { bool isDST(false);  return Offset(code, isDST); }
-	static Int32		Offset(const std::string& code,bool& isDST);
+	static Int32		Offset(const std::string& code) { bool isDST(false);  return Offset(code.data(), isDST); }
+	static Int32		Offset(const char* code) { bool isDST(false);  return Offset(code, isDST); }
+	static Int32		Offset(const std::string& code,bool& isDST)  { return Offset(code.data(), isDST); }
+	static Int32		Offset(const char* code, bool& isDST);
 
 
 private:

@@ -89,7 +89,7 @@ void Servers::start(const Parameters& parameters) {
 	string targets;
 	parameters.getString("servers.targets",targets);
 	
-	String::ForEach forEach( [this](const char* target) {
+	String::ForEach forEach( [this](UInt32 index, const char* target) {
 		const char* query = strchr(target,'?');
 		if (query) {
 			*(char*)query = '\0';
@@ -105,6 +105,7 @@ void Servers::start(const Parameters& parameters) {
 			server.OnMessage::subscribe(*this);
 			server.OnDisconnection::subscribe(onServerDisconnection);
 		}
+		return true;
 	});
 	String::Split(targets, ";", forEach, String::SPLIT_IGNORE_EMPTY | String::SPLIT_TRIM);
 

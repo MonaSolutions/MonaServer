@@ -39,7 +39,7 @@ void BinaryReader::shrink(UInt32 rest) {
 	_size = _end-_data;
 }
 
-UInt8* BinaryReader::readRaw(UInt8* value, UInt32 size) {
+UInt8* BinaryReader::read(UInt32 size, UInt8* value) {
 	UInt32 available(this->available());
 	if (size > available)
 		size = available;
@@ -66,7 +66,7 @@ UInt32 BinaryReader::read7BitEncoded() {
 
 UInt16 BinaryReader::read16() {
 	UInt16 value(0);
-	readRaw((UInt8*)&value, sizeof(value));
+	read(sizeof(value),(UInt8*)&value);
 	if (_flipBytes)
 		return Binary::Flip16(value);
 	return value;
@@ -74,7 +74,7 @@ UInt16 BinaryReader::read16() {
 
 UInt32 BinaryReader::read24() {
 	UInt32 value(0);
-	readRaw((UInt8*)&value, 3);
+	read(3, (UInt8*)&value);
 	if (_flipBytes)
 		return Binary::Flip24(value);
 	return value;
@@ -82,7 +82,7 @@ UInt32 BinaryReader::read24() {
 
 UInt32 BinaryReader::read32() {
 	UInt32 value(0);
-	readRaw((UInt8*)&value, sizeof(value));
+	read(sizeof(value), (UInt8*)&value);
 	if (_flipBytes)
 		return Binary::Flip32(value);
 	return value;
@@ -91,7 +91,7 @@ UInt32 BinaryReader::read32() {
 
 UInt64 BinaryReader::read64() {
 	UInt64 value(0);
-	readRaw((UInt8*)&value, sizeof(value));
+	read(sizeof(value), (UInt8*)&value);
 	if (_flipBytes)
 		return Binary::Flip64(value);
 	return value;
@@ -125,12 +125,6 @@ UInt64 BinaryReader::read7BitLongValue() {
     result <<= ((n<8) ? 7 : 8); // Use all 8 bits from the 4th byte
     result |= b;
 	return result;
-}
-
-string& BinaryReader::readRaw(UInt32 size, string& value) {
-	value.resize(size);
-	readRaw((UInt8*)value.data(), size);
-	return value;
 }
 
 

@@ -33,13 +33,13 @@ public:
 	const_iterator		begin() const { return _map.begin(); }
 	const_iterator		end() const { return _map.end(); }
 
-	UInt32			count() const { return _map.size(); }
+	UInt32				count() const { return _map.size(); }
 
 private:
-	UInt32				iteration(const char* prefix, ForEach& function) const;
+	UInt32				iteration(const char* prefix, const ForEach& function) const;
 	void				clearAll() { _map.clear(); }
-	const std::string*  getRaw(const std::string& key) const { auto it = _map.find(key); return it == _map.end() ? NULL : &it->second; }
-	bool				setRaw(const std::string& key, const char* value);
+	const std::string*  getRaw(const char* key) const { auto it = _map.find(key); return it == _map.end() ? NULL : &it->second; }
+	const std::string*	setRaw(const char* key, const char* value, UInt32 size);
 
 	std::map<std::string,std::string>	_map;
 };

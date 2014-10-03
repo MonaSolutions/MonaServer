@@ -46,7 +46,7 @@ public:
 		_pBuffer->resize(old + fragment.available(),true);
 		if(_pBuffer->size()>old)
 			memcpy(_pBuffer->data()+old,fragment.current(),fragment.available());
-		++(UInt16&)fragments;
+		++(UInt32&)fragments;
 	}
 
 	PacketReader* release() {
@@ -55,12 +55,13 @@ public:
 			return _pMessage;
 		}
 		_pMessage = new PacketReader(_pBuffer->size()==0 ? NULL : _pBuffer->data(),_pBuffer->size());
-		(UInt16&)_pMessage->fragments = fragments;
 		return _pMessage;
 	}
 
 	const UInt32	fragments;
+
 private:
+	
 	PoolBuffer		_pBuffer;
 	PacketReader*  _pMessage;
 };
@@ -69,7 +70,7 @@ private:
 class RTMFPFragment : public PoolBuffer, public virtual Object{
 public:
 	RTMFPFragment(const PoolBuffers& poolBuffers,PacketReader& packet,UInt8 flags) : flags(flags),PoolBuffer(poolBuffers,packet.available()) {
-		packet.readRaw((*this)->data(),(*this)->size());
+		packet.read((*this)->size(),(*this)->data());
 	}
 	UInt8					flags;
 };
@@ -301,6 +302,8 @@ void RTMFPFlow::onFragment(UInt64 _stage,PacketReader& fragment,UInt8 flags) {
 	}
 
 	PacketReader* pMessage(&fragment);
+	double lostRate(1);
+
 	if(flags&MESSAGE_WITH_BEFOREPART){
 		if(!_pPacket) {
 			WARN("A received message tells to have a 'beforepart' and nevertheless partbuffer is empty, certainly some packets were lost");
@@ -315,6 +318,7 @@ void RTMFPFlow::onFragment(UInt64 _stage,PacketReader& fragment,UInt8 flags) {
 		if(flags&MESSAGE_WITH_AFTERPART)
 			return;
 
+		lostRate = _pPacket->fragments;
 		pMessage = _pPacket->release();
 	} else if(flags&MESSAGE_WITH_AFTERPART) {
 		if(_pPacket) {
@@ -325,9 +329,13 @@ void RTMFPFlow::onFragment(UInt64 _stage,PacketReader& fragment,UInt8 flags) {
 		_pPacket = new RTMFPPacket(_poolBuffers,fragment);
 		return;
 	}
+
 	UInt32 time(0);
 	AMF::ContentType type(unpack(*pMessage, time));
-	if (!_pStream->process(type, time, *pMessage, *_pWriter, _numberLostFragments)) {
+
+	lostRate = _numberLostFragments/(lostRate+_numberLostFragments);
+
+	if (!_pStream->process(type, time, *pMessage, *_pWriter, lostRate)) {
 		complete(); // do already the delete _pPacket
 		return;
 	}

@@ -58,7 +58,7 @@ bool RTMFPCookieComputing::run(Exception& ex) {
 	}
 	packet.write7BitLongValue(size+11);
 	UInt32 noncePos = packet.size();
-	packet.writeRaw(EXPAND_DATA_SIZE("\x03\x1A\x00\x00\x02\x1E\x00"));
+	packet.write(EXPAND("\x03\x1A\x00\x00\x02\x1E\x00"));
 	UInt8 byte2 = DH_KEY_SIZE-size;
 	if(byte2>2) {
 		CRITIC("Generation DH key with less of 126 bytes!");

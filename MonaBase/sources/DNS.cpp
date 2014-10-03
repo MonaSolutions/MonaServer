@@ -27,7 +27,7 @@ using namespace std;
 namespace Mona {
 
 
-bool DNS::HostByName(Exception& ex, const string& hostname, HostEntry& host) {
+bool DNS::HostByName(Exception& ex, const char* hostname, HostEntry& host) {
 	if (!Net::InitializeNetwork(ex))
 		return false;
 
@@ -35,7 +35,7 @@ bool DNS::HostByName(Exception& ex, const string& hostname, HostEntry& host) {
 	struct addrinfo hints;
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_flags = AI_CANONNAME | AI_ADDRCONFIG;
-	int rc = getaddrinfo(hostname.c_str(), NULL, &hints, &pAI); 
+	int rc = getaddrinfo(hostname, NULL, &hints, &pAI); 
 	if (rc == 0) {
 		host.set(ex,pAI);
 		freeaddrinfo(pAI);
@@ -70,7 +70,7 @@ bool DNS::HostByAddress(Exception& ex,const IPAddress& address, HostEntry& host)
 }
 
 
-bool DNS::Resolve(Exception& ex, const string& address, HostEntry& host) {
+bool DNS::Resolve(Exception& ex, const char* address, HostEntry& host) {
 	IPAddress ip;
 	Exception ignore;
 	if (ip.set(ignore, address))

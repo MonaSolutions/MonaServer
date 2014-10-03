@@ -20,13 +20,27 @@ This file is a part of Mona.
 #pragma once
 
 #include "Mona/Mona.h"
-#include "Mona/Exceptions.h"
 #include "Mona/Listeners.h"
-#include "Mona/Peer.h"
+#include "Mona/Client.h"
+#include "Mona/AMFWriter.h"
 
 namespace Mona {
 
-class Publication : public virtual Object {
+namespace PublicationEvents {
+	struct OnData : Event<void(const Publication&,DataReader&)> {};
+	struct OnAudio : Event<void(const Publication&,UInt32, PacketReader&)> {};
+	struct OnVideo : Event<void(const Publication&,UInt32, PacketReader&)> {};
+	struct OnFlush : Event<void(const Publication&)> {};
+	struct OnProperties : Event<void(const Publication&,const Parameters&)> {};
+};
+
+
+class Publication : public virtual Object,
+	public PublicationEvents::OnData,
+	public PublicationEvents::OnAudio,
+	public PublicationEvents::OnVideo,
+	public PublicationEvents::OnFlush,
+	public PublicationEvents::OnProperties {
 public:
 	enum Type {
 		LIVE,
@@ -36,9 +50,9 @@ public:
 	Publication(const std::string& name,const PoolBuffers& poolBuffers);
 	virtual ~Publication();
 
-	const std::string&		name() const { return _name; }
+	const PoolBuffers&		poolBuffers;
 
-	Client*					publisher() const { return _pPublisher; }
+	const std::string&		name() const { return _name; }
 
 	const Listeners			listeners;
 
@@ -46,15 +60,21 @@ public:
 	const QualityOfService&	audioQOS() const { return _audioQOS; }
 	const QualityOfService&	dataQOS() const { return _dataQOS; }
 
-	void					start(Exception& ex, Peer& peer, Type type);
-	void					stop(Peer& peer);
+	const Parameters&		properties() const { return _properties; }
+	void					writeProperties(DataReader& reader) { writeProperties(String::Empty.c_str(),reader); }
+	void					writeProperties(const char* handler, DataReader& reader);
+	void					clearProperties() { writeProperties(NULL, DataReader::Null); }
 
-	void					pushAudio(UInt32 time,PacketReader& packet,UInt32 numberLostFragments=0);
-	void					pushVideo(UInt32 time,PacketReader& packet,UInt32 numberLostFragments=0);
-	void					pushData(DataReader& reader,UInt32 numberLostFragments=0);
+	void					start(Type type);
+	bool					running() const { return _running; }
+	void					stop();
 
-	Listener*				addListener(Exception& ex, Peer& peer,Writer& writer);
-	void					removeListener(Peer& peer);
+	void					pushAudio(UInt32 time,PacketReader& packet,UInt16 ping=0, double lostRate=0);
+	void					pushVideo(UInt32 time,PacketReader& packet,UInt16 ping=0, double lostRate=0);
+	void					pushData(DataReader& reader,UInt16 ping=0, double lostRate=0);
+
+	Listener*				addListener(Exception& ex, Client& client,Writer& writer);
+	void					removeListener(Client& client);
 
 	void					flush();
 
@@ -63,9 +83,11 @@ public:
 	const PoolBuffer&		videoCodecBuffer() const { return _videoCodecBuffer; }
 
 private:
-	Peer*								_pPublisher;
+	bool								_running;
 	std::string							_name;
 	std::map<Client*,Listener*>			_listeners;
+	MapParameters						_properties;
+	AMFWriter							_propertiesInfos;
 
 	UInt32								_lastTime;
 	PoolBuffer							_audioCodecBuffer;

@@ -40,8 +40,8 @@ private:
 	bool run(Exception& ex) {return !(failed = !compute(ex)); }
 	bool compute(Exception& ex);
 
-	const UInt8*	data() { return _writer.data(); }
-	UInt32			size() { return _writer.size(); }
+	const UInt8*	data() const { return _writer.data(); }
+	UInt32			size() const { return _writer.size(); }
 
 	PacketWriter			_writer;
 

@@ -22,7 +22,6 @@ This file is a part of Mona.
 #include "Mona/Mona.h"
 #include "Mona/RTMFP/RTMFP.h"
 #include "Mona/Trigger.h"
-#include "Mona/AMFReader.h"
 #include "Mona/RTMFP/BandWriter.h"
 #include "Mona/RTMFP/RTMFPMessage.h"
 #include "Mona/FlashWriter.h"
@@ -62,7 +61,8 @@ public:
 			return;
 		WARN("RTMFPWriter ", id, " has failed, ", args ...);
 		clear();
-		_stage = _stageAck = _lostCount = _ackCount = 0;
+		_stage = _stageAck = _lostCount = 0;
+		 _ackCount = 0;
         std::shared_ptr<RTMFPWriter> pWriter = _band.changeWriter(*new RTMFPWriter(*this));
         _band.initWriter(pWriter);
 		_qos.reset();
@@ -76,7 +76,7 @@ public:
 
 	UInt64				stage() { return _stage; }
 
-	bool				writeMedia(MediaType type,UInt32 time,PacketReader& packet,Parameters& properties);
+	bool				writeMedia(MediaType type,UInt32 time,PacketReader& packet,const Parameters& properties);
 	void				writeRaw(const UInt8* data,UInt32 size);
 	bool				writeMember(const Client& client);
 
@@ -84,14 +84,11 @@ private:
 	RTMFPWriter(RTMFPWriter& writer);
 	
 	UInt32					headerSize(UInt64 stage);
-	void					flush(BinaryWriter& writer,UInt64 stage,UInt8 flags,bool header,const UInt8* data,UInt16 size);
+	void					flush(BinaryWriter& writer,UInt64 stage,UInt8 flags,bool header,const RTMFPMessage& message, UInt32 offset, UInt16 size);
 
 	void					raiseMessage();
-	RTMFPMessageBuffered&	createBufferedMessage();
+	RTMFPMessageBuffered&	createMessage();
 	AMFWriter&				write(AMF::ContentType type,UInt32 time=0,PacketReader* pPacket=NULL);
-
-	void					createReader(PacketReader& packet, std::shared_ptr<DataReader>& pReader) { pReader.reset(new AMFReader(packet)); }
-	void					createWriter(std::shared_ptr<DataWriter>& pWriter) { pWriter.reset(new AMFWriter(_band.poolBuffers()));pWriter->packet.next(6); }
 
 	Trigger						_trigger;
 
@@ -100,7 +97,7 @@ private:
 	std::deque<RTMFPMessage*>	_messagesSent;
 	UInt64						_stageAck;
 	UInt32						_lostCount;
-	UInt32						_ackCount;
+	double						_ackCount;
 	UInt32						_repeatable;
 	BandWriter&					_band;
 

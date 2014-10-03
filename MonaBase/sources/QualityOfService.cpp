@@ -26,45 +26,38 @@ namespace Mona {
 
 QualityOfService QualityOfService::Null;
 
-QualityOfService::QualityOfService() : _sampleInterval(4000),lostRate(0),byteRate(0),latency(0),_lost(0),_count(0),_size(0),_latency(0),_latencyCount(0) {
+QualityOfService::QualityOfService() : _sampleInterval(4000),lostRate(0),byteRate(0),latency(0),_lost(0),_size(0),_latency(0),_latencyCount(0) {
 }
 
 void QualityOfService::reset() {
 	(double&)lostRate = 0;
 	(double&)byteRate = 0;
 	(UInt32&)latency = 0;
-	_latencyCount=_latency=_size=_count=_lost=0;
+	_latencyCount = _latency = _size = 0;
+	_lost = 0;
 	_sendSamples.clear();
 	_lostSamples.clear();
 }
 
-void QualityOfService::add(UInt32 count, UInt32 lost) {
-	
-	if (lost > count)
-		lost = count;
+void QualityOfService::add(double lost) {
 
 	while(!_lostSamples.empty()) {
 		LostSample& sample(_lostSamples.front());
 		if(!sample.time.isElapsed(_sampleInterval))
 			break;
 		_lost -= sample.lost;
-		_count -= sample.count;
 		_lostSamples.pop_front();
 	}
 
 	_lost += lost;
-	_count += count;
-	_lostSamples.emplace_back(count,lost);
+	_lostSamples.emplace_back(lost);
 
-	(double&)lostRate = 0;
-	if (_count > 0)
-		(double&)lostRate = _lost / (double)_count;
+	(double&)lostRate = _lost / _lostSamples.size();
 }
 
-void QualityOfService::add(UInt32 size, UInt16 ping, UInt32 count, UInt32 lost) {
+void QualityOfService::add(UInt32 size, UInt16 ping, double lost) {
 
-	if (count > 0)
-		add(count, lost);
+	add(lost);
 
 	while(!_sendSamples.empty()) {
 		SendSample& sample(_sendSamples.front());

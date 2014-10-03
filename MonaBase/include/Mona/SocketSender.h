@@ -30,14 +30,14 @@ This file is a part of Mona.
 namespace Mona {
 
 class Socket;
-class SocketSender : public WorkThread, public virtual Object {
+class SocketSender : public WorkThread, public Binary, public virtual Object {
 	friend class Socket;
 	friend class SocketImpl;
 public:
 	bool	available() { return _ppBuffer ? !_ppBuffer->empty() : (data() && _position < size()); }
 
-	virtual const UInt8*	data() { return _data; }
-	virtual UInt32			size() { return _size; }
+	virtual const UInt8*	data() const { return _data; }
+	virtual UInt32			size() const { return _size; }
 
 protected:
 	SocketSender(const char* name);

@@ -36,8 +36,8 @@ public:
 	UInt32				sizePos;
 	UInt8				headerSize;
 
-	const UInt8*		data() { return _writer.packet.data(); }
-	UInt32				size() { return _writer.packet.size(); }
+	const UInt8*		data() const { return _writer.packet.data(); }
+	UInt32				size() const { return _writer.packet.size(); }
 
 
 	void				dump(RTMPChannel& channel, const SocketAddress& address) { pack(channel); Session::DumpResponse(data(), size(), address); }

@@ -19,23 +19,25 @@ This file is a part of Mona.
 
 #pragma once
 
-#include "Mona/Mona.h"
-#include "Mona/XMLReader.h"
+#include "Mona/ReferableReader.h"
+#include "Script.h"
 
 
-namespace Mona {
-
-class SOAPReader : public XMLReader, public virtual Object {
+class ScriptReader : public Mona::ReferableReader {
 public:
-	SOAPReader(PacketReader& packet);
+	// Read the count number of lua object in the lua_State stack
+	ScriptReader(lua_State *pState, Mona::UInt32 count);
 
-	virtual Type	followingType();
-	virtual bool	isValid();
-	virtual void	reset();
+	void reset();
 
 private:
-	bool	_body;
+	Mona::UInt8			followingType();
+	bool				readOne(Mona::UInt8 type, Mona::DataWriter& writer);
+
+	bool				writeNext(Mona::DataWriter& writer);
+
+	lua_State*			_pState;			
+	int					_start;
+	int					_current;
+	int					_end;
 };
-
-
-} // namespace Mona

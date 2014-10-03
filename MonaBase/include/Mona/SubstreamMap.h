@@ -29,23 +29,23 @@ namespace Mona {
 /// in substream composed of pairs (pointer/size)
 class SubstreamMap : Mona::Object {
 public:
-	SubstreamMap(const UInt8* data, const UInt32 size) : _data(data), _size(size), _index(0), _pos(NULL) {}
+	SubstreamMap(const UInt8* data, const UInt32 size) : _totalSize(0), _data(data), _size(size), _index(0), _pos(NULL) {}
 
 	/// \bried Define a substream and add it to the end of the list
 	SubstreamMap & addSub(UInt32 pos, UInt32 size);
 
 	/// \return true if there is a next sub and it's position is 0
-	bool nextSubIsNew() { return _listSubs.size() && _pos == NULL; }
+	bool nextSubIsNew() const { return _listSubs.size() && _pos == NULL; }
 
 	/// \return minimum size between maxsize and size of substream
 	/// 0 if there is no more substream available
 	UInt32 readNextSub(UInt8*& pos, UInt32 maxsize);
 
 	/// \return Number of substreams
-	UInt32 count() { return _listSubs.size(); }
+	UInt32 count() const { return _listSubs.size(); }
 
 	/// \return Total size of substreams
-	UInt32 totalSize();
+	UInt32 totalSize() const { return _totalSize; }
 
 	/// \brief Reset Cursor
 	void resetPos() {
@@ -54,14 +54,15 @@ public:
 	}
 
 	/// \return Original Data
-	const UInt8* originalData() { return _data; } 
+	const UInt8* originalData() const { return _data; } 
 
 	/// \return Original Size
-	const UInt32 originalSize() { return _size; } 
+	UInt32 originalSize() const { return _size; } 
 
 private:
 	UInt32			_index;
 	UInt8*			_pos;
+	UInt32			_totalSize;
 
 	const UInt8*	_data;
 	const UInt32	_size;

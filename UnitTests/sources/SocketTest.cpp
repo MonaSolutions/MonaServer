@@ -281,8 +281,8 @@ void TCPTest(SocketManager& sockets) {
 	TCPEchoClient client(sockets, &sockets == &ParallelSockets);
 	SocketAddress target(IPAddress::Loopback(),host.port());
 	CHECK(client.connect(ex, target) && !ex && client.connected());
-	CHECK(client.echo(ex,EXPAND_DATA_SIZE("hi mathieu and thomas")) && !ex);
-	CHECK(client.echo(ex,(const UInt8*)Long0Data.c_str(),Long0Data.size()) && !ex);
+	CHECK(client.echo(ex,BIN EXPAND("hi mathieu and thomas")) && !ex);
+	CHECK(client.echo(ex,BIN Long0Data.c_str(),Long0Data.size()) && !ex);
 	CHECK(TaskSockets.join(client));
 
 	client.testDisconnection = true;
@@ -300,7 +300,7 @@ void TCPTest(SocketManager& sockets) {
 			CHECK(client.address());
 			CHECK(client.peerAddress()==unknown);
 			if (Util::Random<UInt8>()%2)
-				CHECK(client.send(ex,EXPAND_DATA_SIZE("salut")) && !ex)
+				CHECK(client.send(ex,BIN EXPAND("salut")) && !ex)
 			CHECK(client.connected());
 		}
 		CHECK(TaskSockets.join(client));
@@ -334,8 +334,8 @@ void UDPTest(SocketManager& sockets) {
 	SocketAddress	 target(IPAddress::Loopback(),host.port());
 	CHECK(client.connect(ex, target) && !ex);
 
-	CHECK(client.echo(ex,EXPAND_DATA_SIZE("hi mathieu and thomas")) && !ex);
-	CHECK(client.echo(ex,(const UInt8*)Short0Data.c_str(),Short0Data.size()) && !ex);
+	CHECK(client.echo(ex,BIN EXPAND("hi mathieu and thomas")) && !ex);
+	CHECK(client.echo(ex,BIN Short0Data.c_str(),Short0Data.size()) && !ex);
 	CHECK(TaskSockets.join(client));
 
 	server.OnError::unsubscribe(onError);

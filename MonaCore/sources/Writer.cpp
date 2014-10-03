@@ -32,7 +32,7 @@ Writer				Writer::Null;
 Writer::Writer(State state) : _isNull(false),reliable(true),_state(state) {
 }
 
-Writer::Writer(Writer& writer) : _isNull(writer._isNull),reliable(writer.reliable),_state(writer._state) {
+Writer::Writer(const Writer& other) : _isNull(other._isNull),reliable(other.reliable),_state(other._state) {
 }
 
 Writer::Writer() : _isNull(true), reliable(true), _state(CLOSED) {
@@ -53,7 +53,7 @@ void Writer::close(Int32 code) {
 	OnClose::raise(code);
 }
 
-bool Writer::writeMedia(MediaType type,UInt32 time,PacketReader& packet,Parameters& properties) {
+bool Writer::writeMedia(MediaType type,UInt32 time,PacketReader& packet,const Parameters& properties) {
 	ERROR("writeMedia method not supported by this protocol for ",Format<UInt8>("%.2x",(UInt8)type)," type")
 	return true;
 }

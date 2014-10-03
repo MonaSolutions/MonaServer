@@ -51,7 +51,7 @@ Timezone::TransitionRule		Timezone::_StartDST;
 Timezone::TransitionRule		Timezone::_EndDST;
 Timezone						Timezone::_Timezone; // to guarantee that it will be build after _Environment
 
-const std::string Util::_RESERVED           = "%<>{}|\\\"^`#?";
+const char* Util::_URICharReserved("%<>{}|\\\"^`#?\x7F");
 
 const char Util::_B64Table[65] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
@@ -98,16 +98,11 @@ const Parameters& Util::Environment() {
 	lock_guard<mutex> lock(_MutexEnvironment);
 	if (_Environment.count() > 0)
 		return _Environment;
-	char *s = *environ;
-	for (int i = 0; s = *(environ + i); ++i) {
-		const char* temp = strchr(s, '=');
-		string name;
-		string value;
-		if (temp) {
-			name.assign(s, temp - s);
-			value.assign(temp + 1);
-		} else
-			name.assign(s);
+	char *name = *environ;
+	for (UInt32 i = 0; name = *(environ + i); ++i) {
+		const char* value = strchr(name, '=');
+		if (value)
+			(char&)*(value++) = 0;
 		_Environment.setString(name, value);
 	}
 	return _Environment;
@@ -180,15 +175,25 @@ size_t Util::UnpackUrl(const string& url, string& address, string& path, string&
 	return isFile ? lastPos : string::npos;
 }
 
-Parameters& Util::UnpackQuery(const char* query, Parameters& properties) {
-	if (!query)
-		return properties;
+Parameters& Util::UnpackQuery(const char* query, Parameters& parameters) {
+	ForEachParameter forEach([&parameters](const string& key, const char* value) {
+		parameters.setString(key, value);
+		return true;
+	});
+	UnpackQuery(query, forEach);
+	return parameters;
+}
+
+size_t Util::UnpackQuery(const char* query, const ForEachParameter& forEach) {
 	const char* it = query;
 	const char* end = it+strlen(query);
-	while (it != end) {
+	size_t count(0);
+	string name;
+	string value;
+	while (it < end) {
 
 		// name
-		string name;
+		name.clear();
 		auto itEnd(it);
 		while (itEnd != end && *itEnd != '=' && *itEnd != '&') {
 			if (*itEnd == '+')
@@ -200,10 +205,12 @@ Parameters& Util::UnpackQuery(const char* query, Parameters& properties) {
 			++itEnd;
 		};
 		it = itEnd;
-		string value;
+		value.clear();
+		bool hasValue(false);
 		if (it!=end && *it != '&') { // if it's '='
 			// value
-			itEnd = ++it;
+			hasValue = true;
+			itEnd = ++it; // skip '='
 			while (itEnd != end && *itEnd != '&') {
 				if (*itEnd == '+')
 					value += ' ';
@@ -217,30 +224,11 @@ Parameters& Util::UnpackQuery(const char* query, Parameters& properties) {
 		if (itEnd != end) // if it's '&'
 			++itEnd;
 		it = itEnd;
-		properties.setString(name,value);
+		if (!forEach(name, hasValue ? value.c_str() : NULL))
+			return string::npos;
+		++count;
 	}
-	return properties;
-}
-
-void Util::EncodeURI(const std::string& str, std::string& encodedStr) {
-
-	for (std::string::const_iterator it = str.begin(); it != str.end(); ++it)
-	{
-		char c = *it;
-		if ((c >= 'a' && c <= 'z') || 
-		    (c >= 'A' && c <= 'Z') || 
-		    (c >= '0' && c <= '9') ||
-		    c == '-' || c == '_' || 
-		    c == '.' || c == '~')
-		{
-			encodedStr += c;
-		}
-		else if (c <= 0x20 || c >= 0x7F || _RESERVED.find(c) != std::string::npos)
-		{
-			String::Append(encodedStr, '%', Format<UInt8>("%2X", (UInt8)c));
-		}
-		else encodedStr += c;
-	}
+	return count;
 }
 
 char Util::DecodeURI(const char*& begin,const char* end) {
@@ -271,55 +259,56 @@ char Util::DecodeURI(const char*& begin,const char* end) {
 		c += lo - 'a' + 10;
 	else
 		return '%'; // syntax error
-
+	
 	// Decoded! Assign next caracter & return the caracter decoded
 	begin=itURI;
 	return c;
 }
 
 
-void Util::Dump(const UInt8* in,UInt32 size,Buffer& out,const string& header) {
-	UInt32 len = 0;
-	UInt32 i = 0;
-	UInt32 c = 0;
+void Util::Dump(const UInt8* data,UInt32 size,Buffer& buffer,const string& header) {
 	UInt8 b;
-	out.resize((UInt32)ceil((double)size / 16) * 67 + (header.empty() ? 0 : (header.size() + 2)),false);
+	UInt32 c(0);
+	buffer.resize((UInt32)ceil((double)size / 16) * 67 + (header.empty() ? 0 : (header.size() + 2)),false);
+
+	const UInt8* end(data+size);
+	UInt8*		 out(buffer.data());
 
 	if(!header.empty()) {
-		out[len++] = '\t';
+		*out++ = '\t';
 		c = header.size();
-		memcpy(&out[len],header.c_str(),c);
-		len += c;
-		out[len++] = '\n';
+		memcpy(out,header.c_str(),c);
+		out += c;
+		*out++ = '\n';
 	}
 
-	while (i<size) {
+	while (data<end) {
 		c = 0;
-		out[len++] = '\t';
-		while ( (c < 16) && (i+c < size) ) {
-			b = in[i+c];
-            snprintf((char*)&out[len],out.size()-len,"%X%X ",b>>4, b & 0x0f );
-			len += 3;
+		*out++ = '\t';
+		while ( (c < 16) && (data < end) ) {
+			b = *data++;
+            snprintf((char*)out,4,"%X%X ",b>>4, b & 0x0f );
+			out += 3;
 			++c;
 		}
+		data -= c;
 		while (c++ < 16) {
-			memcpy((char*)&out[len],"   \0",4);
-			len += 3;
+			memcpy((char*)out,"   \0",4);
+			out += 3;
 		}
-		out[len++] = ' ';
+		*out++ = ' ';
 		c = 0;
-		while ( (c < 16) && (i+c < size) ) {
-			b = in[i+c];
+		while ( (c < 16) && (data < end) ) {
+			b = *data++;
 			if (b > 31)
-				out[len++] = b;
+				*out++ = b;
 			else
-				out[len++] = '.';
+				*out++ = '.';
 			++c;
 		}
 		while (c++ < 16)
-			out[len++] = ' ';
-		i += 16;
-		out[len++] = '\n';
+			*out++ = ' ';
+		*out++ = '\n';
 	}
 }
 

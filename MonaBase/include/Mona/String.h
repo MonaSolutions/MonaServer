@@ -27,8 +27,7 @@ This file is a part of Mona.
 
 namespace Mona {
 
-#define EXPAND_SIZE(VALUE)		VALUE"",(sizeof(VALUE)-1) // "" concatenation is here to check that it's a valid const string is not a pointer of char*
-#define EXPAND_DATA_SIZE(VALUE)	(const UInt8*)VALUE"",(UInt32)(sizeof(VALUE)-1)
+#define EXPAND(VALUE)		VALUE"",(sizeof(VALUE)-1) // "" concatenation is here to check that it's a valid const string is not a pointer of char*
 
 template<typename Type>
 class Format : public virtual Object {
@@ -55,167 +54,176 @@ public:
 		TRIM_RIGHT = 2
 	};
 
-	typedef std::function<void(const char*)> ForEach; /// String::Split function type handler
+	typedef std::function<bool(UInt32 index,const char*)> ForEach; /// String::Split function type handler
 
-	static std::vector<std::string>& Split(const std::string& value, const std::string& separators, std::vector<std::string>& values, int options = 0) {
-		String::ForEach forEach([&values](const char* value) { values.emplace_back(value); });
-		String::Split(value, separators, forEach, options);
-		return values;
-	}
-	static UInt32 Split(const std::string& value, const std::string& separators, const String::ForEach& forEach, int options = 0);
+	static std::size_t Split(const std::string& value, const char* separators, const String::ForEach& forEach, int options = 0) { return Split(value.data(), separators, forEach, options); }
+	static std::size_t Split(const char* value, const char* separators, const String::ForEach& forEach, int options = 0);
 
 	static std::string& Trim(std::string& value, TrimOption option = TRIM_BOTH);
-
-	static std::string&	ToLower(std::string& value);
-	static char*		ToLower(char* value);
+	static const char*	TrimLeft(const char* value) { while (*value && isspace(*value)) ++value; return value; }
+	
+	static std::string&	ToLower(std::string& value) { for (auto it = value.begin(); it != value.end(); ++it) *it = tolower(*it); return value; }
 
 	static int ICompare(const char* value1, const char* value2,  std::size_t size = std::string::npos);
 	static int ICompare(const std::string& value1, const std::string& value2, std::size_t size = std::string::npos) { return ICompare(value1.empty() ? NULL : value1.c_str(), value2.empty() ? NULL : value2.c_str(), size); }
 	static int ICompare(const std::string& value1, const char* value2,  std::size_t size = std::string::npos) { return ICompare(value1.empty() ? NULL : value1.c_str(), value2, size); }
 	static int ICompare(const char* value1, const std::string& value2,  std::size_t size = std::string::npos) { return ICompare(value1, value2.empty() ? NULL : value2.c_str(), size); }
 
-	template <typename ...Args>
-	static std::string& Format(std::string& result, Args&&... args) {
+	
+	template<typename Type>
+	static bool ToNumber(const std::string& value, Type& result) { return ToNumber(value.data(), value.size(), result); }
+	template<typename Type>
+	static bool ToNumber(const char* value, Type& result) { return ToNumber(value, std::string::npos, result); }
+	template<typename Type>
+	static bool ToNumber(const char* value, std::size_t size, Type& result);
+
+	template<typename Type>
+	static Type ToNumber(Exception& ex, const std::string& value) { return ToNumber<Type>(ex, 0, value.data(),value.size()); }
+	template<typename Type>
+	static Type ToNumber(Exception& ex, const char* value, std::size_t size = std::string::npos) { return ToNumber<Type>(ex, 0, value, size ); }
+	template<typename Type>
+	static Type ToNumber(Exception& ex, Type failValue, const std::string& value) { return ToNumber<Type>(ex, failValue, value.data(),value.size()); }
+	template<typename Type>
+	static Type ToNumber(Exception& ex, Type failValue, const char* value, std::size_t size = std::string::npos);
+
+
+	static const std::string Empty;
+
+	template <typename BufferType, typename ...Args>
+	static BufferType& Format(BufferType& result, Args&&... args) {
 		result.clear();
 		return String::Append(result, args ...);
 	}
 
 	/// \brief match "std::string" case
-	template <typename ...Args>
-	static std::string& Append(std::string& result, const std::string& value, Args&&... args) {
-		result.append(value);
-		return String::Append(result, args ...);
+	template <typename BufferType, typename ...Args>
+	static BufferType& Append(BufferType& result, const std::string& value, Args&&... args) {
+		return String::Append(AppendString(result,value), args ...);
 	}
 
 	
 	/// \brief match "char*" case
-	template <typename ...Args>
-	static std::string& Append(std::string& result, const char* value, Args&&... args) {
-		result.append(value);
-		return String::Append(result, args ...);
+	template <typename BufferType, typename ...Args>
+	static BufferType& Append(BufferType& result, const char* value, Args&&... args) {
+		return String::Append(AppendString(result,value), args ...);
 	}
 
 	// match le "char" cas
-	template <typename ...Args>
-	static std::string& Append(std::string& result, char value, Args&&... args) {
-		result.append(1,value);
-		return String::Append(result, args ...);
+	template <typename BufferType, typename ...Args>
+	static BufferType& Append(BufferType& result, char value, Args&&... args) {
+		return String::Append(AppendData(result,&value,1), args ...);
 	}
 
+	// match le "signed char" cas
+	template <typename BufferType, typename ...Args>
+	static BufferType& Append(BufferType& result, signed char value, Args&&... args) {
+		char buffer[8];
+		sprintf(buffer, "%hhd", value);
+		return String::Append(AppendString(result,buffer), args ...);
+	}
 
 	/// \brief match "short" case
-	template <typename ...Args>
-	static std::string& Append(std::string& result, short value, Args&&... args) {
-		char buffer[64];
+	template <typename BufferType, typename ...Args>
+	static BufferType& Append(BufferType& result, short value, Args&&... args) {
+		char buffer[8];
 		sprintf(buffer, "%hd", value);
-		result.append(buffer);
-		return String::Append(result, args ...);
+		return String::Append(AppendString(result,buffer), args ...);
 	}
 
 	/// \brief match "int" case
-	template <typename ...Args>
-	static std::string& Append(std::string& result, int value, Args&&... args) {
-		char buffer[64];
+	template <typename BufferType, typename ...Args>
+	static BufferType& Append(BufferType& result, int value, Args&&... args) {
+		char buffer[16];
 		sprintf(buffer, "%d", value);
-		result.append(buffer);
-		return String::Append(result, args ...);
+		return String::Append(AppendString(result,buffer), args ...);
 	}
 
 	/// \brief match "long" case
-	template <typename ...Args>
-	static std::string& Append(std::string& result, long value, Args&&... args) {
-		char buffer[64];
+	template <typename BufferType, typename ...Args>
+	static BufferType& Append(BufferType& result, long value, Args&&... args) {
+		char buffer[32];
 		sprintf(buffer, "%ld", value);
-		result.append(buffer);
-		return String::Append(result, args ...);
+		return String::Append(AppendString(result,buffer), args ...);
 	}
 
 	/// \brief match "unsigned char" case
-	template <typename ...Args>
-	static std::string& Append(std::string& result, unsigned char value, Args&&... args) {
-		char buffer[64];
+	template <typename BufferType, typename ...Args>
+	static BufferType& Append(BufferType& result, unsigned char value, Args&&... args) {
+		char buffer[8];
 		sprintf(buffer, "%hhu", value);
-		result.append(buffer);
-		return String::Append(result, args ...);
+		return String::Append(AppendString(result,buffer), args ...);
 	}
 
 	/// \brief match "unsigned short" case
-	template <typename ...Args>
-	static std::string& Append(std::string& result, unsigned short value, Args&&... args) {
-		char buffer[64];
+	template <typename BufferType, typename ...Args>
+	static BufferType& Append(BufferType& result, unsigned short value, Args&&... args) {
+		char buffer[8];
 		sprintf(buffer, "%hu", value);
-		result.append(buffer);
-		return String::Append(result, args ...);
+		return String::Append(AppendString(result,buffer), args ...);
 	}
 
 	/// \brief match "unsigned int" case
-	template <typename ...Args>
-	static std::string& Append(std::string& result, unsigned int value, Args&&... args) {
-		char buffer[64];
+	template <typename BufferType, typename ...Args>
+	static BufferType& Append(BufferType& result, unsigned int value, Args&&... args) {
+		char buffer[16];
 		sprintf(buffer, "%u", value);
-		result.append(buffer);
-		return String::Append(result, args ...);
+		return String::Append(AppendString(result,buffer), args ...);
 	}
 
 	/// \brief match "unsigned long" case
-	template <typename ...Args>
-	static std::string& Append(std::string& result, unsigned long value, Args&&... args) {
-		char buffer[64];
+	template <typename BufferType, typename ...Args>
+	static BufferType& Append(BufferType& result, unsigned long value, Args&&... args) {
+		char buffer[32];
 		sprintf(buffer, "%lu", value);
-		result.append(buffer);
-		return String::Append(result, args ...);
+		return String::Append(AppendString(result,buffer), args ...);
 	}
 
 	/// \brief match "Int64" case
-	template <typename ...Args>
-	static std::string& Append(std::string& result, long long value, Args&&... args) {
+	template <typename BufferType, typename ...Args>
+	static BufferType& Append(BufferType& result, long long value, Args&&... args) {
 		char buffer[64];
 		sprintf(buffer, "%lld", value);
-		result.append(buffer);
-		return String::Append(result, args ...);
+		return String::Append(AppendString(result,buffer), args ...);
 	}
 
 	/// \brief match "UInt64" case
-	template <typename ...Args>
-	static std::string& Append(std::string& result, unsigned long long value, Args&&... args) {
+	template <typename BufferType, typename ...Args>
+	static BufferType& Append(BufferType& result, unsigned long long value, Args&&... args) {
 		char buffer[64];
 		sprintf(buffer, "%llu", value);
-		result.append(buffer);
-		return String::Append(result, args ...);
+		return String::Append(AppendString(result,buffer), args ...);
 	}
 
 	/// \brief match "float" case
-	template <typename ...Args>
-	static std::string& Append(std::string& result, float value, Args&&... args) {
+	template <typename BufferType, typename ...Args>
+	static BufferType& Append(BufferType& result, float value, Args&&... args) {
 		char buffer[64];
 		sprintf(buffer, "%.8g", value);
-		result.append(buffer);
-		return String::Append(result, args ...);
+		return String::Append(AppendString(result,buffer), args ...);
 	}
 
 	/// \brief match "double" case
-	template <typename ...Args>
-	static std::string& Append(std::string& result, double value, Args&&... args) {
+	template <typename BufferType, typename ...Args>
+	static BufferType& Append(BufferType& result, double value, Args&&... args) {
 		char buffer[64];
 		sprintf(buffer, "%.16g", value);
-		result.append(buffer);
-		return String::Append(result, args ...);
+		return String::Append(AppendString(result,buffer), args ...);
 	}
 
 	/// \brief match "bool" case
-	template <typename ...Args>
-	static std::string& Append(std::string& result, bool value, Args&&... args) {
-		result.append(value ? "true" : "false");
-		return String::Append(result, args ...);
+	template <typename BufferType, typename ...Args>
+	static BufferType& Append(BufferType& result, bool value, Args&&... args) {
+		if (value)
+			return String::Append(AppendData(result,EXPAND("true")), args ...);
+		return String::Append(AppendData(result,EXPAND("false")), args ...);
 	}
 
 	/// \brief match pointer case
-	template <typename ...Args>
-	static std::string& Append(std::string& result, const void* value, Args&&... args)	{
+	template <typename BufferType, typename ...Args>
+	static BufferType& Append(BufferType& result, const void* value, Args&&... args)	{
 		char buffer[64];
 		sprintf(buffer,"%p", value);
-		result.append(buffer);
-		return String::Append(result, args ...);
+		return String::Append(AppendString(result,buffer), args ...);
 	}
 
 	/// \brief A usefull form which use snprintf to format result
@@ -223,8 +231,8 @@ public:
 	/// \param result This is the std::string which to append text
 	/// \param value A pair of format text associate with value (ex: pair<char*, double>("%.2f", 10))
 	/// \param args Other arguments to append
-	template <class Type, typename ...Args>
-	static std::string& Append(std::string& result, const Mona::Format<Type>& custom, Args&&... args) {
+	template <class Type, typename BufferType, typename ...Args>
+	static BufferType& Append(BufferType& result, const Mona::Format<Type>& custom, Args&&... args) {
 		char buffer[64];
 		try {
             snprintf(buffer, sizeof(buffer), custom.format, custom.value);
@@ -232,23 +240,15 @@ public:
 		catch (...) {
 			return String::Append(result, args ...);
 		}
-		result.append(buffer);
-		return String::Append(result, args ...);
+		return String::Append(AppendString(result,buffer), args ...);
 	}
 
-	template<typename T>
-	static bool ToNumber(const std::string& value, T& result);
-
-	template<typename T>
-	static T ToNumber(Exception& ex, const std::string& value, T result=0);
-
-	static const std::string Empty;
 private:
 
-	static std::string& Append(std::string& result) { return result; }
-#if defined(WIN32)
-	static int output_exp_old_format; // for setting number of exponent digits to 2
-#endif
+	template <typename BufferType>
+	static BufferType& Append(BufferType& result) { return result; }
+
+
 };
 
 

@@ -22,19 +22,10 @@ This file is a part of Mona.
 #include "Mona/Util.h"
 #include <algorithm>
 
-#include "Mona/XMLWriter.h"
-#include "Mona/SOAPWriter.h"
-#include "Mona/JSONWriter.h"
-#include "Mona/CSSWriter.h"
-#include "Mona/HTMLWriter.h"
-#include "Mona/SVGWriter.h"
-#include "Mona/RawWriter.h"
 #include "Mona/HTTP/HTTPSession.h"
-#include "Mona/HTTP/HTTPPacket.h"
 #include "Mona/PacketReader.h"
 #include "Mona/JSONReader.h"
-#include "Mona/XMLReader.h"
-#include "Mona/SOAPReader.h"
+#include "Mona/XMLRPCReader.h"
 
 using namespace std;
 
@@ -133,7 +124,7 @@ HTTP::ContentType HTTP::ExtensionToMIMEType(const string& extension, string& sub
 		subType = "svg+xml";
 		return CONTENT_IMAGE;
 	}
-	else if (String::ICompare(extension, EXPAND_SIZE("m3u")) == 0) {
+	else if (String::ICompare(extension, EXPAND("m3u")) == 0) {
 		subType = (extension.size() > 3 && extension[3] == '8') ? "x-mpegurl; charset=utf-8" : "x-mpegurl";
 		return CONTENT_AUDIO;
 	}
@@ -151,53 +142,56 @@ HTTP::ContentType HTTP::ExtensionToMIMEType(const string& extension, string& sub
 }
 
 
-string& HTTP::FormatContentType(ContentType type, const string& subType, string& value) {
+string& HTTP::FormatContentType(ContentType type, const char* subType, string& value) {
 	switch (type) {
 		case CONTENT_TEXT:
 			value.assign("text/");
+			if (!subType)
+				subType = "plain";
 			break;
 		case CONTENT_IMAGE:
 			value.assign("image/");
+			if (!subType)
+				subType = "jpeg";
 			break;
 		case CONTENT_APPLICATON:
 			value.assign("application/");
+			if (!subType)
+				subType = "octet-stream";
 			break;
 		case CONTENT_MULTIPART:
 			value.assign("multipart/");
+			if (!subType)
+				subType = "mixed";
 			break;
 		case CONTENT_AUDIO:
 			value.assign("audio/");
+			if (!subType)
+				subType = "mpeg";
 			break;
 		case CONTENT_VIDEO:
 			value.assign("video/");
+			if (!subType)
+				subType = "mpeg";
 			break;
 		case CONTENT_MESSAGE:
 			value.assign("message/");
+			if (!subType)
+				subType = "example";
 			break;
 		case CONTENT_MODEL:
 			value.assign("model/");
+			if (!subType)
+				subType = "example";
 			break;
 		case CONTENT_EXAMPLE:
-			value.assign("example/");
+			value.assign("example");
+			subType = "";
 			break;
+		default:
+			return value.assign("text/plain");
 	}
 	return value.append(subType);
-}
-
-DataWriter* HTTP::NewDataWriter(const PoolBuffers& poolBuffers,const string& subType) {
-	if (String::ICompare(subType,EXPAND_SIZE("html"))==0 || String::ICompare(subType,EXPAND_SIZE("xhtml+xml"))==0)
-		return new HTMLWriter(poolBuffers);
-	if (String::ICompare(subType,EXPAND_SIZE("xml"))==0)
-		return new XMLWriter(poolBuffers);
-	if (String::ICompare(subType,EXPAND_SIZE("soap+xml"))==0)
-		return new SOAPWriter(poolBuffers);
-	if (String::ICompare(subType,EXPAND_SIZE("json"))==0)
-		return new JSONWriter(poolBuffers);
-	if (String::ICompare(subType,EXPAND_SIZE("svg+xml"))==0)
-		return new SVGWriter(poolBuffers);
-	if (String::ICompare(subType,EXPAND_SIZE("css"))==0)
-		return new CSSWriter(poolBuffers);
-	return new RawWriter(poolBuffers);
 }
 
 const char* HTTP::CodeToMessage(UInt16 code) {
@@ -208,24 +202,23 @@ const char* HTTP::CodeToMessage(UInt16 code) {
 }
 
 HTTP::CommandType HTTP::ParseCommand(Exception& ex,const char* value) {
-	if (String::ICompare(value,EXPAND_SIZE("GET"))==0)
+	if (String::ICompare(value,EXPAND("GET"))==0)
 		return COMMAND_GET;
-	if (String::ICompare(value,EXPAND_SIZE("PUSH"))==0)
+	if (String::ICompare(value,EXPAND("PUSH"))==0)
 		return COMMAND_PUSH;
-	if (String::ICompare(value,EXPAND_SIZE("HEAD"))==0)
+	if (String::ICompare(value,EXPAND("HEAD"))==0)
 		return COMMAND_HEAD;
-	if (String::ICompare(value,EXPAND_SIZE("OPTIONS"))==0)
+	if (String::ICompare(value,EXPAND("OPTIONS"))==0)
 		return COMMAND_OPTIONS;
-	if (String::ICompare(value,EXPAND_SIZE("POST"))==0)
+	if (String::ICompare(value,EXPAND("POST"))==0)
 		return COMMAND_POST;
 	ex.set(Exception::PROTOCOL, "Unknown HTTP command ", string(value, 4));
 	return COMMAND_UNKNOWN;
 }
 
 UInt8 HTTP::ParseConnection(Exception& ex,const char* value) {
-	vector<string> fields;
 	UInt8 type(CONNECTION_ABSENT);
-	for (const string& field : String::Split(value, ",", fields, String::SPLIT_IGNORE_EMPTY | String::SPLIT_TRIM)) {
+	String::ForEach forEach([&type,&ex](UInt32 index,const char* field){
 		if (String::ICompare(field, "upgrade") == 0)
 			type |= CONNECTION_UPGRADE;
 		else if (String::ICompare(field, "keep-alive") == 0)
@@ -234,7 +227,9 @@ UInt8 HTTP::ParseConnection(Exception& ex,const char* value) {
 			type |= CONNECTION_CLOSE;
 		else
 			ex.set(Exception::PROTOCOL, "Unknown HTTP type connection ", field);
-	}
+		return true;
+	});
+	String::Split(value, ",", forEach, String::SPLIT_IGNORE_EMPTY | String::SPLIT_TRIM);
 	return type;
 }
 
@@ -252,23 +247,23 @@ HTTP::ContentType HTTP::ParseContentType(const char* value, string& subType) {
 		subType.clear();
 
 	// type
-	if (String::ICompare(value,EXPAND_SIZE("text"))==0)
+	if (String::ICompare(value,EXPAND("text"))==0)
 		return CONTENT_TEXT;
-	if (String::ICompare(value,EXPAND_SIZE("image"))==0)
+	if (String::ICompare(value,EXPAND("image"))==0)
 		return CONTENT_IMAGE;
-	if (String::ICompare(value,EXPAND_SIZE("application"))==0)
+	if (String::ICompare(value,EXPAND("application"))==0)
 		return CONTENT_APPLICATON;
-	if (String::ICompare(value,EXPAND_SIZE("multipart"))==0)
+	if (String::ICompare(value,EXPAND("multipart"))==0)
 		return CONTENT_MULTIPART;
-	if (String::ICompare(value,EXPAND_SIZE("audio"))==0)
+	if (String::ICompare(value,EXPAND("audio"))==0)
 		return CONTENT_AUDIO;
-	if (String::ICompare(value,EXPAND_SIZE("video"))==0)
+	if (String::ICompare(value,EXPAND("video"))==0)
 		return CONTENT_VIDEO;
-	if (String::ICompare(value,EXPAND_SIZE("message"))==0)
+	if (String::ICompare(value,EXPAND("message"))==0)
 		return CONTENT_MESSAGE;
-	if (String::ICompare(value,EXPAND_SIZE("model"))==0)
+	if (String::ICompare(value,EXPAND("model"))==0)
 		return CONTENT_MODEL;
-	if (String::ICompare(value,EXPAND_SIZE("example"))==0)
+	if (String::ICompare(value,EXPAND("example"))==0)
 		return CONTENT_EXAMPLE;
 	return CONTENT_TEXT; // default value
 }
@@ -319,16 +314,18 @@ void HTTP::WriteDirectoryEntries(BinaryWriter& writer, const string& serverAddre
 
 	// Write column names
 	// Name		Modified	Size
-	writer.writeRaw("<html><head><title>Index of ",
-		path, "/</title><style>th {text-align: center;}</style></head><body><h1>Index of ",
-		path, "/</h1><pre><table cellpadding=\"0\"><tr><th><a href=\"?N=",
-		sort, "\">Name</a></th><th><a href=\"?M=",
-		sort, "\">Modified</a></th><th><a href=\"?S=",
-		sort, "\">Size</a></th></tr><tr><td colspan=\"3\"><hr></td></tr>");
+	writer.write(EXPAND("<html><head><title>Index of "))
+		.write(path).write(EXPAND("/</title><style>th {text-align: center;}</style></head><body><h1>Index of "))
+		.write(path).write(EXPAND("/</h1><pre><table cellpadding=\"0\"><tr><th><a href=\"?N="))
+		.write(sort).write(EXPAND("\">Name</a></th><th><a href=\"?M="))
+		.write(sort).write(EXPAND("\">Modified</a></th><th><a href=\"?S="))
+		.write(sort).write(EXPAND("\">Size</a></th></tr><tr><td colspan=\"3\"><hr></td></tr>"));
 
 	// Write first entry - link to a parent directory
 	if(!path.empty())
-		writer.writeRaw("<tr><td><a href=\"http://", serverAddress,path,"/..\">Parent directory</a></td><td>&nbsp;-</td><td>&nbsp;&nbsp;-</td></tr>\n");
+		writer.write(EXPAND("<tr><td><a href=\"http://"))
+			.write(serverAddress).write(path)
+			.write(EXPAND("/..\">Parent directory</a></td><td>&nbsp;-</td><td>&nbsp;&nbsp;-</td></tr>\n"));
 
 	// Sort entries
 	EntriesComparator comparator(sortOptions);
@@ -341,7 +338,7 @@ void HTTP::WriteDirectoryEntries(BinaryWriter& writer, const string& serverAddre
 	}
 
 	// Write footer
-	writer.writeRaw("</table></body></html>");
+	writer.write(EXPAND("</table></body></html>"));
 }
 
 void HTTP::WriteDirectoryEntry(BinaryWriter& writer,const string& serverAddress,const string& path,const Path& entry) {
@@ -357,27 +354,12 @@ void HTTP::WriteDirectoryEntry(BinaryWriter& writer,const string& serverAddress,
 	else
 		String::Format(size, Format<double>("%.1fG",entry.size()/1073741824.0));
 
-	writer.writeRaw("<tr><td><a href=\"http://", serverAddress, path, "/",
-		entry.name(), entry.isDirectory() ? "/\">" : "\">",
-		entry.name(), entry.isDirectory() ? "/" : "", "</a></td><td>&nbsp;",
-		Date(entry.lastModified()).toString("%d-%b-%Y %H:%M", date), "</td><td align=right>&nbsp;&nbsp;",
-		size, "</td></tr>\n");
+	writer.write(EXPAND("<tr><td><a href=\"http://")).write(serverAddress).write(path).write("/")
+		.write(entry.name()).write(entry.isDirectory() ? "/\">" : "\">")
+		.write(entry.name()).write(entry.isDirectory() ? "/" : "").write(EXPAND("</a></td><td>&nbsp;"))
+		.write(Date(entry.lastModified()).toString("%d-%b-%Y %H:%M", date)).write(EXPAND("</td><td align=right>&nbsp;&nbsp;"))
+		.write(size).write(EXPAND("</td></tr>\n"));
 }
 
-void HTTP::ReadMessageFromType(Exception& ex, HTTPSession& caller, const shared_ptr<HTTPPacket>& httpPacket, PacketReader& packet) {
-
-	// SOAP
-	if (httpPacket->contentType == HTTP::CONTENT_TEXT && String::ICompare(httpPacket->contentSubType,EXPAND_SIZE("soap+xml"))==0)
-		caller.readMessage<SOAPReader>(ex, packet);
-	// XML
-	else if (httpPacket->contentType == HTTP::CONTENT_TEXT && String::ICompare(httpPacket->contentSubType,EXPAND_SIZE("xml"))==0)
-		caller.readMessage<XMLReader>(ex, packet);
-	// JSON
-	else if (httpPacket->contentType == HTTP::CONTENT_APPLICATON && String::ICompare(httpPacket->contentSubType,EXPAND_SIZE("json"))==0)
-		caller.readMessage<JSONReader>(ex, packet);
-	// TODO other types
-	else
-		caller.readRawMessage(ex, packet);
-}
 
 } // namespace Mona

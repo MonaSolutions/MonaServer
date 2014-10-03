@@ -69,13 +69,12 @@ bool LUASocketAddress::Read(Exception& ex, lua_State *pState, int& index, Socket
 	if(lua_isnumber(pState,index)) // just port?
 		 return address.set(IPAddress::Wildcard(), (UInt16)lua_tonumber(pState, index));
 
-	if(lua_isstring(pState,index)) {
+	if (lua_type(pState, index)==LUA_TSTRING) { // lua_type because can be encapsulated in a lua_next
 		const char* value = lua_tostring(pState,index);
-		if (lua_isstring(pState,index+1)) {
-			if (lua_isnumber(pState,++index))
-				return address.set(ex, value, (UInt16)lua_tonumber(pState,index));
+		if (lua_type(pState, index+1)==LUA_TSTRING)
 			return address.set(ex, value, lua_tostring(pState,index));
-		}
+		if (lua_isnumber(pState,++index))
+			return address.set(ex, value, (UInt16)lua_tonumber(pState,index));
 		return address.set(ex, value);
 	}
 	
@@ -88,11 +87,10 @@ bool LUASocketAddress::Read(Exception& ex, lua_State *pState, int& index, Socket
 
 		IPAddress* pHost = Script::ToObject<IPAddress>(pState, isConst, index);
 		if (pHost) {
-			if (lua_isstring(pState, index+1)) {
-				if (lua_isnumber(pState, ++index))
-					return address.set(*pHost, (UInt16)lua_tonumber(pState, index));
+			if (lua_type(pState, index+1)==LUA_TSTRING)
 				return address.set(ex, *pHost, lua_tostring(pState, index));
-			}
+			if (lua_isnumber(pState, ++index))
+				return address.set(*pHost, (UInt16)lua_tonumber(pState, index));
 			return address.set(ex, *pHost, 0);
 		}
 

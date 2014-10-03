@@ -263,27 +263,26 @@ ADD_TEST(StringTest, Trim) {
 ADD_TEST(StringTest, Split) {
 
 	int test = 0;
-	int i = 0;
-	String::ForEach forEach([&test, &i](const char* value) {
+	String::ForEach forEach([&test](UInt32 index,const char* value) {
 		switch (test) {
 			case 0:
 				CHECK(strcmp(value, "bidule")==0)
 				break;
 			case 1: {
-				if (i == 0)
+				if (index == 0)
 					CHECK(strcmp(value, "abc ")==0)
-				else if (i == 1)
+				else if (index == 1)
 					CHECK(strcmp(value, " def ")==0)
-				else if (i==2)
+				else if (index==2)
 					CHECK(strcmp(value, " ghi")==0)
 				else
 					CHECK(strcmp(value, "")==0)
 				break;
 			}
 			case 2: {
-				if (i == 0)
+				if (index == 0)
 					CHECK(strcmp(value, "abc")==0)
-				else if (i == 1)
+				else if (index == 1)
 					CHECK(strcmp(value, "def")==0)
 				else
 					CHECK(strcmp(value, "ghi")==0)
@@ -292,20 +291,20 @@ ADD_TEST(StringTest, Split) {
 			default:
 				FATAL_ERROR("No expected Split ", test, " test")
 		}
-		++i;
+		return true;
 	});
 
-	string s = "bidule"; test = 0; i = 0;
+	string s = "bidule"; test = 0;
 	CHECK(String::Split(s,"|",forEach) == 1);
 	
-	s = "abc | def | ghi"; test = 1; i = 0;
+	s = "abc | def | ghi"; test = 1;
 	CHECK(String::Split(s,"|",forEach) == 3);
 
-	s = "abc | def | ghi|"; test = 1; i = 0;
+	s = "abc | def | ghi|"; test = 1;
 	CHECK(String::Split(s,"|",forEach) == 4);
-	test = 1; i = 0;
+	test = 1;
 	CHECK(String::Split(s,"|",forEach,String::SPLIT_IGNORE_EMPTY) == 3);
-	test = 2; i = 0;
+	test = 2;
 	CHECK(String::Split(s,"|",forEach,String::SPLIT_IGNORE_EMPTY | String::SPLIT_TRIM) == 3);
 }
 
@@ -352,4 +351,8 @@ ADD_TEST(StringTest, ICompare) {
 	CHECK(String::ICompare(ss1, "aaa", 3) == 0);
 	CHECK(String::ICompare(ss1, "AAA", 3) == 0);
 	CHECK(String::ICompare(ss1, "bb", 2) < 0);
+
+
+	CHECK(String::ICompare("true salut", "true", 4)==0);
+	CHECK(String::ICompare("true salut", "true", 10)>0);
 }

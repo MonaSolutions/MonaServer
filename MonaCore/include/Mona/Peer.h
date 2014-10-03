@@ -21,11 +21,9 @@ This file is a part of Mona.
 
 #include "Mona/Mona.h"
 #include "Mona/ICE.h"
-#include "Mona/Exceptions.h"
-#include "Mona/Client.h"
-#include "Mona/DataReader.h"
+#include "Mona/Group.h"
+#include "Mona/Publication.h"
 #include "Mona/Path.h"
-#include <set>
 
 namespace Mona {
 
@@ -34,17 +32,15 @@ namespace Events {
 };
 
 
-class Group;
 class Handler;
-class Publication;
-class Listener;
-class Member;
 class Peer : public Client, public virtual Object,
 	public Events::OnInitParameters {
 public:
 
 	Peer(Handler& handler);
 	virtual ~Peer();
+
+	Writer&						writer() { return _pWriter ? *_pWriter : Writer::Null; }
 
 	std::set<SocketAddress>		localAddresses;
 	const bool					connected;
@@ -81,15 +77,10 @@ public:
 	void onHandshake(UInt32 attempts, std::set<SocketAddress>& addresses);
 	void onAddressChanged(const SocketAddress& oldAddress);
 
-	bool onPublish(const Publication& publication, std::string& error);
+	bool onPublish(Exception& ex, const Publication& publication);
 	void onUnpublish(const Publication& publication);
 
-	void onDataPacket(const Publication& publication, DataReader& packet);
-	void onAudioPacket(const Publication& publication, UInt32 time, PacketReader& packet);
-	void onVideoPacket(const Publication& publication, UInt32 time, PacketReader& packet);
-	void onFlushPackets(const Publication& publication);
-
-	bool onSubscribe(const Listener& listener, std::string& error);
+	bool onSubscribe(Exception& ex, const Listener& listener);
 	void onUnsubscribe(const Listener& listener);
 
 	bool onMessage(Exception& ex, const std::string& name, DataReader& reader, UInt8 responseType = 0);
@@ -116,7 +107,7 @@ private:
 	UInt16							_ping;
 	Time							_pingTime;
 	bool							_pingProcessing;
-	
+	Writer*							_pWriter;
 };
 
 } // namespace Mona

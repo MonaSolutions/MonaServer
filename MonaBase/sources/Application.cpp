@@ -132,8 +132,11 @@ bool Application::init(int argc, const char* argv[]) {
 	defineOptions(ex, _options);
 	if (ex)
         FATAL_ERROR(ex.error());
-	if(!_options.process(ex,argc, argv, [this](Exception& ex,const string& name, const string& value){ setString("application." + name, value); }))
-        FATAL_ERROR(ex.error());
+
+	if (!_options.process(ex, argc, argv, [this](const string& name, const string& value) { setString("arguments." + name, value); }))
+        FATAL_ERROR(ex.error())
+	else if(ex)
+		WARN(ex.error())
 
 	if (hasArgument("help")) {
 		displayHelp();
@@ -164,15 +167,17 @@ void Application::defineOptions(Exception& ex, Options& options) {
 		.argument("level")
 		.handler([this](Exception& ex, const string& value) { Exception exWarn;
 #if defined(_DEBUG)
-		UInt8 level(Logger::LEVEL_DEBUG);
+		Logs::SetLevel(String::ToNumber<UInt8>(exWarn, Logger::LEVEL_DEBUG, value));
 #else
-		UInt8 level(Logger::LEVEL_INFO);
+		Logs::SetLevel(String::ToNumber<UInt8>(exWarn, Logger::LEVEL_INFO, value));
 #endif
-		Logs::SetLevel(String::ToNumber<UInt8>(exWarn, value,level)); if (exWarn) WARN("Bad level ",value," has to be a numeric value between 0 and 8 (see help)") });
+		ex.set(Exception::ARGUMENT, "Bad level ", value, " has to be a numeric value between 0 and 8 (see help)");
+		return true;
+	});
 
 	options.add(ex, "dump", "d", "Enables packet traces in logs. Optional arguments are 'intern' or 'all' respectively to displays just intern packet exchanged (between servers) or all packet process. If no argument is given, just outside packet process will be dumped.")
 		.argument("intern|all", false)
-		.handler([this](Exception& ex, const string& value) { Logs::SetDump(value == "all" ? Logs::DUMP_ALL : (value == "intern" ? Logs::DUMP_INTERN : Logs::DUMP_EXTERN)); });
+		.handler([this](Exception& ex, const string& value) { Logs::SetDump(value == "all" ? Logs::DUMP_ALL : (value == "intern" ? Logs::DUMP_INTERN : Logs::DUMP_EXTERN)); return true; });
 	
 	options.add(ex,"help", "h", "Displays help information about command-line usage.");
 }

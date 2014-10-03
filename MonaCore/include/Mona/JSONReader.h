@@ -27,37 +27,33 @@ namespace Mona {
 
 class JSONReader : public DataReader, public virtual Object {
 public:
-	JSONReader(PacketReader& packet);
+	JSONReader(PacketReader& packet,const PoolBuffers& poolBuffers);
 
-	bool				isValid();
-
-	std::string&		readString(std::string& value);
-	double				readNumber();
-	bool				readBoolean();
-	Date&				readDate(Date& date);
-	void				readNull() { packet.next(4); }
-
-	bool				readObject(std::string& type,bool& external);
-	bool				readArray(UInt32& size);
-	Type				readItem(std::string& name);
-	
-	Type				followingType();
-
-	void				reset();
+	bool				isValid() const { return _isValid; }
+	void				reset() { packet.reset(_pos); }
 
 private:
-	const UInt8*	readBytes(UInt32& size);
+	enum {
+		OBJECT =	OTHER,
+		ARRAY =		OTHER+1
+	};
 
+	bool	readOne(UInt8 type, DataWriter& writer);
+	UInt8	followingType();
+
+
+	const char*		jumpToString(UInt32& size);
+	bool			jumpTo(char marker);
+	bool			countArrayElement(UInt32& count);
+	void			ignoreObjectRest();
 	const UInt8*	current();
 
-	UInt32			_pos;
-	std::string		_text;
+	UInt32			_size;
 	Date			_date;
-	bool			_bool;
-	UInt8			_last;
-
-	bool			_validated;
+	double			_number;
 	bool			_isValid;
+	UInt32			_pos;
+	PoolBuffer		_pBuffer;
 };
 
 

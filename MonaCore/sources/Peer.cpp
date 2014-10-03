@@ -36,8 +36,7 @@ public:
 	Writer*			pWriter;
 };
 
-
-Peer::Peer(Handler& handler) : _ping(0),_pingTime(0),_pingProcessing(false),_handler(handler), connected(false) {
+Peer::Peer(Handler& handler) : _pWriter(NULL),_ping(0),_pingTime(0),_pingProcessing(false),_handler(handler), connected(false) {
 }
 
 Peer::~Peer() {
@@ -270,27 +269,27 @@ void Peer::onUnjoinGroup(Group& group,bool dummy) {
 		((Peer*)itPeer->second)->exchangeMemberId(group,followingPeer,NULL);
 }
 
-bool Peer::onPublish(const Publication& publication,string& error) {
+bool Peer::onPublish(Exception& ex, const Publication& publication) {
 	if(connected)
-		return _handler.onPublish(*this,publication,error);
+		return _handler.onPublish(ex,publication,this);
 	WARN("Publication client before connection")
-	error = "Client must be connected before publication";
+	ex.set(Exception::SOFTWARE, "Client must be connected before publication");
 	return false;
 }
 
 void Peer::onUnpublish(const Publication& publication) {
 	if(connected) {
-		_handler.onUnpublish(*this,publication);
+		_handler.onUnpublish(publication,this);
 		return;
 	}
 	WARN("Unpublication client before connection")
 }
 
-bool Peer::onSubscribe(const Listener& listener,string& error) {
+bool Peer::onSubscribe(Exception& ex, const Listener& listener) {
 	if(connected)
-		return _handler.onSubscribe(*this,listener,error);
+		return _handler.onSubscribe(ex, *this,listener);
 	WARN("Subscription client before connection")
-	error = "Client must be connected before subscription";
+	ex.set(Exception::SOFTWARE, "Client must be connected before subscription");
 	return false;
 }
 
@@ -308,40 +307,6 @@ bool Peer::onFileAccess(Exception& ex, FileAccessType type, Path& filePath,DataR
 	ERROR("File '", filePath.toString(), "' access by a not connected client")
 	return false;
 }
-
-void Peer::onDataPacket(const Publication& publication,DataReader& packet) {
-	if(connected) {
-		_handler.onDataPacket(*this,publication,packet);
-		return;
-	}
-	WARN("DataPacket client before connection")
-}
-
-void Peer::onAudioPacket(const Publication& publication,UInt32 time,PacketReader& packet) {
-	if(connected) {
-		_handler.onAudioPacket(*this,publication,time,packet);
-		return;
-	}
-	WARN("AudioPacket client before connection")
-}
-
-void Peer::onVideoPacket(const Publication& publication,UInt32 time,PacketReader& packet) {
-	if(connected) {
-		_handler.onVideoPacket(*this,publication,time,packet);
-		return;
-	}
-	WARN("VideoPacket client before connection")
-}
-
-void Peer::onFlushPackets(const Publication& publication) {
-	if(connected) {
-		_handler.onFlushPackets(*this,publication);
-		return;
-	}
-	WARN("FlushPackets client before connection")
-}
-
-
 
 
 

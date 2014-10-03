@@ -30,6 +30,8 @@ class Date : public Time, public virtual Object {
 public:
 	static const char* ISO8601_FORMAT; 		/// 2005-01-01T12:00:00+01:00 | 2005-01-01T11:00:00Z
 	static const char* ISO8601_FRAC_FORMAT;	/// 2005-01-01T12:00:00.000000+01:00 | 2005-01-01T11:00:00.000000Z
+	static const char* ISO8601_SHORT_FORMAT; 		// 20050101T120000+01:00 | 20050101T110000Z
+	static const char* ISO8601_SHORT_FRAC_FORMAT;	// 20050101T120000.000000+01:00 | 20050101T110000.000000Z
 	static const char* RFC822_FORMAT;		/// Sat, 1 Jan 05 12:00:00 +0100 | Sat, 1 Jan 05 11:00:00 GMT
 	static const char* RFC1123_FORMAT;		/// Sat, 1 Jan 2005 12:00:00 +0100 | Sat, 1 Jan 2005 11:00:00 GMT
 	static const char* HTTP_FORMAT;			/// Sat, 01 Jan 2005 12:00:00 +0100 | Sat, 01 Jan 2005 11:00:00 GMT
@@ -92,7 +94,9 @@ public:
 	Date& update(Int32 year, UInt8 month, UInt8 day, UInt8 hour, UInt8 minute, UInt8 second, UInt16 millisecond, Int32 offset) { update(year, month, day, hour, minute, second,millisecond); setOffset(offset); return *this; }
 
 	/// from string
-	bool update(Exception& ex, const std::string &value,const char* format=NULL);
+	bool update(Exception& ex, const char* value, const char* format = NULL) { return update(ex, value, std::string::npos, format); }
+	bool update(Exception& ex, const char* value, std::size_t count, const char* format = NULL);
+	bool update(Exception& ex, const std::string& value, const char* format = NULL) { return update(ex, value.data(), format); }
 
 	Date& operator=(Int64 time) { update(time); return *this; }
 	Date& operator=(const Date& date) { update(date); return *this; }
@@ -140,10 +144,7 @@ public:
 private:
 
 	void  computeWeekDay(Int64 days);
-	bool  parseAuto(Exception& ex, const std::string &value);
-	UInt8 parseMonth(std::string::const_iterator& it, const std::string::const_iterator& end);
-	bool  parseAMPM(UInt8& hour,std::string::const_iterator& it, const std::string::const_iterator& end);
-	Int32 parseTimezone(bool& isDST,std::string::const_iterator& it, const std::string::const_iterator& end);
+	bool  parseAuto(Exception& ex, const char* data, std::size_t count);
 	void  formatTimezone(std::string& value, bool bISO = true) const;
 
 	

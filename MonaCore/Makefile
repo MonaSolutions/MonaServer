@@ -11,7 +11,7 @@ INCLUDES=-I./../MonaBase/include/ -I./include/
 LIBDIR=-L./../MonaBase/lib/
 LIBS ?= -lMonaBase -lcrypto -lssl
 
-SOURCES = $(filter-out sources/CSSWriter.cpp sources/SVGWriter.cpp sources/HTMLWriter.cpp, $(wildcard sources/*.cpp sources/*/*.cpp))
+SOURCES = $(wildcard sources/*.cpp sources/*/*.cpp)
 OBJECT = $(addprefix tmp/Release/,$(notdir $(SOURCES:%.cpp=%.o)))
 OBJECTD = $(addprefix tmp/Debug/,$(notdir $(SOURCES:%.cpp=%.o)))
 

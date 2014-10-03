@@ -39,7 +39,7 @@ public:
 		WRITE
 	};
 
-	Client() : _pWriter(NULL),_data(0) {}
+	Client() : _data(0) {}
 
 	const SocketAddress			address;
 	const std::string			protocol;
@@ -59,16 +59,16 @@ public:
 	const Time					lastReceptionTime;
 	virtual UInt16				ping() const = 0;
 	virtual const Parameters&	properties() const =0;
-	void						properties(std::vector<std::string>& items) {
+	std::vector<std::string>&	properties(std::vector<std::string>& items) {
 		if (!OnCallProperties::subscribed() || OnCallProperties::raise<false>(items)) {
 			for (std::string& item : items)
 				if (!properties().getString(item, item)) item.assign("null");
 		}
+		return items;
 	}
 
-	Writer&						writer() { return _pWriter ? *_pWriter : Writer::Null; }
-protected:
-	Writer*						_pWriter;
+	virtual Writer&				writer() = 0;
+
 private:
 	double						_data;
 };

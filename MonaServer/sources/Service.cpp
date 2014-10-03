@@ -233,7 +233,7 @@ void Service::loadFile() {
 
 		lua_rawgeti(_pState, LUA_REGISTRYINDEX, _reference);
 		if(luaL_loadfile(_pState,filePath.toString().c_str())!=0) {
-			_ex.set(Exception::SOFTWARE, Script::LastError(_pState));
+			SCRIPT_ERROR(_ex.set(Exception::SOFTWARE, Script::LastError(_pState)).error())
 			lua_pop(_pState,1); // remove environment
 			return;
 		}
@@ -248,8 +248,7 @@ void Service::loadFile() {
 			_handler.startService(*this);
 			SCRIPT_INFO("Application www", path, " loaded")
 		} else {
-			_ex.set(Exception::SOFTWARE, Script::LastError(_pState));
-			SCRIPT_ERROR(_ex.error());
+			SCRIPT_ERROR(_ex.set(Exception::SOFTWARE, Script::LastError(_pState)).error());
 			clearEnvironment();
 		}
 
@@ -323,7 +322,8 @@ int Service::Item(lua_State *pState) {
 		if (!name.empty()) {
 			Exception ex;
 			Service* pService(service.open(ex, name));
-			lua_rawgeti(pState, LUA_REGISTRYINDEX, pService->reference());
+			if (pService) // otherwise means error service
+				lua_rawgeti(pState, LUA_REGISTRYINDEX, pService->reference());
 		}
 	}
 	SCRIPT_CALLBACK_RETURN
@@ -352,7 +352,7 @@ int Service::Index(lua_State *pState) {
 
 
 				if (!path.empty()) {  // else return |data
-					String::ForEach forEach([pState](const char* value){
+					String::ForEach forEach([pState](UInt32 index,const char* value){
 						lua_getfield(pState,-1, value);
 						if (lua_isnil(pState, -1)) {
 							lua_pop(pState, 1);
@@ -361,6 +361,7 @@ int Service::Index(lua_State *pState) {
 							lua_setfield(pState, -3, value);
 						}
 						lua_replace(pState, -2);
+						return true;
 					});
 					String::Split(path, "/", forEach,String::SPLIT_IGNORE_EMPTY | String::SPLIT_TRIM);
 				}

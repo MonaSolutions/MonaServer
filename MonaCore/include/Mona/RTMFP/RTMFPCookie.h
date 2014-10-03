@@ -47,7 +47,7 @@ public:
 	bool					obsolete() { return _createdTimestamp.isElapsed(120000);}  // after 2 mn
 
 	UInt16					length() { return _pCookieComputing->packet.size() + 4; }
-	void					read(PacketWriter& packet) {packet.write32(id).writeRaw(_pCookieComputing->packet.data(),_pCookieComputing->packet.size());}
+	void					read(PacketWriter& packet) {packet.write32(id).write(_pCookieComputing->packet);}
 private:
 	PoolThread*								_pComputingThread;
 	std::shared_ptr<RTMFPCookieComputing>	_pCookieComputing;

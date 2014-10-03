@@ -30,7 +30,9 @@ class Options : public virtual Object {
 public:
 	typedef std::set<Option>::const_iterator Iterator;
 
-	Options();
+	Options() : _pOption(NULL) {}
+
+	bool acceptUnknownOption;
 
 	template <typename ...Args>
 	Option& add(Exception& ex, const char* fullName, const char* shortName, Args&&... args) {
@@ -60,10 +62,11 @@ public:
 
 	UInt32			count() const { return _options.size(); }
 
-    bool			process(Exception& ex, int argc, const char* argv[], const std::function<void(Exception& ex, const std::string&, const std::string&)>& handler = nullptr);
+	typedef std::function<void(const std::string&, const std::string&)> ForEach;
+    bool			process(Exception& ex, int argc, const char* argv[], const ForEach& forEach = nullptr);
 
 private:
-	bool			process(Exception& ex, const std::string& argument, std::string& name, std::string& value, std::set<std::string>& alreadyReaden);
+	bool			process(Exception& ex, const char* argument, std::string& name, std::string& value, std::set<std::string>& alreadyReaden);
 	void			handleOption(const std::string& name,const std::string& value) {}
 	
 	std::set<Option>	_options;

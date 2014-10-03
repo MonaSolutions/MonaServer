@@ -57,7 +57,7 @@ UInt32 LUATCPClient::onData(PoolBuffer& pBuffer) {
 		SCRIPT_MEMBER_FUNCTION_BEGIN(LUATCPClient,*this,"onData")
 			SCRIPT_WRITE_BINARY(pBuffer->data(),pBuffer->size())
 			SCRIPT_FUNCTION_CALL
-			if (SCRIPT_CAN_READ)
+			if (SCRIPT_READ_AVAILABLE)
 				rest = SCRIPT_READ_UINT(0);
 		SCRIPT_FUNCTION_END
 	SCRIPT_END
@@ -87,7 +87,7 @@ int	LUATCPClient::Connect(lua_State* pState) {
 
 		Exception ex;
 		SocketAddress address(IPAddress::Loopback(),0);
-		if (LUASocketAddress::Read(ex, pState, SCRIPT_READ_NEXT, address) && client.connect(ex, address)) {
+		if (LUASocketAddress::Read(ex, pState, SCRIPT_READ_NEXT(1), address) && client.connect(ex, address)) {
 			if (ex)
 				SCRIPT_WARN(ex.error())
 			SCRIPT_WRITE_BOOL(true)

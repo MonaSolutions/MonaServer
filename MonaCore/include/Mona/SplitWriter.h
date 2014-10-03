@@ -44,27 +44,25 @@ public:
 		removeWriter(args ...);
 	}
 
-	void beginObject(const std::string& type = "", bool external = false)	{ for (DataWriter* pWriter : _writers) pWriter->beginObject(type,external); }
-	void endObject()														{ for (DataWriter* pWriter : _writers) pWriter->endObject(); }
+	UInt64 beginObject(const char* type = NULL)								{ for (DataWriter* pWriter : _writers) pWriter->beginObject(type); return 0; }
+	void   endObject()														{ for (DataWriter* pWriter : _writers) pWriter->endObject(); }
 
-	void writePropertyName(const std::string& value)						{ for (DataWriter* pWriter : _writers) pWriter->writePropertyName(value); }
+	void   writePropertyName(const char* value)								{ for (DataWriter* pWriter : _writers) pWriter->writePropertyName(value); }
 
-	void beginArray(UInt32 size)											{ for (DataWriter* pWriter : _writers) pWriter->beginArray(size); }
-	void endArray()															{ for (DataWriter* pWriter : _writers) pWriter->endArray(); }
+	UInt64 beginArray(UInt32 size)											{ for (DataWriter* pWriter : _writers) pWriter->beginArray(size); return 0; }
+	void   endArray()														{ for (DataWriter* pWriter : _writers) pWriter->endArray(); }
 
-	void writeDate(const Date& date)										{ for (DataWriter* pWriter : _writers) pWriter->writeDate(date); }
-	void writeNumber(double value)											{ for (DataWriter* pWriter : _writers) pWriter->writeNumber(value); }
-	void writeString(const std::string& value)								{ for (DataWriter* pWriter : _writers) pWriter->writeString(value); }
-	void writeBoolean(bool value)											{ for (DataWriter* pWriter : _writers) pWriter->writeBoolean(value); }
-	void writeNull()														{ for (DataWriter* pWriter : _writers) pWriter->writeNull(); }
-	void writeBytes(const UInt8* data, UInt32 size)							{ for (DataWriter* pWriter : _writers) pWriter->writeBytes(data,size); }
+	void   writeNumber(double value)										{ for (DataWriter* pWriter : _writers) pWriter->writeNumber(value); }
+	void   writeString(const char* value, UInt32 size)						{ for (DataWriter* pWriter : _writers) pWriter->writeString(value,size); }
+	void   writeBoolean(bool value)											{ for (DataWriter* pWriter : _writers) pWriter->writeBoolean(value); }
+	void   writeNull()														{ for (DataWriter* pWriter : _writers) pWriter->writeNull(); }
+	UInt64 writeDate(const Date& date)										{ for (DataWriter* pWriter : _writers) pWriter->writeDate(date); return 0; }
+	UInt64 writeBytes(const UInt8* data, UInt32 size)						{ for (DataWriter* pWriter : _writers) pWriter->writeBytes(data,size); return 0; }
 
-	void beginObjectArray(UInt32 size)										{ for (DataWriter* pWriter : _writers) pWriter->beginObjectArray(size); }
+	UInt64 beginObjectArray(UInt32 size)									{ for (DataWriter* pWriter : _writers) pWriter->beginObjectArray(size); return 0; }
 
-	void beginMap(UInt32 size, bool weakKeys = false)						{ for (DataWriter* pWriter : _writers) pWriter->beginMap(size,weakKeys); }
-	void endMap()															{ for (DataWriter* pWriter : _writers) pWriter->endMap(); }
-
-	void endWrite()															{ for (DataWriter* pWriter : _writers) pWriter->endWrite(); }
+	UInt64 beginMap(Exception& ex, UInt32 size, bool weakKeys = false)		{ for (DataWriter* pWriter : _writers) pWriter->beginMap(ex, size,weakKeys); return 0; }
+	void   endMap()															{ for (DataWriter* pWriter : _writers) pWriter->endMap(); }
 
 	void   clear()															{ for (DataWriter* pWriter : _writers) pWriter->clear(); DataWriter::clear(); }
 

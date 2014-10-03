@@ -22,6 +22,8 @@ This file is a part of Mona.
 #include "Mona/ArrayReader.h"
 #include "Mona/ArrayWriter.h"
 #include "Mona/Util.h"
+#include "ScriptReader.h"
+#include "ScriptWriter.h"
 #include "LUAWriter.h"
 #include "LUAQualityOfService.h"
 #include "LUASocketAddress.h"
@@ -32,15 +34,11 @@ using namespace Mona;
 
 int LUAClient::Item(lua_State *pState) {
 	SCRIPT_CALLBACK(Client,client)
-
 		vector<string> items;
-		ArrayWriter<vector<string>> writer(items);
-
-		SCRIPT_READ_DATA(writer);
-		client.properties(items);
-		ArrayReader<vector<string>> reader(items);
-		SCRIPT_WRITE_DATA(reader,0);
-
+		ArrayWriter<vector<string>> array(items);
+		SCRIPT_READ_NEXT(ScriptReader(pState, SCRIPT_READ_AVAILABLE).read(array));
+		ScriptWriter writer(pState);
+		ArrayReader<vector<string>>(client.properties(items)).read(writer);
 	SCRIPT_CALLBACK_RETURN
 }
 

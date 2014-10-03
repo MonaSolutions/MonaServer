@@ -28,63 +28,41 @@ namespace Mona {
 class BinaryWriter : public Binary, virtual public Object {
 public:
 
-	BinaryWriter(BinaryWriter& other,UInt32 offset=0);
 	BinaryWriter(UInt8* buffer, UInt32 size, Binary::Order byteOrder = Binary::ORDER_BIG_ENDIAN); // ORDER_BIG_ENDIAN==NETWORK_ENDIAN
-   
 
-	template <typename ...Args>
-	BinaryWriter& writeRaw(const UInt8* value, UInt32 size,Args&&... args) {
-		Buffer& buffer = this->buffer();
-		UInt32 oldSize(buffer.size());
-		if(buffer.resize(size+oldSize, true))
-			memcpy(buffer.data()+oldSize,value,size);
-		else
-			memcpy(buffer.data()+oldSize,value,buffer.size()-oldSize);
-		return writeRaw(args ...);
-	}
-	template <typename ...Args>
-	BinaryWriter& writeRaw(Binary& value, Args&&... args) {
-		return writeRaw(value.data(),value.size(), args ...);
-	}
-	template <typename ...Args>
-	BinaryWriter& writeRaw(const char* value, Args&&... args) {
-		return writeRaw((const UInt8*)value, strlen(value), args ...);
-	}
-	template <typename ...Args>
-	BinaryWriter& writeRaw(const std::string& value,Args&&... args) {
-		return writeRaw((const UInt8*)value.c_str(),value.size(),args ...);
-	}
+	BinaryWriter& write(const void* value, UInt32 size);
+	BinaryWriter& write(const char* value) { return write(value, strlen(value)); }
+	BinaryWriter& write(char* value)	   { return write(value, strlen(value)); } // required cause the following template signature which catch "char *" on posix
+	template<typename BinaryType>
+	BinaryWriter& write(const BinaryType& value) { return write(value.data(),(UInt32)value.size()); }
+	BinaryWriter& write(char value) { return write(&value, sizeof(value)); }
 
-	BinaryWriter& write8(UInt8 value) { return writeRaw((const UInt8*)&value, sizeof(value)); }
+	BinaryWriter& write8(UInt8 value) { return write(&value, sizeof(value)); }
 	BinaryWriter& write16(UInt16 value);
 	BinaryWriter& write24(UInt32 value);
 	BinaryWriter& write32(UInt32 value);
 	BinaryWriter& write64(UInt64 value);
-	BinaryWriter& writeString8(const std::string& value) { write8(value.size()); return writeRaw(value); }
-	BinaryWriter& writeString8(const char* value) { UInt32 size(strlen(value));  write8(size); return writeRaw((const UInt8*)value, size); }
-	BinaryWriter& writeString16(const std::string& value) { write16(value.size()); return writeRaw(value); }
-	BinaryWriter& writeString16(const char* value) { UInt32 size(strlen(value)); write16(size); return writeRaw((const UInt8*)value, size); }
-	BinaryWriter& writeString(const std::string& value) { write7BitEncoded(value.size()); return writeRaw(value); }
-	BinaryWriter& writeString(const char* value) { UInt32 size(strlen(value)); write7BitEncoded(size); return writeRaw((const UInt8*)value, size); }
+	BinaryWriter& writeString(const std::string& value) { write7BitEncoded(value.size()); return write(value); }
+	BinaryWriter& writeString(const char* value) { UInt32 size(strlen(value)); write7BitEncoded(size); return write(value, size); }
 	BinaryWriter& write7BitEncoded(UInt32 value);
 	BinaryWriter& write7BitValue(UInt32 value);
 	BinaryWriter& write7BitLongValue(UInt64 value);
 	BinaryWriter& writeBool(bool value) { return write8(value ? 1 : 0); }
 	template<typename NumberType>
-	BinaryWriter& writeNumber(NumberType value) { return writeRaw(_flipBytes ? Binary::ReverseBytes((UInt8*)&value, sizeof(value)) : (const UInt8*)&value , sizeof(value)); }
+	BinaryWriter& writeNumber(NumberType value) { return write(_flipBytes ? Binary::ReverseBytes(&value, sizeof(value)) : &value , sizeof(value)); }
 
 	BinaryWriter& writeRandom(UInt32 count=1);
 	
 	virtual BinaryWriter&	clear(UInt32 size = 0) { buffer().resize(size, true); return *this; }
-	BinaryWriter&	next(UInt32 count = 1);
-	BinaryWriter&	clip(UInt32 offset) {buffer().clip(offset); return *this;}
+	BinaryWriter&			next(UInt32 count = 1);
+	BinaryWriter&			clip(UInt32 offset) {buffer().clip(offset); return *this;}
 
+	// beware, data() can be null
+	UInt8*			data() { return buffer().data(); }
 	const UInt8*	data() const { return const_cast<BinaryWriter*>(this)->buffer().data(); }
 	UInt32			size() const { return const_cast<BinaryWriter*>(this)->buffer().size(); }
 
 private:
-	
-	BinaryWriter& writeRaw() {return *this;}
 
 	virtual Buffer&	buffer() { return _buffer; }
 

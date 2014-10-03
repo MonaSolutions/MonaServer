@@ -20,6 +20,8 @@ This file is a part of Mona.
 #include "Mona/Listener.h"
 #include "Mona/Publication.h"
 #include "Mona/MediaCodec.h"
+#include "Mona/StringReader.h"
+#include "Mona/MIME.h"
 #include "Mona/Logs.h"
 
 
@@ -27,8 +29,7 @@ using namespace std;
 
 namespace Mona {
 
-Listener::Listener(Publication& publication,Client& client,Writer& writer) :
-   _writer(writer), publication(publication), receiveAudio(true), receiveVideo(true), client(client), _firstTime(true),
+Listener::Listener(Publication& publication, Client& client, Writer& writer) : _writer(writer), publication(publication), receiveAudio(true), receiveVideo(true), client(client), _firstTime(true),
 	_pAudioWriter(NULL),_pVideoWriter(NULL),_pDataWriter(NULL),_publicationNamePacket((const UInt8*)publication.name().c_str(),publication.name().size()),
 	_startTime(0),_codecInfosSent(false) {
 }
@@ -75,13 +76,12 @@ bool Listener::init() {
 	_pVideoWriter->writeMedia(Writer::INIT, Writer::VIDEO, publicationNamePacket(),*this);
 	_pDataWriter = &_writer.newWriter();
 	_pDataWriter->writeMedia(Writer::INIT, Writer::DATA, publicationNamePacket(),*this);
-	_pDataTypeName = typeid(*_pDataWriter).name();
 
 	
 	if(!publication.audioCodecBuffer().empty()) {
 		PacketReader audioCodecPacket(publication.audioCodecBuffer()->data(),publication.audioCodecBuffer()->size());
 		INFO("AAC codec infos sent to one listener of ", publication.name(), " publication")
-		pushAudioPacket(_startTime,audioCodecPacket);
+		pushAudio(_startTime,audioCodecPacket);
 	}
 
 	if (getBool<false>("unbuffered")) {
@@ -90,42 +90,45 @@ bool Listener::init() {
 		_pDataWriter->reliable = false;
 	}
 
+	string converstionType;
+	if (getString("conversionType", converstionType) || !MIME::CreateDataWriter(converstionType.c_str(), publication.poolBuffers, _pConvertorWriter))
+		_pConvertorWriter.reset();
+
 	return true;
 }
 
-void Listener::pushDataPacket(DataReader& reader) {
+void Listener::pushData(DataReader& reader) {
 	if (!_pDataWriter && !init())
 		return;
 
+	/* TODO remplacer par un relay mode à imaginer et concevoir!
 	if(publication.publisher()) {
 		if(ICE::ProcessSDPPacket(reader,(Peer&)*publication.publisher(),publication.publisher()->writer(),(Peer&)client,*_pDataWriter))
 			return;
-	}
+	}*/
 
-	if(_pDataTypeName == typeid(reader).name()) {
-		if(!_pDataWriter->writeMedia(Writer::DATA,0,reader.packet,*this))
+	// If un conversion type exists, and it is different than the current reader gotten
+	if (_pConvertorWriter && typeid(*_pConvertorWriter).name()!=typeid(reader).name()) {
+		// convert data
+		reader.read(*_pConvertorWriter);
+		PacketReader packet(_pConvertorWriter->packet.data(),_pConvertorWriter->packet.size());
+		if(!_pDataWriter->writeMedia(Writer::DATA,0,packet,*this))
 			init();
+		_pConvertorWriter->clear();
 		return;
 	}
 
-	shared_ptr<DataWriter> pWriter;
-	_pDataWriter->createWriter(pWriter);
-	if (!pWriter) {
-		if(!_pDataWriter->writeMedia(Writer::DATA,0,reader.packet,*this))
-			init();
+	if (!reader) {
+		ERROR("Impossible to push ", typeid(reader).name(), " null DataReader without an explicit conversion");
 		return;
 	}
-	
-	UInt32 offset = pWriter->packet.size();
-	reader.read(*pWriter);
-	reader.reset();
-	PacketReader packet(pWriter->packet.data(),pWriter->packet.size());
-	packet.next(offset);
-	if(!_pDataWriter->writeMedia(Writer::DATA,0,packet,*this))
+
+	if(!_pDataWriter->writeMedia(Writer::DATA,0,reader.packet,*this))
 		init();
 }
 
-void Listener::pushVideoPacket(UInt32 time,PacketReader& packet) {
+
+void Listener::pushVideo(UInt32 time,PacketReader& packet) {
 	if(!receiveVideo && !MediaCodec::H264::IsCodecInfos(packet))
 		return;
 
@@ -134,7 +137,7 @@ void Listener::pushVideoPacket(UInt32 time,PacketReader& packet) {
 			if (!publication.videoCodecBuffer().empty() && !MediaCodec::H264::IsCodecInfos(packet)) {
 				PacketReader videoCodecPacket(publication.videoCodecBuffer()->data(), publication.videoCodecBuffer()->size());
 				INFO("H264 codec infos sent to one listener of ", publication.name(), " publication")
-				pushVideoPacket(time, videoCodecPacket);
+				pushVideo(time, videoCodecPacket);
 			}
 			_codecInfosSent = true;
 		} else if (_firstTime) {
@@ -160,7 +163,7 @@ void Listener::pushVideoPacket(UInt32 time,PacketReader& packet) {
 }
 
 
-void Listener::pushAudioPacket(UInt32 time,PacketReader& packet) {
+void Listener::pushAudio(UInt32 time,PacketReader& packet) {
 	if(!receiveAudio && !MediaCodec::AAC::IsCodecInfos(packet))
 		return;
 
@@ -176,6 +179,14 @@ void Listener::pushAudioPacket(UInt32 time,PacketReader& packet) {
 	TRACE("Audio time ", time);
 
 	if(!_pAudioWriter->writeMedia(Writer::AUDIO,time,packet,*this))
+		init();
+}
+
+void Listener::pushProperties(const Parameters& properties,PacketReader& infos) {
+	if (!init())
+		return;
+	
+	if (!_writer.writeMedia(Writer::PROPERTIES, properties.count(), infos,properties))
 		init();
 }
 

@@ -26,7 +26,7 @@ using namespace std;
 namespace Mona {
 
 
-bool Parameters::getString(const std::string& key, std::string& value) const {
+bool Parameters::getString(const char* key, std::string& value) const {
 	const string* pTemp = getRaw(key);
 	if (!pTemp)
 		return false;
@@ -35,7 +35,7 @@ bool Parameters::getString(const std::string& key, std::string& value) const {
 }
 
 
-bool Parameters::getBool(const string& key, bool& value) const {
+bool Parameters::getBool(const char* key, bool& value) const {
 	const string* pTemp = getRaw(key);
 	if (pTemp) {
 		if (pTemp->empty() || String::ICompare(*pTemp, "0") == 0 || String::ICompare(*pTemp, "false") == 0 || String::ICompare(*pTemp, "no") == 0 || String::ICompare(*pTemp, "off") == 0) {
@@ -48,6 +48,12 @@ bool Parameters::getBool(const string& key, bool& value) const {
 		}
 	}
 	return false;
+}
+
+void Parameters::setIntern(const char* key, const char* value, size_t size) {
+	const string* pChanged(setRaw(key, value, size == string::npos ? strlen(value) : size));
+	if (pChanged)
+		OnChange::raise(key,value ? pChanged->c_str() : NULL); // value==NULL means "deletion"
 }
 
 

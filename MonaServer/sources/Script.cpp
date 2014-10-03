@@ -84,7 +84,7 @@ int Script::Panic(lua_State *pState) {
 	SCRIPT_BEGIN(pState)
 		SCRIPT_FATAL(ToPrint(pState,LOG_BUFFER));
 	SCRIPT_END
-	return 1;
+	return 0;
 }
 
 lua_State* Script::CreateState() {
@@ -340,6 +340,12 @@ int Script::CollectionToString(lua_State* pState) {
 int Script::Next(lua_State* pState) {
 	// 1 table
 	// [2 key] (optional)
+	if (!lua_istable(pState, 1)) {
+		SCRIPT_BEGIN(pState)
+			SCRIPT_ERROR("next on a ", lua_typename(pState,lua_type(pState, 1)), " value")
+		SCRIPT_END
+		return 0;
+	}
 	if (lua_getmetatable(pState,  1)) {
 		lua_getfield(pState, -1, "|items");
 		lua_replace(pState, -2);
@@ -359,6 +365,12 @@ int Script::Next(lua_State* pState) {
 static int INext(lua_State* pState) {
 	// 1 table
 	// [2 index] (optional,start to 0)
+	if (!lua_istable(pState, 1)) {
+		SCRIPT_BEGIN(pState)
+			SCRIPT_ERROR("inext on a ", lua_typename(pState,lua_type(pState, 1)), " value")
+		SCRIPT_END
+		return 0;
+	}
 	if (lua_getmetatable(pState,  1)) {
 		lua_getfield(pState, -1, "|items");
 		lua_replace(pState, -2);
@@ -382,6 +394,12 @@ static int INext(lua_State* pState) {
 
 int Script::Pairs(lua_State* pState) {
 	// 1 table
+	if (!lua_istable(pState, 1)) {
+		SCRIPT_BEGIN(pState)
+			SCRIPT_ERROR("pairs on a ", lua_typename(pState,lua_type(pState, 1)), " value")
+		SCRIPT_END
+		return 0;
+	}
 	lua_pushcfunction(pState,&Next);
 	lua_pushvalue(pState, 1);
 	return 2;
@@ -389,6 +407,12 @@ int Script::Pairs(lua_State* pState) {
 
 int Script::IPairs(lua_State* pState) {
 	// 1 table
+	if (!lua_istable(pState, 1)) {
+		SCRIPT_BEGIN(pState)
+			SCRIPT_ERROR("ipairs on a ", lua_typename(pState,lua_type(pState, 1)), " value")
+		SCRIPT_END
+		return 0;
+	}
 	lua_pushcfunction(pState,&INext);
 	lua_pushvalue(pState, 1);
 	return 2;
@@ -417,377 +441,6 @@ bool Script::ToRawId(const UInt8* data, UInt32& size) {
 		return  true;
 	}
 	return false;
-}
-
-DataReader& Script::WriteData(lua_State *pState,DataReader& reader,int reference,UInt32 count) {
-	DataReader::Type type;
-	bool all=count==0;
-	if(all)
-		count=1;
-	while(count>0 && (type = reader.followingType())!=DataReader::END) {
-		WriteData(pState,type,reader,reference);
-		if(!all)
-			--count;
-	}
-	return reader;
-}
-
-
-DataReader& Script::WriteData(lua_State *pState,DataReader::Type type,DataReader& reader,int reference) {
-	SCRIPT_BEGIN(pState)
-	switch(type) {
-		case DataReader::NIL:
-			reader.readNull();
-			lua_pushnil(pState);
-			break;
-		case DataReader::BOOLEAN:
-			lua_pushboolean(pState,reader.readBoolean());
-			break;
-		case DataReader::NUMBER:
-			lua_pushnumber(pState,reader.readNumber());
-			break;
-		case DataReader::STRING: {
-			string value;
-			reader.readString(value);
-			lua_pushlstring(pState,value.c_str(),value.size());
-			break;
-		}
-		case DataReader::DATE: {
-			Date date;
-			reader.readDate(date);
-			lua_newtable(pState);
-			lua_pushnumber(pState, (double)date);
-			lua_setfield(pState, -2, "__time");
-			lua_pushnumber(pState, date.year());
-			lua_setfield(pState, -2, "year");
-			lua_pushnumber(pState, date.month() + 1);
-			lua_setfield(pState, -2, "month");
-			lua_pushnumber(pState, date.day());
-			lua_setfield(pState, -2, "day");
-			lua_pushnumber(pState, date.yearDay());
-			lua_setfield(pState, -2, "yday");
-			lua_pushnumber(pState, date.weekDay());
-			lua_setfield(pState, -2, "wday");
-			lua_pushnumber(pState, date.hour());
-			lua_setfield(pState, -2, "hour");
-			lua_pushnumber(pState, date.minute());
-			lua_setfield(pState, -2, "min");
-			lua_pushnumber(pState, date.second());
-			lua_setfield(pState, -2, "sec");
-			lua_pushnumber(pState, date.millisecond());
-			lua_setfield(pState, -2, "msec");
-			lua_pushboolean(pState, date.isDST() ? 1 : 0);
-			lua_setfield(pState, -2, "isdst");
-			break;
-		}
-		case DataReader::ARRAY: {
-			UInt32 size=0;
-			if(reader.readArray(size)) {
-				lua_newtable(pState);
-				UInt32 index=0;
-				string name;
-				while((type=reader.readItem(name))!=DataReader::END) {
-					WriteData(pState,type,reader,reference);
-					if(name.empty())
-						lua_rawseti(pState,-2,++index);
-					else
-						lua_setfield(pState,-2,name.c_str());
-				}
-			}
-			break;
-		}
-		case DataReader::MAP: {
-			bool weakKeys=false;
-			UInt32 size;
-			if(reader.readMap(size,weakKeys)) {
-				lua_newtable(pState);
-				if(weakKeys) {
-					lua_newtable(pState);
-					lua_pushliteral(pState,"k");
-					lua_setfield(pState,-2,"__mode");
-					lua_setmetatable(pState,-2);
-				}
-				string name;
-				while((type=reader.readKey())!=DataReader::END) {
-					WriteData(pState,type,reader,reference);
-					WriteData(pState,reader.readValue(),reader,reference);
-					lua_rawset(pState,-3);
-				}
-				lua_pushnumber(pState,size);
-				lua_setfield(pState,-2,"__size");
-			}
-			break;
-		}
-		case DataReader::OBJECT: {
-			string objectType;
-			bool external=false;
-			if(reader.readObject(objectType,external)) {
-				lua_newtable(pState);
-				if(!objectType.empty()) {
-					lua_pushstring(pState,objectType.c_str());
-					lua_setfield(pState,-2,"__type");
-				} else if(external) {
-					SCRIPT_ERROR("Impossible to deserialize the external object without a type")
-					break;
-				}
-				string name;
-				while((type=reader.readItem(name))!=DataReader::END) {
-					WriteData(pState,type,reader,reference);
-					lua_setfield(pState,-2,name.c_str());
-				}
-				lua_getfield(pState,-1,"__type");
-				if(lua_isstring(pState,-1)==1)
-					objectType = lua_tostring(pState,-1);
-				lua_pop(pState,1);
-				if(!objectType.empty()) {
-					int top = lua_gettop(pState);
-					// function
-					SCRIPT_FUNCTION_BEGIN("onTypedObject",reference)
-						// type argument
-						lua_pushstring(pState,objectType.c_str());
-						// table argument
-						lua_pushvalue(pState,top);
-						SCRIPT_FUNCTION_CALL
-					SCRIPT_FUNCTION_END
-				}
-				// After the "onTypedObject" to get before the "__readExternal" required to unserialize
-				lua_getfield(pState,-1,"__readExternal");
-				if(lua_isfunction(pState,-1)) {
-					// self
-					lua_pushvalue(pState,-2);
-					// reader
-					SCRIPT_WRITE_BINARY(reader.packet.current(),reader.packet.available())
-					if(lua_pcall(pState,2,1,0)!=0)
-						SCRIPT_ERROR(Script::LastError(pState))
-					else {
-						reader.packet.next((int)lua_tonumber(pState,-1));
-						lua_pop(pState,1);
-					}
-					break;
-				} else if(external)
-					SCRIPT_ERROR("Impossible to deserialize the external type '",objectType,"' without a __readExternal method")
-				lua_pop(pState,1);
-			}
-			break;
-		}
-		case DataReader::BYTES: {
-			UInt32 size;
-			lua_newtable(pState);
-			const UInt8* bytes = reader.readBytes(size);
-			lua_pushlstring(pState,(const char*)bytes,size);
-			lua_setfield(pState,-2,"__raw");
-			break;
-		}
-		default:
-			reader.packet.next(1);
-			SCRIPT_ERROR("AMF ",type," type unknown");
-			break;
-	}
-	SCRIPT_END
-	return reader;
-}
-
-DataWriter& Script::ReadData(lua_State* pState,DataWriter& writer,UInt32 count) {
-	map<UInt64,UInt32> references;
-	return ReadData(pState,writer,count,references);
-}
-
-DataWriter& Script::ReadData(lua_State* pState,DataWriter& writer,UInt32 count,map<UInt64,UInt32>& references) {
-	SCRIPT_BEGIN(pState)
-	int top = lua_gettop(pState);
-	Int32 args = top-count;
-	if(args<0) {
-		SCRIPT_ERROR("Impossible to write ",-args," missing AMF arguments")
-		args=0;
-	}
-	while(args++<top) {
-		int type = lua_type(pState, args);
-		switch (type) {
-			case LUA_TTABLE: {
-
-				// Repeat
-				UInt64 reference = (UInt64)lua_topointer(pState,args);
-				map<UInt64,UInt32>::iterator it = references.lower_bound(reference);
-				if(it!=references.end() && it->first==reference) {
-					if(writer.repeat(it->second))
-						break;
-				} else { 
-					if(it!=references.begin())
-						--it;
-					it = references.insert( it,pair<UInt64,UInt32>(reference,0));
-				}
-
-				// ByteArray
-				lua_getfield(pState,args,"__raw");
-				if(lua_isstring(pState,-1)) {
-					UInt32 size = lua_objlen(pState,-1);
-					writer.writeBytes((const UInt8*)lua_tostring(pState,-1),size);
-					it->second = writer.lastReference();
-					lua_pop(pState,1);
-					break;
-				}
-				lua_pop(pState,1);
-
-				// Date
-				lua_getfield(pState,args,"__time");
-				if(lua_isnumber(pState,-1)) {
-					Date date((Int64)lua_tonumber(pState,-1));
-					writer.writeDate(date);
-					it->second = writer.lastReference();
-					lua_pop(pState,1);
-					break;
-				}
-				lua_pop(pState,1);
-
-
-				// Dictionary
-				UInt32 size=0;
-				lua_getfield(pState,args,"__size");
-				if(lua_isnumber(pState,-1)) {
-					size = (UInt32)lua_tonumber(pState,-1);
-	
-					bool weakKeys = false;
-					if(lua_getmetatable(pState,args)!=0) {
-						lua_getfield(pState,-1,"__mode");
-						if(lua_isstring(pState,-1) && strcmp(lua_tostring(pState,-1),"k")==0)
-							weakKeys=true;
-						lua_pop(pState,2);
-					}
-					
-					// Array, write properties in first
-					writer.beginMap(size,weakKeys);
-					lua_pushnil(pState);  /* first key */
-					while (lua_next(pState, args) != 0) {
-						/* uses 'key' (at index -2) and 'value' (at index -1) */
-						if(lua_type(pState,-2)!=LUA_TSTRING || strcmp(lua_tostring(pState,-2),"__size")!=0 )
-							ReadData(pState,writer,2);
-						/* removes 'value'; keeps 'key' for next iteration */
-						lua_pop(pState, 1);
-					}
-					writer.endMap();
-
-					it->second = writer.lastReference();
-					lua_pop(pState,1);
-					break;
-				}
-				lua_pop(pState,1);
-
-
-				bool object=true;
-				bool start=false;
-				if(size==0)
-					size = luaL_getn(pState,args);
-				
-				// Object or Array!
-				lua_getfield(pState,args,"__type");
-				const char* objectType = lua_isstring(pState,-1) ? lua_tostring(pState,-1) : NULL;
-				if(objectType) {
-					// Externalized?
-					lua_getfield(pState,args,"__writeExternal");
-					if(lua_isfunction(pState,-1)) {
-						writer.beginObject(objectType,true);
-						// self argument
-						lua_pushvalue(pState,args);
-						if(lua_pcall(pState,2,1,0)!=0)
-							SCRIPT_ERROR(Script::LastError(pState))
-						else {
-							writer.packet.writeRaw((const UInt8*)lua_tostring(pState,-1),lua_objlen(pState,-1));
-							lua_pop(pState,1);
-						}
-						writer.endObject();
-						it->second = writer.lastReference();
-						lua_pop(pState,1);
-						break;
-					}
-					lua_pop(pState,1);
-					writer.beginObject(objectType);
-					start=true;
-				} else if(size>0) {
-					// Array, write properties in first
-					object=false;
-					lua_pushnil(pState);  /* first key */
-					while (lua_next(pState, args) != 0) {
-						/* uses 'key' (at index -2) and 'value' (at index -1) */
-						int keyType = lua_type(pState,-2);
-						const char* key = NULL;
-						if(keyType==LUA_TSTRING && strcmp((key=lua_tostring(pState,-2)),"__type")!=0 ) {
-							if (!start) {
-								writer.beginObjectArray(size);
-								start=true;
-							}
-							writer.writePropertyName(key);
-							ReadData(pState,writer,1);
-						}
-						/* removes 'value'; keeps 'key' for next iteration */
-						lua_pop(pState, 1);
-					}
-					if (!start) {
-						writer.beginArray(size);
-						start=true;
-					} else
-						writer.endObject();
-				}
-				lua_pop(pState,1);
-				
-
-				lua_pushnil(pState);  /* first key */
-				while (lua_next(pState, args) != 0) {
-					/* uses 'key' (at index -2) and 'value' (at index -1) */
-					int keyType = lua_type(pState,-2);
-					const char* key = NULL;
-					if(keyType==LUA_TSTRING) {
-						if(object && strcmp((key=lua_tostring(pState,-2)),"__type")!=0) {
-							if(!start) {
-								writer.beginObject();
-								start=true;
-							}
-							writer.writePropertyName(key);
-							ReadData(pState,writer,1);
-						}
-					} else if(keyType==LUA_TNUMBER) {
-						if(object)
-							SCRIPT_WARN("Impossible to encode this array element in an AMF object format")
-						else
-							ReadData(pState,writer,1);
-					} else
-						SCRIPT_WARN("Impossible to encode this table key of type ",lua_typename(pState, keyType), " in an AMF object format")
-					/* removes 'value'; keeps 'key' for next iteration */
-					lua_pop(pState, 1);
-				}
-				if(start) {
-					if(object)
-						writer.endObject();
-					else
-						writer.endArray();
-				} else {
-					writer.beginArray(0);
-					writer.endArray();
-				}
-
-				it->second = writer.lastReference();
-				break;
-			}
-			case LUA_TSTRING: {
-				string data(lua_tostring(pState,args),lua_objlen(pState,args));
-				writer.writeString(data);
-				break;
-			}
-			case LUA_TBOOLEAN:
-				writer.writeBoolean(lua_toboolean(pState,args)==0 ? false : true);
-				break;
-			case LUA_TNUMBER: {
-				writer.writeNumber(lua_tonumber(pState,args));
-				break;
-			}
-			default:
-				SCRIPT_WARN("Impossible to encode the '",lua_typename(pState,type),"' type in a AMF format")
-			case LUA_TNIL:
-				writer.writeNull();
-				break;
-		}
-	}
-	SCRIPT_END
-	return writer;
 }
 
 const char* Script::ToPrint(lua_State* pState, string& out) {

@@ -27,6 +27,20 @@ This file is a part of Mona.
 
 namespace Mona {
 
+
+#define HTML_BEGIN_COMMON_RESPONSE(BINARYWRITER,TITLE) \
+	{ BinaryWriter& __binary(BINARYWRITER); __binary.write(EXPAND("<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\"><html><head><title>")).write(TITLE).write(EXPAND("</title></head><body><h1>")).write(TITLE).write(EXPAND("</h1><p>"));
+
+#define HTML_END_COMMON_RESPONSE(ADDRESS) \
+	__binary.write(EXPAND("</p><hr><address>Mona Server at ")).write(ADDRESS).write(EXPAND("</address></body></html>\r\n")); }
+
+
+#define HTTP_BEGIN_HEADER(BINARYWRITER)  { BinaryWriter& __binary(BINARYWRITER);  __binary.clear(BINARYWRITER.size()-2);
+#define HTTP_ADD_HEADER(NAME,VALUE) __binary.write(EXPAND(NAME)).write(": ").write(VALUE).write("\r\n");
+#define HTTP_END_HEADER  __binary.write("\r\n");  }
+
+
+
 #define HTTP_CODE_100	"Continue"
 #define HTTP_CODE_101	"Switching Protocols"
 #define HTTP_CODE_102	"Processing"
@@ -97,22 +111,11 @@ namespace Mona {
 #define HTTP_CODE_520	"Web server is returning an unknown error"
 
 class HTTPSession;
-class HTTPPacket;
 class PacketReader;
 
 class HTTP : virtual Static {
 public:
 
-
-	enum DataType {
-		HTML = 0,
-		RAW,
-		XML,
-		SOAP,
-		JSON,
-		SVG,
-		CSS
-	};
 
 	enum CommandType {
 		COMMAND_UNKNOWN = 0,
@@ -125,6 +128,7 @@ public:
 	};
 
 	enum ContentType {
+		CONTENT_ABSENT=0,
 		CONTENT_TEXT,
 		CONTENT_APPLICATON,
 		CONTENT_EXAMPLE,
@@ -133,8 +137,7 @@ public:
 		CONTENT_IMAGE,
 		CONTENT_MESSAGE,
 		CONTENT_MODEL,
-		CONTENT_MULTIPART,
-		CONTENT_ABSENT
+		CONTENT_MULTIPART
 	};
 
 	enum ConnectionType {
@@ -157,19 +160,16 @@ public:
 	static ContentType	ParseContentType(const char* value,std::string& subType);
 	static UInt8		ParseConnection(Exception& ex,const char* value);
 
-	static std::string&	FormatContentType(ContentType type,const std::string& subType,std::string& value);
+	static std::string&	FormatContentType(ContentType type,const char* subType,std::string& value);
 
 	static ContentType	ExtensionToMIMEType(const std::string& extension, std::string& subType);
 
 	static const char*	CodeToMessage(UInt16 code);
 
-	static DataWriter* NewDataWriter(const PoolBuffers& poolBuffers,const std::string& subType);
-	static void WriteDirectoryEntries(BinaryWriter& writer, const std::string& serverAddress, const std::string& fullPath, const std::string& path, UInt8 sortOptions);
-	
-	static void			ReadMessageFromType(Exception& ex, HTTPSession& caller, const std::shared_ptr<HTTPPacket>& httpPacket, PacketReader& packet);
+	static void			WriteDirectoryEntries(BinaryWriter& writer, const std::string& serverAddress, const std::string& fullPath, const std::string& path, UInt8 sortOptions);
 
 private:
-	static void WriteDirectoryEntry(BinaryWriter& writer, const std::string& serverAddress,const std::string& path,const Path& entry);
+	static void			WriteDirectoryEntry(BinaryWriter& writer, const std::string& serverAddress,const std::string& path,const Path& entry);
 };
 
 

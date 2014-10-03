@@ -38,12 +38,6 @@ namespace Mona {
 
 using namespace std;
 
-// TODO eliminate everywhere the VMS support!
-#if defined(_WIN32)
-const string FileSystem::_PathSeparator(";");
-#else
-const string FileSystem::_PathSeparator(":");
-#endif
 
 #if defined(_WIN32)
 typedef struct _stat Status;
@@ -63,7 +57,7 @@ static bool Stat(const string& path, Status& status) {
 }
 
 
-FileSystem::Attributes& FileSystem::GetAttributes(Exception& ex,const string& path,Attributes& attributes) {
+FileSystem::Attributes& FileSystem::GetAttributes(Exception& ex,const char* path,Attributes& attributes) {
 
 	Status status;
 	status.st_mtime = attributes.lastModified/1000;
@@ -80,15 +74,16 @@ FileSystem::Attributes& FileSystem::GetAttributes(Exception& ex,const string& pa
 	return attributes;
 }
 
-bool FileSystem::Exists(const string& path, bool any) {
+bool FileSystem::Exists(const char* path, bool any) {
 	Status status;
 	string file(path);
+	size_t oldSize(file.size());
 	if (!Stat(MakeFile(file), status))
 		return false;
 	if (any)
 		return true;
 	// if existing test was on folder
-	if (path.size() > file.size())
+	if (oldSize > file.size())
 		return status.st_mode&S_IFDIR ? true : false;
 	return status.st_mode&S_IFDIR ? false : true;
 }
@@ -114,17 +109,17 @@ void FileSystem::CreateDirectories(Exception& ex,const string& path) {
 }
 
 
-bool FileSystem::CreateDirectory(const string& path) {
+bool FileSystem::CreateDirectory(const char* path) {
 	Status status;
 	string file(path);
 	if (Stat(MakeFile(file), status)) // exists already
 		return status.st_mode&S_IFDIR ? true : false;
 #if defined(_WIN32)
 	wchar_t wFile[_MAX_PATH];
-	MultiByteToWideChar(CP_UTF8, 0, path.c_str(), -1, wFile, _MAX_PATH);
+	MultiByteToWideChar(CP_UTF8, 0, file.c_str(), -1, wFile, _MAX_PATH);
 	return _wmkdir(wFile) == 0;
 #else
-    return mkdir(path.c_str(),S_IRWXU | S_IRWXG | S_IRWXO) == 0;
+    return mkdir(file.c_str(),S_IRWXU | S_IRWXG | S_IRWXO) == 0;
 #endif
 }
 
@@ -151,7 +146,7 @@ bool FileSystem::Remove(Exception& ex,const string& path,bool all) {
 	return false;
 }
 
-UInt32 FileSystem::Paths(Exception& ex, const string& path, const FileSystem::ForEach& forEach) {
+UInt32 FileSystem::Paths(Exception& ex, const char* path, const ForEach& forEach) {
 	int err = 0;
 	string directory(path);
 	FileSystem::MakeDirectory(directory);
@@ -177,7 +172,7 @@ UInt32 FileSystem::Paths(Exception& ex, const string& path, const FileSystem::Fo
 			WideCharToMultiByte(CP_UTF8, 0, fileData.cFileName, -1, file, _MAX_FNAME, NULL, NULL);
 			string pathFile(path);
 			++count;
-			forEach(String::Append(MakeDirectory(pathFile), file));
+			forEach(String::Append(MakeDirectory(pathFile), file));	
 		}
 	} while (FindNextFileW(fileHandle, &fileData) != 0);
 	FindClose(fileHandle);
@@ -192,7 +187,7 @@ UInt32 FileSystem::Paths(Exception& ex, const string& path, const FileSystem::Fo
 		if (strcmp(pEntry->d_name, ".")!=0 && strcmp(pEntry->d_name, "..")!=0) {
 			string pathFile(directory);
 			++count;
-            forEach(String::Append(pathFile, pEntry->d_name));
+			forEach(String::Append(pathFile, pEntry->d_name));
 		}
 	}
 	closedir(pDirectory);
@@ -200,7 +195,7 @@ UInt32 FileSystem::Paths(Exception& ex, const string& path, const FileSystem::Fo
 	return count;
 }
 
-Time& FileSystem::GetLastModified(Exception& ex, const string& path, Time& time) {
+Time& FileSystem::GetLastModified(Exception& ex, const char* path, Time& time) {
 	Status status;
 	status.st_mtime = time/1000;
 	string file(path);
@@ -211,7 +206,7 @@ Time& FileSystem::GetLastModified(Exception& ex, const string& path, Time& time)
 	return time;
 }
 
-UInt32 FileSystem::GetSize(Exception& ex,const string& path) {
+UInt32 FileSystem::GetSize(Exception& ex,const char* path) {
 	Status status;
 	status.st_size = 0;
 	string file(path);
@@ -224,7 +219,7 @@ UInt32 FileSystem::GetSize(Exception& ex,const string& path) {
 	return (UInt32)status.st_size;
 }
 
-string& FileSystem::GetName(const string& path, string& value) {
+string& FileSystem::GetName(const char* path, string& value) {
 	value.assign(path);
 	auto separator = value.find_last_of("/\\");
 	if (separator != string::npos)
@@ -232,7 +227,14 @@ string& FileSystem::GetName(const string& path, string& value) {
 	return value;
 }
 
-string& FileSystem::GetBaseName(const string& path, string& value) {
+const char* FileSystem::GetName(const char* path) {
+	const char* separator(strrpbrk(path, "/\\"));
+	if (!separator)
+		return path; // path is the name
+	return separator+1;
+}
+
+string& FileSystem::GetBaseName(const char* path, string& value) {
 	value.assign(path);
 	auto dot = value.find_last_of('.');
 	auto separator = value.find_last_of("/\\");
@@ -244,15 +246,22 @@ string& FileSystem::GetBaseName(const string& path, string& value) {
 }
 
 
-string& FileSystem::GetExtension(const string& path, string& value) {
+string& FileSystem::GetExtension(const char* path, string& value) {
 	value.assign(path);
 	auto dot = value.find_last_of('.');
 	auto separator = value.find_last_of("/\\");
 	if (dot != string::npos && (separator == string::npos || dot > separator))
-		value.erase(0, dot + 1);
-	else
-		value.clear();
+		return value.erase(0, dot + 1);
+	value.clear();
 	return value;
+}
+
+const char* FileSystem::GetExtension(const char* path) {
+	const char* dot(strrpbrk(path, "/\\"));
+	const char* separator(strrpbrk(path, "/\\"));
+	if (dot && (separator || dot > separator))
+		return dot + 1;
+	return NULL;
 }
 
 string& FileSystem::MakeFile(string& path) {
@@ -273,7 +282,6 @@ string& FileSystem::GetParent(string& path) {
 		path.erase(separator+1); // keep the "/" (= folder!)
 	return path;
 }
-
 
 string& FileSystem::Pack(const vector<string>& values, string& path) {
 	path.clear();
@@ -296,10 +304,11 @@ string& FileSystem::Pack(const vector<string>& values, string& path) {
 	return path;
 }
 
-vector<string>& FileSystem::Unpack(const string& path, vector<string>& values) {
-	string::const_iterator it = path.begin(), itValue, end = path.end();
+vector<string>& FileSystem::Unpack(const char* path, vector<string>& values) {
+	const char* it(path);
+	const char* itValue;
 
-	while (it != end) {
+	while (*it) {
 
 		// trim begin
 		while (isspace(*it))
@@ -307,7 +316,7 @@ vector<string>& FileSystem::Unpack(const string& path, vector<string>& values) {
 
 		itValue = it;
 		bool first = true;
-		while (it != end && *it != '\\' && *it != '/') {
+		while (*it && *it != '\\' && *it != '/') {
 			int count(0);
 			// resolve '..' and '.'
 			if (first) {
@@ -336,7 +345,7 @@ vector<string>& FileSystem::Unpack(const string& path, vector<string>& values) {
 			++it;
 			values.emplace_back(itValue, it);
 		}
-		if (it != end)
+		if (*it)
 			++it;
 	}
 	return values;
@@ -388,28 +397,45 @@ bool FileSystem::IsAbsolute(const string& path) {
 	return path.size()<2 || path[1] == '/';
 #endif
 }
-
-bool FileSystem::ResolveFileWithPaths(const string& paths, string& file) {
-
-	vector<string> values;
-	String::Split(paths, _PathSeparator, values, String::SPLIT_IGNORE_EMPTY | String::SPLIT_TRIM);
-
-	for (string& value : values) {
-#if defined(WIN32)
-		// "path" => path
-		if (value.size() > 1 && value[0] == '"' && value.back() == '"') {
-			value.resize(value.size()-1);
-			value.erase(0, 1);
-		}
+bool FileSystem::IsAbsolute(const char* path) {
+#if defined(_WIN32)
+	size_t size(strlen(path));
+	return size>0 && isalpha(path[0]) && (size!=2 || path[--size]==':');
+#else
+	if (path[0]==0)
+		return false;
+	if (path[0] == '/')
+		return true;
+	if (path[0] != '~')
+		return false;
+	return path[1]==0 || path[1] == '/';
 #endif
-		MakeDirectory(value);
-		value += file;
-		if (Exists(value)) {
-			file = move(value);
-			return true;
+}
+
+bool FileSystem::ResolveFileWithPaths(const char* paths, string& file) {
+
+
+	String::ForEach forEach([&file](UInt32 index,const char* value) {
+		string path(value);
+		#if defined(WIN32)
+			// "path" => path
+			if (!path.empty() && path[0] == '"' && path.back() == '"') {
+				path.resize(path.size()-1);
+				path.erase(0, 1);
+			}
+		#endif
+		MakeDirectory(path).append(file);
+		if (Exists(path)) {
+			file = move(path);
+			return false;
 		}
-	}
-	return false;
+		return true;
+	});
+#if defined(WIN32)
+	return String::Split(paths, ";", forEach, String::SPLIT_IGNORE_EMPTY | String::SPLIT_TRIM) == string::npos;
+#else
+	return String::Split(paths, ":", forEach, String::SPLIT_IGNORE_EMPTY | String::SPLIT_TRIM) == string::npos;
+#endif
 }
 
 bool FileSystem::GetCurrentApplication(string& path) {

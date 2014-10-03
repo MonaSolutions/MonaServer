@@ -20,6 +20,7 @@ This file is a part of Mona.
 #include "Mona/FlashMainStream.h"
 #include "Mona/Invoker.h"
 #include "Mona/Util.h"
+#include "Mona/ParameterWriter.h"
 #include "Mona/Exceptions.h"
 #include "Mona/Logs.h"
 #include <openssl/evp.h>
@@ -54,47 +55,22 @@ FlashStream* FlashMainStream::stream(UInt32 id) {
 void FlashMainStream::messageHandler(const string& name,AMFReader& message,FlashWriter& writer) {
 	if(name=="connect") {
 		message.stopReferencing();
-		AMFReader::Type type;
-		string name;
-		bool external(false);
-		if(message.readObject(name,external) && !external) {
-			
-			auto& properties(peer.properties());
-			while((type=message.readItem(name))!=AMFReader::END) {
-				switch(type) {
-					case AMFReader::BOOLEAN:
-						properties.setBool(name,message.readBoolean());
-						break;
-					case AMFReader::NUMBER:
-						properties.setNumber(name,message.readNumber());
-						break;
-					case AMFReader::STRING: {
-						string value;
-						properties.setString(name, message.readString(value));
-						break;
-					}
-					case AMFReader::DATE: {
-						Date date;
-						properties.setNumber<Int64>(name,message.readDate(date));
-						break;
-					}
-					default:
-						message.next();
-				}
-			}
+		
+		
+		ParameterWriter parameterWriter(peer.properties());
 
-			if (peer.path.empty() && properties.getString("tcUrl",_buffer)) {
+		if(message.read(AMFReader::OBJECT,parameterWriter)) {
+
+			if (peer.path.empty() && peer.properties().getString("tcUrl",_buffer)) {
 				Util::UnpackUrl(_buffer, (string&)peer.serverAddress,(string&)peer.path,(string&)peer.query);
-				Util::UnpackQuery(peer.query, properties);
+				Util::UnpackQuery(peer.query, peer.properties());
 			}
 
-			if (properties.getNumber<UInt32,3>("objectEncoding")==0) {
+			if (peer.properties().getNumber<UInt32,3>("objectEncoding")==0) {
 				writer.amf0 = true;
 				WARN("Client ",peer.protocol," not compatible with AMF3, few complex object can be not supported");
 			}
 		}
-		if(external)
-			ERROR("External type not acceptable for a connection message on flash stream ", id);
 
 		message.startReferencing();
 
@@ -131,7 +107,7 @@ void FlashMainStream::messageHandler(const string& name,AMFReader& message,Flash
 			SocketAddress address;
 			Exception ex;
 			_buffer.clear();
-			if (message.readString(_buffer).empty())
+			if (!message.readString(_buffer) || _buffer.empty())
 				continue;
 			if (address.set(ex, _buffer))
 				peer.localAddresses.emplace(address);
@@ -152,9 +128,12 @@ void FlashMainStream::messageHandler(const string& name,AMFReader& message,Flash
 		response.writeNumber(pStream->id);
 
 	} else if(name == "deleteStream") {
-		UInt32 id = (UInt32)message.readNumber();
-		_streams.erase(id);
-		invoker.destroyFlashStream(id);
+		double id;
+		if (message.readNumber(id)) {
+			_streams.erase((UInt32)id);
+			invoker.destroyFlashStream((UInt32)id);
+		} else
+			ERROR("deleteStream message without id on flash stream ",id)
 	} else {
 		// not close the main flash stream for that!
 		Exception ex;

@@ -36,7 +36,7 @@ struct SDPCandidate {
 
 class SDPMedia : public virtual Object {
 public:
-	SDPMedia(UInt16 port,const std::string& codec) : codec(codec),port(port) {}
+	SDPMedia(UInt16 port,const char* codec) : codec(codec),port(port) {}
 
 	const std::string		codec;
 	const UInt16		port; // if port==0 the media is rejected!
@@ -49,7 +49,7 @@ public:
 	SDP() : supportMsId(false), version(0), sessionId(0) {}
 	virtual ~SDP() { clearMedias(); }
 
-	bool build(Exception& ex, const std::string& text);
+	bool build(Exception& ex, const char* text);
 	void build();
 
 	int						version;
@@ -75,7 +75,7 @@ public:
 
 	std::map<std::string,std::vector<std::string> >	extensions;
 
-	SDPMedia*	addMedia(const std::string& name, UInt16 port, const std::string& codec) { return _medias.insert(std::pair<std::string, SDPMedia*>(name, new SDPMedia(port, codec))).first->second; }
+	SDPMedia*	addMedia(const std::string& name, UInt16 port, const char* codec) { return _medias.emplace(name, new SDPMedia(port, codec)).first->second; }
 	void		clearMedias();
 
 	static void SendNewCandidate(Writer& writer,SDPCandidate& candidate);

@@ -31,18 +31,10 @@ public:
 
 	ArrayReader(const ArrayType& array) : _number(0),_begin(array.begin()),_it(array.begin()),_end(array.end()) {}
 
-	std::string&	readString(std::string& value) { value.assign(*_it); ++_it; return value; }
-	double			readNumber() {++_it; return _number;}
-	bool			readBoolean() {++_it; return _number==1;}
-	Date&			readDate(Date& date) { ++_it; return date = _date; }
-	void			readNull() { ++_it; }
-	const UInt8*	readBytes(UInt32& size) { ++_it; return NULL; }
+	void			reset() { _it = _begin; }
 
-	bool			readObject(std::string& type,bool& external) { return false; }
-	bool			readArray(UInt32& size) { return false; }
-	Type			readItem(std::string& name) { return END; }
-	
-	Type			followingType() {
+private:
+	UInt8 followingType() {
 		if (_it == _end)
 			return END;
 		if (String::ICompare(*_it, "true") == 0) {
@@ -63,11 +55,32 @@ public:
 		return STRING;
 	}
 
-	void			reset() { _it = _begin; }
+	bool readOne(UInt8 type, DataWriter& writer) {
+		
+		switch (type) {
+			case BOOLEAN:
+				writer.writeBoolean(_number==1);
+				break;
+			case NUMBER:
+				writer.writeNumber(_number);
+				break;
+			case NIL:
+				writer.writeNull();
+				break;
+			case DATE:
+				writer.writeDate(_date);
+				break;
+			case STRING:
+				writer.writeString(_it->data(), _it->size());
+				break;
+		}
+		
+		++_it;
+		return true;
+	}
 
-private:
-	Date								_date;
 	double								_number;
+	Date								_date;
 	typename ArrayType::const_iterator	_begin;
 	typename ArrayType::const_iterator	_it;
 	typename ArrayType::const_iterator	_end;

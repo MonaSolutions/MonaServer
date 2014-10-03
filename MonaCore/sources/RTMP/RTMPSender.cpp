@@ -29,7 +29,7 @@ void RTMPSender::pack(RTMPChannel& channel) {
 		return;
 	// writer the size of the precedent playload!
 	channel.bodySize = _writer.packet.size()-sizePos+4-headerSize;
-	BinaryWriter(_writer.packet,sizePos).write24(channel.bodySize);
+	BinaryWriter(_writer.packet.data()+sizePos,3).write24(channel.bodySize);
 	sizePos=0;
 }
 

@@ -18,11 +18,15 @@ This file is a part of Mona.
 */
 
 #include "Mona/Buffer.h"
+#include "Mona/PacketReader.h"
+#include "Mona/PacketWriter.h"
 
 
 
 namespace Mona {
 
+PacketReader PacketReader::Null(NULL,0);
+PacketWriter PacketWriter::Null(Buffer::Null);
 Buffer	Buffer::Null(NULL,0);
 
 void Buffer::clip(UInt32 offset) {
@@ -56,10 +60,15 @@ bool Buffer::resize(UInt32 size,bool preserveData) {
 		_size = _capacity;
 		return false;
 	}
+
+	if (_capacity == 0)
+		_capacity = 32;
 	
 	do {
 		_capacity *= 2;
-	} while (size > _capacity);
+	} while (_capacity && size > _capacity);
+	if (_capacity == 0) // to expect the case or _capacity*2 = 0 (exceeds maximum size)
+		_capacity = size;
 
 	UInt8* oldData = _data;
 	_data = new UInt8[_capacity]();

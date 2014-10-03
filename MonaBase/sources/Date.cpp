@@ -29,6 +29,8 @@ namespace Mona {
 
 const char* Date::ISO8601_FORMAT("%Y[-%m-%dT%H:%M:%S%z]");  	//DONE/ 2005-01-01T12:00:00+01:00 | 2005-01-01T11:00:00Z
 const char* Date::ISO8601_FRAC_FORMAT("%Y[-%m-%dT%H:%M:%s%z]"); //DONE/ 2005-01-01T12:00:00.000000+01:00 | 2005-01-01T11:00:00.000000Z
+const char* Date::ISO8601_SHORT_FORMAT("%Y[%m%dT%H%M%S%z]");  	// 20050101T120000+01:00 | 20050101T110000Z
+const char* Date::ISO8601_SHORT_FRAC_FORMAT("%Y[%m%dT%H%M%s%z]"); // 20050101T120000.000000+01:00 | 20050101T110000.000000Z
 const char* Date::RFC822_FORMAT("[%w, ]%e %b %y %H:%M[:%S] %Z");//DONE/ Sat, 1 Jan 05 12:00:00 +0100 | Sat, 1 Jan 05 11:00:00 GMT
 const char* Date::RFC1123_FORMAT("%w, %e %b %Y %H:%M:%S %Z");	/// Sat, 1 Jan 2005 12:00:00 +0100 | Sat, 1 Jan 2005 11:00:00 GMT
 const char* Date::HTTP_FORMAT("%w, %d %b %Y %H:%M:%S %Z");		/// Sat, 01 Jan 2005 12:00:00 +0100 | Sat, 01 Jan 2005 11:00:00 GMT
@@ -242,7 +244,7 @@ void Date::setOffset(Int32 offset) {
 			return;
 	}
 	if (!_changed) // means that _offset is an integer
-		Time::update(Time::time()-_offset-offset); // time + old - new
+		Time::update(Time::time()+_offset-offset); // time + old - new
 	_offset = offset;
 }
 
@@ -292,7 +294,9 @@ void Date::setClock(UInt8 hour, UInt8 minute, UInt8 second, UInt16 millisecond) 
 }
 
 void Date::setYear(Int32 year) {
-	if (_day>0 && year == _year)
+	if (_day == 0)
+		update(_offset);
+	if (year == _year)
 		return;
 	_changed = true;
 	_year = year;
@@ -303,14 +307,18 @@ void Date::setMonth(UInt8 month) {
 		month = 1;
 	else if (month>12)
 		month = 12;
-	if (_day>0 && month == _month)
+	if (_day == 0)
+		update(_offset);
+	if (month == _month)
 		return;
 	_changed = true;
 	_month = month;
 }
 
 void Date::setDay(UInt8 day) {
-	if (_day>0 && day == _day)
+	if (_day == 0)
+		update(_offset);
+	if (day == _day)
 		return;
 
 	if (day<1)
@@ -318,8 +326,6 @@ void Date::setDay(UInt8 day) {
 	else if (day>31)
 		day = 31;
 	if (day > 28) {
-		if (_day == 0) // to get _month correct value
-			update(_offset);
 		if (_month < 8) {
 			if (_month == 2) {
 				if (day >= 30)
@@ -334,43 +340,51 @@ void Date::setDay(UInt8 day) {
 		}
 	}
 	
-	if (!_changed && day == _day)
+	if (day == _day)
 		return;
 	_changed = true;
 	_day = day;
 }
 
 void Date::setHour(UInt8 hour) {
+	if (_day == 0)
+		update(_offset);
 	if (hour > 59)
 		hour = 59;
-	if (_day>0 && hour == _hour)
+	if (hour == _hour)
 		return;
 	_changed = true;
 	_hour = hour;
 }
 
 void Date::setMinute(UInt8 minute) {
+	if (_day == 0)
+		update(_offset);
 	if (minute>59)
 		minute = 59;
-	if (_day>0 && minute == _minute)
+	if (minute == _minute)
 		return;
 	_changed = true;
 	_minute = minute;
 }
 
 void Date::setSecond(UInt8 second) {
+	if (_day == 0)
+		update(_offset);
 	if (second>59)
 		second = 59;
-	if (_day>0 && second == _second)
+	if (second == _second)
 		return;
 	_changed = true;
 	_second = second;
 }
 
 void Date::setMillisecond(UInt16 millisecond) {
+	if (_day == 0)
+		update(_offset);
 	if (millisecond > 999)
 		millisecond = 999;
-	if (_day>0 && millisecond == _millisecond)
+	if (millisecond == _millisecond)
 		return;
 	if (!_changed)
 		Time::update(time()-_millisecond+millisecond);
@@ -403,170 +417,8 @@ void Date::computeWeekDay(Int64 days) {
 }
 
 
+///////////// FORMATER //////////////////////////
 
-///////////// PARSER //////////////////////////
-
-
-
-
-
-#define SKIP_DIGITS() \
-	while (it != end && isdigit(*it)) ++it
-
-#define PARSE_NUMBER(var) \
-	while (it != end && isdigit(*it)) var = var * 10 + ((*it++) - '0')
-
-#define PARSE_NUMBER_N(var, n) \
-	{ int i = 0; while (i++ < n && it != end && isdigit(*it)) var = var * 10 + ((*it++) - '0');}
-
-#define PARSE_FRACTIONAL_N(var, n) \
-	{ int i = 0; while (i < n && it != end && isdigit(*it)) { var = var * 10 + ((*it++) - '0'); i++; } while (i++ < n) var *= 10; }
-
-
-
-
-
-bool Date::update(Exception& ex, const string& value, const char* format) {
-	if (!format)
-		return parseAuto(ex, value);
-
-	UInt8 month(0), day(0), hour(0), minute(0), second(0);
-	Int32 year(0), offset(LOCAL);
-	UInt16 millisecond(0);
-
-	int microsecond(0);
-
-	auto it = value.begin(),end = value.end();
-	UInt32 formatSize = strlen(format);
-	UInt32 iFormat(0);
-	bool isDST(false);
-	int optional(0);
-
-	while (iFormat<formatSize && it != end) {
-
-		char c(format[iFormat++]);
-
-		if (c == '[') {
-			if (optional>=0)
-				++optional;
-			else
-				--optional;
-			continue;
-		} else if (c == ']') {
-			if (optional > 0)
-				--optional;
-			else
-				++optional;
-			continue;
-		} else if (c != '%') {
-			if (c == '?') {} 
-			else if (optional<0)
-				continue;
-			else if (optional > 0) {
-				if (c != *it) {
-					optional = -optional;
-					continue;
-				}
-			} else if (c != *it)
-				return false;
-			++it;
-			continue;
-		}
-			
-		if (iFormat == formatSize)
-			break;
-
-		switch (format[iFormat++]) {
-			case 'w':
-			case 'W':
-				while (it != end && isalpha(*it)) ++it;
-				break;
-			case 'b':
-			case 'B':
-				if ((month=parseMonth(it, end))==0 && optional!=0)
-					ex.set(Exception::FORMATTING, "Impossible to parse ", string(it, end), " as a valid month");
-				break;
-			case 'd':
-			case 'e':
-			case 'f':
-				if(isspace(*it))
-					++it;
-				PARSE_NUMBER_N(day, 2);
-				break;
-			case 'm':
-			case 'n':
-			case 'o':
-				PARSE_NUMBER_N(month, 2);
-				break;
-			case 'y':
-				PARSE_NUMBER_N(year, 2);
-				if (year >= 70)
-					year += 1900;
-				else
-					year += 2000;
-				break;
-			case 'Y':
-				PARSE_NUMBER_N(year, 4);
-				break;
-			case '_':
-				PARSE_NUMBER(year);
-				if (year < 100) {
-					if (year >= 70)
-						year += 1900;
-					else
-						year += 2000;
-				}
-				break;
-			case 'H':
-			case 'h':
-				PARSE_NUMBER_N(hour, 2);
-				break;
-			case 'a':
-			case 'A':
-				if(!parseAMPM(hour,it, end) && optional!=0)
-					ex.set(Exception::FORMATTING, "Impossible to parse ", string(it, end), " as a valid AM/PM information");
-				break;
-			case 'M':
-				PARSE_NUMBER_N(minute, 2);
-				break;
-			case 'S':
-				PARSE_NUMBER_N(second, 2);
-				break;
-			case 's':
-				PARSE_NUMBER_N(second, 2);
-				if (it != end && (*it == '.' || *it == ',')) {
-					++it;
-					PARSE_FRACTIONAL_N(millisecond, 3);
-					PARSE_FRACTIONAL_N(microsecond, 3);
-					SKIP_DIGITS();
-				}
-				break;
-			case 'i':
-				PARSE_NUMBER_N(millisecond, 3);
-				break;
-			case 'c':
-				PARSE_NUMBER_N(millisecond, 1);
-				millisecond *= 100;
-				break;
-			case 'F':
-				PARSE_FRACTIONAL_N(millisecond, 3);
-				PARSE_FRACTIONAL_N(microsecond, 3);
-				SKIP_DIGITS();
-				break;
-			case 'z':
-			case 'Z':
-				offset = parseTimezone(isDST,it, end);
-				break;
-		}
-	}
-
-	update(year,month,day,hour,minute,second,millisecond,offset);
-	_isDST = isDST;
-
-	if (microsecond > 0)
-		ex.set(Exception::FORMATTING, "microseconds information lost, not supported by Mona Date system");
-	return true;
-}
 
 string& Date::toString(const char* format, string& value) const {
 	if (!format)
@@ -640,102 +492,250 @@ void Date::formatTimezone(string& value, bool bISO) const {
 }
 
 
-Int32 Date::parseTimezone(bool& isDST,string::const_iterator& it, const string::const_iterator& end) {
 
-	if (it == end)
-		return LOCAL;
+///////////// PARSER //////////////////////////
 
-	Int32 offset(0);
 
-	if (isalpha(*it)) {
-		string code;
-		code += *it++;
-		if (it != end && isalpha(*it))
-			code += *it++;
-		if (it != end && isalpha(*it))
-			code += *it++;
-		if (it != end && isalpha(*it))
-			code += *it++;
-		offset = Timezone::Offset(code,isDST);
+
+#define CAN_READ (*current && size!=0)
+#define READ	 (--size,*current++)
+
+#define SKIP_DIGITS \
+	while (CAN_READ && isdigit(*current)) READ;
+
+#define PARSE_NUMBER(var) \
+	while (CAN_READ && isdigit(*current)) var = var * 10 + (READ - '0')
+
+#define PARSE_NUMBER_N(var, n) \
+	{ size_t i = 0; while (i++ < n && CAN_READ && isdigit(*current)) var = var * 10 + (READ - '0');}
+
+#define PARSE_FRACTIONAL_N(var, n) \
+	{ size_t i = 0; while (i < n && CAN_READ && isdigit(*current)) { var = var * 10 + (READ - '0'); i++; } while (i++ < n) var *= 10; }
+
+
+
+
+
+bool Date::update(Exception& ex, const char* current, size_t size, const char* format) {
+	if (!format)
+		return parseAuto(ex, current,size);
+
+	UInt8 month(0), day(0), hour(0), minute(0), second(0);
+	Int32 year(0), offset(LOCAL);
+	UInt16 millisecond(0);
+	int microsecond(0);
+	bool isDST(false);
+	int optional(0);
+
+	while (*format) {
+
+		char c(*(format++));
+
+		if (c == '[') {
+			if (optional>=0)
+				++optional;
+			else
+				--optional;
+			continue;
+		} else if (c == ']') {
+			if (optional > 0)
+				--optional;
+			else
+				++optional;
+			continue;
+		} else if (c != '%') {
+			if (c == '?') {} 
+			else if (optional<0)
+				continue;
+			else if (optional > 0) {
+				if (!CAN_READ || c != *current) {
+					optional = -optional;
+					continue;
+				}
+			} else if (!CAN_READ || c != *current)
+				return false;
+			READ;
+			continue;
+		}
+			
+		if (!(*format))
+			break;
+
+		switch (*format) {
+			default:
+				if (optional == 0)
+					ex.set(Exception::FORMATTING, "Unknown date %c pattern",*format);
+				break;
+			case '%': // to catch %% case
+				if (c != '%')
+					return false;
+				break;
+			case 'w':
+			case 'W':
+				while (CAN_READ && isalpha(*current))
+					READ;
+				break;
+			case 'b':
+			case 'B': {
+				month = 0;
+				string value;
+				bool isFirst = true;
+				while (CAN_READ && isalpha(*current)) {
+					char ch(READ);
+					if (isFirst) {
+						value += toupper(ch);
+						isFirst = false;
+					} else
+						value += tolower(ch);
+				}
+
+				if (value.length() >= 3) {
+					for (int i = 0; i < 12; ++i) {
+						if (MONTH_NAMES[i].find(value) == 0) {
+							month = i + 1;
+							break;
+						}
+					}
+				}
+				if (month == 0 && optional == 0)
+					ex.set(Exception::FORMATTING, "Impossible to parse ", value, " as a valid month");
+				break;
+			}
+			case 'd':
+			case 'e':
+			case 'f':
+				if (CAN_READ && isspace(*current))
+					READ;
+				PARSE_NUMBER_N(day, 2);
+				break;
+			case 'm':
+			case 'n':
+			case 'o':
+				PARSE_NUMBER_N(month, 2);
+				break;
+			case 'y':
+				PARSE_NUMBER_N(year, 2);
+				if (year >= 70)
+					year += 1900;
+				else
+					year += 2000;
+				break;
+			case 'Y':
+				PARSE_NUMBER_N(year, 4);
+				break;
+			case '_':
+				PARSE_NUMBER(year);
+				if (year < 100) {
+					if (year >= 70)
+						year += 1900;
+					else
+						year += 2000;
+				}
+				break;
+			case 'H':
+			case 'h':
+				PARSE_NUMBER_N(hour, 2);
+				break;
+			case 'a':
+			case 'A': {
+				const char* ampm(current);
+				UInt32 count(0);
+				while (CAN_READ && isalpha(*current)) {
+					READ;
+					++count;
+				}
+				if (String::ICompare(ampm,"AM",count)==0) {
+					if (hour == 12)
+						hour = 0;
+				} else if (String::ICompare(ampm,"PM",count)==0) {
+					if (hour < 12)
+						hour += 12;
+				} else if (optional==0)
+					ex.set(Exception::FORMATTING, "Impossible to parse ", ampm, " as a valid AM/PM information");
+				break;
+			}
+			case 'M':
+				PARSE_NUMBER_N(minute, 2);
+				break;
+			case 'S':
+				PARSE_NUMBER_N(second, 2);
+				break;
+			case 's':
+				PARSE_NUMBER_N(second, 2);
+				if (CAN_READ && (*current == '.' || *current == ',')) {
+					READ;
+					PARSE_FRACTIONAL_N(millisecond, 3);
+					PARSE_FRACTIONAL_N(microsecond, 3);
+					SKIP_DIGITS;
+				}
+				break;
+			case 'i':
+				PARSE_NUMBER_N(millisecond, 3);
+				break;
+			case 'c':
+				PARSE_NUMBER_N(millisecond, 1);
+				millisecond *= 100;
+				break;
+			case 'F':
+				PARSE_FRACTIONAL_N(millisecond, 3);
+				PARSE_FRACTIONAL_N(microsecond, 3);
+				SKIP_DIGITS;
+				break;
+			case 'z':
+			case 'Z':
+
+				offset = LOCAL;
+				const char* code(current);
+				UInt32 count(0);
+				while (CAN_READ && isalpha(*current)) {
+					READ;
+					++count;
+				}
+				if (count>0) {
+					if (*current)
+						offset = Timezone::Offset(string(code,count),isDST);
+					else
+						offset = Timezone::Offset(code,isDST);
+				}
+				if (CAN_READ && (*current == '+' || *current == '-')) {
+					if (offset==GMT || offset==LOCAL)
+						offset = 0;
+
+					int sign = READ == '+' ? 1 : -1;
+					int hours = 0;
+					PARSE_NUMBER_N(hours, 2);
+					if (CAN_READ && *current == ':')
+						READ;
+					int minutes = 0;
+					PARSE_NUMBER_N(minutes, 2);
+					offset += sign*(hours * 3600 + minutes * 60)*1000;
+				}			
+				break;
+		}
+		++format;
 	}
-	if (it == end || (*it != '+' && *it != '-'))
-		return offset;
 
-	if (offset==GMT)
-		offset = 0;
+	update(year,month,day,hour,minute,second,millisecond,offset);
+	_isDST = isDST;
 
-	int sign = *it == '+' ? 1 : -1;
-	++it;
-	int hours = 0;
-	PARSE_NUMBER_N(hours, 2);
-	if (it != end && *it == ':') ++it;
-	int minutes = 0;
-	PARSE_NUMBER_N(minutes, 2);
-	offset += sign*(hours * 3600 + minutes * 60)*1000;
-	return offset;
+	if (microsecond > 0)
+		ex.set(Exception::FORMATTING, "microseconds information lost, not supported by Mona Date system");
+	return true;
 }
 
+bool Date::parseAuto(Exception& ex, const char* data, size_t count) {
 
-UInt8 Date::parseMonth(string::const_iterator& it, const string::const_iterator& end) {
-	string month;
-	bool isFirst = true;
-	while (it != end && isalpha(*it)) {
-		char ch = (*it++);
-		if (isFirst) { month += toupper(ch); isFirst = false; }
-		else month += tolower(ch);
-	}
-
-	if (month.length() < 3)
-		return 0;
-
-	for (int i = 0; i < 12; ++i) {
-		if (MONTH_NAMES[i].find(month) == 0)
-			return i + 1;
-	}
-	return 0;
-}
-
-
-bool Date::parseAMPM(UInt8& hour,string::const_iterator& it, const string::const_iterator& end) {
-	string ampm;
-	while (it != end && isalpha(*it)) {
-		char ch = (*it++);
-		ampm += toupper(ch);
-	}
-
-	if (ampm == "AM") {
-		if (hour == 12)
-			hour = 0;
-		return true;
-	}
-	else if (ampm == "PM") {
-		if (hour < 12)
-			hour += 12;
-		return true;
-	}
-	return false;
-}
-
-
-
-
-bool Date::parseAuto(Exception& ex, const string& value) {
-	if (value.length()>50)
-		return false;
-
-	if (value.length() < 4)
-		return false;
-	if (value[3] == ',')
-		return update(ex,value,"%w, %e?%b?%_ %H:%M[:%S %Z]");
-	if (value[3] == ' ')
-		return update(ex,value,ASCTIME_FORMAT);
-
-	int length(0);
+	size_t length(0);
 	bool digit(false);
 	bool digits(false);
-	char signifiant(0);
 	UInt8 tPos(0);
-	for (char c : value) {
+	const char* current = data;
+	size_t size(count);
+
+	while(CAN_READ && length<50) {
+		char c(*current);
+		if (digit && c == 'T')
+			tPos = length;
 		if (length<10) {
 			if (length == 0)
 				digit = isdigit(c) != 0;
@@ -744,57 +744,53 @@ bool Date::parseAuto(Exception& ex, const string& value) {
 					if (digit) {
 						digits = true;
 						if (!isdigit(c))
-							return update(ex, value, "%e?%b?%_ %H:%M[:%S %Z]");
+							return update(ex, data, count, "%e?%b?%_ %H:%M[:%S %Z]");
 					}
-				} else if(digits && !isdigit(c))
-					return update(ex,value,"%e?%b?%_ %H:%M[:%S %Z]");
+				} else if (digits && !isdigit(c))
+					return update(ex, data, count, "%e?%b?%_ %H:%M[:%S %Z]");
+			} else if (length==3 && c==' ')
+				return update(ex,data,count, ASCTIME_FORMAT);
+
+			if (c == ',') {
+				if (length == 3)
+					return update(ex,data, count, "%w, %e?%b?%_ %H:%M[:%S %Z]");
+				return update(ex,data, count, "%W, %e?%b?%_ %H:%M[:%S %Z]");
 			}
-			if (c == ',')
-				return update(ex,value,"%W, %e?%b?%_ %H:%M[:%S %Z]");
-			if (digit) {
-				if (c == ' ')
-					signifiant = ' ';
-				else if (c == '.' || c == ',')
-					signifiant = '.';
-				else if (c == 'T')
-					tPos = length;
-			}
-			
-			if (length < 9) {
-				++length;
-				continue;
-			}
-			c = signifiant;
+
+			++length;
+			READ;
+			continue;
+		}
+		
+		// length >= 10
+		
+		if (length == 10) {
+			if(!digit)
+				return false;
+			if (c == ' ')
+				return update(ex, data, count, SORTABLE_FORMAT);
+			if (!tPos)
+				return false;
+		}
+	
+		if (c == '.' || c == ',') {
+			if (tPos==8)
+				return update(ex, data, count, "%Y%m%dT%H%M%s[%z]");
+			return update(ex, data, count,"%Y-%m-%dT%H:%M:%s[%z]"); //  ISO8601_FRAC_FORMAT
 		}
 
-		if(!digit)
-			return false;
-		if (c == ' ')
-			return update(ex, value, SORTABLE_FORMAT);
-		if (c == '.') {
-			if (tPos==8)
-				return update(ex, value, "%Y%m%dT%H%M%S[.%i%z]");
-			return update(ex, value, ISO8601_FRAC_FORMAT);
-		}
-		if (c == ',') {
-			if (tPos==8)
-				return update(ex, value, "%Y%m%dT%H%M%S[,%i%z]");
-			return update(ex, value, ISO8601_FRAC_FORMAT);
-		}
-			
-		if (c == 'T')
-			tPos = length;
+		READ;
 		++length;
 	}
 
 	if (!digit)
 		return false;
 	if (length == 10)
-		return update(ex, value, SORTABLE_FORMAT);
-	if (length<10 || tPos==10)
-		return update(ex, value, ISO8601_FORMAT);
+		return update(ex, data, count, SORTABLE_FORMAT);
+	if (tPos==10)
+		return update(ex, data, count, "%Y-%m-%dT%H:%M:%S[%z]"); //  ISO8601_FORMAT
 	if (tPos==8) // compact format (20050108T123000, 20050108T123000Z, 20050108T123000.123+0200)
-		return update(ex, value, "%Y%m%dT%H%M%S[.%i][%z]");
+		return update(ex, data, count, "%Y%m%dT%H%M%s[%z]");
 	return false;
 }
 

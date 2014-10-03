@@ -34,12 +34,12 @@ public:
 	
 	BinaryWriter&			writeRaw() { return write(AMF::RAW).packet; }
 	AMFWriter&				writeMessage();
-	AMFWriter&				writeInvocation(const std::string& name) { return writeInvocation(name,0); }
+	AMFWriter&				writeInvocation(const char* name) { return writeInvocation(name,0); }
 
-	AMFWriter&				writeAMFSuccess(const std::string& code, const std::string& description, bool withoutClosing = false) { return writeAMFState("_result", code, description, withoutClosing); }
-	AMFWriter&				writeAMFStatus(const std::string& code, const std::string& description, bool withoutClosing = false) { return writeAMFState("onStatus", code, description, withoutClosing); }
-	AMFWriter&				writeAMFError(const std::string& code, const std::string& description, bool withoutClosing = false) { return writeAMFState("_error", code, description, withoutClosing); }
-	bool					writeMedia(MediaType type,UInt32 time,PacketReader& packet,Parameters& properties);
+	AMFWriter&				writeAMFSuccess(const char* code, const std::string& description, bool withoutClosing = false) { return writeAMFState("_result", code, description, withoutClosing); }
+	AMFWriter&				writeAMFStatus(const char* code, const std::string& description, bool withoutClosing = false) { return writeAMFState("onStatus", code, description, withoutClosing); }
+	AMFWriter&				writeAMFError(const char* code, const std::string& description, bool withoutClosing = false) { return writeAMFState("_error", code, description, withoutClosing); }
+	bool					writeMedia(MediaType type,UInt32 time,PacketReader& packet,const Parameters& properties);
 
 	void					writePing() { writeRaw().write16(0x0006).write32((UInt32)Time::Now()); }
 	void					writePong(UInt32 pingTime) { writeRaw().write16(0x0007).write32(pingTime); }
@@ -52,8 +52,8 @@ protected:
 	virtual ~FlashWriter();
 
 	virtual AMFWriter&		write(AMF::ContentType type,UInt32 time=0,PacketReader* pPacket=NULL)=0;
-	AMFWriter&				writeInvocation(const std::string& name,double callback);
-	AMFWriter&				writeAMFState(const std::string& name,const std::string& code,const std::string& description,bool withoutClosing=false);
+	AMFWriter&				writeInvocation(const char* name,double callback);
+	AMFWriter&				writeAMFState(const char* name,const char* code,const std::string& description,bool withoutClosing=false);
 private:
 	std::string		_onAudio;
 	std::string		_onVideo;

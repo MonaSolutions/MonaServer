@@ -130,10 +130,10 @@ void ServerConnection::send(const shared_ptr<ServerMessage>& pMessage) {
 
 	pMessage->_shift -= (handler.empty() ? Util::Get7BitValueSize(handlerRef) : handler.size());
 
-	BinaryWriter writer(pMessage->packet, pMessage->_shift);
+	BinaryWriter writer(pMessage->data(),pMessage->size());
 
 	writer.write32(pMessage->size()-4);
-	writer.writeString8(handler);
+	writer.write8(handler.size()).write(handler);
 	if(writeRef)
 		writer.write7BitEncoded(handlerRef);
 	else if(handler.empty())
@@ -172,7 +172,7 @@ UInt32 ServerConnection::onData(PoolBuffer& pBuffer) {
 	string handler;
 	UInt8 handlerSize = packet.read8();
 	if (handlerSize>0)
-		_receivingRefs.emplace(_receivingRefs.size()+1,packet.readRaw(handlerSize, handler));
+		_receivingRefs.emplace(_receivingRefs.size()+1,packet.read(handlerSize, handler));
 	else {
 		UInt32 ref = packet.read7BitEncoded();
 		if (ref == 0) {

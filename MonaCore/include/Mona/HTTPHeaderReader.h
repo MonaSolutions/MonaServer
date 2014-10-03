@@ -29,32 +29,16 @@ namespace Mona {
 
 class HTTPHeaderReader : public DataReader, public virtual Object {
 public:
-	HTTPHeaderReader(std::vector<const char*>& headers);
+	HTTPHeaderReader(std::vector<const char*>& headers) : _header(headers.begin()), _headers(headers) {}
 
-
-	std::string&		readString(std::string& value) {return _value.assign(value);}
-	double				readNumber();
-	bool				readBoolean() { return _bool; }
-	Date&				readDate(Date& date) { return date = _date; }
-	void				readNull() {}
-
-	bool				readObject(std::string& type, bool& external) { return true; }
-	Type				readItem(std::string& name);
-	
-	Type				followingType() { return _header == _headers.end() ? END : OBJECT; }
-	bool				available() { return _header != _headers.end(); }
-
-	void				reset();
+	void				reset() { _header = _headers.begin(); }
 
 private:
-	bool				readArray(UInt32& size) {return false;}
-	const UInt8*		readBytes(UInt32& size) { size = _value.size(); return (const UInt8*)_value.c_str(); }
-	
+	bool	readOne(UInt8 type, DataWriter& writer);
+	UInt8	followingType() { return _header == _headers.end() ? END : OTHER; }
+
 	std::vector<const char*>&				 _headers;
 	std::vector<const char*>::const_iterator _header;
-	std::string								_value;
-	Date									_date;
-	bool									_bool;
 };
 
 

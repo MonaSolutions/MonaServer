@@ -114,8 +114,7 @@ void RTMFP::WriteCRC(PacketWriter& packet) {
 	// Compute the CRC and add it at the beginning of the request
 	PacketReader reader(packet.data(),packet.size());
 	reader.next(6);
-	UInt16 sum = CheckSum(reader);
-	BinaryWriter(packet,4).write16(sum);
+	packet.write16(CheckSum(reader));
 }
 
 UInt32 RTMFP::Unpack(PacketReader& packet) {
@@ -130,7 +129,7 @@ UInt32 RTMFP::Unpack(PacketReader& packet) {
 void RTMFP::Pack(PacketWriter& packet,UInt32 farId) {
 	PacketReader reader(packet.data(),packet.size());
 	reader.next(4);
-	BinaryWriter(packet).write32(reader.read32()^reader.read32()^farId);
+	BinaryWriter(packet.data(),4).write32(reader.read32()^reader.read32()^farId);
 }
 
 

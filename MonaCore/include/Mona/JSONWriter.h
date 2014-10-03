@@ -27,51 +27,40 @@ namespace Mona {
 
 class JSONWriter : public DataWriter, public virtual Object {
 public:
-	JSONWriter(const PoolBuffers& buffers,bool modeRaw=false);
+	JSONWriter(const PoolBuffers& poolBuffers,bool modeRaw=false);
 
-	virtual void beginObject(const std::string& type="",bool external=false);
-	virtual void endObject();
+	UInt64 beginObject(const char* type=NULL);
+	void   writePropertyName(const char* value);
+	void   endObject();
 
-	virtual void writePropertyName(const std::string& value);
+	UInt64 beginArray(UInt32 size);
+	void   endArray();
 
-	virtual void beginArray(UInt32 size);
-	virtual void endArray();
+	void   writeNumber(double value) { start(); String::Append(packet, value); end(); }
+	void   writeString(const char* value, UInt32 size);
+	void   writeBoolean(bool value) { start(); String::Append(packet,value); end(); }
+	void   writeNull() { start(); packet.write("null", 4); end(); }
+	UInt64 writeDate(const Date& date);
+	UInt64 writeBytes(const UInt8* data,UInt32 size);
 
-	void writeDate(const Date& date) { writeString(date.toString(Date::ISO8601_FRAC_FORMAT, _buffer)); }
-	void writeNumber(double value) { writeRaw(String::Format(_buffer, value)); }
-	void writeString(const std::string& value);
-	void writeBoolean(bool value) { writeRaw( value ? "true" : "false"); }
-	void writeNull() { writeRaw("null"); }
-	void writeBytes(const UInt8* data,UInt32 size);
-
-	virtual void clear();
-	virtual void endWrite();
+	void clear();
+	
 
 private:
 
 	/// \brief Add '[' for first data or ',' for next data of an array/object
 	/// and update state members
 	/// \param isContainer current data is Array or Object
-	void startData(bool isContainer = false);
+	void start(bool isContainer = false);
 
 	/// \brief Add last ']' if data ended and update state members
 	/// \param isContainer current data is Array or Object
-	void endData(bool isContainer = false);
+	void end(bool isContainer = false);
 
-	template <typename ...Args>
-	void writeRaw(Args&&... args) {
-		startData();
-
-		packet.writeRaw(args ...);
-
-		endData();
-	}
 
 	bool		_modeRaw;
-	bool		_started;
 	bool		_first;
 	UInt32		_layers;
-	std::string _buffer;
 };
 
 

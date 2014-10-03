@@ -20,6 +20,7 @@ This file is a part of Mona.
 #include "Service.h"
 #include "LUAWriter.h"
 #include "LUAQualityOfService.h"
+#include "ScriptReader.h"
 
 using namespace std;
 using namespace Mona;
@@ -99,20 +100,20 @@ int LUAWriter::Flush(lua_State* pState) {
 
 int LUAWriter::WriteMessage(lua_State* pState) {
 	SCRIPT_CALLBACK(Writer,writer)
-		SCRIPT_READ_DATA(writer.writeMessage())
+		SCRIPT_READ_NEXT(ScriptReader(pState, SCRIPT_READ_AVAILABLE).read(writer.writeMessage()));
 	SCRIPT_CALLBACK_RETURN
 }
 
 int LUAWriter::WriteInvocation(lua_State* pState) {
-	SCRIPT_CALLBACK(Writer,writer)
-		DataWriter& dataWriter = writer.writeInvocation(SCRIPT_READ_STRING(""));
-		SCRIPT_READ_DATA(dataWriter)
+	SCRIPT_CALLBACK(Writer, writer)
+		const char* name(SCRIPT_READ_STRING(""));
+		SCRIPT_READ_NEXT(ScriptReader(pState, SCRIPT_READ_AVAILABLE).read(writer.writeInvocation(name)));
 	SCRIPT_CALLBACK_RETURN
 }
 
 int LUAWriter::WriteRaw(lua_State* pState) {
 	SCRIPT_CALLBACK(Writer,writer)
-		while(SCRIPT_CAN_READ) {
+		while(SCRIPT_READ_AVAILABLE) {
 			SCRIPT_READ_BINARY(data, size);
 			if (data)
 				writer.writeRaw(data, size);

@@ -173,10 +173,10 @@ void RTMFPSession::p2pHandshake(const string& tag,const SocketAddress& address,U
 
 	BinaryWriter& writer = writeMessage(0x0F,size);
 
-	writer.write8(0x22).write8(0x21).write8(0x0F).writeRaw(peer.id, ID_SIZE);
+	writer.write8(0x22).write8(0x21).write8(0x0F).write(peer.id, ID_SIZE);
 	RTMFP::WriteAddress(writer,*pAddress, index == 0 ? RTMFP::ADDRESS_PUBLIC : RTMFP::ADDRESS_LOCAL);
 	DEBUG("P2P address destinator exchange, ",pAddress->toString());
-	writer.writeRaw(tag);
+	writer.write(tag);
 	flush();
 }
 
@@ -196,7 +196,7 @@ void RTMFPSession::flush(UInt8 marker,bool echoTime,RTMFPEngine::Type type) {
 		else
 			packet.clip(2);
 
-		BinaryWriter writer(packet, 6);
+		BinaryWriter writer(packet.data()+6, 5);
 		writer.write8(marker).write16(RTMFP::TimeNow());
 		if (echoTime)
 			writer.write16(_timeSent+RTMFP::Time(peer.lastReceptionTime.elapsed()));
@@ -358,7 +358,7 @@ void RTMFPSession::packetHandler(PacketReader& packet) {
 				// Header part if present
 				if(flags & MESSAGE_HEADER) {
 					string signature;
-					message.readString8(signature);
+					message.read(message.read8(),signature);
 
 					if(!pFlow)
 						pFlow = createFlow(idFlow,signature);

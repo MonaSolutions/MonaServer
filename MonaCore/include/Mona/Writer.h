@@ -20,7 +20,7 @@ This file is a part of Mona.
 #pragma once
 
 #include "Mona/Mona.h"
-#include "Mona/DataReader.h"
+#include "Mona/DataWriter.h"
 #include "Mona/QualityOfService.h"
 #include "Mona/PacketReader.h"
 #include "Mona/Parameters.h"
@@ -43,6 +43,7 @@ public:
 		VIDEO,
 		DATA,
 		START,
+		PROPERTIES,
 		STOP
 	};
 	enum State {
@@ -80,18 +81,15 @@ public:
 		If it returns true, for every media type (AUDIO, VIDEO, DATA), an type=INIT call is invoked on start with time=MediaType,
 		and always publication name in packet.
 		Finally, every media data are passed (AUDIO, VIDEO and DATA), if the methods returns false, the cycle restart since the beginning */
-	virtual bool			writeMedia(MediaType type,UInt32 time,PacketReader& packet,Parameters& properties);
+	virtual bool			writeMedia(MediaType type,UInt32 time,PacketReader& packet,const Parameters& properties);
 	virtual bool			writeMember(const Client& client);
 
-    virtual DataWriter&		writeInvocation(const std::string& name){return DataWriter::Null;}
+    virtual DataWriter&		writeInvocation(const char* name){return DataWriter::Null;}
     virtual DataWriter&		writeMessage(){return DataWriter::Null;}
 	virtual DataWriter&		writeResponse(UInt8 type){return writeMessage();}
 	virtual void			writeRaw(const UInt8* data,UInt32 size){}
 
 	virtual void			flush(bool full = false) {} // TODO change to return bool (return false if _state==CONNECTING), and not use an argument (just usefull for RTMFP)
-
-	virtual void			createReader(PacketReader& packet,std::shared_ptr<DataReader>& pReader) {}
-	virtual void			createWriter(std::shared_ptr<DataWriter>& pWriter) {}
 
 	operator bool() const { return !_isNull; }
 
@@ -99,7 +97,7 @@ public:
 
 protected:
 	Writer(State state);
-	Writer(Writer& writer);
+	Writer(const Writer& other);
 	virtual ~Writer();
 
 	QualityOfService				_qos;

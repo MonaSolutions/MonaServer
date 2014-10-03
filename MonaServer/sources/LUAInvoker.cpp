@@ -28,13 +28,16 @@ This file is a part of Mona.
 #include "LUABroadcaster.h"
 #include "LUASocketAddress.h"
 #include "LUAIPAddress.h"
+#include "LUAXML.h"
 #include "Mona/Exceptions.h"
 #include "MonaServer.h"
 #include <openssl/evp.h>
 #include "Mona/JSONReader.h"
 #include "Mona/JSONWriter.h"
-#include "Mona/XMLReader.h"
-#include "Mona/XMLWriter.h"
+#include "Mona/XMLRPCReader.h"
+#include "Mona/XMLRPCWriter.h"
+#include "Mona/QueryWriter.h"
+#include "Mona/QueryReader.h"
 #include "math.h"
 
 
@@ -172,10 +175,11 @@ void LUAInvoker::RemoveGroup(lua_State *pState) {
 
 int	LUAInvoker::Split(lua_State *pState) {
 	SCRIPT_CALLBACK(Invoker,invoker)
-		string expression = SCRIPT_READ_STRING("");
-		string separator = SCRIPT_READ_STRING("");
-		String::ForEach forEach([__pState](const char* value) {
-			SCRIPT_WRITE_STRING(value)
+		const char* expression = SCRIPT_READ_STRING("");
+		const char* separator = SCRIPT_READ_STRING("");
+		String::ForEach forEach([__pState](UInt32 index,const char* value) {
+			SCRIPT_WRITE_STRING(value);
+			return true;
 		});
 		String::Split(expression, separator, forEach,SCRIPT_READ_UINT(0));
 	SCRIPT_CALLBACK_RETURN
@@ -218,19 +222,18 @@ int	LUAInvoker::AbsolutePath(lua_State *pState) {
 
 int	LUAInvoker::CreateIPAddress(lua_State *pState) {
 	SCRIPT_CALLBACK_TRY(Invoker, invoker)
-		if (!SCRIPT_CAN_READ) {
+		if (!SCRIPT_READ_AVAILABLE) {
 			Script::AddObject<LUAIPAddress>(pState, IPAddress::Wildcard());
 		} else {
 			Exception ex;
 			IPAddress* pAddress = new IPAddress();
-			if (LUAIPAddress::Read(ex, pState, SCRIPT_READ_NEXT, *pAddress)) {
+			if (LUAIPAddress::Read(ex, pState, SCRIPT_READ_NEXT(1), *pAddress)) {
 				Script::NewObject<LUAIPAddress>(pState, *pAddress);
 				if (ex)
 					SCRIPT_WARN(ex.error());
 			} else {
 				delete pAddress;
-				if (ex)
-					SCRIPT_CALLBACK_THROW(ex.error().c_str())
+				SCRIPT_CALLBACK_THROW(ex.error().c_str())
 			}
 		}
 	SCRIPT_CALLBACK_RETURN
@@ -239,19 +242,18 @@ int	LUAInvoker::CreateIPAddress(lua_State *pState) {
 
 int	LUAInvoker::CreateSocketAddress(lua_State *pState) {
 	SCRIPT_CALLBACK_TRY(Invoker, invoker)
-		if (!SCRIPT_CAN_READ) {
+		if (!SCRIPT_READ_AVAILABLE) {
 			Script::AddObject<LUASocketAddress>(pState, SocketAddress::Wildcard());
 		} else {
 			Exception ex;
 			SocketAddress* pAddress = new SocketAddress();
-			if (LUASocketAddress::Read(ex, pState, SCRIPT_READ_NEXT, *pAddress)) {
+			if (LUASocketAddress::Read(ex, pState, SCRIPT_READ_NEXT(1), *pAddress)) {
 				Script::NewObject<LUASocketAddress>(pState, *pAddress);
 				if (ex)
 					SCRIPT_WARN(ex.error());
 			} else {
 				delete pAddress;
-				if (ex)
-					SCRIPT_CALLBACK_THROW(ex.error().c_str())
+				SCRIPT_CALLBACK_THROW(ex.error().c_str())
 			}
 		}
 	SCRIPT_CALLBACK_RETURN
@@ -277,7 +279,7 @@ int	LUAInvoker::CreateTCPServer(lua_State *pState) {
 
 int	LUAInvoker::Md5(lua_State *pState) {
 	SCRIPT_CALLBACK(Invoker,invoker)
-		while(SCRIPT_CAN_READ) {
+		while(SCRIPT_READ_AVAILABLE) {
 			SCRIPT_READ_BINARY(data,size)
 			if(data) {
 				UInt8 result[16];
@@ -312,7 +314,7 @@ int LUAInvoker::ListPaths(lua_State *pState) {
 
 int	LUAInvoker::Sha256(lua_State *pState) {
 	SCRIPT_CALLBACK(Invoker,invoker)
-		while(SCRIPT_CAN_READ) {
+		while(SCRIPT_READ_AVAILABLE) {
 			SCRIPT_READ_BINARY(data,size)
 			if(data) {
 				UInt8 result[32];
@@ -330,17 +332,52 @@ int	LUAInvoker::ToAMF0(lua_State *pState) {
 	SCRIPT_CALLBACK(Invoker,invoker)
 		AMFWriter writer(invoker.poolBuffers);
 		writer.amf0=true;
-		SCRIPT_READ_DATA(writer)
+		SCRIPT_READ_NEXT(ScriptReader(pState, SCRIPT_READ_AVAILABLE).read(writer));
 		SCRIPT_WRITE_BINARY(writer.packet.data(),writer.packet.size())
 	SCRIPT_CALLBACK_RETURN
 }
 
+int	LUAInvoker::FromXML(lua_State *pState) {
+	SCRIPT_CALLBACK_TRY(Invoker, invoker)
+		SCRIPT_READ_BINARY(data,size)
+		Exception ex;
+		int count(lua_gettop(pState));
+		LUAXML::XMLToLUA(ex, pState, STR data, size, invoker.poolBuffers);
+		if (ex) {
+			// erase object written
+			lua_pop(pState, lua_gettop(pState) - count);
+			SCRIPT_CALLBACK_THROW(ex.error().c_str())
+		}
+	SCRIPT_CALLBACK_RETURN
+}
+
+int	LUAInvoker::ToXML(lua_State *pState) {
+	SCRIPT_CALLBACK_TRY(Invoker,invoker)
+		// TODO compress option
+		Exception ex;
+		if (LUAXML::LUAToXML(ex, pState, SCRIPT_READ_NEXT(1), invoker.poolBuffers)) {
+			if (ex)
+				SCRIPT_WARN(ex.error());
+		} else {
+			SCRIPT_CALLBACK_THROW(ex.error().c_str())
+		}
+	SCRIPT_CALLBACK_RETURN
+}
+
+int	LUAInvoker::FromQuery(lua_State *pState) {
+	SCRIPT_CALLBACK(Invoker, invoker)
+		ScriptWriter writer(pState);
+		QueryReader(SCRIPT_READ_STRING(String::Empty.c_str())).read(writer);
+	SCRIPT_CALLBACK_RETURN
+}
+
+
 int	LUAInvoker::AddToBlacklist(lua_State* pState) {
 	SCRIPT_CALLBACK(Invoker,invoker)	
-		while(SCRIPT_CAN_READ) {
+		while(SCRIPT_READ_AVAILABLE) {
 			Exception ex;
 			IPAddress address;
-			if (LUAIPAddress::Read(ex, pState, SCRIPT_READ_NEXT, address)) {
+			if (LUAIPAddress::Read(ex, pState, SCRIPT_READ_NEXT(1), address)) {
 				if (ex)
 					SCRIPT_WARN(ex.error())
 				invoker.addBanned(address);
@@ -352,10 +389,10 @@ int	LUAInvoker::AddToBlacklist(lua_State* pState) {
 
 int	LUAInvoker::RemoveFromBlacklist(lua_State* pState) {
 	SCRIPT_CALLBACK(Invoker,invoker)
-		while(SCRIPT_CAN_READ) {
+		while(SCRIPT_READ_AVAILABLE) {
 			Exception ex;
 			IPAddress address;
-			if (LUAIPAddress::Read(ex, pState, SCRIPT_READ_NEXT, address)) {
+			if (LUAIPAddress::Read(ex, pState, SCRIPT_READ_NEXT(1), address)) {
 				if (ex)
 					SCRIPT_WARN(ex.error())
 				invoker.removeBanned(address);
@@ -439,13 +476,25 @@ int LUAInvoker::Get(lua_State *pState) {
 				SCRIPT_WRITE_FUNCTION(LUAInvoker::ToData<Mona::JSONWriter>)
 				SCRIPT_CALLBACK_FIX_INDEX
 			} else if (strcmp(name, "fromJSON") == 0) {
-				SCRIPT_WRITE_FUNCTION(LUAInvoker::FromData<Mona::JSONReader>)
+				SCRIPT_WRITE_FUNCTION(LUAInvoker::FromDataWithBuffers<Mona::JSONReader>)
+				SCRIPT_CALLBACK_FIX_INDEX
+			} else if (strcmp(name, "toXMLRPC") == 0) {
+				SCRIPT_WRITE_FUNCTION(LUAInvoker::ToData<Mona::XMLRPCWriter>)
+				SCRIPT_CALLBACK_FIX_INDEX
+			} else if (strcmp(name, "fromXMLRPC") == 0) {
+				SCRIPT_WRITE_FUNCTION(LUAInvoker::FromDataWithBuffers<Mona::XMLRPCReader>)
 				SCRIPT_CALLBACK_FIX_INDEX
 			} else if (strcmp(name, "toXML") == 0) {
-				SCRIPT_WRITE_FUNCTION(LUAInvoker::ToData<Mona::XMLWriter>)
+				SCRIPT_WRITE_FUNCTION(LUAInvoker::ToXML)
 				SCRIPT_CALLBACK_FIX_INDEX
 			} else if (strcmp(name, "fromXML") == 0) {
-				SCRIPT_WRITE_FUNCTION(LUAInvoker::FromData<XMLReader>)
+				SCRIPT_WRITE_FUNCTION(LUAInvoker::FromXML)
+				SCRIPT_CALLBACK_FIX_INDEX
+			} else if (strcmp(name, "toQuery") == 0) {
+				SCRIPT_WRITE_FUNCTION(LUAInvoker::ToData<Mona::QueryWriter>)
+				SCRIPT_CALLBACK_FIX_INDEX
+			} else if (strcmp(name, "fromQuery") == 0) {
+				SCRIPT_WRITE_FUNCTION(LUAInvoker::FromQuery)
 				SCRIPT_CALLBACK_FIX_INDEX
 			} else if (strcmp(name, "absolutePath") == 0) {
 				SCRIPT_WRITE_FUNCTION(LUAInvoker::AbsolutePath)
@@ -500,6 +549,11 @@ int LUAInvoker::Get(lua_State *pState) {
 			} else {
 				Script::Collection(pState,1, "configs");
 				lua_getfield(pState, -1, name);
+				if (lua_isnil(pState, -1) && strcmp(name, "arguments") == 0) {
+					// to accept "mona.arguments" even if there is no arguments given on start (empty table so)
+					lua_newtable(pState);
+					lua_replace(pState, -2);
+				}
 				lua_replace(pState, -2);
 				SCRIPT_CALLBACK_FIX_INDEX
 			}

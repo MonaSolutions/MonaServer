@@ -21,32 +21,24 @@ This file is a part of Mona.
 
 #include "Mona/Mona.h"
 #include "Mona/AMF.h"
-#include "Mona/DataReader.h"
+#include "Mona/ReferableReader.h"
 #include <deque>
 
 namespace Mona {
 
 
-class AMFReader : public DataReader, public virtual Object {
+class AMFReader : public ReferableReader, public virtual Object {
 public:
 	AMFReader(PacketReader& reader);
 
-	std::string&		readString(std::string& value);
-	double				readNumber();
-	bool				readBoolean();
-	const UInt8*		readBytes(UInt32& size);
-	Date&				readDate(Date& date);
-	void				readNull();
+	enum {
+		OBJECT =	OTHER,
+		ARRAY =		OTHER+1,
+		MAP =		OTHER+2,
+		AMF3 =		OTHER+3,
+		AMF0_REF =	OTHER+4
+	};
 
-	bool			readObject(std::string& type,bool& external);
-	bool			readArray(UInt32& size);
-	Type			readItem(std::string& name);
-
-	bool			readMap(UInt32& size,bool& weakKeys);
-	Type			readKey();
-	Type			readValue() { return readKey(); }
-
-	Type			followingType();
 
 	void			startReferencing() { _referencing = true; }
 	void			stopReferencing() { _referencing = false; }
@@ -54,30 +46,20 @@ public:
 	void			reset();
 
 private:
-	std::string&					readText(std::string& value);
-	UInt8							current() { return *packet.current(); }
 
-	
+	UInt8			followingType();
+
+	bool			readOne(UInt8 type, DataWriter& writer);
+
+	const char*		readText(UInt32& size,bool nullIfEmpty=false);
+
 	std::vector<UInt32>		_stringReferences;
 	std::vector<UInt32>		_classDefReferences;
 	std::vector<UInt32>		_references;
 	std::vector<UInt32>		_amf0References;
-	UInt32					_amf0Reset;
-	UInt32					_amf3;
+
+	bool					_amf3;
 	bool					_referencing;
-
-	struct ObjectDef {
-		ObjectDef(UInt32 amf3,UInt8 arrayType=0) : amf3(amf3),reset(0),dynamic(false),externalizable(false),count(0),arrayType(arrayType) {}
-
-		std::deque<std::string>		hardProperties;
-		UInt32						reset;
-		bool						dynamic;
-		bool						externalizable;
-		UInt32						count;
-		UInt8						arrayType;
-		const UInt32				amf3;
-	};
-	std::vector<ObjectDef>	_objectDefs;
 
 };
 

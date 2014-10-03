@@ -137,7 +137,7 @@ ADD_TEST(DateTest, ParseISO8601) {
 
 	CHECK(Parse("2005-01-08", 2005, 1, 8,6, 0, 0, 0, 0, Date::LOCAL));
 
-	CHECK(Parse("2005", 2005, 1, 1, 6, 0, 0, 0, 0, Date::LOCAL));
+	CHECK(Parse("2005", 2005, 1, 1, 6, 0, 0, 0, 0, Date::LOCAL,Date::ISO8601_FORMAT));
 }
 
 ADD_TEST(DateTest, ParseISO8601Frac) {

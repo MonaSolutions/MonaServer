@@ -111,18 +111,19 @@ public:
 		return addr >= 0xE0000100 && addr <= 0xEE000000; // 224.0.1.0 to 238.255.255.255
 	}
 
-	static IPv4Address* Parse(Exception& ex,const string& address) {
-		if (address.empty() || !Net::InitializeNetwork(ex))
+	static IPv4Address* Parse(Exception& ex,const char* address) {
+		if (!address || !Net::InitializeNetwork(ex))
 			return 0;
-		const char* addr(address == "localhost" ? LocalhostV4 : address.c_str());
+		if (String::ICompare(address, "localhost") == 0)
+			address = LocalhostV4;
 		struct in_addr ia;
 #if defined(_WIN32) 
-		ia.s_addr = inet_addr(addr);
-		if (ia.s_addr == INADDR_NONE && strcmp(addr,"255.255.255.255")!=0)
+		ia.s_addr = inet_addr(address);
+		if (ia.s_addr == INADDR_NONE && strcmp(address,"255.255.255.255")!=0)
 			return 0;
 		return new IPv4Address(ia);
 #else
-		if (inet_aton(addr, &ia))
+		if (inet_aton(address, &ia))
             return new IPv4Address(ia);
 		return 0;
 #endif
@@ -250,16 +251,17 @@ public:
 		return (ntohs(words[0]) & 0xFFEF) == 0xFF0F;
 	}
 
-	static IPv6Address* Parse(Exception& ex,const string& address) {
-		if (address.empty() || !Net::InitializeNetwork(ex))
+	static IPv6Address* Parse(Exception& ex,const char* address) {
+		if (!address || *address==0 || !Net::InitializeNetwork(ex))
 			return 0;
 #if defined(_WIN32)
-		const char* addr(address == "localhost" ? LocalhostV6 : address.c_str());
+		if (String::ICompare(address, "localhost") == 0)
+			address = LocalhostV6;
 		struct addrinfo* pAI;
 		struct addrinfo hints;
 		memset(&hints, 0, sizeof(hints));
 		hints.ai_flags = AI_NUMERICHOST;
-		int rc = getaddrinfo(addr, NULL, &hints, &pAI);
+		int rc = getaddrinfo(address, NULL, &hints, &pAI);
 		if (rc == 0) {
 			IPv6Address* pResult = new IPv6Address(reinterpret_cast<struct sockaddr_in6*>(pAI->ai_addr)->sin6_addr, static_cast<int>(reinterpret_cast<struct sockaddr_in6*>(pAI->ai_addr)->sin6_scope_id));
 			freeaddrinfo(pAI);
@@ -267,20 +269,24 @@ public:
 		}
 #else
 		struct in6_addr ia;
-		string::size_type pos = address.find('%');
-		if (string::npos != pos) {
-			string::size_type start = ('[' == address[0]) ? 1 : 0;
-			string unscopedAddr(address, start, pos - start);
-			string scope(address, pos + 1, address.size() - start - pos);
+		const char* scoped(strchr(address,'%'));
+		if (scoped) {
 			UInt32 scopeId(0);
-			if (!(scopeId = if_nametoindex(scope.c_str())))
+			if (!(scopeId = if_nametoindex(scoped+1)))
 				return 0;
-			if (inet_pton(AF_INET6, unscopedAddr.c_str(), &ia) == 1)
+			if(*address=='[')
+				++address;
+			auto result(inet_pton(AF_INET6,string(address,scoped - address).c_str(), &ia));
+			if (result == 1)
                 return new IPv6Address(ia, scopeId);
 		} else {
-			const char* addr(address == "localhost" ? LocalhostV6 : address.c_str());
-			if (inet_pton(AF_INET6, addr, &ia) == 1)
-                return new IPv6Address(ia);
+			if (String::ICompare(address, "localhost") == 0)
+				address = LocalhostV4;
+			if(*address=='[') {
+				if (inet_pton(AF_INET6,string(address+1,strlen(address)-2).c_str(), &ia) == 1)
+					return new IPv6Address(ia);
+			} else if (inet_pton(AF_INET6,address, &ia) == 1)
+					return new IPv6Address(ia);
 		}
 #endif
 		return 0;
@@ -365,26 +371,26 @@ IPAddress& IPAddress::set(const in6_addr& addr, UInt32 scope) {
 	return *this;
 }
 
-bool IPAddress::set(Exception& ex, const string& addr) {
-	IPAddressCommon* pIPAddress = IPv4Address::Parse(ex, addr);
+bool IPAddress::set(Exception& ex, const char* address) {
+	IPAddressCommon* pIPAddress = IPv4Address::Parse(ex, address);
 	if (!pIPAddress)
-		pIPAddress = IPv6Address::Parse(ex, addr);
+		pIPAddress = IPv6Address::Parse(ex, address);
 	if (!pIPAddress) {
-		ex.set(Exception::NETADDRESS, "Invalid IPAddress ", addr);
+		ex.set(Exception::NETADDRESS, "Invalid IPAddress ", address);
 		return false;
 	}
 	_pIPAddress.reset(pIPAddress);
 	return true;
 }
 
-bool IPAddress::set(Exception& ex, const string& addr, Family family) {
+bool IPAddress::set(Exception& ex, const char* address, Family family) {
 	IPAddressCommon* pIPAddress(NULL);
 	if (family == IPv6)
-		pIPAddress = IPv6Address::Parse(ex, addr);
+		pIPAddress = IPv6Address::Parse(ex, address);
 	else
-		pIPAddress = IPv4Address::Parse(ex, addr);
+		pIPAddress = IPv4Address::Parse(ex, address);
 	if (!pIPAddress) {
-		ex.set(Exception::NETADDRESS, "Invalid IPAddress ", addr);
+		ex.set(Exception::NETADDRESS, "Invalid IPAddress ", address);
 		return false;
 	}
 	_pIPAddress.reset(pIPAddress);

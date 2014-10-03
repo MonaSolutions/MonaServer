@@ -24,18 +24,19 @@ using namespace Mona;
 using namespace std;
 
 static void CheckBuffer(Buffer& buffer,UInt32 capacity=0) {
-	CHECK(buffer.capacity()==(capacity == 0 ? 64 : capacity))
-	CHECK(buffer.resize(10,false));
-	for (int i = 0; i < buffer.size(); ++i)
-		buffer[i] = 'a'+i;
-	CHECK(memcmp(buffer.data(), EXPAND_SIZE("abcdefghij"))==0)
+	CHECK(buffer.capacity()==(capacity == 0 ? 32 : capacity))
+	CHECK(buffer.resize(10,false) && buffer.size()==10);
+	UInt8* data(buffer.data());
+	for (int i = 0; i < 10; ++i)
+		*data++ = 'a'+i;
+	CHECK(memcmp(buffer.data(), EXPAND("abcdefghij"))==0)
 	CHECK(buffer.resize(100,true));
 	CHECK(buffer.size()==100);
-	CHECK(memcmp(buffer.data(), EXPAND_SIZE("abcdefghij"))==0)
+	CHECK(memcmp(buffer.data(), EXPAND("abcdefghij"))==0)
 	CHECK(buffer.capacity()==(capacity == 0 ? 128 : capacity));
 	buffer.clip(9);
 	CHECK(buffer.size()==91);
-	CHECK(buffer[0]=='j')
+	CHECK(*buffer.data()=='j')
 	CHECK(buffer.size()>0);
 	buffer.clear();
 	CHECK(buffer.size()==0);

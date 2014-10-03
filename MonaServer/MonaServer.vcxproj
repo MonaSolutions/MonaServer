@@ -119,8 +119,11 @@
     <ClInclude Include="sources\LUAIPAddress.h" />
     <ClInclude Include="sources\LUAPath.h" />
     <ClInclude Include="sources\LUASocketAddress.h" />
+    <ClInclude Include="sources\LUAXML.h" />
     <ClInclude Include="sources\MonaServer.h" />
     <ClInclude Include="sources\Script.h" />
+    <ClInclude Include="sources\ScriptReader.h" />
+    <ClInclude Include="sources\ScriptWriter.h" />
     <ClInclude Include="sources\Service.h" />
     <ClInclude Include="sources\LUABroadcaster.h" />
     <ClInclude Include="sources\LUAClient.h" />
@@ -144,9 +147,12 @@
     <ClCompile Include="sources\LUAIPAddress.cpp" />
     <ClCompile Include="sources\LUAPath.cpp" />
     <ClCompile Include="sources\LUASocketAddress.cpp" />
+    <ClCompile Include="sources\LUAXML.cpp" />
     <ClCompile Include="sources\main.cpp" />
     <ClCompile Include="sources\MonaServer.cpp" />
     <ClCompile Include="sources\Script.cpp" />
+    <ClCompile Include="sources\ScriptReader.cpp" />
+    <ClCompile Include="sources\ScriptWriter.cpp" />
     <ClCompile Include="sources\Service.cpp" />
     <ClCompile Include="sources\LUABroadcaster.cpp" />
     <ClCompile Include="sources\LUAClient.cpp" />
