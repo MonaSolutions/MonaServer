@@ -41,6 +41,7 @@ public:
 	};
 
 	void			next() { read(DataWriter::Null,1); }
+	UInt8			nextType() { if (_nextType == END) _nextType = followingType(); return _nextType; }
 
 	// return the number of writing success on writer object
 	// can be override to capture many reading on the same writer
@@ -82,9 +83,6 @@ private:
 	virtual bool	readOne(UInt8 type, DataWriter& writer) = 0;
 	virtual UInt8	followingType()=0;
 ////////////////////
-
-
-	UInt8			nextType() { if (_nextType == END) _nextType = followingType(); return _nextType; }
 
 	UInt32						_pos;
 	UInt8						_nextType;

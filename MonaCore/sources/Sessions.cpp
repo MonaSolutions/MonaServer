@@ -84,11 +84,10 @@ void Sessions::remove(map<UInt32,Session*>::iterator it) {
 
 	if (session._sessionsOptions&BYPEER) {
 		if (_sessionsByPeerId.erase(session.peer.id)==0) {
-			string buffer;
- 			ERROR("Session ",session.name()," unfound in peer sessions collection with key ",Util::FormatHex(session.peer.id,ID_SIZE,buffer));
+ 			ERROR("Session ",session.name()," unfound in peer sessions collection with key ",Util::FormatHex(session.peer.id,ID_SIZE,LOG_BUFFER));
  			for (auto it = _sessionsByPeerId.begin(); it != _sessionsByPeerId.end();++it) {
  				if (it->second == &session) {
-					INFO("The correct key was ",Util::FormatHex(it->first,ID_SIZE,buffer));
+					INFO("The correct key was ",Util::FormatHex(it->first,ID_SIZE,LOG_BUFFER));
  					_sessionsByPeerId.erase(it);
 					break;
 				}

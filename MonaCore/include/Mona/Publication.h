@@ -60,10 +60,10 @@ public:
 	const QualityOfService&	audioQOS() const { return _audioQOS; }
 	const QualityOfService&	dataQOS() const { return _dataQOS; }
 
+	const UInt8*			propertiesInfos(UInt32& size) const { return (size = _propertiesInfos.packet.size()) > 0 ? _propertiesInfos.packet.data() : NULL; }
 	const Parameters&		properties() const { return _properties; }
-	void					writeProperties(DataReader& reader) { writeProperties(String::Empty.c_str(),reader); }
-	void					writeProperties(const char* handler, DataReader& reader);
-	void					clearProperties() { writeProperties(NULL, DataReader::Null); }
+	void					writeProperties(DataReader& reader);
+	void					clearProperties();
 
 	void					start(Type type);
 	bool					running() const { return _running; }

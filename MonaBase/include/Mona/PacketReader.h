@@ -30,7 +30,7 @@ class PacketReader: public BinaryReader, virtual NullableObject {
 public:
 	PacketReader(const UInt8* data, UInt32 size) : BinaryReader(data,size) {}
 
-	operator bool() const { return !data(); }
+	operator bool() const { return data()!=NULL; }
 
 	static PacketReader Null;
 };

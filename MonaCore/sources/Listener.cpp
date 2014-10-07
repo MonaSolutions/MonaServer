@@ -21,6 +21,7 @@ This file is a part of Mona.
 #include "Mona/Publication.h"
 #include "Mona/MediaCodec.h"
 #include "Mona/StringReader.h"
+#include "Mona/AMFReader.h"
 #include "Mona/MIME.h"
 #include "Mona/Logs.h"
 
@@ -31,7 +32,7 @@ namespace Mona {
 
 Listener::Listener(Publication& publication, Client& client, Writer& writer) : _writer(writer), publication(publication), receiveAudio(true), receiveVideo(true), client(client), _firstTime(true),
 	_pAudioWriter(NULL),_pVideoWriter(NULL),_pDataWriter(NULL),_publicationNamePacket((const UInt8*)publication.name().c_str(),publication.name().size()),
-	_startTime(0),_codecInfosSent(false) {
+	_startTime(0),_codecInfosSent(false),_firstMedia(true) {
 }
 
 Listener::~Listener() {
@@ -77,13 +78,6 @@ bool Listener::init() {
 	_pDataWriter = &_writer.newWriter();
 	_pDataWriter->writeMedia(Writer::INIT, Writer::DATA, publicationNamePacket(),*this);
 
-	
-	if(!publication.audioCodecBuffer().empty()) {
-		PacketReader audioCodecPacket(publication.audioCodecBuffer()->data(),publication.audioCodecBuffer()->size());
-		INFO("AAC codec infos sent to one listener of ", publication.name(), " publication")
-		pushAudio(_startTime,audioCodecPacket);
-	}
-
 	if (getBool<false>("unbuffered")) {
 		_pAudioWriter->reliable = false;
 		_pVideoWriter->reliable = false;
@@ -107,12 +101,17 @@ void Listener::pushData(DataReader& reader) {
 			return;
 	}*/
 
+	writeData(reader, Writer::USER_DATA, *_pDataWriter);
+}
+
+void Listener::writeData(DataReader& reader,Writer::DataType type, Writer& writer) {
+
 	// If un conversion type exists, and it is different than the current reader gotten
 	if (_pConvertorWriter && typeid(*_pConvertorWriter).name()!=typeid(reader).name()) {
 		// convert data
 		reader.read(*_pConvertorWriter);
 		PacketReader packet(_pConvertorWriter->packet.data(),_pConvertorWriter->packet.size());
-		if(!_pDataWriter->writeMedia(Writer::DATA,0,packet,*this))
+		if(!writer.writeMedia(Writer::DATA,type,packet,*this))
 			init();
 		_pConvertorWriter->clear();
 		return;
@@ -123,7 +122,7 @@ void Listener::pushData(DataReader& reader) {
 		return;
 	}
 
-	if(!_pDataWriter->writeMedia(Writer::DATA,0,reader.packet,*this))
+	if(!writer.writeMedia(Writer::DATA,type,reader.packet,*this))
 		init();
 }
 
@@ -132,14 +131,16 @@ void Listener::pushVideo(UInt32 time,PacketReader& packet) {
 	if(!receiveVideo && !MediaCodec::H264::IsCodecInfos(packet))
 		return;
 
+	firstMedia(time);
+
 	if (!_codecInfosSent) {
 		if (MediaCodec::IsKeyFrame(packet)) {
+			_codecInfosSent = true;
 			if (!publication.videoCodecBuffer().empty() && !MediaCodec::H264::IsCodecInfos(packet)) {
 				PacketReader videoCodecPacket(publication.videoCodecBuffer()->data(), publication.videoCodecBuffer()->size());
 				INFO("H264 codec infos sent to one listener of ", publication.name(), " publication")
 				pushVideo(time, videoCodecPacket);
 			}
-			_codecInfosSent = true;
 		} else if (_firstTime) {
 			DEBUG("Video frame dropped to wait first key frame");
 			return;
@@ -170,6 +171,8 @@ void Listener::pushAudio(UInt32 time,PacketReader& packet) {
 	if (!_pAudioWriter && !init())
 		return;
 
+	firstMedia(time);
+
 	if (_firstTime) {
 		_startTime = time;
 		_firstTime = false;
@@ -182,22 +185,44 @@ void Listener::pushAudio(UInt32 time,PacketReader& packet) {
 		init();
 }
 
-void Listener::pushProperties(const Parameters& properties,PacketReader& infos) {
-	if (!init())
+void Listener::updateProperties() {
+	if (_firstMedia)
+		return; // wait first media
+	UInt32 size;
+	const UInt8* meta(publication.propertiesInfos(size));
+	if (!meta)
 		return;
-	
-	if (!_writer.writeMedia(Writer::PROPERTIES, properties.count(), infos,properties))
-		init();
+	PacketReader packet(meta, size);
+	AMFReader reader(packet);
+	DEBUG("Listener::updateProperties")
+	writeData(reader,Writer::INFO_DATA,_writer);
+}
+
+void Listener::firstMedia(UInt32 time) {
+	if (!_firstMedia)
+		return;
+	_firstMedia = false; // keep it here cause recursive call
+
+	updateProperties();
+
+	if(!publication.audioCodecBuffer().empty()) {
+		PacketReader audioCodecPacket(publication.audioCodecBuffer()->data(),publication.audioCodecBuffer()->size());
+		INFO("AAC codec infos sent to one listener of ", publication.name(), " publication")
+		pushAudio(time,audioCodecPacket);
+	}
 }
 
 void Listener::flush() {
+	 // in first the controller
+	_writer.flush();
+	// in second the data channel (for possible metadata)
+	if(_pDataWriter)
+		_pDataWriter->flush();
+	// now media channel
 	if(_pAudioWriter)
 		_pAudioWriter->flush();
 	if(_pVideoWriter)
 		_pVideoWriter->flush();
-	if(_pDataWriter)
-		_pDataWriter->flush();
-	_writer.flush(true);
 }
 
 

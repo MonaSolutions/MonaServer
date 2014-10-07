@@ -56,7 +56,7 @@ void HTTPWriter::close(Int32 code) {
 	Writer::close(code);
 }
 
-void HTTPWriter::flush(bool full) {
+void HTTPWriter::flush() {
 
 	if(_senders.empty())
 		return;

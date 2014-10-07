@@ -94,7 +94,7 @@ int LUAWriter::Flush(lua_State* pState) {
 		if(writer.state()==Writer::OPENING)
 			SCRIPT_ERROR("Violation policy, impossible to flush data on a opening writer")
 		else
-			writer.flush(SCRIPT_READ_BOOL(true));
+			writer.flush();
 	SCRIPT_CALLBACK_RETURN
 }
 

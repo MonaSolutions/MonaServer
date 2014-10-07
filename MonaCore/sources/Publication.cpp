@@ -58,13 +58,8 @@ Listener* Publication::addListener(Exception& ex, Client& client,Writer& writer)
 	Listener* pListener = new Listener(*this,client,writer);
 	if(((Peer&)client).onSubscribe(ex,*pListener)) {
 		_listeners.insert(it,pair<Client*,Listener*>(&client,pListener));
-		if (_running) {
+		if (_running)
 			pListener->startPublishing();
-			if (_properties.count() > 0) {
-				PacketReader reader(_propertiesInfos.packet.data(),_propertiesInfos.packet.size());
-				pListener->pushProperties(_properties, reader);
-			}
-		}
 		return pListener;
 	}
 	if(!ex)
@@ -205,7 +200,18 @@ void Publication::pushVideo(UInt32 time,PacketReader& packet, UInt16 ping, doubl
 	OnVideo::raise(*this, _lastTime=time, packet);
 }
 
-void Publication::writeProperties(const char* handler,DataReader& reader)  {
+void Publication::clearProperties()  {
+	if (!_running) {
+		ERROR("Properties can't be writing on ",_name," publication stopped");
+		return;
+	}
+	_properties.clear();
+	_propertiesInfos.clear();
+	INFO("Clear ",_name," publication properties")
+	OnProperties::raise(*this,_properties);
+}
+
+void Publication::writeProperties(DataReader& reader)  {
 	if (!_running) {
 		ERROR("Properties can't be writing on ",_name," publication stopped");
 		return;
@@ -214,18 +220,23 @@ void Publication::writeProperties(const char* handler,DataReader& reader)  {
 	_properties.clear();
 	_propertiesInfos.clear();
 
-	if (handler) {
-		_propertiesInfos.writeString(handler,strlen(handler));
+	_propertiesInfos.amf0 = true;
+	if (reader.nextType()!=DataReader::STRING)
+		_propertiesInfos.writeString(EXPAND("onMetaData"));
+	else
+		reader.read(_propertiesInfos, 1);
+	_propertiesInfos.amf0 = false;
 	
-		ParameterWriter writer(_properties);
-		SplitWriter writers(writer, _propertiesInfos);
-		reader.read(writers);
-	}
+	ParameterWriter writer(_properties);
+	SplitWriter writers(writer, _propertiesInfos);
+	reader.read(writers);
+
 	auto it = _listeners.begin();
-	while (it != _listeners.end()) {
-		PacketReader reader(_propertiesInfos.packet.data(),_propertiesInfos.packet.size());
-		(it++)->second->pushProperties(_properties, reader);  // listener can be removed in this call
-	}
+	while (it != _listeners.end())
+		(it++)->second->updateProperties();  // listener can be removed in this call
+
+
+	INFO("Write ",_name," publication properties")
 	OnProperties::raise(*this,_properties);
 }
 

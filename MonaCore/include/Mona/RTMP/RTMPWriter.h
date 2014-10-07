@@ -39,7 +39,7 @@ public:
 
 	void			writeRaw(const UInt8* data,UInt32 size);
 
-	void			flush(bool full=false);
+	void			flush();
 
 	void			writeAck(UInt32 count) {write(AMF::ACK).packet.write32(count);}
 	void			writeWinAckSize(UInt32 value) {write(AMF::WIN_ACKSIZE).packet.write32(value);}

@@ -26,11 +26,11 @@ using namespace std;
 using namespace Mona;
 
 void LUAListener::Init(lua_State* pState, Listener& listener) {
-	Script::InitCollectionParameters(pState,listener,"properties",listener);
+	Script::InitCollectionParameters(pState,listener,"parameters",listener);
 }
 
 void LUAListener::Clear(lua_State* pState,Listener& listener){
-	Script::ClearCollectionParameters(pState,"properties",listener);
+	Script::ClearCollectionParameters(pState,"parameters",listener);
 
 	Script::ClearObject<LUAQualityOfService>(pState, listener.dataQOS());
 	Script::ClearObject<LUAQualityOfService>(pState, listener.audioQOS());
@@ -56,11 +56,11 @@ int LUAListener::Get(lua_State *pState) {
 			} else if(strcmp(name,"client")==0) {
 				Script::AddObject<LUAClient>(pState, listener.client);
 				SCRIPT_CALLBACK_FIX_INDEX
-			} else if (strcmp(name,"properties")==0) {
-				Script::Collection(pState, 1, "properties");
+			} else if (strcmp(name,"parameters")==0) {
+				Script::Collection(pState, 1, "parameters");
 				SCRIPT_CALLBACK_FIX_INDEX
 			} else {
-				Script::Collection(pState,1, "properties");
+				Script::Collection(pState,1, "parameters");
 				lua_getfield(pState, -1, name);
 				lua_replace(pState, -2);
 			}

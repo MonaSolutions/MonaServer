@@ -49,7 +49,9 @@ private:
 	static int PushAMF0Data(lua_State *pState);
 	static int Flush(lua_State *pState);
 	static int Close(lua_State *pState);
+	// metadata
 	static int WriteProperties(lua_State *pState);
+	static int ClearProperties(lua_State *pState);
 
 	template<typename DataReaderType>
 	static int	PushData(lua_State *pState) {

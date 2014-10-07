@@ -40,7 +40,7 @@ public:
 	void pushAudio(UInt32 time,PacketReader& packet); 
 	void pushVideo(UInt32 time,PacketReader& packet);
 	void pushData(DataReader& packet);
-	void pushProperties(const Parameters& properties,PacketReader& infos);
+	void updateProperties();
 
 	void flush();
 
@@ -55,11 +55,15 @@ public:
 	const QualityOfService&	dataQOS() const;
 
 private:
+	void    writeData(DataReader& reader,Writer::DataType type, Writer& writer);
+
 	bool	init();
 	void	reset();
+	void	firstMedia(UInt32 time);
 
 	PacketReader& publicationNamePacket() { _publicationNamePacket.reset(); return _publicationNamePacket; }
 	
+	bool					_firstMedia;
 	UInt32 					_startTime;
 	bool					_firstTime;
 	bool					_codecInfosSent;

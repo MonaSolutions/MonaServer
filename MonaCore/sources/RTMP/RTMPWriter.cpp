@@ -39,7 +39,7 @@ void RTMPWriter::writeProtocolSettings() {
 	write(AMF::BANDWITH).packet.write32(2500000).write8(0); // hard setting
 }
 
-void RTMPWriter::flush(bool full) {
+void RTMPWriter::flush() {
 	if(!_pSender || !_pSender->available())
 		return;
 	_pSender->dump(_channel,_session.peer.address);

@@ -78,7 +78,7 @@ void RTMFPWriter::clear() {
 	}
 	if(_stage>0) {
 		createMessage(); // Send a MESSAGE_ABANDONMENT just in the case where the receiver has been created
-		flush();
+		flush(false);
 		_trigger.stop();
 	}
 }
@@ -310,7 +310,7 @@ void RTMFPWriter::manage(Exception& ex, Invoker& invoker) {
 		ex.set(Exception::NETWORK, "Main flow writer closed, session is closing");
 		return;
 	}
-	flush();
+	flush(false);
 }
 
 UInt32 RTMFPWriter::headerSize(UInt64 stage) { // max size header = 50
@@ -534,7 +534,7 @@ AMFWriter& RTMFPWriter::write(AMF::ContentType type,UInt32 time,PacketReader* pP
 		time = 0; // Because it can "dropped" the packet otherwise (like if the Writer was not reliable!)
 	if(pPacket && !reliable && state()==OPENED && !_band.failed() && !signature.empty()) {
 		_messages.emplace_back(new RTMFPMessageUnbuffered(type,time,pPacket->current(),pPacket->available()));
-		flush();
+		flush(false);
         return AMFWriter::Null;
 	}
 	AMFWriter& amf = createMessage().writer();
@@ -560,7 +560,7 @@ void RTMFPWriter::writeRaw(const UInt8* data,UInt32 size) {
 	if(state()==CLOSED || signature.empty() || _band.failed()) // signature.empty() means that we are on the writer of FlowNull
 		return;
 	_messages.emplace_back(new RTMFPMessageUnbuffered(data,size));
-	flush();
+	flush(false);
 }
 
 bool RTMFPWriter::writeMedia(MediaType type,UInt32 time,PacketReader& packet,const Parameters& properties) {
@@ -572,6 +572,7 @@ bool RTMFPWriter::writeMedia(MediaType type,UInt32 time,PacketReader& packet,con
 		writer.packet.write32(_boundCount).write32(3); // 3 tracks!
 		_reseted=false;
 		++_boundCount;
+		flush(false);// Flush immediat required for bound message!
 	}
 	bool result = FlashWriter::writeMedia(type,time,packet,properties);
 	return _reseted ? false : result;

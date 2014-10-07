@@ -43,8 +43,11 @@ public:
 		VIDEO,
 		DATA,
 		START,
-		PROPERTIES,
 		STOP
+	};
+	enum DataType {
+		USER_DATA=0,
+		INFO_DATA
 	};
 	enum State {
 		OPENING,
@@ -80,7 +83,8 @@ public:
 		If this call returns false, the writer can be closed, and subscription have to be removed by the writer handler.
 		If it returns true, for every media type (AUDIO, VIDEO, DATA), an type=INIT call is invoked on start with time=MediaType,
 		and always publication name in packet.
-		Finally, every media data are passed (AUDIO, VIDEO and DATA), if the methods returns false, the cycle restart since the beginning */
+		Finally, every media data are passed (AUDIO, VIDEO and DATA), if the methods returns false, the cycle restart since the beginning
+		For DATA type, time is Writer::DataType */
 	virtual bool			writeMedia(MediaType type,UInt32 time,PacketReader& packet,const Parameters& properties);
 	virtual bool			writeMember(const Client& client);
 
@@ -89,7 +93,7 @@ public:
 	virtual DataWriter&		writeResponse(UInt8 type){return writeMessage();}
 	virtual void			writeRaw(const UInt8* data,UInt32 size){}
 
-	virtual void			flush(bool full = false) {} // TODO change to return bool (return false if _state==CONNECTING), and not use an argument (just usefull for RTMFP)
+	virtual void			flush() {}
 
 	operator bool() const { return !_isNull; }
 

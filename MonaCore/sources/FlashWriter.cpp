@@ -20,7 +20,6 @@ This file is a part of Mona.
 #include "Mona/FlashWriter.h"
 #include "Mona/AMF.h"
 #include "Mona/Util.h"
-#include "Mona/AMFReader.h"
 #include "Mona/Logs.h"
 
 
@@ -108,7 +107,7 @@ bool FlashWriter::writeMedia(MediaType type,UInt32 time,PacketReader& packet,con
 				write(AMF::VIDEO,time,&packet);
 			break;
 		case DATA:
-			write(AMF::DATA,time,&packet);
+			write(time == INFO_DATA ? AMF::INFORMATIONS : AMF::DATA, 0, &packet);
 			break;
 		case INIT:
 			_onAudio.clear();
@@ -119,16 +118,6 @@ bool FlashWriter::writeMedia(MediaType type,UInt32 time,PacketReader& packet,con
 			} else
 				WARN("Impossible to handle onAudio and onVideo properties on a AMF0 stream")
 			break;
-		case PROPERTIES: {
-			
-			AMFWriter& writer = write(AMF::INFORMATIONS,0);
-			AMFReader reader(packet);
-			if(!reader.read(DataReader::STRING, writer))
-				writer.writeString(EXPAND("onMetaData"));
-
-			reader.read(writer);
-			break;
-		}
 		default:
 			return Writer::writeMedia(type,time,packet,properties);
 	}

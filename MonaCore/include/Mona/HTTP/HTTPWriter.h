@@ -37,7 +37,7 @@ public:
 	std::shared_ptr<HTTPPacket>		pRequest;
 
 	virtual void			abort() {_senders.clear();}
-	virtual void			flush(bool full=false);
+	virtual void			flush();
 
 	virtual DataWriter&		writeInvocation(const char* name) { DataWriter& writer(writeMessage()); writer.writeString(name,strlen(name)); return writer; }
 	virtual DataWriter&		writeMessage();

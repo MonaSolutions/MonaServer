@@ -176,7 +176,7 @@ void HTTPSession::packetHandler(PacketReader& reader) {
 			HTTP_END_HEADER
 			HTTPHeaderReader reader(pPacket->headers);
 			peer.onConnection(ex, wsWriter(),reader,response);
-			_writer.flush(true); // last HTTP flush for this connection, now we are in a WebSession mode!
+			_writer.flush(); // last HTTP flush for this connection, now we are in a WebSession mode!
 		} // TODO else
 	} else {
 		// Create volatile parameters from POST/GET/HEAD Queries

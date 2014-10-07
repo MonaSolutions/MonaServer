@@ -83,10 +83,8 @@ TCPSession::~TCPSession() {
 
 void TCPSession::receive(PacketReader& packet) {
 	Session::receive(packet);
-	if (_receptions.size()>1 && _receptions.front() > 0 && (--_receptions.front()) == 0) {
+	if (_receptions.size()>1 && _receptions.front() > 0 && (--_receptions.front()) == 0)
 		_receptions.pop_front();
-		return flush();
-	}
 }
 
 void TCPSession::manage() {

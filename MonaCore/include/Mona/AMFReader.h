@@ -35,8 +35,7 @@ public:
 		OBJECT =	OTHER,
 		ARRAY =		OTHER+1,
 		MAP =		OTHER+2,
-		AMF3 =		OTHER+3,
-		AMF0_REF =	OTHER+4
+		AMF0_REF =	OTHER+3
 	};
 
 
@@ -50,6 +49,7 @@ private:
 	UInt8			followingType();
 
 	bool			readOne(UInt8 type, DataWriter& writer);
+	bool			writeOne(UInt8 type, DataWriter& writer);
 
 	const char*		readText(UInt32& size,bool nullIfEmpty=false);
 
@@ -58,7 +58,7 @@ private:
 	std::vector<UInt32>		_references;
 	std::vector<UInt32>		_amf0References;
 
-	bool					_amf3;
+	UInt8					_amf3;
 	bool					_referencing;
 
 };

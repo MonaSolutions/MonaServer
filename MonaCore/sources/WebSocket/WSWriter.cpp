@@ -64,7 +64,7 @@ void WSWriter::pack() {
 	sender.packaged = true;
 }
 
-void WSWriter::flush(bool full) {
+void WSWriter::flush() {
 	if(_senders.empty())
 		return;
 	pack();

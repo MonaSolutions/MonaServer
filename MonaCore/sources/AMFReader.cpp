@@ -28,7 +28,7 @@ namespace Mona {
 
 
 
-AMFReader::AMFReader(PacketReader& packet) : ReferableReader(packet),_amf3(false),_referencing(true) {
+AMFReader::AMFReader(PacketReader& packet) : ReferableReader(packet),_amf3(0),_referencing(true) {
 
 }
 
@@ -38,7 +38,7 @@ void AMFReader::reset() {
 	_classDefReferences.clear();
 	_references.clear();
 	_amf0References.clear();
-	_amf3 = false;
+	_amf3 = 0;
 	_referencing = true;
 }
 
@@ -113,7 +113,9 @@ UInt8 AMFReader::followingType() {
 		
 	switch(type) {
 		case AMF_AVMPLUS_OBJECT:
-			return AMF3;
+			packet.next();
+			_amf3 = 1;
+			return followingType();
 		case AMF_UNDEFINED:
 		case AMF_NULL:
 			return NIL;
@@ -150,16 +152,23 @@ UInt8 AMFReader::followingType() {
 }
 
 bool AMFReader::readOne(UInt8 type, DataWriter& writer) {
+	bool resetAMF3(false);
+	if (_amf3 == 1) {
+		resetAMF3 = true;
+		_amf3 = 2;
+	}
+
+	bool written(writeOne(type, writer));
+
+	if (resetAMF3)
+		_amf3 = 0;
+
+	return written;
+}
+
+bool AMFReader::writeOne(UInt8 type, DataWriter& writer) {
 
 	switch (type) {
-
-		case AMF3: {
-			_amf3 = true;
-			packet.next();
-			bool written = readNext(writer);
-			_amf3 = false;
-			return written;
-		}
 
 		case AMF0_REF: {
 			packet.next();

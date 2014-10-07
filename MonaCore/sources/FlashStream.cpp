@@ -160,9 +160,7 @@ void FlashStream::messageHandler(const string& name, AMFReader& message, FlashWr
 		message.readBoolean(_pListener->receiveVideo);
 	} else if (_pPublication && name == "@setDataFrame") {
 		// metadata
-		string handler;
-		message.readString(handler);
-		_pPublication->writeProperties(handler.c_str(), message);
+		_pPublication->writeProperties(message);
 	} else if (_pPublication && name == "@clearDataFrame") {
 		_pPublication->clearProperties();
 	} else
@@ -191,6 +189,24 @@ void FlashStream::dataHandler(DataReader& data, double lostRate) {
 		ERROR("a data packet has been received on a no publishing stream ",id,", certainly a publication currently closing");
 		return;
 	}
+
+	// necessary AMF0 here!
+	if (*data.packet.current() == AMF_STRING && *(data.packet.current() + 3) == '@') {
+		
+		if (*(data.packet.current() + 1) == 0) {
+			if (*(data.packet.current() + 2) == 13 && memcmp(data.packet.current() + 3, EXPAND("@setDataFrame"))==0) {
+				// @setDataFrame
+				data.next();
+				_pPublication->writeProperties(data);
+				return;
+			} else if (*(data.packet.current() + 2) == 15 && memcmp(data.packet.current() + 3, EXPAND("@clearDataFrame"))==0) {
+				// @clearDataFrame
+				_pPublication->clearProperties();
+				return;
+			}
+		}
+	}
+
 	_pPublication->pushData(data,peer.ping(),lostRate);
 }
 

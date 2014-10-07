@@ -132,12 +132,15 @@ int	LUAPublication::Flush(lua_State *pState) {
 
 int LUAPublication::WriteProperties(lua_State *pState) {
 	SCRIPT_CALLBACK(Publication, publication)
-		const char* handler(SCRIPT_READ_STRING(NULL));
 		ScriptReader reader(pState, SCRIPT_READ_AVAILABLE);
-		if (handler)
-			publication.writeProperties(handler, reader);
-		else
-			publication.writeProperties(handler, reader);
+		publication.writeProperties(reader);
+		Script::Collection(pState, 1, "properties");
+	SCRIPT_CALLBACK_RETURN
+}
+
+int LUAPublication::ClearProperties(lua_State *pState) {
+	SCRIPT_CALLBACK(Publication, publication)
+		publication.clearProperties();
 	SCRIPT_CALLBACK_RETURN
 }
 
@@ -192,6 +195,9 @@ int LUAPublication::Get(lua_State *pState) {
 				SCRIPT_CALLBACK_FIX_INDEX
 			} else if (strcmp(name,"writeProperties")==0) {
 				SCRIPT_WRITE_FUNCTION(LUAPublication::WriteProperties)
+				SCRIPT_CALLBACK_FIX_INDEX
+			} else if (strcmp(name,"clearProperties")==0) {
+				SCRIPT_WRITE_FUNCTION(LUAPublication::ClearProperties)
 				SCRIPT_CALLBACK_FIX_INDEX
 			} else if (strcmp(name,"properties")==0) {
 				Script::Collection(pState, 1, "properties");
