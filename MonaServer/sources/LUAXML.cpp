@@ -219,8 +219,8 @@ void LUAXML::addMetatable() {
 	// metatable
 	lua_newtable(_pState);
 #if !defined(_DEBUG)
-	lua_pushliteral(pState, "change metatable of XML DOM object is prohibited");
-	lua_setfield(pState, -2, "__metatable");
+	lua_pushliteral(_pState, "change metatable of XML DOM object is prohibited");
+	lua_setfield(_pState, -2, "__metatable");
 #endif
 	lua_pushcfunction(_pState, &LUAXML::Index);
 	lua_setfield(_pState, -2, "__index");
