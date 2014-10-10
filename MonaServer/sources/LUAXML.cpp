@@ -181,7 +181,7 @@ int LUAXML::NewIndex(lua_State* pState) {
 bool LUAXML::onXMLInfos(const char* name, Parameters& attributes) {
 	lua_newtable(_pState);
 	Parameters::ForEach forEach([this](const string& key, const string& value) {
-		Script::PushValue(_pState, value);
+		lua_pushstring(_pState,value.c_str());
 		lua_setfield(_pState, -2, key.c_str());
 	});
 	attributes.iterate(forEach);
@@ -195,7 +195,7 @@ bool LUAXML::onStartXMLElement(const char* name, Parameters& attributes) {
 	lua_setfield(_pState, -2, "__name");
 
 	Parameters::ForEach forEach([this](const string& key, const string& value) {
-		Script::PushValue(_pState, value);
+		lua_pushstring(_pState,value.c_str());
 		lua_setfield(_pState, -2, key.c_str());
 	});
 	attributes.iterate(forEach);
@@ -204,7 +204,7 @@ bool LUAXML::onStartXMLElement(const char* name, Parameters& attributes) {
 }
 
 bool LUAXML::onInnerXMLElement(const char* name, const char* data, UInt32 size) {
-	Script::PushValue(_pState, BIN data,size);
+	lua_pushlstring(_pState,data,size);
 	lua_rawseti(_pState,-2,lua_objlen(_pState,-2)+1);
 	return true;
 }

@@ -105,7 +105,9 @@ if mona.arguments.module and not test then WARN("Test module ",mona.arguments.mo
 
 print("UnitTests Application Server")
 
-if not test or #tests>1 then
+if not test and #tests==1 then test = tests[1] end
+
+if not test then
 	for index,test in pairs(tests) do
 		io.write(index," - ",test.name,"\n")
 	end
