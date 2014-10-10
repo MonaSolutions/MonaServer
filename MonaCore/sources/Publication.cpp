@@ -30,7 +30,7 @@ using namespace std;
 
 namespace Mona {
 
-Publication::Publication(const string& name,const PoolBuffers& poolBuffers): _propertiesInfos(poolBuffers),_running(false),poolBuffers(poolBuffers),_audioCodecBuffer(poolBuffers),_videoCodecBuffer(poolBuffers),_new(false),_name(name),_lastTime(0),listeners(_listeners) {
+Publication::Publication(const string& name,const PoolBuffers& poolBuffers): _propertiesWriter(poolBuffers),_running(false),poolBuffers(poolBuffers),_audioCodecBuffer(poolBuffers),_videoCodecBuffer(poolBuffers),_new(false),_name(name),_lastTime(0),listeners(_listeners) {
 	DEBUG("New publication ",_name);
 }
 
@@ -99,7 +99,7 @@ void Publication::stop() {
 		it.second->stopPublishing();
 	flush();
 	_properties.clear();
-	_propertiesInfos.clear();
+	_propertiesWriter.clear();
 	_videoQOS.reset();
 	_audioQOS.reset();
 	_dataQOS.reset();
@@ -206,7 +206,7 @@ void Publication::clearProperties()  {
 		return;
 	}
 	_properties.clear();
-	_propertiesInfos.clear();
+	_propertiesWriter.clear();
 	INFO("Clear ",_name," publication properties")
 	OnProperties::raise(*this,_properties);
 }
@@ -218,23 +218,23 @@ void Publication::writeProperties(DataReader& reader)  {
 	}
 
 	_properties.clear();
-	_propertiesInfos.clear();
-
-	_propertiesInfos.amf0 = true;
-	if (reader.nextType()!=DataReader::STRING)
-		_propertiesInfos.writeString(EXPAND("onMetaData"));
-	else
-		reader.read(_propertiesInfos, 1);
-	_propertiesInfos.amf0 = false;
+	_propertiesWriter.clear();
 	
+	_propertiesWriter.amf0 = true;
+	if (reader.nextType() != DataReader::STRING)
+		_propertiesWriter.writeString(EXPAND("onMetaData"));
+	else
+		reader.read(_propertiesWriter, 1);
+	_propertiesWriter.amf0 = false;
+
+	// flat all
 	ParameterWriter writer(_properties);
-	SplitWriter writers(writer, _propertiesInfos);
-	reader.read(writers);
+	SplitWriter writers(writer,_propertiesWriter);
+	reader.read(writers,1);
 
 	auto it = _listeners.begin();
 	while (it != _listeners.end())
 		(it++)->second->updateProperties();  // listener can be removed in this call
-
 
 	INFO("Write ",_name," publication properties")
 	OnProperties::raise(*this,_properties);

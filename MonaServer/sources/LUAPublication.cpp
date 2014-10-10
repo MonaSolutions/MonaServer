@@ -200,10 +200,9 @@ int LUAPublication::Get(lua_State *pState) {
 				SCRIPT_WRITE_FUNCTION(LUAPublication::ClearProperties)
 				SCRIPT_CALLBACK_FIX_INDEX
 			} else if (strcmp(name,"properties")==0) {
-				Script::Collection(pState, 1, "properties");
-				SCRIPT_CALLBACK_FIX_INDEX
-			} else {
-				Script::Collection(pState,1, "properties");
+				if(Script::GetCollection(pState, 1, "properties")) // if no properties, must returns null
+					SCRIPT_CALLBACK_FIX_INDEX
+			} else if(Script::GetCollection(pState, 1, "properties")) {
 				lua_getfield(pState, -1, name);
 				lua_replace(pState, -2);
 				SCRIPT_CALLBACK_FIX_INDEX

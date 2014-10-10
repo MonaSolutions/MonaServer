@@ -41,12 +41,20 @@ void WSWriter::close(Int32 code) {
 }
 
 
-JSONWriter& WSWriter::newDataWriter(bool modeRaw) {
+DataWriter& WSWriter::newDataWriter(bool modeRaw) {
 	pack();
 	WSSender* pSender = new WSSender(_session.invoker.poolBuffers,modeRaw);
 	_senders.emplace_back(pSender);
-	pSender->writer.packet.next(10); // header
-	return pSender->writer;
+	// expect place for header
+	PacketWriter& packet(pSender->writer().packet);
+	if (modeRaw)
+		packet.next(10);
+	else {
+		packet.clear();
+		packet.next(10);
+		packet.write("[]");
+	}
+	return pSender->writer();
 }
 
 void WSWriter::pack() {
@@ -55,12 +63,11 @@ void WSWriter::pack() {
 	WSSender& sender = *_senders.back();
 	if(sender.packaged)
 		return;
-	JSONWriter& writer = sender.writer;
-	PacketWriter& packet = writer.packet;
+	PacketWriter& packet = sender.writer().packet;
 	UInt32 size = packet.size()-10;
 	packet.clip(10-WS::HeaderSize(size));
 	BinaryWriter headerWriter(packet.data(),packet.size());
-	packet.clear(WS::WriteHeader(WS::TYPE_TEXT,size,headerWriter)+size);
+	packet.clear(WS::WriteHeader(sender.type,size,headerWriter)+size);
 	sender.packaged = true;
 }
 
@@ -80,10 +87,10 @@ void WSWriter::write(UInt8 type,const UInt8* data,UInt32 size) {
 	if(state()==CLOSED)
 		return;
 	pack();
-	WSSender* pSender = new WSSender(_session.invoker.poolBuffers);
+	WSSender* pSender = new WSSender(_session.invoker.poolBuffers,true);
 	pSender->packaged = true;
 	_senders.emplace_back(pSender);
-	BinaryWriter& writer = pSender->writer.packet;
+	BinaryWriter& writer(pSender->writer().packet);
 	if(type==WS::TYPE_CLOSE) {
 		// here size is the code!
 		if(size>0) {
@@ -102,7 +109,7 @@ void WSWriter::write(UInt8 type,const UInt8* data,UInt32 size) {
 DataWriter& WSWriter::writeInvocation(const char* name) {
 	if(state()==CLOSED)
         return DataWriter::Null;
-	JSONWriter& invocation = newDataWriter();
+	DataWriter& invocation(newDataWriter());
 	invocation.writeString(name,strlen(name));
 	return invocation;
 }
@@ -134,7 +141,7 @@ bool WSWriter::writeMedia(MediaType type,UInt32 time,PacketReader& packet,const 
 			writeInvocation("__unpublishing").writeString((const char*)packet.current(),packet.available());
 			break;
 		case DATA: {
-			newDataWriter().packet.write8('[').write(packet.current(),packet.available()).write8(']');
+			newDataWriter(true).packet.write(packet.current(), packet.available());
 			break;
 		}
 		case INIT:

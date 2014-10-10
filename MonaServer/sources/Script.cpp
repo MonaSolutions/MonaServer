@@ -129,17 +129,35 @@ void Script::CloseState(lua_State* pState) {
 }
 
 void Script::PushValue(lua_State* pState,const char* value) {
-	if (String::ICompare(value, "false")==0 || String::ICompare(value, "null") == 0)
+	if (String::ICompare(value, "false") == 0)
 		lua_pushboolean(pState, 0);
-	else
-		lua_pushstring(pState, value);
+	else if (String::ICompare(value, "true") == 0)
+		lua_pushboolean(pState, 1);
+	else if (String::ICompare(value, "null") == 0)
+		lua_pushnil(pState);
+	else {
+		double result(0);
+		if (String::ToNumber(value, result))
+			lua_pushnumber(pState, result);
+		else
+			lua_pushstring(pState, value);
+	}
 }
 
 void Script::PushValue(lua_State* pState,const UInt8* value, UInt32 size) {
-	if ((size==5 && String::ICompare((const char*)value, "false") == 0) || (size==4 && String::ICompare((const char*)value, "null") == 0))
+	if (size==5 && String::ICompare(STR value, EXPAND("false")) == 0)
 		lua_pushboolean(pState, 0);
-	else
-		lua_pushlstring(pState, (const char*)value, size);
+	else if (size==4 && String::ICompare(STR value, EXPAND("true")) == 0)
+		lua_pushboolean(pState, 1);
+	else if (size==4 && String::ICompare(STR value, EXPAND("null")) == 0)
+		lua_pushnil(pState);
+	else {
+		double result(0);
+		if (String::ToNumber(STR value,size, result))
+			lua_pushnumber(pState, result);
+		else
+			lua_pushlstring(pState, STR value,size);
+	}
 }
 
  bool Script::GetCollection(lua_State* pState, int index,const char* field) {
@@ -153,6 +171,15 @@ void Script::PushValue(lua_State* pState,const UInt8* value, UInt32 size) {
 		return false;
 	}
 	return true;
+}
+
+ 
+void Script::DeleteCollection(lua_State* pState,int index,const char* field) {
+	if (!field || !lua_getmetatable(pState, index))
+		return;
+	lua_pushnil(pState);
+	lua_setfield(pState, -2, field);
+	lua_pop(pState, 1); // metatable
 }
 
 void Script::FillCollection(lua_State* pState, UInt32 size) {
@@ -235,6 +262,7 @@ void Script::ClearCollection(lua_State* pState) {
 
 	lua_pop(pState, 1);
 }
+
 
 void Script::ClearCollectionParameters(lua_State* pState, const char* field,const Parameters& parameters) {
 	// index -1 must be the collection
@@ -340,23 +368,28 @@ int Script::CollectionToString(lua_State* pState) {
 int Script::Next(lua_State* pState) {
 	// 1 table
 	// [2 key] (optional)
-	if (!lua_istable(pState, 1)) {
+	if (lua_gettop(pState) < 2)
+		lua_pushnil(pState);
+	return Script::Next(pState, 1);
+}
+
+int Script::Next(lua_State* pState,int index) {
+	// -1 is key
+	if (!lua_istable(pState, index)) {
 		SCRIPT_BEGIN(pState)
 			SCRIPT_ERROR("next on a ", lua_typename(pState,lua_type(pState, 1)), " value")
 		SCRIPT_END
 		return 0;
 	}
-	if (lua_getmetatable(pState,  1)) {
+	if (lua_getmetatable(pState,  index)) {
 		lua_getfield(pState, -1, "|items");
 		lua_replace(pState, -2);
 		if (!lua_istable(pState, -1))
 			lua_pop(pState, 1);
 		else
-			lua_replace(pState, 1);
+			lua_replace(pState, index);
 	};
-	if (lua_gettop(pState) < 2)
-		lua_pushnil(pState);
-	int results = lua_next(pState, 1);
+	int results = lua_next(pState, index);
 	if (results>0)
 		++results;
 	return results;

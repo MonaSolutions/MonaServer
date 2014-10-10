@@ -134,9 +134,9 @@ bool Application::init(int argc, const char* argv[]) {
         FATAL_ERROR(ex.error());
 
 	if (!_options.process(ex, argc, argv, [this](const string& name, const string& value) { setString("arguments." + name, value); }))
-        FATAL_ERROR(ex.error())
-	else if(ex)
-		WARN(ex.error())
+        FATAL_ERROR("Arguments, ",ex.error()," use 'help'")
+	else if (ex)
+		WARN("Arguments, ",ex.error()," use 'help'")
 
 	if (hasArgument("help")) {
 		displayHelp();
@@ -165,13 +165,12 @@ void Application::defineOptions(Exception& ex, Options& options) {
 
 	options.add(ex, "log", "l", "Log level argument, must be beetween 0 and 8 : nothing, fatal, critic, error, warn, note, info, debug, trace. Default value is 6 (info), all logs until info level are displayed.")
 		.argument("level")
-		.handler([this](Exception& ex, const string& value) { Exception exWarn;
+		.handler([this](Exception& ex, const string& value) {
 #if defined(_DEBUG)
-		Logs::SetLevel(String::ToNumber<UInt8>(exWarn, Logger::LEVEL_DEBUG, value));
+		Logs::SetLevel(String::ToNumber<UInt8>(ex, Logger::LEVEL_DEBUG, value));
 #else
-		Logs::SetLevel(String::ToNumber<UInt8>(exWarn, Logger::LEVEL_INFO, value));
+		Logs::SetLevel(String::ToNumber<UInt8>(ex, Logger::LEVEL_INFO, value));
 #endif
-		ex.set(Exception::ARGUMENT, "Bad level ", value, " has to be a numeric value between 0 and 8 (see help)");
 		return true;
 	});
 

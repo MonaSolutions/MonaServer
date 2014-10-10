@@ -99,6 +99,7 @@ public:
 	static lua_State*	CreateState();
 
 	static int Next(lua_State* pState);
+	static int Next(lua_State* pState, int index);
 	static int Pairs(lua_State* pState);
 	static int IPairs(lua_State* pState);
 
@@ -114,6 +115,7 @@ public:
 	static void ClearCollectionParameters(lua_State* pState,const char* field, const Mona::Parameters& parameters);
 
 	static bool GetCollection(lua_State* pState, int index, const char* field);
+	static void DeleteCollection(lua_State* pState,int index,const char* field);
 	static void FillCollection(lua_State* pState, Mona::UInt32 size);
 	static void ClearCollection(lua_State* pState);
 

@@ -22,20 +22,24 @@ This file is a part of Mona.
 #include "Mona/Mona.h"
 #include "Mona/TCPSender.h"
 #include "Mona/JSONWriter.h"
+#include "Mona/StringWriter.h"
 
 
 namespace Mona {
 
 class WSSender : public TCPSender, public virtual Object {
 public:
-	WSSender(const PoolBuffers& poolBuffers,bool modeRaw=false) : TCPSender("WSSender"), packaged(false),writer(poolBuffers,modeRaw) {}
+	WSSender(const PoolBuffers& poolBuffers,bool modeRaw=false) : type(modeRaw ? WS::TYPE_BINARY : WS::TYPE_TEXT),TCPSender("WSSender"), packaged(false),_pWriter(modeRaw ? (DataWriter*)new StringWriter(poolBuffers) : (DataWriter*)new JSONWriter(poolBuffers)) {}
 	
-	JSONWriter		writer;
-	bool			packaged;
+	DataWriter&				writer() { return *_pWriter; }
+	bool					packaged;
+	const WS::MessageType  type;
 
-	const UInt8*	data() const { return writer.packet.data(); }
-	UInt32			size() const { return writer.packet.size(); }
+	const UInt8*	data() const { return _pWriter->packet.data(); }
+	UInt32			size() const { return _pWriter->packet.size(); }
 
+private:
+	std::unique_ptr<DataWriter>		_pWriter;
 };
 
 

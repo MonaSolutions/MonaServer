@@ -189,7 +189,7 @@ void Listener::updateProperties() {
 	if (_firstMedia)
 		return; // wait first media
 	UInt32 size;
-	const UInt8* meta(publication.propertiesInfos(size));
+	const UInt8* meta(publication.propertiesRaw(size));
 	if (!meta)
 		return;
 	PacketReader packet(meta, size);

@@ -79,7 +79,7 @@ int LUADataTable::Set(lua_State *pState) {
 
 					// table iteration
 					lua_pushnil(pState);  // first key 
-					while (lua_next(pState, 3) != 0) {
+					while (Script::Next(pState, 3) != 0) {
 						// uses 'key' (at index -2) and 'value' (at index -1) 
 						lua_pushvalue(pState, -2); // duplicate key
 						lua_pushvalue(pState, -2); // duplicate value

@@ -39,7 +39,7 @@ public:
 	DataWriter&		writeInvocation(const char* name);
 	DataWriter&		writeMessage();
 	DataWriter&		writeResponse(UInt8 type);
-	void			writeRaw(const UInt8* data, UInt32 size) { write(WS::TYPE_TEXT, data, size); }
+	void			writeRaw(const UInt8* data, UInt32 size) { write(WS::TYPE_BINARY, data, size); }
 
 	void			writePing() { write(WS::TYPE_PING, NULL, 0); }
 	void			writePong(const UInt8* data, UInt32 size) { write(WS::TYPE_PONG, data, size); }
@@ -52,7 +52,7 @@ private:
 
 	void			write(UInt8 type,const UInt8* data,UInt32 size);
 
-	JSONWriter&		newDataWriter(bool modeRaw=false);
+	DataWriter&		newDataWriter(bool modeRaw=false);
 
 	TCPSession&								_session;
 	std::vector<std::shared_ptr<WSSender>>	_senders;

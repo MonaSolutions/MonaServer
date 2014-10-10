@@ -106,7 +106,7 @@ int LUAWriter::WriteMessage(lua_State* pState) {
 
 int LUAWriter::WriteInvocation(lua_State* pState) {
 	SCRIPT_CALLBACK(Writer, writer)
-		const char* name(SCRIPT_READ_STRING(""));
+		const char* name(SCRIPT_READ_STRING("onMessage"));
 		SCRIPT_READ_NEXT(ScriptReader(pState, SCRIPT_READ_AVAILABLE).read(writer.writeInvocation(name)));
 	SCRIPT_CALLBACK_RETURN
 }

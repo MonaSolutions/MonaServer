@@ -27,7 +27,7 @@ using namespace std;
 namespace Mona {
 
 
-JSONWriter::JSONWriter(const PoolBuffers& poolBuffers,bool modeRaw) : DataWriter(poolBuffers),_modeRaw(modeRaw),_first(true),_layers(0) {
+JSONWriter::JSONWriter(const PoolBuffers& poolBuffers) : DataWriter(poolBuffers),_first(true),_layers(0) {
 	packet.write("[]");
 }
 
@@ -80,11 +80,9 @@ void JSONWriter::writePropertyName(const char* value) {
 void JSONWriter::writeString(const char* value, UInt32 size) {
 
 	start();
-	if (!_modeRaw)
-		packet.write8('"');
+	packet.write8('"');
 	packet.write(value,size);
-	if (!_modeRaw)
-		packet.write8('"');
+	packet.write8('"');
 	end();
 }
 

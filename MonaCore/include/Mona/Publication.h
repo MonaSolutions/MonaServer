@@ -60,8 +60,9 @@ public:
 	const QualityOfService&	audioQOS() const { return _audioQOS; }
 	const QualityOfService&	dataQOS() const { return _dataQOS; }
 
-	const UInt8*			propertiesInfos(UInt32& size) const { return (size = _propertiesInfos.packet.size()) > 0 ? _propertiesInfos.packet.data() : NULL; }
 	const Parameters&		properties() const { return _properties; }
+	const UInt8*			propertiesRaw(UInt32& size) const { return (size=_propertiesWriter.packet.size())==0 ? NULL : _propertiesWriter.packet.data(); }
+
 	void					writeProperties(DataReader& reader);
 	void					clearProperties();
 
@@ -86,8 +87,9 @@ private:
 	bool								_running;
 	std::string							_name;
 	std::map<Client*,Listener*>			_listeners;
+
+	AMFWriter							_propertiesWriter;
 	MapParameters						_properties;
-	AMFWriter							_propertiesInfos;
 
 	UInt32								_lastTime;
 	PoolBuffer							_audioCodecBuffer;

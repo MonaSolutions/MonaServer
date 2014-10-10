@@ -94,13 +94,21 @@ MonaServer::MonaServer(TerminateSignal& terminateSignal, const Parameters& confi
 
 
 	onPublicationProperties = [this](const Publication& publication, const Parameters& properties) {
+		UInt32 size;
+		bool clear(publication.propertiesRaw(size)==NULL);
 		SCRIPT_BEGIN(_pState)
 			SCRIPT_MEMBER_FUNCTION_BEGIN(Publication, publication, "onProperties")
-				Script::Collection(_pState, -1, "properties");		
-				Parameters::ForEach forEach([this](const std::string& key, const std::string& value) {
-					Script::PushKeyValue(_pState, key, value);
-				});
-				Script::FillCollection(_pState, properties.iterate(forEach));
+				if (clear) {
+					Script::DeleteCollection(_pState, -1, "properties");
+					lua_pushnil(_pState);
+				} else {
+					Script::Collection(_pState, -1, "properties");		
+					Parameters::ForEach forEach([this](const std::string& key, const std::string& value) {
+						Script::PushKeyValue(_pState, key, value);
+					});
+					Script::ClearCollection(_pState);
+					Script::FillCollection(_pState, properties.iterate(forEach));	
+				}
 				lua_pushvalue(_pState,-1); // properties collection
 				lua_setfield(_pState,-3,"properties"); // fix on publication object
 				SCRIPT_FUNCTION_CALL
@@ -505,7 +513,7 @@ void MonaServer::onConnection(Exception& ex, Client& client,DataReader& paramete
 				if(SCRIPT_NEXT_TYPE==LUA_TTABLE) {
 
 					lua_pushnil(_pState);  // first key 
-					while (lua_next(_pState, -2) != 0) {
+					while (Script::Next(_pState, -2) != 0) {
 						// uses 'key' (at index -2) and 'value' (at index -1) 
 						if (lua_type(_pState, -2)==LUA_TSTRING) { // lua_type because can be encapsulated in a lua_next
 							response.writePropertyName(lua_tostring(_pState,-2));
@@ -651,7 +659,7 @@ bool MonaServer::onFileAccess(Exception& ex, Client& client, Client::FileAccessT
 				}
 				if(SCRIPT_NEXT_TYPE==LUA_TTABLE) {
 					lua_pushnil(_pState);  // first key 
-					while (lua_next(_pState, -2) != 0) {
+					while (Script::Next(_pState, -2) != 0) {
 						// uses 'key' (at index -2) and 'value' (at index -1) 
 						if (lua_type(_pState,-2)==LUA_TSTRING) {
 							properties.writePropertyName(lua_tostring(_pState,-2));
@@ -662,7 +670,7 @@ bool MonaServer::onFileAccess(Exception& ex, Client& client, Client::FileAccessT
 						lua_pop(_pState,1);
 					}
 					SCRIPT_READ_NEXT(1);
-				} else
+				} else if (SCRIPT_READ_AVAILABLE)
 					SCRIPT_ERROR(type==Client::FileAccessType::READ ? "onRead" : "onWrite"," properties returned must be a table {prop1=value1,prop2=value2}")
 			}
 		SCRIPT_FUNCTION_END

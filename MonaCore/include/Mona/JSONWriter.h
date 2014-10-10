@@ -27,7 +27,7 @@ namespace Mona {
 
 class JSONWriter : public DataWriter, public virtual Object {
 public:
-	JSONWriter(const PoolBuffers& poolBuffers,bool modeRaw=false);
+	JSONWriter(const PoolBuffers& poolBuffers);
 
 	UInt64 beginObject(const char* type=NULL);
 	void   writePropertyName(const char* value);
@@ -58,7 +58,6 @@ private:
 	void end(bool isContainer = false);
 
 
-	bool		_modeRaw;
 	bool		_first;
 	UInt32		_layers;
 };

@@ -146,7 +146,7 @@ bool ScriptReader::readOne(UInt8 type,DataWriter& writer) {
 			started = true;
 		} else {
 			lua_pushnil(_pState);  /* first key */
-			while (lua_next(_pState, _current) != 0) {
+			while (Script::Next(_pState, _current) != 0) {
 				/* uses 'key' (at index -2) and 'value' (at index -1) */
 				if (lua_type(_pState, -2) != LUA_TSTRING || strcmp(lua_tostring(_pState, -2), "__size") != 0) {
 					 // key
@@ -181,7 +181,7 @@ bool ScriptReader::readOne(UInt8 type,DataWriter& writer) {
 			// Array or mixed, write properties in first
 			object=false;
 			lua_pushnil(_pState);  /* first key */
-			while (lua_next(_pState, _current) != 0) {
+			while (Script::Next(_pState, _current) != 0) {
 				/* uses 'key' (at index -2) and 'value' (at index -1) */
 				if(lua_type(_pState,-2)==LUA_TSTRING) {
 					if (!started) {
@@ -206,7 +206,7 @@ bool ScriptReader::readOne(UInt8 type,DataWriter& writer) {
 				
 
 	lua_pushnil(_pState);  /* first key */
-	while (lua_next(_pState, _current) != 0) {
+	while (Script::Next(_pState, _current) != 0) {
 		/* uses 'key' (at index -2) and 'value' (at index -1) */
 		if (lua_type(_pState,-2)==LUA_TSTRING) {
 			// here necessarly we are writing an object (mixed or pure object)

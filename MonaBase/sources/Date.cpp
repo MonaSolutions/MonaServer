@@ -27,17 +27,17 @@ using namespace std;
 namespace Mona {
 
 
-const char* Date::ISO8601_FORMAT("%Y[-%m-%dT%H:%M:%S%z]");  	//DONE/ 2005-01-01T12:00:00+01:00 | 2005-01-01T11:00:00Z
-const char* Date::ISO8601_FRAC_FORMAT("%Y[-%m-%dT%H:%M:%s%z]"); //DONE/ 2005-01-01T12:00:00.000000+01:00 | 2005-01-01T11:00:00.000000Z
-const char* Date::ISO8601_SHORT_FORMAT("%Y[%m%dT%H%M%S%z]");  	// 20050101T120000+01:00 | 20050101T110000Z
+const char* Date::ISO8601_FORMAT("%Y[-%m-%dT%H:%M:%S%z]");  	  // 2005-01-01T12:00:00+01:00 | 2005-01-01T11:00:00Z
+const char* Date::ISO8601_FRAC_FORMAT("%Y[-%m-%dT%H:%M:%s%z]");   // 2005-01-01T12:00:00.000000+01:00 | 2005-01-01T11:00:00.000000Z
+const char* Date::ISO8601_SHORT_FORMAT("%Y[%m%dT%H%M%S%z]");  	  // 20050101T120000+01:00 | 20050101T110000Z
 const char* Date::ISO8601_SHORT_FRAC_FORMAT("%Y[%m%dT%H%M%s%z]"); // 20050101T120000.000000+01:00 | 20050101T110000.000000Z
-const char* Date::RFC822_FORMAT("[%w, ]%e %b %y %H:%M[:%S] %Z");//DONE/ Sat, 1 Jan 05 12:00:00 +0100 | Sat, 1 Jan 05 11:00:00 GMT
-const char* Date::RFC1123_FORMAT("%w, %e %b %Y %H:%M:%S %Z");	/// Sat, 1 Jan 2005 12:00:00 +0100 | Sat, 1 Jan 2005 11:00:00 GMT
-const char* Date::HTTP_FORMAT("%w, %d %b %Y %H:%M:%S %Z");		/// Sat, 01 Jan 2005 12:00:00 +0100 | Sat, 01 Jan 2005 11:00:00 GMT
-const char* Date::RFC850_FORMAT("%W, %e-%b-%y %H:%M:%S %Z");	//DONE/ Saturday, 1-Jan-05 12:00:00 +0100 | Saturday, 1-Jan-05 11:00:00 GMT
-const char* Date::RFC1036_FORMAT("%W, %e %b %y %H:%M:%S %Z");	/// Saturday, 1 Jan 05 12:00:00 +0100 | Saturday, 1 Jan 05 11:00:00 GMT
-const char* Date::ASCTIME_FORMAT("%w %b %f %H:%M:%S %Y");		//DONE/ Sat Jan  1 12:00:00 2005
-const char* Date::SORTABLE_FORMAT("%Y-%m-%d[ %H:%M:%S]");		//DONE/ 2005-01-01 12:00:00
+const char* Date::RFC822_FORMAT("[%w, ]%e %b %y %H:%M[:%S] %Z");  // Sat, 1 Jan 05 12:00:00 +0100 | Sat, 1 Jan 05 11:00:00 GMT
+const char* Date::RFC1123_FORMAT("%w, %e %b %Y %H:%M:%S %Z");	  // Sat, 1 Jan 2005 12:00:00 +0100 | Sat, 1 Jan 2005 11:00:00 GMT
+const char* Date::HTTP_FORMAT("%w, %d %b %Y %H:%M:%S %Z");		  // Sat, 01 Jan 2005 12:00:00 +0100 | Sat, 01 Jan 2005 11:00:00 GMT
+const char* Date::RFC850_FORMAT("%W, %e-%b-%y %H:%M:%S %Z");	  // Saturday, 1-Jan-05 12:00:00 +0100 | Saturday, 1-Jan-05 11:00:00 GMT
+const char* Date::RFC1036_FORMAT("%W, %e %b %y %H:%M:%S %Z");	  // Saturday, 1 Jan 05 12:00:00 +0100 | Saturday, 1 Jan 05 11:00:00 GMT
+const char* Date::ASCTIME_FORMAT("%w %b %f %H:%M:%S %Y");		  // Sat Jan  1 12:00:00 2005
+const char* Date::SORTABLE_FORMAT("%Y-%m-%d[ %H:%M:%S]");		  // 2005-01-01 12:00:00
 
 
 

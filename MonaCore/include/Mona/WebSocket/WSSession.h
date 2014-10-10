@@ -38,15 +38,16 @@ public:
 	void			flush() { if (_pPublication) _pPublication->flush(); Session::flush(); }
 	void			manage();
 
-	/// \brief Read message and call method if needed
-	/// \param packet Content message to read
-	void			readMessage(Exception& ex, DataReader& reader, UInt8 responseType=0);
 
 protected:
 	WSWriter&		wsWriter() { return _writer; }
 	void			kill(UInt32 type=NORMAL_DEATH);
 	Publication*	_pPublication;
 	Listener*		_pListener;
+
+	/// \brief Read message and call method if needed
+	/// \param packet Content message to read
+	void			readMessage(Exception& ex, DataReader& reader, UInt8 responseType=0);
 	
 private:
 	void			closeSusbcription();
