@@ -327,10 +327,10 @@ void MonaServer::onDataLoading(const string& path, const UInt8* value, UInt32 si
 		FileSystem::GetParent(newPath);
 		
 
-	String::ForEach forEach([this,&path](UInt32 index, const char* field) {
+	String::ForEach forEach([this,&newPath](UInt32 index, const char* field) {
 		if (!lua_istable(_pState, -1)) {
 			lua_pop(_pState, 1);
-			WARN("Loading database entry ", path, " ignored because parent is not a table")
+			WARN("Loading database entry ", newPath, " ignored because parent is not a table")
 				return false;
 		}
 		lua_getfield(_pState, -1, field);
@@ -343,7 +343,7 @@ void MonaServer::onDataLoading(const string& path, const UInt8* value, UInt32 si
 		lua_replace(_pState, -2);
 		return true;
 	});
-	if (String::Split(path, "/", forEach, String::SPLIT_IGNORE_EMPTY | String::SPLIT_TRIM) == string::npos)
+	if (String::Split(newPath, "/", forEach, String::SPLIT_IGNORE_EMPTY | String::SPLIT_TRIM) == string::npos)
 		return;
 
 	// set value

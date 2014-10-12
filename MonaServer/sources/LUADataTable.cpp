@@ -95,7 +95,7 @@ int LUADataTable::Set(lua_State *pState) {
 					Exception ex;
 					bool success = false;
 					if (removing) {
-						if ((success = table.database.remove(ex, path)) && !lua_isnil(pState, -1))
+						if ((success = table.database.remove(ex, path)) && !lua_isnil(pState, -1) && !lua_istable(pState, -1))
 							--table.count;
 					} else {
 						UInt32 size(0);

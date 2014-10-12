@@ -357,8 +357,8 @@ int Service::Index(lua_State *pState) {
 						if (lua_isnil(pState, -1)) {
 							lua_pop(pState, 1);
 							lua_newtable(pState);
-							lua_pushvalue(pState,1);
-							lua_setfield(pState, -3, value);
+							lua_setfield(pState, -2, value);
+							lua_getfield(pState, -1, value);
 						}
 						lua_replace(pState, -2);
 						return true;
