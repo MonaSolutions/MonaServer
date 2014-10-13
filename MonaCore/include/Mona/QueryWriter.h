@@ -46,7 +46,7 @@ public:
 	UInt64 writeDate(const Date& date) { std::string buffer; writer().write(date.toString(Date::ISO8601_SHORT_FORMAT,buffer)); return 0; }
 	UInt64 writeBytes(const UInt8* data, UInt32 size) { Util::ToBase64(data, size, writer()); return 0; }
 
-	void clear() { _isProperty = false; _first = true;  DataWriter::clear(); }
+	void clear(UInt32 size=0) { _isProperty = false; _first = true;  DataWriter::clear(size); }
 	
 private:
 	PacketWriter& writer();

@@ -32,7 +32,7 @@ public:
 	AMFWriter(const PoolBuffers& poolBuffers);
 
 	bool repeat(UInt64 reference);
-	void clear();
+	void clear(UInt32 size=0);
 
 	UInt64 beginObject(const char* type=NULL);
 	void   writePropertyName(const char* value);

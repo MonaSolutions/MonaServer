@@ -34,9 +34,9 @@ XMLRPCWriter::XMLRPCWriter(const PoolBuffers& poolBuffers) : DataWriter(poolBuff
 	packet.write(EXPAND(RESPONSE_HEADER)).write(EXPAND(RESPONSE_FOOTER));
 }
 
-void XMLRPCWriter::clear() {
+void XMLRPCWriter::clear(UInt32 size) {
 	_layers.clear();
-	DataWriter::clear();
+	DataWriter::clear(size);
 	packet.write(EXPAND(RESPONSE_HEADER)).write(EXPAND(RESPONSE_FOOTER));
 }
 

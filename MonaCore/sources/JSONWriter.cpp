@@ -31,10 +31,10 @@ JSONWriter::JSONWriter(const PoolBuffers& poolBuffers) : DataWriter(poolBuffers)
 	packet.write("[]");
 }
 
-void JSONWriter::clear() {
+void JSONWriter::clear(UInt32 size) {
 	_first=true;
 	_layers=0;
-	DataWriter::clear();
+	packet.clear(size);
 	packet.write("[]");
 }
 

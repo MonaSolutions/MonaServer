@@ -43,7 +43,7 @@ public:
 	UInt64 writeDate(const Date& date);
 	UInt64 writeBytes(const UInt8* data,UInt32 size);
 
-	void clear();
+	void clear(UInt32 size=0);
 	
 
 private:

@@ -46,6 +46,7 @@ public:
 	UInt64 writeDate(const Date& date) { std::string buffer; append(date.toString(Date::SORTABLE_FORMAT, buffer)); return 0; }
 	UInt64 writeBytes(const UInt8* data, UInt32 size) { append(data, size); return 0; }
 
+	void   clear(UInt32 size = 0) { if (_pString) _pString->erase(size); else packet.clear(size); }
 private:
 	void append(const void* value, UInt32 size) {
 		if (_pString)

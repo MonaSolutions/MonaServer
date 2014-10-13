@@ -53,7 +53,7 @@ public:
 	virtual UInt64 beginMap(Exception& ex, UInt32 size, bool weakKeys = false) { ex.set(Exception::FORMATTING,typeid(*this).name()," doesn't support map type, a object will be written rather");  return beginObject(); }
 	virtual void   endMap() { endObject(); }
 
-	virtual void   clear() { packet.clear(); }
+	virtual void   clear(UInt32 size=0) { packet.clear(size); }
 	virtual bool   repeat(UInt64 reference) { return false; }
 
 ////////////////////
