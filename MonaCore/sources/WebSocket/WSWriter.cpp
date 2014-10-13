@@ -46,15 +46,9 @@ DataWriter& WSWriter::newDataWriter(bool modeRaw) {
 	WSSender* pSender = new WSSender(_session.invoker.poolBuffers,modeRaw);
 	_senders.emplace_back(pSender);
 	// expect place for header
-	PacketWriter& packet(pSender->writer().packet);
-	if (modeRaw)
-		packet.next(10);
-	else {
-		packet.clear();
-		packet.next(10);
-		packet.write("[]");
-	}
-	return pSender->writer();
+	DataWriter& writer(pSender->writer());
+	writer.clear(10);
+	return writer;
 }
 
 void WSWriter::pack() {
