@@ -174,7 +174,7 @@ DataWriter& HTTPSender::writer(const string& code, HTTP::ContentType type, const
 		_pWriter.reset(new StringWriter(_poolBuffers));
 
 	PacketWriter& packet = _pWriter->packet;
-
+	packet.clear();
 
 	// First line (HTTP/1.1 200 OK)
 	UInt16 value(200);
@@ -231,7 +231,10 @@ DataWriter& HTTPSender::writer(const string& code, HTTP::ContentType type, const
 	packet.write("\r\n\r\n");
 	if (data && size > 0)
 		packet.write(data, size);
-	return !data ? *_pWriter : DataWriter::Null;
+	if(data)
+		return DataWriter::Null;
+	_pWriter->clear(packet.size());
+	return *_pWriter;
 }
 
 BinaryWriter& HTTPSender::writeRaw(const PoolBuffers& poolBuffers) {

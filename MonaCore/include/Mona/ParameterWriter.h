@@ -50,7 +50,7 @@ public:
 	UInt32 count() const { return _parameters.count(); }
 	
 
-	void   clear() { _index = 0; _isProperty = false; _property.clear(); _size = 0; DataWriter::clear(); _parameters.clear(); }
+	void   clear(UInt32 size=0) { _index = 0; _isProperty = false; _property.clear(); _size = 0; _parameters.clear(); }
 private:
 
 	UInt32 size(const std::string& value) { return value.size(); }

@@ -32,13 +32,13 @@ AMFWriter::AMFWriter(const PoolBuffers& poolBuffers) : _amf0References(0),_amf3(
 
 }
 
-void AMFWriter::clear() {
+void AMFWriter::clear(UInt32 size) {
 	_amf3 = false;
 	_levels.clear();
 	_references.clear();
 	_amf0References = 0;
 	_stringReferences.clear();
-	DataWriter::clear();
+	DataWriter::clear(size);
 }
 
 bool AMFWriter::repeat(UInt64 reference) {

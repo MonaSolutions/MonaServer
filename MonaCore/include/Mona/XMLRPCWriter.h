@@ -45,7 +45,7 @@ public:
 	UInt64 writeDate(const Date& date);
 	UInt64 writeBytes(const UInt8* data, UInt32 size) { Util::ToBase64(data, size, beginValue("base64"),true); endValue("base64"); return 0; }
 
-	void clear();
+	void clear(UInt32 size=0);
 	
 
 private:
