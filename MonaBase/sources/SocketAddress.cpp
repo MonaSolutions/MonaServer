@@ -19,7 +19,6 @@ This file is a part of Mona.
 
 
 #include "Mona/SocketAddress.h"
-#include "Mona/DNS.h"
 #include "Mona/String.h"
 
 
@@ -190,33 +189,13 @@ bool SocketAddress::setIntern(Exception& ex,const char* hostAndPort,bool resolve
 
 bool SocketAddress::setIntern(Exception& ex,const char* host, UInt16 port,bool resolveHost) {
 	IPAddress ip;
-	Exception ignore;
-	if (ip.set(ignore, host)) {
-		set(ip, port);
-		return true;
-	}
-	HostEntry entry;
-	if (!resolveHost) {
-		if (ignore)
-			ex.set(ignore);
+	if (resolveHost) {
+		if (!ip.setWithDNS(ex, host))
+			return false;
+	} else if(!ip.set(ex, host))
 		return false;
-	}
-	if (!DNS::HostByName(ex, host, entry))
-		return false;
-	auto& addresses = entry.addresses();
-	if (addresses.size() > 0) {
-		// if we get both IPv4 and IPv6 addresses, prefer IPv4
-		for (const IPAddress& address : addresses) {
-			if (address.family() == IPAddress::IPv4) {
-				set(address, port);
-				return true;
-			}
-		}
-		set(addresses.front(), port);
-		return true;
-	}
-	ex.set(Exception::NETADDRESS, "No address found for the host ", host);
-	return false;
+	set(ip, port);
+	return true;
 }
 
 bool SocketAddress::operator < (const SocketAddress& address) const {

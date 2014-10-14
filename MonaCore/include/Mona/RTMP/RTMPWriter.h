@@ -47,7 +47,7 @@ public:
 private:
 	RTMPWriter(const RTMPWriter& other) = delete; // require by gcc 4.8 to build _writers of RTMPSession
 
-	AMFWriter&		write(AMF::ContentType type,UInt32 time=0,PacketReader* pData=NULL);
+	AMFWriter&		write(AMF::ContentType type,UInt32 time=0,const UInt8* data=NULL,UInt32 size=0);
 
 	RTMPChannel						_channel;
 	std::shared_ptr<RTMPSender>&	_pSender;

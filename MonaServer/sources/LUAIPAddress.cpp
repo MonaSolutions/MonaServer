@@ -105,10 +105,10 @@ int LUAIPAddress::Get(lua_State *pState) {
 }
 
 
-bool LUAIPAddress::Read(Exception& ex, lua_State *pState, int& index, IPAddress& address) {
+bool LUAIPAddress::Read(Exception& ex, lua_State *pState, int index, IPAddress& address,bool withDNS) {
 
 	if (lua_type(pState, index)==LUA_TSTRING) // lua_type because can be encapsulated in a lua_next
-		return address.set(ex, lua_tostring(pState,index));
+		return withDNS ? address.setWithDNS(ex, lua_tostring(pState,index)) : address.set(ex, lua_tostring(pState,index));
 
 	if(lua_istable(pState,index)) {
 		bool isConst;

@@ -26,10 +26,7 @@ This file is a part of Mona.
 #include "LUAMember.h"
 #include "LUAPath.h"
 #include "LUABroadcaster.h"
-#include "LUASocketAddress.h"
-#include "LUAIPAddress.h"
 #include "LUAXML.h"
-#include "Mona/Exceptions.h"
 #include "MonaServer.h"
 #include <openssl/evp.h>
 #include "Mona/JSONReader.h"
@@ -216,46 +213,6 @@ int	LUAInvoker::Publish(lua_State *pState) {
 int	LUAInvoker::AbsolutePath(lua_State *pState) {
 	SCRIPT_CALLBACK(Invoker,invoker)
 		SCRIPT_WRITE_STRING((MonaServer::WWWPath + "/" + SCRIPT_READ_STRING("") + "/").c_str())
-	SCRIPT_CALLBACK_RETURN
-}
-
-
-int	LUAInvoker::CreateIPAddress(lua_State *pState) {
-	SCRIPT_CALLBACK_TRY(Invoker, invoker)
-		if (!SCRIPT_READ_AVAILABLE) {
-			Script::AddObject<LUAIPAddress>(pState, IPAddress::Wildcard());
-		} else {
-			Exception ex;
-			IPAddress* pAddress = new IPAddress();
-			if (LUAIPAddress::Read(ex, pState, SCRIPT_READ_NEXT(1), *pAddress)) {
-				Script::NewObject<LUAIPAddress>(pState, *pAddress);
-				if (ex)
-					SCRIPT_WARN(ex.error());
-			} else {
-				delete pAddress;
-				SCRIPT_CALLBACK_THROW(ex.error().c_str())
-			}
-		}
-	SCRIPT_CALLBACK_RETURN
-}
-
-
-int	LUAInvoker::CreateSocketAddress(lua_State *pState) {
-	SCRIPT_CALLBACK_TRY(Invoker, invoker)
-		if (!SCRIPT_READ_AVAILABLE) {
-			Script::AddObject<LUASocketAddress>(pState, SocketAddress::Wildcard());
-		} else {
-			Exception ex;
-			SocketAddress* pAddress = new SocketAddress();
-			if (LUASocketAddress::Read(ex, pState, SCRIPT_READ_NEXT(1), *pAddress)) {
-				Script::NewObject<LUASocketAddress>(pState, *pAddress);
-				if (ex)
-					SCRIPT_WARN(ex.error());
-			} else {
-				delete pAddress;
-				SCRIPT_CALLBACK_THROW(ex.error().c_str())
-			}
-		}
 	SCRIPT_CALLBACK_RETURN
 }
 
@@ -506,10 +463,16 @@ int LUAInvoker::Get(lua_State *pState) {
 				SCRIPT_WRITE_FUNCTION(LUAInvoker::Split)
 				SCRIPT_CALLBACK_FIX_INDEX
 			} else if (strcmp(name, "createIPAddress") == 0) {
- 				SCRIPT_WRITE_FUNCTION(LUAInvoker::CreateIPAddress)
+ 				SCRIPT_WRITE_FUNCTION(LUAInvoker::CreateIPAddress<false>)
+				SCRIPT_CALLBACK_FIX_INDEX
+			} else if (strcmp(name, "createIPAddressWithDNS") == 0) {
+ 				SCRIPT_WRITE_FUNCTION(LUAInvoker::CreateIPAddress<true>)
 				SCRIPT_CALLBACK_FIX_INDEX
 			} else if (strcmp(name, "createSocketAddress") == 0) {
- 				SCRIPT_WRITE_FUNCTION(LUAInvoker::CreateSocketAddress)
+ 				SCRIPT_WRITE_FUNCTION(LUAInvoker::CreateSocketAddress<false>)
+				SCRIPT_CALLBACK_FIX_INDEX
+			} else if (strcmp(name, "createSocketAddress") == 0) {
+ 				SCRIPT_WRITE_FUNCTION(LUAInvoker::CreateSocketAddress<true>)
 				SCRIPT_CALLBACK_FIX_INDEX
 			} else if (strcmp(name, "createUDPSocket") == 0) {
  				SCRIPT_WRITE_FUNCTION(LUAInvoker::CreateUDPSocket)

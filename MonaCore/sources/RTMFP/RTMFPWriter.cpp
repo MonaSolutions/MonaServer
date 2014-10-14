@@ -29,14 +29,14 @@ using namespace std;
 namespace Mona {
 
 
-RTMFPWriter::RTMFPWriter(State state,const string& signature, BandWriter& band, shared_ptr<RTMFPWriter>& pThis) : FlashWriter(state), id(0), _band(band), _reseted(true), critical(false), _stage(0), _stageAck(0), _boundCount(0), flowId(0), signature(signature), _repeatable(0), _lostCount(0), _ackCount(0) {
+RTMFPWriter::RTMFPWriter(State state,const string& signature, BandWriter& band, shared_ptr<RTMFPWriter>& pThis) : FlashWriter(state,band.poolBuffers()), id(0), _band(band), _reseted(true), critical(false), _stage(0), _stageAck(0), _boundCount(0), flowId(0), signature(signature), _repeatable(0), _lostCount(0), _ackCount(0) {
 	pThis.reset(this);
 	_band.initWriter(pThis);
 	if (signature.empty())
 		open();
 }
 
-RTMFPWriter::RTMFPWriter(State state,const string& signature, BandWriter& band) : FlashWriter(state), id(0), _band(band), _reseted(true), critical(false), _stage(0), _stageAck(0), _boundCount(0), flowId(0), signature(signature), _repeatable(0), _lostCount(0), _ackCount(0) {
+RTMFPWriter::RTMFPWriter(State state,const string& signature, BandWriter& band) : FlashWriter(state,band.poolBuffers()), id(0), _band(band), _reseted(true), critical(false), _stage(0), _stageAck(0), _boundCount(0), flowId(0), signature(signature), _repeatable(0), _lostCount(0), _ackCount(0) {
 	shared_ptr<RTMFPWriter> pThis(this);
 	_band.initWriter(pThis);
 	if (signature.empty())
@@ -529,11 +529,11 @@ RTMFPMessageBuffered& RTMFPWriter::createMessage() {
 	return *pMessage;
 }
 
-AMFWriter& RTMFPWriter::write(AMF::ContentType type,UInt32 time,PacketReader* pPacket) {
+AMFWriter& RTMFPWriter::write(AMF::ContentType type,UInt32 time,const UInt8* data, UInt32 size) {
 	if (type < AMF::AUDIO || type > AMF::VIDEO)
 		time = 0; // Because it can "dropped" the packet otherwise (like if the Writer was not reliable!)
-	if(pPacket && !reliable && state()==OPENED && !_band.failed() && !signature.empty()) {
-		_messages.emplace_back(new RTMFPMessageUnbuffered(type,time,pPacket->current(),pPacket->available()));
+	if(data && !reliable && state()==OPENED && !_band.failed() && !signature.empty()) {
+		_messages.emplace_back(new RTMFPMessageUnbuffered(type,time,data,size));
 		flush(false);
         return AMFWriter::Null;
 	}
@@ -542,8 +542,8 @@ AMFWriter& RTMFPWriter::write(AMF::ContentType type,UInt32 time,PacketReader* pP
 	binary.write8(type).write32(time);
 	if(type==AMF::DATA)
 		binary.write8(0);
-	if(pPacket)
-		binary.write(pPacket->current(),pPacket->available());
+	if(data)
+		binary.write(data,size);
 	return amf;
 }
 

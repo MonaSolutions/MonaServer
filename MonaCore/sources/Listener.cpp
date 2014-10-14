@@ -20,7 +20,6 @@ This file is a part of Mona.
 #include "Mona/Listener.h"
 #include "Mona/Publication.h"
 #include "Mona/MediaCodec.h"
-#include "Mona/StringReader.h"
 #include "Mona/AMFReader.h"
 #include "Mona/MIME.h"
 #include "Mona/Logs.h"
@@ -84,10 +83,6 @@ bool Listener::init() {
 		_pDataWriter->reliable = false;
 	}
 
-	string converstionType;
-	if (getString("conversionType", converstionType) || !MIME::CreateDataWriter(converstionType.c_str(), publication.poolBuffers, _pConvertorWriter))
-		_pConvertorWriter.reset();
-
 	return true;
 }
 
@@ -106,23 +101,12 @@ void Listener::pushData(DataReader& reader) {
 
 void Listener::writeData(DataReader& reader,Writer::DataType type, Writer& writer) {
 
-	// If un conversion type exists, and it is different than the current reader gotten
-	if (_pConvertorWriter && typeid(*_pConvertorWriter).name()!=typeid(reader).name()) {
-		// convert data
-		reader.read(*_pConvertorWriter);
-		PacketReader packet(_pConvertorWriter->packet.data(),_pConvertorWriter->packet.size());
-		if(!writer.writeMedia(Writer::DATA,type,packet,*this))
-			init();
-		_pConvertorWriter->clear();
-		return;
-	}
-
 	if (!reader) {
-		ERROR("Impossible to push ", typeid(reader).name(), " null DataReader without an explicit conversion");
+		ERROR("Impossible to stream ", typeid(reader).name(), " null DataReader");
 		return;
 	}
 
-	if(!writer.writeMedia(Writer::DATA,type,reader.packet,*this))
+	if(!writer.writeMedia(Writer::DATA,MIME::DataType(reader)<<8 | type,reader.packet,*this))
 		init();
 }
 

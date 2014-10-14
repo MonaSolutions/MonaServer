@@ -47,18 +47,19 @@ public:
 	void					setCallbackHandle(double value) { _callbackHandle = value; _callbackHandleOnAbort = 0; }
 	virtual void			abort() { _callbackHandle = _callbackHandleOnAbort; } // must erase the queueing messages (don't change the writer state)
 protected:
-	FlashWriter(State state);
+	FlashWriter(State state,const PoolBuffers& poolBuffers);
 	FlashWriter(FlashWriter& writer);
-	virtual ~FlashWriter();
 
-	virtual AMFWriter&		write(AMF::ContentType type,UInt32 time=0,PacketReader* pPacket=NULL)=0;
+	virtual AMFWriter&		write(AMF::ContentType type,UInt32 time=0,const UInt8* data=NULL,UInt32 size=0)=0;
 	AMFWriter&				writeInvocation(const char* name,double callback);
 	AMFWriter&				writeAMFState(const char* name,const char* code,const std::string& description,bool withoutClosing=false);
+
+	const PoolBuffers&		poolBuffers;
 private:
-	std::string		_onAudio;
-	std::string		_onVideo;
-	double			_callbackHandleOnAbort;
-	double			_callbackHandle;
+	std::string				_onAudio;
+	std::string				_onVideo;
+	double					_callbackHandleOnAbort;
+	double					_callbackHandle;
 };
 
 

@@ -23,6 +23,8 @@ This file is a part of Mona.
 #include "Mona/Invoker.h"
 #include "ScriptReader.h"
 #include "ScriptWriter.h"
+#include "LUASocketAddress.h"
+#include "LUAIPAddress.h"
 
 class LUAInvoker {
 public:
@@ -56,7 +58,7 @@ private:
 	/// \brief Generic function for serialization
 	/// lua -> DataType
 	template<typename DataType>
-	static int	ToData(lua_State *pState) {
+	static int ToData(lua_State *pState) {
 		SCRIPT_CALLBACK(Mona::Invoker,invoker)
 			DataType writer(invoker.poolBuffers);
 			SCRIPT_READ_NEXT(ScriptReader(pState, SCRIPT_READ_AVAILABLE).read(writer));
@@ -67,7 +69,7 @@ private:
 	/// \brief Generic function for serialization
 	/// DataType -> lua
 	template<typename DataReaderType>
-	static int	FromData(lua_State *pState) {
+	static int FromData(lua_State *pState) {
 		SCRIPT_CALLBACK(Mona::Invoker,invoker)
 			SCRIPT_READ_BINARY(data,size)
 			Mona::PacketReader packet(data,size);
@@ -76,12 +78,52 @@ private:
 		SCRIPT_CALLBACK_RETURN
 	}
 	template<typename DataReaderType>
-	static int	FromDataWithBuffers(lua_State *pState) {
+	static int FromDataWithBuffers(lua_State *pState) {
 		SCRIPT_CALLBACK(Mona::Invoker,invoker)
 			SCRIPT_READ_BINARY(data,size)
 			Mona::PacketReader packet(data,size);
 			ScriptWriter writer(pState);
 			DataReaderType(packet, invoker.poolBuffers).read(writer);
+		SCRIPT_CALLBACK_RETURN
+	}
+
+	template<bool WithDNS>
+	static int CreateIPAddress(lua_State *pState) {
+		SCRIPT_CALLBACK_TRY(Mona::Invoker, invoker)
+			if (!SCRIPT_READ_AVAILABLE) {
+				Script::AddObject<LUAIPAddress>(pState, Mona::IPAddress::Wildcard());
+			} else {
+				Mona::Exception ex;
+				Mona::IPAddress* pAddress = new Mona::IPAddress();
+				if (LUAIPAddress::Read(ex, pState, SCRIPT_READ_NEXT(1), *pAddress,WithDNS)) {
+					Script::NewObject<LUAIPAddress>(pState, *pAddress);
+					if (ex)
+						SCRIPT_WARN(ex.error());
+				} else {
+					delete pAddress;
+					SCRIPT_CALLBACK_THROW(ex.error().c_str())
+				}
+			}
+		SCRIPT_CALLBACK_RETURN
+	}
+
+	template<bool WithDNS>
+	static int CreateSocketAddress(lua_State *pState) {
+		SCRIPT_CALLBACK_TRY(Mona::Invoker, invoker)
+			if (!SCRIPT_READ_AVAILABLE) {
+				Script::AddObject<LUASocketAddress>(pState, Mona::SocketAddress::Wildcard());
+			} else {
+				Mona::Exception ex;
+				Mona::SocketAddress* pAddress = new Mona::SocketAddress();
+				if (LUASocketAddress::Read(ex, pState, SCRIPT_READ_NEXT(1), *pAddress,WithDNS)) {
+					Script::NewObject<LUASocketAddress>(pState, *pAddress);
+					if (ex)
+						SCRIPT_WARN(ex.error());
+				} else {
+					delete pAddress;
+					SCRIPT_CALLBACK_THROW(ex.error().c_str())
+				}
+			}
 		SCRIPT_CALLBACK_RETURN
 	}
 

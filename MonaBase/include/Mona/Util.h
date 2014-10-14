@@ -154,8 +154,11 @@ public:
 			if (isspace(c) || c == '=')
 				continue;
 
-			if ((c > 127) || (c < 0) || (_ReverseB64Table[c] > 63))
+			if ((c > 127) || (c < 0) || (_ReverseB64Table[c] > 63)) {
+				// reset the oldSize
+				buffer.resize(oldSize);
 				return false;
+			}
 		
 			accumulator = (accumulator << 6) | _ReverseB64Table[c];
 			bits += 6;

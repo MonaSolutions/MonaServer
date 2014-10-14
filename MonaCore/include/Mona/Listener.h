@@ -71,8 +71,7 @@ private:
 	Writer&					_writer;
 	Writer*					_pAudioWriter;
 	Writer*					_pVideoWriter;
-	Writer*						_pDataWriter;
-	std::unique_ptr<DataWriter>  _pConvertorWriter;
+	Writer*					_pDataWriter;
 	PacketReader				_publicationNamePacket;
 };
 

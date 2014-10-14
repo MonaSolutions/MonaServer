@@ -46,8 +46,8 @@ public:
 		STOP
 	};
 	enum DataType {
-		USER_DATA=0,
-		INFO_DATA
+		USER_DATA=1,
+		INFO_DATA=2
 	};
 	enum State {
 		OPENING,
@@ -84,7 +84,7 @@ public:
 		If it returns true, for every media type (AUDIO, VIDEO, DATA), an type=INIT call is invoked on start with time=MediaType,
 		and always publication name in packet.
 		Finally, every media data are passed (AUDIO, VIDEO and DATA), if the methods returns false, the cycle restart since the beginning
-		For DATA type, time is Writer::DataType */
+		For DATA type, time is MIME::Type on 3 bytes and Writer::DataType on 1 byte */
 	virtual bool			writeMedia(MediaType type,UInt32 time,PacketReader& packet,const Parameters& properties);
 	virtual bool			writeMember(const Client& client);
 

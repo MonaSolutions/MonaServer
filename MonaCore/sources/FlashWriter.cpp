@@ -19,6 +19,7 @@ This file is a part of Mona.
 
 #include "Mona/FlashWriter.h"
 #include "Mona/AMF.h"
+#include "Mona/MIME.h"
 #include "Mona/Util.h"
 #include "Mona/Logs.h"
 
@@ -29,16 +30,12 @@ using namespace std;
 namespace Mona {
 
 
-FlashWriter::FlashWriter(State state) : _callbackHandleOnAbort(0),_callbackHandle(0),Writer(state),amf0(false) {
+FlashWriter::FlashWriter(State state,const PoolBuffers& poolBuffers) : poolBuffers(poolBuffers),_callbackHandleOnAbort(0),_callbackHandle(0),Writer(state),amf0(false) {
 }
 
-FlashWriter::FlashWriter(FlashWriter& writer) : _callbackHandle(writer._callbackHandle),_callbackHandleOnAbort(0),Writer(writer),amf0(writer.amf0) {
+FlashWriter::FlashWriter(FlashWriter& writer) : poolBuffers(writer.poolBuffers),_callbackHandle(writer._callbackHandle),_callbackHandleOnAbort(0),Writer(writer),amf0(writer.amf0) {
 	writer._callbackHandle = 0;
 }
-
-FlashWriter::~FlashWriter() {
-}
-
 
 AMFWriter& FlashWriter::writeMessage() {
 	AMFWriter& writer(writeInvocation("_result",_callbackHandleOnAbort = _callbackHandle));
@@ -92,7 +89,7 @@ bool FlashWriter::writeMedia(MediaType type,UInt32 time,PacketReader& packet,con
 				writer.writeNumber(time);
 				writer.writeBytes(packet.current(),packet.available());
 			} else
-				write(AMF::AUDIO,time,&packet);
+				write(AMF::AUDIO,time,packet.current(),packet.available());
 			break;
 		case VIDEO:
 			if (!_onVideo.empty()) {
@@ -104,11 +101,25 @@ bool FlashWriter::writeMedia(MediaType type,UInt32 time,PacketReader& packet,con
 				writer.writeBytes(packet.current(),packet.available());
 				
 			} else
-				write(AMF::VIDEO,time,&packet);
+				write(AMF::VIDEO,time,packet.current(),packet.available());
 			break;
-		case DATA:
-			write(time == INFO_DATA ? AMF::INFORMATIONS : AMF::DATA, 0, &packet);
+		case DATA: {
+			// convert to AMF ?
+			DataType dataType((DataType)(time & 0xFF));
+			MIME::Type mimeType((MIME::Type)(time >> 8));
+			if (dataType!=MIME::AMF) {
+				unique_ptr<DataReader> pReader;
+				if (!MIME::CreateDataReader(mimeType, packet,poolBuffers, pReader)) {
+					ERROR("Impossible to convert streaming ", mimeType, " data to AMF, data ignored")
+					break;
+				}
+				AMFWriter& writer(write(dataType == INFO_DATA ? AMF::INFORMATIONS : AMF::DATA, 0));
+				pReader->read(writer); // to AMF
+				break;
+			}
+			write(dataType == INFO_DATA ? AMF::INFORMATIONS : AMF::DATA, 0, packet.current(),packet.available());
 			break;
+		}
 		case INIT:
 			_onAudio.clear();
 			_onVideo.clear();

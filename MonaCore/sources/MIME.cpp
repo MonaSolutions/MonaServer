@@ -31,35 +31,70 @@ using namespace std;
 
 namespace Mona {
 
+MIME::Type MIME::DataType(const char* type) {
+	if (String::ICompare(type, EXPAND("json")) == 0)
+		return JSON;
+	if (String::ICompare(type, EXPAND("xml")) == 0)
+		return XMLRPC;
+	if (String::ICompare(type, EXPAND("amf")) == 0 || String::ICompare(type, EXPAND("x-amf")) == 0)
+		return AMF;
+	return UNKNOWN;
+}
 
-bool MIME::CreateDataReader(const char* type,PacketReader& packet,const PoolBuffers& poolBuffers,unique_ptr<DataReader>& pReader) {
-	if (String::ICompare(type, EXPAND("json")) == 0) {
-		pReader.reset(new JSONReader(packet, poolBuffers));
-		if (((JSONReader&)*pReader).isValid())
+MIME::Type MIME::DataType(DataWriter& writer) {
+	if (typeid(writer).name() == typeid(AMFWriter).name())
+		return AMF;
+	if (typeid(writer).name() == typeid(JSONWriter).name())
+		return JSON;
+	if (typeid(writer).name() == typeid(XMLRPCWriter).name())
+		return XMLRPC;
+	return UNKNOWN;
+}
+
+MIME::Type MIME::DataType(DataReader& reader) {
+	if (typeid(reader).name() == typeid(AMFReader).name())
+		return AMF;
+	if (typeid(reader).name() == typeid(JSONReader).name())
+		return JSON;
+	if (typeid(reader).name() == typeid(XMLRPCReader).name())
+		return XMLRPC;
+	return UNKNOWN;
+}
+
+bool MIME::CreateDataReader(Type type,PacketReader& packet,const PoolBuffers& poolBuffers,unique_ptr<DataReader>& pReader) {
+	switch (type) {
+		case JSON:
+			pReader.reset(new JSONReader(packet, poolBuffers));
+			if (((JSONReader&)*pReader).isValid())
+				return true;
+			break;
+		case XMLRPC:
+			pReader.reset(new XMLRPCReader(packet, poolBuffers));
+			if (((XMLRPCReader&)*pReader).isValid())
+				return true;
+			break;
+		case AMF:
+			pReader.reset(new AMFReader(packet));
 			return true;
-		packet.reset();
-	} else if (String::ICompare(type, EXPAND("xml")) == 0) {
-		pReader.reset(new XMLRPCReader(packet, poolBuffers));
-		if (((XMLRPCReader&)*pReader).isValid())
-			return true;
-		packet.reset();
-	} else if (String::ICompare(type, EXPAND("amf")) == 0 || String::ICompare(type, EXPAND("x-amf")) == 0) {
-		pReader.reset(new AMFReader(packet));
-		return true;
 	}
+	pReader.reset();
+	packet.reset();
 	return false;
 }
 
-bool MIME::CreateDataWriter(const char* type,const PoolBuffers& poolBuffers,unique_ptr<DataWriter>& pWriter) {
-	if (String::ICompare(type, EXPAND("json")) == 0)
-		pWriter.reset(new JSONWriter(poolBuffers));
-	else if (String::ICompare(type, EXPAND("xml")) == 0)
-		pWriter.reset(new XMLRPCWriter(poolBuffers));
-	else if (String::ICompare(type, EXPAND("amf")) == 0 || String::ICompare(type, EXPAND("x-amf")) == 0)
-		pWriter.reset(new AMFWriter(poolBuffers));
-	else
-		return false;
-	return true;
+bool MIME::CreateDataWriter(Type type,const PoolBuffers& poolBuffers,unique_ptr<DataWriter>& pWriter) {
+	switch (type) {
+		case JSON:
+			pWriter.reset(new JSONWriter(poolBuffers));
+			return true;
+		case XMLRPC:
+			pWriter.reset(new XMLRPCWriter(poolBuffers));
+			return true;
+		case AMF:
+			pWriter.reset(new AMFWriter(poolBuffers));
+			return true;
+	}
+	return false;
 }
 
 

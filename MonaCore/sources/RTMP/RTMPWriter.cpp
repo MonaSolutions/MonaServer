@@ -26,7 +26,7 @@ using namespace std;
 
 namespace Mona {
 
-RTMPWriter::RTMPWriter(UInt32 id,TCPSession& session,std::shared_ptr<RTMPSender>& pSender,const shared_ptr<RC4_KEY>& pEncryptKey) : _channel(session.invoker.poolBuffers),channel(session.invoker.poolBuffers),_pSender(pSender),_pEncryptKey(pEncryptKey),id(id), isMain(false), _session(session),FlashWriter(session.peer.connected ? OPENED : OPENING) {
+RTMPWriter::RTMPWriter(UInt32 id,TCPSession& session,std::shared_ptr<RTMPSender>& pSender,const shared_ptr<RC4_KEY>& pEncryptKey) : _channel(session.invoker.poolBuffers),channel(session.invoker.poolBuffers),_pSender(pSender),_pEncryptKey(pEncryptKey),id(id), isMain(false), _session(session),FlashWriter(session.peer.connected ? OPENED : OPENING,session.invoker.poolBuffers) {
 	// TODO _qos.add
 }
 
@@ -60,7 +60,7 @@ void RTMPWriter::writeRaw(const UInt8* data,UInt32 size) {
 	}
 	PacketReader reader(data,size);
 	AMF::ContentType type((AMF::ContentType)reader.read8());
-	write(type,reader.read32(),&reader);
+	write(type,reader.read32(),reader.current(),reader.available());
 }
 
 void RTMPWriter::close(Int32 code) {
@@ -76,7 +76,7 @@ void RTMPWriter::close(Int32 code) {
 	Writer::close(code);
 }
 
-AMFWriter& RTMPWriter::write(AMF::ContentType type,UInt32 time,PacketReader* pData) {
+AMFWriter& RTMPWriter::write(AMF::ContentType type,UInt32 time,const UInt8* data,UInt32 size) {
 	if(state()==CLOSED)
         return AMFWriter::Null;
 
@@ -89,7 +89,7 @@ AMFWriter& RTMPWriter::write(AMF::ContentType type,UInt32 time,PacketReader* pDa
 	if(_channel.streamId == channel.streamId) {
 		++headerFlag;
 		time -= _channel.absoluteTime; // relative time!
-		if (_channel.type == type && pData && _channel.bodySize == pData->available()) {
+		if (_channel.type == type && data && _channel.bodySize == size) {
 			++headerFlag;
 			if (_channel.time==time)
 				++headerFlag;
@@ -105,49 +105,49 @@ AMFWriter& RTMPWriter::write(AMF::ContentType type,UInt32 time,PacketReader* pDa
 		_pSender.reset(new RTMPSender(_session.invoker.poolBuffers));
 
 	AMFWriter& writer = _pSender->writer(_channel);
-	BinaryWriter& data = writer.packet;
+	BinaryWriter& packet = writer.packet;
 
 	_pSender->headerSize = 12 - 4*headerFlag;
 	if (id>319) {
 		_pSender->headerSize += 2;
-		data.write8((headerFlag<<6)| 1);
-		data.write8((id-64)&0x00FF);
-		data.write8((id-64)&0xFF00);
+		packet.write8((headerFlag<<6)| 1);
+		packet.write8((id-64)&0x00FF);
+		packet.write8((id-64)&0xFF00);
 	} else if (id > 63) {
 		++_pSender->headerSize;
-		data.write8((headerFlag<<6)| 0);
-		data.write8(id-64);
+		packet.write8((headerFlag<<6)| 0);
+		packet.write8(id-64);
 	} else
-		data.write8((headerFlag<<6)| id);
+		packet.write8((headerFlag<<6)| id);
 
 
 	if (_pSender->headerSize > 0) {
 		if (time<0xFFFFFF)
-			data.write24(time);
+			packet.write24(time);
 		else {
-			data.write24(0xFFFFFF);
+			packet.write24(0xFFFFFF);
 			_pSender->headerSize += 4;
 		}
 
 		if (_pSender->headerSize > 4) {
-			_pSender->sizePos = data.size();
-			data.next(3); // For size
-			data.write8(type);
+			_pSender->sizePos = packet.size();
+			packet.next(3); // For size
+			packet.write8(type);
 			if (_pSender->headerSize > 8) {
-				data.write8(_channel.streamId);
-				data.write8(_channel.streamId >> 8);
-				data.write8(_channel.streamId >> 16);
-				data.write8(_channel.streamId >> 24);
+				packet.write8(_channel.streamId);
+				packet.write8(_channel.streamId >> 8);
+				packet.write8(_channel.streamId >> 16);
+				packet.write8(_channel.streamId >> 24);
 				// if(type==AMF::DATA) TODO?
 				//	pWriter->write8(0);
 				if (_pSender->headerSize > 12)
-					data.write32(time);
+					packet.write32(time);
 			}
 		}
 	}
 
-	if(pData) {
-		data.write(pData->current(),pData->available());
+	if(data) {
+		packet.write(data,size);
         return AMFWriter::Null;
 	}
 	return writer;

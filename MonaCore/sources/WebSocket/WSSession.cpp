@@ -112,7 +112,7 @@ void WSSession::packetHandler(PacketReader& packet) {
 			}
 			case WS::TYPE_TEXT: {
 				unique_ptr<DataReader> pReader;
-				if (!MIME::CreateDataReader("json", packet, invoker.poolBuffers, pReader)) {
+				if (!MIME::CreateDataReader(MIME::JSON, packet, invoker.poolBuffers, pReader)) {
 					pReader.reset(new StringReader(packet));
 					readMessage(ex,*pReader, WS::TYPE_BINARY);
 				} else

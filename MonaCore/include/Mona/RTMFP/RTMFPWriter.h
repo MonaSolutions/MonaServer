@@ -89,7 +89,7 @@ private:
 
 	void					raiseMessage();
 	RTMFPMessageBuffered&	createMessage();
-	AMFWriter&				write(AMF::ContentType type,UInt32 time=0,PacketReader* pPacket=NULL);
+	AMFWriter&				write(AMF::ContentType type,UInt32 time=0,const UInt8* data=NULL, UInt32 size=0);
 
 	Trigger						_trigger;
 

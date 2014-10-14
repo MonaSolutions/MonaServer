@@ -27,8 +27,20 @@ namespace Mona {
 
 class MIME : virtual Static {
 public:
-	static bool CreateDataReader(const char* type, PacketReader& packet,const PoolBuffers& poolBuffers,std::unique_ptr<DataReader>& pReader);
-	static bool CreateDataWriter(const char* type, const PoolBuffers& poolBuffers,std::unique_ptr<DataWriter>& pWriter);
+
+	enum Type {
+		UNKNOWN = 0,
+		AMF=1,
+		JSON=2,
+		XMLRPC=3
+	};
+
+	static Type DataType(DataWriter& writer);
+	static Type DataType(DataReader& reader);
+	static Type DataType(const char* type);
+
+	static bool CreateDataReader(Type type, PacketReader& packet,const PoolBuffers& poolBuffers,std::unique_ptr<DataReader>& pReader);
+	static bool CreateDataWriter(Type type, const PoolBuffers& poolBuffers,std::unique_ptr<DataWriter>& pWriter);
 };
 
 

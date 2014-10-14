@@ -21,6 +21,7 @@ This file is a part of Mona.
 
 #include "Mona/IPAddress.h"
 #include "Mona/String.h"
+#include "Mona/DNS.h"
 #include "Mona/Util.h"
 
 using namespace std;
@@ -380,6 +381,29 @@ bool IPAddress::set(Exception& ex, const char* address) {
 		return false;
 	}
 	_pIPAddress.reset(pIPAddress);
+	return true;
+}
+
+bool IPAddress::setWithDNS(Exception& ex, const char* address) {
+	if (set(ex, address))
+		return true;
+	HostEntry entry;
+	if (!DNS::HostByName(ex, address, entry))
+		return false;
+	auto& addresses(entry.addresses());
+	if (addresses.empty()) {
+		ex.set(Exception::NETADDRESS, "No address found for ip ", address);
+		return false;
+	}
+	ex.set(Exception::NIL);
+	// if we get both IPv4 and IPv6 addresses, prefer IPv4
+	for (const IPAddress& address : addresses) {
+		if (address.family() == IPAddress::IPv4) {
+			set(address);
+			return true;
+		}
+	}
+	set(addresses.front());
 	return true;
 }
 

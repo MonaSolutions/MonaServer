@@ -31,7 +31,7 @@ public:
 	static int	Get(lua_State *pState);
 	static int	Set(lua_State *pState);
 
-	static bool Read(Mona::Exception& ex, lua_State *pState, int& index, Mona::IPAddress& address);
+	static bool Read(Mona::Exception& ex, lua_State *pState, int index, Mona::IPAddress& address,bool withDNS=false);
 private:
 	static int	Call(lua_State *pState);
 };

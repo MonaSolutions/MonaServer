@@ -46,7 +46,7 @@ public:
 	UInt32 size() const { return _size; }
 	UInt32 count() const { return _array.count(); }
 	
-	void   clear(UInt32 size=0) { _array.clear(); _size = 0; }
+	void   clear(UInt32 size=0) { _array.clear(); _size = 0;}
 
 private:
 

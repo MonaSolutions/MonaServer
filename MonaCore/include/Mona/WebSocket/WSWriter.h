@@ -22,6 +22,7 @@ This file is a part of Mona.
 #include "Mona/Mona.h"
 #include "Mona/Writer.h"
 #include "Mona/TCPSession.h"
+#include "Mona/MIME.h"
 #include "Mona/WebSocket/WS.h"
 #include "Mona/WebSocket/WSSender.h"
 
@@ -56,6 +57,7 @@ private:
 
 	TCPSession&								_session;
 	std::vector<std::shared_ptr<WSSender>>	_senders;
+	MIME::Type								_dataType;
 };
 
 

@@ -26,7 +26,7 @@ using namespace std;
 
 namespace Mona {
 
-WSWriter::WSWriter(TCPSession& session) : _session(session),Writer(session.peer.connected ? OPENED : OPENING) {
+WSWriter::WSWriter(TCPSession& session) : _dataType(MIME::UNKNOWN),_session(session),Writer(session.peer.connected ? OPENED : OPENING) {
 	
 }
 
@@ -135,11 +135,25 @@ bool WSWriter::writeMedia(MediaType type,UInt32 time,PacketReader& packet,const 
 			writeInvocation("__unpublishing").writeString((const char*)packet.current(),packet.available());
 			break;
 		case DATA: {
+			if (_dataType) { // conversion?
+				MIME::Type dataType((MIME::Type)(time >> 8));
+				if (_dataType != dataType) {
+					unique_ptr<DataReader> pReader;
+					if (MIME::CreateDataReader(dataType, packet, _session.invoker.poolBuffers, pReader))
+						pReader->read(newDataWriter()); // to JSON
+				}
+				break;
+			}
+			// raw
 			newDataWriter(true).packet.write(packet.current(), packet.available());
 			break;
 		}
-		case INIT:
+		case INIT: {
+			string dataType;
+			if (properties.getString("dataType", dataType) && (_dataType = MIME::DataType(dataType.c_str())))
+				_dataType = MIME::UNKNOWN;
 			break;
+		}
 		default:
 			return Writer::writeMedia(type,time,packet,properties);
 	}

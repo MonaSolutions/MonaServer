@@ -67,11 +67,13 @@ public:
 
 	// Set an IPAddress from the string containing an IP address in presentation format (dotted decimal for IPv4, hex string for IPv6).
 	bool set(Exception& ex, const char* address);
-	bool set(Exception& ex, const std::string& address) { return set(ex, address.data()); }
+	bool set(Exception& ex, const std::string& address) { return set(ex, address.c_str()); }
+	bool setWithDNS(Exception& ex, const char* address);
+	bool setWithDNS(Exception& ex, const std::string& address) { return setWithDNS(ex, address.c_str()); }
 
 	// Set an IPAddress from the string containing an IP address in presentation format (dotted decimal for IPv4, hex string for IPv6).
 	bool set(Exception& ex, const char* address, Family family);
-	bool set(Exception& ex, const std::string& address, Family family) { return set(ex, address.data(),family); }
+	bool set(Exception& ex, const std::string& address, Family family) { return set(ex, address.c_str(),family); }
 
 	void reset();
 

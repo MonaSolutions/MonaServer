@@ -28,12 +28,13 @@ namespace Mona {
 
 
 JSONWriter::JSONWriter(const PoolBuffers& poolBuffers) : DataWriter(poolBuffers),_first(true),_layers(0) {
+	packet.write("[]");
 }
 
 void JSONWriter::clear(UInt32 size) {
 	_first=true;
 	_layers=0;
-	packet.clear(size);
+	DataWriter::clear(size);
 	packet.write("[]");
 }
 
@@ -107,9 +108,9 @@ UInt64 JSONWriter::writeBytes(const UInt8* data,UInt32 size) {
 
 void JSONWriter::start(bool isContainer) {
 
-	// add the first '['
+	// remove the last ']'
 	if (_layers == 0)
-		packet.write8('[');
+		packet.clear(packet.size() - 1);
 
 
 	if(!_first)

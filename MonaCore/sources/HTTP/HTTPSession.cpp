@@ -217,7 +217,7 @@ void HTTPSession::packetHandler(PacketReader& reader) {
 			else if (pPacket->command == HTTP::COMMAND_POST) {
 				PacketReader packet(pPacket->content, pPacket->contentLength);
 				unique_ptr<DataReader> pReader;
-				if (!MIME::CreateDataReader(pPacket->contentSubType.c_str(), packet, invoker.poolBuffers, pReader)) {
+				if (!MIME::CreateDataReader(MIME::DataType(pPacket->contentSubType.c_str()), packet, invoker.poolBuffers, pReader)) {
 					pReader.reset(new StringReader(packet));
 					pPacket->rawSerialization = true;
 				}

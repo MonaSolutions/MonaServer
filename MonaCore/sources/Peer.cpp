@@ -36,7 +36,7 @@ public:
 	Writer*			pWriter;
 };
 
-Peer::Peer(Handler& handler) : _pWriter(NULL),_ping(0),_pingTime(0),_pingProcessing(false),_handler(handler), connected(false) {
+Peer::Peer(Handler& handler) : _pWriter(NULL),_ping(0),_pingProcessing(false),_handler(handler), connected(false) {
 }
 
 Peer::~Peer() {
