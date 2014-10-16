@@ -51,7 +51,7 @@ bool Parameters::getBool(const char* key, bool& value) const {
 }
 
 void Parameters::setIntern(const char* key, const char* value, size_t size) {
-	const string* pChanged(setRaw(key, value, size == string::npos ? strlen(value) : size));
+	const string* pChanged(setRaw(key, value, value && size == string::npos ? strlen(value) : size));
 	if (pChanged)
 		OnChange::raise(key,value ? pChanged->c_str() : NULL); // value==NULL means "deletion"
 }

@@ -57,11 +57,11 @@ public:
 
 
 	/*! A short version of getNumber with template default argument to get value as returned result */
-	template<typename NumberType,NumberType defaultValue=0>
+	template<typename NumberType=double,int defaultValue=0>
 	NumberType getNumber(const std::string& key) const { return getNumber<NumberType,defaultValue>(key.c_str()); }
-	template<typename NumberType,NumberType defaultValue=0>
+	template<typename NumberType,int defaultValue=0>
 	NumberType getNumber(const char* key) const {
-		NumberType result(defaultValue);
+		NumberType result((NumberType)defaultValue);
 		getNumber(key,result);
 		return result;
 	}
@@ -108,7 +108,7 @@ public:
 	
 	void clear() { clearAll(); OnClear::raise(); }
 
-
+	bool empty() const { return count() == 0; }
 	virtual UInt32 count() const = 0;
 
 protected:

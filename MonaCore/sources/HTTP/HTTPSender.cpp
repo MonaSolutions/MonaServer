@@ -170,7 +170,7 @@ DataWriter& HTTPSender::writer(const string& code, HTTP::ContentType type, const
 		return DataWriter::Null;
 	}
 
-	if (type == HTTP::CONTENT_ABSENT || data || size || !subType || !MIME::CreateDataWriter(subType, _poolBuffers, _pWriter))
+	if (type == HTTP::CONTENT_ABSENT || data || size || !subType || !MIME::CreateDataWriter(MIME::DataType(subType), _poolBuffers, _pWriter))
 		_pWriter.reset(new StringWriter(_poolBuffers));
 
 	PacketWriter& packet = _pWriter->packet;

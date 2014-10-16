@@ -25,6 +25,7 @@ using namespace Mona;
 using namespace std;
 
 Options _Options;
+static int _I;
 
 bool GetOption(const string& fullName) { return _Options.get(fullName) ? true : false; }
 
@@ -141,18 +142,20 @@ ADD_TEST(OptionsTest, TestOptionsAdd) {
 
 	_Options.remove("include-dir");
 	CHECK(!GetOption("include-dir"));
+
+	_Options.clear();
+	CHECK(_Options.count()==0 && _Options.empty());
 }
 
 void TestProcessInclude(const string& name, const string& value) {
 	CHECK(name == "include-dir");
-	static int i = 0;
     static const char* res[] = {
 		"include",
 		"/usr/include",
 		"/usr/local/include",
 		"/proj/include",
 		"/usr/include" };
-	CHECK(value == res[i++]);
+	CHECK(value == res[_I++]);
 }
 
 void TestProcessVerbose(const string& name, const string& value) {
@@ -162,10 +165,9 @@ void TestProcessVerbose(const string& name, const string& value) {
 
 void TestProcessOptimize(const string& name, const string& value) {
 	CHECK(name == "optimize");
-	static int counter = 0;
-	if (++counter < 3)
+	if (++_I < 3)
 		CHECK(value.empty())
-	else if (counter == 3)
+	else if (_I == 3)
 		CHECK(value == "1")
 	else
 		CHECK(value == "2")
@@ -183,6 +185,7 @@ ADD_TEST(OptionsTest, TestProcess) {
 					"-include-dir=/proj/include",
 					"/include-dir=/usr/include"};
 
+	_I = 0;
 	CHECK(_Options.process(ex, (sizeof(arg) / sizeof(char *)), arg, TestProcessInclude));
 
 	CHECK(!ProcessArg("/I"));
@@ -204,10 +207,13 @@ ADD_TEST(OptionsTest, TestProcess) {
 
 	CHECK(AddOption("optimize", "O", "enable optimization", false, false, "level", false));
 	
+	_I = 0;
 	CHECK(ProcessArg("/O", TestProcessOptimize));
 	CHECK(ProcessArg("-optimize=", TestProcessOptimize));
 
 	CHECK(ProcessArg("-optimize:1", TestProcessOptimize));
 	CHECK(ProcessArg("/O=2", TestProcessOptimize));
-	
+
+	_Options.clear();
+	CHECK(_Options.count()==0 && _Options.empty());
 }

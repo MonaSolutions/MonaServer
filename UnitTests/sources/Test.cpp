@@ -26,7 +26,7 @@ using namespace std;
 
 void Test::run(UInt32 loop) {
 	_chrono.restart();
-	for (UInt32 i = 0; i < loop;++i)
+	for (_loop = 0; _loop < loop;++_loop)
 		TestFunction();
 	_chrono.stop();
 	NOTE(_name, " OK (",_chrono.elapsed(),"ms)");

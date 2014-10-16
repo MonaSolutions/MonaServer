@@ -36,6 +36,8 @@ public:
 
 	void run(Mona::UInt32 loop);
 
+protected:
+	Mona::UInt32	_loop;
 private:
 	virtual void TestFunction() = 0;
 		/// \brief The test function to overload
@@ -77,6 +79,9 @@ private:
 		/// \brief destructor of PoolTest
 
 };
+
+
+#define LOOP _loop
 
 /// Macro for assert true function
 #define CHECK(CONDITION) FATAL_ASSERT(CONDITION)

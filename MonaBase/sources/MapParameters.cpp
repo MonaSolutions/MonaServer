@@ -47,8 +47,7 @@ UInt32 MapParameters::iteration(const char* prefix, const ForEach& function) con
 const string* MapParameters::setRaw(const char* key, const char* value, UInt32 size) {
 	if (!value)
 		return _map.erase(key)>0 ? &String::Empty : NULL;
-	auto it(_map.emplace(piecewise_construct, forward_as_tuple(key), forward_as_tuple(value, size)));
-	return it.second ? &it.first->second : NULL;
+	return &_map[key].assign(value, size);
 }
 
 
