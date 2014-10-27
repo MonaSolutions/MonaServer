@@ -270,12 +270,20 @@
 <div class="section" id="id3">
 <h4><a class="toc-backref" href="#id14">onConnection parameters</a><a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h4>
 <p>As it is said in the <a class="reference external" href="./api.html">LUA API</a> first parameter of <em>onConnection</em> is the <strong>Client</strong> object.</p>
-<p>Other parameters are <strong>URL query parameters</strong> from the HTTP request.</p>
+<p>The following parameter is an array which contains <strong>URL query parameters</strong> from the HTTP request.</p>
+<div class="highlight-lua"><div class="highlight"><pre><span class="c1">-- show each parameters from url</span>
+    <span class="k">function</span> <span class="nf">onConnection</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">parameters</span><span class="p">)</span>
+            <span class="n">INFO</span><span class="p">(</span><span class="n">mona</span><span class="p">:</span><span class="n">toJSON</span><span class="p">(</span><span class="n">parameters</span><span class="p">))</span>
+    <span class="k">end</span>
+</pre></div>
+</div>
 </div>
 <div class="section" id="id4">
 <h4><a class="toc-backref" href="#id15">client.properties</a><a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h4>
-<p>With HTTP protocol the client properties maps cookies sended by client plus some connection properties :
-- <strong>HTTPVersion</strong> (read-only), the version of HTTP used.</p>
+<p>With HTTP protocol the client properties maps cookies sended by client plus some connection properties :</p>
+<ul class="simple">
+<li><strong>HTTPVersion</strong> (read-only), the version of HTTP used.</li>
+</ul>
 </div>
 <div class="section" id="client-properties-key-value-expires-path-domain-secure-httponly">
 <h4><a class="toc-backref" href="#id16">client.properties(key, value[, expires, path, domain, secure, httpOnly])</a><a class="headerlink" href="#client-properties-key-value-expires-path-domain-secure-httponly" title="Permalink to this headline">¶</a></h4>

@@ -126,7 +126,7 @@
 <li><a class="reference internal" href="#id9">events</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#flowwriter">FlowWriter</a><ul>
+<li><a class="reference internal" href="#writer">Writer</a><ul>
 <li><a class="reference internal" href="#id10">properties</a></li>
 <li><a class="reference internal" href="#id11">methods</a></li>
 <li><a class="reference internal" href="#id12">events</a></li>
@@ -275,7 +275,7 @@ To know how create a server application, and understand how it works, read <a cl
 <li><a class="reference internal" href="#data" id="id49">Data</a></li>
 <li><a class="reference internal" href="#clients" id="id50">Clients</a></li>
 <li><a class="reference internal" href="#client" id="id51">Client</a></li>
-<li><a class="reference internal" href="#flowwriter" id="id52">FlowWriter</a></li>
+<li><a class="reference internal" href="#writer" id="id52">Writer</a></li>
 <li><a class="reference internal" href="#groups" id="id53">Groups</a></li>
 <li><a class="reference internal" href="#group" id="id54">Group</a></li>
 <li><a class="reference internal" href="#member" id="id55">Member</a></li>
@@ -384,7 +384,6 @@ To know how create a server application, and understand how it works, read <a cl
 <li><strong>clients</strong> (read-only), clients actually connected, see <em>clients</em> object thereafter.</li>
 <li><strong>configs</strong> (read-only), return a <a class="reference external" href="http://www.lua.org/">LUA</a> table which contains Mona configurations, it means the <em>MonaServer.ini</em> content file, (see <em>Configurations</em> part of <a class="reference external" href="./installation.html">Installation</a> page) and also some others usefull parameters (application.path, application.baseName, and many others. To know really all its content, iterate on this table and print its content). One sample is given in <em>Global configurations</em> in <a class="reference external" href="./serverapp.html">Server Application</a> page.</li>
 <li><strong>environment</strong> (read-only), return a <a class="reference external" href="http://www.lua.org/">LUA</a> table which contains environment variables from the system.</li>
-<li><strong>epochTime</strong> (read-only), gives the epoch time (since the Unix epoch, midnight, January 1, 1970) in milliseconds.</li>
 <li><strong>groups</strong> (read-only), existing groups (NetGroup_s running), see <em>groups</em> object thereafter.</li>
 <li><strong>pulications</strong> (read-only), server publications available, see <em>publications</em> object thereafter.</li>
 <li><strong>servers</strong> (read-only), MonaServer instances actually connected to the server, see <em>Servers_</em> object thereafter.</li>
@@ -419,6 +418,7 @@ To know how create a server application, and understand how it works, read <a cl
 <li><strong>split(expression,separator[,option])</strong>, <a class="reference external" href="http://www.lua.org/">LUA</a> has not real split operator, this function fills this gap. It splits the <em>expression</em> in relation with the <em>separator</em> term given, and returns tokens as a multiple result. A optional number argument indicates if you want to ignore empty tokens (<em>option</em> =1), or to remove leading and trailing whitespace from tokens (<em>option</em> =2), or the both in same time (<em>option</em> =3).</li>
 <li><strong>listPaths(dirName)</strong>, return a <a class="reference external" href="http://www.lua.org/">LUA</a> table containing objects of type <em>File</em> in the <em>dirName</em> directory (relative to the <strong>www</strong> path), see <a class="reference internal" href="#file">File</a> object thereafter.</li>
 <li><strong>joinGroup(peerID, groupID)</strong>, add <a class="reference internal" href="#client">Client</a> with <em>peerID</em> to <a class="reference internal" href="#group">Group</a> with <em>groupID</em>.</li>
+<li><strong>time()</strong>, gives the epoch time (since the Unix epoch, midnight, January 1, 1970) in milliseconds.</li>
 <li><strong>dump(data[, size])</strong>, dump data to the console and log file, if <em>size</em> is not specified it dump all the data.</li>
 </ul>
 <p>Example of access to a Mona global function :</p>
@@ -462,7 +462,7 @@ To know how create a server application, and understand how it works, read <a cl
 <li><strong>ping</strong> (read-only), client ping value.</li>
 <li><strong>protocol</strong> (read-only), client protocol name (HTTP, WebSocket, RTMP or RTMFP).</li>
 <li><strong>query</strong> (read-only), query part of the url (used in HTTP).</li>
-<li><strong>writer</strong> (read-only), the main flowWriter to communicate with the client (see <a class="reference internal" href="#flowwriter">FlowWriter</a> object thereafter).</li>
+<li><strong>writer</strong> (read-only), the main writer to communicate with the client (see <a class="reference internal" href="#writer">Writer</a> object thereafter).</li>
 <li><strong>properties</strong> (read-only), dynamic properties of the client connection, depends on the protocol (see <a class="reference external" href="./protocols.html">Specific Protocol functionalities</a>).</li>
 <li><strong>parameters</strong> (read-only), static parameters/configuration of the client protocol (<strong>parameters</strong> can be substituate by protocol name).</li>
 </ul>
@@ -495,9 +495,9 @@ To know how create a server application, and understand how it works, read <a cl
 </ul>
 </div>
 </div>
-<div class="section" id="flowwriter">
-<h3><a class="toc-backref" href="#id52">FlowWriter</a><a class="headerlink" href="#flowwriter" title="Permalink to this headline">¶</a></h3>
-<p>A FlowWriter is an unidirectional communication pipe, which allows to write message in a fifo to the client. Each flowWriter is independant and have its own statistic exchange informations. It&#8217;s used to communicate with the client, see <em>Communication between server and client</em> of <a class="reference external" href="./serverapp.html">Server Application</a> page to get more details. Each client have at less one flowWriter opened (available by <em>client.writer</em>, see <em>client</em> object above), it&#8217;s its main communication channel, but you can open many flowWriters if need.</p>
+<div class="section" id="writer">
+<h3><a class="toc-backref" href="#id52">Writer</a><a class="headerlink" href="#writer" title="Permalink to this headline">¶</a></h3>
+<p>A Writer is an unidirectional communication pipe, which allows to write message in a fifo to the client. Each writer is independant and have its own statistic exchange informations. It&#8217;s used to communicate with the client, see <em>Communication between server and client</em> of <a class="reference external" href="./serverapp.html">Server Application</a> page to get more details. Each client have at less one writer opened (available by <em>client.writer</em>, see <em>client</em> object above), it&#8217;s its main communication channel, but you can open many writers if need.</p>
 <div class="section" id="id10">
 <h4>properties<a class="headerlink" href="#id10" title="Permalink to this headline">¶</a></h4>
 <ul class="simple">
@@ -537,9 +537,9 @@ To know how create a server application, and understand how it works, read <a cl
 <li><strong>writeMessage(...)</strong>, write a result for an invokation client call, it takes multiple <a class="reference external" href="http://www.lua.org/">LUA</a> variables as argument to convert it to the output format and send it to the client (see <em>AMF and LUA types conversion</em> part of <a class="reference external" href="./serverapp.html">Server Application</a> page to know how AMF/<a class="reference external" href="http://www.lua.org/">LUA</a> conversion works).</li>
 <li><strong>writeInvocation(name,...)</strong>, invoke a client method on client side. First parameter is the name of the function to call, and then it takes multiple <a class="reference external" href="http://www.lua.org/">LUA</a> variables as argument to convert it to AMF and send it to the client (see <em>AMF and LUA types conversion</em> part of <a class="reference external" href="./serverapp.html">Server Application</a> page to know how AMF/<a class="reference external" href="http://www.lua.org/">LUA</a> conversion works).</li>
 <li><strong>writeStatusResponse(code,[description])</strong>, call a status event on flash side. If code argument is <em>Call.Failed</em> for example the status event created will be <em>NetConnection.Call.Failed</em>. The second optional argument is the literal description of this event.</li>
-<li><strong>flush([full])</strong>, fill queueing data to sending buffer to the pipe without waiting anymore. Helpful in some special real-time sending case with an important flow rate, to control sending. By default the sending is complete and immediate (<em>full=true</em>), however if the optional <em>full</em> argument equals <em>false</em> it sends only the UDP packets where no more data can be written (maximum size reached), but keep the last writing suspended. It can be usefull when you use several flowWriters, and that you want flush their data with a certain order: you call <em>flush(false)</em> on all the flowWriters, and to finish a <em>flush()</em> final to send last suspended data.</li>
-<li><strong>newFlowWriter()</strong>, create a new flowWriter communication pipe and returns it.</li>
-<li><strong>close()</strong>, close the communication pipe. In the case where you close a flowWriter creating by yourself (in calling <em>client.writer:newFlowWriter()</em>), it closes the flowWriter and you must not use anymore the flowWriter object which is going to be deleted. In the case where you close the main flowWriter of its client (<em>client.writer:close()</em>) it closes the entiere client session.</li>
+<li><strong>flush([full])</strong>, fill queueing data to sending buffer to the pipe without waiting anymore. Helpful in some special real-time sending case with an important flow rate, to control sending. By default the sending is complete and immediate (<em>full=true</em>), however if the optional <em>full</em> argument equals <em>false</em> it sends only the UDP packets where no more data can be written (maximum size reached), but keep the last writing suspended. It can be usefull when you use several writers, and that you want flush their data with a certain order: you call <em>flush(false)</em> on all the writers, and to finish a <em>flush()</em> final to send last suspended data.</li>
+<li><strong>newWriter()</strong>, create a new writer communication pipe and returns it.</li>
+<li><strong>close()</strong>, close the communication pipe. In the case where you close a writer creating by yourself (in calling <em>client.writer:newWriter()</em>), it closes the writer and you must not use anymore the writer object which is going to be deleted. In the case where you close the main writer of its client (<em>client.writer:close()</em>) it closes the entiere client session.</li>
 </ul>
 </div>
 <div class="section" id="id12">
@@ -549,7 +549,7 @@ To know how create a server application, and understand how it works, read <a cl
 </ul>
 <div class="admonition warning">
 <p class="first admonition-title">Warning</p>
-<p class="last"><em>onManage</em> event doesn&#8217;t work for the main flowWriter of one client, but just for a flowWriter created by script code with <em>newFlowWriter()</em> method (see methods description above).</p>
+<p class="last"><em>onManage</em> event doesn&#8217;t work for the main writer of one client, but just for a writer created by script code with <em>newWriter()</em> method (see methods description above).</p>
 </div>
 </div>
 </div>
@@ -766,17 +766,18 @@ To know how create a server application, and understand how it works, read <a cl
 </div>
 <div class="section" id="file">
 <h3><a class="toc-backref" href="#id66">File</a><a class="headerlink" href="#file" title="Permalink to this headline">¶</a></h3>
-<p><em>File</em> object gives some properties of a file in the file system. <em>File</em> objects are created on a <em>mona:files(...)</em> call.</p>
+<p><em>File</em> object gives some properties of a file in the file system. <em>File</em> objects are created on a <em>mona:listPaths(...)</em> call.</p>
 <div class="section" id="id37">
 <h4>properties<a class="headerlink" href="#id37" title="Permalink to this headline">¶</a></h4>
 <ul class="simple">
-<li><strong>fullPath</strong> (read-only), full path of the file</li>
 <li><strong>name</strong> (read-only), name of the file</li>
 <li><strong>baseName</strong> (read-only), name of the file, without extension</li>
+<li><strong>parent</strong> (read-only), name of the parent directory</li>
 <li><strong>extension</strong> (read-only), extension of the file</li>
 <li><strong>size</strong> (read-only), size of the file</li>
 <li><strong>lastModified</strong> (read-only), date of last modification (in seconds)</li>
 <li><strong>isDirectory</strong> (read-only), true if the file is a directory</li>
+<li><strong>value</strong> (read-only), full path of the file</li>
 </ul>
 </div>
 </div>
@@ -1025,7 +1026,7 @@ Otherwise you can cutomize this message in raising one error in this context.</p
 <p>Call on client disconnection. <em>client</em> argument is the disconnected client.</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
-<p class="last">At this stage you can send no more data to the client, all writing to a flowWriter object of this client has no effect.</p>
+<p class="last">At this stage you can send no more data to the client, all writing to a writer object of this client has no effect.</p>
 </div>
 </div>
 <div class="section" id="ontypedobject-type-object">

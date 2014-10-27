@@ -89,7 +89,6 @@ properties
 - **clients** (read-only), clients actually connected, see *clients* object thereafter.
 - **configs** (read-only), return a LUA_ table which contains Mona configurations, it means the *MonaServer.ini* content file, (see *Configurations* part of `Installation <./installation.html>`_ page) and also some others usefull parameters (application.path, application.baseName, and many others. To know really all its content, iterate on this table and print its content). One sample is given in *Global configurations* in `Server Application`_ page.
 - **environment** (read-only), return a LUA_ table which contains environment variables from the system.
-- **epochTime** (read-only), gives the epoch time (since the Unix epoch, midnight, January 1, 1970) in milliseconds.
 - **groups** (read-only), existing groups (NetGroup_s running), see *groups* object thereafter.
 - **pulications** (read-only), server publications available, see *publications* object thereafter.
 - **servers** (read-only), MonaServer instances actually connected to the server, see *Servers_* object thereafter.
@@ -125,6 +124,7 @@ methods
 - **split(expression,separator[,option])**, LUA_ has not real split operator, this function fills this gap. It splits the *expression* in relation with the *separator* term given, and returns tokens as a multiple result. A optional number argument indicates if you want to ignore empty tokens (*option* =1), or to remove leading and trailing whitespace from tokens (*option* =2), or the both in same time (*option* =3).
 - **listPaths(dirName)**, return a LUA_ table containing objects of type *File* in the *dirName* directory (relative to the **www** path), see File_ object thereafter.
 - **joinGroup(peerID, groupID)**, add Client_ with *peerID* to Group_ with *groupID*.
+- **time()**, gives the epoch time (since the Unix epoch, midnight, January 1, 1970) in milliseconds.
 - **dump(data[, size])**, dump data to the console and log file, if *size* is not specified it dump all the data.
 
 Example of access to a Mona global function :
@@ -169,7 +169,7 @@ properties
 - **ping** (read-only), client ping value.
 - **protocol** (read-only), client protocol name (HTTP, WebSocket, RTMP or RTMFP).
 - **query** (read-only), query part of the url (used in HTTP).
-- **writer** (read-only), the main flowWriter to communicate with the client (see FlowWriter_ object thereafter).
+- **writer** (read-only), the main writer to communicate with the client (see Writer_ object thereafter).
 - **properties** (read-only), dynamic properties of the client connection, depends on the protocol (see `Specific Protocol functionalities`_).
 - **parameters** (read-only), static parameters/configuration of the client protocol (**parameters** can be substituate by protocol name).
 
@@ -203,10 +203,10 @@ events
 - **onManage**, overloading this method allows to get an inside handle every two seconds on the related client.
 
 
-FlowWriter
+Writer
 ==================
 
-A FlowWriter is an unidirectional communication pipe, which allows to write message in a fifo to the client. Each flowWriter is independant and have its own statistic exchange informations. It's used to communicate with the client, see *Communication between server and client* of `Server Application`_ page to get more details. Each client have at less one flowWriter opened (available by *client.writer*, see *client* object above), it's its main communication channel, but you can open many flowWriters if need.
+A Writer is an unidirectional communication pipe, which allows to write message in a fifo to the client. Each writer is independant and have its own statistic exchange informations. It's used to communicate with the client, see *Communication between server and client* of `Server Application`_ page to get more details. Each client have at less one writer opened (available by *client.writer*, see *client* object above), it's its main communication channel, but you can open many writers if need.
 
 properties
 -----------------
@@ -253,16 +253,16 @@ methods
 - **writeMessage(...)**, write a result for an invokation client call, it takes multiple LUA_ variables as argument to convert it to the output format and send it to the client (see *AMF and LUA types conversion* part of `Server Application`_ page to know how AMF/LUA_ conversion works).
 - **writeInvocation(name,...)**, invoke a client method on client side. First parameter is the name of the function to call, and then it takes multiple LUA_ variables as argument to convert it to AMF and send it to the client (see *AMF and LUA types conversion* part of `Server Application`_ page to know how AMF/LUA_ conversion works).
 - **writeStatusResponse(code,[description])**, call a status event on flash side. If code argument is *Call.Failed* for example the status event created will be *NetConnection.Call.Failed*. The second optional argument is the literal description of this event.
-- **flush([full])**, fill queueing data to sending buffer to the pipe without waiting anymore. Helpful in some special real-time sending case with an important flow rate, to control sending. By default the sending is complete and immediate (*full=true*), however if the optional *full* argument equals *false* it sends only the UDP packets where no more data can be written (maximum size reached), but keep the last writing suspended. It can be usefull when you use several flowWriters, and that you want flush their data with a certain order: you call *flush(false)* on all the flowWriters, and to finish a *flush()* final to send last suspended data.
-- **newFlowWriter()**, create a new flowWriter communication pipe and returns it.
-- **close()**, close the communication pipe. In the case where you close a flowWriter creating by yourself (in calling *client.writer:newFlowWriter()*), it closes the flowWriter and you must not use anymore the flowWriter object which is going to be deleted. In the case where you close the main flowWriter of its client (*client.writer:close()*) it closes the entiere client session.
+- **flush([full])**, fill queueing data to sending buffer to the pipe without waiting anymore. Helpful in some special real-time sending case with an important flow rate, to control sending. By default the sending is complete and immediate (*full=true*), however if the optional *full* argument equals *false* it sends only the UDP packets where no more data can be written (maximum size reached), but keep the last writing suspended. It can be usefull when you use several writers, and that you want flush their data with a certain order: you call *flush(false)* on all the writers, and to finish a *flush()* final to send last suspended data.
+- **newWriter()**, create a new writer communication pipe and returns it.
+- **close()**, close the communication pipe. In the case where you close a writer creating by yourself (in calling *client.writer:newWriter()*), it closes the writer and you must not use anymore the writer object which is going to be deleted. In the case where you close the main writer of its client (*client.writer:close()*) it closes the entiere client session.
 
 events
 -----------------
 
 - **onManage**, overloading this method allows to get an inside handle every two seconds (see *Communication between server and client* part of `Server Application`_ page to get a sample usage).
 
-.. warning:: *onManage* event doesn't work for the main flowWriter of one client, but just for a flowWriter created by script code with *newFlowWriter()* method (see methods description above).
+.. warning:: *onManage* event doesn't work for the main writer of one client, but just for a writer created by script code with *newWriter()* method (see methods description above).
 
 
 Groups
@@ -473,18 +473,19 @@ methods
 File
 =============
 
-*File* object gives some properties of a file in the file system. *File* objects are created on a *mona:files(...)* call.
+*File* object gives some properties of a file in the file system. *File* objects are created on a *mona:listPaths(...)* call.
 
 properties
 -----------------
 
-- **fullPath** (read-only), full path of the file
 - **name** (read-only), name of the file
 - **baseName** (read-only), name of the file, without extension
+- **parent** (read-only), name of the parent directory
 - **extension** (read-only), extension of the file
 - **size** (read-only), size of the file
 - **lastModified** (read-only), date of last modification (in seconds)
 - **isDirectory** (read-only), true if the file is a directory
+- **value** (read-only), full path of the file
 
 Events
 **************
@@ -767,7 +768,7 @@ onDisconnection(client)
 
 Call on client disconnection. *client* argument is the disconnected client.
 
-.. note:: At this stage you can send no more data to the client, all writing to a flowWriter object of this client has no effect.
+.. note:: At this stage you can send no more data to the client, all writing to a writer object of this client has no effect.
 
 onTypedObject(type,object)
 =====================================

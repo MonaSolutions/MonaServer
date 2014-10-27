@@ -91,12 +91,20 @@ onConnection parameters
 
 As it is said in the `LUA API`_ first parameter of *onConnection* is the **Client** object.
 
-Other parameters are **URL query parameters** from the HTTP request.
+The following parameter is an array which contains **URL query parameters** from the HTTP request.
+
+.. code-block:: lua
+
+    -- show each parameters from url
+	function onConnection(client, parameters)
+		INFO(mona:toJSON(parameters))
+	end
 
 client.properties
 -------------------------------------------
 
 With HTTP protocol the client properties maps cookies sended by client plus some connection properties :
+
 - **HTTPVersion** (read-only), the version of HTTP used.
 
 client.properties(key, value[, expires, path, domain, secure, httpOnly])
