@@ -50,3 +50,4 @@ _build
 /MonaServer/data
 logs
 /MonaServer/www
+html-template

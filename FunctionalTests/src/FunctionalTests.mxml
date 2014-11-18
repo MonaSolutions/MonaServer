@@ -22,9 +22,9 @@
 			public var _timeStart:int = 0; // Time in msec when the test has been started
 			
 			// Console functions
-			public function INFO(message:String):void { console.htmlText += "<p>" + message + "</p>"; }
-			public function SUCCESS(message:String):void { console.htmlText += "<p><b>" + message + "<b></p>"; }
-			public function ERROR(message:String):void { console.htmlText += "<p><b><i>ERROR : " + message + "</i></b></p>"; }
+			public function INFO(message:String):void { console.htmlText += "<p><font color='#000000'>" + message + "</font></p>"; }
+			public function SUCCESS(message:String):void { console.htmlText += "<p><b><font color='#00CC00'>" + message + "</font></b></p>"; }
+			public function ERROR(message:String):void { console.htmlText += "<p><b><i><font color='#CC0000'>ERROR : " + message + "</font></i></b></p>"; }
 			
 			private function init():void {
 				// Initiate parameters
@@ -33,13 +33,15 @@
 				
 				INFO("Starting FunctionalTests from host http://" + hostDefault + applicationDefault);
 				
-				addTest(new TestHTTP(this, hostDefault, applicationDefault));
-				addTest(new TestHTTPReconnect(this, hostDefault, applicationDefault));
-				addTest(new TestBadRequests(this, hostDefault));
+				addTest(new HTTPLoad(this, hostDefault, applicationDefault));
+				addTest(new HTTPReconnect(this, hostDefault, applicationDefault));
+				addTest(new HTTPBadRequests(this, hostDefault));
+				addTest(new HTTPAggregated(this, hostDefault, applicationDefault));
+				addTest(new RTMPBadRequests(this, hostDefault));
 				addTest(new SerializationJSON(this, hostDefault));
-				addTest(new SerializationXML(this, hostDefault));
 				addTest(new DeserializationJSON(this, hostDefault, applicationDefault));
-				addTest(new DeserializationXML(this, hostDefault, applicationDefault));
+				addTest(new DeserializationXMLRPC(this, hostDefault, applicationDefault));
+				addTest(new BigDeserialize(this, hostDefault, applicationDefault));
 			}
 			
 			public function addTest(test:Test):void {
@@ -91,7 +93,7 @@
 	</fx:Script>	
 	<mx:VBox x="10" y="10" width="935" height="580">
 		<mx:HBox width="100%">
-			<mx:TextArea id="console" width="720" height="518" editable="false"/>
+			<mx:TextArea id="console" width="720" height="518" editable="false" />
 			<mx:List id="listTests" width="204" height="517" dataProvider="{arrayTests}" allowMultipleSelection="true"></mx:List>
 		</mx:HBox>
 		<mx:HBox width="100%">

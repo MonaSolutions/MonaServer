@@ -11,26 +11,18 @@ tabSerialize = {
   {a=1,b=2,3,4,x={{{1,2,3}}}}
 }
 
+-- ******* Socket Policy file *******
 
--- ******* TestBadRequests parameters *******
-nbBadRequests = 0
-socket = mona:createTCPClient()
-
-function socket:onDisconnection()
-	if self.error then -- error? or normal disconnection?
-		ERROR(self.error)
-		self.clientWriter:writeInvocation("onFinished", self.error);
-	else
-		if nbBadRequests < 10 then
-			nbBadRequests = nbBadRequests + 1
-			local ok = self:connect("localhost",80)
-			if ok then self:send("TESTBADREQUEST") end
-		else
-			self.clientWriter:writeInvocation("onFinished", "");
-		end
-	end
-	NOTE("TCP disconnection")
+serverPolicyFile = mona:createTCPServer()
+function serverPolicyFile:onConnection(client)
+        
+        function client:onData(data)
+                INFO("Sending policy file...")
+                self:send("<cross-domain-policy><allow-access-from domain=\"*\" to-ports=\"*\"/></cross-domain-policy>\0")
+                return 0 -- return rest (all has been consumed here)
+        end
 end
+serverPolicyFile:start(843); -- start the server on the port 843
 
 
 -- ******* Main functions *******
@@ -43,15 +35,10 @@ function onConnection(client,...)
 		for key,value in pairs(tabSerialize) do
 			-- Serialize current object
 			local result2JSON = ""
-			if mode == "xml" then
-				local result = mona:toXML(value)
-				INFO("XML : ", result)
-				result2JSON = mona:toJSON(mona:fromXML(result))
-			else -- JSON
-				local result = mona:toJSON(value)
-				INFO("JSON : ", result)
-				result2JSON = mona:toJSON(mona:fromJSON(result))
-			end
+			-- JSON
+			local result = mona:toJSON(value)
+			INFO("JSON : ", result)
+			result2JSON = mona:toJSON(mona:fromJSON(result))
 			local msg2JSON = mona:toJSON(value) -- JSON serialization is considerated as valid
 			
 			-- Return result
@@ -63,21 +50,13 @@ function onConnection(client,...)
 		client.writer:writeInvocation("onFinished", "")
 	end
   
-	function client:testBadRequests()
-		nbBadRequests = 0
-		
-		socket.clientWriter = self.writer
-		local ok = socket:connect("localhost",80)
-		if ok then socket:send("TESTBADREQUEST") end
-	end
-  
-	-- For TestHTTP, TestHTTPReconnect and Deserialize tests
-	function client:onMessage(data)
+	-- For HTTPLoad, HTTPReconnect and Deserialize tests
+	function client:onMessage(...)
 		NOTE(path) -- to see if we are in app or subapp
-		INFO("Message : ", mona:toJSON(data))
+		INFO("Message : ", mona:toJSON(...))
 		
-		client.writer:writeMessage(data)
+		client.writer:writeMessage(...)
 	end
   
-  --return {index="index.html",timeout=7}
+  return {index="flash.html",timeout=7}
 end

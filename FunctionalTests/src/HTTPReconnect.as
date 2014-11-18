@@ -9,7 +9,7 @@ package
 	import mx.rpc.events.ResultEvent;
 	import mx.rpc.http.HTTPService;
 	
-	public class TestHTTP extends Test
+	public class HTTPReconnect extends Test
 	{
 		private var _parameters:Object = new Object();
 		private var _http:HTTPService;
@@ -19,9 +19,9 @@ package
 		private var _currentTest:int = 0;
 		private const NB_LOAD_TESTS:int = 100; 
 		
-		public function TestHTTP(app:FunctionalTests, host:String, url:String)
+		public function HTTPReconnect(app:FunctionalTests, host:String, url:String)
 		{
-			super(app, "TestHTTP", "send 100 POST requests with 2 parameters");
+			super(app, "HTTPReconnect", "connect and reconnect in app and child app");
 			_host=host;
 			_url=url;
 		}
@@ -32,7 +32,7 @@ package
 			
 			// Prepare POST request
 			_http = new HTTPService();
-			_http.url = _url;
+			_http.url = "/FunctionalTests/";
 			_http.method = "POST";
 			_http.resultFormat = "flashvars";
 			_http.showBusyCursor = true;
@@ -41,7 +41,6 @@ package
 			
 			// Prepare parameters
 			_parameters["var1"] = "value1";
-			_parameters["var2"] = "value2";
 			
 			_currentTest = 0;
 			_http.send(_parameters);
@@ -52,11 +51,15 @@ package
 			switch(event.type) {
 			case ResultEvent.RESULT: // We got a response
 				var result:Object = ResultEvent(event).result;
-				if (result["var1"] == "value1" || result["var2"] == "value2") { // Response valid
+				if (result["var1"] == "value1") { // Valid Response 
 					
 					if (_currentTest < NB_LOAD_TESTS) {
 						_currentTest += 1;
-						_http.send(_parameters); // Next request
+						
+						// Disconnection and reconnection
+						_http.disconnect();
+						_http.url = (_http.url == "/FunctionalTests/") ? "/FunctionalTests/subapp/" : "/FunctionalTests/";
+						_http.send(_parameters);
 					} else
 						_onResult(""); // Test Terminated!
 				} else
