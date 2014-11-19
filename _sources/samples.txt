@@ -99,8 +99,8 @@ Flash client
     <mx:Button x="430" y="10" label="Connect and Send" click="connectAndSend()"/>
   </mx:Application>
 
-Http client (JSON-RPC and XML-RPC)
-==================================
+Http client (JSON-RPC and XML-RPC_)
+======================================
 
 .. code-block:: html
 
@@ -762,3 +762,4 @@ Use only the client part of these sources, and for server side create the file M
   end
 
 .. _Server Application: ./serverapp.html
+.. _XML-RPC : http://xmlrpc.scripting.com/spec.html

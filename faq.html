@@ -30,7 +30,7 @@
     <script type="text/javascript" src="_static/bootstrap-3.1.0/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
     <link rel="top" title="MonaServer 1 documentation" href="index.html" />
-    <link rel="prev" title="The NoSQL Database System" href="database.html" />
+    <link rel="prev" title="Support &amp; Contacts" href="contacts.html" />
 
   <a href="https://github.com/MonaSolutions/MonaServer"
      class="visible-desktop hidden-xs"><img
@@ -45,6 +45,15 @@
       $("#gh-banner").css("top", navHeight);
     });
   </script>
+
+
+
+
+
+
+
+
+
 
   </head>
   <body>
@@ -85,6 +94,7 @@
 <li class="toctree-l1"><a class="reference internal" href="api.html">Mona Server&#8217;s lua API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="protocols.html">Specific Protocol Functionalities</a></li>
 <li class="toctree-l1"><a class="reference internal" href="database.html">The NoSQL Database System</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contacts.html">Support &amp; Contacts</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="">FAQ</a></li>
 </ul>
 </ul>
@@ -102,6 +112,7 @@
 <li><a class="reference internal" href="#">FAQ</a><ul>
 <li><a class="reference internal" href="#what-are-the-advantages-of-rtmfp">What are the advantages of RTMFP?</a></li>
 <li><a class="reference internal" href="#why-doesn-t-the-cirrus-sample-application-work">Why doesn&#8217;t the Cirrus Sample Application work?</a></li>
+<li><a class="reference internal" href="#how-to-use-the-as3-socket-class-with-mona">How to use the as3 Socket class with Mona?</a></li>
 </ul>
 </li>
 </ul>
@@ -113,7 +124,7 @@
               
                 
   <li>
-    <a href="database.html" title="Previous Chapter: The NoSQL Database System"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm">&laquo; The NoSQL Databa...</span>
+    <a href="contacts.html" title="Previous Chapter: Support & Contacts"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm">&laquo; Support & Contac...</span>
     </a>
   </li>
               
@@ -155,6 +166,7 @@
 <li><a class="reference internal" href="#faq" id="id1">FAQ</a><ul>
 <li><a class="reference internal" href="#what-are-the-advantages-of-rtmfp" id="id2">What are the advantages of RTMFP?</a></li>
 <li><a class="reference internal" href="#why-doesn-t-the-cirrus-sample-application-work" id="id3">Why doesn&#8217;t the Cirrus Sample Application work?</a></li>
+<li><a class="reference internal" href="#how-to-use-the-as3-socket-class-with-mona" id="id4">How to use the as3 Socket class with Mona?</a></li>
 </ul>
 </li>
 </ul>
@@ -188,6 +200,26 @@
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
 <p class="last">The <a class="reference external" href="http://labs.adobe.com/technologies/cirrus/samples/">Cirrus Sample Application</a> requires some python scripts to exchange user names, which can be achieved much easier with LUA code. Take a look at the <em>Meeting Sample</em> in <a class="reference external" href="./samples.html">Samples</a> page which does the same thing, but without other external dependencies.</p>
+</div>
+</div>
+<div class="section" id="how-to-use-the-as3-socket-class-with-mona">
+<h2><a class="toc-backref" href="#id4">How to use the as3 Socket class with Mona?</a><a class="headerlink" href="#how-to-use-the-as3-socket-class-with-mona" title="Permalink to this headline">¶</a></h2>
+<p>Due to new policy rules it is not possible to use the Socket class online without having a policy file. The easier way to do this is to return the socket policy file on each connection on the port 843 (the default port used by Flash):</p>
+<div class="highlight-lua"><div class="highlight"><pre><span class="n">serverPolicyFile</span> <span class="o">=</span> <span class="n">mona</span><span class="p">:</span><span class="n">createTCPServer</span><span class="p">()</span>
+<span class="k">function</span> <span class="nf">serverPolicyFile</span><span class="p">:</span><span class="n">onConnection</span><span class="p">(</span><span class="n">client</span><span class="p">)</span>
+
+        <span class="k">function</span> <span class="nf">client</span><span class="p">:</span><span class="n">onData</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+                <span class="n">INFO</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">Sending policy file...&quot;</span><span class="p">)</span>
+                <span class="n">self</span><span class="p">:</span><span class="n">send</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">&lt;cross-domain-policy&gt;&lt;allow-access-from domain=</span><span class="se">\&quot;</span><span class="s">*</span><span class="se">\&quot;</span><span class="s"> to-ports=</span><span class="se">\&quot;</span><span class="s">*</span><span class="se">\&quot;</span><span class="s">/&gt;&lt;/cross-domain-policy&gt;</span><span class="se">\0</span><span class="s">&quot;</span><span class="p">)</span>
+                <span class="k">return</span> <span class="mi">0</span> <span class="c1">-- return rest (all has been consumed here)</span>
+        <span class="k">end</span>
+<span class="k">end</span>
+<span class="n">serverPolicyFile</span><span class="p">:</span><span class="n">start</span><span class="p">(</span><span class="mi">843</span><span class="p">);</span> <span class="c1">-- start the server on the port 843</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">In this sample we give access to each ports and from any domain.</p>
 </div>
 </div>
 </div>

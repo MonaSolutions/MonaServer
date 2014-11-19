@@ -5,7 +5,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Overview &mdash; MonaServer 1 documentation</title>
+    <title>Support &amp; Contacts &mdash; MonaServer 1 documentation</title>
     
     <link rel="stylesheet" href="_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -29,8 +29,9 @@
     <script type="text/javascript" src="_static/js/jquery-fix.js"></script>
     <script type="text/javascript" src="_static/bootstrap-3.1.0/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
-    <link rel="top" title="MonaServer 1 documentation" href="#" />
-    <link rel="next" title="Samples" href="samples.html" />
+    <link rel="top" title="MonaServer 1 documentation" href="index.html" />
+    <link rel="next" title="FAQ" href="faq.html" />
+    <link rel="prev" title="The NoSQL Database System" href="database.html" />
 
   <a href="https://github.com/MonaSolutions/MonaServer"
      class="visible-desktop hidden-xs"><img
@@ -67,7 +68,7 @@
           <span class="icon-bar"></span>
           <span class="icon-bar"></span>
         </button>
-        <a class="navbar-brand" href="#">
+        <a class="navbar-brand" href="index.html">
           MonaServer</a>
         <span class="navbar-text navbar-version pull-left"><b>1</b></span>
       </div>
@@ -82,10 +83,10 @@
      id="dLabelGlobalToc"
      data-toggle="dropdown"
      data-target="#"
-     href="#">Site <b class="caret"></b></a>
+     href="index.html">Site <b class="caret"></b></a>
   <ul class="dropdown-menu globaltoc"
       role="menu"
-      aria-labelledby="dLabelGlobalToc"><ul>
+      aria-labelledby="dLabelGlobalToc"><ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="samples.html">Samples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="serverapp.html">Server Application</a></li>
@@ -94,7 +95,7 @@
 <li class="toctree-l1"><a class="reference internal" href="api.html">Mona Server&#8217;s lua API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="protocols.html">Specific Protocol Functionalities</a></li>
 <li class="toctree-l1"><a class="reference internal" href="database.html">The NoSQL Database System</a></li>
-<li class="toctree-l1"><a class="reference internal" href="contacts.html">Support &amp; Contacts</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">Support &amp; Contacts</a></li>
 <li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a></li>
 </ul>
 </ul>
@@ -109,7 +110,9 @@
   <ul class="dropdown-menu localtoc"
       role="menu"
       aria-labelledby="dLabelLocalToc"><ul>
-<li><a class="reference internal" href="#">Overview</a><ul>
+<li><a class="reference internal" href="#">Support &amp; Contacts</a><ul>
+<li><a class="reference internal" href="#contacts">Contacts</a></li>
+<li><a class="reference internal" href="#support">Support</a></li>
 </ul>
 </li>
 </ul>
@@ -121,7 +124,11 @@
               
                 
   <li>
-    <a href="samples.html" title="Next Chapter: Samples"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm">Samples &raquo;</span>
+    <a href="database.html" title="Previous Chapter: The NoSQL Database System"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm">&laquo; The NoSQL Databa...</span>
+    </a>
+  </li>
+  <li>
+    <a href="faq.html" title="Next Chapter: FAQ"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm">FAQ &raquo;</span>
     </a>
   </li>
               
@@ -131,7 +138,7 @@
             
               <li class="hidden-sm">
 <div id="sourcelink">
-  <a href="_sources/index.txt"
+  <a href="_sources/contacts.txt"
      rel="nofollow">Source</a>
 </div></li>
             
@@ -155,44 +162,70 @@
   <div class="row">
     <div class="col-md-12">
       
-  <div class="section" id="overview">
-<h1>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h1>
-<p>MonaServer starts with the idea that protocols essentially serve the same aims :</p>
+  <div class="section" id="support-contacts">
+<h1><a class="toc-backref" href="#id1">Support &amp; Contacts</a><a class="headerlink" href="#support-contacts" title="Permalink to this headline">¶</a></h1>
+<div class="contents topic" id="table-of-contents">
+<p class="topic-title first">Table of Contents</p>
 <ul class="simple">
-<li>pull data (request + response),</li>
-<li>push data (server -&gt; client or client -&gt; server),</li>
-<li>read/write file (<strong>VOD</strong> and <strong>RECORDING</strong>),</li>
-<li>AND communication channel between clients (<strong>P2P</strong> or publish/play <strong>live</strong>).</li>
+<li><a class="reference internal" href="#support-contacts" id="id1">Support &amp; Contacts</a><ul>
+<li><a class="reference internal" href="#contacts" id="id2">Contacts</a></li>
+<li><a class="reference internal" href="#support" id="id3">Support</a></li>
 </ul>
-<p>And with this objective we are proud to give you a generic alternative to existing communication servers with :</p>
-<ul class="simple">
-<li>The powerful <a class="reference external" href="http://luajit.org/">LuaJIT</a> compiler combined in a useful lua API to write server applications,</li>
-<li><strong>NoSQL</strong> database management system,</li>
-<li><strong>RTMFP</strong> Protocal, which provide P2P channels, UDP reliable and non-reliable communication and many other great features,</li>
-<li>And all of this developed keeping in mind the 5 following notions: speed, light weight, cross-platform, scalable and elegant <strong>C++11</strong> code.</li>
+</li>
 </ul>
-<p>Mona currently supports the following protocals:</p>
-<ul class="simple">
-<li><strong>RTMFP</strong>, <strong>RTMP</strong>, <strong>RTMPE</strong>,</li>
-<li><strong>HTTP</strong> (with <strong>JSON-RPC</strong> and <a class="reference external" href="http://xmlrpc.scripting.com/spec.html">XML-RPC</a>), <strong>Websocket</strong>.</li>
-</ul>
-<p>We expect to add many other protocols, such as  <strong>WebRTC</strong>, <strong>HLS</strong>, <strong>IPTV</strong>, but please remember that our development is open source
-so contributions are greatly appreciated: <a class="reference external" href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&amp;hosted_button_id=M24B32EH2GV3A">us</a>, <a class="reference external" href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&amp;hosted_button_id=QPWT9V67YWSGG">eu</a>.</p>
-<p>Mona is licensed under the <a class="reference external" href="http://www.gnu.org/licenses/">GNU General Public License</a>, please contact us for a commercial licence at <a class="reference external" href="mailto:mathieupoux&#37;&#52;&#48;gmail&#46;com">mathieupoux<span>&#64;</span>gmail<span>&#46;</span>com</a> or <a class="reference external" href="mailto:jammetthomas&#37;&#52;&#48;gmail&#46;com">jammetthomas<span>&#64;</span>gmail<span>&#46;</span>com</a>.</p>
-<p><strong>Table of Contents</strong>:</p>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="samples.html">Samples</a></li>
-<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="serverapp.html">Server Application</a></li>
-<li class="toctree-l1"><a class="reference internal" href="scalability.html">Scalability and load-balancing</a></li>
-<li class="toctree-l1"><a class="reference internal" href="serversocket.html">Server Application Sockets</a></li>
-<li class="toctree-l1"><a class="reference internal" href="api.html">Mona Server&#8217;s lua API</a></li>
-<li class="toctree-l1"><a class="reference internal" href="protocols.html">Specific Protocol Functionalities</a></li>
-<li class="toctree-l1"><a class="reference internal" href="database.html">The NoSQL Database System</a></li>
-<li class="toctree-l1"><a class="reference internal" href="contacts.html">Support &amp; Contacts</a></li>
-<li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a></li>
-</ul>
+</div>
+<div class="section" id="contacts">
+<h2><a class="toc-backref" href="#id2">Contacts</a><a class="headerlink" href="#contacts" title="Permalink to this headline">¶</a></h2>
+<p>We are 2 french engineers specialists of c++11 and server communication.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="94%" />
+<col width="6%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Mathieu Poux</th>
+<th class="head">&nbsp;</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>I am the original developer of the project <a class="reference external" href="https://github.com/OpenRTMFP/Cumulus">Cumulus</a> and initiator of MonaServer.</td>
+<td>&nbsp;</td>
+</tr>
+<tr class="row-odd"><td>Expert of RTMP and RTMFP I develop and do support for clients of MonaServer.</td>
+<td>&nbsp;</td>
+</tr>
+<tr class="row-even"><td><strong>Mail:</strong> <a class="reference external" href="mailto:mathieupoux&#37;&#52;&#48;gmail&#46;com">mathieupoux<span>&#64;</span>gmail<span>&#46;</span>com</a></td>
+<td>&nbsp;</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="docutils">
+<colgroup>
+<col width="32%" />
+<col width="68%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Thomas Jammet</th>
+<th class="head">&nbsp;</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><img alt="_images/thomas2.jpg" class="first last" src="_images/thomas2.jpg" />
+</td>
+<td><p class="first">With an experience of 5 years in Industrial Computing I am now a
+freelancer working on MonaServer, making development and
+support for clients of MonaServer.</p>
+<p><strong>Mail:</strong> <a class="reference external" href="mailto:jammetthomas&#37;&#52;&#48;gmail&#46;com">jammetthomas<span>&#64;</span>gmail<span>&#46;</span>com</a></p>
+<p class="last"><strong>Linkedin:</strong> <a class="reference external" href="http://fr.linkedin.com/pub/thomas-jammet/5a/411/60b/">http://fr.linkedin.com/pub/thomas-jammet/5a/411/60b/</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="support">
+<h2><a class="toc-backref" href="#id3">Support</a><a class="headerlink" href="#support" title="Permalink to this headline">¶</a></h2>
+<p>If you are looking for a commercial licence or want to build a project based on Mona and you want some support please contact us by mail (<a class="reference external" href="mailto:mathieupoux&#37;&#52;&#48;gmail&#46;com">mathieupoux<span>&#64;</span>gmail<span>&#46;</span>com</a> or <a class="reference external" href="mailto:jammetthomas&#37;&#52;&#48;gmail&#46;com">jammetthomas<span>&#64;</span>gmail<span>&#46;</span>com</a>).</p>
+<p>To report a bug or ask any question you can also use the <a class="reference external" href="https://github.com/MonaSolutions/MonaServer/issues">Github issue page</a>.</p>
 </div>
 </div>
 
