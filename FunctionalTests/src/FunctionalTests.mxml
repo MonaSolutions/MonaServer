@@ -18,8 +18,10 @@
 			[Bindable] public var arrayTests:ArrayCollection = new ArrayCollection();
 			private var mapTests:Object = new Object();
 			
-			public var _currentTest:int = 0;
+			public var _currentIndex:int = 0;
 			public var _timeStart:int = 0; // Time in msec when the test has been started
+			
+			private var _conn:NetConnection = null; // Connection to Mona for getting list of lua tests
 			
 			// Console functions
 			public function INFO(message:String):void { console.htmlText += "<p><font color='#000000'>" + message + "</font></p>"; }
@@ -31,6 +33,9 @@
 				applicationDefault = FlexGlobals.topLevelApplication.parameters.pathname;
 				hostDefault = FlexGlobals.topLevelApplication.parameters.host;
 				
+				listTests.enabled = false;
+				btRun.enabled = false;
+				
 				INFO("Starting FunctionalTests from host http://" + hostDefault + applicationDefault);
 				
 				addTest(new HTTPLoad(this, hostDefault, applicationDefault));
@@ -38,35 +43,51 @@
 				addTest(new HTTPBadRequests(this, hostDefault));
 				addTest(new HTTPAggregated(this, hostDefault, applicationDefault));
 				addTest(new RTMPBadRequests(this, hostDefault));
-				addTest(new SerializationJSON(this, hostDefault));
 				addTest(new DeserializationJSON(this, hostDefault, applicationDefault));
 				addTest(new DeserializationXMLRPC(this, hostDefault, applicationDefault));
 				addTest(new BigDeserialize(this, hostDefault, applicationDefault));
+				
+				_conn = new NetConnection();
+				_conn.addEventListener(NetStatusEvent.NET_STATUS, onStatus);
+				_conn.connect("rtmfp://"+hostDefault+applicationDefault);
+				_conn.client = this;
 			}
 			
-			public function addTest(test:Test):void {
-				
+			private function addLUATest(name:String, index:int):void {
+				arrayTests.addItem(name);
+				mapTests[name] = index;
+			}
+			
+			private function addTest(test:Test):void {
 				arrayTests.addItem(test.testName);
 				mapTests[test.testName] = test;
 			}
 			
-			public function run():void {
+			// Run selected tests
+			private function run():void {
 				
 				listTests.enabled = false;
 				btRun.enabled = false;
-				_currentTest = 0;
-				runTest(_currentTest);
+				_currentIndex = 0;
+				runTest();
 			}
 			
-			public function runTest(index:int):void {
-				
+			// Run current test
+			private function runTest():void {
 				var items:Array = listTests.selectedItems;
-				if (index < items.length) {
-					var test:Test = mapTests[items[index]];
-					
-					SUCCESS("Running " + test.testName + " (" + test.description + ")...");
-					_timeStart = getTimer();
-					test.run(asyncResult);
+				
+				if (_currentIndex < items.length) {
+					var test:Object = mapTests[items[_currentIndex]];
+					if (test is Test) { // AS3 Test
+						var as3test:Test = test as Test;
+						SUCCESS("Running " + as3test.testName + " (" + as3test.description + ")...");
+						_timeStart = getTimer();
+						as3test.run(asyncResult);
+					} else if (test is int) { // LUA Test
+						SUCCESS("Running " + items[_currentIndex] + "...");
+						_timeStart = getTimer();
+						_conn.call("runTest", new Responder(asyncResult), test as int);
+					}
 				}
 				else {// End of tests!
 					listTests.enabled = true;
@@ -75,19 +96,36 @@
 			}
 			
 			public function asyncResult(error:String):void {
-				
 				var items:Array = listTests.selectedItems;
-				var test:Test = mapTests[items[_currentTest]];
 				
-				if (error == "") { // Success : Go to next Test
-					SUCCESS("Test " + test.testName + " OK (" + (getTimer()-_timeStart) + "ms)");
-					_currentTest += 1;
-					runTest(_currentTest);
+				// Success => Go to next Test
+				if (error == "") {
+					SUCCESS("Test " + items[_currentIndex] + " OK (" + (getTimer()-_timeStart) + "ms)");
+					_currentIndex += 1;
+					runTest();
 				} else {  // Error : End of tests!
 					ERROR(error);
 					listTests.enabled = true;
 					btRun.enabled = true;
 				}
+			}
+			
+			private function onStatus(event:NetStatusEvent):void {
+				switch(event.info.code) {
+					case "NetConnection.Connect.Success":
+						_conn.call("listTests",new Responder(onListTests));
+						break;
+					default:
+						Alert.show(event.info.code);
+				}
+			}
+			
+			public function onListTests(list:Object):void {
+				for (var name:String in list)
+					addLUATest(name,list[name]);
+				
+				listTests.enabled = true;
+				btRun.enabled = true;
 			}
 		]]>
 	</fx:Script>	

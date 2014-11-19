@@ -1,10 +1,9 @@
 <html>
 <head>
-  <title>XML JavaScript Client Test</title>
+  <title>Serialize JavaScript Client</title>
   <script type="text/javascript">
     function send() {
       var xmlhttp = new XMLHttpRequest();
-      xmlhttp.open('POST', "", true);
 
       var mimein = window.document.getElementById("mimein").value;
       var mimeout = window.document.getElementById("mimeout").value;
@@ -21,47 +20,121 @@
                 alert("Error during the request (code " + xmlhttp.status + ")");
           }
       }
-      // Send the POST request
-      xmlhttp.setRequestHeader('Content-Type', mimein);
       
-      if (mimein == "application/json")
-        xmlhttp.send('[["' + mimeout + '"],' + req + ']');
-      else {//xml
-        xmlhttp.send("<__array><__array>" + mimeout + "</__array>" + req + "</__array>");
+      // Send the request
+      switch(mimein) {
+        case "json":
+            xmlhttp.open('POST', "", true);
+            xmlhttp.setRequestHeader('Content-Type', 'application/json');
+            xmlhttp.send('["onMessage","' + mimeout + '",' + req + ']');
+            break;
+        case "xmlrpc":
+            xmlhttp.open('POST', "", true);
+            xmlhttp.setRequestHeader('Content-Type', 'text/xml');
+            xmlhttp.send('<?xml version="1.0"?><methodCall>' +
+                         '  <methodName>onMessage</methodName>' +
+                         '    <params>' +
+                         '      <param><value><string>'+mimeout+'</string></value></param>' +
+                                req +
+                         '</params></methodCall>');
+            break;
+        case "soap":
+            xmlhttp.open('POST', "?mode="+mimeout+"&type=soap", true);
+            xmlhttp.setRequestHeader('Content-Type', 'text/plain');
+            xmlhttp.send('<?xml version="1.0" encoding="utf-8"?>' +
+                    '<soapenv:Envelope ' + 
+                    'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ' +
+                    'xmlns:xsd="http://www.w3.org/2001/XMLSchema" ' +
+                    'xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">' +
+                    '<soapenv:Body>' +
+                      '<urn:onMessage xmlns="http://localhost/">' +
+                        req +
+                      '</urn:onMessage>' +
+                    '</soapenv:Body>' +
+                    '</soapenv:Envelope>');
+            break;
+        case "xml":
+            xmlhttp.open('POST', "?mode="+mimeout+"&type=xml", true);
+            xmlhttp.setRequestHeader('Content-Type', 'text/plain');
+            xmlhttp.send(req);
+            break;
+        case "query":
+            xmlhttp.open('POST', "?mode="+mimeout+"&type=query", true);
+            xmlhttp.setRequestHeader('Content-Type', 'text/plain');
+            xmlhttp.send(req);
+            break;
       }
     }
     
+    // Change the sample text to the mime type selected
     function changeSample() {
-      var mimein = window.document.getElementById("mimein").value;
-      var req = window.document.getElementById("request");
-      if (mimein == "application/json")
-        req.value = "[1,2,3]";
-      else
-        req.value = "<__array><__noname>1</__noname><__noname>2</__noname><__noname>3</__noname></__array>";
+        var mimein = window.document.getElementById("mimein").value;
+        var req = window.document.getElementById("request");
+        switch(mimein) {
+            case "json":
+                req.value = "[1,2,3]";
+                break;
+            case "xmlrpc":
+                req.value = '<param>\n' +
+                    '  <value>\n' +
+                    '    <array size="3">\n' +
+                    '      <data>\n' +
+                    '        <value><i4>1</i4></value>\n' +
+                    '        <value><i4>2</i4></value>\n' +
+                    '        <value><i4>3</i4></value>\n' +
+                    '      </data>\n' +
+                    '    </array>\n' +
+                    '  </value>\n' +
+                    '</param>\n';
+                break;
+            case "soap":
+                req.value = '<value xsi:type="xsd:int">1</value>\n' +
+                '<value xsi:type="xsd:int">2</value>\n' +
+                '<value xsi:type="xsd:int">3</value>\n';
+                break;
+            case "xml":
+                req.value = '<value>1</value>\n' +
+                '<value>2</value>\n' +
+                '<value>3</value>\n';
+                break;
+            case "query":
+                req.value = 'value1=1&value2=2&value3=3';
+                break;
+        }
     }
   </script>
 </head>
-<body>
+<body onload="changeSample();">
     <form name="Demo" action="" method="post">
-<label>Type IN : </label>
-<select id="mimein" onchange="changeSample();">
-  <option value="text/xml" selected="selected">text/xml</option>
-  <option value="application/json">application/json</option>
-</select>
-<label>Type OUT : </label>
-<select id="mimeout">
-  <option value="xml" selected="selected">text/xml</option>
-  <option value="json">application/json</option>
-</select>
-<div>
-<textarea id="request" rows="10" cols="100">
-<__array><__noname>1</__noname><__noname>2</__noname><__noname>3</__noname></__array>
-</textarea>
-</div>
-<div>
-<textarea id="response" rows="10" cols="100" disabled>
-</textarea>
-</div>
+        <div>
+            <label>Type IN : </label>
+            <select id="mimein" onchange="changeSample();">
+              <option value="xmlrpc" selected="selected">xmlrpc</option>
+              <option value="json">json</option>
+              <option value="soap">soap</option>
+              <option value="xml">xml</option>
+              <option value="query">query</option>
+            </select>
+            <label>Type OUT : </label>
+            <select id="mimeout">
+              <option value="xmlrpc" selected="selected">xmlrpc</option>
+              <option value="json">json</option>
+              <option value="soap">soap*</option>
+              <option value="xml">xml*</option>
+              <option value="query">query</option>
+              <option value="amf">amf</option>
+              <option value="amf">amf0</option>
+            </select>
+        </div>
+        <i style="color:red;">* : soap and xml are not formatted so here we use the format of XML-RPC for the output.</i>
+        <div>
+            <h2>IN:</h2>
+            <textarea id="request" rows="10" cols="100"></textarea>
+        </div>
+        <div>
+            <h2>OUT:</h2>
+            <textarea id="response" rows="10" cols="100" readonly="true"></textarea>
+        </div>
         <div>
             <input type="button" value="Send" onclick="send();" />
         </div>
