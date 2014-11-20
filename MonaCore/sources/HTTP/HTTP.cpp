@@ -269,32 +269,33 @@ HTTP::ContentType HTTP::ParseContentType(const char* value, string& subType) {
 }
 
 
-
-
-class EntriesComparator {
-public:
-	EntriesComparator(UInt8 options) : _options(options) {}
+struct EntriesComparator {
+	EntriesComparator(HTTP::SortField field, HTTP::SortOrder order) : _field(field),_order(order) {}
 
 	bool operator() (const Path* pFile1,const Path* pFile2) {
-		if (_options&HTTP::SORT_BY_SIZE)
-			return _options&HTTP::SORT_ASC ? pFile1->size() < pFile2->size() : pFile2->size() < pFile1->size();
-		if (_options&HTTP::SORT_BY_MODIFIED)
-			return _options&HTTP::SORT_ASC ? pFile1->lastModified() < pFile2->lastModified() : pFile2->lastModified() < pFile1->lastModified();
+		if (_field == HTTP::SORT_BY_SIZE) {
+			if (pFile1->size() != pFile2->size())
+				return _order==HTTP::SORT_ASC ? pFile1->size() < pFile2->size() : pFile2->size() < pFile1->size();
+		} else if (_field == HTTP::SORT_BY_MODIFIED) {
+			if (pFile1->lastModified() != pFile2->lastModified())
+				return _order==HTTP::SORT_ASC ? pFile1->lastModified() < pFile2->lastModified() : pFile2->lastModified() < pFile1->lastModified();
+		}
 		
 		// NAME case
-		if (pFile1->isDirectory() && !pFile2->isDirectory())
-			return _options&HTTP::SORT_ASC;
-		if (pFile2->isDirectory() && !pFile1->isDirectory())
-			return _options&HTTP::SORT_DESC;
+		if (pFile1->isFolder() && !pFile2->isFolder())
+			return _order==HTTP::SORT_ASC;
+		if (pFile2->isFolder() && !pFile1->isFolder())
+			return _order==HTTP::SORT_DESC;
 		int result = String::ICompare(pFile1->name(), pFile2->name());
-		return _options&HTTP::SORT_ASC ? result<0 : result>0; 
+		return _order==HTTP::SORT_ASC ? result<0 : result>0; 
 	}
 private:
-	UInt8 _options;
+	HTTP::SortField _field;
+	HTTP::SortOrder _order;
 };
 
 
-void HTTP::WriteDirectoryEntries(BinaryWriter& writer, const string& serverAddress, const std::string& fullPath, const std::string& path, UInt8 sortOptions) {
+void HTTP::WriteDirectoryEntries(BinaryWriter& writer, const string& serverAddress, const std::string& fullPath, const std::string& path, SortField sortField, SortOrder sortOrder) {
 
 	Exception ex;
 	vector<Path*> files;
@@ -309,7 +310,7 @@ void HTTP::WriteDirectoryEntries(BinaryWriter& writer, const string& serverAddre
 	}
 
 	char sort[] = "D";
-	if (sortOptions&SORT_DESC)
+	if (sortOrder==SORT_DESC)
 		sort[0] = 'A';
 
 	// Write column names
@@ -328,7 +329,7 @@ void HTTP::WriteDirectoryEntries(BinaryWriter& writer, const string& serverAddre
 			.write(EXPAND("/..\">Parent directory</a></td><td>&nbsp;-</td><td>&nbsp;&nbsp;-</td></tr>\n"));
 
 	// Sort entries
-	EntriesComparator comparator(sortOptions);
+	EntriesComparator comparator(sortField,sortOrder);
 	std::sort(files.begin(), files.end(), comparator);
 
 	// Write entries
@@ -343,7 +344,7 @@ void HTTP::WriteDirectoryEntries(BinaryWriter& writer, const string& serverAddre
 
 void HTTP::WriteDirectoryEntry(BinaryWriter& writer,const string& serverAddress,const string& path,const Path& entry) {
 	string size,date;
-	if (entry.isDirectory())
+	if (entry.isFolder())
 		size.assign("-");
 	else if (entry.size()<1024)
 		String::Format(size, entry.size());
@@ -355,8 +356,8 @@ void HTTP::WriteDirectoryEntry(BinaryWriter& writer,const string& serverAddress,
 		String::Format(size, Format<double>("%.1fG",entry.size()/1073741824.0));
 
 	writer.write(EXPAND("<tr><td><a href=\"http://")).write(serverAddress).write(path).write("/")
-		.write(entry.name()).write(entry.isDirectory() ? "/\">" : "\">")
-		.write(entry.name()).write(entry.isDirectory() ? "/" : "").write(EXPAND("</a></td><td>&nbsp;"))
+		.write(entry.name()).write(entry.isFolder() ? "/\">" : "\">")
+		.write(entry.name()).write(entry.isFolder() ? "/" : "").write(EXPAND("</a></td><td>&nbsp;"))
 		.write(Date(entry.lastModified()).toString("%d-%b-%Y %H:%M", date)).write(EXPAND("</td><td align=right>&nbsp;&nbsp;"))
 		.write(size).write(EXPAND("</td></tr>\n"));
 }

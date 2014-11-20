@@ -24,8 +24,11 @@ namespace Mona {
 using namespace std;
 
 Path& Path::operator=(const Path& other) {
-	if (_attributesLoaded = other._attributesLoaded)
-		_attributes=other._attributes;
+	if (_attributesLoaded = other._attributesLoaded) {
+		_attributes = other._attributes;
+		_exists = other._exists;
+	}
+	_folder = other._folder;
 	_extension = other._extension;
 	_path = other._path;
 	_name = other._name;
@@ -39,7 +42,8 @@ const FileSystem::Attributes& Path::attributes() const {
 		return _attributes;
 	Exception ex;
 	FileSystem::GetAttributes(ex, _path, _attributes);
-	_attributesLoaded = !ex;
+	_attributesLoaded = true;
+	_exists = !ex;
 	return _attributes;
 }
 

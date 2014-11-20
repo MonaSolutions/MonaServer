@@ -52,38 +52,66 @@ void RTMPSession::readKeys() {
 	_pHandshaker.reset();
 }
 
-bool RTMPSession::buildPacket(PoolBuffer& pBuffer,PacketReader& packet) {
+
+UInt32 RTMPSession::onData(PoolBuffer& pBuffer) {
+
+	// first hanshake
+	if (!_handshaking) {
+		UInt32 size(pBuffer->size());
+		if (size < 1537)
+			return 0;
+		if (size > 1537) {
+			ERROR("RTMP Handshake unknown");
+			kill(PROTOCOL_DEATH);
+			return size;
+		}
+
+		if(!TCPSession::receive(pBuffer))
+			return size;
+		_unackBytes += 1537;
+		++_handshaking;
+
+		Exception ex;
+		_pHandshaker.reset(new RTMPHandshaker(peer.address, pBuffer));
+		send<RTMPHandshaker>(ex, _pHandshaker, NULL); // threaded!
+		if (ex) {
+			ERROR("RTMP Handshake, ", ex.error())
+			kill(PROTOCOL_DEATH);
+		}
+		return size;
+	}
+
+	const UInt8* data(pBuffer->data());
+	const UInt8* end(pBuffer->data()+pBuffer->size());
+
+	while(end-data) {
+		BinaryReader packet(data, end-data);
+		if (!buildPacket(packet))
+			break;
+		data = packet.current()+packet.available(); // next data
+		receive(packet);
+	}
+
+	if (data!=pBuffer->data())
+		flush();
+
+	return data-pBuffer->data(); // consumed
+}
+
+bool RTMPSession::buildPacket(BinaryReader& packet) {
 
 	if (pDecryptKey() && packet.available()>_decrypted) {
 		RC4(pDecryptKey().get(),packet.available()-_decrypted,packet.current()+_decrypted,(UInt8*)packet.current()+_decrypted);
 		_decrypted = packet.available();
 	}
 
-	switch(_handshaking) {
-		case 0: {
-			if (pBuffer->size() < 1537)
-				return false;
-			if (pBuffer->size() > 1537) {
-				ERROR("RTMP Handshake unknown");
-				kill(PROTOCOL_DEATH);
-				return true;
-			}
-			Exception ex;
-			_pHandshaker.reset(new RTMPHandshaker(peer.address, pBuffer));
-			send<RTMPHandshaker>(ex, _pHandshaker,NULL); // threaded!
-			if (ex) {
-				ERROR("RTMP Handshake, ", ex.error())
-				kill(PROTOCOL_DEATH);
-			}
-			return true;
-		}
-		case 1:
-			if (packet.available() < 1536)
-				return false;
-			if (_decrypted>=1536)
-				_decrypted -= 1536;
-			packet.shrink(1536);
-			return true;
+	if(_handshaking==1) {
+		if (packet.available() < 1536)
+			return false;
+		if (_decrypted>=1536)
+			_decrypted -= 1536;
+		packet.shrink(1536);
+		return true;
 	}
 
 	if (!_pController)
@@ -178,7 +206,11 @@ bool RTMPSession::buildPacket(PoolBuffer& pBuffer,PacketReader& packet) {
 }
 
 
-void RTMPSession::packetHandler(PacketReader& packet) {
+void RTMPSession::receive(BinaryReader& packet) {
+
+	if (!TCPSession::receive(packet))
+		return;
+
 	_unackBytes += packet.position() + packet.available();
 
 	if (_handshaking < 2) {

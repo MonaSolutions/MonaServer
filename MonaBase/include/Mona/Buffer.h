@@ -32,6 +32,7 @@ public:
 	virtual ~Buffer() { if (_buffer) delete [] _buffer; }
 
 	void			clip(UInt32 offset);
+	void			append(const void* data, UInt32 size) { Append(*this, data, size); }
 	bool			resize(UInt32 size, bool preserveContent=false);
 	void			clear();
 
@@ -45,6 +46,16 @@ public:
 	operator bool() const { return _data != NULL;  }
 	
 	static Buffer Null;
+
+	template <typename BufferType>
+	static BufferType& Append(BufferType& buffer, const void* data, UInt32 size) {
+		if (!buffer.data()) // to expect null writer 
+			return buffer;
+		UInt32 oldSize(buffer.size());
+		buffer.resize(oldSize + size);
+		memcpy((UInt8*)buffer.data() + oldSize, data, size);
+		return buffer;
+	}
 
 private:
 	UInt32  _offset;

@@ -20,10 +20,11 @@ This file is a part of Mona.
 #pragma once
 
 #include "Mona/Mona.h"
-#include "Mona/ICE.h"
 #include "Mona/Group.h"
 #include "Mona/Publication.h"
 #include "Mona/Path.h"
+#include "Mona/ICE.h"
+#include <set>
 
 namespace Mona {
 

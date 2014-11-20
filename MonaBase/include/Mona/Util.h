@@ -38,8 +38,15 @@ public:
 	static UInt8 Get7BitValueSize(UInt32 value) { return Get7BitValueSize((UInt64)value); }
 	static UInt8 Get7BitValueSize(UInt64 value);
 
-	static const std::string&	CurrentThreadInfos(THREAD_ID& id);
-	static void					SetCurrentThreadName(const std::string& name);
+	static THREAD_ID	CurrentThreadId();
+	static void			SetCurrentThreadName(const char* name);
+	template <typename BufferType>
+	static BufferType&	GetThreadName(THREAD_ID id, BufferType& buffer, bool append = false) {
+		if (!append)
+			buffer.resize(0);
+		std::lock_guard<std::recursive_mutex> lock(_MutexThreadNames);
+		return String::Append(buffer,_ThreadNames[id]);
+	}
 
 	static void Dump(const UInt8* data, UInt32 size, Buffer& buffer) { std::string header; Dump(data, size, buffer, header); }
 	static void Dump(const UInt8* data, UInt32 size, Buffer& buffer, const std::string& header);
@@ -50,7 +57,9 @@ public:
 	/// \param query Part of the url after '?' (if present)
 	/// \return The position of the file in path (std::npos for a directory)
 	static std::size_t UnpackUrl(const std::string& url, std::string& path, std::string& query) {std::string address; return UnpackUrl(url, address, path, query);}
-	static std::size_t UnpackUrl(const std::string& url, std::string& address, std::string& path, std::string& query);
+	static std::size_t UnpackUrl(const char* url, std::string& path, std::string& query) {std::string address; return UnpackUrl(url, address, path, query);}
+	static std::size_t UnpackUrl(const std::string& url, std::string& address, std::string& path, std::string& query) { return UnpackUrl(url.c_str(), address, path, query); }
+	static std::size_t UnpackUrl(const char*, std::string& address, std::string& path, std::string& query);
 	
 	typedef std::function<bool(const std::string&, const char*)> ForEachParameter;
 
@@ -66,7 +75,47 @@ public:
 	static const Parameters& Environment();
 
 
-	static char			DecodeURI(const char*& begin,const char* end);
+	template <typename BufferType>
+	static const char* DecodeURI(const char* value,BufferType& out) {
+		if (!*value || *value != '%')
+			return value; // nothing, end!
+		if (!*++value) {
+			String::Append(out,'%');
+			return value; // syntax error
+		}
+		char hi = *value;
+		if (!*++value) {
+			String::Append(out,'%',hi);
+			return value; // syntax error
+		}
+		char lo = *value++;
+		char c;
+		if (hi >= '0' && hi <= '9')
+			c = hi - '0';
+		else if (hi >= 'A' && hi <= 'F')
+			c = hi - 'A' + 10;
+		else if (hi >= 'a' && hi <= 'f')
+			c = hi - 'a' + 10;
+		else {
+			String::Append(out,'%',hi,lo);
+			return value; // syntax error
+		}
+		c *= 16;
+		if (lo >= '0' && lo <= '9')
+			c += lo - '0';
+		else if (lo >= 'A' && lo <= 'F')
+			c += lo - 'A' + 10;
+		else if (lo >= 'a' && lo <= 'f')
+			c += lo - 'a' + 10;
+		else {
+			String::Append(out,'%',hi,lo);
+			return value; // syntax error
+		}
+	
+		// Decoded! Assign next caracter & return the caracter decoded
+		String::Append(out,c);
+		return value;
+	}
 
 	template <typename BufferType>
 	static BufferType&	EncodeURI(const char* in, BufferType& out) { return EncodeURI(in, strlen(in), out); }
@@ -77,11 +126,11 @@ public:
 		while (in<end) {
 			char c = *in++;
 			if (isxml(c))
-				AppendData(out, &c, 1);
+				Buffer::Append(out, &c, 1);
 			else if (c <= 0x20 || c > 0x7E || strchr(_URICharReserved,c))
 				String::Append(out, '%', Format<UInt8>("%2X", (UInt8)c));
 			else
-				AppendData(out, &c, 1);
+				Buffer::Append(out, &c, 1);
 		}
 		return out;
 	}

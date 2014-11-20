@@ -22,7 +22,7 @@ This file is a part of Mona.
 #include "Mona/Mona.h"
 #include "Mona/TCPSession.h"
 #include "Mona/WebSocket/WSWriter.h"
-#include "Mona/StringReader.h"
+#include "Mona/WebSocket/WSDecoder.h"
 
 
 namespace Mona {
@@ -33,27 +33,37 @@ public:
 
 	WSSession(const SocketAddress& peerAddress, SocketFile& file, Protocol& protocol, Invoker& invoker);
 
-	bool			buildPacket(PoolBuffer& pBuffer,PacketReader& packet);
-	void			packetHandler(PacketReader& packet);
 	void			flush() { if (_pPublication) _pPublication->flush(); Session::flush(); }
 	void			manage();
 
 
 protected:
+	bool			enabled() { return _enabled; }
+	void			enable();
+
 	WSWriter&		wsWriter() { return _writer; }
 	void			kill(UInt32 type=NORMAL_DEATH);
 	Publication*	_pPublication;
 	Listener*		_pListener;
+
+	UInt32			onData(PoolBuffer& pBuffer) { return _decoder.decode(pBuffer); }
 
 	/// \brief Read message and call method if needed
 	/// \param packet Content message to read
 	void			readMessage(Exception& ex, DataReader& reader, UInt8 responseType=0);
 	
 private:
+	void			receive(WSDecoded& packet);
+
 	void			closeSusbcription();
 	void			closePublication();
 
+	WSDecoder::OnDecoded::Type		onDecoded;
+	WSDecoder::OnDecodedEnd::Type	onDecodedEnd;
+
 	WSWriter		_writer;
+	WSDecoder		_decoder;
+	bool			_enabled;
 };
 
 

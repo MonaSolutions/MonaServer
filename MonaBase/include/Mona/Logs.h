@@ -56,12 +56,10 @@ public:
 			
 		std::string message;
 		String::Format(message, args ...);
-		THREAD_ID threadId;
-		const std::string& threadName(Util::CurrentThreadInfos(threadId));
 		if (_PLogger)
-            _PLogger->log(threadId, threadName , level, file, shortFile, line, message);
+            _PLogger->log(Util::CurrentThreadId(), level, file, shortFile, line, message);
 		else
-            _DefaultLogger.log(threadId, threadName, level, file, shortFile, line, message);
+            _DefaultLogger.log(Util::CurrentThreadId(), level, file, shortFile, line, message);
 	}
 
 	template <typename ...Args>

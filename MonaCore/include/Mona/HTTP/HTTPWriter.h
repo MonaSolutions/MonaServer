@@ -33,39 +33,42 @@ class HTTPWriter : public Writer, public virtual Object {
 public:
 
 	HTTPWriter(TCPSession& session);
-	
-	std::shared_ptr<HTTPPacket>		pRequest;
 
-	virtual void			abort() {_senders.clear();}
-	virtual void			flush();
+	const std::shared_ptr<HTTPPacket>&	setRequest(const std::shared_ptr<HTTPPacket>& pRequest) { _pRequest = pRequest; if (!_pFirstRequest) _pFirstRequest = pRequest; return _pRequest; }
+	HTTPPacket*							request() { return _pRequest ? &*_pRequest : NULL; }
 
-	virtual DataWriter&		writeInvocation(const char* name) { DataWriter& writer(writeMessage()); writer.writeString(name,strlen(name)); return writer; }
-	virtual DataWriter&		writeMessage();
-	virtual DataWriter&		writeResponse(UInt8 type) { return writeMessage(); }
-	virtual void			writeRaw(const UInt8* data, UInt32 size) { write("200 OK", HTTP::CONTENT_TEXT,"plain",data,size); }
-	virtual void			close(Int32 code=0);
+	void			abort() { _pSender.reset(); _pushSenders.clear();  }
+	void			flush(bool withPush);
+
+	DataWriter&		writeInvocation(const char* name) { DataWriter& writer(writeMessage()); writer.writeString(name,strlen(name)); return writer; }
+	DataWriter&		writeMessage();
+	DataWriter&		writeResponse(UInt8 type) { return writeMessage(); }
+	void			writeRaw(const UInt8* data, UInt32 size) { write("200 OK", HTTP::CONTENT_TEXT,"plain",data,size); }
+	void			close(Int32 code=0);
 
 	DataWriter&		write(const std::string& code, HTTP::ContentType type=HTTP::CONTENT_ABSENT, const char* subType=NULL,const UInt8* data=NULL,UInt32 size=0);
 
 	/// \brief create a Sender and write the file in parameter
 	/// \param file path of the file
-	/// \param sortOptions Sort options for directory listing
-	/// \param isApp True if file is an application
-	void			writeFile(const Path& file, UInt8 sortOptions, bool isApp);
+	void			writeFile(const Path& file, DataReader& parameters);
 
 	void			close(const Exception& ex);
 
 private:
 	bool			writeMedia(MediaType type,UInt32 time,PacketReader& packet,const Parameters& properties);
+	void			flush() { flush(false); }
 	
-	HTTPSender& createSender(HTTPPacket& request) { return **_senders.emplace(_senders.end(),new HTTPSender(_session.peer.address,request,_session.invoker.poolBuffers,_session.peer.path)); }
+	HTTPSender*     createSender();
 
 	std::unique_ptr<MediaContainer>				_pMedia;
 	TCPSession&									_session;
 	PoolThread*									_pThread;
-	std::vector<std::shared_ptr<HTTPSender>>	_senders;
+	std::shared_ptr<HTTPSender>					_pSender;
+	std::deque<std::shared_ptr<HTTPSender>>		_pushSenders;
 	bool										_isMain;
 	std::string									_lastError;
+	std::shared_ptr<HTTPPacket>					_pRequest;
+	std::shared_ptr<HTTPPacket>					_pFirstRequest;
 };
 
 

@@ -313,27 +313,5 @@ static char toupper(char value) { return ASCII::ToUpper(value); }
 
 const char* strrpbrk(const char* value, const char* markers);
 
-template <typename BufferType>
-static BufferType& AppendData(BufferType& buffer, const void* data, UInt32 size) {
-	if (!buffer.data()) // to expect null writer 
-		buffer;
-	UInt32 oldSize(buffer.size());
-	buffer.resize(oldSize + size);
-	memcpy((UInt8*)buffer.data() + oldSize, data, size);
-	return buffer;
-}
-
-template <typename BufferType>
-static BufferType& AppendString(BufferType& buffer, const char* data) {
-	return AppendData<BufferType>(buffer,data,strlen(data));
-}
-
-template <typename BufferType>
-static BufferType& AppendString(BufferType& buffer, const std::string& data) {
-	return AppendData<BufferType>(buffer,data.data(), data.size());
-}
-
-
-
 
 } // namespace Mona

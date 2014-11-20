@@ -23,6 +23,7 @@ This file is a part of Mona.
 #include "Mona/UDPSocket.h"
 #include "Mona/SocketManager.h"
 #include <set>
+#include <vector>
 
 namespace Mona {
 

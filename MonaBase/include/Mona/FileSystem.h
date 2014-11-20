@@ -24,6 +24,7 @@ This file is a part of Mona.
 #include "Mona/MapParameters.h"
 #include "Mona/Time.h"
 #include "Mona/Exceptions.h"
+#include <vector>
 #undef CreateDirectory
 
 namespace Mona {
@@ -31,10 +32,9 @@ namespace Mona {
 class FileSystem : virtual Static {
 public:
 	struct Attributes {
-		Attributes() : size(0), lastModified(0), isDirectory(false) {}
+		Attributes() : size(0), lastModified(0) {}
 		Time	lastModified;
 		UInt32	size;
-		bool	isDirectory;
 	};
 
 	typedef std::function<void(const std::string&)> ForEach; /// FileSystem::ListDir function type handler
@@ -48,6 +48,8 @@ public:
 	static bool			Exists(const char* path, bool any = false);
 	static bool			IsAbsolute(const std::string& path);
 	static bool			IsAbsolute(const char* path);
+	static bool			IsFolder(const std::string& path);
+	static bool			IsFolder(const char* path);
 	
 	static Attributes&	GetAttributes(Exception& ex, const std::string& path, Attributes& attributes) { return GetAttributes(ex,path.data(),attributes); }
 	static Attributes&	GetAttributes(Exception& ex, const char* path, Attributes& attributes);

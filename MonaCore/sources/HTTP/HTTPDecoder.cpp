@@ -17,30 +17,19 @@ details (or else see http://www.gnu.org/licenses/).
 This file is a part of Mona.
 */
 
-#pragma once
+#include "Mona/HTTP/HTTPDecoder.h"
+#include "Mona/HTTP/HTTP.h"
 
-#include "Mona/Mona.h"
-#include "Mona/DataReader.h"
-#include "Mona/Time.h"
-
+using namespace std;
 
 namespace Mona {
 
-
-class HTTPHeaderReader : public DataReader, public virtual Object {
-public:
-	HTTPHeaderReader(std::vector<const char*>& headers) : _header(headers.begin()), _headers(headers) {}
-
-	void				reset() { _header = _headers.begin(); }
-
-private:
-	bool	readOne(UInt8 type, DataWriter& writer);
-	UInt8	followingType() { return _header == _headers.end() ? END : OTHER; }
-
-	std::vector<const char*>&				 _headers;
-	std::vector<const char*>::const_iterator _header;
-};
-
-
+UInt32 HTTPDecoder::decoding(Exception& ex, UInt8* data,UInt32 size) {
+	std::shared_ptr<HTTPPacket>	pPacket(new HTTPPacket(_rootPath));
+	UInt32 consumed = pPacket->build(ex, data, size);
+	if (consumed)
+		receive(pPacket);
+	return consumed;
+}
 
 } // namespace Mona

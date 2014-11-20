@@ -35,8 +35,8 @@ namespace Mona {
 	__binary.write(EXPAND("</p><hr><address>Mona Server at ")).write(ADDRESS).write(EXPAND("</address></body></html>\r\n")); }
 
 
-#define HTTP_BEGIN_HEADER(BINARYWRITER)  { BinaryWriter& __binary(BINARYWRITER);  __binary.clear(BINARYWRITER.size()-2);
-#define HTTP_ADD_HEADER(NAME,VALUE) __binary.write(EXPAND(NAME)).write(": ").write(VALUE).write("\r\n");
+#define HTTP_BEGIN_HEADER(BINARYWRITER)  { BinaryWriter& __binary(BINARYWRITER);  __binary.clear(__binary.size()-2);
+#define HTTP_ADD_HEADER(NAME,VALUE) { __binary.write(EXPAND(NAME)).write(": ").write(VALUE).write("\r\n"); }
 #define HTTP_END_HEADER  __binary.write("\r\n");  }
 
 
@@ -147,15 +147,17 @@ public:
 		CONNECTION_KEEPALIVE = 4
 	};
 
-	enum SortOption {
-		SORT_ASC = 0,
-		SORT_DESC = 1,
-		SORT_BY_NAME = 2,
-		SORT_BY_MODIFIED = 4,
-		SORT_BY_SIZE = 8
+	enum SortOrder {
+		SORT_ASC,
+		SORT_DESC,
 	};
 
-	
+	enum SortField {
+		SORT_BY_NAME,
+		SORT_BY_MODIFIED,
+		SORT_BY_SIZE
+	};
+
 	static CommandType	ParseCommand(Exception& ex,const char* value);
 	static ContentType	ParseContentType(const char* value,std::string& subType);
 	static UInt8		ParseConnection(Exception& ex,const char* value);
@@ -166,7 +168,7 @@ public:
 
 	static const char*	CodeToMessage(UInt16 code);
 
-	static void			WriteDirectoryEntries(BinaryWriter& writer, const std::string& serverAddress, const std::string& fullPath, const std::string& path, UInt8 sortOptions);
+	static void			WriteDirectoryEntries(BinaryWriter& writer, const std::string& serverAddress, const std::string& fullPath, const std::string& path, SortField sortField = SORT_BY_NAME, SortOrder sortOrder = SORT_ASC);
 
 private:
 	static void			WriteDirectoryEntry(BinaryWriter& writer, const std::string& serverAddress,const std::string& path,const Path& entry);

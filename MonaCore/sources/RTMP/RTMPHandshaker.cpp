@@ -40,10 +40,10 @@ bool RTMPHandshaker::compute(Exception& ex) {
 		return false;
 	}
 
-	Crypto crypto;
+	Crypto::HMAC hmac;
 	bool encrypted(handshakeType == 6);
 	bool middle;
-	const UInt8* challengeKey = RTMP::ValidateClient(crypto,packet,middle); // size = HMAC_KEY_SIZE
+	const UInt8* challengeKey = RTMP::ValidateClient(hmac,packet,middle); // size = HMAC_KEY_SIZE
 
 	if (!challengeKey) {
 		if (encrypted) {
@@ -104,11 +104,11 @@ bool RTMPHandshaker::compute(Exception& ex) {
 			if (ex)
 				return false;
 
-			RTMP::ComputeRC4Keys(crypto,_writer.data() + serverDHPos, publicKeySize, farPubKey, DH_KEY_SIZE, *pSecret, *pDecryptKey, *pEncryptKey);
+			RTMP::ComputeRC4Keys(hmac,_writer.data() + serverDHPos, publicKeySize, farPubKey, DH_KEY_SIZE, *pSecret, *pDecryptKey, *pEncryptKey);
 		}
 
 		//generate the digest
-		RTMP::WriteDigestAndKey(crypto,(UInt8*)_writer.data(),challengeKey,middle);
+		RTMP::WriteDigestAndKey(hmac,(UInt8*)_writer.data(),challengeKey,middle);
 	}
 
 	Session::DumpResponse(data(), size(), _address,true);

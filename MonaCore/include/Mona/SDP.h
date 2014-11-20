@@ -24,6 +24,7 @@ This file is a part of Mona.
 #include "Mona/Writer.h"
 #include "Mona/IPAddress.h"
 #include <map>
+#include <vector>
 
 
 namespace Mona {

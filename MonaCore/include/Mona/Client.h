@@ -24,6 +24,7 @@ This file is a part of Mona.
 #include "Mona/Entity.h"
 #include "Mona/Writer.h"
 #include "Mona/Parameters.h"
+#include <vector>
 
 namespace Mona {
 
@@ -44,7 +45,6 @@ public:
 	const SocketAddress			address;
 	const std::string			protocol;
 	virtual const Parameters&	parameters() const =0;
-	const std::string			name;
 
 	 // user data (custom data)
 	double						data() const { return _data; }
@@ -60,7 +60,7 @@ public:
 	virtual UInt16				ping() const = 0;
 	virtual const Parameters&	properties() const =0;
 	std::vector<std::string>&	properties(std::vector<std::string>& items) {
-		if (!OnCallProperties::subscribed() || OnCallProperties::raise<false>(items)) {
+		if (!OnCallProperties::subscribed() || !OnCallProperties::raise<false>(items)) {
 			for (std::string& item : items)
 				if (!properties().getString(item, item)) item.assign("null");
 		}

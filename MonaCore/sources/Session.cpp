@@ -29,8 +29,7 @@ using namespace std;
 namespace Mona {
 
 Session::Session(Protocol& protocol, Invoker& invoker, const shared_ptr<Peer>& pPeer, const char* name) : _sessionsOptions(0),_pPeer(pPeer),peer(*_pPeer),dumpJustInDebug(false),
-	_protocol(protocol), _name(name ? name : ""), invoker(invoker), _pDecodingThread(NULL), died(false), _id(0),
-	Expirable<Session>(this) {
+	_protocol(protocol), _name(name ? name : ""), invoker(invoker), died(false), _id(0) {
 
 	((string&)peer.protocol) = protocol.name;
 	if(memcmp(peer.id,"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",ID_SIZE)==0)
@@ -40,8 +39,7 @@ Session::Session(Protocol& protocol, Invoker& invoker, const shared_ptr<Peer>& p
 }
 	
 Session::Session(Protocol& protocol, Invoker& invoker, const char* name) : _sessionsOptions(0),dumpJustInDebug(false), _pPeer(new Peer((Handler&)invoker)),
-	_protocol(protocol),_name(name ? name : ""), invoker(invoker), _pDecodingThread(NULL), died(false), _id(0), peer(*_pPeer),
-	Expirable<Session>(this) {
+	_protocol(protocol),_name(name ? name : ""), invoker(invoker), died(false), _id(0), peer(*_pPeer) {
 
 	((string&)peer.protocol) = protocol.name;
 	if(memcmp(peer.id,"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",ID_SIZE)==0)
@@ -51,7 +49,6 @@ Session::Session(Protocol& protocol, Invoker& invoker, const char* name) : _sess
 }
 
 Session::~Session() {
-	expire();
 	if (!died)
 		CRITIC("Session ",name()," deleted without being killed")
 }
@@ -69,7 +66,26 @@ void Session::kill(UInt32 type) {
 	(bool&)died=true;
 }
 
-void Session::receive(PacketReader& packet, const SocketAddress& address) {
+void Session::DumpResponse(const UInt8* data, UInt32 size, const SocketAddress& address, bool justInDebug) {
+	// executed just in debug mode, or in dump mode
+	if (!justInDebug || (justInDebug&&Logs::GetLevel() >= 7))
+		DUMP(data, size, "Response to ", address.toString())
+}
+
+const string&  Session::protocolName() {
+	return _protocol.name;
+}
+
+bool Session::receive(Binary& packet) {
+	if(died)
+		return false;
+	peer.updateLastReception();
+	if (!dumpJustInDebug || (dumpJustInDebug && Logs::GetLevel()>=7))
+		DUMP(packet.data(),packet.size(),"Request from ",peer.address.toString())
+	return true;
+}
+
+bool Session::receive(const SocketAddress& address, Binary& packet) {
 	// if address  has changed (possible in UDP), update it
 	if (address != peer.address) {
 		SocketAddress oldAddress(peer.address);
@@ -80,28 +96,7 @@ void Session::receive(PacketReader& packet, const SocketAddress& address) {
 				peer.onAddressChanged(oldAddress);
 		}
 	}
-	receive(packet);
-}
-
-
-void Session::receive(PacketReader& packet) {
-	if(died)
-		return;
-	peer.updateLastReception();
-	if (!dumpJustInDebug || (dumpJustInDebug && Logs::GetLevel()>=7))
-		DUMP(packet.data(),packet.size(),"Request from ",peer.address.toString())
-	packetHandler(packet);
-	flush();
-}
-
-void Session::DumpResponse(const UInt8* data, UInt32 size, const SocketAddress& address, bool justInDebug) {
-	// executed just in debug mode, or in dump mode
-	if (!justInDebug || (justInDebug&&Logs::GetLevel() >= 7))
-		DUMP(data, size, "Response to ", address.toString())
-}
-
-const string&  Session::protocolName() {
-	return _protocol.name;
+	return receive(packet);
 }
 
 

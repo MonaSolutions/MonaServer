@@ -21,17 +21,17 @@ This file is a part of Mona.
 
 #include "Mona/Mona.h"
 #include "Mona/UDPSender.h"
+#include "Mona/PacketWriter.h"
 #include "Mona/RTMFP/RTMFP.h"
 
 namespace Mona {
 
 class RTMFPSender : public UDPSender, public virtual Object {
 public:
-	RTMFPSender(const PoolBuffers& poolBuffers,const std::shared_ptr<RTMFPKey>& pEncryptKey): encoder(pEncryptKey,RTMFPEngine::ENCRYPT),UDPSender("RTMFPSender"),packet(poolBuffers),farId(0) {
+	RTMFPSender(const PoolBuffers& poolBuffers,const std::shared_ptr<RTMFPEngine>& pEncoder): _pEncoder(pEncoder),UDPSender("RTMFPSender"),packet(poolBuffers),farId(0) {
 		packet.next(RTMFP_HEADER_SIZE);
 	}
 	
-	RTMFPEngine		encoder;
 	UInt32			farId;
 	PacketWriter	packet;
 
@@ -40,14 +40,10 @@ private:
 	UInt32			size() const { return packet.size(); }
 	
 	bool			run(Exception& ex);
+
+	const std::shared_ptr<RTMFPEngine>	_pEncoder;
 };
 
-
-inline bool RTMFPSender::run(Exception& ex) {
-	RTMFP::Encode(encoder,packet);
-	RTMFP::Pack(packet,farId);
-	return UDPSender::run(ex);
-}
 
 
 

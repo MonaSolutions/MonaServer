@@ -18,7 +18,6 @@ This file is a part of Mona.
 */
 
 #include "Mona/SDP.h"
-#include "Mona/Peer.h"
 #include "Mona/Logs.h"
 
 

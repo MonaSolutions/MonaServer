@@ -51,11 +51,11 @@ public:
 
 	static UInt16			GetDigestPos(const UInt8* data,bool middle);
 	static UInt16			GetDHPos(const UInt8* data,bool middle);
-	static const UInt8*		ValidateClient(Crypto& crypto,BinaryReader& reader,bool& middleKey);
-	static void				WriteDigestAndKey(Crypto& crypto,UInt8* data,const UInt8* challengeKey,bool middleKey);
-	static void				ComputeRC4Keys(Crypto& crypto,const UInt8* pubKey,UInt32 pubKeySize,const UInt8* farPubKey,UInt32 farPubKeySize,const Buffer& sharedSecret,RC4_KEY& decryptKey,RC4_KEY& encryptKey);
+	static const UInt8*		ValidateClient(Crypto::HMAC& hmac,BinaryReader& reader,bool& middleKey);
+	static void				WriteDigestAndKey(Crypto::HMAC& hmac,UInt8* data,const UInt8* challengeKey,bool middleKey);
+	static void				ComputeRC4Keys(Crypto::HMAC& hmac,const UInt8* pubKey,UInt32 pubKeySize,const UInt8* farPubKey,UInt32 farPubKeySize,const Buffer& sharedSecret,RC4_KEY& decryptKey,RC4_KEY& encryptKey);
 private:
-	static const UInt8*		ValidateClientScheme(Crypto& crypto,BinaryReader& reader,bool middleKey);
+	static const UInt8*		ValidateClientScheme(Crypto::HMAC& hmac,BinaryReader& reader,bool middleKey);
 };
 
 

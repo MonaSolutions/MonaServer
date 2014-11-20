@@ -46,8 +46,8 @@ int LUAPath::Get(lua_State *pState) {
 			} else if(strcmp(name,"lastModified")==0) {
 				SCRIPT_WRITE_NUMBER(path.lastModified())
 				SCRIPT_CALLBACK_FIX_INDEX
-			} else if (strcmp(name,"isDirectory")==0) {
-				SCRIPT_WRITE_BOOL(path.isDirectory())
+			} else if (strcmp(name,"isFolder")==0) {
+				SCRIPT_WRITE_BOOL(path.isFolder())
 				SCRIPT_CALLBACK_FIX_INDEX
 			} else if (strcmp(name,"value")==0) {
 				SCRIPT_WRITE_STRING(path.toString().c_str());

@@ -50,11 +50,7 @@ public:
 			if (lua_isstring(pState, 2)) {
 				SCRIPT_READ_BINARY(id, size)
 				Client* pClient(NULL);
-				if (Script::ToRawId(id, size))
-					pClient = invoker.clients(id);
-				if (!pClient)
-					pClient = invoker.clients((const char*)id); // try by name
-				if (pClient)
+				if (Script::ToRawId(id, size) && (pClient = invoker.clients(id)))
 					Script::AddObject<LUAClient>(pState, *pClient);
 			}
 
@@ -70,10 +66,8 @@ public:
 
 			if (lua_isstring(pState, 2)) {
 				SCRIPT_READ_BINARY(id, size)
-					Group* pGroup(NULL);
-				if (Script::ToRawId(id, size))
-					pGroup = invoker.groups(id);
-				if (pGroup)
+				Group* pGroup(NULL);
+				if (Script::ToRawId(id, size) && (pGroup = invoker.groups(id)))
 					Script::AddObject<LUAGroup>(pState, *pGroup);
 			}
 

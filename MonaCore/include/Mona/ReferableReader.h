@@ -40,7 +40,7 @@ protected:
 		UInt8		level;
 	};
 
-	ReferableReader(PacketReader& packet) : DataReader(packet) {}
+	ReferableReader(PacketReader& packet) : DataReader(packet),_recursive(false) {}
 	ReferableReader() : DataReader() {}
 
 	Reference*	beginObject(DataWriter& writer, UInt64 reference, const char* type = NULL) { return beginRepeatable(reference,writer.beginObject(type)); }
@@ -64,6 +64,7 @@ private:
 	void		writeRepeatable(UInt64 readerRef, UInt64 writerRef);
 
 	std::map<UInt64, Reference> _references;
+	bool						_recursive;
 };
 
 

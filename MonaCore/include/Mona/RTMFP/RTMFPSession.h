@@ -26,7 +26,7 @@ This file is a part of Mona.
 #include "Mona/RTMFP/RTMFPWriter.h"
 #include "Mona/RTMFP/RTMFPSender.h"
 #include "Mona/RTMFP/RTMFPCookieComputing.h"
-#include "Mona/RTMFP/RTMFPDecoding.h"
+#include "Mona/RTMFP/RTMFPDecoder.h"
 #include "Mona/Time.h"
 
 namespace Mona {
@@ -38,8 +38,8 @@ public:
 	RTMFPSession(RTMFProtocol& protocol,
 			Invoker& invoker,
 			UInt32 farId,
-			const UInt8* decryptKey,
-			const UInt8* encryptKey,
+			const std::shared_ptr<RTMFPEngine> pDecoder,
+			const std::shared_ptr<RTMFPEngine> pEncoder,
 			const std::shared_ptr<Peer>& pPeer);
 
 
@@ -47,7 +47,7 @@ public:
 
 	std::shared_ptr<RTMFPCookieComputing>	pRTMFPCookieComputing;
 
-	void				decode(PoolBuffer& poolBuffer, const SocketAddress& address) { Session::decode<RTMFPDecoding>(address,poolBuffer,_pDecryptKey,(_prevEngineType = (farId == 0 ? RTMFPEngine::DEFAULT : RTMFPEngine::NORMAL))); }
+	void				decode(const SocketAddress& address, PoolBuffer& pBuffer) { if(!died) _decoder.decode(address,pBuffer);  }
 
 	bool				failed() const { return _failed; }
 	void				kill(UInt32 type=NORMAL_DEATH);
@@ -62,9 +62,8 @@ protected:
 
 	const UInt32		farId;
 	PacketWriter&		packet();
-	void				flush() { flush(0x4a, true, prevEngineType()); }
-	void				flush(bool echoTime) { flush(0x4a, echoTime, prevEngineType()); }
-	void				flush(UInt8 marker, bool echoTime) { flush(marker, echoTime, prevEngineType()); }
+	void				flush() { flush(true); }
+	void				flush(bool echoTime, UInt8 marker = 0x4a);
 
 	template <typename ...Args>
 	void fail(Args&&... args) {
@@ -90,10 +89,10 @@ protected:
 	
 	
 private:
-	
+
+	virtual void					receive(const SocketAddress& address, BinaryReader& packet);
 
 	void							manage();
-	void							packetHandler(PacketReader& packet);
 
 	// Implementation of BandWriter
 	UInt16 ping() const				{ return peer.ping(); }
@@ -105,15 +104,18 @@ private:
 
 	BinaryWriter&					writeMessage(UInt8 type,UInt16 length,RTMFPWriter* pWriter=NULL);
 
-	void							flush(UInt8 marker,bool echoTime,RTMFPEngine::Type type);
-	RTMFPEngine::Type				prevEngineType() { return _prevEngineType; }
-	
 	bool							keepalive();
 
 	RTMFPWriter*					writer(UInt64 id);
 	RTMFPFlow*						createFlow(UInt64 id,const std::string& signature);
 
 	void							failSignal();
+
+	RTMFPDecoder::OnDecoded::Type					onDecoded;
+	RTMFPDecoder::OnDecodedEnd::Type				onDecodedEnd;
+
+	RTMFPDecoder									_decoder;
+	const std::shared_ptr<RTMFPEngine>				_pEncoder;
 
 	UInt16											_timeSent;
 	bool											_failed;
@@ -126,12 +128,7 @@ private:
 	Writer*											_pLastWriter;
 	UInt64											_nextRTMFPWriterId;
 
-	RTMFPEngine::Type								_prevEngineType;
-
 	std::shared_ptr<RTMFPSender>					_pSender;
-
-	const std::shared_ptr<RTMFPKey>					_pDecryptKey;
-	const std::shared_ptr<RTMFPKey>					_pEncryptKey;
 	PoolThread*										_pThread;
 };
 

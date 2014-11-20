@@ -184,16 +184,14 @@ void Peer::onConnection(Exception& ex, Writer& writer,DataReader& parameters,Dat
 		ParameterWriter parameterWriter(_parameters);
 		SplitWriter parameterAndResponse(parameterWriter,response);
 
-		_properties.getString("name", (std::string&)name);
 		_handler.onConnection(ex, *this,parameters,parameterAndResponse);
 		if (!ex) {
-			(bool&)connected = ((Clients&)_handler.clients).add(ex,*this);
+			(bool&)connected = ((Entities<Client>&)_handler.clients).add(*this);
 			if (!connected) {
-				if (ex)
-					ERROR(ex.error());
+				ex.set(Exception::PROTOCOL, "Client ", Util::FormatHex(id, ID_SIZE, buffer), " exists already");
+				ERROR(ex.error());
 				_handler.onDisconnection(*this);
-			} else if (ex)
-				WARN(ex.error());
+			}
 		}
 		if (!connected) {
 			writer.abort();
@@ -217,7 +215,7 @@ void Peer::onDisconnection() {
 	if (!connected)
 		return;
 	(bool&)connected = false;
-	if (!((Clients&)_handler.clients).remove(*this))
+	if (!((Entities<Client>&)_handler.clients).remove(*this))
 		ERROR("Client ", Util::FormatHex(id, ID_SIZE, LOG_BUFFER), " seems already disconnected!");
 	_handler.onDisconnection(*this);
 	_pWriter = NULL; // keep after the onDisconnection because otherise the LUA object client.writer can't be deleted!

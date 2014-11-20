@@ -254,7 +254,7 @@ void MonaServer::onStart() {
 
 
 	// init root server application
-	_pService.reset(new Service(_pState, *this));
+	_pService.reset(new Service(_pState, WWWPath, *this));
 
 	// Init few global variable
 	Script::AddObject<LUAInvoker,Invoker>(_pState,*this);
@@ -554,16 +554,8 @@ lua_State* MonaServer::openService(const Service& service, Client& client) {
 	lua_getfield(_pState, -3,"id");
 	lua_pushvalue(_pState, -4);
 	Script::FillCollection(_pState, 1);
-
-	if (!client.name.empty()) {
-		Script::Collection(_pState, -1, "clientsByName");
-		lua_pushstring(_pState,client.name.c_str());
-		lua_pushvalue(_pState, -5);
-		Script::FillCollection(_pState, 1);
-		lua_pop(_pState, 1);
-	}
-
 	lua_pop(_pState, 2);
+
 	return _pState;
 }
 
@@ -578,14 +570,6 @@ lua_State* MonaServer::closeService(const Client& client) {
 	lua_replace(_pState, -2);
 	lua_pushnil(_pState);
 	Script::FillCollection(_pState, 1);
-
-	if (!client.name.empty()) {
-		Script::Collection(_pState, -1, "clientsByName");
-		lua_pushstring(_pState,client.name.c_str());
-		lua_pushnil(_pState);
-		Script::FillCollection(_pState, 1);
-		lua_pop(_pState, 1);
-	}
 
 	lua_pop(_pState, 2);
 	return _pState;
@@ -636,10 +620,14 @@ bool MonaServer::onMessage(Exception& ex, Client& client,const string& name,Data
 
 bool MonaServer::onFileAccess(Exception& ex, Client& client, Client::FileAccessType type, Path& filePath,DataReader& parameters,DataWriter& properties) { 
 
+	if (filePath.isFolder()) {
+		// filePath must be a file, not a folder, otherwise it's a security issue
+		ex.set(Exception::PERMISSION, "Impossible to access to ",filePath.toString()," ressource through the ",client.path," application, this resource is managed by ",filePath.parent()," application");
+		return false;
+	}
+
 	bool result = true;
-	string name;
-	if (client.path!=filePath.toString()) // "" if it is current application
-		name.assign(filePath.name());
+	string name(filePath.name());
 	SCRIPT_BEGIN(loadService(client))
 		SCRIPT_MEMBER_FUNCTION_BEGIN(Client,client,type==Client::FileAccessType::READ ? "onRead" : "onWrite")
 			SCRIPT_WRITE_STRING(name.c_str())

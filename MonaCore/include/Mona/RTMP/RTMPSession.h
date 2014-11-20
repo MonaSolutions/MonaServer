@@ -33,8 +33,9 @@ public:
 	RTMPSession(const SocketAddress& peerAddress, SocketFile& file, Protocol& protocol, Invoker& invoker);
 	
 private:
-	bool			buildPacket(PoolBuffer& pBuffer,PacketReader& packet);
-	void			packetHandler(PacketReader& packet);
+	UInt32			onData(PoolBuffer& pBuffer);
+	bool			buildPacket(BinaryReader& packet);
+	void			receive(BinaryReader& packet);
 	void			manage();
 	void			flush() { Session::flush(); if (_pStream) _pStream->flush(); }
 

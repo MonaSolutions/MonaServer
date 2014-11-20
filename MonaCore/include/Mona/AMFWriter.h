@@ -23,6 +23,7 @@ This file is a part of Mona.
 #include "Mona/AMF.h"
 #include "Mona/DataWriter.h"
 #include <map>
+#include <vector>
 
 namespace Mona {
 

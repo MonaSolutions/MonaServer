@@ -52,16 +52,15 @@ LUATCPClient::~LUATCPClient() {
 }
 
 UInt32 LUATCPClient::onData(PoolBuffer& pBuffer) {
-	UInt32 rest(0);
+	UInt32 consumed;
 	SCRIPT_BEGIN(_pState)
 		SCRIPT_MEMBER_FUNCTION_BEGIN(LUATCPClient,*this,"onData")
-			SCRIPT_WRITE_BINARY(pBuffer->data(),pBuffer->size())
+			SCRIPT_WRITE_BINARY(pBuffer->data(), pBuffer->size())
 			SCRIPT_FUNCTION_CALL
-			if (SCRIPT_READ_AVAILABLE)
-				rest = SCRIPT_READ_UINT(0);
+			consumed = SCRIPT_READ_UINT(pBuffer->size()); // by default, consume all
 		SCRIPT_FUNCTION_END
 	SCRIPT_END
-	return rest;
+	return consumed;
 }
 
 void LUATCPClient::onDisconnection(const SocketAddress& peerAddress){

@@ -21,6 +21,7 @@ This file is a part of Mona.
 #include "Mona/FileSystem.h"
 #include "Mona/StringWriter.h"
 #include "Mona/MIME.h"
+#include "Mona/ParameterWriter.h"
 #include "Mona/Logs.h"
 #include "Mona/HTTP/HTTPWriter.h"
 
@@ -35,16 +36,18 @@ namespace Mona {
 
 HTTPSender::HTTPSender(const SocketAddress& address, HTTPPacket& request,const PoolBuffers& poolBuffers, const string& relativePath) :
 	_serverAddress(request.serverAddress),
+	_origin(request.origin),
 	_ifModifiedSince(request.ifModifiedSince),
 	_connection(request.connection),
 	_command(request.command),
 	_pInfos(request.pullSendingInfos()),
 	_address(address),
 	_sizePos(0),
-	_sortOptions(0),
-	_isApp(false),
+	_sortField(HTTP::SORT_BY_NAME),
+	_sortOrder(HTTP::SORT_ASC),
 	_poolBuffers(poolBuffers),
 	_appPath(relativePath),
+	_written(false),
 	TCPSender("TCPSender") {
 
 }
@@ -57,76 +60,94 @@ void HTTPSender::onSent(Socket& socket) {
 	socket.shutdown(ex,Socket::SEND);
 }
 
+void HTTPSender::writeFile(const Path& file, DataReader& parameters) {
+	_file = file;
+	if (file.isFolder()) {
+		string direction;
+		MapParameters properties;
+		ParameterWriter parameterWriter(properties);
+		parameters.read(parameterWriter);
+		if (properties.getString("N", direction))
+			_sortField = HTTP::SORT_BY_NAME;
+		else if (properties.getString("M", direction))
+			_sortField = HTTP::SORT_BY_MODIFIED;
+		else if (properties.getString("S", direction))
+			_sortField = HTTP::SORT_BY_SIZE;
+		if (direction == "D")
+			_sortOrder = HTTP::SORT_DESC;
+	}
+}
+
 bool HTTPSender::run(Exception& ex) {
 
 	if (!_pWriter) {
 
 		//// GET FILE
 		Date date;
-		// Not Modified => don't send the file
-		if (_file.lastModified()>0 && _ifModifiedSince >= _file.lastModified()) {
-			write("304 Not Modified", HTTP::CONTENT_ABSENT);
-		} else {
-			// file doesn't exist
-			if (_file.lastModified()==0)
-				writeError(404, "The requested URL ", _file.toString(), " was not found on this server");
-			// Folder
-			else if (_file.isDirectory()) {
-				// Connected to parent => redirect to url + '/'
-				if (!_isApp) {
-					// Redirect to the real path of directory
+
+		if (!_file.exists()) {
+			if (_file.isFolder())
+				writeError(404, "The requested URL ", _buffer, " was not found on this server");
+			else {
+				// last "/" is missing? is it a folder instead of file?
+				if (FileSystem::Exists(String::Format(_buffer,_file(),'/'))) {
+					// Redirect to the real folder path
 					BinaryWriter& writer(write("301 Moved Permanently").packet);
-					String::Format(_buffer, "http://", _serverAddress, _appPath, '/');
+					String::Format(_buffer, "http://", _serverAddress,_appPath, '/',_file.name(), '/');
 					HTTP_BEGIN_HEADER(writer)
 						HTTP_ADD_HEADER("Location", _buffer)
-					HTTP_END_HEADER
-					HTML_BEGIN_COMMON_RESPONSE(writer, EXPAND("Moved Permanently"))
+						HTTP_END_HEADER
+						HTML_BEGIN_COMMON_RESPONSE(writer, EXPAND("Moved Permanently"))
 						writer.write(EXPAND("The document has moved <a href=\"")).write(_buffer).write(EXPAND("\">here</a>."));
 					HTML_END_COMMON_RESPONSE(_buffer)
-				} else {
-					BinaryWriter& writer(write("200 OK", HTTP::CONTENT_TEXT, "html; charset=utf-8").packet);
-					HTTP_BEGIN_HEADER(writer)
-						HTTP_ADD_HEADER("Last-Modified", date.toString(Date::HTTP_FORMAT, _buffer))
-					HTTP_END_HEADER
+				} else
+					writeError(404, "The requested URL ",_appPath, '/',_file.name() , " was not found on this server");
+			}
+		} else if (_ifModifiedSince >= _file.lastModified())
+			write("304 Not Modified", HTTP::CONTENT_ABSENT);
+		else if (_file.isFolder()) {
+			/// Folder
+			BinaryWriter& writer(write("200 OK", HTTP::CONTENT_TEXT, "html; charset=utf-8").packet);
+			HTTP_BEGIN_HEADER(writer)
+				HTTP_ADD_HEADER("Last-Modified", date.toString(Date::HTTP_FORMAT, _buffer))
+			HTTP_END_HEADER
 
-					HTTP::WriteDirectoryEntries(writer, _serverAddress, _file.toString(), _appPath, _sortOptions);
-				}
-			} 
-			// File
-			else {
+			HTTP::WriteDirectoryEntries(writer, _serverAddress, _file.toString(), _appPath, _sortField, _sortOrder);
+		} else {
+			/// File
 #if defined(_WIN32)
-				wchar_t wFile[_MAX_PATH];
-				MultiByteToWideChar(CP_UTF8, 0, _file.toString().c_str(), -1, wFile, _MAX_PATH);
-				ifstream ifile(wFile, ios::in | ios::binary | ios::ate);
+			wchar_t wFile[_MAX_PATH];
+			MultiByteToWideChar(CP_UTF8, 0, _file.toString().c_str(), -1, wFile, _MAX_PATH);
+			ifstream ifile(wFile, ios::in | ios::binary | ios::ate);
 #else
-				ifstream ifile(_file.toString(), ios::in | ios::binary | ios::ate);
+			ifstream ifile(_file.toString(), ios::in | ios::binary | ios::ate);
 #endif
-				if (!ifile.good())
-					writeError(423, "Impossible to open ", _appPath, "/", _file.name(), " file");
+			if (!ifile.good())
+				writeError(423, "Impossible to open ", _appPath, '/', _file.name(), " file");
+			else {
+				// determine the content-type
+				string subType;
+				HTTP::ContentType type = HTTP::ExtensionToMIMEType(_file.extension(), subType);	
+
+				PacketWriter& response(writer("200 OK", type, subType.c_str(), NULL, 2).packet); // 2 to impose a raw serialization
+				HTTP_BEGIN_HEADER(response)
+					HTTP_ADD_HEADER("Last-Modified", date.toString(Date::HTTP_FORMAT, _buffer))
+				HTTP_END_HEADER
+
+				// TODO see if filter is correct
+				if (type == HTTP::CONTENT_TEXT && _pInfos && _pInfos->parameters.count())
+					replaceTemplateTags(response, ifile, _pInfos->parameters, _pInfos->sizeParameters);
 				else {
-					// determine the content-type
-					string subType;
-					HTTP::ContentType type = HTTP::ExtensionToMIMEType(_file.extension(), subType);	
 
-					PacketWriter& response(write("200 OK", type,subType.c_str()).packet);
-					HTTP_BEGIN_HEADER(response)
-						HTTP_ADD_HEADER("Last-Modified", date.toString(Date::HTTP_FORMAT, _buffer))
-					HTTP_END_HEADER
-
-					// TODO see if filter is correct
-					if (type == HTTP::CONTENT_TEXT && _pInfos && _pInfos->parameters.count())
-						replaceTemplateTags(response, ifile, _pInfos->parameters, _pInfos->sizeParameters);
-					else {
-
-						// push the entire file content to memory
-						UInt32 size = (UInt32)ifile.tellg();
-						ifile.seekg(0);
-						char* current = (char*)response.buffer(size); // reserve memory for file
-						ifile.read(current, size);
-					}
+					// push the entire file content to memory
+					UInt32 size = (UInt32)ifile.tellg();
+					ifile.seekg(0);
+					char* current = (char*)response.buffer(size); // reserve memory for file
+					ifile.read(current, size);
 				}
 			}
 		}
+
 	
 	}
 	
@@ -144,7 +165,7 @@ bool HTTPSender::run(Exception& ex) {
 				break;
 			}
 			if (content == end)
-				ERROR("HTTP header without end, unvalid packet")
+				ERROR("HTTP header without end, invalid packet")
 		}
 
 		// write content-length
@@ -169,6 +190,8 @@ DataWriter& HTTPSender::writer(const string& code, HTTP::ContentType type, const
 		ERROR("HTTP response already written");
 		return DataWriter::Null;
 	}
+
+	_written = true;
 
 	if (type == HTTP::CONTENT_ABSENT || data || size || !subType || !MIME::CreateDataWriter(MIME::DataType(subType), _poolBuffers, _pWriter))
 		_pWriter.reset(new StringWriter(_poolBuffers));
@@ -203,6 +226,10 @@ DataWriter& HTTPSender::writer(const string& code, HTTP::ContentType type, const
 	} else if (_connection&HTTP::CONNECTION_CLOSE)
 		packet.write(EXPAND("\r\nConnection: close"));
 
+	// allow cross request, indeed if onConnection has not been rejected, every cross request are allowed
+	if (String::ICompare(_origin, _serverAddress) != 0)
+		packet.write(EXPAND("\r\nAccess-Control-Allow-Origin: ")).write(_origin);
+
 	// Set Cookies
 	if (_pInfos) {
 		for(const string& cookie : _pInfos->setCookies)
@@ -210,7 +237,9 @@ DataWriter& HTTPSender::writer(const string& code, HTTP::ContentType type, const
 	}
 
 	// Content Type
-	if (type != HTTP::CONTENT_ABSENT) {
+	if (type == HTTP::CONTENT_ABSENT)
+		packet.write(EXPAND("\r\nContent-Length: 0"));
+	else {
 		packet.write(EXPAND("\r\nContent-Type: "));
 		packet.write(HTTP::FormatContentType(type, subType, _buffer));
 		

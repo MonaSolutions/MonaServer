@@ -22,7 +22,6 @@ This file is a part of Mona.
 #include "Mona/Mona.h"
 #include "Mona/Peer.h"
 #include "Mona/Invoker.h"
-#include "Mona/Decoding.h"
 #include "Mona/Logs.h"
 
 namespace Mona {
@@ -33,7 +32,7 @@ namespace Events {
 };
 
 class Protocol;
-class Session : public Expirable<Session>, public virtual Object,
+class Session : public virtual Object,
 	public Events::OnAddressChanged {
 	friend class Sessions;
 
@@ -69,17 +68,6 @@ public:
 	static void	DumpResponse(const UInt8* data, UInt32 size, const SocketAddress& address, bool justInDebug = false);
 	void dumpResponse(const UInt8* data, UInt32 size, bool justInDebug=false) { DumpResponse(data, size, peer.address, justInDebug); }
 
-	template <typename DecodingType, typename ...Args>
-	void decode(Args&&... args) {
-		std::shared_ptr<DecodingType> pDecoding(new DecodingType(invoker, *this, args ...));
-		Exception ex;
-		_pDecodingThread = invoker.poolThreads.enqueue<DecodingType>(ex, pDecoding, _pDecodingThread);
-		if (ex)
-			ERROR("Impossible to decode packet of protocol ", protocolName(), " on session ", name(), ", ", ex.error());
-	}
-
-	virtual void		receive(PacketReader& packet);
-	virtual void		receive(PacketReader& packet, const SocketAddress& address);
 
 	template<typename ProtocolType,typename SenderType>
 	bool send(Exception& ex,const std::shared_ptr<SenderType>& pSender) {
@@ -98,18 +86,19 @@ protected:
 	Session(Protocol& protocol,Invoker& invoker, const char* name=NULL);
 	Session(Protocol& protocol, Invoker& invoker, const std::shared_ptr<Peer>& pPeer, const char* name = NULL);
 
+	bool receive(Binary& packet);
+	bool receive(const SocketAddress& address, Binary& packet);
+
 private:
 
-	virtual void		packetHandler(PacketReader& packet)=0;
-
-	const std::string&			protocolName();
+	const std::string&	protocolName();
 
 
-	PoolThread*					_pDecodingThread;
-	mutable std::string			_name;
-	UInt32						_id;
-	UInt8						_sessionsOptions;
-	Protocol&					_protocol;
+	
+	mutable std::string					_name;
+	UInt32								_id;
+	UInt8								_sessionsOptions;
+	Protocol&							_protocol;
 };
 
 

@@ -61,7 +61,6 @@ protected:
 	virtual void	run(Exception& ex) = 0;
 
 private:
-	void			setDebugThreadName();
 	void			process();
 	
 

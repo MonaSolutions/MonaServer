@@ -26,7 +26,7 @@ namespace Mona {
 
 /// \class Record access to name, extension and basename for a faster response
 ///
-class Path : public virtual Object {
+class Path : public virtual NullableObject {
 public:
 	Path() : _attributesLoaded(false) {}
 
@@ -38,17 +38,21 @@ public:
 
 	Path& operator=(const Path& other);
 
+	operator bool() const { return !_path.empty(); }
+
+	// about Path
 	const std::string&	toString() const { return _path; }
 	const std::string&	operator()() const { return _path; }
-
 	const std::string&	name() const { return _name.empty() ? FileSystem::GetName(_path,_name) : _name; }
 	const std::string&	baseName() const { return _baseName.empty() ? FileSystem::GetBaseName(_path,_baseName) : _baseName; }
 	const std::string&	extension() const { return _extension.empty() ? FileSystem::GetExtension(_path,_extension) : _extension; }
+	const std::string&  parent() const { return _parent.empty() ? FileSystem::GetParent(_parent.assign(_path)) : _parent; }
+	bool				isFolder() const { if (!_folder) _folder = FileSystem::IsFolder(_path) ? 1 : -1; return _folder == 1; }
 
+	// about File
+	bool				exists() const { if (!_attributesLoaded) attributes();  return _exists; }
 	UInt32				size() const { return attributes().size; }
 	const Time&			lastModified() const { return attributes().lastModified; }
-	const std::string&  parent() const { return _parent.empty() ? FileSystem::GetParent(_parent.assign(_path)) : _parent; }
-	bool				isDirectory() const { return attributes().isDirectory; }
 	void				update() const { _attributesLoaded = false; }
 	
 	template <typename ...Args>
@@ -57,6 +61,7 @@ public:
 		_baseName.clear();
 		_extension.clear();
 		_parent.clear();
+		_folder = 0;
 		_attributesLoaded = false;
 		String::Append(_path, args ...);
 	}
@@ -76,6 +81,8 @@ private:
 	mutable std::string				_baseName;
 	mutable std::string				_extension;
 	mutable std::string				_parent;
+	mutable Int8					_folder;
+	mutable bool					_exists;
 	mutable FileSystem::Attributes	_attributes;
 	mutable bool					_attributesLoaded;
 };

@@ -20,29 +20,20 @@ This file is a part of Mona.
 #pragma once
 
 #include "Mona/Mona.h"
-#include "Mona/Decoding.h"
-#include "Mona/WebSocket/WS.h"
+#include "Mona/Decoder.h"
+#include "Mona/RTMFP/RTMFP.h"
 
 namespace Mona {
 
-
-class WSUnmasking : public Decoding, public virtual Object {
+class RTMFPDecoder : public Decoder<BinaryReader>, public virtual Object {
 public:
-	WSUnmasking(Invoker& invoker, const Session& session, const UInt8* data,UInt32 size,UInt8 type) : _type(type), Decoding(invoker,session,"WSUnmasking",data,size) {}
-	
-private:
-	bool					decode(Exception& ex, PacketReader& packet, UInt32 times);
-	UInt8					_type;
-};
+	RTMFPDecoder(Invoker& invoker, const UInt8* decryptKey) : Decoder(invoker, "RTMFPDecoder"), _pDecoder(new RTMFPEngine(decryptKey, RTMFPEngine::DECRYPT)) {}
+	RTMFPDecoder(Invoker& invoker, const std::shared_ptr<RTMFPEngine>& pDecoder) : Decoder(invoker, "RTMFPDecoder"), _pDecoder(pDecoder) {}
 
-inline bool WSUnmasking::decode(Exception& ex, PacketReader& packet, UInt32 times) {
-	if (times)
-		return false;
-	WS::Unmask(packet);
-	packet.reset(packet.position()-1);
-	*(UInt8*)packet.current() = _type;
-	return true;
-}
+private:
+	UInt32 decoding(Exception& ex, UInt8* data,UInt32 size);
+	const std::shared_ptr<RTMFPEngine>	  _pDecoder;
+};
 
 
 

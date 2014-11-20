@@ -35,15 +35,15 @@ void Buffer::clip(UInt32 offset) {
 	if (offset == 0)
 		return;
 	_offset += offset;
-	_size -= offset;
 	_data += offset;
+	_size -= offset;
 	_capacity -= offset;
 }
 
 void Buffer::clear() {
 	_size = 0;
 	// fix possible clip
-	if (_offset>0) {
+	if (_offset) {
 		_capacity += _offset;
 		_data -= _offset;
 		_offset = 0;
@@ -54,6 +54,25 @@ bool Buffer::resize(UInt32 size,bool preserveData) {
 	if (size <= _capacity) {
 		_size = size;
 		return true;
+	}
+
+	// here size > capacity, so size > _size
+
+	UInt8* oldData(_data);
+
+	// try without offset
+	if (_offset) {
+		_capacity += _offset;
+		_data -= _offset;
+		_offset = 0;
+		if (size <= _capacity) {
+			if (preserveData)
+				memmove(_data,oldData,_size);
+			_size = size;
+			return true;
+		}
+		if (!_buffer && preserveData)
+			memmove(_data, oldData, _size);
 	}
 
 	if (!_buffer) {
@@ -70,14 +89,12 @@ bool Buffer::resize(UInt32 size,bool preserveData) {
 	if (_capacity == 0) // to expect the case or _capacity*2 = 0 (exceeds maximum size)
 		_capacity = size;
 
-	UInt8* oldData = _data;
 	_data = new UInt8[_capacity]();
-	if (preserveData && _size>0)
+	if (preserveData)
 		memcpy(_data, oldData, _size);
 	delete [] _buffer;
-	_offset = 0;
-	_buffer=_data;
 	_size = size;
+	_buffer=_data;
 	return true;
 }
 

@@ -249,7 +249,7 @@ void RTMFPWriter::acknowledgment(PacketReader& packet) {
 			UInt32 size = contentSize+4;
 			UInt32 availableToWrite(_band.availableToWrite());
 			if(!header && size>availableToWrite) {
-				_band.flush(false);
+				_band.flush();
 				header=true;
 			}
 
@@ -257,7 +257,7 @@ void RTMFPWriter::acknowledgment(PacketReader& packet) {
 				size+=headerSize(stage);
 
 			if(size>availableToWrite)
-				_band.flush(false);
+				_band.flush();
 
 			// Write packet
 			size-=3;  // type + timestamp removed, before the "writeMessage"
@@ -473,7 +473,7 @@ void RTMFPWriter::flush(bool full) {
 			UInt32 contentSize = _band.availableToWrite();
 			UInt32 headerSize = (header && contentSize<62) ? this->headerSize(_stage) : 0; // calculate only if need!
 			if(contentSize<(headerSize+12)) { // 12 to have a size minimum of fragmentation
-				_band.flush(false); // send packet (and without time echo)
+				_band.flush(); // send packet (and without time echo)
 				header=true;
 			}
 

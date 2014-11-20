@@ -54,9 +54,6 @@
     <ClInclude Include="include\Mona\RTMFP\RTMFPCookieComputing.h">
       <Filter>Protocols\RTMFP</Filter>
     </ClInclude>
-    <ClInclude Include="include\Mona\RTMFP\RTMFPDecoding.h">
-      <Filter>Protocols\RTMFP</Filter>
-    </ClInclude>
     <ClInclude Include="include\Mona\RTMFP\RTMFPFlow.h">
       <Filter>Protocols\RTMFP</Filter>
     </ClInclude>
@@ -103,9 +100,6 @@
       <Filter>Protocols\WebSocket</Filter>
     </ClInclude>
     <ClInclude Include="include\Mona\WebSocket\WSSession.h">
-      <Filter>Protocols\WebSocket</Filter>
-    </ClInclude>
-    <ClInclude Include="include\Mona\WebSocket\WSUnmasking.h">
       <Filter>Protocols\WebSocket</Filter>
     </ClInclude>
     <ClInclude Include="include\Mona\WebSocket\WSWriter.h">
@@ -175,8 +169,6 @@
       <Filter>Protocols</Filter>
     </ClInclude>
     <ClInclude Include="include\Mona\Client.h" />
-    <ClInclude Include="include\Mona\Clients.h" />
-    <ClInclude Include="include\Mona\Decoding.h" />
     <ClInclude Include="include\Mona\Group.h" />
     <ClInclude Include="include\Mona\Handler.h" />
     <ClInclude Include="include\Mona\Invoker.h" />
@@ -185,12 +177,6 @@
     <ClInclude Include="include\Mona\Writer.h" />
     <ClInclude Include="include\Mona\FlashMainStream.h">
       <Filter>Flash</Filter>
-    </ClInclude>
-    <ClInclude Include="include\Mona\HTTPHeaderReader.h">
-      <Filter>Serializers</Filter>
-    </ClInclude>
-    <ClInclude Include="include\Mona\HTTP\HTTPPacketBuilding.h">
-      <Filter>Protocols\HTTP</Filter>
     </ClInclude>
     <ClInclude Include="include\Mona\HTTP\HTTPPacket.h">
       <Filter>Protocols\HTTP</Filter>
@@ -254,6 +240,16 @@
     </ClInclude>
     <ClInclude Include="include\Mona\QueryWriter.h">
       <Filter>Serializers</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\Decoder.h" />
+    <ClInclude Include="include\Mona\WebSocket\WSDecoder.h">
+      <Filter>Protocols\WebSocket</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\RTMFP\RTMFPDecoder.h">
+      <Filter>Protocols\RTMFP</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\HTTP\HTTPDecoder.h">
+      <Filter>Protocols\HTTP</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -347,7 +343,6 @@
     <ClCompile Include="sources\FlashWriter.cpp">
       <Filter>Flash</Filter>
     </ClCompile>
-    <ClCompile Include="sources\Decoding.cpp" />
     <ClCompile Include="sources\Invoker.cpp" />
     <ClCompile Include="sources\Peer.cpp" />
     <ClCompile Include="sources\Server.cpp" />
@@ -357,9 +352,6 @@
     </ClCompile>
     <ClCompile Include="sources\RTMP\RTMPSender.cpp">
       <Filter>Protocols\RTMP</Filter>
-    </ClCompile>
-    <ClCompile Include="sources\HTTPHeaderReader.cpp">
-      <Filter>Serializers</Filter>
     </ClCompile>
     <ClCompile Include="sources\HTTP\HTTPPacket.cpp">
       <Filter>Protocols\HTTP</Filter>
@@ -399,6 +391,18 @@
     </ClCompile>
     <ClCompile Include="sources\QueryReader.cpp">
       <Filter>Serializers</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\WebSocket\WSDecoder.cpp">
+      <Filter>Protocols\WebSocket</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\RTMFP\RTMFPSender.cpp">
+      <Filter>Protocols\RTMFP</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\RTMFP\RTMFPDecoder.cpp">
+      <Filter>Protocols\RTMFP</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\HTTP\HTTPDecoder.cpp">
+      <Filter>Protocols\HTTP</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

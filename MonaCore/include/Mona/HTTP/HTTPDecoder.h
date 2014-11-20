@@ -17,36 +17,24 @@ details (or else see http://www.gnu.org/licenses/).
 This file is a part of Mona.
 */
 
-#include "Test.h"
-#include "Mona/Expirable.h"
+#pragma once
 
-using namespace std;
-using namespace Mona;
+#include "Mona/Mona.h"
+#include "Mona/Decoder.h"
+#include "Mona/HTTP/HTTPPacket.h"
 
+namespace Mona {
 
-class ExpirableObject : public Expirable<ExpirableObject>, public virtual Object {
+class HTTPDecoder : public Decoder<const std::shared_ptr<HTTPPacket>>, public virtual Object {
 public:
-	ExpirableObject() : Expirable(this) {}
-	virtual ~ExpirableObject() {
-		expire();
-	}
+	HTTPDecoder(Invoker& invoker) : _rootPath(invoker.rootPath()), Decoder(invoker, "HTTPDecoder") {}
+
+private:
+	UInt32 decoding(Exception& ex, UInt8* data,UInt32 size);
+
+	const std::string&			_rootPath;
 
 };
 
 
-ADD_TEST(ExpirableTest, Expire) {
-
-	ExpirableObject* pObject(new ExpirableObject());
-	CHECK(pObject->isOwner());
-	Expirable<ExpirableObject> expirable(*pObject);
-	{
-		unique_lock<mutex> lock;
-		ExpirableObject* pObject = expirable.safeThis(lock);
-		CHECK(pObject)
-	}
-	delete pObject;
-
-	unique_lock<mutex> lock;
-	pObject = expirable.safeThis(lock);
-	CHECK(!pObject)
-}
+} // namespace Mona

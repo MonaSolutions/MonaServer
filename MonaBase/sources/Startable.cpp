@@ -19,9 +19,7 @@ This file is a part of Mona.
 
 
 #include "Mona/Startable.h"
-#if !defined(_WIN32)
-#include <sys/prctl.h> // for thread name
-#else
+#if defined(_WIN32)
 #include <windows.h>
 #endif
 #include "Mona/Logs.h"
@@ -40,36 +38,8 @@ Startable::~Startable() {
 	stop();
 }
 
-void Startable::setDebugThreadName() {
-#if defined(_DEBUG)
-#if defined(_WIN32)
-	typedef struct tagTHREADNAME_INFO {
-		DWORD dwType; // Must be 0x1000.
-		LPCSTR szName; // Pointer to name (in user addr space).
-		DWORD dwThreadID; // Thread ID (-1=caller thread).
-		DWORD dwFlags; // Reserved for future use, must be zero.
-	} THREADNAME_INFO;
-
-	THREADNAME_INFO info;
-	info.dwType = 0x1000;
-	info.szName = _name.c_str();
-	info.dwThreadID = GetCurrentThreadId();
-	info.dwFlags = 0;
-
-	__try {
-		RaiseException(0x406D1388, 0, sizeof(info) / sizeof(ULONG_PTR), (ULONG_PTR*)&info);
-	} __except (EXCEPTION_EXECUTE_HANDLER) {
-	}
-
-#else
-	prctl(PR_SET_NAME, _name.c_str(), 0, 0, 0);
-#endif
-#endif
-}
-
 void Startable::process() {
-	Util::SetCurrentThreadName(_name);
-	setDebugThreadName();
+	Util::SetCurrentThreadName(_name.c_str());
 
 	// set priority
 #if defined(_WIN32)

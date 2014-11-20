@@ -22,7 +22,7 @@ This file is a part of Mona.
 #include "Mona/Mona.h"
 #include "Mona/AMF.h"
 #include "Mona/ReferableReader.h"
-#include <deque>
+#include <vector>
 
 namespace Mona {
 

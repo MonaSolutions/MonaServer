@@ -29,28 +29,28 @@ ADD_TEST(PathTest, CommonWin32) {
 	CHECK(file1()=="C:\\Users\\Public\\file.test");
 	CHECK(file1.baseName()=="file");
 	CHECK(file1.extension()=="test");
-	CHECK(!file1.isDirectory());
+	CHECK(!file1.isFolder());
 	CHECK(file1.name()=="file.test");
 
 	Path file2("C:\\Users\\Public", "/file.test");
 	CHECK(file2()=="C:\\Users\\Public/file.test");
 	CHECK(file2.baseName()=="file");
 	CHECK(file2.extension()=="test");
-	CHECK(!file2.isDirectory());
+	CHECK(!file2.isFolder());
 	CHECK(file2.name()=="file.test");
 
 	Path file3("C:/Users/Public/file.test");
 	CHECK(file3()=="C:/Users/Public/file.test");
 	CHECK(file3.baseName()=="file");
 	CHECK(file3.extension()=="test");
-	CHECK(!file3.isDirectory());
+	CHECK(!file3.isFolder());
 	CHECK(file3.name()=="file.test");
 
 	Path file4("C:/Users/Public/", "file.test");
 	CHECK(file4()=="C:/Users/Public/file.test");
 	CHECK(file4.baseName()=="file");
 	CHECK(file4.extension()=="test");
-	CHECK(!file4.isDirectory());
+	CHECK(!file4.isFolder());
 	CHECK(file4.name()=="file.test");
 
 	Path directory1("C:/Users/Public");
@@ -72,14 +72,14 @@ ADD_TEST(PathTest, CommonLinux) {
 	CHECK(file1()=="/user/dev/file.test");
 	CHECK(file1.baseName()=="file");
 	CHECK(file1.extension()=="test");
-	CHECK(!file1.isDirectory());
+	CHECK(!file1.isFolder());
 	CHECK(file1.name()=="file.test");
 
 	Path file2("/user/dev", "/file.test");
 	CHECK(file2()=="/user/dev/file.test");
 	CHECK(file2.baseName()=="file");
 	CHECK(file2.extension()=="test");
-	CHECK(!file2.isDirectory());
+	CHECK(!file2.isFolder());
 	CHECK(file2.name()=="file.test");
 }
 
@@ -110,7 +110,7 @@ ADD_TEST(PathTest, Operations) {
 	CHECK(file2.baseName()=="tmpFile");
 	CHECK(file2.extension()=="txt");
 	CHECK(file2.name()=="tmpFile.txt");
-	CHECK(!file2.isDirectory());
+	CHECK(!file2.isFolder());
 
 	file = file2;
 	CHECK(file()=="/tmp/tmpFile.txt");

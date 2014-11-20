@@ -22,6 +22,7 @@ This file is a part of Mona.
 #include "Mona/Mona.h"
 #include "Mona/DataWriter.h"
 #include "Mona/Util.h"
+#include <vector>
 
 namespace Mona {
 

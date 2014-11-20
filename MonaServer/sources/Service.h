@@ -29,13 +29,12 @@ class ServiceHandler {
 public:
 	virtual void startService(Service& service){}
 	virtual void stopService(Service& service){}
-	virtual const std::string& wwwPath() = 0;
 };
 
 
 class Service : private Mona::FileWatcher {
 public:
-	Service(lua_State* pState, ServiceHandler& handler);
+	Service(lua_State* pState, const std::string& rootPath, ServiceHandler& handler);
 	virtual ~Service();
 
 	int					reference() const { return _reference; }
@@ -49,7 +48,7 @@ public:
 	const std::string	path;
 
 private:
-	Service(lua_State* pState, Service& parent, const std::string& name, ServiceHandler& handler);
+	Service(lua_State* pState,  const std::string& rootPath, Service& parent, const std::string& name, ServiceHandler& handler);
 
 	bool		open(bool create);
 	void		setReference(int reference);
@@ -69,5 +68,6 @@ private:
 
 
 	std::map<std::string,Service*>	_services;
+	const std::string&				_rootPath;
 	ServiceHandler&					_handler;
 };

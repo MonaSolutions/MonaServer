@@ -24,6 +24,7 @@ This file is a part of Mona.
 #include "Mona/Options.h"
 #include "Mona/HelpFormatter.h"
 #include "Mona/Logger.h"
+#include <vector>
 #include <memory>
 #include <fstream>
 
@@ -76,7 +77,7 @@ protected:
 	virtual bool			loadConfigurations(std::string& path);
 	virtual void			defineOptions(Exception& ex, Options& options);
 
-	virtual void			log(THREAD_ID threadId, const std::string& threadName, Level level, const char *filePath, std::string& shortFilePath, long line, std::string& message);
+	virtual void			log(THREAD_ID threadId, Level level, const char *filePath, std::string& shortFilePath, long line, std::string& message);
 	virtual void			dump(const UInt8* data, UInt32 size);
 	
 private:

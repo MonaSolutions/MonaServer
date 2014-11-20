@@ -32,10 +32,12 @@ namespace Mona {
 RTMFPSession::RTMFPSession(RTMFProtocol& protocol,
 				Invoker& invoker,
 				UInt32 farId,
-				const UInt8* decryptKey,
-				const UInt8* encryptKey,
-				const shared_ptr<Peer>& pPeer) : _failed(false),_pThread(NULL), farId(farId), Session(protocol, invoker, pPeer), _pDecryptKey(new RTMFPKey(decryptKey)), _pEncryptKey(new RTMFPKey(encryptKey)), _timesFailed(0), _timeSent(0), _nextRTMFPWriterId(0), _timesKeepalive(0), _pLastWriter(NULL), _prevEngineType(RTMFPEngine::NORMAL) {
+				const shared_ptr<RTMFPEngine> pDecoder,
+				const shared_ptr<RTMFPEngine> pEncoder,
+				const shared_ptr<Peer>& pPeer) : onDecoded([this](BinaryReader& packet,const SocketAddress& address){receive(address,packet);}), onDecodedEnd([this](){flush();}), _failed(false), _pThread(NULL),farId(farId), Session(protocol, invoker, pPeer), _decoder(invoker,pDecoder), _pEncoder(pEncoder), _timesFailed(0), _timeSent(0), _nextRTMFPWriterId(0), _timesKeepalive(0), _pLastWriter(NULL){
 	_pFlowNull = new RTMFPFlow(0,"",peer,invoker,*this);
+	_decoder.OnDecodedEnd::subscribe(onDecodedEnd);
+	_decoder.OnDecoded::subscribe(onDecoded);
 }
 
 RTMFPSession::RTMFPSession(RTMFProtocol& protocol,
@@ -43,10 +45,11 @@ RTMFPSession::RTMFPSession(RTMFProtocol& protocol,
 				UInt32 farId,
 				const UInt8* decryptKey,
 				const UInt8* encryptKey,
-				const char* name) : _failed(false),_pThread(NULL), farId(farId), Session(protocol, invoker,name), _pDecryptKey(new RTMFPKey(decryptKey)), _pEncryptKey(new RTMFPKey(encryptKey)), _timesFailed(0), _timeSent(0), _nextRTMFPWriterId(0), _timesKeepalive(0), _pLastWriter(NULL), _prevEngineType(RTMFPEngine::NORMAL) {
+				const char* name) : onDecoded([this](BinaryReader& packet,const SocketAddress& address){receive(address,packet);}), onDecodedEnd([this](){flush();}) , _failed(false), farId(farId), _pThread(NULL), Session(protocol, invoker, name), _decoder(invoker, decryptKey), _pEncoder(new RTMFPEngine(encryptKey, RTMFPEngine::ENCRYPT)), _timesFailed(0), _timeSent(0), _nextRTMFPWriterId(0), _timesKeepalive(0), _pLastWriter(NULL) {
 	_pFlowNull = new RTMFPFlow(0,"",peer,invoker,*this);
+	_decoder.OnDecodedEnd::subscribe(onDecodedEnd);
+	_decoder.OnDecoded::subscribe(onDecoded);
 }
-
 
 void RTMFPSession::failSignal() {
 	_failed = true;
@@ -85,6 +88,10 @@ void RTMFPSession::kill(UInt32 type) {
 	
 	// delete flowWriters
 	_flowWriters.clear();
+
+	// no more reception
+	_decoder.OnDecoded::unsubscribe(onDecoded);
+	_decoder.OnDecodedEnd::unsubscribe(onDecodedEnd);
 }
 
 void RTMFPSession::manage() {
@@ -180,7 +187,7 @@ void RTMFPSession::p2pHandshake(const string& tag,const SocketAddress& address,U
 	flush();
 }
 
-void RTMFPSession::flush(UInt8 marker,bool echoTime,RTMFPEngine::Type type) {
+void RTMFPSession::flush(bool echoTime,UInt8 marker) {
 	_pLastWriter=NULL;
 	if(!_pSender)
 		return;
@@ -202,7 +209,6 @@ void RTMFPSession::flush(UInt8 marker,bool echoTime,RTMFPEngine::Type type) {
 			writer.write16(_timeSent+RTMFP::Time(peer.lastReceptionTime.elapsed()));
 
 		_pSender->farId = farId;
-		_pSender->encoder.type = type;
 		_pSender->address.set(peer.address);
 
 		if (packet.size() > RTMFP_MAX_PACKET_SIZE)
@@ -220,7 +226,7 @@ void RTMFPSession::flush(UInt8 marker,bool echoTime,RTMFPEngine::Type type) {
 
 PacketWriter& RTMFPSession::packet() {
 	if (!_pSender)
-		_pSender.reset(new RTMFPSender(invoker.poolBuffers,_pEncryptKey));
+		_pSender.reset(new RTMFPSender(invoker.poolBuffers,_pEncoder));
 	return _pSender->packet;
 }
 
@@ -247,7 +253,10 @@ BinaryWriter& RTMFPSession::writeMessage(UInt8 type, UInt16 length, RTMFPWriter*
 	return packet().write8(type).write16(length);
 }
 
-void RTMFPSession::packetHandler(PacketReader& packet) {
+void RTMFPSession::receive(const SocketAddress& address, BinaryReader& packet) {
+
+	if (!Session::receive(address, packet))
+		return;
 
 	// Read packet
 	UInt8 marker = packet.read8()|0xF0;

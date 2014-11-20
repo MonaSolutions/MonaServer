@@ -27,32 +27,6 @@ using namespace std;
 namespace Mona {
 
 
-const shared_ptr<RTMFPKey>	RTMFPEngine::_pDefaultKey(new RTMFPKey(RTMFP_DEFAULT_KEY));
-RTMFPEngine RTMFPEngine::_DefaultDecrypt(_pDefaultKey,DECRYPT);
-RTMFPEngine RTMFPEngine::_DefaultEncrypt(_pDefaultKey,ENCRYPT);
-
-
-RTMFPEngine::RTMFPEngine(const std::shared_ptr<RTMFPKey>& pKey,Direction direction) : type(NORMAL),_direction(direction),_pKey(pKey) {
-	EVP_CIPHER_CTX_init(&_context);
-}
-
-RTMFPEngine::~RTMFPEngine() {
-	EVP_CIPHER_CTX_cleanup(&_context);
-}
-
-void RTMFPEngine::process(const UInt8* in,UInt8* out,int size) {
-	if(type==DEFAULT) {
-		if(_direction==DECRYPT)
-			_DefaultDecrypt.process(in,out,size);
-		else
-			_DefaultEncrypt.process(in,out,size);
-		return;
-	}
-	static UInt8 IV[RTMFP_KEY_SIZE];
-	EVP_CipherInit_ex(&_context, EVP_aes_128_cbc(), NULL, _pKey->value(), IV,_direction);
-	EVP_CipherUpdate(&_context, out, &size, in, size);
-}
-
 
 BinaryWriter& RTMFP::WriteAddress(BinaryWriter& writer,const SocketAddress& address,AddressType type) {
 	const IPAddress& host = address.host();
@@ -67,69 +41,18 @@ BinaryWriter& RTMFP::WriteAddress(BinaryWriter& writer,const SocketAddress& addr
 	return writer.write16(address.port());
 }
 
-
-UInt16 RTMFP::CheckSum(PacketReader& packet) {
-	int sum = 0;
-	int pos = packet.position();
-	while(packet.available()>0)
-		sum += packet.available()==1 ? packet.read8() : packet.read16();
-	packet.reset(pos);
-
-  /* add back carry outs from top 16 bits to low 16 bits */
-  sum = (sum >> 16) + (sum & 0xffff);     /* add hi 16 to low 16 */
-  sum += (sum >> 16);                     /* add carry */
-  return ~sum; /* truncate to 16 bits */
-}
-
-
-bool RTMFP::Decode(Exception& ex,RTMFPEngine& aesDecrypt,PacketReader& packet) {
-	// Decrypt
-	aesDecrypt.process(packet.current(),(UInt8*)packet.current(),packet.available());
-	bool result = ReadCRC(packet);
-	if (!result)
-		ex.set(Exception::CRYPTO, "Bad RTMFP CRC sum computing");
-	return result;
-}
-
-bool RTMFP::ReadCRC(PacketReader& packet) {
-	// Check the first 2 CRC bytes 
-	packet.reset(4);
-	UInt16 sum = packet.read16();
-	return (sum == CheckSum(packet));
-}
-
-
-void RTMFP::Encode(RTMFPEngine& aesEncrypt,PacketWriter& packet) {
-	// paddingBytesLength=(0xffffffff-plainRequestLength+5)&0x0F
-	int paddingBytesLength = (0xFFFFFFFF-packet.size()+5)&0x0F;
-	// Padd the plain request with paddingBytesLength of value 0xff at the end
-	while (paddingBytesLength-->0)
-		packet.write8(0xFF);
-	WriteCRC(packet);
-	// Encrypt the resulted request
-	aesEncrypt.process(packet.data()+4,(UInt8*)packet.data()+4,packet.size()-4);
-}
-
-void RTMFP::WriteCRC(PacketWriter& packet) {
-	// Compute the CRC and add it at the beginning of the request
-	PacketReader reader(packet.data(),packet.size());
-	reader.next(6);
-	BinaryWriter(packet.data()+4,2).write16(CheckSum(reader));
-}
-
-UInt32 RTMFP::Unpack(PacketReader& packet) {
-	packet.reset();
+UInt32 RTMFP::Unpack(BinaryReader& reader) {
+	reader.reset();
 	UInt32 id=0;
 	for(int i=0;i<3;++i)
-		id ^= packet.read32();
-	packet.reset(4);
+		id ^= reader.read32();
+	reader.reset(4);
 	return id;
 }
 
-void RTMFP::Pack(PacketWriter& packet,UInt32 farId) {
-	PacketReader reader(packet.data(),packet.size());
-	reader.next(4);
-	BinaryWriter(packet.data(),4).write32(reader.read32()^reader.read32()^farId);
+void RTMFP::Pack(BinaryWriter& writer,UInt32 farId) {
+	BinaryReader reader(writer.data()+4,writer.size()-4);
+	BinaryWriter(writer.data(),4).write32(reader.read32()^reader.read32()^farId);
 }
 
 
@@ -138,16 +61,16 @@ void RTMFP::ComputeAsymetricKeys(const Buffer& sharedSecret, const UInt8* initia
 														    UInt8* requestKey,UInt8* responseKey) {
 	UInt8 mdp1[HMAC_KEY_SIZE];
 	UInt8 mdp2[HMAC_KEY_SIZE];
-	Crypto crypto;
+	Crypto::HMAC hmac;
 
 	// doing HMAC-SHA256 of one side
-	crypto.hmac(EVP_sha256(),responderNonce,respNonceSize,initiatorNonce,initNonceSize,mdp1);
+	hmac.compute(EVP_sha256(),responderNonce,respNonceSize,initiatorNonce,initNonceSize,mdp1);
 	// doing HMAC-SHA256 of the other side
-	crypto.hmac(EVP_sha256(),initiatorNonce,initNonceSize,responderNonce,respNonceSize,mdp2);
+	hmac.compute(EVP_sha256(),initiatorNonce,initNonceSize,responderNonce,respNonceSize,mdp2);
 
 	// now doing HMAC-sha256 of both result with the shared secret DH key
-	crypto.hmac(EVP_sha256(),sharedSecret.data(),sharedSecret.size(),mdp1,HMAC_KEY_SIZE,requestKey);
-	crypto.hmac(EVP_sha256(),sharedSecret.data(),sharedSecret.size(),mdp2,HMAC_KEY_SIZE,responseKey);
+	hmac.compute(EVP_sha256(),sharedSecret.data(),sharedSecret.size(),mdp1,HMAC_KEY_SIZE,requestKey);
+	hmac.compute(EVP_sha256(),sharedSecret.data(),sharedSecret.size(),mdp2,HMAC_KEY_SIZE,responseKey);
 }
 
 

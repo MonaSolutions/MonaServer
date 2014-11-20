@@ -137,8 +137,10 @@ void FlashMainStream::messageHandler(const string& name,AMFReader& message,Flash
 	} else {
 		// not close the main flash stream for that!
 		Exception ex;
-		if (!peer.onMessage(ex, name, message))
-			ERROR(ex.set(Exception::APPLICATION, "Method '", name, "' not found on application ", peer.path).error())
+		if (!peer.onMessage(ex, name, message)) {
+			ex.set(Exception::APPLICATION, "Method '", name, "' not found on application ", peer.path);
+			ERROR(ex.error())
+		}
 		if (ex)
 			writer.writeAMFError("NetConnection.Call.Failed", ex.error());
 	}

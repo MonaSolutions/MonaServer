@@ -42,13 +42,6 @@ public:
 				} else
 					lua_pushnil(pState);
 
-				if (lua_isnil(pState,-1) && Script::GetCollection(pState, -2, "clientsByName")) {
-					// try by name
-					lua_pop(pState, 1);
-					lua_getfield(pState, -1,(const char*) id);
-					lua_replace(pState, -2); // remove clientsByName collection
-				}
-
 				lua_replace(pState, -2); // remove clients collection
 			}
 
@@ -56,11 +49,11 @@ public:
 	}
 };
 
-Service::Service(lua_State* pState, ServiceHandler& handler) : _lastCheck(0), _reference(LUA_REFNIL), _pParent(NULL), _handler(handler), _pState(pState), FileWatcher(handler.wwwPath(), "/main.lua") {
+Service::Service(lua_State* pState, const string& rootPath, ServiceHandler& handler) : _rootPath(rootPath), _lastCheck(0), _reference(LUA_REFNIL), _pParent(NULL), _handler(handler), _pState(pState), FileWatcher(rootPath, "/main.lua") {
 
 }
 
-Service::Service(lua_State* pState, Service& parent, const string& name, ServiceHandler& handler) : name(name), _lastCheck(0), _reference(LUA_REFNIL), _pParent(&parent), _handler(handler), _pState(pState), FileWatcher(handler.wwwPath(),parent.path,'/',name,"/main.lua") {
+Service::Service(lua_State* pState, const string& rootPath, Service& parent, const string& name, ServiceHandler& handler) : _rootPath(rootPath), name(name), _lastCheck(0), _reference(LUA_REFNIL), _pParent(&parent), _handler(handler), _pState(pState), FileWatcher(rootPath,parent.path,'/',name,"/main.lua") {
 	String::Format((string&)path,parent.path,"/",name);
 }
 
@@ -130,12 +123,12 @@ Service* Service::open(Exception& ex, const string& path) {
 	if (!name.empty()) {
 		it = _services.lower_bound(name);
 		if (it == _services.end() || it->first != name)
-			it = _services.emplace_hint(it, name, new Service(_pState, *this, name, _handler)); // Service doesn't exists
+			it = _services.emplace_hint(it, name, new Service(_pState, _rootPath, *this, name, _handler)); // Service doesn't exists
 		pSubService = it->second;
 	}
 
 	if (!nextPath.empty())
-		return pSubService->open(ex,nextPath);
+		return pSubService->open(ex, nextPath);
 
 	 // if file or folder exists, return the service
 	if (pSubService->open(ex))

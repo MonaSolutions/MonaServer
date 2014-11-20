@@ -49,15 +49,17 @@ private:
 	lua_State*				loadService(const Mona::Client& client) { return (_pState && client.data() != LUA_REFNIL) ? _pState : NULL; }
 	lua_State*				closeService(const Mona::Client& client);
 
-	// DatabaseLoader implementation
+	/// DatabaseLoader implementation
 	void					onDataLoading(const std::string& path, const Mona::UInt8* value, Mona::UInt32 size);
 
-	// ServiceHandler implementation
+	/// ServiceHandler implementation
 	void					startService(Service& service);
 	void					stopService(Service& service);
 	const std::string&		wwwPath() { return WWWPath; }
 
 
+	/// Server implementation
+	const std::string&		rootPath() const { return WWWPath; }
 
 	//events
 	void					onStart();

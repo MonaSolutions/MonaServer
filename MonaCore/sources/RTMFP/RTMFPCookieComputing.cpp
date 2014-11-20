@@ -74,8 +74,12 @@ bool RTMFPCookieComputing::run(Exception& ex) {
 	packet.write8(0x58);
 
 	// Compute Keys
+	UInt8 encryptKey[HMAC_KEY_SIZE];
+	UInt8 decryptKey[HMAC_KEY_SIZE];
 	RTMFP::ComputeAsymetricKeys(_sharedSecret,initiatorNonce.data(),initiatorNonce.size(),packet.data()+noncePos,size+11,decryptKey,encryptKey);
-	
+	pDecoder.reset(new RTMFPEngine(decryptKey,RTMFPEngine::DECRYPT));
+	pEncoder.reset(new RTMFPEngine(encryptKey,RTMFPEngine::ENCRYPT));
+
 	waitHandle();
 	return true;
 }

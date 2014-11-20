@@ -17,26 +17,24 @@ details (or else see http://www.gnu.org/licenses/).
 This file is a part of Mona.
 */
 
-#pragma once
+#include "Mona/RTMFP/RTMFPDecoder.h"
+#include "Mona/Crypto.h"
 
-#include "Mona/Mona.h"
-#include "Mona/Decoding.h"
+using namespace std;
 
 namespace Mona {
 
-
-class RTMFPDecoding : public Decoding, public virtual Object {
-public:
-	RTMFPDecoding(Invoker& invoker, const Session& session, const SocketAddress& address, PoolBuffer& pBuffer,const std::shared_ptr<RTMFPKey>& pDecryptKey,RTMFPEngine::Type type) : Decoding(invoker,session,address,"RTMFPDecoding",pBuffer),_decoder(pDecryptKey,RTMFPEngine::DECRYPT) {
-		_decoder.type = type;
-	}
-
-private:
-	bool		  decode(Exception& ex, PacketReader& packet, UInt32 times) { if (times) return false;  packet.next(4); return RTMFP::Decode(ex, _decoder, packet); }
-
-	RTMFPEngine	  _decoder;
-};
-
-
+UInt32 RTMFPDecoder::decoding(Exception& ex, UInt8* data,UInt32 size) {
+	// Decrypt
+	_pDecoder->process(data, size);
+	// Check CRC
+	BinaryReader reader(data, size);
+	UInt16 crc(reader.read16());
+	if (Crypto::ComputeCRC(reader) == crc)
+		receive(reader.current(),reader.available());
+	else
+		ex.set(Exception::CRYPTO, "Bad RTMFP CRC sum computing");	
+	return size;
+}
 
 } // namespace Mona

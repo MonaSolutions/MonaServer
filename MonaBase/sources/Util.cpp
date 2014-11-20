@@ -23,12 +23,13 @@ This file is a part of Mona.
 #include "Mona/Time.h"
 #include "Mona/Timezone.h"
 #include <fstream>
-
+#include <vector>
 
 #if defined(_WIN32)
 	#include <windows.h>
 #else
 	#include <unistd.h>
+	#include <sys/prctl.h> // for thread name
 	#include <sys/syscall.h>
 	extern "C" char **environ;
 #endif
@@ -66,21 +67,46 @@ const char Util::_ReverseB64Table[128] = {
 	41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 64, 64, 64, 64, 64
 };
 
-const string& Util::CurrentThreadInfos(THREAD_ID& id) {
+THREAD_ID Util::CurrentThreadId() {
 #ifdef _WIN32
-	id = GetCurrentThreadId();
+	return GetCurrentThreadId();
 #else
-	id = syscall(SYS_gettid);
+	return syscall(SYS_gettid);
 #endif
-	lock_guard<recursive_mutex> lock(_MutexThreadNames);
-	return _ThreadNames[id];
 }
 
-void Util::SetCurrentThreadName(const string& name) {
-	THREAD_ID id;
+void SetCurrentThreadDebugName(const char* name) {
+	#if defined(_DEBUG)
+	#if defined(_WIN32)
+		typedef struct tagTHREADNAME_INFO {
+			DWORD dwType; // Must be 0x1000.
+			LPCSTR szName; // Pointer to name (in user addr space).
+			DWORD dwThreadID; // Thread ID (-1=caller thread).
+			DWORD dwFlags; // Reserved for future use, must be zero.
+		} THREADNAME_INFO;
+
+		THREADNAME_INFO info;
+		info.dwType = 0x1000;
+		info.szName = name;
+		info.dwThreadID = GetCurrentThreadId();
+		info.dwFlags = 0;
+
+		__try {
+			RaiseException(0x406D1388, 0, sizeof(info) / sizeof(ULONG_PTR), (ULONG_PTR*)&info);
+		} __except (EXCEPTION_EXECUTE_HANDLER) {
+		}
+
+	#else
+		prctl(PR_SET_NAME, name, 0, 0, 0);
+	#endif
+	#endif
+}
+
+void Util::SetCurrentThreadName(const char* name) {
+	SetCurrentThreadDebugName(name);
+	THREAD_ID id(CurrentThreadId());
 	lock_guard<recursive_mutex> lock(_MutexThreadNames);
-	const string& oldName(CurrentThreadInfos(id));
-	((string&)oldName).assign(name);
+	_ThreadNames[id].assign(name);
 }
 
 UInt8 Util::Get7BitValueSize(UInt64 value) {
@@ -109,25 +135,25 @@ const Parameters& Util::Environment() {
 }
 
 
-size_t Util::UnpackUrl(const string& url, string& address, string& path, string& query) {
+size_t Util::UnpackUrl(const char* url, string& address, string& path, string& query) {
 	
 	path.clear();
 	query.clear();
 
-	const char* it = url.c_str();
-	const char* const end = it+url.size();
+	const char* it = url;
+
 	// Get address
-	while (it != end) {
+	while (*it) {
 		if (*it == '/' || *it == '\\') // no address, just path
 			break;
 		if (*it == ':') {
 			++it;
-			while (it != end && (*it == '/' || *it == '\\'))
+			while (*it && (*it == '/' || *it == '\\'))
 				++it;
-			if (it == end) // no address, no path, just "scheme://"
+			if (!*it) // no address, no path, just "scheme://"
 				return string::npos;
-			auto itEnd(it);
-			while (itEnd != end && *itEnd != '/' && *itEnd != '\\')
+			const char* itEnd(it);
+			while (*itEnd && *itEnd != '/' && *itEnd != '\\')
 				++itEnd;
 			address.assign(it, itEnd);
 			it = itEnd;
@@ -139,10 +165,10 @@ size_t Util::UnpackUrl(const string& url, string& address, string& path, string&
 	// Normalize path => replace // by / and \ by / AND remove the last '/'
 	bool isFile(false);
 	size_t lastPos = 0; /// Position of last '/'
-    while (it != end) {
+    while (*it) {
 		// Extract query part
         if (*it == '?') {
-			query.assign(++it,end);
+			query.assign(++it);
 			// remove last slashes
 			while (!path.empty() && (path.back() == '/' || path.back() == '\\'))
 				path.resize(path.size() - 1);
@@ -151,10 +177,10 @@ size_t Util::UnpackUrl(const string& url, string& address, string& path, string&
 		// Add slash
         if (*it == '/' || *it == '\\') {
             ++it;
-            while (it != end && (*it == '/' || *it == '\\'))
+            while (*it && (*it == '/' || *it == '\\'))
                 ++it;
 			isFile = false;
-			if (it != end) {
+			if (*it) {
 				path += '/'; // We don't add the last slash
 				lastPos = path.size();
 			}
@@ -164,7 +190,7 @@ size_t Util::UnpackUrl(const string& url, string& address, string& path, string&
 			if (*it == '+')
 				path += ' ';
 			else if (*it == '%')
-				path += DecodeURI(it,end);
+				it = DecodeURI(it,path);
 			else
 				path += *it;
 			++it;
@@ -185,21 +211,20 @@ Parameters& Util::UnpackQuery(const char* query, Parameters& parameters) {
 }
 
 size_t Util::UnpackQuery(const char* query, const ForEachParameter& forEach) {
-	const char* it = query;
-	const char* end = it+strlen(query);
+	const char* it(query);
 	size_t count(0);
 	string name;
 	string value;
-	while (it < end) {
+	while (*it) {
 
 		// name
 		name.clear();
-		auto itEnd(it);
-		while (itEnd != end && *itEnd != '=' && *itEnd != '&') {
+		const char* itEnd(it);
+		while (*itEnd && *itEnd != '=' && *itEnd != '&') {
 			if (*itEnd == '+')
 				name += ' ';
 			else if (*itEnd == '%')
-				name += DecodeURI(itEnd,end);
+				itEnd = DecodeURI(itEnd,name);
 			else
 				name += *itEnd;
 			++itEnd;
@@ -207,21 +232,21 @@ size_t Util::UnpackQuery(const char* query, const ForEachParameter& forEach) {
 		it = itEnd;
 		value.clear();
 		bool hasValue(false);
-		if (it!=end && *it != '&') { // if it's '='
+		if (*it && *it != '&') { // if it's '='
 			// value
 			hasValue = true;
 			itEnd = ++it; // skip '='
-			while (itEnd != end && *itEnd != '&') {
+			while (*itEnd && *itEnd != '&') {
 				if (*itEnd == '+')
 					value += ' ';
 				else if (*itEnd == '%')
-					value += DecodeURI(itEnd,end);
+					itEnd = DecodeURI(itEnd,value);
 				else
 					value += *itEnd;
 				++itEnd;
 			};
 		}
-		if (itEnd != end) // if it's '&'
+		if (*itEnd) // if it's '&'
 			++itEnd;
 		it = itEnd;
 		if (!forEach(name, hasValue ? value.c_str() : NULL))
@@ -230,41 +255,6 @@ size_t Util::UnpackQuery(const char* query, const ForEachParameter& forEach) {
 	}
 	return count;
 }
-
-char Util::DecodeURI(const char*& begin,const char* end) {
-	if (!begin || end<begin || begin == end || *begin != '%')
-		return '%'; // nothing, end!
-	const char* itURI(begin);
-	if (++itURI == end) 
-		return '%'; // syntax error
-	char hi = *itURI++;
-	if (itURI == end) 
-		return '%'; // syntax error
-	char lo = *itURI;
-	char c;
-	if (hi >= '0' && hi <= '9')
-		c = hi - '0';
-	else if (hi >= 'A' && hi <= 'F')
-		c = hi - 'A' + 10;
-	else if (hi >= 'a' && hi <= 'f')
-		c = hi - 'a' + 10;
-	else
-		return '%'; // syntax error
-	c *= 16;
-	if (lo >= '0' && lo <= '9')
-		c += lo - '0';
-	else if (lo >= 'A' && lo <= 'F')
-		c += lo - 'A' + 10;
-	else if (lo >= 'a' && lo <= 'f')
-		c += lo - 'a' + 10;
-	else
-		return '%'; // syntax error
-	
-	// Decoded! Assign next caracter & return the caracter decoded
-	begin=itURI;
-	return c;
-}
-
 
 void Util::Dump(const UInt8* data,UInt32 size,Buffer& buffer,const string& header) {
 	UInt8 b;

@@ -21,7 +21,8 @@ This file is a part of Mona.
 
 #include "Mona/Mona.h"
 #include "Mona/BinaryReader.h"
-
+#include "Mona/PoolBuffer.h"
+#include <memory>
 
 namespace Mona {
 
@@ -29,10 +30,14 @@ namespace Mona {
 class PacketReader: public BinaryReader, virtual NullableObject {
 public:
 	PacketReader(const UInt8* data, UInt32 size) : BinaryReader(data,size) {}
+	PacketReader(PoolBuffer& pBuffer) : _ppBuffer(new PoolBuffer(pBuffer.poolBuffers)), BinaryReader(pBuffer->data(), pBuffer->size()) { _ppBuffer->swap(pBuffer); }
 
 	operator bool() const { return data()!=NULL; }
 
 	static PacketReader Null;
+
+private:
+	std::unique_ptr<PoolBuffer>		_ppBuffer;
 };
 
 

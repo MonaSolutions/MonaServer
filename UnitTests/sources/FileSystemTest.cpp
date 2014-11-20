@@ -80,11 +80,14 @@ ADD_TEST(FileSystemTest, Properties) {
 	Exception ex;
 	FileSystem::Attributes attributes;
 	FileSystem::GetAttributes(ex, Path2,attributes);
-	CHECK(!ex)
+	CHECK(ex)
 	string value;
 	CHECK(FileSystem::GetName(Path2,value)==".MonaFileSystemTests");
 	CHECK(FileSystem::GetBaseName(Path2,value)=="");
 	CHECK(FileSystem::GetExtension(Path2,value)=="MonaFileSystemTests");
+	ex.set(Exception::NIL);
+	FileSystem::GetAttributes(ex, Path2.append("/"),attributes);
+	CHECK(!ex)
 }
 
 ADD_TEST(FileSystemTest, Utf8) {

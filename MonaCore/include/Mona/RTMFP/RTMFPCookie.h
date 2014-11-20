@@ -39,8 +39,8 @@ public:
 	bool					run(Exception& ex) { _pComputingThread = _invoker.poolThreads.enqueue<RTMFPCookieComputing>(ex, _pCookieComputing, _pComputingThread); return !ex; }
 
 	const UInt8*			value() { return _pCookieComputing->value; }
-	const UInt8*			decryptKey()  { return _pCookieComputing->decryptKey; }
-	const UInt8*			encryptKey()  { return _pCookieComputing->encryptKey; }
+	const std::shared_ptr<RTMFPEngine>&	decoder()  { return _pCookieComputing->pDecoder; }
+	const std::shared_ptr<RTMFPEngine>&	encoder()  { return _pCookieComputing->pEncoder; }
 	
 	bool					computeSecret(Exception& ex, const UInt8* initiatorKey,UInt32 sizeKey,const UInt8* initiatorNonce,UInt32 sizeNonce);
 

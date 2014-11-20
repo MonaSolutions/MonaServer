@@ -25,8 +25,7 @@ using namespace std;
 
 namespace Mona {
 
-HTTPWriter::HTTPWriter(TCPSession& session) : 
-		_session(session),_pThread(NULL),Writer(session.peer.connected ? OPENED : OPENING) {
+HTTPWriter::HTTPWriter(TCPSession& session) : _session(session),_pThread(NULL),Writer(session.peer.connected ? OPENED : OPENING) {
 }
 
 void HTTPWriter::close(const Exception& ex) {
@@ -49,52 +48,76 @@ void HTTPWriter::close(const Exception& ex) {
 void HTTPWriter::close(Int32 code) {
 	if (code < 0)
 		return; // listener!
-	if (code > 0 && pRequest)
-		createSender(*pRequest).writeError(_lastError,code);
+	HTTPSender* pSender;
+	if (code > 0 && (pSender=createSender()))
+		pSender->writeError(_lastError,code);
 	else
 		_session.kill(code); // kill just if no message is send
 	Writer::close(code);
 }
 
-void HTTPWriter::flush() {
-
-	if(_senders.empty())
-		return;
-	// TODO _qos.add(ping,_sent);
-	// _sent=0;
-
-	Exception ex;
-	for (shared_ptr<HTTPSender>& pSender : _senders) {
-		_pThread = _session.send<HTTPSender>(ex, qos(),pSender,_pThread);
-		if (ex)
-			ERROR("HTTPSender flush, ", ex.error())
+HTTPSender* HTTPWriter::createSender() {
+	if (_pRequest) {
+		_pSender.reset(new HTTPSender(_session.peer.address,*_pRequest,_session.invoker.poolBuffers,_session.peer.path));
+		_pRequest.reset();
+		return &*_pSender;
 	}
-	_senders.clear();
+	if (_pFirstRequest) {
+		_pushSenders.emplace_back(new HTTPSender(_session.peer.address,*_pFirstRequest,_session.invoker.poolBuffers,_session.peer.path));
+		return &*_pushSenders.back();
+	}
+	return NULL;
 }
 
-void HTTPWriter::writeFile(const Path& file, UInt8 sortOptions, bool isApp) {
+void HTTPWriter::flush(bool withPush) {
+	Exception ex;
+	if (_pSender) {
+		_pThread = _session.send<HTTPSender>(ex, qos(),_pSender,_pThread);
+		if (ex)
+			ERROR("HTTPSender flush, ", ex.error())
+		_pSender.reset();
+	} else {
+		bool one(false);
+		while (!_pushSenders.empty()) {
+			const shared_ptr<HTTPSender>& pSender(_pushSenders.front());
+			if (one && pSender->written())
+				break; // just one response by request!
+			_pThread = _session.send<HTTPSender>(ex, qos(),pSender,_pThread);
+			if (ex)
+				ERROR("Pushing HTTPSender flush, ", ex.error())
+			if (pSender->written())
+				one=true;
+			_pushSenders.pop_front();
+		}
+	}
+}
 
-	if (!pRequest) {
+void HTTPWriter::writeFile(const Path& file, DataReader& parameters) {
+	HTTPSender* pSender(createSender());
+	if (!pSender) {
 		ERROR("No HTTP request to send file ",file.name())
 		return;
 	}
-	return createSender(*pRequest).writeFile(file,sortOptions,isApp);
+	return pSender->writeFile(file,parameters);
 }	
 
 
 DataWriter& HTTPWriter::write(const string& code, HTTP::ContentType type, const char* subType, const UInt8* data,UInt32 size) {
 	if(state()==CLOSED)
         return DataWriter::Null;
-	if (!pRequest) {
+
+	HTTPSender* pSender(createSender());
+	if (!pSender) {
 		ERROR("No HTTP request to send this reply")
 		return DataWriter::Null;
 	}
-	return createSender(*pRequest).writer(code, type, subType, data, size);
+
+	return pSender->writer(code, type, subType, data, size);
 }
 
 DataWriter& HTTPWriter::writeMessage() {
-	if (pRequest && pRequest->contentType != HTTP::CONTENT_ABSENT)
-		return write("200 OK", pRequest->contentType, pRequest->contentSubType.c_str(),NULL,pRequest->rawSerialization ? 2 : 0);
+	if (_pRequest && _pRequest->contentType != HTTP::CONTENT_ABSENT)
+		return write("200 OK", _pRequest->contentType, _pRequest->contentSubType.c_str(),NULL,_pRequest->rawSerialization ? 2 : 0);
 	return write("200 OK", HTTP::CONTENT_APPLICATON , "json");
 }
 
@@ -109,27 +132,30 @@ bool HTTPWriter::writeMedia(MediaType type,UInt32 time,PacketReader& packet,cons
 			if (time>0) // one init by mediatype, we want here just init one time!
 				break;
 			Exception ex;
-			if (!pRequest)
+			if (!_pRequest)
 				ex.set(Exception::APPLICATION, "HTTP streaming without request related");
-			else if (pRequest->contentSubType.compare(0, 5, "x-flv")==0)
+			else if (_pRequest->contentSubType.compare(0, 5, "x-flv")==0)
 				_pMedia.reset(new FLV());
-			else if(pRequest->contentSubType.compare(0,4,"mpeg")==0)
+			else if(_pRequest->contentSubType.compare(0,4,"mpeg")==0)
 				_pMedia.reset(new MPEGTS());
 			else
-				ex.set(Exception::APPLICATION, "HTTP streaming for a ",pRequest->contentSubType," unsupported");
+				ex.set(Exception::APPLICATION, "HTTP streaming for a ",_pRequest->contentSubType," unsupported");
 			if (ex) {
 				close(ex);
 				return false;
 			}
 			// write a HTTP header without content-length (data==NULL and size==1)
-			_pMedia->write(write("200", pRequest->contentType, pRequest->contentSubType.c_str(), NULL, 1).packet);
+			_pMedia->write(write("200", _pRequest->contentType, _pRequest->contentSubType.c_str(), NULL, 1).packet);
 			break;
 		}
 		case AUDIO:
 		case VIDEO: {
-			if (!_pMedia || !pRequest)
+			if (!_pMedia)
 				return false;
-			_pMedia->write(createSender(*pRequest).writeRaw(_session.invoker.poolBuffers),type,time,packet.current(), packet.available());
+			HTTPSender* pSender(createSender());
+			if (!pSender)
+				return false;
+			_pMedia->write(pSender->writeRaw(_session.invoker.poolBuffers),type,time,packet.current(), packet.available());
 			break;
 		}
 		default:

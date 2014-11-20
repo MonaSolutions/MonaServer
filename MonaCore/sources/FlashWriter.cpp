@@ -105,19 +105,18 @@ bool FlashWriter::writeMedia(MediaType type,UInt32 time,PacketReader& packet,con
 			break;
 		case DATA: {
 			// convert to AMF ?
-			DataType dataType((DataType)(time & 0xFF));
-			MIME::Type mimeType((MIME::Type)(time >> 8));
+			MIME::Type dataType((MIME::Type)(time >> 8));
 			if (dataType!=MIME::AMF) {
 				unique_ptr<DataReader> pReader;
-				if (!MIME::CreateDataReader(mimeType, packet,poolBuffers, pReader)) {
-					ERROR("Impossible to convert streaming ", mimeType, " data to AMF, data ignored")
+				if (!MIME::CreateDataReader(dataType, packet,poolBuffers, pReader)) {
+					ERROR("Impossible to convert streaming ", dataType, " data to AMF, data ignored")
 					break;
 				}
-				AMFWriter& writer(write(dataType == INFO_DATA ? AMF::INFORMATIONS : AMF::DATA, 0));
+				AMFWriter& writer(write((time & 0xFF) == INFO_DATA ? AMF::INFORMATIONS : AMF::DATA, 0));
 				pReader->read(writer); // to AMF
 				break;
 			}
-			write(dataType == INFO_DATA ? AMF::INFORMATIONS : AMF::DATA, 0, packet.current(),packet.available());
+			write((time & 0xFF) == INFO_DATA ? AMF::INFORMATIONS : AMF::DATA, 0, packet.current(),packet.available());
 			break;
 		}
 		case INIT:

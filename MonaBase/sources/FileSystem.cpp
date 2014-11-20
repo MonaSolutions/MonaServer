@@ -58,19 +58,24 @@ static bool Stat(const string& path, Status& status) {
 
 
 FileSystem::Attributes& FileSystem::GetAttributes(Exception& ex,const char* path,Attributes& attributes) {
-
 	Status status;
-	status.st_mtime = attributes.lastModified/1000;
-	status.st_size = attributes.size;
-
 	string file(path);
+	size_t oldSize(file.size());
 	if (!Stat(MakeFile(file), status)) {
 		ex.set(Exception::FILE, "Path ", path, " doesn't exist");
 		return attributes;
 	}
+	if (status.st_mode&S_IFDIR) {
+		if (oldSize == file.size()) {
+			ex.set(Exception::FILE, "File ", path, " doesn't exist");
+			return attributes;
+		}
+	} else if (oldSize > file.size()) {
+		ex.set(Exception::FILE, "Folder ", path, " doesn't exist");
+		return attributes;
+	}
 	attributes.lastModified.update(status.st_mtime*1000ll);
-	if(!(attributes.isDirectory = (status.st_mode&S_IFDIR) ? true : false))
-		attributes.size = (UInt32)status.st_size;
+	attributes.size = oldSize > file.size() ? 0 : (UInt32)status.st_size;
 	return attributes;
 }
 
@@ -210,12 +215,14 @@ UInt32 FileSystem::GetSize(Exception& ex,const char* path) {
 	Status status;
 	status.st_size = 0;
 	string file(path);
-	if (Stat(MakeFile(file).c_str(), status) != 0)
+	size_t oldSize(file.size());
+	if (Stat(MakeFile(file).c_str(), status) != 0 || status.st_mode&S_IFDIR) {
 		ex.set(Exception::FILE, "File ", path, " doesn't exist");
-	else if (status.st_mode&S_IFDIR) // folder, no GetSize possible
+		return 0;
+	} else if (oldSize>file.size()) { // if was a folder
 		ex.set(Exception::FILE, "GetSize works just on file, and ", path, " is a folder");
-	if (ex)
-		status.st_size = 0; // Cause on linux, for a folder, it's equal to 4096...
+		return 0;
+	}
 	return (UInt32)status.st_size;
 }
 
@@ -265,14 +272,9 @@ const char* FileSystem::GetExtension(const char* path) {
 }
 
 string& FileSystem::MakeFile(string& path) {
-	string::size_type size = path.size();
-#if defined(_WIN32)
+	size_t size = path.size();
 	while (size>0 && (path.back() == '\\' || path.back() == '/'))
 		path.resize(--size);
-#else
-	while (size>0 && path.back() == '/')
-		path.resize(--size);
-#endif
 	return path;
 }
 
@@ -383,7 +385,34 @@ bool FileSystem::GetHome(string& path) {
 	return true;
 }
 
-// TODO test unit
+bool FileSystem::IsFolder(const string& path) {
+	if (path.empty())
+		return false;
+	char last(path.back());
+	if (last == '/' || last == '\\')
+		return true;
+#if defined(_WIN32)
+	return path.size()==2 && last == ':';
+#else
+	return path.size()==1 && last == '~';
+#endif
+}
+
+bool FileSystem::IsFolder(const char* path) {
+	size_t size(strlen(path));
+	if (size == 0)
+		return false;
+	char last(path[--size]);
+	if (last == '/' || last == '\\')
+		return true;
+#if defined(_WIN32)
+	return size==2 && last == ':';
+#else
+	return size==1 && last == '~';
+#endif
+}
+
+
 bool FileSystem::IsAbsolute(const string& path) {
 #if defined(_WIN32)
 	return !path.empty() && isalpha(path[0]) && (path.size()!=2 || path.back()==':');

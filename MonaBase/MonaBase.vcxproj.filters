@@ -22,7 +22,7 @@
     <Filter Include="Time">
       <UniqueIdentifier>{f8abdd34-07f1-42b7-a62f-5840cdcacea3}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Application\Crypto">
+    <Filter Include="Crypto">
       <UniqueIdentifier>{835ec284-f947-44d1-8dfc-2022d87d1c83}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
@@ -143,10 +143,10 @@
       <Filter>IO</Filter>
     </ClCompile>
     <ClCompile Include="sources\DiffieHellman.cpp">
-      <Filter>Application\Crypto</Filter>
+      <Filter>Crypto</Filter>
     </ClCompile>
     <ClCompile Include="sources\Crypto.cpp">
-      <Filter>Application\Crypto</Filter>
+      <Filter>Crypto</Filter>
     </ClCompile>
     <ClCompile Include="sources\Process.cpp">
       <Filter>Util</Filter>
@@ -329,10 +329,10 @@
       <Filter>IO</Filter>
     </ClInclude>
     <ClInclude Include="include\Mona\DiffieHellman.h">
-      <Filter>Application\Crypto</Filter>
+      <Filter>Crypto</Filter>
     </ClInclude>
     <ClInclude Include="include\Mona\Crypto.h">
-      <Filter>Application\Crypto</Filter>
+      <Filter>Crypto</Filter>
     </ClInclude>
     <ClInclude Include="include\Mona\SubstreamMap.h">
       <Filter>IO</Filter>
@@ -356,9 +356,6 @@
       <Filter>Threading</Filter>
     </ClInclude>
     <ClInclude Include="include\Mona\Event.h">
-      <Filter>Threading</Filter>
-    </ClInclude>
-    <ClInclude Include="include\Mona\Expirable.h">
       <Filter>Threading</Filter>
     </ClInclude>
     <ClInclude Include="include\Mona\Path.h">

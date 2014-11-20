@@ -115,14 +115,12 @@
   <ItemGroup>
     <ClInclude Include="include\Mona\ArrayReader.h" />
     <ClInclude Include="include\Mona\Client.h" />
-    <ClInclude Include="include\Mona\Clients.h" />
-    <ClInclude Include="include\Mona\Decoding.h" />
+    <ClInclude Include="include\Mona\Decoder.h" />
     <ClInclude Include="include\Mona\FlashMainStream.h" />
     <ClInclude Include="include\Mona\Group.h" />
     <ClInclude Include="include\Mona\Handler.h" />
-    <ClInclude Include="include\Mona\HTTPHeaderReader.h" />
+    <ClInclude Include="include\Mona\HTTP\HTTPDecoder.h" />
     <ClInclude Include="include\Mona\HTTP\HTTPPacket.h" />
-    <ClInclude Include="include\Mona\HTTP\HTTPPacketBuilding.h" />
     <ClInclude Include="include\Mona\ICE.h" />
     <ClInclude Include="include\Mona\Invoker.h" />
     <ClInclude Include="include\Mona\MapReader.h" />
@@ -135,6 +133,7 @@
     <ClInclude Include="include\Mona\QueryWriter.h" />
     <ClInclude Include="include\Mona\ReferableReader.h" />
     <ClInclude Include="include\Mona\RelayServer.h" />
+    <ClInclude Include="include\Mona\RTMFP\RTMFPDecoder.h" />
     <ClInclude Include="include\Mona\SDP.h" />
     <ClInclude Include="include\Mona\Server.h" />
     <ClInclude Include="include\Mona\SplitWriter.h" />
@@ -143,6 +142,7 @@
     <ClInclude Include="include\Mona\TCProtocol.h" />
     <ClInclude Include="include\Mona\UDProtocol.h" />
     <ClInclude Include="include\Mona\ArrayWriter.h" />
+    <ClInclude Include="include\Mona\WebSocket\WSDecoder.h" />
     <ClInclude Include="include\Mona\Writer.h" />
     <ClInclude Include="include\Mona\Protocol.h" />
     <ClInclude Include="include\Mona\Protocols.h" />
@@ -150,7 +150,6 @@
     <ClInclude Include="include\Mona\RTMFP\RTMFP.h" />
     <ClInclude Include="include\Mona\RTMFP\RTMFPCookie.h" />
     <ClInclude Include="include\Mona\RTMFP\RTMFPCookieComputing.h" />
-    <ClInclude Include="include\Mona\RTMFP\RTMFPDecoding.h" />
     <ClInclude Include="include\Mona\RTMFP\RTMFPFlow.h" />
     <ClInclude Include="include\Mona\RTMFP\RTMFPHandshake.h" />
     <ClInclude Include="include\Mona\RTMFP\RTMFPMessage.h" />
@@ -167,7 +166,6 @@
     <ClInclude Include="include\Mona\WebSocket\WS.h" />
     <ClInclude Include="include\Mona\WebSocket\WSSender.h" />
     <ClInclude Include="include\Mona\WebSocket\WSSession.h" />
-    <ClInclude Include="include\Mona\WebSocket\WSUnmasking.h" />
     <ClInclude Include="include\Mona\WebSocket\WSWriter.h" />
     <ClInclude Include="include\Mona\HTTP\HTTP.h" />
     <ClInclude Include="include\Mona\HTTP\HTTProtocol.h" />
@@ -194,12 +192,8 @@
     <ClInclude Include="include\Mona\XMLRPCWriter.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="sources\Decoding.cpp" />
     <ClCompile Include="sources\FlashMainStream.cpp" />
-    <ClCompile Include="sources\HTTPHeaderReader.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='release|Win32'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug|Win32'">false</ExcludedFromBuild>
-    </ClCompile>
+    <ClCompile Include="sources\HTTP\HTTPDecoder.cpp" />
     <ClCompile Include="sources\HTTP\HTTPPacket.cpp" />
     <ClCompile Include="sources\HTTP\HTTPSender.cpp" />
     <ClCompile Include="sources\ICE.cpp" />
@@ -211,9 +205,12 @@
     <ClCompile Include="sources\QueryWriter.cpp" />
     <ClCompile Include="sources\ReferableReader.cpp" />
     <ClCompile Include="sources\RelayServer.cpp" />
+    <ClCompile Include="sources\RTMFP\RTMFPDecoder.cpp" />
+    <ClCompile Include="sources\RTMFP\RTMFPSender.cpp" />
     <ClCompile Include="sources\RTMP\RTMPSender.cpp" />
     <ClCompile Include="sources\SDP.cpp" />
     <ClCompile Include="sources\Server.cpp" />
+    <ClCompile Include="sources\WebSocket\WSDecoder.cpp" />
     <ClCompile Include="sources\Writer.cpp" />
     <ClCompile Include="sources\Protocols.cpp" />
     <ClCompile Include="sources\RTMFP\RTMFP.cpp" />

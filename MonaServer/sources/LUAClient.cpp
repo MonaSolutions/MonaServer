@@ -79,9 +79,6 @@ int LUAClient::Get(lua_State *pState) {
 				lua_getfield(pState, -1, "|id");
 				lua_replace(pState, -2);
 				SCRIPT_CALLBACK_FIX_INDEX
-			} else if(strcmp(name,"name")==0) {
-				SCRIPT_WRITE_STRING(client.name.c_str())
-				SCRIPT_CALLBACK_FIX_INDEX
 			} else if(strcmp(name,"rawId")==0) {
 				SCRIPT_WRITE_BINARY(client.id,ID_SIZE);
 				SCRIPT_CALLBACK_FIX_INDEX
@@ -89,11 +86,9 @@ int LUAClient::Get(lua_State *pState) {
 				SCRIPT_WRITE_STRING(client.path.c_str())
 				SCRIPT_CALLBACK_FIX_INDEX
 			} else if(strcmp(name,"query")==0) {
-				SCRIPT_WRITE_STRING(client.query.c_str())
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_WRITE_STRING(client.query.c_str()) // can change (HTTP client for example)
 			} else if(strcmp(name,"address")==0) {
-				Script::AddObject<LUASocketAddress>(pState, client.address);
-				SCRIPT_CALLBACK_FIX_INDEX
+				Script::AddObject<LUASocketAddress>(pState, client.address); // can change (RTMFP client for example)
 			} else if(strcmp(name,"ping")==0) {
 				SCRIPT_WRITE_NUMBER(client.ping())  // can change
 			} else if(strcmp(name,"lastReceptionTime")==0) {
@@ -108,6 +103,7 @@ int LUAClient::Get(lua_State *pState) {
 				Script::Collection(pState, 1, name);
 				SCRIPT_CALLBACK_FIX_INDEX
 			} else {
+				// can change
 				Script::Collection(pState,1, "properties");
 				lua_getfield(pState, -1, name);
 				lua_replace(pState, -2);

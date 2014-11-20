@@ -26,7 +26,7 @@ using namespace std;
 namespace Mona {
 
 
-HTTPPacket::HTTPPacket(const shared_ptr<PoolBuffer>& ppBuffer) : filePos(string::npos), _ppBuffer(ppBuffer),
+HTTPPacket::HTTPPacket(const string& rootPath) : filePath(rootPath),_data(NULL), _size(0),
 	content(NULL),
 	contentLength(0),
 	contentType(HTTP::CONTENT_ABSENT),
@@ -34,7 +34,6 @@ HTTPPacket::HTTPPacket(const shared_ptr<PoolBuffer>& ppBuffer) : filePos(string:
 	version(0),
 	connection(HTTP::CONNECTION_ABSENT),
 	ifModifiedSince(0),
-	accessControlRequestMethod(0),
 	rawSerialization(false) {
 
 }
@@ -48,6 +47,8 @@ void HTTPPacket::parseHeader(Exception& ex,const char* key, const char* value) {
 		connection = HTTP::ParseConnection(ex,value);
 	} else if (String::ICompare(key,"host")==0) {
 		serverAddress.assign(value);
+	} else if (String::ICompare(key,"origin")==0) {
+		origin.assign(value);
 	} else if (String::ICompare(key,"upgrade")==0) {
 		upgrade.assign(value);
 	} else if (String::ICompare(key,"sec-websocket-key")==0) {
@@ -56,137 +57,133 @@ void HTTPPacket::parseHeader(Exception& ex,const char* key, const char* value) {
 		secWebsocketAccept.assign(value);
 	} else if (String::ICompare(key,"if-modified-since")==0) {
 		ifModifiedSince.update(ex,value,Date::HTTP_FORMAT);
+	} else if (String::ICompare(key,"access-control-request-headers")==0) {
+		sendingInfos().accessControlRequestHeaders.assign(value);
 	} else if (String::ICompare(key,"access-control-request-method")==0) {
 
 		String::ForEach forEach([this,&ex](UInt32 index,const char* value){
-			accessControlRequestMethod |= HTTP::ParseCommand(ex,value);
+			sendingInfos().accessControlRequestMethod |= HTTP::ParseCommand(ex,value);
 			return true;
 		});
 		String::Split(value, ",", forEach, String::SPLIT_IGNORE_EMPTY | String::SPLIT_TRIM);
 
 	} else if (String::ICompare(key,"cookie")==0) {
-		cookies.assign(value);
+		String::ForEach forEach([this](UInt32 index,const char* key) {
+			const char* value = key;
+			// trim right
+			while (value && *value != '=' && !isblank(*value))
+				++value;
+			if (value) {
+				(char&)*value = 0;
+				// trim left
+				do {
+					++value;
+				} while (value && (isblank(*value) || *value == '='));
+			}
+			cookies[key].assign(value);
+			return true;
+		});
+		String::Split(value, ";", forEach, String::SPLIT_IGNORE_EMPTY | String::SPLIT_TRIM);
 	}
 }
 	
-const UInt8* HTTPPacket::build(Exception& ex,PoolBuffer& pBuffer,const UInt8* data,UInt32& size) {
-
-	/// append data
-	if (!_ppBuffer->empty()) {
-		UInt32 oldSize = (*_ppBuffer)->size();
-		(*_ppBuffer)->resize(oldSize+size,true);
-		memcpy((*_ppBuffer)->data()+oldSize, data,size);
-	} else
-		_ppBuffer->swap(pBuffer); // exchange the buffers
+UInt32 HTTPPacket::build(Exception& ex,UInt8* data,UInt32 size) {
+	if (_data)
+		return 0;
+	exception.set(Exception::NIL);
 
 	/// read data
-	UInt8				newLineCount(0);
 	ReadingStep			step(CMD);
-	UInt8*				current((*_ppBuffer)->data());
-	UInt8*				end(current+(*_ppBuffer)->size());
+	UInt8*				current(data);
+	const UInt8*		end(current+size-4); // 4 == /r/n/r/n
 	const char*			signifiant(NULL);
 	const char*			key(NULL);
 
-	for (current; current < end;++current) {
-		// http header
-		UInt8 byte = *current;
+	// headers
 
-		if (byte=='\r') {
-			++newLineCount;
-			step = LINE_RETURN;
-		} else if (step==LINE_RETURN && byte=='\n')
-			++newLineCount;
-		else {
-			newLineCount = 0;
+	for (current; current <= end;++current) {
 
-			if ((step == LEFT || step == CMD || step == PATH) && isspace(byte)) {
-				if (step == CMD) {
-					// by default command == GET
-					if ((command = HTTP::ParseCommand(ex, signifiant)) == HTTP::COMMAND_UNKNOWN) {
-						_ppBuffer->release();
-						exception.set(ex);
-						return NULL;
-					}
-					signifiant = NULL;
-					step = PATH;
-				} else if (step == PATH) {
-					// parse query
-					*current = 0;
-					filePos = Util::UnpackUrl(signifiant, path,query);
-					signifiant = NULL;
-					step = VERSION;
-				} else
-					++signifiant; // for trim begin of key or value
-				continue;
-			} else if (step != CMD && !key && byte == ':') {
-				// KEY
-				key = signifiant;
-				step = LEFT;
-				UInt8* prev = current;
-				while (isblank(*--current));
-				*(current+1) = '\0';
-				current = prev;
-				headers.emplace_back(signifiant);
-				signifiant = (const char*)current + 1;
-			} else if (step == CMD || step == PATH || step == VERSION) {
-				if (!signifiant)
-					signifiant = (const char*)current;
-				if (step == CMD && (current-(*_ppBuffer)->data())>7) {
-					// not a HTTP valid packet, consumes all
-					_ppBuffer->release();
-					exception.set(ex.set(Exception::PROTOCOL, "invalid HTTP packet"));
-					return NULL;
-				}
-			} else
-				step = RIGHT;
-			continue;
-		}
-		
-		if (newLineCount == 2) {
-			if (signifiant) {
+		if (memcmp(current, EXPAND("\r\n")) == 0 || memcmp(current, EXPAND("\0\n")) == 0) {
+
+			if (!ex && signifiant) {
 				// KEY = VALUE
-				UInt8* prev = current--;
-				while (isblank(*--current));
-				*(current+1) = '\0';
-				current = prev;
+				UInt8* endValue(current);
+				while (isblank(*--endValue));
+				*(endValue+1) = 0;
 				if (!key) { // version case!
 					String::ToNumber(signifiant+5, version);
 				} else {
-					headers.emplace_back(signifiant);
+					headers[key] = signifiant;
 					parseHeader(ex,key,signifiant);
 					key = NULL;
 				}
 			}
 			step = LEFT;
-			signifiant = (const char*)current+1;
-		} else if (newLineCount == 4) {
-			content = current + 1;
-			current += contentLength;
-			break;
+			current += 2;
+			signifiant = (const char*)current;
+
+			if (memcmp(current, EXPAND("\r\n")) == 0) {
+				current += 2;
+				if (ex)
+					return current - data;
+				content = current;
+				_data = data;
+				return _size = current + contentLength - data;
+			}
+
+			++current; // here no continue, the "\r\n" check is not required again
 		}
+
+		if (ex)
+			continue; // try to go to "\r\n\r\n"
+
+		// http header, byte by byte
+		UInt8 byte = *current;
+
+		if ((step == LEFT || step == CMD || step == PATH) && (isspace(byte) || byte==0)) {
+			if (step == CMD) {
+				// by default command == GET
+				if ((command = HTTP::ParseCommand(ex, signifiant)) == HTTP::COMMAND_UNKNOWN) {
+					exception.set(ex);
+					continue;
+				}
+				signifiant = NULL;
+				step = PATH;
+			} else if (step == PATH) {
+				// parse query
+				*current = 0;
+				size_t filePos = Util::UnpackUrl(signifiant, path,query);
+				filePath.append(path);
+				if (filePos != string::npos)
+					path.erase(filePos - 1);
+				else
+					filePath.append("/");
+				signifiant = NULL;
+				step = VERSION;
+			} else
+				++signifiant; // for trim begin of key or value
+		} else if (step != CMD && !key && (byte == ':' || byte == 0)) {
+			// KEY
+			key = signifiant;
+			step = LEFT;
+			UInt8* endValue(current);
+			while (isblank(*--endValue));
+			*(endValue+1) = 0;
+			signifiant = (const char*)current + 1;
+		} else if (step == CMD || step == PATH || step == VERSION) {
+			if (!signifiant)
+				signifiant = (const char*)current;
+			if (step == CMD && (current-data)>7) // not a HTTP valid packet, consumes all
+				exception.set(ex.set(Exception::PROTOCOL, "invalid HTTP packet"));
+		} else
+			step = RIGHT;
 	}
 
-	if (current >= end)
-		return NULL;  // wait next data
 
-	// exchange the buffers
-	pBuffer.swap(*_ppBuffer);
+	if (ex)
+		return current - data;
 
-	UInt32 rest = end-current-1;
-	if (rest == 0) {
-		_ppBuffer->release(); // release buffer
-		size = pBuffer->size();
-		return pBuffer->data();
-	}
-
-	// prepare next iteration
-	(*_ppBuffer)->resize(rest,false);
-	memcpy((*_ppBuffer)->data(), current + 1, rest);
-	
-
-	// shrink data
-	size = size-rest;
-	return pBuffer->data();
+	return 0;  // wait next data
 }
 
 

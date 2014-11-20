@@ -146,7 +146,7 @@ UInt8 AMFReader::followingType() {
 			return END;		
 	}
 
-	ERROR("Unknown AMF0 type ",Format<UInt8>("%.2x",(UInt8)type))
+	ERROR("Unknown AMF0 type ",Format<UInt8>("%.2x",type))
 	packet.next(packet.available());
 	return END;
 }
@@ -302,6 +302,7 @@ bool AMFReader::writeOne(UInt8 type, DataWriter& writer) {
 
 
 			UInt32 reset(0);
+			bool referencing(_referencing);
 			Reference* pReference(NULL);
 			Exception ex;
 
@@ -316,6 +317,7 @@ bool AMFReader::writeOne(UInt8 type, DataWriter& writer) {
 				packet.reset(_references[reference]);
 				size = packet.read7BitValue() >> 1;
 				pReference = beginMap(writer,((++reference)<<1) | 0x01, ex, size, packet.read8() & 0x01);
+				_referencing = false;
 			} else if (_referencing) {
 				_references.emplace_back(reference);
 				pReference = beginMap(writer,(_references.size()<<1) | 0x01,ex, size, packet.read8() & 0x01);
@@ -329,7 +331,7 @@ bool AMFReader::writeOne(UInt8 type, DataWriter& writer) {
 				if (ex) {
 					string prop;
 					StringWriter stringWriter(prop);
-					if (!read(stringWriter, 1))
+					if (!readNext(stringWriter))
 						continue;
 					writer.writePropertyName(prop.c_str());
 				} else if (!readNext(writer)) // key
@@ -344,6 +346,8 @@ bool AMFReader::writeOne(UInt8 type, DataWriter& writer) {
 			if (reset)
 				packet.reset(reset);
 
+			_referencing = referencing;
+
 			return true;
 
 		}
@@ -353,6 +357,7 @@ bool AMFReader::writeOne(UInt8 type, DataWriter& writer) {
 			UInt32 size(0);
 			const char* text(NULL);
 			UInt32 reset(0);
+			bool referencing(_referencing);
 			Reference* pReference(NULL);
 			UInt32 reference(0);
 
@@ -366,23 +371,26 @@ bool AMFReader::writeOne(UInt8 type, DataWriter& writer) {
 				}
 				size = packet.read32();
 
-				if (type == AMF_STRICT_ARRAY)
-					pReference = beginArray(writer,reference<<1,size);
-				else {
+				if (type == AMF_MIXED_ARRAY) {
+					
 					// AMF_MIXED_ARRAY
 					pReference = beginObjectArray(writer,reference<<1,size);
 	
 					// skip the elements
+					_referencing = false;
 					UInt32 position(packet.position());
-					for (UInt32 i = 0; i < size;++i)
-						next();
+					UInt32 sizeText;
+					for (UInt32 i = 0; i < size; ++i) {
+						readText(sizeText); // key (string number, "0")
+						readNext(DataWriter::Null); // value
+					}
+					_referencing = referencing;
 		
 					// write properties in first
-					UInt32 sizeTest(0);
-					while (text = readText(sizeTest,true)) {
+					while (text = readText(sizeText,true)) {
 						if (!packet.available())
 							break; // no stringify possible!
-						SCOPED_STRINGIFY(text, sizeTest, writer.writePropertyName(text))
+						SCOPED_STRINGIFY(text, sizeText, writer.writePropertyName(text))
 						if (!readNext(writer))
 							writer.writeNull();
 					}
@@ -390,14 +398,27 @@ bool AMFReader::writeOne(UInt8 type, DataWriter& writer) {
 					if(packet.read8()!=AMF_END_OBJECT)
 						ERROR("AMF0 end marker object absent for this mixed array");
 
-					reset = packet.position();
-
 					// finalize object part
 					endObject(writer,pReference);
 
 					// reset on elements
+					reset = packet.position();
 					packet.reset(position);
-				}	
+
+					while (size-- > 0) {
+						if (!readText(sizeText) || !readNext(writer))
+							writer.writeNull();
+					}
+
+					endArray(writer,pReference);
+
+					packet.reset(reset);
+					_referencing = referencing;
+					return true;
+				} 
+				
+				// AMF_STRICT_ARRAY
+				pReference = beginArray(writer,reference<<1,size);
 
 			} else {
 	
@@ -421,6 +442,7 @@ bool AMFReader::writeOne(UInt8 type, DataWriter& writer) {
 					reset = packet.position();
 					packet.reset(_references[size]);
 					size = packet.read7BitValue() >> 1;
+					_referencing = false;
 				} else if (_referencing) {
 					_references.emplace_back(reference);
 					reference = (_references.size()<<1) | 0x01;
@@ -446,16 +468,20 @@ bool AMFReader::writeOne(UInt8 type, DataWriter& writer) {
 					pReference = beginArray(writer,reference, size);
 				else
 					endObject(writer,pReference);
+
 			}
 
 			while (size-- > 0) {
 				if (!readNext(writer))
-						writer.writeNull();
+					writer.writeNull();
 			}
+
 			endArray(writer,pReference);
 
 			if (reset)
 				packet.reset(reset);
+
+			_referencing = referencing;
 
 			return true;
 		}
@@ -510,6 +536,7 @@ bool AMFReader::writeOne(UInt8 type, DataWriter& writer) {
 	UInt32 resetObject(0);
 	bool isInline = flags&0x01;
 	flags >>= 1;
+	bool referencing(_referencing);
 
 	if(!isInline) {
 		reference = ((flags+1)<<1) | 0x01;
@@ -523,6 +550,7 @@ bool AMFReader::writeOne(UInt8 type, DataWriter& writer) {
 		resetObject = packet.position();
 		packet.reset(_references[flags]);
 		flags = packet.read7BitValue() >> 1;
+		_referencing = false;
 	} else if (_referencing) {
 		_references.emplace_back(pos);
 		reference = (_references.size()<<1) | 0x01;
@@ -546,6 +574,7 @@ bool AMFReader::writeOne(UInt8 type, DataWriter& writer) {
 		flags = packet.read7BitValue()>>2;
 		text = readText(size);
 		stringify = packet.available()>0;
+		_referencing = false;
 	} else
 		ERROR("AMF3 classDef reference not found")
 
@@ -560,6 +589,8 @@ bool AMFReader::writeOne(UInt8 type, DataWriter& writer) {
 	if (reset && flags == 0) {
 		packet.reset(reset);
 		reset = 0;
+		if (!resetObject)
+			_referencing = referencing;
 	}
 
 	if (!text || size==0 || !stringify) // to avoid stringify
@@ -580,6 +611,8 @@ bool AMFReader::writeOne(UInt8 type, DataWriter& writer) {
 			if (--flags == 0) {
 				packet.reset(reset);
 				reset = 0;
+				if (!resetObject)
+					_referencing = referencing;
 			} else
 				packet.reset(position);
 		}
@@ -591,6 +624,8 @@ bool AMFReader::writeOne(UInt8 type, DataWriter& writer) {
 		packet.reset(resetObject); // reset object
 	else if(reset)
  		packet.reset(reset); // reset classdef
+
+	_referencing = referencing;
 
 	return true;
 }

@@ -69,9 +69,7 @@ int LUAGroup::Item(lua_State *pState) {
 		if (lua_isstring(pState, 2)) {
 			SCRIPT_READ_BINARY(id,size)
 			Client* pMember(NULL);
-			if (Script::ToRawId(id, size))
-				pMember = group(id);
-			if (pMember)
+			if (Script::ToRawId(id, size) && (pMember = group(id)))
 				Script::AddObject<LUAClient>(pState,*pMember);
 		}
 

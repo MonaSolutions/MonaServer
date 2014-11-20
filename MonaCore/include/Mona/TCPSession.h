@@ -22,7 +22,6 @@ This file is a part of Mona.
 #include "Mona/Mona.h"
 #include "Mona/Session.h"
 #include "Mona/TCPClient.h"
-#include "Mona/Decoding.h"
 
 namespace Mona {
 
@@ -30,18 +29,6 @@ class TCPSession : public Session, public virtual Object {
 public:
 	
 	void kill(UInt32 type=NORMAL_DEATH) { _client.disconnect(); Session::kill(type); }
-
-	template <typename DecodingType, typename ...Args>
-	void decode(Args&&... args) {
-		++_receptions.back();
-		Session::decode<DecodingType>(args ...);
-	}
-
-	void receive(PacketReader& packet, const SocketAddress& address) {
-		WARN(name(), " cannot updated its address (TCP session is in a connected way");
-		Session::receive(packet);
-	}
-	void receive(PacketReader& packet);
 
 	template<typename TCPSenderType>
 	bool send(Exception& ex,const QualityOfService& qos,const std::shared_ptr<TCPSenderType>& pSender) {
@@ -67,18 +54,16 @@ protected:
 
 private:
 
-	virtual bool	buildPacket(PoolBuffer& pBuffer,PacketReader& packet) = 0;
+	virtual UInt32	onData(PoolBuffer& pBuffer) = 0;
 
 	// TCPClient events
-	TCPClient::OnError::Type			onError;
-	TCPClient::OnData::Type				onData;
-	TCPClient::OnDisconnection::Type	onDisconnection;
+	TCPClient::OnError::Type			_onError;
+	TCPClient::OnData::Type				_onData;
+	TCPClient::OnDisconnection::Type	_onDisconnection;
 	Peer::OnInitParameters::Type		onInitParameters;
 
 
 	UInt32				_timeout;
-
-	std::deque<UInt32>	_receptions;
 	TCPClient			_client;
 };
 

@@ -48,10 +48,10 @@ public:
 
 private:
 
-	void		flush() { RTMFPSession::flush(0x0b, false); (UInt32&)farId=0; }
+	void		flush() { RTMFPSession::flush(false,0x0b); (UInt32&)farId=0; }
 
-	void		packetHandler(PacketReader& packet);
-	UInt8		handshakeHandler(UInt8 id,PacketReader& request,PacketWriter& response);
+	void		receive(const SocketAddress& address, BinaryReader& packet);
+	UInt8		handshakeHandler(UInt8 id,const SocketAddress& address, BinaryReader& request,PacketWriter& response);
 
 	struct CompareCookies {
 	   bool operator()(const UInt8* a,const UInt8* b) const {

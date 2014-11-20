@@ -17,6 +17,7 @@ details (or else see http://www.gnu.org/licenses/).
 This file is a part of Mona.
 */
 
+#include "Mona/RTMFP/RTMFPSender.h"
 #include "Mona/Crypto.h"
 
 using namespace std;
@@ -24,24 +25,20 @@ using namespace std;
 namespace Mona {
 
 
-UInt8* Crypto::HMAC::compute(const EVP_MD* evpMD, const void* key, int keySize, const UInt8* data, size_t size, UInt8* value) {
-	HMAC_Init_ex(&_hmacCTX,key, keySize, evpMD, NULL);
-	HMAC_Update(&_hmacCTX, data, size);
-	HMAC_Final(&_hmacCTX, value,NULL);
-	return value;
-}
+bool RTMFPSender::run(Exception& ex) {
+	// paddingBytesLength=(0xffffffff-plainRequestLength+5)&0x0F
+	int paddingBytesLength = (0xFFFFFFFF-packet.size()+5)&0x0F;
+	// Padd the plain request with paddingBytesLength of value 0xff at the end
+	while (paddingBytesLength-->0)
+		packet.write8(0xFF);
+	// Write CRC (at the beginning of the request)
+	BinaryReader reader(packet.data()+6,packet.size()-6);
+	BinaryWriter(packet.data()+4,2).write16(Crypto::ComputeCRC(reader));
+	// Encrypt the resulted request
+	_pEncoder->process((UInt8*)packet.data()+4,packet.size()-4);
+	RTMFP::Pack(packet,farId);
 
-UInt16 Crypto::ComputeCRC(BinaryReader& reader) {
-	int sum = 0;
-	UInt32 pos(reader.position());
-	while(reader.available()>0)
-		sum += reader.available()==1 ? reader.read8() : reader.read16();
-	reader.reset(pos);
-
-  /* add back carry outs from top 16 bits to low 16 bits */
-  sum = (sum >> 16) + (sum & 0xffff);     /* add hi 16 to low 16 */
-  sum += (sum >> 16);                     /* add carry */
-  return ~sum; /* truncate to 16 bits */
+	return UDPSender::run(ex);
 }
 
 } // namespace Mona

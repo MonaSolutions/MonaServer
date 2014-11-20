@@ -26,15 +26,17 @@ using namespace std;
 namespace Mona {
 
 UInt32 ReferableReader::read(DataWriter& writer, UInt32 count) {
+	if (_recursive)
+		return DataReader::read(writer, count);
 	// start read (new writer!)
-	_references.clear();
+	_recursive = true;
 	UInt32 result(DataReader::read(writer,count));
-	if (Logs::GetLevel() >= Logger::LEVEL_DEBUG) {
-		for (auto& it : _references) {
-			if (it.second.level>0)
-				WARN(typeid(*this).name()," has open some complex objects withoiut closing them")
-		}
+	for (auto& it : _references) {
+		if (it.second.level>0)
+			WARN(typeid(*this).name()," has open some complex objects withoiut closing them")
 	}
+	_references.clear();
+	_recursive = false;
 	return result;
 } 
 

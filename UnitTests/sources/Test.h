@@ -23,6 +23,7 @@ This file is a part of Mona.
 #include "Mona/StopWatch.h"
 #include <memory>
 #include <map>
+#include <vector>
 
 /// \brief The fixture for testing class Foo.
 class Test : virtual Mona::Object {

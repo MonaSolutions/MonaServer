@@ -199,15 +199,16 @@ int Application::run(int argc, const char* argv[]) {
 #endif
 }
 
-void Application::log(THREAD_ID threadId, const string& threadName, Level level, const char *filePath, string& shortFilePath, long line, string& message) {
+void Application::log(THREAD_ID threadId, Level level, const char *filePath, string& shortFilePath, long line, string& message) {
 	if (isInteractive())
-		Logger::log(threadId, threadName, level, filePath, shortFilePath, line, message);
+		Logger::log(threadId, level, filePath, shortFilePath, line, message);
 	lock_guard<mutex> lock(_logMutex);
 	if (!_logStream.good())
 		return;
 	string date;
+	string threadName;
 	_logStream << Date().toString("%d/%m %H:%M:%S.%c  ", date)
-		<< LogLevels[level-1] << '\t' << threadName << '(' << threadId << ")\t"
+		<< LogLevels[level-1] << '\t' << Util::GetThreadName(threadId,threadName) << '(' << threadId << ")\t"
 		<< shortFilePath << '[' << line << "]  " << message << std::endl;
 	_logStream.flush();
 	manageLogFiles();

@@ -22,6 +22,7 @@ This file is a part of Mona.
 
 #include "Mona/DataWriter.h"
 #include "Script.h"
+#include <vector>
 
 
 class ScriptWriter : public Mona::DataWriter{

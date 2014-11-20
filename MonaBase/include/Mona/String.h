@@ -20,7 +20,7 @@ This file is a part of Mona.
 #pragma once
 
 #include "Mona/Mona.h"
-#include <vector>
+#include "Mona/Buffer.h"
 #include <functional>
 
 #undef max
@@ -98,20 +98,20 @@ public:
 	/// \brief match "std::string" case
 	template <typename BufferType, typename ...Args>
 	static BufferType& Append(BufferType& result, const std::string& value, Args&&... args) {
-		return String::Append(AppendString(result,value), args ...);
+		return String::Append(Buffer::Append<BufferType>(result,value.data(), value.size()), args ...);
 	}
 
 	
 	/// \brief match "char*" case
 	template <typename BufferType, typename ...Args>
 	static BufferType& Append(BufferType& result, const char* value, Args&&... args) {
-		return String::Append(AppendString(result,value), args ...);
+		return String::Append(Buffer::Append<BufferType>(result,value, strlen(value)), args ...);
 	}
 
 	// match le "char" cas
 	template <typename BufferType, typename ...Args>
 	static BufferType& Append(BufferType& result, char value, Args&&... args) {
-		return String::Append(AppendData(result,&value,1), args ...);
+		return String::Append(Buffer::Append(result,&value,1), args ...);
 	}
 
 	// match le "signed char" cas
@@ -119,7 +119,7 @@ public:
 	static BufferType& Append(BufferType& result, signed char value, Args&&... args) {
 		char buffer[8];
 		sprintf(buffer, "%hhd", value);
-		return String::Append(AppendString(result,buffer), args ...);
+		return String::Append(Buffer::Append<BufferType>(result,buffer,strlen(buffer)), args ...);
 	}
 
 	/// \brief match "short" case
@@ -127,7 +127,7 @@ public:
 	static BufferType& Append(BufferType& result, short value, Args&&... args) {
 		char buffer[8];
 		sprintf(buffer, "%hd", value);
-		return String::Append(AppendString(result,buffer), args ...);
+		return String::Append(Buffer::Append<BufferType>(result,buffer,strlen(buffer)), args ...);
 	}
 
 	/// \brief match "int" case
@@ -135,7 +135,7 @@ public:
 	static BufferType& Append(BufferType& result, int value, Args&&... args) {
 		char buffer[16];
 		sprintf(buffer, "%d", value);
-		return String::Append(AppendString(result,buffer), args ...);
+		return String::Append(Buffer::Append<BufferType>(result,buffer,strlen(buffer)), args ...);
 	}
 
 	/// \brief match "long" case
@@ -143,7 +143,7 @@ public:
 	static BufferType& Append(BufferType& result, long value, Args&&... args) {
 		char buffer[32];
 		sprintf(buffer, "%ld", value);
-		return String::Append(AppendString(result,buffer), args ...);
+		return String::Append(Buffer::Append<BufferType>(result,buffer,strlen(buffer)), args ...);
 	}
 
 	/// \brief match "unsigned char" case
@@ -151,7 +151,7 @@ public:
 	static BufferType& Append(BufferType& result, unsigned char value, Args&&... args) {
 		char buffer[8];
 		sprintf(buffer, "%hhu", value);
-		return String::Append(AppendString(result,buffer), args ...);
+		return String::Append(Buffer::Append<BufferType>(result,buffer,strlen(buffer)), args ...);
 	}
 
 	/// \brief match "unsigned short" case
@@ -159,7 +159,7 @@ public:
 	static BufferType& Append(BufferType& result, unsigned short value, Args&&... args) {
 		char buffer[8];
 		sprintf(buffer, "%hu", value);
-		return String::Append(AppendString(result,buffer), args ...);
+		return String::Append(Buffer::Append<BufferType>(result,buffer,strlen(buffer)), args ...);
 	}
 
 	/// \brief match "unsigned int" case
@@ -167,7 +167,7 @@ public:
 	static BufferType& Append(BufferType& result, unsigned int value, Args&&... args) {
 		char buffer[16];
 		sprintf(buffer, "%u", value);
-		return String::Append(AppendString(result,buffer), args ...);
+		return String::Append(Buffer::Append<BufferType>(result,buffer,strlen(buffer)), args ...);
 	}
 
 	/// \brief match "unsigned long" case
@@ -175,7 +175,7 @@ public:
 	static BufferType& Append(BufferType& result, unsigned long value, Args&&... args) {
 		char buffer[32];
 		sprintf(buffer, "%lu", value);
-		return String::Append(AppendString(result,buffer), args ...);
+		return String::Append(Buffer::Append<BufferType>(result,buffer,strlen(buffer)), args ...);
 	}
 
 	/// \brief match "Int64" case
@@ -183,7 +183,7 @@ public:
 	static BufferType& Append(BufferType& result, long long value, Args&&... args) {
 		char buffer[64];
 		sprintf(buffer, "%lld", value);
-		return String::Append(AppendString(result,buffer), args ...);
+		return String::Append(Buffer::Append<BufferType>(result,buffer,strlen(buffer)), args ...);
 	}
 
 	/// \brief match "UInt64" case
@@ -191,7 +191,7 @@ public:
 	static BufferType& Append(BufferType& result, unsigned long long value, Args&&... args) {
 		char buffer[64];
 		sprintf(buffer, "%llu", value);
-		return String::Append(AppendString(result,buffer), args ...);
+		return String::Append(Buffer::Append<BufferType>(result,buffer,strlen(buffer)), args ...);
 	}
 
 	/// \brief match "float" case
@@ -199,7 +199,7 @@ public:
 	static BufferType& Append(BufferType& result, float value, Args&&... args) {
 		char buffer[64];
 		sprintf(buffer, "%.8g", value);
-		return String::Append(AppendString(result,buffer), args ...);
+		return String::Append(Buffer::Append<BufferType>(result,buffer,strlen(buffer)), args ...);
 	}
 
 	/// \brief match "double" case
@@ -207,15 +207,15 @@ public:
 	static BufferType& Append(BufferType& result, double value, Args&&... args) {
 		char buffer[64];
 		sprintf(buffer, "%.16g", value);
-		return String::Append(AppendString(result,buffer), args ...);
+		return String::Append(Buffer::Append<BufferType>(result,buffer,strlen(buffer)), args ...);
 	}
 
 	/// \brief match "bool" case
 	template <typename BufferType, typename ...Args>
 	static BufferType& Append(BufferType& result, bool value, Args&&... args) {
 		if (value)
-			return String::Append(AppendData(result,EXPAND("true")), args ...);
-		return String::Append(AppendData(result,EXPAND("false")), args ...);
+			return String::Append(Buffer::Append(result,EXPAND("true")), args ...);
+		return String::Append(Buffer::Append(result,EXPAND("false")), args ...);
 	}
 
 	/// \brief match pointer case
@@ -223,7 +223,7 @@ public:
 	static BufferType& Append(BufferType& result, const void* value, Args&&... args)	{
 		char buffer[64];
 		sprintf(buffer,"%p", value);
-		return String::Append(AppendString(result,buffer), args ...);
+		return String::Append(Buffer::Append<BufferType>(result,buffer,strlen(buffer)), args ...);
 	}
 
 	/// \brief A usefull form which use snprintf to format result
@@ -231,7 +231,7 @@ public:
 	/// \param result This is the std::string which to append text
 	/// \param value A pair of format text associate with value (ex: pair<char*, double>("%.2f", 10))
 	/// \param args Other arguments to append
-	template <class Type, typename BufferType, typename ...Args>
+	template <typename Type, typename BufferType, typename ...Args>
 	static BufferType& Append(BufferType& result, const Mona::Format<Type>& custom, Args&&... args) {
 		char buffer[64];
 		try {
@@ -240,7 +240,7 @@ public:
 		catch (...) {
 			return String::Append(result, args ...);
 		}
-		return String::Append(AppendString(result,buffer), args ...);
+		return String::Append(Buffer::Append<BufferType>(result,buffer,strlen(buffer)), args ...);
 	}
 
 private:

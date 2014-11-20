@@ -22,6 +22,7 @@ This file is a part of Mona.
 #include "Mona/Mona.h"
 #include "Mona/Invoker.h"
 #include "Mona/DiffieHellman.h"
+#include "Mona/RTMFP/RTMFP.h"
 
 
 
@@ -39,8 +40,8 @@ public:
 	Buffer								initiatorKey;
 	Buffer								initiatorNonce;
 	
-	UInt8								decryptKey[HMAC_KEY_SIZE];
-	UInt8								encryptKey[HMAC_KEY_SIZE];
+	std::shared_ptr<RTMFPEngine>		pDecoder;
+	std::shared_ptr<RTMFPEngine>		pEncoder;
 	PacketWriter						packet;
 
 	std::weak_ptr<RTMFPCookieComputing> weak;

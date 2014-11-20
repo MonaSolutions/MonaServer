@@ -42,16 +42,16 @@ class TCPEchoClient : public TCPClient {
 public:
 	TCPEchoClient(const SocketManager& manager,bool parallel) : testDisconnection(false),TCPClient(manager),_mutex(!parallel),parallel(parallel) {
 		
-		onData = [this](PoolBuffer& pBuffer) {
+		onData = [this](PoolBuffer& pBuffer)->UInt32 {
 			lock_guard<Mutex> lock(_mutex);
 			if (pBuffer->size() < _datas.front().size())
-				return pBuffer->size(); // wait more data
+				return 0; // wait more data
 			UInt32 consumed(_datas.front().size());
 			CHECK(memcmp(_datas.front().data(), pBuffer->data(), consumed) == 0);
 			_datas.pop_front();
 			if (this->parallel)
 				_signal.set();
-			return pBuffer->size()-consumed; // rest
+			return consumed;
 		};
 
 		onError = [this](const Exception& ex) {
@@ -231,7 +231,7 @@ public:
 		onData = [this](PoolBuffer& pBuffer) {
 			Exception ex;
 			CHECK(_client.send(ex, pBuffer->data(), pBuffer->size()) && !ex);
-			return 0;
+			return pBuffer->size();
 		};
 		onError = [this](const Exception& ex) {
 			FATAL_ERROR("Client, ",ex.error());

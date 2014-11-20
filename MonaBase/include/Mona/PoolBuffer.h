@@ -25,18 +25,21 @@ This file is a part of Mona.
 
 namespace Mona {
 
-class PoolBuffer : public virtual Object {
+class PoolBuffer : public virtual Object, public Binary {
 public:
 	PoolBuffer(const PoolBuffers& poolBuffers,UInt32 size=0) : _size(size),poolBuffers(poolBuffers),_pBuffer(NULL) {}
 	virtual ~PoolBuffer() { release(); }
 
-	bool	empty() const { return !_pBuffer || _pBuffer->size()==0; }
+	bool			empty() const { return !_pBuffer || _pBuffer->size()==0; }
+	const UInt8*	data() const { return _pBuffer ? _pBuffer->data() : NULL; }
+	UInt32			size() const { return _pBuffer ? _pBuffer->size() : 0; }
+
 	Buffer* operator->() const { if (!_pBuffer) _pBuffer=poolBuffers.beginBuffer(_size);  return _pBuffer; }
 	Buffer& operator*() const { if (!_pBuffer) _pBuffer=poolBuffers.beginBuffer(_size);  return *_pBuffer; }
 
 	
-	void	swap(PoolBuffer& buffer) { std::swap(buffer._pBuffer,_pBuffer); }
-	void	release() { if (!_pBuffer) return; poolBuffers.endBuffer(_pBuffer); _pBuffer = NULL; }
+	PoolBuffer&	swap(PoolBuffer& pBuffer) { std::swap(pBuffer._pBuffer, _pBuffer); return *this; }
+	void		release() { if (!_pBuffer) return; poolBuffers.endBuffer(_pBuffer); _pBuffer = NULL; }
 
 	const PoolBuffers&	poolBuffers;
 

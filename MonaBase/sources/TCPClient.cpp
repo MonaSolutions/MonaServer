@@ -25,7 +25,7 @@ using namespace std;
 
 namespace Mona {
 
-TCPClient::TCPClient(const SocketManager& manager) : _disconnecting(false),_pBuffer(manager.poolBuffers), _socket(manager), _rest(0),
+TCPClient::TCPClient(const SocketManager& manager) : _disconnecting(false),_pBuffer(manager.poolBuffers), _socket(manager),
 		onReadable([this](Exception& ex, UInt32 available) {receive(ex,available);}),
 		onSending([this](UInt32 size) {lock_guard<mutex> lock(_mutexIdleTime); _idleTime.update(); }) {
 	_socket.OnError::subscribe(*this);
@@ -33,7 +33,7 @@ TCPClient::TCPClient(const SocketManager& manager) : _disconnecting(false),_pBuf
 	_socket.OnReadable::subscribe(onReadable);
 }
 
-TCPClient::TCPClient(const SocketAddress& peerAddress, SocketFile& file,const SocketManager& manager) : _disconnecting(false),_peerAddress(peerAddress),_pBuffer(manager.poolBuffers), _rest(0), _socket(file,manager), 
+TCPClient::TCPClient(const SocketAddress& peerAddress, SocketFile& file,const SocketManager& manager) : _disconnecting(false),_peerAddress(peerAddress),_pBuffer(manager.poolBuffers), _socket(file,manager), 
 		onReadable([this](Exception& ex, UInt32 available) {receive(ex,available);}),
 		onSending([this](UInt32 size) {lock_guard<mutex> lock(_mutexIdleTime); _idleTime.update(); }) {
 	_socket.OnError::subscribe(*this);
@@ -59,7 +59,6 @@ void TCPClient::close() {
 	}
 	_disconnecting = false;
 	_socket.close();
-	_rest = 0;
 	_pBuffer.release();
 	SocketAddress peerAddress;
 	{
@@ -90,12 +89,12 @@ void TCPClient::receive(Exception& ex, UInt32 available) {
 		return;
 	}
 
-	if(available>(_pBuffer->size() - _rest))
-		_pBuffer->resize(_rest+available,true);
+	UInt32 size(_pBuffer->size());
+	_pBuffer->resize(size+available,true);
 	
 	Exception exRecv;
 	
-	int received = _socket.receiveBytes(exRecv,_pBuffer->data()+_rest, available);
+	int received = _socket.receiveBytes(exRecv,_pBuffer->data()+size, available);
 
 	if (received <= 0) {
 		if (exRecv)
@@ -105,38 +104,21 @@ void TCPClient::receive(Exception& ex, UInt32 available) {
 	} else if (exRecv)
 		ex.set(exRecv); // received > 0, so WARN
 
+	_pBuffer->resize(size+received,true);
+	size = 0;
 
-	_rest += received;
+	while(size<_pBuffer->size()) { // while everything is not consumed
 
-	while (_rest > 0) {
+		if (size)
+			_pBuffer->clip(size);
+		
+		size = OnData::raise<0xFFFFFFFF>(_pBuffer); // consumed
 
-		_pBuffer->resize(_rest,true);
-		UInt32 rest = OnData::raise<0>(_pBuffer);
-
-			// To prevent the case where the buffer has been manipulated during onReception call
-		if(_pBuffer.empty())
-			rest = 0;
-		else if (_pBuffer->size() < _rest)
-			_rest = _pBuffer->size();
-
-		if (rest > _rest)
-			rest = _rest;
-		if (rest == 0) {
-			// has consumed all
-			_pBuffer.release();
-			_rest = 0;
-			break;
-		}
-		if (_rest == rest) // no new bytes consumption, wait next reception
-			break;
-
-
-		// has consumed few bytes (but not all)
-		// 0 < rest < _rest <= _pBuffer->size()
-		memmove(_pBuffer->data(), _pBuffer->data() + (_rest - rest), rest); // move to the beginning
-
-		_rest = rest;
+		if (!size) // if no consumption
+			return; // no release here
 	}
+
+	_pBuffer.release();
 }
 
 void TCPClient::disconnect() {

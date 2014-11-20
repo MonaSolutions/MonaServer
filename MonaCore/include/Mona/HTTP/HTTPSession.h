@@ -23,6 +23,7 @@ This file is a part of Mona.
 #include "Mona/WebSocket/WSSession.h"
 #include "Mona/HTTP/HTTPWriter.h"
 #include "Mona/HTTP/HTTPPacket.h"
+#include "Mona/HTTP/HTTPDecoder.h"
 #include "Mona/QueryReader.h"
 
 
@@ -38,26 +39,27 @@ private:
 	void			kill(UInt32 type=NORMAL_DEATH);
 	void			manage();
 
-	bool			buildPacket(PoolBuffer& pBuffer,PacketReader& packet);
-	void			packetHandler(PacketReader& packet);
+	UInt32			onData(PoolBuffer& pBuffer) { if (WSSession::enabled()) return WSSession::onData(pBuffer); return _decoder.decode(pBuffer); }
+	void			receive(const std::shared_ptr<HTTPPacket>& pPacket);
 
 	/// \brief Send the Option response
 	/// Note: It is called when processMove is used before a SOAP request
-	void			processOptions(Exception& ex,const std::shared_ptr<HTTPPacket>& pPacket);
+	void			processOptions(Exception& ex,const HTTPSendingInfos& infos);
 
 	/// \brief Process GET & HEAD commands
 	/// Search for a method or a file whitch correspond to the _filePath
-	void			processGet(Exception& ex, const std::shared_ptr<HTTPPacket>& pPacket, QueryReader& parameters);
+	void			processGet(Exception& ex, HTTPPacket& packet, QueryReader& parameters);
+
+
+	HTTPDecoder::OnDecoded::Type	onDecoded;
+	HTTPDecoder::OnDecodedEnd::Type	onDecodedEnd;
+
+
+	HTTPDecoder			_decoder;
 
 	HTTPWriter			_writer;
-	bool				_isWS;
 
 	Listener*			_pListener;
-
-	std::deque<std::shared_ptr<HTTPPacket>>			_packets;
-	std::shared_ptr<PoolBuffer>						_ppBuffer;
-
-	Path				_filePath; /// Path of the HTTP query
 
 	// options
 	std::string			_index;

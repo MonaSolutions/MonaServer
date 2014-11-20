@@ -37,8 +37,10 @@ RTMFProtocol::RTMFProtocol(const char* name, Invoker& invoker, Sessions& session
 			ERROR("Invalid RTMFP packet");
 			return;
 		}
-		PacketReader packet(pBuffer->data(),pBuffer->size());
-		UInt32 id = RTMFP::Unpack(packet);
+		BinaryReader reader(pBuffer->data(),pBuffer->size());
+		UInt32 id = RTMFP::Unpack(reader);
+		pBuffer->clip(reader.position());
+
 		// TRACE("RTMFP Session ",id);
 		RTMFPSession* pSession = id == 0 ? _pHandshake.get() : this->sessions.find<RTMFPSession>(id);
 		if (!pSession) {
@@ -49,7 +51,7 @@ RTMFProtocol::RTMFProtocol(const char* name, Invoker& invoker, Sessions& session
 			_pHandshake->commitCookie(pSession->pRTMFPCookieComputing->value);
 			pSession->pRTMFPCookieComputing.reset();
 		}
-		pSession->decode(pBuffer, address);
+		pSession->decode(address,pBuffer);
 	};
 
 	OnPacket::subscribe(onPacket);

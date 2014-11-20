@@ -22,6 +22,7 @@ This file is a part of Mona.
 #if !defined(_WIN32)
 #include <unistd.h>
 #include "sys/epoll.h"
+#include <vector>
 #endif
 
 using namespace std;

@@ -85,11 +85,8 @@ private:
 
 	mutable std::mutex		_mutex;
 	PoolBuffer				_pBuffer;
-	UInt32					_rest;
 	mutable SocketAddress	_address;
 	mutable SocketAddress	_peerAddress;
-
-
 	
 };
 

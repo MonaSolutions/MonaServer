@@ -20,23 +20,28 @@ This file is a part of Mona.
 #pragma once
 
 #include "Mona/Mona.h"
+#include "BinaryReader.h"
 #include <openssl/hmac.h>
-#include <mutex>
-#include <deque>
 
 namespace Mona {
 
-class Crypto : public virtual Object {
+
+class Crypto : public virtual Static {
 public:
+	class HMAC : public virtual Object {
+	public:
+		HMAC() { HMAC_CTX_init(&_hmacCTX); }
+		virtual ~HMAC() { HMAC_CTX_cleanup(&_hmacCTX); }
 
-	Crypto() { HMAC_CTX_init(&_hmacCTX);}
-	~Crypto() { HMAC_CTX_cleanup(&_hmacCTX); }
+		UInt8* compute(const EVP_MD* evpMD, const void* key, int keySize, const UInt8* data, size_t size, UInt8* value);
 
-	UInt8* hmac(const EVP_MD* evpMD, const void* key, int keySize, const UInt8* data, size_t size, UInt8* value);
+	private:
+		HMAC_CTX _hmacCTX;
+	};
 
-private:
-	HMAC_CTX _hmacCTX;
+	static UInt16 ComputeCRC(BinaryReader& reader);
 };
+
 
 
 } // namespace Mona

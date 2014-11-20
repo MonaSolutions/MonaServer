@@ -20,7 +20,6 @@ This file is a part of Mona.
 #pragma once
 
 #include "Mona/Mona.h"
-#include "Mona/PoolBuffer.h"
 #include "Mona/HTTP/HTTP.h"
 
 
@@ -28,74 +27,76 @@ namespace Mona {
 
 class HTTPSendingInfos : public virtual Object {
 public:
-	HTTPSendingInfos() : sizeParameters(0) {}
+	HTTPSendingInfos() : sizeParameters(0),accessControlRequestMethod(0) {}
 	std::vector<std::string>	setCookies; /// List of Set-cookie lines to add
 	MapParameters				parameters; // For onRead returned value (return file,parameters)
 	UInt32						sizeParameters;
+
+	UInt8						accessControlRequestMethod;
+	std::string					accessControlRequestHeaders;
 };
 
-class HTTPPacket : public virtual Object {
+class HTTPPacket : public virtual Object, public Binary {
 public:
 	
 
-	HTTPPacket(const std::shared_ptr<PoolBuffer>& ppBuffer);
+	HTTPPacket(const std::string& rootPath);
+
+	const UInt8*	data() const { return _data; }
+	UInt32			size() const { return _size; }
 
 	Exception					exception;
 
-	std::vector<const char*>	headers;
-	const UInt8*				content;
-	UInt32						contentLength;
-	HTTP::ContentType			contentType;
-	std::string					contentSubType;
-	bool						rawSerialization;
+	std::map<const char*,const char*>	headers;
+	const UInt8*						content;
+	UInt32								contentLength;
+	HTTP::ContentType					contentType;
+	std::string							contentSubType;
+	bool								rawSerialization;
 
 	HTTP::CommandType			command;
 	std::string					path;
+	Path						filePath;
 	std::string					query;
 	std::string					serverAddress;
 	float						version;
-	std::size_t					filePos;
+	std::string					origin;
 
 	UInt8						connection;
 	std::string					upgrade;
 	UInt8						cacheControl;
 	
 	Date						ifModifiedSince;
-	UInt8						accessControlRequestMethod;
 
 	std::string					secWebsocketKey;
 	std::string					secWebsocketAccept;
 
-	std::string					cookies; /// List of cookie key;value
+	std::map<std::string,std::string>	cookies; /// List of cookie key;value
 
-	const PoolBuffers&			poolBuffers() { return _ppBuffer->poolBuffers; }
-
-
-	const UInt8*				build(Exception& ex,PoolBuffer& pBuffer,const UInt8* data,UInt32& size);
+	UInt32						build(Exception& ex,UInt8* data,UInt32 size);
 
 	HTTPSendingInfos&					sendingInfos() { if (!_pSendingInfos) _pSendingInfos.reset(new HTTPSendingInfos()); return *_pSendingInfos; }
 	std::shared_ptr<HTTPSendingInfos>	pullSendingInfos() { return std::move(_pSendingInfos); }
 	
 
-private:
 	void parseHeader(Exception& ex,const char* key, const char* value);
+private:
 
-	// for header
+	// for header reading
 	enum ReadingStep {
 		CMD,
 		PATH,
 		VERSION,
 		LEFT,
-		RIGHT,
-		LINE_RETURN,
+		RIGHT
 	};
-
-	const std::shared_ptr<PoolBuffer>	_ppBuffer;
 
 	// For next HTTPSender
 	std::shared_ptr<HTTPSendingInfos>	_pSendingInfos;
-};
 
+	const UInt8*		_data;
+	UInt32				_size;
+};
 
 
 

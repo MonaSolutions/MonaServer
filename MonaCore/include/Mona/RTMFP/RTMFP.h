@@ -21,8 +21,8 @@ This file is a part of Mona.
 
 #include "Mona/Mona.h"
 #include "Mona/SocketAddress.h"
-#include "Mona/PacketReader.h"
-#include "Mona/PacketWriter.h"
+#include "Mona/BinaryReader.h"
+#include "Mona/BinaryWriter.h"
 #include "Mona/Time.h"
 #include <openssl/evp.h>
 
@@ -36,41 +36,30 @@ namespace Mona {
 #define RTMFP_MAX_PACKET_SIZE	1192
 #define RTMFP_TIMESTAMP_SCALE	4
 
-
-class RTMFPKey : public virtual Object {
-public:
-	RTMFPKey(const UInt8* key) {memcpy(_key, key, RTMFP_KEY_SIZE);}
-	const UInt8* value() { return _key; }
-
-private:
-	UInt8 _key[RTMFP_KEY_SIZE];	
-};
-
 class RTMFPEngine : public virtual Object {
 public:
 	enum Direction {
 		DECRYPT=0,
 		ENCRYPT
 	};
-	enum Type {
-		NORMAL=0,
-		DEFAULT
-	};
-	RTMFPEngine(const std::shared_ptr<RTMFPKey>& pKey,Direction direction);
-	virtual ~RTMFPEngine();
+	RTMFPEngine(const UInt8* key, Direction direction) : _direction(direction) {
+		memcpy(_key, key, RTMFP_KEY_SIZE);
+		EVP_CIPHER_CTX_init(&_context);
+	}
+	virtual ~RTMFPEngine() {
+		EVP_CIPHER_CTX_cleanup(&_context);
+	}
 
-	void		  process(const UInt8* in,UInt8* out,int size);
-
-	Type		  type;
+	void process(UInt8* data, int size) {
+		static UInt8 IV[RTMFP_KEY_SIZE];
+		EVP_CipherInit_ex(&_context, EVP_aes_128_cbc(), NULL, _key, IV,_direction);
+		EVP_CipherUpdate(&_context, data, &size, data, size);
+	}
 
 private:
-	Direction						_direction;
-	const std::shared_ptr<RTMFPKey> _pKey;
-	EVP_CIPHER_CTX					_context;
-
-	static const std::shared_ptr<RTMFPKey>	_pDefaultKey;
-	static RTMFPEngine						_DefaultDecrypt;
-	static RTMFPEngine						_DefaultEncrypt;
+	Direction				_direction;
+	UInt8					_key[RTMFP_KEY_SIZE];
+	EVP_CIPHER_CTX			_context;
 };
 
 
@@ -85,14 +74,8 @@ public:
 
 	static BinaryWriter&		WriteAddress(BinaryWriter& writer, const SocketAddress& address, AddressType type=ADDRESS_UNSPECIFIED);
 
-	static UInt32				Unpack(PacketReader& packet);
-	static void					Pack(PacketWriter& packet,UInt32 farId);
-
-	static bool					ReadCRC(PacketReader& packet);
-	static void					WriteCRC(PacketWriter& packet);
-	static bool					Decode(Exception& ex,RTMFPEngine& aesDecrypt,PacketReader& packet);
-	static void					Encode(RTMFPEngine& aesEncrypt,PacketWriter& packet);
-	
+	static UInt32				Unpack(BinaryReader& reader);
+	static void					Pack(BinaryWriter& writer,UInt32 farId);
 
 	static void					ComputeAsymetricKeys(const Buffer& sharedSecret,
 														const UInt8* initiatorNonce,UInt16 initNonceSize,
@@ -103,8 +86,6 @@ public:
 	static UInt16				TimeNow() { return Time(Mona::Time::Now()); }
 	static UInt16				Time(Int64 timeVal) { return (timeVal / RTMFP_TIMESTAMP_SCALE)&0xFFFF; }
 
-private:
-	static UInt16				CheckSum(PacketReader& packet);
 };
 
 }  // namespace Mona

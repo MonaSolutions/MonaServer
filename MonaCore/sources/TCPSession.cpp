@@ -28,64 +28,35 @@ namespace Mona {
 TCPSession::TCPSession(const SocketAddress& peerAddress, SocketFile& file, Protocol& protocol, Invoker& invoker) : _timeout(protocol.getNumber<UInt32>("timeout") * 1000), _client(peerAddress, file, invoker.sockets), Session(protocol, invoker) {
 	((SocketAddress&)peer.address).set(peerAddress);
 
-	_receptions.emplace_back(0);
 
 	onInitParameters = [this](const Parameters& parameters) {
 		if (parameters.getNumber("timeout", _timeout))
 			_timeout *= 1000;
 	};
 
-	onError = [this](const Exception& ex) { WARN(name(), ", ", ex.error()); };
+	_onError = [this](const Exception& ex) { WARN(name(), ", ", ex.error()); };
 
-	onData = [this](PoolBuffer& pBuffer)->UInt32 {
+	_onData = [this](PoolBuffer& pBuffer)->UInt32 {
 		if (died)
-			return 0;
-		UInt32 size(pBuffer->size());
-		PacketReader packet(pBuffer->data(), size);
-		UInt32 receptions(_receptions.back());
-		if (!buildPacket(pBuffer,packet)) {
-			if (_receptions.size()>1 && _receptions.front() > 0 && (--_receptions.front()) == 0) {
-				_receptions.pop_front();
-				flush();
-			}
-			return size;
-		}
-
-		bool noDecoding(receptions == _receptions.back());
-	
-		UInt32 rest = size - packet.position() - packet.available();
-		if (rest==0)
-			_receptions.emplace_back(0);
-
-		if (noDecoding) {
-			++_receptions.back();
-			receive(packet);
-		}
-
-		return rest;
+			return pBuffer->size();
+		return onData(pBuffer);
 	};
 
-	onDisconnection = [this](const SocketAddress&) { kill(SOCKET_DEATH); };
+	_onDisconnection = [this](const SocketAddress&) { kill(SOCKET_DEATH); };
 
 	peer.OnInitParameters::subscribe(onInitParameters);
-	_client.OnError::subscribe(onError);
-	_client.OnDisconnection::subscribe(onDisconnection);
-	_client.OnData::subscribe(onData);
+	_client.OnError::subscribe(_onError);
+	_client.OnDisconnection::subscribe(_onDisconnection);
+	_client.OnData::subscribe(_onData);
 }
 
 TCPSession::~TCPSession() {
 	peer.OnInitParameters::unsubscribe(onInitParameters);
-	_client.OnData::unsubscribe(onData);
-	_client.OnDisconnection::unsubscribe(onDisconnection);
-	_client.OnError::unsubscribe(onError);
+	_client.OnData::unsubscribe(_onData);
+	_client.OnDisconnection::unsubscribe(_onDisconnection);
+	_client.OnError::unsubscribe(_onError);
 }
 
-
-void TCPSession::receive(PacketReader& packet) {
-	Session::receive(packet);
-	if (_receptions.size()>1 && _receptions.front() > 0 && (--_receptions.front()) == 0)
-		_receptions.pop_front();
-}
 
 void TCPSession::manage() {
 	if (died)

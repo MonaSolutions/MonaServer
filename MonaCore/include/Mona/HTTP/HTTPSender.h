@@ -23,9 +23,11 @@ This file is a part of Mona.
 #include "Mona/TCPSender.h"
 #include "Mona/Writer.h"
 #include "Mona/Path.h"
+#include "Mona/Client.h"
+#include "Mona/DataReader.h"
 #include "Mona/HTTP/HTTP.h"
 #include "Mona/HTTP/HTTPPacket.h"
-#include "Mona/Client.h"
+
 
 
 namespace Mona {
@@ -35,8 +37,11 @@ class HTTPSender : public TCPSender, public virtual Object {
 public:
 	HTTPSender(const SocketAddress& address,HTTPPacket& request,const PoolBuffers& poolBuffers,const std::string& relativePath);
 
+	bool			written() const { return _written; }
+
+	// if data==NULL and size==1 means "live stream" (no content-length), if data==NULL and size>1 it will use a StringWriter (raw serialization)
 	DataWriter&		writer(const std::string& code, HTTP::ContentType type, const char* subType,const UInt8* data,UInt32 size);
-	void			writeFile(const Path& file, UInt8 sortOptions, bool isApp) { _file = file; _sortOptions = sortOptions; _isApp = isApp; }
+	void			writeFile(const Path& file, DataReader& parameters);
 
 	const UInt8*	data() const { return _pWriter ? _pWriter->packet.data() : NULL; }
 	UInt32			size() const { return _pWriter ? _pWriter->packet.size() : 0; }
@@ -75,19 +80,22 @@ private:
 
 
 	const PoolBuffers&						_poolBuffers;
-	bool									_isApp;
 	Path									_file;
 	const std::string						_appPath; // Relative path of the application
-	UInt8									_sortOptions;
 	const std::shared_ptr<HTTPSendingInfos> _pInfos;
 	UInt8									_connection;
 	HTTP::CommandType						_command;
 	Date									_ifModifiedSince;
 	std::string								_serverAddress;
+	std::string								_origin;
 	UInt32									_sizePos;
 	std::unique_ptr<DataWriter>				_pWriter;
 	std::string								_buffer;
 	SocketAddress							_address;
+	bool									_written;
+
+	HTTP::SortOrder							_sortOrder;
+	HTTP::SortField							_sortField;
 };
 
 

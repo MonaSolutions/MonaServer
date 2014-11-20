@@ -28,7 +28,7 @@ using namespace std;
 
 namespace Mona {
 
-RTMFPHandshake::RTMFPHandshake(RTMFProtocol& protocol, Sessions& sessions, Invoker& invoker) : RTMFPSession(protocol, invoker, 0, RTMFP_DEFAULT_KEY, RTMFP_DEFAULT_KEY, "RTMFPHandshake"),
+RTMFPHandshake::RTMFPHandshake(RTMFProtocol& protocol, Sessions& sessions, Invoker& invoker) : RTMFPSession(protocol, invoker, 0,RTMFP_DEFAULT_KEY ,RTMFP_DEFAULT_KEY, "RTMFPHandshake"),
 	_sessions(sessions),_pPeer(new Peer((Handler&)invoker)) {
 	
 	memcpy(_certificat,"\x01\x0A\x41\x0E",4);
@@ -82,7 +82,10 @@ void RTMFPHandshake::clear() {
 	_cookies.clear();
 }
 
-void RTMFPHandshake::packetHandler(PacketReader& packet) {
+void RTMFPHandshake::receive(const SocketAddress& address, BinaryReader& packet) {
+
+	if(!Session::receive(address, packet))
+		return;
 
 	UInt8 marker = packet.read8();
 	if(marker!=0x0b) {
@@ -97,7 +100,7 @@ void RTMFPHandshake::packetHandler(PacketReader& packet) {
 	PacketWriter& response(this->packet());
 	UInt32 oldSize(response.size());
 	response.next(3); // type and size
-	UInt8 idResponse = handshakeHandler(id,packet,response);
+	UInt8 idResponse = handshakeHandler(id,address, packet,response);
 	if(idResponse>0)
 		BinaryWriter(response.data()+oldSize,3).write8(idResponse).write16(response.size()-oldSize-3);
 	else
@@ -116,7 +119,7 @@ RTMFPSession* RTMFPHandshake::createSession(const UInt8* cookieValue) {
 	(UInt32&)farId = cookie.farId;
 
 	// Create session
-	RTMFPSession* pSession = &_sessions.create<RTMFPSession,Sessions::BYPEER | Sessions::BYADDRESS>(protocol<RTMFProtocol>(), invoker, farId, cookie.decryptKey(), cookie.encryptKey(),cookie.pPeer);
+	RTMFPSession* pSession = &_sessions.create<RTMFPSession,Sessions::BYPEER | Sessions::BYADDRESS>(protocol<RTMFProtocol>(), invoker, farId, cookie.decoder(), cookie.encoder(),cookie.pPeer);
 	(UInt32&)cookie.id = pSession->id();
 
 	// response!
@@ -131,7 +134,7 @@ RTMFPSession* RTMFPHandshake::createSession(const UInt8* cookieValue) {
 }
 
 
-UInt8 RTMFPHandshake::handshakeHandler(UInt8 id,PacketReader& request,PacketWriter& response) {
+UInt8 RTMFPHandshake::handshakeHandler(UInt8 id,const SocketAddress& address, BinaryReader& request,PacketWriter& response) {
 
 	switch(id){
 		case 0x30: {
@@ -161,10 +164,10 @@ UInt8 RTMFPHandshake::handshakeHandler(UInt8 id,PacketReader& request,PacketWrit
 					UInt32 times = attempt(tag);
 
 					RTMFPSession* pSession(NULL);
-					if(times > 0 || peer.address.host() == pSessionWanted->peer.address.host())
-						pSession = _sessions.find<RTMFPSession>(peer.address);
+					if(times > 0 || address.host() == pSessionWanted->peer.address.host())
+						pSession = _sessions.find<RTMFPSession>(address);
 					
-					pSessionWanted->p2pHandshake(tag,peer.address,times,pSession);
+					pSessionWanted->p2pHandshake(tag,address,times,pSession);
 
 					RTMFP::WriteAddress(response,pSessionWanted->peer.address, RTMFP::ADDRESS_PUBLIC);
 					DEBUG("P2P address initiator exchange, ",pSessionWanted->peer.address.toString());
@@ -201,8 +204,8 @@ UInt8 RTMFPHandshake::handshakeHandler(UInt8 id,PacketReader& request,PacketWrit
 				for(it=addresses.begin();it!=addresses.end();++it) {
 					if(it->host().isWildcard())
 						continue;
-					if(peer.address == *it)
-						WARN("A client tries to connect to himself (same ",peer.address.toString()," address)");
+					if(address == *it)
+						WARN("A client tries to connect to himself (same ", address.toString()," address)");
 					RTMFP::WriteAddress(response,*it,RTMFP::ADDRESS_REDIRECTION);
 					DEBUG("P2P address initiator exchange, ",it->toString());
 				}
@@ -242,7 +245,7 @@ UInt8 RTMFPHandshake::handshakeHandler(UInt8 id,PacketReader& request,PacketWrit
 				// New RTMFPCookie
 				RTMFPCookie* pCookie = attempt.pCookie;
 				if(!pCookie) {
-					((SocketAddress&)_pPeer->address).set(peer.address);
+					((SocketAddress&)_pPeer->address).set(address);
 					pCookie = new RTMFPCookie(*this,invoker,tag,_pPeer);
 					if (!pCookie->run(ex)) {
 						delete pCookie;

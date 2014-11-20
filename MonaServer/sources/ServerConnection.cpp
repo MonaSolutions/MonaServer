@@ -157,14 +157,13 @@ UInt32 ServerConnection::onData(PoolBuffer& pBuffer) {
 	// Index handler==0 => HELLO MESSAGE => String host, 1 byte indication on ports count, String protocol name, UInt16 port, parameters (String key, String value)
 
 	if (pBuffer->size() < 4)
-		return pBuffer->size();
+		return 0;
 
 	PacketReader packet(pBuffer->data(), pBuffer->size());
 	UInt32 size(packet.read32());
 	if (packet.available() < size)
-		return pBuffer->size();
+		return 0;
 
-	UInt32 rest = packet.available() - size;
 	packet.shrink(size);
 	
 	DUMP_INTERN(packet.current(),packet.available(), "From ", address.toString(), " server");
@@ -180,7 +179,7 @@ UInt32 ServerConnection::onData(PoolBuffer& pBuffer) {
 			if (!isHello) {
 				ERROR("Connection with ", address.toString(), " server, ",packet.readString(handler));
 				_pClient->disconnect();
-				return 0;
+				return size+4;
 			}
 
 			/// properties itself
@@ -196,7 +195,7 @@ UInt32 ServerConnection::onData(PoolBuffer& pBuffer) {
 			}
 			_connected = true;
 			OnHello::raise(*this);
-			return rest;
+			return size+4;
 		}
 
 		auto it = _receivingRefs.find(ref);
@@ -207,7 +206,7 @@ UInt32 ServerConnection::onData(PoolBuffer& pBuffer) {
 	}
 
 	OnMessage::raise(*this,handler,packet);
-	return rest;
+	return size+4;
 }
 
 void ServerConnection::onDisconnection(){

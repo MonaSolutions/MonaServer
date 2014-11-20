@@ -19,7 +19,6 @@ This file is a part of Mona.
 
 #include "Mona/WebSocket/WSSession.h"
 #include "Mona/WebSocket/WS.h"
-#include "Mona/WebSocket/WSUnmasking.h"
 #include "Mona/JSONReader.h"
 #include "Mona/StringReader.h"
 #include "Mona/MIME.h"
@@ -31,9 +30,23 @@ using namespace std;
 namespace Mona {
 
 
-WSSession::WSSession(const SocketAddress& peerAddress, SocketFile& file, Protocol& protocol, Invoker& invoker) : TCPSession(peerAddress, file,protocol, invoker), _writer(*this), _pListener(NULL), _pPublication(NULL) {
+class WSSource : public virtual Object {
+public:
+	WSSource(PoolBuffer& pBuffer) : pBuffer(pBuffer.poolBuffers) { this->pBuffer.swap(pBuffer); }
+	PoolBuffer	pBuffer;
+};
+
+
+WSSession::WSSession(const SocketAddress& peerAddress, SocketFile& file, Protocol& protocol, Invoker& invoker) : TCPSession(peerAddress, file,protocol, invoker), _writer(*this), _enabled(false),_pListener(NULL), _pPublication(NULL),
+	_decoder(invoker),onDecoded([this](WSDecoded& decoded,const SocketAddress& address){receive(decoded);}), onDecodedEnd([this](){flush();}) {
 }
 
+void WSSession::enable() {
+	((string&)this->peer.protocol) = "WebSocket";
+	_decoder.OnDecodedEnd::subscribe(onDecodedEnd);
+	_decoder.OnDecoded::subscribe(onDecoded);
+	_enabled = true;
+}
 
 void WSSession::kill(UInt32 type){
 	if(died)
@@ -43,6 +56,10 @@ void WSSession::kill(UInt32 type){
 	closePublication();
 	closeSusbcription();
 	TCPSession::kill(type);
+
+	// no more reception
+	_decoder.OnDecoded::unsubscribe(onDecoded);
+	_decoder.OnDecodedEnd::unsubscribe(onDecodedEnd);
 }
 
 void WSSession::closeSusbcription(){
@@ -60,51 +77,14 @@ void WSSession::closePublication(){
 }
 
 
-bool WSSession::buildPacket(PoolBuffer& pBuffer,PacketReader& packet) {
-	if (packet.available()<2)
-		return false;
-	UInt8 type = packet.read8() & 0x0F;
-	UInt8 lengthByte = packet.read8();
+void WSSession::receive(WSDecoded& packet) {
 
-	UInt32 size=lengthByte&0x7f;
-	if (size==127) {
-		if (packet.available()<8)
-			return false;
-		size = (UInt32)packet.read64();
-	} else if (size==126) {
-		if (packet.available()<2)
-			return false;
-		size = packet.read16();
-	}
+	if (!TCPSession::receive(packet))
+		return;
 
-	if(lengthByte&0x80)
-		size += 4;
-
-	if (packet.available()<size)
-		return false;
-
-	packet.shrink(size);
-
-	if (lengthByte & 0x80)
-		decode<WSUnmasking>(packet.current(),packet.available(), type);
-	else {
-		packet.reset(packet.position()-1);
-		*(UInt8*)packet.current() = type;
-	}
-	return true;
-}
-
-
-void WSSession::packetHandler(PacketReader& packet) {
-	if (!packet.available())
-		return ;
-
-	UInt8 type = 0;
 	Exception ex;
 	if(peer.connected) {
-		type = packet.read8();	
-		
-		switch(type) {
+		switch(packet.type) {
 			case WS::TYPE_BINARY: {
 				StringReader reader(packet);
 				readMessage(ex, reader, WS::TYPE_BINARY);
@@ -129,8 +109,7 @@ void WSSession::packetHandler(PacketReader& packet) {
 				peer.pong();
 				break;
 			default:
-				ex.set(Exception::PROTOCOL, Format<UInt8>("Type %#x unknown", type), WS::CODE_MALFORMED_PAYLOAD);
-				ERROR(ex.error());
+				ERROR(ex.set(Exception::PROTOCOL, Format<UInt8>("Type %#x unknown", packet.type), WS::CODE_MALFORMED_PAYLOAD).error());
 				break;
 		}
 		
@@ -142,7 +121,7 @@ void WSSession::packetHandler(PacketReader& packet) {
 	if (!peer.connected) {
 		_writer.close(WS::CODE_POLICY_VIOLATION);
 		kill(REJECTED_DEATH);
-	} else if (type==WS::TYPE_CLOSE)
+	} else if (packet.type==WS::TYPE_CLOSE)
 		kill();
 	else
 		_writer.flush();

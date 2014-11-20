@@ -23,6 +23,7 @@ This file is a part of Mona.
 #include "Mona/MapParameters.h"
 #include "Mona/PacketWriter.h"
 #include "Mona/Exceptions.h"
+#include <vector>
 
 
 namespace Mona {

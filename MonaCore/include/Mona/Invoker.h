@@ -25,7 +25,6 @@ This file is a part of Mona.
 #include "Mona/Group.h"
 #include "Mona/Publications.h"
 #include "Mona/Entities.h"
-#include "Mona/Clients.h"
 #include "Mona/TaskHandler.h"
 #include "Mona/PoolThreads.h"
 #include "Mona/PoolBuffers.h"
@@ -37,7 +36,7 @@ class Invoker : public Entity,public TaskHandler, public virtual Object, public 
 	friend class FlashStream; // FlashStream manage _streams
 public:
 	// invocations
-	const Clients			clients;
+	const Entities<Client>  clients;
 	const Entities<Group>	groups;
 	Publications			publications;
 	const RelayServer		relayer;
@@ -63,6 +62,8 @@ public:
 	void					removeBanned(const IPAddress& ip) { _bannedList.erase(ip); }
 	void					clearBannedList() { _bannedList.clear(); }
 	bool					isBanned(const IPAddress& ip) { return _bannedList.find(ip) != _bannedList.end(); }
+
+	virtual const std::string&	rootPath() const = 0;
 
 protected:
 	Invoker(UInt32 socketBufferSize,UInt16 threads);
