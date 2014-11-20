@@ -131,21 +131,23 @@ Http client (JSON-RPC and XML-RPC_)
   </body>
   <html>
 
-Mona supports both json and xml formats, so just replace the response and request with the lines below to have xml http rpc sample :
+Mona supports both json and xml formats, so just replace the response and request with the lines below to have an XML-RPC_ sample :
 
 .. code-block:: js
 
   // Manage the response
   xmlhttp.onreadystatechange = function () {
     if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
-      var roolElmt = xmlhttp.responseXML.documentElement;
-      if (roolElmt.childNodes[0].textContent=="onReception")
-        alert(roolElmt.childNodes[1].textContent);
+      var xml = xmlhttp.response;
+      alert(xml);
     }
   }
   // Send the POST request
   xmlhttp.setRequestHeader('Content-Type', 'text/xml');
-  xmlhttp.send("<__array><__noname>onMethod</__noname><__noname>http xml msg</__noname></__array>");
+  xmlhttp.send('<?xml version="1.0"?><methodCall>' +
+                '<methodName>onMethod</methodName><params>' +
+                '<param><value><string>http XML-RPC msg/string></value></param>' +
+                '</params></methodCall>');
 
 Push Data
 ******************************
@@ -301,7 +303,7 @@ Now we are about to create a sample of publication with a flash publisher. For t
         }
         
         // net status handler for the NetStream
-        private function onStatusOutstream(evt:NetStatusEvent):void { 			
+        private function onStatusOutstream(evt:NetStatusEvent):void {       
           statusOutstream.text = evt.info.code; 
         }
         
@@ -313,7 +315,7 @@ Now we are about to create a sample of publication with a flash publisher. For t
           _connection.addEventListener(NetStatusEvent.NET_STATUS, onStatus);
         }
       ]]>
-    </fx:Script>	
+    </fx:Script>  
     <mx:TextInput x="10" y="10" width="400" text="rtmfp://localhost/publish" id="address"/>
     <mx:Button x="450" y="10" label="Send" click="send()"/>
     <mx:Label x="10" y="40" text="Net Status Code: "/>
@@ -486,7 +488,7 @@ And the last one is the mxml main file which connect the peer to MonaServer and 
   <mx:Application xmlns:fx="http://ns.adobe.com/mxml/2009" 
           xmlns:mx="library://ns.adobe.com/flex/mx" layout="absolute" minWidth="955" minHeight="600" applicationComplete="getName();">
     <fx:Script>
-      <![CDATA[			
+      <![CDATA[      
         import mx.containers.TitleWindow;
         import mx.events.CloseEvent;
         import mx.managers.PopUpManager;
@@ -495,7 +497,7 @@ And the last one is the mxml main file which connect the peer to MonaServer and 
         private var _netGroup:NetGroup;
         private var _namePopup:TitleWindow;
         private var _nameUser:String;
-        public 	var p2pSharedObject:P2PSharedObject;
+        public   var p2pSharedObject:P2PSharedObject;
         
         //////////////////////////// IDENTIFICATION ////////////////////////////////
         
@@ -726,10 +728,10 @@ Use only the client part of these sources, and for server side create the file M
           if cur_client.id then
             cur_meeter.protocol = 'rtmfp'
           end
-          cur_meeter.farID = cur_client.id;		
+          cur_meeter.farID = cur_client.id;    
           result[i] = cur_meeter
         end
-      end	
+      end  
       return result
     end
       

@@ -60,6 +60,14 @@ If you use Notepad++ (plugin NppExec)
 
 To run the script just type **F6** then **Enter**.
 
+If you use Komodo Edit
+----------------------------------------------
+
+* Tools>Run Command...
+* In "Run" type "make html"
+* In "Start in" choose the path of "doc" (this directory)
+* Then just run it.
+
 .. _Sphinx : http://sphinx-doc.org/index.html
 .. _`Easy Install` : http://pythonhosted.org/setuptools/easy_install.html
 .. _Python : http://www.python.org/

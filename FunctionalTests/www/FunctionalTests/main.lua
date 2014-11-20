@@ -1,3 +1,4 @@
+package.path = "F:/Travail/MonaWorkspace/MonaServer/MonaServer/Debug/?.lua;" .. package.path
 require("www/"..path.."/utilTests")
 
 local tests = {} -- list of LUA Tests
@@ -26,14 +27,15 @@ function onConnection(client,...)
 		local list = {}
 		local index = 1
 		for _,filePath in pairs(mona:listPaths(path.."/LUATests")) do
-			if filePath.isDirectory then
+			--if filePath.isFolder then
+				INFO(filePath.name)
 				local child = children("LUATests/"..filePath.name)
 				if child and child.run then
 					tests[index] = child
 					list[child.name] = index
 					index = index+1
 				end
-			end
+			--end
 		end
 		
 		NOTE("List of tests : ", mona:toJSON(list))

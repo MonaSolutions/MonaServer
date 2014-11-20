@@ -252,15 +252,16 @@ void HTTPSession::processGet(Exception& ex, HTTPPacket& packet, QueryReader& par
 			if (_index.find_last_of('.') != string::npos && peer.onMessage(ex, _index, parameters)) // can be method!
 				return;
 			// Redirect to the file (get name to prevent path insertion)
-			file.append('/', FileSystem::GetName(_index)); 
-			return processGet(ex, packet, parameters);
-		}
+			file.append(FileSystem::GetName(_index)); 
+		} else {
 		
-		if (_indexDirectory)
-			_writer.writeFile(file, parameters); // folder view!
-		else
+			if (_indexDirectory)
+				return _writer.writeFile(file, parameters); // folder view!
 			ex.set(Exception::PERMISSION, "No authorization to see the content of ", peer.path, "/");
-	} else {
+		}
+	} 
+	
+	if (!file.isFolder()) {
 		// FILE //
 
 		// 1 - priority on client method
