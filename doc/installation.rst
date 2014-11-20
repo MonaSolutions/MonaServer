@@ -129,12 +129,12 @@ Connect to the AMI and execute the following script:
 Raspberry PI (armv61) Build
 ===================================
 
-You need to install a distibution where **gcc 4.8.2** is available. For now we have only found Raspbian_ upgraded to the distribution *jessie*. Here is the protocol to install it correctly :
+You need to install a distribution where **gcc 4.8.2** is available. For now we have only found Raspbian_ upgraded to the distribution *jessie*. Here is the protocol to install it correctly :
 
 - First download Raspbian_
 - Then write the distribution image on an SD Card (`How to write Raspberry Pi image to SD card <http://xmodulo.com/2013/11/write-raspberry-pi-image-sd-card.html>`_)
 - Start the raspberry pi and install raspbian
-- Update the /etc/apt/sources.list to have at least jessie (rather than wheezy)
+- Update the /etc/apt/sources.list to have at least *jessie* (rather than *wheezy*)
 - Run theses steps to upgrade Raspbian_ :
 
 .. code-block:: sh

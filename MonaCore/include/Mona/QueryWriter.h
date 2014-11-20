@@ -39,7 +39,7 @@ public:
 	UInt64 beginArray(UInt32 size) { return 0; }
 	void   endArray() {}
 
-	void   writeNumber(double value) { String::Format(writer(), value); }
+	void   writeNumber(double value) { String::Append(writer(), value); }
 	void   writeString(const char* value, UInt32 size) { Util::EncodeURI(value,size, writer()); }
 	void   writeBoolean(bool value) { writer().write(value ? "true" : "false"); }
 	void   writeNull() { writer().write("null",4); }

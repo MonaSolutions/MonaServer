@@ -22,7 +22,7 @@ Here's a complete sample to understand its usage:
 .. code-block:: lua
 
 	socket = mona:createTCPClient()
-	function socket:onReception(data)
+	function socket:onData(data)
 		NOTE("Reception from "..self.peerAddress.." to "..self.address)
 		self:send(data) -- echo sample
 		return 0 -- return rest (all has been consumed here)
@@ -35,7 +35,7 @@ Here's a complete sample to understand its usage:
 	end
 
 	local err = socket:connect("localhost",1234)
-	if err then ERROR(err) end
+	if err then ERROR("Unable to connect to localahost:1234") end
 	...
 	if socket.connected then -- useless if already disconnected
 		socket:disconnect()
@@ -54,7 +54,7 @@ properties
 methods
 =============================
 
-- **connect(host[,port])**, connect to the *host:port* indicated. If this method fails, it returns an error message, otherwise it returns nothing.
+- **connect(host[,port])**, connect to the *host:port* indicated. If this method fails, it prints an error message and return false, otherwise it returns true.
 - **disconnect()**, shutdown the socket.
 - **send(data)**, send *data* (LUA_ string) to the TCP server.
 
@@ -78,7 +78,7 @@ Here's a complete sample to understand its usage:
 	server = mona:createTCPServer()
 	function server:onConnection(client)
 		-- Here we have a TCPClient object, same usage than TCPClient
-		function client:onReception(data)
+		function client:onData(data)
 			NOTE("Reception from "..self.peerAddress.." to "..self.address)
 			self:send(data) -- echo sample
 			return 0 -- return rest (all has been consumed here)

@@ -1,83 +1,89 @@
+require("www/"..path.."/utilTests")
 
--- ******* TestSerialize parameters *******
+local tests = {} -- list of LUA Tests
 
-tabSerialize = {
-  {10,10,100,100},
-  {x=10,y=10,width=100,height=100},
-  {x=10,y=10,100,100},
-  {x={10,10,10,10}},
-  {x={width=100,height=100,100,100}},
-  {x={100,100,width=100,height=100}},
-  {a=1,b=2,3,4,x={{{1,2,3}}}}
-}
+-- ******* Socket Policy file *******
 
-
--- ******* TestBadRequests parameters *******
-nbBadRequests = 0
-socket = mona:createTCPClient()
-
-function socket:onDisconnection()
-	if self.error then -- error? or normal disconnection?
-		ERROR(self.error)
-		self.clientWriter:writeInvocation("onFinished", self.error);
-	else
-		if nbBadRequests < 10 then
-			nbBadRequests = nbBadRequests + 1
-			local ok = self:connect("localhost",80)
-			if ok then self:send("TESTBADREQUEST") end
-		else
-			self.clientWriter:writeInvocation("onFinished", "");
-		end
-	end
-	NOTE("TCP disconnection")
+serverPolicyFile = mona:createTCPServer()
+function serverPolicyFile:onConnection(client)
+        
+        function client:onData(data)
+                INFO("Sending policy file...")
+                self:send("<cross-domain-policy><allow-access-from domain=\"*\" to-ports=\"*\"/></cross-domain-policy>\0")
+                return 0 -- return rest (all has been consumed here)
+        end
 end
-
+serverPolicyFile:start(843); -- start the server on the port 843
 
 -- ******* Main functions *******
 function onConnection(client,...)
 	
   INFO("New client on FunctionalTests (protocol : ", client.protocol, ")")
-  
-	function client:onSerialize(mode)
 	
-		for key,value in pairs(tabSerialize) do
-			-- Serialize current object
-			local result2JSON = ""
-			if mode == "xml" then
-				local result = mona:toXML(value)
-				INFO("XML : ", result)
-				result2JSON = mona:toJSON(mona:fromXML(result))
-			else -- JSON
-				local result = mona:toJSON(value)
-				INFO("JSON : ", result)
-				result2JSON = mona:toJSON(mona:fromJSON(result))
-			end
-			local msg2JSON = mona:toJSON(value) -- JSON serialization is considerated as valid
-			
-			-- Return result
-			if result2JSON ~= msg2JSON then -- incorrect result
-				local message = "Test["..key.."] : expected '"..msg2JSON.."' and '"..result2JSON.."' received"
-				client.writer:writeInvocation("onFinished", message)
+	-- Return the list of LUA tests availables
+	function client:listTests()
+		
+		local list = {}
+		local index = 1
+		for _,filePath in pairs(mona:listPaths(path.."/LUATests")) do
+			if filePath.isDirectory then
+				local child = children("LUATests/"..filePath.name)
+				if child and child.run then
+					tests[index] = child
+					list[child.name] = index
+					index = index+1
+				end
 			end
 		end
-		client.writer:writeInvocation("onFinished", "")
-	end
-  
-	function client:testBadRequests()
-		nbBadRequests = 0
 		
-		socket.clientWriter = self.writer
-		local ok = socket:connect("localhost",80)
-		if ok then socket:send("TESTBADREQUEST") end
+		NOTE("List of tests : ", mona:toJSON(list))
+		return list
+	end
+	
+	-- Run the test and return the result of the test
+	function client:runTest(index)
+		local test = tests[index]
+		if not test then return "Test of index '"..index.."' doesn't exists" end
+		local start = mona:time()
+		local args = table.pack(pcall(test.run))
+		local err = false
+		if args[1] then
+			table.remove(args,1)
+			for i,f in pairs(args) do
+				if type(f) == "function" then
+					for k,v in pairs(test) do
+						if v==f then
+							local start2 = mona:time()
+							ok,err = pcall(f)
+							if ok then
+								INFO(test.name,":",k," OK (",mona:time()-start2,"ms)")
+							else
+								ERROR(test.name,":",k," test failed, ",err)
+							end
+						end
+						if err then break end
+					end
+				end
+				if err then break end
+			end
+			if not err then
+				NOTE(test.name," OK (",mona:time()-start,"ms)")
+				return ""
+			end
+		else
+			err = args[2]
+		end
+		ERROR(test.name," test failed, ",err)
+		return test.name.." test failed, "..err
 	end
   
-	-- For TestHTTP, TestHTTPReconnect and Deserialize tests
-	function client:onMessage(data)
+	-- For HTTPLoad, HTTPReconnect and Deserialize tests, just return parameters deserialized and serialized
+	function client:onMessage(...)
 		NOTE(path) -- to see if we are in app or subapp
-		INFO("Message : ", mona:toJSON(data))
+		INFO("Message : ", mona:toJSON(...))
 		
-		client.writer:writeMessage(data)
+		client.writer:writeMessage(...)
 	end
   
-  --return {index="index.html",timeout=7}
+  return {index="flash.html",timeout=7}
 end

@@ -190,7 +190,7 @@ You have to define your RPC functions as a member of *client* object gotten on c
 .. code-block:: as3 
 
   _netConnection.client = this
-  _netConnection.call("test",new Responder(onResult,onStatus),"Client","Test")
+  _netConnection.call("test",new Responder(onResult,onStatus),"François-Marie","Arouet")
 
   function close():void { _netConnection.close() }
   function onStatus(status:Object):void {
@@ -198,7 +198,7 @@ You have to define your RPC functions as a member of *client* object gotten on c
   }
   
   function onResult(response:Object):void {
-    trace(response) // displays "Hello Test Client"
+    trace(response) // displays "Hello François-Marie Arouet"
   }
 
 .. warning:: When you change default client of NetConnection, the new client should have a *close()* method which closes the connection, because a RTMFP Server can call this function in some special cases
@@ -225,7 +225,7 @@ If the function is not available on the *client* object, it returns a *NetConnec
 .. code-block:: as3
 
   _netConnection.client = this
-  _netConnection.call("test",new Responder(onResult,onStatus),"Client");
+  _netConnection.call("test",new Responder(onResult,onStatus),"François-Marie");
 
   function close():void { _netConnection.close() }
   function onStatus(status:Object):void {
@@ -238,7 +238,7 @@ If the function is not available on the *client* object, it returns a *NetConnec
 Remote Procedure Call with Websocket or HTTP
 -----------------------------------------------
 
-Websocket supports JSON RPC and HTTP supports either JSON and XML RPC using the 'Content-Type' header. Here are samples using the same lua server part :
+Websocket supports JSON RPC and HTTP supports either JSON and XML-RPC_ using the 'Content-Type' header. Here are samples using the same lua server part :
 
 **Websocket client :**
 
@@ -246,7 +246,7 @@ Websocket supports JSON RPC and HTTP supports either JSON and XML RPC using the 
 
   socket = new WebSocket(host);
   socket.onmessage = onMessage;
-  var data = ["test", "Client", "Test"];
+  var data = ["test", "François-Marie", "Arouet"];
   socket.send(JSON.stringify(data));
    
   function onMessage(msg){ 
@@ -265,12 +265,12 @@ Websocket supports JSON RPC and HTTP supports either JSON and XML RPC using the 
   xmlhttp.onreadystatechange = function () {
     if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
       var response = JSON.parse(xmlhttp.response);
-      alert(response);
+      alert(xmlhttp.response);
     }
   }
   // Send the POST request
   xmlhttp.setRequestHeader('Content-Type', 'application/json');
-  var data = ["test", "Client", "Test"];
+  var data = ["test", "François-Marie", "Arouet"];
   xmlhttp.send(JSON.stringify(data));
   
 **HTTP XML-RPC client :**
@@ -289,7 +289,9 @@ Websocket supports JSON RPC and HTTP supports either JSON and XML RPC using the 
   }
   // Send the POST request
   xmlhttp.setRequestHeader('Content-Type', 'text/xml');
-  xmlhttp.send("<__array><__noname>onMethod</__noname><__noname>Client</__noname><__noname>Test</__noname></__array>");
+  xmlhttp.send("<methodCall><methodName>test</methodName><params><param><value><string>François-Marie</string></value></param><param><value><string>Arouet</string></value></param></params></methodCall>");
+  
+.. Note:: Here we use the XML-RPC_ format which is fully supported by Mona.
 
 See more samples on `Samples <./samples.html>`_ page.
   
@@ -392,7 +394,8 @@ LUA types conversions
 Several types are supported for messages received by server or sended to clients :
  - AMF (for flash clients),
  - JSON,
- - XML,
+ - XML-RPC_,
+ - XML (by the fromXML_ parser),
  - and raw data (obviously it does not needs conversion).
 
 AMF to LUA conversions
@@ -524,55 +527,123 @@ As in AMF primitive, conversion types are easy and intuitive (Number, Boolean, S
 .. code-block:: js
 
   socket.send("[[10,10,100,100]]");
-  
-XML to LUA conversions
+
+XML data compatibility (XML parser)
 =========================================
 
-XML is a special format that include some constraints :
+As mentioned above, Mona traduce XMLRPC calls automatically. For other types of XML data only few LUA_ code lines are needed, using the useful XML parser.
+
+Two methods are available to do this :
+ - *fromXML*
+ - and *toXML*
+ 
+See *Mona* part of `Server Application, API <./api.html>`_ page for more details.
+
+A sample with SOAP
+-----------------------------
+
+Let us begin with an RPC addition method :
 
 .. code-block:: lua
 
-  -- LUA table formatted in Object              // XML Object 
-  {x=10,y=10,width=100,height=100}              <__array><y>10</y><x>10</x><height>100</height><width>100</width></__array>         
-      
-  -- LUA table formatted in Array               // XML Array
-  {10,10,100,100}                               <__array><__noname>10</__noname><__noname>10</__noname><__noname>100</__noname><__noname>100</__noname></__array>
-      
-  -- LUA table mixed                            // XML Array mixed
-  {x=10,y=10,100,100}                           <__array><y>10</y><x>10</x><__noname>100</__noname><__noname>100</__noname></__array>
-         
-  -- LUA empty object                           // XML Empty Object
-  {x={}}                                        <__array><x/></__array>
-        
-  -- LUA table object with empty sub-object     // XML Array of Objects with empty object
-  {x={{},10}}                                   <__array><x/><x>10</x></__array>
-        
-  -- LUA array object                           // XML Array of Objects
-  {a={10,10,100,100}}                           <__array><a>10</a><a>10</a><a>100</a><a>100</a></__array>
-  
-  -- LUA table in object                        // XML Array in Object
-  {a={{10,10,100,100}}}                         <__array><a><__noname>10</__noname><__noname>10</__noname><__noname>100</__noname><__noname>100</__noname></a></__array>
-  
-  -- LUA array in object                        // XML Array in object
-  {a={{{100,100}},10,10}}                       <__array><__array><a><__array><__noname>100</__noname><__noname>100</__noname></__array></a><a>10</a><a>10</a></__array></__array>
-  
-  -- LUA tabled mixed in array object           // XML Array of objects and nonames
-  {a={{x=10,y=10,100,100}}}                     <__array><a><y>10</y><x>10</x><__noname>100</__noname><__noname>100</__noname></a></__array>
-  
-  -- LUA table mixed object                     // XML Array of objects and sub-objects
-  {a={x=10,y=10,100,100}}                       <__array><a><y>10</y></a><a><x>10</x></a><a>100</a><a>100</a></__array>
+	function onConnection(client,...)
+		function client:add(value)
+		  return value+1
+		end
+	end
 
-.. note::
+We can already call this method by an HTTP GET request (the name and the parameters are given in the URI), a JSON POST, XML-RPC or by AMF.
+But if we want absolutly to call it from a SOAP client with the following request :
 
-  - For perfomance reasons the toXML output can’t contains attributes, so they are converted in primitive tags,
-  - Order can differ from original type because there is no attribute order in lua,
-  - **<__noname>** tag is needed for representing lua single values,
-  - **<__array>** tag is needed for representing some arrays variables,
-  - For serializations reasons XML data need to be encapsulated in a **<__array>** tag, it allows user to send/recieve several objects,
-  
-.. warning::
-  - For now it not possible with deserialization to reproduce a property containing an array of one element (for example : "{a={10}}"),
-  - [[CDADA is not yet supported.
+.. code-block:: xml
+
+	<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+		<soap:Body>
+			<Add xmlns="http://localhost/">
+				<Value>1</Value>
+			</Add>
+		</soap:Body>
+	</soap:Envelope>
+	
+And the expected response :
+
+.. code-block:: xml
+
+	<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+		<soap:Body>
+			<AddResponse xmlns="http://localhost/">
+				<AddResult>
+					<Value>2</Value>
+				</AddResult>
+			</AddResponse>
+		</soap:Body>
+	</soap:Envelope>
+	
+Just rebuild the LUA_ code lines like this :
+
+.. code-block:: lua
+
+	function onConnection(client,...)
+	
+		function client:onMessage(data)
+			local xml = mona:fromXML(error,data) -- parse the XML data
+			
+			-- Call the method
+			local result = self:add(xml["soap:Envelope"]["soap:Body"].Add.Value.__value)
+			
+			-- Replace the Add method by AddResult
+			local content = xml["soap:Envelope"]["soap:Body"].Add
+			content.__name = "AddResponse"
+			content.__value = {__name="AddResult",{__name="Value",result}}
+			
+			-- Rewrite the XML data and send the result
+			return mona:toXML(error,xml)
+		end
+		
+		function client:add(value)
+			return value+1
+		end
+	end
+
+XML to LUA conversions
+-----------------------------
+
+**XML:**
+
+.. code-block:: xml
+
+	<?xml version="1.0"?>
+	<document>
+	  <article>
+		<p>This is the first paragraph.</p>
+		<h2 class='opt'>Title with opt style</h2>
+	  </article>
+	  <article>
+		<p>Some <b>important</b> text.</p>
+	  </article>
+	</document>
+
+**LUA:**
+
+.. code-block:: lua
+
+	{ xml = {version = 1.0},
+		{__name = 'document',
+		  {__name = 'article',
+			{__name = 'p', 'This is the first paragraph.'},
+			{__name = 'h2', class = 'opt', 'Title with opt style'},
+		  },
+		  {__name = 'article',
+			{__name = 'p', 'Some ', {__name = 'b', 'important'}, ' text.'},
+		  },
+		}
+	}
+
+
+Due to LUA_ language you can access to "This is the first paragraph" in two ways :
+1. variable[1][1][1][1]
+2. variable.document.article.p.__value
+
 
 LUA extensions and files inclusion
 ******************************************
@@ -620,4 +691,5 @@ API
 
 Complete API is available on `Server Application, API <./api.html>`_ page.
 
-.. _LUA: http://www.lua.org/
+.. _LUA : http://www.lua.org/
+.. _XML-RPC : http://xmlrpc.scripting.com/spec.html
