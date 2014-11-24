@@ -50,6 +50,9 @@ public:
 private:
 	Service(lua_State* pState,  const std::string& rootPath, Service& parent, const std::string& name, ServiceHandler& handler);
 
+	static int  LoadFile(lua_State *pState);
+	static int	ExecuteFile(lua_State *pState);
+
 	bool		open(bool create);
 	void		setReference(int reference);
 	void		close(bool full);

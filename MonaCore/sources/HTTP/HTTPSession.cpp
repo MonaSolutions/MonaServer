@@ -248,44 +248,42 @@ void HTTPSession::processGet(Exception& ex, HTTPPacket& packet, QueryReader& par
 
 	if (file.isFolder()) {
 		// FOLDER //
-		if (!_index.empty()) {
-			if (_index.find_last_of('.') != string::npos && peer.onMessage(ex, _index, parameters)) // can be method!
-				return;
-			// Redirect to the file (get name to prevent path insertion)
-			file.append(FileSystem::GetName(_index)); 
-		} else {
-		
+		if (_index.empty()) {
 			if (_indexDirectory)
 				return _writer.writeFile(file, parameters); // folder view!
 			ex.set(Exception::PERMISSION, "No authorization to see the content of ", peer.path, "/");
+			return;
 		}
+		if (_index.find_last_of('.') != string::npos && peer.onMessage(ex, _index, parameters)) // can be method!
+			return;
+
+		// Redirect to the file (get name to prevent path insertion)
+		file.append(FileSystem::GetName(_index));
 	} 
 	
-	if (!file.isFolder()) {
-		// FILE //
+	// FILE //
 
-		// 1 - priority on client method
-		if (file.extension().empty() && peer.onMessage(ex, file.name(), parameters)) // can be method!
-			return;
+	// 1 - priority on client method
+	if (file.extension().empty() && peer.onMessage(ex, file.name(), parameters)) // can be method!
+		return;
 	
-		// 2 - try to get a file
-		ParameterWriter parameterWriter(packet.sendingInfos().parameters);
-		if (peer.onRead(ex, file, parameters, parameterWriter) && !ex) {
-			packet.sendingInfos().sizeParameters = parameterWriter.size();
+	// 2 - try to get a file
+	ParameterWriter parameterWriter(packet.sendingInfos().parameters);
+	if (peer.onRead(ex, file, parameters, parameterWriter) && !ex) {
+		packet.sendingInfos().sizeParameters = parameterWriter.size();
 			
-			// If onRead has been authorised, and that the file is a multimedia file, and it doesn't exists (no VOD, filePath.lastModified()==0 means "doesn't exists")
-			// Subscribe for a live stream with the basename file as stream name
-			if (!file.exists()) {
-				if (packet.contentType == HTTP::CONTENT_ABSENT)
-					packet.contentType = HTTP::ExtensionToMIMEType(file.extension(), packet.contentSubType);
-				if (packet.contentType == HTTP::CONTENT_VIDEO || packet.contentType == HTTP::CONTENT_AUDIO) {
-					if (_pListener = invoker.subscribe(ex, peer, file.baseName(), _writer))
-						return;
-				}
+		// If onRead has been authorised, and that the file is a multimedia file, and it doesn't exists (no VOD, filePath.lastModified()==0 means "doesn't exists")
+		// Subscribe for a live stream with the basename file as stream name
+		if (!file.exists()) {
+			if (packet.contentType == HTTP::CONTENT_ABSENT)
+				packet.contentType = HTTP::ExtensionToMIMEType(file.extension(), packet.contentSubType);
+			if (packet.contentType == HTTP::CONTENT_VIDEO || packet.contentType == HTTP::CONTENT_AUDIO) {
+				if (_pListener = invoker.subscribe(ex, peer, file.baseName(), _writer))
+					return;
 			}
-			parameters.reset();
-			_writer.writeFile(file, parameters);
 		}
+		parameters.reset();
+		_writer.writeFile(file, parameters);
 	}
 }
 

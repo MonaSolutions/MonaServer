@@ -246,6 +246,7 @@ void Service::loadFile() {
 		}
 
 		lua_pop(_pState, 1);
+
 	SCRIPT_END
 }
 
@@ -303,7 +304,82 @@ void Service::clearEnvironment() {
 	}
 }
 
+int Service::LoadFile(lua_State *pState) {
+	// 1 - name
 
+	SCRIPT_BEGIN(pState)
+
+	const char* name(lua_tostring(pState, 1));
+	if (!name) {
+		SCRIPT_ERROR("loadfile must take a string argument")
+		return 0;
+	}
+
+	if (!FileSystem::IsAbsolute(name)) {
+
+		Service* pService((Service*)lua_touserdata(pState,lua_upvalueindex(1)));
+		string path;
+
+		while (pService) {
+			Exception ex;
+			String::Format(path,pService->_rootPath,pService->path,"/",name);
+	
+			if (FileSystem::Exists(path)) {
+				if (luaL_loadfile(pState, path.c_str()) == 0)
+					return 1;
+				SCRIPT_ERROR(Script::LastError(pState))
+				return 0;
+			}
+			
+			pService = pService->_pParent;
+		}
+		
+	}
+
+	// try pure relative or absolute
+	if (luaL_loadfile(pState, name) == 0)
+		return 1;
+	
+	SCRIPT_ERROR(Script::LastError(pState))
+
+	SCRIPT_END
+	return 0;
+}
+
+
+int Service::ExecuteFile(lua_State *pState) {
+	// 1 - name
+
+	SCRIPT_BEGIN(pState)
+
+		int result(0);
+		bool isRequire(lua_toboolean(pState, lua_upvalueindex(2))!=0);
+		if (isRequire) {
+			const char* name(lua_tostring(pState, 1));
+			if (!name) {
+				SCRIPT_ERROR("require must take a string argument")
+				return 0;
+			}
+			const char* ext(FileSystem::GetExtension(name));
+			if (ext && String::ICompare(ext,"lua")==0)
+				result = LoadFile(pState);
+		} else
+			result = LoadFile(pState);
+
+		if (result) {
+			Service* pService((Service*)lua_touserdata(pState,lua_upvalueindex(1)));
+			lua_rawgeti(pState, LUA_REGISTRYINDEX, pService->reference());
+			lua_setfenv(pState, -2);
+			lua_call(pState, 0, 0);
+		} else if (isRequire) {
+			// is require, try lib
+			lua_getglobal(pState, "require");
+			lua_call(pState, 1,0);
+		}
+
+	SCRIPT_END
+	return 0;
+}
 
 int Service::Item(lua_State *pState) {
 	SCRIPT_CALLBACK(Service,service)
@@ -337,14 +413,11 @@ int Service::Index(lua_State *pState) {
 			if (lua_istable(pState,-1)) {
 				lua_replace(pState, -2); // replace first metatable
 
-				string path;
 				lua_getfield(pState, 1, "path");
-				if (lua_isstring(pState, -1))
-					path.assign(lua_tostring(pState, -1));
+				const char* path(lua_tostring(pState, -1));
 				lua_pop(pState, 1);
 
-
-				if (!path.empty()) {  // else return |data
+				if (path) {  // else return |data
 					String::ForEach forEach([pState](UInt32 index,const char* value){
 						lua_getfield(pState,-1, value);
 						if (lua_isnil(pState, -1)) {
@@ -366,19 +439,62 @@ int Service::Index(lua_State *pState) {
 				return 1;
 			}
 			lua_pop(pState, 1);
-		}
+		} else if (strcmp(key, "dofile") == 0) {
 
-		// search in metatable (contains super, children, path, name, this, clients, ...)
-		lua_getfield(pState, -1, key);
-		if (!lua_isnil(pState, -1)) {
-			lua_replace(pState, -2);
-			// recort to accelerate the access
-			lua_pushvalue(pState, 2);
-			lua_pushvalue(pState, -2);
-			lua_rawset(pState, 1);
-			return 1;
+			lua_getfield(pState, -1, "|this");
+			if (lua_isuserdata(pState, -1)) {
+				lua_pushcclosure(pState, &Service::ExecuteFile, 1);
+
+				// save dofile function
+				lua_pushvalue(pState, 2);
+				lua_pushvalue(pState, -2);
+				lua_rawset(pState, 1);
+				return 1;
+			}
+			lua_pop(pState, 1);
+			
+		} else if (strcmp(key, "require") == 0) {
+
+			lua_getfield(pState, -1, "|this");
+			if (lua_isuserdata(pState, -1)) {
+				lua_pushboolean(pState, true);
+				lua_pushcclosure(pState, &Service::ExecuteFile, 2);
+
+				// save require function
+				lua_pushvalue(pState, 2);
+				lua_pushvalue(pState, -2);
+				lua_rawset(pState, 1);
+				return 1;
+			}
+			lua_pop(pState, 1);
+			
+		} else if (strcmp(key, "loadfile") == 0) {
+
+			lua_getfield(pState, -1, "|this");
+			if (lua_isuserdata(pState, -1)) {
+				lua_pushcclosure(pState, &Service::LoadFile, 1);
+
+				// save require function
+				lua_pushvalue(pState, 2);
+				lua_pushvalue(pState, -2);
+				lua_rawset(pState, 1);
+				return 1;
+			}
+			lua_pop(pState, 1);
+			
+		} else {
+			// search in metatable (contains super, children, path, name, this, clients, ...)
+			lua_getfield(pState, -1, key);
+			if (!lua_isnil(pState, -1)) {
+				lua_replace(pState, -2);
+				// recort to accelerate the access
+				lua_pushvalue(pState, 2);
+				lua_pushvalue(pState, -2);
+				lua_rawset(pState, 1);
+				return 1;
+			}
+			lua_pop(pState, 1);
 		}
-		lua_pop(pState, 1);
 	}
 	
 	// search in parent (inheriting)

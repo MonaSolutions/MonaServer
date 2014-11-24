@@ -264,7 +264,7 @@ string& FileSystem::GetExtension(const char* path, string& value) {
 }
 
 const char* FileSystem::GetExtension(const char* path) {
-	const char* dot(strrpbrk(path, "/\\"));
+	const char* dot(strrpbrk(path, "."));
 	const char* separator(strrpbrk(path, "/\\"));
 	if (dot && (separator || dot > separator))
 		return dot + 1;
@@ -414,30 +414,29 @@ bool FileSystem::IsFolder(const char* path) {
 
 
 bool FileSystem::IsAbsolute(const string& path) {
-#if defined(_WIN32)
-	return !path.empty() && isalpha(path[0]) && (path.size()!=2 || path.back()==':');
-#else
 	if (path.empty())
 		return false;
+#if defined(_WIN32)
+	return path.size()>1 && isalpha(path[0]) && path[1]==':';
+#else
 	if (path[0] == '/')
 		return true;
 	if (path[0] != '~')
 		return false;
-	return path.size()<2 || path[1] == '/';
+	return path.size()==1 || path[1] == '/'; // everything in the form ~/... is absolute
 #endif
 }
 bool FileSystem::IsAbsolute(const char* path) {
+	if (*path==0) // strlen(path)==0
+		return false;
 #if defined(_WIN32)
-	size_t size(strlen(path));
-	return size>0 && isalpha(path[0]) && (size!=2 || path[--size]==':');
+	return path[1] && isalpha(path[0]) && path[1]==':';
 #else
-	if (path[0]==0)
-		return false;
-	if (path[0] == '/')
+	if (*path == '/')
 		return true;
-	if (path[0] != '~')
+	if (*path != '~')
 		return false;
-	return path[1]==0 || path[1] == '/';
+	return *++path==0 || *path == '/'; // everything in the form ~/... is absolute
 #endif
 }
 
