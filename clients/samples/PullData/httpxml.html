@@ -9,14 +9,16 @@
       // Manage the response
       xmlhttp.onreadystatechange = function () {
         if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
-          var roolElmt = xmlhttp.responseXML.documentElement;
-          if (roolElmt.childNodes[0].textContent=="onReception")
-            alert(roolElmt.childNodes[1].textContent);
+            var xml = xmlhttp.response;
+            alert(xml);
         }
       }
       // Send the POST request
       xmlhttp.setRequestHeader('Content-Type', 'text/xml');
-      xmlhttp.send("<__array><__noname>onMethod</__noname><__noname>http xml msg</__noname></__array>");
+      xmlhttp.send('<?xml version="1.0"?><methodCall>' +
+                    '<methodName>onMethod</methodName><params>' +
+                    '<param><value><string>http XML-RPC msg</string></value></param>' +
+                    '</params></methodCall>');
     }
   </script>
 </head>

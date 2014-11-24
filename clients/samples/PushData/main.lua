@@ -8,10 +8,8 @@ function onConnection(client,...)
   
   if client.protocol == "WebSocket" then
     clientWS = client
-  else
-    if client.protocol == "RTMFP" then
+  elseif client.protocol == "RTMFP" then
       clientAMF = client
-    end
   end
   
   function client:onMessage(data)

@@ -1,8 +1,22 @@
 /* Unused samples for overrides example. */
 .navbar-version {
   visibility: hidden;
-}*/
+}
 
-/*footer {
-  background-color: red;
-}*/
+.navbar {
+  height: 80px;
+  margin-bottom: 40px;
+}
+
+.navbar-brand {
+  margin-top: 18px;
+  font-size: 30px;
+}
+
+.navbar-form {
+  margin-top: 18px;
+}
+
+body {
+  padding-top: 80px;
+}

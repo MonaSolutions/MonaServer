@@ -112,7 +112,31 @@ html_theme = 'bootstrap'
 # further.  For a list of options available for each theme, see the
 # documentation.
 html_theme_options = {
-#'navbar_title' : '<img src="_images/logo_mona.png"/>',
+    # Navigation bar title. (Default: ``project`` value)
+    'navbar_title': "MonaServer",
+    
+    # Tab name for entire site. (Default: "Site")
+    'navbar_site_name': "Site",
+
+    # A list of tuples containing pages or urls to link to.
+    'navbar_links': [
+        ("<img src=\"_static/star-bookmark-icone-8571-48.png\"/> Quick Start", "quickstart"),
+        ("<img src=\"_static/aide-point-interrogation-systeme-icone-8289-48.png\"/> FAQ", "faq"),
+        ("<img src=\"_static/casque-ecoute-soutien-icone-9816-48.png\"/> Support", "contacts"),
+        ("<img src=\"_static/texinfo-texte-x-icone-4685-48.png\"/> Documentation", "manual"),
+    ],
+
+    # Render the next and previous page links in navbar. (Default: true)
+    'navbar_sidebarrel': False,
+
+    # Render the current pages TOC in the navbar. (Default: true)
+    'navbar_pagenav': False,
+    
+    # Location of link to source.
+    # Options are "nav" (default), "footer" or anything else to exclude.
+    'source_link_position': "",
+    
+    # Bootswatch (http://bootswatch.com/) theme.
     'bootswatch_theme': "cerulean",
 }
 
@@ -126,9 +150,9 @@ html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
 # A shorter title for the navigation bar.  Default is the same as html_title.
 html_short_title = 'Mona'
 
-# The name of an image file (relative to this directory) to place at the top
-# of the sidebar.
-#html_logo = None
+# (Optional) Logo. Should be small enough to fit the navbar (ideally 24x24).
+# Path should be relative to the ``_static`` files directory.
+#html_logo = "monaLogo-small.png"
 
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32

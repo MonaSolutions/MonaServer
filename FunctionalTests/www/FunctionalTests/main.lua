@@ -1,5 +1,4 @@
-package.path = "F:/Travail/MonaWorkspace/MonaServer/MonaServer/Debug/?.lua;" .. package.path
-require("www/"..path.."/utilTests")
+require("utilTests.lua")
 
 local tests = {} -- list of LUA Tests
 
