@@ -349,7 +349,6 @@ int Service::LoadFile(lua_State *pState) {
 	return 0;
 }
 
-
 int Service::ExecuteFile(lua_State *pState) {
 	// 1 - name
 
@@ -377,9 +376,9 @@ int Service::ExecuteFile(lua_State *pState) {
 		} else if (isRequire) {
 			// is require, try lib
 			results = lua_gettop(pState);
-			lua_pushvalue(pState, 1);
 			lua_getglobal(pState, "require");
-			lua_call(pState, 1,LUA_MULTRET);
+			lua_pushvalue(pState, 1);
+			lua_call(pState, 1, LUA_MULTRET);
 			results = lua_gettop(pState)-results;
 		}
 
