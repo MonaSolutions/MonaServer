@@ -23,13 +23,13 @@ A property is available as follows:
 
 .. code-block:: lua
 
-	value = object.property
+  value = object.property
 
 
 And it can be assigned if it's not a *read-only* property like that:
 
 .. code-block:: lua
-	
+  
   object.property = value
 
 
@@ -40,7 +40,7 @@ A method is called as follows:
 
 .. code-block:: lua
 
-	results = object:method(arguments)
+  results = object:method(arguments)
 
 
 It can take multiple parameters and return mutiple results.
@@ -51,9 +51,9 @@ A few objects have also some events called by the system. Simply overload the na
 
 .. code-block:: lua
 
-	function object:onManage()
-		self:writeInvocation("push","test")
-	end
+  function object:onManage()
+    self:writeInvocation("push","test")
+  end
 
 
 pairs and ipairs
@@ -63,9 +63,9 @@ Objects are kind of array or map, so you can iterate between elements of objects
 
 .. code-block:: lua
 
-	for index,value in ipairs(object) do
-		INFO(index,value)
-	end
+  for index,value in ipairs(object) do
+    INFO(index,value)
+  end
 
 Application properties
 ========================
@@ -98,8 +98,8 @@ Example of access to a Mona global property :
 .. code-block:: lua
 
   for id, client in pairs(mona.clients) do
-		INFO(id, " : ", client.address)
-	end
+    INFO(id, " : ", client.address)
+  end
 
 methods
 -----------------
@@ -131,8 +131,8 @@ Example of access to a Mona global function :
 
 .. code-block:: lua
 
-	# Print congiguration array in a JSON format
-	INFO(mona:toJSON(mona.configs))
+  # Print congiguration array in a JSON format
+  INFO(mona:toJSON(mona.configs))
 
 Data
 ==================
@@ -182,14 +182,14 @@ In *client.properties* the word *properties* can be omitted to access directly t
 
 .. code-block:: as3
 
-	_netConnection.connect("rtmfp://localhost/myApplication?arg1=value1&arg2=value2");
+  _netConnection.connect("rtmfp://localhost/myApplication?arg1=value1&arg2=value2");
 
 .. code-block:: lua
 
-	function onConnection(client,...)
-		NOTE("client arg1 = "..client.arg1)
-		NOTE("client arg2 = "..client.arg2)
-	end
+  function onConnection(client,...)
+    NOTE("client arg1 = "..client.arg1)
+    NOTE("client arg2 = "..client.arg2)
+  end
 
 
 methods
@@ -215,34 +215,34 @@ properties
 
 .. code-block:: lua
 
-	function onConnection(client,...)
-		client.writer.reliable = false
-		client.writer.writeInvocation("method","hello")  -- packet more fast but can be lost
-		client.writer.reliable = true
-	end
+  function onConnection(client,...)
+    client.writer.reliable = false
+    client.writer.writeInvocation("method","hello")  -- packet more fast but can be lost
+    client.writer.reliable = true
+  end
 
 .. note:: About client to server communication this property is set on client side.
 
 .. code-block:: as3
 
-	_netStream.dataReliable = false
-	_netStream.send("method","hello") -- packet more fast but can be lost
+  _netStream.dataReliable = false
+  _netStream.send("method","hello") -- packet more fast but can be lost
 
 
 About stream publication it's done like that:
 
 .. code-block:: as3
 
-	_netStream.audioReliable = false
-	_netStream.videoReliable = false
-	_netStream.publish("mystream")
+  _netStream.audioReliable = false
+  _netStream.videoReliable = false
+  _netStream.publish("mystream")
 
 
 And  about stream subscription you opt for a no-reliable mode like that:
 
 .. code-block:: as3
 
-	_netStream.play("mystream",-3)
+  _netStream.play("mystream",-3)
 
 Here the server will stream in a no-reliable way and without buffering, it can improve significantly performances and better cope with congestion.
 
@@ -500,8 +500,8 @@ All event names starts with the *on* prefix.
 
 .. code-block:: lua
 
-	function onConnection(client,...)
-	end
+  function onConnection(client,...)
+  end
 
 
 onStart(path)
@@ -533,74 +533,74 @@ Finally you can return a table result to add some informations on connection (se
 
 .. code-block:: lua
 
-	function onConnection(client,...)
-		return {message="welcome",id=1}
-	end
+  function onConnection(client,...)
+    return {message="welcome",id=1}
+  end
 
 .. code-block:: as3
 
-	function onStatusEvent(event:NetStatusEvent):void {
-		switch(event.info.code) {
-			case "NetConnection.Connect.Success":
-			trace(event.info.message); // displays "welcome"
-			trace(event.info.id); // displays "1"
-			break;
-		}
-	}
+  function onStatusEvent(event:NetStatusEvent):void {
+    switch(event.info.code) {
+      case "NetConnection.Connect.Success":
+      trace(event.info.message); // displays "welcome"
+      trace(event.info.id); // displays "1"
+      break;
+    }
+  }
 
 You can reject a client adding an error of connection:
 
 .. code-block:: lua
 
-	function onConnection(client,login)
-		if login ~= "Tom" then
-			error("you are not Tom!")
-		end
-	end
+  function onConnection(client,login)
+    if login ~= "Tom" then
+      error("you are not Tom!")
+    end
+  end
 
 .. code-block:: as3
 
-	_netConnection.connect("rtmfp://localhost/","Ben")
+  _netConnection.connect("rtmfp://localhost/","Ben")
 
-	function onStatusEvent(event:NetStatusEvent):void {
-		switch(event.info.code) {
-			case "NetConnection.Connect.Rejected":
-			trace(event.info.description); // displays "you are not Tom!"
-			break;
-		}
-	}
+  function onStatusEvent(event:NetStatusEvent):void {
+    switch(event.info.code) {
+      case "NetConnection.Connect.Rejected":
+      trace(event.info.description); // displays "you are not Tom!"
+      break;
+    }
+  }
 
 In RTMP&RTFMP it answers with a *NetConnection.Connect.Rejected* status event and close the client connection. The *event.info.description* field contains your error message. Now if you reject a client with no error message, *event.info.description* field will contain "client rejected" by default.
 
 .. code-block:: lua
 
-	function onConnection(client,...)
-		error("")
-	end
+  function onConnection(client,...)
+    error("")
+  end
 
 .. code-block:: as3
 
-	_netConnection.connect("rtmfp://localhost/")
+  _netConnection.connect("rtmfp://localhost/")
 
-	function onStatusEvent(event:NetStatusEvent):void {
-		switch(event.info.code) {
-			case "NetConnection.Connect.Rejected":
-			trace(event.info.description); // displays "client rejected"
-			break;
-		}
-	}
+  function onStatusEvent(event:NetStatusEvent):void {
+    switch(event.info.code) {
+      case "NetConnection.Connect.Rejected":
+      trace(event.info.description); // displays "client rejected"
+      break;
+    }
+  }
 
 Functions below are member functions of clients objects so need to be declared under the onConnection scope like in this sample :
 
 .. code-block:: lua
 
-	function onConnection(client)
-		
-		function client:onRead(file, parameters)
-		
-			NOTE("Sending file '", file, "' to client address ", client.address)
-		end
-	end
+  function onConnection(client)
+    
+    function client:onRead(file, parameters)
+    
+      NOTE("Sending file '", file, "' to client address ", client.address)
+    end
+  end
 
 client:onRead(file, parameters...)
 ====================================
@@ -614,36 +614,36 @@ You can also reject the connexion like this :
 
 .. code-block:: lua
 
-	function client:onRead(file)
-		if file ~= "index.html" then
-			error("Access to file ", file, " is forbidden)
-		end
-	end
+  function client:onRead(file)
+    if file ~= "index.html" then
+      error("Access to file ", file, " is forbidden)
+    end
+  end
 
 You can redirect to another file returning the file name as first parameter :
 
 .. code-block:: lua
 
-	function client:onRead(file)
-		return "newFile"
-	end
-	
+  function client:onRead(file)
+    return "newFile"
+  end
+  
 Other parameters are treated as values for replacing templates *<% property %>* in file. So with the script below each *<% name %>* element will be replaced by "robert" :
 
 .. code-block:: lua
 
-	function client:onRead(file)
-		return file, {name="robert"}
-	end
+  function client:onRead(file)
+    return file, {name="robert"}
+  end
 
 If you need to return a custom response you can return *nil* and write you response using the writer as below:
 
 .. code-block:: lua
 
-	function client:onRead(file,parameters)
-		self.writer:writeRaw("hello"); -- my custom response
-		return nil
-	end
+  function client:onRead(file,parameters)
+    self.writer:writeRaw("hello"); -- my custom response
+    return nil
+  end
 
 client:onMessage(parameters...)
 ====================================
@@ -670,21 +670,21 @@ Otherwise you can cutomize this message in raising one error in this context.
 
 .. code-block:: lua
 
-	function onPublish(client,publication)
-		if not client.right then
-			error("no rights to publish it")
-		end
-	end
+  function onPublish(client,publication)
+    if not client.right then
+      error("no rights to publish it")
+    end
+  end
 
 .. code-block:: as3
-	
+  
   function onStatusEvent(event:NetStatusEvent):void {
-		switch(event.info.code) {
-			case "NetStream.Publish.Failed":
-			trace(event.info.description); // displays "no rights to publish it"
-			break;
-		}
-	}
+    switch(event.info.code) {
+      case "NetStream.Publish.Failed":
+      trace(event.info.description); // displays "no rights to publish it"
+      break;
+    }
+  }
 
 .. warning:: This event is not called for publications started from script code, it's called only for client publications (see *publication* object in *Objects* part). Then of course, it's called only in stream-to-server case (not in P2P case).
 
@@ -731,21 +731,21 @@ Otherwise you can cutomize this message in raising one error in this context.
 
 .. code-block:: lua
 
-	function onSubscribe(client,listener)
-		if not client.right then
-			error("no rights to play it")
-		end
-	end
+  function onSubscribe(client,listener)
+    if not client.right then
+      error("no rights to play it")
+    end
+  end
 
 .. code-block:: as3
 
-	function onStatusEvent(event:NetStatusEvent):void {
-		switch(event.info.code) {
-			case "NetStream.Play.Failed":
-			trace(event.info.description); // displays "no rights to play it"
-			break;
-		}
-	}
+  function onStatusEvent(event:NetStatusEvent):void {
+    switch(event.info.code) {
+      case "NetStream.Play.Failed":
+      trace(event.info.description); // displays "no rights to play it"
+      break;
+    }
+  }
 
 .. warning::
 
@@ -787,36 +787,36 @@ Allows to redirect a client who searchs a peerId that the rendezvous service doe
 
 .. code-block:: lua
 
-	function onRendezVousUnknown(peerId)
-		return 192.168.0.2:1935
-	end
+  function onRendezVousUnknown(peerId)
+    return 192.168.0.2:1935
+  end
 
 .. code-block:: lua
 
-	function onRendezVousUnknown(peerId)
-		return 192.168.0.2:1935,192.168.0.3:1935
-	end
+  function onRendezVousUnknown(peerId)
+    return 192.168.0.2:1935,192.168.0.3:1935
+  end
 
 .. code-block:: lua
 
-	addresses = {192.168.0.2:1936,192.168.0.3:1936}
-	function onRendezVousUnknown(peerId)
-		return addresses
-	end
+  addresses = {192.168.0.2:1936,192.168.0.3:1936}
+  function onRendezVousUnknown(peerId)
+    return addresses
+  end
 
 Then you can return a *server* object or a *servers* object (see above for these object descriptions):
 
 .. code-block:: lua
-	
+  
   function onRendezVousUnknown(peerId)
-		return mona.servers[1] -- redirect to the first server connected
-	end
+    return mona.servers[1] -- redirect to the first server connected
+  end
 
 .. code-block:: lua
 
-	function onRendezVousUnknown(peerId)
-		return mona.servers -- redirect to all the connected servers
-	end
+  function onRendezVousUnknown(peerId)
+    return mona.servers -- redirect to all the connected servers
+  end
 
 .. note:: When this function returns multiple addresses, the client will receive all these addresses and will start multiple attempt in parallel to these servers.
 
@@ -829,30 +829,30 @@ It's called on the first packet received from one client (before the creation of
 
 .. code-block:: as3
 
-	_netConnection.connect("rtmfp://localhost/myApplication?acceptableAttempts=2");
+  _netConnection.connect("rtmfp://localhost/myApplication?acceptableAttempts=2");
 
 .. code-block:: lua
 
-	index=0
-	function onHandshake(address,path,properties,attempts)
-		if attempts > properties.acceptableAttempts then
-			-- This time we return all server available,
-			-- and it's the client who will test what is the server the faster with parallel connection
-			-- (first which answers wins)
-			return mona.servers
-		end
-		index=index+1
-		if index > mona.servers.count then index=1 end -- not exceed the number of server available
-		return mona.servers[index] -- load-balacing system!
-	end
+  index=0
+  function onHandshake(address,path,properties,attempts)
+    if attempts > properties.acceptableAttempts then
+      -- This time we return all server available,
+      -- and it's the client who will test what is the server the faster with parallel connection
+      -- (first which answers wins)
+      return mona.servers
+    end
+    index=index+1
+    if index > mona.servers.count then index=1 end -- not exceed the number of server available
+    return mona.servers[index] -- load-balacing system!
+  end
 
 .. note:: You can use the keyword *again* to request a new attempt on *myself* (if the other redirection doesn't work).
 
 .. code-block:: lua
 
-	function onHandshake(address,path,properties,attempts)
-		return mona.servers,"again" -- redirect to the other server and my myself
-	end
+  function onHandshake(address,path,properties,attempts)
+    return mona.servers,"again" -- redirect to the other server and my myself
+  end
 
 onServerConnection(server)
 ====================================

@@ -20,12 +20,12 @@ For example, the address *rtmfp://host:port/myApplication* search its correspond
 
 .. note::
 
-	- The root application is built and started on MonaServer start, whereas other server applications are started on the first client connection.
-	- Exceptionaly you can give root rights to a child application with the function **children()** as shown below. It permits to start other applications at start.
+  - The root application is built and started on MonaServer start, whereas other server applications are started on the first client connection.
+  - Exceptionaly you can give root rights to a child application with the function **children()** as shown below. It permits to start other applications at start.
 
 .. code-block:: lua
 
-	children("childapp")
+  children("childapp")
 
 Each application is identified by its *path*, which is exactly the *path* part of the RTMFP URL connection. In the example above, *root application* has an empty string for path, then the both others have respectively */myApplication* and */Games/myGame* for *path* values.
 
@@ -395,7 +395,7 @@ Several types are supported for messages received by server or sended to clients
  - AMF (for flash clients),
  - JSON,
  - XML-RPC_,
- - XML (by the fromXML_ parser),
+ - XML (using the *fromXML* parser),
  - and raw data (obviously it does not needs conversion).
 
 AMF to LUA conversions
@@ -528,6 +528,47 @@ As in AMF primitive, conversion types are easy and intuitive (Number, Boolean, S
 
   socket.send("[[10,10,100,100]]");
 
+XML-RPC_ to LUA conversions
+=========================================
+
+There are a lot of XML format for communication, XML-RPC_ has been choosen for its simplicity and because it fits well with Mona.
+
+.. code-block:: lua
+
+  -- LUA table formatted in Object          // XML-RPC Object
+  {x=10,y=10,width=100,height=100}          <struct>
+                                                <member><name>x</name><value><i4>10</i4></value></member>
+                                                <member><name>y</name><value><i4>10</i4></value></member>
+                                                <member><name>width</name><value><i4>100</i4></value></member>
+                                                <member><name>height</name><value><i4>100</i4></value></member>
+                                            </struct>
+  
+  -- LUA table formatted in Array           // XML-RPC Array (size is facultative)
+  {10,10,100,100}                           <array size="4">
+                                              <data>
+                                                <value><i4>10</i4></value><value><i4>10</i4></value><value><i4>100</i4></value><value><i4>100</i4></value>
+                                              </data>
+                                            </array>
+  
+  -- LUA table mixed                        // XML-RPC Array + Object
+  {x=10,y=10,100,100}                       <array size="3">
+                                              <data>
+                                                <value><struct>
+                                                  <member><name>y</name><value><int>10</int></value></member>
+                                                  <member><name>x</name><value><int>10</int></value></member>
+                                                </struct></value>
+                                                <value><int>100</int></value>
+                                                <value><int>100</int></value>
+                                              </data>
+                                            </array>
+  
+
+.. Note::
+
+  - As you see XML-RPC_ is a bit verbose so we council you to use JSON if possible for faster communication,
+  - Order can differ from original type because there is no attribute order in lua,
+  - Notice that in XML-RPC_ mixed tables don't exist, that's why we must create an array with an object containing associative values.
+
 XML data compatibility (XML parser)
 =========================================
 
@@ -546,103 +587,112 @@ Let us begin with an RPC addition method :
 
 .. code-block:: lua
 
-	function onConnection(client,...)
-		function client:add(value)
-		  return value+1
-		end
-	end
+  function onConnection(client,...)
+    function client:add(value)
+      return value+1
+    end
+  end
 
 We can already call this method by an HTTP GET request (the name and the parameters are given in the URI), a JSON POST, XML-RPC or by AMF.
 But if we want absolutly to call it from a SOAP client with the following request :
 
 .. code-block:: xml
 
-	<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
-		<soap:Body>
-			<Add xmlns="http://localhost/">
-				<Value>1</Value>
-			</Add>
-		</soap:Body>
-	</soap:Envelope>
-	
+  <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+    <soap:Body>
+      <Add xmlns="http://localhost/">
+        <Value>1</Value>
+      </Add>
+    </soap:Body>
+  </soap:Envelope>
+  
 And the expected response :
 
 .. code-block:: xml
 
-	<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
-		<soap:Body>
-			<AddResponse xmlns="http://localhost/">
-				<AddResult>
-					<Value>2</Value>
-				</AddResult>
-			</AddResponse>
-		</soap:Body>
-	</soap:Envelope>
-	
+  <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    <soap:Body>
+      <AddResponse xmlns="http://localhost/">
+        <AddResult>
+          <Value>2</Value>
+        </AddResult>
+      </AddResponse>
+    </soap:Body>
+  </soap:Envelope>
+  
 Just rebuild the LUA_ code lines like this :
 
 .. code-block:: lua
 
-	function onConnection(client,...)
-	
-		function client:onMessage(data)
-			local xml = mona:fromXML(error,data) -- parse the XML data
-			
-			-- Call the method
-			local result = self:add(xml["soap:Envelope"]["soap:Body"].Add.Value.__value)
-			
-			-- Replace the Add method by AddResult
-			local content = xml["soap:Envelope"]["soap:Body"].Add
-			content.__name = "AddResponse"
-			content.__value = {__name="AddResult",{__name="Value",result}}
-			
-			-- Rewrite the XML data and send the result
-			return mona:toXML(error,xml)
-		end
-		
-		function client:add(value)
-			return value+1
-		end
-	end
+  function onConnection(client,...)
+  
+    function client:onMessage(data)
+      local xml = mona:fromXML(error,data) -- parse the XML data
+      
+      -- Call the method
+      local result = self:add(xml["soap:Envelope"]["soap:Body"].Add.Value.__value)
+      
+      -- Replace the Add method by AddResult
+      local content = xml["soap:Envelope"]["soap:Body"].Add
+      content.__name = "AddResponse"
+      content.__value = {__name="AddResult",{__name="Value",result}}
+      
+      -- Rewrite the XML data and send the result
+      return mona:toXML(error,xml)
+    end
+    
+    function client:add(value)
+      return value+1
+    end
+  end
 
 XML to LUA conversions
 -----------------------------
+
+The XML parser (fromXML/toXML) is freely inspirated by an `open source project <https://github.com/lubyk/xml>`_ to give an intuitive traduction of xml in lua variable.
+Here is an example of xml to lua conversion :
 
 **XML:**
 
 .. code-block:: xml
 
-	<?xml version="1.0"?>
-	<document>
-	  <article>
-		<p>This is the first paragraph.</p>
-		<h2 class='opt'>Title with opt style</h2>
-	  </article>
-	  <article>
-		<p>Some <b>important</b> text.</p>
-	  </article>
-	</document>
+  <?xml version="1.0"?>
+  <document>
+    <article>
+      <p>This is the first paragraph.</p>
+      <h2 class='opt'>Title with opt style</h2>
+    </article>
+    <article>
+      <p>Some <b>important</b> text.</p>
+    </article>
+  </document>
 
 **LUA:**
 
 .. code-block:: lua
 
-	{ xml = {version = 1.0},
-		{__name = 'document',
-		  {__name = 'article',
-			{__name = 'p', 'This is the first paragraph.'},
-			{__name = 'h2', class = 'opt', 'Title with opt style'},
-		  },
-		  {__name = 'article',
-			{__name = 'p', 'Some ', {__name = 'b', 'important'}, ' text.'},
-		  },
-		}
-	}
+  { xml = {version = 1.0},
+    {__name = 'document',
+      {__name = 'article',
+        {__name = 'p', 'This is the first paragraph.'},
+        {__name = 'h2', class = 'opt', 'Title with opt style'},
+      },
+      {__name = 'article',
+        {__name = 'p', 'Some ', {__name = 'b', 'important'}, ' text.'},
+      },
+    }
+  }
 
+**fromXML usage:**
 
-Due to LUA_ language you can access to "This is the first paragraph" in two ways :
-1. variable[1][1][1][1]
-2. variable.document.article.p.__value
+.. code-block:: lua
+
+  variable = mona:fromXML(XML)
+
+For facility you can access to *"This is the first paragraph"* by two ways :
+
+1. *variable[1][1][1][1]*
+2. *variable.document.article.p.__value*
 
 
 LUA extensions and files inclusion

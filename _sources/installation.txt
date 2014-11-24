@@ -173,18 +173,18 @@ Possible configurations are :
 
 .. code-block:: ini
 
-	[servers]
-	targets=192.168.0.2:1936?name=master&arg=val;192.168.0.3:1936
+  [servers]
+  targets=192.168.0.2:1936?name=master&arg=val;192.168.0.3:1936
 
 It will create dynamic properties on *server* object (see *server* object description of "Server application, api" page for more details).
 
 .. code-block:: lua
 
-	function onServerConnection(server)
-		if server.name=="master" then -- true here just for 192.168.0.2:1936 server
-			NOTE("server master arg = "..server.arg) -- displays here "server master arg = val"
-		end
-	end
+  function onServerConnection(server)
+    if server.name=="master" then -- true here just for 192.168.0.2:1936 server
+      NOTE("server master arg = "..server.arg) -- displays here "server master arg = val"
+    end
+  end
 
 [RTMFP]
 ===================================
@@ -252,13 +252,13 @@ You can also start it as a Windows service:
 
 .. code-block:: sh
 
-	MonaServer.exe /registerService [/displayName=MonaServer /description="Open Source RTMFP Server" /startup=automatic]
+  MonaServer.exe /registerService [/displayName=MonaServer /description="Open Source RTMFP Server" /startup=automatic]
 
 Or an Unix daemon:
 
 .. code-block:: sh
 
-	sudo ./MonaServer --daemon [--pidfile=/var/run/MonaServer.pid]
+  sudo ./MonaServer --daemon [--pidfile=/var/run/MonaServer.pid]
 
 
 Usage

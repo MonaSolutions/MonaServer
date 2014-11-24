@@ -30,8 +30,6 @@
     <script type="text/javascript" src="_static/bootstrap-3.1.0/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
     <link rel="top" title="MonaServer 1 documentation" href="index.html" />
-    <link rel="next" title="The NoSQL Database System" href="database.html" />
-    <link rel="prev" title="Mona Server’s lua API" href="api.html" />
 
   <a href="https://github.com/MonaSolutions/MonaServer"
      class="visible-desktop hidden-xs"><img
@@ -46,14 +44,11 @@
       $("#gh-banner").css("top", navHeight);
     });
   </script>
-
-
-
-
-
-
-
-
+  
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
 
 
   </head>
@@ -77,87 +72,17 @@
           <ul class="nav navbar-nav">
             <li class="divider-vertical"></li>
             
-            
-              <li class="dropdown globaltoc-container">
-  <a role="button"
-     id="dLabelGlobalToc"
-     data-toggle="dropdown"
-     data-target="#"
-     href="index.html">Site <b class="caret"></b></a>
-  <ul class="dropdown-menu globaltoc"
-      role="menu"
-      aria-labelledby="dLabelGlobalToc"><ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="samples.html">Samples</a></li>
-<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="serverapp.html">Server Application</a></li>
-<li class="toctree-l1"><a class="reference internal" href="scalability.html">Scalability and load-balancing</a></li>
-<li class="toctree-l1"><a class="reference internal" href="serversocket.html">Server Application Sockets</a></li>
-<li class="toctree-l1"><a class="reference internal" href="api.html">Mona Server&#8217;s lua API</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="">Specific Protocol Functionalities</a></li>
-<li class="toctree-l1"><a class="reference internal" href="database.html">The NoSQL Database System</a></li>
-<li class="toctree-l1"><a class="reference internal" href="contacts.html">Support &amp; Contacts</a></li>
-<li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a></li>
-</ul>
-</ul>
-</li>
-              
-                <li class="dropdown">
-  <a role="button"
-     id="dLabelLocalToc"
-     data-toggle="dropdown"
-     data-target="#"
-     href="#">Page <b class="caret"></b></a>
-  <ul class="dropdown-menu localtoc"
-      role="menu"
-      aria-labelledby="dLabelLocalToc"><ul>
-<li><a class="reference internal" href="#">Specific Protocol Functionalities</a><ul>
-<li><a class="reference internal" href="#rtmp-rtmfp">RTMP &amp; RTMFP</a><ul>
-<li><a class="reference internal" href="#api-specificities">API specificities</a><ul>
-<li><a class="reference internal" href="#onconnection-returned-array">onConnection returned array</a></li>
-<li><a class="reference internal" href="#onconnection-parameters">onConnection parameters</a></li>
-<li><a class="reference internal" href="#client-properties">client.properties</a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li><a class="reference internal" href="#http-websocket">HTTP &amp; WebSocket</a><ul>
-<li><a class="reference internal" href="#id1">API specificities</a><ul>
-<li><a class="reference internal" href="#id2">onConnection returned array</a></li>
-<li><a class="reference internal" href="#id3">onConnection parameters</a></li>
-<li><a class="reference internal" href="#id4">client.properties</a></li>
-<li><a class="reference internal" href="#client-properties-key-value-expires-path-domain-secure-httponly">client.properties(key, value[, expires, path, domain, secure, httpOnly])</a></li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-</ul>
-</li>
-              
+                <li><a href="quickstart.html"><img src="_static/star-bookmark-icone-8571-48.png"/> Quick Start</a></li>
+                <li><a href="faq.html"><img src="_static/aide-point-interrogation-systeme-icone-8289-48.png"/> FAQ</a></li>
+                <li><a href="contacts.html"><img src="_static/casque-ecoute-soutien-icone-9816-48.png"/> Support</a></li>
+                <li><a href="manual.html"><img src="_static/texinfo-texte-x-icone-4685-48.png"/> Documentation</a></li>
             
             
-              
-                
-  <li>
-    <a href="api.html" title="Previous Chapter: Mona Server’s lua API"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm">&laquo; Mona Server’s lu...</span>
-    </a>
-  </li>
-  <li>
-    <a href="database.html" title="Next Chapter: The NoSQL Database System"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm">The NoSQL Databa... &raquo;</span>
-    </a>
-  </li>
-              
+
+
             
             
             
-            
-              <li class="hidden-sm">
-<div id="sourcelink">
-  <a href="_sources/protocols.txt"
-     rel="nofollow">Source</a>
-</div></li>
             
           </ul>
 
@@ -218,7 +143,7 @@
 <h4><a class="toc-backref" href="#id8">onConnection returned array</a><a class="headerlink" href="#onconnection-returned-array" title="Permalink to this headline">¶</a></h4>
 <p>Parameters can be sended to the client on connection by returning them in an associative array. Here is an example :</p>
 <div class="highlight-lua"><div class="highlight"><pre><span class="k">function</span> <span class="nf">onConnection</span><span class="p">(</span><span class="n">client</span><span class="p">,</span><span class="o">...</span><span class="p">)</span>
-        <span class="k">return</span> <span class="p">{</span><span class="n">message</span><span class="o">=</span><span class="s2">&quot;</span><span class="s">welcome&quot;</span><span class="p">,</span><span class="n">id</span><span class="o">=</span><span class="mi">1</span><span class="p">}</span>
+  <span class="k">return</span> <span class="p">{</span><span class="n">message</span><span class="o">=</span><span class="s2">&quot;</span><span class="s">welcome&quot;</span><span class="p">,</span><span class="n">id</span><span class="o">=</span><span class="mi">1</span><span class="p">}</span>
 <span class="k">end</span>
 </pre></div>
 </div>
@@ -264,7 +189,7 @@
 <h4><a class="toc-backref" href="#id13">onConnection returned array</a><a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h4>
 <p>Some specific parameters can be set returning an associative array like this :</p>
 <div class="highlight-lua"><div class="highlight"><pre><span class="k">function</span> <span class="nf">onConnection</span><span class="p">(</span><span class="n">client</span><span class="p">,</span><span class="o">...</span><span class="p">)</span>
-        <span class="k">return</span> <span class="p">{</span><span class="n">index</span><span class="o">=</span><span class="s2">&quot;</span><span class="s">index.html&quot;</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">7</span><span class="p">}</span>
+  <span class="k">return</span> <span class="p">{</span><span class="n">index</span><span class="o">=</span><span class="s2">&quot;</span><span class="s">index.html&quot;</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">7</span><span class="p">}</span>
 <span class="k">end</span>
 </pre></div>
 </div>
@@ -281,10 +206,10 @@
 <h4><a class="toc-backref" href="#id14">onConnection parameters</a><a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h4>
 <p>As it is said in the <a class="reference external" href="./api.html">LUA API</a> first parameter of <em>onConnection</em> is the <strong>Client</strong> object.</p>
 <p>The following parameter is an array which contains <strong>URL query parameters</strong> from the HTTP request.</p>
-<div class="highlight-lua"><div class="highlight"><pre><span class="c1">-- show each parameters from url</span>
-    <span class="k">function</span> <span class="nf">onConnection</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">parameters</span><span class="p">)</span>
-            <span class="n">INFO</span><span class="p">(</span><span class="n">mona</span><span class="p">:</span><span class="n">toJSON</span><span class="p">(</span><span class="n">parameters</span><span class="p">))</span>
-    <span class="k">end</span>
+<div class="highlight-lua"><div class="highlight"><pre>  <span class="c1">-- show each parameters from url</span>
+<span class="k">function</span> <span class="nf">onConnection</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">parameters</span><span class="p">)</span>
+  <span class="n">INFO</span><span class="p">(</span><span class="n">mona</span><span class="p">:</span><span class="n">toJSON</span><span class="p">(</span><span class="n">parameters</span><span class="p">))</span>
+<span class="k">end</span>
 </pre></div>
 </div>
 </div>
@@ -323,7 +248,11 @@
 
 
     </div>
+    
       
+    
+    
+
   </div>
 </div>
 <footer class="footer">

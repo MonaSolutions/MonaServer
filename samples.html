@@ -30,8 +30,6 @@
     <script type="text/javascript" src="_static/bootstrap-3.1.0/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
     <link rel="top" title="MonaServer 1 documentation" href="index.html" />
-    <link rel="next" title="Installation" href="installation.html" />
-    <link rel="prev" title="Overview" href="index.html" />
 
   <a href="https://github.com/MonaSolutions/MonaServer"
      class="visible-desktop hidden-xs"><img
@@ -46,14 +44,11 @@
       $("#gh-banner").css("top", navHeight);
     });
   </script>
-
-
-
-
-
-
-
-
+  
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
 
 
   </head>
@@ -77,95 +72,17 @@
           <ul class="nav navbar-nav">
             <li class="divider-vertical"></li>
             
-            
-              <li class="dropdown globaltoc-container">
-  <a role="button"
-     id="dLabelGlobalToc"
-     data-toggle="dropdown"
-     data-target="#"
-     href="index.html">Site <b class="caret"></b></a>
-  <ul class="dropdown-menu globaltoc"
-      role="menu"
-      aria-labelledby="dLabelGlobalToc"><ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="">Samples</a></li>
-<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="serverapp.html">Server Application</a></li>
-<li class="toctree-l1"><a class="reference internal" href="scalability.html">Scalability and load-balancing</a></li>
-<li class="toctree-l1"><a class="reference internal" href="serversocket.html">Server Application Sockets</a></li>
-<li class="toctree-l1"><a class="reference internal" href="api.html">Mona Server&#8217;s lua API</a></li>
-<li class="toctree-l1"><a class="reference internal" href="protocols.html">Specific Protocol Functionalities</a></li>
-<li class="toctree-l1"><a class="reference internal" href="database.html">The NoSQL Database System</a></li>
-<li class="toctree-l1"><a class="reference internal" href="contacts.html">Support &amp; Contacts</a></li>
-<li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a></li>
-</ul>
-</ul>
-</li>
-              
-                <li class="dropdown">
-  <a role="button"
-     id="dLabelLocalToc"
-     data-toggle="dropdown"
-     data-target="#"
-     href="#">Page <b class="caret"></b></a>
-  <ul class="dropdown-menu localtoc"
-      role="menu"
-      aria-labelledby="dLabelLocalToc"><ul>
-<li><a class="reference internal" href="#">Samples</a><ul>
-<li><a class="reference internal" href="#pull-data">Pull Data</a><ul>
-<li><a class="reference internal" href="#server-part-lua">Server part (lua)</a></li>
-<li><a class="reference internal" href="#websocket-client">WebSocket client</a></li>
-<li><a class="reference internal" href="#flash-client">Flash client</a></li>
-<li><a class="reference internal" href="#http-client-json-rpc-and-xml-rpc">Http client (JSON-RPC and XML-RPC)</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#push-data">Push Data</a><ul>
-<li><a class="reference internal" href="#server-part">Server part</a></li>
-<li><a class="reference internal" href="#id1">Websocket client</a></li>
-<li><a class="reference internal" href="#id2">Flash client</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#read-write-files">Read/Write Files</a></li>
-<li><a class="reference internal" href="#communication-channels">Communication channels</a><ul>
-<li><a class="reference internal" href="#publish-live">Publish live</a></li>
-<li><a class="reference internal" href="#p2p-channel">P2P channel</a><ul>
-<li><a class="reference internal" href="#id3">Server part</a></li>
-<li><a class="reference internal" href="#id4">Flash client</a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li><a class="reference internal" href="#others">Others</a><ul>
-<li><a class="reference internal" href="#meeting-sample">Meeting sample</a></li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-</ul>
-</li>
-              
+                <li><a href="quickstart.html"><img src="_static/star-bookmark-icone-8571-48.png"/> Quick Start</a></li>
+                <li><a href="faq.html"><img src="_static/aide-point-interrogation-systeme-icone-8289-48.png"/> FAQ</a></li>
+                <li><a href="contacts.html"><img src="_static/casque-ecoute-soutien-icone-9816-48.png"/> Support</a></li>
+                <li><a href="manual.html"><img src="_static/texinfo-texte-x-icone-4685-48.png"/> Documentation</a></li>
             
             
-              
-                
-  <li>
-    <a href="index.html" title="Previous Chapter: Overview"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm">&laquo; Overview</span>
-    </a>
-  </li>
-  <li>
-    <a href="installation.html" title="Next Chapter: Installation"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm">Installation &raquo;</span>
-    </a>
-  </li>
-              
+
+
             
             
             
-            
-              <li class="hidden-sm">
-<div id="sourcelink">
-  <a href="_sources/samples.txt"
-     rel="nofollow">Source</a>
-</div></li>
             
           </ul>
 
@@ -188,38 +105,44 @@
     <div class="col-md-12">
       
   <div class="section" id="samples">
-<h1><a class="toc-backref" href="#id5">Samples</a><a class="headerlink" href="#samples" title="Permalink to this headline">¶</a></h1>
-<p>This page gives you several examples of what you can do with MonaServer. Others samples are available in the <em>clients</em> directory of MonaServer. You can copy or create a symbolic link of this directory in <em>www</em>.
+<h1><a class="toc-backref" href="#id4">Samples</a><a class="headerlink" href="#samples" title="Permalink to this headline">¶</a></h1>
+<p>This page gives you several examples of what you can do with MonaServer. Others samples are available in the <em>clients</em> directory of MonaServer. To use them you can copy or create a symbolic link of this directory in <em>www</em>.
 For more information about functionalities see <a class="reference external" href="./serverapp.html">Server Application</a> page.</p>
+<p>The samples below are hosted on a <a class="reference external" href="http://www.raspberrypi.org/">Raspberry Pi</a> running MonaServer :</p>
+<a class="reference internal image-reference" href="_images/Raspberry_Pi_-_Model_A.jpg"><img alt="Raspberry Pi" class="align-center" src="_images/Raspberry_Pi_-_Model_A.jpg" style="width: 300px; height: 300px;" /></a>
 <div class="contents topic" id="table-of-contents">
 <p class="topic-title first">Table of Contents</p>
 <ul class="simple">
-<li><a class="reference internal" href="#samples" id="id5">Samples</a><ul>
-<li><a class="reference internal" href="#pull-data" id="id6">Pull Data</a><ul>
-<li><a class="reference internal" href="#server-part-lua" id="id7">Server part (lua)</a></li>
-<li><a class="reference internal" href="#websocket-client" id="id8">WebSocket client</a></li>
-<li><a class="reference internal" href="#flash-client" id="id9">Flash client</a></li>
-<li><a class="reference internal" href="#http-client-json-rpc-and-xml-rpc" id="id10">Http client (JSON-RPC and XML-RPC)</a></li>
+<li><a class="reference internal" href="#samples" id="id4">Samples</a><ul>
+<li><a class="reference internal" href="#pull-data" id="id5">Pull Data</a><ul>
+<li><a class="reference internal" href="#server-part-lua" id="id6">Server part (lua)</a></li>
+<li><a class="reference internal" href="#websocket-client" id="id7">WebSocket client</a></li>
+<li><a class="reference internal" href="#flash-client" id="id8">Flash client</a></li>
+<li><a class="reference internal" href="#http-json-rpc-client" id="id9">Http JSON-RPC client</a></li>
+<li><a class="reference internal" href="#http-xml-rpc-client" id="id10">Http XML-RPC client</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#push-data" id="id11">Push Data</a><ul>
 <li><a class="reference internal" href="#server-part" id="id12">Server part</a></li>
-<li><a class="reference internal" href="#id1" id="id13">Websocket client</a></li>
-<li><a class="reference internal" href="#id2" id="id14">Flash client</a></li>
+<li><a class="reference internal" href="#websocket-part" id="id13">Websocket part</a></li>
+<li><a class="reference internal" href="#id1" id="id14">Flash client</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#read-write-files" id="id15">Read/Write Files</a></li>
-<li><a class="reference internal" href="#communication-channels" id="id16">Communication channels</a><ul>
-<li><a class="reference internal" href="#publish-live" id="id17">Publish live</a></li>
-<li><a class="reference internal" href="#p2p-channel" id="id18">P2P channel</a><ul>
-<li><a class="reference internal" href="#id3" id="id19">Server part</a></li>
-<li><a class="reference internal" href="#id4" id="id20">Flash client</a></li>
+<li><a class="reference internal" href="#read-write-files" id="id15">Read/Write Files</a><ul>
+<li><a class="reference internal" href="#read-files" id="id16">Read Files</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#communication-channels" id="id17">Communication channels</a><ul>
+<li><a class="reference internal" href="#publish-live" id="id18">Publish live</a></li>
+<li><a class="reference internal" href="#p2p-channel" id="id19">P2P channel</a><ul>
+<li><a class="reference internal" href="#id2" id="id20">Server part</a></li>
+<li><a class="reference internal" href="#id3" id="id21">Flash client</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><a class="reference internal" href="#others" id="id21">Others</a><ul>
-<li><a class="reference internal" href="#meeting-sample" id="id22">Meeting sample</a></li>
+<li><a class="reference internal" href="#others" id="id22">Others</a><ul>
+<li><a class="reference internal" href="#meeting-sample" id="id23">Meeting sample</a></li>
 </ul>
 </li>
 </ul>
@@ -227,22 +150,23 @@ For more information about functionalities see <a class="reference external" hre
 </ul>
 </div>
 <div class="section" id="pull-data">
-<h2><a class="toc-backref" href="#id6">Pull Data</a><a class="headerlink" href="#pull-data" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#id5">Pull Data</a><a class="headerlink" href="#pull-data" title="Permalink to this headline">¶</a></h2>
 <p>This part describes how to write a simple pull data client/server that supports Websocket, Flash, and Http with RPC-type communication. The real amazing part is the 7 lines of server application which support each protocol :</p>
 <div class="section" id="server-part-lua">
-<h3><a class="toc-backref" href="#id7">Server part (lua)</a><a class="headerlink" href="#server-part-lua" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id6">Server part (lua)</a><a class="headerlink" href="#server-part-lua" title="Permalink to this headline">¶</a></h3>
 <div class="highlight-lua"><div class="highlight"><pre><span class="k">function</span> <span class="nf">onConnection</span><span class="p">(</span><span class="n">client</span><span class="p">,</span><span class="o">...</span><span class="p">)</span>
   <span class="n">INFO</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">Connection of a new client &quot;</span><span class="o">..</span><span class="n">client</span><span class="p">.</span><span class="n">protocol</span><span class="p">)</span>
   <span class="k">function</span> <span class="nf">client</span><span class="p">:</span><span class="n">onMethod</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
     <span class="n">INFO</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">Reception Message : &quot;</span><span class="o">..</span><span class="n">mona</span><span class="p">:</span><span class="n">toJSON</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
-    <span class="n">client</span><span class="p">.</span><span class="n">writer</span><span class="p">:</span><span class="n">writeInvocation</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">onReception&quot;</span><span class="p">,</span><span class="n">data</span><span class="o">..</span><span class="s2">&quot;</span><span class="s"> recieved&quot;</span><span class="p">)</span>
+    <span class="n">client</span><span class="p">.</span><span class="n">writer</span><span class="p">:</span><span class="n">writeInvocation</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">onReception&quot;</span><span class="p">,</span><span class="n">data</span><span class="o">..</span><span class="s2">&quot;</span><span class="s"> received&quot;</span><span class="p">)</span>
   <span class="k">end</span>
 <span class="k">end</span>
 </pre></div>
 </div>
+<p>Source code : <a class="reference external" href="http://78.199.204.75/clients/samples/PullData/main.lua">PullData/main.lua</a></p>
 </div>
 <div class="section" id="websocket-client">
-<h3><a class="toc-backref" href="#id8">WebSocket client</a><a class="headerlink" href="#websocket-client" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id7">WebSocket client</a><a class="headerlink" href="#websocket-client" title="Permalink to this headline">¶</a></h3>
 <div class="highlight-html"><div class="highlight"><pre><span class="nt">&lt;html&gt;</span>
 <span class="nt">&lt;head&gt;</span>
     <span class="nt">&lt;title&gt;</span>Pull Websocket/JSON Client Test<span class="nt">&lt;/title&gt;</span>
@@ -283,38 +207,49 @@ For more information about functionalities see <a class="reference external" hre
 <span class="nt">&lt;html&gt;</span>
 </pre></div>
 </div>
+<p>Sample : <a class="reference external" href="http://78.199.204.75/clients/samples/PullData/websocket.html">PullData/websocket.html</a></p>
 </div>
 <div class="section" id="flash-client">
-<h3><a class="toc-backref" href="#id9">Flash client</a><a class="headerlink" href="#flash-client" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id8">Flash client</a><a class="headerlink" href="#flash-client" title="Permalink to this headline">¶</a></h3>
 <div class="highlight-as3"><div class="highlight"><pre><span class="o">&lt;?</span><span class="n">xml</span> <span class="n">version</span><span class="o">=</span><span class="s2">&quot;1.0&quot;</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="o">?&gt;</span>
-<span class="o">&lt;</span><span class="n">mx</span><span class="o">:</span><span class="n">Application</span> <span class="n">xmlns</span><span class="o">:</span><span class="n">fx</span><span class="o">=</span><span class="s2">&quot;http://ns.adobe.com/mxml/2009&quot;</span> <span class="n">xmlns</span><span class="o">:</span><span class="n">mx</span><span class="o">=</span><span class="s2">&quot;library://ns.adobe.com/flex/mx&quot;</span> <span class="n">layout</span><span class="o">=</span><span class="s2">&quot;absolute&quot;</span> <span class="n">minWidth</span><span class="o">=</span><span class="s2">&quot;955&quot;</span> <span class="n">minHeight</span><span class="o">=</span><span class="s2">&quot;600&quot;</span><span class="o">&gt;</span>
+<span class="o">&lt;</span><span class="n">mx</span><span class="o">:</span><span class="n">Application</span> <span class="n">xmlns</span><span class="o">:</span><span class="n">fx</span><span class="o">=</span><span class="s2">&quot;http://ns.adobe.com/mxml/2009&quot;</span>
+        <span class="n">xmlns</span><span class="o">:</span><span class="n">mx</span><span class="o">=</span><span class="s2">&quot;library://ns.adobe.com/flex/mx&quot;</span> <span class="n">layout</span><span class="o">=</span><span class="s2">&quot;absolute&quot;</span> <span class="n">minWidth</span><span class="o">=</span><span class="s2">&quot;955&quot;</span> <span class="n">minHeight</span><span class="o">=</span><span class="s2">&quot;600&quot;</span><span class="o">&gt;</span>
   <span class="o">&lt;</span><span class="n">fx</span><span class="o">:</span><span class="n">Script</span><span class="o">&gt;</span>
     <span class="o">&lt;![</span><span class="n">CDATA</span><span class="o">[</span>
       <span class="k">import</span> <span class="nn">mx.controls.Alert</span><span class="o">;</span>
+      <span class="k">import</span> <span class="nn">mx.utils.URLUtil</span><span class="o">;</span>
+
       <span class="kd">private</span> <span class="kd">var</span> <span class="n">_netConnection</span><span class="p">:</span><span class="kt">NetConnection</span><span class="o">;</span>
 
-  <span class="c1">// connect button handler</span>
-  <span class="kd">private</span> <span class="kd">function </span><span class="nf">connectAndSend</span><span class="o">():</span><span class="kt">void</span> <span class="o">{</span>
+      <span class="c1">// connect button handler</span>
+      <span class="kd">private</span> <span class="kd">function </span><span class="nf">connectAndSend</span><span class="o">():</span><span class="kt">void</span> <span class="o">{</span>
 
-    <span class="c1">// make a new NetConnection and connect</span>
-    <span class="n">_netConnection</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">NetConnection</span><span class="o">();</span>
-    <span class="n">_netConnection</span><span class="o">.</span><span class="na">connect</span><span class="o">(</span><span class="n">address</span><span class="o">.</span><span class="na">text</span><span class="o">);</span>
-    <span class="n">_netConnection</span><span class="o">.</span><span class="na">client</span> <span class="o">=</span> <span class="k">this</span><span class="o">;</span>
-    <span class="c1">// send the request</span>
-    <span class="n">_netConnection</span><span class="o">.</span><span class="na">call</span><span class="o">(</span><span class="s2">&quot;onMethod&quot;</span><span class="o">,</span> <span class="kc">null</span><span class="o">,</span> <span class="s2">&quot;amf message&quot;</span><span class="o">);</span>
-  <span class="o">}</span>
+        <span class="c1">// Generate dynamic url</span>
+        <span class="kd">var</span> <span class="n">address</span><span class="p">:</span><span class="kt">String</span> <span class="o">=</span> <span class="s2">&quot;rtmfp://localhost/clients/samples/PullData&quot;</span><span class="o">;</span>
+        <span class="kd">var</span> <span class="n">url</span><span class="p">:</span><span class="kt">String</span> <span class="o">=</span> <span class="k">this</span><span class="o">.</span><span class="na">loaderInfo</span><span class="o">.</span><span class="na">url</span><span class="o">;</span>
+        <span class="kd">var</span> <span class="n">domainNPath</span><span class="p">:</span><span class="kt">Array</span> <span class="o">=</span> <span class="n">url</span><span class="o">.</span><span class="na">match</span><span class="o">(/(:\/\/.+)\//);</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">URLUtil</span><span class="o">.</span><span class="na">getProtocol</span><span class="o">(</span><span class="n">url</span><span class="o">)</span> <span class="o">!=</span> <span class="s2">&quot;file&quot;</span><span class="o">)</span>
+          <span class="n">address</span> <span class="o">=</span> <span class="s2">&quot;rtmfp&quot;</span> <span class="o">+</span> <span class="n">domainNPath</span><span class="o">[</span><span class="mi">1</span><span class="o">];</span>
 
-  <span class="kd">public</span> <span class="kd">function </span><span class="nf">onReception</span><span class="o">(</span><span class="n">result</span><span class="o">:</span><span class="kt">String</span><span class="o">):</span><span class="kt">void</span> <span class="o">{</span> <span class="n">Alert</span><span class="o">.</span><span class="na">show</span><span class="o">(</span><span class="n">result</span><span class="o">);</span> <span class="o">}</span>
+        <span class="c1">// make a new NetConnection and connect</span>
+        <span class="n">_netConnection</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">NetConnection</span><span class="o">();</span>
+        <span class="n">_netConnection</span><span class="o">.</span><span class="na">connect</span><span class="o">(</span><span class="n">address</span><span class="o">);</span>
+        <span class="n">_netConnection</span><span class="o">.</span><span class="na">client</span> <span class="o">=</span> <span class="k">this</span><span class="o">;</span>
+        <span class="c1">// send the request</span>
+        <span class="n">_netConnection</span><span class="o">.</span><span class="na">call</span><span class="o">(</span><span class="s2">&quot;onMethod&quot;</span><span class="o">,</span> <span class="kc">null</span><span class="o">,</span> <span class="s2">&quot;amf message&quot;</span><span class="o">);</span>
+      <span class="o">}</span>
+
+      <span class="kd">public</span> <span class="kd">function </span><span class="nf">onReception</span><span class="o">(</span><span class="n">result</span><span class="o">:</span><span class="kt">String</span><span class="o">):</span><span class="kt">void</span> <span class="o">{</span> <span class="n">Alert</span><span class="o">.</span><span class="na">show</span><span class="o">(</span><span class="n">result</span><span class="o">);</span> <span class="o">}</span>
     <span class="o">]]&gt;</span>
   <span class="o">&lt;/</span><span class="n">fx</span><span class="o">:</span><span class="n">Script</span><span class="o">&gt;</span>
-  <span class="o">&lt;</span><span class="n">mx</span><span class="o">:</span><span class="n">TextInput</span> <span class="n">x</span><span class="o">=</span><span class="s2">&quot;10&quot;</span> <span class="n">y</span><span class="o">=</span><span class="s2">&quot;10&quot;</span> <span class="n">width</span><span class="o">=</span><span class="s2">&quot;400&quot;</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;rtmfp://localhost/clients/pull&quot;</span> <span class="n">id</span><span class="o">=</span><span class="s2">&quot;address&quot;</span><span class="o">/&gt;</span>
-  <span class="o">&lt;</span><span class="n">mx</span><span class="o">:</span><span class="n">Button</span> <span class="n">x</span><span class="o">=</span><span class="s2">&quot;430&quot;</span> <span class="n">y</span><span class="o">=</span><span class="s2">&quot;10&quot;</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Connect and Send&quot;</span> <span class="n">click</span><span class="o">=</span><span class="s2">&quot;connectAndSend()&quot;</span><span class="o">/&gt;</span>
+  <span class="o">&lt;</span><span class="n">mx</span><span class="o">:</span><span class="n">Button</span> <span class="n">x</span><span class="o">=</span><span class="s2">&quot;10&quot;</span> <span class="n">y</span><span class="o">=</span><span class="s2">&quot;10&quot;</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Connect and Send&quot;</span> <span class="n">click</span><span class="o">=</span><span class="s2">&quot;connectAndSend()&quot;</span><span class="o">/&gt;</span>
 <span class="o">&lt;/</span><span class="n">mx</span><span class="o">:</span><span class="n">Application</span><span class="o">&gt;</span>
 </pre></div>
 </div>
+<p>Sample : <a class="reference external" href="http://78.199.204.75/clients/samples/PullData/flash.html">PullData/flash.html</a></p>
 </div>
-<div class="section" id="http-client-json-rpc-and-xml-rpc">
-<h3>Http client (JSON-RPC and <a class="reference external" href="http://xmlrpc.scripting.com/spec.html">XML-RPC</a>)<a class="headerlink" href="#http-client-json-rpc-and-xml-rpc" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="http-json-rpc-client">
+<h3><a class="toc-backref" href="#id9">Http JSON-RPC client</a><a class="headerlink" href="#http-json-rpc-client" title="Permalink to this headline">¶</a></h3>
 <div class="highlight-html"><div class="highlight"><pre><span class="nt">&lt;html&gt;</span>
 <span class="nt">&lt;head&gt;</span>
   <span class="nt">&lt;title&gt;</span>HTTP JSON Client Test<span class="nt">&lt;/title&gt;</span>
@@ -343,20 +278,27 @@ For more information about functionalities see <a class="reference external" hre
 <span class="nt">&lt;html&gt;</span>
 </pre></div>
 </div>
-<p>Mona supports both json and xml formats, so just replace the response and request with the lines below to have xml http rpc sample :</p>
+<p>Sample : <a class="reference external" href="http://78.199.204.75/clients/samples/PullData/httpjson.html">PullData/httpjson.html</a></p>
+</div>
+<div class="section" id="http-xml-rpc-client">
+<h3><a class="toc-backref" href="#id10">Http XML-RPC client</a><a class="headerlink" href="#http-xml-rpc-client" title="Permalink to this headline">¶</a></h3>
+<p>Mona supports both json and XML-RPC formats, so just replace the response and request with the lines below to have an <a class="reference external" href="http://xmlrpc.scripting.com/spec.html">XML-RPC</a> sample :</p>
 <div class="highlight-js"><div class="highlight"><pre><span class="c1">// Manage the response</span>
 <span class="nx">xmlhttp</span><span class="p">.</span><span class="nx">onreadystatechange</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
   <span class="k">if</span> <span class="p">(</span><span class="nx">xmlhttp</span><span class="p">.</span><span class="nx">readyState</span> <span class="o">==</span> <span class="mi">4</span> <span class="o">&amp;&amp;</span> <span class="nx">xmlhttp</span><span class="p">.</span><span class="nx">status</span> <span class="o">==</span> <span class="mi">200</span><span class="p">)</span> <span class="p">{</span>
-    <span class="kd">var</span> <span class="nx">roolElmt</span> <span class="o">=</span> <span class="nx">xmlhttp</span><span class="p">.</span><span class="nx">responseXML</span><span class="p">.</span><span class="nx">documentElement</span><span class="p">;</span>
-    <span class="k">if</span> <span class="p">(</span><span class="nx">roolElmt</span><span class="p">.</span><span class="nx">childNodes</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="nx">textContent</span><span class="o">==</span><span class="s2">&quot;onReception&quot;</span><span class="p">)</span>
-      <span class="nx">alert</span><span class="p">(</span><span class="nx">roolElmt</span><span class="p">.</span><span class="nx">childNodes</span><span class="p">[</span><span class="mi">1</span><span class="p">].</span><span class="nx">textContent</span><span class="p">);</span>
+    <span class="kd">var</span> <span class="nx">xml</span> <span class="o">=</span> <span class="nx">xmlhttp</span><span class="p">.</span><span class="nx">response</span><span class="p">;</span>
+    <span class="nx">alert</span><span class="p">(</span><span class="nx">xml</span><span class="p">);</span>
   <span class="p">}</span>
 <span class="p">}</span>
 <span class="c1">// Send the POST request</span>
 <span class="nx">xmlhttp</span><span class="p">.</span><span class="nx">setRequestHeader</span><span class="p">(</span><span class="s1">&#39;Content-Type&#39;</span><span class="p">,</span> <span class="s1">&#39;text/xml&#39;</span><span class="p">);</span>
-<span class="nx">xmlhttp</span><span class="p">.</span><span class="nx">send</span><span class="p">(</span><span class="s2">&quot;&lt;__array&gt;&lt;__noname&gt;onMethod&lt;/__noname&gt;&lt;__noname&gt;http xml msg&lt;/__noname&gt;&lt;/__array&gt;&quot;</span><span class="p">);</span>
+<span class="nx">xmlhttp</span><span class="p">.</span><span class="nx">send</span><span class="p">(</span><span class="s1">&#39;&lt;?xml version=&quot;1.0&quot;?&gt;&lt;methodCall&gt;&#39;</span> <span class="o">+</span>
+              <span class="s1">&#39;&lt;methodName&gt;onMethod&lt;/methodName&gt;&lt;params&gt;&#39;</span> <span class="o">+</span>
+              <span class="s1">&#39;&lt;param&gt;&lt;value&gt;&lt;string&gt;http XML-RPC msg&lt;/string&gt;&lt;/value&gt;&lt;/param&gt;&#39;</span> <span class="o">+</span>
+              <span class="s1">&#39;&lt;/params&gt;&lt;/methodCall&gt;&#39;</span><span class="p">);</span>
 </pre></div>
 </div>
+<p>Sample : <a class="reference external" href="http://78.199.204.75/clients/samples/PullData/httpxml.html">PullData/httpxml.html</a></p>
 </div>
 </div>
 <div class="section" id="push-data">
@@ -392,9 +334,10 @@ Brief description : When the flash client send a message to the server, this mes
 <span class="k">end</span>
 </pre></div>
 </div>
+<p>Source code : <a class="reference external" href="http://78.199.204.75/clients/samples/PushData/main.lua">PushData/main.lua</a></p>
 </div>
-<div class="section" id="id1">
-<h3><a class="toc-backref" href="#id13">Websocket client</a><a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="websocket-part">
+<h3><a class="toc-backref" href="#id13">Websocket part</a><a class="headerlink" href="#websocket-part" title="Permalink to this headline">¶</a></h3>
 <div class="highlight-html"><div class="highlight"><pre><span class="nt">&lt;html&gt;</span>
 <span class="nt">&lt;head&gt;</span>
     <span class="nt">&lt;title&gt;</span>Push Websocket/JSON Client Test<span class="nt">&lt;/title&gt;</span>
@@ -433,64 +376,88 @@ Brief description : When the flash client send a message to the server, this mes
 <span class="nt">&lt;html&gt;</span>
 </pre></div>
 </div>
+<p>Sample : <a class="reference external" href="http://78.199.204.75/clients/samples/PushData/websocket.html">PushData/websocket.html</a></p>
 </div>
-<div class="section" id="id2">
-<h3><a class="toc-backref" href="#id14">Flash client</a><a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id1">
+<h3><a class="toc-backref" href="#id14">Flash client</a><a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
 <div class="highlight-as3"><div class="highlight"><pre><span class="o">&lt;?</span><span class="n">xml</span> <span class="n">version</span><span class="o">=</span><span class="s2">&quot;1.0&quot;</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="o">?&gt;</span>
 <span class="o">&lt;</span><span class="n">mx</span><span class="o">:</span><span class="n">Application</span> <span class="n">xmlns</span><span class="o">:</span><span class="n">fx</span><span class="o">=</span><span class="s2">&quot;http://ns.adobe.com/mxml/2009&quot;</span>
-        <span class="n">xmlns</span><span class="o">:</span><span class="n">mx</span><span class="o">=</span><span class="s2">&quot;library://ns.adobe.com/flex/mx&quot;</span> <span class="n">layout</span><span class="o">=</span><span class="s2">&quot;absolute&quot;</span> <span class="n">minWidth</span><span class="o">=</span><span class="s2">&quot;955&quot;</span> <span class="n">minHeight</span><span class="o">=</span><span class="s2">&quot;600&quot;</span> <span class="n">activate</span><span class="o">=</span><span class="s2">&quot;connect()&quot;</span><span class="o">&gt;</span>
+        <span class="n">xmlns</span><span class="o">:</span><span class="n">mx</span><span class="o">=</span><span class="s2">&quot;library://ns.adobe.com/flex/mx&quot;</span> <span class="n">layout</span><span class="o">=</span><span class="s2">&quot;absolute&quot;</span> <span class="n">minWidth</span><span class="o">=</span><span class="s2">&quot;955&quot;</span> <span class="n">minHeight</span><span class="o">=</span><span class="s2">&quot;600&quot;</span> <span class="n">updateComplete</span><span class="o">=</span><span class="s2">&quot;init()&quot;</span><span class="o">&gt;</span>
   <span class="o">&lt;</span><span class="n">fx</span><span class="o">:</span><span class="n">Script</span><span class="o">&gt;</span>
     <span class="o">&lt;![</span><span class="n">CDATA</span><span class="o">[</span>
       <span class="k">import</span> <span class="nn">mx.controls.Alert</span><span class="o">;</span>
+      <span class="k">import</span> <span class="nn">mx.utils.URLUtil</span><span class="o">;</span>
 
       <span class="kd">private</span> <span class="kd">var</span> <span class="n">_netConnection</span><span class="p">:</span><span class="kt">NetConnection</span><span class="o">;</span>
 
       <span class="c1">// connect button handler</span>
-      <span class="kd">private</span> <span class="kd">function </span><span class="nf">connect</span><span class="o">():</span><span class="kt">void</span> <span class="o">{</span>
+      <span class="kd">private</span> <span class="kd">function </span><span class="nf">init</span><span class="o">():</span><span class="kt">void</span> <span class="o">{</span>
+
+        <span class="c1">// Generate dynamic url</span>
+        <span class="kd">var</span> <span class="n">address</span><span class="p">:</span><span class="kt">String</span> <span class="o">=</span> <span class="s2">&quot;rtmfp://localhost/clients/samples/PushData&quot;</span><span class="o">;</span>
+        <span class="kd">var</span> <span class="n">url</span><span class="p">:</span><span class="kt">String</span> <span class="o">=</span> <span class="k">this</span><span class="o">.</span><span class="na">loaderInfo</span><span class="o">.</span><span class="na">url</span><span class="o">;</span>
+        <span class="kd">var</span> <span class="n">domainNPath</span><span class="p">:</span><span class="kt">Array</span> <span class="o">=</span> <span class="n">url</span><span class="o">.</span><span class="na">match</span><span class="o">(/(:\/\/.+)\//);</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">URLUtil</span><span class="o">.</span><span class="na">getProtocol</span><span class="o">(</span><span class="n">url</span><span class="o">)</span> <span class="o">!=</span> <span class="s2">&quot;file&quot;</span><span class="o">)</span>
+          <span class="n">address</span> <span class="o">=</span> <span class="s2">&quot;rtmfp&quot;</span> <span class="o">+</span> <span class="n">domainNPath</span><span class="o">[</span><span class="mi">1</span><span class="o">];</span>
 
         <span class="c1">// make a new NetConnection and connect</span>
         <span class="n">_netConnection</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">NetConnection</span><span class="o">();</span>
-        <span class="n">_netConnection</span><span class="o">.</span><span class="na">connect</span><span class="o">(</span><span class="n">address</span><span class="o">.</span><span class="na">text</span><span class="o">);</span>
+        <span class="n">_netConnection</span><span class="o">.</span><span class="na">connect</span><span class="o">(</span><span class="n">address</span><span class="o">);</span>
         <span class="n">_netConnection</span><span class="o">.</span><span class="na">client</span> <span class="o">=</span> <span class="k">this</span><span class="o">;</span>
       <span class="o">}</span>
 
+      <span class="c1">// send the request</span>
       <span class="kd">private</span> <span class="kd">function </span><span class="nf">send</span><span class="o">():</span><span class="kt">void</span> <span class="o">{</span>
-        <span class="c1">// send the request</span>
         <span class="n">_netConnection</span><span class="o">.</span><span class="na">call</span><span class="o">(</span><span class="s2">&quot;onMessage&quot;</span><span class="o">,</span> <span class="kc">null</span><span class="o">,</span> <span class="s2">&quot;message from amf&quot;</span><span class="o">);</span>
       <span class="o">}</span>
 
+      <span class="c1">// Receive a message asynchronously</span>
       <span class="kd">public</span> <span class="kd">function </span><span class="nf">onReception</span><span class="o">(</span><span class="n">result</span><span class="o">:</span><span class="kt">String</span><span class="o">):</span><span class="kt">void</span> <span class="o">{</span> <span class="n">Alert</span><span class="o">.</span><span class="na">show</span><span class="o">(</span><span class="n">result</span> <span class="o">+</span> <span class="s2">&quot; received&quot;</span><span class="o">);</span> <span class="o">}</span>
     <span class="o">]]&gt;</span>
   <span class="o">&lt;/</span><span class="n">fx</span><span class="o">:</span><span class="n">Script</span><span class="o">&gt;</span>
-  <span class="o">&lt;</span><span class="n">mx</span><span class="o">:</span><span class="n">TextInput</span> <span class="n">x</span><span class="o">=</span><span class="s2">&quot;10&quot;</span> <span class="n">y</span><span class="o">=</span><span class="s2">&quot;10&quot;</span> <span class="n">width</span><span class="o">=</span><span class="s2">&quot;400&quot;</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;rtmfp://localhost/clients/push&quot;</span> <span class="n">id</span><span class="o">=</span><span class="s2">&quot;address&quot;</span><span class="o">/&gt;</span>
-  <span class="o">&lt;</span><span class="n">mx</span><span class="o">:</span><span class="n">Button</span> <span class="n">x</span><span class="o">=</span><span class="s2">&quot;430&quot;</span> <span class="n">y</span><span class="o">=</span><span class="s2">&quot;10&quot;</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Send&quot;</span> <span class="n">click</span><span class="o">=</span><span class="s2">&quot;send()&quot;</span><span class="o">/&gt;</span>
+  <span class="o">&lt;</span><span class="n">mx</span><span class="o">:</span><span class="n">Button</span> <span class="n">x</span><span class="o">=</span><span class="s2">&quot;10&quot;</span> <span class="n">y</span><span class="o">=</span><span class="s2">&quot;10&quot;</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Send&quot;</span> <span class="n">click</span><span class="o">=</span><span class="s2">&quot;send()&quot;</span><span class="o">/&gt;</span>
 <span class="o">&lt;/</span><span class="n">mx</span><span class="o">:</span><span class="n">Application</span><span class="o">&gt;</span>
 </pre></div>
 </div>
+<p>Sample : <a class="reference external" href="http://78.199.204.75/clients/samples/PushData/flash.html">PushData/flash.html</a></p>
 </div>
 </div>
 <div class="section" id="read-write-files">
 <h2><a class="toc-backref" href="#id15">Read/Write Files</a><a class="headerlink" href="#read-write-files" title="Permalink to this headline">¶</a></h2>
+<p>For now writing files is only possible by a scripting way, if you need more please contact us (<a class="reference external" href="./contacts.html">Support</a>).</p>
+<div class="section" id="read-files">
+<h3><a class="toc-backref" href="#id16">Read Files</a><a class="headerlink" href="#read-files" title="Permalink to this headline">¶</a></h3>
+<p>To read a file you just have to put it in the <em>www</em> directory and access it from HTTP. To have more functionnalities please contact us (<a class="reference external" href="./contacts.html">Support</a>).</p>
+</div>
 </div>
 <div class="section" id="communication-channels">
-<h2><a class="toc-backref" href="#id16">Communication channels</a><a class="headerlink" href="#communication-channels" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#id17">Communication channels</a><a class="headerlink" href="#communication-channels" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="publish-live">
-<h3><a class="toc-backref" href="#id17">Publish live</a><a class="headerlink" href="#publish-live" title="Permalink to this headline">¶</a></h3>
-<p>Now we are about to create a sample of publication with a flash publisher. For the server part just create a directory “publish” in the root directory. The client could be vlc for example connected to the url <a class="reference external" href="http://localhost/publish/file.flv">http://localhost/publish/file.flv</a>. for the publisher use the code below :</p>
+<h3><a class="toc-backref" href="#id18">Publish live</a><a class="headerlink" href="#publish-live" title="Permalink to this headline">¶</a></h3>
+<p>Now we are about to create a sample of publication with a flash publisher. For the server part just create a directory “publish” in the root directory. For the publisher use the code below :</p>
 <div class="highlight-as3"><div class="highlight"><pre><span class="o">&lt;?</span><span class="n">xml</span> <span class="n">version</span><span class="o">=</span><span class="s2">&quot;1.0&quot;</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="o">?&gt;</span>
 <span class="o">&lt;</span><span class="n">mx</span><span class="o">:</span><span class="n">Application</span> <span class="n">xmlns</span><span class="o">:</span><span class="n">fx</span><span class="o">=</span><span class="s2">&quot;http://ns.adobe.com/mxml/2009&quot;</span>
-        <span class="n">xmlns</span><span class="o">:</span><span class="n">mx</span><span class="o">=</span><span class="s2">&quot;library://ns.adobe.com/flex/mx&quot;</span> <span class="n">layout</span><span class="o">=</span><span class="s2">&quot;absolute&quot;</span> <span class="n">minWidth</span><span class="o">=</span><span class="s2">&quot;955&quot;</span> <span class="n">minHeight</span><span class="o">=</span><span class="s2">&quot;600&quot;</span> <span class="n">activate</span><span class="o">=</span><span class="s2">&quot;startCam()&quot;</span><span class="o">&gt;</span>
+        <span class="n">xmlns</span><span class="o">:</span><span class="n">mx</span><span class="o">=</span><span class="s2">&quot;library://ns.adobe.com/flex/mx&quot;</span> <span class="n">layout</span><span class="o">=</span><span class="s2">&quot;absolute&quot;</span> <span class="n">minWidth</span><span class="o">=</span><span class="s2">&quot;955&quot;</span> <span class="n">minHeight</span><span class="o">=</span><span class="s2">&quot;600&quot;</span> <span class="n">updateComplete</span><span class="o">=</span><span class="s2">&quot;startCam()&quot;</span><span class="o">&gt;</span>
   <span class="o">&lt;</span><span class="n">fx</span><span class="o">:</span><span class="n">Script</span><span class="o">&gt;</span>
     <span class="o">&lt;![</span><span class="n">CDATA</span><span class="o">[</span>
+      <span class="k">import</span> <span class="nn">mx.controls.Alert</span><span class="o">;</span>
+      <span class="k">import</span> <span class="nn">mx.core.FlexGlobals</span><span class="o">;</span>
+      <span class="k">import</span> <span class="nn">mx.utils.URLUtil</span><span class="o">;</span>
       <span class="kd">private</span> <span class="kd">var</span> <span class="n">_cam</span><span class="p">:</span><span class="kt">Camera</span><span class="o">;</span>
       <span class="kd">private</span> <span class="kd">var</span> <span class="n">_connection</span><span class="p">:</span><span class="kt">NetConnection</span><span class="o">;</span>
       <span class="kd">private</span> <span class="kd">var</span> <span class="n">_outstream</span><span class="p">:</span><span class="kt">NetStream</span><span class="o">;</span>
 
       <span class="c1">// init camera</span>
       <span class="kd">private</span> <span class="kd">function </span><span class="nf">startCam</span><span class="o">():</span><span class="kt">void</span> <span class="o">{</span>
+
+        <span class="c1">// Generate dynamic url</span>
+        <span class="kd">var</span> <span class="n">url</span><span class="p">:</span><span class="kt">String</span> <span class="o">=</span> <span class="k">this</span><span class="o">.</span><span class="na">loaderInfo</span><span class="o">.</span><span class="na">url</span><span class="o">;</span>
+        <span class="kd">var</span> <span class="n">domainNPath</span><span class="p">:</span><span class="kt">Array</span> <span class="o">=</span> <span class="n">url</span><span class="o">.</span><span class="na">match</span><span class="o">(/(:\/\/.+)\//);</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">URLUtil</span><span class="o">.</span><span class="na">getProtocol</span><span class="o">(</span><span class="n">url</span><span class="o">)</span> <span class="o">!=</span> <span class="s2">&quot;file&quot;</span><span class="o">)</span>
+          <span class="n">address</span><span class="o">.</span><span class="na">text</span> <span class="o">=</span> <span class="s2">&quot;rtmfp&quot;</span> <span class="o">+</span> <span class="n">domainNPath</span><span class="o">[</span><span class="mi">1</span><span class="o">];</span>
+
         <span class="n">_cam</span> <span class="o">=</span> <span class="n">Camera</span><span class="o">.</span><span class="na">getCamera</span><span class="o">();</span>
         <span class="n">player</span><span class="o">.</span><span class="na">attachCamera</span><span class="o">(</span><span class="n">_cam</span><span class="o">);</span>
-        <span class="n">player</span><span class="o">.</span><span class="na">play</span><span class="o">();</span>
       <span class="o">}</span>
 
       <span class="c1">// net status handler for the NetConnection : connect the netstream and publish</span>
@@ -517,22 +484,32 @@ Brief description : When the flash client send a message to the server, this mes
       <span class="o">}</span>
     <span class="o">]]&gt;</span>
   <span class="o">&lt;/</span><span class="n">fx</span><span class="o">:</span><span class="n">Script</span><span class="o">&gt;</span>
-  <span class="o">&lt;</span><span class="n">mx</span><span class="o">:</span><span class="n">TextInput</span> <span class="n">x</span><span class="o">=</span><span class="s2">&quot;10&quot;</span> <span class="n">y</span><span class="o">=</span><span class="s2">&quot;10&quot;</span> <span class="n">width</span><span class="o">=</span><span class="s2">&quot;400&quot;</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;rtmfp://localhost/publish&quot;</span> <span class="n">id</span><span class="o">=</span><span class="s2">&quot;address&quot;</span><span class="o">/&gt;</span>
+  <span class="o">&lt;</span><span class="n">mx</span><span class="o">:</span><span class="n">TextInput</span> <span class="n">x</span><span class="o">=</span><span class="s2">&quot;10&quot;</span> <span class="n">y</span><span class="o">=</span><span class="s2">&quot;10&quot;</span> <span class="n">width</span><span class="o">=</span><span class="s2">&quot;400&quot;</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;rtmfp://localhost/clients/samples/PublishLive&quot;</span> <span class="n">id</span><span class="o">=</span><span class="s2">&quot;address&quot;</span><span class="o">/&gt;</span>
   <span class="o">&lt;</span><span class="n">mx</span><span class="o">:</span><span class="n">Button</span> <span class="n">x</span><span class="o">=</span><span class="s2">&quot;450&quot;</span> <span class="n">y</span><span class="o">=</span><span class="s2">&quot;10&quot;</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Send&quot;</span> <span class="n">click</span><span class="o">=</span><span class="s2">&quot;send()&quot;</span><span class="o">/&gt;</span>
   <span class="o">&lt;</span><span class="n">mx</span><span class="o">:</span><span class="n">Label</span> <span class="n">x</span><span class="o">=</span><span class="s2">&quot;10&quot;</span> <span class="n">y</span><span class="o">=</span><span class="s2">&quot;40&quot;</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;Net Status Code: &quot;</span><span class="o">/&gt;</span>
   <span class="o">&lt;</span><span class="n">mx</span><span class="o">:</span><span class="n">Text</span> <span class="n">x</span><span class="o">=</span><span class="s2">&quot;150&quot;</span> <span class="n">y</span><span class="o">=</span><span class="s2">&quot;40&quot;</span> <span class="n">id</span><span class="o">=</span><span class="s2">&quot;status&quot;</span> <span class="n">width</span><span class="o">=</span><span class="s2">&quot;200&quot;</span><span class="o">/&gt;</span>
   <span class="o">&lt;</span><span class="n">mx</span><span class="o">:</span><span class="n">Label</span> <span class="n">x</span><span class="o">=</span><span class="s2">&quot;10&quot;</span> <span class="n">y</span><span class="o">=</span><span class="s2">&quot;70&quot;</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;OutStream Status Code: &quot;</span><span class="o">/&gt;</span>
   <span class="o">&lt;</span><span class="n">mx</span><span class="o">:</span><span class="n">Text</span> <span class="n">x</span><span class="o">=</span><span class="s2">&quot;150&quot;</span> <span class="n">y</span><span class="o">=</span><span class="s2">&quot;70&quot;</span> <span class="n">id</span><span class="o">=</span><span class="s2">&quot;statusOutstream&quot;</span> <span class="n">width</span><span class="o">=</span><span class="s2">&quot;200&quot;</span><span class="o">/&gt;</span>
-  <span class="o">&lt;</span><span class="n">mx</span><span class="o">:</span><span class="n">VideoDisplay</span> <span class="n">x</span><span class="o">=</span><span class="s2">&quot;10&quot;</span> <span class="n">y</span><span class="o">=</span><span class="s2">&quot;100&quot;</span> <span class="n">width</span><span class="o">=</span><span class="s2">&quot;160&quot;</span> <span class="n">height</span><span class="o">=</span><span class="s2">&quot;120&quot;</span> <span class="n">id</span><span class="o">=</span><span class="s2">&quot;player&quot;</span><span class="o">/&gt;</span>
+  <span class="o">&lt;</span><span class="n">mx</span><span class="o">:</span><span class="n">VideoDisplay</span> <span class="n">x</span><span class="o">=</span><span class="s2">&quot;10&quot;</span> <span class="n">y</span><span class="o">=</span><span class="s2">&quot;100&quot;</span> <span class="n">width</span><span class="o">=</span><span class="s2">&quot;320&quot;</span> <span class="n">height</span><span class="o">=</span><span class="s2">&quot;240&quot;</span> <span class="n">id</span><span class="o">=</span><span class="s2">&quot;player&quot;</span><span class="o">/&gt;</span>
 <span class="o">&lt;/</span><span class="n">mx</span><span class="o">:</span><span class="n">Application</span><span class="o">&gt;</span>
 </pre></div>
 </div>
+<p>Sample : <a class="reference external" href="http://78.199.204.75/clients/samples/PublishLive/flash.html">PublishLive/flash.html</a></p>
+<p>To play the video you an use a flash player or vlc for example connected to the following url : <a class="reference external" href="rtmp://78.199.204.75/file">rtmp://78.199.204.75/file</a></p>
+<p>If you need support for other type of clients or devices please contact us (<a class="reference external" href="./contacts.html">Support</a>).</p>
 </div>
 <div class="section" id="p2p-channel">
-<h3><a class="toc-backref" href="#id18">P2P channel</a><a class="headerlink" href="#p2p-channel" title="Permalink to this headline">¶</a></h3>
-<p>This sample shows P2P file transfert and NetGroup usage over Object Replication functionality.</p>
-<div class="section" id="id3">
-<h4><a class="toc-backref" href="#id19">Server part</a><a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h4>
+<h3><a class="toc-backref" href="#id19">P2P channel</a><a class="headerlink" href="#p2p-channel" title="Permalink to this headline">¶</a></h3>
+<p>This sample shows P2P file transfert and NetGroup usage over Object Replication functionality.
+Here follows an illustration of the P2P NetGroup :</p>
+<a class="reference internal image-reference" href="_images/NetgroupP2PChannel.png"><img alt="_images/NetgroupP2PChannel.png" class="align-center" src="_images/NetgroupP2PChannel.png" style="width: 639px; height: 336px;" /></a>
+<ol class="arabic simple">
+<li>In this sample the first user can browse and share a file from is filesystem,</li>
+<li>When a second user arrives he can download the file from the first one,</li>
+<li>And then each new user download the file from any other user, flash decides by itself who is the nearest peer.</li>
+</ol>
+<div class="section" id="id2">
+<h4><a class="toc-backref" href="#id20">Server part</a><a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h4>
 <p>Source below is the lua application. During the test you should take attention to the sender of the file which could be any peer among the providers.</p>
 <div class="highlight-lua"><div class="highlight"><pre><span class="n">peers</span> <span class="o">=</span> <span class="p">{}</span>
 
@@ -562,9 +539,10 @@ Brief description : When the flash client send a message to the server, this mes
 <span class="k">end</span>
 </pre></div>
 </div>
+<p>Source code : <a class="reference external" href="http://78.199.204.75/clients/samples/P2PChannel/main.lua">P2PChannel/main.lua</a></p>
 </div>
-<div class="section" id="id4">
-<h4><a class="toc-backref" href="#id20">Flash client</a><a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h4>
+<div class="section" id="id3">
+<h4><a class="toc-backref" href="#id21">Flash client</a><a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h4>
 <p>And the flash client source is cutted in three files.
 Here is the file <em>P2PSharedObject.as</em>, the class file for objects that will be exchanged :</p>
 <div class="highlight-as3"><div class="highlight"><pre><span class="kd">package</span> <span class="o">{</span>
@@ -681,16 +659,16 @@ Here is the file <em>P2PSharedObject.as</em>, the class file for objects that wi
   <span class="o">&lt;</span><span class="n">fx</span><span class="o">:</span><span class="n">Script</span><span class="o">&gt;</span>
     <span class="o">&lt;![</span><span class="n">CDATA</span><span class="o">[</span>
       <span class="k">import</span> <span class="nn">mx.containers.TitleWindow</span><span class="o">;</span>
+      <span class="k">import</span> <span class="nn">mx.controls.Alert</span><span class="o">;</span>
       <span class="k">import</span> <span class="nn">mx.events.CloseEvent</span><span class="o">;</span>
       <span class="k">import</span> <span class="nn">mx.managers.PopUpManager</span><span class="o">;</span>
+      <span class="k">import</span> <span class="nn">mx.utils.URLUtil</span><span class="o">;</span>
       <span class="kd">private</span> <span class="kd">var</span> <span class="n">_fileLoader</span><span class="p">:</span><span class="kt">LocalFileLoader</span><span class="o">;</span>
       <span class="kd">private</span> <span class="kd">var</span> <span class="n">_netConnection</span><span class="p">:</span><span class="kt">NetConnection</span><span class="o">;</span>
       <span class="kd">private</span> <span class="kd">var</span> <span class="n">_netGroup</span><span class="p">:</span><span class="kt">NetGroup</span><span class="o">;</span>
       <span class="kd">private</span> <span class="kd">var</span> <span class="n">_namePopup</span><span class="p">:</span><span class="kt">TitleWindow</span><span class="o">;</span>
       <span class="kd">private</span> <span class="kd">var</span> <span class="n">_nameUser</span><span class="p">:</span><span class="kt">String</span><span class="o">;</span>
       <span class="kd">public</span>  <span class="kd">var</span> <span class="n">p2pSharedObject</span><span class="p">:</span><span class="kt">P2PSharedObject</span><span class="o">;</span>
-
-      <span class="c1">//////////////////////////// IDENTIFICATION ////////////////////////////////</span>
 
       <span class="c1">// Try to identificate</span>
       <span class="kd">private</span> <span class="kd">function </span><span class="nf">sendName</span><span class="o">(</span><span class="n">event</span><span class="o">:</span><span class="kt">Event</span><span class="o">):</span><span class="kt">void</span> <span class="o">{</span>
@@ -740,9 +718,13 @@ Here is the file <em>P2PSharedObject.as</em>, the class file for objects that wi
         <span class="n">PopUpManager</span><span class="o">.</span><span class="na">addPopUp</span><span class="o">(</span><span class="n">_namePopup</span><span class="o">,</span> <span class="k">this</span><span class="o">,</span> <span class="kc">true</span><span class="o">);</span>
         <span class="n">PopUpManager</span><span class="o">.</span><span class="na">centerPopUp</span><span class="o">(</span><span class="n">_namePopup</span><span class="o">);</span>
         <span class="n">userName</span><span class="o">.</span><span class="na">setFocus</span><span class="o">();</span>
-      <span class="o">}</span>
 
-      <span class="c1">//////////////////////////// CONNECTION ////////////////////////////////</span>
+        <span class="c1">// Generate dynamic url</span>
+        <span class="kd">var</span> <span class="n">url</span><span class="p">:</span><span class="kt">String</span> <span class="o">=</span> <span class="k">this</span><span class="o">.</span><span class="na">loaderInfo</span><span class="o">.</span><span class="na">url</span><span class="o">;</span>
+        <span class="kd">var</span> <span class="n">domainNPath</span><span class="p">:</span><span class="kt">Array</span> <span class="o">=</span> <span class="n">url</span><span class="o">.</span><span class="na">match</span><span class="o">(/(:\/\/.+)\//);</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">URLUtil</span><span class="o">.</span><span class="na">getProtocol</span><span class="o">(</span><span class="n">url</span><span class="o">)</span> <span class="o">!=</span> <span class="s2">&quot;file&quot;</span><span class="o">)</span>
+          <span class="n">address</span><span class="o">.</span><span class="na">text</span> <span class="o">=</span> <span class="s2">&quot;rtmfp&quot;</span> <span class="o">+</span> <span class="n">domainNPath</span><span class="o">[</span><span class="mi">1</span><span class="o">];</span>
+      <span class="o">}</span>
 
       <span class="kd">private</span> <span class="kd">function </span><span class="nf">connect</span><span class="o">():</span><span class="kt">void</span><span class="o">{</span>
         <span class="n">_fileLoader</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">LocalFileLoader</span><span class="o">();</span>
@@ -757,8 +739,6 @@ Here is the file <em>P2PSharedObject.as</em>, the class file for objects that wi
       <span class="kd">private</span> <span class="kd">function </span><span class="nf">onStatusLoad</span><span class="o">(</span><span class="n">event</span><span class="o">:</span><span class="kt">StatusEvent</span><span class="o">):</span><span class="kt">void</span><span class="o">{</span>
         <span class="n">writeText</span><span class="o">(</span><span class="s2">&quot;Load : &quot;</span> <span class="o">+</span> <span class="n">event</span><span class="o">.</span><span class="na">level</span><span class="o">);</span>
       <span class="o">}</span>
-
-      <span class="c1">//////////////////////////// TRANSFERT ////////////////////////////////</span>
 
       <span class="kd">protected</span> <span class="kd">function </span><span class="nf">netStatus</span><span class="o">(</span><span class="n">event</span><span class="o">:</span><span class="kt">NetStatusEvent</span><span class="o">):</span><span class="kt">void</span><span class="o">{</span>
 
@@ -864,7 +844,7 @@ Here is the file <em>P2PSharedObject.as</em>, the class file for objects that wi
   <span class="o">&lt;/</span><span class="n">fx</span><span class="o">:</span><span class="n">Script</span><span class="o">&gt;</span>
   <span class="o">&lt;</span><span class="n">mx</span><span class="o">:</span><span class="n">VBox</span> <span class="n">x</span><span class="o">=</span><span class="s2">&quot;10&quot;</span> <span class="n">y</span><span class="o">=</span><span class="s2">&quot;10&quot;</span> <span class="n">height</span><span class="o">=</span><span class="s2">&quot;100%&quot;</span> <span class="n">paddingBottom</span><span class="o">=</span><span class="s2">&quot;10&quot;</span><span class="o">&gt;</span>
     <span class="o">&lt;</span><span class="n">mx</span><span class="o">:</span><span class="n">HBox</span><span class="o">&gt;</span>
-      <span class="o">&lt;</span><span class="n">mx</span><span class="o">:</span><span class="n">TextInput</span> <span class="n">width</span><span class="o">=</span><span class="s2">&quot;400&quot;</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;rtmfp://localhost/clients/p2p&quot;</span> <span class="n">id</span><span class="o">=</span><span class="s2">&quot;address&quot;</span><span class="o">/&gt;</span>
+      <span class="o">&lt;</span><span class="n">mx</span><span class="o">:</span><span class="n">TextInput</span> <span class="n">width</span><span class="o">=</span><span class="s2">&quot;400&quot;</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;rtmfp://localhost/clients/samples/P2PChannel&quot;</span> <span class="n">id</span><span class="o">=</span><span class="s2">&quot;address&quot;</span><span class="o">/&gt;</span>
       <span class="o">&lt;</span><span class="n">mx</span><span class="o">:</span><span class="n">Button</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Connect&quot;</span> <span class="n">click</span><span class="o">=</span><span class="s2">&quot;connect()&quot;</span><span class="o">/&gt;</span>
     <span class="o">&lt;/</span><span class="n">mx</span><span class="o">:</span><span class="n">HBox</span><span class="o">&gt;</span>
     <span class="o">&lt;</span><span class="n">mx</span><span class="o">:</span><span class="n">HBox</span><span class="o">&gt;</span>
@@ -877,13 +857,14 @@ Here is the file <em>P2PSharedObject.as</em>, the class file for objects that wi
 <span class="o">&lt;/</span><span class="n">mx</span><span class="o">:</span><span class="n">Application</span><span class="o">&gt;</span>
 </pre></div>
 </div>
+<p>Sample : <a class="reference external" href="http://78.199.204.75/clients/samples/P2PChannel/index.html">P2PChannel/index.html</a></p>
 </div>
 </div>
 </div>
 <div class="section" id="others">
-<h2><a class="toc-backref" href="#id21">Others</a><a class="headerlink" href="#others" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#id22">Others</a><a class="headerlink" href="#others" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="meeting-sample">
-<h3><a class="toc-backref" href="#id22">Meeting sample</a><a class="headerlink" href="#meeting-sample" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id23">Meeting sample</a><a class="headerlink" href="#meeting-sample" title="Permalink to this headline">¶</a></h3>
 <p>The sources are available here: <a class="reference external" href="http://www.adobe.com/devnet/flashmediaserver/articles/real-time-collaboration.html">http://www.adobe.com/devnet/flashmediaserver/articles/real-time-collaboration.html</a></p>
 <p>Use only the client part of these sources, and for server side create the file MonaServer/www/meeting/main.lua with the following content:</p>
 <div class="highlight-lua"><div class="highlight"><pre><span class="n">meeters</span> <span class="o">=</span> <span class="p">{}</span>
@@ -952,13 +933,18 @@ Here is the file <em>P2PSharedObject.as</em>, the class file for objects that wi
 <span class="k">end</span>
 </pre></div>
 </div>
+<p>Sample : <a class="reference external" href="http://78.199.204.75/clients/samples/Meeting/VideoMeeting.html">Meeting/VideoMeeting.html</a></p>
 </div>
 </div>
 </div>
 
 
     </div>
+    
       
+    
+    
+
   </div>
 </div>
 <footer class="footer">

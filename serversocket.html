@@ -30,8 +30,6 @@
     <script type="text/javascript" src="_static/bootstrap-3.1.0/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
     <link rel="top" title="MonaServer 1 documentation" href="index.html" />
-    <link rel="next" title="Mona Server’s lua API" href="api.html" />
-    <link rel="prev" title="Scalability and load-balancing" href="scalability.html" />
 
   <a href="https://github.com/MonaSolutions/MonaServer"
      class="visible-desktop hidden-xs"><img
@@ -46,14 +44,11 @@
       $("#gh-banner").css("top", navHeight);
     });
   </script>
-
-
-
-
-
-
-
-
+  
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
 
 
   </head>
@@ -77,87 +72,17 @@
           <ul class="nav navbar-nav">
             <li class="divider-vertical"></li>
             
-            
-              <li class="dropdown globaltoc-container">
-  <a role="button"
-     id="dLabelGlobalToc"
-     data-toggle="dropdown"
-     data-target="#"
-     href="index.html">Site <b class="caret"></b></a>
-  <ul class="dropdown-menu globaltoc"
-      role="menu"
-      aria-labelledby="dLabelGlobalToc"><ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="samples.html">Samples</a></li>
-<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="serverapp.html">Server Application</a></li>
-<li class="toctree-l1"><a class="reference internal" href="scalability.html">Scalability and load-balancing</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="">Server Application Sockets</a></li>
-<li class="toctree-l1"><a class="reference internal" href="api.html">Mona Server&#8217;s lua API</a></li>
-<li class="toctree-l1"><a class="reference internal" href="protocols.html">Specific Protocol Functionalities</a></li>
-<li class="toctree-l1"><a class="reference internal" href="database.html">The NoSQL Database System</a></li>
-<li class="toctree-l1"><a class="reference internal" href="contacts.html">Support &amp; Contacts</a></li>
-<li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a></li>
-</ul>
-</ul>
-</li>
-              
-                <li class="dropdown">
-  <a role="button"
-     id="dLabelLocalToc"
-     data-toggle="dropdown"
-     data-target="#"
-     href="#">Page <b class="caret"></b></a>
-  <ul class="dropdown-menu localtoc"
-      role="menu"
-      aria-labelledby="dLabelLocalToc"><ul>
-<li><a class="reference internal" href="#">Server Application Sockets</a><ul>
-<li><a class="reference internal" href="#tcp-client">TCP Client</a><ul>
-<li><a class="reference internal" href="#properties">properties</a></li>
-<li><a class="reference internal" href="#methods">methods</a></li>
-<li><a class="reference internal" href="#events">events</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#tcp-server">TCP Server</a><ul>
-<li><a class="reference internal" href="#id4">properties</a></li>
-<li><a class="reference internal" href="#id5">methods</a></li>
-<li><a class="reference internal" href="#id6">events</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#udp-socket">UDP Socket</a><ul>
-<li><a class="reference internal" href="#id8">properties</a></li>
-<li><a class="reference internal" href="#id9">methods</a></li>
-<li><a class="reference internal" href="#id10">events</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#other-protocols">Other protocols</a></li>
-</ul>
-</li>
-</ul>
-</ul>
-</li>
-              
+                <li><a href="quickstart.html"><img src="_static/star-bookmark-icone-8571-48.png"/> Quick Start</a></li>
+                <li><a href="faq.html"><img src="_static/aide-point-interrogation-systeme-icone-8289-48.png"/> FAQ</a></li>
+                <li><a href="contacts.html"><img src="_static/casque-ecoute-soutien-icone-9816-48.png"/> Support</a></li>
+                <li><a href="manual.html"><img src="_static/texinfo-texte-x-icone-4685-48.png"/> Documentation</a></li>
             
             
-              
-                
-  <li>
-    <a href="scalability.html" title="Previous Chapter: Scalability and load-balancing"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm">&laquo; Scalability and ...</span>
-    </a>
-  </li>
-  <li>
-    <a href="api.html" title="Next Chapter: Mona Server’s lua API"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm">Mona Server’s lu... &raquo;</span>
-    </a>
-  </li>
-              
+
+
             
             
             
-            
-              <li class="hidden-sm">
-<div id="sourcelink">
-  <a href="_sources/serversocket.txt"
-     rel="nofollow">Source</a>
-</div></li>
             
           </ul>
 
@@ -222,22 +147,22 @@ Usually to add sockets feature in <a class="reference external" href="http://www
 Here&#8217;s a complete sample to understand its usage:</p>
 <div class="highlight-lua"><div class="highlight"><pre><span class="n">socket</span> <span class="o">=</span> <span class="n">mona</span><span class="p">:</span><span class="n">createTCPClient</span><span class="p">()</span>
 <span class="k">function</span> <span class="nf">socket</span><span class="p">:</span><span class="n">onData</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
-        <span class="n">NOTE</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">Reception from &quot;</span><span class="o">..</span><span class="n">self</span><span class="p">.</span><span class="n">peerAddress</span><span class="o">..</span><span class="s2">&quot;</span><span class="s"> to &quot;</span><span class="o">..</span><span class="n">self</span><span class="p">.</span><span class="n">address</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">:</span><span class="n">send</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="c1">-- echo sample</span>
-        <span class="k">return</span> <span class="mi">0</span> <span class="c1">-- return rest (all has been consumed here)</span>
+  <span class="n">NOTE</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">Reception from &quot;</span><span class="o">..</span><span class="n">self</span><span class="p">.</span><span class="n">peerAddress</span><span class="o">..</span><span class="s2">&quot;</span><span class="s"> to &quot;</span><span class="o">..</span><span class="n">self</span><span class="p">.</span><span class="n">address</span><span class="p">)</span>
+  <span class="n">self</span><span class="p">:</span><span class="n">send</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="c1">-- echo sample</span>
+  <span class="k">return</span> <span class="mi">0</span> <span class="c1">-- return rest (all has been consumed here)</span>
 <span class="k">end</span>
 <span class="k">function</span> <span class="nf">socket</span><span class="p">:</span><span class="n">onDisconnection</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">error</span> <span class="k">then</span> <span class="c1">-- error? or normal disconnection?</span>
-                <span class="n">ERROR</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">error</span><span class="p">)</span>
-        <span class="k">end</span>
-        <span class="n">NOTE</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">TCP disconnection&quot;</span><span class="p">)</span>
+  <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">error</span> <span class="k">then</span> <span class="c1">-- error? or normal disconnection?</span>
+    <span class="n">ERROR</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">error</span><span class="p">)</span>
+  <span class="k">end</span>
+  <span class="n">NOTE</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">TCP disconnection&quot;</span><span class="p">)</span>
 <span class="k">end</span>
 
 <span class="kd">local</span> <span class="n">err</span> <span class="o">=</span> <span class="n">socket</span><span class="p">:</span><span class="n">connect</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">localhost&quot;</span><span class="p">,</span><span class="mi">1234</span><span class="p">)</span>
 <span class="k">if</span> <span class="n">err</span> <span class="k">then</span> <span class="n">ERROR</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">Unable to connect to localahost:1234&quot;</span><span class="p">)</span> <span class="k">end</span>
 <span class="o">...</span>
 <span class="k">if</span> <span class="n">socket</span><span class="p">.</span><span class="n">connected</span> <span class="k">then</span> <span class="c1">-- useless if already disconnected</span>
-        <span class="n">socket</span><span class="p">:</span><span class="n">disconnect</span><span class="p">()</span>
+  <span class="n">socket</span><span class="p">:</span><span class="n">disconnect</span><span class="p">()</span>
 <span class="k">end</span>
 </pre></div>
 </div>
@@ -272,15 +197,15 @@ Here&#8217;s a complete sample to understand its usage:</p>
 Here&#8217;s a complete sample to understand its usage:</p>
 <div class="highlight-lua"><div class="highlight"><pre><span class="n">server</span> <span class="o">=</span> <span class="n">mona</span><span class="p">:</span><span class="n">createTCPServer</span><span class="p">()</span>
 <span class="k">function</span> <span class="nf">server</span><span class="p">:</span><span class="n">onConnection</span><span class="p">(</span><span class="n">client</span><span class="p">)</span>
-        <span class="c1">-- Here we have a TCPClient object, same usage than TCPClient</span>
-        <span class="k">function</span> <span class="nf">client</span><span class="p">:</span><span class="n">onData</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
-                <span class="n">NOTE</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">Reception from &quot;</span><span class="o">..</span><span class="n">self</span><span class="p">.</span><span class="n">peerAddress</span><span class="o">..</span><span class="s2">&quot;</span><span class="s"> to &quot;</span><span class="o">..</span><span class="n">self</span><span class="p">.</span><span class="n">address</span><span class="p">)</span>
-                <span class="n">self</span><span class="p">:</span><span class="n">send</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="c1">-- echo sample</span>
-                <span class="k">return</span> <span class="mi">0</span> <span class="c1">-- return rest (all has been consumed here)</span>
-        <span class="k">end</span>
-        <span class="k">function</span> <span class="nf">client</span><span class="p">:</span><span class="n">onDisconnection</span><span class="p">()</span>
-                <span class="n">NOTE</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">TCP client disconnection&quot;</span><span class="p">)</span>
-        <span class="k">end</span>
+  <span class="c1">-- Here we have a TCPClient object, same usage than TCPClient</span>
+  <span class="k">function</span> <span class="nf">client</span><span class="p">:</span><span class="n">onData</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+    <span class="n">NOTE</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">Reception from &quot;</span><span class="o">..</span><span class="n">self</span><span class="p">.</span><span class="n">peerAddress</span><span class="o">..</span><span class="s2">&quot;</span><span class="s"> to &quot;</span><span class="o">..</span><span class="n">self</span><span class="p">.</span><span class="n">address</span><span class="p">)</span>
+    <span class="n">self</span><span class="p">:</span><span class="n">send</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="c1">-- echo sample</span>
+    <span class="k">return</span> <span class="mi">0</span> <span class="c1">-- return rest (all has been consumed here)</span>
+  <span class="k">end</span>
+  <span class="k">function</span> <span class="nf">client</span><span class="p">:</span><span class="n">onDisconnection</span><span class="p">()</span>
+    <span class="n">NOTE</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">TCP client disconnection&quot;</span><span class="p">)</span>
+  <span class="k">end</span>
 <span class="k">end</span>
 <span class="n">server</span><span class="p">:</span><span class="n">start</span><span class="p">(</span><span class="mi">1234</span><span class="p">);</span> <span class="c1">-- start the server on the port 1234</span>
 </pre></div>
@@ -312,8 +237,8 @@ Here&#8217;s a complete sample to understand its usage:</p>
 Here&#8217;s an echo sample to understand its usage:</p>
 <div class="highlight-lua"><div class="highlight"><pre><span class="n">socket</span> <span class="o">=</span> <span class="n">mona</span><span class="p">:</span><span class="n">createUDPSocket</span><span class="p">()</span>
 <span class="k">function</span> <span class="nf">socket</span><span class="p">:</span><span class="n">onReception</span><span class="p">(</span><span class="n">data</span><span class="p">,</span><span class="n">address</span><span class="p">)</span>
-        <span class="n">NOTE</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">Reception from &quot;</span><span class="o">..</span><span class="n">address</span><span class="p">)</span>
-        <span class="n">self</span><span class="p">:</span><span class="n">send</span><span class="p">(</span><span class="n">data</span><span class="p">,</span><span class="n">address</span><span class="p">)</span> <span class="c1">-- echo sample</span>
+  <span class="n">NOTE</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">Reception from &quot;</span><span class="o">..</span><span class="n">address</span><span class="p">)</span>
+  <span class="n">self</span><span class="p">:</span><span class="n">send</span><span class="p">(</span><span class="n">data</span><span class="p">,</span><span class="n">address</span><span class="p">)</span> <span class="c1">-- echo sample</span>
 <span class="k">end</span>
 <span class="n">err</span> <span class="o">=</span> <span class="n">socket</span><span class="p">:</span><span class="n">bind</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">0.0.0.0:1234&quot;</span><span class="p">)</span> <span class="c1">-- start the server</span>
 <span class="k">if</span> <span class="n">err</span> <span class="k">then</span> <span class="n">ERROR</span><span class="p">(</span><span class="n">err</span><span class="p">)</span> <span class="k">end</span>
@@ -322,7 +247,7 @@ Here&#8217;s an echo sample to understand its usage:</p>
 <p>Following a sample in a client form, in connected mode:</p>
 <div class="highlight-lua"><div class="highlight"><pre><span class="n">socket</span> <span class="o">=</span> <span class="n">mona</span><span class="p">:</span><span class="n">createUDPSocket</span><span class="p">()</span>
 <span class="k">function</span> <span class="nf">socket</span><span class="p">:</span><span class="n">onReception</span><span class="p">(</span><span class="n">data</span><span class="p">,</span><span class="n">address</span><span class="p">)</span>
-        <span class="n">NOTE</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">Reception from &quot;</span><span class="o">..</span><span class="n">address</span><span class="o">..</span><span class="s2">&quot;</span><span class="s">: &quot;</span><span class="o">..</span><span class="n">data</span><span class="p">)</span>
+  <span class="n">NOTE</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">Reception from &quot;</span><span class="o">..</span><span class="n">address</span><span class="o">..</span><span class="s2">&quot;</span><span class="s">: &quot;</span><span class="o">..</span><span class="n">data</span><span class="p">)</span>
 <span class="k">end</span>
 <span class="n">socket</span><span class="p">:</span><span class="n">connect</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">127.0.0.1&quot;</span><span class="p">,</span> <span class="mi">1234</span><span class="p">)</span>
 <span class="n">NOTE</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">UDP socket opened on &quot;</span><span class="p">,</span><span class="n">socket</span><span class="p">.</span><span class="n">address</span><span class="p">,</span><span class="s2">&quot;</span><span class="s"> connected to &quot;</span><span class="p">,</span><span class="n">socket</span><span class="p">.</span><span class="n">peerAddress</span><span class="p">)</span>
@@ -361,7 +286,11 @@ Here&#8217;s an echo sample to understand its usage:</p>
 
 
     </div>
+    
       
+    
+    
+
   </div>
 </div>
 <footer class="footer">

@@ -21,25 +21,25 @@ Here's a complete sample to understand its usage:
 
 .. code-block:: lua
 
-	socket = mona:createTCPClient()
-	function socket:onData(data)
-		NOTE("Reception from "..self.peerAddress.." to "..self.address)
-		self:send(data) -- echo sample
-		return 0 -- return rest (all has been consumed here)
-	end
-	function socket:onDisconnection()
-		if self.error then -- error? or normal disconnection?
-			ERROR(self.error)
-		end
-		NOTE("TCP disconnection")
-	end
+  socket = mona:createTCPClient()
+  function socket:onData(data)
+    NOTE("Reception from "..self.peerAddress.." to "..self.address)
+    self:send(data) -- echo sample
+    return 0 -- return rest (all has been consumed here)
+  end
+  function socket:onDisconnection()
+    if self.error then -- error? or normal disconnection?
+      ERROR(self.error)
+    end
+    NOTE("TCP disconnection")
+  end
 
-	local err = socket:connect("localhost",1234)
-	if err then ERROR("Unable to connect to localahost:1234") end
-	...
-	if socket.connected then -- useless if already disconnected
-		socket:disconnect()
-	end
+  local err = socket:connect("localhost",1234)
+  if err then ERROR("Unable to connect to localahost:1234") end
+  ...
+  if socket.connected then -- useless if already disconnected
+    socket:disconnect()
+  end
 
 
 properties
@@ -75,19 +75,19 @@ Here's a complete sample to understand its usage:
 
 .. code-block:: lua
 
-	server = mona:createTCPServer()
-	function server:onConnection(client)
-		-- Here we have a TCPClient object, same usage than TCPClient
-		function client:onData(data)
-			NOTE("Reception from "..self.peerAddress.." to "..self.address)
-			self:send(data) -- echo sample
-			return 0 -- return rest (all has been consumed here)
-		end
-		function client:onDisconnection()
-			NOTE("TCP client disconnection")
-		end
-	end
-	server:start(1234); -- start the server on the port 1234
+  server = mona:createTCPServer()
+  function server:onConnection(client)
+    -- Here we have a TCPClient object, same usage than TCPClient
+    function client:onData(data)
+      NOTE("Reception from "..self.peerAddress.." to "..self.address)
+      self:send(data) -- echo sample
+      return 0 -- return rest (all has been consumed here)
+    end
+    function client:onDisconnection()
+      NOTE("TCP client disconnection")
+    end
+  end
+  server:start(1234); -- start the server on the port 1234
 
 properties
 =============================
@@ -117,25 +117,25 @@ Here's an echo sample to understand its usage:
 
 .. code-block:: lua
 
-	socket = mona:createUDPSocket()
-	function socket:onReception(data,address)
-		NOTE("Reception from "..address)
-		self:send(data,address) -- echo sample
-	end
-	err = socket:bind("0.0.0.0:1234") -- start the server
-	if err then ERROR(err) end
+  socket = mona:createUDPSocket()
+  function socket:onReception(data,address)
+    NOTE("Reception from "..address)
+    self:send(data,address) -- echo sample
+  end
+  err = socket:bind("0.0.0.0:1234") -- start the server
+  if err then ERROR(err) end
 
 Following a sample in a client form, in connected mode:
 
 .. code-block:: lua
 
-	socket = mona:createUDPSocket()
-	function socket:onReception(data,address)
-		NOTE("Reception from "..address..": "..data)
-	end
-	socket:connect("127.0.0.1", 1234)
-	NOTE("UDP socket opened on ",socket.address," connected to ",socket.peerAddress)
-	socket:send("hello")
+  socket = mona:createUDPSocket()
+  function socket:onReception(data,address)
+    NOTE("Reception from "..address..": "..data)
+  end
+  socket:connect("127.0.0.1", 1234)
+  NOTE("UDP socket opened on ",socket.address," connected to ",socket.peerAddress)
+  socket:send("hello")
 
 
 properties

@@ -20,17 +20,17 @@ Cirrus Server requires the following script:
 
 .. code-block:: lua
 
-	function onConnection(client,...)
-		function client:relay(targetId,...)
-			target = mona.clients(targetId)
-			if not target then
-				error("client '"..targetId.."' not found")
-				return
-			end
-			target.writer:writeInvocation("onRelay",self.id,...)
-			target.writer:flush(true)
-		end
-	end
+  function onConnection(client,...)
+    function client:relay(targetId,...)
+      target = mona.clients(targetId)
+      if not target then
+        error("client '"..targetId.."' not found")
+        return
+      end
+      target.writer:writeInvocation("onRelay",self.id,...)
+      target.writer:flush(true)
+    end
+  end
 
 You can add the script (seen above) in *www/main.lua* to make the `Cirrus Sample Application`_ work. 
 

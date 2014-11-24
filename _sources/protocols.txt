@@ -21,9 +21,9 @@ Parameters can be sended to the client on connection by returning them in an ass
 
 .. code-block:: lua
 
-	function onConnection(client,...)
-		return {message="welcome",id=1}
-	end
+  function onConnection(client,...)
+    return {message="welcome",id=1}
+  end
 
 Some parameters are specific to RTMP :
 
@@ -59,7 +59,7 @@ And here is a sample of RTMFP URL query parameters sended by a flash client :
 
 .. code-block:: as3
 
-	_netConnection.connect("rtmfp://localhost/myApplication?arg1=value1&arg2=value2");
+  _netConnection.connect("rtmfp://localhost/myApplication?arg1=value1&arg2=value2");
 
 HTTP & WebSocket
 *******************************************
@@ -74,9 +74,9 @@ Some specific parameters can be set returning an associative array like this :
 
 .. code-block:: lua
 
-	function onConnection(client,...)
-		return {index="index.html", timeout=7}
-	end
+  function onConnection(client,...)
+    return {index="index.html", timeout=7}
+  end
 
 Here is the list of the possible common parameters :
 
@@ -96,9 +96,9 @@ The following parameter is an array which contains **URL query parameters** from
 .. code-block:: lua
 
     -- show each parameters from url
-	function onConnection(client, parameters)
-		INFO(mona:toJSON(parameters))
-	end
+  function onConnection(client, parameters)
+    INFO(mona:toJSON(parameters))
+  end
 
 client.properties
 -------------------------------------------
