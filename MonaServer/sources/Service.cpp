@@ -353,9 +353,10 @@ int Service::LoadFile(lua_State *pState) {
 int Service::ExecuteFile(lua_State *pState) {
 	// 1 - name
 
+	int results(0);
+
 	SCRIPT_BEGIN(pState)
 
-		int result(0);
 		bool isRequire(lua_toboolean(pState, lua_upvalueindex(2))!=0);
 		if (isRequire) {
 			const char* name(lua_tostring(pState, 1));
@@ -365,20 +366,26 @@ int Service::ExecuteFile(lua_State *pState) {
 			}
 			const char* ext(FileSystem::GetExtension(name));
 			if (ext && String::ICompare(ext,"lua")==0)
-				result = LoadFile(pState);
+				results = LoadFile(pState);
 		} else
-			result = LoadFile(pState);
+			results = LoadFile(pState);
 
-		if (result)
-			lua_call(pState, 0, 0);
-		else if (isRequire) {
+		if (results) {
+			results = lua_gettop(pState)-results;
+			lua_call(pState, 0, LUA_MULTRET);
+			results = lua_gettop(pState)-results;
+		} else if (isRequire) {
 			// is require, try lib
+			results = lua_gettop(pState);
+			lua_pushvalue(pState, 1);
 			lua_getglobal(pState, "require");
-			lua_call(pState, 1,0);
+			lua_call(pState, 1,LUA_MULTRET);
+			results = lua_gettop(pState)-results;
 		}
 
 	SCRIPT_END
-	return 0;
+
+	return results;
 }
 
 int Service::Item(lua_State *pState) {
