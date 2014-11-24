@@ -325,8 +325,11 @@ int Service::LoadFile(lua_State *pState) {
 			String::Format(path,pService->_rootPath,pService->path,"/",name);
 	
 			if (FileSystem::Exists(path)) {
-				if (luaL_loadfile(pState, path.c_str()) == 0)
+				if (luaL_loadfile(pState, path.c_str()) == 0) {
+					lua_rawgeti(pState, LUA_REGISTRYINDEX, pService->reference());
+					lua_setfenv(pState, -2);
 					return 1;
+				}
 				SCRIPT_ERROR(Script::LastError(pState))
 				return 0;
 			}
@@ -366,12 +369,9 @@ int Service::ExecuteFile(lua_State *pState) {
 		} else
 			result = LoadFile(pState);
 
-		if (result) {
-			Service* pService((Service*)lua_touserdata(pState,lua_upvalueindex(1)));
-			lua_rawgeti(pState, LUA_REGISTRYINDEX, pService->reference());
-			lua_setfenv(pState, -2);
+		if (result)
 			lua_call(pState, 0, 0);
-		} else if (isRequire) {
+		else if (isRequire) {
 			// is require, try lib
 			lua_getglobal(pState, "require");
 			lua_call(pState, 1,0);
