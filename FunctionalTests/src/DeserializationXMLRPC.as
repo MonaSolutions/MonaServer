@@ -32,7 +32,7 @@ package
 		
 		public function DeserializationXMLRPC(app:FunctionalTests,host:String, url:String)
 		{
-			super(app, "DeserializationXMLRPC", "send XMLPC request and check received result");
+			super(app, "DeserializationXMLRPC", "Send XMLPC request and check received result");
 			
 			_host = host;
 			_url = url;

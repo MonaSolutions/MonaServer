@@ -52,7 +52,7 @@ UInt16 RTMP::GetDigestPos(const UInt8* data, bool middle) {
 	if(middle)
 		pos += 764;
 	pos += ((data[pos-4] + data[pos-3] + data[pos-2] + data[pos-1])%728);
-	if (pos > (1505-HMAC_KEY_SIZE))
+	if (pos > 1505)
 		pos = 0;
 	return pos;
 }
@@ -104,8 +104,9 @@ const UInt8* RTMP::ValidateClientScheme(Crypto::HMAC& hmac,BinaryReader& reader,
 }
 
 
-void RTMP::WriteDigestAndKey(Crypto::HMAC& hmac,UInt8* data,const UInt8* challengeKey,bool middleKey) {
+bool RTMP::WriteDigestAndKey(Exception& ex, Crypto::HMAC& hmac,UInt8* data,const UInt8* challengeKey,bool middleKey) {
 	UInt16 serverDigestOffset = RTMP::GetDigestPos(data, middleKey);
+	ASSERT_RETURN(serverDigestOffset != 0, false);
 
 	UInt8 content[1504];
 	memcpy(content, data+1, serverDigestOffset-1);
@@ -122,6 +123,7 @@ void RTMP::WriteDigestAndKey(Crypto::HMAC& hmac,UInt8* data,const UInt8* challen
 
 	//generate the hash
 	hmac.compute(EVP_sha256(),hash,HMAC_KEY_SIZE,data + 1537,1504,data+3041);
+	return true;
 }
 
 

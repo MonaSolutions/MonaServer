@@ -21,7 +21,7 @@ package
 		
 		public function HTTPLoad(app:FunctionalTests, host:String, url:String)
 		{
-			super(app, "HTTPLoad", "send 100 POST requests with 2 parameters");
+			super(app, "HTTPLoad", "Send 100 POST requests with 2 parameters");
 			_host=host;
 			_url=url;
 		}
