@@ -188,7 +188,7 @@ UInt32 FileSystem::Paths(Exception& ex, const char* path, const ForEach& forEach
 		return count;
 	}
 	struct dirent* pEntry(NULL);
-	while(pEntry = readdir(pDirectory)) {
+	while((pEntry = readdir(pDirectory))) {
 		if (strcmp(pEntry->d_name, ".")!=0 && strcmp(pEntry->d_name, "..")!=0) {
 			string pathFile(directory);
 			++count;

@@ -24,7 +24,7 @@ namespace Mona {
 using namespace std;
 
 Path& Path::operator=(const Path& other) {
-	if (_attributesLoaded = other._attributesLoaded) {
+	if ((_attributesLoaded = other._attributesLoaded)) {
 		_attributes = other._attributes;
 		_exists = other._exists;
 	}

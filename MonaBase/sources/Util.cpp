@@ -131,7 +131,7 @@ const Parameters& Util::Environment() {
 	if (_Environment.count() > 0)
 		return _Environment;
 	char *name = *environ;
-	for (UInt32 i = 0; name = *(environ + i); ++i) {
+	for (UInt32 i = 0; (name = *(environ + i)); ++i) {
 		const char* value = strchr(name, '=');
 		if (value)
 			(char&)*(value++) = 0;

@@ -60,7 +60,7 @@ void Startable::process() {
 			struct sched_param params;
 			params.sched_priority = Priorities[_priority];
 			int result;
-			if (result=pthread_setschedparam(pthread_self(), SCHED_OTHER , &params))
+			if ((result=pthread_setschedparam(pthread_self(), SCHED_OTHER , &params)))
 				WARN("Impossible to change the thread ", _name, " priority to ", Priorities[_priority]," ",strerror(result));
 		}
 	}
