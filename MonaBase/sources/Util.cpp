@@ -29,7 +29,11 @@ This file is a part of Mona.
 	#include <windows.h>
 #else
 	#include <unistd.h>
-	#include <sys/prctl.h> // for thread name
+	#if __linux
+		#include <sys/prctl.h> // for thread name
+	#elif __APPLE__
+		#include <pthread.h>
+	#endif
 	#include <sys/syscall.h>
 	extern "C" char **environ;
 #endif
@@ -96,8 +100,10 @@ void SetCurrentThreadDebugName(const char* name) {
 		} __except (EXCEPTION_EXECUTE_HANDLER) {
 		}
 
-	#else
+	#elif __linux
 		prctl(PR_SET_NAME, name, 0, 0, 0);
+	#elif __APPLE__
+		pthread_setname_np(name);
 	#endif
 	#endif
 }

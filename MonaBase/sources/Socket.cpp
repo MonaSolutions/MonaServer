@@ -297,9 +297,21 @@ public:
 #endif
 
 		int rc;
+		int remaining = length;
 		do {
-			rc = ::send(_sockfd, reinterpret_cast<const char*>(buffer), length, flags);
-		} while (rc < 0 && Net::LastError() == NET_EINTR);
+			rc = ::send(_sockfd, reinterpret_cast<const char*>(buffer), remaining, flags);
+			if (rc < 0 && Net::LastError() == NET_EINTR) {
+				continue;
+			} else if (rc < 0 && Net::LastError() == NET_EAGAIN) { //FIXME(hanfei) should deal with EAGAIN somewhere else
+				continue;
+			} else if (rc > 0) {
+				buffer = reinterpret_cast<const void*>(reinterpret_cast<const char*>(buffer) + rc);
+				remaining -= rc;
+				if (remaining <= 0) break;
+			} else {
+				break;
+			}
+		} while (true);
 
 		if (rc < 0) {
 			int err = Net::LastError();
