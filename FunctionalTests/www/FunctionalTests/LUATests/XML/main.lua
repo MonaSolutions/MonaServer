@@ -3,6 +3,10 @@ xml =  [[<?xml version="1.0" ?><document ><article ><p >This is the first paragr
 function run()
 	test = mona:fromXML(error,xml)
 	
+	for index,value in ipairs(test) do
+		assert(index <= #test) -- test infinite loop bug on ipairs
+	end
+	
 	assert(test.xml.version == "1.0")
 	
 	assert(test.document == test[1])

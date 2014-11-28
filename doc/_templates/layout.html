@@ -19,13 +19,13 @@
       $("#gh-banner").css("top", navHeight);
     });
   </script>
-{#   {{ super() }} #}
-{# {% endblock %} #}
+  {{ super() }}
+{% endblock %}
 
-{# Add Mona's presentation from googledoc #}
-{# {% block sidebar1 %} #}
-{#   {% if pagename == 'index' %} #}
-{#     <iframe src="https://docs.google.com/presentation/d/12hdM3-yxBQ4xF_fe2C7zYnmwD3wYAkEe1FoNS3gKGQ4/embed?start=false&loop=false&delayms=5000" frameborder="5" width="960" height="569" allowfullscreen="true" mozallowfullscreen="true" webkitallowfullscreen="true"></iframe> #}
-{#   {% endif %} #}
-{#   {{ super() }} #}
+{% block sidebar2 %}
+    {{ super() }}
+    {# Add Mona's presentation from googledoc #}
+    {% if pagename == 'quickstart' %}
+        <iframe src="https://docs.google.com/presentation/d/12hdM3-yxBQ4xF_fe2C7zYnmwD3wYAkEe1FoNS3gKGQ4/embed?start=false&loop=false&delayms=5000" frameborder="5" width="960" height="569" allowfullscreen="true" mozallowfullscreen="true" webkitallowfullscreen="true"></iframe>
+    {% endif %}
 {% endblock %}

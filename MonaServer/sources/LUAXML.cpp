@@ -157,13 +157,13 @@ int LUAXML::Index(lua_State* pState) {
 			lua_pop(pState, 1); // remove __name
 			if (name && strcmp(key, name) == 0) {
 				lua_replace(pState, -2);
-				break;
+				return 1;
 			}
 		}
 		lua_pop(pState, 1);
 	}
 	
-	return 1;
+	return 0; // not found!
 }
 
 int LUAXML::NewIndex(lua_State* pState) {

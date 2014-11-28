@@ -45,6 +45,8 @@
 				addTest(new DeserializationJSON(this, hostDefault, applicationDefault));
 				addTest(new DeserializationXMLRPC(this, hostDefault, applicationDefault));
 				addTest(new BigDeserialize(this, hostDefault, applicationDefault));
+				addTest(new RTMPLoad(this, hostDefault, applicationDefault));
+				addTest(new RTMFPLoad(this, hostDefault, applicationDefault));
 				
 				_conn = new NetConnection();
 				_conn.addEventListener(NetStatusEvent.NET_STATUS, onStatus);
@@ -126,12 +128,22 @@
 				listTests.enabled = true;
 				btRun.enabled = true;
 			}
+			
+			public function myDataTipFunction(value:Object):String {
+				
+				var test:Object = mapTests[value];
+				if (test is Test) {// AS3 Test
+					var as3Test:Test = test as Test;
+					return as3Test.description;
+				} else // LUA Test
+					return value.toString() + " LUA Test";
+			}
 		]]>
 	</fx:Script>	
 	<mx:VBox x="10" y="10" width="935" height="580">
 		<mx:HBox width="100%">
 			<mx:TextArea id="console" width="720" height="518" editable="false" />
-			<mx:List id="listTests" width="204" height="517" dataProvider="{arrayTests}" allowMultipleSelection="true"></mx:List>
+			<mx:List id="listTests" width="204" height="517" dataProvider="{arrayTests}" allowMultipleSelection="true" showDataTips="true" dataTipFunction="myDataTipFunction"></mx:List>
 		</mx:HBox>
 		<mx:HBox width="100%">
 			<mx:Spacer width="100%"/>

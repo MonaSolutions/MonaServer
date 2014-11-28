@@ -22,7 +22,7 @@ package
 		private var _message:String;
 		
 		public function RTMPBadRequests(app:FunctionalTests,host:String) {
-			super(app, "RTMPBadRequests", "send 10 bad RTMP requests");
+			super(app, "RTMPBadRequests", "Send 10 bad RTMP requests");
 			_host = host;
 			
 			// Prepare message (size must be > to 1537 otherwise Mona wait for next characters!

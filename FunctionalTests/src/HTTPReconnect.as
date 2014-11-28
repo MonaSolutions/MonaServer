@@ -21,7 +21,7 @@ package
 		
 		public function HTTPReconnect(app:FunctionalTests, host:String, url:String)
 		{
-			super(app, "HTTPReconnect", "connect and reconnect in app and child app");
+			super(app, "HTTPReconnect", "Connect and reconnect in app and child app");
 			_host=host;
 			_url=url;
 		}

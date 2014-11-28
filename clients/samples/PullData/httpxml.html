@@ -1,0 +1,28 @@
+<html>
+<head>
+  <title>HTTP XML Client Test</title>
+  <script type="text/javascript">
+    function sendMessage() {
+      var xmlhttp = new XMLHttpRequest();
+      xmlhttp.open('POST', "", true);
+      
+      // Manage the response
+      xmlhttp.onreadystatechange = function () {
+        if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+            var xml = xmlhttp.response;
+            alert(xml);
+        }
+      }
+      // Send the POST request
+      xmlhttp.setRequestHeader('Content-Type', 'text/xml');
+      xmlhttp.send('<?xml version="1.0"?><methodCall>' +
+                    '<methodName>onMethod</methodName><params>' +
+                    '<param><value><string>http XML-RPC msg</string></value></param>' +
+                    '</params></methodCall>');
+    }
+  </script>
+</head>
+<body>
+    <input type="button" value="Send" onclick="sendMessage();" />
+</body>
+<html>

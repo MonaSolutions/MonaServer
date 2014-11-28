@@ -28,7 +28,7 @@ package
 		
 		public function DeserializationJSON(app:FunctionalTests,host:String, url:String)
 		{
-			super(app, "DeserializationJSON", "send JSON data and check received result");
+			super(app, "DeserializationJSON", "Send JSON data and check received result");
 			
 			_host = host;
 			_url = url;

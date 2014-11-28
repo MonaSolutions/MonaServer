@@ -29,6 +29,7 @@ namespace Events {
 	template<typename DecodedType>
 	struct OnDecoded : Event<void(DecodedType& decoded, const SocketAddress& address)> {};
 	struct OnDecodedEnd : Event<void()> {};
+	struct OnDecoding : Event<UInt32(Exception& ex, UInt8* data, UInt32 size)> {};
 };
 
 template<typename DecodedType>
@@ -37,16 +38,16 @@ class Decoder : public virtual Object,
 	public Events::OnDecodedEnd {
 
 public:
-	Decoder(Invoker& invoker, const char* name) : poolBuffers(invoker.poolBuffers), _name(name), _pThread(NULL), _poolThreads(invoker.poolThreads), _pDecoding(new Decoding<DecodedType>(invoker, name)),
+	Decoder(Invoker& invoker, const char* name) : poolBuffers(invoker.poolBuffers), _name(name), _pThread(NULL), _poolThreads(invoker.poolThreads), _pDecoding(new Decoding(invoker, name)),
 		onDecoding([this](Exception& ex, UInt8* data, UInt32 size) { return decoding(ex, data, size); }) {
 
 		_pDecoding->OnDecodedEnd::subscribe(*this);
 		_pDecoding->Events::OnDecoded<DecodedType>::subscribe(*this);
-		_pDecoding->OnDecoding::subscribe(onDecoding);
+		_pDecoding->Events::OnDecoding::subscribe(onDecoding);
 	}
 
 	virtual ~Decoder() {
-		_pDecoding->OnDecoding::unsubscribe(onDecoding);
+		_pDecoding->Events::OnDecoding::unsubscribe(onDecoding);
 		_pDecoding->Events::OnDecoded<DecodedType>::unsubscribe(*this);
 		_pDecoding->OnDecodedEnd::unsubscribe(*this);
 	}
@@ -78,11 +79,8 @@ private:
 	// return the rest
 	virtual UInt32 decoding(Exception& ex, UInt8* data,UInt32 size) = 0;
 
-	struct OnDecoding : Event<UInt32(Exception& ex, UInt8* data, UInt32 size)> {};
-
-	template<typename>
 	class Decoding : public WorkThread, private Task, public virtual Object,
-		public OnDecoding,
+		public Events::OnDecoding,
 		public Events::OnDecoded<DecodedType>,
 		public Events::OnDecodedEnd {
 	public:
@@ -218,11 +216,11 @@ private:
 		SocketAddress							_newAddress;
 	};
 
-	typename Decoding<DecodedType>::OnDecoding::Type		onDecoding;
-	typename Decoding<DecodedType>::OnDecoded::Type			onDecoded;
-	typename Decoding<DecodedType>::OnDecodedEnd::Type		onDecodeEnd;
+	typename Decoding::OnDecoding::Type		onDecoding;
+	typename Decoding::OnDecoded::Type			onDecoded;
+	typename Decoding::OnDecodedEnd::Type		onDecodeEnd;
 
-	const std::shared_ptr<Decoding<DecodedType>>	_pDecoding;
+	const std::shared_ptr<Decoding>	_pDecoding;
 
 	PoolThread*										_pThread;
 	PoolThreads&									_poolThreads;

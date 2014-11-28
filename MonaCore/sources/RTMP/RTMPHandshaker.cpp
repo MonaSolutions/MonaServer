@@ -108,7 +108,8 @@ bool RTMPHandshaker::compute(Exception& ex) {
 		}
 
 		//generate the digest
-		RTMP::WriteDigestAndKey(hmac,(UInt8*)_writer.data(),challengeKey,middle);
+		if (!RTMP::WriteDigestAndKey(ex, hmac,(UInt8*)_writer.data(),challengeKey,middle))
+			return false;
 	}
 
 	Session::DumpResponse(data(), size(), _address,true);

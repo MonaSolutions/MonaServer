@@ -14,7 +14,7 @@ package
 		private var _counter:int = 0;
 		
 		public function HTTPBadRequests(app:FunctionalTests,host:String) {
-			super(app, "HTTPBadRequests", "send 10 bad HTTP requests");
+			super(app, "HTTPBadRequests", "Send 10 bad HTTP requests");
 			_host = host;
 		}
 		

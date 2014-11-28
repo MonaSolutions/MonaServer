@@ -24,6 +24,7 @@ This file is a part of Mona.
 #include "Mona/AMF.h"
 #include "Mona/PoolBuffer.h"
 #include "Mona/Crypto.h"
+#include "Mona/Exceptions.h"
 #include <openssl/rc4.h>
 
 
@@ -52,7 +53,7 @@ public:
 	static UInt16			GetDigestPos(const UInt8* data,bool middle);
 	static UInt16			GetDHPos(const UInt8* data,bool middle);
 	static const UInt8*		ValidateClient(Crypto::HMAC& hmac,BinaryReader& reader,bool& middleKey);
-	static void				WriteDigestAndKey(Crypto::HMAC& hmac,UInt8* data,const UInt8* challengeKey,bool middleKey);
+	static bool				WriteDigestAndKey(Exception& ex, Crypto::HMAC& hmac,UInt8* data,const UInt8* challengeKey,bool middleKey);
 	static void				ComputeRC4Keys(Crypto::HMAC& hmac,const UInt8* pubKey,UInt32 pubKeySize,const UInt8* farPubKey,UInt32 farPubKeySize,const Buffer& sharedSecret,RC4_KEY& decryptKey,RC4_KEY& encryptKey);
 private:
 	static const UInt8*		ValidateClientScheme(Crypto::HMAC& hmac,BinaryReader& reader,bool middleKey);

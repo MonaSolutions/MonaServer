@@ -701,7 +701,24 @@ LUA extensions and files inclusion
 LUA_ can be extended easily, LUA_ extensions can be founded for all needs and on all operating systems. With LUA_ it is a common thing to add some new MonaServer abilities as SQL, TCP sockets, or others.
 Install your LUA_ extension library, and add a *require* line for your script. LUA_ will search the extension in some common location related with LUA_ folder installation.
 
-Now if you need to organize your code in different files for your server application, you can use *absolutePath(path)* helpful functions on *Mona* object (see *Objects* part of `Server Application, API <./api.html>`_ page for more details), in addition of *dofile* or *loadfile* LUA_ functions (see `this LUA page <http://www.lua.org/pil/8.html>`_).
+Now if you need to organize your code in different directories for your server application, we have extended the LUA_ functions *require*, *dofile* and *loadfile* (see `this LUA page <http://www.lua.org/pil/8.html>`_) to allow inclusion through relative paths.
+Search begin in the directory of the application itself and recursively in each parents applications. And finally, if the file cannot be found in this way it search in the common locations of LUA_.
+So you can include your scripts like this :
+
+.. code-block:: lua
+
+  local module = require("module.lua")
+  require("init.lua")
+
+  function onStart(path)
+    dofile("start.lua")
+  end
+  function onConnection(client,...)
+    local file = loadfile("connection.lua")
+    pcall(file)
+  end
+
+Or you can always use *mona:absolutePath(path)* function (see *Objects* part of `Server Application, API <./api.html>`_ page for more details) if you want to use the absolute path of the file :
 
 .. code-block:: lua
 
