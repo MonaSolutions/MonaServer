@@ -189,9 +189,11 @@ size_t Util::UnpackUrl(const char* url, string& address, string& path, string& q
 		else {
 			if (*it == '+')
 				path += ' ';
-			else if (*it == '%')
-				it = DecodeURI(it,path);
-			else
+			else if (*it == '%') {
+				it = DecodeURI(it, path);
+				if (*it)
+					path += *it;
+			} else
 				path += *it;
 			++it;
 			if (!isFile)
@@ -223,9 +225,11 @@ size_t Util::UnpackQuery(const char* query, const ForEachParameter& forEach) {
 		while (*itEnd && *itEnd != '=' && *itEnd != '&') {
 			if (*itEnd == '+')
 				name += ' ';
-			else if (*itEnd == '%')
-				itEnd = DecodeURI(itEnd,name);
-			else
+			else if (*itEnd == '%') {
+				itEnd = DecodeURI(itEnd, name);
+				if (*itEnd)
+					name += *itEnd;
+			} else
 				name += *itEnd;
 			++itEnd;
 		};
@@ -239,9 +243,11 @@ size_t Util::UnpackQuery(const char* query, const ForEachParameter& forEach) {
 			while (*itEnd && *itEnd != '&') {
 				if (*itEnd == '+')
 					value += ' ';
-				else if (*itEnd == '%')
+				else if (*itEnd == '%') {
 					itEnd = DecodeURI(itEnd,value);
-				else
+					if (*itEnd)
+						name += *itEnd;
+				} else
 					value += *itEnd;
 				++itEnd;
 			};

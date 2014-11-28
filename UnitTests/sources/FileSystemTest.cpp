@@ -17,11 +17,9 @@ details (or else see http://www.gnu.org/licenses/).
 This file is a part of Mona.
 */
 
-#if defined(_WIN32)
-    #include "windows.h"
-#endif
 #include "Test.h"
 #include "Mona/FileSystem.h"
+#include <fstream>
 
 using namespace std;
 using namespace Mona;
@@ -45,20 +43,19 @@ ADD_TEST(FileSystemTest, Resolution) {
 	CHECK(FileSystem::Unpack(Path, directories).back() == ".MonaFileSystemTest");
 
 	directories.emplace_back("SubFolder");
-	directories.emplace_back("Folder");
+	directories.emplace_back("Folder/");
 
-	CHECK(FileSystem::Pack(directories,Path2).compare(Path.size(),Path2.size()-Path.size(),"/SubFolder/Folder")==0);
+	CHECK(FileSystem::Pack(directories,Path2).compare(Path.size(),Path2.size()-Path.size(),"/SubFolder/Folder/")==0);
 }
 
 ADD_TEST(FileSystemTest, Creation) {
 	Exception ex;
 	FileSystem::CreateDirectories(ex,Path2);
 	CHECK(!ex);
-	CHECK(!FileSystem::Exists(Path2));
-	CHECK(FileSystem::Exists(Path2, true));
+	CHECK(FileSystem::Exists(Path2));
 
 	CHECK(FileSystem::Remove(ex,Path,true) && !ex);
-	CHECK(!FileSystem::Exists(Path,true));
+	CHECK(!FileSystem::Exists(Path));
 
 	CHECK(FileSystem::CreateDirectory(Path));
 	CHECK(FileSystem::MakeDirectory(Path).back() == '/');
@@ -69,9 +66,9 @@ ADD_TEST(FileSystemTest, Creation) {
 	Path2.assign(Path);
 	Path2.append("s/");
 	if (FileSystem::Exists(Path2))
-		CHECK(FileSystem::Remove(ex,Path2) && !ex);
+		CHECK(FileSystem::Remove(ex,Path2,true) && !ex);
 	CHECK(FileSystem::Rename(Path, Path2));
-	CHECK(!FileSystem::Exists(Path,true));
+	CHECK(!FileSystem::Exists(Path));
 	CHECK(FileSystem::Exists(Path2));
 	CHECK(FileSystem::MakeFile(Path2).back() == 's');
 }
@@ -93,22 +90,35 @@ ADD_TEST(FileSystemTest, Properties) {
 ADD_TEST(FileSystemTest, Utf8) {
 	Exception ex;
 #if defined(WIN32)
-	wstring test(L"Приве́т नमस्ते שָׁלוֹם");
-	char file[_MAX_PATH];
-	WideCharToMultiByte(CP_UTF8, 0, test.c_str(), -1, file, _MAX_PATH, NULL, NULL);
+	String::Format(Path, Home, L"Приве́т नमस्ते שָׁלוֹם");
 #else
-	string file("Приве́т नमस्ते שָׁלוֹם");
+	String::Format(Path, Home, "Приве́т नमस्ते שָׁלוֹם");
 #endif
-	String::Format(Path, Home, file);
+	
+	// file
+#if defined(WIN32)
+	wchar_t wFile[_MAX_PATH];
+	MultiByteToWideChar(CP_UTF8, 0, Path.c_str(), -1, wFile, _MAX_PATH);
+	ofstream(wFile).close();
+#else
+	ofstream(Path.c_str()).close();
+#endif
+	CHECK(FileSystem::Exists(Path))
+	CHECK(FileSystem::Remove(ex, Path) && !ex);
+	CHECK(!FileSystem::Exists(Path))
 
-	if (FileSystem::Exists(Path, true))
+	// folder
+	Path.append("/");
+	if (FileSystem::Exists(Path))
 		CHECK(FileSystem::Remove(ex, Path) && !ex);
 	CHECK(FileSystem::CreateDirectory(Path));
+	CHECK(FileSystem::Exists(Path))
 	CHECK(FileSystem::Remove(ex, Path) && !ex);
+	CHECK(!FileSystem::Exists(Path))
 }
 
 ADD_TEST(FileSystemTest, Deletion) {
 	Exception ex;
-	CHECK(FileSystem::Remove(ex,Path2) && !ex);
+	CHECK(FileSystem::Remove(ex,Path2,true) && !ex);
 }
 

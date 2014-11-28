@@ -24,6 +24,7 @@ This file is a part of Mona.
 #include "Mona/MapParameters.h"
 #include "Mona/Path.h"
 #include "Mona/DataWriter.h"
+#include "Mona/DataReader.h"
 
 namespace Mona {
 
@@ -144,7 +145,8 @@ public:
 		CONNECTION_ABSENT = 0,
 		CONNECTION_CLOSE = 1,
 		CONNECTION_UPGRADE = 2,
-		CONNECTION_KEEPALIVE = 4
+		CONNECTION_KEEPALIVE = 4,
+		CONNECTION_UPDATE = 8
 	};
 
 	enum SortOrder {
@@ -170,6 +172,7 @@ public:
 
 	static void			WriteDirectoryEntries(BinaryWriter& writer, const std::string& serverAddress, const std::string& fullPath, const std::string& path, SortField sortField = SORT_BY_NAME, SortOrder sortOrder = SORT_ASC);
 
+	static UInt32		WriteSetCookie(DataReader& reader,Buffer& buffer,Parameters& keyValue);
 private:
 	static void			WriteDirectoryEntry(BinaryWriter& writer, const std::string& serverAddress,const std::string& path,const Path& entry);
 };

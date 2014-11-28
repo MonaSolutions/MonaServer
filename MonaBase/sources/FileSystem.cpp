@@ -79,18 +79,14 @@ FileSystem::Attributes& FileSystem::GetAttributes(Exception& ex,const char* path
 	return attributes;
 }
 
-bool FileSystem::Exists(const char* path, bool any) {
+bool FileSystem::Exists(const char* path) {
 	Status status;
 	string file(path);
 	size_t oldSize(file.size());
 	if (!Stat(MakeFile(file), status))
 		return false;
-	if (any)
-		return true;
 	// if existing test was on folder
-	if (oldSize > file.size())
-		return status.st_mode&S_IFDIR ? true : false;
-	return status.st_mode&S_IFDIR ? false : true;
+	return status.st_mode&S_IFDIR ? oldSize>file.size() : oldSize==file.size();
 }
 
 void FileSystem::CreateDirectories(Exception& ex,const string& path) {
@@ -128,26 +124,37 @@ bool FileSystem::CreateDirectory(const char* path) {
 #endif
 }
 
-bool FileSystem::Remove(Exception& ex,const string& path,bool all) {
-	if (all) {
+bool FileSystem::Remove(Exception& ex,const char* path,bool all) {
+	bool isFolder(IsFolder(path));
+	if (all && isFolder) {
 		FileSystem::ForEach forEach([&ex](const string& filePath){
 			Remove(ex, filePath, true);
 		});
 		Exception ignore;
-		Paths(ignore, path, forEach); // if exception it's a file or a not existent folder
+		Paths(ignore, path, forEach); // if exception it's a not existent folder
 	}
-
-	if (!Exists(path, true))
-		return !ex;
-	if (remove(path.c_str()) == 0)
-		return !ex;
+	if (!Exists(path))
+		return !ex;; // already removed!
 #if defined(_WIN32)
-	wchar_t wFile[_MAX_PATH];
-	MultiByteToWideChar(CP_UTF8, 0, path.c_str(), -1, wFile, _MAX_PATH);
-	if (RemoveDirectoryW(wFile) != 0)
-		return !ex;
+	if (isFolder) {
+		wchar_t wFile[_MAX_PATH];
+		MultiByteToWideChar(CP_UTF8, 0, path, -1, wFile, _MAX_PATH);
+		if (RemoveDirectoryW(wFile)==0)
+			ex.set(Exception::FILE, "Impossible to remove folder ", path);
+	} else {
+		wchar_t wFile[_MAX_PATH];
+		MultiByteToWideChar(CP_UTF8, 0, path, -1, wFile, _MAX_PATH);
+		if(_wremove(wFile) != 0)
+			ex.set(Exception::FILE, "Impossible to remove file ", path);
+	}
+	return !ex;
 #endif
-	ex.set(Exception::FILE, "Impossible to remove ", path);
+	if (remove(path) == 0)
+		return !ex;
+	if (isFolder)
+		ex.set(Exception::FILE, "Impossible to remove folder ", path);
+	else
+		ex.set(Exception::FILE, "Impossible to remove file ", path);
 	return false;
 }
 
@@ -156,6 +163,8 @@ UInt32 FileSystem::Paths(Exception& ex, const char* path, const ForEach& forEach
 	string directory(path);
 	FileSystem::MakeDirectory(directory);
 	UInt32 count(0);
+	string pathFile;
+
 #if defined(_WIN32)
 	directory.append("*");
 
@@ -173,11 +182,11 @@ UInt32 FileSystem::Paths(Exception& ex, const char* path, const ForEach& forEach
 	}
 	do {
 		if (wcscmp(fileData.cFileName, L".") != 0 && wcscmp(fileData.cFileName, L"..") != 0) {
-			char file[_MAX_FNAME];
-			WideCharToMultiByte(CP_UTF8, 0, fileData.cFileName, -1, file, _MAX_FNAME, NULL, NULL);
-			string pathFile(path);
 			++count;
-			forEach(String::Append(MakeDirectory(pathFile), file));	
+			String::Append(MakeDirectory(pathFile.assign(path)), fileData.cFileName);
+			if (fileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+				pathFile.append("/");
+			forEach(pathFile);
 		}
 	} while (FindNextFileW(fileHandle, &fileData) != 0);
 	FindClose(fileHandle);
@@ -190,9 +199,11 @@ UInt32 FileSystem::Paths(Exception& ex, const char* path, const ForEach& forEach
 	struct dirent* pEntry(NULL);
 	while(pEntry = readdir(pDirectory)) {
 		if (strcmp(pEntry->d_name, ".")!=0 && strcmp(pEntry->d_name, "..")!=0) {
-			string pathFile(directory);
 			++count;
-			forEach(String::Append(pathFile, pEntry->d_name));
+			String::Append(pathFile.assign(directory), pEntry->d_name);
+			if(pEntry->d_type==DT_DIR)
+				pathFile.append("/");
+			forEach(pathFile);
 		}
 	}
 	closedir(pDirectory);
@@ -204,10 +215,24 @@ Time& FileSystem::GetLastModified(Exception& ex, const char* path, Time& time) {
 	Status status;
 	status.st_mtime = time/1000;
 	string file(path);
-	if (Stat(MakeFile(file).c_str(), status) != 0)
+	size_t oldSize(file.size());
+	if (Stat(MakeFile(file).c_str(), status) != 0) {
 		ex.set(Exception::FILE, "Path ", path, " doesn't exist");
-	else
-		time.update(status.st_mtime*1000ll);
+		return time;
+	}
+	
+	if (status.st_mode&S_IFDIR) {
+		 // if path is file
+		if (oldSize==file.size()) {
+			ex.set(Exception::FILE, "File ", path, " doesn't exist");
+			return time;
+		}
+	} else if (oldSize>file.size()) {
+		 // if path is folder
+		ex.set(Exception::FILE, "Folder ", path, " doesn't exist");
+		return time;
+	}
+	time.update(status.st_mtime*1000ll);
 	return time;
 }
 
@@ -226,49 +251,35 @@ UInt32 FileSystem::GetSize(Exception& ex,const char* path) {
 	return (UInt32)status.st_size;
 }
 
-string& FileSystem::GetName(const char* path, string& value) {
-	value.assign(path);
-	auto separator = value.find_last_of("/\\");
+string& FileSystem::GetName(string& path) {
+	MakeFile(path);
+	auto separator = path.find_last_of("/\\");
 	if (separator != string::npos)
-		value.erase(0, separator + 1);
-	return value;
+		path.erase(0, separator + 1);
+	return path;
 }
 
-const char* FileSystem::GetName(const char* path) {
-	const char* separator(strrpbrk(path, "/\\"));
-	if (!separator)
-		return path; // path is the name
-	return separator+1;
-}
 
-string& FileSystem::GetBaseName(const char* path, string& value) {
-	value.assign(path);
-	auto dot = value.find_last_of('.');
-	auto separator = value.find_last_of("/\\");
+string& FileSystem::GetBaseName(string& path) {
+	MakeFile(path);
+	auto dot = path.find_last_of('.');
+	auto separator = path.find_last_of("/\\");
 	if (dot != string::npos && (separator == string::npos || dot > separator))
-		value.resize(dot);
+		path.resize(dot);
 	if (separator != string::npos)
-		value.erase(0, separator + 1);
-	return value;
+		path.erase(0, separator + 1);
+	return path;
 }
 
 
-string& FileSystem::GetExtension(const char* path, string& value) {
-	value.assign(path);
-	auto dot = value.find_last_of('.');
-	auto separator = value.find_last_of("/\\");
+string& FileSystem::GetExtension(string& path) {
+	MakeFile(path);
+	auto dot = path.find_last_of('.');
+	auto separator = path.find_last_of("/\\");
 	if (dot != string::npos && (separator == string::npos || dot > separator))
-		return value.erase(0, dot + 1);
-	value.clear();
-	return value;
-}
-
-const char* FileSystem::GetExtension(const char* path) {
-	const char* dot(strrpbrk(path, "."));
-	const char* separator(strrpbrk(path, "/\\"));
-	if (dot && (separator || dot > separator))
-		return dot + 1;
-	return NULL;
+		return path.erase(0, dot + 1);
+	path.clear();
+	return path;
 }
 
 string& FileSystem::MakeFile(string& path) {
@@ -282,6 +293,8 @@ string& FileSystem::GetParent(string& path) {
 	auto separator = MakeFile(path).find_last_of("/\\");
 	if (separator != string::npos)
 		path.erase(separator+1); // keep the "/" (= folder!)
+	else
+		path.assign(".");
 	return path;
 }
 

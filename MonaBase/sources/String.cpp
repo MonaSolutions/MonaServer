@@ -22,6 +22,10 @@ This file is a part of Mona.
 #include <limits>
 #include <cctype>
 
+#if defined(_WIN32)
+    #include "windows.h"
+#endif
+
 using namespace std;
 
 namespace Mona {
@@ -198,6 +202,12 @@ Type String::ToNumber(Exception& ex, Type failValue, const char* value, size_t s
 	return (Type)result;
 }
 
+#if defined(WIN32)
+const char* String::ToUTF8(const wchar_t* value,char buffer[_MAX_PATH]) {
+	WideCharToMultiByte(CP_UTF8, 0, value, -1, buffer, _MAX_PATH, NULL, NULL);
+	return buffer;
+}
+#endif
 
 template float String::ToNumber(Exception& ex, float failValue, const char* value, size_t size);
 template bool  String::ToNumber(const char* value, size_t size, float& result);

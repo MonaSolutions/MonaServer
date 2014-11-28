@@ -36,6 +36,8 @@ public:
 	HTTPSession(const SocketAddress& peerAddress, SocketFile& file, Protocol& protocol, Invoker& invoker);
 	
 private:
+	const char*		cookie(const char* key);
+
 	void			kill(UInt32 type=NORMAL_DEATH);
 	void			manage();
 
@@ -44,11 +46,11 @@ private:
 
 	/// \brief Send the Option response
 	/// Note: It is called when processMove is used before a SOAP request
-	void			processOptions(Exception& ex,const HTTPSendingInfos& infos);
+	void			processOptions(Exception& ex,const HTTPPacket& request);
 
 	/// \brief Process GET & HEAD commands
 	/// Search for a method or a file whitch correspond to the _filePath
-	void			processGet(Exception& ex, HTTPPacket& packet, QueryReader& parameters);
+	void			processGet(Exception& ex, HTTPPacket& request, QueryReader& parameters);
 
 
 	HTTPDecoder::OnDecoded::Type	onDecoded;

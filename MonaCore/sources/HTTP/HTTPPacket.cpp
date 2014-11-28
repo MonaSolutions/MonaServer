@@ -26,15 +26,15 @@ using namespace std;
 namespace Mona {
 
 
-HTTPPacket::HTTPPacket(const string& rootPath) : filePath(rootPath),_data(NULL), _size(0),
+HTTPPacket::HTTPPacket(const string& rootPath) : accessControlRequestMethod(0), accessControlRequestHeaders(NULL),
+	filePath(rootPath), _data(NULL), _size(0),
 	content(NULL),
 	contentLength(0),
 	contentType(HTTP::CONTENT_ABSENT),
 	command(HTTP::COMMAND_UNKNOWN),
 	version(0),
 	connection(HTTP::CONNECTION_ABSENT),
-	ifModifiedSince(0),
-	rawSerialization(false) {
+	ifModifiedSince(0) {
 
 }
 
@@ -58,11 +58,11 @@ void HTTPPacket::parseHeader(Exception& ex,const char* key, const char* value) {
 	} else if (String::ICompare(key,"if-modified-since")==0) {
 		ifModifiedSince.update(ex,value,Date::HTTP_FORMAT);
 	} else if (String::ICompare(key,"access-control-request-headers")==0) {
-		sendingInfos().accessControlRequestHeaders.assign(value);
+		accessControlRequestHeaders = value;
 	} else if (String::ICompare(key,"access-control-request-method")==0) {
 
 		String::ForEach forEach([this,&ex](UInt32 index,const char* value){
-			sendingInfos().accessControlRequestMethod |= HTTP::ParseCommand(ex,value);
+			accessControlRequestMethod |= HTTP::ParseCommand(ex,value);
 			return true;
 		});
 		String::Split(value, ",", forEach, String::SPLIT_IGNORE_EMPTY | String::SPLIT_TRIM);
@@ -80,7 +80,7 @@ void HTTPPacket::parseHeader(Exception& ex,const char* key, const char* value) {
 					++value;
 				} while (value && (isblank(*value) || *value == '='));
 			}
-			cookies[key].assign(value);
+			cookies[key] = value;
 			return true;
 		});
 		String::Split(value, ";", forEach, String::SPLIT_IGNORE_EMPTY | String::SPLIT_TRIM);
@@ -124,11 +124,12 @@ UInt32 HTTPPacket::build(Exception& ex,UInt8* data,UInt32 size) {
 
 			if (memcmp(current, EXPAND("\r\n")) == 0) {
 				current += 2;
-				if (ex)
-					return current - data;
 				content = current;
+				current += contentLength;
+				if (ex || current > (end+4))
+					break; // wait next
 				_data = data;
-				return _size = current + contentLength - data;
+				return _size = current - data;
 			}
 
 			++current; // here no continue, the "\r\n" check is not required again

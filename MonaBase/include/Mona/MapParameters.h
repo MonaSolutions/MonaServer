@@ -38,8 +38,8 @@ public:
 private:
 	UInt32				iteration(const char* prefix, const ForEach& function) const;
 	void				clearAll() { _map.clear(); }
-	const std::string*  getRaw(const char* key) const { auto it = _map.find(key); return it == _map.end() ? NULL : &it->second; }
-	const std::string*	setRaw(const char* key, const char* value, UInt32 size);
+	const char*		    getRaw(const char* key) const { auto it = _map.find(key); return it == _map.end() ? NULL : it->second.c_str(); }
+	UInt32				setRaw(const char* key, const char* value, UInt32 size);
 
 	std::map<std::string,std::string>	_map;
 };

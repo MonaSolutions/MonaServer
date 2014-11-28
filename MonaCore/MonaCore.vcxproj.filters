@@ -199,12 +199,6 @@
     <ClInclude Include="include\Mona\SplitWriter.h">
       <Filter>Serializers</Filter>
     </ClInclude>
-    <ClInclude Include="include\Mona\ArrayWriter.h">
-      <Filter>Serializers</Filter>
-    </ClInclude>
-    <ClInclude Include="include\Mona\ArrayReader.h">
-      <Filter>Serializers</Filter>
-    </ClInclude>
     <ClInclude Include="include\Mona\ParameterWriter.h">
       <Filter>Serializers</Filter>
     </ClInclude>

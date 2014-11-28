@@ -45,7 +45,7 @@ public:
 
 	enum SplitOption {
 		SPLIT_IGNORE_EMPTY = 1, /// ignore empty tokens
-		SPLIT_TRIM = 2  /// remove leading and trailing whitespace from tokens
+		SPLIT_TRIM = 2,  /// remove leading and trailing whitespace from tokens
 	};
 
 	enum TrimOption {
@@ -102,11 +102,27 @@ public:
 	}
 
 	
-	/// \brief match "char*" case
+	/// \brief match "const char*" case
 	template <typename BufferType, typename ...Args>
 	static BufferType& Append(BufferType& result, const char* value, Args&&... args) {
 		return String::Append(Buffer::Append<BufferType>(result,value, strlen(value)), args ...);
 	}
+
+#if defined(WIN32)
+	/// \brief match "wstring" case
+	template <typename BufferType, typename ...Args>
+	static BufferType& Append(BufferType& result, const std::wstring& value, Args&&... args) {
+		return String::Append(value.c_str(), args ...);
+	}
+	
+	/// \brief match "const wchar_t*" case
+	template <typename BufferType, typename ...Args>
+	static BufferType& Append(BufferType& result, const wchar_t* value, Args&&... args) {
+		char buffer[_MAX_PATH];
+		ToUTF8(value, buffer);
+		return String::Append(Buffer::Append<BufferType>(result,buffer, strlen(buffer)), args ...);
+	}
+#endif
 
 	// match le "char" cas
 	template <typename BufferType, typename ...Args>
@@ -248,7 +264,9 @@ private:
 	template <typename BufferType>
 	static BufferType& Append(BufferType& result) { return result; }
 
-
+#if defined(WIN32)
+	static const char* ToUTF8(const wchar_t* value, char buffer[_MAX_PATH]);
+#endif
 };
 
 

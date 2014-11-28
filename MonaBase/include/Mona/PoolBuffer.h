@@ -25,11 +25,12 @@ This file is a part of Mona.
 
 namespace Mona {
 
-class PoolBuffer : public virtual Object, public Binary {
+class PoolBuffer : virtual public NullableObject, public Binary {
 public:
 	PoolBuffer(const PoolBuffers& poolBuffers,UInt32 size=0) : _size(size),poolBuffers(poolBuffers),_pBuffer(NULL) {}
 	virtual ~PoolBuffer() { release(); }
 
+	operator bool() const { return !_pBuffer;  }
 	bool			empty() const { return !_pBuffer || _pBuffer->size()==0; }
 	const UInt8*	data() const { return _pBuffer ? _pBuffer->data() : NULL; }
 	UInt32			size() const { return _pBuffer ? _pBuffer->size() : 0; }

@@ -53,17 +53,19 @@ ADD_TEST(PathTest, CommonWin32) {
 	CHECK(!file4.isFolder());
 	CHECK(file4.name()=="file.test");
 
-	Path directory1("C:/Users/Public");
-	CHECK(directory1()=="C:/Users/Public");
-	CHECK(directory1.baseName()=="Public");
-	CHECK(directory1.extension()=="");
-	CHECK(directory1.name()=="Public");
+	Path file5("C:/Users/Public");
+	CHECK(file5()=="C:/Users/Public");
+	CHECK(!file5.isFolder());
+	CHECK(file5.baseName()=="Public");
+	CHECK(file5.extension()=="");
+	CHECK(file5.name()=="Public");
 
-	Path directory2("C:/Users/Public/");
-	CHECK(directory2()=="C:/Users/Public/");
-	CHECK(directory2.baseName()=="");
-	CHECK(directory2.extension()=="");
-	CHECK(directory2.name()=="");
+	Path directory("C:/Users/Public/");
+	CHECK(directory()=="C:/Users/Public/");
+	CHECK(directory.isFolder());
+	CHECK(directory.baseName()=="Public");
+	CHECK(directory.extension()=="");
+	CHECK(directory.name()=="Public");
 }
 
 ADD_TEST(PathTest, CommonLinux) {

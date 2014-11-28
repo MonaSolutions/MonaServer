@@ -44,10 +44,17 @@ UInt32 MapParameters::iteration(const char* prefix, const ForEach& function) con
 	return count;
 }
 
-const string* MapParameters::setRaw(const char* key, const char* value, UInt32 size) {
-	if (!value)
-		return _map.erase(key)>0 ? &String::Empty : NULL;
-	return &_map[key].assign(value, size);
+UInt32 MapParameters::setRaw(const char* key, const char* value, UInt32 size) {
+	if (!value) {
+		auto it(_map.find(key));
+		if (it == _map.end())
+			return 0;
+		size = it->second.size();
+		_map.erase(it);
+		return size;
+	}
+	_map[key].assign(value, size);
+	return size;
 }
 
 

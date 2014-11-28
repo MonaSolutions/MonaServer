@@ -35,29 +35,29 @@ namespace Mona {
 
 class HTTPSender : public TCPSender, public virtual Object {
 public:
-	HTTPSender(const SocketAddress& address,HTTPPacket& request,const PoolBuffers& poolBuffers,const std::string& relativePath);
+	HTTPSender(const SocketAddress& address,HTTPPacket& request,const PoolBuffers& poolBuffers,const std::string& relativePath, PoolBuffer& pSetCookieBuffer);
 
-	bool			written() const { return _written; }
+	bool			newHeaders() const { return _newHeaders; }
 
 	// if data==NULL and size==1 means "live stream" (no content-length), if data==NULL and size>1 it will use a StringWriter (raw serialization)
-	DataWriter&		writer(const std::string& code, HTTP::ContentType type, const char* subType,const UInt8* data,UInt32 size);
-	void			writeFile(const Path& file, DataReader& parameters);
-
-	const UInt8*	data() const { return _pWriter ? _pWriter->packet.data() : NULL; }
-	UInt32			size() const { return _pWriter ? _pWriter->packet.size() : 0; }
-
-	BinaryWriter&	writeRaw(const PoolBuffers& poolBuffers);
+	DataWriter&		write(const char* code, HTTP::ContentType type = HTTP::CONTENT_TEXT, const char* subType = "html", const UInt8* data=NULL,UInt32 size=0);
+	DataWriter&		writeResponse(const char* code="200 OK",bool rawWithoutLength=false);
+	void			writeFile(const Path& file, const std::shared_ptr<Parameters>& pParameters);
+	BinaryWriter&	writeRaw();
 
 	void writeError(const std::string& error,int code) {
 		writeError(code, error);
 		_connection = HTTP::CONNECTION_CLOSE;
 	}
 
+	const UInt8*	data() const { return _pWriter ? _pWriter->packet.data() : NULL; }
+	UInt32			size() const { return _pWriter ? _pWriter->packet.size() : 0; }
+
 private:
 	template <typename ...Args>
 	void writeError(int code, Args&&... args) {
 		std::string title;
-		PacketWriter& writer(write(String::Format(title, code, " ", HTTP::CodeToMessage(code))).packet);
+		PacketWriter& writer(write(String::Format(title, code, " ", HTTP::CodeToMessage(code)).c_str()).packet);
 		HTML_BEGIN_COMMON_RESPONSE(writer, title)
 			UInt32 size(writer.size());
 			String::Append(writer,args ...);
@@ -68,34 +68,32 @@ private:
 
 	bool			run(Exception& ex);
 
-	DataWriter&		write(const std::string& code, HTTP::ContentType type = HTTP::CONTENT_TEXT, const char* subType = "html") { return writer(code, type, subType, NULL, 0); }
-
 	/// \brief  Write content file and replace the "<% key %>" field 
 	/// by relating parameters[key]
-	void			replaceTemplateTags(PacketWriter& packet, std::ifstream& ifile, const Parameters& parameters, UInt32 sizeParameters);
+	void			replaceTemplateTags(PacketWriter& packet, std::ifstream& ifile, const Parameters& parameters);
 
 
 	/*! SocketSender override to disconnect socket if _connection == HTTP::CONNECTION_CLOSE */
 	void			onSent(Socket& socket);
 
+	// just for next writeResponse operation
+	const HTTPPacket&					_request;
 
-	const PoolBuffers&						_poolBuffers;
-	Path									_file;
-	const std::string						_appPath; // Relative path of the application
-	const std::shared_ptr<HTTPSendingInfos> _pInfos;
-	UInt8									_connection;
-	HTTP::CommandType						_command;
-	Date									_ifModifiedSince;
-	std::string								_serverAddress;
-	std::string								_origin;
-	UInt32									_sizePos;
-	std::unique_ptr<DataWriter>				_pWriter;
-	std::string								_buffer;
-	SocketAddress							_address;
-	bool									_written;
-
-	HTTP::SortOrder							_sortOrder;
-	HTTP::SortField							_sortField;
+	PoolBuffer							_pSetCookieBuffer;
+	const PoolBuffers&					_poolBuffers;
+	Path								_file;
+	std::shared_ptr<Parameters>			_pFileParams;
+	const std::string					_appPath; // Relative path of the application
+	UInt8								_connection;
+	HTTP::CommandType					_command;
+	Date								_ifModifiedSince;
+	std::string							_serverAddress;
+	std::string							_origin;
+	UInt32								_sizePos;
+	std::unique_ptr<DataWriter>			_pWriter;
+	std::string							_buffer;
+	SocketAddress						_address;
+	bool								_newHeaders;
 };
 
 

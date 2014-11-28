@@ -19,8 +19,6 @@ This file is a part of Mona.
 
 #include "LUAClient.h"
 #include "Mona/Peer.h"
-#include "Mona/ArrayReader.h"
-#include "Mona/ArrayWriter.h"
 #include "Mona/Util.h"
 #include "ScriptReader.h"
 #include "ScriptWriter.h"
@@ -34,11 +32,9 @@ using namespace Mona;
 
 int LUAClient::Item(lua_State *pState) {
 	SCRIPT_CALLBACK(Client,client)
-		vector<string> items;
-		ArrayWriter<vector<string>> array(items);
-		SCRIPT_READ_NEXT(ScriptReader(pState, SCRIPT_READ_AVAILABLE).read(array));
+		ScriptReader reader(pState, SCRIPT_READ_AVAILABLE);
 		ScriptWriter writer(pState);
-		ArrayReader<vector<string>>(client.properties(items)).read(writer);
+		SCRIPT_READ_NEXT(client.properties(reader,writer));
 	SCRIPT_CALLBACK_RETURN
 }
 

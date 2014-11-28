@@ -25,7 +25,7 @@ using namespace std;
 
 namespace Mona {
 
-HTTPWriter::HTTPWriter(TCPSession& session) : _session(session),_pThread(NULL),Writer(session.peer.connected ? OPENED : OPENING) {
+HTTPWriter::HTTPWriter(TCPSession& session) : _pSetCookieBuffer(session.invoker.poolBuffers),_requestCount(0),_requesting(false),_session(session),_pThread(NULL),Writer(session.peer.connected ? OPENED : OPENING) {
 }
 
 void HTTPWriter::close(const Exception& ex) {
@@ -49,76 +49,103 @@ void HTTPWriter::close(Int32 code) {
 	if (code < 0)
 		return; // listener!
 	HTTPSender* pSender;
-	if (code > 0 && (pSender=createSender()))
+	if (code > 0 && (pSender=createSender(true)))
 		pSender->writeError(_lastError,code);
 	else
 		_session.kill(code); // kill just if no message is send
 	Writer::close(code);
 }
 
-HTTPSender* HTTPWriter::createSender() {
-	if (_pRequest) {
-		_pSender.reset(new HTTPSender(_session.peer.address,*_pRequest,_session.invoker.poolBuffers,_session.peer.path));
-		_pRequest.reset();
-		return &*_pSender;
-	}
-	if (_pFirstRequest) {
-		_pushSenders.emplace_back(new HTTPSender(_session.peer.address,*_pFirstRequest,_session.invoker.poolBuffers,_session.peer.path));
-		return &*_pushSenders.back();
-	}
-	return NULL;
+void HTTPWriter::beginRequest(const shared_ptr<HTTPPacket>& pRequest) {
+	++_requestCount;
+	_pRequest = pRequest;
+	_pLastRequest = pRequest;
+	_requesting = true;
 }
 
-void HTTPWriter::flush(bool withPush) {
+void HTTPWriter::endRequest() {
+	_requesting = false;
+	flush();
+}
+
+HTTPSender* HTTPWriter::createSender(bool isInternResponse) {
+	if(state()==CLOSED)
+		return NULL;
+	if (isInternResponse) {
+		if (!_pRequest)
+			return NULL;
+		if (_pResponse)
+			ERROR("HTTP Response already written")
+		_pResponse.reset(new HTTPSender(_session.peer.address, *_pRequest, _session.invoker.poolBuffers, _session.peer.path,_pSetCookieBuffer));
+		return &*_pResponse;
+	}
+	if (!_pRequest && !_pLastRequest) {
+		ERROR("No HTTP request to answer")
+		return NULL;
+	}
+	_senders.emplace_back(new HTTPSender(_session.peer.address,_pRequest ? *_pRequest : *_pLastRequest,_session.invoker.poolBuffers,_session.peer.path,_pSetCookieBuffer));
+	return &*_senders.back();
+}
+
+void HTTPWriter::flush() {
+
+	if (_requesting || !_requestCount) // during request wait the response, otherwise if no request no flush
+		return;
+
+	// send just one!
 	Exception ex;
-	if (_pSender) {
-		_pThread = _session.send<HTTPSender>(ex, qos(),_pSender,_pThread);
+	if (_pResponse) {
+		if (_pResponse->newHeaders())
+			--_requestCount;
+		_pThread = _session.send<HTTPSender>(ex, qos(),_pResponse,_pThread);
 		if (ex)
 			ERROR("HTTPSender flush, ", ex.error())
-		_pSender.reset();
-	} else {
-		bool one(false);
-		while (!_pushSenders.empty()) {
-			const shared_ptr<HTTPSender>& pSender(_pushSenders.front());
-			if (one && pSender->written())
-				break; // just one response by request!
-			_pThread = _session.send<HTTPSender>(ex, qos(),pSender,_pThread);
-			if (ex)
-				ERROR("Pushing HTTPSender flush, ", ex.error())
-			if (pSender->written())
-				one=true;
-			_pushSenders.pop_front();
-		}
+		_pResponse.reset();
 	}
-}
-
-void HTTPWriter::writeFile(const Path& file, DataReader& parameters) {
-	HTTPSender* pSender(createSender());
-	if (!pSender) {
-		ERROR("No HTTP request to send file ",file.name())
-		return;
+	while (_requestCount && !_senders.empty()) {
+		const shared_ptr<HTTPSender>& pSender(_senders.front());
+		if (pSender->newHeaders())
+			--_requestCount;
+		_pThread = _session.send<HTTPSender>(ex, qos(),pSender,_pThread);
+		if (ex)
+			ERROR("HTTPSender flush, ", ex.error())
+		_senders.pop_front();
 	}
-	return pSender->writeFile(file,parameters);
-}	
-
-
-DataWriter& HTTPWriter::write(const string& code, HTTP::ContentType type, const char* subType, const UInt8* data,UInt32 size) {
-	if(state()==CLOSED)
-        return DataWriter::Null;
-
-	HTTPSender* pSender(createSender());
-	if (!pSender) {
-		ERROR("No HTTP request to send this reply")
-		return DataWriter::Null;
-	}
-
-	return pSender->writer(code, type, subType, data, size);
+	if (_requestCount==0)
+		_pRequest.reset();
 }
 
 DataWriter& HTTPWriter::writeMessage() {
-	if (_pRequest && _pRequest->contentType != HTTP::CONTENT_ABSENT)
-		return write("200 OK", _pRequest->contentType, _pRequest->contentSubType.c_str(),NULL,_pRequest->rawSerialization ? 2 : 0);
-	return write("200 OK", HTTP::CONTENT_APPLICATON , "json");
+	HTTPSender* pSender(createSender(false));
+	if (!pSender)
+		return DataWriter::Null;
+	return pSender->writeResponse();
+}
+
+DataWriter& HTTPWriter::writeResponse(UInt8 type) {
+	HTTPSender* pSender(createSender(true));
+	if (!pSender)
+		return DataWriter::Null;
+	return pSender->writeResponse();
+}
+
+void HTTPWriter::writeFile(const Path& file, const shared_ptr<Parameters>& pParameters) {
+	HTTPSender* pSender(createSender(false));
+	if (pSender)
+		pSender->writeFile(file,pParameters);
+}	
+
+void HTTPWriter::writeRaw(const UInt8* data, UInt32 size) {
+	HTTPSender* pSender(createSender(false));
+	if (pSender)
+		pSender->write("200 OK", HTTP::CONTENT_TEXT,"plain",data,size); 
+}	
+
+DataWriter& HTTPWriter::writeRaw(const char* code) {
+	HTTPSender* pSender(createSender(true));
+	if (pSender)
+		return pSender->write(code, HTTP::CONTENT_ABSENT, NULL);
+	return DataWriter::Null;
 }
 
 bool HTTPWriter::writeMedia(MediaType type,UInt32 time,PacketReader& packet,const Parameters& properties) {
@@ -140,22 +167,23 @@ bool HTTPWriter::writeMedia(MediaType type,UInt32 time,PacketReader& packet,cons
 				_pMedia.reset(new MPEGTS());
 			else
 				ex.set(Exception::APPLICATION, "HTTP streaming for a ",_pRequest->contentSubType," unsupported");
+
 			if (ex) {
 				close(ex);
 				return false;
 			}
 			// write a HTTP header without content-length (data==NULL and size==1)
-			_pMedia->write(write("200", _pRequest->contentType, _pRequest->contentSubType.c_str(), NULL, 1).packet);
+			_pMedia->write(createSender(true)->writeResponse("200 OK",true).packet);
 			break;
 		}
 		case AUDIO:
 		case VIDEO: {
 			if (!_pMedia)
 				return false;
-			HTTPSender* pSender(createSender());
+			HTTPSender* pSender(createSender(false));
 			if (!pSender)
 				return false;
-			_pMedia->write(pSender->writeRaw(_session.invoker.poolBuffers),type,time,packet.current(), packet.available());
+			_pMedia->write(pSender->writeRaw(),type,time,packet.current(), packet.available());
 			break;
 		}
 		default:

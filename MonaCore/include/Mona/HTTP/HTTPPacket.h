@@ -25,16 +25,6 @@ This file is a part of Mona.
 
 namespace Mona {
 
-class HTTPSendingInfos : public virtual Object {
-public:
-	HTTPSendingInfos() : sizeParameters(0),accessControlRequestMethod(0) {}
-	std::vector<std::string>	setCookies; /// List of Set-cookie lines to add
-	MapParameters				parameters; // For onRead returned value (return file,parameters)
-	UInt32						sizeParameters;
-
-	UInt8						accessControlRequestMethod;
-	std::string					accessControlRequestHeaders;
-};
 
 class HTTPPacket : public virtual Object, public Binary {
 public:
@@ -52,7 +42,6 @@ public:
 	UInt32								contentLength;
 	HTTP::ContentType					contentType;
 	std::string							contentSubType;
-	bool								rawSerialization;
 
 	HTTP::CommandType			command;
 	std::string					path;
@@ -65,19 +54,18 @@ public:
 	UInt8						connection;
 	std::string					upgrade;
 	UInt8						cacheControl;
-	
+
 	Date						ifModifiedSince;
 
 	std::string					secWebsocketKey;
 	std::string					secWebsocketAccept;
 
-	std::map<std::string,std::string>	cookies; /// List of cookie key;value
+	UInt8						accessControlRequestMethod;
+	const char*					accessControlRequestHeaders;
+
+	std::map<std::string,const char*>	cookies; /// List of cookie key;value
 
 	UInt32						build(Exception& ex,UInt8* data,UInt32 size);
-
-	HTTPSendingInfos&					sendingInfos() { if (!_pSendingInfos) _pSendingInfos.reset(new HTTPSendingInfos()); return *_pSendingInfos; }
-	std::shared_ptr<HTTPSendingInfos>	pullSendingInfos() { return std::move(_pSendingInfos); }
-	
 
 	void parseHeader(Exception& ex,const char* key, const char* value);
 private:
@@ -90,9 +78,6 @@ private:
 		LEFT,
 		RIGHT
 	};
-
-	// For next HTTPSender
-	std::shared_ptr<HTTPSendingInfos>	_pSendingInfos;
 
 	const UInt8*		_data;
 	UInt32				_size;

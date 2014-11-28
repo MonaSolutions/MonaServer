@@ -314,6 +314,10 @@ int Service::LoadFile(lua_State *pState) {
 		SCRIPT_ERROR("loadfile must take a string argument")
 		return 0;
 	}
+	if (FileSystem::IsFolder(name)) {
+		SCRIPT_ERROR("loadfile can't load a folder")
+		return 0;
+	}
 
 	if (!FileSystem::IsAbsolute(name)) {
 
@@ -363,8 +367,8 @@ int Service::ExecuteFile(lua_State *pState) {
 				SCRIPT_ERROR("require must take a string argument")
 				return 0;
 			}
-			const char* ext(FileSystem::GetExtension(name));
-			if (ext && String::ICompare(ext,"lua")==0)
+			string ext;
+			if (String::ICompare(FileSystem::GetExtension(name,ext),"lua")==0)
 				results = LoadFile(pState);
 		} else
 			results = LoadFile(pState);

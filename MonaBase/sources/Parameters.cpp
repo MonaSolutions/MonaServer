@@ -27,22 +27,22 @@ namespace Mona {
 
 
 bool Parameters::getString(const char* key, std::string& value) const {
-	const string* pTemp = getRaw(key);
-	if (!pTemp)
+	const char* temp = getRaw(key);
+	if (!temp)
 		return false;
-	value.assign(*pTemp);
+	value.assign(temp);
 	return true;
 }
 
 
 bool Parameters::getBool(const char* key, bool& value) const {
-	const string* pTemp = getRaw(key);
-	if (pTemp) {
-		if (pTemp->empty() || String::ICompare(*pTemp, "0") == 0 || String::ICompare(*pTemp, "false") == 0 || String::ICompare(*pTemp, "no") == 0 || String::ICompare(*pTemp, "off") == 0) {
+	const char* temp = getRaw(key);
+	if (temp) {
+		if (String::ICompare(temp, "0") == 0 || String::ICompare(temp, "false") == 0 || String::ICompare(temp, "no") == 0 || String::ICompare(temp, "off") == 0) {
 			value = false;
 			return true;
 		}
-		if (String::ICompare(*pTemp, "1") == 0 || String::ICompare(*pTemp, "true") == 0 || String::ICompare(*pTemp, "yes") == 0 || String::ICompare(*pTemp, "on") == 0) {
+		if (String::ICompare(temp, "1") == 0 || String::ICompare(temp, "true") == 0 || String::ICompare(temp, "yes") == 0 || String::ICompare(temp, "on") == 0) {
 			value = true;
 			return true;
 		}
@@ -51,9 +51,15 @@ bool Parameters::getBool(const char* key, bool& value) const {
 }
 
 void Parameters::setIntern(const char* key, const char* value, size_t size) {
-	const string* pChanged(setRaw(key, value, value && size == string::npos ? strlen(value) : size));
-	if (pChanged)
-		OnChange::raise(key,value ? pChanged->c_str() : NULL); // value==NULL means "deletion"
+	UInt32 bytes(setRaw(key, value, value && size == string::npos ? strlen(value) : size));
+	if (!bytes)
+		return;
+	if (key)
+		_bytes += bytes;
+	else
+		_bytes -= bytes;
+	if (bytes)
+		OnChange::raise(key,value); // value==NULL means "deletion"
 }
 
 

@@ -129,12 +129,11 @@ void Database::processEntry(Exception& ex,Entry& entry) {
 	}
 
 	// remove possible old value after writing (and possible folder inside directory)
-	Exception ignore;
-	FileSystem::ForEach forEach([&ignore, name, &file](const string& path){
+	FileSystem::ForEach forEach([&ex, name, &file](const string& path){
 		if (FileSystem::GetName(path, file) != name)
-			FileSystem::Remove(ignore, path, true);
+			FileSystem::Remove(ex, path, true);
 	});
-
+	Exception ignore;
 	FileSystem::Paths(ignore, directory, forEach);
 }
 
@@ -145,15 +144,16 @@ bool Database::loadDirectory(Exception& ex, const string& directory, const strin
 
 	FileSystem::ForEach forEach([&ex, this, &hasData, path, &loader](const string& filePath) {
 		/// directory
-		string dir(filePath);
-		const char* name(FileSystem::GetName(filePath));
-		if (FileSystem::Exists(FileSystem::MakeDirectory(dir))) {
-			hasData = loadDirectory(ex, dir, path + "/" + name, loader);
+
+		string name;
+		FileSystem::GetName(filePath, name);
+		if (FileSystem::IsFolder(filePath)) {
+			hasData = loadDirectory(ex, filePath, path + "/" + name, loader);
 			return;
 		}
 
 		/// file
-		if (strlen(name) != 32) {
+		if (name.size() != 32) {
 			// just erase the file
 			FileSystem::Remove(ex,filePath);
 			return;

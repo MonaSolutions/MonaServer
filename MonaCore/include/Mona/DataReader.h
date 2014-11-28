@@ -90,8 +90,9 @@ private:
 	class WrapperWriter : public DataWriter {
 	public:
 		UInt64	beginObject(const char* type) { return 0; }
-		void	endObject() {}
 		void	writePropertyName(const char* value) {}
+		void	endObject() {}
+		
 		UInt64	beginArray(UInt32 size) { return 0; }
 		void	endArray() {}
 
@@ -110,8 +111,9 @@ private:
 	public:
 		BytesWriter(BufferType& buffer) : _buffer(buffer), _position((UInt32)buffer.size()) {}
 		UInt64	beginObject(const char* type, UInt32 size) { return 0; }
+		void	writePropertyName(const char* value) {}
 		void	endObject() {}
-		void	writePropertyName(const char* value, UInt32 size) {}
+		
 		UInt64	beginArray(UInt32 size) { return 0; }
 		void	endArray() {}
 

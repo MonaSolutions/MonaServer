@@ -30,7 +30,7 @@ namespace Mona {
 class ParameterWriter : public DataWriter, public virtual Object {
 public:
 
-	ParameterWriter(Parameters& parameters) : _index(0),_parameters(parameters),_size(0),_isProperty(false) {}
+	ParameterWriter(Parameters& parameters) : _index(0),_parameters(parameters),_isProperty(false) {}
 	UInt64 beginObject(const char* type = NULL) { return 0; }
 	void   endObject() {}
 
@@ -46,11 +46,9 @@ public:
 	UInt64 writeDate(const Date& date) { writeNumber((double)date); return 0; }
 	UInt64 writeBytes(const UInt8* data, UInt32 size) { set(STR data, size); return 0; }
 
-	UInt32 size() const { return _size; }
 	UInt32 count() const { return _parameters.count(); }
 	
-
-	void   clear(UInt32 size=0) { _index = 0; _isProperty = false; _property.clear(); _size = 0; _parameters.clear(); }
+	void   clear(UInt32 size=0) { _index = 0; _isProperty = false; _property.clear(); _parameters.clear(); }
 private:
 
 	UInt32 size(const std::string& value) { return value.size(); }
@@ -62,7 +60,6 @@ private:
 		if (!_isProperty)
 			String::Format(_property, _index++);
 		_parameters.setString(_property,args ...);
-		_size += size(args ...);
 		_isProperty = false;
 		_property.clear();
 	}
@@ -72,7 +69,6 @@ private:
 	UInt32						_index;
 
 	Parameters&					_parameters;
-	UInt32						_size;
 };
 
 

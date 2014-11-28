@@ -24,12 +24,13 @@ This file is a part of Mona.
 #include "Mona/Entity.h"
 #include "Mona/Writer.h"
 #include "Mona/Parameters.h"
+#include "Mona/DataReader.h"
 #include <vector>
 
 namespace Mona {
 
 namespace Events {
-	struct OnCallProperties : Event<bool(std::vector<std::string>&)> {};
+	struct OnCallProperties : Event<UInt32(DataReader& reader,DataWriter& writer)> {};
 };
 
 class Client : public Entity, public virtual Object,
@@ -59,12 +60,20 @@ public:
 	const Time					lastReceptionTime;
 	virtual UInt16				ping() const = 0;
 	virtual const Parameters&	properties() const =0;
-	std::vector<std::string>&	properties(std::vector<std::string>& items) {
-		if (!OnCallProperties::subscribed() || !OnCallProperties::raise<false>(items)) {
-			for (std::string& item : items)
-				if (!properties().getString(item, item)) item.assign("null");
+	UInt32						properties(DataReader& reader,DataWriter& writer) {
+		UInt32 readen;
+		if (OnCallProperties::subscribed() && (readen = OnCallProperties::raise<0>(reader, writer)))
+			return readen;
+		readen = 0;
+		std::string value;
+		while (reader.readString(value)) {
+			++readen;
+			if (!properties().getString(value, value))
+				writer.writeNull();
+			else
+				writer.writeString(value.data(), value.size());
 		}
-		return items;
+		return readen;
 	}
 
 	virtual Writer&				writer() = 0;

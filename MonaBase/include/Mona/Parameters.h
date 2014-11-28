@@ -45,10 +45,10 @@ public:
 	bool getNumber(const std::string& key, NumberType& value) const { return getNumber<NumberType>(key.c_str(), value); }
 	template<typename NumberType>
 	bool getNumber(const char* key, NumberType& value) const {
-		const  std::string* pTemp = getRaw(key);
-		if (!pTemp)
+		const char* temp = getRaw(key);
+		if (!temp)
 			return false;
-		return String::ToNumber<NumberType>(*pTemp, value);
+		return String::ToNumber<NumberType>(temp, value);
 	}
 
 	/*! Return false if key doesn't exist or if it's not a boolean type, otherwise return true and assign boolean 'value' */
@@ -106,13 +106,14 @@ public:
 	UInt32  iterate(const char* prefix, const ForEach& function) const { return iteration(prefix, function);};
 	
 	
-	void clear() { clearAll(); OnClear::raise(); }
+	void clear() { clearAll(); _bytes = 0; OnClear::raise(); }
 
 	bool empty() const { return count() == 0; }
 	virtual UInt32 count() const = 0;
+	UInt32			bytes() const { return _bytes; };
 
 protected:
-	Parameters() {}
+	Parameters() : _bytes(0) {}
 
 private:
 	
@@ -121,9 +122,12 @@ private:
 	virtual UInt32 iteration(const char* prefix,const ForEach& function) const = 0;
 
 	virtual void clearAll() = 0;
-	virtual const std::string* getRaw(const char* key) const = 0;
+	virtual const char* getRaw(const char* key) const = 0;
 	// if value==NULL the property should be removed, return true if something has changed
-	virtual const std::string* setRaw(const char* key, const char* value, UInt32 size) = 0;
+	virtual UInt32 setRaw(const char* key, const char* value, UInt32 size) = 0;
+
+
+	UInt32	_bytes;
 };
 
 

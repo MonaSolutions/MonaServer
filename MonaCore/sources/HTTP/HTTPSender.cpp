@@ -21,7 +21,6 @@ This file is a part of Mona.
 #include "Mona/FileSystem.h"
 #include "Mona/StringWriter.h"
 #include "Mona/MIME.h"
-#include "Mona/ParameterWriter.h"
 #include "Mona/Logs.h"
 #include "Mona/HTTP/HTTPWriter.h"
 
@@ -34,22 +33,21 @@ namespace Mona {
 
 
 
-HTTPSender::HTTPSender(const SocketAddress& address, HTTPPacket& request,const PoolBuffers& poolBuffers, const string& relativePath) :
+HTTPSender::HTTPSender(const SocketAddress& address, HTTPPacket& request,const PoolBuffers& poolBuffers, const string& relativePath,PoolBuffer& pSetCookieBuffer) :
 	_serverAddress(request.serverAddress),
 	_origin(request.origin),
 	_ifModifiedSince(request.ifModifiedSince),
 	_connection(request.connection),
 	_command(request.command),
-	_pInfos(request.pullSendingInfos()),
 	_address(address),
 	_sizePos(0),
-	_sortField(HTTP::SORT_BY_NAME),
-	_sortOrder(HTTP::SORT_ASC),
 	_poolBuffers(poolBuffers),
 	_appPath(relativePath),
-	_written(false),
+	_newHeaders(false),
+	_request(request),
+	_pSetCookieBuffer(poolBuffers),
 	TCPSender("TCPSender") {
-
+	_pSetCookieBuffer.swap(pSetCookieBuffer);
 }
 
 void HTTPSender::onSent(Socket& socket) {
@@ -60,23 +58,6 @@ void HTTPSender::onSent(Socket& socket) {
 	socket.shutdown(ex,Socket::SEND);
 }
 
-void HTTPSender::writeFile(const Path& file, DataReader& parameters) {
-	_file = file;
-	if (file.isFolder()) {
-		string direction;
-		MapParameters properties;
-		ParameterWriter parameterWriter(properties);
-		parameters.read(parameterWriter);
-		if (properties.getString("N", direction))
-			_sortField = HTTP::SORT_BY_NAME;
-		else if (properties.getString("M", direction))
-			_sortField = HTTP::SORT_BY_MODIFIED;
-		else if (properties.getString("S", direction))
-			_sortField = HTTP::SORT_BY_SIZE;
-		if (direction == "D")
-			_sortOrder = HTTP::SORT_DESC;
-	}
-}
 
 bool HTTPSender::run(Exception& ex) {
 
@@ -112,7 +93,21 @@ bool HTTPSender::run(Exception& ex) {
 				HTTP_ADD_HEADER("Last-Modified", date.toString(Date::HTTP_FORMAT, _buffer))
 			HTTP_END_HEADER
 
-			HTTP::WriteDirectoryEntries(writer, _serverAddress, _file.toString(), _appPath, _sortField, _sortOrder);
+			HTTP::SortOrder		sortOrder(HTTP::SORT_ASC);
+			HTTP::SortField		sortField(HTTP::SORT_BY_NAME);
+
+			if (_pFileParams) {
+				if (_pFileParams->getString("N", _buffer))
+					sortField = HTTP::SORT_BY_NAME;
+				else if (_pFileParams->getString("M", _buffer))
+					sortField = HTTP::SORT_BY_MODIFIED;
+				else if (_pFileParams->getString("S", _buffer))
+					sortField = HTTP::SORT_BY_SIZE;
+				if (_buffer == "D")
+					sortOrder = HTTP::SORT_DESC;
+			}
+
+			HTTP::WriteDirectoryEntries(writer, _serverAddress, _file.toString(), _appPath, sortField, sortOrder);
 		} else {
 			/// File
 #if defined(_WIN32)
@@ -129,14 +124,14 @@ bool HTTPSender::run(Exception& ex) {
 				string subType;
 				HTTP::ContentType type = HTTP::ExtensionToMIMEType(_file.extension(), subType);	
 
-				PacketWriter& response(writer("200 OK", type, subType.c_str(), NULL, 2).packet); // 2 to impose a raw serialization
+				PacketWriter& response(write("200 OK", type, subType.c_str(), NULL, 2).packet); // 2 to impose a raw serialization
 				HTTP_BEGIN_HEADER(response)
 					HTTP_ADD_HEADER("Last-Modified", date.toString(Date::HTTP_FORMAT, _buffer))
 				HTTP_END_HEADER
 
 				// TODO see if filter is correct
-				if (type == HTTP::CONTENT_TEXT && _pInfos && _pInfos->parameters.count())
-					replaceTemplateTags(response, ifile, _pInfos->parameters, _pInfos->sizeParameters);
+				if (type == HTTP::CONTENT_TEXT && _pFileParams->count())
+					replaceTemplateTags(response, ifile, *_pFileParams);
 				else {
 
 					// push the entire file content to memory
@@ -185,13 +180,26 @@ bool HTTPSender::run(Exception& ex) {
 	return TCPSender::run(ex);
 }
 
-DataWriter& HTTPSender::writer(const string& code, HTTP::ContentType type, const char* subType, const UInt8* data, UInt32 size) {
+
+void HTTPSender::writeFile(const Path& file, const shared_ptr<Parameters>& pParameters) {
+	_newHeaders = true;
+	_file = file;
+	_pFileParams = pParameters;
+}
+
+DataWriter& HTTPSender::writeResponse(const char* code, bool rawWithoutLength) {
+	if (_request.contentType == HTTP::CONTENT_ABSENT)
+		return write(code, HTTP::CONTENT_APPLICATON, "json", NULL, rawWithoutLength ? 1 : 0);
+	return write(code, _request.contentType, _request.contentSubType.c_str(), NULL, rawWithoutLength ? 1 : (MIME::DataType(_request.contentSubType.c_str())==MIME::UNKNOWN  ? 2 : 0));
+}
+
+DataWriter& HTTPSender::write(const char* code, HTTP::ContentType type, const char* subType, const UInt8* data, UInt32 size) {
 	if (_pWriter) {
 		ERROR("HTTP response already written");
 		return DataWriter::Null;
 	}
 
-	_written = true;
+	_newHeaders = true;
 
 	if (type == HTTP::CONTENT_ABSENT || data || size || !subType || !MIME::CreateDataWriter(MIME::DataType(subType), _poolBuffers, _pWriter))
 		_pWriter.reset(new StringWriter(_poolBuffers));
@@ -231,10 +239,8 @@ DataWriter& HTTPSender::writer(const string& code, HTTP::ContentType type, const
 		packet.write(EXPAND("\r\nAccess-Control-Allow-Origin: ")).write(_origin);
 
 	// Set Cookies
-	if (_pInfos) {
-		for(const string& cookie : _pInfos->setCookies)
-			packet.write(EXPAND("\r\nSet-Cookie: ")).write(cookie);
-	}
+	if (_pSetCookieBuffer)
+		packet.write(*_pSetCookieBuffer);
 
 	// Content Type
 	if (type == HTTP::CONTENT_ABSENT)
@@ -266,16 +272,16 @@ DataWriter& HTTPSender::writer(const string& code, HTTP::ContentType type, const
 	return *_pWriter;
 }
 
-BinaryWriter& HTTPSender::writeRaw(const PoolBuffers& poolBuffers) {
+BinaryWriter& HTTPSender::writeRaw() {
 	if (_pWriter) {
 		ERROR("HTTP response already written");
 		return DataWriter::Null.packet;
 	}
-	_pWriter.reset(new StringWriter(poolBuffers));
+	_pWriter.reset(new StringWriter(_poolBuffers));
 	return _pWriter->packet;
 }
 
-void HTTPSender::replaceTemplateTags(PacketWriter& packet, ifstream& ifile, const Parameters& parameters, UInt32 sizeParameters) {
+void HTTPSender::replaceTemplateTags(PacketWriter& packet, ifstream& ifile, const Parameters& parameters) {
 
 	UInt32 pos = packet.size();
 	// get file content size
@@ -283,7 +289,7 @@ void HTTPSender::replaceTemplateTags(PacketWriter& packet, ifstream& ifile, cons
 
 	// push the entire file content to memory
 	ifile.seekg(0);
-	char* current = (char*)packet.buffer(size+sizeParameters); // reserve more memory to change <%name%> field
+	char* current = (char*)packet.buffer(size+parameters.bytes()); // reserve more memory to change <%name%> field
 	ifile.read(current, size);
 	// iterate on content to replace "<% key %>" fields
 	const char* begin = current;

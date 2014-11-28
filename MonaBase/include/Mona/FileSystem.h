@@ -44,8 +44,8 @@ public:
 	static UInt32	Paths(Exception& ex, const char* path, const ForEach& forEach);
 
 	/// In giving a path with /, it tests one folder existance, otherwise file existance (test windows device without / => C:)
-	static bool			Exists(const std::string& path, bool any = false) { return Exists(path.c_str(), any); }
-	static bool			Exists(const char* path, bool any = false);
+	static bool			Exists(const std::string& path) { return Exists(path.c_str()); }
+	static bool			Exists(const char* path);
 	static bool			IsAbsolute(const std::string& path);
 	static bool			IsAbsolute(const char* path);
 	static bool			IsFolder(const std::string& path);
@@ -54,30 +54,33 @@ public:
 	static Attributes&	GetAttributes(Exception& ex, const std::string& path, Attributes& attributes) { return GetAttributes(ex,path.data(),attributes); }
 	static Attributes&	GetAttributes(Exception& ex, const char* path, Attributes& attributes);
 
-	static std::string& GetName(const char* path, std::string& value);
-	static std::string& GetName(const std::string& path, std::string& value) { return GetName(path.c_str(), value); }
-	static const char*	GetName(const char* path);
-	static const char*	GetName(const std::string& path) { return GetName(path.c_str()); }
+	static std::string& GetName(const char* path, std::string& value) { return GetName(value.assign(path)); }
+	static std::string& GetName(const std::string& path, std::string& value) { return GetName(value.assign(path)); }
+	static std::string& GetName(std::string& path);
 
-	static std::string& GetBaseName(const char* path, std::string& value);
-	static std::string& GetBaseName(const std::string& path, std::string& value)  { return GetBaseName(path.c_str(), value); }
+	static std::string& GetBaseName(const char* path, std::string& value) { return GetBaseName(value.assign(path)); }
+	static std::string& GetBaseName(const std::string& path, std::string& value) { return GetBaseName(value.assign(path)); }
+	static std::string& GetBaseName(std::string& path);
 
-	static std::string& GetExtension(const char* path,std::string& value);
-	static std::string& GetExtension(const std::string& path,std::string& value)  { return GetExtension(path.c_str(), value); }
-	static const char*  GetExtension(const char* path);
-	static const char*  GetExtension(const std::string& path)  { return GetExtension(path.c_str()); }
+	static std::string& GetExtension(const char* path,std::string& value) { return GetExtension(value.assign(path)); }
+	static std::string& GetExtension(const std::string& path,std::string& value) { return GetExtension(value.assign(path)); }
+	static std::string& GetExtension(std::string& path);
 
 	static UInt32		GetSize(Exception& ex,const char* path);
 	static UInt32		GetSize(Exception& ex, const std::string& path) { return GetSize(ex, path); }
 	static Time&		GetLastModified(Exception& ex,const std::string& path, Time& time) { return GetLastModified(ex, path.c_str(),time); }
 	static Time&		GetLastModified(Exception& ex, const char* path, Time& time);
+	
+	static std::string&	GetParent(const char* path, std::string& value)  { return GetParent(value.assign(path)); }
+	static std::string&	GetParent(std::string& path, std::string& value)  { return GetParent(value.assign(path)); }
 	static std::string&	GetParent(std::string& path);
 
 	static bool			GetCurrentApplication(std::string& path);
 	static bool			GetCurrent(std::string& path);
 	static bool			GetHome(std::string& path);
 
-	static bool			Remove(Exception& ex,const std::string& path,bool all=false);
+	static bool			Remove(Exception& ex, const std::string& path, bool all = false) { return Remove(ex, path.c_str(), all); }
+	static bool			Remove(Exception& ex, const char* path, bool all = false);
 	static bool			Rename(const std::string& fromPath, const std::string& toPath) { return rename(fromPath.c_str(), toPath.c_str()) == 0; }
 	static bool			CreateDirectory(const std::string& path) { return CreateDirectory(path.c_str()); }
 	static bool			CreateDirectory(const char* path);

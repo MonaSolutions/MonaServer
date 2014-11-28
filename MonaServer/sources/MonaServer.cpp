@@ -319,9 +319,9 @@ void MonaServer::onDataLoading(const string& path, const UInt8* value, UInt32 si
 		}
 	}
 
-	const char* key(FileSystem::GetName(path));
+	string key;
 	string newPath(path);
-	if (strlen(key)==0)
+	if (FileSystem::GetName(path,key).empty())
 		key = "|data";
 	else
 		FileSystem::GetParent(newPath);
@@ -348,7 +348,7 @@ void MonaServer::onDataLoading(const string& path, const UInt8* value, UInt32 si
 
 	// set value
 	Script::PushValue(_pState,value,size);
-	lua_setfield(_pState, -2, key);
+	lua_setfield(_pState, -2, key.c_str());
 	lua_pop(_pState, 1); // remove table
 }
 

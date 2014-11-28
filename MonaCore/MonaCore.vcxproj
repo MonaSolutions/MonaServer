@@ -113,7 +113,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\Mona\ArrayReader.h" />
     <ClInclude Include="include\Mona\Client.h" />
     <ClInclude Include="include\Mona\Decoder.h" />
     <ClInclude Include="include\Mona\FlashMainStream.h" />
@@ -141,7 +140,6 @@
     <ClInclude Include="include\Mona\StringWriter.h" />
     <ClInclude Include="include\Mona\TCProtocol.h" />
     <ClInclude Include="include\Mona\UDProtocol.h" />
-    <ClInclude Include="include\Mona\ArrayWriter.h" />
     <ClInclude Include="include\Mona\WebSocket\WSDecoder.h" />
     <ClInclude Include="include\Mona\Writer.h" />
     <ClInclude Include="include\Mona\Protocol.h" />

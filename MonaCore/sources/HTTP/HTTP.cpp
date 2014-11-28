@@ -225,6 +225,8 @@ UInt8 HTTP::ParseConnection(Exception& ex,const char* value) {
 			type |= CONNECTION_KEEPALIVE;
 		else if (String::ICompare(field, "close") == 0)
 			type |= CONNECTION_CLOSE;
+		else if (String::ICompare(field, "update") == 0)
+			type |= CONNECTION_UPDATE;
 		else
 			ex.set(Exception::PROTOCOL, "Unknown HTTP type connection ", field);
 		return true;
@@ -360,6 +362,115 @@ void HTTP::WriteDirectoryEntry(BinaryWriter& writer,const string& serverAddress,
 		.write(entry.name()).write(entry.isFolder() ? "/" : "").write(EXPAND("</a></td><td>&nbsp;"))
 		.write(Date(entry.lastModified()).toString("%d-%b-%Y %H:%M", date)).write(EXPAND("</td><td align=right>&nbsp;&nbsp;"))
 		.write(size).write(EXPAND("</td></tr>\n"));
+}
+
+class SetCookieWriter : public DataWriter {
+public:
+	SetCookieWriter(Buffer& buffer,Parameters& keyValue) : _keyValue(keyValue),_option(NO),_buffer(buffer) {
+		String::Append(_buffer,"\r\nSet-Cookie: ");
+	}
+
+	UInt64	beginObject(const char* type=NULL) { return 0; }
+	void	endObject() {}
+	UInt64	beginArray(UInt32 size) { return 0; }
+	void	endArray() {}
+
+	void	writePropertyName(const char* value) {
+		if (String::ICompare("domain", value) == 0) {
+			_option = DOM;
+		} else if (String::ICompare("path", value) == 0) {
+			_option = PATH;
+		} else if (String::ICompare("expires", value) == 0) {
+			_option = EXPIRES;
+		} else if (String::ICompare("secure", value) == 0) {
+			_option = SECURE;
+		} else if (String::ICompare("httponly", value) == 0) {
+			_option = HTTPONLY;
+		} else {
+			_option = VALUE;
+			_key.assign(value);
+		}
+	}
+
+	UInt64	writeDate(const Date& date) {
+		if ((_option <= 2 || date) && writeHeader()) {
+			string buffer;
+			writeContent<String>(date.toString(Date::RFC1123_FORMAT, buffer));
+		}
+		_option = NO;
+		return 0;
+	}
+	void	writeBoolean(bool value) {
+		if ((_option <= 2 || value) && writeHeader())
+			writeContent<String>(value ? "true" : "false");
+		_option = NO;
+	}
+	void	writeNull() {
+		if (_option <= 2 && writeHeader())
+			writeContent<String>("null");
+		_option = NO;
+	}
+	UInt64	writeBytes(const UInt8* data, UInt32 size) { writeString((const char*)data, size); return 0; }
+	void	writeString(const char* value, UInt32 size) {
+		if ((_option <= 2 || (String::ICompare(value, "false", size) != 0 && String::ICompare(value, "no", size) != 0 && String::ICompare(value, "0", size) != 0 && String::ICompare(value, "off", size) != 0 && String::ICompare(value, "null", size) != 0))&& writeHeader())
+			writeContent<String>(_buffer,value, size);
+		_option = NO;
+	}
+	void	writeNumber(double value) {
+		if ((_option <= 2 || value) && writeHeader()) {
+			if (_option == EXPIRES) {
+				string date;
+				writeContent<String>(Date(Time::Now()+(Int64)(value*1000),Date::GMT).toString(Date::RFC1123_FORMAT, date));
+			} else
+				writeContent<String>(value);
+		}
+		_option = NO;
+	}
+
+private:
+
+	bool writeHeader() {
+		static const vector<const char*> Patterns({ "; Domain=", "; Path=", "; Expires=", "; Secure", "; HttpOnly" });
+		if (_option >= 0) {
+			String::Append(_buffer,Patterns[_option]);
+		} else {
+			String::Append(_buffer, "; ");
+			if (_option == VALUE)
+				String::Append(_buffer, _key, "=");
+		}
+		return _option<=2;
+	}
+
+	template <typename BufferClass, typename ...Args>
+	void writeContent(Args&&... args) {
+		UInt32 before = _buffer.size();
+		BufferClass::Append(_buffer,args ...);
+		if (_option == VALUE)
+			_keyValue.setString(_key,STR _buffer.data()+before,_buffer.size()-before);
+	}
+	
+	enum Option {
+		NO = -2,
+		VALUE=-1,
+		DOM = 0,
+		PATH = 1,
+		EXPIRES = 2,
+		SECURE = 3,
+		HTTPONLY = 4
+	};
+
+	Buffer&		 _buffer;
+	string		 _key;
+	Parameters& _keyValue;
+	Option		 _option;
+};
+
+
+UInt32 HTTP::WriteSetCookie(DataReader& reader,Buffer& buffer,Parameters& keyValue) {
+	if (reader.nextType() < DataReader::OTHER)
+		return 0;
+	SetCookieWriter writer(buffer,keyValue);
+	return reader.read(writer);
 }
 
 
