@@ -14,7 +14,7 @@ package
 		private var _url:String;
 	
 		private var _countSuccess:uint = 0;
-		private const NB_LOAD_TESTS:int = 1000;
+		private const NB_LOAD_TESTS:int = 100;
 	
 		public function RTMPLoad(app:FunctionalTests, host:String, url:String)
 		{
@@ -33,7 +33,7 @@ package
 
 			var connection:NetConnection = new NetConnection();
 			connection.addEventListener(NetStatusEvent.NET_STATUS, onStatus);
-			connection.connect("rtmpe://" + _host + _url);
+			connection.connect("rtmp://" + _host + _url);
 			
 		}
 
@@ -49,7 +49,7 @@ package
 					
 					var connection:NetConnection = new NetConnection();
 					connection.addEventListener(NetStatusEvent.NET_STATUS, onStatus);
-					connection.connect("rtmpe://" + _host + _url);
+					connection.connect("rtmp://" + _host + _url);
 					
 					
 					break;
