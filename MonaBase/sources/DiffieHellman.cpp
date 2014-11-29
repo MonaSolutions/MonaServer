@@ -65,7 +65,7 @@ bool DiffieHellman::initialize(Exception& ex,bool reset) {
 
 	//3. initialize p, g and key length
 	BN_set_word(_pDH->g, 2); //group DH 2
-	BN_bin2bn(DH1024p,DH_KEY_SIZE,_pDH->p); //prime number
+	BN_bin2bn(DH1024p,SIZE,_pDH->p); //prime number
 
 	//4. Generate private and public key
 	if (!DH_generate_key(_pDH)) {
@@ -81,11 +81,11 @@ Buffer& DiffieHellman::computeSecret(Exception& ex, const UInt8* farPubKey, UInt
 	if (!initialize(ex))
 		return sharedSecret;
 	BIGNUM *bnFarPubKey = BN_bin2bn(farPubKey,farPubKeySize,NULL);
-	sharedSecret.resize(DH_KEY_SIZE,false);
+	sharedSecret.resize(SIZE,false);
 	int size = DH_compute_key(sharedSecret.data(), bnFarPubKey, _pDH);
 	if (size <= 0)
 		ex.set(Exception::MATH, "Diffie Hellman exchange failed, DH compute key error");
-	else if(size!=DH_KEY_SIZE)
+	else if(size!=SIZE)
 		sharedSecret.resize(size,true);
 	BN_free(bnFarPubKey);
 	return sharedSecret;

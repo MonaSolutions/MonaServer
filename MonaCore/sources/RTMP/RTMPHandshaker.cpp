@@ -32,9 +32,7 @@ RTMPHandshaker::RTMPHandshaker(const SocketAddress& address,PoolBuffer& pBuffer)
 }
 
 bool RTMPHandshaker::compute(Exception& ex) {
-	BinaryReader packet(_pBuffer->data(),_pBuffer->size());
-
-	UInt8 handshakeType = packet.read8();
+	UInt8 handshakeType(*_pBuffer->data());
 	if(handshakeType!=3 && handshakeType!=6) {
 		ex.set(Exception::PROTOCOL,"RTMP Handshake type '",handshakeType,"' unknown");
 		return false;
@@ -43,9 +41,10 @@ bool RTMPHandshaker::compute(Exception& ex) {
 	Crypto::HMAC hmac;
 	bool encrypted(handshakeType == 6);
 	bool middle;
-	const UInt8* challengeKey = RTMP::ValidateClient(hmac,packet,middle); // size = HMAC_KEY_SIZE
+	UInt32 keySize;
+	const UInt8* key = RTMP::ValidateClient(hmac,_pBuffer->data(),_pBuffer->size(),middle,keySize); // size = HMAC_KEY_SIZE
 
-	if (!challengeKey) {
+	if (!key) {
 		if (encrypted) {
 			ex.set(Exception::PROTOCOL,"Unable to validate client");
 			return false;
@@ -57,7 +56,7 @@ bool RTMPHandshaker::compute(Exception& ex) {
 		//generate random data
 		_writer.writeRandom(1536);
 		// write data
-		_writer.write(packet.current(),packet.available());
+		_writer.write(_pBuffer->data()+1,_pBuffer->size()-1);
 	} else {
 
 		/// Complexe Handshake ///
@@ -66,9 +65,6 @@ bool RTMPHandshaker::compute(Exception& ex) {
 			pDecryptKey.reset(new RC4_KEY);
 			pEncryptKey.reset(new RC4_KEY);
 		}
-		packet.reset();
-
-		const UInt8* farPubKey = packet.current() + RTMP::GetDHPos(packet.current(), middle); // size = DH_KEY_SIZE
 
 		// encrypted flag
 		_writer.write8(encrypted ? 6 : 3);
@@ -84,8 +80,12 @@ bool RTMPHandshaker::compute(Exception& ex) {
 
 		if (encrypted) {
 
+			UInt32 farPubKeySize;
+			const UInt8* farPubKey = _pBuffer->data() + RTMP::GetDHPos(_pBuffer->data(),_pBuffer->size(), middle,farPubKeySize);
+
 			//compute DH key position
-			UInt32 serverDHPos = RTMP::GetDHPos(_writer.data(), middle);
+			UInt32 serverDHSize;
+			UInt32 serverDHPos = RTMP::GetDHPos(_writer.data(), _writer.size(), middle, serverDHSize);
 
 			PoolBuffer pSecret(_pBuffer.poolBuffers);
 			//generate DH key
@@ -94,21 +94,15 @@ bool RTMPHandshaker::compute(Exception& ex) {
 			do {
 				if (ex || !dh.initialize(ex, true))
 					return false;
-				dh.computeSecret(ex, farPubKey,DH_KEY_SIZE, *pSecret);
-			} while (!ex && (pSecret->size() != DH_KEY_SIZE || dh.privateKeySize(ex) != DH_KEY_SIZE || (publicKeySize=dh.publicKeySize(ex)) != DH_KEY_SIZE));
-		
+				dh.computeSecret(ex, farPubKey,farPubKeySize, *pSecret);
+			} while (!ex && (pSecret->size() != DiffieHellman::SIZE || dh.privateKeySize(ex) != DiffieHellman::SIZE || (publicKeySize=dh.publicKeySize(ex)) != DiffieHellman::SIZE));
 			if (ex)
 				return false;
-
-			dh.readPublicKey(ex,(UInt8*)_writer.data() + serverDHPos);
-			if (ex)
-				return false;
-
-			RTMP::ComputeRC4Keys(hmac,_writer.data() + serverDHPos, publicKeySize, farPubKey, DH_KEY_SIZE, *pSecret, *pDecryptKey, *pEncryptKey);
+			RTMP::ComputeRC4Keys(hmac,dh.readPublicKey(ex, _writer.data() + serverDHPos), DiffieHellman::SIZE, farPubKey, farPubKeySize, *pSecret, *pDecryptKey, *pEncryptKey);
 		}
 
 		//generate the digest
-		if (!RTMP::WriteDigestAndKey(ex, hmac,(UInt8*)_writer.data(),challengeKey,middle))
+		if (!RTMP::WriteDigestAndKey(ex, hmac, key, keySize, middle, _writer.data(), _writer.size()))
 			return false;
 	}
 

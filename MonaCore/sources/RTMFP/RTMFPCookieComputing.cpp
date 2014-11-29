@@ -21,6 +21,7 @@ This file is a part of Mona.
 #include "Mona/RTMFP/RTMFPHandshake.h"
 #include "Mona/Util.h"
 #include "Mona/Logs.h"
+#include "Mona/Crypto.h"
 
 using namespace std;
 
@@ -59,7 +60,7 @@ bool RTMFPCookieComputing::run(Exception& ex) {
 	packet.write7BitLongValue(size+11);
 	UInt32 noncePos = packet.size();
 	packet.write(EXPAND("\x03\x1A\x00\x00\x02\x1E\x00"));
-	UInt8 byte2 = DH_KEY_SIZE-size;
+	UInt8 byte2 = DiffieHellman::SIZE-size;
 	if(byte2>2) {
 		CRITIC("Generation DH key with less of 126 bytes!");
 		byte2=2;
@@ -74,8 +75,8 @@ bool RTMFPCookieComputing::run(Exception& ex) {
 	packet.write8(0x58);
 
 	// Compute Keys
-	UInt8 encryptKey[HMAC_KEY_SIZE];
-	UInt8 decryptKey[HMAC_KEY_SIZE];
+	UInt8 encryptKey[Crypto::HMAC::SIZE];
+	UInt8 decryptKey[Crypto::HMAC::SIZE];
 	RTMFP::ComputeAsymetricKeys(_sharedSecret,initiatorNonce.data(),initiatorNonce.size(),packet.data()+noncePos,size+11,decryptKey,encryptKey);
 	pDecoder.reset(new RTMFPEngine(decryptKey,RTMFPEngine::DECRYPT));
 	pEncoder.reset(new RTMFPEngine(encryptKey,RTMFPEngine::ENCRYPT));

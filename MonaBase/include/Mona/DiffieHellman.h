@@ -28,19 +28,22 @@ This file is a part of Mona.
 
 namespace Mona {
 
-#define DH_KEY_SIZE				0x80
-
 class DiffieHellman : public virtual Object {
 public:
+	enum { SIZE = 0x80 };
+
 	DiffieHellman();
 	virtual ~DiffieHellman();
 
 	bool	initialized() { return _pDH != NULL; }
 	bool	initialize(Exception& ex,bool reset=false);
+
 	int		publicKeySize(Exception& ex) { if (!initialize(ex)) return -1; return BN_num_bytes(_pDH->pub_key); }
-	int		privateKeySize(Exception& ex) { if (!initialize(ex)) return -1;  return BN_num_bytes(_pDH->priv_key); }
 	UInt8*	readPublicKey(Exception& ex, UInt8* pubKey) { if (!initialize(ex)) return NULL; readKey(_pDH->pub_key, pubKey); return pubKey; }
+
+	int		privateKeySize(Exception& ex) { if (!initialize(ex)) return -1;  return BN_num_bytes(_pDH->priv_key); }
 	UInt8*	readPrivateKey(Exception& ex, UInt8* privKey) { if (!initialize(ex)) return NULL;  readKey(_pDH->priv_key, privKey); return privKey; }
+
 	Buffer&	computeSecret(Exception& ex, const UInt8* farPubKey, UInt32 farPubKeySize, Buffer& sharedSecret);
 
 private:

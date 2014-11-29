@@ -20,6 +20,7 @@ This file is a part of Mona.
 #include "Mona/RTMP/RTMP.h"
 #include "Mona/Util.h"
 #include "Mona/Logs.h"
+#include "Mona/DiffieHellman.h"
 
 
 
@@ -47,89 +48,94 @@ const UInt8 FMSKey[] = {
 
 UInt8	 AlignData[1536];
 
-UInt16 RTMP::GetDigestPos(const UInt8* data, bool middle) {
+UInt32 RTMP::GetDigestPos(const UInt8* data,UInt32 size,bool middle, UInt32& length) {
+	if (size<1504) {
+		length = 0;
+		return size;
+	}
 	UInt16 pos = 13;
 	if(middle)
 		pos += 764;
 	pos += ((data[pos-4] + data[pos-3] + data[pos-2] + data[pos-1])%728);
-	if (pos > 1505)
-		pos = 0;
-	return pos;
+	length = size-pos;
+	if (length > Crypto::HMAC::SIZE)
+		length = Crypto::HMAC::SIZE;
+	return pos; // maximum pos=1504
 }
 
-UInt16 RTMP::GetDHPos(const UInt8* data,bool middle) {
+UInt32 RTMP::GetDHPos(const UInt8* data,UInt32 size,bool middle, UInt32& length) {
+	if (size<1536) {
+		length = 0;
+		return size;
+	}
 	UInt16 pos = 772;
 	if(!middle)
 		pos += 764;
 	pos = ((data[pos-3] + data[pos-2] + data[pos-1] + data[pos])%632)+9;
 	if(!middle)
 		pos += 764;
-	return pos;
+	length = size-pos;
+	if (length > DiffieHellman::SIZE)
+		length = DiffieHellman::SIZE;
+	return pos; // maximum pos=1404
 }
 
-const UInt8* RTMP::ValidateClient(Crypto::HMAC& hmac,BinaryReader& reader,bool& middleKey) {
+const UInt8* RTMP::ValidateClient(Crypto::HMAC& hmac,const UInt8* data, UInt32 size,bool& middleKey,UInt32& keySize) {
 	middleKey=false;
-	UInt32 position = reader.position();
-	const UInt8* keyChallenge = ValidateClientScheme(hmac,reader, false);
+	const UInt8* keyChallenge = ValidateClientScheme(hmac,data,size, false, keySize);
 	if (!keyChallenge) {
-		keyChallenge = ValidateClientScheme(hmac,reader, true);
+		keyChallenge = ValidateClientScheme(hmac,data,size, true, keySize);
 		middleKey = true;
 	}
-	reader.reset(position);
 	return keyChallenge;
 }
 
-const UInt8* RTMP::ValidateClientScheme(Crypto::HMAC& hmac,BinaryReader& reader,bool middleKey) {
-	reader.reset();
-	UInt16 pos = GetDigestPos(reader.current(),middleKey);
-	if (pos == 0)
+const UInt8* RTMP::ValidateClientScheme(Crypto::HMAC& hmac,const UInt8* data, UInt32 size,bool middleKey,UInt32& keySize) {
+	UInt32 pos = GetDigestPos(data,size,middleKey,keySize);
+	if (!keySize)
 		return NULL;
 
 	UInt8 content[1504];
-	reader.reset(1);
-	memcpy(content, reader.current(), pos-1);
-	reader.reset(pos);
-	UInt16 size(reader.available() - HMAC_KEY_SIZE);
-	--pos;
-	if (size > (sizeof(content)-pos))
-		return NULL;
-	memcpy(content + pos, reader.current()+HMAC_KEY_SIZE,size);
+	memcpy(content, data+1, pos-1);
+	data += pos;
+	memcpy(content+pos-1, data+keySize,1504-pos+1);
 
-	UInt8 hash[HMAC_KEY_SIZE];
+	UInt8 hash[Crypto::HMAC::SIZE];
 	hmac.compute(EVP_sha256(),FPKey,sizeof(FPKey),content,sizeof(content),hash);
-
-	if(memcmp(hash,reader.current(),HMAC_KEY_SIZE)==0)
-		return reader.current();
+	if(memcmp(hash,data,keySize)==0)
+		return data;
 	return NULL;
 }
 
 
-bool RTMP::WriteDigestAndKey(Exception& ex, Crypto::HMAC& hmac,UInt8* data,const UInt8* challengeKey,bool middleKey) {
-	UInt16 serverDigestOffset = RTMP::GetDigestPos(data, middleKey);
-	ASSERT_RETURN(serverDigestOffset != 0, false);
+bool RTMP::WriteDigestAndKey(Exception& ex,Crypto::HMAC& hmac,const UInt8* key,UInt32 keySize, bool middleKey,UInt8* data,UInt32 size) {
+	if(size<3041) {
+		ex.set(Exception::MEMORY, "RTMP::WriteDigestAndKey impossible, data of size ", size, " not enough large");
+		return false;
+	}
+	UInt32 length;
+	UInt32 pos = RTMP::GetDigestPos(data, size, middleKey,length);
 
 	UInt8 content[1504];
-	memcpy(content, data+1, serverDigestOffset-1);
-	memcpy(content + serverDigestOffset-1, data + serverDigestOffset + HMAC_KEY_SIZE,1505 - serverDigestOffset);
-
-	UInt8 hash[HMAC_KEY_SIZE];
-	hmac.compute(EVP_sha256(),FMSKey,36,content,sizeof(content),hash);
+	memcpy(content, data+1, pos-1);
+	memcpy(content+pos-1, data+pos+length,1504-pos+1);
 
 	//put the digest in place
-	memcpy(data+serverDigestOffset,hash,sizeof(hash));
+	hmac.compute(EVP_sha256(),FMSKey,36,content,sizeof(content),data+pos);
 
-		//compute the key
-	hmac.compute(EVP_sha256(),FMSKey,sizeof(FMSKey),challengeKey,HMAC_KEY_SIZE,hash);
+	//compute the key
+	UInt8 hash[Crypto::HMAC::SIZE];
+	hmac.compute(EVP_sha256(),FMSKey,sizeof(FMSKey),key,keySize,hash);
+	//write the FMSKey hash on end of packet
+	hmac.compute(EVP_sha256(),hash,Crypto::HMAC::SIZE,data + 1537,1504,data+size-Crypto::HMAC::SIZE);
 
-	//generate the hash
-	hmac.compute(EVP_sha256(),hash,HMAC_KEY_SIZE,data + 1537,1504,data+3041);
 	return true;
 }
 
 
 void RTMP::ComputeRC4Keys(Crypto::HMAC& hmac,const UInt8* pubKey,UInt32 pubKeySize,const UInt8* farPubKey,UInt32 farPubKeySize,const Buffer& sharedSecret,RC4_KEY& decryptKey,RC4_KEY& encryptKey) {
 
-	UInt8 hash[HMAC_KEY_SIZE];
+	UInt8 hash[Crypto::HMAC::SIZE];
 	RC4_set_key(&decryptKey, 16, hmac.compute(EVP_sha256(),sharedSecret.data(),sharedSecret.size(),pubKey,pubKeySize,hash));
 	RC4_set_key(&encryptKey, 16, hmac.compute(EVP_sha256(),sharedSecret.data(),sharedSecret.size(),farPubKey,farPubKeySize,hash));
 

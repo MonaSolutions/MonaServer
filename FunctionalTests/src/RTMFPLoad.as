@@ -9,15 +9,12 @@ package
 	
 	public class RTMFPLoad extends Test
 	{
-		private var _conn:NetConnection;
 		private var _host:String;
 		private var _url:String;
-		private var _timer:Timer;
-		
-		private var _currentTest:int = 0;
+	
+		private var _countSuccess:int = 0;
 		private const NB_LOAD_TESTS:int = 100;
-		private var _ncs:Array = new Array();
-		
+	
 		public function RTMFPLoad(app:FunctionalTests, host:String, url:String)
 		{
 			super(app, "RTMFPLoad", "Send 100 RTMFPLoad connections requests");
@@ -30,58 +27,33 @@ package
 			super.run(onResult);
 			
 			// Prepare POST request
-			_conn = new NetConnection();
-			_conn.addEventListener(NetStatusEvent.NET_STATUS, onStatus);
-			_conn.connect("rtmfp://" + _host + _url);
 			
-			_timer = new Timer(1);
-			_timer.addEventListener(TimerEvent.TIMER, onReady);
+			_countSuccess = 0;
 			
-			_currentTest = 0;
-		}
-		
-		private function closeConnections():void {
-			
-			_timer.stop();
-			for(var conn:Object in _ncs) {
-				var connection:NetConnection = conn as NetConnection;
-				if (connection && connection.connected)
-					connection.close();
+			for(var i:uint;i<NB_LOAD_TESTS;++i) {
+				var connection:NetConnection = new NetConnection();
+				connection.addEventListener(NetStatusEvent.NET_STATUS, onStatus);
+				connection.connect("rtmfp://" + _host + _url);
 			}
+
 		}
-		
+
 		public function onStatus(event:NetStatusEvent):void {
 			
 			switch(event.info.code) {
 				case "NetConnection.Connect.Success":
-				
-					if (_currentTest < NB_LOAD_TESTS) {
-						_currentTest += 1;
-						
-						// Add connection and go to next one
-						_ncs.push(_conn);
-						_timer.start();
-					} else {
-						
-						// Close all connections
-						closeConnections();
+					if(++_countSuccess==NB_LOAD_TESTS) {
 						_onResult(""); // Test Terminated!
+						break;
 					}
 					break;
-				case "NetConnection.Connect.Closed":
-					break;
 				default:
-					closeConnections();
 					_onResult(event.info.code);
 			}
+			
+			if(event.target is NetConnection)
+				event.target.removeEventListener(NetStatusEvent.NET_STATUS, onStatus);
 		}
-		
-		public function onReady(event:TimerEvent):void {
-		
-			_timer.stop();
-			_conn = new NetConnection();
-			_conn.addEventListener(NetStatusEvent.NET_STATUS, onStatus);
-			_conn.connect("rtmfp://" + _host + _url);
-		}
+
 	}
 }

@@ -35,7 +35,6 @@ This file is a part of Mona.
 #define STRINGIZE(x) STRINGIZE2(x)
 #define STRINGIZE2(x) #x
 #define LINE_STRING STRINGIZE(__LINE__)
-#define HMAC_KEY_SIZE	0x20
 
 #define MAP_FIND_OR_EMPLACE(MAP,IT,KEY,...) auto IT = MAP.lower_bound(KEY); if (IT == MAP.end() || IT->first != KEY) {IT = MAP.emplace_hint(IT,std::piecewise_construct,std::forward_as_tuple(KEY),std::forward_as_tuple(__VA_ARGS__));}
 

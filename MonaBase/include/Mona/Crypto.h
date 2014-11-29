@@ -28,8 +28,13 @@ namespace Mona {
 
 class Crypto : public virtual Static {
 public:
+	static UInt16 ComputeCRC(BinaryReader& reader);
+
 	class HMAC : public virtual Object {
 	public:
+
+		enum { SIZE = 0x20 };
+	
 		HMAC() { HMAC_CTX_init(&_hmacCTX); }
 		virtual ~HMAC() { HMAC_CTX_cleanup(&_hmacCTX); }
 
@@ -39,7 +44,6 @@ public:
 		HMAC_CTX _hmacCTX;
 	};
 
-	static UInt16 ComputeCRC(BinaryReader& reader);
 };
 
 

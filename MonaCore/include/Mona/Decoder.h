@@ -216,7 +216,7 @@ private:
 		SocketAddress							_newAddress;
 	};
 
-	typename Decoding::OnDecoding::Type		onDecoding;
+	typename Decoding::OnDecoding::Type			onDecoding;
 	typename Decoding::OnDecoded::Type			onDecoded;
 	typename Decoding::OnDecodedEnd::Type		onDecodeEnd;
 

@@ -59,8 +59,8 @@ void RTMFP::Pack(BinaryWriter& writer,UInt32 farId) {
 void RTMFP::ComputeAsymetricKeys(const Buffer& sharedSecret, const UInt8* initiatorNonce,UInt16 initNonceSize,
 														    const UInt8* responderNonce,UInt16 respNonceSize,
 														    UInt8* requestKey,UInt8* responseKey) {
-	UInt8 mdp1[HMAC_KEY_SIZE];
-	UInt8 mdp2[HMAC_KEY_SIZE];
+	UInt8 mdp1[Crypto::HMAC::SIZE];
+	UInt8 mdp2[Crypto::HMAC::SIZE];
 	Crypto::HMAC hmac;
 
 	// doing HMAC-SHA256 of one side
@@ -69,8 +69,8 @@ void RTMFP::ComputeAsymetricKeys(const Buffer& sharedSecret, const UInt8* initia
 	hmac.compute(EVP_sha256(),initiatorNonce,initNonceSize,responderNonce,respNonceSize,mdp2);
 
 	// now doing HMAC-sha256 of both result with the shared secret DH key
-	hmac.compute(EVP_sha256(),sharedSecret.data(),sharedSecret.size(),mdp1,HMAC_KEY_SIZE,requestKey);
-	hmac.compute(EVP_sha256(),sharedSecret.data(),sharedSecret.size(),mdp2,HMAC_KEY_SIZE,responseKey);
+	hmac.compute(EVP_sha256(),sharedSecret.data(),sharedSecret.size(),mdp1,Crypto::HMAC::SIZE,requestKey);
+	hmac.compute(EVP_sha256(),sharedSecret.data(),sharedSecret.size(),mdp2,Crypto::HMAC::SIZE,responseKey);
 }
 
 

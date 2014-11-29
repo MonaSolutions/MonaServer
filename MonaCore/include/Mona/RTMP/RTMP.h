@@ -50,13 +50,13 @@ public:
 		DEFAULT_WIN_ACKSIZE = 131072 // TODO default value?
 	};
 
-	static UInt16			GetDigestPos(const UInt8* data,bool middle);
-	static UInt16			GetDHPos(const UInt8* data,bool middle);
-	static const UInt8*		ValidateClient(Crypto::HMAC& hmac,BinaryReader& reader,bool& middleKey);
-	static bool				WriteDigestAndKey(Exception& ex, Crypto::HMAC& hmac,UInt8* data,const UInt8* challengeKey,bool middleKey);
+	static UInt32			GetDigestPos(const UInt8* data,UInt32 size,bool middle, UInt32& length);
+	static UInt32			GetDHPos(const UInt8* data,UInt32 size,bool middle, UInt32& length);
+	static const UInt8*		ValidateClient(Crypto::HMAC& hmac,const UInt8* data, UInt32 size,bool& middleKey,UInt32& keySize);
+	static bool				WriteDigestAndKey(Exception& ex,Crypto::HMAC& hmac,const UInt8* key,UInt32 keySize,bool middleKey,UInt8* data,UInt32 size);
 	static void				ComputeRC4Keys(Crypto::HMAC& hmac,const UInt8* pubKey,UInt32 pubKeySize,const UInt8* farPubKey,UInt32 farPubKeySize,const Buffer& sharedSecret,RC4_KEY& decryptKey,RC4_KEY& encryptKey);
 private:
-	static const UInt8*		ValidateClientScheme(Crypto::HMAC& hmac,BinaryReader& reader,bool middleKey);
+	static const UInt8*		ValidateClientScheme(Crypto::HMAC& hmac,const UInt8* data, UInt32 size,bool middleKey,UInt32& keySize);
 };
 
 
