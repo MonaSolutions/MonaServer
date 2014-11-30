@@ -99,10 +99,8 @@ public:
 		}
 
 		pSession->_sessionsOptions = options;
-		if (options&BYPEER)
-			addByPeer(*pSession);
-		if (options&BYADDRESS)
-			addByAddress(*pSession);
+		addByPeer(*pSession);
+		addByAddress(*pSession);
 		
 		pSession->Events::OnAddressChanged::subscribe(onAddressChanged);
 		DEBUG("Session ", pSession->name(), " created");

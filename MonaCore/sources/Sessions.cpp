@@ -30,8 +30,6 @@ namespace Mona {
 Sessions::Sessions() {
 	onAddressChanged = [this](Session& session, const SocketAddress& oldAddress) {
 		INFO("Session ",session.name()," has changed its address, ",oldAddress.toString()," -> ",session.peer.address.toString());
-		if (!(session._sessionsOptions&BYADDRESS))
-			return;
 		removeByAddress(oldAddress, session);
 		addByAddress(session);
 	};
@@ -49,56 +47,64 @@ Sessions::~Sessions() {
 }
 
 void Sessions::addByAddress(Session& session) {
-	auto& map(dynamic_cast<UDProtocol*>(&session.protocol()) ? _sessionsByAddress[0] : _sessionsByAddress[1]);
-	auto it = map.lower_bound(session.peer.address);
-	if (it != map.end() && it->first == session.peer.address) {
-		INFO("Session ", it->second->name(), " overloaded by ",session.name()," (by ",session.peer.address.toString(),")");
-		auto itSession = _sessions.find(it->second->_id);
-		if (itSession == _sessions.end())
-			CRITIC("Session overloaded ",it->second->name()," impossible to find in sessions collection")
-		else
-			remove(itSession,BYPEER);
-		it->second = &session;
-	} else
-		map.emplace_hint(it, session.peer.address, &session);
+	if (session._sessionsOptions&BYADDRESS) {
+		auto& map(dynamic_cast<UDProtocol*>(&session.protocol()) ? _sessionsByAddress[0] : _sessionsByAddress[1]);
+		auto it = map.lower_bound(session.peer.address);
+		if (it != map.end() && it->first == session.peer.address) {
+			INFO("Session ", it->second->name(), " overloaded by ",session.name()," (by ",session.peer.address.toString(),")");
+			auto itSession = _sessions.find(it->second->_id);
+			if (itSession == _sessions.end())
+				CRITIC("Session overloaded ",it->second->name()," impossible to find in sessions collection")
+			else
+				remove(itSession,BYPEER);
+			it->second = &session;
+		} else
+			map.emplace_hint(it, session.peer.address, &session);
+	}
 }
 
 void Sessions::removeByAddress(const SocketAddress& address,Session& session) {
-	auto& map(dynamic_cast<UDProtocol*>(&session.protocol()) ? _sessionsByAddress[0] : _sessionsByAddress[1]);
-	if (map.erase(address)==0) {
-		ERROR("Session ",session.name()," unfound in address sessions collection with key ",address.toString());
-		for (auto it = map.begin(); it != map.end();++it) {
-			if (it->second == &session) {
-				INFO("The correct key was ",it->first.toString());
-				map.erase(it);
-				break;
+	if (session._sessionsOptions&BYADDRESS) {
+		auto& map(dynamic_cast<UDProtocol*>(&session.protocol()) ? _sessionsByAddress[0] : _sessionsByAddress[1]);
+		if (map.erase(address)==0) {
+			ERROR("Session ",session.name()," unfound in address sessions collection with key ",address.toString());
+			for (auto it = map.begin(); it != map.end();++it) {
+				if (it->second == &session) {
+					INFO("The correct key was ",it->first.toString());
+					map.erase(it);
+					break;
+				}
 			}
 		}
 	}
 }
 
 void Sessions::addByPeer(Session& session) {
-	auto it = _sessionsByPeerId.lower_bound(session.peer.id);
-	if (it != _sessionsByPeerId.end() && memcmp(it->first,session.peer.id,ID_SIZE)==0) {
-		INFO("Session ", it->second->name(), " overloaded by ",session.name()," (by peer id)");
-		auto itSession = _sessions.find(it->second->_id);
-		if (itSession == _sessions.end())
-			CRITIC("Session overloaded ",it->second->name()," impossible to find in sessions collection")
-		else
-			remove(itSession,BYADDRESS);
-		it->second = &session;
-	} else
-		_sessionsByPeerId.emplace_hint(it, session.peer.id, &session);
+	if (session._sessionsOptions&BYADDRESS) {
+		auto it = _sessionsByPeerId.lower_bound(session.peer.id);
+		if (it != _sessionsByPeerId.end() && memcmp(it->first, session.peer.id, ID_SIZE) == 0) {
+			INFO("Session ", it->second->name(), " overloaded by ", session.name(), " (by peer id)");
+			auto itSession = _sessions.find(it->second->_id);
+			if (itSession == _sessions.end())
+				CRITIC("Session overloaded ", it->second->name(), " impossible to find in sessions collection")
+			else
+			remove(itSession, BYPEER);
+			it->second = &session;
+		} else
+			_sessionsByPeerId.emplace_hint(it, session.peer.id, &session);
+	}
 }
 
 void Sessions::removeByPeer(Session& session) {
-	if (_sessionsByPeerId.erase(session.peer.id)==0) {
- 		ERROR("Session ",session.name()," unfound in peer sessions collection with key ",Util::FormatHex(session.peer.id,ID_SIZE,LOG_BUFFER));
- 		for (auto it = _sessionsByPeerId.begin(); it != _sessionsByPeerId.end();++it) {
- 			if (it->second == &session) {
-				INFO("The correct key was ",Util::FormatHex(it->first,ID_SIZE,LOG_BUFFER));
- 				_sessionsByPeerId.erase(it);
-				break;
+	if (session._sessionsOptions&BYPEER) {
+		if (_sessionsByPeerId.erase(session.peer.id) == 0) {
+			ERROR("Session ", session.name(), " unfound in peer sessions collection with key ", Util::FormatHex(session.peer.id, ID_SIZE, LOG_BUFFER));
+			for (auto it = _sessionsByPeerId.begin(); it != _sessionsByPeerId.end(); ++it) {
+				if (it->second == &session) {
+					INFO("The correct key was ", Util::FormatHex(it->first, ID_SIZE, LOG_BUFFER));
+					_sessionsByPeerId.erase(it);
+					break;
+				}
 			}
 		}
 	}
