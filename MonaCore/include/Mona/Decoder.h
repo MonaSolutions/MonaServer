@@ -58,13 +58,18 @@ public:
 
 	UInt32 decode(const SocketAddress& address,PoolBuffer& pBuffer) {	
 		Exception ex;
+		UInt32 consumed(pBuffer.size());
 		std::lock_guard<std::mutex> lock(_pDecoding->_inMutex);
 		_pThread = _poolThreads.enqueue(ex, _pDecoding, _pThread);
-		if (ex)
+		if (ex) {
 			ERROR(_name, ", ", ex.error());
-		_pDecoding->_input.emplace_back(poolBuffers);
-		_pDecoding->_addresses.emplace_back(address);
-		return _pDecoding->_input.back().swap(pBuffer).size();
+			pBuffer.release();
+		} else {
+			_pDecoding->_input.emplace_back(poolBuffers);
+			_pDecoding->_inAddresses.emplace_back(address);
+			_pDecoding->_input.back().swap(pBuffer);
+		}
+		return consumed;
 	}
 
 protected:
@@ -94,7 +99,7 @@ private:
 			PoolBuffer	pBuffer;
 		};
 
-		Decoding(Invoker& invoker, const char* name) : _new(false), _pBuffer(invoker.poolBuffers), WorkThread(name), Task(invoker) {}
+		Decoding(Invoker& invoker, const char* name) : _pBuffer(invoker.poolBuffers), WorkThread(name), Task(invoker) {}
 
 		virtual ~Decoding() {
 			for (OutType* pOut : _output)
@@ -104,75 +109,71 @@ private:
 		template <typename ...Args>
 		void receive(Args&&... args) {
 			_new = true;
-			_pNewOut = new OutType(_pBuffer.poolBuffers,args ...);
+			_pLastOut = new OutType(_pBuffer.poolBuffers,args ...);
 			std::lock_guard<std::mutex> lock(_outMutex);
-			_output.emplace_back(_pNewOut);
+			_output.emplace_back(_pLastOut);
+			_outAddresses.emplace_back(_address);
 		}
 
-		bool run(Exception& exc) {
+		bool run(Exception& ex) {
+
+			// Just one!
 
 			_new = false;
-			SocketAddress address;
-		
-			while (true) {
-				PoolBuffer pBuffer(_pBuffer.poolBuffers);
-				{
-					std::lock_guard<std::mutex> lock(_inMutex);
-					if (_input.empty())
-						break;
-					pBuffer.swap(_input.front());
-					_input.pop_front();
-					address = _addresses.front();
-					_addresses.pop_front();
-				}
 
-				// add general buffer in front
-				if (!_pBuffer.empty()) {
-					if (!pBuffer.empty())
-						_pBuffer->append(pBuffer.data(),pBuffer.size());
-					pBuffer.swap(_pBuffer);
-					_pBuffer.release();
-				}
-
-				UInt32 consumed(0);
-			
-				while(consumed<pBuffer.size()) { // while everything is not consumed
-
-					if (consumed) {
-						if (_pNewOut) {
-							_pBuffer->resize(pBuffer.size()-consumed);
-							memcpy(_pBuffer->data(), pBuffer->data()+consumed, _pBuffer->size());
-							pBuffer->resize(consumed);
-							_pNewOut->pBuffer.swap(pBuffer);
-							pBuffer.swap(_pBuffer);
-						} else
-							pBuffer->clip(consumed);
-					}
-
-					Exception ex;
-					_pNewOut = NULL;
-					consumed = OnDecoding::raise<0xFFFFFFFF>(ex, pBuffer->data(),pBuffer->size());
-
-					if (ex)
-						ERROR(name, ", ", ex.error())
-					else if (address) {
-						std::lock_guard<std::mutex> lock(_outMutex);
-						_newAddress = address;
-					}
-
-					if (!consumed) {
-						_pBuffer.swap(pBuffer); // memorize the rest in general buffer
-						break;
-					}
-
-					if (_pNewOut && consumed >= pBuffer.size()) {
-						_pNewOut->pBuffer.swap(pBuffer);
-						break;
-					}
-
-				}
+			PoolBuffer pBuffer(_pBuffer.poolBuffers);
+			{
+				std::lock_guard<std::mutex> lock(_inMutex);
+				ASSERT_RETURN(!_input.empty(),true)
+				pBuffer.swap(_input.front());
+				_input.pop_front();
+				_address = _inAddresses.front();
+				_inAddresses.pop_front();
 			}
 
+			// add general buffer in front
+			if (!_pBuffer.empty()) {
+				if (!pBuffer.empty())
+					_pBuffer->append(pBuffer.data(),pBuffer.size());
+				pBuffer.swap(_pBuffer);
+				_pBuffer.release();
+			}
+
+			UInt32 consumed(0);
+			
+			while(consumed<pBuffer.size()) { // while everything is not consumed
+
+				if (consumed) {
+					// not execute the first loop!
+					if (_pLastOut) {
+						_pBuffer->resize(pBuffer.size()-consumed);
+						memcpy(_pBuffer->data(), pBuffer->data()+consumed, _pBuffer->size());
+						pBuffer->resize(consumed);
+						_pLastOut->pBuffer.swap(pBuffer);
+						pBuffer.swap(_pBuffer);
+					} else
+						pBuffer->clip(consumed);
+				}
+
+				Exception exc;
+				_pLastOut = NULL;
+				consumed = OnDecoding::raise<0xFFFFFFFF>(exc, pBuffer->data(),pBuffer->size());
+
+				if (exc)
+					ERROR(name, ", ", exc.error())
+		
+				if (!consumed) {
+					_pBuffer.swap(pBuffer); // memorize the rest in general buffer
+					break;
+				}
+
+				if (_pLastOut && consumed >= pBuffer.size()) {
+					_pLastOut->pBuffer.swap(pBuffer);
+					break;
+				}
+
+			}
+		
 			if (_new)
 				waitHandle();
 
@@ -191,10 +192,8 @@ private:
 						break;
 					pOut = _output.front();
 					_output.pop_front();
-					if (_newAddress) {
-						address = _newAddress;
-						_newAddress.reset();
-					}
+					address = _outAddresses.front();
+					_outAddresses.pop_front();
 				}
 				Events::OnDecoded<DecodedType>::raise(pOut->decoded,address);
 				delete pOut;
@@ -204,16 +203,17 @@ private:
 		}
 
 		bool									_new;
-		OutType*								_pNewOut;
+		OutType*								_pLastOut;
+		SocketAddress							_address;
 		PoolBuffer								_pBuffer;
 
 		std::mutex								_inMutex;
 		std::deque<PoolBuffer>					_input;
-		std::deque<SocketAddress>				_addresses;
+		std::deque<SocketAddress>				_inAddresses;
 		
 		std::mutex								_outMutex;
 		std::deque<OutType*>					_output;
-		SocketAddress							_newAddress;
+		std::deque<SocketAddress>				_outAddresses;
 	};
 
 	typename Decoding::OnDecoding::Type			onDecoding;

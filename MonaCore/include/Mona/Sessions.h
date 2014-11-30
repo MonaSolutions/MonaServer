@@ -30,7 +30,6 @@ namespace Mona {
 class Sessions {
 public:
 	enum {
-		BYID = 0,
 		BYPEER = 1,
 		BYADDRESS = 2,
 	};
@@ -48,16 +47,17 @@ public:
 	void	 manage();
 
 	template<typename SessionType=Session>
-	SessionType* find(const SocketAddress& address) {
-		auto it = _sessionsByAddress.find(address);
-		if (it == _sessionsByAddress.end())
+	SessionType* findByAddress(const SocketAddress& address,Socket::Type type) {
+		auto& map(type == Socket::DATAGRAM ? _sessionsByAddress[0] : _sessionsByAddress[1]);
+		auto it = map.find(address);
+		if (it == map.end())
 			return NULL;
 		return dynamic_cast<SessionType*>(it->second);
 	}
 
 
 	template<typename SessionType = Session>
-	SessionType* find(const UInt8* peerId) {
+	SessionType* findByPeer(const UInt8* peerId) {
 		auto it = _sessionsByPeerId.find(peerId);
 		if (it == _sessionsByPeerId.end())
 			return NULL;
@@ -73,7 +73,7 @@ public:
 		return dynamic_cast<SessionType*>(it->second);
 	}
 
-	template<typename SessionType, UInt8 options = BYID,typename ...Args>
+	template<typename SessionType, UInt8 options = 0,typename ...Args>
 	SessionType& create(Args&&... args) {
 		SessionType* pSession = new SessionType(args ...);
 
@@ -98,36 +98,12 @@ public:
 			} while (find(pSession->_id));
 		}
 
-		if (options&BYPEER) {
-			auto it = _sessionsByPeerId.lower_bound(pSession->peer.id);
-			if (it != _sessionsByPeerId.end() && memcmp(it->first,pSession->peer.id,ID_SIZE)==0) {
-				INFO("Session ", it->second->name(), " overloaded by ",pSession->name()," (by peer id)");
-				auto itSession = _sessions.find(it->second->_id);
-				if (itSession == _sessions.end())
-					CRITIC("Session overloaded ",it->second->name()," impossible to find in sessions collection")
-				else
-					remove(itSession);
-				it->second = pSession;
-			} else
-				_sessionsByPeerId.emplace_hint(it, pSession->peer.id, pSession);
-		}
-
-		if (options&BYADDRESS) {
-			auto it = _sessionsByAddress.lower_bound(pSession->peer.address);
-			if (it != _sessionsByAddress.end() && it->first == pSession->peer.address) {
-				INFO("Session ", it->second->name(), " overloaded by ",pSession->name()," (by ",pSession->peer.address.toString(),")");
-				auto itSession = _sessions.find(it->second->_id);
-				if (itSession == _sessions.end())
-					CRITIC("Session overloaded ",it->second->name()," impossible to find in sessions collection")
-				else
-					remove(itSession);
-				it->second = pSession;
-			} else
-				_sessionsByAddress.emplace_hint(it, pSession->peer.address, pSession);
-		}
-
 		pSession->_sessionsOptions = options;
-
+		if (options&BYPEER)
+			addByPeer(*pSession);
+		if (options&BYADDRESS)
+			addByAddress(*pSession);
+		
 		pSession->Events::OnAddressChanged::subscribe(onAddressChanged);
 		DEBUG("Session ", pSession->name(), " created");
 		return *pSession;
@@ -135,8 +111,13 @@ public:
 
 private:
 
-	void    remove(std::map<UInt32,Session*>::iterator it);
-	void	removeByAddress(Session& session);
+	void    remove(std::map<UInt32,Session*>::iterator it,UInt8 options);
+
+	void	addByPeer(Session& session);
+	void	removeByPeer(Session& session);
+	
+	void	addByAddress(Session& session);
+	void	removeByAddress(Session& session) { removeByAddress(session.peer.address, session); }
 	void	removeByAddress(const SocketAddress& address, Session& session);
 
 	Session::OnAddressChanged::Type	onAddressChanged;
@@ -144,7 +125,7 @@ private:
 	std::map<UInt32,Session*>						_sessions;
 	std::set<UInt32>								_freeIds;
 	std::map<const UInt8*,Session*,CompareEntity>	_sessionsByPeerId;
-	std::map<SocketAddress,Session*>				_sessionsByAddress;
+	std::map<SocketAddress,Session*>				_sessionsByAddress[2]; // 0 - UDP, 1 - TCP
 };
 
 

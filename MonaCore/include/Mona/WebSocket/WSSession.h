@@ -53,7 +53,7 @@ protected:
 	void			readMessage(Exception& ex, DataReader& reader, UInt8 responseType=0);
 	
 private:
-	void			receive(WSDecoded& packet);
+	void			receive(WSReader& packet);
 
 	void			closeSusbcription();
 	void			closePublication();

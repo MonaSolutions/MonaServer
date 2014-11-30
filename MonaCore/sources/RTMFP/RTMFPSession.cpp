@@ -45,10 +45,10 @@ RTMFPSession::RTMFPSession(RTMFProtocol& protocol,
 				UInt32 farId,
 				const UInt8* decryptKey,
 				const UInt8* encryptKey,
-				const char* name) : onDecoded([this](BinaryReader& packet,const SocketAddress& address){receive(address,packet);}), onDecodedEnd([this](){flush();}) , _failed(false), farId(farId), _pThread(NULL), Session(protocol, invoker, name), _decoder(invoker, decryptKey), _pEncoder(new RTMFPEngine(encryptKey, RTMFPEngine::ENCRYPT)), _timesFailed(0), _timeSent(0), _nextRTMFPWriterId(0), _timesKeepalive(0), _pLastWriter(NULL) {
+				const char* name) : onDecoded([this](BinaryReader& packet,const SocketAddress& address){receive(address,packet);}) , _failed(false), farId(farId), _pThread(NULL), Session(protocol, invoker, name), _decoder(invoker, decryptKey), _pEncoder(new RTMFPEngine(encryptKey, RTMFPEngine::ENCRYPT)), _timesFailed(0), _timeSent(0), _nextRTMFPWriterId(0), _timesKeepalive(0), _pLastWriter(NULL) {
 	_pFlowNull = new RTMFPFlow(0,"",peer,invoker,*this);
-	_decoder.OnDecodedEnd::subscribe(onDecodedEnd);
 	_decoder.OnDecoded::subscribe(onDecoded);
+	// No onDecodedEnd subscription for RTMFPHandshake
 }
 
 void RTMFPSession::failSignal() {
@@ -56,9 +56,9 @@ void RTMFPSession::failSignal() {
 	if(died)
 		return;
 	++_timesFailed;
-	PacketWriter& writer = RTMFPSession::packet(); 
-	writer.clear(RTMFP_HEADER_SIZE); // no other message, just fail message, so I erase all data in first
-	writer.write8(0x0C).write16(0);
+	// no other message, just fail message, so I erase all data in first
+	_pSender.reset(new RTMFPSender(invoker.poolBuffers,_pEncoder));
+	_pSender->packet.write8(0x0C).write16(0);
 	flush(false); // We send immediatly the fail message
 
 	// After 6 mn we can considerated that the session is died!
@@ -187,12 +187,26 @@ void RTMFPSession::p2pHandshake(const string& tag,const SocketAddress& address,U
 	flush();
 }
 
+UInt8* RTMFPSession::packet() {
+	if (!_pSender)
+		_pSender.reset(new RTMFPSender(invoker.poolBuffers, _pEncoder));
+	_pSender->packet.resize(RTMFP_MAX_PACKET_SIZE);
+	return _pSender->packet.data();
+}
+
+void RTMFPSession::flush(UInt8 marker, UInt32 size) {
+	if (!_pSender)
+		return;
+	_pSender->packet.clear(size);
+	flush(false,marker);
+}
+
 void RTMFPSession::flush(bool echoTime,UInt8 marker) {
 	_pLastWriter=NULL;
 	if(!_pSender)
 		return;
 	if (!died && _pSender->available()) {
-		PacketWriter& packet(_pSender->packet);
+		BinaryWriter& packet(_pSender->packet);
 	
 		// After 30 sec, send packet without echo time
 		if(peer.lastReceptionTime.isElapsed(30000))
@@ -217,17 +231,11 @@ void RTMFPSession::flush(bool echoTime,UInt8 marker) {
 		dumpResponse(packet.data() + 6, packet.size() - 6);
 
 		Exception ex;
-		_pThread = send<RTMFProtocol,RTMFPSender>(ex, _pSender,_pThread);
+		_pThread = Session::send<RTMFProtocol,RTMFPSender>(ex, _pSender,_pThread);
 		if (ex)
 			ERROR("RTMFP flush, ", ex.error());
 	}
 	_pSender.reset();
-}
-
-PacketWriter& RTMFPSession::packet() {
-	if (!_pSender)
-		_pSender.reset(new RTMFPSender(invoker.poolBuffers,_pEncoder));
-	return _pSender->packet;
 }
 
 BinaryWriter& RTMFPSession::writeMessage(UInt8 type, UInt16 length, RTMFPWriter* pWriter) {
@@ -250,7 +258,9 @@ BinaryWriter& RTMFPSession::writeMessage(UInt8 type, UInt16 length, RTMFPWriter*
 		_pLastWriter=NULL;
 	}
 
-	return packet().write8(type).write16(length);
+	if (!_pSender)
+		_pSender.reset(new RTMFPSender(invoker.poolBuffers, _pEncoder));
+	return _pSender->packet.write8(type).write16(length);
 }
 
 void RTMFPSession::receive(const SocketAddress& address, BinaryReader& packet) {

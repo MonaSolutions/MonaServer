@@ -38,7 +38,7 @@ public:
 
 
 WSSession::WSSession(const SocketAddress& peerAddress, SocketFile& file, Protocol& protocol, Invoker& invoker) : TCPSession(peerAddress, file,protocol, invoker), _writer(*this), _enabled(false),_pListener(NULL), _pPublication(NULL),
-	_decoder(invoker),onDecoded([this](WSDecoded& decoded,const SocketAddress& address){receive(decoded);}), onDecodedEnd([this](){flush();}) {
+	_decoder(invoker),onDecoded([this](WSReader& reader,const SocketAddress& address){receive(reader);}), onDecodedEnd([this](){flush();}) {
 }
 
 void WSSession::enable() {
@@ -77,7 +77,7 @@ void WSSession::closePublication(){
 }
 
 
-void WSSession::receive(WSDecoded& packet) {
+void WSSession::receive(WSReader& packet) {
 
 	if (!TCPSession::receive(packet))
 		return;

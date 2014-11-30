@@ -82,29 +82,28 @@ void RTMFPHandshake::clear() {
 	_cookies.clear();
 }
 
-void RTMFPHandshake::receive(const SocketAddress& address, BinaryReader& packet) {
+void RTMFPHandshake::receive(const SocketAddress& address, BinaryReader& request) {
 
-	if(!Session::receive(address, packet))
+	if(!Session::receive(address, request))
 		return;
 
-	UInt8 marker = packet.read8();
+	UInt8 marker = request.read8();
 	if(marker!=0x0b) {
 		ERROR("Marker handshake wrong : should be 0b and not ",Format<UInt8>("%.2x",marker));
 		return;
 	}
-	
-	UInt16 time = packet.read16();
-	UInt8 id = packet.read8();
-	packet.shrink(packet.read16()); // length
 
-	PacketWriter& response(this->packet());
-	UInt32 oldSize(response.size());
-	response.next(3); // type and size
-	UInt8 idResponse = handshakeHandler(id,address, packet,response);
-	if(idResponse>0)
-		BinaryWriter(response.data()+oldSize,3).write8(idResponse).write16(response.size()-oldSize-3);
-	else
-		response.clear(oldSize);
+	UInt16 time = request.read16();
+	UInt8 id = request.read8();
+	request.shrink(request.read16()); // length
+
+	BinaryWriter response(packet(),RTMFP_MAX_PACKET_SIZE);
+	response.clear(RTMFP_HEADER_SIZE+3); // header + type and size
+	UInt8 idResponse = handshakeHandler(id,address, request,response);
+	if (!idResponse)
+		return;
+	BinaryWriter(response.data() + RTMFP_HEADER_SIZE, 3).write8(idResponse).write16(response.size() - RTMFP_HEADER_SIZE - 3);
+	flush(response.size());
 }
  
 RTMFPSession* RTMFPHandshake::createSession(const UInt8* cookieValue) {
@@ -123,18 +122,17 @@ RTMFPSession* RTMFPHandshake::createSession(const UInt8* cookieValue) {
 	(UInt32&)cookie.id = pSession->id();
 
 	// response!
-	PacketWriter& response(packet());
-	response.write8(0x78);
-	response.write16(cookie.length());
+	BinaryWriter response(packet(),RTMFP_MAX_PACKET_SIZE);
+	response.clear(RTMFP_HEADER_SIZE).write8(0x78).write16(cookie.length());
 	cookie.read(response);
 	// set the peer address
 	((SocketAddress&)peer.address).set(pSession->peer.address);
-	flush();
+	flush(response.size());
 	return pSession;
 }
 
 
-UInt8 RTMFPHandshake::handshakeHandler(UInt8 id,const SocketAddress& address, BinaryReader& request,PacketWriter& response) {
+UInt8 RTMFPHandshake::handshakeHandler(UInt8 id,const SocketAddress& address, BinaryReader& request,BinaryWriter& response) {
 
 	switch(id){
 		case 0x30: {
@@ -155,7 +153,7 @@ UInt8 RTMFPHandshake::handshakeHandler(UInt8 id,const SocketAddress& address, Bi
 
 				const UInt8* peerId = (const UInt8*)epd.c_str();
 				
-				RTMFPSession* pSessionWanted = _sessions.find<RTMFPSession>(peerId);
+				RTMFPSession* pSessionWanted = _sessions.findByPeer<RTMFPSession>(peerId);
 	
 				if(pSessionWanted) {
 					if(pSessionWanted->failed())
@@ -165,7 +163,7 @@ UInt8 RTMFPHandshake::handshakeHandler(UInt8 id,const SocketAddress& address, Bi
 
 					RTMFPSession* pSession(NULL);
 					if(times > 0 || address.host() == pSessionWanted->peer.address.host())
-						pSession = _sessions.find<RTMFPSession>(address);
+						pSession = _sessions.findByAddress<RTMFPSession>(address,Socket::DATAGRAM);
 					
 					pSessionWanted->p2pHandshake(tag,address,times,pSession);
 
@@ -244,18 +242,18 @@ UInt8 RTMFPHandshake::handshakeHandler(UInt8 id,const SocketAddress& address, Bi
 
 				// New RTMFPCookie
 				RTMFPCookie* pCookie = attempt.pCookie;
-				if(!pCookie) {
-					((SocketAddress&)_pPeer->address).set(address);
-					pCookie = new RTMFPCookie(*this,invoker,tag,_pPeer);
+				if (!pCookie) {
+					pCookie = new RTMFPCookie(*this, invoker, tag, _pPeer);
 					if (!pCookie->run(ex)) {
 						delete pCookie;
-						ERROR("RTMFPCookie creation, ",ex.error())
-						return 0;
+						ERROR("RTMFPCookie creation, ", ex.error())
+							return 0;
 					}
 					_pPeer.reset(new Peer((Handler&)invoker)); // reset peer
-					_cookies.emplace(pCookie->value(),pCookie);
+					_cookies.emplace(pCookie->value(), pCookie);
 					attempt.pCookie = pCookie;
 				}
+
 				// response
 				response.write8(COOKIE_SIZE);
 				response.write(pCookie->value(),COOKIE_SIZE);
@@ -283,7 +281,7 @@ UInt8 RTMFPHandshake::handshakeHandler(UInt8 id,const SocketAddress& address, Bi
 			}
 
 			RTMFPCookie& cookie(*itCookie->second);
-			((SocketAddress&)cookie.pPeer->address).set(peer.address);
+			((SocketAddress&)cookie.pPeer->address).set(address);
 
 			if(cookie.farId==0) {
 				((UInt32&)cookie.farId) = farId;

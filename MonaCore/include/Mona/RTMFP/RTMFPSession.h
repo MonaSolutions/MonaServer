@@ -61,9 +61,6 @@ protected:
 			const char* name);
 
 	const UInt32		farId;
-	PacketWriter&		packet();
-	void				flush() { flush(true); }
-	void				flush(bool echoTime, UInt8 marker = 0x4a);
 
 	template <typename ...Args>
 	void fail(Args&&... args) {
@@ -86,22 +83,24 @@ protected:
 		}
 	
 	}
-	
-	
+
+	UInt8*							packet(); // size = RTMFP_MAX_PACKET_SIZE
+	void							flush(UInt8 marker, UInt32 size);
+
 private:
-
+	
 	virtual void					receive(const SocketAddress& address, BinaryReader& packet);
-
+	void							flush(bool echoTime, UInt8 marker = 0x4a);
 	void							manage();
 
 	// Implementation of BandWriter
+	void							flush() { flush(true); }
 	UInt16 ping() const				{ return peer.ping(); }
 	const PoolBuffers&				poolBuffers() { return invoker.poolBuffers; }
 	void							initWriter(const std::shared_ptr<RTMFPWriter>& pWriter);
 	std::shared_ptr<RTMFPWriter>	changeWriter(RTMFPWriter& writer);
 	bool							canWriteFollowing(RTMFPWriter& writer) { return _pLastWriter == &writer; }
 	UInt32							availableToWrite() { return RTMFP_MAX_PACKET_SIZE - (_pSender ? _pSender->packet.size() : RTMFP_HEADER_SIZE); }
-
 	BinaryWriter&					writeMessage(UInt8 type,UInt16 length,RTMFPWriter* pWriter=NULL);
 
 	bool							keepalive();

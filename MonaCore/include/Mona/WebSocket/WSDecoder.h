@@ -25,15 +25,15 @@ This file is a part of Mona.
 namespace Mona {
 
 
-class WSDecoded : public virtual Object, public PacketReader {
+class WSReader : public virtual Object, public PacketReader {
 public:
-	WSDecoded(const UInt8* data,UInt32 size, UInt8 type) : type(type),PacketReader(data,size) {}
+	WSReader(const UInt8* data,UInt32 size, UInt8 type) : type(type),PacketReader(data,size) {}
 	const UInt8		type;
 };
 
-class WSDecoder : public Decoder<WSDecoded>, public virtual Object {
+class WSDecoder : public Decoder<WSReader>, public virtual Object {
 public:
-	WSDecoder(Invoker& invoker) : Decoder<WSDecoded>(invoker,"WSDecoder") {}
+	WSDecoder(Invoker& invoker) : Decoder<WSReader>(invoker,"WSDecoder") {}
 private:
 	UInt32 decoding(Exception& ex, UInt8* data,UInt32 size);
 };
