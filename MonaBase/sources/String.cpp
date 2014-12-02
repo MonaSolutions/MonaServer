@@ -32,7 +32,7 @@ namespace Mona {
 
 const string String::Empty;
 
-#if defined(WIN32)
+#if defined(_WIN32)
 	 // for setting number of exponent digits to 2
 	static int output_exp_old_format(_set_output_format(_TWO_DIGIT_EXPONENT));
 #endif
@@ -202,7 +202,7 @@ Type String::ToNumber(Exception& ex, Type failValue, const char* value, size_t s
 	return (Type)result;
 }
 
-#if defined(WIN32)
+#if defined(_WIN32)
 const char* String::ToUTF8(const wchar_t* value,char buffer[_MAX_PATH]) {
 	WideCharToMultiByte(CP_UTF8, 0, value, -1, buffer, _MAX_PATH, NULL, NULL);
 	return buffer;

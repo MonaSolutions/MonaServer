@@ -14,11 +14,10 @@
 			private var applicationDefault:String = null;
 			private var hostDefault:String = null;
 			
-			[Bindable] public var arrayTests:ArrayCollection = new ArrayCollection();
-			private var mapTests:Object = new Object();
+			private var luaGroup:Test;
+			[Bindable] private var mapTests:Array = new Array();
 			
 			public var _currentIndex:int = 0;
-			public var _timeStart:int = 0; // Time in msec when the test has been started
 			
 			private var _conn:NetConnection = null; // Connection to Mona for getting list of lua tests
 			
@@ -37,31 +36,34 @@
 				listTests.enabled = false;
 				btRun.enabled = false;
 				
-				addTest(new HTTPLoad(this, hostDefault, applicationDefault));
-				addTest(new HTTPReconnect(this, hostDefault, applicationDefault));
-				addTest(new HTTPBadRequests(this, hostDefault));
-				addTest(new HTTPAggregated(this, hostDefault, applicationDefault));
-				addTest(new RTMPBadRequests(this, hostDefault));
-				addTest(new DeserializationJSON(this, hostDefault, applicationDefault));
-				addTest(new DeserializationXMLRPC(this, hostDefault, applicationDefault));
-				addTest(new BigDeserialize(this, hostDefault, applicationDefault));
-				addTest(new RTMPLoad(this, hostDefault, applicationDefault));
-				addTest(new RTMFPLoad(this, hostDefault, applicationDefault));
+				var group:Test = new Test(this, "HTTP", "List of HTTP tests", true);
+				group.children.push(new HTTPLoad(this, hostDefault, applicationDefault));
+				group.children.push(new HTTPReconnect(this, hostDefault, applicationDefault));
+				group.children.push(new HTTPBadRequests(this, hostDefault));
+				group.children.push(new HTTPAggregated(this, hostDefault, applicationDefault));
+				group.children.push(new HTTPSplitted(this, hostDefault, applicationDefault));
+				group.children.push(new BigDeserialize(this, hostDefault, applicationDefault));
+				mapTests.push(group);
+				group = new Test(this, "RTMP", "List of RTMP tests", true);
+				group.children.push(new RTMPBadRequests(this, hostDefault));
+				group.children.push(new RTMPLoad(this, hostDefault, applicationDefault, "RTMP"));
+				group.children.push(new RTMPLoad(this, hostDefault, applicationDefault, "RTMPE"));
+				mapTests.push(group);
+				group = new Test(this, "RTMFP", "List of RTMFP tests", true);
+				group.children.push(new RTMFPLoad(this, hostDefault, applicationDefault));
+				mapTests.push(group);
+				group = new Test(this, "Other", "List of other tests", true);
+				group.children.push(new DeserializationJSON(this, hostDefault, applicationDefault));
+				group.children.push(new DeserializationXMLRPC(this, hostDefault, applicationDefault));
+				mapTests.push(group);
+				
+				luaGroup = new Test(this, "LUA", "List of LUA server tests", true);
+				mapTests.push(luaGroup);
 				
 				_conn = new NetConnection();
 				_conn.addEventListener(NetStatusEvent.NET_STATUS, onStatus);
 				_conn.connect("rtmfp://" + hostDefault + applicationDefault);
 				_conn.client = this;
-			}
-			
-			private function addLUATest(name:String, index:int):void {
-				arrayTests.addItem(name);
-				mapTests[name] = index;
-			}
-			
-			private function addTest(test:Test):void {
-				arrayTests.addItem(test.testName);
-				mapTests[test.testName] = test;
 			}
 			
 			// Run selected tests
@@ -70,24 +72,23 @@
 				listTests.enabled = false;
 				btRun.enabled = false;
 				_currentIndex = 0;
-				runTest();
+				runNext();
 			}
 			
 			// Run current test
-			private function runTest():void {
+			private function runNext():void {
 				var items:Array = listTests.selectedItems;
 				
 				if (_currentIndex < items.length) {
-					var test:Object = mapTests[items[_currentIndex]];
-					if (test is Test) { // AS3 Test
-						var as3test:Test = test as Test;
-						SUCCESS("Running " + as3test.testName + " (" + as3test.description + ")...");
-						_timeStart = getTimer();
-						as3test.run(asyncResult);
-					} else if (test is int) { // LUA Test
-						SUCCESS("Running " + items[_currentIndex] + "...");
-						_timeStart = getTimer();
-						_conn.call("runTest", new Responder(asyncResult), test as int);
+					var test:Test = items[_currentIndex];
+					var parent:Test = listTests.getParentItem(test);
+					
+					// Run if parent is not selected (TODO : recursive)
+					if (!parent || !listTests.isItemSelected(parent))
+						test.run(onFinished);
+					else {
+						_currentIndex += 1;
+						runNext();
 					}
 				}
 				else {// End of tests!
@@ -96,18 +97,16 @@
 				}
 			}
 			
-			public function asyncResult(error:String):void {
-				var items:Array = listTests.selectedItems;
+			// Callback, called from a test finished
+			public function onFinished(test:Test, response:Object):void {
 				
-				// Success => Go to next Test
-				if (error == "") {
-					SUCCESS("Test " + items[_currentIndex] + " OK (" + (getTimer()-_timeStart) + "ms)");
-					_currentIndex += 1;
-					runTest();
-				} else {  // Error : End of tests!
-					ERROR(error);
+				// Error : End of tests!
+				if (response.err) {
 					listTests.enabled = true;
 					btRun.enabled = true;
+				} else { // Success => Go to next Test
+					_currentIndex += 1;
+					runNext();
 				}
 			}
 			
@@ -122,28 +121,30 @@
 			}
 			
 			public function onListTests(list:Object):void {
-				for (var name:String in list)
-					addLUATest(name,list[name]);
+				for (var name:String in list) {
+					var test:LUATest = new LUATest(this, name, list[name], _conn);
+					luaGroup.children.push(test);
+				}
 				
 				listTests.enabled = true;
 				btRun.enabled = true;
 			}
 			
 			public function myDataTipFunction(value:Object):String {
-				
-				var test:Object = mapTests[value];
-				if (test is Test) {// AS3 Test
-					var as3Test:Test = test as Test;
+				if (value is Test) {// AS3 Test
+					var as3Test:Test = value as Test;
 					return as3Test.description;
 				} else // LUA Test
-					return value.toString() + " LUA Test";
+					return value.label + " LUA Test";
 			}
 		]]>
 	</fx:Script>	
 	<mx:VBox x="10" y="10" width="935" height="580">
 		<mx:HBox width="100%">
-			<mx:TextArea id="console" width="720" height="518" editable="false" />
-			<mx:List id="listTests" width="204" height="517" dataProvider="{arrayTests}" allowMultipleSelection="true" showDataTips="true" dataTipFunction="myDataTipFunction"></mx:List>
+			<mx:TextArea id="console" width="720" height="518" editable="false"
+						 valueCommit="console.verticalScrollPosition=console.maxVerticalScrollPosition"/>
+			<mx:Tree id="listTests" width="204" height="517" dataProvider="{mapTests}" allowMultipleSelection="true" 
+					 showDataTips="true" dataTipFunction="myDataTipFunction"></mx:Tree>
 		</mx:HBox>
 		<mx:HBox width="100%">
 			<mx:Spacer width="100%"/>

@@ -108,7 +108,7 @@ public:
 		return String::Append(Buffer::Append<BufferType>(result,value, strlen(value)), args ...);
 	}
 
-#if defined(WIN32)
+#if defined(_WIN32)
 	/// \brief match "wstring" case
 	template <typename BufferType, typename ...Args>
 	static BufferType& Append(BufferType& result, const std::wstring& value, Args&&... args) {
@@ -264,7 +264,7 @@ private:
 	template <typename BufferType>
 	static BufferType& Append(BufferType& result) { return result; }
 
-#if defined(WIN32)
+#if defined(_WIN32)
 	static const char* ToUTF8(const wchar_t* value, char buffer[_MAX_PATH]);
 #endif
 };

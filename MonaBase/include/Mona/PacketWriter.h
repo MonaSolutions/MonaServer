@@ -32,7 +32,7 @@ public:
 
 	UInt8* buffer(UInt32 size) { UInt32 pos(this->size()); next(size); return (UInt8*)data()+pos; }
 
-	PacketWriter&	resize(UInt32 size) { return clear(size); }
+	PacketWriter&	resize(UInt32 size, bool preserveContent=true) { buffer().resize(size, true); return *this; }
 	PacketWriter&	clear(UInt32 size = 0) { BinaryWriter::clear(size); if (_ppBuffer && _ppBuffer->empty()) _ppBuffer->release(); return *this; }
 
 	operator bool() const { return (_ppBuffer || _buffer) ? true : false; }

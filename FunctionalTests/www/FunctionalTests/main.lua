@@ -26,7 +26,7 @@ function onConnection(client,...)
 		local list = {}
 		local index = 1
 		for _,filePath in pairs(mona:listPaths(path.."/LUATests")) do
-			--if filePath.isFolder then
+			if filePath.isFolder then
 				INFO(filePath.name)
 				local child = children("LUATests/"..filePath.name)
 				if child and child.run then
@@ -34,7 +34,7 @@ function onConnection(client,...)
 					list[child.name] = index
 					index = index+1
 				end
-			--end
+			end
 		end
 		
 		NOTE("List of tests : ", mona:toJSON(list))
@@ -45,7 +45,7 @@ function onConnection(client,...)
 	function client:runTest(index)
 		local test = tests[index]
 		if not test then return "Test of index '"..index.."' doesn't exists" end
-		local start = mona:time()
+		local start, elapsed = mona:time(), 0
 		local args = table.pack(pcall(test.run))
 		local err = false
 		if args[1] then
@@ -57,7 +57,9 @@ function onConnection(client,...)
 							local start2 = mona:time()
 							ok,err = pcall(f)
 							if ok then
-								INFO(test.name,":",k," OK (",mona:time()-start2,"ms)")
+								elapsed = mona:time()-start2
+								INFO(test.name,":",k," OK (",elapsed,"ms)")
+								client.writer:writeInvocation("INFO",test.name..":"..k.." OK ("..elapsed.."ms)")
 							else
 								ERROR(test.name,":",k," test failed, ",err)
 							end
@@ -68,14 +70,15 @@ function onConnection(client,...)
 				if err then break end
 			end
 			if not err then
-				NOTE(test.name," OK (",mona:time()-start,"ms)")
-				return ""
+				elapsed = mona:time()-start
+				NOTE(test.name," OK (",elapsed,"ms)")
+				return {err="", elapsed=elapsed}
 			end
 		else
 			err = args[2]
 		end
 		ERROR(test.name," test failed, ",err)
-		return test.name.." test failed, "..err
+		return {err=test.name.." test failed, "..err}
 	end
   
 	-- For HTTPLoad, HTTPReconnect and Deserialize tests, just return parameters deserialized and serialized
@@ -83,7 +86,7 @@ function onConnection(client,...)
 		NOTE(path) -- to see if we are in app or subapp
 		INFO("Message : ", mona:toJSON(...))
 		
-		client.writer:writeMessage(...)
+		return ...
 	end
   
   return {index="flash.html",timeout=7}

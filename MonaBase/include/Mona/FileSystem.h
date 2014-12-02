@@ -25,7 +25,10 @@ This file is a part of Mona.
 #include "Mona/Time.h"
 #include "Mona/Exceptions.h"
 #include <vector>
+#if defined(_WIN32)
+#include "windows.h"
 #undef CreateDirectory
+#endif
 
 namespace Mona {
 

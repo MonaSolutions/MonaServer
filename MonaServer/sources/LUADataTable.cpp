@@ -58,7 +58,7 @@ int LUADataTable::Set(lua_State *pState) {
 		if (name) {
 			Int8 removing = SCRIPT_NEXT_TYPE==LUA_TNIL ? 1 : 0;
 			string path;
-			String::Format(path, table.path, '/', name);
+			String::Format(path, table.path, '/', name, '/');
 
 			lua_getmetatable(pState, 1);
 			lua_getfield(pState, -1, "|items");

@@ -59,7 +59,11 @@ function JSON()
 	json = mona:toJSON({})
 	assert(json=="[[]]")
 	compareTable(mona:fromJSON(json),{})
-
+	
+	json = mona:toJSON({{}})
+	assert(json=="[[[]]]")
+	compareTable(mona:fromJSON(json),{{}})
+	
 	check(mona:fromJSON( mona:toJSON(Values(false,false))))
 end
 

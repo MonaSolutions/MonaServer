@@ -245,7 +245,7 @@ void RTMPSession::receive(BinaryReader& packet) {
 		if (channel.bodySize > channel.pBuffer->size())
 			return; // wait the next piece
 	} else if (channel.bodySize > packet.available()) {
-		channel.pBuffer->resize(packet.available());
+		channel.pBuffer->resize(packet.available(), false);
 		memcpy(channel.pBuffer->data(),packet.current(),packet.available());
 		return; // wait the next piece
 	}

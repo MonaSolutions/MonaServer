@@ -38,9 +38,9 @@ package
 			_url = url;
 		}
 		
-		override public function run(onResult:Function):void {
+		override public function run(onFinished:Function):void {
 			
-			super.run(onResult);
+			super.run(onFinished);
 			
 			// Prepare POST request
 			_http = new HTTPService();
@@ -100,14 +100,12 @@ package
 						if (_currentIndex < _tabXML.length)
 							_http.send(formatMessage(_tabXML[_currentIndex]));
 						else
-							_onResult(""); // Test Terminated!
-					} else {
-						Alert.show(result);
-						_onResult("Result unexpected for index "+(_currentIndex+1));
-					}
+							onResult({}); // Test Terminated!
+					} else
+						onResult({err:"Result unexpected for index "+(_currentIndex+1)});
 					break;
 				case FaultEvent.FAULT:
-					_onResult(FaultEvent(event).fault.faultString);
+					onResult({err:FaultEvent(event).fault.faultString});
 					break;
 			}
 		}

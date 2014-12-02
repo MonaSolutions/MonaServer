@@ -34,9 +34,9 @@ package
 			_url = url;
 		}
 		
-		override public function run(onResult:Function):void {
+		override public function run(onFinished:Function):void {
 			
-			super.run(onResult);
+			super.run(onFinished);
 			
 			// Prepare POST request
 			_http = new HTTPService();
@@ -74,12 +74,12 @@ package
 							var json:String = _tabJSON[_currentIndex];
 							_http.send(json);
 						} else
-							_onResult(""); // Test Terminated!
+							onResult({}); // Test Terminated!
 					} else
-						_onResult("Expected '"+original+"' and got '"+result+"'");
+						onResult({err:"Expected '"+original+"' and got '"+result+"'"});
 					break;
 				case FaultEvent.FAULT:
-					_onResult(FaultEvent(event).fault.faultString);
+					onResult({err:FaultEvent(event).fault.faultString});
 					break;
 			}
 		}

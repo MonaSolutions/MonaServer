@@ -26,9 +26,9 @@ package
 			_url=url;
 		}
 		
-		override public function run(onResult:Function):void {
+		override public function run(onFinished:Function):void {
 			
-			super.run(onResult);
+			super.run(onFinished);
 			
 			// Prepare POST request
 			_http = new HTTPService();
@@ -58,12 +58,12 @@ package
 						_currentTest += 1;
 						_http.send(_parameters); // Next request
 					} else
-						_onResult(""); // Test Terminated!
+						onResult({}); // Test Terminated!
 				} else
-					_onResult("Error in result ("+result.toString()+")");
+					onResult({err:"Error in result ("+result.toString()+")"});
 				break;
 			case FaultEvent.FAULT:
-				_onResult(FaultEvent(event).fault.faultString);
+				onResult({err:FaultEvent(event).fault.faultString});
 				break;
 			}
 		}

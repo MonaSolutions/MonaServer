@@ -146,9 +146,9 @@ private:
 				if (consumed) {
 					// not execute the first loop!
 					if (_pLastOut) {
-						_pBuffer->resize(pBuffer.size()-consumed);
+						_pBuffer->resize(pBuffer.size()-consumed, false);
 						memcpy(_pBuffer->data(), pBuffer->data()+consumed, _pBuffer->size());
-						pBuffer->resize(consumed);
+						pBuffer->resize(consumed, false);
 						_pLastOut->pBuffer.swap(pBuffer);
 						pBuffer.swap(_pBuffer);
 					} else

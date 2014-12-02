@@ -24,7 +24,10 @@ This file is a part of Mona.
 #include "Mona/BinaryReader.h"
 #include <vector>
 
-#ifdef _WIN32
+#if defined(_WIN32)
+#include "windows.h"
+#undef ABSOLUTE
+#undef RELATIVE
 struct _SYSTEMTIME;
 #endif
 

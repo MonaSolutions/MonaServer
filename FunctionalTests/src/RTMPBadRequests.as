@@ -31,8 +31,8 @@ package
 			}
 		}
 		
-		override public function run(onResult:Function):void {
-			super.run(onResult);
+		override public function run(onFinished:Function):void {
+			super.run(onFinished);
 			
 			// First connect
 			_sock = new Socket();
@@ -62,10 +62,10 @@ package
 						myTimer.addEventListener(TimerEvent.TIMER, reconnect);
 						myTimer.start();
 					} else
-						_onResult(""); // End of tests!
+						onResult({}); // End of tests!
 					break;
 				default:
-					_onResult(evt.toString());
+					onResult({err:evt.toString()});
 			}
 		}
 	}

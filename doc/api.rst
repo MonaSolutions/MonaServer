@@ -279,7 +279,7 @@ methods
 
 .. note:: 
   
-  - You can use the **ipairs()** LUA_ function to iterate on the list of *groups*, keys are *group.id* and values are *group* object (see *group* object thereafter).
+  - You can use the **pairs()** LUA_ function to iterate on the list of *groups*, keys are *group.id* and values are *group* object (see *group* object thereafter).
   - And the "#" operator to get the number of groups.
 
 Group
@@ -292,11 +292,16 @@ properties
 
 - **id** (read-only), the group id in a readable string format, it has a size of 64 bytes.
 - **rawId** (read-only), the group id in a hexadecimal raw format, it has a size of 32 bytes.
+- **members** (read-only), the list of clients in the group.
+
+methods
+-----------------
+
+- **size()**, return the number of client of the group.
 
 .. note:: 
   
-  - You can use the **ipairs()** LUA_ function to iterate on the list of *clients*.
-  - And the "#" operator to get the number of clients.
+  - You can use the **pairs()** LUA_ function to iterate on the list of *members*.
 
 Member
 =================
@@ -698,7 +703,7 @@ Call on video packet reception for one publication. *time* is the time in millis
 .. warning:: This event is not called for publications started from script code, it's called only for client publications (see *publication* object in *Objects* part). Then of course, it's called only in stream-to-server case (not in P2P case).
 
 
-publication:onAudioPacket(time,packet)
+publication:onAudio(time,packet)
 =======================================
 
 Call on audio packet reception for one publication. *time* is the time in milliseconds of this packet in the stream, and *packet* contains audio data.
@@ -706,7 +711,7 @@ Call on audio packet reception for one publication. *time* is the time in millis
 .. warning:: This event is not called for publications started from script code, it's called only for client publications (see *publication* object in *Objects* part). Then of course, it's called only in stream-to-server case (not in P2P case).
 
 
-publication:onDataPacket(name,packet)
+publication:onData(name,packet)
 ======================================
 
 Call on data packet reception for one publication. *name* is the invocation name, and *packet* contains raw data.

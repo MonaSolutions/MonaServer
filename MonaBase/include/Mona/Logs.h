@@ -23,6 +23,12 @@ This file is a part of Mona.
 #include "Mona/Logger.h"
 #include "Mona/String.h"
 #include "Mona/Util.h"
+#if defined(WIN32)
+#include "windows.h"
+#undef ERROR
+#undef DEBUG
+#undef TRACE
+#endif
 
 namespace Mona {
 
@@ -83,10 +89,6 @@ private:
 	static UInt8		_Level;
 	static Logger		_DefaultLogger;
 };
-
-#undef ERROR
-#undef DEBUG
-#undef TRACE
 
 #define LOG_BUFFER	__buffer
 #define LOG(LEVEL,FILE,LINE,...) { if(Mona::Logs::GetLevel()>=LEVEL) { std::string __buffer; Mona::Logs::Log(LEVEL,FILE,LINE, __VA_ARGS__); } }

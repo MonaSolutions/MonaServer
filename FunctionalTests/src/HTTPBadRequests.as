@@ -18,9 +18,9 @@ package
 			_host = host;
 		}
 		
-		override public function run(onResult:Function):void {
+		override public function run(onFinished:Function):void {
 			
-			super.run(onResult);				
+			super.run(onFinished);				
 			_sock = new Socket();
 			_sock.addEventListener(Event.CLOSE, onEvent);
 			_sock.addEventListener(Event.CONNECT, onEvent);
@@ -48,10 +48,10 @@ package
 						myTimer.addEventListener(TimerEvent.TIMER, reconnect);
 						myTimer.start();
 					} else
-						_onResult(""); // End of tests!
+						onResult({}); // End of tests!
 					break;
 				default:
-					_onResult(evt.toString());
+					onResult({err:evt.toString()});
 			}
 		}
 	}

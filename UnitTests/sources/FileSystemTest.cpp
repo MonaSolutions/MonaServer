@@ -89,14 +89,14 @@ ADD_TEST(FileSystemTest, Properties) {
 
 ADD_TEST(FileSystemTest, Utf8) {
 	Exception ex;
-#if defined(WIN32)
+#if defined(_WIN32)
 	String::Format(Path, Home, L"Приве́т नमस्ते שָׁלוֹם");
 #else
 	String::Format(Path, Home, "Приве́т नमस्ते שָׁלוֹם");
 #endif
 	
 	// file
-#if defined(WIN32)
+#if defined(_WIN32)
 	wchar_t wFile[_MAX_PATH];
 	MultiByteToWideChar(CP_UTF8, 0, Path.c_str(), -1, wFile, _MAX_PATH);
 	ofstream(wFile).close();

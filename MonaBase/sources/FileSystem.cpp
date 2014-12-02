@@ -22,7 +22,6 @@ This file is a part of Mona.
 #include <sys/stat.h>
 #include <cctype>
 #if defined(_WIN32)
-    #include "windows.h"
 	#include "direct.h"
 #else
     #include "dirent.h"
@@ -201,6 +200,13 @@ UInt32 FileSystem::Paths(Exception& ex, const char* path, const ForEach& forEach
 		if (strcmp(pEntry->d_name, ".")!=0 && strcmp(pEntry->d_name, "..")!=0) {
 			++count;
 			String::Append(pathFile.assign(directory), pEntry->d_name);
+			// Cross-platform solution when DT_UNKNOWN
+			if(pEntry->d_type==DT_UNKNOWN) {
+				Status status;
+				Stat(pathFile, status);
+				if ((status.st_mode&S_IFMT) == S_IFDIR)
+					pEntry->d_type = DT_DIR;
+			}
 			if(pEntry->d_type==DT_DIR)
 				pathFile.append("/");
 			forEach(pathFile);
@@ -458,7 +464,7 @@ bool FileSystem::ResolveFileWithPaths(const char* paths, string& file) {
 
 	String::ForEach forEach([&file](UInt32 index,const char* value) {
 		string path(value);
-		#if defined(WIN32)
+		#if defined(_WIN32)
 			// "path" => path
 			if (!path.empty() && path[0] == '"' && path.back() == '"') {
 				path.resize(path.size()-1);
@@ -472,7 +478,7 @@ bool FileSystem::ResolveFileWithPaths(const char* paths, string& file) {
 		}
 		return true;
 	});
-#if defined(WIN32)
+#if defined(_WIN32)
 	return String::Split(paths, ";", forEach, String::SPLIT_IGNORE_EMPTY | String::SPLIT_TRIM) == string::npos;
 #else
 	return String::Split(paths, ":", forEach, String::SPLIT_IGNORE_EMPTY | String::SPLIT_TRIM) == string::npos;

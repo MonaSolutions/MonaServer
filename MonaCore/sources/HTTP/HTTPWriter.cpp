@@ -89,7 +89,7 @@ HTTPSender* HTTPWriter::createSender(bool isInternResponse) {
 
 void HTTPWriter::flush() {
 
-	if (_requesting || !_requestCount) // during request wait the response, otherwise if no request no flush
+	if (_requesting || (!_requestCount && !_pMedia)) // during request wait the response, otherwise if no request no flush
 		return;
 
 	// send just one!
@@ -102,7 +102,7 @@ void HTTPWriter::flush() {
 			ERROR("HTTPSender flush, ", ex.error())
 		_pResponse.reset();
 	}
-	while (_requestCount && !_senders.empty()) {
+	while ((_pMedia || _requestCount) && !_senders.empty()) {
 		const shared_ptr<HTTPSender>& pSender(_senders.front());
 		if (pSender->newHeaders())
 			--_requestCount;

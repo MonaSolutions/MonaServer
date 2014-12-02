@@ -26,9 +26,9 @@ package
 			_message += i + "]";
 		}
 		
-		override public function run(onResult:Function):void {
+		override public function run(onFinished:Function):void {
 			
-			super.run(onResult);
+			super.run(onFinished);
 			
 			// Prepare POST request
 			_http = new HTTPService();
@@ -52,12 +52,12 @@ package
 					var result:String = String(ResultEvent(event).result);					
 					
 					if (result==_message)
-						_onResult("");
+						onResult({});
 					else
-						_onResult("Result is different from message!");
+						onResult({err:"Result is different from message!"});
 					break;
 				case FaultEvent.FAULT:
-					_onResult(FaultEvent(event).fault.faultString);
+					onResult({err:FaultEvent(event).fault.faultString});
 					break;
 			}
 		}

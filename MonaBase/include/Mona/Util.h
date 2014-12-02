@@ -205,7 +205,7 @@ public:
 
 			if ((c > 127) || (c < 0) || (_ReverseB64Table[c] > 63)) {
 				// reset the oldSize
-				buffer.resize(oldSize);
+				buffer.resize(oldSize,false);
 				return false;
 			}
 		
@@ -217,7 +217,7 @@ public:
 				*out++ = ((accumulator >> bits) & 0xFFu);
 			}
 		}
-		buffer.resize(oldSize+size);
+		buffer.resize(oldSize+size,false);
 		return true;
 	}
 
@@ -248,7 +248,7 @@ public:
 		}
 
 		UInt32 oldSize(options&HEX_APPEND ? buffer.size() : 0);
-		buffer.resize((end-data) * ((options&HEX_CPP) ? 4 : 2) - (skipLeft ? 1 : 0) + oldSize);
+		buffer.resize((end-data) * ((options&HEX_CPP) ? 4 : 2) - (skipLeft ? 1 : 0) + oldSize, false);
 		UInt8* out((UInt8*)buffer.data() + oldSize);
 	
 		UInt8 ref(options&HEX_UPPER_CASE ? '7' : 'W');
@@ -286,7 +286,7 @@ public:
 			*out++ = ((first - (first<='9' ? '0' : '7')) << 4) | ((second - (second<='9' ? '0' : '7')) & 0x0F);
 			++size;
 		}
-		buffer.resize(size);
+		buffer.resize(size, false);
 		return buffer;
 	}
 
