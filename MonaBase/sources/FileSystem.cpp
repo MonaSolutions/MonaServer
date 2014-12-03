@@ -200,8 +200,8 @@ UInt32 FileSystem::Paths(Exception& ex, const char* path, const ForEach& forEach
 		if (strcmp(pEntry->d_name, ".")!=0 && strcmp(pEntry->d_name, "..")!=0) {
 			++count;
 			String::Append(pathFile.assign(directory), pEntry->d_name);
-			// Cross-platform solution when DT_UNKNOWN
-			if(pEntry->d_type==DT_UNKNOWN) {
+			// Cross-platform solution when DT_UNKNOWN or symbolic link
+			if(pEntry->d_type==DT_UNKNOWN || pEntry->d_type==DT_LNK) {
 				Status status;
 				Stat(pathFile, status);
 				if ((status.st_mode&S_IFMT) == S_IFDIR)
