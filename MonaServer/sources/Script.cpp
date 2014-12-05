@@ -397,7 +397,7 @@ int Script::Next(lua_State* pState,int index) {
 
 static int INext(lua_State* pState) {
 	// 1 table
-	// [2 index] (optional,start to 0)
+	// [2 index] (optional,start to 1)
 	if (!lua_istable(pState, 1)) {
 		SCRIPT_BEGIN(pState)
 			SCRIPT_ERROR("inext on a ", lua_typename(pState,lua_type(pState, 1)), " value")

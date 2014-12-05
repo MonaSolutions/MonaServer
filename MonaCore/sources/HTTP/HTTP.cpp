@@ -366,7 +366,7 @@ void HTTP::WriteDirectoryEntry(BinaryWriter& writer,const string& serverAddress,
 
 class SetCookieWriter : public DataWriter {
 public:
-	SetCookieWriter(Buffer& buffer,Parameters& keyValue) : _keyValue(keyValue),_option(NO),_buffer(buffer) {
+	SetCookieWriter(Buffer& buffer,const HTTP::OnCookie& onCookie) : _first(true),_onCookie(onCookie),_option(NO),_buffer(buffer) {
 		String::Append(_buffer,"\r\nSet-Cookie: ");
 	}
 
@@ -413,7 +413,7 @@ public:
 	UInt64	writeBytes(const UInt8* data, UInt32 size) { writeString((const char*)data, size); return 0; }
 	void	writeString(const char* value, UInt32 size) {
 		if ((_option <= 2 || (String::ICompare(value, "false", size) != 0 && String::ICompare(value, "no", size) != 0 && String::ICompare(value, "0", size) != 0 && String::ICompare(value, "off", size) != 0 && String::ICompare(value, "null", size) != 0))&& writeHeader())
-			writeContent<String>(_buffer,value, size);
+			writeContent<Buffer>(value, size);
 		_option = NO;
 	}
 	void	writeNumber(double value) {
@@ -430,14 +430,15 @@ public:
 private:
 
 	bool writeHeader() {
-		static const vector<const char*> Patterns({ "; Domain=", "; Path=", "; Expires=", "; Secure", "; HttpOnly" });
-		if (_option >= 0) {
-			String::Append(_buffer,Patterns[_option]);
-		} else {
+		static const vector<const char*> Patterns({ "Domain=", "Path=", "Expires=", "Secure", "HttpOnly" });
+		if (!_first)
 			String::Append(_buffer, "; ");
-			if (_option == VALUE)
-				String::Append(_buffer, _key, "=");
-		}
+		else
+			_first = false;
+		if (_option >= 0)
+			String::Append(_buffer,Patterns[_option]);
+		else if (_option == VALUE)
+			String::Append(_buffer, _key, "=");
 		return _option<=2;
 	}
 
@@ -445,8 +446,8 @@ private:
 	void writeContent(Args&&... args) {
 		UInt32 before = _buffer.size();
 		BufferClass::Append(_buffer,args ...);
-		if (_option == VALUE)
-			_keyValue.setString(_key,STR _buffer.data()+before,_buffer.size()-before);
+		if (_option == VALUE && _onCookie)
+			_onCookie(_key.c_str(),STR _buffer.data()+before,_buffer.size()-before);
 	}
 	
 	enum Option {
@@ -459,18 +460,19 @@ private:
 		HTTPONLY = 4
 	};
 
-	Buffer&		 _buffer;
-	string		 _key;
-	Parameters& _keyValue;
-	Option		 _option;
+	Buffer&				   _buffer;
+	string				   _key;
+	const HTTP::OnCookie&  _onCookie;
+	Option				   _option;
+	bool					_first;
 };
 
 
-UInt32 HTTP::WriteSetCookie(DataReader& reader,Buffer& buffer,Parameters& keyValue) {
+bool HTTP::WriteSetCookie(DataReader& reader,Buffer& buffer,const OnCookie& onCookie) {
 	if (reader.nextType() < DataReader::OTHER)
-		return 0;
-	SetCookieWriter writer(buffer,keyValue);
-	return reader.read(writer);
+		return false;
+	SetCookieWriter writer(buffer,onCookie);
+	return reader.read(writer)>0;
 }
 
 

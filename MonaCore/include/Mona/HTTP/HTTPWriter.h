@@ -39,7 +39,7 @@ public:
 
 	const HTTPPacket* lastRequest() const { return _pLastRequest ? &*_pLastRequest : NULL; }
 
-	UInt32			  writeSetCookie(DataReader& reader,Parameters& keyValue) { return HTTP::WriteSetCookie(reader,*_pSetCookieBuffer, keyValue); }
+	bool			writeSetCookie(DataReader& reader,const HTTP::OnCookie& onCookie=nullptr) { return HTTP::WriteSetCookie(reader,*_pSetCookieBuffer, onCookie); }
 
 	void			abort() { _pResponse.reset(); _senders.clear(); }
 

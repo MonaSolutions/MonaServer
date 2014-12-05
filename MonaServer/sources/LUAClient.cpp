@@ -33,8 +33,17 @@ using namespace Mona;
 int LUAClient::Item(lua_State *pState) {
 	SCRIPT_CALLBACK(Client,client)
 		ScriptReader reader(pState, SCRIPT_READ_AVAILABLE);
-		ScriptWriter writer(pState);
-		SCRIPT_READ_NEXT(client.properties(reader,writer));
+		string value("null");
+		while (reader.available() && client.OnCallProperties::raise<false>(reader, value)) {
+			Script::PushValue(pState, value);
+			value.assign("null");
+		}
+		while (reader.readString(value)) {
+			if (client.properties().getString(value, value))
+				lua_pushlstring(pState, value.data(), value.size());
+			else
+				lua_pushnil(pState);
+		}
 	SCRIPT_CALLBACK_RETURN
 }
 

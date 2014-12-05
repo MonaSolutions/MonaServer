@@ -37,7 +37,13 @@ namespace Mona {
 HTTPSession::HTTPSession(const SocketAddress& peerAddress, SocketFile& file, Protocol& protocol, Invoker& invoker) :
 	_indexDirectory(true), WSSession(peerAddress, file, protocol, invoker), _writer(*this), _pListener(NULL),
 	_decoder(invoker), onDecoded([this](const std::shared_ptr<HTTPPacket>& pPacket, const SocketAddress& address) {receive(pPacket); }), onDecodedEnd([this]() {flush(); }),
-	onCallProperties([this](DataReader& reader, DataWriter& writer) { return _writer.writeSetCookie(reader, peer.properties()); }) {
+	onCallProperties([this](DataReader& reader,string& value) {
+		HTTP::OnCookie onCookie([this,&value](const char* key, const char* data, UInt32 size) {
+			peer.properties().setString(key, data, size);
+			value.assign(data,size);
+		});
+		return _writer.writeSetCookie(reader, onCookie);
+	}) {
 
 	peer.OnCallProperties::subscribe(onCallProperties); // subscribe to client.properties(...)
 

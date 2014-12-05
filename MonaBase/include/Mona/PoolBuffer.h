@@ -30,7 +30,7 @@ public:
 	PoolBuffer(const PoolBuffers& poolBuffers,UInt32 size=0) : _size(size),poolBuffers(poolBuffers),_pBuffer(NULL) {}
 	virtual ~PoolBuffer() { release(); }
 
-	operator bool() const { return !_pBuffer;  }
+	operator bool() const { return _pBuffer!=NULL;  }
 	bool			empty() const { return !_pBuffer || _pBuffer->size()==0; }
 	const UInt8*	data() const { return _pBuffer ? _pBuffer->data() : NULL; }
 	UInt32			size() const { return _pBuffer ? _pBuffer->size() : 0; }

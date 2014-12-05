@@ -172,7 +172,9 @@ public:
 
 	static void			WriteDirectoryEntries(BinaryWriter& writer, const std::string& serverAddress, const std::string& fullPath, const std::string& path, SortField sortField = SORT_BY_NAME, SortOrder sortOrder = SORT_ASC);
 
-	static UInt32		WriteSetCookie(DataReader& reader,Buffer& buffer,Parameters& keyValue);
+	typedef std::function<void(const char* key,const char* data,UInt32 size)> OnCookie;
+	static bool			WriteSetCookie(DataReader& reader,Buffer& buffer,const OnCookie& onCookie=nullptr);
+
 private:
 	static void			WriteDirectoryEntry(BinaryWriter& writer, const std::string& serverAddress,const std::string& path,const Path& entry);
 };

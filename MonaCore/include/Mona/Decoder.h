@@ -66,8 +66,8 @@ public:
 			pBuffer.release();
 		} else {
 			_pDecoding->_input.emplace_back(poolBuffers);
-			_pDecoding->_inAddresses.emplace_back(address);
 			_pDecoding->_input.back().swap(pBuffer);
+			_pDecoding->_inAddresses.emplace_back(address);
 		}
 		return consumed;
 	}

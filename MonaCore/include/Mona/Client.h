@@ -30,7 +30,7 @@ This file is a part of Mona.
 namespace Mona {
 
 namespace Events {
-	struct OnCallProperties : Event<UInt32(DataReader& reader,DataWriter& writer)> {};
+	struct OnCallProperties : Event<bool(DataReader& reader,std::string& value)> {};
 };
 
 class Client : public Entity, public virtual Object,
@@ -60,21 +60,7 @@ public:
 	const Time					lastReceptionTime;
 	virtual UInt16				ping() const = 0;
 	virtual const Parameters&	properties() const =0;
-	UInt32						properties(DataReader& reader,DataWriter& writer) {
-		UInt32 readen;
-		if (OnCallProperties::subscribed() && (readen = OnCallProperties::raise<0>(reader, writer)))
-			return readen;
-		readen = 0;
-		std::string value;
-		while (reader.readString(value)) {
-			++readen;
-			if (!properties().getString(value, value))
-				writer.writeNull();
-			else
-				writer.writeString(value.data(), value.size());
-		}
-		return readen;
-	}
+
 
 	virtual Writer&				writer() = 0;
 

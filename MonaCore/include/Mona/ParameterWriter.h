@@ -46,15 +46,9 @@ public:
 	UInt64 writeDate(const Date& date) { writeNumber((double)date); return 0; }
 	UInt64 writeBytes(const UInt8* data, UInt32 size) { set(STR data, size); return 0; }
 
-	UInt32 count() const { return _parameters.count(); }
-	
 	void   clear(UInt32 size=0) { _index = 0; _isProperty = false; _property.clear(); _parameters.clear(); }
 private:
-
-	UInt32 size(const std::string& value) { return value.size(); }
-	UInt32 size(const char* value) { return strlen(value); }
-	UInt32 size(const char* value, std::size_t size) { return size; }
-
+	
 	template <typename ...Args>
 	void set(Args&&... args) {
 		if (!_isProperty)
