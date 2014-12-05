@@ -152,7 +152,7 @@ public:
 
 		if (!append)
 			accumulator = 0;
-		buffer.resize(accumulator+(UInt32)ceil(size/3.0)*4);
+		buffer.resize(accumulator+(UInt32)ceil(size/3.0)*4,append);
 
 		char*		current = (char*)buffer.data();
 		if (!current) // to expect null writer 
@@ -205,7 +205,7 @@ public:
 
 			if ((c > 127) || (c < 0) || (_ReverseB64Table[c] > 63)) {
 				// reset the oldSize
-				buffer.resize(oldSize,false);
+				buffer.resize(oldSize,append);
 				return false;
 			}
 		
@@ -217,7 +217,7 @@ public:
 				*out++ = ((accumulator >> bits) & 0xFFu);
 			}
 		}
-		buffer.resize(oldSize+size,false);
+		buffer.resize(oldSize+size,append);
 		return true;
 	}
 
@@ -248,7 +248,7 @@ public:
 		}
 
 		UInt32 oldSize(options&HEX_APPEND ? buffer.size() : 0);
-		buffer.resize((end-data) * ((options&HEX_CPP) ? 4 : 2) - (skipLeft ? 1 : 0) + oldSize, false);
+		buffer.resize((end-data) * ((options&HEX_CPP) ? 4 : 2) - (skipLeft ? 1 : 0) + oldSize, options&HEX_APPEND);
 		UInt8* out((UInt8*)buffer.data() + oldSize);
 	
 		UInt8 ref(options&HEX_UPPER_CASE ? '7' : 'W');

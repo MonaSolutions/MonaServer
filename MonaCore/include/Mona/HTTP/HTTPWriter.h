@@ -62,6 +62,7 @@ private:
 	bool			writeMedia(MediaType type,UInt32 time,PacketReader& packet,const Parameters& properties);
 
 	HTTPSender*     createSender(bool isInternResponse);
+	bool			send(std::shared_ptr<HTTPSender>& pSender);
 
 	std::unique_ptr<MediaContainer>				_pMedia;
 	TCPSession&									_session;

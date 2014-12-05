@@ -22,6 +22,7 @@ This file is a part of Mona.
 #include <sys/stat.h>
 #include <cctype>
 #if defined(_WIN32)
+	#include "windows.h"
 	#include "direct.h"
 #else
     #include "dirent.h"
@@ -201,14 +202,14 @@ UInt32 FileSystem::Paths(Exception& ex, const char* path, const ForEach& forEach
 			++count;
 			String::Append(pathFile.assign(directory), pEntry->d_name);
 			// Cross-platform solution when DT_UNKNOWN or symbolic link
-			if(pEntry->d_type==DT_UNKNOWN || pEntry->d_type==DT_LNK) {
+			if(pEntry->d_type==DT_DIR)
+				pathFile.append("/");
+			else if(pEntry->d_type==DT_UNKNOWN || pEntry->d_type==DT_LNK) {
 				Status status;
 				Stat(pathFile, status);
 				if ((status.st_mode&S_IFMT) == S_IFDIR)
-					pEntry->d_type = DT_DIR;
+					pathFile.append("/");
 			}
-			if(pEntry->d_type==DT_DIR)
-				pathFile.append("/");
 			forEach(pathFile);
 		}
 	}

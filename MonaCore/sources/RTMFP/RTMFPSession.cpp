@@ -190,7 +190,7 @@ void RTMFPSession::p2pHandshake(const string& tag,const SocketAddress& address,U
 UInt8* RTMFPSession::packet() {
 	if (!_pSender)
 		_pSender.reset(new RTMFPSender(invoker.poolBuffers, _pEncoder));
-	_pSender->packet.resize(RTMFP_MAX_PACKET_SIZE);
+	_pSender->packet.resize(RTMFP_MAX_PACKET_SIZE,false);
 	return _pSender->packet.data();
 }
 

@@ -42,10 +42,7 @@ public:
 	}
 
 	void add(PacketReader& fragment) {
-		string::size_type old = _pBuffer->size();
-		_pBuffer->resize(old + fragment.available(),true);
-		if(_pBuffer->size()>old)
-			memcpy(_pBuffer->data()+old,fragment.current(),fragment.available());
+		_pBuffer->append(fragment.current(),fragment.available());
 		++(UInt32&)fragments;
 	}
 

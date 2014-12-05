@@ -72,7 +72,6 @@ private:
 	/// by relating parameters[key]
 	void			replaceTemplateTags(PacketWriter& packet, std::ifstream& ifile, const Parameters& parameters);
 
-
 	/*! SocketSender override to disconnect socket if _connection == HTTP::CONNECTION_CLOSE */
 	void			onSent(Socket& socket);
 

@@ -178,7 +178,7 @@ void Listener::updateProperties() {
 		return;
 	PacketReader packet(meta, size);
 	AMFReader reader(packet);
-	DEBUG("Listener::updateProperties")
+	DEBUG("Listener::updateProperties => send metadata")
 	writeData(reader,Writer::INFO_DATA,_writer);
 }
 

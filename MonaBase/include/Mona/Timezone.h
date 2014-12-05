@@ -25,9 +25,6 @@ This file is a part of Mona.
 #include <vector>
 
 #if defined(_WIN32)
-#include "windows.h"
-#undef ABSOLUTE
-#undef RELATIVE
 struct _SYSTEMTIME;
 #endif
 

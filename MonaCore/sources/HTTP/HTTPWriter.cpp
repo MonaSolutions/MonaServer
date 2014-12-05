@@ -87,32 +87,33 @@ HTTPSender* HTTPWriter::createSender(bool isInternResponse) {
 	return &*_senders.back();
 }
 
+bool HTTPWriter::send(shared_ptr<HTTPSender>& pSender) {
+	Exception ex;
+	if (pSender->newHeaders()) {
+		if (!_requestCount)
+			return false;
+		if(--_requestCount==0)
+			_pRequest.reset();
+	}
+	_pThread = _session.send<HTTPSender>(ex, qos(),pSender,_pThread);
+	if (ex)
+		ERROR("HTTPSender flush, ", ex.error())
+	pSender.reset();
+	return true;
+}
+
 void HTTPWriter::flush() {
 
-	if (_requesting || (!_requestCount && !_pMedia)) // during request wait the response, otherwise if no request no flush
+	if (_requesting) // during request wait the main response before flush
 		return;
 
-	// send just one!
-	Exception ex;
-	if (_pResponse) {
-		if (_pResponse->newHeaders())
-			--_requestCount;
-		_pThread = _session.send<HTTPSender>(ex, qos(),_pResponse,_pThread);
-		if (ex)
-			ERROR("HTTPSender flush, ", ex.error())
-		_pResponse.reset();
-	}
-	while ((_pMedia || _requestCount) && !_senders.empty()) {
-		const shared_ptr<HTTPSender>& pSender(_senders.front());
-		if (pSender->newHeaders())
-			--_requestCount;
-		_pThread = _session.send<HTTPSender>(ex, qos(),pSender,_pThread);
-		if (ex)
-			ERROR("HTTPSender flush, ", ex.error())
+	// now send just one response with header!
+	if (_pResponse && !send(_pResponse))
+		return;
+
+	// send senders
+	while (!_senders.empty() && send(_senders.front()))
 		_senders.pop_front();
-	}
-	if (_requestCount==0)
-		_pRequest.reset();
 }
 
 DataWriter& HTTPWriter::writeMessage() {

@@ -239,9 +239,7 @@ void RTMPSession::receive(BinaryReader& packet) {
 
 	// unchunk (build)
 	if (!channel.pBuffer.empty()) {
-		UInt32 oldSize(channel.pBuffer->size());
-		channel.pBuffer->resize(oldSize + packet.available(), true);
-		memcpy(channel.pBuffer->data() + oldSize, packet.current(), packet.available());
+		channel.pBuffer->append(packet.current(), packet.available());
 		if (channel.bodySize > channel.pBuffer->size())
 			return; // wait the next piece
 	} else if (channel.bodySize > packet.available()) {

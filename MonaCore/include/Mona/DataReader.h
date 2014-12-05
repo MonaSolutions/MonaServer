@@ -109,7 +109,7 @@ private:
 	template<typename BufferType>
 	class BytesWriter : public DataWriter {
 	public:
-		BytesWriter(BufferType& buffer) : _buffer(buffer), _position((UInt32)buffer.size()) {}
+		BytesWriter(BufferType& buffer) : _buffer(buffer) {}
 		UInt64	beginObject(const char* type, UInt32 size) { return 0; }
 		void	writePropertyName(const char* value) {}
 		void	endObject() {}
@@ -117,17 +117,14 @@ private:
 		UInt64	beginArray(UInt32 size) { return 0; }
 		void	endArray() {}
 
-		UInt64	writeDate(const Date& date) { Int64 time(date.time()); write(&time, sizeof(time)); return 0; }
-		void	writeNumber(double value) { write(&value, sizeof(value)); }
-		void	writeString(const char* value, UInt32 size) { write(value, size); }
-		void	writeBoolean(bool value) { write(&value, sizeof(value)); }
+		UInt64	writeDate(const Date& date) { Int64 time(date.time()); _buffer.write(&time, sizeof(time)); return 0; }
+		void	writeNumber(double value) { _buffer.write(&value, sizeof(value)); }
+		void	writeString(const char* value, UInt32 size) { _buffer.write(value, size); }
+		void	writeBoolean(bool value) { _buffer.write(&value, sizeof(value)); }
 		void	writeNull() {}
-		UInt64	writeBytes(const UInt8* data, UInt32 size) { write(data, size); return 0; }
+		UInt64	writeBytes(const UInt8* data, UInt32 size) { _buffer.write(data, size); return 0; }
 	private:
-		void	write(void* data, UInt32 size) { _buffer.resize(_position + size,true); memcpy(_buffer.data() + _position, data, size); _position += size; }
-
 		BufferType&  _buffer;
-		UInt32		 _position;
 	};
 
 	DataWriter&					wrapper(void* pData) { _wrapper.pData = pData; return _wrapper; }

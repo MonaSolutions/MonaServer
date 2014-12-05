@@ -28,7 +28,7 @@ namespace Mona {
 
 
 BinaryWriter::BinaryWriter(UInt8* buffer, UInt32 size,Binary::Order byteOrder) : _buffer(buffer,size) {
-	_buffer.resize(0,true);
+	_buffer.resize(0);
 #if defined(_ARCH_BIG_ENDIAN)
 	_flipBytes = byteOrder == Binary::ORDER_LITTLE_ENDIAN;
 #else

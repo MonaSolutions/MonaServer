@@ -148,7 +148,7 @@ private:
 					if (_pLastOut) {
 						_pBuffer->resize(pBuffer.size()-consumed, false);
 						memcpy(_pBuffer->data(), pBuffer->data()+consumed, _pBuffer->size());
-						pBuffer->resize(consumed, false);
+						pBuffer->resize(consumed);
 						_pLastOut->pBuffer.swap(pBuffer);
 						pBuffer.swap(_pBuffer);
 					} else

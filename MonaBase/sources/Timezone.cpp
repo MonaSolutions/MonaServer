@@ -21,11 +21,15 @@ This file is a part of Mona.
 #include "Mona/FileSystem.h"
 #include "Mona/Util.h"
 #include <fstream>
-#if !defined(_WIN32)
+#if defined(_WIN32)
+#include "windows.h"
+#else
 extern long timezone;
 extern char *tzname[2];
 #endif
 
+#undef ABSOLUTE
+#undef RELATIVE
 
 using namespace std;
 

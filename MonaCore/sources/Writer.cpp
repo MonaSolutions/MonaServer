@@ -54,7 +54,7 @@ void Writer::close(Int32 code) {
 }
 
 bool Writer::writeMedia(MediaType type,UInt32 time,PacketReader& packet,const Parameters& properties) {
-	ERROR("writeMedia method not supported by this protocol for ",Format<UInt8>("%.2x",(UInt8)type)," type")
+	WARN("writeMedia method not supported by this protocol for ",Format<UInt8>("%.2x",(UInt8)type)," type")
 	return true;
 }
 
