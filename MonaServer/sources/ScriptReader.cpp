@@ -18,6 +18,7 @@ This file is a part of Mona.
 */
 
 #include "ScriptReader.h"
+#include "ScriptWriter.h"
 
 using namespace std;
 using namespace Mona;
@@ -30,6 +31,15 @@ ScriptReader::ScriptReader(lua_State *pState, UInt32 count) : _pState(pState), _
 	_current = _start;
 	_end = _current + count;
 }
+
+#if defined(_DEBUG)
+UInt32 ScriptReader::read(DataWriter& writer, UInt32 count) {
+	// DEBUG causes this method is used a lot and dynamic_cast is cpu expensive
+	if (dynamic_cast<ScriptWriter*>(&writer))
+		CRITIC("A ScriptReader is writing to a ScriptWriter, behavior undefined (unsafe)")
+	return ReferableReader::read(writer, count);
+}
+#endif
 
 
 void ScriptReader::reset() {

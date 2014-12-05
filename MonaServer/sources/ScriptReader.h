@@ -28,6 +28,10 @@ public:
 	// Read the count number of lua object in the lua_State stack
 	ScriptReader(lua_State *pState, Mona::UInt32 count);
 
+#if defined(_DEBUG)
+	UInt32	read(DataWriter& writer,UInt32 count=END);
+#endif
+
 	void reset();
 
 private:

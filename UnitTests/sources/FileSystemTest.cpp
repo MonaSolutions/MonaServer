@@ -18,6 +18,9 @@ This file is a part of Mona.
 */
 
 #include "Test.h"
+#if defined(_WIN32)
+	#include "windows.h"
+#endif
 #include "Mona/FileSystem.h"
 #include <fstream>
 
