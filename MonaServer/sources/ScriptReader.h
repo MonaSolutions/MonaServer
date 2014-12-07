@@ -29,7 +29,7 @@ public:
 	ScriptReader(lua_State *pState, Mona::UInt32 count);
 
 #if defined(_DEBUG)
-	UInt32	read(DataWriter& writer,UInt32 count=END);
+	Mona::UInt32	read(Mona::DataWriter& writer,Mona::UInt32 count=END);
 #endif
 
 	void reset();
