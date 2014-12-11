@@ -24,8 +24,10 @@ This file is a part of Mona.
 #if defined(_WIN32)
 #include "windows.h"
 #else
-extern long timezone;
-extern char *tzname[2];
+   #if !defined(_OS_BSD)
+      extern long timezone;
+   #endif
+   extern char *tzname[2];
 #endif
 
 #undef ABSOLUTE
@@ -498,10 +500,16 @@ Timezone::Timezone() : _offset(0),_dstOffset(3600000) {
 			_name.assign(it->second);
 	} else
 		_name.clear();
-	
 #else
-	tzset();
-   _offset = (-(Int32)timezone*1000);
+   tzset();
+   #if defined(_OS_BSD) // timezone not available on BSD
+      std::time_t now = std::time(NULL);
+      struct std::tm t;
+      gmtime_r(&now, &t);
+      _offset = now - std::mktime(&t);
+   #else
+      _offset = (-(Int32)timezone*1000);
+   #endif
    _name.assign(tzname[0]);
    _dstOffset += _offset;
 #endif

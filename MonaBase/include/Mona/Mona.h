@@ -23,6 +23,7 @@ This file is a part of Mona.
 #include <cstdint>
 #include <string>
 #include <cstring>
+#include <complex>
 
 /////  Usefull macros and patchs   //////
 
@@ -37,16 +38,6 @@ This file is a part of Mona.
 #define LINE_STRING STRINGIZE(__LINE__)
 
 #define MAP_FIND_OR_EMPLACE(MAP,IT,KEY,...) auto IT = MAP.lower_bound(KEY); if (IT == MAP.end() || IT->first != KEY) {IT = MAP.emplace_hint(IT,std::piecewise_construct,std::forward_as_tuple(KEY),std::forward_as_tuple(__VA_ARGS__));}
-
-#if defined(_WIN32)
-#define THREAD_ID	DWORD
-#define NOMINMAX
-#define _WINSOCKAPI_    // stops windows.h including winsock.h
-#define sprintf sprintf_s
-#define snprintf sprintf_s
-#else
-#define THREAD_ID	pid_t
-#endif
 
 ///// Disable some annoying warnings /////
 #if defined(_MSC_VER)
@@ -219,6 +210,17 @@ This file is a part of Mona.
 #error "Unknown Hardware Architecture."
 #endif
 
+#if defined(_WIN32)
+#define THREAD_ID	DWORD
+#define NOMINMAX
+#define _WINSOCKAPI_    // stops windows.h including winsock.h
+#define sprintf sprintf_s
+#define snprintf sprintf_s
+#elif _OS_BSD
+#define THREAD_ID	pthread_t
+#else
+#define THREAD_ID	pid_t
+#endif
 
 namespace Mona {
 

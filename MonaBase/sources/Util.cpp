@@ -29,7 +29,11 @@ This file is a part of Mona.
 	#include <windows.h>
 #else
 	#include <unistd.h>
-	#include <sys/prctl.h> // for thread name
+	#if defined(_OS_BSD)
+		#include <pthread_np.h>
+	#else
+		#include <sys/prctl.h> // for thread name
+	#endif
 	#include <sys/syscall.h>
 	extern "C" char **environ;
 #endif
@@ -70,6 +74,8 @@ const char Util::_ReverseB64Table[128] = {
 THREAD_ID Util::CurrentThreadId() {
 #ifdef _WIN32
 	return GetCurrentThreadId();
+#elif _OS_BSD
+	return pthread_self();
 #else
 	return syscall(SYS_gettid);
 #endif
@@ -96,6 +102,8 @@ void SetCurrentThreadDebugName(const char* name) {
 		} __except (EXCEPTION_EXECUTE_HANDLER) {
 		}
 
+	#elif defined(_OS_BSD)
+		pthread_set_name_np(pthread_self(), name);
 	#else
 		prctl(PR_SET_NAME, name, 0, 0, 0);
 	#endif

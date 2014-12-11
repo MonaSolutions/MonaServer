@@ -1,18 +1,23 @@
+OS := $(shell uname -s)
 
-CC=g++
-CFLAGS+=-std=c++11
+CC=gcc
+ifeq ($(OS), FreeBSD)
+	CFLAGS+=-D_GLIBCXX_USE_C99 -std=c++11
+	LIBS ?= -pthread -lMonaBase -lcrypto -lssl -lm -lstdc++
+else
+	CFLAGS+=-std=c++11
+	LIBS ?= -pthread -lMonaBase -lcrypto -lssl
+endif
 EXEC=UnitTests
 INCLUDES=-I./../MonaBase/include/
 LIBDIR=-L./../MonaBase/lib/
 LDFLAGS+="-Wl,-rpath,./../MonaBase/lib/,-rpath,/usr/local/lib/"
-LIBS ?= -pthread -lMonaBase -lcrypto -lssl
 
-OS := $(shell uname)
 ifeq ($(OS),Darwin)
 	LBITS := $(shell getconf LONG_BIT)
 	ifeq ($(LBITS),64)
 	   # just require for OSX 64 buts
-	LIBS +=  -pagezero_size 10000 -image_base 100000000
+	   LIBS +=  -pagezero_size 10000 -image_base 100000000
 	endif
 endif
 
@@ -25,13 +30,13 @@ OBJECTD = $(SOURCES:sources/%.cpp=tmp/Debug/%.o)
 
 release:	
 	mkdir -p tmp/Release/
-	@make -k $(OBJECT)
+	@$(MAKE) -k $(OBJECT)
 	@echo creating executable $(EXEC)
 	@$(CC) $(CFLAGS) $(LDFLAGS) $(LIBDIR) -o $(EXEC) $(OBJECT) $(LIBS)
 
 debug:	
 	mkdir -p tmp/Debug/
-	@make -k $(OBJECTD)
+	@$(MAKE) -k $(OBJECTD)
 	@echo creating debugging executable $(EXEC)
 	@$(CC) -g -D_DEBUG $(CFLAGS) $(LDFLAGS) $(LIBDIR) -o $(EXEC) $(OBJECTD) $(LIBS)
 

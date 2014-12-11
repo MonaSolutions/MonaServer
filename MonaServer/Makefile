@@ -1,13 +1,19 @@
 
-CC=g++
-CFLAGS+=-std=c++11
+OS := $(shell uname -s)
+
+CC=gcc
+ifeq ($(OS),FreeBSD)
+	CFLAGS+=-D_GLIBCXX_USE_C99 -std=c++11
+	LIBS ?=  -pthread -lMonaBase -lMonaCore -lcrypto -lssl -lluajit-5.1 -lm -lstdc++
+else
+	CFLAGS+=-std=c++11
+	LIBS ?=  -pthread -lMonaBase -lMonaCore -lcrypto -lssl -lluajit-5.1
+endif
 EXEC=MonaServer
 INCLUDES=-I./../MonaBase/include/ -I./../MonaCore/include/
 LIBDIR=-L./../MonaBase/lib/ -L./../MonaCore/lib/
 LDFLAGS+="-Wl,-rpath,./../MonaBase/lib/,-rpath,./../MonaCore/lib/,-rpath,/usr/local/lib/"
-LIBS ?=  -pthread -lMonaBase -lMonaCore -lcrypto -lssl -lluajit-5.1
 
-OS := $(shell uname)
 ifeq ($(OS),Darwin)
 	LBITS := $(shell getconf LONG_BIT)
 	ifeq ($(LBITS),64)
@@ -25,13 +31,13 @@ OBJECTD = $(SOURCES:sources/%.cpp=tmp/Debug/%.o)
 
 release:	
 	mkdir -p tmp/Release/
-	@make -k $(OBJECT)
+	@$(MAKE) -k $(OBJECT)
 	@echo creating executable $(EXEC)
 	@$(CC) $(CFLAGS) $(LDFLAGS) $(LIBDIR) -o $(EXEC) $(OBJECT) $(LIBS)
 
 debug:	
 	mkdir -p tmp/Debug/
-	@make -k $(OBJECTD)
+	@$(MAKE) -k $(OBJECTD)
 	@echo creating debugging executable $(EXEC)
 	@$(CC) -g -D_DEBUG $(CFLAGS) $(LDFLAGS) $(LIBDIR) -o $(EXEC) $(OBJECTD) $(LIBS)
 

@@ -30,7 +30,6 @@ This file is a part of Mona.
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
-#include <signal.h>
 #include <sys/stat.h>
 #include <fstream>
 #endif

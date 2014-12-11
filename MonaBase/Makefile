@@ -5,8 +5,12 @@ else
 	LIB=lib/libMonaBase.so
 	SHARED=-shared
 endif
-CC=g++
-CFLAGS+=-std=c++11
+CC=gcc
+ifeq ($(shell uname -s),FreeBSD)
+	CFLAGS+=-D_GLIBCXX_USE_C99 -std=c++11
+else
+	CFLAGS+=-std=c++11
+endif
 INCLUDES=-I./include/
 LIBS ?= -lcrypto -lssl
 
@@ -17,14 +21,14 @@ OBJECTD = $(SOURCES:sources/%.cpp=tmp/Debug/%.o)
 release:
 	mkdir -p tmp/Release
 	mkdir -p lib
-	@make -k $(OBJECT)
+	@$(MAKE) -k $(OBJECT)
 	@echo creating dynamic lib $(LIB)
 	@$(CC) $(CFLAGS) -fPIC $(SHARED) -o $(LIB) $(OBJECT) $(LIBS)
 
 debug:
 	mkdir -p tmp/Debug
 	mkdir -p lib
-	@make -k $(OBJECTD)
+	@$(MAKE) -k $(OBJECTD)
 	@echo creating dynamic debug lib $(LIB)
 	@$(CC) -g -D_DEBUG $(CFLAGS) -fPIC $(SHARED) -o $(LIB) $(OBJECTD) $(LIBS)
 

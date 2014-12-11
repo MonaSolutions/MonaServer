@@ -19,10 +19,15 @@ This file is a part of Mona.
 
 #include "Mona/SocketManager.h"
 #include "Mona/Socket.h"
-#if !defined(_WIN32)
-#include <unistd.h>
-#include "sys/epoll.h"
-#include <vector>
+#if defined(_OS_BSD)
+    #include <sys/types.h>
+    #include <sys/event.h>
+    #include <sys/time.h>
+    #include <vector>
+#elif !defined(_WIN32)
+    #include <unistd.h>
+    #include "sys/epoll.h"
+    #include <vector>
 #endif
 
 using namespace std;
@@ -100,6 +105,16 @@ Socket** SocketManager::add(Exception& ex,NET_SOCKET sockfd,Socket& socket) cons
 		Net::SetException(ex, Net::LastError());
 		return NULL;
 	}
+#elif defined(_OS_BSD)
+	struct kevent event;
+	memset(&event, 0, sizeof(event));
+	EV_SET(&event, sockfd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, ppSocket);
+	int res = kevent(_eventSystem, &event, 1, NULL, 0, NULL);
+	if(res<0) {
+		delete ppSocket;
+		Net::SetException(ex, Net::LastError());
+		return NULL;
+	}
 #else
 	epoll_event event;
 	memset(&event, 0, sizeof(event));
@@ -128,6 +143,11 @@ Socket** SocketManager::add(Exception& ex,NET_SOCKET sockfd,Socket& socket) cons
 bool SocketManager::startWrite(NET_SOCKET sockfd,Socket** ppSocket) const {
 #if defined(_WIN32)
 	return WSAAsyncSelect(sockfd, _eventSystem, 104, FD_CONNECT | FD_ACCEPT | FD_CLOSE | FD_READ | FD_WRITE) == 0;
+#elif defined(_OS_BSD)
+	struct kevent event;
+	memset(&event, 0, sizeof(event));
+	EV_SET(&event, sockfd, EVFILT_READ | EVFILT_WRITE, EV_ADD, 0, 0, ppSocket);
+	return kevent(_eventSystem, &event, 1, NULL, 0, NULL) >= 0;
 #else
 	epoll_event event;
 	memset(&event, 0, sizeof(event));
@@ -141,6 +161,11 @@ bool SocketManager::startWrite(NET_SOCKET sockfd,Socket** ppSocket) const {
 bool SocketManager::stopWrite(NET_SOCKET sockfd,Socket** ppSocket) const {
 #if defined(_WIN32)
 	return WSAAsyncSelect(sockfd, _eventSystem, 104, FD_CONNECT | FD_ACCEPT | FD_CLOSE | FD_READ) == 0;
+#elif defined(_OS_BSD)
+	struct kevent event;
+	memset(&event, 0, sizeof(event));
+	EV_SET(&event, sockfd, EVFILT_READ, EV_ADD, 0, 0, ppSocket);
+	return kevent(_eventSystem, &event, 1, NULL, 0, NULL) >= 0;
 #else
 	epoll_event event;
 	memset(&event, 0, sizeof(event));
@@ -174,6 +199,16 @@ void SocketManager::remove(NET_SOCKET sockfd) const {
 #if defined(_WIN32)
 	if (_eventSystem==0 || (WSAAsyncSelect(sockfd,_eventSystem,0,0)==0 && !PostMessage(_eventSystem,0,(WPARAM)ppSocket,0)))
 		delete ppSocket;
+#elif defined(_OS_BSD)
+    struct kevent event;
+    memset(&event, 0, sizeof(event));
+    if (_eventSystem==0)
+        delete ppSocket;
+    else {
+        EV_SET(&event, sockfd, EVFILT_READ | EVFILT_WRITE, EV_DELETE, 0, 0, NULL);
+        if (kevent(_eventSystem, &event, 1, NULL, 0, NULL)>=0 && write(_eventFD,&ppSocket,sizeof(ppSocket))<0)
+            delete ppSocket;
+    }
 #else
 	epoll_event event;
 	memset(&event, 0, sizeof(event));
@@ -296,7 +331,11 @@ void SocketManager::run(Exception& exThread) {
 		_eventFD = pipefds[1];
 	}
 	if(readFD>0 && _eventFD>0)
+    #if defined(_OS_BSD)
+        _eventSystem = kqueue();
+    #else
 		_eventSystem = epoll_create(1); // Argument is ignored, but has to be greater or equal to 1
+    #endif
 	if(_eventSystem<=0) {
 		if(_eventFD>0)
 			::close(_eventFD);
@@ -305,12 +344,19 @@ void SocketManager::run(Exception& exThread) {
 		_eventSystem = 0;
 		ex.set(Exception::NETWORK, name, " starting failed, impossible to manage sockets");
 	} else {
-		// Add the event to terminate the epoll_wait!
-		epoll_event event;
-		memset(&event, 0, sizeof(event));
-		event.events = EPOLLIN;
-		event.data.fd = readFD;
-		epoll_ctl(_eventSystem, EPOLL_CTL_ADD,readFD, &event);	
+        #if defined(_OS_BSD)
+            struct kevent event;
+            memset(&event, 0, sizeof(event));
+            EV_SET(&event, readFD, EVFILT_READ, EV_ADD, 0, 0, NULL);
+            kevent(_eventSystem, &event, 1, NULL, 0, NULL);
+        #else
+            // Add the event to terminate the epoll_wait!
+            epoll_event event;
+            memset(&event, 0, sizeof(event));
+            event.events = EPOLLIN;
+            event.data.fd = readFD;
+            epoll_ctl(_eventSystem, EPOLL_CTL_ADD,readFD, &event);
+        #endif
 	}
 #endif
 
@@ -363,6 +409,83 @@ void SocketManager::run(Exception& exThread) {
 		ex.set(Exception::NETWORK, name, " failed, impossible to manage sockets");
 		exThread.set(ex);
 	}
+#elif defined(_OS_BSD)
+    int count = _counter+1;
+    vector<struct kevent> events(count);
+    vector<Socket**> removedSockets;
+    
+    for(;;) {
+    
+        int results = kevent(_eventSystem, NULL, 0, &events[0], events.size(), NULL);
+        
+        if(results<0 && errno!=NET_EINTR) {
+            Net::SetException(ex, Net::LastError());
+            exThread.set(ex);
+            break;
+        }
+        
+        // for each ready socket
+        int i=0;
+        for(i;i<results;++i) {
+            struct kevent& event = events[i];
+            
+            if(event.ident==readFD) {
+            
+                if(event.flags & EV_EOF) {
+                    i=-1; // termination signal!
+                    break;
+                }
+                
+                while (Socket::IOCTL(_exSkip,readFD, FIONREAD, 0)>=sizeof(_ppSocket) && read(readFD, &_ppSocket, sizeof(_ppSocket)) > 0) {
+                    // no mutex for ppSocket methods access because the socket has been removed already here!
+                    removedSockets.emplace_back(_ppSocket);
+                }
+                _ppSocket = NULL;
+                continue;
+            }
+            
+            _currentEvent = event.filter;
+            if(event.flags&EV_ERROR) {
+                _currentError = Net::LastError();
+                _currentEvent &= ~EV_ERROR;
+            }
+            
+            if(_currentEvent==EVFILT_WRITE) {
+                lock_guard<recursive_mutex> lock(_mutex);
+                _ppSocket = (Socket**)event.udata;
+                Socket* pSocket(*_ppSocket);
+                if(pSocket)
+                    pSocket->flush(_currentException);
+            }
+	    else if(_currentException || _currentError>0 || _currentEvent>0) {
+                if(!_ppSocket)
+                    _ppSocket = (Socket**)event.udata;
+                Task::waitHandle();
+                _currentException.set(Exception::NIL);
+                _currentError = 0;
+            }
+            
+            _ppSocket = NULL;
+        }
+        if(i==-1)
+            break; // termination signal!
+        count = _counter+1;
+        if(count!=events.size())
+            events.resize(count);
+        
+        // remove sockets
+        if(removedSockets.empty())
+            continue;
+        for (Socket** ppSocket : removedSockets)
+            delete ppSocket;
+        removedSockets.clear();
+    }
+    ::close(readFD); // close reader pipe side
+    ::close(_eventSystem); // close the system message
+    
+    for (Socket** ppSocket : removedSockets)
+        delete ppSocket;
+    removedSockets.clear();
 #else
     int count = _counter+1;
 	vector<epoll_event> events(count);
