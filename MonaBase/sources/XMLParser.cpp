@@ -425,7 +425,7 @@ const char* XMLParser::parseXMLName(const char* endMarkers, UInt32& size) {
 
 	if (!isalpha(*_current) && *_current!='_')  {
 		_ex.set(Exception::FORMATTING, "XML name must start with an alphabetic character");
-		return false;
+		return NULL;
 	}
 	const char* name(_current++);
 	while (_current < _end && isxml(*_current))
@@ -433,7 +433,7 @@ const char* XMLParser::parseXMLName(const char* endMarkers, UInt32& size) {
 	size = (_current - name);
 	if (_current==_end || (!strchr(endMarkers,*_current) && !isspace(*_current)))  {
 		_ex.set(Exception::FORMATTING, "XML name '",string(name,size),"' without termination");
-		return false;
+		return NULL;
 	}
 	return name;
 }

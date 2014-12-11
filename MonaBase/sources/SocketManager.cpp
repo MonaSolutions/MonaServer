@@ -19,9 +19,14 @@ This file is a part of Mona.
 
 #include "Mona/SocketManager.h"
 #include "Mona/Socket.h"
-#if !defined(_WIN32)
+#if __linux
 #include <unistd.h>
 #include "sys/epoll.h"
+#include <vector>
+#elif __APPLE__
+#include <sys/types.h>
+#include <sys/event.h>
+#include <sys/time.h>
 #include <vector>
 #endif
 
@@ -100,13 +105,23 @@ Socket** SocketManager::add(Exception& ex,NET_SOCKET sockfd,Socket& socket) cons
 		Net::SetException(ex, Net::LastError());
 		return NULL;
 	}
-#else
+#elif __linux
 	epoll_event event;
 	memset(&event, 0, sizeof(event));
 	event.events = EPOLLIN | EPOLLRDHUP;
 	 event.data.fd = sockfd;
 	 event.data.ptr = ppSocket;
 	 int res = epoll_ctl(_eventSystem, EPOLL_CTL_ADD,sockfd, &event);
+	if(res<0) {
+		delete ppSocket;
+		Net::SetException(ex, Net::LastError());
+		return NULL;
+	}
+#elif __APPLE__
+	struct kevent event;
+	memset(&event, 0, sizeof(event));
+	EV_SET(&event, sockfd, EVFILT_READ, EV_ADD, 0, 0, ppSocket);
+	int res = kevent(_eventSystem, &event, 1, NULL, 0, NULL);
 	if(res<0) {
 		delete ppSocket;
 		Net::SetException(ex, Net::LastError());
@@ -128,26 +143,36 @@ Socket** SocketManager::add(Exception& ex,NET_SOCKET sockfd,Socket& socket) cons
 bool SocketManager::startWrite(NET_SOCKET sockfd,Socket** ppSocket) const {
 #if defined(_WIN32)
 	return WSAAsyncSelect(sockfd, _eventSystem, 104, FD_CONNECT | FD_ACCEPT | FD_CLOSE | FD_READ | FD_WRITE) == 0;
-#else
+#elif __linux
 	epoll_event event;
 	memset(&event, 0, sizeof(event));
 	event.events = EPOLLIN | EPOLLOUT | EPOLLRDHUP;
 	event.data.fd = sockfd;
 	event.data.ptr = ppSocket;
     return epoll_ctl(_eventSystem, EPOLL_CTL_MOD, sockfd, &event)>=0;
+#elif __APPLE__
+	struct kevent event;
+	memset(&event, 0, sizeof(event));
+	EV_SET(&event, sockfd, EVFILT_READ | EVFILT_WRITE, EV_ADD, 0, 0, ppSocket);
+	return kevent(_eventSystem, &event, 1, NULL, 0, NULL)>=0;
 #endif
 }
 
 bool SocketManager::stopWrite(NET_SOCKET sockfd,Socket** ppSocket) const {
 #if defined(_WIN32)
 	return WSAAsyncSelect(sockfd, _eventSystem, 104, FD_CONNECT | FD_ACCEPT | FD_CLOSE | FD_READ) == 0;
-#else
+#elif __linux
 	epoll_event event;
 	memset(&event, 0, sizeof(event));
 	event.events = EPOLLIN | EPOLLRDHUP;
 	event.data.fd = sockfd;
 	event.data.ptr = ppSocket;
     return epoll_ctl(_eventSystem, EPOLL_CTL_MOD,sockfd, &event) >= 0;
+#elif __APPLE__
+	struct kevent event;
+	memset(&event, 0, sizeof(event));
+	EV_SET(&event, sockfd, EVFILT_READ, EV_ADD, 0, 0, ppSocket);
+	return kevent(_eventSystem, &event, 1, NULL, 0, NULL)>=0;
 #endif
 }
 
@@ -174,11 +199,21 @@ void SocketManager::remove(NET_SOCKET sockfd) const {
 #if defined(_WIN32)
 	if (_eventSystem==0 || (WSAAsyncSelect(sockfd,_eventSystem,0,0)==0 && !PostMessage(_eventSystem,0,(WPARAM)ppSocket,0)))
 		delete ppSocket;
-#else
+#elif __linux
 	epoll_event event;
 	memset(&event, 0, sizeof(event));
 	if (_eventSystem==0 || (epoll_ctl(_eventSystem, EPOLL_CTL_DEL,sockfd,&event)>=0 && write(_eventFD,&ppSocket,sizeof(ppSocket))<0))
 		delete ppSocket;
+#elif __APPLE__
+	struct kevent event;
+	memset(&event, 0, sizeof(event));
+	if (_eventSystem==0)
+		delete ppSocket;
+	else {
+		EV_SET(&event, sockfd, EVFILT_READ | EVFILT_WRITE, EV_DELETE, 0, 0, NULL);
+		if (kevent(_eventSystem, &event, 1, NULL, 0, NULL)>=0 && write(_eventFD,&ppSocket,sizeof(ppSocket))<0)
+			delete ppSocket;
+	}
 #endif
 	--_counter;
 }
@@ -287,7 +322,7 @@ void SocketManager::run(Exception& exThread) {
 	_eventSystem = CreateWindow(name, name, WS_EX_LEFT, 0, 0, 0, 0, HWND_MESSAGE, NULL, NULL, NULL);
 	if (_eventSystem == 0)
 		ex.set(Exception::NETWORK, name, " starting failed, impossible to manage sockets");
-#else
+#elif __linux
 	int pipefds[2] = {};
 	int readFD(0);
 	_eventFD=0;
@@ -311,6 +346,29 @@ void SocketManager::run(Exception& exThread) {
 		event.events = EPOLLIN;
 		event.data.fd = readFD;
 		epoll_ctl(_eventSystem, EPOLL_CTL_ADD,readFD, &event);	
+	}
+#elif __APPLE__
+	int pipefds[2] = {};
+	int readFD(0);
+	_eventFD=0;
+	if(pipe(pipefds)==0) {
+		readFD = pipefds[0];
+		_eventFD = pipefds[1];
+	}
+	if(readFD>0 && _eventFD>0)
+		_eventSystem = kqueue();
+	if(_eventSystem<=0) {
+		if(_eventFD>0)
+			::close(_eventFD);
+		if(readFD>0)
+			::close(readFD);
+		_eventSystem = 0;
+		ex.set(Exception::NETWORK, name, " starting failed, impossible to manage sockets");
+	} else {
+		struct kevent event;
+		memset(&event, 0, sizeof(event));
+		EV_SET(&event, readFD, EVFILT_READ, EV_ADD, 0, 0, NULL);
+		kevent(_eventSystem, &event, 1, NULL, 0, NULL);
 	}
 #endif
 
@@ -363,7 +421,7 @@ void SocketManager::run(Exception& exThread) {
 		ex.set(Exception::NETWORK, name, " failed, impossible to manage sockets");
 		exThread.set(ex);
 	}
-#else
+#elif __linux
     int count = _counter+1;
 	vector<epoll_event> events(count);
 	vector<Socket**>	removedSockets;
@@ -416,6 +474,85 @@ void SocketManager::run(Exception& exThread) {
 			if(_currentException || _currentError>0 || _currentEvent>0) {
 				if(!_ppSocket)
 					_ppSocket = (Socket**)event.data.ptr;
+				Task::waitHandle();
+				_currentException.set(Exception::NIL);
+				_currentError = 0;
+			}
+
+			_ppSocket = NULL;
+		}
+		if(i==-1)
+			break; // termination signal!
+        count = _counter+1;
+		if(count!=events.size())
+			events.resize(count);
+
+		// remove sockets
+		if(removedSockets.empty())
+			continue;
+		for (Socket** ppSocket : removedSockets)
+			delete ppSocket;
+		removedSockets.clear();
+	}
+	::close(readFD);  // close reader pipe side
+	::close(_eventSystem); // close the system message
+
+	for (Socket** ppSocket : removedSockets)
+		delete ppSocket;
+	removedSockets.clear();
+#elif __APPLE__
+    int count = _counter+1;
+	vector<struct kevent> events(count);
+	vector<Socket**>	removedSockets;
+
+	for(;;) {
+
+		int results = kevent(_eventSystem, NULL, 0, &events[0], events.size(), NULL);
+
+		if(results<0 && errno!=NET_EINTR) {
+			Net::SetException(ex, Net::LastError());
+			exThread.set(ex);
+			break;
+		}
+
+		// for each ready socket
+		int i=0;
+		for(;i<results;++i) {
+			struct kevent& event = events[i];
+
+			if(event.ident==readFD) {
+
+				if(event.flags & EV_EOF) {
+					i=-1; // termination signal!
+					break;
+				}
+
+				while (Socket::IOCTL(_exSkip,readFD, FIONREAD, 0)>=sizeof(_ppSocket) && read(readFD, &_ppSocket, sizeof(_ppSocket)) > 0) {
+					// no mutex for ppSocket methods access because the socket has been removed already here!
+					removedSockets.emplace_back(_ppSocket);
+				}
+				_ppSocket = NULL;
+				continue;	
+			}
+		
+			_currentEvent = event.flags;
+			if(_currentEvent&EV_ERROR) {
+                _currentError = Net::LastError();
+				_currentEvent &= ~EV_ERROR;
+			}
+
+			if(_currentEvent&EVFILT_WRITE) {
+				lock_guard<recursive_mutex> lock(_mutex);
+				_ppSocket = (Socket**)event.udata;
+				Socket* pSocket(*_ppSocket);
+				if(pSocket)
+					pSocket->flush(_currentException);
+				_currentEvent &= ~EVFILT_WRITE;
+			}
+
+			if(_currentException || _currentError>0 || _currentEvent>0) {
+				if(!_ppSocket)
+					_ppSocket = (Socket**)event.udata;
 				Task::waitHandle();
 				_currentException.set(Exception::NIL);
 				_currentError = 0;
