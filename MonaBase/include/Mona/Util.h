@@ -248,7 +248,7 @@ public:
 		}
 
 		UInt32 oldSize(options&HEX_APPEND ? buffer.size() : 0);
-		buffer.resize((end-data) * ((options&HEX_CPP) ? 4 : 2) - (skipLeft ? 1 : 0) + oldSize, options&HEX_APPEND);
+		buffer.resize((end-data) * ((options&HEX_CPP) ? 4 : 2) - (skipLeft ? 1 : 0) + oldSize, (options&HEX_APPEND)>0);
 		UInt8* out((UInt8*)buffer.data() + oldSize);
 	
 		UInt8 ref(options&HEX_UPPER_CASE ? '7' : 'W');

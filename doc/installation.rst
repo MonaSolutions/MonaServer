@@ -17,7 +17,7 @@ Binaries
 Download
 ***********************************
 
-You can download the entire sources with `zipball <https://github.com/MonaSolutions/MonaServer/zipball/master>`_ or by using a GIT_ Client with the following address: https://github.com/MonaSolutions/MonaServer.git.
+You can download the entire sources with `zipball <https://github.com/MonaSolutions/MonaServer/zipball/master>`_ or use a GIT_ client to **clone** the following address: https://github.com/MonaSolutions/MonaServer.git.
 
 Build
 ***********************************

@@ -3,15 +3,14 @@ OS := $(shell uname -s)
 CC=gcc
 ifeq ($(OS), FreeBSD)
 	CFLAGS+=-D_GLIBCXX_USE_C99 -std=c++11
-	LIBS ?= -pthread -lMonaBase -lcrypto -lssl -lm -lstdc++
 else
 	CFLAGS+=-std=c++11
-	LIBS ?= -pthread -lMonaBase -lcrypto -lssl
 endif
 EXEC=UnitTests
 INCLUDES=-I./../MonaBase/include/
 LIBDIR=-L./../MonaBase/lib/
 LDFLAGS+="-Wl,-rpath,./../MonaBase/lib/,-rpath,/usr/local/lib/"
+LIBS ?= -pthread -lMonaBase -lcrypto -lssl -lm -lstdc++
 
 ifeq ($(OS),Darwin)
 	LBITS := $(shell getconf LONG_BIT)
