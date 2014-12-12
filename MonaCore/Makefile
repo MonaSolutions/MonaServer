@@ -5,7 +5,7 @@ else
 	LIB=lib/libMonaCore.so
 	SHARED=-shared
 endif
-CC=gcc
+CC=g++
 ifeq ($(shell uname -s),FreeBSD)
 	CFLAGS+=-D_GLIBCXX_USE_C99 -std=c++11
 else

@@ -29,7 +29,9 @@ This file is a part of Mona.
 	#include <windows.h>
 #else
 	#include <unistd.h>
-	#if defined(_OS_BSD)
+	#if defined(__APPLE__)
+		#include <pthread.h>
+	#elif defined(_OS_BSD)
 		#include <pthread_np.h>
 	#else
 		#include <sys/prctl.h> // for thread name
