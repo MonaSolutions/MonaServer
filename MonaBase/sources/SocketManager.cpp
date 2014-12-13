@@ -108,7 +108,7 @@ Socket** SocketManager::add(Exception& ex,NET_SOCKET sockfd,Socket& socket) cons
 #elif defined(_OS_BSD)
 	struct kevent event;
 	memset(&event, 0, sizeof(event));
-	EV_SET(&event, sockfd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, ppSocket);
+	EV_SET(&event, sockfd, EVFILT_READ, EV_ADD, 0, 0, ppSocket);
 	int res = kevent(_eventSystem, &event, 1, NULL, 0, NULL);
 	if(res<0) {
 		delete ppSocket;
@@ -146,7 +146,7 @@ bool SocketManager::startWrite(NET_SOCKET sockfd,Socket** ppSocket) const {
 #elif defined(_OS_BSD)
 	struct kevent event;
 	memset(&event, 0, sizeof(event));
-	EV_SET(&event, sockfd, EVFILT_READ | EVFILT_WRITE, EV_ADD, 0, 0, ppSocket);
+	EV_SET(&event, sockfd, EVFILT_WRITE, EV_ADD, 0, 0, ppSocket);
 	return kevent(_eventSystem, &event, 1, NULL, 0, NULL) >= 0;
 #else
 	epoll_event event;

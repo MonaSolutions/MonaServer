@@ -1,7 +1,7 @@
 
 OS := $(shell uname -s)
 
-CC=gcc
+CC=g++
 ifeq ($(OS),FreeBSD)
 	CFLAGS+=-D_GLIBCXX_USE_C99 -std=c++11
 else
@@ -11,7 +11,7 @@ EXEC=MonaServer
 INCLUDES=-I./../MonaBase/include/ -I./../MonaCore/include/
 LIBDIR=-L./../MonaBase/lib/ -L./../MonaCore/lib/
 LDFLAGS+="-Wl,-rpath,./../MonaBase/lib/,-rpath,./../MonaCore/lib/,-rpath,/usr/local/lib/"
-LIBS ?=  -pthread -lMonaBase -lMonaCore -lcrypto -lssl -lluajit-5.1 -lm -lstdc++
+LIBS ?=  -pthread -lMonaBase -lMonaCore -lcrypto -lssl -lluajit-5.1
 
 ifeq ($(OS),Darwin)
 	LBITS := $(shell getconf LONG_BIT)
