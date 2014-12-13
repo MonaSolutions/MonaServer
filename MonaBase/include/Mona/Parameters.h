@@ -27,7 +27,7 @@ This file is a part of Mona.
 namespace Mona {
 
 namespace Events {
-	struct OnChange : Event<void(const char* key, const char* value)> {};
+	struct OnChange : Event<void(const char* key, const char* value, size_t size)> {};
 	struct OnClear : Event<void()> {};
 };
 

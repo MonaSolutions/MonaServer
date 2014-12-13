@@ -56,7 +56,7 @@ const char* HTTPSession::cookie(const char* key) {
 	if (!pPacket)
 		return NULL;
 	auto it(pPacket->cookies.find(key));
-	return it == pPacket->cookies.end() ? NULL : it->second;
+	return it == pPacket->cookies.end() ? NULL : it->second.c_str();
 }
 
 void HTTPSession::kill(UInt32 type){

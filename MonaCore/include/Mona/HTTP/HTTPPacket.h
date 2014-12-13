@@ -63,7 +63,7 @@ public:
 	UInt8						accessControlRequestMethod;
 	const char*					accessControlRequestHeaders;
 
-	std::map<std::string,const char*>	cookies; /// List of cookie key;value
+	std::map<std::string,std::string>	cookies; /// List of cookie key;value
 
 	UInt32						build(Exception& ex,UInt8* data,UInt32 size);
 

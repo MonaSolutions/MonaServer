@@ -364,6 +364,7 @@ void HTTP::WriteDirectoryEntry(BinaryWriter& writer,const string& serverAddress,
 		.write(size).write(EXPAND("</td></tr>\n"));
 }
 
+/// Cookie Writer class for writing Set-Cookie HTTP headers when client.properties({key=value, expires=...}) is called
 class SetCookieWriter : public DataWriter {
 public:
 	SetCookieWriter(Buffer& buffer,const HTTP::OnCookie& onCookie) : _first(true),_onCookie(onCookie),_option(NO),_buffer(buffer) {

@@ -190,12 +190,12 @@ public:
 	template<typename LUAItemType = Script,typename ObjectType>
 	static void InitCollectionParameters(lua_State* pState, ObjectType& object,const char* field, const Mona::Parameters& parameters) {
 		// index -1 must be the collector
-		Mona::Parameters::OnChange::Type* pOnChange = new Mona::Parameters::OnChange::Type([pState,&object,&parameters,field](const char* key, const char* value) {
+		Mona::Parameters::OnChange::Type* pOnChange = new Mona::Parameters::OnChange::Type([pState,&object,&parameters,field](const char* key, const char* value, size_t size) {
 			if (Script::FromObject(pState, object)) {
 				Script::Collection(pState, -1, field);
 				lua_pushstring(pState, key);
 				if (value)
-					lua_pushstring(pState, value);
+					lua_pushlstring(pState, value, size == std::string::npos? strlen(value) : size);
 				else
 					lua_pushnil(pState);
 				Script::FillCollection(pState, 1);

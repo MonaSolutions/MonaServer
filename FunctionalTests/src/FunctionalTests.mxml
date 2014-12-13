@@ -43,6 +43,7 @@
 				group.children.push(new HTTPAggregated(this, hostDefault, applicationDefault));
 				group.children.push(new HTTPSplitted(this, hostDefault, applicationDefault));
 				group.children.push(new BigDeserialize(this, hostDefault, applicationDefault));
+				group.children.push(new Cookies(this, hostDefault, applicationDefault));
 				mapTests.push(group);
 				group = new Test(this, "RTMP", "List of RTMP tests", true);
 				group.children.push(new RTMPBadRequests(this, hostDefault));
