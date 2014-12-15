@@ -254,11 +254,11 @@ size_t Util::UnpackQuery(const char* query, const ForEachParameter& forEach) {
 				if (*itEnd == '+')
 					value += ' ';
 				else if (*itEnd == '%') {
-					itEnd = DecodeURI(itEnd,value);
-					if (*itEnd)
-						name += *itEnd;
+						itEnd = DecodeURI(itEnd,value);
+					continue;
 				} else
 					value += *itEnd;
+					
 				++itEnd;
 			};
 		}

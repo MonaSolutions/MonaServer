@@ -32,7 +32,8 @@ public:
 		UNKNOWN = 0,
 		AMF=1,
 		JSON=2,
-		XMLRPC=3
+		XMLRPC=3,
+		QUERY
 	};
 
 	static Type DataType(DataWriter& writer);

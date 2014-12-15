@@ -41,6 +41,13 @@ ADD_TEST(UtilTest, UnpackQuery) {
 	Util::UnpackQuery("name1=value1&name2=value2", Properties);
 	DEBUG_CHECK(Properties.getString("name1", value) && value == "value1");
 	DEBUG_CHECK(Properties.getString("name2", value) && value == "value2");
+	Properties.clear();
+
+	Util::UnpackQuery("name1=one%20space&name2=%22one+double quotes%22&name3=percent:%25&name4=%27simple quotes%27", Properties);
+	DEBUG_CHECK(Properties.getString("name1", value) && value == "one space");
+	DEBUG_CHECK(Properties.getString("name2", value) && value == "\"one double quotes\"");
+	DEBUG_CHECK(Properties.getString("name3", value) && value == "percent:%");
+	DEBUG_CHECK(Properties.getString("name4", value) && value == "'simple quotes'");
 }
 
 ADD_TEST(UtilTest, UnpackUrlPerf) {

@@ -24,6 +24,8 @@ This file is a part of Mona.
 #include "Mona/XMLRPCWriter.h"
 #include "Mona/AMFReader.h"
 #include "Mona/AMFWriter.h"
+#include "Mona/QueryReader.h"
+#include "Mona/QueryWriter.h"
 
 
 using namespace std;
@@ -38,6 +40,8 @@ MIME::Type MIME::DataType(const char* type) {
 		return XMLRPC;
 	if (String::ICompare(type, EXPAND("amf")) == 0 || String::ICompare(type, EXPAND("x-amf")) == 0)
 		return AMF;
+	if (String::ICompare(type, EXPAND("x-www-form-urlencoded")) == 0)
+		return QUERY;
 	return UNKNOWN;
 }
 
@@ -48,6 +52,8 @@ MIME::Type MIME::DataType(DataWriter& writer) {
 		return JSON;
 	if (typeid(writer).name() == typeid(XMLRPCWriter).name())
 		return XMLRPC;
+	if (typeid(writer).name() == typeid(QueryWriter).name())
+		return QUERY;
 	return UNKNOWN;
 }
 
@@ -58,6 +64,8 @@ MIME::Type MIME::DataType(DataReader& reader) {
 		return JSON;
 	if (typeid(reader).name() == typeid(XMLRPCReader).name())
 		return XMLRPC;
+	if (typeid(reader).name() == typeid(QueryReader).name())
+		return QUERY;
 	return UNKNOWN;
 }
 
@@ -76,6 +84,9 @@ bool MIME::CreateDataReader(Type type,PacketReader& packet,const PoolBuffers& po
 		case AMF:
 			pReader.reset(new AMFReader(packet));
 			return true;
+		case QUERY:
+			pReader.reset(new QueryReader(STR packet.data()));
+			return true;
 	}
 	pReader.reset();
 	packet.reset();
@@ -92,6 +103,9 @@ bool MIME::CreateDataWriter(Type type,const PoolBuffers& poolBuffers,unique_ptr<
 			return true;
 		case AMF:
 			pWriter.reset(new AMFWriter(poolBuffers));
+			return true;
+		case QUERY:
+			pWriter.reset(new QueryWriter(poolBuffers));
 			return true;
 	}
 	return false;
