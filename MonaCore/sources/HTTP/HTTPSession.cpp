@@ -114,7 +114,8 @@ void HTTPSession::receive(const shared_ptr<HTTPPacket>& pPacket) {
 		peer.properties().setString(it.first, it.second);
 
 	// Create parameters for onConnection or a GET onRead/onWrite/onMessage
-	QueryReader parameters(peer.query.c_str());
+	PacketReader query(BIN peer.query.data(), peer.query.size());
+	QueryReader parameters(query);
 	
 	Exception ex;
 

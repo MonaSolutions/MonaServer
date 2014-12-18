@@ -129,7 +129,6 @@ private:
 
 	static int	FromXML(lua_State *pState);
 	static int	ToXML(lua_State *pState);
-	static int	FromQuery(lua_State *pState);
 
 	static int	Time(lua_State *pState);
 	static int	ToAMF0(lua_State *pState);

@@ -315,14 +315,6 @@ int	LUAInvoker::ToXML(lua_State *pState) {
 	SCRIPT_CALLBACK_RETURN
 }
 
-int	LUAInvoker::FromQuery(lua_State *pState) {
-	SCRIPT_CALLBACK(Invoker, invoker)
-		ScriptWriter writer(pState);
-		QueryReader(SCRIPT_READ_STRING(String::Empty.c_str())).read(writer);
-	SCRIPT_CALLBACK_RETURN
-}
-
-
 int	LUAInvoker::AddToBlacklist(lua_State* pState) {
 	SCRIPT_CALLBACK(Invoker,invoker)	
 		while(SCRIPT_READ_AVAILABLE) {
@@ -445,7 +437,7 @@ int LUAInvoker::Get(lua_State *pState) {
 				SCRIPT_WRITE_FUNCTION(LUAInvoker::ToData<Mona::QueryWriter>)
 				SCRIPT_CALLBACK_FIX_INDEX
 			} else if (strcmp(name, "fromQuery") == 0) {
-				SCRIPT_WRITE_FUNCTION(LUAInvoker::FromQuery)
+				SCRIPT_WRITE_FUNCTION(LUAInvoker::FromData<Mona::QueryReader>)
 				SCRIPT_CALLBACK_FIX_INDEX
 			} else if (strcmp(name, "absolutePath") == 0) {
 				SCRIPT_WRITE_FUNCTION(LUAInvoker::AbsolutePath)

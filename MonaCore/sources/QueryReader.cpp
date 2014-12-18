@@ -38,11 +38,13 @@ UInt8 QueryReader::followingType() {
 			_value.assign(value);
 		} else
 			_value = std::move(key);
-		return false;
+		return false; // we just want the first following key
 	});
 	
-	if (!_current || Util::UnpackQuery(_current, forEach) == 0)
+	if (!packet.available())
 		return END;
+
+	SCOPED_STRINGIFY(STR packet.current(),packet.available(), if (Util::UnpackQuery(STR packet.current(), forEach) == 0) return END;)
 
 	if (hasProperty)
 		_type = OBJECT;
@@ -54,19 +56,25 @@ UInt8 QueryReader::followingType() {
 
 
 bool QueryReader::readOne(UInt8 type, DataWriter& writer) {
-
+	
+	const UInt8* cur = packet.current();
+	const UInt8* end = cur+packet.available();
 	if (type==OBJECT) {
 
 		// OBJECT
 		writer.beginObject();
 		do {
+			cur = packet.current();
 			writer.writePropertyName(_property.c_str());
 			writeValue(valueType(), writer);
+
 			// next!
-			_current = strchr(_current, '&');
+			while (cur<end && *cur != '&')
+				cur++;
+			packet.next(cur-packet.current() + (*cur=='&'));
+
 			_type = END;
-			if (_current) ++_current;
-		} while ((_type=followingType())==OBJECT);
+		} while (cur<end && (_type=followingType())==OBJECT);
 		writer.endObject();
 		return true;
 	}
@@ -74,9 +82,10 @@ bool QueryReader::readOne(UInt8 type, DataWriter& writer) {
 	writeValue(type, writer);
 
 	// next!
-	_current = strchr(_current, '&');
+	while (cur<end && *cur != '&')
+		cur++;
+	packet.next(cur-packet.current() + (*cur=='&'));
 	_type = END;
-	if (_current) ++_current;
 	return true;
 }
 

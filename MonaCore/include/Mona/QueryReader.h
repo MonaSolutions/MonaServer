@@ -29,10 +29,9 @@ namespace Mona {
 class QueryReader : public DataReader, public virtual Object {
 public:
 
-	QueryReader(const char* query) :  _query(query),_current(_query),_type(END) {}
+	QueryReader(PacketReader& packet) :  DataReader(packet),_type(END) {}
 
-	const char* query() const { return _query; }
-	void		reset() { _current = _query; _type = END; }
+	void		reset() { packet.reset(); _type = END; }
 
 private:
 	enum {
@@ -45,8 +44,6 @@ private:
 	void	writeValue(UInt8 type, DataWriter& writer);
 	UInt8   valueType();
 
-	const char* _query;
-	const char* _current;
 	std::string _property;
 	std::string _value;
 	Date		_date;

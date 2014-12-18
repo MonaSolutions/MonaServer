@@ -85,7 +85,7 @@ bool MIME::CreateDataReader(Type type,PacketReader& packet,const PoolBuffers& po
 			pReader.reset(new AMFReader(packet));
 			return true;
 		case QUERY:
-			pReader.reset(new QueryReader(STR packet.data()));
+			pReader.reset(new QueryReader(packet));
 			return true;
 	}
 	pReader.reset();
