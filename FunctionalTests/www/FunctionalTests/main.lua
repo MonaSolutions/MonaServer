@@ -15,6 +15,13 @@ function serverPolicyFile:onConnection(client)
 end
 serverPolicyFile:start(843); -- start the server on the port 843
 
+
+-- ******* For ParentFunctions Test *******
+function getNameApp()
+	INFO("FunctionalTests::getNameApp called")
+	return "FunctionalTests"
+end
+
 -- ******* Main functions *******
 function onConnection(client,...)
 	

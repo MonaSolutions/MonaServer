@@ -127,12 +127,12 @@ Service* Service::open(Exception& ex, const string& path) {
 		pSubService = it->second;
 	}
 
-	if (!nextPath.empty())
+	// if file or folder exists, return the service (or sub service)
+	if (pSubService->open(ex)) {
+		if (nextPath.empty())
+			return pSubService;	
 		return pSubService->open(ex, nextPath);
-
-	 // if file or folder exists, return the service
-	if (pSubService->open(ex))
-		return pSubService;
+	}
 
 	// service doesn't exist (and no children possible here!)
 	if (it != _services.end() && ex.code() == Exception::APPLICATION) {

@@ -49,6 +49,7 @@
 				group.children.push(new RTMPBadRequests(this, hostDefault));
 				group.children.push(new RTMPLoad(this, hostDefault, applicationDefault, "RTMP"));
 				group.children.push(new RTMPLoad(this, hostDefault, applicationDefault, "RTMPE"));
+				// TODO : group.children.push(new RTMPp2p(this, hostDefault, applicationDefault));
 				mapTests.push(group);
 				group = new Test(this, "RTMFP", "List of RTMFP tests", true);
 				group.children.push(new RTMFPLoad(this, hostDefault, applicationDefault));
@@ -56,6 +57,7 @@
 				group = new Test(this, "Other", "List of other tests", true);
 				group.children.push(new DeserializationJSON(this, hostDefault, applicationDefault));
 				group.children.push(new DeserializationXMLRPC(this, hostDefault, applicationDefault));
+				group.children.push(new ParentFunctions(this, hostDefault, applicationDefault));
 				mapTests.push(group);
 				
 				luaGroup = new Test(this, "LUA", "List of LUA server tests", true);
