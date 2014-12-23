@@ -23,7 +23,7 @@ Mona currently supports the following protocols:
 - **HTTP** (with **JSON-RPC** and XML-RPC_), **Websocket**.
 
 We expect to add many other protocols, such as  **WebRTC**, **HLS**, **IPTV**, but please remember that our development is open source
-so contributions are greatly appreciated: `us`_, `eu`_.
+so contributions are greatly appreciated: `$`_, `€`_.
 
 Mona is licensed under the `GNU General Public License`_, please contact us for a commercial licence at mathieupoux@gmail.com or jammetthomas@gmail.com.
 
@@ -39,6 +39,6 @@ For some samples running on a `Raspberry Pi`_ please visit the `Samples page <./
 .. _LuaJIT : http://luajit.org/
 .. _XML-RPC : http://xmlrpc.scripting.com/spec.html
 .. _`GNU General Public License` : http://www.gnu.org/licenses/
-.. _`us` : https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=M24B32EH2GV3A
-.. _`eu` : https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=QPWT9V67YWSGG
+.. _`$` : https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=M24B32EH2GV3A
+.. _`€` : https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=QPWT9V67YWSGG
 .. _`Raspberry Pi` : http://www.raspberrypi.org/

@@ -9,10 +9,9 @@ We would like to remind you that Mona is licensed under the `GNU General Public 
 Binaries
 ***********************************
 
-.. TODO
-.. A `32-bit Windows binary <http://jazzmatazz.free.fr/Mona/MonaServer.zip>`_ has been provided to quickly test MonaServer. We recommend
-.. you compile a Linux version from the sources for production use. If you download the Windows 32-bit binary, then you can skip down to the
-.. *Configurations* section of this document.
+A `32-bit Windows binary <http://78.199.204.75/download/MonaServer_32.exe>`_ is provided to quickly test MonaServer.
+We recommend you to clone the github version from the sources for production use.
+If you download the Windows 32-bit binary, then you can skip down to the *Configurations* section of this document.
 
 Download
 ***********************************
@@ -80,22 +79,12 @@ To build Mona:
 
 .. code-block:: sh
 
-  cd MonaBase
-  make
-  cd ../MonaCore
-  make
-  cd ../MonaServer
-  make
+  $ make
 
 To clean:
 
 .. code-block:: sh
 
-  $ cd MonaBase
-  $ make clean
-  $ cd ../MonaCore
-  $ make clean
-  $ cd ../MonaServer
   $ make clean
 
 Amazon EC2 AMI Build
@@ -116,13 +105,6 @@ Connect to the AMI and execute the following script:
   wget https://github.com/MonaSolutions/MonaServer/archive/master.zip
   unzip Mona-master.zip
   cd Mona-master
-  cd MonaBase
-  make
-  cd ..
-  cd MonaCore
-  make
-  cd ..
-  cd MonaServer
   make
   sudo ./MonaServer --daemon
 

@@ -51,7 +51,8 @@ Listener* Publication::addListener(Exception& ex, Client& client,Writer& writer)
 	map<Client*,Listener*>::iterator it = _listeners.lower_bound(&client);
 	if(it!=_listeners.end() && it->first==&client) {
 		WARN("Already subscribed for publication ",_name);
-		return it->second;
+		ex.set(Exception::APPLICATION,"Already subscribed to ",_name);
+		return NULL;
 	}
 	if(it!=_listeners.begin())
 		--it;

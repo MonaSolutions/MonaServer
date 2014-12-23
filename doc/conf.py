@@ -122,7 +122,8 @@ html_theme_options = {
     'navbar_links': [
         ("<img src=\"_static/star-bookmark-icone-8571-48.png\"/> Quick Start", "quickstart"),
         ("<img src=\"_static/aide-point-interrogation-systeme-icone-8289-48.png\"/> FAQ", "faq"),
-        ("<img src=\"_static/casque-ecoute-soutien-icone-9816-48.png\"/> Support", "contacts"),
+        ("<img src=\"_static/casque-ecoute-soutien-icone-9816-48.png\"/> Services", "contacts"),
+        ("<img src=\"_static/time-system-preferences-icone-8704-48.png\"/> Roadmap", "roadmap"),
         ("<img src=\"_static/texinfo-texte-x-icone-4685-48.png\"/> Documentation", "manual"),
     ],
 

@@ -675,9 +675,13 @@ Otherwise you can cutomize this message in raising one error in this context.
 
 .. code-block:: lua
 
-  function onPublish(client,publication)
+  function client:onPublish(publication)
     if not client.right then
       error("no rights to publish it")
+    end
+    
+    function publication:onData(time,packet)
+      -- write code here
     end
   end
 

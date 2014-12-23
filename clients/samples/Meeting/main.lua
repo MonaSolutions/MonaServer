@@ -3,23 +3,17 @@ meeters = {}
 
 function onConnection(client, userName, meeting)
 	
-  if client.protocol == "RTMFP" or client.protocol == "RTMP" then
-    meeter = {}
-    meeter.userName = userName
-    meeter.meeting = meeting
-
-    INFO("User connected: ", meeter.userName , " meeting: ", meeter.meeting)
-    
-    sendParticipantUpdate(meeter.meeting)
-    meeters[client] = meeter -- Add participant to the list
-  end
-  
-  function client:onRead(file)
-    if file == "" and client.protocol == "HTTP" then -- If file empty => return VideoMeeting.html
-      return "VideoMeeting.html"
-    end
-  end
-  
+	if client.protocol == "RTMFP" or client.protocol == "RTMP" then
+		meeter = {}
+		meeter.userName = userName
+		meeter.meeting = meeting
+		
+		INFO("User connected: ", meeter.userName , " meeting: ", meeter.meeting)
+		
+		sendParticipantUpdate(meeter.meeting)
+		meeters[client] = meeter -- Add participant to the list
+	end
+	
 	function client:getParticipants(meeting)
 		result = {}
 		i = 0;
@@ -44,6 +38,8 @@ function onConnection(client, userName, meeting)
 			end
 		end
 	end
+	
+	return {index="VideoMeeting.html"}
 end
 
 function onDisconnection(client)
