@@ -5,7 +5,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Overview &mdash; MonaServer 1 documentation</title>
+    <title>Roadmap &mdash; MonaServer 1 documentation</title>
     
     <link rel="stylesheet" href="_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -29,7 +29,7 @@
     <script type="text/javascript" src="_static/js/jquery-fix.js"></script>
     <script type="text/javascript" src="_static/bootstrap-3.1.0/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
-    <link rel="top" title="MonaServer 1 documentation" href="#" />
+    <link rel="top" title="MonaServer 1 documentation" href="index.html" />
 
   <a href="https://github.com/MonaSolutions/MonaServer"
      class="visible-desktop hidden-xs"><img
@@ -63,7 +63,7 @@
           <span class="icon-bar"></span>
           <span class="icon-bar"></span>
         </button>
-        <a class="navbar-brand" href="#">
+        <a class="navbar-brand" href="index.html">
           MonaServer</a>
         <span class="navbar-text navbar-version pull-left"><b>1</b></span>
       </div>
@@ -75,7 +75,7 @@
                 <li><a href="quickstart.html"><img src="_static/star-bookmark-icone-8571-48.png"/> Quick Start</a></li>
                 <li><a href="faq.html"><img src="_static/aide-point-interrogation-systeme-icone-8289-48.png"/> FAQ</a></li>
                 <li><a href="contacts.html"><img src="_static/casque-ecoute-soutien-icone-9816-48.png"/> Services</a></li>
-                <li><a href="roadmap.html"><img src="_static/time-system-preferences-icone-8704-48.png"/> Roadmap</a></li>
+                <li><a href="#"><img src="_static/time-system-preferences-icone-8704-48.png"/> Roadmap</a></li>
                 <li><a href="manual.html"><img src="_static/texinfo-texte-x-icone-4685-48.png"/> Documentation</a></li>
             
             
@@ -105,33 +105,48 @@
   <div class="row">
     <div class="col-md-12">
       
-  <div class="section" id="overview">
-<h1>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h1>
-<p>MonaServer starts with the idea that protocols essentially serve the same aims :</p>
-<ul class="simple">
-<li>pull data (request + response),</li>
-<li>push data (server -&gt; client or client -&gt; server),</li>
-<li>read/write file (<strong>VOD</strong> and <strong>RECORDING</strong>),</li>
-<li>AND communication channel between clients (<strong>P2P</strong> or publish/play <strong>live</strong>).</li>
-</ul>
-<p>And with this objective we are proud to give you a generic alternative to existing communication servers with :</p>
-<ul class="simple">
-<li>The powerful <a class="reference external" href="http://luajit.org/">LuaJIT</a> compiler combined in a useful lua API to write server applications,</li>
-<li><strong>NoSQL</strong> database management system,</li>
-<li><strong>RTMFP</strong> Protocal, which provide P2P channels, UDP reliable and non-reliable communication and many other great features,</li>
-<li>And all of this developed keeping in mind the 5 following notions: speed, light weight, cross-platform, scalable and elegant <strong>C++11</strong> code.</li>
-</ul>
-<p>Mona currently supports the following protocols:</p>
-<ul class="simple">
-<li><strong>RTMFP</strong>, <strong>RTMP</strong>, <strong>RTMPE</strong>,</li>
-<li><strong>HTTP</strong> (with <strong>JSON-RPC</strong> and <a class="reference external" href="http://xmlrpc.scripting.com/spec.html">XML-RPC</a>), <strong>Websocket</strong>.</li>
-</ul>
-<p>We expect to add many other protocols, such as  <strong>WebRTC</strong>, <strong>HLS</strong>, <strong>IPTV</strong>, but please remember that our development is open source
-so contributions are greatly appreciated: <a class="reference external" href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&amp;hosted_button_id=M24B32EH2GV3A">$</a>, <a class="reference external" href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&amp;hosted_button_id=QPWT9V67YWSGG">€</a>.</p>
-<p>Mona is licensed under the <a class="reference external" href="http://www.gnu.org/licenses/">GNU General Public License</a>, please contact us for a commercial licence at <a class="reference external" href="mailto:mathieupoux&#37;&#52;&#48;gmail&#46;com">mathieupoux<span>&#64;</span>gmail<span>&#46;</span>com</a> or <a class="reference external" href="mailto:jammetthomas&#37;&#52;&#48;gmail&#46;com">jammetthomas<span>&#64;</span>gmail<span>&#46;</span>com</a>.</p>
-<p>The following scheme is a little preview of what is possible with MonaServer :</p>
-<a class="reference internal image-reference" href="_images/MonaServerScheme.png"><img alt="_images/MonaServerScheme.png" class="align-center" src="_images/MonaServerScheme.png" style="width: 698px; height: 469px;" /></a>
-<p>For some samples running on a <a class="reference external" href="http://www.raspberrypi.org/">Raspberry Pi</a> please visit the <a class="reference external" href="./samples.html">Samples page</a> of our <a class="reference external" href="./manual.html">documentation</a>.</p>
+  <div class="section" id="roadmap">
+<h1>Roadmap<a class="headerlink" href="#roadmap" title="Permalink to this headline">¶</a></h1>
+<p>Mona is our full-time project. We develop according to our funding, trying to follow the following <strong>Roadmap</strong>.
+Here are listed the future evolutions of MonaServer and the time of development expected.
+If you want to finance/accelerate a specific development you can contact us at <a class="reference external" href="mailto:mathieupoux&#37;&#52;&#48;gmail&#46;com">mathieupoux<span>&#64;</span>gmail<span>&#46;</span>com</a> or <a class="reference external" href="mailto:jammetthomas&#37;&#52;&#48;gmail&#46;com">jammetthomas<span>&#64;</span>gmail<span>&#46;</span>com</a>.
+You can also make a donation for the project to allow us to continue the development : <a class="reference external" href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&amp;hosted_button_id=M24B32EH2GV3A">$</a>, <a class="reference external" href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&amp;hosted_button_id=QPWT9V67YWSGG">€</a>.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="24%" />
+<col width="51%" />
+<col width="24%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Name</th>
+<th class="head">Details of the feature</th>
+<th class="head">Time required</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>Recording</td>
+<td>Adding asynchronous recording feature using IOCP, libkqueue...</td>
+<td>5 weeks</td>
+</tr>
+<tr class="row-odd"><td>VOD</td>
+<td>Adding support for client:onRead() to RTMP/RTMFP and Websocket</td>
+<td>1 week</td>
+</tr>
+<tr class="row-even"><td>SSL Support</td>
+<td>To support HTTPS, WenSocketSSL and RTMPS</td>
+<td>3 weeks</td>
+</tr>
+<tr class="row-odd"><td>RTP</td>
+<td>Adding the Real-time Transport Protocol, a first step to build the
+WebRTC protocol</td>
+<td>&nbsp;</td>
+</tr>
+<tr class="row-even"><td>WebRTC</td>
+<td>Adding the WebRTC Protocol in a promising implementation</td>
+<td>&nbsp;</td>
+</tr>
+</tbody>
+</table>
 </div>
 
 

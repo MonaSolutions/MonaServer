@@ -9,7 +9,7 @@
     
     <link rel="stylesheet" href="_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="_static/bootswatch-3.1.0/cerulean/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="_static/bootswatch-3.1.0/amelia/bootstrap.min.css" type="text/css" />
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/my-styles.css" type="text/css" />
     
@@ -74,7 +74,8 @@
             
                 <li><a href="quickstart.html"><img src="_static/star-bookmark-icone-8571-48.png"/> Quick Start</a></li>
                 <li><a href="faq.html"><img src="_static/aide-point-interrogation-systeme-icone-8289-48.png"/> FAQ</a></li>
-                <li><a href="contacts.html"><img src="_static/casque-ecoute-soutien-icone-9816-48.png"/> Support</a></li>
+                <li><a href="contacts.html"><img src="_static/casque-ecoute-soutien-icone-9816-48.png"/> Services</a></li>
+                <li><a href="roadmap.html"><img src="_static/time-system-preferences-icone-8704-48.png"/> Roadmap</a></li>
                 <li><a href="manual.html"><img src="_static/texinfo-texte-x-icone-4685-48.png"/> Documentation</a></li>
             
             
@@ -144,10 +145,13 @@
 </div>
 <div class="section" id="binaries">
 <h2><a class="toc-backref" href="#id5">Binaries</a><a class="headerlink" href="#binaries" title="Permalink to this headline">¶</a></h2>
+<p>A <a class="reference external" href="http://78.199.204.75/download/MonaServer_32.exe">32-bit Windows binary</a> is provided to quickly test MonaServer.
+We recommend you to clone the github version from the sources for production use.
+If you download the Windows 32-bit binary, then you can skip down to the <em>Configurations</em> section of this document.</p>
 </div>
 <div class="section" id="download">
 <h2><a class="toc-backref" href="#id6">Download</a><a class="headerlink" href="#download" title="Permalink to this headline">¶</a></h2>
-<p>You can download the entire sources with <a class="reference external" href="https://github.com/MonaSolutions/MonaServer/zipball/master">zipball</a> or by using a <a class="reference external" href="http://en.wikipedia.org/wiki/Git_(software)">GIT</a> Client with the following address: <a class="reference external" href="https://github.com/MonaSolutions/MonaServer.git">https://github.com/MonaSolutions/MonaServer.git</a>.</p>
+<p>You can download the entire sources with <a class="reference external" href="https://github.com/MonaSolutions/MonaServer/zipball/master">zipball</a> or use a <a class="reference external" href="http://en.wikipedia.org/wiki/Git_(software)">GIT</a> client to <strong>clone</strong> the following address: <a class="reference external" href="https://github.com/MonaSolutions/MonaServer.git">https://github.com/MonaSolutions/MonaServer.git</a>.</p>
 </div>
 <div class="section" id="build">
 <h2><a class="toc-backref" href="#id7">Build</a><a class="headerlink" href="#build" title="Permalink to this headline">¶</a></h2>
@@ -220,21 +224,11 @@ You can find <a class="reference external" href="http://www.openssl.org/">OpenSS
 <p class="last">You need to use the <em>-dev</em> version to get the header files required during Mona compilation.</p>
 </div>
 <p>To build Mona:</p>
-<div class="highlight-sh"><div class="highlight"><pre><span class="nb">cd </span>MonaBase
-make
-<span class="nb">cd</span> ../MonaCore
-make
-<span class="nb">cd</span> ../MonaServer
-make
+<div class="highlight-sh"><div class="highlight"><pre><span class="nv">$ </span>make
 </pre></div>
 </div>
 <p>To clean:</p>
-<div class="highlight-sh"><div class="highlight"><pre><span class="nv">$ </span><span class="nb">cd </span>MonaBase
-<span class="nv">$ </span>make clean
-<span class="nv">$ </span><span class="nb">cd</span> ../MonaCore
-<span class="nv">$ </span>make clean
-<span class="nv">$ </span><span class="nb">cd</span> ../MonaServer
-<span class="nv">$ </span>make clean
+<div class="highlight-sh"><div class="highlight"><pre><span class="nv">$ </span>make clean
 </pre></div>
 </div>
 </div>
@@ -250,13 +244,6 @@ yum -y install make
 wget https://github.com/MonaSolutions/MonaServer/archive/master.zip
 unzip Mona-master.zip
 <span class="nb">cd </span>Mona-master
-<span class="nb">cd </span>MonaBase
-make
-<span class="nb">cd</span> ..
-<span class="nb">cd </span>MonaCore
-make
-<span class="nb">cd</span> ..
-<span class="nb">cd </span>MonaServer
 make
 sudo ./MonaServer --daemon
 </pre></div>

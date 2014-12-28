@@ -9,7 +9,7 @@
     
     <link rel="stylesheet" href="_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="_static/bootswatch-3.1.0/cerulean/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="_static/bootswatch-3.1.0/amelia/bootstrap.min.css" type="text/css" />
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/my-styles.css" type="text/css" />
     
@@ -74,7 +74,8 @@
             
                 <li><a href="quickstart.html"><img src="_static/star-bookmark-icone-8571-48.png"/> Quick Start</a></li>
                 <li><a href="faq.html"><img src="_static/aide-point-interrogation-systeme-icone-8289-48.png"/> FAQ</a></li>
-                <li><a href="contacts.html"><img src="_static/casque-ecoute-soutien-icone-9816-48.png"/> Support</a></li>
+                <li><a href="contacts.html"><img src="_static/casque-ecoute-soutien-icone-9816-48.png"/> Services</a></li>
+                <li><a href="roadmap.html"><img src="_static/time-system-preferences-icone-8704-48.png"/> Roadmap</a></li>
                 <li><a href="manual.html"><img src="_static/texinfo-texte-x-icone-4685-48.png"/> Documentation</a></li>
             
             
@@ -494,7 +495,7 @@ Brief description : When the flash client send a message to the server, this mes
 <span class="o">&lt;/</span><span class="n">mx</span><span class="o">:</span><span class="n">Application</span><span class="o">&gt;</span>
 </pre></div>
 </div>
-<p>Sample : <a class="reference external" href="http://78.199.204.75/clients/samples/PublishLive/flash.html">PublishLive/flash.html</a></p>
+<p>Sample : <a class="reference external" href="http://78.199.204.75/clients/samples/PublishLive/PublishLive.html">PublishLive/PublishLive.html</a></p>
 <p>To play the video you an use a flash player or vlc for example connected to the following url : <a class="reference external" href="rtmp://78.199.204.75/file">rtmp://78.199.204.75/file</a></p>
 <p>If you need support for other type of clients or devices please contact us (<a class="reference external" href="./contacts.html">Support</a>).</p>
 </div>
@@ -882,12 +883,6 @@ Here is the file <em>P2PSharedObject.as</em>, the class file for objects that wi
     <span class="n">meeters</span><span class="p">[</span><span class="n">client</span><span class="p">]</span> <span class="o">=</span> <span class="n">meeter</span> <span class="c1">-- Add participant to the list</span>
   <span class="k">end</span>
 
-  <span class="k">function</span> <span class="nf">client</span><span class="p">:</span><span class="n">onRead</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">file</span> <span class="o">==</span> <span class="s2">&quot;</span><span class="s">&quot;</span> <span class="ow">and</span> <span class="n">client</span><span class="p">.</span><span class="n">protocol</span> <span class="o">==</span> <span class="s2">&quot;</span><span class="s">HTTP&quot;</span> <span class="k">then</span> <span class="c1">-- If file empty =&gt; return VideoMeeting.html</span>
-      <span class="k">return</span> <span class="s2">&quot;</span><span class="s">VideoMeeting.html&quot;</span>
-    <span class="k">end</span>
-  <span class="k">end</span>
-
   <span class="k">function</span> <span class="nf">client</span><span class="p">:</span><span class="n">getParticipants</span><span class="p">(</span><span class="n">meeting</span><span class="p">)</span>
     <span class="n">result</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
@@ -912,6 +907,8 @@ Here is the file <em>P2PSharedObject.as</em>, the class file for objects that wi
       <span class="k">end</span>
     <span class="k">end</span>
   <span class="k">end</span>
+
+  <span class="k">return</span> <span class="p">{</span><span class="n">index</span><span class="o">=</span><span class="s2">&quot;</span><span class="s">VideoMeeting.html&quot;</span><span class="p">}</span>
 <span class="k">end</span>
 
 <span class="k">function</span> <span class="nf">onDisconnection</span><span class="p">(</span><span class="n">client</span><span class="p">)</span>

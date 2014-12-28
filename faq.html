@@ -9,7 +9,7 @@
     
     <link rel="stylesheet" href="_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="_static/bootswatch-3.1.0/cerulean/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="_static/bootswatch-3.1.0/amelia/bootstrap.min.css" type="text/css" />
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/my-styles.css" type="text/css" />
     
@@ -74,7 +74,8 @@
             
                 <li><a href="quickstart.html"><img src="_static/star-bookmark-icone-8571-48.png"/> Quick Start</a></li>
                 <li><a href="#"><img src="_static/aide-point-interrogation-systeme-icone-8289-48.png"/> FAQ</a></li>
-                <li><a href="contacts.html"><img src="_static/casque-ecoute-soutien-icone-9816-48.png"/> Support</a></li>
+                <li><a href="contacts.html"><img src="_static/casque-ecoute-soutien-icone-9816-48.png"/> Services</a></li>
+                <li><a href="roadmap.html"><img src="_static/time-system-preferences-icone-8704-48.png"/> Roadmap</a></li>
                 <li><a href="manual.html"><img src="_static/texinfo-texte-x-icone-4685-48.png"/> Documentation</a></li>
             
             
@@ -113,6 +114,8 @@
 <li><a class="reference internal" href="#what-are-the-advantages-of-rtmfp" id="id2">What are the advantages of RTMFP?</a></li>
 <li><a class="reference internal" href="#why-doesn-t-the-cirrus-sample-application-work" id="id3">Why doesn&#8217;t the Cirrus Sample Application work?</a></li>
 <li><a class="reference internal" href="#how-to-use-the-as3-socket-class-with-mona" id="id4">How to use the as3 Socket class with Mona?</a></li>
+<li><a class="reference internal" href="#is-there-a-way-to-record-audio-video-stream" id="id5">Is there a way to record audio&amp;video stream?</a></li>
+<li><a class="reference internal" href="#how-to-create-a-c-plugin-extending-lua" id="id6">How to create a C++ plugin extending lua?</a></li>
 </ul>
 </li>
 </ul>
@@ -166,6 +169,40 @@
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
 <p class="last">In this sample we give access to each ports and from any domain.</p>
+</div>
+</div>
+<div class="section" id="is-there-a-way-to-record-audio-video-stream">
+<h2><a class="toc-backref" href="#id5">Is there a way to record audio&amp;video stream?</a><a class="headerlink" href="#is-there-a-way-to-record-audio-video-stream" title="Permalink to this headline">¶</a></h2>
+<p>Recording feature is on the roadmap of Mona, until now we have prefered to put that on hold because it miss a async file mechanism in Mona to be able to manipulate files asynchronously like sockets (IOCP for Windows and libaio for linux).
+We could implement it in a classic &#8220;blocking way&#8221; but it will decrease Mona performance, not our goal, we prefer keep full real-time reactivity of Mona. If we find financial resources to develop it (see <cite>Support page &lt;./contacts.html&gt;</cite>), it could become our priority but until nobody has give funds for that (Mona development is our full time job, and this feature requires between 2 weeks and 1 month of job).</p>
+</div>
+<div class="section" id="how-to-create-a-c-plugin-extending-lua">
+<h2><a class="toc-backref" href="#id6">How to create a C++ plugin extending lua?</a><a class="headerlink" href="#how-to-create-a-c-plugin-extending-lua" title="Permalink to this headline">¶</a></h2>
+<p>It is very easy to create a new library extending your lua functionalities. For example the following c++ source code implements a <em>printtest(message)</em> function:</p>
+<div class="highlight-c++"><div class="highlight"><pre><span class="c1">// Don&#39;t forget extern &quot;C&quot;!</span>
+<span class="k">extern</span> <span class="s">&quot;C&quot;</span> <span class="p">{</span>
+<span class="cp">#include &quot;luajit-2.0/lauxlib.h&quot;</span>
+<span class="p">}</span>
+
+<span class="c1">// The function printtest implementation in C++</span>
+<span class="kt">int</span> <span class="n">lua_printtest</span><span class="p">(</span><span class="n">lua_State</span><span class="o">*</span> <span class="n">L</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">message</span> <span class="o">=</span> <span class="n">luaL_checkstring</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">&quot;printtest : %s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">message</span><span class="p">);</span>
+  <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="k">extern</span> <span class="s">&quot;C&quot;</span> <span class="kr">__declspec</span><span class="p">(</span><span class="n">dllexport</span><span class="p">)</span> <span class="kt">int</span> <span class="n">luaopen_LibLua</span> <span class="p">(</span><span class="n">lua_State</span><span class="o">*</span> <span class="n">L</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="n">lua_register</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="s">&quot;printtest&quot;</span><span class="p">,</span>  <span class="n">lua_printtest</span><span class="p">);</span>
+  <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Now just compile the project and put the library in the execution directory of MonaServer. Restart Mona. That&#8217;s all!</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Don&#8217;t forget to link with luajit library and include files.</p>
 </div>
 </div>
 </div>
