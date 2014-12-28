@@ -386,7 +386,7 @@ Now we are about to create a sample of publication with a flash publisher. For t
   </mx:Application>
 
 
-Sample : `PublishLive/flash.html <http://78.199.204.75/clients/samples/PublishLive/flash.html>`_
+Sample : `PublishLive/PublishLive.html <http://78.199.204.75/clients/samples/PublishLive/PublishLive.html>`_
 
 To play the video you an use a flash player or vlc for example connected to the following url : `rtmp://78.199.204.75/file <rtmp://78.199.204.75/file>`_
 
@@ -789,17 +789,11 @@ Use only the client part of these sources, and for server side create the file M
       meeter = {}
       meeter.userName = userName
       meeter.meeting = meeting
-
+      
       INFO("User connected: ", meeter.userName , " meeting: ", meeter.meeting)
       
       sendParticipantUpdate(meeter.meeting)
       meeters[client] = meeter -- Add participant to the list
-    end
-    
-    function client:onRead(file)
-      if file == "" and client.protocol == "HTTP" then -- If file empty => return VideoMeeting.html
-        return "VideoMeeting.html"
-      end
     end
     
     function client:getParticipants(meeting)
@@ -826,6 +820,8 @@ Use only the client part of these sources, and for server side create the file M
         end
       end
     end
+    
+    return {index="VideoMeeting.html"}
   end
 
   function onDisconnection(client)

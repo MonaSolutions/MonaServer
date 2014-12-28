@@ -138,7 +138,7 @@ html_theme_options = {
     'source_link_position': "",
     
     # Bootswatch (http://bootswatch.com/) theme.
-    'bootswatch_theme': "cerulean",
+    'bootswatch_theme': "amelia",
 }
 
 # Add any paths that contain custom themes here, relative to this directory.

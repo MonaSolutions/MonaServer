@@ -12,7 +12,14 @@ Name                              Details of the feature                        
 ================================  ===================================================================  ================================
 Recording                         Adding asynchronous recording feature using IOCP, libkqueue...       5 weeks                                  
 --------------------------------  -------------------------------------------------------------------  --------------------------------
-SSL Support                       To support HTTPS, WenSocketSSL and RTMPS                             3 weeks                                   
+VOD                               Adding support for client:onRead() to RTMP/RTMFP and Websocket       1 week
+--------------------------------  -------------------------------------------------------------------  --------------------------------
+SSL Support                       To support HTTPS, WenSocketSSL and RTMPS                             3 weeks
+--------------------------------  -------------------------------------------------------------------  --------------------------------
+RTP                               Adding the Real-time Transport Protocol, a first step to build the
+                                  WebRTC protocol
+--------------------------------  -------------------------------------------------------------------  --------------------------------
+WebRTC                            Adding the WebRTC Protocol in a promising implementation
 ================================  ===================================================================  ================================
 
 .. _`$` : https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=M24B32EH2GV3A

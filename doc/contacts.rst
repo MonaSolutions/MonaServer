@@ -43,7 +43,7 @@ Or we can simply assist you and advise you in the deployment and the usage of Mo
 Professional Support
 *******************************************
 
-We are currently working on our support agreement document, so please contact jammetthomas@gmail.com if you are interested. The expected contract :
+We are currently working on our support agreement document, so please contact jammetthomas@gmail.com if you are interested. The expected contract is :
 
 
 +------------------------------+--------------------------------+
@@ -60,11 +60,11 @@ Licence
 
 Mona is licensed under the `GNU General Public License`_.
 
-But if you are looking for a commercial licence or you want to build a project based on Mona we offer :
+But if you are looking for a commercial licence or you want to build a project based on Mona our price is :
 
 EUR 5000 (approx. US-$ 6116)
 
-Please contact us mathieupoux@gmail.com or jammetthomas@gmail.com
+Please contact us mathieupoux@gmail.com or jammetthomas@gmail.com for more informations.
 
 
 Basic Support
