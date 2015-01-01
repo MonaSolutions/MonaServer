@@ -11,7 +11,7 @@ You can talk with the **MonaServer** Community on the [MonaServer forum](https:/
 
 Mona is licensed under the [GNU General Public License], please contact us for a commercial licence at mathieupoux@gmail.com or jammetthomas@gmail.com. You can also contribute to the project by making a **donation** : [$]|[€].
 
-The meaning of the differents types of branchs/tags are described here :
+The meanings of the differents types of branchs/tags are described here :
 
 | Branch        | Description                                                                        |
 | ------------- |------------------------------------------------------------------------------------|
