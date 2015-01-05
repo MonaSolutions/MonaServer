@@ -364,10 +364,11 @@ void HTTP::WriteDirectoryEntry(BinaryWriter& writer,const string& serverAddress,
 		.write(size).write(EXPAND("</td></tr>\n"));
 }
 
-/// Cookie Writer class for writing Set-Cookie HTTP headers when client.properties({key=value, expires=...}) is called
+/// Cookie Writer class for writing Set-Cookie HTTP headers when client.properties(key, value, {expires=...}) is called
+/// This implementation is based on RFC 6265 (but does not use 'Max-Age')
 class SetCookieWriter : public DataWriter {
 public:
-	SetCookieWriter(Buffer& buffer,const HTTP::OnCookie& onCookie) : _first(true),_onCookie(onCookie),_option(NO),_buffer(buffer) {
+	SetCookieWriter(Buffer& buffer, const HTTP::OnCookie& onCookie) : _onCookie(onCookie),_option(VALUE),_buffer(buffer) {
 		String::Append(_buffer,"\r\nSet-Cookie: ");
 	}
 
@@ -377,20 +378,18 @@ public:
 	void	endArray() {}
 
 	void	writePropertyName(const char* value) {
-		if (String::ICompare("domain", value) == 0) {
+		if (String::ICompare("domain", value) == 0)
 			_option = DOM;
-		} else if (String::ICompare("path", value) == 0) {
+		else if (String::ICompare("path", value) == 0)
 			_option = PATH;
-		} else if (String::ICompare("expires", value) == 0) {
+		else if (String::ICompare("expires", value) == 0)
 			_option = EXPIRES;
-		} else if (String::ICompare("secure", value) == 0) {
+		else if (String::ICompare("secure", value) == 0)
 			_option = SECURE;
-		} else if (String::ICompare("httponly", value) == 0) {
+		else if (String::ICompare("httponly", value) == 0)
 			_option = HTTPONLY;
-		} else {
-			_option = VALUE;
-			_key.assign(value);
-		}
+		else
+			WARN("Unexpected option : ", value)
 	}
 
 	UInt64	writeDate(const Date& date) {
@@ -413,9 +412,14 @@ public:
 	}
 	UInt64	writeBytes(const UInt8* data, UInt32 size) { writeString((const char*)data, size); return 0; }
 	void	writeString(const char* value, UInt32 size) {
-		if ((_option <= 2 || (String::ICompare(value, "false", size) != 0 && String::ICompare(value, "no", size) != 0 && String::ICompare(value, "0", size) != 0 && String::ICompare(value, "off", size) != 0 && String::ICompare(value, "null", size) != 0))&& writeHeader())
+		if (_key.empty() && size && _option==VALUE) {
+			_key.assign(value, size);
+			String::Append(_buffer, _key, "=");
+		}
+		else if ((_option <= 2 || (String::ICompare(value, "false", size) != 0 && String::ICompare(value, "no", size) != 0 && String::ICompare(value, "0", size) != 0 && String::ICompare(value, "off", size) != 0 && String::ICompare(value, "null", size) != 0))&& writeHeader()) {
 			writeContent<Buffer>(value, size);
-		_option = NO;
+			_option = NO;
+		}
 	}
 	void	writeNumber(double value) {
 		if ((_option <= 2 || value) && writeHeader()) {
@@ -432,14 +436,8 @@ private:
 
 	bool writeHeader() {
 		static const vector<const char*> Patterns({ "Domain=", "Path=", "Expires=", "Secure", "HttpOnly" });
-		if (!_first)
-			String::Append(_buffer, "; ");
-		else
-			_first = false;
 		if (_option >= 0)
-			String::Append(_buffer,Patterns[_option]);
-		else if (_option == VALUE)
-			String::Append(_buffer, _key, "=");
+			String::Append(_buffer, "; ", Patterns[_option]);
 		return _option<=2;
 	}
 
@@ -465,15 +463,19 @@ private:
 	string				   _key;
 	const HTTP::OnCookie&  _onCookie;
 	Option				   _option;
-	bool					_first;
 };
 
 
-bool HTTP::WriteSetCookie(DataReader& reader,Buffer& buffer,const OnCookie& onCookie) {
-	if (reader.nextType() < DataReader::OTHER)
+bool HTTP::WriteSetCookie(DataReader& reader,Buffer& buffer, const OnCookie& onCookie) {
+
+	if (reader.nextType() != DataReader::STRING)
 		return false;
-	SetCookieWriter writer(buffer,onCookie);
-	return reader.read(writer)>0;
+	UInt32 before = buffer.size();
+	SetCookieWriter writer(buffer, onCookie);
+	bool res = reader.read(writer)>1;
+	if (!res)
+		buffer.resize(before, true);
+	return res;
 }
 
 

@@ -58,9 +58,9 @@ We are currently working on our support agreement document, so please contact ja
 Licence
 *******************************************
 
-Mona is licensed under the `GNU General Public License`_.
+We remind you that Mona is licensed under the `GNU General Public License`_, so it is free to use.
 
-But if you are looking for a commercial licence or you want to build a project based on Mona our price is :
+But if you want to sell a product based on MonaServer source code you can buy a commercial licence, the price is :
 
 EUR 5000 (approx. US-$ 6116)
 

@@ -9,11 +9,11 @@ function serverPolicyFile:onConnection(client)
         
         function client:onData(data)
                 INFO("Sending policy file...")
-                self:send("<cross-domain-policy><allow-access-from domain=\"*\" to-ports=\"*\"/></cross-domain-policy>\0")
+                self:send('<cross-domain-policy><allow-access-from domain="*" secure="false" to-ports="*"/></cross-domain-policy>\0')
                 return 0 -- return rest (all has been consumed here)
         end
 end
-serverPolicyFile:start(843); -- start the server on the port 843
+NOTE("Starting server policy file on port 843 : ", serverPolicyFile:start(843)) -- start the server on the port 843
 
 
 -- ******* For ParentFunctions Test *******

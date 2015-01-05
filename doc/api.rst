@@ -512,7 +512,7 @@ All event names starts with the *on* prefix.
 onStart(path)
 ===================
 
-Call when the server application is built and executed the first time. The first argument is the *path* of the application (see *Create a server application* part of `Server Application`_ page).
+Called when the server application is built and executed the first time. The first argument is the *path* of the application (see *Create a server application* part of `Server Application`_ page).
 
 .. warning:: All server application are built on first client connection for the application, except *root* application (*/* application), which is started on MonaServer starting.
 
@@ -520,7 +520,7 @@ Call when the server application is built and executed the first time. The first
 onStop(path)
 =====================
 
-Call when the server application is unloaded. It happens in three different cases:
+Called when the server application is unloaded. It happens in three different cases:
 
 - When you edit *main.lua* file of one server application. Application is restarted (stopped and started).
 - When you delete a server application.
@@ -532,15 +532,19 @@ The first argument is the *path* of the application (see *Create a server applic
 onConnection(client,...)
 =============================
 
-Call on a new client connection. First argument is a client object (see *client* object description above), and following arguments depend on the protocol (see `Specific Protocol functionalities`_).
+Called on a new client connection. First argument is a client object (see *client* object description above), and following arguments depend on the protocol (see `Specific Protocol functionalities`_).
 
-Finally you can return a table result to add some informations on connection (see `Specific Protocol functionalities`_):
+Finally you can return a table result to send some informations on RTMP&RTMFP connections (see `Specific Protocol functionalities`_) or to overload some configuration parameters:
+
+- **timeout** , timeout in seconds. It overloads the timeout parameter from the configuration file (see `Installation`_).
 
 .. code-block:: lua
 
   function onConnection(client,...)
-    return {message="welcome",id=1}
+    return {message="welcome",id=1,timeout=7}
   end
+
+The as3 code below illustrates the returned parameters on RTMP&RTMFP connections:
 
 .. code-block:: as3
 
@@ -553,7 +557,7 @@ Finally you can return a table result to add some informations on connection (se
     }
   }
 
-You can reject a client adding an error of connection:
+You can reject a client by adding an error of connection:
 
 .. code-block:: lua
 
@@ -577,25 +581,7 @@ You can reject a client adding an error of connection:
 
 In RTMP&RTFMP it answers with a *NetConnection.Connect.Rejected* status event and close the client connection. The *event.info.description* field contains your error message. Now if you reject a client with no error message, *event.info.description* field will contain "client rejected" by default.
 
-.. code-block:: lua
-
-  function onConnection(client,...)
-    error("")
-  end
-
-.. code-block:: as3
-
-  _netConnection.connect("rtmfp://localhost/")
-
-  function onStatusEvent(event:NetStatusEvent):void {
-    switch(event.info.code) {
-      case "NetConnection.Connect.Rejected":
-      trace(event.info.description); // displays "client rejected"
-      break;
-    }
-  }
-
-Functions below are member functions of clients objects so need to be declared under the onConnection scope like in this sample :
+Functions below are member functions of **clients** objects so need to be declared under the onConnection scope like in this sample :
 
 .. code-block:: lua
 

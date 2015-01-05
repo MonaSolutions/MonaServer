@@ -68,19 +68,19 @@ void HTTPPacket::parseHeader(Exception& ex,const char* key, const char* value) {
 		String::Split(value, ",", forEach, String::SPLIT_IGNORE_EMPTY | String::SPLIT_TRIM);
 
 	} else if (String::ICompare(key,"cookie")==0) {
-		String::ForEach forEach([this](UInt32 index,const char* key) {
-			const char* value = key;
+		String::ForEach forEach([this](UInt32 index,const char* data) {
+			const char* value = data;
 			// trim right
 			while (value && *value != '=' && !isblank(*value))
 				++value;
 			if (value) {
-				(char&)*value = 0;
+				const char *endKey=value;
 				// trim left
 				do {
 					++value;
 				} while (value && (isblank(*value) || *value == '='));
+				SCOPED_STRINGIFY(data, endKey-data, cookies[data] = value);
 			}
-			cookies[key] = value;
 			return true;
 		});
 		String::Split(value, ";", forEach, String::SPLIT_IGNORE_EMPTY | String::SPLIT_TRIM);

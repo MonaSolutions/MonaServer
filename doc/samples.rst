@@ -77,7 +77,7 @@ WebSocket client
   <body>
     <input type="button" value="Send" onclick="sendMessage();" />
   </body>
-  <html>
+  </html>
 
 Sample : `PullData/websocket.html <http://78.199.204.75/clients/samples/PullData/websocket.html>`_
 
@@ -152,7 +152,7 @@ Http JSON-RPC client
   <body>
       <input type="button" value="Send" onclick="sendMessage();" />
   </body>
-  <html>
+  </html>
   
 Sample : `PullData/httpjson.html <http://78.199.204.75/clients/samples/PullData/httpjson.html>`_
 
@@ -258,7 +258,7 @@ Websocket part
   <body>
     <input type="button" value="Send" onclick="sendMessage();" />
   </body>
-  <html>
+  </html>
 
 Sample : `PushData/websocket.html <http://78.199.204.75/clients/samples/PushData/websocket.html>`_
 

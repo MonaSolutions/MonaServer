@@ -49,33 +49,40 @@ package
 		
 		// Parse HTTP result searching for cookies
 		private function parseResult(result:String):Boolean {
+			var pattern:RegExp = /HTTP\/1.1 (\d+)/g;
+			var statusCode:Object = pattern.exec(result);
+			if (statusCode[1] != "200") {
+				onResult({err:"Error on server side (status code : "+statusCode[1]+"), check the logs."});
+				return false;
+			}
 			
 			var headers:Array = result.match(/Set-Cookie: .*/g);
 			for (var i:int = 0; i < headers.length; i++) {
 				var cookie:Object = _cookies[0][i];
 				
-				// Search for <key>=<value> in Set-Cookie
-				if (headers[i].indexOf(cookie.key + "=" + cookie.value) < 0) {
+				// Search for Set-Cookie: <key>=<value>
+				var expectedFirst:String = "Set-Cookie: "+cookie.key+"="+cookie.value; // The expected first pair in Set-Cookie:
+				if (headers[i].substr(0, expectedFirst.length) != expectedFirst) {
 					_sock.close();
-					onResult("Cookie "+cookie.key+" not founded in http result");
+					onResult({err:"Expected '"+expectedFirst+"' and got '"+headers[i].substr(0, expectedFirst.length)+"'"});
 					return false;
 				}
 				// Check HTTPOnly
 				if (cookie.httponly && headers[i].indexOf("HttpOnly") < 0) {
 					_sock.close();
-					onResult("Cookie "+cookie.key+" HttpOnly flag not found");
+					onResult({err:"Cookie "+cookie.key+" HttpOnly flag not found"});
 					return false;
 				}
 				// Check Secure
 				if (cookie.secure && headers[i].indexOf("Secure") < 0) {
 					_sock.close();
-					onResult("Cookie "+cookie.key+" Secure flag not found");
+					onResult({err:"Cookie "+cookie.key+" Secure flag not found"});
 					return false;
 				}
 				// Check Path
 				if (headers[i].indexOf("Path=" + cookie.path) < 0) {
 					_sock.close();
-					onResult("Cookie "+cookie.key+" path is incorrect ("+cookie.path+" expected)");
+					onResult({err:"Cookie "+cookie.key+" path is incorrect ("+cookie.path+" expected)"});
 					return false;
 				}
 				_app.INFO(cookie.key + "=" + cookie.value + " OK.");
