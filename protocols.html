@@ -31,6 +31,7 @@
     <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
     <link rel="top" title="MonaServer 1 documentation" href="index.html" />
 
+  
   <a href="https://github.com/MonaSolutions/MonaServer"
      class="visible-desktop hidden-xs"><img
     id="gh-banner"
@@ -43,6 +44,18 @@
       var navHeight = $(".navbar .container").css("height");
       $("#gh-banner").css("top", navHeight);
     });
+  </script>
+  
+  
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  
+    ga('create', 'UA-58143950-1', 'auto');
+    ga('send', 'pageview');
+  
   </script>
   
 <meta charset='utf-8'>
@@ -127,7 +140,7 @@
 <li><a class="reference internal" href="#id2" id="id13">onConnection returned array</a></li>
 <li><a class="reference internal" href="#id3" id="id14">onConnection parameters</a></li>
 <li><a class="reference internal" href="#id4" id="id15">client.properties</a></li>
-<li><a class="reference internal" href="#client-properties-key-value-expires-path-domain-secure-httponly" id="id16">client.properties(key, value[, expires, path, domain, secure, httpOnly])</a></li>
+<li><a class="reference internal" href="#client-properties-key-value-options" id="id16">client.properties(key, value[,{ options }])</a></li>
 </ul>
 </li>
 </ul>
@@ -148,10 +161,6 @@
 <span class="k">end</span>
 </pre></div>
 </div>
-<p>Some parameters are specific to RTMP :</p>
-<ul class="simple">
-<li><strong>timeout</strong> , timeout in seconds. It overloads the timeout parameter from the configuration file (see <a class="reference external" href="./installation.html">Installation</a>).</li>
-</ul>
 </div>
 <div class="section" id="onconnection-parameters">
 <h4><a class="toc-backref" href="#id9">onConnection parameters</a><a class="headerlink" href="#onconnection-parameters" title="Permalink to this headline">¶</a></h4>
@@ -194,11 +203,7 @@
 <span class="k">end</span>
 </pre></div>
 </div>
-<p>Here is the list of the possible common parameters :</p>
-<ul class="simple">
-<li><strong>timeout</strong> , timeout in seconds. It overloads the timeout parameter from the configuration file (see <a class="reference external" href="./installation.html">Installation</a>).</li>
-</ul>
-<p>And here the HTTP-only parameters :</p>
+<p>HTTP specific parameters :</p>
 <ul class="simple">
 <li><strong>index</strong>, true by default. If <em>true</em> the Server will send a view of the application&#8217;s directory, otherwise return a <em>404 error</em> file. If it is a string MonaServer will try to return the corresponding file in the application&#8217;s directory.</li>
 </ul>
@@ -216,26 +221,29 @@
 </div>
 <div class="section" id="id4">
 <h4><a class="toc-backref" href="#id15">client.properties</a><a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h4>
-<p>With HTTP protocol the client properties maps cookies sended by client plus some connection properties :</p>
+<p>With HTTP protocol the client properties maps cookies sended by client and some connection properties :</p>
 <ul class="simple">
 <li><strong>HTTPVersion</strong> (read-only), the version of HTTP used.</li>
 </ul>
 </div>
-<div class="section" id="client-properties-key-value-expires-path-domain-secure-httponly">
-<h4><a class="toc-backref" href="#id16">client.properties(key, value[, expires, path, domain, secure, httpOnly])</a><a class="headerlink" href="#client-properties-key-value-expires-path-domain-secure-httponly" title="Permalink to this headline">¶</a></h4>
-<p>As <em>client.properties</em> maps cookies values you can also set cookies by using the <em>client.properties()</em> method. Parameters are :</p>
+<div class="section" id="client-properties-key-value-options">
+<h4><a class="toc-backref" href="#id16">client.properties(key, value[,{ options }])</a><a class="headerlink" href="#client-properties-key-value-options" title="Permalink to this headline">¶</a></h4>
+<p>As <em>client.properties</em> maps cookies values you can also set cookies by using the <em>client.properties()</em> method. Parameter are :</p>
 <ul class="simple">
-<li><strong>key</strong>, the key name of the cookie.</li>
-<li><strong>value</strong>, a string representing the value of the cookie.</li>
-<li><strong>expires</strong> (optional), 0 by default, an integer value that represents the number of seconds (since now) that the client should keep the cookie.</li>
-<li><strong>path</strong> (optional), the server path on which the cookie applies.</li>
-<li><strong>domain</strong> (optional), the domain on which the cookie should be send.</li>
-<li><strong>secure</strong> (optional), true if the cookie should be send only on a securised connection.</li>
-<li><strong>httpOnly</strong> (optional), true if the cookie should be visible only by the HTTP protocol.</li>
+<li><strong>key</strong> , the key name of the cookie.</li>
+<li><strong>value</strong> , the value corresponding to <strong>key</strong>.</li>
+<li>and an optional object containing the following options :<ul>
+<li><strong>expires=&lt;time&gt;</strong> (optional), 0 by default, an integer value that represents the number of seconds (since now) that the client should keep the cookie,</li>
+<li><strong>path=&#8221;&lt;value&gt;&#8221;</strong> (optional), the server path on which the cookie applies,</li>
+<li><strong>domain=&#8221;&lt;value&gt;&#8221;</strong> (optional), the domain on which the cookie should be send,</li>
+<li><strong>secure=&lt;bool&gt;</strong> (optional), true if the cookie should be send only on a securised connection,</li>
+<li><strong>httponly=&lt;bool&gt;</strong> (optional), true if the cookie should be visible only by the HTTP protocol,</li>
 </ul>
-<p>The return value is the <strong>value</strong> parameter if the operation succeed.</p>
+</li>
+</ul>
+<p>The returned value is the <strong>value</strong> parameter if the operation succeed, otherwise it returns <em>nil</em>.</p>
 <p>Here is an example of a cookie named <em>test</em> with a value of <em>value1</em> that should be sended by client for the 5 next minutes on each application (<em>&#8220;/&#8221;</em>) only for HTTP requests to the host <em>192.168.0.1</em> :</p>
-<div class="highlight-lua"><div class="highlight"><pre><span class="n">INFO</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">test : &quot;</span><span class="p">,</span> <span class="n">client</span><span class="p">.</span><span class="n">properties</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">test&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="s">value1&quot;</span><span class="p">,</span> <span class="mi">300</span><span class="p">,</span> <span class="s2">&quot;</span><span class="s">/&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="s">192.168.0.1&quot;</span><span class="p">,</span> <span class="kc">false</span><span class="p">,</span> <span class="kc">true</span><span class="p">))</span>
+<div class="highlight-lua"><div class="highlight"><pre><span class="n">INFO</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">Result : &quot;</span><span class="p">,</span> <span class="n">client</span><span class="p">.</span><span class="n">properties</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">test&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="s">value1&quot;</span><span class="p">,</span> <span class="p">{</span><span class="n">expires</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="s2">&quot;</span><span class="s">/&quot;</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="s2">&quot;</span><span class="s">192.168.0.1&quot;</span><span class="p">,</span> <span class="n">secure</span><span class="o">=</span><span class="kc">false</span><span class="p">,</span> <span class="n">httpOnly</span><span class="o">=</span><span class="kc">true</span><span class="p">}))</span>
 </pre></div>
 </div>
 <div class="admonition note">

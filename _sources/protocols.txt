@@ -25,10 +25,6 @@ Parameters can be sended to the client on connection by returning them in an ass
     return {message="welcome",id=1}
   end
 
-Some parameters are specific to RTMP :
-
-- **timeout** , timeout in seconds. It overloads the timeout parameter from the configuration file (see `Installation`_).
-
 onConnection parameters
 -------------------------------------------
 
@@ -78,11 +74,7 @@ Some specific parameters can be set returning an associative array like this :
     return {index="index.html", timeout=7}
   end
 
-Here is the list of the possible common parameters :
-
-- **timeout** , timeout in seconds. It overloads the timeout parameter from the configuration file (see `Installation`_).
-
-And here the HTTP-only parameters :
+HTTP specific parameters :
 
 - **index**, true by default. If *true* the Server will send a view of the application's directory, otherwise return a *404 error* file. If it is a string MonaServer will try to return the corresponding file in the application's directory.
 
@@ -103,30 +95,32 @@ The following parameter is an array which contains **URL query parameters** from
 client.properties
 -------------------------------------------
 
-With HTTP protocol the client properties maps cookies sended by client plus some connection properties :
+With HTTP protocol the client properties maps cookies sended by client and some connection properties :
 
 - **HTTPVersion** (read-only), the version of HTTP used.
 
-client.properties(key, value[, expires, path, domain, secure, httpOnly])
+client.properties(key, value[,{ options }])
 -------------------------------------------------------------------------
 
-As *client.properties* maps cookies values you can also set cookies by using the *client.properties()* method. Parameters are :
+As *client.properties* maps cookies values you can also set cookies by using the *client.properties()* method. Parameter are :
 
-- **key**, the key name of the cookie.
-- **value**, a string representing the value of the cookie.
-- **expires** (optional), 0 by default, an integer value that represents the number of seconds (since now) that the client should keep the cookie.
-- **path** (optional), the server path on which the cookie applies.
-- **domain** (optional), the domain on which the cookie should be send.
-- **secure** (optional), true if the cookie should be send only on a securised connection.
-- **httpOnly** (optional), true if the cookie should be visible only by the HTTP protocol.
+- **key** , the key name of the cookie.
+- **value** , the value corresponding to **key**.
+- and an optional object containing the following options :
 
-The return value is the **value** parameter if the operation succeed.
+  - **expires=<time>** (optional), 0 by default, an integer value that represents the number of seconds (since now) that the client should keep the cookie,
+  - **path="<value>"** (optional), the server path on which the cookie applies,
+  - **domain="<value>"** (optional), the domain on which the cookie should be send,
+  - **secure=<bool>** (optional), true if the cookie should be send only on a securised connection,
+  - **httponly=<bool>** (optional), true if the cookie should be visible only by the HTTP protocol,
+
+The returned value is the **value** parameter if the operation succeed, otherwise it returns *nil*.
 
 Here is an example of a cookie named *test* with a value of *value1* that should be sended by client for the 5 next minutes on each application (*"/"*) only for HTTP requests to the host *192.168.0.1* :
 
 .. code-block:: lua
 
-    INFO("test : ", client.properties("test", "value1", 300, "/", "192.168.0.1", false, true))
+    INFO("Result : ", client.properties("test", "value1", {expires=300, path="/", domain="192.168.0.1", secure=false, httpOnly=true}))
 
 .. note:: To unset a cookie on the client side you can set a negative value to the **expires** parameter.
 
