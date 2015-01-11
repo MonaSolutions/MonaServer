@@ -5,7 +5,7 @@ MonaServer
 
 In addition to **RTMFP** it includes **RTMP/RTMPE**, **WebSocket**, **HTTP**, a **NoDB** system and a lot of improvements.
 
-Check our [Website](http://monasolutions.github.io/MonaServer/) to know more about **MonaServer**.
+Check our website to know more about **MonaServer** : www.monaserver.ovh
 
 You can talk with the **MonaServer** Community on the [MonaServer forum](https://groups.google.com/forum/#!forum/monaserver) or report a bug on the [issue](https://github.com/MonaSolutions/MonaServer/issues) page.
 

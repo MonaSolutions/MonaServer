@@ -9,7 +9,7 @@ We would like to remind you that Mona is licensed under the `GNU General Public 
 Binaries
 ***********************************
 
-A `32-bit Windows binary <http://78.199.204.75/download/MonaServer_32.exe>`_ is provided to quickly test MonaServer.
+A `32-bit Windows binary <http://raspi.monaserver.ovh/download/MonaServer_32.exe>`_ is provided to quickly test MonaServer.
 We recommend you to clone the github version from the sources for production use.
 If you download the Windows 32-bit binary, then you can skip down to the *Configurations* section of this document.
 

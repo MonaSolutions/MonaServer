@@ -14,7 +14,7 @@ And with this objective we are proud to give you a generic alternative to existi
 
 - The powerful LuaJIT_ compiler combined in a useful lua API to write server applications,
 - **NoSQL** database management system,
-- **RTMFP** Protocal, which provide P2P channels, UDP reliable and non-reliable communication and many other great features,
+- **RTMFP** Protocol, which provide P2P channels, UDP reliable and non-reliable communication and many other great features,
 - And all of this developed keeping in mind the 5 following notions: speed, light weight, cross-platform, scalable and elegant **C++11** code.
 
 Mona currently supports the following protocols:
@@ -24,6 +24,8 @@ Mona currently supports the following protocols:
 
 We expect to add many other protocols, such as  **WebRTC**, **HLS**, **IPTV**, but please remember that our development is open source
 so contributions are greatly appreciated: `$`_, `€`_.
+
+You can talk with the MonaServer Community on the `MonaServer forum`_ or report a bug on the `issue page`_.
 
 Mona is licensed under the `GNU General Public License`_, please contact us for a commercial licence at mathieupoux@gmail.com or jammetthomas@gmail.com.
 
@@ -42,3 +44,5 @@ For some samples running on a `Raspberry Pi`_ please visit the `Samples page <./
 .. _`$` : https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=M24B32EH2GV3A
 .. _`€` : https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=QPWT9V67YWSGG
 .. _`Raspberry Pi` : http://www.raspberrypi.org/
+.. _`MonaServer forum` : https://groups.google.com/forum/#!forum/monaserver
+.. _`issue page` : https://github.com/MonaSolutions/MonaServer/issues

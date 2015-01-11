@@ -22,6 +22,9 @@ This file is a part of Mona.
 #include "Mona/Util.h"
 #include <fstream>
 #include <openssl/evp.h>
+#if defined(_WIN32)
+	#include "windows.h"
+#endif
 
 using namespace std;
 
@@ -120,7 +123,13 @@ void Database::processEntry(Exception& ex,Entry& entry) {
 	file.append(name);
 	{	
 		// encapsulate to flush it
-		ofstream ofile(file, ios::out | ios::binary);
+		#if defined(_WIN32)
+			wchar_t wFile[_MAX_PATH];
+			MultiByteToWideChar(CP_UTF8, 0, file.c_str(), -1, wFile, _MAX_PATH);
+			ofstream ofile(wFile, ios::out | ios::binary);
+		#else
+			ofstream ofile(file, ios::out | ios::binary);
+		#endif
 		if (!ofile.good()) {
 			ex.set(Exception::FILE, "Impossible to write file ", file);
 			return;
@@ -160,7 +169,13 @@ bool Database::loadDirectory(Exception& ex, const string& directory, const strin
 		}
 
 		// read the file
-		ifstream ifile(filePath, ios::in | ios::binary | ios::ate);
+		#if defined(_WIN32)
+			wchar_t wFile[_MAX_PATH];
+			MultiByteToWideChar(CP_UTF8, 0, filePath.c_str(), -1, wFile, _MAX_PATH);
+			ifstream ifile(wFile, ios::in | ios::binary | ios::ate);
+		#else
+			ifstream ifile(filePath, ios::in | ios::binary | ios::ate);
+		#endif
 		if (!ifile.good()) {
 			ex.set(Exception::FILE, "Impossible to read file ", filePath);
 			return;
