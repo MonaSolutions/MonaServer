@@ -33,7 +33,7 @@ Server part (lua)
     end
   end
   
-Source code : `PullData/main.lua <http://78.199.204.75/clients/samples/PullData/main.lua>`_
+Source code : `PullData/main.lua <http://raspi.monaserver.ovh/clients/samples/PullData/main.lua>`_
 
 WebSocket client
 ==============================
@@ -79,7 +79,7 @@ WebSocket client
   </body>
   </html>
 
-Sample : `PullData/websocket.html <http://78.199.204.75/clients/samples/PullData/websocket.html>`_
+Sample : `PullData/websocket.html <http://raspi.monaserver.ovh/clients/samples/PullData/websocket.html>`_
 
 Flash client
 ==============================
@@ -120,7 +120,7 @@ Flash client
     <mx:Button x="10" y="10" label="Connect and Send" click="connectAndSend()"/>
   </mx:Application>
   
-Sample : `PullData/flash.html <http://78.199.204.75/clients/samples/PullData/flash.html>`_
+Sample : `PullData/flash.html <http://raspi.monaserver.ovh/clients/samples/PullData/flash.html>`_
 
 Http JSON-RPC client
 ======================================
@@ -154,7 +154,7 @@ Http JSON-RPC client
   </body>
   </html>
   
-Sample : `PullData/httpjson.html <http://78.199.204.75/clients/samples/PullData/httpjson.html>`_
+Sample : `PullData/httpjson.html <http://raspi.monaserver.ovh/clients/samples/PullData/httpjson.html>`_
 
 Http XML-RPC client
 ======================================
@@ -177,7 +177,7 @@ Mona supports both json and XML-RPC formats, so just replace the response and re
                 '<param><value><string>http XML-RPC msg</string></value></param>' +
                 '</params></methodCall>');
 
-Sample : `PullData/httpxml.html <http://78.199.204.75/clients/samples/PullData/httpxml.html>`_
+Sample : `PullData/httpxml.html <http://raspi.monaserver.ovh/clients/samples/PullData/httpxml.html>`_
 
 Push Data
 ******************************
@@ -216,7 +216,7 @@ Server part
     end
   end
 
-Source code : `PushData/main.lua <http://78.199.204.75/clients/samples/PushData/main.lua>`_
+Source code : `PushData/main.lua <http://raspi.monaserver.ovh/clients/samples/PushData/main.lua>`_
 
 Websocket part
 ==============================
@@ -260,7 +260,7 @@ Websocket part
   </body>
   </html>
 
-Sample : `PushData/websocket.html <http://78.199.204.75/clients/samples/PushData/websocket.html>`_
+Sample : `PushData/websocket.html <http://raspi.monaserver.ovh/clients/samples/PushData/websocket.html>`_
 
 Flash client
 ==============================
@@ -305,7 +305,7 @@ Flash client
     <mx:Button x="10" y="10" label="Send" click="send()"/>
   </mx:Application>
 
-Sample : `PushData/flash.html <http://78.199.204.75/clients/samples/PushData/flash.html>`_
+Sample : `PushData/flash.html <http://raspi.monaserver.ovh/clients/samples/PushData/flash.html>`_
 
 Read/Write Files
 ******************************
@@ -386,9 +386,9 @@ Now we are about to create a sample of publication with a flash publisher. For t
   </mx:Application>
 
 
-Sample : `PublishLive/PublishLive.html <http://78.199.204.75/clients/samples/PublishLive/PublishLive.html>`_
+Sample : `PublishLive/PublishLive.html <http://raspi.monaserver.ovh/clients/samples/PublishLive/PublishLive.html>`_
 
-To play the video you an use a flash player or vlc for example connected to the following url : `rtmp://78.199.204.75/file <rtmp://78.199.204.75/file>`_
+To play the video you can use a flash player client or vlc for example connected to the following url : `rtmp://raspi.monaserver.ovh/file <rtmp://raspi.monaserver.ovh/file>`_
 
 If you need support for other type of clients or devices please contact us (Support_).
 

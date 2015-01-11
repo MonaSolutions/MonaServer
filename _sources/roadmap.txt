@@ -2,7 +2,7 @@
 Roadmap
 ##############################
 
-Mona is our full-time project. We develop according to our funding, trying to follow the following **Roadmap**.
+Mona is our full-time project. We develop according to our funding, trying to follow the **Roadmap** below.
 Here are listed the future evolutions of MonaServer and the time of development expected.
 If you want to finance/accelerate a specific development you can contact us at mathieupoux@gmail.com or jammetthomas@gmail.com.
 You can also make a donation for the project to allow us to continue the development : `$`_, `€`_.

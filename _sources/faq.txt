@@ -59,8 +59,8 @@ Due to new policy rules it is not possible to use the Socket class online withou
 Is there a way to record audio&video stream?
 ****************************************************
 
-Recording feature is on the roadmap of Mona, until now we have prefered to put that on hold because it miss a async file mechanism in Mona to be able to manipulate files asynchronously like sockets (IOCP for Windows and libaio for linux).
-We could implement it in a classic "blocking way" but it will decrease Mona performance, not our goal, we prefer keep full real-time reactivity of Mona. If we find financial resources to develop it (see `Support page <./contacts.html>`), it could become our priority but until nobody has give funds for that (Mona development is our full time job, and this feature requires between 2 weeks and 1 month of job).
+Recording feature is on the roadmap of Mona, until now we have prefered to put that on hold because it miss an async file mechanism in Mona to be able to manipulate files asynchronously like sockets (IOCP for Windows and libaio for linux).
+We could implement it in a classic "blocking way" but it will decrease Mona performance, not our goal, we prefer keep full real-time reactivity of Mona. If we find financial resources to develop it (see `Support page <./contacts.html>`_), it could become our priority but until nobody has give funds for that (Mona development is our full time job, and this feature requires between 2 weeks and 1 month of job) it could take a lot of time...
 
 How to create a C++ plugin extending lua?
 ****************************************************
@@ -91,5 +91,18 @@ It is very easy to create a new library extending your lua functionalities. For 
 Now just compile the project and put the library in the execution directory of MonaServer. Restart Mona. That's all!
 
 .. Note:: Don't forget to link with luajit library and include files.
+
+What can I do with MonaServer?
+****************************************************
+
+First take a look at our `main page <index.html>`_ which describe briefly the scope of MonaServer. Now we could take some samples :
+
+- Videoconference (please take a look at our `sample <samples.html#meeting-sample>`_) or a chat service,
+- Mutiplayer online P2P games like `Haxball <http://www.haxball.com/>`_,
+- Industrial Computing with web interfaces,
+- API Server using HTTP JSON or XML-RPC (to serve other formats, please `ask us <contacts.html>`_),
+- WebTV channels using RTMFP and *mona:publish()* on server side to publish from an external source,
+- Dynamic web applications communicating over any of our protocols (WebSocket, RTMFP, RTMP or HTTP),
+- Etc... Everything is possible as MonaServer is fast, scalable and oriented for web applications.
 
 .. _`Cirrus Sample Application`: http://labs.adobe.com/technologies/cirrus/samples/
