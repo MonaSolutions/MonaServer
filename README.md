@@ -7,7 +7,7 @@ In addition to **RTMFP** it includes **RTMP/RTMPE**, **WebSocket**, **HTTP**, a 
 
 Check our website to know more about **MonaServer** : www.monaserver.ovh
 
-You can talk with the **MonaServer** Community on the [MonaServer forum](https://groups.google.com/forum/#!forum/monaserver) or report a bug on the [issue](https://github.com/MonaSolutions/MonaServer/issues) page.
+You can talk with the **MonaServer** Community on the [MonaServer forum](https://groups.google.com/forum/#!forum/monaserver) or report a bug on the [issues](https://github.com/MonaSolutions/MonaServer/issues) page.
 
 MonaServer is licensed under the [GNU General Public License], please contact us for a commercial licence at mathieupoux@gmail.com or jammetthomas@gmail.com. You can also contribute to the project by making a **donation** : [$]|[€].
 
@@ -19,5 +19,5 @@ The meanings of the differents types of branchs/tags are described here :
 | tags          | Stable versions (latest one is 1.0)                                                |
 
 [GNU General Public License]: http://www.gnu.org/licenses/ "www.gnu.org/licenses"
-[$]: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=M24B32EH2GV3A "Donation US"
-[€]: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=QPWT9V67YWSGG "Donation EU"
+[$]: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=VXMEGJ2MFVP4C "Donation US"
+[€]: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=LW2NA26CNLS6G "Donation EU"
