@@ -5,7 +5,7 @@ Quick Start
 Running MonaServer
 ==============================
 
-To run Mona just run the program. For configuration see `Installation page <./installation.html>`_.
+To run Mona just run the program. For configuration see :ref:`ref-configurations`.
 
 .. code-block:: lua
   

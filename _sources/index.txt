@@ -35,14 +35,17 @@ The following scheme is a little preview of what is possible with MonaServer :
   :width: 698
   :height: 469
   :align: center
-  
-For some samples running on a `Raspberry Pi`_ please visit the `Samples page <./samples.html>`_ of our `documentation <./manual.html>`_.
+
+
+To start with **MonaServer** read first the :doc:`quickstart` page, then you can go further with the :doc:`serverapp` page.
+
+You want to see what **MonaServer** can do for you? Let's go to the sample page : 
 
 .. _LuaJIT : http://luajit.org/
 .. _XML-RPC : http://xmlrpc.scripting.com/spec.html
 .. _`GNU General Public License` : http://www.gnu.org/licenses/
-.. _`$` : https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=M24B32EH2GV3A
-.. _`€` : https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=QPWT9V67YWSGG
+.. _`$` : https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=VXMEGJ2MFVP4C
+.. _`€` : https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=LW2NA26CNLS6G
 .. _`Raspberry Pi` : http://www.raspberrypi.org/
 .. _`MonaServer forum` : https://groups.google.com/forum/#!forum/monaserver
 .. _`issue page` : https://github.com/MonaSolutions/MonaServer/issues

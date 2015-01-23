@@ -5,11 +5,11 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Server Application Sockets &mdash; MonaServer 1 documentation</title>
+    <title>Server Application Sockets &mdash; MonaServer</title>
     
     <link rel="stylesheet" href="_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="_static/bootswatch-3.1.0/amelia/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="_static/bootswatch-3.2.0/amelia/bootstrap.min.css" type="text/css" />
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/my-styles.css" type="text/css" />
     
@@ -27,9 +27,13 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <script type="text/javascript" src="_static/js/jquery-1.11.0.min.js"></script>
     <script type="text/javascript" src="_static/js/jquery-fix.js"></script>
-    <script type="text/javascript" src="_static/bootstrap-3.1.0/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="_static/bootstrap-3.2.0/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
-    <link rel="top" title="MonaServer 1 documentation" href="index.html" />
+    <link rel="top" title="MonaServer" href="index.html" />
+
+  
+  <link href='http://fonts.googleapis.com/css?family=Lobster' rel='stylesheet' type='text/css'>
+  <link href='http://fonts.googleapis.com/css?family=Cabin' rel='stylesheet' type='text/css'>
 
   
   <a href="https://github.com/MonaSolutions/MonaServer"
@@ -66,6 +70,8 @@
 
   </head>
   <body>
+    <div id="content">
+    
 
   <div id="navbar" class="navbar navbar-default navbar-fixed-top">
     <div class="container">
@@ -83,7 +89,6 @@
 
         <div class="collapse navbar-collapse nav-collapse">
           <ul class="nav navbar-nav">
-            <li class="divider-vertical"></li>
             
                 <li><a href="quickstart.html"><img src="_static/star-bookmark-icone-8571-48.png"/> Quick Start</a></li>
                 <li><a href="faq.html"><img src="_static/aide-point-interrogation-systeme-icone-8289-48.png"/> FAQ</a></li>
@@ -123,9 +128,9 @@
     <div class="col-md-12">
       
   <div class="section" id="server-application-sockets">
-<h1><a class="toc-backref" href="#id11">Server Application Sockets</a><a class="headerlink" href="#server-application-sockets" title="Permalink to this headline">¶</a></h1>
-<p><a class="reference external" href="./serveapp.html">Server Application</a> in MonaServer uses <a class="reference external" href="http://www.lua.org/">LUA</a> engine. This engine can be extended with some <a class="reference external" href="http://www.lua.org/">LUA</a> extensions to add some required features (for more details see <a class="reference external" href="./serveapp.html">Server Application</a> page.)
-Usually to add sockets feature in <a class="reference external" href="http://www.lua.org/">LUA</a>, the extension <a class="reference external" href="http://w3.impa.br/~diego/software/luasocket/">LUASocket</a> is used. But this extension has three disavantages to create <a class="reference external" href="./serveapp.html">Server Application</a> in MonaServer:</p>
+<h1><a class="toc-backref" href="#id7">Server Application Sockets</a><a class="headerlink" href="#server-application-sockets" title="Permalink to this headline">¶</a></h1>
+<p><a class="reference internal" href="serverapp.html"><em>Server Application</em></a> in MonaServer uses <a class="reference external" href="http://www.lua.org/">LUA</a> engine. This engine can be extended with some <a class="reference external" href="http://www.lua.org/">LUA</a> extensions to add some required features (for more details see <a class="reference internal" href="serverapp.html"><em>Server Application</em></a> page.)
+Usually to add sockets feature in <a class="reference external" href="http://www.lua.org/">LUA</a>, the extension <a class="reference external" href="http://w3.impa.br/~diego/software/luasocket/">LUASocket</a> is used. But this extension has three disavantages to create a <a class="reference internal" href="serverapp.html"><em>Server Application</em></a> in MonaServer:</p>
 <ul class="simple">
 <li>All methods to receive and send data are in a blocking mode by default. It can be changed, but it works not correctly especially in TCP. <a class="reference external" href="http://www.lua.org/">LUA</a> is essentialy single-threaded, and the handle have to return to Mona quickly on each script processing. We have need of non-blocking socket features which works with performance in all circumstances.</li>
 <li><a class="reference external" href="http://w3.impa.br/~diego/software/luasocket/">LUASocket</a> don&#8217;t work always fine on Windows.</li>
@@ -135,33 +140,33 @@ Usually to add sockets feature in <a class="reference external" href="http://www
 <div class="contents topic" id="table-of-contents">
 <p class="topic-title first">Table of Contents</p>
 <ul class="simple">
-<li><a class="reference internal" href="#server-application-sockets" id="id11">Server Application Sockets</a><ul>
-<li><a class="reference internal" href="#tcp-client" id="id12">TCP Client</a><ul>
-<li><a class="reference internal" href="#properties" id="id13">properties</a></li>
-<li><a class="reference internal" href="#methods" id="id14">methods</a></li>
-<li><a class="reference internal" href="#events" id="id15">events</a></li>
+<li><a class="reference internal" href="#server-application-sockets" id="id7">Server Application Sockets</a><ul>
+<li><a class="reference internal" href="#tcp-client" id="id8">TCP Client</a><ul>
+<li><a class="reference internal" href="#properties" id="id9">properties</a></li>
+<li><a class="reference internal" href="#methods" id="id10">methods</a></li>
+<li><a class="reference internal" href="#events" id="id11">events</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#tcp-server" id="id16">TCP Server</a><ul>
+<li><a class="reference internal" href="#tcp-server" id="id12">TCP Server</a><ul>
+<li><a class="reference internal" href="#id1" id="id13">properties</a></li>
+<li><a class="reference internal" href="#id2" id="id14">methods</a></li>
+<li><a class="reference internal" href="#id3" id="id15">events</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#udp-socket" id="id16">UDP Socket</a><ul>
 <li><a class="reference internal" href="#id4" id="id17">properties</a></li>
 <li><a class="reference internal" href="#id5" id="id18">methods</a></li>
 <li><a class="reference internal" href="#id6" id="id19">events</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#udp-socket" id="id20">UDP Socket</a><ul>
-<li><a class="reference internal" href="#id8" id="id21">properties</a></li>
-<li><a class="reference internal" href="#id9" id="id22">methods</a></li>
-<li><a class="reference internal" href="#id10" id="id23">events</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#other-protocols" id="id24">Other protocols</a></li>
+<li><a class="reference internal" href="#other-protocols" id="id20">Other protocols</a></li>
 </ul>
 </li>
 </ul>
 </div>
 <div class="section" id="tcp-client">
-<h2><a class="toc-backref" href="#id12">TCP Client</a><a class="headerlink" href="#tcp-client" title="Permalink to this headline">¶</a></h2>
-<p>To create a TCP client, call <em>mona:createTCPClient()</em> method (see <em>Mona</em> object description on <a class="reference external" href="./api.html">Server Application, API</a> page).
+<h2><a class="toc-backref" href="#id8">TCP Client</a><a class="headerlink" href="#tcp-client" title="Permalink to this headline">¶</a></h2>
+<p>To create a TCP client, call <em>mona:createTCPClient()</em> method (see <a class="reference internal" href="api.html#ref-mona"><em>Mona</em></a> object).
 Here&#8217;s a complete sample to understand its usage:</p>
 <div class="highlight-lua"><div class="highlight"><pre><span class="n">socket</span> <span class="o">=</span> <span class="n">mona</span><span class="p">:</span><span class="n">createTCPClient</span><span class="p">()</span>
 <span class="k">function</span> <span class="nf">socket</span><span class="p">:</span><span class="n">onData</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
@@ -185,7 +190,7 @@ Here&#8217;s a complete sample to understand its usage:</p>
 </pre></div>
 </div>
 <div class="section" id="properties">
-<h3><a class="toc-backref" href="#id13">properties</a><a class="headerlink" href="#properties" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id9">properties</a><a class="headerlink" href="#properties" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><strong>connected</strong> (read-only), return <em>true</em> if the client is connected, otherwise return <em>false</em>.</li>
 <li><strong>address</strong> (read-only), address local of connection for this TCP socket.</li>
@@ -194,7 +199,7 @@ Here&#8217;s a complete sample to understand its usage:</p>
 </ul>
 </div>
 <div class="section" id="methods">
-<h3><a class="toc-backref" href="#id14">methods</a><a class="headerlink" href="#methods" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id10">methods</a><a class="headerlink" href="#methods" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><strong>connect(host[,port])</strong>, connect to the <em>host:port</em> indicated. If this method fails, it prints an error message and return false, otherwise it returns true.</li>
 <li><strong>disconnect()</strong>, shutdown the socket.</li>
@@ -202,7 +207,7 @@ Here&#8217;s a complete sample to understand its usage:</p>
 </ul>
 </div>
 <div class="section" id="events">
-<h3><a class="toc-backref" href="#id15">events</a><a class="headerlink" href="#events" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id11">events</a><a class="headerlink" href="#events" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><strong>onData(data)</strong>, call on data reception (data is a <a class="reference external" href="http://www.lua.org/">LUA</a> string). Have to return the number of bytes remaining, it means that if you return <em>#data</em> (size of data received), on the next reception, <em>data</em> will contain precedent value concatenated with new data received.</li>
 <li><strong>onDisconnection()</strong>, call on socket disconnection.</li>
@@ -210,8 +215,8 @@ Here&#8217;s a complete sample to understand its usage:</p>
 </div>
 </div>
 <div class="section" id="tcp-server">
-<h2><a class="toc-backref" href="#id16">TCP Server</a><a class="headerlink" href="#tcp-server" title="Permalink to this headline">¶</a></h2>
-<p>To create a TCP server, call <em>mona:createTCPServer()</em> method (see <em>Mona</em> object description on <a class="reference external" href="./api.html">Server Application, API</a> page).
+<h2><a class="toc-backref" href="#id12">TCP Server</a><a class="headerlink" href="#tcp-server" title="Permalink to this headline">¶</a></h2>
+<p>To create a TCP server, call <em>mona:createTCPServer()</em> method (see <a class="reference internal" href="api.html#ref-mona"><em>Mona</em></a> object).
 Here&#8217;s a complete sample to understand its usage:</p>
 <div class="highlight-lua"><div class="highlight"><pre><span class="n">server</span> <span class="o">=</span> <span class="n">mona</span><span class="p">:</span><span class="n">createTCPServer</span><span class="p">()</span>
 <span class="k">function</span> <span class="nf">server</span><span class="p">:</span><span class="n">onConnection</span><span class="p">(</span><span class="n">client</span><span class="p">)</span>
@@ -228,30 +233,30 @@ Here&#8217;s a complete sample to understand its usage:</p>
 <span class="n">server</span><span class="p">:</span><span class="n">start</span><span class="p">(</span><span class="mi">1234</span><span class="p">);</span> <span class="c1">-- start the server on the port 1234</span>
 </pre></div>
 </div>
-<div class="section" id="id4">
-<h3><a class="toc-backref" href="#id17">properties</a><a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id1">
+<h3><a class="toc-backref" href="#id13">properties</a><a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><strong>address</strong> (read-only), return the listening address and port for the TCP server.</li>
 <li><strong>running</strong> (read-only), return <em>true</em> if the TCP server is running.</li>
 </ul>
 </div>
-<div class="section" id="id5">
-<h3><a class="toc-backref" href="#id18">methods</a><a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id2">
+<h3><a class="toc-backref" href="#id14">methods</a><a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><strong>start(address[, port])</strong>, start the TCP server on the address and port given. This method returns <em>true</em> if successful, otherwise it returns <em>false</em> and displays a <em>ERROR</em> log in MonaServer logs.</li>
 <li><strong>stop()</strong>, stop the TCP server.</li>
 </ul>
 </div>
-<div class="section" id="id6">
-<h3><a class="toc-backref" href="#id19">events</a><a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id3">
+<h3><a class="toc-backref" href="#id15">events</a><a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><strong>onConnection(client)</strong>, call on client connection. Client parameter is a TCP client as described in the precedent <em>TCP Client</em> part (see above).</li>
 </ul>
 </div>
 </div>
 <div class="section" id="udp-socket">
-<h2><a class="toc-backref" href="#id20">UDP Socket</a><a class="headerlink" href="#udp-socket" title="Permalink to this headline">¶</a></h2>
-<p>To create a UDP socket, call <em>mona:createUDPSocket([allowBroadcast])</em> method (see <em>Mona</em> object description on <a class="reference external" href="./api.html">Server Application, API</a> page).
+<h2><a class="toc-backref" href="#id16">UDP Socket</a><a class="headerlink" href="#udp-socket" title="Permalink to this headline">¶</a></h2>
+<p>To create a UDP socket, call <em>mona:createUDPSocket([allowBroadcast])</em> method (see <a class="reference internal" href="api.html#ref-mona"><em>Mona</em></a> object).
 Here&#8217;s an echo sample to understand its usage:</p>
 <div class="highlight-lua"><div class="highlight"><pre><span class="n">socket</span> <span class="o">=</span> <span class="n">mona</span><span class="p">:</span><span class="n">createUDPSocket</span><span class="p">()</span>
 <span class="k">function</span> <span class="nf">socket</span><span class="p">:</span><span class="n">onReception</span><span class="p">(</span><span class="n">data</span><span class="p">,</span><span class="n">address</span><span class="p">)</span>
@@ -272,15 +277,15 @@ Here&#8217;s an echo sample to understand its usage:</p>
 <span class="n">socket</span><span class="p">:</span><span class="n">send</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">hello&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="section" id="id8">
-<h3><a class="toc-backref" href="#id21">properties</a><a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id4">
+<h3><a class="toc-backref" href="#id17">properties</a><a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><strong>address</strong> (read-only), address local of connection for this UDP socket (returns NULL in an unconnected socket mode)</li>
 <li><strong>peerAddress</strong> (read-only), peer address of connection for this UDP socket (returns NULL in an unconnected socket mode)</li>
 </ul>
 </div>
-<div class="section" id="id9">
-<h3><a class="toc-backref" href="#id22">methods</a><a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id5">
+<h3><a class="toc-backref" href="#id18">methods</a><a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><strong>connect(address[,port])</strong>, connect to the <em>address</em> indicated. Then UDP packets can be sent without using <em>address</em> argument in <em>send</em> method (see below).</li>
 <li><strong>disconnect()</strong>, disconnect the socket.</li>
@@ -289,15 +294,15 @@ Here&#8217;s an echo sample to understand its usage:</p>
 <li><strong>close()</strong>, close the socket.</li>
 </ul>
 </div>
-<div class="section" id="id10">
-<h3><a class="toc-backref" href="#id23">events</a><a class="headerlink" href="#id10" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id6">
+<h3><a class="toc-backref" href="#id19">events</a><a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><strong>onPacket(data,address)</strong>, call on data reception (data is a <a class="reference external" href="http://www.lua.org/">LUA</a> string). The <em>address</em> argument is the sender.</li>
 </ul>
 </div>
 </div>
 <div class="section" id="other-protocols">
-<h2><a class="toc-backref" href="#id24">Other protocols</a><a class="headerlink" href="#other-protocols" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#id20">Other protocols</a><a class="headerlink" href="#other-protocols" title="Permalink to this headline">¶</a></h2>
 <p>All is possible in a non-blocking mode, and without using <a class="reference external" href="http://w3.impa.br/~diego/software/luasocket/">LUASocket</a> extension, contact &lt;<a class="reference external" href="mailto:mathieu&#46;poux&#37;&#52;&#48;gmail&#46;com">mathieu<span>&#46;</span>poux<span>&#64;</span>gmail<span>&#46;</span>com</a>&gt; or &lt;<a class="reference external" href="mailto:jammetthomas&#37;&#52;&#48;gmail&#46;com">jammetthomas<span>&#64;</span>gmail<span>&#46;</span>com</a>&gt; for help.</p>
 </div>
 </div>
@@ -305,12 +310,16 @@ Here&#8217;s an echo sample to understand its usage:</p>
 
     </div>
     
-      
+    <div class="col-md-12">
     
     
+        <p></p>
+    </div>
 
   </div>
 </div>
+
+    
 <footer class="footer">
   <div class="container">
     <p class="pull-right">
@@ -318,10 +327,12 @@ Here&#8217;s an echo sample to understand its usage:</p>
       
     </p>
     <p>
-        &copy; Copyright 2014, Mathieu Poux &amp; Thomas Jammet.<br/>
+        &copy; Copyright 2015, Mathieu Poux &amp; Thomas Jammet.<br/>
       Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b2.<br/>
     </p>
   </div>
 </footer>
+    </div>
+
   </body>
 </html>

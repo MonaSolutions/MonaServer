@@ -2,8 +2,8 @@
 Server Application Sockets
 ##############################
 
-`Server Application <./serveapp.html>`_ in MonaServer uses LUA_ engine. This engine can be extended with some LUA_ extensions to add some required features (for more details see `Server Application <./serveapp.html>`_ page.)
-Usually to add sockets feature in LUA_, the extension LUASocket_ is used. But this extension has three disavantages to create `Server Application <./serveapp.html>`_ in MonaServer:
+:doc:`serverapp` in MonaServer uses LUA_ engine. This engine can be extended with some LUA_ extensions to add some required features (for more details see :doc:`serverapp` page.)
+Usually to add sockets feature in LUA_, the extension LUASocket_ is used. But this extension has three disavantages to create a :doc:`serverapp` in MonaServer:
 
 - All methods to receive and send data are in a blocking mode by default. It can be changed, but it works not correctly especially in TCP. LUA_ is essentialy single-threaded, and the handle have to return to Mona quickly on each script processing. We have need of non-blocking socket features which works with performance in all circumstances.
 - LUASocket_ don't work always fine on Windows.
@@ -16,7 +16,7 @@ For all these reason, we have made available a new LUA_ socket features mapping 
 TCP Client
 ********************************
 
-To create a TCP client, call *mona:createTCPClient()* method (see *Mona* object description on `Server Application, API <./api.html>`_ page).
+To create a TCP client, call *mona:createTCPClient()* method (see :ref:`ref-mona` object).
 Here's a complete sample to understand its usage:
 
 .. code-block:: lua
@@ -70,7 +70,7 @@ events
 TCP Server
 ********************************
 
-To create a TCP server, call *mona:createTCPServer()* method (see *Mona* object description on `Server Application, API <./api.html>`_ page).
+To create a TCP server, call *mona:createTCPServer()* method (see :ref:`ref-mona` object).
 Here's a complete sample to understand its usage:
 
 .. code-block:: lua
@@ -112,7 +112,7 @@ events
 UDP Socket
 ********************************
 
-To create a UDP socket, call *mona:createUDPSocket([allowBroadcast])* method (see *Mona* object description on `Server Application, API <./api.html>`_ page).
+To create a UDP socket, call *mona:createUDPSocket([allowBroadcast])* method (see :ref:`ref-mona` object).
 Here's an echo sample to understand its usage:
 
 .. code-block:: lua

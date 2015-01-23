@@ -35,7 +35,7 @@ Thomas Jammet
 Development
 *******************************************
 
-Mona is our full-time project. We develop according to our funding, trying to follow the `Roadmap <./roadmap.html>`_.
+Mona is our full-time project. We develop according to our funding, trying to follow the :doc:`roadmap`.
 But we can also personalize Mona to your needs, or extend its features for your systems.
 Or we can simply assist you and advise you in the deployment and the usage of Mona on your environment.
 

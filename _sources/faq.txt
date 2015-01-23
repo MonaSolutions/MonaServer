@@ -34,7 +34,7 @@ Cirrus Server requires the following script:
 
 You can add the script (seen above) in *www/main.lua* to make the `Cirrus Sample Application`_ work. 
 
-.. Note:: The `Cirrus Sample Application`_ requires some python scripts to exchange user names, which can be achieved much easier with LUA code. Take a look at the *Meeting Sample* in `Samples <./samples.html>`_ page which does the same thing, but without other external dependencies.
+.. Note:: The `Cirrus Sample Application`_ requires some python scripts to exchange user names, which can be achieved much easier with LUA code. Take a look at the :doc:`Meeting sample <samples>` which does the same thing, but without other external dependencies.
 
 How to use the as3 Socket class with Mona?
 ****************************************************
@@ -60,7 +60,7 @@ Is there a way to record audio&video stream?
 ****************************************************
 
 Recording feature is on the roadmap of Mona, until now we have prefered to put that on hold because it miss an async file mechanism in Mona to be able to manipulate files asynchronously like sockets (IOCP for Windows and libaio for linux).
-We could implement it in a classic "blocking way" but it will decrease Mona performance, not our goal, we prefer keep full real-time reactivity of Mona. If we find financial resources to develop it (see `Support page <./contacts.html>`_), it could become our priority but until nobody has give funds for that (Mona development is our full time job, and this feature requires between 2 weeks and 1 month of job) it could take a lot of time...
+We could implement it in a classic "blocking way" but it will decrease Mona performance, not our goal, we prefer keep full real-time reactivity of Mona. If we find financial resources to develop it (see :doc:`contacts`), it could become our priority but until nobody has give funds for that (Mona development is our full time job, and this feature requires between 2 weeks and 1 month of job) it could take a lot of time...
 
 How to create a C++ plugin extending lua?
 ****************************************************
@@ -95,14 +95,20 @@ Now just compile the project and put the library in the execution directory of M
 What can I do with MonaServer?
 ****************************************************
 
-First take a look at our `main page <index.html>`_ which describe briefly the scope of MonaServer. Now we could take some samples :
+First take a look at our :doc:`Main page <index>` which describe briefly the scope of MonaServer. Then we could take some samples :
 
-- Videoconference (please take a look at our `sample <samples.html#meeting-sample>`_) or a chat service,
-- Mutiplayer online P2P games like `Haxball <http://www.haxball.com/>`_,
-- Industrial Computing with web interfaces,
-- API Server using HTTP JSON or XML-RPC (to serve other formats, please `ask us <contacts.html>`_),
+- Videoconference (please take a look at the :doc:`Meeting sample <samples>`) or a chat service,
+- Remote desktop control or sharing screen online applications (see the `OBS Guide`_ on how to configure the great projet OBS_ with MonaServer),
+- Mutiplayer online P2P games like Haxball_,
+- Industrial Computing with web interface (using our :doc:`socket classes <serversocket>` or `rpi-gpio`_ for example on a Raspberry pi),
+- API Server using HTTP JSON or XML-RPC (to serve other formats, please :doc:`ask us <contacts>`),
 - WebTV channels using RTMFP and *mona:publish()* on server side to publish from an external source,
+- Online P2P sharing file site,
 - Dynamic web applications communicating over any of our protocols (WebSocket, RTMFP, RTMP or HTTP),
 - Etc... Everything is possible as MonaServer is fast, scalable and oriented for web applications.
 
 .. _`Cirrus Sample Application`: http://labs.adobe.com/technologies/cirrus/samples/
+.. _Haxball : http://www.haxball.com
+.. _OBS : https://obsproject.com
+.. _`OBS Guide` : https://obsproject.com/forum/resources/how-to-set-up-your-own-private-rtmfp-server-using-monaserver.153/
+.. _`rpi-gpio` : https://github.com/Tieske/rpi-gpio/tree/master/lua
