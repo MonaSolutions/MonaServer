@@ -9,25 +9,31 @@ We would like to remind you that Mona is licensed under the `GNU General Public 
 Binaries
 ***********************************
 
-A `32-bit Windows binary <http://raspi.monaserver.ovh/download/MonaServer_32.exe>`_ is provided to quickly test MonaServer.
+A `32-bit Windows zipped package <http://sourceforge.net/projects/monaserver/files/MonaServer_Windows_32.zip/download>`_ is provided to quickly test MonaServer.
+
 We recommend you to clone the github version from the sources for production use.
+
 If you download the Windows 32-bit binary, then you can skip down to the *Configurations* section of this document.
+
+.. note:: In order to use it you need the `C++ Redistributable Packages for Visual Studio 2013`_.
 
 Download
 ***********************************
 
 You can download the entire sources with `zipball <https://github.com/MonaSolutions/MonaServer/zipball/master>`_ or use a GIT_ client to **clone** the following address: https://github.com/MonaSolutions/MonaServer.git.
 
+
 Build
 ***********************************
 
-The Mona source code is cross-platform.
+The Mona source code is cross-platform. Supported OS are :
 
-You **must** build Mona in the following order:
+- Windows (minimum XP)
+- All Linux OS
+- FreeBSD
+- MACOS X
 
-#. :  **MonaBase**, 
-#. :  **MonaCore**, 
-#. :  **MonaServer**.
+If you need to target a specific platform or if you encouter problems during the build please ask us on the forum_.
 
 Dependencies and requirements
 ===================================
@@ -71,9 +77,9 @@ Unix (Linux/OSX) Build
 
 First follow the `LuaJIT installation`_ steps.
 
-If your Unix system includes a package manager you can quickly install OpenSSL_. The package is usually named *libssl-dev*.
+If your Unix system includes a package manager you can quickly install OpenSSL_. The package is usually named *libssl-dev* (or *openssl-devel*).
 
-.. warning:: You need to use the *-dev* version to get the header files required during Mona compilation.
+.. warning:: You need to use the *-dev* (or *-devel*) version to get the header files required during Mona compilation.
 
 To build Mona:
 
@@ -129,13 +135,15 @@ You need to install a distribution where **gcc 4.8.2** is available. For now we 
 - Follow the `LuaJIT installation`_ steps
 - And then run `Unix (Linux/OSX) Build`_ steps
 
+.. _ref-configurations:
+
 Configurations
 ***********************************
 
 MonaServer is statically configured by an optional configuration *MonaServer.ini* file to put in the installation folder.
 Possible configurations are :
 
-- **host** : address like it will be seen by clients and other servers, this option is mandatory to make working all redirection features in multiple server configuration (see `Scalability and load-balancing <./scalability.html>`_).
+- **host** : address like it will be seen by clients and other servers, this option is mandatory to make working all redirection features in multiple server configuration (see :doc:`scalability`).
 - **socketBufferSize** : allows to change the size in bytes of sockets reception and sending buffer. Increases this value if your operating system has a default value too lower for important loads.
 - **threads** : indicates the number of threads which will be allocated in the pool of threads of Mona. Usually it have to be equal to (or greather than) the number of cores on the host machine (virtual or physic cores). By default, an auto-detection system tries to determinate its value, but it can be perfectible on machine who owns hyper-threading technology, or on some operating systems.
  
@@ -147,11 +155,11 @@ Possible configurations are :
 [servers]
 ===================================
 
-- **port** : port to receive incoming server connection (in a multiple servers configuration, see `Scalability and load-balancing <./scalability.html>`_ for more details). If you don't configure this port, MonaServer cannot establish a connection with it.
+- **port** : port to receive incoming server connection (in a multiple servers configuration, see :doc:`scalability` for more details). If you don't configure this port, MonaServer cannot establish a connection with it.
 
 .. warning::  The exchange between servers is done in a unencrypted TCP way, so to avoid an attack by this incoming end point the *servers.port* should be protected by a firewall to allow just a connection by an other server and nothing else.
  
-- **targets** : list of MonaServer addresses (separated by semicolons) to connect on start-up. When the server will start, it will try to etablish a connection to these addresses every 10 seconds (see `Scalability and load-balancing <./scalability.html>`_ for more details). Each token can include arguments through as a query url form:
+- **targets** : list of MonaServer addresses (separated by semicolons) to connect on start-up. When the server will start, it will try to etablish a connection to these addresses every 10 seconds (see :doc:`scalability` for more details). Each token can include arguments through as a query url form:
 
 .. code-block:: ini
 
@@ -254,13 +262,13 @@ Flash client connects to MonaServer by the classical NetConnection way:
 
 Here the port has its default value 1935. If you configure a different port on MonaServer you have to indicate this port in the URL (after *localhost*, of course).
 
-The path used allows you to connect for your desired `Server Application <./serveapp.html>`_.
+The path used allows you to connect for your desired :doc:`serverapp`.
 
 .. code-block:: as3
 
     _netConnection.connect("rtmfp://localhost/myApplication");
 
-To learn more, read the `Server Application <./serveapp.html>`_ or `Samples <./samples.html>`_ page.
+To learn more, read the :doc:`serverapp` or :doc:`samples` pages.
 
 .. _Win32OpenSSL : http://www.slproweb.com/products/Win32OpenSSL.html
 .. _LuaJIT : http://luajit.org/
@@ -268,3 +276,5 @@ To learn more, read the `Server Application <./serveapp.html>`_ or `Samples <./s
 .. _`GNU General Public License` : http://www.gnu.org/licenses/
 .. _GIT : http://en.wikipedia.org/wiki/Git_(software)
 .. _Raspbian : http://downloads.raspberrypi.org/raspbian_latest
+.. _forum : https://groups.google.com/forum/#!forum/monaserver
+.. _`C++ Redistributable Packages for Visual Studio 2013` : http://www.microsoft.com/en-us/download/details.aspx?id=40784

@@ -5,6 +5,10 @@
 
 {% block extrahead %}
 
+  {# Load google fonts (this is needed only on localhost) #}
+  <link href='http://fonts.googleapis.com/css?family=Lobster' rel='stylesheet' type='text/css'>
+  <link href='http://fonts.googleapis.com/css?family=Cabin' rel='stylesheet' type='text/css'>
+
   {# Add github banner (from: https://github.com/blog/273-github-ribbons). #}
   <a href="https://github.com/MonaSolutions/MonaServer"
      class="visible-desktop hidden-xs"><img
@@ -34,9 +38,14 @@
   {{ super() }}
 {% endblock %}
 
+{% block content %}
+    <div id="content">
+    {{ super() }}
+{% endblock %}
+
 {% block sidebar1 %}
     {# Add social buttons #}
-    {% if pagename == 'index' %}
+    {% if pagename == 'index' or pagename == 'samples' %}
         <div class="bs-docs-social">
             <div class="container">
               <ul class="bs-docs-social-buttons">
@@ -76,16 +85,29 @@
 {% endblock %}
 
 {% block sidebar2 %}
-    {{ super() }}
+    <div class="col-md-12">
     {# Add Mona's presentation from googledoc #}
     {% if pagename == 'quickstart' %}
         <iframe src="https://docs.google.com/presentation/d/12hdM3-yxBQ4xF_fe2C7zYnmwD3wYAkEe1FoNS3gKGQ4/embed?start=false&loop=false&delayms=5000" frameborder="5" width="960" height="569" allowfullscreen="true" mozallowfullscreen="true" webkitallowfullscreen="true"></iframe>
+    {# Add paypal button #}
     {% elif pagename == 'contacts' %}    
         <form action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_top">
             <input type="hidden" name="cmd" value="_s-xclick">
-            <input type="hidden" name="hosted_button_id" value="QPWT9V67YWSGG">
+            <input type="hidden" name="hosted_button_id" value="LW2NA26CNLS6G">
             <input type="image" src="https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif" border="0" name="submit" alt="PayPal - The safer, easier way to pay online!">
             <img alt="" border="0" src="https://www.paypalobjects.com/en_US/i/scr/pixel.gif" width="1" height="1">
         </form>
+    {# Add Demo button #}
+    {% elif pagename == 'index' %}
+        <form action="http://monaserver.ovh/samples.html" method="post">
+            <button type="submit" class="btn btn-success"><span class="glyphicon glyphicon-play"></span> Demo</button>
+        </form>
     {% endif %}
+        <p></p>
+    </div>
+{% endblock %}
+
+{% block footer %}
+    {{ super() }}
+    </div>
 {% endblock %}

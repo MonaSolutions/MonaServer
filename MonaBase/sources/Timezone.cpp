@@ -378,8 +378,12 @@ Timezone::Timezone() : _offset(0),_dstOffset(3600000) {
 
 	//// LOAD default values ////////////////////////
 
+	// Following code is used for Windows XP and 2000 compatibility
+	typedef DWORD (WINAPI *TimeZoneFct)(PDYNAMIC_TIME_ZONE_INFORMATION);
+	TimeZoneFct dynamicTzFunction = (TimeZoneFct) GetProcAddress(GetModuleHandle("kernel32.dll"), "GetDynamicTimeZoneInformation");
 	DYNAMIC_TIME_ZONE_INFORMATION	timezoneInfo;
-	DWORD result = GetDynamicTimeZoneInformation(&timezoneInfo);
+	DWORD result = (dynamicTzFunction)? dynamicTzFunction(&timezoneInfo) : GetTimeZoneInformation((PTIME_ZONE_INFORMATION)&timezoneInfo);
+
 	_offset=(-(Int32)timezoneInfo.Bias*60000);
 	if (result != TIME_ZONE_ID_UNKNOWN)
 		_dstOffset = (-(Int32)timezoneInfo.DaylightBias*60000);
@@ -390,7 +394,7 @@ Timezone::Timezone() : _offset(0),_dstOffset(3600000) {
 
 	int size(sizeof(timezoneInfo.TimeZoneKeyName));
 	_name.resize(size);
-	if ((size = WideCharToMultiByte(CP_ACP, 0, timezoneInfo.TimeZoneKeyName, -1, (char*)_name.data(), _name.size(), NULL, NULL)) > 0) {
+	if (dynamicTzFunction && (size = WideCharToMultiByte(CP_ACP, 0, timezoneInfo.TimeZoneKeyName, -1, (char*)_name.data(), _name.size(), NULL, NULL)) > 0) {
 		_name.resize(size-1);
 
 		static const map<string, const char*> WindowToTZID ({

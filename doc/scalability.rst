@@ -8,9 +8,9 @@ To resolve this issue, a full framework is included in MonaServer to enable comm
 
 The main idea is simple: by default, **each instance is an independent server and shares nothing with others, YOU decide what are the resources are to be shared** between all the server instances.
 
-This page intends to describe every features of this framework illustrated with some code samples and context usage. Of course, the `Server Application, API <./api.html>`_ page lists all these feature but without code samples or any utilization context.
+This page intends to describe every features of this framework illustrated with some code samples and context usage. Of course, the :doc:`api` page lists all these feature but without code samples or any utilization context.
 
-Finally some piece of script code illustrates how to use it, to know how to create an application server see `Server Application <./serveapp.html>`_ page.
+Finally some piece of script code illustrates how to use it, to know how to create an application server see :doc:`serverapp` page.
 
 .. contents:: Table of Contents
 
@@ -64,7 +64,7 @@ Following scripts should be included in root *main.lua* file to be loaded at sta
 
 This configuration system allows to scale an existing system horizontaly without having to restart server already running. Indeed, the first server started can configure its incoming server port (*servers.port*) and no target, and a new server can come to extend the system in putting the address of the first server in its *servers.targets* configuration.
 
-Of course, complex configurations are possible, with multiple servers (and properties individual by server, see *Configurations* part of `Installation <./installation.html>`_ page):
+Of course, complex configurations are possible, with multiple servers (and properties individual by server, see :ref:`ref-configurations`):
 
 .. code-block:: ini
 
@@ -102,7 +102,7 @@ It is also possible to reject a server adding an error in the *onServerConnectio
 Exchange data and resources
 ***********************************
 
-To exchange data between servers you have to call the *server:send* method on sender side (see *server* object description on `Server Application, API <./api.html>`_) and you have to define RPC server functions as a member of server object on the receiver side: 
+To exchange data between servers you have to call the *server:send* method on sender side (see :ref:`ref-server` object description) and you have to define RPC server functions as a member of server object on the receiver side: 
 
 .. code-block:: lua
 
@@ -120,7 +120,7 @@ To exchange data between servers you have to call the *server:send* method on se
     NOTE("Server '"..server.name.."' at address "..server.address)
   end
 
-.. warning:: *self.name = name* in the function body of *onHello* creates on the *server* object a *name* value. Beware with this kind of thing on *server* object, it's shared with all other `Server Application <./serveapp.html>`_. If one other server application attachs too a *name* value to this *server* object, it will overload the previous assignment. A solution can be to prefix the property by the name of the current application.
+.. warning:: *self.name = name* in the function body of *onHello* creates on the *server* object a *name* value. Beware with this kind of thing on *server* object, it's shared with all other :doc:`serverapp`. If one other server application attachs too a *name* value to this *server* object, it will overload the previous assignment. A solution can be to prefix the property by the name of the current application.
 
 The main goal of this exchange mechanism is to share resource wanted between all the server instances.
 For example, if you use Mona to stream (by server bypass configuration, no P2P) to many subscribers, usually there are a small number of publishers and a very important number of subscribers. The server can support the publisher load, but could be saturated by the important number of listeners.
@@ -131,7 +131,7 @@ One solution in this model case is to scale horizontaly the system to share the 
   :width: 785
   :align: center
 
-Here we have a configuration with three servers, but many others could be added dynamically. The load-balacing system can be managed by a DNS way, but we have to share the publications between all three (or more) servers, otherwise one subscriber could not find one publication. Below following a complete `Server Application <./serveapp.html>`_ to share publications between all the servers.
+Here we have a configuration with three servers, but many others could be added dynamically. The load-balacing system can be managed by a DNS way, but we have to share the publications between all three (or more) servers, otherwise one subscriber could not find one publication. Below following a complete :doc:`serverapp` to share publications between all the servers.
 
 .. code-block:: lua
 
@@ -259,7 +259,7 @@ The line *if _nextServer and _subscribers>=400 then error(_nextServer.host) end*
 Load balancing and rendezvous service
 ******************************************
 
-In a load-balancing solution, usually we opt for hardware solution with a DNS which returns an address ip rotated on a list of addresses. You can realize it in a software way using the *onHandshake* event (see `Server Application, API <./api.html>`_ page for complete details on this event):
+In a load-balancing solution, usually we opt for hardware solution with a DNS which returns an address ip rotated on a list of addresses. You can realize it in a software way using the :ref:`ref-onHandshake` event:
 
 .. code-block:: lua
 
@@ -282,7 +282,7 @@ An other possibility is to return many server addresses to benefit of parallel c
 
 Indeed, the client will receive multiple server addresses, and in this case, RTMFP starts multiple connection attempt in parallel, and keep only the faster to answer. It's an other way of load-balacing system: the more faster wins.
 
-About the P2P rendezvous service of Mona, in a multiple servers way, if the peerA connected to MonaServerA requests a connection to the peerB connected to MonaServerB, of course MonaServerA will be unable to return information about peerB. We have to use the *onRendezVousUnknown* event (see `Server Application, API <./api.html>`_ page for complete details on this event):
+About the P2P rendezvous service of Mona, in a multiple servers way, if the peerA connected to MonaServerA requests a connection to the peerB connected to MonaServerB, of course MonaServerA will be unable to return information about peerB. We have to use the :ref:`ref-onRendezVousUnknown` event:
 
 .. code-block:: lua
 
@@ -292,7 +292,7 @@ About the P2P rendezvous service of Mona, in a multiple servers way, if the peer
 
 With the above code addition, you can redirect a rendezvous request which fails to other servers.
 
-But it's always missing a solution to synchronize member of groups in NetGroup_ usage case. Indeed, a groupA can exists on serverA and contains peerA, and the same groupA can exists on serverB too and contains peerB. peerB and peerA will never meet them. To solve it, you have to use *groups:join* method (see *groups* object description on `Server Application, API <./api.html>`_ page for complete description of this method).
+But it's always missing a solution to synchronize member of groups in NetGroup_ usage case. Indeed, a groupA can exists on serverA and contains peerA, and the same groupA can exists on serverB too and contains peerB. peerB and peerA will never meet them. To solve it, you have to use *groups:join* method (see :ref:`ref-groups` object description for a complete description of this method).
 The idea is simple: you have to share every group inclusion informations between all servers. The following server application code realizes this sharing job:
 
 .. code-block:: lua

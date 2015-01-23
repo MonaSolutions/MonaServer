@@ -6,6 +6,8 @@ MonaServer includes a powerfull script-engine (using LUA_ langage) to create you
 
 .. contents:: Table of Contents
 
+.. _ref-create-server-app:
+
 Create a server application
 ******************************
 
@@ -40,11 +42,12 @@ Here a very simple first server application:
     print("Server application '"..path.."' stopped")
   end
 
+.. _ref-global-configurations:
 
 Global configurations
 ******************************
 
-*MonaServer.ini* file allows to give some global configuration values on MonaServer start-up (see `Installation <./installation.html>`_ page). To access for these values from script, use *mona.configs* property (see *Mona* object description in `Server Application, API <./api.html>`_ page to get more details). This system allows to create your own global configuration values and access to them in scripts.
+*MonaServer.ini* file allows to give some global configuration values on MonaServer start-up (see :ref:`ref-configurations`). To access for these values from script, use *mona.configs* property (see :ref:`ref-mona` object description to get more details). This system allows to create your own global configuration values and access to them in scripts.
 
 .. code-block:: ini
 
@@ -120,7 +123,7 @@ On variable overloading (or function overloading), you can always access for the
   end
   hello() -- displays "I am /Games application"
 
-.. warning:: Events are functions called by the system (see *Events* part of `Server Application, API <./api.html>`_ page), if an application doesn't define *onConnection* event for example, on new client connection for this application, it's the parent application which will receive the event. To avoid it, you have to overload the event in child application, and you can call also the parent version if needed.
+.. warning:: Events are functions called by the system (see :ref:`ref-events`), if an application doesn't define *onConnection* event for example, on new client connection for this application, it's the parent application which will receive the event. To avoid it, you have to overload the event in child application, and you can call also the parent version if needed.
 
 .. note:: The keyword *super* is supported to refer to the the parent application:
 
@@ -132,7 +135,7 @@ On variable overloading (or function overloading), you can always access for the
   end
   super:hello() -- displays "I am the root application"
 
-You can use *client.path* property to check if it's a client connected for this application or for one child application (see `Server Application, API <./api.html>`_ page for more details on *client* object description).
+You can use *client.path* property to check if it's a client connected for this application or for one child application (see :ref:`ref-client` object description).
 
 
 Exchange between unrelated server applications
@@ -168,6 +171,8 @@ By the same way, any applications can do the same thing with any other applicati
   function load() end
     ...
   end
+
+.. _ref-com-server-client:
 
 Communication between server and client
 *******************************************
@@ -293,7 +298,7 @@ Websocket supports JSON RPC and HTTP supports either JSON and XML-RPC_ using the
   
 .. Note:: Here we use the XML-RPC_ format which is fully supported by Mona.
 
-See more samples on `Samples <./samples.html>`_ page.
+See more samples on :doc:`samples` page.
   
 Push data
 =======================================
@@ -328,7 +333,7 @@ Push data mechanism is either possible with Websocket and Flash using *client.wr
 
 .. note:: Push data is not possible with HTTP protocol because it is an old protocol based on pull data only. Long polling is a solution for this but is not implemented yet.
 
-Here an example of push data every two seconds (see *Events* part of `Server Application, API <./api.html>`_ page for *onManage* event description):
+Here an example of push data every two seconds (see :ref:`ref-onManage` event description):
 
 .. code-block:: lua
 
@@ -371,7 +376,7 @@ When you want push a constant flow with a large amount of data, or if you want t
 
   function refresh():void {...}
 
-When you create your own flowWriter, you can overload its *onManage* function, allowing you to write the same thing in a more elegant way, which avoid here *writers* table usage, and make the code really more short (see *Objects* part of `Server Application, API <./api.html>`_ page for more details).
+When you create your own :ref:`ref-writer`, you can overload its *onManage* function, allowing you to write the same thing in a more elegant way, which avoid here *writers* table usage, and make the code really more short (see :doc:`api` page for more details).
 
 .. code-block:: lua
 
@@ -386,7 +391,7 @@ When you create your own flowWriter, you can overload its *onManage* function, a
 
   function refresh():void {...}
 
-If you have need of pushing rate greater than two seconds, use *onRealTime* event of root application (see *Events* part of `Server Application, API <./api.html>`_ page for more details).
+If you have need of pushing rate greater than two seconds, use *onRealTime* event of root application (see :ref:`ref-events` for more details).
 
 LUA types conversions
 *****************************************
@@ -397,6 +402,8 @@ Several types are supported for messages received by server or sended to clients
  - XML-RPC_,
  - XML (using the *fromXML* parser),
  - and raw data (obviously it does not needs conversion).
+
+.. _ref-amf-to-lua:
 
 AMF to LUA conversions
 =========================================
@@ -499,8 +506,9 @@ For example, *ArrayCollection* is an externalizable type, and is not supported b
     end
   end
 
-*reader* and *writer* arguments are equivalent of `IDataOutput <http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/utils/IDataOutput.html>`_ and `IDataInput <http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/utils/IDataInput.html>`_) AS3 class (see *Objects* part of `Server Application, API <./api.html>`_ page for more details).
+*reader* and *writer* arguments are equivalent of `IDataOutput <http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/utils/IDataOutput.html>`_ and `IDataInput <http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/utils/IDataInput.html>`_) AS3 class (see :doc:`api` page for more details).
 
+.. _ref-json-to-lua:
 
 JSON to LUA conversions
 =========================================
@@ -527,6 +535,8 @@ As in AMF primitive, conversion types are easy and intuitive (Number, Boolean, S
 .. code-block:: js
 
   socket.send("[[10,10,100,100]]");
+
+.. _ref-xmlrpc-to-lua:
 
 XML-RPC_ to LUA conversions
 =========================================
@@ -578,7 +588,7 @@ Two methods are available to do this :
  - *fromXML*
  - and *toXML*
  
-See *Mona* part of `Server Application, API <./api.html>`_ page for more details.
+See :ref:`ref-mona` for more details.
 
 A sample with SOAP
 -----------------------------
@@ -694,6 +704,7 @@ For facility you can access to *"This is the first paragraph"* by two ways :
 1. *variable[1][1][1][1]*
 2. *variable.document.article.p.__value*
 
+.. _ref-lua-extensions:
 
 LUA extensions and files inclusion
 ******************************************
@@ -718,7 +729,7 @@ So you can include your scripts like this :
     pcall(file)
   end
 
-Or you can always use *mona:absolutePath(path)* function (see *Objects* part of `Server Application, API <./api.html>`_ page for more details) if you want to use the absolute path of the file :
+Or you can always use *mona:absolutePath(path)* function (see :ref:`ref-mona` object for more details) if you want to use the absolute path of the file :
 
 .. code-block:: lua
 
@@ -756,7 +767,7 @@ The solution is to use logs macros :
 API
 ****************************************
 
-Complete API is available on `Server Application, API <./api.html>`_ page.
+The complete API documentation is available on the :doc:`API page <api>`.
 
 .. _LUA : http://www.lua.org/
 .. _XML-RPC : http://xmlrpc.scripting.com/spec.html

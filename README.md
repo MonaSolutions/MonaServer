@@ -9,7 +9,7 @@ Check our website to know more about **MonaServer** : www.monaserver.ovh
 
 You can talk with the **MonaServer** Community on the [MonaServer forum](https://groups.google.com/forum/#!forum/monaserver) or report a bug on the [issue](https://github.com/MonaSolutions/MonaServer/issues) page.
 
-Mona is licensed under the [GNU General Public License], please contact us for a commercial licence at mathieupoux@gmail.com or jammetthomas@gmail.com. You can also contribute to the project by making a **donation** : [$]|[€].
+MonaServer is licensed under the [GNU General Public License], please contact us for a commercial licence at mathieupoux@gmail.com or jammetthomas@gmail.com. You can also contribute to the project by making a **donation** : [$]|[€].
 
 The meanings of the differents types of branchs/tags are described here :
 

@@ -1,5 +1,5 @@
 
-Specific Protocol Functionalities
+Specific Protocol Features
 ###########################################
 
 In MonaServer we have taken the choice to give a powerfull **generic** access to protocols. For this reason we take importance to the choice of protocols implemented in order to fit well with our architecture.
@@ -28,9 +28,9 @@ Parameters can be sended to the client on connection by returning them in an ass
 onConnection parameters
 -------------------------------------------
 
-As it is said in the `LUA API`_ first parameter of *onConnection* is the **Client** object.
+As it is said in the :doc:`api` first parameter of *onConnection* is the **Client** object.
 
-Others ar AMF parameters given to *NetConnection:connect(address:String, ... parameters)* converted in LUA_ types (see *AMF and LUA types conversion* part of `Server Application`_ page to know how AMF/LUA_ conversion works).
+Others ar AMF parameters given to *NetConnection:connect(address:String, ... parameters)* converted in LUA_ types (see :ref:`ref-amf-to-lua` to know how AMF/LUA_ conversion works).
 
 client.properties
 -------------------------------------------
@@ -81,7 +81,7 @@ HTTP specific parameters :
 onConnection parameters
 -------------------------------------------
 
-As it is said in the `LUA API`_ first parameter of *onConnection* is the **Client** object.
+As it is said in the :doc:`api` first parameter of *onConnection* is the :ref:`ref-client` object.
 
 The following parameter is an array which contains **URL query parameters** from the HTTP request.
 
@@ -124,7 +124,5 @@ Here is an example of a cookie named *test* with a value of *value1* that should
 
 .. note:: To unset a cookie on the client side you can set a negative value to the **expires** parameter.
 
-.. _Installation: ./installation.html
-.. _Server Application: ./serverapp.html
-.. _LUA API: ./api.html
+
 .. _LUA: http://www.lua.org/

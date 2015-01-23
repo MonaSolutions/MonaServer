@@ -45,7 +45,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'MonaServer'
-copyright = u'2014, Mathieu Poux & Thomas Jammet'
+copyright = u'2015, Mathieu Poux & Thomas Jammet'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -139,6 +139,10 @@ html_theme_options = {
     
     # Bootswatch (http://bootswatch.com/) theme.
     'bootswatch_theme': "amelia",
+    
+    # Choose Bootstrap version.
+    # Values: "3" (default) or "2" (in quotes)
+    'bootstrap_version': "3",
 }
 
 # Add any paths that contain custom themes here, relative to this directory.
@@ -146,7 +150,7 @@ html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
-#html_title = None
+html_title = 'MonaServer'
 
 # A shorter title for the navigation bar.  Default is the same as html_title.
 html_short_title = 'Mona'
