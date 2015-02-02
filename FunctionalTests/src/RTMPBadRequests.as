@@ -43,6 +43,7 @@ package
 			
 			_sock.timeout = 1000; // timeout of 1s
 			_sock.connect(_host, 1935);
+			_counter = 0;
 		}
 		
 		private function reconnect(evt:TimerEvent):void {

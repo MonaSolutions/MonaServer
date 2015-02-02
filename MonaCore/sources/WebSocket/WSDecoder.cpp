@@ -57,7 +57,7 @@ UInt32 WSDecoder::decoding(Exception& ex, UInt8* data,UInt32 size) {
 
 	receive(reader.current(),reader.available(),type);
 
-	return reader.position()+size;
+	return reader.position()+reader.available();
 }
 
 } // namespace Mona

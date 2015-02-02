@@ -178,6 +178,10 @@ void Application::defineOptions(Exception& ex, Options& options) {
 		.argument("intern|all", false)
 		.handler([this](Exception& ex, const string& value) { Logs::SetDump(value == "all" ? Logs::DUMP_ALL : (value == "intern" ? Logs::DUMP_INTERN : Logs::DUMP_EXTERN)); return true; });
 	
+	options.add(ex, "dumplimit", "dl", "If dump is activated this option set the limit of dump messages. Argument is an unsigned integer defining the limit of bytes to show. By default there is not limit.")
+		.argument("limit", true)
+		.handler([this](Exception& ex, const string& value) { Logs::SetDumpLimit(String::ToNumber<Int16>(ex,-1, value)); return true; });
+
 	options.add(ex,"help", "h", "Displays help information about command-line usage.");
 }
 

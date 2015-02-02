@@ -42,6 +42,7 @@ WSSession::WSSession(const SocketAddress& peerAddress, SocketFile& file, Protoco
 }
 
 void WSSession::enable() {
+	DEBUG("Upgrading ", name(), " to WebSocket")
 	((string&)this->peer.protocol) = "WebSocket";
 	_decoder.OnDecodedEnd::subscribe(onDecodedEnd);
 	_decoder.OnDecoded::subscribe(onDecoded);
@@ -109,7 +110,7 @@ void WSSession::receive(WSReader& packet) {
 				peer.pong();
 				break;
 			default:
-				ERROR(ex.set(Exception::PROTOCOL, Format<UInt8>("Type %#x unknown", packet.type), WS::CODE_MALFORMED_PAYLOAD).error());
+				ERROR(ex.set(Exception::PROTOCOL, Format<UInt8>("Type %#x unknown ", packet.type), WS::CODE_MALFORMED_PAYLOAD).error());
 				break;
 		}
 		

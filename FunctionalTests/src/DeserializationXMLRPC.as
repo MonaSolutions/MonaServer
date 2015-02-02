@@ -44,7 +44,7 @@ package
 			
 			// Prepare POST request
 			_http = new HTTPService();
-			_http.url = _url;
+			_http.url =  "http://" + _host + _url;
 			_http.resultFormat = "text";
 			_http.method = "POST";
 			_http.contentType = "text/xml";

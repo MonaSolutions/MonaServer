@@ -4,8 +4,11 @@ package
 	import flash.events.IOErrorEvent;
 	import flash.events.SecurityErrorEvent;
 	import flash.events.TimerEvent;
-	import flash.utils.Timer;
 	import flash.net.Socket;
+	import flash.system.Security;
+	import flash.utils.Timer;
+	
+	import mx.controls.Alert;
 
 	public class HTTPBadRequests extends Test
 	{
@@ -20,7 +23,8 @@ package
 		
 		override public function run(onFinished:Function):void {
 			
-			super.run(onFinished);				
+			super.run(onFinished);
+			
 			_sock = new Socket();
 			_sock.addEventListener(Event.CLOSE, onEvent);
 			_sock.addEventListener(Event.CONNECT, onEvent);
@@ -29,6 +33,7 @@ package
 			
 			_sock.timeout = 1000; // timeout of 1s
 			_sock.connect(_host, 80);
+			_counter = 0;
 		}
 		
 		private function reconnect(evt:TimerEvent):void {

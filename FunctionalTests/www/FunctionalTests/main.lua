@@ -7,11 +7,11 @@ local tests = {} -- list of LUA Tests
 serverPolicyFile = mona:createTCPServer()
 function serverPolicyFile:onConnection(client)
         
-        function client:onData(data)
-                INFO("Sending policy file...")
-                self:send('<cross-domain-policy><allow-access-from domain="*" secure="false" to-ports="*"/></cross-domain-policy>\0')
-                return 0 -- return rest (all has been consumed here)
-        end
+	function client:onData(data)
+		INFO("Sending policy file...")
+		self:send('<cross-domain-policy><allow-access-from domain="*" secure="false" to-ports="*"/></cross-domain-policy>\0')
+		return data.length -- (all has been consumed here)
+	end
 end
 NOTE("Starting server policy file on port 843 : ", serverPolicyFile:start(843)) -- start the server on the port 843
 
@@ -96,5 +96,5 @@ function onConnection(client,...)
 		return ...
 	end
   
-  return {index="flash.html",timeout=7}
+  return {index="FunctionalTests.html",timeout=7}
 end

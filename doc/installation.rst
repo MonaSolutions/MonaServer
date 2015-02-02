@@ -179,7 +179,7 @@ It will create dynamic properties on *server* object (see *server* object descri
 [RTMFP]
 ===================================
 
-- **port** : equals 1935 by default (RTMFP server default port), it is the port used by MonaServer to listen incoming RTMFP requests.
+- **port** : 1935 by default (RTMFP server default port), it is the port used by MonaServer to listen incoming RTMFP requests.
 
 - **keepaliveServer** : time in seconds for periodically sending packets keep-alive with server, 15s by default (valid value is from 5s to 255s).
 
@@ -188,12 +188,12 @@ It will create dynamic properties on *server* object (see *server* object descri
 [RTMP]
 ===================================
 
-- **port** : equals 1935 by default (RTMP server default port), it is the port used by MonaServer to listen incoming RTMFP requests.
+- **port** : 1935 by default (RTMP server default port), it is the port used by MonaServer to listen incoming RTMFP requests.
 
 [HTTP]
 ===================================
 
-- **port** : equals 80 by default (HTTP server default port), it is the port used by MonaServer to listen incoming HTTP requests.
+- **port** : 80 by default (HTTP server default port), it is the port used by MonaServer to listen incoming HTTP requests.
 - **timeout** : 7 by default, it is the maximum time before server kills the connection when no data as been received.
 - **index** : the default index file of HTTP protocol, if it is specified it will redirect each connection to this index.
 

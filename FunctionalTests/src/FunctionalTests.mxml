@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <mx:Application xmlns:fx="http://ns.adobe.com/mxml/2009" 
-				xmlns:mx="library://ns.adobe.com/flex/mx" layout="absolute" minWidth="955" minHeight="600" applicationComplete="init()" >
+				xmlns:mx="library://ns.adobe.com/flex/mx" layout="absolute" minWidth="955" minHeight="610" applicationComplete="init()" >
 	<fx:Declarations>
 	</fx:Declarations>
 	<fx:Script>
@@ -10,12 +10,13 @@
 			import mx.collections.ArrayCollection;
 			import mx.controls.Alert;
 			import mx.core.FlexGlobals;
+			import mx.utils.URLUtil;
 			
-			private var applicationDefault:String = null;
-			private var hostDefault:String = null;
+			private var applicationDefault:String = "127.0.0.1/";
+			private var hostDefault:String = "/FunctionalTests/";
 			
 			private var luaGroup:Test;
-			[Bindable] private var mapTests:Array = new Array();
+			[Bindable] private var mapTests:Array = null;
 			
 			public var _currentIndex:int = 0;
 			
@@ -27,15 +28,35 @@
 			public function ERROR(message:String):void { console.htmlText += "<p><b><i><font color='#CC0000'>ERROR : " + message + "</font></i></b></p>"; }
 			
 			private function init():void {
-				// Initiate parameters
-				applicationDefault = FlexGlobals.topLevelApplication.parameters.pathname;
-				hostDefault = FlexGlobals.topLevelApplication.parameters.host;
 				
-				INFO("Starting FunctionalTests from host http://" + hostDefault + applicationDefault);
+				// Initiate parameters
+				var url:String = this.loaderInfo.url;
+				var domainNPath:Array = url.match(/(:\/\/.+\/)/);
+				if (URLUtil.getProtocol(url) != "file") {
+					address.text = "rtmfp" + domainNPath[1];
+				}
+			}
+			
+			// Connect to MonaServer and load tests
+			private function connect():void {
+				var domainNPath:Array = address.text.match(/:\/\/(.*)(\/.+)/);
+				if (!domainNPath || domainNPath.length < 3) {
+					ERROR("The address format is incorrect");
+				} else {
+					hostDefault = domainNPath[1];
+					applicationDefault = domainNPath[2];
+					if (applicationDefault.charAt(applicationDefault.length-1)!="/")
+						applicationDefault += "/";
+				}
+				
+				INFO("Connecting to MonaServer...");
+				INFO("Host : " + hostDefault);
+				INFO("Application : " + applicationDefault);
 				
 				listTests.enabled = false;
 				btRun.enabled = false;
 				
+				mapTests = new Array();
 				var group:Test = new Test(this, "HTTP", "List of HTTP tests", true);
 				group.children.push(new HTTPLoad(this, hostDefault, applicationDefault));
 				group.children.push(new HTTPReconnect(this, hostDefault, applicationDefault));
@@ -44,6 +65,9 @@
 				group.children.push(new HTTPSplitted(this, hostDefault, applicationDefault));
 				group.children.push(new BigDeserialize(this, hostDefault, applicationDefault));
 				group.children.push(new Cookies(this, hostDefault, applicationDefault));
+				mapTests.push(group);
+				group = new Test(this, "WebSocket", "List of WebSocket tests", true);
+				group.children.push(new WebSocketLoad(this, hostDefault, applicationDefault));
 				mapTests.push(group);
 				group = new Test(this, "RTMP", "List of RTMP tests", true);
 				group.children.push(new RTMPBadRequests(this, hostDefault));
@@ -65,7 +89,7 @@
 				
 				_conn = new NetConnection();
 				_conn.addEventListener(NetStatusEvent.NET_STATUS, onStatus);
-				_conn.connect("rtmfp://" + hostDefault + applicationDefault);
+				_conn.connect(address.text);
 				_conn.client = this;
 			}
 			
@@ -131,6 +155,7 @@
 				
 				listTests.enabled = true;
 				btRun.enabled = true;
+				SUCCESS("Connection succeed. Ready for testing!");
 			}
 			
 			public function myDataTipFunction(value:Object):String {
@@ -142,11 +167,15 @@
 			}
 		]]>
 	</fx:Script>	
-	<mx:VBox x="10" y="10" width="935" height="580">
+	<mx:VBox x="10" y="10" width="935" height="600">
 		<mx:HBox width="100%">
-			<mx:TextArea id="console" width="720" height="518" editable="false"
+			<mx:TextInput x="10" y="10" width="400" text="rtmfp://127.0.0.1/FunctionalTests/" id="address"/>
+			<mx:Button x="430" y="10" label="Connect" click="connect()"/>
+		</mx:HBox>
+		<mx:HBox width="100%" height="520">
+			<mx:TextArea id="console" width="720" height="100%" editable="false"
 						 valueCommit="console.verticalScrollPosition=console.maxVerticalScrollPosition"/>
-			<mx:Tree id="listTests" width="204" height="517" dataProvider="{mapTests}" allowMultipleSelection="true" 
+			<mx:Tree id="listTests" width="204" height="100%" dataProvider="{mapTests}" allowMultipleSelection="true" 
 					 showDataTips="true" dataTipFunction="myDataTipFunction"></mx:Tree>
 		</mx:HBox>
 		<mx:HBox width="100%">

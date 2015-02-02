@@ -32,7 +32,7 @@ package
 			
 			// Prepare POST request
 			_http = new HTTPService();
-			_http.url = _url;
+			_http.url = "http://" + _host + _url;
 			_http.method = "POST";
 			_http.resultFormat = "flashvars";
 			_http.showBusyCursor = true;
@@ -63,7 +63,7 @@ package
 					onResult({err:"Error in result ("+result.toString()+")"});
 				break;
 			case FaultEvent.FAULT:
-				onResult({err:FaultEvent(event).fault.faultString});
+				onResult({err:event.toString()});
 				break;
 			}
 		}

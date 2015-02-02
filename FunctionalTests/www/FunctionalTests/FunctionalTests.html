@@ -42,11 +42,6 @@
             var xiSwfUrlStr = "playerProductInstall.swf";
             var flashvars = {};
             
-            // ---------------- Added to get dynamically host and path of the app to connect with (HTTP hosted by Mona) ----------------- 
-            flashvars.host=window.location.hostname;
-            var path = window.location.pathname;
-            flashvars.pathname=path; //.substring(0,path.lastIndexOf('/'));
-            
             var params = {};
             params.quality = "high";
             params.bgcolor = "#869ca7";

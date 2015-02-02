@@ -4,17 +4,39 @@ FAQ
 
 .. contents:: Table of Contents
 
-What are the advantages of RTMFP?
-*******************************************
+Technical questions
+********************
 
-**RTMFP (Real Time Media Flow Protocol)** is the most powerful protocol to deliver live real-time communication for these principal reasons:
+Why does connections from IPv6 addresses doesn't work on Windows XP (or 2000)?
+===============================================================================
 
-- RTMFP supports Native IP Multicast, Application Level Multicasting (using P2P), and the combination of both called Fusion Multicasting.
-- RTMFP is based on the User Datagram Protocol (UDP), which increases the speed of delivery; Audio and Video packets are not forced to be retransmitted, which greatly reduces latency.
-- RTMFP utilizes peer-to-peer (P2P) assisted network communication (end-users communicate directly), which consumes minimal server bandwidth and system resources.
+By default Windows XP doesn't support IPv6, you just need to install it in the commande line :
+
+.. code-block:: bash
+
+  netsh int ipv6 install
+
+Why do I have the error "HTTP server, Permission denied..." at start?
+======================================================================
+
+It's not an error, you have already a process listening on the port 80, maybe Skype or Apache?
+If you don't want to use the HTTP/WebSocket part of MonaServer you can continue without doing anything. Otherwise you can :
+
+- kill the other process listening on the port 80 and restart MonaServer,
+- or `Configure the HTTP port`_ of MonaServer in the file MonaServer.ini (create the file)
+
+​
+Here is a MonaServer.ini sample :
+
+.. code-block:: ini
+
+  [HTTP]
+  port=8081
+
+
 
 Why doesn't the `Cirrus Sample Application`_ work?
-***************************************************
+================================================================
 
 Cirrus Server requires the following script:
 
@@ -34,10 +56,10 @@ Cirrus Server requires the following script:
 
 You can add the script (seen above) in *www/main.lua* to make the `Cirrus Sample Application`_ work. 
 
-.. Note:: The `Cirrus Sample Application`_ requires some python scripts to exchange user names, which can be achieved much easier with LUA code. Take a look at the :doc:`Meeting sample <samples>` which does the same thing, but without other external dependencies.
+Let see **VideoPhone**, our improved version of the Cirrus Sample, or take a look at the **Meeting sample** which combine RTMFP and RTMP and add meeting rooms : :doc:`samples`.
 
 How to use the as3 Socket class with Mona?
-****************************************************
+===============================================================================
 
 Due to new policy rules it is not possible to use the Socket class online without having a policy file. The easier way to do this is to return the socket policy file on each connection on the port 843 (the default port used by Flash):
 
@@ -57,13 +79,13 @@ Due to new policy rules it is not possible to use the Socket class online withou
 .. Note:: In this sample we give access to each ports and from any domain.
 
 Is there a way to record audio&video stream?
-****************************************************
+===============================================================================
 
 Recording feature is on the roadmap of Mona, until now we have prefered to put that on hold because it miss an async file mechanism in Mona to be able to manipulate files asynchronously like sockets (IOCP for Windows and libaio for linux).
 We could implement it in a classic "blocking way" but it will decrease Mona performance, not our goal, we prefer keep full real-time reactivity of Mona. If we find financial resources to develop it (see :doc:`contacts`), it could become our priority but until nobody has give funds for that (Mona development is our full time job, and this feature requires between 2 weeks and 1 month of job) it could take a lot of time...
 
 How to create a C++ plugin extending lua?
-****************************************************
+===============================================================================
 
 It is very easy to create a new library extending your lua functionalities. For example the following c++ source code implements a *printtest(message)* function:
 
@@ -92,8 +114,21 @@ Now just compile the project and put the library in the execution directory of M
 
 .. Note:: Don't forget to link with luajit library and include files.
 
+
+General questions
+********************
+
+What are the advantages of RTMFP?
+====================================
+
+**RTMFP (Real Time Media Flow Protocol)** is the most powerful protocol to deliver live real-time communication for these principal reasons:
+
+- RTMFP supports Native IP Multicast, Application Level Multicasting (using P2P), and the combination of both called Fusion Multicasting.
+- RTMFP is based on the User Datagram Protocol (UDP), which increases the speed of delivery; Audio and Video packets are not forced to be retransmitted, which greatly reduces latency.
+- RTMFP utilizes peer-to-peer (P2P) assisted network communication (end-users communicate directly), which consumes minimal server bandwidth and system resources.
+
 What can I do with MonaServer?
-****************************************************
+===============================================================================
 
 First take a look at our :doc:`Main page <index>` which describe briefly the scope of MonaServer. Then we could take some samples :
 
@@ -112,3 +147,4 @@ First take a look at our :doc:`Main page <index>` which describe briefly the sco
 .. _OBS : https://obsproject.com
 .. _`OBS Guide` : https://obsproject.com/forum/resources/how-to-set-up-your-own-private-rtmfp-server-using-monaserver.153/
 .. _`rpi-gpio` : https://github.com/Tieske/rpi-gpio/tree/master/lua
+.. _`Configure the HTTP port` : http://www.monaserver.ovh/installation.html#http

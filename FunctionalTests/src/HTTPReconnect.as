@@ -1,6 +1,7 @@
 package
 {
 	import flash.events.Event;
+	
 	import mx.rpc.events.FaultEvent;
 	import mx.rpc.events.ResultEvent;
 	import mx.rpc.http.HTTPService;
@@ -12,6 +13,9 @@ package
 		private var _host:String;
 		private var _url:String;
 		
+		private var _appUrl:String;
+		private var _subappUrl:String;
+		
 		private var _currentTest:int = 0;
 		private const NB_LOAD_TESTS:int = 100; 
 		
@@ -20,6 +24,8 @@ package
 			super(app, "HTTPReconnect", "Connect and reconnect in app and child app");
 			_host=host;
 			_url=url;
+			_appUrl = "http://" + _host + _url; 
+			_subappUrl = "http://" + _host + _url + "subapp/";
 		}
 		
 		override public function run(onFinished:Function):void {
@@ -28,7 +34,7 @@ package
 			
 			// Prepare POST request
 			_http = new HTTPService();
-			_http.url = "/FunctionalTests/";
+			_http.url = _appUrl;
 			_http.method = "POST";
 			_http.resultFormat = "flashvars";
 			_http.showBusyCursor = true;
@@ -54,7 +60,7 @@ package
 						
 						// Disconnection and reconnection
 						_http.disconnect();
-						_http.url = (_http.url == "/FunctionalTests/") ? "/FunctionalTests/subapp/" : "/FunctionalTests/";
+						_http.url = (_http.url ==  _appUrl) ? _subappUrl : _appUrl;
 						_http.send(_parameters);
 					} else
 						onResult({}); // Test Terminated!

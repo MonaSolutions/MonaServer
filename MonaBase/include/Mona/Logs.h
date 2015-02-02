@@ -39,6 +39,7 @@ public:
 	static void			SetLevel(UInt8 level) { _Level = level; }
 	static UInt8		GetLevel() { return _Level; }
 	static void			SetDump(DumpMode mode) { _DumpMode = mode; }
+	static void			SetDumpLimit(Int32 limit) { _DumpLimit = limit; }
 	static DumpMode		GetDump() { return _DumpMode; }
 
 
@@ -67,8 +68,8 @@ public:
 		Buffer out;
 		std::string header;
 		String::Format(header, args ...);
-		// TODO add a size limit to DUMP (otherwise it could take a long time)
-		Util::Dump(data, size, out, header);
+		
+		Util::Dump(data, (_DumpLimit<0 || size<_DumpLimit)? size : _DumpLimit, out, header);
 		if (out.size() == 0)
 			return;
 		if (_PLogger)
@@ -82,6 +83,7 @@ private:
 	static DumpMode		_DumpMode;
 	static UInt8		_Level;
 	static Logger		_DefaultLogger;
+	static Int16		_DumpLimit; // -1 means no limit
 };
 
 #undef ERROR

@@ -26,6 +26,7 @@ namespace Mona {
 
 Logger*			Logs::_PLogger(NULL);
 Logs::DumpMode	Logs::_DumpMode(DUMP_NOTHING);
+Int16			Logs::_DumpLimit(-1);
 #if defined(_DEBUG)
 UInt8			Logs::_Level(Logger::LEVEL_DEBUG); // default log level
 #else
