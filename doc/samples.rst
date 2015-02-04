@@ -11,53 +11,66 @@ The sources are availables on the `MonaClients github page`_.
 To get more informations please ask us on the `MonaServer forum`_ or send a mail to jammetthomas@gmail.com.
 
 
-+--------------------+-------------------------+------------------------------------------------------------------+-------------------------------------------------+
-| Name               | Screenshot & link       |  Description                                                     |   Technologies                                  |
-+====================+=========================+==================================================================+=================================================+
-| MonaVideo_         | |monavideo|             | The simpliest application of live video                          | - **Protocol :** RTMFP                          |
-|                    |                         | communication.                                                   | - **P2P :** Full-mesh                           |
-|                    |                         |                                                                  |                                                 |
-|                    |                         | 1. Type a name to identify your meeting                          |                                                 |
-|                    |                         | 2. Send the http link to your correspondant                      |                                                 |
-|                    |                         |                                                                  |                                                 |
-|                    |                         | **Notes :**                                                      |                                                 |
-|                    |                         |                                                                  |                                                 |
-|                    |                         | - This is just a sample, the video quality is set to the minimum |                                                 |
-|                    |                         | - Download the `apk installer`_ to try it on Android.            |                                                 |
-+--------------------+-------------------------+------------------------------------------------------------------+-------------------------------------------------+
-| VideoPhone_        | |videophone|            | This is an improved version of the `Cirrus Sample Application`_  | - **Protocol :** RTMFP                          |
-|                    |                         | with full-screen mode and a better default quality of video.     | - **P2P :** Full-mesh                           |
-|                    |                         |                                                                  |                                                 |
-+--------------------+-------------------------+------------------------------------------------------------------+-------------------------------------------------+
-| Meeting_           | |meeting|               | This is the adaptation of the `Adobe Meeting Sample`_. It is     | - **Protocol :** RTMFP or RTMP                  |
-|                    |                         | a more complex VideoConference application permitting to         | - **P2P :** Full-mesh or publish/play           |
-|                    |                         | connect users in both RTMFP (P2P full-mesh) and RTMP             |                                                 |
-|                    |                         | (publish/play) modes.                                            |                                                 |
-|                    |                         |                                                                  |                                                 |
-+--------------------+-------------------------+------------------------------------------------------------------+-------------------------------------------------+
-| FileShare_         | |fileshare|             | The simpliest application of P2P file sharing.                   | - **Protocol :** RTMFP                          |
-|                    |                         |                                                                  | - **P2P :** NetGroup                            |
-|                    |                         | 1. Load your file and share the link                             |                                                 |
-|                    |                         | 2. Your file is shared as long as their is a peer connected      |                                                 |
-+--------------------+-------------------------+------------------------------------------------------------------+-------------------------------------------------+
-| Chat_              | |chat|                  | A sample chat application available in :                         | - **Protocol :** WebSocket or RTMFP/RTMP        |
-|                    |                         |                                                                  | - **P2P :** No                                  |
-|                    |                         | - Javascript (WebSocket) : `Javascript Chat`_                    |                                                 |
-|                    |                         | - Flash (RTMP/RTMFP) : `Flash Chat`_                             |                                                 |
-+--------------------+-------------------------+------------------------------------------------------------------+-------------------------------------------------+
-|  VideoPublisher_   | |videopublisher|        | A simple video publisher working with both RTMP & RTMFP, with or | - **Protocol :** RTMFP/RTMP                     |
-|                    |                         | without a NetGroup, allows **synchronous recording!**            | - **P2P :** Netgroup                            |
-|                    |                         |                                                                  |                                                 |
-|                    |                         | **Note :** asynchronous recording is a feature in the roadmap, if| - **Recording :** in a lua synchronous way      |
-|                    |                         | you need it please contact us.                                   |                                                 |
-+--------------------+-------------------------+------------------------------------------------------------------+-------------------------------------------------+
-|   VideoPlayer_     | |videoplayer|           | A simple video player working with both RTMP & RTMFP, with or    | - **Protocol :** RTMFP/RTMP or HTTP Progressive |
-|                    |                         | without a NetGroup and with HTTP Progressive (only flv)!         | - **P2P :** Netgroup                            |
-|                    |                         |                                                                  |                                                 |
-|                    |                         | **Note :** HTTP Progressive is a new feature providing an        |                                                 |
-|                    |                         | alternative to RTMP & RTMFP, if you are interested to improve it |                                                 |
-|                    |                         | :doc:`contact us <contacts>`!                                    |                                                 |
-+--------------------+-------------------------+------------------------------------------------------------------+-------------------------------------------------+
++-------------------------+-------------------------------------------------------------------+-------------------------------------------------+
+| Screenshot & link       |  Description                                                      |   Technologies                                  |
++=========================+===================================================================+=================================================+
+| |monavideo|             | MonaVideo_ :                                                      | - **Protocol :** RTMFP                          |
+|                         |                                                                   | - **P2P :** Full-mesh                           |
+|                         | The simpliest application of live video communication.            |                                                 |
+|                         |                                                                   |                                                 |
+|                         | 1. Type a name to identify your meeting                           |                                                 |
+|                         | 2. Send the http link to your correspondant                       |                                                 |
+|                         |                                                                   |                                                 |
+|                         | **Notes :**                                                       |                                                 |
+|                         |                                                                   |                                                 |
+|                         | - This is just a sample, the video quality is set to the minimum  |                                                 |
+|                         | - Download the `apk installer`_ to try it on Android.             |                                                 |
++-------------------------+-------------------------------------------------------------------+-------------------------------------------------+
+|                         | VideoPhone_ :                                                     |                                                 |
+|                         |                                                                   |                                                 |
+| |videophone|            | This is an improved version of the `Cirrus Sample Application`_   | - **Protocol :** RTMFP                          |
+|                         | with full-screen mode and a better default quality of video.      | - **P2P :** Full-mesh                           |
+|                         |                                                                   |                                                 |
++-------------------------+-------------------------------------------------------------------+-------------------------------------------------+
+|                         | Meeting_ :                                                        |                                                 |
+|                         |                                                                   |                                                 |
+| |meeting|               | This is the adaptation of the `Adobe Meeting Sample`_. It is      | - **Protocol :** RTMFP or RTMP                  |
+|                         | a more complex VideoConference application permitting to          | - **P2P :** Full-mesh or publish/play           |
+|                         | connect users in both RTMFP (P2P full-mesh) and RTMP              |                                                 |
+|                         | (publish/play) modes.                                             |                                                 |
+|                         |                                                                   |                                                 |
++-------------------------+-------------------------------------------------------------------+-------------------------------------------------+
+|                         | FileShare_ :                                                      |                                                 |
+|                         |                                                                   |                                                 |
+| |fileshare|             | The simpliest application of P2P file sharing.                    | - **Protocol :** RTMFP                          |
+|                         |                                                                   | - **P2P :** NetGroup                            |
+|                         | 1. Load your file and share the link                              |                                                 |
+|                         | 2. Your file is shared as long as their is a peer connected       |                                                 |
++-------------------------+-------------------------------------------------------------------+-------------------------------------------------+
+|                         | Chat_ :                                                           |                                                 |
+|                         |                                                                   |                                                 |
+| |chat|                  | A sample chat application available in :                          | - **Protocol :** WebSocket or RTMFP/RTMP        |
+|                         |                                                                   | - **P2P :** No                                  |
+|                         | - Javascript (WebSocket) : `Javascript Chat`_                     |                                                 |
+|                         | - Flash (RTMP/RTMFP) : `Flash Chat`_                              |                                                 |
++-------------------------+-------------------------------------------------------------------+-------------------------------------------------+
+|                         | VideoPublisher_ :                                                 |                                                 |
+|                         |                                                                   |                                                 |
+| |videopublisher|        | A simple video publisher working with both RTMP & RTMFP, with or  | - **Protocol :** RTMFP/RTMP                     |
+|                         | without a NetGroup, allows **synchronous recording!**             | - **P2P :** Netgroup                            |
+|                         |                                                                   |                                                 |
+|                         | **Note :** asynchronous recording is a feature in the roadmap, if | - **Recording :** in a lua synchronous way      |
+|                         | you need it please contact us.                                    |                                                 |
++-------------------------+-------------------------------------------------------------------+-------------------------------------------------+
+|                         | VideoPlayer_ :                                                    |                                                 |
+|                         |                                                                   |                                                 |
+| |videoplayer|           | A simple video player working with both RTMP & RTMFP, with or     | - **Protocol :** RTMFP/RTMP or HTTP Progressive |
+|                         | without a NetGroup and with HTTP Progressive (only flv)!          | - **P2P :** Netgroup                            |
+|                         |                                                                   |                                                 |
+|                         | **Note :** HTTP Progressive is a new feature providing an         |                                                 |
+|                         | alternative to RTMP & RTMFP, if you are interested to improve it  |                                                 |
+|                         | :doc:`contact us <contacts>`!                                     |                                                 |
++-------------------------+-------------------------------------------------------------------+-------------------------------------------------+
 
 
 .. |monavideo| image:: img/monavideo.png                         

@@ -71,7 +71,7 @@ Due to new policy rules it is not possible to use the Socket class online withou
           function client:onData(data)
                   INFO("Sending policy file...")
                   self:send("<cross-domain-policy><allow-access-from domain=\"*\" to-ports=\"*\"/></cross-domain-policy>\0")
-                  return 0 -- return rest (all has been consumed here)
+                  return data.length -- (all has been consumed here)
           end
   end
   serverPolicyFile:start(843); -- start the server on the port 843

@@ -106,7 +106,7 @@ methods
 events
 =============================
 
-- **onConnection(client)**, call on client connection. Client parameter is a TCP client as described in the precedent *TCP Client* part (see above).
+- **onConnection(client)**, call on client connection. Client parameter is a TCP client as described in `TCP Client`_.
 
 
 UDP Socket
@@ -118,7 +118,7 @@ Here's an echo sample to understand its usage:
 .. code-block:: lua
 
   socket = mona:createUDPSocket()
-  function socket:onReception(data,address)
+  function socket:onPacket(data,address)
     NOTE("Reception from "..address)
     self:send(data,address) -- echo sample
   end
@@ -130,7 +130,7 @@ Following a sample in a client form, in connected mode:
 .. code-block:: lua
 
   socket = mona:createUDPSocket()
-  function socket:onReception(data,address)
+  function socket:onPacket(data,address)
     NOTE("Reception from "..address..": "..data)
   end
   socket:connect("127.0.0.1", 1234)
