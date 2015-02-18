@@ -50,7 +50,7 @@ To get more informations please ask us on the `MonaServer forum`_ or send a mail
 |                         | Chat_ :                                                           |                                                 |
 |                         |                                                                   |                                                 |
 | |chat|                  | A sample chat application available in :                          | - **Protocol :** WebSocket or RTMFP/RTMP        |
-|                         |                                                                   | - **P2P :** No                                  |
+|                         |                                                                   |                                                 |
 |                         | - Javascript (WebSocket) : `Javascript Chat`_                     |                                                 |
 |                         | - Flash (RTMP/RTMFP) : `Flash Chat`_                              |                                                 |
 +-------------------------+-------------------------------------------------------------------+-------------------------------------------------+
@@ -70,6 +70,12 @@ To get more informations please ask us on the `MonaServer forum`_ or send a mail
 |                         | **Note :** HTTP Progressive is a new feature providing an         |                                                 |
 |                         | alternative to RTMP & RTMFP, if you are interested to improve it  |                                                 |
 |                         | :doc:`contact us <contacts>`!                                     |                                                 |
++-------------------------+-------------------------------------------------------------------+-------------------------------------------------+
+|                         | IndustrialComputing_ :                                            | - **Protocol :** WebSocket                      |
+|                         |                                                                   | - **SVG/Javascript**                            |
+| |icomputing|            | A proof of concept of an Industrial Computing interface using     | - **NoSQL Database**                            |
+|                         | SVG for the view and saving data with our NoSQL Dabase system.    |                                                 |
+|                         |                                                                   |                                                 |
 +-------------------------+-------------------------------------------------------------------+-------------------------------------------------+
 
 
@@ -107,6 +113,11 @@ To get more informations please ask us on the `MonaServer forum`_ or send a mail
   :target: http://raspi.monaserver.ovh/MonaClients/VideoPlayer/
   :width: 250                                        
   :height: 150
+  
+.. |icomputing| image:: img/industrialcomputing.png                         
+  :target: http://raspi.monaserver.ovh/MonaClients/IndustrialComputing/
+  :width: 250                                        
+  :height: 150
 
 .. _MonaVideo : http://raspi.monaserver.ovh/MonaClients/MonaVideo/
 .. _VideoPhone : http://raspi.monaserver.ovh/MonaClients/VideoPhone/
@@ -115,6 +126,7 @@ To get more informations please ask us on the `MonaServer forum`_ or send a mail
 .. _Chat : http://raspi.monaserver.ovh/MonaClients/chat/
 .. _VideoPublisher : http://raspi.monaserver.ovh/MonaClients/VideoPublisher/
 .. _VideoPlayer : http://raspi.monaserver.ovh/MonaClients/VideoPlayer/
+.. _IndustrialComputing : http://raspi.monaserver.ovh/MonaClients/IndustrialComputing/
 .. _`Javascript Chat`: http://raspi.monaserver.ovh/MonaClients/chat/websocket.html
 .. _`Flash Chat`: http://raspi.monaserver.ovh/MonaClients/chat/chat.html
 .. _`Adobe Meeting Sample` : http://www.adobe.com/devnet/flashmediaserver/articles/real-time-collaboration.html

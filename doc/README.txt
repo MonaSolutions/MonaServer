@@ -35,7 +35,7 @@ Actually we use the `Sphinx Bootstrap theme`_ for html generation. To install it
 Usage of Sphinx_
 -------------------------------------
 
-Just run the command bellow :
+Just run the command bellow in this directory (doc) :
 
 .. code-block:: sh
 
