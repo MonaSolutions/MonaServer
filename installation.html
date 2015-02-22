@@ -140,7 +140,7 @@
 <li><a class="reference internal" href="#dependencies-and-requirements" id="id5">Dependencies and requirements</a></li>
 <li><a class="reference internal" href="#luajit-installation" id="id6">LuaJIT installation</a></li>
 <li><a class="reference internal" href="#windows-build" id="id7">Windows Build</a></li>
-<li><a class="reference internal" href="#unix-linux-osx-build" id="id8">Unix (Linux/OSX) Build</a></li>
+<li><a class="reference internal" href="#unix-linux-os-x-build" id="id8">Unix (Linux/OS-X) Build</a></li>
 <li><a class="reference internal" href="#amazon-ec2-ami-build" id="id9">Amazon EC2 AMI Build</a></li>
 <li><a class="reference internal" href="#raspberry-pi-armv61-build" id="id10">Raspberry PI (armv61) Build</a></li>
 </ul>
@@ -186,7 +186,7 @@
 <li>Windows (minimum XP)</li>
 <li>All Linux OS</li>
 <li>FreeBSD</li>
-<li>MACOS X</li>
+<li>OS-X</li>
 </ul>
 <p>If you need to target a specific platform or if you encouter problems during the build please ask us on the <a class="reference external" href="https://groups.google.com/forum/#!forum/monaserver">forum</a>.</p>
 <div class="section" id="dependencies-and-requirements">
@@ -203,7 +203,7 @@
 <p class="first admonition-title">Note</p>
 <p class="last"><a class="reference external" href="http://luajit.org/">LuaJIT</a> is an alternative to the official LUA interpreter. It works faster than LUA essentially because it compiles the LUA code to machine code during execution (see <a class="reference external" href="http://luajit.org/performance_x86.html">LuaJIT performance</a> about performance comparison).</p>
 </div>
-<p>As <strong>C++11</strong> is used in MonaServer you need to install a compiler which is compatible. At least <strong>gcc 4.8.2</strong> on Linux and VS 2013 on Windows.</p>
+<p>As <strong>C++11</strong> is used in MonaServer you need to install a compiler which is compatible. At least <strong>gcc 4.8.2</strong> on Linux/FreeBSD/OS-X and VS 2013 on Windows.</p>
 </div>
 <div class="section" id="luajit-installation">
 <h3><a class="toc-backref" href="#id6">LuaJIT installation</a><a class="headerlink" href="#luajit-installation" title="Permalink to this headline">¶</a></h3>
@@ -242,13 +242,16 @@ It searches external libraries in <em>External/lib</em> folder and external incl
 So you must put <a class="reference external" href="http://www.openssl.org/">OpenSSL</a> and <a class="reference external" href="http://luajit.org/">LuaJIT</a> headers and libraries in these folders.
 You can find <a class="reference external" href="http://www.openssl.org/">OpenSSL</a> binaries for windows on <a class="reference external" href="http://www.slproweb.com/products/Win32OpenSSL.html">Win32OpenSSL</a>.</p>
 </div>
-<div class="section" id="unix-linux-osx-build">
-<h3><a class="toc-backref" href="#id8">Unix (Linux/OSX) Build</a><a class="headerlink" href="#unix-linux-osx-build" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="unix-linux-os-x-build">
+<h3><a class="toc-backref" href="#id8">Unix (Linux/OS-X) Build</a><a class="headerlink" href="#unix-linux-os-x-build" title="Permalink to this headline">¶</a></h3>
 <p>First follow the <a class="reference internal" href="#luajit-installation">LuaJIT installation</a> steps.</p>
 <p>If your Unix system includes a package manager you can quickly install <a class="reference external" href="http://www.openssl.org/">OpenSSL</a>. The package is usually named <em>libssl-dev</em> (or <em>openssl-devel</em>).</p>
 <div class="admonition warning">
 <p class="first admonition-title">Warning</p>
-<p class="last">You need to use the <em>-dev</em> (or <em>-devel</em>) version to get the header files required during Mona compilation.</p>
+<ul class="last simple">
+<li>You need to use the <em>-dev</em> (or <em>-devel</em>) version to get the header files required during Mona compilation,</li>
+<li>Don&#8217;t use <strong>clang/llvm</strong> on <strong>OS-X</strong>, use rather <strong>gcc</strong>.</li>
+</ul>
 </div>
 <p>To build Mona:</p>
 <div class="highlight-sh"><div class="highlight"><pre><span class="nv">$ </span>make
@@ -294,7 +297,7 @@ reboot
 </div>
 <ul class="simple">
 <li>Follow the <a class="reference internal" href="#luajit-installation">LuaJIT installation</a> steps</li>
-<li>And then run <a class="reference internal" href="#unix-linux-osx-build">Unix (Linux/OSX) Build</a> steps</li>
+<li>And then run <a class="reference internal" href="#unix-linux-os-x-build">Unix (Linux/OS-X) Build</a> steps</li>
 </ul>
 </div>
 </div>

@@ -850,7 +850,7 @@ Otherwise you can cutomize this message in raising one error in this context.</p
 <p>Call on new <a class="reference internal" href="#client">Client</a> subscription. <em>client</em> is the client which starts the stream subscription, and <em>listener</em> is the <a class="reference internal" href="#listener">Listener</a> object.</p>
 <p>If you return <em>false</em> value on this event, it will send a <em>NetStream.Play.Failed</em> status event with as <em>info.description</em> field a <em>&#8220;Not authorized to play [name]&#8221;</em> message.
 Otherwise you can cutomize this message in raising one error in this context.</p>
-<div class="highlight-lua"><div class="highlight"><pre><span class="k">function</span> <span class="nf">onSubscribe</span><span class="p">(</span><span class="n">client</span><span class="p">,</span><span class="n">listener</span><span class="p">)</span>
+<div class="highlight-lua"><div class="highlight"><pre><span class="k">function</span> <span class="nf">client</span><span class="p">:</span><span class="n">onSubscribe</span><span class="p">(</span><span class="n">listener</span><span class="p">)</span>
   <span class="k">if</span> <span class="ow">not</span> <span class="n">client</span><span class="p">.</span><span class="n">right</span> <span class="k">then</span>
     <span class="nb">error</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">no rights to play it&quot;</span><span class="p">)</span>
   <span class="k">end</span>

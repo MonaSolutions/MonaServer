@@ -60,7 +60,7 @@ To get more informations please ask us on the `MonaServer forum`_ or send a mail
 |                         | without a NetGroup, allows **synchronous recording!**             | - **P2P :** Netgroup                            |
 |                         |                                                                   |                                                 |
 |                         | **Note :** asynchronous recording is a feature in the roadmap, if | - **Recording :** in a lua synchronous way      |
-|                         | you need it please contact us.                                    |                                                 |
+|                         | you need it please :doc:`contact us <contacts>`!                  |                                                 |
 +-------------------------+-------------------------------------------------------------------+-------------------------------------------------+
 |                         | VideoPlayer_ :                                                    |                                                 |
 |                         |                                                                   |                                                 |
