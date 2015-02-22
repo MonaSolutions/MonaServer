@@ -136,7 +136,7 @@ You need to install a distribution where **gcc 4.8.2** is available. For now we 
     reboot
 
 - Follow the `LuaJIT installation`_ steps
-- And then run `Unix (Linux/OSX) Build`_ steps
+- And then run `Unix (Linux/OS-X) Build`_ steps
 
 .. _ref-configurations:
 
