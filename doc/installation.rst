@@ -31,7 +31,7 @@ The Mona source code is cross-platform. Supported OS are :
 - Windows (minimum XP)
 - All Linux OS
 - FreeBSD
-- MACOS X
+- OS-X
 
 If you need to target a specific platform or if you encouter problems during the build please ask us on the forum_.
 
@@ -44,7 +44,7 @@ Mona has the following dependencies :
 
 .. note:: LuaJIT_ is an alternative to the official LUA interpreter. It works faster than LUA essentially because it compiles the LUA code to machine code during execution (see `LuaJIT performance <http://luajit.org/performance_x86.html>`_ about performance comparison).
 
-As **C++11** is used in MonaServer you need to install a compiler which is compatible. At least **gcc 4.8.2** on Linux and VS 2013 on Windows.
+As **C++11** is used in MonaServer you need to install a compiler which is compatible. At least **gcc 4.8.2** on Linux/FreeBSD/OS-X and VS 2013 on Windows.
 
 LuaJIT installation
 ===================================
@@ -72,14 +72,17 @@ It searches external libraries in *External/lib* folder and external includes in
 So you must put OpenSSL_ and LuaJIT_ headers and libraries in these folders.
 You can find OpenSSL_ binaries for windows on Win32OpenSSL_.
 
-Unix (Linux/OSX) Build
+Unix (Linux/OS-X) Build
 ===================================
 
 First follow the `LuaJIT installation`_ steps.
 
 If your Unix system includes a package manager you can quickly install OpenSSL_. The package is usually named *libssl-dev* (or *openssl-devel*).
 
-.. warning:: You need to use the *-dev* (or *-devel*) version to get the header files required during Mona compilation.
+.. warning::
+    
+    - You need to use the *-dev* (or *-devel*) version to get the header files required during Mona compilation,
+    - Don't use **clang/llvm** on **OS-X**, use rather **gcc**.
 
 To build Mona:
 

@@ -737,7 +737,7 @@ Otherwise you can cutomize this message in raising one error in this context.
 
 .. code-block:: lua
 
-  function onSubscribe(client,listener)
+  function client:onSubscribe(listener)
     if not client.right then
       error("no rights to play it")
     end
