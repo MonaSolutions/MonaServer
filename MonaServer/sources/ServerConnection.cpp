@@ -130,7 +130,7 @@ void ServerConnection::send(const shared_ptr<ServerMessage>& pMessage) {
 
 	pMessage->_shift -= (handler.empty() ? Util::Get7BitValueSize(handlerRef) : handler.size());
 
-	BinaryWriter writer(pMessage->data(),pMessage->size());
+	BinaryWriter writer((UInt8*)pMessage->data(),pMessage->size());
 
 	writer.write32(pMessage->size()-4);
 	writer.write8(handler.size()).write(handler);

@@ -164,7 +164,7 @@ bool HTTPWriter::writeMedia(MediaType type,UInt32 time,PacketReader& packet,cons
 				ex.set(Exception::APPLICATION, "HTTP streaming without request related");
 			else if (_pRequest->contentSubType.compare(0, 5, "x-flv")==0)
 				_pMedia.reset(new FLV());
-			else if(_pRequest->contentSubType.compare(0,4,"mpeg")==0)
+			else if(_pRequest->contentSubType.compare(0,4,"mp2t")==0)
 				_pMedia.reset(new MPEGTS());
 			else
 				ex.set(Exception::APPLICATION, "HTTP streaming for a ",_pRequest->contentSubType," unsupported");
