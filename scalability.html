@@ -131,7 +131,7 @@
 <h1><a class="toc-backref" href="#id1">Scalability and load-balancing</a><a class="headerlink" href="#scalability-and-load-balancing" title="Permalink to this headline">¶</a></h1>
 <p>RTMFP (Real Time Media Flow Protocol) uses a server end-point to negotiate the P2P connection between clients. All media is sent directly between clients without routing it through the server, which provides extremely cost effective scalable deployments. While the media is transmitted between the clients, one server instance can only negotiate a maximum number of clients before the load becomes too heavy due to CPU/Memory limitations.</p>
 <p>To resolve this issue, a full framework is included in MonaServer to enable communicatication between multiple MonaServer instances. The framework detects server connections and disconnections, manages exchanges of data between servers, manages load-balacing by redirecting clients, and has features to synchronise client information for the rendez-vous service and NetGroup RTMFP options. All communication between servers is done in a raw TCP way.</p>
-<p>The main idea is simple: by default, <strong>each instance is an independent server and shares nothing with others, YOU decide what are the resources are to be shared</strong> between all the server instances.</p>
+<p>The main idea is simple: by default, <strong>each instance is an independent server and shares nothing with others, YOU decide what are the resources to be shared</strong> between all the server instances.</p>
 <p>This page intends to describe every features of this framework illustrated with some code samples and context usage. Of course, the <a class="reference internal" href="api.html"><em>API</em></a> page lists all these feature but without code samples or any utilization context.</p>
 <p>Finally some piece of script code illustrates how to use it, to know how to create an application server see <a class="reference internal" href="serverapp.html"><em>Server Application</em></a> page.</p>
 <div class="contents topic" id="table-of-contents">
@@ -383,8 +383,8 @@ An other possibility is to return many server addresses to benefit of parallel c
 </pre></div>
 </div>
 <p>Indeed, the client will receive multiple server addresses, and in this case, RTMFP starts multiple connection attempt in parallel, and keep only the faster to answer. It&#8217;s an other way of load-balacing system: the more faster wins.</p>
-<p>About the P2P rendezvous service of Mona, in a multiple servers way, if the peerA connected to MonaServerA requests a connection to the peerB connected to MonaServerB, of course MonaServerA will be unable to return information about peerB. We have to use the <a class="reference internal" href="api.html#ref-onrendezvousunknown"><em>onRendezVousUnknown(peerId)</em></a> event:</p>
-<div class="highlight-lua"><div class="highlight"><pre><span class="k">function</span> <span class="nf">onRendezVousUnknown</span><span class="p">(</span><span class="n">peerId</span><span class="p">)</span>
+<p>About the P2P rendezvous service of Mona, in a multiple servers way, if the peerA connected to MonaServerA requests a connection to the peerB connected to MonaServerB, of course MonaServerA will be unable to return information about peerB. We have to use the <a class="reference internal" href="api.html#ref-onrendezvousunknown"><em>onRendezVousUnknown(protocol, peerId)</em></a> event:</p>
+<div class="highlight-lua"><div class="highlight"><pre><span class="k">function</span> <span class="nf">onRendezVousUnknown</span><span class="p">(</span><span class="n">protocol</span><span class="p">,</span> <span class="n">peerId</span><span class="p">)</span>
   <span class="k">return</span> <span class="n">mona</span><span class="p">.</span><span class="n">servers</span> <span class="c1">-- redirect to all the connected servers</span>
 <span class="k">end</span>
 </pre></div>
@@ -392,24 +392,26 @@ An other possibility is to return many server addresses to benefit of parallel c
 <p>With the above code addition, you can redirect a rendezvous request which fails to other servers.</p>
 <p>But it&#8217;s always missing a solution to synchronize member of groups in <a class="reference external" href="http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/net/NetGroup.html">NetGroup</a> usage case. Indeed, a groupA can exists on serverA and contains peerA, and the same groupA can exists on serverB too and contains peerB. peerB and peerA will never meet them. To solve it, you have to use <em>groups:join</em> method (see <a class="reference internal" href="api.html#ref-groups"><em>Groups</em></a> object description for a complete description of this method).
 The idea is simple: you have to share every group inclusion informations between all servers. The following server application code realizes this sharing job:</p>
-<div class="highlight-lua"><div class="highlight"><pre><span class="k">function</span> <span class="nf">onRendezVousUnknown</span><span class="p">(</span><span class="n">peerId</span><span class="p">)</span>
+<div class="highlight-lua"><div class="highlight"><pre><span class="k">function</span> <span class="nf">onRendezVousUnknown</span><span class="p">(</span><span class="n">protocol</span><span class="p">,</span> <span class="n">peerId</span><span class="p">)</span>
   <span class="k">return</span> <span class="n">mona</span><span class="p">.</span><span class="n">servers</span> <span class="c1">-- redirect to all the connected servers</span>
 <span class="k">end</span>
 
-<span class="k">function</span> <span class="nf">onJoinGroup</span><span class="p">(</span><span class="n">client</span><span class="p">,</span><span class="n">group</span><span class="p">)</span>
-  <span class="c1">-- inform other servers of this joining operation</span>
-  <span class="n">mona</span><span class="p">.</span><span class="n">servers</span><span class="p">:</span><span class="n">broadcast</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">join&quot;</span><span class="p">,</span><span class="n">group</span><span class="p">.</span><span class="n">rawId</span><span class="p">,</span><span class="n">client</span><span class="p">.</span><span class="n">rawId</span><span class="p">)</span>
-<span class="k">end</span>
+<span class="k">function</span> <span class="nf">onConnection</span><span class="p">(</span><span class="n">client</span><span class="p">)</span>
+  <span class="k">function</span> <span class="nf">client</span><span class="p">:</span><span class="n">onJoinGroup</span><span class="p">(</span><span class="n">group</span><span class="p">)</span>
+    <span class="c1">-- inform other servers of this joining operation</span>
+    <span class="n">mona</span><span class="p">.</span><span class="n">servers</span><span class="p">:</span><span class="n">broadcast</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">join&quot;</span><span class="p">,</span><span class="n">group</span><span class="p">.</span><span class="n">rawId</span><span class="p">,</span><span class="n">client</span><span class="p">.</span><span class="n">rawId</span><span class="p">)</span>
+  <span class="k">end</span>
 
-<span class="k">function</span> <span class="nf">onUnjoinGroup</span><span class="p">(</span><span class="n">client</span><span class="p">,</span><span class="n">group</span><span class="p">)</span>
-  <span class="c1">-- inform other servers of this unjoining operation</span>
-  <span class="n">mona</span><span class="p">.</span><span class="n">servers</span><span class="p">:</span><span class="n">broadcast</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">unjoin&quot;</span><span class="p">,</span><span class="n">group</span><span class="p">.</span><span class="n">rawId</span><span class="p">,</span><span class="n">client</span><span class="p">.</span><span class="n">rawId</span><span class="p">)</span>
+  <span class="k">function</span> <span class="nf">client</span><span class="p">:</span><span class="n">onUnjoinGroup</span><span class="p">(</span><span class="n">group</span><span class="p">)</span>
+    <span class="c1">-- inform other servers of this unjoining operation</span>
+    <span class="n">mona</span><span class="p">.</span><span class="n">servers</span><span class="p">:</span><span class="n">broadcast</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">unjoin&quot;</span><span class="p">,</span><span class="n">group</span><span class="p">.</span><span class="n">rawId</span><span class="p">,</span><span class="n">client</span><span class="p">.</span><span class="n">rawId</span><span class="p">)</span>
+  <span class="k">end</span>
 <span class="k">end</span>
 
 <span class="k">function</span> <span class="nf">onServerConnection</span><span class="p">(</span><span class="n">server</span><span class="p">)</span>
   <span class="c1">-- inform this new incoming server of my group/client relations existing</span>
-  <span class="k">for</span> <span class="n">id</span><span class="p">,</span><span class="n">group</span> <span class="k">in</span> <span class="n">mona</span><span class="p">.</span><span class="n">groups</span><span class="p">:</span><span class="nb">pairs</span><span class="p">()</span> <span class="k">do</span>
-    <span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">client</span> <span class="k">in</span> <span class="n">mona</span><span class="p">.</span><span class="n">groups</span><span class="p">:</span><span class="nb">ipairs</span><span class="p">()</span> <span class="k">do</span>
+  <span class="k">for</span> <span class="n">id</span><span class="p">,</span><span class="n">group</span> <span class="k">in</span> <span class="nb">pairs</span><span class="p">(</span><span class="n">mona</span><span class="p">.</span><span class="n">groups</span><span class="p">)</span> <span class="k">do</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">client</span> <span class="k">in</span> <span class="nb">ipairs</span><span class="p">(</span><span class="n">mona</span><span class="p">.</span><span class="n">groups</span><span class="p">)</span> <span class="k">do</span>
       <span class="n">server</span><span class="p">:</span><span class="n">send</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">join&quot;</span><span class="p">,</span><span class="n">group</span><span class="p">.</span><span class="n">rawId</span><span class="p">,</span><span class="n">client</span><span class="p">.</span><span class="n">rawId</span><span class="p">)</span>
     <span class="k">end</span>
   <span class="k">end</span>
@@ -418,12 +420,12 @@ The idea is simple: you have to share every group inclusion informations between
   <span class="c1">-- RPC server functions to receive joining/unjoining operation</span>
   <span class="k">function</span> <span class="nf">server</span><span class="p">:</span><span class="n">join</span><span class="p">(</span><span class="n">groupId</span><span class="p">,</span><span class="n">clientId</span><span class="p">)</span>
     <span class="c1">-- creation of a virtual member for this group</span>
-    <span class="kd">local</span> <span class="n">member</span> <span class="o">=</span> <span class="n">mona</span><span class="p">:</span><span class="n">join</span><span class="p">(</span><span class="n">groupId</span><span class="p">,</span><span class="n">clientId</span><span class="p">)</span>
+    <span class="kd">local</span> <span class="n">member</span> <span class="o">=</span> <span class="n">mona</span><span class="p">:</span><span class="n">joinGroup</span><span class="p">(</span><span class="n">clientId</span><span class="p">,</span><span class="n">groupId</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">member</span> <span class="k">then</span> <span class="k">return</span> <span class="k">end</span> <span class="c1">-- join operation has failed</span>
     <span class="c1">-- We have to attach this member object to its server</span>
     <span class="c1">-- to avoid its destruction by the LUA garbage collector</span>
     <span class="kd">local</span> <span class="n">group</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">groups</span><span class="p">[</span><span class="n">groupId</span><span class="p">]</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">group</span> <span class="k">then</span> <span class="n">self</span><span class="p">.</span><span class="n">groups</span><span class="p">[</span><span class="n">groupId</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="n">size</span><span class="o">=</span><span class="mi">0</span><span class="p">}</span> <span class="k">end</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">group</span> <span class="k">then</span> <span class="n">group</span> <span class="o">=</span> <span class="p">{</span><span class="n">size</span><span class="o">=</span><span class="mi">0</span><span class="p">};</span> <span class="n">self</span><span class="p">.</span><span class="n">groups</span><span class="p">[</span><span class="n">groupId</span><span class="p">]</span> <span class="o">=</span> <span class="n">group</span> <span class="k">end</span>
     <span class="n">group</span><span class="p">.</span><span class="n">size</span> <span class="o">=</span> <span class="n">group</span><span class="p">.</span><span class="n">size</span> <span class="o">+</span> <span class="mi">1</span>
     <span class="n">group</span><span class="p">[</span><span class="n">clientId</span><span class="p">]</span> <span class="o">=</span> <span class="n">member</span>
   <span class="k">end</span>

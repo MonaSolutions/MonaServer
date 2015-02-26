@@ -454,16 +454,21 @@ Server
 properties
 -----------------
 
-- **address** (read-only), name of the publication
-- **host** (read-only), name of the publication
-- **isTarget** (read-only), name of the publication
+- **address** (read-only), object address of the server.
+- **host** (read-only), hostname of the server.
+- **port** (read-only), port used for the server-to-server connection.
+- **isTarget** (read-only), true if the server is a target of current server.
+- **configs** (read-only), configuration properties of the server (see :ref:`ref-configurations`).
 
 .. note:: *server* object can have other dynamic properties (as Client_ object) which relates properties used during the server connection (see :ref:`ref-configurations`).
 
 methods
 -----------------
 
-*Server* has no hard-coded method by default, and if you add some methods on, you create RPC function available from other server (see :doc:`scalability` page for more details).
+- **send(handler[,parameters])**, call a method of the server.
+- **reject([message])**, disconnect from the server.
+
+You can add some methods into a **Server** object to create RPC functions availables from other servers (see :doc:`scalability` page for more details).
 
 
 Broadcaster
@@ -786,27 +791,27 @@ Call every two seconds, this event is available only in the *root* server applic
 
 .. _ref-onRendezVousUnknown:
 
-onRendezVousUnknown(peerId)
+onRendezVousUnknown(protocol, peerId)
 =====================================
 
 Allows to redirect a client who searchs a peerId that the rendezvous service doesn't find. Usually you will redirect the client to one or multiple other MonaServer (see :doc:`scalability` for more details on multiple servers usage). You can return an address, but also multiple address, or an array of addresses.
 
 .. code-block:: lua
 
-  function onRendezVousUnknown(peerId)
+  function onRendezVousUnknown(protocol, peerId)
     return 192.168.0.2:1935
   end
 
 .. code-block:: lua
 
-  function onRendezVousUnknown(peerId)
+  function onRendezVousUnknown(protocol, peerId)
     return 192.168.0.2:1935,192.168.0.3:1935
   end
 
 .. code-block:: lua
 
   addresses = {192.168.0.2:1936,192.168.0.3:1936}
-  function onRendezVousUnknown(peerId)
+  function onRendezVousUnknown(protocol, peerId)
     return addresses
   end
 
@@ -814,13 +819,13 @@ Then you can return a Server_ object or a Servers_ object:
 
 .. code-block:: lua
   
-  function onRendezVousUnknown(peerId)
+  function onRendezVousUnknown(protocol, peerId)
     return mona.servers[1] -- redirect to the first server connected
   end
 
 .. code-block:: lua
 
-  function onRendezVousUnknown(peerId)
+  function onRendezVousUnknown(protocol, peerId)
     return mona.servers -- redirect to all the connected servers
   end
 
@@ -831,7 +836,7 @@ Then you can return a Server_ object or a Servers_ object:
 onHandshake(address,path,properties,attempts)
 ===============================================
 
-Allows to redirect the client to one other MonaServer (see :doc:`scalability` for more details on multiple servers usage), in returning address(es) of redirection. About the returned value it works exactly same the returned value of `onRendezVousUnknown(peerId)`_ event.
+Allows to redirect the client to one other MonaServer (see :doc:`scalability` for more details on multiple servers usage), in returning address(es) of redirection. About the returned value it works exactly same the returned value of :ref:`ref-onRendezVousUnknown` event.
 It's called on the first packet received from one client (before the creation of its client object associated). First *address* argument is the address of the client, *path* argument indicates the path expression of connection, *properties* argument is a table with the HTTP parameters given in the URL of connection (see dynamic properties of Client_ object description) and *attempts* argument indicates the number of attempts of connection (starts to 1 and is incremented on each attempt).
 
 .. code-block:: as3

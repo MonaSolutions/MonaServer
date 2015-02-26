@@ -6,7 +6,7 @@ RTMFP (Real Time Media Flow Protocol) uses a server end-point to negotiate the P
 
 To resolve this issue, a full framework is included in MonaServer to enable communicatication between multiple MonaServer instances. The framework detects server connections and disconnections, manages exchanges of data between servers, manages load-balacing by redirecting clients, and has features to synchronise client information for the rendez-vous service and NetGroup RTMFP options. All communication between servers is done in a raw TCP way.
 
-The main idea is simple: by default, **each instance is an independent server and shares nothing with others, YOU decide what are the resources are to be shared** between all the server instances.
+The main idea is simple: by default, **each instance is an independent server and shares nothing with others, YOU decide what are the resources to be shared** between all the server instances.
 
 This page intends to describe every features of this framework illustrated with some code samples and context usage. Of course, the :doc:`api` page lists all these feature but without code samples or any utilization context.
 
@@ -286,7 +286,7 @@ About the P2P rendezvous service of Mona, in a multiple servers way, if the peer
 
 .. code-block:: lua
 
-  function onRendezVousUnknown(peerId)
+  function onRendezVousUnknown(protocol, peerId)
     return mona.servers -- redirect to all the connected servers
   end
 
@@ -297,24 +297,26 @@ The idea is simple: you have to share every group inclusion informations between
 
 .. code-block:: lua
 
-  function onRendezVousUnknown(peerId)
+  function onRendezVousUnknown(protocol, peerId)
     return mona.servers -- redirect to all the connected servers
   end
   
-  function onJoinGroup(client,group)
-    -- inform other servers of this joining operation
-    mona.servers:broadcast("join",group.rawId,client.rawId)
-  end
-  
-  function onUnjoinGroup(client,group)
-    -- inform other servers of this unjoining operation
-    mona.servers:broadcast("unjoin",group.rawId,client.rawId)
+  function onConnection(client)
+    function client:onJoinGroup(group)
+      -- inform other servers of this joining operation
+      mona.servers:broadcast("join",group.rawId,client.rawId)
+    end
+    
+    function client:onUnjoinGroup(group)
+      -- inform other servers of this unjoining operation
+      mona.servers:broadcast("unjoin",group.rawId,client.rawId)
+    end
   end
   
   function onServerConnection(server)
     -- inform this new incoming server of my group/client relations existing
-    for id,group in mona.groups:pairs() do
-      for i,client in mona.groups:ipairs() do
+    for id,group in pairs(mona.groups) do
+      for i,client in ipairs(mona.groups) do
         server:send("join",group.rawId,client.rawId)
       end
     end
@@ -323,12 +325,12 @@ The idea is simple: you have to share every group inclusion informations between
     -- RPC server functions to receive joining/unjoining operation
     function server:join(groupId,clientId)
       -- creation of a virtual member for this group
-      local member = mona:join(groupId,clientId)
+      local member = mona:joinGroup(clientId,groupId)
       if not member then return end -- join operation has failed
       -- We have to attach this member object to its server
       -- to avoid its destruction by the LUA garbage collector
       local group = self.groups[groupId]
-      if not group then self.groups[groupId] = {size=0} end
+      if not group then group = {size=0}; self.groups[groupId] = group end
       group.size = group.size + 1
       group[clientId] = member
     end
