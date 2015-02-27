@@ -114,16 +114,22 @@ bool LUAIPAddress::Read(Exception& ex, lua_State *pState, int index, IPAddress& 
 		bool isConst;
 
 		IPAddress* pOther = Script::ToObject<IPAddress>(pState, isConst, index);
-		if (pOther)
-			return address.set(*pOther);
+		if (pOther) {
+			address.set(*pOther);
+			return true;
+		}
 
 		SocketAddress* pAddress = Script::ToObject<SocketAddress>(pState, isConst, index);
-		if (pAddress)
-			return address.set(pAddress->host());
+		if (pAddress) {
+			address.set(pAddress->host());
+			return true;
+		}
 
 		ServerConnection* pServer = Script::ToObject<ServerConnection>(pState, isConst, index);
-		if (pServer)
-			return address.set(pServer->address.host());
+		if (pServer) {
+			address.set(pServer->address.host());
+			return true;
+		}
 	}
 
 	ex.set(Exception::NETADDRESS, "No valid IPAddress available to read");

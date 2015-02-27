@@ -493,6 +493,7 @@ private:
 		return 1;
 	}
 
+
 	template<typename Type>
 	static int Le(lua_State *pState) {
 		SCRIPT_CALLBACK(Type, object)
@@ -533,18 +534,6 @@ private:
 		SCRIPT_CALLBACK_RETURN
 	}
 
-	
-	template<typename LUAType>
-	static int Get(lua_State* pState) {
-		// 1 - table
-		// 2 - index
-		int results(LUAType::Get(pState));
-		if (results == 0 && lua_isstring(pState, 2) && strcmp(lua_tostring(pState, 2), "value") == 0)
-			ToString<LUAType>(pState);
-		return results;
-	}
-
-
 	template<typename LUAType,typename Type>
 	static void CreateObject(lua_State *pState, const Type& object) {
 
@@ -563,7 +552,7 @@ private:
 		lua_setfield(pState,-2,"|type");
 
 		// get
-		lua_pushcfunction(pState,&Script::Get<LUAType>);
+		lua_pushcfunction(pState,&LUAType::Get);
 		lua_setfield(pState,-2,"__index");
 
 		// toString

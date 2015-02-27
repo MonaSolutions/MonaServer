@@ -58,8 +58,7 @@ void Parameters::setIntern(const char* key, const char* value, size_t size) {
 		_bytes += bytes;
 	else
 		_bytes -= bytes;
-	if (bytes)
-		OnChange::raise(key,value, size); // value==NULL means "deletion"
+	OnChange::raise(key,value, size); // value==NULL means "deletion"
 }
 
 

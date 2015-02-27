@@ -53,9 +53,10 @@ bool TCPServer::start(Exception& ex,const SocketAddress& address) {
 			return true;
 		stop();
 	}
+	
 	if (!_socket.bindWithListen(ex, address))
 		return false;
-	_address = address;
+	_socket.address(ex, _address); // not assign address to _address because if address.port()==0 it has choose a random port!
 	return _running=true;
 }
 
