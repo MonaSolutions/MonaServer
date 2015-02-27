@@ -240,7 +240,7 @@ void MonaServer::stopService(Service& service) {
 	// Call all the onServerDisconnection event for every services where service.path is running
 	SCRIPT_BEGIN(_pState)
 		for(ServerConnection* pServer : servers) {
-			SCRIPT_FUNCTION_BEGIN("onServerDisconnection",_pService->reference())
+			SCRIPT_FUNCTION_BEGIN("onServerDisconnection", service.reference())
 				Script::AddObject<LUAServer>(_pState, *pServer);
 				SCRIPT_FUNCTION_CALL
 			SCRIPT_FUNCTION_END
@@ -260,7 +260,7 @@ void MonaServer::onStart() {
 	Script::AddObject<LUAInvoker,Invoker>(_pState,*this);
 	lua_getmetatable(_pState, -1);
 
-	Script::AddObject<LUABroadcaster>(_pState, servers);
+	Script::AddObject<LUABroadcaster,Broadcaster>(_pState, servers);
 	lua_getmetatable(_pState, -1);	
 
 	Script::AddObject<LUABroadcaster>(_pState, servers.initiators);
@@ -422,7 +422,10 @@ void MonaServer::readAddressRedirection(const string& protocol, int& index, set<
 					if (!pServer->getString(String::Format(buffer, protocol, ".publicHost"), buffer) && !pServer->getString("publicHost", buffer))
 						buffer = pServer->address.host().toString();
 
-					EXCEPTION_TO_LOG(address.set(ex, buffer,port),"Address Redirection");
+					bool success(false);
+					EXCEPTION_TO_LOG(success=address.set(ex, buffer,port),"Address Redirection");
+					if (success)
+						addresses.emplace(address);
 				}
 				return;
 			}

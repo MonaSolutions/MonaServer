@@ -87,7 +87,7 @@ bool Peer::exchangeMemberId(Group& group,Peer& peer,Writer* pWriter) {
 }
 
 Group& Peer::joinGroup(const UInt8* id,Writer* pWriter) {
-	// create invoker.groups if need
+	// create invoker.groups if needed
 	Group& group(((Entities<Group>&)_handler.groups).create(id));
 
 	// group._clients and this->_groups insertions,

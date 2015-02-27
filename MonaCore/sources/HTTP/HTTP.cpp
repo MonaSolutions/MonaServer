@@ -117,7 +117,7 @@ HTTP::ContentType HTTP::ExtensionToMIMEType(const string& extension, string& sub
 		return CONTENT_VIDEO;
 	}
 	else if (String::ICompare(extension, "ts") == 0) {
-		subType = "mpeg";
+		subType = "mp2t";
 		return CONTENT_VIDEO;
 	}
 	else if (String::ICompare(extension, "svg") == 0) {
@@ -167,12 +167,12 @@ string& HTTP::FormatContentType(ContentType type, const char* subType, string& v
 		case CONTENT_AUDIO:
 			value.assign("audio/");
 			if (!subType)
-				subType = "mpeg";
+				subType = "mp2t";
 			break;
 		case CONTENT_VIDEO:
 			value.assign("video/");
 			if (!subType)
-				subType = "mpeg";
+				subType = "mp2t";
 			break;
 		case CONTENT_MESSAGE:
 			value.assign("message/");
