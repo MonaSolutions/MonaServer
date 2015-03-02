@@ -408,6 +408,9 @@ Several types are supported for messages received by server or sended to clients
 AMF to LUA conversions
 =========================================
 
+- **Used by :** RTMP, RTMFP and HTTP POST (Mime-Type: application/amf)
+- **Functions :** toAMF/fromAMF/toAMF0 (see :ref:`ref-mona` object for more details)
+
 Primitive conversion types are easy and intuitive (Number, Boolean, String). Except these primitive types, in LUA_ all is table. Concerning AMF complex type conversions, things go as following:
 
 .. code-block:: lua
@@ -513,6 +516,9 @@ For example, *ArrayCollection* is an externalizable type, and is not supported b
 JSON to LUA conversions
 =========================================
 
+- **Used by :** WebSocket and HTTP POST (Mime-Type: application/json)
+- **Functions :** toJSON/fromJSON (see :ref:`ref-mona` object for more details)
+
 As in AMF primitive, conversion types are easy and intuitive (Number, Boolean, String). For the rest, things go as following:
 
 .. code-block:: lua
@@ -536,10 +542,36 @@ As in AMF primitive, conversion types are easy and intuitive (Number, Boolean, S
 
   socket.send("[[10,10,100,100]]");
 
+.. _ref-query-to-lua:
+
+Query String to LUA conversions
+=========================================
+
+- **Used by :** HTTP POST (Mime-Type: application/x-www-form-urlencoded)
+- **Functions :** toQuery/fromQuery (see :ref:`ref-mona` object for more details)
+
+As in AMF primitive, conversion types are easy and intuitive (Number, Boolean, String). For the rest, things go as following:
+
+.. code-block:: lua
+
+  -- LUA table formatted in Object          // Query String
+  {x=10,y=10,width=100,height=100}          x=10&y=10&width=100&height=100
+
+  -- LUA table formatted in Array           // Query String
+  {10,10,100,100}                           10&10&100&100
+
+.. note::
+  
+  - As you can see there is no array type in our Query String format, all values are converted in primitives or in pairs key/value,
+  - In the Query String to LUA conversion each sequence of pairs key/value is converted in a lua Object.
+
 .. _ref-xmlrpc-to-lua:
 
 XML-RPC_ to LUA conversions
 =========================================
+
+- **Used by :** HTTP POST (Mime-Type: application/xml)
+- **Functions :** toXMLRPC/fromXMLRPC (see :ref:`ref-mona` object for more details)
 
 There are a lot of XML format for communication, XML-RPC_ has been choosen for its simplicity and because it fits well with Mona.
 
@@ -579,8 +611,13 @@ There are a lot of XML format for communication, XML-RPC_ has been choosen for i
   - Order can differ from original type because there is no attribute order in lua,
   - Notice that in XML-RPC_ mixed tables don't exist, that's why we must create an array with an object containing associative values.
 
+.. _ref-xml-compatibility:
+
 XML data compatibility (XML parser)
 =========================================
+
+- **Not used in parsers**
+- **Functions :** toXML/fromXML (see :ref:`ref-mona` object for more details)
 
 As mentioned above, Mona traduce XMLRPC calls automatically. For other types of XML data only few LUA_ code lines are needed, using the useful XML parser.
 
