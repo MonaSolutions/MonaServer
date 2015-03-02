@@ -457,7 +457,7 @@ int LUAInvoker::Get(lua_State *pState) {
 			} else if (strcmp(name, "createSocketAddress") == 0) {
  				SCRIPT_WRITE_FUNCTION(LUAInvoker::CreateSocketAddress<false>)
 				SCRIPT_CALLBACK_FIX_INDEX
-			} else if (strcmp(name, "createSocketAddress") == 0) {
+			} else if (strcmp(name, "createSocketAddressWithDNS") == 0) {
  				SCRIPT_WRITE_FUNCTION(LUAInvoker::CreateSocketAddress<true>)
 				SCRIPT_CALLBACK_FIX_INDEX
 			} else if (strcmp(name, "createUDPSocket") == 0) {
