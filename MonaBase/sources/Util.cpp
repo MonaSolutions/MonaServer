@@ -134,12 +134,14 @@ const Parameters& Util::Environment() {
 	lock_guard<mutex> lock(_MutexEnvironment);
 	if (_Environment.count() > 0)
 		return _Environment;
-	char *name = *environ;
-	for (UInt32 i = 0; name = *(environ + i); ++i) {
-		const char* value = strchr(name, '=');
-		if (value)
-			(char&)*(value++) = 0;
-		_Environment.setString(name, value);
+	const char* line(*environ);
+	for (UInt32 i = 0; line = *(environ + i); ++i) {
+		const char* value = strchr(line, '=');
+		if (value) {
+			string name(line,(value++)-line);
+			_Environment.setString(name, value);
+		} else
+			_Environment.setString(line, NULL);
 	}
 	return _Environment;
 }

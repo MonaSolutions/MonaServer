@@ -41,15 +41,14 @@ public:
 		WRITE
 	};
 
-	Client() : _data(0) {}
+	Client() : pData(NULL) {}
 
 	const SocketAddress			address;
 	const std::string			protocol;
 	virtual const Parameters&	parameters() const =0;
 
 	 // user data (custom data)
-	double						data() const { return _data; }
-	double						data(double value) { return _data = value; }
+	void*						pData;
 
 	// Alterable in class children Peer
 	
@@ -64,8 +63,7 @@ public:
 
 	virtual Writer&				writer() = 0;
 
-private:
-	double						_data;
+
 };
 
 

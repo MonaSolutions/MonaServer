@@ -40,6 +40,7 @@ public:
 	Iterator begin() const { return _entities.begin(); }
 	Iterator end() const { return _entities.end(); }
 	UInt32   count() const { return _entities.size(); }
+	bool	 empty() const { return count() == 0; }
 
 	EntityType* operator()(const UInt8* id) const {
 		Iterator it = _entities.find(id);

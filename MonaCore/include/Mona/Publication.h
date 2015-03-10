@@ -67,6 +67,7 @@ public:
 	void					clearProperties();
 
 	void					start(Type type);
+	UInt32					lastTime() const { return _lastTime; }
 	bool					running() const { return _running; }
 	void					stop();
 

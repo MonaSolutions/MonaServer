@@ -551,7 +551,10 @@ lua_State* MonaServer::openService(const Service& service, Client& client) {
 	// -1 must be client table
 	if (!_pState || service.reference() == LUA_REFNIL)
 		return NULL;
-	lua_rawgeti(_pState, LUA_REGISTRYINDEX, (int)client.data(service.reference()));
+
+	client.pData = new int(service.reference());
+
+	lua_rawgeti(_pState, LUA_REGISTRYINDEX, *(int*)client.pData);
 
 	Script::Collection(_pState, -1, "clients");
 	lua_getfield(_pState, -3,"id");
@@ -562,11 +565,15 @@ lua_State* MonaServer::openService(const Service& service, Client& client) {
 	return _pState;
 }
 
-lua_State* MonaServer::closeService(const Client& client) {
+lua_State* MonaServer::closeService(const Client& client,int& reference) {
 	// -1 must be client table
-	if (!_pState || client.data() == LUA_REFNIL)
+	if (!client.pData)
 		return NULL;
-	lua_rawgeti(_pState, LUA_REGISTRYINDEX, (int)client.data());
+	reference = *(int*)client.pData;
+	delete client.pData;
+	if (!_pState || reference == LUA_REFNIL)
+		return NULL;
+	lua_rawgeti(_pState, LUA_REGISTRYINDEX, reference);
 	Script::Collection(_pState, -1, "clients");
 	lua_getmetatable(_pState, -3);
 	lua_getfield(_pState, -1, "|id"); // to be sure that id is not overrided
@@ -582,8 +589,9 @@ void MonaServer::onDisconnection(const Client& client) {
 	Script::AddObject<LUAClient>(_pState, client);
 	LUAInvoker::RemoveClient(_pState);
 	
-	SCRIPT_BEGIN(closeService(client))
-		SCRIPT_FUNCTION_BEGIN("onDisconnection",(int)client.data())
+	int reference;
+	SCRIPT_BEGIN(closeService(client,reference))
+		SCRIPT_FUNCTION_BEGIN("onDisconnection",reference)
 			lua_pushvalue(_pState, 1); // client! (see Script::AddObject above)
 			SCRIPT_FUNCTION_CALL
 		SCRIPT_FUNCTION_END

@@ -47,7 +47,7 @@ private:
 
 	lua_State*				openService(const Service& service, Mona::Client& client);
 	lua_State*				loadService(const Mona::Client& client) { return (_pState && client.data() != LUA_REFNIL) ? _pState : NULL; }
-	lua_State*				closeService(const Mona::Client& client);
+	lua_State*				closeService(const Mona::Client& client, int& reference);
 
 	/// DatabaseLoader implementation
 	void					onDataLoading(const std::string& path, const Mona::UInt8* value, Mona::UInt32 size);

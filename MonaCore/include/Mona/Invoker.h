@@ -63,7 +63,7 @@ public:
 	void					clearBannedList() { _bannedList.clear(); }
 	bool					isBanned(const IPAddress& ip) { return _bannedList.find(ip) != _bannedList.end(); }
 
-	virtual const std::string&	rootPath() const = 0;
+	virtual const std::string&	rootPath() const { return String::Empty; }
 
 protected:
 	Invoker(UInt32 socketBufferSize,UInt16 threads);
