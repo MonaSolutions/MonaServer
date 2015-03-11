@@ -14,8 +14,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "UnitTests", "UnitTests\Unit
 		{59BC76A9-32CF-4580-8C32-9F12EA4BA22B} = {59BC76A9-32CF-4580-8C32-9F12EA4BA22B}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "KulaByteServer", "KulaByteServer\KulaByteServer.vcxproj", "{4997D893-6057-434C-A6AE-7A338FCCEAA6}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		debug|Win32 = debug|Win32
@@ -56,14 +54,6 @@ Global
 		{9693B98F-14F3-4F89-930E-0AA7B1EBE8F0}.release|Win32.Build.0 = Release|Win32
 		{9693B98F-14F3-4F89-930E-0AA7B1EBE8F0}.release|x64.ActiveCfg = Release|x64
 		{9693B98F-14F3-4F89-930E-0AA7B1EBE8F0}.release|x64.Build.0 = Release|x64
-		{4997D893-6057-434C-A6AE-7A338FCCEAA6}.debug|Win32.ActiveCfg = debug|Win32
-		{4997D893-6057-434C-A6AE-7A338FCCEAA6}.debug|Win32.Build.0 = debug|Win32
-		{4997D893-6057-434C-A6AE-7A338FCCEAA6}.debug|x64.ActiveCfg = debug|x64
-		{4997D893-6057-434C-A6AE-7A338FCCEAA6}.debug|x64.Build.0 = debug|x64
-		{4997D893-6057-434C-A6AE-7A338FCCEAA6}.release|Win32.ActiveCfg = release|Win32
-		{4997D893-6057-434C-A6AE-7A338FCCEAA6}.release|Win32.Build.0 = release|Win32
-		{4997D893-6057-434C-A6AE-7A338FCCEAA6}.release|x64.ActiveCfg = release|x64
-		{4997D893-6057-434C-A6AE-7A338FCCEAA6}.release|x64.Build.0 = release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
