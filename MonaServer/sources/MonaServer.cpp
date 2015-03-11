@@ -404,29 +404,22 @@ void MonaServer::readAddressRedirection(const string& protocol, int& index, set<
 				return;
 			}
 		} else if (lua_istable(_pState, index)) {
-			bool isConst;
+			bool isConst, success;
 			Broadcaster* pBroadcaster = Script::ToObject<Broadcaster>(_pState, isConst,index);
 			if (pBroadcaster) {
-				string buffer;
 				for (ServerConnection* pServer : *pBroadcaster) {
-					UInt16 port(0);
-					if (!pServer->getNumber(String::Format(buffer, protocol, ".port"), port)) {
-						SCRIPT_ERROR("Impossible to determine ", protocol, " port of ", pServer->address.toString(), " server");
-						continue;
-					}
-					if (port == 0) {
-						SCRIPT_WARN("Server ",pServer->address.toString()," has ",protocol," disabled");
-						continue;
-					}
-
-					if (!pServer->getString(String::Format(buffer, protocol, ".publicHost"), buffer) && !pServer->getString("publicHost", buffer))
-						buffer = pServer->address.host().toString();
-
-					bool success(false);
-					EXCEPTION_TO_LOG(success=address.set(ex, buffer,port),"Address Redirection");
-					if (success)
+					
+					EXCEPTION_TO_LOG(success=pServer->addressFromProtocol(ex, protocol, address), "Address Redirection")
+					if(success)
 						addresses.emplace(address);
 				}
+				return;
+			} 
+			ServerConnection* pServer = Script::ToObject<ServerConnection>(_pState, isConst, index);
+			if (pServer) {
+				EXCEPTION_TO_LOG(success=pServer->addressFromProtocol(ex, protocol, address), "Address Redirection")
+				if(success)
+					addresses.emplace(address);
 				return;
 			}
 		}

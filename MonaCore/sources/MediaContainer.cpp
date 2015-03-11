@@ -52,7 +52,7 @@ void FLV::write(BinaryWriter& writer,UInt8 track,UInt32 time,const UInt8* data,U
 	writer.write24(time);
 	// unknown 4 bytes set to 0
 	writer.write32(0);
-	/// playload
+	/// payload
 	writer.write(data, size);
 	/// footer
 	writer.write32(11+size);
