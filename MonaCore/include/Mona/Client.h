@@ -48,7 +48,7 @@ public:
 	virtual const Parameters&	parameters() const =0;
 
 	 // user data (custom data)
-	void*						pData;
+	mutable void*				pData;
 
 	// Alterable in class children Peer
 	

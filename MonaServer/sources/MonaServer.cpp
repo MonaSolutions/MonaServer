@@ -571,6 +571,7 @@ lua_State* MonaServer::closeService(const Client& client,int& reference) {
 		return NULL;
 	reference = *(int*)client.pData;
 	delete client.pData;
+	client.pData = NULL;
 	if (!_pState || reference == LUA_REFNIL)
 		return NULL;
 	lua_rawgeti(_pState, LUA_REGISTRYINDEX, reference);
