@@ -24,12 +24,11 @@ This file is a part of Mona.
 #include "Mona/HTTP/HTTPWriter.h"
 #include "Mona/HTTP/HTTPPacket.h"
 #include "Mona/HTTP/HTTPDecoder.h"
-#include "Mona/QueryReader.h"
-
 
 namespace Mona {
 
 class HTTPPacketReader;
+class QueryReader;
 
 class HTTPSession :  public WSSession {
 public:

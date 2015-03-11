@@ -74,6 +74,8 @@ public:
 	void			send(const std::shared_ptr<ServerMessage>& pMessage);
 	void			sendHello(const Mona::Parameters& parameters);
 	void			reject(const char* error);
+	
+	bool			addressFromProtocol(Mona::Exception& ex, const std::string& protocol, Mona::SocketAddress& socketAddress);
 
 private:
 

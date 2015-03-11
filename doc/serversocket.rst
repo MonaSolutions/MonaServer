@@ -35,7 +35,7 @@ Here's a complete sample to understand its usage:
   end
 
   local err = socket:connect("localhost",1234)
-  if err then ERROR("Unable to connect to localahost:1234") end
+  if err then ERROR("Unable to connect to localhost:1234") end
   ...
   if socket.connected then -- useless if already disconnected
     socket:disconnect()
