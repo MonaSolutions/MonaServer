@@ -27,8 +27,8 @@ namespace Mona {
 
 class RTMProtocol : public TCProtocol, public virtual Object {
 public:
-	RTMProtocol(const char* name, Invoker& invoker, Sessions& sessions) : TCProtocol(name, invoker, sessions) {
-		onConnection = [this](Exception& ex,const SocketAddress& address,SocketFile& file) {
+	RTMProtocol(const char* name, Invoker& invoker, Sessions& sessions) : TCProtocol(name, invoker, sessions),
+		onConnection([this](Exception& ex,const SocketAddress& address,SocketFile& file) {
 			this->sessions.create<RTMPSession>(address,file,*this,this->invoker); // Create session
 		}) {
 
