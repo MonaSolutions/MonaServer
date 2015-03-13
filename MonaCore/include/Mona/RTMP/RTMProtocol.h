@@ -30,7 +30,10 @@ public:
 	RTMProtocol(const char* name, Invoker& invoker, Sessions& sessions) : TCProtocol(name, invoker, sessions) {
 		onConnection = [this](Exception& ex,const SocketAddress& address,SocketFile& file) {
 			this->sessions.create<RTMPSession>(address,file,*this,this->invoker); // Create session
-		};
+		}) {
+
+		setNumber("timeout", 120); // 120 seconds
+
 		OnConnection::subscribe(onConnection);
 	}
 	~RTMProtocol() { OnConnection::unsubscribe(onConnection); }

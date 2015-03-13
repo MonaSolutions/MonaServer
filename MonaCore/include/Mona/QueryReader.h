@@ -31,7 +31,7 @@ public:
 
 	QueryReader(PacketReader& packet) :  DataReader(packet),_type(END) {}
 
-	void		reset() { packet.reset(); _type = END; }
+	void		reset() { DataReader::reset(); _type = END; }
 
 private:
 	enum {

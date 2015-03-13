@@ -25,10 +25,11 @@ This file is a part of Mona.
 
 namespace Mona {
 
+class TCPClient;
 namespace Events {
 	// Can be called by a separated thread!
 	struct OnData : Event<UInt32(PoolBuffer&)> {};
-	struct OnDisconnection : Event<void(const SocketAddress&)> {};
+	struct OnDisconnection : Event<void(TCPClient&,const SocketAddress&)> {};
 };
 
 class TCPClient : public virtual Object,

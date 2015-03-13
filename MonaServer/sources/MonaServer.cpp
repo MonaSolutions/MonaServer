@@ -545,9 +545,9 @@ lua_State* MonaServer::openService(const Service& service, Client& client) {
 	if (!_pState || service.reference() == LUA_REFNIL)
 		return NULL;
 
-	client.pData = new int(service.reference());
+	;
 
-	lua_rawgeti(_pState, LUA_REGISTRYINDEX, *(int*)client.pData);
+	lua_rawgeti(_pState, LUA_REGISTRYINDEX, *client.setCustomData<int>(new int(service.reference())));
 
 	Script::Collection(_pState, -1, "clients");
 	lua_getfield(_pState, -3,"id");
@@ -560,11 +560,11 @@ lua_State* MonaServer::openService(const Service& service, Client& client) {
 
 lua_State* MonaServer::closeService(const Client& client,int& reference) {
 	// -1 must be client table
-	if (!client.pData)
+	if (!client.hasCustomData())
 		return NULL;
-	reference = *(int*)client.pData;
-	delete client.pData;
-	client.pData = NULL;
+	reference = *client.getCustomData<int>();
+	delete client.getCustomData<int>();
+	client.setCustomData<int>(NULL);
 	if (!_pState || reference == LUA_REFNIL)
 		return NULL;
 	lua_rawgeti(_pState, LUA_REGISTRYINDEX, reference);

@@ -77,10 +77,8 @@ void Service::setReference(int reference) {
 			bool isConst;
 			// uses 'key' (at index -2) and 'value' (at index -1)
 			Client* pClient = Script::ToObject<Client>(_pState, isConst);
-			if (pClient && pClient->pData) {
-				delete pClient->pData;
-				pClient->pData = NULL;
-			}
+			if (pClient && pClient->hasCustomData())
+				*pClient->getCustomData<int>() = LUA_REFNIL;
 			lua_pop(_pState, 2);
 		}
 		lua_pop(_pState, 2);

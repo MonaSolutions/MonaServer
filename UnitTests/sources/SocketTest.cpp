@@ -59,7 +59,7 @@ public:
 				FATAL_ERROR("TCPEchoClient, ", ex.error())
 		};
 
-		onDisconnection = [this](const SocketAddress& peerAddress){
+		onDisconnection = [this](TCPClient& client,const SocketAddress& peerAddress){
 			CHECK(!connected())
 			_signal.set();
 		};
@@ -236,7 +236,7 @@ public:
 		onError = [this](const Exception& ex) {
 			FATAL_ERROR("Client, ",ex.error());
 		};
-		onDisconnection = [this](const SocketAddress& peerAddress){
+		onDisconnection = [this](TCPClient& client, const SocketAddress& peerAddress){
 			CHECK(!_client.connected());
 		};
 		_client.OnError::subscribe(onError);
