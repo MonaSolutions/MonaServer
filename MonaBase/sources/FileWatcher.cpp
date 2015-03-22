@@ -27,12 +27,12 @@ using namespace std;
 bool FileWatcher::watchFile() {
 	filePath.update();
 	if (filePath.lastModified() != _lastModified) { // if path doesn't exist filePath.lastModified()==0
-		if (_lastModified > 0) {
+		if (_lastModified) {
 			_exists = false;
 			clearFile();
 		}
 		_lastModified.update(filePath.lastModified());
-		if (filePath.lastModified() > 0) {
+		if (filePath.lastModified()) {
 			_exists = true;
 			loadFile();
 		}

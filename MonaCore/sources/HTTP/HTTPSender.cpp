@@ -84,7 +84,7 @@ bool HTTPSender::run(Exception& ex) {
 				} else
 					writeError(404, "The requested URL ",_appPath, '/',_file.name() , " was not found on this server");
 			}
-		} else if (_ifModifiedSince >= _file.lastModified())
+		} else if (_ifModifiedSince && _ifModifiedSince >= _file.lastModified())
 			write("304 Not Modified", HTTP::CONTENT_ABSENT);
 		else if (_file.isFolder()) {
 			/// Folder

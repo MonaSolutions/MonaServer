@@ -41,23 +41,24 @@ public:
 	static const char* SORTABLE_FORMAT;		/// 2005-01-01 12:00:00
 
 
-	enum {
+	enum Type {
 		GMT = 0x7FFFFFFF, /// Special value for offset (Int32 minimum)
 		LOCAL = 0x80000000 /// Special value for offset(Int32 maximum)
 	};
 
 	static bool  IsLeapYear(Int32 year) { return (year % 400 == 0) || (!(year & 3) && year % 100); }
 
-	// build a NOW date
-	explicit Date(Int32 offset=LOCAL) : _isDST(false),_year(0), _month(0), _day(0), _weekDay(7),_hour(0), _minute(0), _second(0), _millisecond(0), _changed(true), _offset(offset),_isLocal(true), Time(0) {}
+	// build a NOW date, not initialized (is null)
+	// /!\ Keep 'Type' to avoid confusion with "build from time" constructor, if a explicit Int32 offset is to set, use Date::setOffset or "build from time" contructor
+	explicit Date(Type offset=LOCAL) : _isDST(false),_year(0), _month(0), _day(0), _weekDay(7),_hour(0), _minute(0), _second(0), _millisecond(0), _changed(false), _offset(offset),_isLocal(true) {}
 	
 	// build from time
-	explicit Date(Int64 time,Int32 offset=LOCAL) : _isDST(false),_year(0), _month(0), _day(0),  _weekDay(7),_hour(0), _minute(0), _second(0), _millisecond(0), _changed(true), _offset(0),_isLocal(true), Time(0) {
-		update(time, offset);
-	}
+	explicit Date(Int64 time,Int32 offset=LOCAL) : _isDST(false),_year(0), _month(0), _day(0),  _weekDay(7),_hour(0), _minute(0), _second(0), _millisecond(0), _changed(false), _offset(0),_isLocal(true), Time(time) {}
 
 	// build from other  date
-	explicit Date(const Date& date) : Object(), _isDST(date._isDST),_year(date._year), _month(date._month), _day(date._day),  _weekDay(date._weekDay),_hour(date._hour), _minute(date._minute), _second(date._second), _millisecond(date._millisecond), _changed(date._changed), _offset(date._offset),_isLocal(date._isLocal), Time(date._changed ? 0 : date.time()) {}
+	explicit Date(const Date& date) : Object(), _isDST(date._isDST),_year(date._year), _month(date._month), _day(date._day),  _weekDay(date._weekDay),_hour(date._hour), _minute(date._minute), _second(date._second), _millisecond(date._millisecond), _changed(date._changed), _offset(date._offset),_isLocal(date._isLocal), Time(0) {
+		Time::update((Time&)date);
+	}
 	
 	// build from date
 	explicit Date(Int32 year, UInt8 month, UInt8 day, Int32 offset=LOCAL) : _isDST(false),_year(0), _month(0), _day(0), _weekDay(7),_hour(0), _minute(0), _second(0), _millisecond(0), _changed(true), _offset(0),_isLocal(true), Time(0) {
@@ -76,7 +77,8 @@ public:
 
 	 // now
 	Date& update() { return update(Time::Now()); }
-	Date& update(Int32 offset) { return update(Time::Now(),offset); }
+	// /!\ Keep 'Type' to avoid confusion with 'update(Int64 time)'
+	Date& update(Type offset) { return update(Time::Now(),offset); }
 
 	// from other date
 	Date& update(const Date& date);
@@ -111,20 +113,20 @@ public:
 
 	/// GETTERS
 	// date
-	Int32	year() const			{ if (_day == 0) ((Date&)*this).update(_offset); return _year; }
-	UInt8	month() const			{ if (_day == 0) ((Date&)*this).update(_offset); return _month; }
-	UInt8	day() const				{ if (_day == 0) ((Date&)*this).update(_offset); return _day; }
+	Int32	year() const			{ if (_day == 0) init(); return _year; }
+	UInt8	month() const			{ if (_day == 0) init(); return _month; }
+	UInt8	day() const				{ if (_day == 0) init(); return _day; }
 	UInt8	weekDay() const;
 	UInt16	yearDay() const;
 	// clock
-	UInt32  clock() const			{ if (_day == 0) ((Date&)*this).update(_offset); return _hour*3600000L + _minute*60000L + _second*1000L + _millisecond; }
-	UInt8	hour() const			{ if (_day == 0) ((Date&)*this).update(_offset); return _hour; }
-	UInt8	minute() const			{ if (_day == 0) ((Date&)*this).update(_offset); return _minute; }
-	UInt8	second() const			{ if (_day == 0) ((Date&)*this).update(_offset); return _second; }
-	UInt16	millisecond() const		{ if (_day == 0) ((Date&)*this).update(_offset); return _millisecond; }
+	UInt32  clock() const			{ if (_day == 0) init(); return _hour*3600000L + _minute*60000L + _second*1000L + _millisecond; }
+	UInt8	hour() const			{ if (_day == 0) init(); return _hour; }
+	UInt8	minute() const			{ if (_day == 0) init(); return _minute; }
+	UInt8	second() const			{ if (_day == 0) init(); return _second; }
+	UInt16	millisecond() const		{ if (_day == 0) init(); return _millisecond; }
 	// offset
 	Int32	offset() const;
-	bool	isGMT() const			{ if (_day == 0) ((Date&)*this).update(_offset); return offset()==0 && !_isLocal; }
+	bool	isGMT() const			{ if (_day == 0) init(); return offset()==0 && !_isLocal; }
 	bool	isDST() const			{ offset(); /* <= allow to refresh _isDST */ return _isDST; }
 
 	/// SETTERS
@@ -142,20 +144,20 @@ public:
 	void	setOffset(Int32 offset);
 
 private:
-
+	void  init() const { _day = 1; ((Date*)this)->update(Time::time(), _offset); }
 	void  computeWeekDay(Int64 days);
 	bool  parseAuto(Exception& ex, const char* data, std::size_t count);
 	void  formatTimezone(std::string& value, bool bISO = true) const;
 
 	
-	Int32	_year;
-	UInt8	_month; // 1 to 12
-	UInt8	_day; // 1 to 31
+	Int32			_year;
+	UInt8			_month; // 1 to 12
+	mutable UInt8	_day; // 1 to 31
 	mutable UInt8	_weekDay; // 0 to 6
-	UInt8	_hour; // 0 to 23
-	UInt8	_minute;  // 0 to 59
-	UInt8	_second;	// 0 to 59
-	UInt16	_millisecond; // 0 to 999
+	UInt8			_hour; // 0 to 23
+	UInt8			_minute;  // 0 to 59
+	UInt8			_second;	// 0 to 59
+	UInt16			_millisecond; // 0 to 999
 	mutable Int32	_offset; // gmt offset
 	mutable bool	_isDST; // means that the offset is a Daylight Saving Time offset
 	mutable bool	_isLocal; // just used when offset is on the special Local value!

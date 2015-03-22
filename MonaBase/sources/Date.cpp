@@ -81,9 +81,12 @@ static Int32 LeapYears(Int32 year) {
 	return result;
 }
 
-
 Date& Date::update(Int64 time,Int32 offset) {
 	Time::update(time);
+	if (_day == 0) {
+		_offset = offset;
+		return *this;
+	}
 
 	_changed = false;
 
@@ -169,13 +172,9 @@ Date& Date::update(Int64 time,Int32 offset) {
 }
 
 Int64 Date::time() const {
-	if (_day == 0) {
-		((Date&)*this).update(_offset);
+	if (!_changed) // if _day==0 then _changed==false!
 		return Time::time();
-	}
-	if (!_changed)
-		return Time::time();
-	
+
 	Int64 time = _day - 1 + LeapYears(_year);
 	bool isLeap(IsLeapYear(_year));
 	if (isLeap && _year > 0)
@@ -204,7 +203,7 @@ Int64 Date::time() const {
 
 Int32 Date::offset() const {
 	if (_day == 0) {
-		((Date&)*this).update(_offset);
+		init();
 		return _offset;
 	}
 
@@ -262,8 +261,7 @@ Date& Date::update(const Date& date) {
 	_offset = date._offset;
 	_isLocal = date._isLocal;
 	_isDST = date._isDST;
-	if (!(_changed = date._changed))
-		Time::update(date.time());
+	Time::update((Time&)date);
 	return *this;
 }
 
@@ -295,7 +293,7 @@ void Date::setClock(UInt8 hour, UInt8 minute, UInt8 second, UInt16 millisecond) 
 
 void Date::setYear(Int32 year) {
 	if (_day == 0)
-		update(_offset);
+		init();
 	if (year == _year)
 		return;
 	_changed = true;
@@ -308,7 +306,7 @@ void Date::setMonth(UInt8 month) {
 	else if (month>12)
 		month = 12;
 	if (_day == 0)
-		update(_offset);
+		init();
 	if (month == _month)
 		return;
 	_changed = true;
@@ -317,7 +315,7 @@ void Date::setMonth(UInt8 month) {
 
 void Date::setDay(UInt8 day) {
 	if (_day == 0)
-		update(_offset);
+		init();
 	if (day == _day)
 		return;
 
@@ -348,7 +346,7 @@ void Date::setDay(UInt8 day) {
 
 void Date::setHour(UInt8 hour) {
 	if (_day == 0)
-		update(_offset);
+		init();
 	if (hour > 59)
 		hour = 59;
 	if (hour == _hour)
@@ -359,7 +357,7 @@ void Date::setHour(UInt8 hour) {
 
 void Date::setMinute(UInt8 minute) {
 	if (_day == 0)
-		update(_offset);
+		init();
 	if (minute>59)
 		minute = 59;
 	if (minute == _minute)
@@ -370,7 +368,7 @@ void Date::setMinute(UInt8 minute) {
 
 void Date::setSecond(UInt8 second) {
 	if (_day == 0)
-		update(_offset);
+		init();
 	if (second>59)
 		second = 59;
 	if (second == _second)
@@ -381,7 +379,7 @@ void Date::setSecond(UInt8 second) {
 
 void Date::setMillisecond(UInt16 millisecond) {
 	if (_day == 0)
-		update(_offset);
+		init();
 	if (millisecond > 999)
 		millisecond = 999;
 	if (millisecond == _millisecond)
@@ -393,7 +391,7 @@ void Date::setMillisecond(UInt16 millisecond) {
 
 UInt8 Date::weekDay() const {
 	if (_day == 0)
-		((Date&)*this).update(_offset); // will assign _weekDay
+		init(); // will assign _weekDay
 	else if (_changed || _weekDay==7)
 		((Date&)*this).computeWeekDay((Int64)floor((time()+offset()) / 86400000.0));
 	return _weekDay;
@@ -402,7 +400,7 @@ UInt8 Date::weekDay() const {
 UInt16 Date::yearDay() const {
 	// 0 to 365
 	if (_day == 0)
-		((Date&)*this).update(_offset);
+		init();
 	return _day+MonthDays[IsLeapYear(_year) ? 1 : 0][_month]-1;
 }
 
@@ -427,7 +425,7 @@ string& Date::toString(const char* format, string& value) const {
 	value.clear();
 
 	if (_day == 0)
-		((Date&)*this).update(_offset);
+		init();
 
 	UInt32 formatSize = strlen(format);
 	UInt32 iFormat(0);
