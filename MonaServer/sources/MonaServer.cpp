@@ -30,6 +30,7 @@ This file is a part of Mona.
 #include "LUAIPAddress.h"
 #include "ScriptWriter.h"
 #include "ScriptReader.h"
+#include "Mona/AMFReader.h"
 
 
 using namespace std;
@@ -94,11 +95,9 @@ MonaServer::MonaServer(TerminateSignal& terminateSignal, const Parameters& confi
 
 
 	onPublicationProperties = [this](const Publication& publication, const Parameters& properties) {
-		UInt32 size;
-		bool clear(publication.propertiesRaw(size)==NULL);
 		SCRIPT_BEGIN(_pState)
 			SCRIPT_MEMBER_FUNCTION_BEGIN(Publication, publication, "onProperties")
-				if (clear) {
+				if (properties.empty()) {
 					Script::DeleteCollection(_pState, -1, "properties");
 					lua_pushnil(_pState);
 				} else {
@@ -404,29 +403,22 @@ void MonaServer::readAddressRedirection(const string& protocol, int& index, set<
 				return;
 			}
 		} else if (lua_istable(_pState, index)) {
-			bool isConst;
+			bool isConst, success;
 			Broadcaster* pBroadcaster = Script::ToObject<Broadcaster>(_pState, isConst,index);
 			if (pBroadcaster) {
-				string buffer;
 				for (ServerConnection* pServer : *pBroadcaster) {
-					UInt16 port(0);
-					if (!pServer->getNumber(String::Format(buffer, protocol, ".port"), port)) {
-						SCRIPT_ERROR("Impossible to determine ", protocol, " port of ", pServer->address.toString(), " server");
-						continue;
-					}
-					if (port == 0) {
-						SCRIPT_WARN("Server ",pServer->address.toString()," has ",protocol," disabled");
-						continue;
-					}
-
-					if (!pServer->getString(String::Format(buffer, protocol, ".publicHost"), buffer) && !pServer->getString("publicHost", buffer))
-						buffer = pServer->address.host().toString();
-
-					bool success(false);
-					EXCEPTION_TO_LOG(success=address.set(ex, buffer,port),"Address Redirection");
-					if (success)
+					
+					EXCEPTION_TO_LOG(success=pServer->addressFromProtocol(ex, protocol, address), "Address Redirection")
+					if(success)
 						addresses.emplace(address);
 				}
+				return;
+			} 
+			ServerConnection* pServer = Script::ToObject<ServerConnection>(_pState, isConst, index);
+			if (pServer) {
+				EXCEPTION_TO_LOG(success=pServer->addressFromProtocol(ex, protocol, address), "Address Redirection")
+				if(success)
+					addresses.emplace(address);
 				return;
 			}
 		}
@@ -551,7 +543,10 @@ lua_State* MonaServer::openService(const Service& service, Client& client) {
 	// -1 must be client table
 	if (!_pState || service.reference() == LUA_REFNIL)
 		return NULL;
-	lua_rawgeti(_pState, LUA_REGISTRYINDEX, (int)client.data(service.reference()));
+
+	;
+
+	lua_rawgeti(_pState, LUA_REGISTRYINDEX, *client.setCustomData<int>(new int(service.reference())));
 
 	Script::Collection(_pState, -1, "clients");
 	lua_getfield(_pState, -3,"id");
@@ -562,11 +557,16 @@ lua_State* MonaServer::openService(const Service& service, Client& client) {
 	return _pState;
 }
 
-lua_State* MonaServer::closeService(const Client& client) {
+lua_State* MonaServer::closeService(const Client& client,int& reference) {
 	// -1 must be client table
-	if (!_pState || client.data() == LUA_REFNIL)
+	if (!client.hasCustomData())
 		return NULL;
-	lua_rawgeti(_pState, LUA_REGISTRYINDEX, (int)client.data());
+	reference = *client.getCustomData<int>();
+	delete client.getCustomData<int>();
+	client.setCustomData<int>(NULL);
+	if (!_pState || reference == LUA_REFNIL)
+		return NULL;
+	lua_rawgeti(_pState, LUA_REGISTRYINDEX, reference);
 	Script::Collection(_pState, -1, "clients");
 	lua_getmetatable(_pState, -3);
 	lua_getfield(_pState, -1, "|id"); // to be sure that id is not overrided
@@ -582,8 +582,9 @@ void MonaServer::onDisconnection(const Client& client) {
 	Script::AddObject<LUAClient>(_pState, client);
 	LUAInvoker::RemoveClient(_pState);
 	
-	SCRIPT_BEGIN(closeService(client))
-		SCRIPT_FUNCTION_BEGIN("onDisconnection",(int)client.data())
+	int reference;
+	SCRIPT_BEGIN(closeService(client,reference))
+		SCRIPT_FUNCTION_BEGIN("onDisconnection",reference)
 			lua_pushvalue(_pState, 1); // client! (see Script::AddObject above)
 			SCRIPT_FUNCTION_CALL
 		SCRIPT_FUNCTION_END

@@ -28,38 +28,35 @@ using namespace std;
 
 namespace Mona {
 
-
-RTMFPWriter::RTMFPWriter(State state,const string& signature, BandWriter& band, shared_ptr<RTMFPWriter>& pThis) : FlashWriter(state,band.poolBuffers()), id(0), _band(band), _reseted(true), critical(false), _stage(0), _stageAck(0), _boundCount(0), flowId(0), signature(signature), _repeatable(0), _lostCount(0), _ackCount(0) {
+RTMFPWriter::RTMFPWriter(State state,const string& signature, BandWriter& band, shared_ptr<RTMFPWriter>& pThis) : _resetStream(true), FlashWriter(state,band.poolBuffers()), id(0), _band(band), critical(false), _stage(0), _stageAck(0),  flowId(0), signature(signature), _repeatable(0), _lostCount(0), _ackCount(0) {
 	pThis.reset(this);
 	_band.initWriter(pThis);
 	if (signature.empty())
 		open();
 }
 
-RTMFPWriter::RTMFPWriter(State state,const string& signature, BandWriter& band) : FlashWriter(state,band.poolBuffers()), id(0), _band(band), _reseted(true), critical(false), _stage(0), _stageAck(0), _boundCount(0), flowId(0), signature(signature), _repeatable(0), _lostCount(0), _ackCount(0) {
+RTMFPWriter::RTMFPWriter(State state,const string& signature, BandWriter& band) : _resetStream(true), FlashWriter(state,band.poolBuffers()), id(0), _band(band), critical(false), _stage(0), _stageAck(0), flowId(0), signature(signature), _repeatable(0), _lostCount(0), _ackCount(0) {
 	shared_ptr<RTMFPWriter> pThis(this);
 	_band.initWriter(pThis);
 	if (signature.empty())
 		open();
 }
 
-RTMFPWriter::RTMFPWriter(RTMFPWriter& writer) : FlashWriter(writer),_band(writer._band),
-		critical(false),_repeatable(writer._repeatable),_reseted(true),
-		_stage(writer._stage),_stageAck(writer._stageAck),id(writer.id),
-		_ackCount(writer._ackCount),_lostCount(writer._lostCount),
-		_boundCount(0),flowId(0),signature(writer.signature) {
+RTMFPWriter::RTMFPWriter(RTMFPWriter& writer) : _resetStream(true), FlashWriter(writer),_band(writer._band),
+		critical(false),_repeatable(writer._repeatable), _stage(writer._stage),_stageAck(writer._stageAck),id(writer.id),
+		_ackCount(writer._ackCount),_lostCount(writer._lostCount), flowId(0),signature(writer.signature) {
 	reliable = true;
 	close();
 }
 
 RTMFPWriter::~RTMFPWriter() {
 	Writer::close();
-	clear();
+	abort();
 	if(!signature.empty())
 		DEBUG("RTMFPWriter ",id," consumed");
 }
 
-void RTMFPWriter::clear() {
+void RTMFPWriter::abort() {
 	// delete messages
 	RTMFPMessage* pMessage;
 	while(!_messages.empty()) {
@@ -83,11 +80,11 @@ void RTMFPWriter::clear() {
 	}
 }
 
-void RTMFPWriter::abort() {
+void RTMFPWriter::clear() {
 	for (RTMFPMessage* pMessage : _messages)
 		delete pMessage;
 	_messages.clear();
-	FlashWriter::abort();
+	FlashWriter::clear();
 }
 
 void RTMFPWriter::close(Int32 code) {
@@ -564,18 +561,9 @@ void RTMFPWriter::writeRaw(const UInt8* data,UInt32 size) {
 }
 
 bool RTMFPWriter::writeMedia(MediaType type,UInt32 time,PacketReader& packet,const Parameters& properties) {
-	if(type==INIT) {
-		// write bounds
-		AMFWriter& writer = write(AMF::RAW);
-		writer.packet.write16(0x22);
-		DEBUG("Writing ",id," bound ",_boundCount);
-		writer.packet.write32(_boundCount).write32(3); // 3 tracks!
-		_reseted=false;
-		++_boundCount;
-		flush(false);// Flush immediat required for bound message!
-	}
-	bool result = FlashWriter::writeMedia(type,time,packet,properties);
-	return _reseted ? false : result;
+	if (type==INIT)
+		_resetStream = false;
+	return _resetStream ? false : FlashWriter::writeMedia(type,time,packet,properties);
 }
 
 

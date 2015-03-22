@@ -27,7 +27,7 @@ This file is a part of Mona.
 
 /////  Usefull macros and patchs   //////
 
-#define BIN		(UInt8*)
+#define BIN		(Mona::UInt8*)
 #define STR		(char*)
 
 // BEWARE, be sure that DATA[SIZE] exists! (if DATA must be a allocation of >= (SIZE+1))
@@ -266,7 +266,7 @@ public:
 	virtual operator bool() const = 0;
 };
 
-static UInt32 abs(double value) { return (UInt32)std::abs((long long int)value); }
+inline UInt32 abs(double value) { return (UInt32)std::abs((long long int)value); }
 
 ////// ASCII ////////
 
@@ -290,27 +290,27 @@ public:
 	static UInt8 ToLower(char value) { return Is(value, UPPER) ? (value + 32) : value; }
 	static UInt8 ToUpper(char value) { return Is(value, LOWER) ? (value - 32) : value; }
 
-	static bool Is(char value,UInt16 type) {return value&0x80 ? 0 : ((_CharacterTypes[value]&type) != 0);}
+	static bool Is(char value,UInt16 type) {return value&0x80 ? 0 : ((_CharacterTypes[int(value)]&type) != 0);}
 private:
 	static const UInt16 _CharacterTypes[128];
 };
 
 
-static bool isalnum(char value) { return ASCII::Is(value, ASCII::ALPHA | ASCII::DIGIT); }
-static bool isalpha(char value) { return ASCII::Is(value,ASCII::ALPHA); }
-static bool isblank(char value) { return ASCII::Is(value,ASCII::BLANK); }
-static bool iscntrl(char value) { return ASCII::Is(value,ASCII::CONTROL); }
-static bool isdigit(char value) { return ASCII::Is(value,ASCII::DIGIT); }
-static bool isgraph(char value) { return ASCII::Is(value,ASCII::GRAPH); }
-static bool islower(char value) { return ASCII::Is(value,ASCII::LOWER); }
-static bool isprint(char value) { return ASCII::Is(value,ASCII::PRINT); }
-static bool ispunct(char value) { return ASCII::Is(value,ASCII::PUNCT); }
-static bool isspace(char value) { return  ASCII::Is(value,ASCII::SPACE); }
-static bool isupper(char value) { return ASCII::Is(value,ASCII::UPPER); }
-static bool isxdigit(char value) { return ASCII::Is(value,ASCII::HEXDIGIT); }
-static bool isxml(char value) { return ASCII::Is(value,ASCII::XML); }
-static char tolower(char value) { return ASCII::ToLower(value); }
-static char toupper(char value) { return ASCII::ToUpper(value); }
+inline bool isalnum(char value) { return ASCII::Is(value, ASCII::ALPHA | ASCII::DIGIT); }
+inline bool isalpha(char value) { return ASCII::Is(value,ASCII::ALPHA); }
+inline bool isblank(char value) { return ASCII::Is(value,ASCII::BLANK); }
+inline bool iscntrl(char value) { return ASCII::Is(value,ASCII::CONTROL); }
+inline bool isdigit(char value) { return ASCII::Is(value,ASCII::DIGIT); }
+inline bool isgraph(char value) { return ASCII::Is(value,ASCII::GRAPH); }
+inline bool islower(char value) { return ASCII::Is(value,ASCII::LOWER); }
+inline bool isprint(char value) { return ASCII::Is(value,ASCII::PRINT); }
+inline bool ispunct(char value) { return ASCII::Is(value,ASCII::PUNCT); }
+inline bool isspace(char value) { return  ASCII::Is(value,ASCII::SPACE); }
+inline bool isupper(char value) { return ASCII::Is(value,ASCII::UPPER); }
+inline bool isxdigit(char value) { return ASCII::Is(value,ASCII::HEXDIGIT); }
+inline bool isxml(char value) { return ASCII::Is(value,ASCII::XML); }
+inline char tolower(char value) { return ASCII::ToLower(value); }
+inline char toupper(char value) { return ASCII::ToUpper(value); }
 
 const char* strrpbrk(const char* value, const char* markers);
 

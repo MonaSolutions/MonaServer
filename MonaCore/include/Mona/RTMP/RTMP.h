@@ -24,7 +24,7 @@ This file is a part of Mona.
 #include "Mona/AMF.h"
 #include "Mona/PoolBuffer.h"
 #include "Mona/Crypto.h"
-#include "Mona/Exceptions.h"
+#include "Mona/FlashStream.h"
 #include <openssl/rc4.h>
 
 
@@ -32,13 +32,22 @@ namespace Mona {
 
 class RTMPChannel : public virtual Object {
 public:
-	RTMPChannel(const PoolBuffers& poolBuffers): absoluteTime(0),time(0),bodySize(0),type(AMF::EMPTY),streamId(0),pBuffer(poolBuffers) {}
-	UInt32				bodySize;
-	UInt32				time;
-	UInt32				absoluteTime;
-	UInt32				streamId;
-	AMF::ContentType	type;
-	PoolBuffer			pBuffer;
+	RTMPChannel(const PoolBuffers& poolBuffers): absoluteTime(0),time(0),bodySize(0),type(AMF::EMPTY),pBuffer(poolBuffers) {}
+	UInt32							bodySize;
+	UInt32							time;
+	UInt32							absoluteTime;
+	std::shared_ptr<FlashStream>	pStream;
+	AMF::ContentType				type;
+	PoolBuffer						pBuffer;
+
+	void reset(FlashWriter* pWriter) {
+		bodySize = time = absoluteTime = 0;
+		type = AMF::EMPTY;
+		pBuffer.release();
+		if (pStream)
+			pStream->disengage(pWriter);
+		pStream.reset();
+	}
 };
 
 

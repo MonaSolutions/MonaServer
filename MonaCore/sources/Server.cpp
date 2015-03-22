@@ -55,6 +55,8 @@ bool Server::start(Startable::Priority threadPriority) {
 	Exception ex;
 	bool result;
 	EXCEPTION_TO_LOG(result = Startable::start(ex, threadPriority), "Server");
+	if (result)
+		TaskHandler::start();
 	return result;
 }
 
@@ -66,9 +68,6 @@ void Server::run(Exception& exc) {
 #if !defined(_DEBUG)
 	try {
 #endif
-
-		TaskHandler::start();
-
 		Exception exWarn;
 		if (((SocketManager&)sockets).start(exWarn) && ((RelayServer&)relayer).start(exWarn)) {
 			if (exWarn)

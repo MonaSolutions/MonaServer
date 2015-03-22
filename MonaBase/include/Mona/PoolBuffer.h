@@ -27,7 +27,7 @@ namespace Mona {
 
 class PoolBuffer : virtual public NullableObject, public Binary {
 public:
-	PoolBuffer(const PoolBuffers& poolBuffers,UInt32 size=0) : _size(size),poolBuffers(poolBuffers),_pBuffer(NULL) {}
+	PoolBuffer(const PoolBuffers& poolBuffers,UInt32 size=0) : poolBuffers(poolBuffers),_pBuffer(NULL),_size(size) {}
 	virtual ~PoolBuffer() { release(); }
 
 	operator bool() const { return _pBuffer!=NULL;  }

@@ -194,7 +194,7 @@ void Peer::onConnection(Exception& ex, Writer& writer,DataReader& parameters,Dat
 			}
 		}
 		if (!connected) {
-			writer.abort();
+			writer.clear();
 			_pWriter = NULL;
 		} else {
 			OnInitParameters::raise(_parameters);

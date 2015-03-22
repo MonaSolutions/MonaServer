@@ -48,8 +48,6 @@ public:
 
 private:
 
-	void		flush(UInt32 size) { RTMFPSession::flush(0x0b, size); (UInt32&)farId = 0; }
-
 	void		receive(const SocketAddress& address, BinaryReader& packet);
 	UInt8		handshakeHandler(UInt8 id,const SocketAddress& address, BinaryReader& request,BinaryWriter& response);
 

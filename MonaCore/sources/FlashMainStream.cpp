@@ -18,10 +18,7 @@ This file is a part of Mona.
 */
 
 #include "Mona/FlashMainStream.h"
-#include "Mona/Invoker.h"
-#include "Mona/Util.h"
 #include "Mona/ParameterWriter.h"
-#include "Mona/Exceptions.h"
 #include "Mona/Logs.h"
 #include <openssl/evp.h>
 
@@ -31,25 +28,32 @@ using namespace std;
 
 namespace Mona {
 
-
-FlashMainStream::FlashMainStream(Invoker& invoker,Peer& peer) : FlashStream(0,invoker,peer),_pGroup(NULL) {
+FlashMainStream::FlashMainStream(Invoker& invoker,Peer& peer) : FlashStream(0, invoker,peer), _pGroup(NULL) {
 	
 }
 
 FlashMainStream::~FlashMainStream() {
 	if(_pGroup)
 		peer.unjoinGroup(*_pGroup);
-	// delete stream index remaining (which have not had time to send a 'destroyStream' message)
-	for(auto& it : _streams)
-		invoker.destroyFlashStream(it.first);
+	for (auto& it : _streams) {
+		it.second->OnStart::unsubscribe((OnStart&)*this);
+		it.second->OnStop::unsubscribe((OnStop&)*this);
+	}
+}
+
+void FlashMainStream::disengage(FlashWriter* pWriter) {
+	for (auto& it : _streams)
+		it.second->disengage(pWriter);
 }
 
 
-FlashStream* FlashMainStream::stream(UInt32 id) {
-	auto it = _streams.find(id);
-	if (it == _streams.end())
+FlashStream* FlashMainStream::getStream(UInt16 id,shared_ptr<FlashStream>& pStream) {
+	const auto& it = _streams.find(id);
+	if (it == _streams.end()) {
+		pStream.reset();
 		return NULL;
-	return it->second.get();
+	}
+	return (pStream = it->second).get();
 }
 
 void FlashMainStream::messageHandler(const string& name,AMFReader& message,FlashWriter& writer) {
@@ -121,19 +125,35 @@ void FlashMainStream::messageHandler(const string& name,AMFReader& message,Flash
 		response.write32(peer.parameters().getNumber<UInt32>("keepalivePeer")*1000);
 
 	} else if(name == "createStream") {
-		shared_ptr<FlashStream>& pStream = invoker.createFlashStream(peer);
-		_streams.emplace(pStream->id, pStream);
+
+		UInt16 idStream(1);
+		auto it(_streams.begin());
+		for (it; it != _streams.end();++it) {
+			if (it->first > idStream) 
+				break;
+			++idStream;
+		}
+		FlashStream* pStream(new FlashStream(idStream, invoker, peer));
+		_streams.emplace_hint(it, piecewise_construct, forward_as_tuple(idStream), forward_as_tuple(pStream));
+
+		pStream->OnStart::subscribe((OnStart&)*this);
+		pStream->OnStop::subscribe((OnStop&)*this);
+
 		AMFWriter& response(writer.writeMessage());
 		response.amf0 = true;
-		response.writeNumber(pStream->id);
+		response.writeNumber(idStream);
 
 	} else if(name == "deleteStream") {
-		double id;
-		if (message.readNumber(id)) {
-			_streams.erase((UInt32)id);
-			invoker.destroyFlashStream((UInt32)id);
-		} else
-			ERROR("deleteStream message without id on flash stream ",id)
+		double streamId;
+		if (message.readNumber(streamId)) {
+			const auto& it = _streams.find((UInt16)streamId);
+			if (it != _streams.end()) {
+				it->second->OnStart::unsubscribe((OnStart&)*this);
+				it->second->OnStop::unsubscribe((OnStop&)*this);
+				_streams.erase(it);
+			}
+		}else
+			ERROR("deleteStream message without id on flash stream ",streamId)
 	} else {
 		// not close the main flash stream for that!
 		Exception ex;
@@ -171,21 +191,17 @@ void FlashMainStream::rawHandler(UInt8 type,PacketReader& packet,FlashWriter& wr
 
 	// setBufferTime
 	if(flag==0x03) {
-		UInt32 streamId = packet.read32();
+		UInt16 streamId = packet.read32();
 		if(streamId==0) {
 			bufferTime(packet.read32());
 			return;
 		}
-		FlashStream* pStream = stream(streamId);
-		if (!pStream) {
-			ERROR("setBufferTime message for a unknown ",streamId," stream")
+		const auto& it = _streams.find(streamId);
+		if (it==_streams.end()) {
+			ERROR("setBufferTime message for an unknown ",streamId," stream")
 			return;
 		}
-		// To do working the buffertime on receiver side
-		BinaryWriter& raw = writer.writeRaw();
-		raw.write16(0);
-		raw.write32(pStream->id);
-		pStream->bufferTime(packet.read32());
+		it->second->bufferTime(packet.read32());
 		return;
 	}
 
@@ -202,7 +218,7 @@ void FlashMainStream::rawHandler(UInt8 type,PacketReader& packet,FlashWriter& wr
 		return;
 	}
 
-	ERROR("Raw message ",Format<UInt8>("%.2x",type),"/",flag," unknown on stream ",id);	
+	ERROR("Raw message ",Format<UInt8>("%.2x",type),"/",packet.read16()," unknown on main stream");
 }
 
 

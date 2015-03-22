@@ -42,7 +42,7 @@ TCPSession::TCPSession(const SocketAddress& peerAddress, SocketFile& file, Proto
 		return onData(pBuffer);
 	};
 
-	_onDisconnection = [this](const SocketAddress&) { kill(SOCKET_DEATH); };
+	_onDisconnection = [this](TCPClient& client, const SocketAddress&) { kill(SOCKET_DEATH); };
 
 	peer.OnInitParameters::subscribe(onInitParameters);
 	_client.OnError::subscribe(_onError);

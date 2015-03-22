@@ -26,9 +26,9 @@ namespace Mona {
 
 class Buffer : public Binary, virtual public NullableObject {
 public:
-	Buffer() : _offset(0),_capacity(32), _size(0) {_data = _buffer = new UInt8[_capacity]();}
-	Buffer(UInt32 size) : _offset(0),_capacity(size), _size(size) {_data = _buffer = new UInt8[_capacity]();}
-	Buffer(UInt8* buffer,UInt32 size) : _offset(0),_buffer(NULL),_data(buffer),_capacity(size), _size(size) {}
+	Buffer() : _offset(0), _size(0),_capacity(32) {_data = _buffer = new UInt8[_capacity]();}
+	Buffer(UInt32 size) : _offset(0),_size(size),_capacity(size) {_data = _buffer = new UInt8[_capacity]();}
+	Buffer(UInt8* buffer,UInt32 size) : _offset(0),_data(buffer), _size(size),_capacity(size),_buffer(NULL) {}
 	virtual ~Buffer() { if (_buffer) delete [] _buffer; }
 
 	void			clip(UInt32 offset);

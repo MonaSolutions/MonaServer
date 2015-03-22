@@ -41,7 +41,7 @@ public:
 
 	bool			writeSetCookie(DataReader& reader,const HTTP::OnCookie& onCookie=nullptr) { return HTTP::WriteSetCookie(reader,*_pSetCookieBuffer, onCookie); }
 
-	void			abort() { _pResponse.reset(); _senders.clear(); }
+	void			clear() { _pResponse.reset(); _senders.clear(); }
 
 	DataWriter&		writeInvocation(const char* name) { DataWriter& writer(writeMessage()); writer.writeString(name,strlen(name)); return writer; }
 	DataWriter&		writeMessage();

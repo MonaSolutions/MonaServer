@@ -21,7 +21,6 @@ This file is a part of Mona.
 
 #include "Mona/Mona.h"
 #include "Mona/Signal.h"
-#include <signal.h>
 
 namespace Mona {
 
@@ -30,11 +29,11 @@ class TerminateSignal : public virtual Object {
 public:
 	TerminateSignal();
 	void wait();
-	void set() { _Terminate.set(); }
-protected:
-    static Signal			_Terminate;
+	void set();
+
+private:
 #if defined(_WIN32)
-	static int __stdcall	ConsoleCtrlHandler(unsigned long ctrlType);
+	Signal					_terminate;
 #else
 	sigset_t				_signalSet;
 #endif

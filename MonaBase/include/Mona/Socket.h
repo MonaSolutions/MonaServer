@@ -34,7 +34,7 @@ class SocketFile : virtual NullableObject {
 	friend class SocketImpl;
 	friend class Socket;
 public:
-	SocketFile(const SocketFile& other) : _sockfd(other._sockfd) {}
+	SocketFile(const SocketFile& other) : Object(), NullableObject(), _sockfd(other._sockfd) {}
 	virtual ~SocketFile() {
 		if (_sockfd != NET_INVALID_SOCKET)
 			NET_CLOSESOCKET(_sockfd);

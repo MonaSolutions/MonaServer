@@ -129,11 +129,19 @@ bool WSWriter::writeMedia(MediaType type,UInt32 time,PacketReader& packet,const 
 		return true;
 	switch(type) {
 		case START:
-			writeInvocation("__publishing").writeString((const char*)packet.current(),packet.available());
+			if (time==DATA)
+				writeInvocation("__publishing").writeString((const char*)packet.current(),packet.available());
 			break;
 		case STOP:
-			writeInvocation("__unpublishing").writeString((const char*)packet.current(),packet.available());
+			if (time==DATA)
+				writeInvocation("__unpublishing").writeString((const char*)packet.current(),packet.available());
 			break;
+		case INIT: {
+			string dataType;
+			if (properties.getString("dataType", dataType) && (_dataType = MIME::DataType(dataType.c_str())))
+				_dataType = MIME::UNKNOWN;
+			break;
+		}
 		case DATA: {
 			if (_dataType) { // conversion?
 				MIME::Type dataType((MIME::Type)(time >> 8));
@@ -146,12 +154,6 @@ bool WSWriter::writeMedia(MediaType type,UInt32 time,PacketReader& packet,const 
 			}
 			// raw
 			newDataWriter(true).packet.write(packet.current(), packet.available());
-			break;
-		}
-		case INIT: {
-			string dataType;
-			if (properties.getString("dataType", dataType) && (_dataType = MIME::DataType(dataType.c_str())))
-				_dataType = MIME::UNKNOWN;
 			break;
 		}
 		default:

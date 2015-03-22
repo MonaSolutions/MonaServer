@@ -37,7 +37,7 @@ private:
 	bool			buildPacket(BinaryReader& packet);
 	void			receive(BinaryReader& packet);
 	void			manage();
-	void			flush() { Session::flush(); if (_pStream) _pStream->flush(); }
+	void			flush() { Session::flush(); _mainStream.flush(); }
 
 	void			kill(UInt32 type=NORMAL_DEATH);
 	
@@ -45,6 +45,9 @@ private:
 	void							readKeys();
 	const std::shared_ptr<RC4_KEY>&	pEncryptKey() { if (_handshaking == 1) readKeys(); return _pEncryptKey; }
 	const std::shared_ptr<RC4_KEY>&	pDecryptKey() { if (_handshaking == 1) readKeys(); return _pDecryptKey; }
+
+	FlashStream::OnStart::Type		onStreamStart;
+	FlashStream::OnStart::Type		onStreamStop;
 
 	UInt8							_handshaking;
 	UInt16							_chunkSize;
@@ -61,7 +64,7 @@ private:
 	std::shared_ptr<RC4_KEY>			_pEncryptKey;
 	std::shared_ptr<RC4_KEY>			_pDecryptKey;
 
-	std::shared_ptr<FlashStream>		_pStream;
+	FlashMainStream						_mainStream;
 	UInt32								_decrypted;
 };
 

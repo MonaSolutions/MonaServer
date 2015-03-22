@@ -60,17 +60,17 @@ public:
 		if (state() == CLOSED)
 			return;
 		WARN("RTMFPWriter ", id, " has failed, ", args ...);
-		clear();
+		abort();
 		_stage = _stageAck = _lostCount = 0;
 		 _ackCount = 0;
-        std::shared_ptr<RTMFPWriter> pWriter = _band.changeWriter(*new RTMFPWriter(*this));
-        _band.initWriter(pWriter);
+        std::shared_ptr<RTMFPWriter> pThis = _band.changeWriter(*new RTMFPWriter(*this));
+        _band.initWriter(pThis);
 		_qos.reset();
-		_reseted = true;
+		_resetStream = true;
 	}
 
-	void				abort();
 	void				clear();
+	void				abort();
 	void				close(Int32 code=0);
 	bool				consumed() { return _messages.empty() && state() == CLOSED; }
 
@@ -101,9 +101,7 @@ private:
 	double						_ackCount;
 	UInt32						_repeatable;
 	BandWriter&					_band;
-
-	UInt32						_boundCount;
-	bool						_reseted;
+	bool						_resetStream;
 
 };
 

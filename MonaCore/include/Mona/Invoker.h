@@ -28,12 +28,11 @@ This file is a part of Mona.
 #include "Mona/TaskHandler.h"
 #include "Mona/PoolThreads.h"
 #include "Mona/PoolBuffers.h"
-#include "Mona/FlashMainStream.h"
+#include "Mona/Peer.h"
 
 namespace Mona {
 
 class Invoker : public Entity,public TaskHandler, public virtual Object, public MapParameters {
-	friend class FlashStream; // FlashStream manage _streams
 public:
 	// invocations
 	const Entities<Client>  clients;
@@ -44,10 +43,6 @@ public:
 	const SocketManager		sockets;
 	PoolThreads				poolThreads;
 	const PoolBuffers		poolBuffers;
-
-	std::shared_ptr<FlashStream>&	createFlashStream(Peer& peer);
-	FlashStream&					flashStream(UInt32 id, Peer& peer,std::shared_ptr<FlashStream>& pStream);
-	void							destroyFlashStream(UInt32 id) { _streams.erase(id); }
 
 	Publication*			publish(Exception& ex, const std::string& name, Publication::Type type) { return publish(ex, name, type,NULL); }
 	void					unpublish(const std::string& name) { unpublish(name, NULL); }
@@ -63,7 +58,7 @@ public:
 	void					clearBannedList() { _bannedList.clear(); }
 	bool					isBanned(const IPAddress& ip) { return _bannedList.find(ip) != _bannedList.end(); }
 
-	virtual const std::string&	rootPath() const = 0;
+	virtual const std::string&	rootPath() const { return String::Empty; }
 
 protected:
 	Invoker(UInt32 socketBufferSize,UInt16 threads);
@@ -80,8 +75,6 @@ private:
 
 	std::map<std::string,Publication>				_publications;
 	std::set<IPAddress>								_bannedList;
-	UInt32											_nextId;
-	std::map<UInt32,std::shared_ptr<FlashStream> >	_streams;
 
 };
 

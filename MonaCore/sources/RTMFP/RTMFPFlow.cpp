@@ -19,7 +19,6 @@ This file is a part of Mona.
 
 #include "Mona/RTMFP/RTMFPFlow.h"
 #include "Mona/Invoker.h"
-#include "Mona/FlashMainStream.h"
 #include "Mona/Logs.h"
 #include "Mona/Util.h"
 #include "Mona/PoolBuffer.h"
@@ -73,32 +72,32 @@ public:
 };
 
 
-RTMFPFlow::RTMFPFlow(UInt64 id,const string& signature,Peer& peer,Invoker& invoker,BandWriter& band) : _poolBuffers(invoker.poolBuffers),_numberLostFragments(0),id(id),_stage(0),_completed(false),_pPacket(NULL),_pStream(NULL),_band(band) {
+RTMFPFlow::RTMFPFlow(UInt64 id,const string& signature,Peer& peer,Invoker& invoker, BandWriter& band, shared_ptr<FlashMainStream>& pMainStream) : _pStream(pMainStream),_poolBuffers(invoker.poolBuffers),_numberLostFragments(0),id(id),_stage(0),_completed(false),_pPacket(NULL),_band(band) {
 	
+	// MAIN Stream flow OR Null flow
+
 	RTMFPWriter* pWriter = new RTMFPWriter(peer.connected ? Writer::OPENED : Writer::OPENING,signature, band, _pWriter);
 
-	if(signature.empty())
+	if (!_pStream) {
+		pWriter->open(); // FlowNull, must be opened
 		return;
+	}
 
-	if (pWriter->flowId == 0)
-		((UInt64&)pWriter->flowId) = id;
-
-	// create code prefix for a possible response
-	// get flash stream process engine
-
-	if(signature.size()>4 && signature.compare(0,5,"\x00\x54\x43\x04\x00",5)==0)
-		(bool&)pWriter->critical = true; // NetConnection
-	else if(signature.size()>3 && signature.compare(0,4,"\x00\x54\x43\x04",4)==0)
-		invoker.flashStream(BinaryReader((const UInt8*)signature.c_str()+4,signature.length()-4).read7BitValue(),peer,_pStream); // NetStream
-	else if(signature.size()>2 && signature.compare(0,3,"\x00\x47\x43",3)==0)
-		(UInt64&)pWriter->flowId = id; // NetGroup
-	
-	if(!_pStream)
-		_pStream.reset(new FlashMainStream(invoker,peer));
+	(bool&)pWriter->critical = true;
+	((UInt64&)pWriter->flowId) = id;
 }
+
+RTMFPFlow::RTMFPFlow(UInt64 id,const string& signature,const shared_ptr<FlashStream>& pStream, Peer& peer,Invoker& invoker, BandWriter& band) : _pStream(pStream),_poolBuffers(invoker.poolBuffers),_numberLostFragments(0),id(id),_stage(0),_completed(false),_pPacket(NULL),_band(band) {
+	
+	new RTMFPWriter(peer.connected ? Writer::OPENED : Writer::OPENING,signature, band, _pWriter);
+
+}
+
 
 RTMFPFlow::~RTMFPFlow() {
 	complete();
+	if (_pStream)
+		_pStream->disengage(_pWriter.get());
 	_pWriter->close();
 }
 
@@ -106,7 +105,7 @@ void RTMFPFlow::complete() {
 	if(_completed)
 		return;
 
-	if(!_pStream) // FlowNull instance, not display the message in FullNull case
+	if(_pStream) // FlowNull instance, not display the message in FullNull case
 		DEBUG("RTMFPFlow ",id," consumed");
 
 	// delete fragments
@@ -332,7 +331,7 @@ void RTMFPFlow::onFragment(UInt64 _stage,PacketReader& fragment,UInt8 flags) {
 
 	lostRate = _numberLostFragments/(lostRate+_numberLostFragments);
 
-	if (!_pStream->process(type, time, *pMessage, *_pWriter, lostRate)) {
+	if (!_pStream || !_pStream->process(type, time, *pMessage, *_pWriter, lostRate)) {
 		complete(); // do already the delete _pPacket
 		return;
 	}

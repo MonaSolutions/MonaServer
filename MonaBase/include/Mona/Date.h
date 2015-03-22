@@ -41,7 +41,7 @@ public:
 	static const char* SORTABLE_FORMAT;		/// 2005-01-01 12:00:00
 
 
-	enum Type {
+	enum {
 		GMT = 0x7FFFFFFF, /// Special value for offset (Int32 minimum)
 		LOCAL = 0x80000000 /// Special value for offset(Int32 maximum)
 	};
@@ -49,7 +49,7 @@ public:
 	static bool  IsLeapYear(Int32 year) { return (year % 400 == 0) || (!(year & 3) && year % 100); }
 
 	// build a NOW date
-	explicit Date(Type type=LOCAL) : _isDST(false),_year(0), _month(0), _day(0), _weekDay(7),_hour(0), _minute(0), _second(0), _millisecond(0), _changed(true), _offset(type),_isLocal(true), Time(0) {}
+	explicit Date(Int32 offset=LOCAL) : _isDST(false),_year(0), _month(0), _day(0), _weekDay(7),_hour(0), _minute(0), _second(0), _millisecond(0), _changed(true), _offset(offset),_isLocal(true), Time(0) {}
 	
 	// build from time
 	explicit Date(Int64 time,Int32 offset=LOCAL) : _isDST(false),_year(0), _month(0), _day(0),  _weekDay(7),_hour(0), _minute(0), _second(0), _millisecond(0), _changed(true), _offset(0),_isLocal(true), Time(0) {
@@ -57,7 +57,7 @@ public:
 	}
 
 	// build from other  date
-	explicit Date(const Date& date) : _isDST(date._isDST),_year(date._year), _month(date._month), _day(date._day),  _weekDay(date._weekDay),_hour(date._hour), _minute(date._minute), _second(date._second), _millisecond(date._millisecond), _changed(date._changed), _offset(date._offset),_isLocal(date._isLocal), Time(date._changed ? 0 : date.time()) {}
+	explicit Date(const Date& date) : Object(), _isDST(date._isDST),_year(date._year), _month(date._month), _day(date._day),  _weekDay(date._weekDay),_hour(date._hour), _minute(date._minute), _second(date._second), _millisecond(date._millisecond), _changed(date._changed), _offset(date._offset),_isLocal(date._isLocal), Time(date._changed ? 0 : date.time()) {}
 	
 	// build from date
 	explicit Date(Int32 year, UInt8 month, UInt8 day, Int32 offset=LOCAL) : _isDST(false),_year(0), _month(0), _day(0), _weekDay(7),_hour(0), _minute(0), _second(0), _millisecond(0), _changed(true), _offset(0),_isLocal(true), Time(0) {
@@ -82,7 +82,7 @@ public:
 	Date& update(const Date& date);
 
 	// from time
-	Date& update(Int64 time) { return update(time, _isLocal ? LOCAL : _offset); }
+	Date& update(Int64 time) { return update(time, _isLocal ? Int32(LOCAL) : _offset); }
 	Date& update(Int64 time,Int32 offset);
 
 	// from date

@@ -20,7 +20,8 @@ This file is a part of Mona.
 
 #include "Mona/TerminateSignal.h"
 #if !defined(_WIN32)
-    #include "signal.h"
+	#include <signal.h>
+	#include <unistd.h>
 #else
 	#include <Windows.h>
 #endif
@@ -28,37 +29,32 @@ This file is a part of Mona.
 namespace Mona {
 
 
-Signal	TerminateSignal::_Terminate;
-
 #if defined(_WIN32)
 
 TerminateSignal::TerminateSignal() {}
 
-BOOL TerminateSignal::ConsoleCtrlHandler(DWORD ctrlType) {
-	switch (ctrlType) {
-	case CTRL_C_EVENT:
-	case CTRL_CLOSE_EVENT:
-	case CTRL_BREAK_EVENT:
-		_Terminate.set();
-		return TRUE;
-	default:
-		return FALSE;
-	}
+
+void TerminateSignal::set() {
+	_terminate.set();
 }
 
 void TerminateSignal::wait() {
-	SetConsoleCtrlHandler(ConsoleCtrlHandler, TRUE);
-	_Terminate.wait();
+	_terminate.wait();
 }
 
 #else
 
 TerminateSignal::TerminateSignal() {
+	// In the constructor (must be done in first) because it's inheriting between threads!
 	sigemptyset(&_signalSet);
 	sigaddset(&_signalSet, SIGINT);
 	sigaddset(&_signalSet, SIGQUIT);
 	sigaddset(&_signalSet, SIGTERM);
-	sigprocmask(SIG_BLOCK, &_signalSet, NULL);
+	pthread_sigmask(SIG_BLOCK, &_signalSet, NULL);
+}
+
+void TerminateSignal::set() {
+	kill(getpid(),SIGTERM);
 }
 
 void TerminateSignal::wait() {

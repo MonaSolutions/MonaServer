@@ -21,6 +21,7 @@ This file is a part of Mona.
 #include "Mona/MediaCodec.h"
 #include "Mona/ParameterWriter.h"
 #include "Mona/SplitWriter.h"
+#include "Mona/AMFReader.h"
 #include "Mona/Peer.h"
 #include "Mona/Logs.h"
 
@@ -57,14 +58,22 @@ Listener* Publication::addListener(Exception& ex, Client& client,Writer& writer)
 	if(it!=_listeners.begin())
 		--it;
 	Listener* pListener = new Listener(*this,client,writer);
-	if(((Peer&)client).onSubscribe(ex,*pListener)) {
+	if(((Peer&)client).onSubscribe(ex,*pListener)) { // if ex, it has already been displayed as log
 		_listeners.insert(it,pair<Client*,Listener*>(&client,pListener));
-		if (_running)
+
+		if (_running) {
 			pListener->startPublishing();
+			// send publication properties (metadata)
+			PacketReader packet(_propertiesWriter.packet.data(),_propertiesWriter.packet.size());
+			AMFReader properties(packet);
+			if (properties.available())
+				pListener->pushProperties(properties);
+			pListener->flush(); // flush possible messages in startPublishing + pushProperties
+		}
 		return pListener;
 	}
 	if(!ex)
-		ex.set(Exception::APPLICATION,"Not authorized to play ",_name);
+		WARN(ex.set(Exception::APPLICATION,"Not authorized to play ",_name));
 	delete pListener;
 	return NULL;
 }
@@ -86,19 +95,21 @@ void Publication::start(Type type) {
 	if (_running)
 		return;
 	INFO("Publication ", _name, " started")
-	_running = true;
-	for(auto& it : _listeners)
+	_running = true;  // keep before startPublishing()
+	for (auto& it : _listeners) {
 		it.second->startPublishing();
-	flush();
+		it.second->flush(); // flush possible messages in startPublishing
+	}
 }
 
 void Publication::stop() {
 	if(!_running)
 		return; // already done
 	INFO("Publication ", _name, " stopped")
-	for(auto& it : _listeners)
+	for(auto& it : _listeners) {
 		it.second->stopPublishing();
-	flush();
+		it.second->flush(); // flush possible last media + messages in stopPublishing
+	}
 	_properties.clear();
 	_propertiesWriter.clear();
 	_videoQOS.reset();
@@ -220,22 +231,27 @@ void Publication::writeProperties(DataReader& reader)  {
 
 	_properties.clear();
 	_propertiesWriter.clear();
-	
-	_propertiesWriter.amf0 = true;
+
+	_propertiesWriter.amf0 = true; // AMF0 is certainly required for onMetaData client compatibility and compatible with ParameterWriter
 	if (reader.nextType() != DataReader::STRING)
 		_propertiesWriter.writeString(EXPAND("onMetaData"));
 	else
 		reader.read(_propertiesWriter, 1);
-	_propertiesWriter.amf0 = false;
 
-	// flat all
+	// flat all and fill '_properties'
 	ParameterWriter writer(_properties);
 	SplitWriter writers(writer,_propertiesWriter);
-	reader.read(writers,1);
+	reader.read(writers);
 
+	// send publication properties (metadata)
+	_new = true;
+	PacketReader packet(_propertiesWriter.packet.data(),_propertiesWriter.packet.size());
+	AMFReader properties(packet);
 	auto it = _listeners.begin();
-	while (it != _listeners.end())
-		(it++)->second->updateProperties();  // listener can be removed in this call
+	while (it != _listeners.end()) {
+		(it++)->second->pushProperties(properties);  // listener can be removed in this call
+		properties.reset();
+	}
 
 	INFO("Write ",_name," publication properties")
 	OnProperties::raise(*this,_properties);

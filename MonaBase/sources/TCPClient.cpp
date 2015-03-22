@@ -67,7 +67,7 @@ void TCPClient::close() {
 		peerAddress.set(_peerAddress);
 		_peerAddress.reset();
 	}
-	OnDisconnection::raise(peerAddress); // in last because can delete this
+	OnDisconnection::raise(*this,peerAddress); // in last because can delete this
 }
 
 

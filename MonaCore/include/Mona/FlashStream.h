@@ -22,36 +22,41 @@ This file is a part of Mona.
 #include "Mona/Mona.h"
 #include "Mona/AMF.h"
 #include "Mona/AMFReader.h"
-#include "Mona/Peer.h"
 #include "Mona/FlashWriter.h"
+#include "Mona/Invoker.h"
 
 namespace Mona {
 
-class Invoker;
-class FlashStream : public virtual Object {
+namespace FlashEvents {
+	struct OnStart : Event<void(UInt16 id, FlashWriter& writer)> {};
+	struct OnStop : Event<void(UInt16 id, FlashWriter& writer)> {};
+};
+
+class FlashStream : public virtual Object,
+	public FlashEvents::OnStart,
+	public FlashEvents::OnStop {
 public:
-	FlashStream(UInt32 id,Invoker& invoker,Peer& peer);
+	FlashStream(UInt16 id, Invoker& invoker,Peer& peer);
 	virtual ~FlashStream();
 
-	const UInt32	id;
-	
-	UInt32 bufferTime(UInt32 ms);
-	UInt32 bufferTime() const { return _bufferTime; }
+	const UInt16	id;
+
+	UInt32	bufferTime(UInt32 ms);
+	UInt32	bufferTime() const { return _bufferTime; }
+
+	void	disengage(FlashWriter* pWriter=NULL);
 
 	// return flase if writer is closed!
-	bool		 process(AMF::ContentType type,UInt32 time,PacketReader& packet,FlashWriter& writer,double lostRate=0);
-	virtual void flush();
+	bool	process(AMF::ContentType type,UInt32 time,PacketReader& packet,FlashWriter& writer,double lostRate=0);
 
-
-	virtual FlashStream* stream(UInt32 id) { return NULL; }
+	virtual void	flush() { if(_pPublication) _pPublication->flush(); }
 
 protected:
 
-	Invoker&	invoker;
-	Peer&		peer;
+	Invoker&		invoker;
+	Peer&			peer;
 
 private:
-	void			disengage(FlashWriter* pWriter=NULL);
 
 	virtual void	messageHandler(const std::string& name, AMFReader& message, FlashWriter& writer);
 	virtual void	rawHandler(UInt8 type, PacketReader& data, FlashWriter& writer);

@@ -25,7 +25,7 @@ This file is a part of Mona.
 
 namespace Mona {
 
-class ServerApplication : public Application, public virtual Object, private TerminateSignal {
+class ServerApplication : public Application, public virtual Object {
 public:
 	ServerApplication() : _isInteractive(true) { _PThis = this; }
 
@@ -43,9 +43,10 @@ private:
 	bool		_isInteractive;
 
     static ServerApplication*	 _PThis;
+	static TerminateSignal		 _TerminateSignal;
 
 #if defined(_WIN32)
-
+	static int  __stdcall ConsoleCtrlHandler(unsigned long ctrlType);
 	static void __stdcall ServiceMain(unsigned long argc, char** argv);
 	static void __stdcall ServiceControlHandler(DWORD control);
 

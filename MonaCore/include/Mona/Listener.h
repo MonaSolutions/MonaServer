@@ -31,16 +31,19 @@ namespace Mona {
 class Publication;
 class Listener : public MapParameters, virtual Object {
 public:
+
 	Listener(Publication& publication,Client& client,Writer& writer);
 	virtual ~Listener();
 
-	void startPublishing() { _startTime = 0; _firstTime = true; _writer.writeMedia(Writer::START, 0, publicationNamePacket(), *this); }
-	void stopPublishing() { _writer.writeMedia(Writer::STOP, 0, publicationNamePacket(), *this); }
+	void seek(UInt32 time);
+
+	void startPublishing();
+	void stopPublishing();
 
 	void pushAudio(UInt32 time,PacketReader& packet); 
 	void pushVideo(UInt32 time,PacketReader& packet);
 	void pushData(DataReader& packet);
-	void updateProperties();
+	void pushProperties(DataReader& packet);
 
 	void flush();
 
@@ -50,29 +53,39 @@ public:
 	const Publication&	publication;
 	Client&				client;
 
-	const QualityOfService&	videoQOS() const;
-	const QualityOfService&	audioQOS() const;
-	const QualityOfService&	dataQOS() const;
+	const QualityOfService&	videoQOS() const { return _pVideoWriter ? _pVideoWriter->qos() : QualityOfService::Null; }
+	const QualityOfService&	audioQOS() const { return _pAudioWriter ? _pAudioWriter->qos() : QualityOfService::Null; }
+	const QualityOfService&	dataQOS() const { return _writer.qos(); }
 
 private:
-	void    writeData(DataReader& reader,Writer::DataType type, Writer& writer);
+	enum {
+		DATA_NONE=0,
+		DATA_INITIALIZED=1,
+		DATA_WASRELIABLE=2,
+		DATA_RELIABLE=4
+	};
 
-	bool	init();
-	void	reset();
+	void    writeData(DataReader& reader,Writer::DataType type);
+
+	bool	initWriters();
+	void	closeWriters();
+
 	void	firstMedia(UInt32 time);
 
 	PacketReader& publicationNamePacket() { _publicationNamePacket.reset(); return _publicationNamePacket; }
-	
+
 	bool					_firstMedia;
 	UInt32 					_startTime;
+	UInt32					_lastTime;
 	bool					_firstTime;
+	UInt32					_seekTime;
 	bool					_codecInfosSent;
 	
 	Writer&					_writer;
 	Writer*					_pAudioWriter;
 	Writer*					_pVideoWriter;
-	Writer*					_pDataWriter;
-	PacketReader				_publicationNamePacket;
+	UInt8					_dataInfos;
+	PacketReader			_publicationNamePacket;
 };
 
 

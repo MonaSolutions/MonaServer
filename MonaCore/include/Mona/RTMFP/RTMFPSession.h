@@ -62,6 +62,13 @@ protected:
 
 	const UInt32		farId;
 
+	
+
+	UInt8*				packet(); // size = RTMFP_MAX_PACKET_SIZE
+	void				flush(UInt8 marker, UInt32 size);
+
+private:
+
 	template <typename ...Args>
 	void fail(Args&&... args) {
 		if (_failed)
@@ -76,18 +83,9 @@ protected:
 
 		_failed = true;
 		std::string error;
-		String::Format(error, args ...);
-		if(!error.empty()) {
-			WARN("Client failed, ", error);
-			failSignal();
-		}
-	
+		WARN("Client failed, ", String::Format(error, args ...));
+		failSignal();
 	}
-
-	UInt8*							packet(); // size = RTMFP_MAX_PACKET_SIZE
-	void							flush(UInt8 marker, UInt32 size);
-
-private:
 	
 	virtual void					receive(const SocketAddress& address, BinaryReader& packet);
 	void							flush(bool echoTime, UInt8 marker = 0x4a);
@@ -110,6 +108,9 @@ private:
 
 	void							failSignal();
 
+	FlashStream::OnStart::Type						onStreamStart;
+	FlashStream::OnStop::Type						onStreamStop;
+
 	RTMFPDecoder::OnDecoded::Type					onDecoded;
 	RTMFPDecoder::OnDecodedEnd::Type				onDecodedEnd;
 
@@ -121,6 +122,7 @@ private:
 	UInt8											_timesFailed;
 	UInt8											_timesKeepalive;
 
+	std::shared_ptr<FlashMainStream>				_pMainStream;
 	std::map<UInt64,RTMFPFlow*>						_flows;
 	RTMFPFlow*										_pFlowNull;
 	std::map<UInt64,std::shared_ptr<RTMFPWriter> >	_flowWriters;

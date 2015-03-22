@@ -83,7 +83,7 @@ private:
 	static DumpMode		_DumpMode;
 	static UInt8		_Level;
 	static Logger		_DefaultLogger;
-	static Int16		_DumpLimit; // -1 means no limit
+	static Int32		_DumpLimit; // -1 means no limit
 };
 
 #undef ERROR

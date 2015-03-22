@@ -34,10 +34,23 @@ RTMFPSession::RTMFPSession(RTMFProtocol& protocol,
 				UInt32 farId,
 				const shared_ptr<RTMFPEngine> pDecoder,
 				const shared_ptr<RTMFPEngine> pEncoder,
-				const shared_ptr<Peer>& pPeer) : onDecoded([this](BinaryReader& packet,const SocketAddress& address){receive(address,packet);}), onDecodedEnd([this](){flush();}), _failed(false), _pThread(NULL),farId(farId), Session(protocol, invoker, pPeer), _decoder(invoker,pDecoder), _pEncoder(pEncoder), _timesFailed(0), _timeSent(0), _nextRTMFPWriterId(0), _timesKeepalive(0), _pLastWriter(NULL){
-	_pFlowNull = new RTMFPFlow(0,"",peer,invoker,*this);
+				const shared_ptr<Peer>& pPeer) : onDecoded([this](BinaryReader& packet,const SocketAddress& address){receive(address,packet);}), onDecodedEnd([this](){flush();}), _failed(false), _pThread(NULL),farId(farId), Session(protocol, invoker, pPeer), _decoder(invoker,pDecoder), _pEncoder(pEncoder), _timesFailed(0), _timeSent(0), _nextRTMFPWriterId(0), _timesKeepalive(0), _pLastWriter(NULL), 
+		onStreamStart([this](UInt16 id, FlashWriter& writer) {
+			// Stream Begin signal
+			writer.writeRaw().write16(0).write32(id);
+		}),
+		onStreamStop([this](UInt16 id, FlashWriter& writer) {
+			// Stream EOF signal
+			writer.writeRaw().write16(1).write32(id);
+		}) {
+	_pFlowNull = new RTMFPFlow(0,String::Empty,peer,invoker,*this,_pMainStream);
 	_decoder.OnDecodedEnd::subscribe(onDecodedEnd);
 	_decoder.OnDecoded::subscribe(onDecoded);
+
+	// keep after _pFlowNull creation to have _pMainStream==null until here
+	_pMainStream.reset(new FlashMainStream(invoker,peer));
+	_pMainStream->OnStart::subscribe(onStreamStart);
+	_pMainStream->OnStop::subscribe(onStreamStop);
 }
 
 RTMFPSession::RTMFPSession(RTMFProtocol& protocol,
@@ -46,7 +59,7 @@ RTMFPSession::RTMFPSession(RTMFProtocol& protocol,
 				const UInt8* decryptKey,
 				const UInt8* encryptKey,
 				const char* name) : onDecoded([this](BinaryReader& packet,const SocketAddress& address){receive(address,packet);}) , _failed(false), farId(farId), _pThread(NULL), Session(protocol, invoker, name), _decoder(invoker, decryptKey), _pEncoder(new RTMFPEngine(encryptKey, RTMFPEngine::ENCRYPT)), _timesFailed(0), _timeSent(0), _nextRTMFPWriterId(0), _timesKeepalive(0), _pLastWriter(NULL) {
-	_pFlowNull = new RTMFPFlow(0,"",peer,invoker,*this);
+	_pFlowNull = new RTMFPFlow(0,String::Empty,peer,invoker,*this,_pMainStream);
 	_decoder.OnDecoded::subscribe(onDecoded);
 	// No onDecodedEnd subscription for RTMFPHandshake
 }
@@ -67,7 +80,7 @@ void RTMFPSession::failSignal() {
 }
 
 void RTMFPSession::kill(UInt32 type) {
-	if(!_failed)
+	if(!_failed && type!=SOCKET_DEATH)
 		failSignal();
 	if(died)
 		return;
@@ -83,11 +96,15 @@ void RTMFPSession::kill(UInt32 type) {
 		delete _pFlowNull;
 		_pFlowNull = NULL;
 	}
-	
-	Session::kill(type);
+
+	// to remove OnStart and OnStop, and erase FlashWriters (before to erase flowWriters)
+	if (_pMainStream)
+		_pMainStream.reset();
 	
 	// delete flowWriters
 	_flowWriters.clear();
+
+	Session::kill(type);  // at the end to "unpublish or unsubscribe" before "onDisconnection"!
 
 	// no more reception
 	_decoder.OnDecoded::unsubscribe(onDecoded);
@@ -446,7 +463,7 @@ void RTMFPSession::receive(const SocketAddress& address, BinaryReader& packet) {
 					_failed=true; // If connection fails, log is already displayed, and so fail the whole session!
 					if (!peer.connected) {
 						for (auto& it : _flowWriters)
-							it.second->abort();
+							it.second->clear();
 					}
 				}
 				_flows.erase(pFlow->id);
@@ -472,17 +489,34 @@ RTMFPFlow* RTMFPSession::createFlow(UInt64 id,const string& signature) {
 
 	map<UInt64,RTMFPFlow*>::iterator it = _flows.lower_bound(id);
 	if(it!=_flows.end() && it->first==id) {
-		WARN("RTMFPFlow ",id," has already been created");
+		WARN("RTMFPFlow ",id," has already been created on session ",name());
 		return it->second;
 	}
-	return _flows.insert(it,pair<UInt64,RTMFPFlow*>(id,new RTMFPFlow(id,signature,peer,invoker,*this)))->second;
+
+	RTMFPFlow* pFlow;
+
+	// get flash stream process engine related by signature
+	if (signature.size() > 4 && signature.compare(0, 5, "\x00\x54\x43\x04\x00", 5) == 0) // NetConnection
+		pFlow = new RTMFPFlow(id, signature, peer, invoker, *this, _pMainStream);
+	else if (signature.size()>3 && signature.compare(0, 4, "\x00\x54\x43\x04", 4) == 0) { // NetStream
+		shared_ptr<FlashStream> pStream;
+		UInt32 idSession(BinaryReader((const UInt8*)signature.c_str() + 4, signature.length() - 4).read7BitValue());
+		if (!_pMainStream || !_pMainStream->getStream(idSession,pStream)) {
+			ERROR("RTMFPFlow ",id," indicates a non-existent ",idSession," NetStream on session ",name());
+			return NULL;
+		}
+		pFlow = new RTMFPFlow(id, signature, pStream, peer, invoker, *this);
+	} else if(signature.size()>2 && signature.compare(0,3,"\x00\x47\x43",3)==0)  // NetGroup
+		pFlow = new RTMFPFlow(id, signature, peer, invoker, *this, _pMainStream);
+
+	return _flows.emplace_hint(it, piecewise_construct, forward_as_tuple(id), forward_as_tuple(pFlow))->second;
 }
 
 void RTMFPSession::initWriter(const shared_ptr<RTMFPWriter>& pWriter) {
 	while (++_nextRTMFPWriterId == 0 || !_flowWriters.emplace(_nextRTMFPWriterId, pWriter).second);
 	(UInt64&)pWriter->id = _nextRTMFPWriterId;
 	if (!_flows.empty())
-		(UInt64&)pWriter->flowId = _flows.begin()->second->id;
+		(UInt64&)pWriter->flowId = _flows.begin()->second->id; // newWriter will be associated to the NetConnection flow (first in _flow lists)
 	if (!pWriter->signature.empty())
 		DEBUG("New writer ", pWriter->id, " on session ", name());
 }

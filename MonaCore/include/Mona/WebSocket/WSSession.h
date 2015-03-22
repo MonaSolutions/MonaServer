@@ -43,20 +43,21 @@ protected:
 
 	WSWriter&		wsWriter() { return _writer; }
 	void			kill(UInt32 type=NORMAL_DEATH);
-	Publication*	_pPublication;
-	Listener*		_pListener;
+
+	bool			openSubscribtion(Exception& ex, const std::string& name, Writer& writer);
+	void			closeSusbcription();
+	
+	bool			openPublication(Exception& ex, const std::string& name, Publication::Type type);
+	void			closePublication();
 
 	UInt32			onData(PoolBuffer& pBuffer) { return _decoder.decode(pBuffer); }
 
 	/// \brief Read message and call method if needed
 	/// \param packet Content message to read
 	void			readMessage(Exception& ex, DataReader& reader, UInt8 responseType=0);
-	
+
 private:
 	void			receive(WSReader& packet);
-
-	void			closeSusbcription();
-	void			closePublication();
 
 	WSDecoder::OnDecoded::Type		onDecoded;
 	WSDecoder::OnDecodedEnd::Type	onDecodedEnd;
@@ -64,6 +65,9 @@ private:
 	WSWriter		_writer;
 	WSDecoder		_decoder;
 	bool			_enabled;
+
+	Publication*	_pPublication;
+	Listener*		_pListener;
 };
 
 

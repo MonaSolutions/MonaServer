@@ -58,7 +58,7 @@ AMFWriter& FlashWriter::writeAMFState(const char* name,const char* code,const st
 	_callbackHandle = 0;
 	writer.amf0=true;
 	writer.beginObject();
-	if(name=="_error")
+	if(strcmp(name,"_error")==0)
 		writer.writeStringProperty("level","error");
 	else
 		writer.writeStringProperty("level","status");
@@ -70,15 +70,39 @@ AMFWriter& FlashWriter::writeAMFState(const char* name,const char* code,const st
 	return writer;
 }
 
+AMFWriter& FlashWriter::writeInfos(const char* name) {
+	AMFWriter& writer(write(AMF::INFORMATIONS));
+	writer.amf0 = true;
+	writer.writeString(name,strlen(name));
+	writer.amf0 = false;
+	return writer;
+}
 
 bool FlashWriter::writeMedia(MediaType type,UInt32 time,PacketReader& packet,const Parameters& properties) {
 	
 	switch(type) {
+		case INIT:
+			if (time == AUDIO) {
+				_onAudio.clear();
+				if (properties.getString("onAudio", _onAudio) && amf0) {
+					WARN("Impossible to handle onAudio properties on a AMF0 stream (no ByteArray support)")
+					_onAudio.clear();
+				}
+			} else if (time == VIDEO) {
+				_onVideo.clear();
+				if (properties.getString("onVideo", _onVideo) && amf0) {
+					WARN("Impossible to handle onVideo properties on a AMF0 stream (no ByteArray support)")
+					_onVideo.clear();
+				}
+			}
+			break;
 		case START:
-			writeAMFStatus("NetStream.Play.PublishNotify",string((const char*)packet.current(),packet.available()) + " is now published");
+			if (time==DATA)
+				writeAMFStatus("NetStream.Play.PublishNotify",string(STR packet.current(),packet.available()) + " is now published");
 			break;
 		case STOP:
-			writeAMFStatus("NetStream.Play.UnpublishNotify",string((const char*)packet.current(),packet.available()) +" is now unpublished");
+			if (time==DATA)
+				writeAMFStatus("NetStream.Play.UnpublishNotify",string(STR packet.current(),packet.available()) + " is now unpublished");
 			break;
 		case AUDIO:
 			if (!_onAudio.empty()) {
@@ -113,21 +137,18 @@ bool FlashWriter::writeMedia(MediaType type,UInt32 time,PacketReader& packet,con
 					break;
 				}
 				AMFWriter& writer(write((time & 0xFF) == INFO_DATA ? AMF::INFORMATIONS : AMF::DATA, 0));
+				if (DataReader::STRING == pReader->nextType()) {
+					// Write the handler name in AMF0!
+					writer.amf0 = true;
+					pReader->read(writer, 1);
+					writer.amf0 = false;
+				}
 				pReader->read(writer); // to AMF
 				break;
 			}
 			write((time & 0xFF) == INFO_DATA ? AMF::INFORMATIONS : AMF::DATA, 0, packet.current(),packet.available());
 			break;
 		}
-		case INIT:
-			_onAudio.clear();
-			_onVideo.clear();
-			if (!amf0) {
-				properties.getString("onAudio",_onAudio);
-				properties.getString("onVideo",_onVideo);
-			} else
-				WARN("Impossible to handle onAudio and onVideo properties on a AMF0 stream")
-			break;
 		default:
 			return Writer::writeMedia(type,time,packet,properties);
 	}

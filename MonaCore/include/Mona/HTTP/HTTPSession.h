@@ -52,7 +52,6 @@ private:
 	/// Search for a method or a file whitch correspond to the _filePath
 	void			processGet(Exception& ex, HTTPPacket& request, QueryReader& parameters);
 
-
 	HTTPDecoder::OnDecoded::Type	onDecoded;
 	HTTPDecoder::OnDecodedEnd::Type	onDecodedEnd;
 
@@ -60,8 +59,6 @@ private:
 	HTTPDecoder			_decoder;
 
 	HTTPWriter			_writer;
-
-	Listener*			_pListener;
 
 	// options
 	std::string			_index;

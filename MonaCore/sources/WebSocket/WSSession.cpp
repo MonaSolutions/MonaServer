@@ -63,20 +63,30 @@ void WSSession::kill(UInt32 type){
 	_decoder.OnDecodedEnd::unsubscribe(onDecodedEnd);
 }
 
+bool WSSession::openSubscribtion(Exception& ex, const string& name, Writer& writer) {
+	closeSusbcription();
+	_pListener=invoker.subscribe(ex, peer, name, writer);
+	return _pListener ? true : false;
+}
 void WSSession::closeSusbcription(){
 	if (_pListener) {
+		 // not remove onListenerStart and onListenerStop to raise events on invoker.unsubscribe
 		invoker.unsubscribe(peer,_pListener->publication.name());
 		_pListener=NULL;
 	}
 }
 
+bool WSSession::openPublication(Exception& ex, const string& name, Publication::Type type) {
+	closeSusbcription();
+	_pPublication=invoker.publish(ex, peer, name, type);
+	return _pPublication ? true : false;
+}
 void WSSession::closePublication(){
 	if(_pPublication) {
 		invoker.unpublish(peer,_pPublication->name());
 		_pPublication=NULL;
 	}
 }
-
 
 void WSSession::receive(WSReader& packet) {
 
@@ -140,15 +150,13 @@ void WSSession::readMessage(Exception& ex, DataReader& reader, UInt8 responseTyp
 				ex.set(Exception::PROTOCOL, "__publish method takes a stream name in first parameter",WS::CODE_MALFORMED_PAYLOAD);
 				return;
 			}
-			if(_pPublication)
-				invoker.unpublish(peer,_pPublication->name());
 			Publication::Type type(Publication::LIVE);
 			std::string mode;
 			if (reader.readString(mode)) {
 				if(String::ICompare(mode,"record") == 0)
 						type = Publication::RECORD;
 			}
-			_pPublication = invoker.publish(ex, peer,name,type);
+			EXCEPTION_TO_LOG(openPublication(ex, name, type),"Publish ",name);
 			return;
 
 		}
@@ -158,8 +166,7 @@ void WSSession::readMessage(Exception& ex, DataReader& reader, UInt8 responseTyp
 				ex.set(Exception::PROTOCOL, "__play method takes a stream name in first parameter",WS::CODE_MALFORMED_PAYLOAD);
 				return;
 			}	
-			closeSusbcription();
-			_pListener = invoker.subscribe(ex, peer,name,_writer);
+			EXCEPTION_TO_LOG(openSubscribtion(ex, name, _writer),"Play ",name);
 			return;
 		}
 		

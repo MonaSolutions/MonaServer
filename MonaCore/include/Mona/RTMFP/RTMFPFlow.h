@@ -20,7 +20,7 @@ This file is a part of Mona.
 #pragma once
 
 #include "Mona/Mona.h"
-#include "Mona/FlashStream.h"
+#include "Mona/FlashMainStream.h"
 #include "Mona/PoolBuffers.h"
 #include "Mona/RTMFP/RTMFPWriter.h"
 
@@ -31,7 +31,8 @@ class RTMFPPacket;
 class RTMFPFragment;
 class RTMFPFlow : public virtual Object {
 public:
-	RTMFPFlow(UInt64 id,const std::string& signature,Peer& peer,Invoker& invoker,BandWriter& band);
+	RTMFPFlow(UInt64 id,const std::string& signature,Peer& peer,Invoker& invoker, BandWriter& band, std::shared_ptr<FlashMainStream>& pMainStream);
+	RTMFPFlow(UInt64 id,const std::string& signature,const std::shared_ptr<FlashStream>& pStream, Peer& peer,Invoker& invoker, BandWriter& band);
 	virtual ~RTMFPFlow();
 
 	const UInt64		id;

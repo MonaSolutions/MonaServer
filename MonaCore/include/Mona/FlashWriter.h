@@ -41,11 +41,14 @@ public:
 	AMFWriter&				writeAMFError(const char* code, const std::string& description, bool withoutClosing = false) { return writeAMFState("_error", code, description, withoutClosing); }
 	bool					writeMedia(MediaType type,UInt32 time,PacketReader& packet,const Parameters& properties);
 
+	AMFWriter&				writeInfos(const char* name);
+
 	void					writePing() { writeRaw().write16(0x0006).write32((UInt32)Time::Now()); }
 	void					writePong(UInt32 pingTime) { writeRaw().write16(0x0007).write32(pingTime); }
 
 	void					setCallbackHandle(double value) { _callbackHandle = value; _callbackHandleOnAbort = 0; }
-	virtual void			abort() { _callbackHandle = _callbackHandleOnAbort; } // must erase the queueing messages (don't change the writer state)
+	virtual void			clear() { _callbackHandle = _callbackHandleOnAbort; } // must erase the queueing messages (don't change the writer state)
+
 protected:
 	FlashWriter(State state,const PoolBuffers& poolBuffers);
 	FlashWriter(FlashWriter& writer);

@@ -42,7 +42,8 @@ private:
 public:
 	enum {
 		NORMAL_DEATH=0,
-		SERVER_DEATH=0xFFFFFFFB,
+		// 0xFFFFFFX to allow code protocol, like HTTP with value already conventionned
+		SERVER_DEATH=0xFFFFFFFB, 
 		SOCKET_DEATH=0xFFFFFFFC,
 		TIMEOUT_DEATH=0xFFFFFFFD,
 		REJECTED_DEATH=0xFFFFFFFE,

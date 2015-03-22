@@ -157,7 +157,7 @@ bool HTTPWriter::writeMedia(MediaType type,UInt32 time,PacketReader& packet,cons
 		case STOP:
 			break;
 		case INIT: {
-			if (time>0) // one init by mediatype, we want here just init one time!
+			if (time!=DATA) // one init by mediatype, we want here just init one time!
 				break;
 			Exception ex;
 			if (!_pRequest)

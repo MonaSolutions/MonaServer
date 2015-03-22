@@ -41,6 +41,7 @@ namespace Mona {
 
 
 ServerApplication*		ServerApplication::_PThis(NULL);
+TerminateSignal			ServerApplication::_TerminateSignal;
 
 
 #if defined(_WIN32)
@@ -55,12 +56,25 @@ void  ServerApplication::ServiceControlHandler(DWORD control) {
 	case SERVICE_CONTROL_SHUTDOWN:
 		_ServiceStatus.dwCurrentState = SERVICE_STOP_PENDING;
 		SetServiceStatus(_ServiceStatusHandle, &_ServiceStatus);
-		_Terminate.set();
+		_TerminateSignal.set();
 		return;
 	case SERVICE_CONTROL_INTERROGATE:
 		break;
 	}
 	SetServiceStatus(_ServiceStatusHandle, &_ServiceStatus);
+}
+
+
+BOOL ServerApplication::ConsoleCtrlHandler(DWORD ctrlType) {
+	switch (ctrlType) {
+	case CTRL_C_EVENT:
+	case CTRL_CLOSE_EVENT:
+	case CTRL_BREAK_EVENT:
+		_TerminateSignal.set();
+		return TRUE;
+	default:
+		return FALSE;
+	}
 }
 
 void ServerApplication::ServiceMain(DWORD argc, LPTSTR* argv) {
@@ -90,7 +104,7 @@ void ServerApplication::ServiceMain(DWORD argc, LPTSTR* argv) {
 		if (_PThis->init(argc, const_cast<LPCSTR*>(argv))) {
 			_ServiceStatus.dwCurrentState = SERVICE_RUNNING;
 			SetServiceStatus(_ServiceStatusHandle, &_ServiceStatus);
-			int rc = _PThis->main(*_PThis);
+			int rc = _PThis->main(_TerminateSignal);
 			_ServiceStatus.dwWin32ExitCode = rc ? ERROR_SERVICE_SPECIFIC_ERROR : 0;
 			_ServiceStatus.dwServiceSpecificExitCode = rc;
 		}
@@ -118,6 +132,9 @@ int ServerApplication::run(int argc, const char** argv) {
 #endif
 		if (!hasConsole() && isService())
 			return 0;
+
+		SetConsoleCtrlHandler(ConsoleCtrlHandler, TRUE);
+
 		if (!init(argc, argv))
 			return EXIT_OK;
 		Exception ex;
@@ -135,7 +152,7 @@ int ServerApplication::run(int argc, const char** argv) {
 				NOTE("The application is no more registered as a service");
 			return EXIT_OK;
 		}
-		return main(*_PThis);
+		return main(_TerminateSignal);
 #if !defined(_DEBUG)
 	} catch (exception& ex) {
 		FATAL(ex.what());
@@ -235,7 +252,7 @@ int ServerApplication::run(int argc, const char** argv) {
 					result = EXIT_OSERR;
 			}
 			if(result==EXIT_OK) {
-				result = main(*_PThis);
+				result = main(_TerminateSignal);
 			}
 		}
 #if !defined(_DEBUG)

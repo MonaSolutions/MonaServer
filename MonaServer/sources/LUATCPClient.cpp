@@ -28,7 +28,7 @@ using namespace Mona;
 LUATCPClient::LUATCPClient(const SocketAddress& peerAddress,SocketFile& file,const SocketManager& manager, lua_State* pState) : _pState(pState), TCPClient(peerAddress, file, manager),
 	_onError([this](const Exception& ex) {_error = ex.error();}),
 	_onData([this](PoolBuffer& pBuffer) { return onData(pBuffer);}),
-	_onDisconnection([this](const SocketAddress& peerAddress) {onDisconnection(peerAddress); }) {
+	_onDisconnection([this](TCPClient& client, const SocketAddress& peerAddress) {onDisconnection(peerAddress); }) {
 
 	OnError::subscribe(_onError);
 	OnDisconnection::subscribe(_onDisconnection);
@@ -38,7 +38,7 @@ LUATCPClient::LUATCPClient(const SocketAddress& peerAddress,SocketFile& file,con
 LUATCPClient::LUATCPClient(const SocketManager& manager,lua_State* pState) : _pState(pState),TCPClient(manager),
 	_onError([this](const Exception& ex) {_error = ex.error();}),
 	_onData([this](PoolBuffer& pBuffer) { return onData(pBuffer);}),
-	_onDisconnection([this](const SocketAddress& peerAddress) {onDisconnection(peerAddress); }) {
+	_onDisconnection([this](TCPClient& client, const SocketAddress& peerAddress) {onDisconnection(peerAddress); }) {
 
 	OnError::subscribe(_onError);
 	OnDisconnection::subscribe(_onDisconnection);

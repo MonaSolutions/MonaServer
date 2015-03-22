@@ -35,7 +35,7 @@ namespace Mona {
 
 
 HTTPSession::HTTPSession(const SocketAddress& peerAddress, SocketFile& file, Protocol& protocol, Invoker& invoker) :
-	_indexDirectory(true), WSSession(peerAddress, file, protocol, invoker), _writer(*this), _pListener(NULL),
+	_indexDirectory(true), WSSession(peerAddress, file, protocol, invoker), _writer(*this),
 	_decoder(invoker), onDecoded([this](const std::shared_ptr<HTTPPacket>& pPacket, const SocketAddress& address) {receive(pPacket); }), onDecodedEnd([this]() {flush(); }),
 	onCallProperties([this](DataReader& reader,string& value) {
 		HTTP::OnCookie onCookie([this,&value](const char* key, const char* data, UInt32 size) {
@@ -65,10 +65,9 @@ void HTTPSession::kill(UInt32 type){
 
 	peer.OnCallProperties::unsubscribe(onCallProperties);
 
-	if (_pListener) {
-		invoker.unsubscribe(peer, _pListener->publication.name());
-		_pListener = NULL;
-	}
+	closePublication();
+	closeSusbcription();
+
 	if (WSSession::enabled())
 		WSSession::kill(type);
 	else
@@ -92,10 +91,8 @@ void HTTPSession::receive(const shared_ptr<HTTPPacket>& pPacket) {
 	_writer.beginRequest(pPacket);
 
 	// HTTP is a simplex communication, so if request, remove possible old subscription
-	if (_pListener) {
-		invoker.unsubscribe(peer, _pListener->publication.name());
-		_pListener = NULL;
-	}
+	closePublication();
+	closeSusbcription();
 
 	//// Disconnection if path has changed
 	if(peer.connected && (pPacket->connection&HTTP::CONNECTION_UPDATE || String::ICompare(peer.path,pPacket->path)!=0 || String::ICompare(peer.query,pPacket->query)!=0)) // if path change or query!! (onConnection grab query!)
@@ -246,7 +243,7 @@ void HTTPSession::processGet(Exception& ex, HTTPPacket& request, QueryReader& pa
 			if (request.contentType == HTTP::CONTENT_ABSENT)
 				request.contentType = HTTP::ExtensionToMIMEType(file.extension(), request.contentSubType);
 			if (request.contentType == HTTP::CONTENT_VIDEO || request.contentType == HTTP::CONTENT_AUDIO) {
-				if (_pListener = invoker.subscribe(ex, peer, file.baseName(), _writer)) {
+				if (openSubscribtion(ex, file.baseName(), _writer)) {
 					return;
 				}
 			}

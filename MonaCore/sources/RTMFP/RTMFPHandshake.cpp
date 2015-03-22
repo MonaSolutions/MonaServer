@@ -25,7 +25,6 @@ This file is a part of Mona.
 using namespace std;
 
 
-
 namespace Mona {
 
 RTMFPHandshake::RTMFPHandshake(RTMFProtocol& protocol, Sessions& sessions, Invoker& invoker) : RTMFPSession(protocol, invoker, 0,RTMFP_DEFAULT_KEY ,RTMFP_DEFAULT_KEY, "RTMFPHandshake"),
@@ -37,11 +36,9 @@ RTMFPHandshake::RTMFPHandshake(RTMFProtocol& protocol, Sessions& sessions, Invok
 
 }
 
-
 RTMFPHandshake::~RTMFPHandshake() {
-	fail(""); // To avoid the failSignalo of RTMFPSession
 	clear();
-	kill(SERVER_DEATH); // true because if RTMFPHandshake is deleted it means that the sevrer is closing
+	kill(SOCKET_DEATH); // kill to avoid CRITIC log (nobody will kill it), SOCKET_DEATH to avoid the failSignal of RTMFPSession
 }
 
 void RTMFPHandshake::manage() {
@@ -102,8 +99,10 @@ void RTMFPHandshake::receive(const SocketAddress& address, BinaryReader& request
 	UInt8 idResponse = handshakeHandler(id,address, request,response);
 	if (!idResponse)
 		return;
+	
 	BinaryWriter(response.data() + RTMFP_HEADER_SIZE, 3).write8(idResponse).write16(response.size() - RTMFP_HEADER_SIZE - 3);
-	flush(response.size());
+	(UInt32&)farId = 0;
+	flush(0x0b, response.size());
 }
  
 RTMFPSession* RTMFPHandshake::createSession(const UInt8* cookieValue) {
@@ -115,10 +114,8 @@ RTMFPSession* RTMFPHandshake::createSession(const UInt8* cookieValue) {
 
 	RTMFPCookie& cookie(*itCookie->second);
 
-	(UInt32&)farId = cookie.farId;
-
 	// Create session
-	RTMFPSession* pSession = &_sessions.create<RTMFPSession,Sessions::BYPEER | Sessions::BYADDRESS>(protocol<RTMFProtocol>(), invoker, farId, cookie.decoder(), cookie.encoder(),cookie.pPeer);
+	RTMFPSession* pSession = &_sessions.create<RTMFPSession,Sessions::BYPEER | Sessions::BYADDRESS>(protocol<RTMFProtocol>(), invoker, cookie.farId, cookie.decoder(), cookie.encoder(),cookie.pPeer);
 	(UInt32&)cookie.id = pSession->id();
 
 	// response!
@@ -127,7 +124,9 @@ RTMFPSession* RTMFPHandshake::createSession(const UInt8* cookieValue) {
 	cookie.read(response);
 	// set the peer address
 	((SocketAddress&)peer.address).set(pSession->peer.address);
-	flush(response.size());
+	
+	(UInt32&)farId = cookie.farId;
+	flush(0x0b, response.size());
 	return pSession;
 }
 
@@ -247,7 +246,7 @@ UInt8 RTMFPHandshake::handshakeHandler(UInt8 id,const SocketAddress& address, Bi
 					if (!pCookie->run(ex)) {
 						delete pCookie;
 						ERROR("RTMFPCookie creation, ", ex.error())
-							return 0;
+						return 0;
 					}
 					_pPeer.reset(new Peer((Handler&)invoker)); // reset peer
 					_cookies.emplace(pCookie->value(), pCookie);

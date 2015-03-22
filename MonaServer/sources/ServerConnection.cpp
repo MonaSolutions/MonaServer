@@ -29,7 +29,7 @@ using namespace Mona;
 ServerConnection::ServerConnection(const SocketAddress& address,const SocketManager& manager,const char* query) : address(address), _pClient(new TCPClient(manager)), _connected(false), isTarget(true),
 	_onError([this](const Exception& ex) { _ex.set(ex); }),
 	_onData([this](PoolBuffer& pBuffer) { return onData(pBuffer); }),
-	_onDisconnection([this](const SocketAddress&) { onDisconnection(); }) {
+	_onDisconnection([this](TCPClient& client, const SocketAddress&) { onDisconnection(); }) {
 
 	if (query)
 		Util::UnpackQuery(query,_properties);
@@ -42,7 +42,7 @@ ServerConnection::ServerConnection(const SocketAddress& address,const SocketMana
 ServerConnection::ServerConnection(const SocketAddress& address,SocketFile& file,const SocketManager& manager) : address(address), _pClient(new TCPClient(address,file,manager)), _connected(false), isTarget(false),
 	_onError([this](const Exception& ex) { _ex.set(ex); }),
 	_onData([this](PoolBuffer& pBuffer) { return onData(pBuffer); }),
-	_onDisconnection([this](const SocketAddress&) { onDisconnection(); }) {
+	_onDisconnection([this](TCPClient& client, const SocketAddress&) { onDisconnection(); }) {
 
 	_pClient->OnError::subscribe(_onError);
 	_pClient->OnDisconnection::subscribe(_onDisconnection);
@@ -216,4 +216,23 @@ void ServerConnection::onDisconnection(){
 		_connected=false;
 	MapParameters::clear();
 	OnDisconnection::raise(_ex,*this); // in last because can delete this
+}
+
+bool ServerConnection::addressFromProtocol(Exception& ex, const string& protocol,SocketAddress& socketAddress) {
+
+	string buffer;
+	UInt16 port(0);
+	if (!getNumber(String::Format(buffer, protocol, ".port"), port)) {
+		ex.set(Exception::NETADDRESS, "Impossible to determine ", protocol, " port of ", address.toString(), " server");
+		return false;
+	}
+	else if (port == 0) {
+		ex.set(Exception::NETADDRESS, "Server ", address.toString(), " has ", protocol, " disabled");
+		return false;
+	}
+
+	if (!getString(String::Format(buffer, protocol, ".publicHost"), buffer) && !getString("publicHost", buffer))
+		buffer = address.host().toString();
+
+	return socketAddress.set(ex, buffer, port);
 }

@@ -35,7 +35,7 @@ private:
 	}
 
 ///// MAIN
-	int main(Mona::TerminateSignal& terminateSignal) {
+	int main(TerminateSignal& terminateSignal) {
 
 		// starts the server
 		MonaServer server(terminateSignal, *this);

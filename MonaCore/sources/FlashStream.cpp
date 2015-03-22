@@ -18,9 +18,6 @@ This file is a part of Mona.
 */
 
 #include "Mona/FlashStream.h"
-#include "Mona/Invoker.h"
-#include "Mona/ParameterWriter.h"
-#include "Mona/Util.h"
 #include "Mona/Logs.h"
 
 
@@ -28,8 +25,7 @@ using namespace std;
 
 namespace Mona {
 
-
-FlashStream::FlashStream(UInt32 id, Invoker& invoker, Peer& peer) : id(id), invoker(invoker), peer(peer), _pPublication(NULL), _pListener(NULL), _bufferTime(0) {
+FlashStream::FlashStream(UInt16 id, Invoker& invoker, Peer& peer) : id(id), invoker(invoker), peer(peer), _pPublication(NULL), _pListener(NULL), _bufferTime(0) {
 	DEBUG("FlashStream ",id," created")
 }
 
@@ -41,20 +37,25 @@ FlashStream::~FlashStream() {
 void FlashStream::disengage(FlashWriter* pWriter) {
 	// Stop the current  job
 	if(_pPublication) {
-		string name = _pPublication->name();
-		invoker.unpublish(peer,name);
+		const string& name(_pPublication->name());
 		if(pWriter)
 			pWriter->writeAMFStatus("NetStream.Unpublish.Success",name + " is now unpublished");
+		 // do after writeAMFStatus because can delete the publication, so corrupt name reference
+		invoker.unpublish(peer,name);
 		_pPublication = NULL;
 	}
 	if(_pListener) {
-		string name = _pListener->publication.name();
+		const string& name(_pListener->publication.name());
+		if (pWriter) {
+			pWriter->writeAMFStatus("NetStream.Play.Stop", "Stopped playing " + name);
+			OnStop::raise(id, *pWriter); // stream end
+		}
+		 // do after writeAMFStatus because can delete the publication, so corrupt publication name reference
 		invoker.unsubscribe(peer,name);
-		if(pWriter)
-			pWriter->writeAMFStatus("NetStream.Play.Stop","Stopped playing " + name);
 		_pListener = NULL;
 	}
 }
+
 
 bool FlashStream::process(AMF::ContentType type,UInt32 time,PacketReader& packet,FlashWriter& writer,double lostRate) {
 	if(type==AMF::EMPTY)
@@ -105,7 +106,6 @@ bool FlashStream::process(AMF::ContentType type,UInt32 time,PacketReader& packet
 	return writer.state()!=Writer::CLOSED;
 }
 
-
 void FlashStream::messageHandler(const string& name, AMFReader& message, FlashWriter& writer) {
 	if (name == "play") {
 		disengage(&writer);
@@ -114,25 +114,25 @@ void FlashStream::messageHandler(const string& name, AMFReader& message, FlashWr
 		message.readString(publication);
 		// TODO implements completly NetStream.play method, with possible NetStream.play.failed too!
 		Exception ex;
-		_pListener = invoker.subscribe(ex, peer, publication, writer);
-		if (ex) {
+		_pListener = invoker.subscribe(ex, peer, publication, writer); // ex already log displayed
+		if (!_pListener) {
 			writer.writeAMFStatus("NetStream.Play.Failed", ex.error());
 			return;
 		}
+		
+		OnStart::raise(id, writer); // stream begin
+		writer.writeAMFStatus("NetStream.Play.Reset", "Playing and resetting " + publication); // for entiere playlist
+		writer.writeAMFStatus("NetStream.Play.Start", "Started playing "+publication); // for item
+		AMFWriter& amf(writer.writeInfos("|RtmpSampleAccess"));
+		amf.writeBoolean(true); // audioSampleAccess
+		amf.writeBoolean(true); // videoSampleAccess
+
 		double number;
 		if (message.readNumber(number))
 			_pListener->setNumber("unbuffered", number == -3000);
-
-		if (_bufferTime > 0) {
-			// To do working the buffertime on receiver side
-			BinaryWriter& raw = writer.writeRaw();
-			raw.write16(0);
-			raw.write32(id);
+		if (_bufferTime > 0)
 			_pListener->setNumber("bufferTime", _bufferTime);
-		}
-		writer.writeAMFStatus("NetStream.Play.Reset", "Playing and resetting " + publication); // for entiere playlist
-		writer.writeAMFStatus("NetStream.Play.Start", "Started playing " + publication); // for item
-
+	
 	} else if (name == "closeStream") {
 		disengage(&writer);
 	} else if (name == "publish") {
@@ -158,6 +158,34 @@ void FlashStream::messageHandler(const string& name, AMFReader& message, FlashWr
 		message.readBoolean(_pListener->receiveAudio);
 	} else if (_pListener && name == "receiveVideo") {
 		message.readBoolean(_pListener->receiveVideo);
+
+	} else if (_pListener && name == "pause") {
+		bool paused(true);
+		message.readBoolean(paused);
+		// TODO support pause for VOD
+		
+		if (paused) {
+			// useless, client knows it when it calls NetStream::pause method
+			// writer.writeAMFStatus("NetStream.Pause.Notify", _pListener->publication.name() + " paused");
+		} else {
+			double position;
+			if (message.readNumber(position))
+				_pListener->seek((UInt32)position);
+			OnStart::raise(id, writer); // stream begin
+			// useless, client knows it when it calls NetStream::resume method
+			//	writer.writeAMFStatus("NetStream.Unpause.Notify", _pListener->publication.name() + " resumed");
+		}
+
+	} else if (_pListener && name == "seek") {
+		double position;
+		if (message.readNumber(position)) {
+			_pListener->seek((UInt32)position);
+			 // TODO support seek for VOD
+			OnStart::raise(id, writer); // stream begin
+			// useless, client knows it when it calls NetStream::seek method, and wait "NetStream.Seek.Complete" rather (raised by client side)
+			// writer.writeAMFStatus("NetStream.Seek.Notify", _pListener->publication.name() + " seek operation");
+		} else
+			writer.writeAMFStatus("NetStream.Seek.InvalidTime", _pListener->publication.name() + " seek operation must pass in argument a milliseconds position time");
 	} else if (_pPublication && name == "@setDataFrame") {
 		// metadata
 		_pPublication->writeProperties(message);
@@ -169,18 +197,18 @@ void FlashStream::messageHandler(const string& name, AMFReader& message, FlashWr
 
 
 void FlashStream::rawHandler(UInt8 type, PacketReader& packet, FlashWriter& writer) {
-	if(packet.read16()==0x22) { // TODO Here we receive publication bounds (id + tracks), useless? maybe to record a file and sync tracks?
-		//TRACE("Bound ",id," : ",data.read32()," ",data.read32());
+	if(packet.read16()==0x22) { // TODO Here we receive RTMFP flow sync signal, useless to support it!
+		//TRACE("Sync ",id," : ",data.read32(),"/",data.read32());
 		return;
 	}
-	ERROR("Raw message ",type," unknown on stream ",id);
+	ERROR("Raw message ",Format<UInt8>("%.2x",type),"/",packet.read16()," unknown on stream ",id);
 }
 
 UInt32 FlashStream::bufferTime(UInt32 ms) {
 	_bufferTime = ms;
 	INFO("setBufferTime ", ms, "ms on stream ",id)
-	if(_pListener)
-		_pListener->setNumber("bufferTime",ms);
+	if (_pListener)
+		_pListener->setNumber("bufferTime", ms);
 	return _bufferTime;
 }
 
@@ -225,11 +253,6 @@ void FlashStream::videoHandler(UInt32 time,PacketReader& packet, double lostRate
 		return;
 	}
 	_pPublication->pushVideo(time,packet,peer.ping(),lostRate);
-}
-
-void FlashStream::flush() {
-	if(_pPublication)
-		_pPublication->flush();
 }
 
 

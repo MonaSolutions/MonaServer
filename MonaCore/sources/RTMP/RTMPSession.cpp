@@ -29,7 +29,19 @@ using namespace std;
 namespace Mona {
 
 
-RTMPSession::RTMPSession(const SocketAddress& peerAddress, SocketFile& file, Protocol& protocol, Invoker& invoker) : _unackBytes(0),_decrypted(0), _chunkSize(RTMP::DEFAULT_CHUNKSIZE), _winAckSize(RTMP::DEFAULT_WIN_ACKSIZE),_handshaking(0), _pWriter(NULL), TCPSession(peerAddress,file, protocol, invoker),_isRelative(true) {
+RTMPSession::RTMPSession(const SocketAddress& peerAddress, SocketFile& file, Protocol& protocol, Invoker& invoker) : _mainStream(invoker,peer),_unackBytes(0),_decrypted(0), _chunkSize(RTMP::DEFAULT_CHUNKSIZE), _winAckSize(RTMP::DEFAULT_WIN_ACKSIZE),_handshaking(0), _pWriter(NULL), TCPSession(peerAddress,file, protocol, invoker),_isRelative(true),
+		onStreamStart([this](UInt16 id, FlashWriter& writer) {
+			// Stream Begin signal
+			(_pController ? (FlashWriter&)*_pController : writer).writeRaw().write16(0).write32(id);
+		}),
+		onStreamStop([this](UInt16 id, FlashWriter& writer) {
+			// Stream EOF signal
+			(_pController ? (FlashWriter&)*_pController : writer).writeRaw().write16(1).write32(id);
+		}) {
+	
+	_mainStream.OnStart::subscribe(onStreamStart);
+	_mainStream.OnStop::subscribe(onStreamStop);
+
 	dumpJustInDebug = true;
 }
 
@@ -40,8 +52,15 @@ void RTMPSession::kill(UInt32 type) {
 	// writeAMFError("Connect.AppShutdown","server is stopping");
 	//_writer.close(...);
 
-	_pStream.reset();
-	Session::kill(type);
+	_mainStream.disengage(); // disengage FlashStreams because the writers "engaged" will be deleted
+
+	_writers.clear();
+	_pController.reset();
+
+	Session::kill(type); // at the end to "unpublish or unsubscribe" before "onDisconnection"!
+
+	_mainStream.OnStart::unsubscribe(onStreamStart);
+	_mainStream.OnStop::unsubscribe(onStreamStop);
 }
 
 void RTMPSession::readKeys() {
@@ -166,10 +185,16 @@ bool RTMPSession::buildPacket(BinaryReader& packet) {
 			if(headerSize>=12) {
 				_isRelative = false;
 				// STREAM
-				channel.streamId = packet.read8();
-				channel.streamId += packet.read8() << 8;
-				channel.streamId += packet.read8() << 16;
-				channel.streamId += packet.read8() << 24;
+				UInt32 streamId(packet.read8());
+				streamId += packet.read8() << 8;
+				streamId += packet.read8() << 16;
+				streamId += packet.read8() << 24;
+				if (!_mainStream.getStream(streamId, channel.pStream) && streamId) {
+					ERROR("RTMPSession ",name()," indicates a non-existent ",streamId," NetStream");
+					kill(PROTOCOL_DEATH);
+					return false;
+				}
+
 			}
 		}
 
@@ -259,6 +284,9 @@ void RTMPSession::receive(BinaryReader& packet) {
 		reader.next(1);
 
 	switch(channel.type) {
+		case AMF::ABORT:
+			channel.reset(_pWriter);
+			break;
 		case AMF::CHUNKSIZE:
 			_chunkSize = reader.read32();
 			break;
@@ -271,10 +299,14 @@ void RTMPSession::receive(BinaryReader& packet) {
 			break;
 		default: {
 			 // TODO peer.serverAddress?	
-			if(invoker.flashStream(channel.streamId, peer, _pStream).process(channel.type,channel.absoluteTime, reader,*_pWriter) && peer.connected)
-				_pWriter->isMain = true;
-			else
-				kill(REJECTED_DEATH);	
+
+			if (!channel.pStream) {
+				if(_mainStream.process(channel.type,channel.absoluteTime, reader,*_pWriter) && peer.connected)
+					_pWriter->isMain = true;
+				else
+					kill(REJECTED_DEATH);
+			} else
+				channel.pStream->process(channel.type, channel.absoluteTime, reader, *_pWriter);
 		}
 	}
 

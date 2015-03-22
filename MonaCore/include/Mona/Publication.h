@@ -56,12 +56,13 @@ public:
 
 	const Listeners			listeners;
 
+	UInt32					lastTime() const { return _lastTime; }
+
 	const QualityOfService&	videoQOS() const { return _videoQOS; }
 	const QualityOfService&	audioQOS() const { return _audioQOS; }
 	const QualityOfService&	dataQOS() const { return _dataQOS; }
 
 	const Parameters&		properties() const { return _properties; }
-	const UInt8*			propertiesRaw(UInt32& size) const { return (size=_propertiesWriter.packet.size())==0 ? NULL : _propertiesWriter.packet.data(); }
 
 	void					writeProperties(DataReader& reader);
 	void					clearProperties();
@@ -88,7 +89,7 @@ private:
 	std::string							_name;
 	std::map<Client*,Listener*>			_listeners;
 
-	AMFWriter							_propertiesWriter;
+	AMFWriter							_propertiesWriter; // In AMF because a format is required and AMF is a good network compressed format
 	MapParameters						_properties;
 
 	UInt32								_lastTime;

@@ -134,12 +134,14 @@ const Parameters& Util::Environment() {
 	lock_guard<mutex> lock(_MutexEnvironment);
 	if (_Environment.count() > 0)
 		return _Environment;
-	char *name = *environ;
-	for (UInt32 i = 0; name = *(environ + i); ++i) {
-		const char* value = strchr(name, '=');
-		if (value)
-			(char&)*(value++) = 0;
-		_Environment.setString(name, value);
+	const char* line(*environ);
+	for (UInt32 i = 0; line = *(environ + i); ++i) {
+		const char* value = strchr(line, '=');
+		if (value) {
+			string name(line,(value++)-line);
+			_Environment.setString(name, value);
+		} else
+			_Environment.setString(line, NULL);
 	}
 	return _Environment;
 }
@@ -152,10 +154,15 @@ size_t Util::UnpackUrl(const char* url, string& address, string& path, string& q
 
 	const char* it = url;
 
+	bool isFile(true);
+	size_t lastPos = 0; /// Position of last '/' in path
+
 	// Get address
 	while (*it) {
-		if (*it == '/' || *it == '\\') // no address, just path
+		if (*it == '/' || *it == '\\') { // no address, just 
+			isFile = false;
 			break;
+		}
 		if (*it == ':') {
 			++it;
 			while (*it && (*it == '/' || *it == '\\'))
@@ -166,15 +173,21 @@ size_t Util::UnpackUrl(const char* url, string& address, string& path, string& q
 			while (*itEnd && *itEnd != '/' && *itEnd != '\\')
 				++itEnd;
 			address.assign(it, itEnd);
-			it = itEnd;
+			url = it = itEnd; // on slash after address
+			isFile = false;
 			break;
 		}
 		++it;
 	}
 
+
+	// Normalize path if was not starting with a first slash
+	if (it != url) {
+		path.assign("/").append(url, it - url);
+		++lastPos;
+	}
+
 	// Normalize path => replace // by / and \ by / AND remove the last '/'
-	bool isFile(false);
-	size_t lastPos = 0; /// Position of last '/'
     while (*it) {
 		// Extract query part
         if (*it == '?') {

@@ -80,23 +80,22 @@ AMFWriter& RTMPWriter::write(AMF::ContentType type,UInt32 time,const UInt8* data
 	if(state()==CLOSED)
         return AMFWriter::Null;
 
-	if (time < _channel.absoluteTime)
-		_channel.absoluteTime = time;
-
 	UInt32 absoluteTime = time;
-
 	UInt8 headerFlag=0;
-	if(_channel.streamId == channel.streamId) {
-		++headerFlag;
-		time -= _channel.absoluteTime; // relative time!
-		if (_channel.type == type && data && _channel.bodySize == size) {
-			++headerFlag;
-			if (_channel.time==time)
-				++headerFlag;
-		}
-	} else
-		_channel.streamId=channel.streamId;
 	
+	if (time >= _channel.absoluteTime) {
+		if(_channel.pStream == channel.pStream) {
+			++headerFlag;
+			time -= _channel.absoluteTime; // relative time!
+			if (_channel.type == type && data && _channel.bodySize == size) {
+				++headerFlag;
+				if (_channel.time==time)
+					++headerFlag;
+			}
+		} else
+			_channel.pStream=channel.pStream;
+	} // else time<_channel.absoluteTime => header must be full
+
 	_channel.absoluteTime =	absoluteTime;
 	_channel.time = time;
 	_channel.type = type;
@@ -108,6 +107,7 @@ AMFWriter& RTMPWriter::write(AMF::ContentType type,UInt32 time,const UInt8* data
 	BinaryWriter& packet = writer.packet;
 
 	_pSender->headerSize = 12 - 4*headerFlag;
+
 	if (id>319) {
 		_pSender->headerSize += 2;
 		packet.write8((headerFlag<<6)| 1);
@@ -134,10 +134,11 @@ AMFWriter& RTMPWriter::write(AMF::ContentType type,UInt32 time,const UInt8* data
 			packet.next(3); // For size
 			packet.write8(type);
 			if (_pSender->headerSize > 8) {
-				packet.write8(_channel.streamId);
-				packet.write8(_channel.streamId >> 8);
-				packet.write8(_channel.streamId >> 16);
-				packet.write8(_channel.streamId >> 24);
+				UInt32 streamId(_channel.pStream ? _channel.pStream->id : 0);
+				packet.write8(streamId);
+				packet.write8(streamId >> 8);
+				packet.write8(streamId >> 16);
+				packet.write8(streamId >> 24);
 				// if(type==AMF::DATA) TODO?
 				//	pWriter->write8(0);
 				if (_pSender->headerSize > 12)
@@ -152,7 +153,6 @@ AMFWriter& RTMPWriter::write(AMF::ContentType type,UInt32 time,const UInt8* data
 	}
 	return writer;
 }
-
 
 
 } // namespace Mona

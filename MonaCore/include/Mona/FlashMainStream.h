@@ -29,16 +29,17 @@ public:
 	FlashMainStream(Invoker& invoker,Peer& peer);
 	virtual ~FlashMainStream();
 
-	FlashStream* stream(UInt32 id);
+	void	disengage(FlashWriter* pWriter = NULL);
+
+	FlashStream* getStream(UInt16 id, std::shared_ptr<FlashStream>& pStream);
 
 	void flush() {for(auto& it : _streams) it.second->flush(); }
-
+	
 private:
-
 	void	messageHandler(const std::string& name, AMFReader& message, FlashWriter& writer);
 	void	rawHandler(UInt8 type, PacketReader& packet, FlashWriter& writer);
 
-	std::map<UInt32,std::shared_ptr<FlashStream>>	_streams;
+	std::map<UInt16,std::shared_ptr<FlashStream>>	_streams;
 	Group*											_pGroup;
 	std::string										_buffer;
 };

@@ -227,7 +227,7 @@ bool ICE::ProcessSDPPacket(DataReader& packet,Peer& current,Writer& currentWrite
 				continue;
 			} else if(prop=="candidate") {
 				packet.readString(candidate.candidate);
-				/* To test without host candidates
+				*//* To test without host candidates
 				string::size_type found = candidate.candidate.find("192.168.1.11");
 				if(found==string::npos)
 					found = candidate.candidate.find("192.168.56.1");
