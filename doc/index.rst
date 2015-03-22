@@ -37,7 +37,7 @@ The following scheme is a little preview of what is possible with MonaServer :
   :align: center
 
 
-To start with **MonaServer** read first the :doc:`quickstart` page, then you can go further with the :doc:`serverapp` page.
+To start with **MonaServer** read first the :doc:`quickstart` guide, then you can go further with the :doc:`serverapp` page or simply go to the :doc:`installation` page.
 
 You want to see what **MonaServer** can do for you? Let's go to the sample page : 
 

@@ -108,17 +108,25 @@ methods
 - **absolutePath(path)**, take in first parameter the application *path* and returns a absolute way for its folder. Helpful to separate the code of your server application in many LUA_ files (see :ref:`ref-lua-extensions`).
 - **addToBlacklist(...)**, add to the blacklist the address(es) ip given as input argument(s).
 - **removeFromBlacklist(...)**, remove from the blacklist the address(es) ip given as input argument(s).
+- **createIPAddress(address)**, convert an IP Address string to an IPAddress_ object without DNS resolution (not blocking method).
+- **createIPAddressWithDNS(address)**, convert an IP Address string to an IPAddress_ object with DNS resolution (blocking method).
+- **createSocketAddress(address)**, convert a Socket Address string (with host and port) to a SocketAddress_ object without DNS resolution (not blocking method).
+- **createSocketAddressWithDNS(address)**, convert a Socket Address string (with host and port) to a SocketAddress_ object with DNS resolution (blocking method).
 - **createTCPClient()**, return a TCP client, see :doc:`serversocket` page for more details.
 - **createTCPServer()**, return a TCP server, see :doc:`serversocket` page for more details.
 - **createUDPSocket([allowBroadcast])**, return a UDP socket. The optional boolean *allowBroadcast* argument allows broadcasting date by this socket (by default it's to *false*). See :doc:`serversocket` page for more details.
 - **publish(name)**, publishs a server publication with the name given, this method returns a Publication_ object if successful, or *nil* otherwise. Indeed it can fail if a publication with the same name exists already. Read Publication_ object thereafter to get more details on how push audio,video or data packet for this publication.
-- **fromAMF(data)**, convert the AMF data given in parameter in multiple LUA_ types relating (see :ref:`ref-amf-to-lua` to know how AMF/LUA_ conversion works). It returns multiple LUA_ data resulting.
+- **fromAMF(data)**, convert the AMF data given in parameter in multiple LUA_ types relating (see :ref:`ref-amf-to-lua` to know how AMF/LUA_ conversion works). It returns multiple LUA_ data variables.
 - **toAMF(...)**, convert the multiple LUA_ parameters given in a AMF format (see :ref:`ref-amf-to-lua` to know how AMF/LUA_ conversion works). It returns a string which contain data converted.
 - **toAMF0(...)**, exactly same that the precedent method, but with a conversion priority to AMF0 format (when possible).
-- **fromJSON(data)**, convert the JSON data given in parameter in multiple LUA_ types relating (see :ref:`ref-json-to-lua` to know how JSON/LUA_ conversion works). It returns multiple LUA_ data resulting.
-- **toJSON(...)**, convert the multiple LUA_ parameters given in a JSON format (see :ref:`ref-json-to-lua` to know how JSON/LUA_ conversion works). It returns a string which contain data converted.
-- **fromXML(data)**, convert the XML data given in parameter in multiple LUA_ types relating (see :ref:`ref-xmlrpc-to-lua` to know how XMLRPC/LUA_ conversion works). It returns multiple LUA_ data resulting.
-- **toXML(...)**, convert the multiple LUA_ parameters given in a XML format (see :ref:`ref-xmlrpc-to-lua` to know how XMLRPC/LUA_ conversion works). It returns a string which contain data converted.
+- **fromJSON(data)**, convert the JSON data given in parameter in multiple LUA_ types relating (see :ref:`ref-json-to-lua` to know how JSON/LUA_ conversion works). It returns multiple LUA_ data variables.
+- **toJSON(...)**, convert the multiple LUA_ parameters given in a JSON format (see :ref:`ref-json-to-lua` to know how Query/LUA_ conversion works). It returns a string which contain data converted.
+- **fromQuery(data)**, convert the `Query string`_ data given in parameter in multiple LUA_ types relating (see :ref:`ref-json-to-lua` to know how Query/LUA_ conversion works). It returns multiple LUA_ data variables.
+- **toQuery(...)**, convert the multiple LUA_ parameters given in a `Query string`_ format (see :ref:`ref-json-to-lua` to know how JSON/LUA_ conversion works). It returns a string which contain data converted.
+- **fromXML(data)**, convert the XML data given in parameter in multiple LUA_ types relating (see :ref:`ref-xml-compatibility` to know how XML/LUA_ conversion works). It returns multiple LUA_ data variables.
+- **toXML(...)**, convert the multiple LUA_ parameters given in a XML format (see :ref:`ref-xml-compatibility` to know how XML/LUA_ conversion works). It returns a string which contain data converted.
+- **fromXMLRPC(data)**, convert the XML-RPC_ data given in parameter in multiple LUA_ types relating (see :ref:`ref-xmlrpc-to-lua` to know how XMLRPC/LUA_ conversion works). It returns multiple LUA_ data variables.
+- **toXMLRPC(...)**, convert the multiple LUA_ parameters given in a XML-RPC_ format (see :ref:`ref-xmlrpc-to-lua` to know how XMLRPC/LUA_ conversion works). It returns a string which contain data converted.
 - **md5(...)**, computes and returns the MD5 values from input values given as arguments.
 - **sha256(...)**, computes and returns the SHA256 values from input values given as arguments.
 - **split(expression,separator[,option])**, LUA_ has not real split operator, this function fills this gap. It splits the *expression* in relation with the *separator* term given, and returns tokens as a multiple result. A optional number argument indicates if you want to ignore empty tokens (*option* =1), or to remove leading and trailing whitespace from tokens (*option* =2), or the both in same time (*option* =3).
@@ -626,8 +634,49 @@ properties
 - **extension** (read-only), extension of the file
 - **size** (read-only), size of the file
 - **lastModified** (read-only), date of last modification (in seconds)
-- **isDirectory** (read-only), true if the file is a directory
+- **isFolder** (read-only), true if the file is a directory
 - **value** (read-only), full path of the file
+
+IPAddress
+==================
+
+*IPAddress* object gives the properties of an IP address. *IPAddress* objects are created on a *mona:createIPAddress(...)* or *mona:createIPAddressWithDNS(...)* call (see Mona_ object).
+
+properties
+-----------------
+
+- **isWildcard** (read-only), true if this address is the wildcard address (all zero)
+- **isBroadcast** (read-only), true if this address is the local network broadcast address (255.255.255.255, only IPv4 addresses can be broadcast addresses)
+- **isAnyBroadcast** (read-only), true if this address is a broadcast address (only IPv4 addresses can be broadcast addresses)
+- **isLoopback** (read-only), true if this address is a loopback address
+- **isMulticast** (read-only), true if this address is a multicast address (224.0.0.0 to 239.255.255.255 for IPv4, FFxx:x:x:x:x:x:x:x range for IPv6)
+- **isUnicast** (read-only), true if this address is a unicast address (if it is neither a wildcard, broadcast or multicast address)
+- **isLinkLocal** (read-only), true if this address is a link local unicast address (169.254.0.0/16 range for IPv4, FE80:: for IPv6)
+- **isSiteLocal** (read-only), true if this address is a a site local unicast address (10.0.0.0/24, 192.168.0.0/16 or 172.16.0.0 to 172.31.255.255 ranges for IPv4, FEC0:: for IPv6
+- **isIPv4Compatible** (read-only), true if this address is IPv4 compatible (for IPv6 the address must be in the ::x:x range)
+- **isIPv4Mapped** (read-only), true if this address is an IPv4 mapped IPv6 address (For IPv6, the address must be in the ::FFFF:x:x range)
+- **isWellKnownMC** (read-only), true if this address is a well-known multicast address (224.0.0.0/8 range for IPv4, FF0x:x:x:x:x:x:x:x range for IPv6)
+- **isNodeLocalMC** (read-only), true if this address is a node-local multicast address (always false for IPv4, in the FFx1:x:x:x:x:x:x:x range for IPv6)
+- **isLinkLocalMC** (read-only), true if this address is a link-local multicast address (224.0.0.0/24 range for IPv4, FFx2:x:x:x:x:x:x:x range for IPv6)
+- **isSiteLocalMC** (read-only), true if this address is a site-local multicast address (239.255.0.0/16 range for IPv4, FFx5:x:x:x:x:x:x:x for IPv6)
+- **isOrgLocalMC** (read-only), true if this address is an organization-local multicast address (239.192.0.0/16 range for IPv4, FFx8:x:x:x:x:x:x:x range for IPv6)
+- **isGlobalMC** (read-only), true if this address is a global multicast address (224.0.1.0 to 238.255.255.255 range for IPv4, FFxF:x:x:x:x:x:x:x range for IPv6)
+- **isLocal** (read-only), true if this address is local
+- **isIPv6** (read-only), true if this address is a IPv6 address
+- **value** (read-only), the string representation of the address
+
+SocketAddress
+==================
+
+*SocketAddress* object represents a pair *host:port* of a socket connection. *SocketAddress* objects are created on a *mona:createSocketAddress(...)* or *mona:createSocketAddressWithDNS(...)* call (see Mona_ object).
+
+properties
+-----------------
+
+- **host** (read-only), the IPAddress_ object of this socket address
+- **port** (read-only), the port of the socket address
+- **isIPv6** (read-only), true if the host is an IPv6 address
+- **value** (read-only), the string representation of the socket address (*host:port*)
 
 .. _ref-events:
 
@@ -837,6 +886,8 @@ onServerDisconnection(server)
 Call on server disconnection, see :doc:`scalability` for more details on multiple servers usage, or Server_ object.
 
 
+.. _`Query string`: http://en.wikipedia.org/wiki/Query_string
+.. _XML-RPC : http://xmlrpc.scripting.com/spec.html
 .. _LUA: http://www.lua.org/
 .. _NetGroup: http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/net/NetGroup.html
 .. _IDataOutput: http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/utils/IDataOutput.html
