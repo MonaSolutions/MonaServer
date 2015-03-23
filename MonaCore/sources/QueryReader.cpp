@@ -40,11 +40,9 @@ UInt8 QueryReader::followingType() {
 			_value = std::move(key);
 		return false; // we just want the first following key
 	});
-	
-	if (!packet.available())
-		return END;
 
-	SCOPED_STRINGIFY(STR packet.current(),packet.available(), if (Util::UnpackQuery(STR packet.current(), forEach) == 0) return END;)
+	if (Util::UnpackQuery(STR packet.current(), packet.available(), forEach) == 0)
+		return END;
 
 	if (hasProperty)
 		_type = OBJECT;

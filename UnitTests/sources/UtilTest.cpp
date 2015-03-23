@@ -38,17 +38,27 @@ bool TestDecode(string data, const char* result, UInt32 size) {
 
 ADD_TEST(UtilTest, UnpackQuery) {
 	string value;
-	Util::UnpackQuery("name1=value1&name2=value2", Properties);
+	CHECK(Util::UnpackQuery("name1=value1&name2=value2", Properties).count()==2)
 	DEBUG_CHECK(Properties.getString("name1", value) && value == "value1");
 	DEBUG_CHECK(Properties.getString("name2", value) && value == "value2");
 	Properties.clear();
 
-	Util::UnpackQuery("name1=one%20space&name2=%22one+double quotes%22&name3=percent:%25&name4=%27simple quotes%27", Properties);
+
+	string test("name1=one%20space&name2=%22one+double quotes%22&name3=percent:%25&name4=%27simple quotes%27");
+	CHECK(Util::UnpackQuery(test, Properties).count()==4); // test "count" + DecodeUrI
 	DEBUG_CHECK(Properties.getString("name1", value) && value == "one space");
 	DEBUG_CHECK(Properties.getString("name2", value) && value == "\"one double quotes\"");
 	DEBUG_CHECK(Properties.getString("name3", value) && value == "percent:%");
 	DEBUG_CHECK(Properties.getString("name4", value) && value == "'simple quotes'");
+
+	bool next(true);
+	Util::ForEachParameter forEach([&next](const string& name, const char* value) { return next; });
+	CHECK(Util::UnpackQuery(test.c_str(), forEach) == 4); // test "string::pos" + DecodeUrI
+	CHECK(Util::UnpackQuery("name1=value1&name2=value2", 12, forEach) == 1);
+	next = false;
+	CHECK(Util::UnpackQuery(test, forEach) == string::npos);
 }
+
 
 ADD_TEST(UtilTest, UnpackUrlPerf) {
 	string address;

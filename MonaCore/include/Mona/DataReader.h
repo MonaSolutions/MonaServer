@@ -30,7 +30,7 @@ class DataReaderNull;
 class DataReader : public virtual NullableObject {
 public:
 	enum {
-		END=0,
+		END=0, // keep equal to 0!
 		NIL,
 		BOOLEAN,
 		NUMBER,

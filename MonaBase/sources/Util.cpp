@@ -213,7 +213,7 @@ size_t Util::UnpackUrl(const char* url, string& address, string& path, string& q
 			if (*it == '+')
 				path += ' ';
 			else if (*it == '%') {
-				it = DecodeURI(it, path);
+				DecodeURI(it, path);
 				if (*it)
 					path += *it;
 			} else
@@ -226,63 +226,62 @@ size_t Util::UnpackUrl(const char* url, string& address, string& path, string& q
 	return isFile ? lastPos : string::npos;
 }
 
-Parameters& Util::UnpackQuery(const char* query, Parameters& parameters) {
+Parameters& Util::UnpackQuery(const char* query, size_t count, Parameters& parameters) {
 	ForEachParameter forEach([&parameters](const string& key, const char* value) {
 		parameters.setString(key, value);
 		return true;
 	});
-	UnpackQuery(query, forEach);
+	UnpackQuery(query, count, forEach);
 	return parameters;
 }
 
-size_t Util::UnpackQuery(const char* query, const ForEachParameter& forEach) {
+size_t Util::UnpackQuery(const char* query, size_t count, const ForEachParameter& forEach) {
 	const char* it(query);
-	size_t count(0);
+	size_t countPairs(0);
 	string name;
 	string value;
-	while (*it) {
+	while (count && *it) {
 
 		// name
 		name.clear();
-		const char* itEnd(it);
-		while (*itEnd && *itEnd != '=' && *itEnd != '&') {
-			if (*itEnd == '+')
+		while (count && *it && *it != '=' && *it != '&') {
+			if (*it == '+')
 				name += ' ';
-			else if (*itEnd == '%') {
-				itEnd = DecodeURI(itEnd, name);
-				if (*itEnd)
-					name += *itEnd;
+			else if (*it == '%') {
+				DecodeURI(it, name);
+				if (count && *it)
+					name += *it;
 			} else
-				name += *itEnd;
-			++itEnd;
+				name += *it;
+			++it; --count;
+			
 		};
-		it = itEnd;
 		value.clear();
 		bool hasValue(false);
-		if (*it && *it != '&') { // if it's '='
+		if (count && *it && *it != '&') { // if it's '='
 			// value
 			hasValue = true;
-			itEnd = ++it; // skip '='
-			while (*itEnd && *itEnd != '&') {
-				if (*itEnd == '+')
+			++it; count--; // skip '='
+			while (count && *it && *it != '&') {
+				if (*it == '+')
 					value += ' ';
-				else if (*itEnd == '%') {
-						itEnd = DecodeURI(itEnd,value);
+				else if (*it == '%') {
+					DecodeURI(it, value);
 					continue;
 				} else
-					value += *itEnd;
+					value += *it;
 					
-				++itEnd;
+				++it; --count;
 			};
 		}
-		if (*itEnd) // if it's '&'
-			++itEnd;
-		it = itEnd;
+		if (count && *it) { // if it's '&'
+			++it; --count;
+		}
 		if (!forEach(name, hasValue ? value.c_str() : NULL))
 			return string::npos;
-		++count;
+		++countPairs;
 	}
-	return count;
+	return countPairs;
 }
 
 void Util::Dump(const UInt8* data,UInt32 size,Buffer& buffer,const string& header) {

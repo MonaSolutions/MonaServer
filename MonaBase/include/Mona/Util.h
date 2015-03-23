@@ -63,10 +63,14 @@ public:
 	
 	typedef std::function<bool(const std::string&, const char*)> ForEachParameter;
 
-	static Parameters& UnpackQuery(const std::string& query, Parameters& parameters) { return UnpackQuery(query.c_str(), parameters); }
-	static Parameters& UnpackQuery(const char* query, Parameters& parameters);
-	static std::size_t UnpackQuery(const std::string& query, const ForEachParameter& forEach) { return UnpackQuery(query.c_str(), forEach); }
-	static std::size_t UnpackQuery(const char* query, const ForEachParameter& forEach);
+	static Parameters& UnpackQuery(const std::string& query, Parameters& parameters) { return UnpackQuery(query.data(), query.size(), parameters); }
+	static Parameters& UnpackQuery(const char* query, std::size_t count, Parameters& parameters);
+	static Parameters& UnpackQuery(const char* query, Parameters& parameters) { return UnpackQuery(query, std::string::npos, parameters); }
+
+	/// \return the number of key/value found, or string::npos if forEach return false
+	static std::size_t UnpackQuery(const std::string& query, const ForEachParameter& forEach) { return UnpackQuery(query.data(), query.size(), forEach); }
+	static std::size_t UnpackQuery(const char* query, std::size_t count, const ForEachParameter& forEach);
+	static std::size_t UnpackQuery(const char* query, const ForEachParameter& forEach) { return UnpackQuery(query, std::string::npos, forEach); }
 
 
 	static bool ReadIniFile(Exception& ex, const std::string& path, Parameters& parameters);
@@ -74,21 +78,25 @@ public:
 	static unsigned ProcessorCount() { unsigned result(std::thread::hardware_concurrency());  return result > 0 ? result : 1; }
 	static const Parameters& Environment();
 
+	template <typename BufferType>
+	static bool DecodeURI(const char*& value, BufferType& out) { std::size_t count(std::string::npos); return DecodeURI(value, count, out); }
 
 	template <typename BufferType>
-	static const char* DecodeURI(const char* value,BufferType& out) {
-		if (!*value || *value != '%')
-			return value; // nothing, end!
-		if (!*++value) {
+	static bool DecodeURI(const char*& value, std::size_t& count, BufferType& out) {
+		if (!count || !*value || *value != '%')
+			return false; // nothing, end!
+		++value; --count;
+		if (!count || !*value) {
 			String::Append(out,'%');
-			return value; // syntax error
+			return false; // syntax error
 		}
 		char hi = *value;
-		if (!*++value) {
+		++value; --count;
+		if (!count || !*value) {
 			String::Append(out,'%',hi);
-			return value; // syntax error
+			return false; // syntax error
 		}
-		char lo = *value++;
+		char lo = *value++; --count;
 		char c;
 		if (hi >= '0' && hi <= '9')
 			c = hi - '0';
@@ -98,7 +106,7 @@ public:
 			c = hi - 'a' + 10;
 		else {
 			String::Append(out,'%',hi,lo);
-			return value; // syntax error
+			return false; // syntax error
 		}
 		c *= 16;
 		if (lo >= '0' && lo <= '9')
@@ -109,12 +117,12 @@ public:
 			c += lo - 'a' + 10;
 		else {
 			String::Append(out,'%',hi,lo);
-			return value; // syntax error
+			return false; // syntax error
 		}
 	
-		// Decoded! Assign next caracter & return the caracter decoded
+		// Decoded! Assign next caracter & return next char
 		String::Append(out,c);
-		return value;
+		return true;
 	}
 
 	template <typename BufferType>
