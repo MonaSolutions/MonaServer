@@ -226,6 +226,13 @@
     <ClInclude Include="include\Mona\ReferableReader.h" />
     <ClInclude Include="include\Mona\RelayServer.h" />
     <ClInclude Include="include\Mona\RTMFP\RTMFPDecoder.h" />
+    <ClInclude Include="include\Mona\RTSP\RTSPSender.h" />
+    <ClInclude Include="include\Mona\RTSP\RTSPWriter.h" />
+    <ClInclude Include="include\Mona\RTSP\RTSP.h" />
+    <ClInclude Include="include\Mona\RTSP\RTSPDecoder.h" />
+    <ClInclude Include="include\Mona\RTSP\RTSPPacket.h" />
+    <ClInclude Include="include\Mona\RTSP\RTSProtocol.h" />
+    <ClInclude Include="include\Mona\RTSP\RTSPSession.h" />
     <ClInclude Include="include\Mona\SDP.h" />
     <ClInclude Include="include\Mona\Server.h" />
     <ClInclude Include="include\Mona\SplitWriter.h" />
@@ -299,6 +306,11 @@
     <ClCompile Include="sources\RTMFP\RTMFPDecoder.cpp" />
     <ClCompile Include="sources\RTMFP\RTMFPSender.cpp" />
     <ClCompile Include="sources\RTMP\RTMPSender.cpp" />
+    <ClCompile Include="sources\RTSP\RTSP.cpp" />
+    <ClCompile Include="sources\RTSP\RTSPPacket.cpp" />
+    <ClCompile Include="sources\RTSP\RTSPSender.cpp" />
+    <ClCompile Include="sources\RTSP\RTSPSession.cpp" />
+    <ClCompile Include="sources\RTSP\RTSPWriter.cpp" />
     <ClCompile Include="sources\SDP.cpp" />
     <ClCompile Include="sources\Server.cpp" />
     <ClCompile Include="sources\WebSocket\WSDecoder.cpp" />

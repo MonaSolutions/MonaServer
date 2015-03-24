@@ -17,22 +17,32 @@ details (or else see http://www.gnu.org/licenses/).
 This file is a part of Mona.
 */
 
-#include "Mona/Protocols.h"
+#include "Mona/RTSP/RTSP.h"
 
-#include "Mona/RTMP/RTMProtocol.h"
-#include "Mona/RTMFP/RTMFProtocol.h"
-#include "Mona/HTTP/HTTProtocol.h"
-#include "Mona/RTSP/RTSProtocol.h"
 
 namespace Mona {
-	
-void Protocols::load(Sessions& sessions) {
-	loadProtocol<RTMFProtocol>("RTMFP", 1935, sessions);
-	loadProtocol<RTMProtocol>("RTMP", 1935, sessions);
-	loadProtocol<HTTProtocol>("HTTP", 80, sessions);
-	loadProtocol<RTSProtocol>("RTSP", 554, sessions);
+
+const char* RTSP::MAP_COMMANDS[] ={
+	"",
+	"OPTIONS", 
+	"DESCRIBE",
+	"SETUP",
+	"PLAY",
+	"GET_PARAMETER",
+	"SET_PARAMETER",
+	"TEARDOWN",
+};
+
+RTSP::CommandType RTSP::ParseCommand(Exception& ex,const char* value) {
+	if (!value)
+		return COMMAND_UNKNOWN;
+
+	for(UInt8 index = 1; index < 8; index++) {
+		if (String::ICompare(value,MAP_COMMANDS[index],strlen(MAP_COMMANDS[index]))==0)
+			return (CommandType)index;
+	}
+	ex.set(Exception::PROTOCOL, "Unknown RTSP command ", value);
+	return COMMAND_UNKNOWN;
 }
-
-
 
 } // namespace Mona

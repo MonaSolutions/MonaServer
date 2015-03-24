@@ -17,22 +17,30 @@ details (or else see http://www.gnu.org/licenses/).
 This file is a part of Mona.
 */
 
-#include "Mona/Protocols.h"
+#pragma once
 
-#include "Mona/RTMP/RTMProtocol.h"
-#include "Mona/RTMFP/RTMFProtocol.h"
-#include "Mona/HTTP/HTTProtocol.h"
-#include "Mona/RTSP/RTSProtocol.h"
+#include "Mona/Mona.h"
+#include "Mona/Decoder.h"
+#include "Mona/RTSP/RTSPPacket.h"
 
 namespace Mona {
-	
-void Protocols::load(Sessions& sessions) {
-	loadProtocol<RTMFProtocol>("RTMFP", 1935, sessions);
-	loadProtocol<RTMProtocol>("RTMP", 1935, sessions);
-	loadProtocol<HTTProtocol>("HTTP", 80, sessions);
-	loadProtocol<RTSProtocol>("RTSP", 554, sessions);
-}
 
+class RTSPDecoder : public Decoder<const std::shared_ptr<RTSPPacket>>, public virtual Object {
+public:
+	RTSPDecoder(Invoker& invoker) : _rootPath(invoker.rootPath()), Decoder(invoker, "RTSPDecoder") {}
+
+private:
+	UInt32 decoding(Exception& ex, UInt8* data,UInt32 size) {
+		std::shared_ptr<RTSPPacket>	pPacket(new RTSPPacket(_rootPath));
+		UInt32 consumed = pPacket->build(ex, data, size);
+		if (consumed)
+			receive(pPacket);
+		return consumed;
+	}
+
+	const std::string&			_rootPath;
+
+};
 
 
 } // namespace Mona

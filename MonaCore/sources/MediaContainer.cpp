@@ -18,6 +18,7 @@ This file is a part of Mona.
 */
 
 #include "Mona/MediaContainer.h"
+#include "Mona/MediaCodec.h"
 #include "Mona/AMF.h"
 #include "Mona/Logs.h"
 #include "Mona/SubstreamMap.h"
@@ -126,14 +127,14 @@ void MPEGTS::write(BinaryWriter& writer,UInt8 track) {
 		.write(EXPAND("\x47\x40\x20\x30\x9c\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\x00\x02\xb0\x17\x00\x01\xc1\x00\x00\xe0\x40\xf0\x00\x1b\xe0\x40\xf0\x00\x0f\xe0\x60\xf0\x00\x66\x75\xc4\x68"));
 }
 
-UInt32 MPEGTS::ParseNAL(SubstreamMap& reader, const UInt8* data, UInt32 size) {
+UInt32 MPEGTS::ParseNAL(SubstreamMap& reader, const UInt8* data, UInt32 size, UInt32 offset) {
 
 	// Frame size error
 	UInt32 available = 0;
-	if (size<11)
+	if (size<offset)
 		return available;
 	
-	UInt8* pos = (UInt8*)data + 11;
+	UInt8* pos = (UInt8*)data + offset;
 	bool twoBytesHeader = *data==0x17 && *(data+1)==0x00;
 
 	// Parse each NALU
@@ -359,6 +360,82 @@ bool MPEGTS::WritePES(BinaryWriter& writer, Track type, SubstreamMap& subReader,
 	}
 
 	return true;
+}
+
+void RTP::write(BinaryWriter& writer,UInt8 track,UInt32 time,const UInt8* data,UInt32 size) {
+	if (!data || !size)
+		return;
+
+	if(!_counter) { // First packet
+		if(track&VIDEO) {
+			MediaCodec::VideoCodec codec = MediaCodec::GetVideoType(*data);
+			if (codec != MediaCodec::CODEC_H264)
+				WARN("Video codec for type ", codec, " is not supported yet")
+		}
+		else {
+			MediaCodec::AudioCodec codec = MediaCodec::GetAudioType(*data);
+			if (codec != MediaCodec::CODEC_MP3)
+				INFO("Audio Codec for type : ", codec, " is not supported yet")
+		}
+	}
+	_counter++;
+
+	/// RTP Header
+	writer.write8(0x80);		// Version (2), padding and extension (0)
+
+	/// Payload
+	if (track&VIDEO) {
+
+		// h264 NAL Parsing
+		SubstreamMap subReader(data, size);
+		MPEGTS::ParseNAL(subReader, data, size, (*data==0x17 && *(data+1)==0x00)? 11 : 5);
+		bool aggregated = subReader.count() > 1;
+
+		writer.write8(0x61 + ((aggregated)? 0x80 : 00));		// Marker and Payload type (97)
+		writer.write16(_counter);	// Sequence number
+		writer.write32(time*90);	// Timestamp
+		writer.write(_SSRC);		// SSRC
+		if(aggregated) {
+			writer.write8(0x18 + ((*data==0x17)? 0x60 : 0x00)); // RTP header (F|NRI|Type)
+			_octetCount++;
+		}
+
+		UInt8* pos = NULL;
+		UInt32 readed = subReader.readNextSub(pos, size);
+		while (readed) {
+			if (aggregated)
+				writer.write16(readed); // Size of NALU
+			
+			// Write NALU
+			writer.write(pos, readed);
+			_octetCount += readed + 2*aggregated;
+
+			// Read raw data unit (Video : NALU)
+			readed = subReader.readNextSub(pos, size);
+		}
+	} else if(size>1) { // Audio (mpeg4)
+
+		writer.write8(0x8e);	// Marker (1) and Payload type (14)
+		//writer.write8(0x62);	// Marker (0) and Payload type (98)
+		writer.write16(_counter);	// Sequence number
+		writer.write32(time*22);	// Timestamp
+		writer.write(_SSRC);		// SSRC
+
+		writer.write32(0);
+		writer.write((data+1), size-1);
+		_octetCount += size+3;
+	}
+}
+
+void RTP::writeRTCP(BinaryWriter& writer,UInt8 type,UInt32 time) {
+
+	/// RTCP Header
+	writer.write(EXPAND("\x80\xc8\x00\x06"));		// Version (2), padding and Reception report count (0), packet type = 200, lenght = 6
+	writer.write(_SSRC);							// SSRC
+	writer.write64(0);								// NTP Timestamp (not needed)
+	writer.write32(time);							// RTP Timestamp
+	writer.write32(_counter);						// Packet count
+	writer.write32(_octetCount);					// Octet count
 }
 
 } // namespace Mona

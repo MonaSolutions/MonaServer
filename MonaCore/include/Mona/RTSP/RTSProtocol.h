@@ -17,22 +17,29 @@ details (or else see http://www.gnu.org/licenses/).
 This file is a part of Mona.
 */
 
-#include "Mona/Protocols.h"
+#pragma once
 
-#include "Mona/RTMP/RTMProtocol.h"
-#include "Mona/RTMFP/RTMFProtocol.h"
-#include "Mona/HTTP/HTTProtocol.h"
-#include "Mona/RTSP/RTSProtocol.h"
+#include "Mona/Mona.h"
+#include "Mona/TCProtocol.h"
+#include "Mona/RTSP/RTSPSession.h"
 
 namespace Mona {
-	
-void Protocols::load(Sessions& sessions) {
-	loadProtocol<RTMFProtocol>("RTMFP", 1935, sessions);
-	loadProtocol<RTMProtocol>("RTMP", 1935, sessions);
-	loadProtocol<HTTProtocol>("HTTP", 80, sessions);
-	loadProtocol<RTSProtocol>("RTSP", 554, sessions);
-}
 
+class RTSProtocol : public TCProtocol, public virtual Object {
+public:
+	RTSProtocol(const char* name, Invoker& invoker, Sessions& sessions) : TCProtocol(name, invoker, sessions) {
+
+		setNumber("timeout", 60); // 60s by default
+
+		onConnection = [this](Exception& ex,const SocketAddress& address,SocketFile& file) {
+			this->sessions.create<RTSPSession>(address,file,*this,this->invoker); // Create session
+		};
+		OnConnection::subscribe(onConnection);
+	}
+	~RTSProtocol() { OnConnection::unsubscribe(onConnection); }
+private:
+	TCProtocol::OnConnection::Type onConnection;
+};
 
 
 } // namespace Mona

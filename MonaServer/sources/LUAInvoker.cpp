@@ -27,6 +27,7 @@ This file is a part of Mona.
 #include "LUAPath.h"
 #include "LUABroadcaster.h"
 #include "LUAXML.h"
+#include "LUAMediaWriter.h"
 #include "MonaServer.h"
 #include <openssl/evp.h>
 #include "Mona/AMFReader.h"
@@ -384,6 +385,11 @@ int	LUAInvoker::Time(lua_State *pState) {
 	SCRIPT_CALLBACK_RETURN
 }
 
+int	LUAInvoker::CreateMediaWriter(lua_State *pState) {
+	SCRIPT_CALLBACK(Invoker, invoker)
+		Script::NewObject<LUAMediaWriter>(pState, *new LUAMediaWriter(invoker.poolBuffers, SCRIPT_READ_STRING("")));
+	SCRIPT_CALLBACK_RETURN
+}
 
 int LUAInvoker::Get(lua_State *pState) {
 	SCRIPT_CALLBACK(Invoker,invoker)
@@ -495,6 +501,9 @@ int LUAInvoker::Get(lua_State *pState) {
 				SCRIPT_CALLBACK_FIX_INDEX
 			} else if (strcmp(name,"listPaths")==0) {
 				SCRIPT_WRITE_FUNCTION(LUAInvoker::ListPaths)
+				SCRIPT_CALLBACK_FIX_INDEX
+			} else if (strcmp(name, "createMediaWriter") == 0) {
+				SCRIPT_WRITE_FUNCTION(LUAInvoker::CreateMediaWriter)
 				SCRIPT_CALLBACK_FIX_INDEX
 			} else {
 				Script::Collection(pState,1, "configs");

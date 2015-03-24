@@ -34,6 +34,9 @@
     <Filter Include="Serializers\Patterns">
       <UniqueIdentifier>{8c590d38-9c16-4ea3-8c67-66b5e86293c1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Protocols\RTSP">
+      <UniqueIdentifier>{5cb6a196-c994-4951-821c-7c54141ff68c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Mona\Protocol.h">
@@ -245,6 +248,27 @@
     <ClInclude Include="include\Mona\HTTP\HTTPDecoder.h">
       <Filter>Protocols\HTTP</Filter>
     </ClInclude>
+    <ClInclude Include="include\Mona\RTSP\RTSProtocol.h">
+      <Filter>Protocols\RTSP</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\RTSP\RTSPSession.h">
+      <Filter>Protocols\RTSP</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\RTSP\RTSP.h">
+      <Filter>Protocols\RTSP</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\RTSP\RTSPPacket.h">
+      <Filter>Protocols\RTSP</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\RTSP\RTSPDecoder.h">
+      <Filter>Protocols\RTSP</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\RTSP\RTSPWriter.h">
+      <Filter>Protocols\RTSP</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\RTSP\RTSPSender.h">
+      <Filter>Protocols\RTSP</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="sources\Protocols.cpp">
@@ -397,6 +421,21 @@
     </ClCompile>
     <ClCompile Include="sources\HTTP\HTTPDecoder.cpp">
       <Filter>Protocols\HTTP</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\RTSP\RTSPSession.cpp">
+      <Filter>Protocols\RTSP</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\RTSP\RTSP.cpp">
+      <Filter>Protocols\RTSP</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\RTSP\RTSPPacket.cpp">
+      <Filter>Protocols\RTSP</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\RTSP\RTSPSender.cpp">
+      <Filter>Protocols\RTSP</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\RTSP\RTSPWriter.cpp">
+      <Filter>Protocols\RTSP</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

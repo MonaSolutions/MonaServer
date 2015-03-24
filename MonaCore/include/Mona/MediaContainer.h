@@ -48,6 +48,24 @@ public:
 	virtual void write(BinaryWriter& writer, UInt8 track, UInt32 time, const UInt8* data, UInt32 size) = 0;
 };
 
+class RTP: public MediaContainer {
+public:
+	RTP(const char* ssrc): _counter(0), _SSRC(ssrc), _octetCount(0) {}
+	
+	// To write header (empty because there is no header in RTP)
+	virtual void write(BinaryWriter& writer,UInt8 track=BOTH) {}
+	// To write audio or video packet
+	virtual void write(BinaryWriter& writer,UInt8 track,UInt32 time,const UInt8* data,UInt32 size);
+
+	void writeRTCP(BinaryWriter& writer,UInt8 type,UInt32 time);
+
+private:
+	
+	UInt16			_counter;
+	UInt32			_octetCount;
+	const char*		_SSRC;
+};
+
 class FLV : public MediaContainer {
 public:
 	FLV(){}
@@ -66,21 +84,21 @@ public:
 	virtual void write(BinaryWriter& writer,UInt8 track=BOTH);
 	// To write audio or video packet
 	virtual void write(BinaryWriter& writer, UInt8 track, UInt32 time, const UInt8* data, UInt32 size);
-private:
-	
-	/// \brief Write recursively data of subReader in TS format
-	void		writeTS(BinaryWriter& writer, UInt32& available, UInt32 time, SubstreamMap& subReader, bool isMetadata, Track type, bool first);
 
 	/// \brief Parse each NALU (Video)
 	/// Manages 2 types of NALU header :
 	/// - 2 bytes header = 0x00XY (where XY = size of NALU)
 	/// - 4 bytes header = 0x00UVWXYZ4/6 to 0x00UVWXYZ4/6 (where UVWXYZ = size of NALU)
 	/// \return total size available
-	static UInt32		ParseNAL(SubstreamMap& reader, const UInt8* data, UInt32 size);
+	static UInt32 ParseNAL(SubstreamMap& reader, const UInt8* data, UInt32 size, UInt32 offset = 11);
 
 	/// \brief Parse Audio frame
 	/// \return size available
-	static UInt32		ParseAudio(SubstreamMap& reader, const UInt8* data, UInt32 size);
+	static UInt32 ParseAudio(SubstreamMap& reader, const UInt8* data, UInt32 size);
+private:
+	
+	/// \brief Write recursively data of subReader in TS format
+	void		writeTS(BinaryWriter& writer, UInt32& available, UInt32 time, SubstreamMap& subReader, bool isMetadata, Track type, bool first);
 
 	/// \brief Determine if adaptive field is needed and return size of adaptive field 
 	/// \return return size of adaptive field

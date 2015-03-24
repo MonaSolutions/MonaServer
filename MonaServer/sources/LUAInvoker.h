@@ -143,5 +143,6 @@ private:
 	static int	Publish(lua_State *pState);
 	static int	JoinGroup(lua_State *pState);
 	static int	AbsolutePath(lua_State *pState);
+	static int	CreateMediaWriter(lua_State *pState);
 
 };

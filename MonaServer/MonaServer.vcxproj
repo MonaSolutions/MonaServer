@@ -225,6 +225,7 @@
   <ItemGroup>
     <ClInclude Include="sources\LUADataTable.h" />
     <ClInclude Include="sources\LUAIPAddress.h" />
+    <ClInclude Include="sources\LUAMediaWriter.h" />
     <ClInclude Include="sources\LUAPath.h" />
     <ClInclude Include="sources\LUASocketAddress.h" />
     <ClInclude Include="sources\LUAXML.h" />
@@ -253,6 +254,7 @@
   <ItemGroup>
     <ClCompile Include="sources\LUADataTable.cpp" />
     <ClCompile Include="sources\LUAIPAddress.cpp" />
+    <ClCompile Include="sources\LUAMediaWriter.cpp" />
     <ClCompile Include="sources\LUAPath.cpp" />
     <ClCompile Include="sources\LUASocketAddress.cpp" />
     <ClCompile Include="sources\LUAXML.cpp" />

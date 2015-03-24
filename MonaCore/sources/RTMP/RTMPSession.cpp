@@ -55,6 +55,7 @@ void RTMPSession::kill(UInt32 type) {
 	_mainStream.disengage(); // disengage FlashStreams because the writers "engaged" will be deleted
 
 	_writers.clear();
+	_pWriter = NULL;
 	_pController.reset();
 
 	Session::kill(type); // at the end to "unpublish or unsubscribe" before "onDisconnection"!
@@ -303,15 +304,17 @@ void RTMPSession::receive(BinaryReader& packet) {
 			if (!channel.pStream) {
 				if(_mainStream.process(channel.type,channel.absoluteTime, reader,*_pWriter) && peer.connected)
 					_pWriter->isMain = true;
-				else
+				else if(!died)
 					kill(REJECTED_DEATH);
 			} else
 				channel.pStream->process(channel.type, channel.absoluteTime, reader, *_pWriter);
 		}
 	}
 
-	_pWriter = NULL;
-	channel.pBuffer.release();
+	if(_pWriter) {
+		_pWriter = NULL;
+		channel.pBuffer.release();
+	}
 }
 
 void RTMPSession::manage() {
