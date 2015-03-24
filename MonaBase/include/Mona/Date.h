@@ -53,7 +53,7 @@ public:
 	explicit Date(Type offset=LOCAL) : _isDST(false),_year(0), _month(0), _day(0), _weekDay(7),_hour(0), _minute(0), _second(0), _millisecond(0), _changed(false), _offset(offset),_isLocal(true) {}
 	
 	// build from time
-	explicit Date(Int64 time,Int32 offset=LOCAL) : _isDST(false),_year(0), _month(0), _day(0),  _weekDay(7),_hour(0), _minute(0), _second(0), _millisecond(0), _changed(false), _offset(0),_isLocal(true), Time(time) {}
+	explicit Date(Int64 time,Int32 offset=LOCAL) : _isDST(false),_year(0), _month(0), _day(0),  _weekDay(7),_hour(0), _minute(0), _second(0), _millisecond(0), _changed(false), _offset(offset),_isLocal(true), Time(time) {}
 
 	// build from other  date
 	explicit Date(const Date& date) : Object(), _isDST(date._isDST),_year(date._year), _month(date._month), _day(date._day),  _weekDay(date._weekDay),_hour(date._hour), _minute(date._minute), _second(date._second), _millisecond(date._millisecond), _changed(date._changed), _offset(date._offset),_isLocal(date._isLocal), Time(0) {
@@ -153,7 +153,7 @@ private:
 	Int32			_year;
 	UInt8			_month; // 1 to 12
 	mutable UInt8	_day; // 1 to 31
-	mutable UInt8	_weekDay; // 0 to 6
+	mutable UInt8	_weekDay; // 0 to 6 (sunday=0, monday=1) + 7 (unknown)
 	UInt8			_hour; // 0 to 23
 	UInt8			_minute;  // 0 to 59
 	UInt8			_second;	// 0 to 59

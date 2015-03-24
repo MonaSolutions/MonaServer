@@ -46,7 +46,7 @@ HTTPSender::HTTPSender(const SocketAddress& address, HTTPPacket& request,const P
 	_newHeaders(false),
 	_request(request),
 	_pSetCookieBuffer(poolBuffers),
-	TCPSender("TCPSender") {
+	TCPSender("HTTPSender") {
 	_pSetCookieBuffer.swap(pSetCookieBuffer);
 }
 

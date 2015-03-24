@@ -43,7 +43,7 @@ RTSPSender::RTSPSender(const SocketAddress& address, RTSPPacket& request,const P
 	_appPath(relativePath),
 	_newHeaders(false),
 	_request(request),
-	TCPSender("TCPSender") {
+	TCPSender("RTSPSender") {
 }
 
 void RTSPSender::onSent(Socket& socket) {
