@@ -182,7 +182,7 @@ Here&#8217;s a complete sample to understand its usage:</p>
 <span class="k">end</span>
 
 <span class="kd">local</span> <span class="n">err</span> <span class="o">=</span> <span class="n">socket</span><span class="p">:</span><span class="n">connect</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">localhost&quot;</span><span class="p">,</span><span class="mi">1234</span><span class="p">)</span>
-<span class="k">if</span> <span class="n">err</span> <span class="k">then</span> <span class="n">ERROR</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">Unable to connect to localahost:1234&quot;</span><span class="p">)</span> <span class="k">end</span>
+<span class="k">if</span> <span class="n">err</span> <span class="k">then</span> <span class="n">ERROR</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">Unable to connect to localhost:1234&quot;</span><span class="p">)</span> <span class="k">end</span>
 <span class="o">...</span>
 <span class="k">if</span> <span class="n">socket</span><span class="p">.</span><span class="n">connected</span> <span class="k">then</span> <span class="c1">-- useless if already disconnected</span>
   <span class="n">socket</span><span class="p">:</span><span class="n">disconnect</span><span class="p">()</span>

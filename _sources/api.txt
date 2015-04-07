@@ -129,7 +129,6 @@ methods
 - **toXMLRPC(...)**, convert the multiple LUA_ parameters given in a XML-RPC_ format (see :ref:`ref-xmlrpc-to-lua` to know how XMLRPC/LUA_ conversion works). It returns a string which contain data converted.
 - **md5(...)**, computes and returns the MD5 values from input values given as arguments.
 - **sha256(...)**, computes and returns the SHA256 values from input values given as arguments.
-- **sendMail(sender,subject,content,...)**, send an email from *sender* to recipients given in the last mutiple arguments field. It returns a mail object which contains only one event, *onSent(error)* to get one notification on sent, see :doc:`serversocket` page for more details.
 - **split(expression,separator[,option])**, LUA_ has not real split operator, this function fills this gap. It splits the *expression* in relation with the *separator* term given, and returns tokens as a multiple result. A optional number argument indicates if you want to ignore empty tokens (*option* =1), or to remove leading and trailing whitespace from tokens (*option* =2), or the both in same time (*option* =3).
 - **listPaths(dirName)**, return a LUA_ table containing objects of type File_ in the *dirName* directory (relative to the **www** path).
 - **joinGroup(peerID, groupID)**, add Client_ with *peerID* to Group_ with *groupID*.
@@ -178,6 +177,7 @@ properties
 - **address** (read-only), address of the client.
 - **path** (read-only), *path* used in the URL connection, it gives server application related (see :doc:`serverapp`).
 - **ping** (read-only), client ping value.
+- **lastReceptionTime** (read-only), time of last data reception.
 - **protocol** (read-only), client protocol name (HTTP, WebSocket, RTMP or RTMFP).
 - **query** (read-only), query part of the url (used in HTTP).
 - **writer** (read-only), the main Writer_ to communicate with the client.
@@ -208,11 +208,119 @@ methods
 
 *client* has no hard-coded method by default, and if you add some methods on, you create RPC function available from client side (see :ref:`ref-com-server-client` for more details).
 
+
 events
 -----------------
 
-- **onManage**, overloading this method allows to get an inside handle every two seconds on the related client.
+- **onAddressChanged(oldAddress)**, happen on client.address change (can happen for an UDP based protocol like RTMFP).
+- **onJoinGroup(group)**, happen when the client join a P2P Group_ (RTMFP - NetGroup). 
+- **onUnjoinGroup(group)**, happen when the client leaves a P2P Group_ (RTMFP - NetGroup).
+- **onPublish(publication)**, happen on Publication_ starts.
 
+If you return *false* value on this event, it will send a *NetStream.Publish.Failed* status event with as *info.description* field a *"Not allowed to publish [name]"* message.
+Otherwise you can cutomize this message in raising one error in this context.
+
+.. code-block:: lua
+
+  function client:onPublish(publication)
+    if not client.right then
+      error("no rights to publish it")
+    end
+    
+    function publication:onData(time,packet)
+      -- write code here
+    end
+  end
+
+.. code-block:: as3
+  
+  function onStatusEvent(event:NetStatusEvent):void {
+    switch(event.info.code) {
+      case "NetStream.Publish.Failed":
+      trace(event.info.description); // displays "no rights to publish it"
+      break;
+    }
+  }
+
+.. warning:: This event is not called for publications started from script code, it's called only for client publications (see Publication_ object). Then of course, it's called only in stream-to-server case (not in P2P case).
+
+- **onUnpublish(publication)**, happen on Publication_ stops.
+
+.. warning:: This event is not called for publications started from script code, it's called only for client publications (see Publication_ object). Then of course, it's called only in stream-to-server case (not in P2P case).
+
+- **onSubscribe(listener)**, happen on publication subscription, Listener_ argument describes this subscription.
+
+If you return *false* value on this event, it will send a *NetStream.Play.Failed* status event with as *info.description* field a *"Not authorized to play [name]"* message.
+Otherwise you can cutomize this message in raising one error in this context.
+
+.. code-block:: lua
+
+  function client:onSubscribe(listener)
+    if not client.right then
+      error("no rights to play it")
+    end
+  end
+
+.. code-block:: as3
+
+  function onStatusEvent(event:NetStatusEvent):void {
+    switch(event.info.code) {
+      case "NetStream.Play.Failed":
+      trace(event.info.description); // displays "no rights to play it"
+      break;
+    }
+  }
+
+.. warning:: This event is called only in stream-to-server case (not in P2P case).
+ 
+- **onUnsubscribe(listener)**, happen on publication unsubscription, Listener_ argument describes the abandoned subscription.
+
+.. warning:: This event is called only in stream-to-server case (not in P2P case).
+ 
+- **onRead(file,parameters...)**
+
+This event is used with **HTTP** protocol.
+
+Called when a client try to read a file on the server. The file should exists.
+Parameters should be used to perform REST functionnalities.
+
+You can also reject the connexion like this :
+
+.. code-block:: lua
+
+  function client:onRead(file)
+    if file ~= "index.html" then
+      error("Access to file ", file, " is forbidden)
+    end
+  end
+
+You can redirect to another file returning the file name as first parameter :
+
+.. code-block:: lua
+
+  function client:onRead(file)
+    return "newFile"
+  end
+  
+Other parameters are treated as values for replacing templates *<% property %>* in file. So with the script below each *<% name %>* element will be replaced by "robert" :
+
+.. code-block:: lua
+
+  function client:onRead(file)
+    return file, {name="robert"}
+  end
+
+If you need to return a custom response you can return *nil* and write you response using the writer as below:
+
+.. code-block:: lua
+
+  function client:onRead(file,parameters)
+    self.writer:writeRaw("hello"); -- my custom response
+    return nil
+  end
+
+.. note:: You can create your own events on client object to create RPC server methods. These methods will be accessible from client side. By default if you send data to server from client without given a method name, the method invoked is *client:onMessage*. See :ref:`ref-com-server-apps` for more details.
+ 
 
 .. _ref-writer:
 
@@ -373,21 +481,36 @@ properties
 -----------------
 
 - **name** (read-only), name of the publication
-- **publisherId** (read-only), unique identifier the publisher.
+- **lastTime** (read-only), returns the last media time published.
 - **listeners** (read-only), Listeners_ which have subscribed for this publication.
 - **audioQOS** (read-only), QualityOfService_ object about audio transfer for this publication.
 - **videoQOS** (read-only), QualityOfService_ object about video transfer for this publication.
 - **dataQOS** (read-only), QualityOfService_ object about data transfer for this publication.
 - **running** (read-only), true if the publication is running.
+- **properties** (read-only), returns publication properties (metadata).
 
 methods
 -----------------
 
+- **writeProperties(properties)**, set publication properties (write metadata).
+- **clearProperties()**, clear publication properties (clear metadata).
 - **pushAudio(time,packet[,offset,lost])**, push audio data to this publication. First argument is the time in milliseconds of this audio sample in the stream, the second argument is the packet data. The third optional argument allows to give an offset beginning position on the packet given (0 by default), and the last optional argument is to indicate the number of lost packets gotten since the last call for this method (it's used by QualityOfService_ object).
 - **pushVideo(time,packet[,offset,lost])**, push video data to this publication. First argument is the time in milliseconds of this video frame in the stream, the second argument is the packet data. The third optional argument allows to give an offset beginning position on the packet given (0 by default), and the last optional argument is to indicate the number of lost packets gotten since the last call for this method (it's used by QualityOfService_ object).
-- **pushData(name,packet[,offset])**, push named data to this publication. First argument is the name of this data which relates methods to invoke on listeners side, second argument is the packet data, and the third optional argument allows to give an offset beginning position on the packet given (0 by default),
+- **pushAMFData(...)**, push data to this publication. The arguments passed are serialized in AMF.
+- **pushAMF0Data(...)**, push data to this publication. The arguments passed are serialized in AMF0.
+- **pushXMLRPCData(...)**, push data to this publication. The arguments passed are serialized in XMLRPC.
+- **pushJSONData(...)**, push data to this publication. The arguments passed are serialized in JSON.
+- **pushData(...)**, push data to this publication. The arguments passed are just raw concatenated (no typed serialization).
 - **flush()**, when you push audio, video or data packets, they are not flushed to listeners, you have to call this method to broadcast data when you have finished of pushed all available packets.
 - **close([code,description])**, close a publication. If this publication had been published with *mona.publish* function (see Mona_ object), the publication will be unpublished and deleted, and optional arguments are useless. Now if it's a client publication, its method *close* will be invoked, and a status event will be sent if optional arguments are indicated. For example, *publication:close('Publish.Error','error message')* will send a *NetStream.Publish.Error* statut event with as description *error message*, and then will invoke *close* method on client side for the *NetStream* object related.
+
+events
+-----------------
+
+- **onVideo(time,packet)**, call on video packet reception for one Publication_. *time* is the time in milliseconds of this packet in the stream, and *packet* contains video data.
+- **onAudio(time,packet)**, call on audio packet reception for one Publication_. *time* is the time in milliseconds of this packet in the stream, and *packet* contains video data.
+- **onData(packet)**, call on data packet reception for one Publication_. *packet* contains raw data.
+- **onFlush()**, call on publication flush.
 
 
 Listeners
@@ -646,181 +769,17 @@ You can reject a client by adding an error of connection:
 
 In RTMP&RTFMP it answers with a *NetConnection.Connect.Rejected* status event and close the client connection. The *event.info.description* field contains your error message. Now if you reject a client with no error message, *event.info.description* field will contain "client rejected" by default.
 
-Functions below are member functions of Client_ objects so need to be declared under the onConnection scope like in this sample :
+You can subscribe for Client_ events under the onConnection scope like in this sample :
 
 .. code-block:: lua
 
   function onConnection(client)
     
-    function client:onRead(file, parameters)
-    
-      NOTE("Sending file '", file, "' to client address ", client.address)
+    function client:onMessage(message)
+      NOTE(client.address.." says "..message)
     end
+	
   end
-
-client:onRead(file, parameters...)
-====================================
-
-This event is used with **HTTP** protocol.
-
-Called when a client try to read a file on the server. The file should exists.
-Parameters should be used to perform REST functionnalities.
-
-You can also reject the connexion like this :
-
-.. code-block:: lua
-
-  function client:onRead(file)
-    if file ~= "index.html" then
-      error("Access to file ", file, " is forbidden)
-    end
-  end
-
-You can redirect to another file returning the file name as first parameter :
-
-.. code-block:: lua
-
-  function client:onRead(file)
-    return "newFile"
-  end
-  
-Other parameters are treated as values for replacing templates *<% property %>* in file. So with the script below each *<% name %>* element will be replaced by "robert" :
-
-.. code-block:: lua
-
-  function client:onRead(file)
-    return file, {name="robert"}
-  end
-
-If you need to return a custom response you can return *nil* and write you response using the writer as below:
-
-.. code-block:: lua
-
-  function client:onRead(file,parameters)
-    self.writer:writeRaw("hello"); -- my custom response
-    return nil
-  end
-
-client:onMessage(parameters...)
-====================================
-
-Called when a client send a message to the server in pull or push mode (see :doc:`samples` page for more informations).
-
-client:onJoinGroup(group)
-====================================
-
-Call when a client creates or joins a Group_ (a NetGroup_). Client_ is the client which is joining the Group_ argument.
-
-client:onUnjoinGroup(group)
-====================================
-
-Call when a client unjoins a Group_ (a NetGroup_). Client_ is the client which is unjoining the Group_ argument.
-
-client:onPublish(publication)
-====================================
-
-Call when a Publication_ starts. Client_ is the client which starts the Publication_, and *publication* argument is the Publication_ object.
-
-If you return *false* value on this event, it will send a *NetStream.Publish.Failed* status event with as *info.description* field a *"Not allowed to publish [name]"* message.
-Otherwise you can cutomize this message in raising one error in this context.
-
-.. code-block:: lua
-
-  function client:onPublish(publication)
-    if not client.right then
-      error("no rights to publish it")
-    end
-    
-    function publication:onData(time,packet)
-      -- write code here
-    end
-  end
-
-.. code-block:: as3
-  
-  function onStatusEvent(event:NetStatusEvent):void {
-    switch(event.info.code) {
-      case "NetStream.Publish.Failed":
-      trace(event.info.description); // displays "no rights to publish it"
-      break;
-    }
-  }
-
-.. warning:: This event is not called for publications started from script code, it's called only for client publications (see Publication_ object). Then of course, it's called only in stream-to-server case (not in P2P case).
-
-Functions below are function members of class Publication_ so must be implemented in the scope of the onPublish function.
-
-publication:onVideo(time,packet)
-====================================
-
-Call on video packet reception for one Publication_. *time* is the time in milliseconds of this packet in the stream, and *packet* contains video data.
-
-.. warning:: This event is not called for publications started from script code, it's called only for client publications. Then of course, it's called only in stream-to-server case (not in P2P case).
-
-
-publication:onAudio(time,packet)
-=======================================
-
-Call on audio packet reception for one Publication_. *time* is the time in milliseconds of this packet in the stream, and *packet* contains audio data.
-
-.. warning:: This event is not called for publications started from script code, it's called only for client publications. Then of course, it's called only in stream-to-server case (not in P2P case).
-
-
-publication:onData(name,packet)
-======================================
-
-Call on data packet reception for one Publication_. *name* is the invocation name, and *packet* contains raw data.
-
-.. warning:: This event is not called for publications started from script code, it's called only for client publications. Then of course, it's called only in stream-to-server case (not in P2P case).
-
-
-client:onUnpublish(publication)
-====================================
-
-Call when a publication stops. *client* is the client which have stopped the publication, and *publication* argument is the publication related.
-
-.. warning:: This event is not called for publications started from script code, it's called only for client publications (see Publication_ object). Then of course, it's called only in stream-to-server case (not in P2P case).
-
-client:onSubscribe(listener)
-====================================
-
-Call on new Client_ subscription. *client* is the client which starts the stream subscription, and *listener* is the Listener_ object.
-
-If you return *false* value on this event, it will send a *NetStream.Play.Failed* status event with as *info.description* field a *"Not authorized to play [name]"* message.
-Otherwise you can cutomize this message in raising one error in this context.
-
-.. code-block:: lua
-
-  function client:onSubscribe(listener)
-    if not client.right then
-      error("no rights to play it")
-    end
-  end
-
-.. code-block:: as3
-
-  function onStatusEvent(event:NetStatusEvent):void {
-    switch(event.info.code) {
-      case "NetStream.Play.Failed":
-      trace(event.info.description); // displays "no rights to play it"
-      break;
-    }
-  }
-
-.. warning::
-
- - This event is called only in stream-to-server case (not in P2P case).
- - The listener is added to the *listener.publication.listeners* list after this call, so the value *listener.publication.listeners.count* will return the old value, and only if onSubscribe accepts the new listener, will be incremented.
-
-client:onUnsubscribe(listener)
-====================================
-
-Call on Client_ unsubscription. *client* is the client which stops the stream subscription, and *listener* describes the subscription closed (see Listener_ object).
-
-.. warning::
-
- - This event is called only in stream-to-server case (not in P2P case).
- - The listener is removed to the *listener.publication.listeners* list after this call, so the value *listener.publication.listeners.count* will return the old value until the end of this call.
 
 
 onDisconnection(client)

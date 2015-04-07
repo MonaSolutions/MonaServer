@@ -128,60 +128,49 @@
     <div class="col-md-12">
       
   <div class="section" id="api">
-<h1><a class="toc-backref" href="#id31">API</a><a class="headerlink" href="#api" title="Permalink to this headline">¶</a></h1>
+<h1><a class="toc-backref" href="#id32">API</a><a class="headerlink" href="#api" title="Permalink to this headline">¶</a></h1>
 <p>This page references objects and events availables in a <a class="reference internal" href="serverapp.html"><em>Server Application</em></a> of MonaServer.</p>
 <div class="contents topic" id="table-of-contents">
 <p class="topic-title first">Table of Contents</p>
 <ul class="simple">
-<li><a class="reference internal" href="#api" id="id31">API</a><ul>
-<li><a class="reference internal" href="#objects" id="id32">Objects</a><ul>
-<li><a class="reference internal" href="#common-notions" id="id33">Common notions</a></li>
-<li><a class="reference internal" href="#application-properties" id="id34">Application properties</a></li>
-<li><a class="reference internal" href="#mona" id="id35">Mona</a></li>
-<li><a class="reference internal" href="#data" id="id36">Data</a></li>
-<li><a class="reference internal" href="#clients" id="id37">Clients</a></li>
-<li><a class="reference internal" href="#client" id="id38">Client</a></li>
-<li><a class="reference internal" href="#writer" id="id39">Writer</a></li>
-<li><a class="reference internal" href="#groups" id="id40">Groups</a></li>
-<li><a class="reference internal" href="#group" id="id41">Group</a></li>
-<li><a class="reference internal" href="#member" id="id42">Member</a></li>
-<li><a class="reference internal" href="#qualityofservice" id="id43">QualityOfService</a></li>
-<li><a class="reference internal" href="#publications" id="id44">Publications</a></li>
-<li><a class="reference internal" href="#publication" id="id45">Publication</a></li>
-<li><a class="reference internal" href="#listeners" id="id46">Listeners</a></li>
-<li><a class="reference internal" href="#listener" id="id47">Listener</a></li>
-<li><a class="reference internal" href="#bytereader" id="id48">ByteReader</a></li>
-<li><a class="reference internal" href="#bytewriter" id="id49">ByteWriter</a></li>
-<li><a class="reference internal" href="#servers" id="id50">Servers</a></li>
-<li><a class="reference internal" href="#server" id="id51">Server</a></li>
-<li><a class="reference internal" href="#broadcaster" id="id52">Broadcaster</a></li>
-<li><a class="reference internal" href="#file" id="id53">File</a></li>
-<li><a class="reference internal" href="#ipaddress" id="id54">IPAddress</a></li>
-<li><a class="reference internal" href="#socketaddress" id="id55">SocketAddress</a></li>
+<li><a class="reference internal" href="#api" id="id32">API</a><ul>
+<li><a class="reference internal" href="#objects" id="id33">Objects</a><ul>
+<li><a class="reference internal" href="#common-notions" id="id34">Common notions</a></li>
+<li><a class="reference internal" href="#application-properties" id="id35">Application properties</a></li>
+<li><a class="reference internal" href="#mona" id="id36">Mona</a></li>
+<li><a class="reference internal" href="#data" id="id37">Data</a></li>
+<li><a class="reference internal" href="#clients" id="id38">Clients</a></li>
+<li><a class="reference internal" href="#client" id="id39">Client</a></li>
+<li><a class="reference internal" href="#writer" id="id40">Writer</a></li>
+<li><a class="reference internal" href="#groups" id="id41">Groups</a></li>
+<li><a class="reference internal" href="#group" id="id42">Group</a></li>
+<li><a class="reference internal" href="#member" id="id43">Member</a></li>
+<li><a class="reference internal" href="#qualityofservice" id="id44">QualityOfService</a></li>
+<li><a class="reference internal" href="#publications" id="id45">Publications</a></li>
+<li><a class="reference internal" href="#publication" id="id46">Publication</a></li>
+<li><a class="reference internal" href="#listeners" id="id47">Listeners</a></li>
+<li><a class="reference internal" href="#listener" id="id48">Listener</a></li>
+<li><a class="reference internal" href="#bytereader" id="id49">ByteReader</a></li>
+<li><a class="reference internal" href="#bytewriter" id="id50">ByteWriter</a></li>
+<li><a class="reference internal" href="#servers" id="id51">Servers</a></li>
+<li><a class="reference internal" href="#server" id="id52">Server</a></li>
+<li><a class="reference internal" href="#broadcaster" id="id53">Broadcaster</a></li>
+<li><a class="reference internal" href="#file" id="id54">File</a></li>
+<li><a class="reference internal" href="#ipaddress" id="id55">IPAddress</a></li>
+<li><a class="reference internal" href="#socketaddress" id="id56">SocketAddress</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#ref-events" id="id56">Events</a><ul>
-<li><a class="reference internal" href="#id30" id="id57">Common notions</a></li>
-<li><a class="reference internal" href="#onstart-path" id="id58">onStart(path)</a></li>
-<li><a class="reference internal" href="#onstop-path" id="id59">onStop(path)</a></li>
-<li><a class="reference internal" href="#onconnection-client" id="id60">onConnection(client,...)</a></li>
-<li><a class="reference internal" href="#client-onread-file-parameters" id="id61">client:onRead(file, parameters...)</a></li>
-<li><a class="reference internal" href="#client-onmessage-parameters" id="id62">client:onMessage(parameters...)</a></li>
-<li><a class="reference internal" href="#client-onjoingroup-group" id="id63">client:onJoinGroup(group)</a></li>
-<li><a class="reference internal" href="#client-onunjoingroup-group" id="id64">client:onUnjoinGroup(group)</a></li>
-<li><a class="reference internal" href="#client-onpublish-publication" id="id65">client:onPublish(publication)</a></li>
-<li><a class="reference internal" href="#publication-onvideo-time-packet" id="id66">publication:onVideo(time,packet)</a></li>
-<li><a class="reference internal" href="#publication-onaudio-time-packet" id="id67">publication:onAudio(time,packet)</a></li>
-<li><a class="reference internal" href="#publication-ondata-name-packet" id="id68">publication:onData(name,packet)</a></li>
-<li><a class="reference internal" href="#client-onunpublish-publication" id="id69">client:onUnpublish(publication)</a></li>
-<li><a class="reference internal" href="#client-onsubscribe-listener" id="id70">client:onSubscribe(listener)</a></li>
-<li><a class="reference internal" href="#client-onunsubscribe-listener" id="id71">client:onUnsubscribe(listener)</a></li>
-<li><a class="reference internal" href="#ondisconnection-client" id="id72">onDisconnection(client)</a></li>
-<li><a class="reference internal" href="#onmanage" id="id73">onManage()</a></li>
-<li><a class="reference internal" href="#onrendezvousunknown-protocol-peerid" id="id74">onRendezVousUnknown(protocol, peerId)</a></li>
-<li><a class="reference internal" href="#onhandshake-address-path-properties-attempts" id="id75">onHandshake(address,path,properties,attempts)</a></li>
-<li><a class="reference internal" href="#onserverconnection-server" id="id76">onServerConnection(server)</a></li>
-<li><a class="reference internal" href="#onserverdisconnection-server" id="id77">onServerDisconnection(server)</a></li>
+<li><a class="reference internal" href="#ref-events" id="id57">Events</a><ul>
+<li><a class="reference internal" href="#id31" id="id58">Common notions</a></li>
+<li><a class="reference internal" href="#onstart-path" id="id59">onStart(path)</a></li>
+<li><a class="reference internal" href="#onstop-path" id="id60">onStop(path)</a></li>
+<li><a class="reference internal" href="#onconnection-client" id="id61">onConnection(client,...)</a></li>
+<li><a class="reference internal" href="#ondisconnection-client" id="id62">onDisconnection(client)</a></li>
+<li><a class="reference internal" href="#onmanage" id="id63">onManage()</a></li>
+<li><a class="reference internal" href="#onrendezvousunknown-protocol-peerid" id="id64">onRendezVousUnknown(protocol, peerId)</a></li>
+<li><a class="reference internal" href="#onhandshake-address-path-properties-attempts" id="id65">onHandshake(address,path,properties,attempts)</a></li>
+<li><a class="reference internal" href="#onserverconnection-server" id="id66">onServerConnection(server)</a></li>
+<li><a class="reference internal" href="#onserverdisconnection-server" id="id67">onServerDisconnection(server)</a></li>
 </ul>
 </li>
 </ul>
@@ -189,9 +178,9 @@
 </ul>
 </div>
 <div class="section" id="objects">
-<h2><a class="toc-backref" href="#id32">Objects</a><a class="headerlink" href="#objects" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#id33">Objects</a><a class="headerlink" href="#objects" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="common-notions">
-<h3><a class="toc-backref" href="#id33">Common notions</a><a class="headerlink" href="#common-notions" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id34">Common notions</a><a class="headerlink" href="#common-notions" title="Permalink to this headline">¶</a></h3>
 <p>Some notions are common for all available objects.</p>
 <div class="section" id="properties">
 <h4>Properties<a class="headerlink" href="#properties" title="Permalink to this headline">¶</a></h4>
@@ -232,7 +221,7 @@
 </div>
 </div>
 <div class="section" id="application-properties">
-<h3><a class="toc-backref" href="#id34">Application properties</a><a class="headerlink" href="#application-properties" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id35">Application properties</a><a class="headerlink" href="#application-properties" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><strong>name</strong> (read-only), the name of the application.</li>
 <li><strong>path</strong> (read-only), the path of the current application.</li>
@@ -243,7 +232,7 @@
 <p>See <a class="reference internal" href="serverapp.html"><em>Server Application</em></a> to have more information of communication between applications.</p>
 </div>
 <div class="section" id="mona">
-<span id="ref-mona"></span><h3><a class="toc-backref" href="#id35">Mona</a><a class="headerlink" href="#mona" title="Permalink to this headline">¶</a></h3>
+<span id="ref-mona"></span><h3><a class="toc-backref" href="#id36">Mona</a><a class="headerlink" href="#mona" title="Permalink to this headline">¶</a></h3>
 <p><em>mona</em> is a global object providing access to main Mona elements, available anywhere in all script files.</p>
 <div class="section" id="id1">
 <h4>properties<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h4>
@@ -289,7 +278,6 @@
 <li><strong>toXMLRPC(...)</strong>, convert the multiple <a class="reference external" href="http://www.lua.org/">LUA</a> parameters given in a <a class="reference external" href="http://xmlrpc.scripting.com/spec.html">XML-RPC</a> format (see <a class="reference internal" href="serverapp.html#ref-xmlrpc-to-lua"><em>XML-RPC to LUA conversions</em></a> to know how XMLRPC/<a class="reference external" href="http://www.lua.org/">LUA</a> conversion works). It returns a string which contain data converted.</li>
 <li><strong>md5(...)</strong>, computes and returns the MD5 values from input values given as arguments.</li>
 <li><strong>sha256(...)</strong>, computes and returns the SHA256 values from input values given as arguments.</li>
-<li><strong>sendMail(sender,subject,content,...)</strong>, send an email from <em>sender</em> to recipients given in the last mutiple arguments field. It returns a mail object which contains only one event, <em>onSent(error)</em> to get one notification on sent, see <a class="reference internal" href="serversocket.html"><em>Server Application Sockets</em></a> page for more details.</li>
 <li><strong>split(expression,separator[,option])</strong>, <a class="reference external" href="http://www.lua.org/">LUA</a> has not real split operator, this function fills this gap. It splits the <em>expression</em> in relation with the <em>separator</em> term given, and returns tokens as a multiple result. A optional number argument indicates if you want to ignore empty tokens (<em>option</em> =1), or to remove leading and trailing whitespace from tokens (<em>option</em> =2), or the both in same time (<em>option</em> =3).</li>
 <li><strong>listPaths(dirName)</strong>, return a <a class="reference external" href="http://www.lua.org/">LUA</a> table containing objects of type <a class="reference internal" href="#file">File</a> in the <em>dirName</em> directory (relative to the <strong>www</strong> path).</li>
 <li><strong>joinGroup(peerID, groupID)</strong>, add <a class="reference internal" href="#client">Client</a> with <em>peerID</em> to <a class="reference internal" href="#group">Group</a> with <em>groupID</em>.</li>
@@ -304,11 +292,11 @@
 </div>
 </div>
 <div class="section" id="data">
-<h3><a class="toc-backref" href="#id36">Data</a><a class="headerlink" href="#data" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id37">Data</a><a class="headerlink" href="#data" title="Permalink to this headline">¶</a></h3>
 <p><strong>data</strong> is the global variable that permits you to have persistent values, see <a class="reference internal" href="database.html"><em>The NoSQL Database System</em></a> page to know how to use it.</p>
 </div>
 <div class="section" id="clients">
-<h3><a class="toc-backref" href="#id37">Clients</a><a class="headerlink" href="#clients" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id38">Clients</a><a class="headerlink" href="#clients" title="Permalink to this headline">¶</a></h3>
 <p><em>clients</em> object (available by <em>mona.clients</em> way, see <a class="reference internal" href="#mona">Mona</a> object) is the collection of clients currently connected to the server.</p>
 <div class="section" id="id3">
 <h4>methods<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h4>
@@ -325,7 +313,7 @@
 </div>
 </div>
 <div class="section" id="client">
-<span id="ref-client"></span><h3><a class="toc-backref" href="#id38">Client</a><a class="headerlink" href="#client" title="Permalink to this headline">¶</a></h3>
+<span id="ref-client"></span><h3><a class="toc-backref" href="#id39">Client</a><a class="headerlink" href="#client" title="Permalink to this headline">¶</a></h3>
 <p><em>client</em> object describes a connected client.</p>
 <div class="section" id="id4">
 <h4>properties<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h4>
@@ -335,6 +323,7 @@
 <li><strong>address</strong> (read-only), address of the client.</li>
 <li><strong>path</strong> (read-only), <em>path</em> used in the URL connection, it gives server application related (see <a class="reference internal" href="serverapp.html"><em>Server Application</em></a>).</li>
 <li><strong>ping</strong> (read-only), client ping value.</li>
+<li><strong>lastReceptionTime</strong> (read-only), time of last data reception.</li>
 <li><strong>protocol</strong> (read-only), client protocol name (HTTP, WebSocket, RTMP or RTMFP).</li>
 <li><strong>query</strong> (read-only), query part of the url (used in HTTP).</li>
 <li><strong>writer</strong> (read-only), the main <a class="reference internal" href="#writer">Writer</a> to communicate with the client.</li>
@@ -366,12 +355,117 @@
 <div class="section" id="id6">
 <h4>events<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h4>
 <ul class="simple">
-<li><strong>onManage</strong>, overloading this method allows to get an inside handle every two seconds on the related client.</li>
+<li><strong>onAddressChanged(oldAddress)</strong>, happen on client.address change (can happen for an UDP based protocol like RTMFP).</li>
+<li><strong>onJoinGroup(group)</strong>, happen when the client join a P2P <a class="reference internal" href="#group">Group</a> (RTMFP - NetGroup).</li>
+<li><strong>onUnjoinGroup(group)</strong>, happen when the client leaves a P2P <a class="reference internal" href="#group">Group</a> (RTMFP - NetGroup).</li>
+<li><strong>onPublish(publication)</strong>, happen on <a class="reference internal" href="#publication">Publication</a> starts.</li>
 </ul>
+<p>If you return <em>false</em> value on this event, it will send a <em>NetStream.Publish.Failed</em> status event with as <em>info.description</em> field a <em>&#8220;Not allowed to publish [name]&#8221;</em> message.
+Otherwise you can cutomize this message in raising one error in this context.</p>
+<div class="highlight-lua"><div class="highlight"><pre><span class="k">function</span> <span class="nf">client</span><span class="p">:</span><span class="n">onPublish</span><span class="p">(</span><span class="n">publication</span><span class="p">)</span>
+  <span class="k">if</span> <span class="ow">not</span> <span class="n">client</span><span class="p">.</span><span class="n">right</span> <span class="k">then</span>
+    <span class="nb">error</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">no rights to publish it&quot;</span><span class="p">)</span>
+  <span class="k">end</span>
+
+  <span class="k">function</span> <span class="nf">publication</span><span class="p">:</span><span class="n">onData</span><span class="p">(</span><span class="n">time</span><span class="p">,</span><span class="n">packet</span><span class="p">)</span>
+    <span class="c1">-- write code here</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</pre></div>
+</div>
+<div class="highlight-as3"><div class="highlight"><pre><span class="kd">function </span><span class="nf">onStatusEvent</span><span class="o">(</span><span class="n">event</span><span class="o">:</span><span class="kt">NetStatusEvent</span><span class="o">):</span><span class="kt">void</span> <span class="o">{</span>
+  <span class="k">switch</span><span class="o">(</span><span class="n">event</span><span class="o">.</span><span class="na">info</span><span class="o">.</span><span class="na">code</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">case</span> <span class="s2">&quot;NetStream.Publish.Failed&quot;</span><span class="o">:</span>
+    <span class="nf">trace</span><span class="o">(</span><span class="n">event</span><span class="o">.</span><span class="na">info</span><span class="o">.</span><span class="na">description</span><span class="o">);</span> <span class="c1">// displays &quot;no rights to publish it&quot;</span>
+    <span class="k">break</span><span class="o">;</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">This event is not called for publications started from script code, it&#8217;s called only for client publications (see <a class="reference internal" href="#publication">Publication</a> object). Then of course, it&#8217;s called only in stream-to-server case (not in P2P case).</p>
+</div>
+<ul class="simple">
+<li><strong>onUnpublish(publication)</strong>, happen on <a class="reference internal" href="#publication">Publication</a> stops.</li>
+</ul>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">This event is not called for publications started from script code, it&#8217;s called only for client publications (see <a class="reference internal" href="#publication">Publication</a> object). Then of course, it&#8217;s called only in stream-to-server case (not in P2P case).</p>
+</div>
+<ul class="simple">
+<li><strong>onSubscribe(listener)</strong>, happen on publication subscription, <a class="reference internal" href="#listener">Listener</a> argument describes this subscription.</li>
+</ul>
+<p>If you return <em>false</em> value on this event, it will send a <em>NetStream.Play.Failed</em> status event with as <em>info.description</em> field a <em>&#8220;Not authorized to play [name]&#8221;</em> message.
+Otherwise you can cutomize this message in raising one error in this context.</p>
+<div class="highlight-lua"><div class="highlight"><pre><span class="k">function</span> <span class="nf">client</span><span class="p">:</span><span class="n">onSubscribe</span><span class="p">(</span><span class="n">listener</span><span class="p">)</span>
+  <span class="k">if</span> <span class="ow">not</span> <span class="n">client</span><span class="p">.</span><span class="n">right</span> <span class="k">then</span>
+    <span class="nb">error</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">no rights to play it&quot;</span><span class="p">)</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</pre></div>
+</div>
+<div class="highlight-as3"><div class="highlight"><pre><span class="kd">function </span><span class="nf">onStatusEvent</span><span class="o">(</span><span class="n">event</span><span class="o">:</span><span class="kt">NetStatusEvent</span><span class="o">):</span><span class="kt">void</span> <span class="o">{</span>
+  <span class="k">switch</span><span class="o">(</span><span class="n">event</span><span class="o">.</span><span class="na">info</span><span class="o">.</span><span class="na">code</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">case</span> <span class="s2">&quot;NetStream.Play.Failed&quot;</span><span class="o">:</span>
+    <span class="nf">trace</span><span class="o">(</span><span class="n">event</span><span class="o">.</span><span class="na">info</span><span class="o">.</span><span class="na">description</span><span class="o">);</span> <span class="c1">// displays &quot;no rights to play it&quot;</span>
+    <span class="k">break</span><span class="o">;</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">This event is called only in stream-to-server case (not in P2P case).</p>
+</div>
+<ul class="simple">
+<li><strong>onUnsubscribe(listener)</strong>, happen on publication unsubscription, <a class="reference internal" href="#listener">Listener</a> argument describes the abandoned subscription.</li>
+</ul>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">This event is called only in stream-to-server case (not in P2P case).</p>
+</div>
+<ul class="simple">
+<li><strong>onRead(file,parameters...)</strong></li>
+</ul>
+<p>This event is used with <strong>HTTP</strong> protocol.</p>
+<p>Called when a client try to read a file on the server. The file should exists.
+Parameters should be used to perform REST functionnalities.</p>
+<p>You can also reject the connexion like this :</p>
+<div class="highlight-lua"><div class="highlight"><pre><span class="k">function</span> <span class="nf">client</span><span class="p">:</span><span class="n">onRead</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+  <span class="k">if</span> <span class="n">file</span> <span class="o">~=</span> <span class="s2">&quot;</span><span class="s">index.html&quot;</span> <span class="k">then</span>
+    <span class="nb">error</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">Access to file &quot;</span><span class="p">,</span> <span class="n">file</span><span class="p">,</span> <span class="s2">&quot;</span><span class="s"> is forbidden)</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</pre></div>
+</div>
+<p>You can redirect to another file returning the file name as first parameter :</p>
+<div class="highlight-lua"><div class="highlight"><pre><span class="k">function</span> <span class="nf">client</span><span class="p">:</span><span class="n">onRead</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+  <span class="k">return</span> <span class="s2">&quot;</span><span class="s">newFile&quot;</span>
+<span class="k">end</span>
+</pre></div>
+</div>
+<p>Other parameters are treated as values for replacing templates <em>&lt;% property %&gt;</em> in file. So with the script below each <em>&lt;% name %&gt;</em> element will be replaced by &#8220;robert&#8221; :</p>
+<div class="highlight-lua"><div class="highlight"><pre><span class="k">function</span> <span class="nf">client</span><span class="p">:</span><span class="n">onRead</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+  <span class="k">return</span> <span class="n">file</span><span class="p">,</span> <span class="p">{</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;</span><span class="s">robert&quot;</span><span class="p">}</span>
+<span class="k">end</span>
+</pre></div>
+</div>
+<p>If you need to return a custom response you can return <em>nil</em> and write you response using the writer as below:</p>
+<div class="highlight-lua"><div class="highlight"><pre><span class="k">function</span> <span class="nf">client</span><span class="p">:</span><span class="n">onRead</span><span class="p">(</span><span class="n">file</span><span class="p">,</span><span class="n">parameters</span><span class="p">)</span>
+  <span class="n">self</span><span class="p">.</span><span class="n">writer</span><span class="p">:</span><span class="n">writeRaw</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">hello&quot;</span><span class="p">);</span> <span class="c1">-- my custom response</span>
+  <span class="k">return</span> <span class="kc">nil</span>
+<span class="k">end</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">You can create your own events on client object to create RPC server methods. These methods will be accessible from client side. By default if you send data to server from client without given a method name, the method invoked is <em>client:onMessage</em>. See <em class="xref std std-ref">ref-com-server-apps</em> for more details.</p>
+</div>
 </div>
 </div>
 <div class="section" id="writer">
-<span id="ref-writer"></span><h3><a class="toc-backref" href="#id39">Writer</a><a class="headerlink" href="#writer" title="Permalink to this headline">¶</a></h3>
+<span id="ref-writer"></span><h3><a class="toc-backref" href="#id40">Writer</a><a class="headerlink" href="#writer" title="Permalink to this headline">¶</a></h3>
 <p>A Writer is an unidirectional communication pipe, which allows to write message in a fifo to the client. Each writer is independant and have its own statistic exchange informations. It&#8217;s used to communicate with the client, see <a class="reference internal" href="serverapp.html#ref-com-server-client"><em>Communication between server and client</em></a> to get more details. Each <a class="reference internal" href="#client">Client</a> have at least one <a class="reference internal" href="#writer">Writer</a> opened (available by <em>client.writer</em>), it&#8217;s its main communication channel, but you can open many writers if need.</p>
 <div class="section" id="id7">
 <h4>properties<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h4>
@@ -429,7 +523,7 @@
 </div>
 </div>
 <div class="section" id="groups">
-<span id="ref-groups"></span><h3><a class="toc-backref" href="#id40">Groups</a><a class="headerlink" href="#groups" title="Permalink to this headline">¶</a></h3>
+<span id="ref-groups"></span><h3><a class="toc-backref" href="#id41">Groups</a><a class="headerlink" href="#groups" title="Permalink to this headline">¶</a></h3>
 <p>Existing groups (<a class="reference external" href="http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/net/NetGroup.html">NetGroup</a> running), see <a class="reference internal" href="#group">Group</a> object.
 <em>groups</em> object (available by <em>mona.groups</em> way, see above) is the collection of groups currently running on the server. It means all <a class="reference external" href="http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/net/NetGroup.html">NetGroup</a> created or joined by clients.</p>
 <div class="section" id="id10">
@@ -448,7 +542,7 @@
 </div>
 </div>
 <div class="section" id="group">
-<h3><a class="toc-backref" href="#id41">Group</a><a class="headerlink" href="#group" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id42">Group</a><a class="headerlink" href="#group" title="Permalink to this headline">¶</a></h3>
 <p><em>group</em> object describes a group instance (<a class="reference external" href="http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/net/NetGroup.html">NetGroup</a> instance).</p>
 <div class="section" id="id11">
 <h4>properties<a class="headerlink" href="#id11" title="Permalink to this headline">¶</a></h4>
@@ -472,7 +566,7 @@
 </div>
 </div>
 <div class="section" id="member">
-<h3><a class="toc-backref" href="#id42">Member</a><a class="headerlink" href="#member" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id43">Member</a><a class="headerlink" href="#member" title="Permalink to this headline">¶</a></h3>
 <p><em>member</em> object is a virtual member of one group, gotten by a <em>groups:join(peerId,joinId)</em> call (see <a class="reference internal" href="#groups">Groups</a> object). It&#8217;s here just to allow to detach this virtual member of its group. It&#8217;s done on its destruction by the <a class="reference external" href="http://www.lua.org/">LUA</a> garbage collector, or when wanted in calling its <em>release()</em> method.</p>
 <div class="section" id="id13">
 <h4>properties<a class="headerlink" href="#id13" title="Permalink to this headline">¶</a></h4>
@@ -489,7 +583,7 @@
 </div>
 </div>
 <div class="section" id="qualityofservice">
-<h3><a class="toc-backref" href="#id43">QualityOfService</a><a class="headerlink" href="#qualityofservice" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id44">QualityOfService</a><a class="headerlink" href="#qualityofservice" title="Permalink to this headline">¶</a></h3>
 <p><em>qualityOfService</em> object describes describes how are going a publication or a subscription (see <a class="reference internal" href="#publication">Publication</a> and <a class="reference internal" href="#listener">Listener</a> objects).</p>
 <div class="section" id="id15">
 <h4>properties<a class="headerlink" href="#id15" title="Permalink to this headline">¶</a></h4>
@@ -503,7 +597,7 @@
 </div>
 </div>
 <div class="section" id="publications">
-<h3><a class="toc-backref" href="#id44">Publications</a><a class="headerlink" href="#publications" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id45">Publications</a><a class="headerlink" href="#publications" title="Permalink to this headline">¶</a></h3>
 <p><em>publications</em> object (available by <em>mona.publications</em> way, see <a class="reference internal" href="#mona">Mona</a> object) is the collection of publications actually publishing on the server.</p>
 <div class="section" id="id16">
 <h4>methods<a class="headerlink" href="#id16" title="Permalink to this headline">¶</a></h4>
@@ -520,33 +614,49 @@
 </div>
 </div>
 <div class="section" id="publication">
-<h3><a class="toc-backref" href="#id45">Publication</a><a class="headerlink" href="#publication" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id46">Publication</a><a class="headerlink" href="#publication" title="Permalink to this headline">¶</a></h3>
 <p><em>publication</em> object describes a publication.</p>
 <div class="section" id="id17">
 <h4>properties<a class="headerlink" href="#id17" title="Permalink to this headline">¶</a></h4>
 <ul class="simple">
 <li><strong>name</strong> (read-only), name of the publication</li>
-<li><strong>publisherId</strong> (read-only), unique identifier the publisher.</li>
+<li><strong>lastTime</strong> (read-only), returns the last media time published.</li>
 <li><strong>listeners</strong> (read-only), <a class="reference internal" href="#listeners">Listeners</a> which have subscribed for this publication.</li>
 <li><strong>audioQOS</strong> (read-only), <a class="reference internal" href="#qualityofservice">QualityOfService</a> object about audio transfer for this publication.</li>
 <li><strong>videoQOS</strong> (read-only), <a class="reference internal" href="#qualityofservice">QualityOfService</a> object about video transfer for this publication.</li>
 <li><strong>dataQOS</strong> (read-only), <a class="reference internal" href="#qualityofservice">QualityOfService</a> object about data transfer for this publication.</li>
 <li><strong>running</strong> (read-only), true if the publication is running.</li>
+<li><strong>properties</strong> (read-only), returns publication properties (metadata).</li>
 </ul>
 </div>
 <div class="section" id="id18">
 <h4>methods<a class="headerlink" href="#id18" title="Permalink to this headline">¶</a></h4>
 <ul class="simple">
+<li><strong>writeProperties(properties)</strong>, set publication properties (write metadata).</li>
+<li><strong>clearProperties()</strong>, clear publication properties (clear metadata).</li>
 <li><strong>pushAudio(time,packet[,offset,lost])</strong>, push audio data to this publication. First argument is the time in milliseconds of this audio sample in the stream, the second argument is the packet data. The third optional argument allows to give an offset beginning position on the packet given (0 by default), and the last optional argument is to indicate the number of lost packets gotten since the last call for this method (it&#8217;s used by <a class="reference internal" href="#qualityofservice">QualityOfService</a> object).</li>
 <li><strong>pushVideo(time,packet[,offset,lost])</strong>, push video data to this publication. First argument is the time in milliseconds of this video frame in the stream, the second argument is the packet data. The third optional argument allows to give an offset beginning position on the packet given (0 by default), and the last optional argument is to indicate the number of lost packets gotten since the last call for this method (it&#8217;s used by <a class="reference internal" href="#qualityofservice">QualityOfService</a> object).</li>
-<li><strong>pushData(name,packet[,offset])</strong>, push named data to this publication. First argument is the name of this data which relates methods to invoke on listeners side, second argument is the packet data, and the third optional argument allows to give an offset beginning position on the packet given (0 by default),</li>
+<li><strong>pushAMFData(...)</strong>, push data to this publication. The arguments passed are serialized in AMF.</li>
+<li><strong>pushAMF0Data(...)</strong>, push data to this publication. The arguments passed are serialized in AMF0.</li>
+<li><strong>pushXMLRPCData(...)</strong>, push data to this publication. The arguments passed are serialized in XMLRPC.</li>
+<li><strong>pushJSONData(...)</strong>, push data to this publication. The arguments passed are serialized in JSON.</li>
+<li><strong>pushData(...)</strong>, push data to this publication. The arguments passed are just raw concatenated (no typed serialization).</li>
 <li><strong>flush()</strong>, when you push audio, video or data packets, they are not flushed to listeners, you have to call this method to broadcast data when you have finished of pushed all available packets.</li>
 <li><strong>close([code,description])</strong>, close a publication. If this publication had been published with <em>mona.publish</em> function (see <a class="reference internal" href="#mona">Mona</a> object), the publication will be unpublished and deleted, and optional arguments are useless. Now if it&#8217;s a client publication, its method <em>close</em> will be invoked, and a status event will be sent if optional arguments are indicated. For example, <em>publication:close(&#8216;Publish.Error&#8217;,&#8217;error message&#8217;)</em> will send a <em>NetStream.Publish.Error</em> statut event with as description <em>error message</em>, and then will invoke <em>close</em> method on client side for the <em>NetStream</em> object related.</li>
 </ul>
 </div>
+<div class="section" id="id19">
+<h4>events<a class="headerlink" href="#id19" title="Permalink to this headline">¶</a></h4>
+<ul class="simple">
+<li><strong>onVideo(time,packet)</strong>, call on video packet reception for one <a class="reference internal" href="#publication">Publication</a>. <em>time</em> is the time in milliseconds of this packet in the stream, and <em>packet</em> contains video data.</li>
+<li><strong>onAudio(time,packet)</strong>, call on audio packet reception for one <a class="reference internal" href="#publication">Publication</a>. <em>time</em> is the time in milliseconds of this packet in the stream, and <em>packet</em> contains video data.</li>
+<li><strong>onData(packet)</strong>, call on data packet reception for one <a class="reference internal" href="#publication">Publication</a>. <em>packet</em> contains raw data.</li>
+<li><strong>onFlush()</strong>, call on publication flush.</li>
+</ul>
+</div>
 </div>
 <div class="section" id="listeners">
-<h3><a class="toc-backref" href="#id46">Listeners</a><a class="headerlink" href="#listeners" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id47">Listeners</a><a class="headerlink" href="#listeners" title="Permalink to this headline">¶</a></h3>
 <p><em>listeners</em> object describes a collection of subscribers for one <a class="reference internal" href="#publication">Publication</a>.</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
@@ -557,10 +667,10 @@
 </div>
 </div>
 <div class="section" id="listener">
-<h3><a class="toc-backref" href="#id47">Listener</a><a class="headerlink" href="#listener" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id48">Listener</a><a class="headerlink" href="#listener" title="Permalink to this headline">¶</a></h3>
 <p><em>listener</em> object describes a subscriber for one publication.</p>
-<div class="section" id="id19">
-<h4>properties<a class="headerlink" href="#id19" title="Permalink to this headline">¶</a></h4>
+<div class="section" id="id20">
+<h4>properties<a class="headerlink" href="#id20" title="Permalink to this headline">¶</a></h4>
 <ul class="simple">
 <li><strong>client</strong> (read-only), refers to the <a class="reference internal" href="#client">Client</a> object which is listening.</li>
 <li><strong>audioQOS</strong> (read-only), <a class="reference internal" href="#qualityofservice">QualityOfService</a> object about audio transfer for this subscription.</li>
@@ -573,25 +683,25 @@
 </div>
 </div>
 <div class="section" id="bytereader">
-<h3><a class="toc-backref" href="#id48">ByteReader</a><a class="headerlink" href="#bytereader" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id49">ByteReader</a><a class="headerlink" href="#bytereader" title="Permalink to this headline">¶</a></h3>
 <p>This object is only used for IExternalizable typed object, it&#8217;s the first argument of <em>__readExternal</em> function, and it&#8217;s an equivalent for <a class="reference external" href="http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/utils/IDataInput.html">IDataInput</a> AS3 class (see <a class="reference internal" href="serverapp.html#ref-amf-to-lua"><em>AMF to LUA conversions</em></a> to know how AMF/<a class="reference external" href="http://www.lua.org/">LUA</a> conversion works). It contains exactly same functions, excepting <em>readObject()</em> which is replaced by <em>readAMF(x)</em> function. <em>readAMF(x)</em> returns the <em>x</em> first <a class="reference external" href="http://www.lua.org/">LUA</a> results which come from the AMF unserialization.</p>
 </div>
 <div class="section" id="bytewriter">
-<h3><a class="toc-backref" href="#id49">ByteWriter</a><a class="headerlink" href="#bytewriter" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id50">ByteWriter</a><a class="headerlink" href="#bytewriter" title="Permalink to this headline">¶</a></h3>
 <p>This object is only used for IExternalizable typed object, it&#8217;s the first argument of <em>__writeExternal</em> function, and it&#8217;s an equivalent for <a class="reference external" href="http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/utils/IDataOutput.html">IDataOutput</a> AS3 class (see <a class="reference internal" href="serverapp.html#ref-amf-to-lua"><em>AMF to LUA conversions</em></a> to know how AMF/<a class="reference external" href="http://www.lua.org/">LUA</a> conversion works). It contains exactly same functions, excepting _writeObject(object:*) which is replaced by <em>writeAMF(...)</em> function. <em>writeAMF(...)</em> takes multiple <a class="reference external" href="http://www.lua.org/">LUA</a> arguments for AMF serialization.</p>
 </div>
 <div class="section" id="servers">
-<h3><a class="toc-backref" href="#id50">Servers</a><a class="headerlink" href="#servers" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id51">Servers</a><a class="headerlink" href="#servers" title="Permalink to this headline">¶</a></h3>
 <p>Servers list of MonaServer currently connected to the server (see <a class="reference internal" href="scalability.html"><em>Scalability and load-balancing</em></a> page for more details about multiple server features).</p>
-<div class="section" id="id20">
-<h4>properties<a class="headerlink" href="#id20" title="Permalink to this headline">¶</a></h4>
+<div class="section" id="id21">
+<h4>properties<a class="headerlink" href="#id21" title="Permalink to this headline">¶</a></h4>
 <ul class="simple">
 <li><strong>initiators</strong> (read-only), return a <a class="reference internal" href="#broadcaster">Broadcaster</a> object including the server initiators. Server connections have a direction, with an iniator of the connection, and a target of the connection (see <a class="reference internal" href="scalability.html"><em>Scalability and load-balancing</em></a> page for more details).</li>
 <li><strong>targets</strong> (read-only), return a <a class="reference internal" href="#broadcaster">Broadcaster</a> object including the server targets. Server connections have a direction, with an iniator of the connection, and a target of the connection (see <a class="reference internal" href="scalability.html"><em>Scalability and load-balancing</em></a> page for more details).</li>
 </ul>
 </div>
-<div class="section" id="id21">
-<h4>methods<a class="headerlink" href="#id21" title="Permalink to this headline">¶</a></h4>
+<div class="section" id="id22">
+<h4>methods<a class="headerlink" href="#id22" title="Permalink to this headline">¶</a></h4>
 <ul class="simple">
 <li><strong>broadcast(handler,...)</strong>, broadcast data to servers (initiators and targets). The <em>handler</em> parameter is the name of the <em>remote procedure call</em> method to receive data, multiple arguments following are the data (see <a class="reference internal" href="scalability.html"><em>Scalability and load-balancing</em></a> page for more details).</li>
 <li><strong>(address/index)</strong>, return a <a class="reference internal" href="#server">Server</a> object. It can take the <em>address</em> of the server (string format) or the <em>index</em> of server (number format) as input argument. Indeed the list is sorted by order of connections.</li>
@@ -606,10 +716,10 @@
 </div>
 </div>
 <div class="section" id="server">
-<span id="ref-server"></span><h3><a class="toc-backref" href="#id51">Server</a><a class="headerlink" href="#server" title="Permalink to this headline">¶</a></h3>
+<span id="ref-server"></span><h3><a class="toc-backref" href="#id52">Server</a><a class="headerlink" href="#server" title="Permalink to this headline">¶</a></h3>
 <p><em>server</em> object describes a server communication (see <a class="reference internal" href="scalability.html"><em>Scalability and load-balancing</em></a> page for more details about multiple server features).</p>
-<div class="section" id="id22">
-<h4>properties<a class="headerlink" href="#id22" title="Permalink to this headline">¶</a></h4>
+<div class="section" id="id23">
+<h4>properties<a class="headerlink" href="#id23" title="Permalink to this headline">¶</a></h4>
 <ul class="simple">
 <li><strong>address</strong> (read-only), object address of the server.</li>
 <li><strong>host</strong> (read-only), hostname of the server.</li>
@@ -622,8 +732,8 @@
 <p class="last"><em>server</em> object can have other dynamic properties (as <a class="reference internal" href="#client">Client</a> object) which relates properties used during the server connection (see <a class="reference internal" href="installation.html#ref-configurations"><em>Configurations</em></a>).</p>
 </div>
 </div>
-<div class="section" id="id23">
-<h4>methods<a class="headerlink" href="#id23" title="Permalink to this headline">¶</a></h4>
+<div class="section" id="id24">
+<h4>methods<a class="headerlink" href="#id24" title="Permalink to this headline">¶</a></h4>
 <ul class="simple">
 <li><strong>send(handler[,parameters])</strong>, call a method of the server.</li>
 <li><strong>reject([message])</strong>, disconnect from the server.</li>
@@ -632,16 +742,16 @@
 </div>
 </div>
 <div class="section" id="broadcaster">
-<h3><a class="toc-backref" href="#id52">Broadcaster</a><a class="headerlink" href="#broadcaster" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id53">Broadcaster</a><a class="headerlink" href="#broadcaster" title="Permalink to this headline">¶</a></h3>
 <p>Allow to manipulate list of server initiators or targets gotten with <em>servers.initiators</em> or <em>servers.targets</em> (see <a class="reference internal" href="#servers">Servers</a> object).</p>
-<div class="section" id="id24">
-<h4>properties<a class="headerlink" href="#id24" title="Permalink to this headline">¶</a></h4>
+<div class="section" id="id25">
+<h4>properties<a class="headerlink" href="#id25" title="Permalink to this headline">¶</a></h4>
 <ul class="simple">
 <li><strong>count</strong> (read-only), number of servers.</li>
 </ul>
 </div>
-<div class="section" id="id25">
-<h4>methods<a class="headerlink" href="#id25" title="Permalink to this headline">¶</a></h4>
+<div class="section" id="id26">
+<h4>methods<a class="headerlink" href="#id26" title="Permalink to this headline">¶</a></h4>
 <ul class="simple">
 <li><strong>broadcast(handler,...)</strong>, broadcast data to servers. The <em>handler</em> parameter is the name of the <em>remote procedure call</em> method to receive data, multiple arguments following are the data (see <a class="reference internal" href="scalability.html"><em>Scalability and load-balancing</em></a> page for more details).</li>
 <li><strong>(address/index)</strong>, return a <a class="reference internal" href="#server">Server</a> object. It can take the <em>address</em> of the server (string format) or the <em>index</em> of server (number format) as input argument. Indeed the list is sorted by order of connections.</li>
@@ -653,10 +763,10 @@
 </div>
 </div>
 <div class="section" id="file">
-<h3><a class="toc-backref" href="#id53">File</a><a class="headerlink" href="#file" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id54">File</a><a class="headerlink" href="#file" title="Permalink to this headline">¶</a></h3>
 <p><em>File</em> object gives some properties of a file in the file system. <em>File</em> objects are created on a <em>mona:listPaths(...)</em> call (see <a class="reference internal" href="#mona">Mona</a> object).</p>
-<div class="section" id="id26">
-<h4>properties<a class="headerlink" href="#id26" title="Permalink to this headline">¶</a></h4>
+<div class="section" id="id27">
+<h4>properties<a class="headerlink" href="#id27" title="Permalink to this headline">¶</a></h4>
 <ul class="simple">
 <li><strong>name</strong> (read-only), name of the file</li>
 <li><strong>baseName</strong> (read-only), name of the file, without extension</li>
@@ -670,10 +780,10 @@
 </div>
 </div>
 <div class="section" id="ipaddress">
-<h3><a class="toc-backref" href="#id54">IPAddress</a><a class="headerlink" href="#ipaddress" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id55">IPAddress</a><a class="headerlink" href="#ipaddress" title="Permalink to this headline">¶</a></h3>
 <p><em>IPAddress</em> object gives the properties of an IP address. <em>IPAddress</em> objects are created on a <em>mona:createIPAddress(...)</em> or <em>mona:createIPAddressWithDNS(...)</em> call (see <a class="reference internal" href="#mona">Mona</a> object).</p>
-<div class="section" id="id27">
-<h4>properties<a class="headerlink" href="#id27" title="Permalink to this headline">¶</a></h4>
+<div class="section" id="id28">
+<h4>properties<a class="headerlink" href="#id28" title="Permalink to this headline">¶</a></h4>
 <ul class="simple">
 <li><strong>isWildcard</strong> (read-only), true if this address is the wildcard address (all zero)</li>
 <li><strong>isBroadcast</strong> (read-only), true if this address is the local network broadcast address (255.255.255.255, only IPv4 addresses can be broadcast addresses)</li>
@@ -698,10 +808,10 @@
 </div>
 </div>
 <div class="section" id="socketaddress">
-<h3><a class="toc-backref" href="#id55">SocketAddress</a><a class="headerlink" href="#socketaddress" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id56">SocketAddress</a><a class="headerlink" href="#socketaddress" title="Permalink to this headline">¶</a></h3>
 <p><em>SocketAddress</em> object represents a pair <em>host:port</em> of a socket connection. <em>SocketAddress</em> objects are created on a <em>mona:createSocketAddress(...)</em> or <em>mona:createSocketAddressWithDNS(...)</em> call (see <a class="reference internal" href="#mona">Mona</a> object).</p>
-<div class="section" id="id28">
-<h4>properties<a class="headerlink" href="#id28" title="Permalink to this headline">¶</a></h4>
+<div class="section" id="id29">
+<h4>properties<a class="headerlink" href="#id29" title="Permalink to this headline">¶</a></h4>
 <ul class="simple">
 <li><strong>host</strong> (read-only), the <a class="reference internal" href="#ipaddress">IPAddress</a> object of this socket address</li>
 <li><strong>port</strong> (read-only), the port of the socket address</li>
@@ -712,10 +822,10 @@
 </div>
 </div>
 <div class="section" id="ref-events">
-<span id="id29"></span><h2><a class="toc-backref" href="#id56">Events</a><a class="headerlink" href="#ref-events" title="Permalink to this headline">¶</a></h2>
+<span id="id30"></span><h2><a class="toc-backref" href="#id57">Events</a><a class="headerlink" href="#ref-events" title="Permalink to this headline">¶</a></h2>
 <p>MonaServer calls some events in application server script.</p>
-<div class="section" id="id30">
-<h3><a class="toc-backref" href="#id57">Common notions</a><a class="headerlink" href="#id30" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id31">
+<h3><a class="toc-backref" href="#id58">Common notions</a><a class="headerlink" href="#id31" title="Permalink to this headline">¶</a></h3>
 <p>All event names starts with the <em>on</em> prefix.</p>
 <div class="highlight-lua"><div class="highlight"><pre><span class="k">function</span> <span class="nf">onConnection</span><span class="p">(</span><span class="n">client</span><span class="p">,</span><span class="o">...</span><span class="p">)</span>
 <span class="k">end</span>
@@ -723,7 +833,7 @@
 </div>
 </div>
 <div class="section" id="onstart-path">
-<h3><a class="toc-backref" href="#id58">onStart(path)</a><a class="headerlink" href="#onstart-path" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id59">onStart(path)</a><a class="headerlink" href="#onstart-path" title="Permalink to this headline">¶</a></h3>
 <p>Called when the server application is built and executed the first time. The first argument is the <em>path</em> of the application (see <a class="reference internal" href="serverapp.html#ref-create-server-app"><em>Create a server application</em></a>).</p>
 <div class="admonition warning">
 <p class="first admonition-title">Warning</p>
@@ -731,7 +841,7 @@
 </div>
 </div>
 <div class="section" id="onstop-path">
-<h3><a class="toc-backref" href="#id59">onStop(path)</a><a class="headerlink" href="#onstop-path" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id60">onStop(path)</a><a class="headerlink" href="#onstop-path" title="Permalink to this headline">¶</a></h3>
 <p>Called when the server application is unloaded. It happens in three different cases:</p>
 <ul class="simple">
 <li>When you edit <em>main.lua</em> file of one server application. Application is restarted (stopped and started).</li>
@@ -741,7 +851,7 @@
 <p>The first argument is the <em>path</em> of the application (see <a class="reference internal" href="serverapp.html#ref-create-server-app"><em>Create a server application</em></a>).</p>
 </div>
 <div class="section" id="onconnection-client">
-<h3><a class="toc-backref" href="#id60">onConnection(client,...)</a><a class="headerlink" href="#onconnection-client" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id61">onConnection(client,...)</a><a class="headerlink" href="#onconnection-client" title="Permalink to this headline">¶</a></h3>
 <p>Called on a new client connection. First argument is a <a class="reference internal" href="#client">Client</a> object, and following arguments depend on the protocol (see <a class="reference internal" href="protocols.html"><em>Specific Protocol Features</em></a>).</p>
 <p>Finally you can return a table result to send some informations on RTMP&amp;RTMFP connections (see <a class="reference internal" href="protocols.html"><em>Specific Protocol Features</em></a>) or to overload some configuration parameters:</p>
 <ul class="simple">
@@ -783,167 +893,19 @@
 </pre></div>
 </div>
 <p>In RTMP&amp;RTFMP it answers with a <em>NetConnection.Connect.Rejected</em> status event and close the client connection. The <em>event.info.description</em> field contains your error message. Now if you reject a client with no error message, <em>event.info.description</em> field will contain &#8220;client rejected&#8221; by default.</p>
-<p>Functions below are member functions of <a class="reference internal" href="#client">Client</a> objects so need to be declared under the onConnection scope like in this sample :</p>
+<p>You can subscribe for <a class="reference internal" href="#client">Client</a> events under the onConnection scope like in this sample :</p>
 <div class="highlight-lua"><div class="highlight"><pre><span class="k">function</span> <span class="nf">onConnection</span><span class="p">(</span><span class="n">client</span><span class="p">)</span>
 
-  <span class="k">function</span> <span class="nf">client</span><span class="p">:</span><span class="n">onRead</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="n">parameters</span><span class="p">)</span>
-
-    <span class="n">NOTE</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">Sending file &#39;&quot;</span><span class="p">,</span> <span class="n">file</span><span class="p">,</span> <span class="s2">&quot;</span><span class="s">&#39; to client address &quot;</span><span class="p">,</span> <span class="n">client</span><span class="p">.</span><span class="n">address</span><span class="p">)</span>
-  <span class="k">end</span>
-<span class="k">end</span>
-</pre></div>
-</div>
-</div>
-<div class="section" id="client-onread-file-parameters">
-<h3><a class="toc-backref" href="#id61">client:onRead(file, parameters...)</a><a class="headerlink" href="#client-onread-file-parameters" title="Permalink to this headline">¶</a></h3>
-<p>This event is used with <strong>HTTP</strong> protocol.</p>
-<p>Called when a client try to read a file on the server. The file should exists.
-Parameters should be used to perform REST functionnalities.</p>
-<p>You can also reject the connexion like this :</p>
-<div class="highlight-lua"><div class="highlight"><pre><span class="k">function</span> <span class="nf">client</span><span class="p">:</span><span class="n">onRead</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
-  <span class="k">if</span> <span class="n">file</span> <span class="o">~=</span> <span class="s2">&quot;</span><span class="s">index.html&quot;</span> <span class="k">then</span>
-    <span class="nb">error</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">Access to file &quot;</span><span class="p">,</span> <span class="n">file</span><span class="p">,</span> <span class="s2">&quot;</span><span class="s"> is forbidden)</span>
-  <span class="k">end</span>
-<span class="k">end</span>
-</pre></div>
-</div>
-<p>You can redirect to another file returning the file name as first parameter :</p>
-<div class="highlight-lua"><div class="highlight"><pre><span class="k">function</span> <span class="nf">client</span><span class="p">:</span><span class="n">onRead</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
-  <span class="k">return</span> <span class="s2">&quot;</span><span class="s">newFile&quot;</span>
-<span class="k">end</span>
-</pre></div>
-</div>
-<p>Other parameters are treated as values for replacing templates <em>&lt;% property %&gt;</em> in file. So with the script below each <em>&lt;% name %&gt;</em> element will be replaced by &#8220;robert&#8221; :</p>
-<div class="highlight-lua"><div class="highlight"><pre><span class="k">function</span> <span class="nf">client</span><span class="p">:</span><span class="n">onRead</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
-  <span class="k">return</span> <span class="n">file</span><span class="p">,</span> <span class="p">{</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;</span><span class="s">robert&quot;</span><span class="p">}</span>
-<span class="k">end</span>
-</pre></div>
-</div>
-<p>If you need to return a custom response you can return <em>nil</em> and write you response using the writer as below:</p>
-<div class="highlight-lua"><div class="highlight"><pre><span class="k">function</span> <span class="nf">client</span><span class="p">:</span><span class="n">onRead</span><span class="p">(</span><span class="n">file</span><span class="p">,</span><span class="n">parameters</span><span class="p">)</span>
-  <span class="n">self</span><span class="p">.</span><span class="n">writer</span><span class="p">:</span><span class="n">writeRaw</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">hello&quot;</span><span class="p">);</span> <span class="c1">-- my custom response</span>
-  <span class="k">return</span> <span class="kc">nil</span>
-<span class="k">end</span>
-</pre></div>
-</div>
-</div>
-<div class="section" id="client-onmessage-parameters">
-<h3><a class="toc-backref" href="#id62">client:onMessage(parameters...)</a><a class="headerlink" href="#client-onmessage-parameters" title="Permalink to this headline">¶</a></h3>
-<p>Called when a client send a message to the server in pull or push mode (see <a class="reference internal" href="samples.html"><em>Samples</em></a> page for more informations).</p>
-</div>
-<div class="section" id="client-onjoingroup-group">
-<h3><a class="toc-backref" href="#id63">client:onJoinGroup(group)</a><a class="headerlink" href="#client-onjoingroup-group" title="Permalink to this headline">¶</a></h3>
-<p>Call when a client creates or joins a <a class="reference internal" href="#group">Group</a> (a <a class="reference external" href="http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/net/NetGroup.html">NetGroup</a>). <a class="reference internal" href="#client">Client</a> is the client which is joining the <a class="reference internal" href="#group">Group</a> argument.</p>
-</div>
-<div class="section" id="client-onunjoingroup-group">
-<h3><a class="toc-backref" href="#id64">client:onUnjoinGroup(group)</a><a class="headerlink" href="#client-onunjoingroup-group" title="Permalink to this headline">¶</a></h3>
-<p>Call when a client unjoins a <a class="reference internal" href="#group">Group</a> (a <a class="reference external" href="http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/net/NetGroup.html">NetGroup</a>). <a class="reference internal" href="#client">Client</a> is the client which is unjoining the <a class="reference internal" href="#group">Group</a> argument.</p>
-</div>
-<div class="section" id="client-onpublish-publication">
-<h3><a class="toc-backref" href="#id65">client:onPublish(publication)</a><a class="headerlink" href="#client-onpublish-publication" title="Permalink to this headline">¶</a></h3>
-<p>Call when a <a class="reference internal" href="#publication">Publication</a> starts. <a class="reference internal" href="#client">Client</a> is the client which starts the <a class="reference internal" href="#publication">Publication</a>, and <em>publication</em> argument is the <a class="reference internal" href="#publication">Publication</a> object.</p>
-<p>If you return <em>false</em> value on this event, it will send a <em>NetStream.Publish.Failed</em> status event with as <em>info.description</em> field a <em>&#8220;Not allowed to publish [name]&#8221;</em> message.
-Otherwise you can cutomize this message in raising one error in this context.</p>
-<div class="highlight-lua"><div class="highlight"><pre><span class="k">function</span> <span class="nf">client</span><span class="p">:</span><span class="n">onPublish</span><span class="p">(</span><span class="n">publication</span><span class="p">)</span>
-  <span class="k">if</span> <span class="ow">not</span> <span class="n">client</span><span class="p">.</span><span class="n">right</span> <span class="k">then</span>
-    <span class="nb">error</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">no rights to publish it&quot;</span><span class="p">)</span>
+  <span class="k">function</span> <span class="nf">client</span><span class="p">:</span><span class="n">onMessage</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+    <span class="n">NOTE</span><span class="p">(</span><span class="n">client</span><span class="p">.</span><span class="n">address</span><span class="o">..</span><span class="s2">&quot;</span><span class="s"> says &quot;</span><span class="o">..</span><span class="n">message</span><span class="p">)</span>
   <span class="k">end</span>
 
-  <span class="k">function</span> <span class="nf">publication</span><span class="p">:</span><span class="n">onData</span><span class="p">(</span><span class="n">time</span><span class="p">,</span><span class="n">packet</span><span class="p">)</span>
-    <span class="c1">-- write code here</span>
-  <span class="k">end</span>
 <span class="k">end</span>
 </pre></div>
-</div>
-<div class="highlight-as3"><div class="highlight"><pre><span class="kd">function </span><span class="nf">onStatusEvent</span><span class="o">(</span><span class="n">event</span><span class="o">:</span><span class="kt">NetStatusEvent</span><span class="o">):</span><span class="kt">void</span> <span class="o">{</span>
-  <span class="k">switch</span><span class="o">(</span><span class="n">event</span><span class="o">.</span><span class="na">info</span><span class="o">.</span><span class="na">code</span><span class="o">)</span> <span class="o">{</span>
-    <span class="k">case</span> <span class="s2">&quot;NetStream.Publish.Failed&quot;</span><span class="o">:</span>
-    <span class="nf">trace</span><span class="o">(</span><span class="n">event</span><span class="o">.</span><span class="na">info</span><span class="o">.</span><span class="na">description</span><span class="o">);</span> <span class="c1">// displays &quot;no rights to publish it&quot;</span>
-    <span class="k">break</span><span class="o">;</span>
-  <span class="o">}</span>
-<span class="o">}</span>
-</pre></div>
-</div>
-<div class="admonition warning">
-<p class="first admonition-title">Warning</p>
-<p class="last">This event is not called for publications started from script code, it&#8217;s called only for client publications (see <a class="reference internal" href="#publication">Publication</a> object). Then of course, it&#8217;s called only in stream-to-server case (not in P2P case).</p>
-</div>
-<p>Functions below are function members of class <a class="reference internal" href="#publication">Publication</a> so must be implemented in the scope of the onPublish function.</p>
-</div>
-<div class="section" id="publication-onvideo-time-packet">
-<h3><a class="toc-backref" href="#id66">publication:onVideo(time,packet)</a><a class="headerlink" href="#publication-onvideo-time-packet" title="Permalink to this headline">¶</a></h3>
-<p>Call on video packet reception for one <a class="reference internal" href="#publication">Publication</a>. <em>time</em> is the time in milliseconds of this packet in the stream, and <em>packet</em> contains video data.</p>
-<div class="admonition warning">
-<p class="first admonition-title">Warning</p>
-<p class="last">This event is not called for publications started from script code, it&#8217;s called only for client publications. Then of course, it&#8217;s called only in stream-to-server case (not in P2P case).</p>
-</div>
-</div>
-<div class="section" id="publication-onaudio-time-packet">
-<h3><a class="toc-backref" href="#id67">publication:onAudio(time,packet)</a><a class="headerlink" href="#publication-onaudio-time-packet" title="Permalink to this headline">¶</a></h3>
-<p>Call on audio packet reception for one <a class="reference internal" href="#publication">Publication</a>. <em>time</em> is the time in milliseconds of this packet in the stream, and <em>packet</em> contains audio data.</p>
-<div class="admonition warning">
-<p class="first admonition-title">Warning</p>
-<p class="last">This event is not called for publications started from script code, it&#8217;s called only for client publications. Then of course, it&#8217;s called only in stream-to-server case (not in P2P case).</p>
-</div>
-</div>
-<div class="section" id="publication-ondata-name-packet">
-<h3><a class="toc-backref" href="#id68">publication:onData(name,packet)</a><a class="headerlink" href="#publication-ondata-name-packet" title="Permalink to this headline">¶</a></h3>
-<p>Call on data packet reception for one <a class="reference internal" href="#publication">Publication</a>. <em>name</em> is the invocation name, and <em>packet</em> contains raw data.</p>
-<div class="admonition warning">
-<p class="first admonition-title">Warning</p>
-<p class="last">This event is not called for publications started from script code, it&#8217;s called only for client publications. Then of course, it&#8217;s called only in stream-to-server case (not in P2P case).</p>
-</div>
-</div>
-<div class="section" id="client-onunpublish-publication">
-<h3><a class="toc-backref" href="#id69">client:onUnpublish(publication)</a><a class="headerlink" href="#client-onunpublish-publication" title="Permalink to this headline">¶</a></h3>
-<p>Call when a publication stops. <em>client</em> is the client which have stopped the publication, and <em>publication</em> argument is the publication related.</p>
-<div class="admonition warning">
-<p class="first admonition-title">Warning</p>
-<p class="last">This event is not called for publications started from script code, it&#8217;s called only for client publications (see <a class="reference internal" href="#publication">Publication</a> object). Then of course, it&#8217;s called only in stream-to-server case (not in P2P case).</p>
-</div>
-</div>
-<div class="section" id="client-onsubscribe-listener">
-<h3><a class="toc-backref" href="#id70">client:onSubscribe(listener)</a><a class="headerlink" href="#client-onsubscribe-listener" title="Permalink to this headline">¶</a></h3>
-<p>Call on new <a class="reference internal" href="#client">Client</a> subscription. <em>client</em> is the client which starts the stream subscription, and <em>listener</em> is the <a class="reference internal" href="#listener">Listener</a> object.</p>
-<p>If you return <em>false</em> value on this event, it will send a <em>NetStream.Play.Failed</em> status event with as <em>info.description</em> field a <em>&#8220;Not authorized to play [name]&#8221;</em> message.
-Otherwise you can cutomize this message in raising one error in this context.</p>
-<div class="highlight-lua"><div class="highlight"><pre><span class="k">function</span> <span class="nf">client</span><span class="p">:</span><span class="n">onSubscribe</span><span class="p">(</span><span class="n">listener</span><span class="p">)</span>
-  <span class="k">if</span> <span class="ow">not</span> <span class="n">client</span><span class="p">.</span><span class="n">right</span> <span class="k">then</span>
-    <span class="nb">error</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">no rights to play it&quot;</span><span class="p">)</span>
-  <span class="k">end</span>
-<span class="k">end</span>
-</pre></div>
-</div>
-<div class="highlight-as3"><div class="highlight"><pre><span class="kd">function </span><span class="nf">onStatusEvent</span><span class="o">(</span><span class="n">event</span><span class="o">:</span><span class="kt">NetStatusEvent</span><span class="o">):</span><span class="kt">void</span> <span class="o">{</span>
-  <span class="k">switch</span><span class="o">(</span><span class="n">event</span><span class="o">.</span><span class="na">info</span><span class="o">.</span><span class="na">code</span><span class="o">)</span> <span class="o">{</span>
-    <span class="k">case</span> <span class="s2">&quot;NetStream.Play.Failed&quot;</span><span class="o">:</span>
-    <span class="nf">trace</span><span class="o">(</span><span class="n">event</span><span class="o">.</span><span class="na">info</span><span class="o">.</span><span class="na">description</span><span class="o">);</span> <span class="c1">// displays &quot;no rights to play it&quot;</span>
-    <span class="k">break</span><span class="o">;</span>
-  <span class="o">}</span>
-<span class="o">}</span>
-</pre></div>
-</div>
-<div class="admonition warning">
-<p class="first admonition-title">Warning</p>
-<ul class="last simple">
-<li>This event is called only in stream-to-server case (not in P2P case).</li>
-<li>The listener is added to the <em>listener.publication.listeners</em> list after this call, so the value <em>listener.publication.listeners.count</em> will return the old value, and only if onSubscribe accepts the new listener, will be incremented.</li>
-</ul>
-</div>
-</div>
-<div class="section" id="client-onunsubscribe-listener">
-<h3><a class="toc-backref" href="#id71">client:onUnsubscribe(listener)</a><a class="headerlink" href="#client-onunsubscribe-listener" title="Permalink to this headline">¶</a></h3>
-<p>Call on <a class="reference internal" href="#client">Client</a> unsubscription. <em>client</em> is the client which stops the stream subscription, and <em>listener</em> describes the subscription closed (see <a class="reference internal" href="#listener">Listener</a> object).</p>
-<div class="admonition warning">
-<p class="first admonition-title">Warning</p>
-<ul class="last simple">
-<li>This event is called only in stream-to-server case (not in P2P case).</li>
-<li>The listener is removed to the <em>listener.publication.listeners</em> list after this call, so the value <em>listener.publication.listeners.count</em> will return the old value until the end of this call.</li>
-</ul>
 </div>
 </div>
 <div class="section" id="ondisconnection-client">
-<h3><a class="toc-backref" href="#id72">onDisconnection(client)</a><a class="headerlink" href="#ondisconnection-client" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id62">onDisconnection(client)</a><a class="headerlink" href="#ondisconnection-client" title="Permalink to this headline">¶</a></h3>
 <p>Call on <a class="reference internal" href="#client">Client</a> disconnection. <em>client</em> argument is the disconnected client.</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
@@ -951,11 +913,11 @@ Otherwise you can cutomize this message in raising one error in this context.</p
 </div>
 </div>
 <div class="section" id="onmanage">
-<span id="ref-onmanage"></span><h3><a class="toc-backref" href="#id73">onManage()</a><a class="headerlink" href="#onmanage" title="Permalink to this headline">¶</a></h3>
+<span id="ref-onmanage"></span><h3><a class="toc-backref" href="#id63">onManage()</a><a class="headerlink" href="#onmanage" title="Permalink to this headline">¶</a></h3>
 <p>Call every two seconds, this event is available only in the <em>root</em> server application (<em>www/main.lua</em>). It allows easyly to get handle to manage your objects if need.</p>
 </div>
 <div class="section" id="onrendezvousunknown-protocol-peerid">
-<span id="ref-onrendezvousunknown"></span><h3><a class="toc-backref" href="#id74">onRendezVousUnknown(protocol, peerId)</a><a class="headerlink" href="#onrendezvousunknown-protocol-peerid" title="Permalink to this headline">¶</a></h3>
+<span id="ref-onrendezvousunknown"></span><h3><a class="toc-backref" href="#id64">onRendezVousUnknown(protocol, peerId)</a><a class="headerlink" href="#onrendezvousunknown-protocol-peerid" title="Permalink to this headline">¶</a></h3>
 <p>Allows to redirect a client who searchs a peerId that the rendezvous service doesn&#8217;t find. Usually you will redirect the client to one or multiple other MonaServer (see <a class="reference internal" href="scalability.html"><em>Scalability and load-balancing</em></a> for more details on multiple servers usage). You can return an address, but also multiple address, or an array of addresses.</p>
 <div class="highlight-lua"><div class="highlight"><pre><span class="k">function</span> <span class="nf">onRendezVousUnknown</span><span class="p">(</span><span class="n">protocol</span><span class="p">,</span> <span class="n">peerId</span><span class="p">)</span>
   <span class="k">return</span> <span class="mf">192.168.0.2</span><span class="p">:</span><span class="mi">1935</span>
@@ -990,7 +952,7 @@ Otherwise you can cutomize this message in raising one error in this context.</p
 </div>
 </div>
 <div class="section" id="onhandshake-address-path-properties-attempts">
-<span id="ref-onhandshake"></span><h3><a class="toc-backref" href="#id75">onHandshake(address,path,properties,attempts)</a><a class="headerlink" href="#onhandshake-address-path-properties-attempts" title="Permalink to this headline">¶</a></h3>
+<span id="ref-onhandshake"></span><h3><a class="toc-backref" href="#id65">onHandshake(address,path,properties,attempts)</a><a class="headerlink" href="#onhandshake-address-path-properties-attempts" title="Permalink to this headline">¶</a></h3>
 <p>Allows to redirect the client to one other MonaServer (see <a class="reference internal" href="scalability.html"><em>Scalability and load-balancing</em></a> for more details on multiple servers usage), in returning address(es) of redirection. About the returned value it works exactly same the returned value of <a class="reference internal" href="#ref-onrendezvousunknown"><em>onRendezVousUnknown(protocol, peerId)</em></a> event.
 It&#8217;s called on the first packet received from one client (before the creation of its client object associated). First <em>address</em> argument is the address of the client, <em>path</em> argument indicates the path expression of connection, <em>properties</em> argument is a table with the HTTP parameters given in the URL of connection (see dynamic properties of <a class="reference internal" href="#client">Client</a> object description) and <em>attempts</em> argument indicates the number of attempts of connection (starts to 1 and is incremented on each attempt).</p>
 <div class="highlight-as3"><div class="highlight"><pre><span class="n">_netConnection</span><span class="o">.</span><span class="na">connect</span><span class="o">(</span><span class="s2">&quot;rtmfp://localhost/myApplication?acceptableAttempts=2&quot;</span><span class="o">);</span>
@@ -1021,11 +983,11 @@ It&#8217;s called on the first packet received from one client (before the creat
 </div>
 </div>
 <div class="section" id="onserverconnection-server">
-<h3><a class="toc-backref" href="#id76">onServerConnection(server)</a><a class="headerlink" href="#onserverconnection-server" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id66">onServerConnection(server)</a><a class="headerlink" href="#onserverconnection-server" title="Permalink to this headline">¶</a></h3>
 <p>Call on server connection, see <a class="reference internal" href="scalability.html"><em>Scalability and load-balancing</em></a> for more details on multiple servers usage, or <a class="reference internal" href="#server">Server</a> object.</p>
 </div>
 <div class="section" id="onserverdisconnection-server">
-<h3><a class="toc-backref" href="#id77">onServerDisconnection(server)</a><a class="headerlink" href="#onserverdisconnection-server" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id67">onServerDisconnection(server)</a><a class="headerlink" href="#onserverdisconnection-server" title="Permalink to this headline">¶</a></h3>
 <p>Call on server disconnection, see <a class="reference internal" href="scalability.html"><em>Scalability and load-balancing</em></a> for more details on multiple servers usage, or <a class="reference internal" href="#server">Server</a> object.</p>
 </div>
 </div>

@@ -64,6 +64,9 @@ Global configurations
   print(mona.configs.port) -- displays "19350"
   print(mona.configs.myGroup.myConfig) -- displays "test"
 
+
+.. _ref-com-server-apps:
+
 Communication between server applications
 ********************************************
 
