@@ -65,7 +65,7 @@ void WSSession::kill(UInt32 type){
 
 bool WSSession::openSubscribtion(Exception& ex, const string& name, Writer& writer) {
 	closeSusbcription();
-	_pListener=invoker.subscribe(ex, peer, name, writer);
+	_pListener=invoker.subscribe(ex, peer, name, writer,peer.query.c_str());
 	return _pListener ? true : false;
 }
 void WSSession::closeSusbcription(){

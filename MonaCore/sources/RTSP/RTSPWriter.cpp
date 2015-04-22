@@ -235,13 +235,13 @@ bool RTSPWriter::writeMedia(MediaType type,UInt32 time,PacketReader& packet,cons
 			// TODO changer ça par un booléen!
 			if (time==DATA) {// one init by mediatype, we want here just init one time!
 				if(_pSocketAudioRTP) {
-					_pAudioRTP.reset(new RTP("\x27\x83\xEE\x43")); // TODO : extract from audioSSRC
+					_pAudioRTP.reset(new RTP(_session.invoker.poolBuffers, "\x27\x83\xEE\x43")); // TODO : extract from audioSSRC
 					
 					RTPSender* pSender(createRTPSender(RTPSender::RtpType::AUDIO_RTCP,_portAudioRTCP));
 					_pAudioRTP->writeRTCP(pSender->packet, MediaContainer::AUDIO, 0); // RTCP first packets
 				}
 				if(_pSocketVideoRTP) {
-					_pVideoRTP.reset(new RTP("\x4D\x7C\x7F\xFD")); // TODO : extract from videoSSRC
+					_pVideoRTP.reset(new RTP(_session.invoker.poolBuffers, "\x4D\x7C\x7F\xFD")); // TODO : extract from videoSSRC
 				
 					RTPSender* pSender = createRTPSender(RTPSender::RtpType::VIDEO_RTCP,_portVideoRTCP);
 					_pVideoRTP->writeRTCP(pSender->packet, MediaContainer::VIDEO, 0);

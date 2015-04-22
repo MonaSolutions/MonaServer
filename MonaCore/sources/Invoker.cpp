@@ -26,7 +26,7 @@ using namespace std;
 namespace Mona {
 
 
-Invoker::Invoker(UInt32 socketBufferSize,UInt16 threads) : poolThreads(threads),relayer(poolBuffers,poolThreads,socketBufferSize),sockets(*this,poolBuffers,poolThreads,socketBufferSize),publications(_publications) {
+Invoker::Invoker(UInt32 socketBufferSize,UInt16 threads) : poolThreads(threads),relayer(poolBuffers,poolThreads,socketBufferSize),sockets(*this,poolBuffers,poolThreads,socketBufferSize),publications(_publications), clients(), groups() {
 	DEBUG(poolThreads.threadsAvailable()," threads available in the server poolthreads");
 		
 }
@@ -83,16 +83,16 @@ void Invoker::unpublish(const string& name,Peer* pPeer) {
 
 Listener* Invoker::subscribe(Exception& ex, Peer& peer,string& name,Writer& writer) {
 	string query;
-	Listener* pListener(subscribe(ex, peer, (const string&)publicationName(name, query), writer));
+	Listener* pListener(subscribe(ex, peer, (const string&)publicationName(name, query), writer, query.c_str()));
 	if (pListener)
 		Util::UnpackQuery(query, *pListener);
 	return pListener;
 }
 
-Listener* Invoker::subscribe(Exception& ex, Peer& peer,const string& name,Writer& writer) {
+Listener* Invoker::subscribe(Exception& ex, Peer& peer,const string& name,Writer& writer, const char* queryParams) {
 	MAP_FIND_OR_EMPLACE(_publications, it, name, name,poolBuffers);
 	Publication& publication(it->second);
-	Listener* pListener = publication.addListener(ex, peer,writer);
+	Listener* pListener = publication.addListener(ex, peer,writer, queryParams);
 	if (!pListener) {
 		if(!publication.running() && publication.listeners.count()==0)
 			_publications.erase(it);

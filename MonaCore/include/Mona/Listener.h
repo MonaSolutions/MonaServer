@@ -32,7 +32,7 @@ class Publication;
 class Listener : public MapParameters, virtual Object {
 public:
 
-	Listener(Publication& publication,Client& client,Writer& writer);
+	Listener(Publication& publication,Client& client,Writer& writer,const char* queryParameters=NULL);
 	virtual ~Listener();
 
 	void seek(UInt32 time);
@@ -70,11 +70,13 @@ private:
 	bool	initWriters();
 	void	closeWriters();
 
-	void	firstMedia(UInt32 time);
+	bool	pushAudioInfos(UInt32 time);
 
 	PacketReader& publicationNamePacket() { _publicationNamePacket.reset(); return _publicationNamePacket; }
 
-	bool					_firstMedia;
+	// Parameters overrides
+	void onChange(const char* key, const char* value, std::size_t size);
+
 	UInt32 					_startTime;
 	UInt32					_lastTime;
 	bool					_firstTime;

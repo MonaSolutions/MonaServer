@@ -35,19 +35,12 @@ bool Parameters::getString(const char* key, std::string& value) const {
 }
 
 
-bool Parameters::getBool(const char* key, bool& value) const {
+bool Parameters::getBoolean(const char* key, bool& value) const {
 	const char* temp = getRaw(key);
-	if (temp) {
-		if (String::ICompare(temp, "0") == 0 || String::ICompare(temp, "false") == 0 || String::ICompare(temp, "no") == 0 || String::ICompare(temp, "off") == 0) {
-			value = false;
-			return true;
-		}
-		if (String::ICompare(temp, "1") == 0 || String::ICompare(temp, "true") == 0 || String::ICompare(temp, "yes") == 0 || String::ICompare(temp, "on") == 0) {
-			value = true;
-			return true;
-		}
-	}
-	return false;
+	if (!temp)
+		return false;
+	value = String::ToBoolean(temp);
+	return true;
 }
 
 void Parameters::setIntern(const char* key, const char* value, size_t size) {
@@ -58,7 +51,7 @@ void Parameters::setIntern(const char* key, const char* value, size_t size) {
 		_bytes += bytes;
 	else
 		_bytes -= bytes;
-	OnChange::raise(key,value, size); // value==NULL means "deletion"
+	onChange(key, value, size);  // value==NULL means "deletion"
 }
 
 

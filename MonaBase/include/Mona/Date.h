@@ -42,15 +42,15 @@ public:
 
 
 	enum Type {
-		GMT = 0x7FFFFFFF, /// Special value for offset (Int32 minimum)
-		LOCAL = 0x80000000 /// Special value for offset(Int32 maximum)
+		GMT = (Int32)0x7FFFFFFF, /// Special value for offset (Int32 minimum)
+		LOCAL = (Int32)0x80000000 /// Special value for offset(Int32 maximum)
 	};
 
 	static bool  IsLeapYear(Int32 year) { return (year % 400 == 0) || (!(year & 3) && year % 100); }
 
 	// build a NOW date, not initialized (is null)
 	// /!\ Keep 'Type' to avoid confusion with "build from time" constructor, if a explicit Int32 offset is to set, use Date::setOffset or "build from time" contructor
-	explicit Date(Type offset=LOCAL) : _isDST(false),_year(0), _month(0), _day(0), _weekDay(7),_hour(0), _minute(0), _second(0), _millisecond(0), _changed(false), _offset(offset),_isLocal(true) {}
+	explicit Date(Type offset=LOCAL) : _isDST(false),_year(0), _month(0), _day(0), _weekDay(7),_hour(0), _minute(0), _second(0), _millisecond(0), _changed(false), _offset((Int32)offset),_isLocal(true) {}
 	
 	// build from time
 	explicit Date(Int64 time,Int32 offset=LOCAL) : _isDST(false),_year(0), _month(0), _day(0),  _weekDay(7),_hour(0), _minute(0), _second(0), _millisecond(0), _changed(false), _offset(offset),_isLocal(true), Time(time) {}

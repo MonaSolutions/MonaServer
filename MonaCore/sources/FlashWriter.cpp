@@ -136,7 +136,7 @@ bool FlashWriter::writeMedia(MediaType type,UInt32 time,PacketReader& packet,con
 					ERROR("Impossible to convert streaming ", dataType, " data to AMF, data ignored")
 					break;
 				}
-				AMFWriter& writer(write((time & 0xFF) == INFO_DATA ? AMF::INFORMATIONS : AMF::DATA, 0));
+				AMFWriter& writer(write((time & 0xFF) == DATA_INFO ? AMF::INFORMATIONS : AMF::DATA, 0));
 				if (DataReader::STRING == pReader->nextType()) {
 					// Write the handler name in AMF0!
 					writer.amf0 = true;
@@ -146,7 +146,7 @@ bool FlashWriter::writeMedia(MediaType type,UInt32 time,PacketReader& packet,con
 				pReader->read(writer); // to AMF
 				break;
 			}
-			write((time & 0xFF) == INFO_DATA ? AMF::INFORMATIONS : AMF::DATA, 0, packet.current(),packet.available());
+			write((time & 0xFF) == DATA_INFO ? AMF::INFORMATIONS : AMF::DATA, 0, packet.current(),packet.available());
 			break;
 		}
 		default:

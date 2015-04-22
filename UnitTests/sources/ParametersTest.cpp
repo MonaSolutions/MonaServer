@@ -36,8 +36,8 @@ ADD_TEST(ParametersTest, MapParameters) {
 	// Set STRING
 	params.setString(Key, "1");
 	CHECK(params.getString(Key, Value) && Value == "1");
-	CHECK(params.getBool(Key,bValue) && bValue);
-	CHECK(params.getBool(Key));
+	CHECK(params.getBoolean(Key,bValue) && bValue);
+	CHECK(params.getBoolean(Key));
 	CHECK(params.getNumber(Key,dValue) && dValue==1);
 	CHECK(params.getNumber(Key)==1);
 	params.setString(Key, "1",1);
@@ -45,28 +45,28 @@ ADD_TEST(ParametersTest, MapParameters) {
 	
 
 	// Set BOOL
-	params.setBool(Key, true);
+	params.setBoolean(Key, true);
 	CHECK(params.getString(Key, Value) && Value == "true");
-	CHECK(params.getBool(Key,bValue) && bValue);
-	CHECK(params.getBool(Key));
+	CHECK(params.getBoolean(Key,bValue) && bValue);
+	CHECK(params.getBoolean(Key));
 
-	params.setBool(Key, false);
+	params.setBoolean(Key, false);
 	CHECK(params.getString(Key, Value) && Value == "false");
-	CHECK(params.getBool(Key,bValue) && !bValue);
-	CHECK(!params.getBool<true>(Key));
+	CHECK(params.getBoolean(Key,bValue) && !bValue);
+	CHECK(!params.getBoolean<true>(Key));
 
 	// Set Number
 	params.setNumber(Key, 1);
 	CHECK(params.getString(Key, Value) && Value == "1");
-	CHECK(params.getBool(Key,bValue) && bValue);
-	CHECK(params.getBool(Key));
+	CHECK(params.getBoolean(Key,bValue) && bValue);
+	CHECK(params.getBoolean(Key));
 	CHECK(params.getNumber(Key,dValue) && dValue==1);
 	CHECK(params.getNumber(Key)==1);
 
 	params.setNumber(Key, 0);
 	CHECK(params.getString(Key, Value) && Value == "0");
-	CHECK(params.getBool(Key,bValue) && !bValue);
-	CHECK(!params.getBool<true>(Key));
+	CHECK(params.getBoolean(Key,bValue) && !bValue);
+	CHECK(!params.getBoolean<true>(Key));
 	CHECK(params.getNumber(Key,dValue) && dValue==0);
 	CHECK(params.getNumber(Key)==0);
 

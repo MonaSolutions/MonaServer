@@ -66,17 +66,17 @@ public:
 	bool				dumpJustInDebug;
 
 
-	static void	DumpResponse(const UInt8* data, UInt32 size, const SocketAddress& address, bool justInDebug = false);
-	void dumpResponse(const UInt8* data, UInt32 size, bool justInDebug=false) { DumpResponse(data, size, peer.address, justInDebug); }
+	static void	DumpResponse(const char* name, const UInt8* data, UInt32 size, const SocketAddress& address, bool justInDebug = false);
+	void dumpResponse(const UInt8* data, UInt32 size, bool justInDebug=false) { DumpResponse(peer.protocol.c_str(), data, size, peer.address, justInDebug); }
 
 
 	template<typename ProtocolType,typename SenderType>
 	bool send(Exception& ex,const std::shared_ptr<SenderType>& pSender) {
-		return ((ProtocolType&)_protocol).send<SenderType>(ex, pSender);
+		return ((ProtocolType&)_protocol).template send<SenderType>(ex, pSender);
 	}
 	template<typename ProtocolType,typename SenderType>
 	PoolThread*	send(Exception& ex,const std::shared_ptr<SenderType>& pSender, PoolThread* pThread) {
-		return ((ProtocolType&)_protocol).send<SenderType>(ex, pSender, pThread);
+		return ((ProtocolType&)_protocol).template send<SenderType>(ex, pSender, pThread);
 	}
 
 	virtual void		manage() { flush(); }
@@ -91,10 +91,6 @@ protected:
 	bool receive(const SocketAddress& address, Binary& packet);
 
 private:
-
-	const std::string&	protocolName();
-
-
 	
 	mutable std::string					_name;
 	UInt32								_id;

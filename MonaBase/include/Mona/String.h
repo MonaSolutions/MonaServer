@@ -86,6 +86,7 @@ public:
 	template<typename Type>
 	static Type ToNumber(Exception& ex, Type failValue, const char* value, std::size_t size = std::string::npos);
 
+	static bool ToBoolean(const char* value,std::size_t size = std::string::npos) { return !value || ICompare(value, "0", size) == 0 || String::ICompare(value, "false", size) == 0 || String::ICompare(value, "no", size) == 0 || String::ICompare(value, "off", size) == 0 ? false : true; /* other values is considerated as true */ }
 
 	static const std::string Empty;
 
@@ -259,10 +260,11 @@ public:
 		return String::Append(Buffer::Append<BufferType>(result,buffer,strlen(buffer)), args ...);
 	}
 
-private:
-
+	
 	template <typename BufferType>
 	static BufferType& Append(BufferType& result) { return result; }
+
+private:
 
 #if defined(_WIN32)
 	static const char* ToUTF8(const wchar_t* value, char buffer[_MAX_PATH]);

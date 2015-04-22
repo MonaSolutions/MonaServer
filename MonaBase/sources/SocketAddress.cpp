@@ -144,7 +144,7 @@ SocketAddress::SocketAddress(const struct sockaddr& addr) {
 SocketAddress::SocketAddress(const SocketAddress& other) : _pAddress(other._pAddress),_toString(other._toString) {
 }
 
-void SocketAddress::reset() {
+void SocketAddress::clear() {
 	_pAddress = _pAddress->family() == IPAddress::IPv6 ? _Addressv6Wildcard._pAddress : _Addressv4Wildcard._pAddress;
 	_toString.clear();
 }
@@ -178,7 +178,7 @@ bool SocketAddress::setIntern(Exception& ex,const char* hostAndPort,bool resolve
 
 	const char* colon(strrchr(hostAndPort,':'));
 	if (!colon) {
-		ex.set(Exception::NETADDRESS, "Missing port number in ", hostAndPort);
+		ex.set(Exception::NETPORT, "Missing port number in ", hostAndPort);
 		return false;
 	}
 	(char&)*colon = 0;
@@ -256,7 +256,7 @@ UInt16 SocketAddress::resolveService(Exception& ex,const char* service) {
 	struct servent* se = getservbyname(service, NULL);
 	if (se)
 		return ntohs(se->s_port);
-	ex.set(Exception::NETADDRESS, "Service ", service, " unknown");
+	ex.set(Exception::NETPORT, "Service ", service, " unknown");
 	return 0;
 }
 

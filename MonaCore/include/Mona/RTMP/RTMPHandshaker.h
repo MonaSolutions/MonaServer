@@ -28,8 +28,9 @@ namespace Mona {
 
 class RTMPHandshaker : public TCPSender, public virtual Object {
 public:
-	RTMPHandshaker(const SocketAddress& address,PoolBuffer& pBuffer);
+	RTMPHandshaker(bool encrypted, const SocketAddress& address,PoolBuffer& pBuffer);
 
+	const bool encrypted;
 	volatile bool failed;
 
 	std::shared_ptr<RC4_KEY>	pEncryptKey;

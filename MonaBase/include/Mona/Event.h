@@ -146,7 +146,7 @@ public:
 		std::shared_ptr<std::recursive_mutex> pMutex(Event<Result,ArgsType ...>::_pMutex); // because the event can delete this!
 		std::lock_guard<std::recursive_mutex> lock(*pMutex);
 		if (Event<Result,ArgsType ...>::_pRelayer)
-			return Event<Result,ArgsType ...>::_pRelayer->raise<defaultResult>(args...);
+			return Event<Result,ArgsType ...>::_pRelayer->template raise<defaultResult>(args...);
 		else if (Event<Result, ArgsType ...>::_pFunction)
 			return (*Event<Result, ArgsType ...>::_pFunction)(args ...);
 		return defaultResult;

@@ -75,7 +75,7 @@ public:
 	bool set(Exception& ex, const char* address, Family family);
 	bool set(Exception& ex, const std::string& address, Family family) { return set(ex, address.c_str(),family); }
 
-	void reset();
+	void clear();
 
 	// Masks the IP address using the given netmask, which is usually a IPv4 subnet mask (Only supported for IPv4 addresses)
 	// The new address is (address & mask)
@@ -150,6 +150,9 @@ public:
 	// Returns true if the address is a global multicast address
 	// 224.0.1.0 to 238.255.255.255 range for IPv4, FFxF:x:x:x:x:x:x:x range for IPv6
 	bool isGlobalMC() const;
+
+	// Returns the prefix length
+	UInt8 prefixLength() const;
 
 	// Returns true if the address is local
 	bool isLocal() const { return isWildcard() || isLoopback() || isSiteLocal() || isLinkLocal() || isAnyBroadcast() || isNodeLocalMC() || isLinkLocalMC() || isSiteLocalMC() || isOrgLocalMC(); }

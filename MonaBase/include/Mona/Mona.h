@@ -20,6 +20,7 @@ This file is a part of Mona.
 #pragma once
 
 #include <stdio.h>
+#include <cstdlib>
 #include <cstdint>
 #include <string>
 #include <cstring>

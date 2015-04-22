@@ -32,7 +32,7 @@ public:
 			this->sessions.create<RTMPSession>(address,file,*this,this->invoker); // Create session
 		}) {
 
-		setNumber("timeout", 120); // 120 seconds
+		setNumber("timeout", 60); // 60 seconds (ping is configured for 30 seconds)
 
 		OnConnection::subscribe(onConnection);
 	}

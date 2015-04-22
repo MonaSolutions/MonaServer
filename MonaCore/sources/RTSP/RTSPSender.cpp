@@ -78,7 +78,7 @@ bool RTSPSender::run(Exception& ex) {
 	}
 
 	/// Dump response
-	Session::DumpResponse(data(), size(), _address);
+	Session::DumpResponse("RTSP",data(), size(), _address);
 
 	/// Send
 	return TCPSender::run(ex);

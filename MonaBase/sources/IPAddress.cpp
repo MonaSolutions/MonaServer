@@ -32,6 +32,21 @@ namespace Mona {
 static const char* LocalhostV4("127.0.0.1"); // to accelerate the parse
 static const char* LocalhostV6("::1"); // to accelerate the parse
 
+/// Returns the length of the mask (number of bits set in val).
+/// The val should be either all zeros or two contiguos areas of 1s and 0s. 
+/// The algorithm ignores invalid non-contiguous series of 1s and treats val 
+/// as if all bits between MSb and last non-zero bit are set to 1.
+UInt8 MaskBits(UInt32 val, UInt8 size) {
+	UInt8 count = 0;
+	if (val) {
+		val = (val ^ (val - 1)) >> 1;
+		for (count = 0; val; ++count)
+			val >>= 1;
+	} else
+		count = size;
+	return size - count;
+}
+
 class IPAddressCommon : public virtual Object {
 public:
 	virtual const void* addr() const = 0;
@@ -55,6 +70,7 @@ public:
 	virtual bool isSiteLocalMC() const = 0;
 	virtual bool isOrgLocalMC() const = 0;
 	virtual bool isGlobalMC() const = 0;
+	virtual UInt8 prefixLength() const = 0;
 };
 
 
@@ -110,6 +126,10 @@ public:
 	bool isGlobalMC() const {
 		UInt32 addr = ntohl(_addr.s_addr);
 		return addr >= 0xE0000100 && addr <= 0xEE000000; // 224.0.1.0 to 238.255.255.255
+	}
+
+	UInt8 prefixLength() const {
+		return MaskBits(ntohl(_addr.s_addr), 32);
 	}
 
 	static IPv4Address* Parse(Exception& ex,const char* address) {
@@ -252,6 +272,18 @@ public:
 		return (ntohs(words[0]) & 0xFFEF) == 0xFF0F;
 	}
 
+	UInt8 prefixLength() const {
+		UInt8 bits = 0;
+		UInt8 bitPos = 128;
+		const UInt16* words = reinterpret_cast<const UInt16*>(&_addr);
+		for (int i = 7; i >= 0; --i) {
+			if ((bits = MaskBits(ntohs(words[i]), 16)))
+				return (bitPos - (16 - bits));
+			bitPos -= 16;
+		}
+		return 0;
+	}
+
 	static IPv6Address* Parse(Exception& ex,const char* address) {
 		if (!address || *address==0 || !Net::InitializeNetwork(ex))
 			return 0;
@@ -353,7 +385,7 @@ IPAddress::IPAddress(const in_addr& addr) : _pIPAddress(new IPv4Address(addr)) {
 IPAddress::IPAddress(const in6_addr& addr, UInt32 scope) : _pIPAddress(new IPv6Address(addr, scope)) {
 }
 
-void IPAddress::reset() {
+void IPAddress::clear() {
 	_pIPAddress = _pIPAddress->family() == IPv6 ? _IPv6Wildcard._pIPAddress : _IPv4Wildcard._pIPAddress;
 }
 
@@ -377,7 +409,7 @@ bool IPAddress::set(Exception& ex, const char* address) {
 	if (!pIPAddress)
 		pIPAddress = IPv6Address::Parse(ex, address);
 	if (!pIPAddress) {
-		ex.set(Exception::NETADDRESS, "Invalid IPAddress ", address);
+		ex.set(Exception::NETIP, "Invalid ip ", address);
 		return false;
 	}
 	_pIPAddress.reset(pIPAddress);
@@ -392,7 +424,7 @@ bool IPAddress::setWithDNS(Exception& ex, const char* address) {
 		return false;
 	auto& addresses(entry.addresses());
 	if (addresses.empty()) {
-		ex.set(Exception::NETADDRESS, "No address found for ip ", address);
+		ex.set(Exception::NETIP, "No ip found for address ", address);
 		return false;
 	}
 	ex.set(Exception::NIL);
@@ -414,7 +446,7 @@ bool IPAddress::set(Exception& ex, const char* address, Family family) {
 	else
 		pIPAddress = IPv4Address::Parse(ex, address);
 	if (!pIPAddress) {
-		ex.set(Exception::NETADDRESS, "Invalid IPAddress ", address);
+		ex.set(Exception::NETIP, "Invalid ip ", address);
 		return false;
 	}
 	_pIPAddress.reset(pIPAddress);
@@ -480,6 +512,9 @@ bool IPAddress::isOrgLocalMC() const {
 }
 bool IPAddress::isGlobalMC() const {
 	return _pIPAddress->isGlobalMC();
+}
+UInt8 IPAddress::prefixLength() const {
+	return _pIPAddress->prefixLength();
 }
 
 bool IPAddress::operator == (const IPAddress& a) const {

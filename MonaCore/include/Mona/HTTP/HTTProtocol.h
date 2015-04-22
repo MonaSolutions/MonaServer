@@ -30,9 +30,12 @@ public:
 	HTTProtocol(const char* name, Invoker& invoker, Sessions& sessions) : TCProtocol(name, invoker, sessions) {
 
 		setNumber("timeout", 7); // 7 seconds
-		setBool("index", true); // index directory, if false => forbid directory index, otherwise redirection to index
-		invoker.setNumber("WebSocket.timeout", 120); // 120 sec, default Websocket timeout (ping is configured to 60sec)
+		setBoolean("index", true); // index directory, if false => forbid directory index, otherwise redirection to index
 
+		// trick for WebSocket Session (use HTTPProtocol file)
+		if (!invoker.hasKey("WebSocket.timeout"))
+			invoker.setNumber("WebSocket.timeout", 80); // 80 sec, default Websocket timeout (ping is every 40sec)
+	
 		onConnection = [this](Exception& ex,const SocketAddress& address,SocketFile& file) {
 			this->sessions.create<HTTPSession>(address,file,*this,this->invoker); // Create session
 		};

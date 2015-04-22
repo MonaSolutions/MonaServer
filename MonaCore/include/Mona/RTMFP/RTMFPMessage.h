@@ -73,7 +73,7 @@ private:
 
 
 
-class RTMFPMessageBuffered: public RTMFPMessage, virtual NullableObject {
+class RTMFPMessageBuffered: public RTMFPMessage, virtual public NullableObject {
 public:
 	RTMFPMessageBuffered(const PoolBuffers& poolBuffers,bool repeatable) : _pWriter(new AMFWriter(poolBuffers)),RTMFPMessage(repeatable) {}
 	RTMFPMessageBuffered() : _pWriter(&AMFWriter::Null),RTMFPMessage(false) {}

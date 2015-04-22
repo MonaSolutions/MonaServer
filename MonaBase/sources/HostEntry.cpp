@@ -45,7 +45,7 @@ void HostEntry::set(Exception& ex,const struct hostent* entry) {
 			else if (entry->h_length == sizeof(struct in6_addr))
 				_addresses.emplace_back(*reinterpret_cast<struct in6_addr*>(*address));
 			else
-				ex.set(Exception::NETADDRESS, "Unvalid host address entry");
+				ex.set(Exception::NETIP, "Unvalid host ip entry");
 			++address;
 		}
 	}
@@ -63,7 +63,7 @@ void HostEntry::set(Exception& ex, struct addrinfo* ainfo) {
 			else if (ai->ai_addr->sa_family == AF_INET)
 				_addresses.emplace_back(reinterpret_cast<struct sockaddr_in*>(ai->ai_addr)->sin_addr);
 			else
-				ex.set(Exception::NETADDRESS, "Unknown address family ", ai->ai_addr->sa_family);
+				ex.set(Exception::NETIP, "Unknown ip family ", ai->ai_addr->sa_family);
 		}
 	}
 }

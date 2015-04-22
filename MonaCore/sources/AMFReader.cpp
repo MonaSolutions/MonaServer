@@ -387,7 +387,7 @@ bool AMFReader::writeOne(UInt8 type, DataWriter& writer) {
 					_referencing = referencing;
 		
 					// write properties in first
-					while (text = readText(sizeText,true)) {
+					while ((text = readText(sizeText,true))) {
 						if (!packet.available())
 							break; // no stringify possible!
 						SCOPED_STRINGIFY(text, sizeText, writer.writePropertyName(text))
@@ -452,7 +452,7 @@ bool AMFReader::writeOne(UInt8 type, DataWriter& writer) {
 				bool started(false);
 
 				UInt32 sizeTest(0);
-				while (text = readText(sizeTest,true)) {
+				while ((text = readText(sizeTest,true))) {
 					if (!packet.available())
 						break; // no stringify possible!
 					if (!started) {
@@ -512,7 +512,7 @@ bool AMFReader::writeOne(UInt8 type, DataWriter& writer) {
 		else
 			SCOPED_STRINGIFY(text, size, pReference=beginObject(writer,reference,text))
 
-		while (text = readText(size,true)) {
+		while ((text = readText(size,true))) {
 			if (!packet.available())
 				break; // no stringify possible!
 			SCOPED_STRINGIFY(text, size, writer.writePropertyName(text))
@@ -598,7 +598,7 @@ bool AMFReader::writeOne(UInt8 type, DataWriter& writer) {
 	else
 		SCOPED_STRINGIFY(text, size, pReference = beginObject(writer,reference,text);)
 
-	while (text = readText(size,true)) {
+	while ((text = readText(size,true))) {
 		if (!packet.available())
 			break; // no stringify possible!
 		SCOPED_STRINGIFY(text, size, writer.writePropertyName(text))

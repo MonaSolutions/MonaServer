@@ -27,7 +27,7 @@ namespace Mona {
 
 class DataWriterNull;
 
-class DataWriter : virtual NullableObject {
+class DataWriter : virtual public NullableObject {
 public:
 ////  TO DEFINE ////
 	virtual UInt64 beginObject(const char* type=NULL)=0;

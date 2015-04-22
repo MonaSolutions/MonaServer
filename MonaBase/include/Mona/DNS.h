@@ -59,7 +59,7 @@ private:
 	// Set the exception according to the getaddrinfo() error code
 	template <typename ...Args>
 	static void SetAIError(Exception& ex, int error, Args&&... args) {
-		ex.set(Exception::NETADDRESS, gai_strerror(error), args ...);
+		ex.set(Exception::NETIP, gai_strerror(error), args ...);
 	}
 
 };

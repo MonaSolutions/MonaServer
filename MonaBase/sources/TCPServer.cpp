@@ -65,7 +65,7 @@ void TCPServer::stop() {
 	if (!_running)
 		return;
 	_socket.close();
-	_address.reset();
+	_address.clear();
 	_running = false;
 }
 

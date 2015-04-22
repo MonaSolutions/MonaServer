@@ -44,6 +44,8 @@ public:
 	Client() : _pData(NULL) {}
 
 	const SocketAddress			address;
+	const SocketAddress			serverAddress;
+
 	const std::string			protocol;
 	virtual const Parameters&	parameters() const =0;
 
@@ -58,7 +60,6 @@ public:
 	
 	const std::string			path;
 	const std::string			query;
-	const std::string			serverAddress;
 	
 	const Time					lastReceptionTime;
 	virtual UInt16				ping() const = 0;

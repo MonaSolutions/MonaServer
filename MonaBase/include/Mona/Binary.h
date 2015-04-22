@@ -31,8 +31,9 @@ public:
 
 
 	 enum Order {
-        ORDER_BIG_ENDIAN,
-        ORDER_LITTLE_ENDIAN
+        ORDER_BIG_ENDIAN=1, // network order!
+		ORDER_LITTLE_ENDIAN,
+		ORDER_NETWORK=ORDER_BIG_ENDIAN
 	 };
 
 #if defined(_ARCH_BIG_ENDIAN)
@@ -40,6 +41,28 @@ public:
 #else
 	 static Order NativeOrder() { return ORDER_LITTLE_ENDIAN; }
 #endif
+
+	 static UInt16    From16Network(UInt16 value) { return From16BigEndian(value); }
+	 static UInt32    From24Network(UInt32 value) { return From24BigEndian(value); }
+	 static UInt32    From32Network(UInt32 value) { return From32BigEndian(value); }
+	 static UInt64    From64Network(UInt64 value) { return From64BigEndian(value); }
+	 template<typename DataType>
+	 static DataType* FromNetwork(DataType* data, UInt32 size) { return FromBigEndian(data,size); }
+
+
+	 static UInt16    From16BigEndian(UInt16 value) { return NativeOrder()==ORDER_BIG_ENDIAN ? value : Flip16(value); }
+	 static UInt32    From24BigEndian(UInt32 value) { return NativeOrder()==ORDER_BIG_ENDIAN ? value : Flip24(value); }
+	 static UInt32    From32BigEndian(UInt32 value) { return NativeOrder()==ORDER_BIG_ENDIAN ? value : Flip32(value); }
+	 static UInt64    From64BigEndian(UInt64 value) { return NativeOrder()==ORDER_BIG_ENDIAN ? value : Flip64(value); }
+	 template<typename DataType>
+	 static DataType* FromBigEndian(DataType* data, UInt32 size) { return NativeOrder()==ORDER_BIG_ENDIAN ? data : ReverseBytes(data,size); }
+
+	 static UInt16    From16LittleEndian(UInt16 value) { return NativeOrder()==ORDER_LITTLE_ENDIAN ? value : Flip16(value); }
+	 static UInt32    From24LittleEndian(UInt32 value) { return NativeOrder()==ORDER_LITTLE_ENDIAN ? value : Flip24(value); }
+	 static UInt32    From32LittleEndian(UInt32 value) { return NativeOrder()==ORDER_LITTLE_ENDIAN ? value : Flip32(value); }
+	 static UInt64    From64LittleEndian(UInt64 value) { return NativeOrder()==ORDER_LITTLE_ENDIAN ? value : Flip64(value); }
+	 template<typename DataType>
+	 static DataType* FromLittleEndian(DataType* data, UInt32 size) { return NativeOrder()==ORDER_LITTLE_ENDIAN ? data : ReverseBytes(data,size); }
 
 	static UInt16		Flip16(UInt16 value) { return ((value >> 8) & 0x00FF) | ((value << 8) & 0xFF00); }
 	static UInt32		Flip24(UInt32 value) { return ((value >> 16) & 0x000000FF) | (value & 0x0000FF00) | ((value << 16) & 0x00FF0000); }

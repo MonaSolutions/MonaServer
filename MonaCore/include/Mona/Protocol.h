@@ -28,10 +28,11 @@ namespace Mona {
 
 
 class Protocol : public virtual Object, public MapParameters {
-	friend class Protocols;
-	friend class Handler;
 public:
-	const std::string name;
+	const std::string   name;
+	const SocketAddress publicAddress;
+
+	virtual void	manage() {}
 
 protected:
 	Protocol(const char* name, Invoker& invoker, Sessions& sessions) : invoker(invoker), sessions(sessions), name(name) {}
@@ -42,10 +43,7 @@ protected:
 	Sessions&		sessions;
 
 private:
-	template<typename ParamsType>
-	bool	load(Exception& ex,const std::string& host,UInt16 port) { return true; }
-	virtual void	manage() {}
-
+	bool	load(Exception& ex,const SocketAddress& address) { return true; }
 };
 
 inline bool Protocol::auth(const SocketAddress& address) {

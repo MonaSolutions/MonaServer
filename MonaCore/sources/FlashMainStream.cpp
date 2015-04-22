@@ -65,8 +65,10 @@ void FlashMainStream::messageHandler(const string& name,AMFReader& message,Flash
 
 		if(message.read(AMFReader::OBJECT,parameterWriter)) {
 
-			if (peer.path.empty() && peer.properties().getString("tcUrl",_buffer)) {
-				Util::UnpackUrl(_buffer, (string&)peer.serverAddress,(string&)peer.path,(string&)peer.query);
+			if (peer.properties().getString("tcUrl",_buffer)) {
+				string serverAddress;
+				Util::UnpackUrl(_buffer, serverAddress,(string&)peer.path,(string&)peer.query);
+				peer.setServerAddress(serverAddress);
 				Util::UnpackQuery(peer.query, peer.properties());
 			}
 
@@ -128,7 +130,7 @@ void FlashMainStream::messageHandler(const string& name,AMFReader& message,Flash
 
 		UInt16 idStream(1);
 		auto it(_streams.begin());
-		for (it; it != _streams.end();++it) {
+		for (; it != _streams.end();++it) {
 			if (it->first > idStream) 
 				break;
 			++idStream;

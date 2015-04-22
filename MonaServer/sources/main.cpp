@@ -38,8 +38,8 @@ private:
 	int main(TerminateSignal& terminateSignal) {
 
 		// starts the server
-		MonaServer server(terminateSignal, *this);
-		if (server.start()) {
+		MonaServer server(*this, terminateSignal);
+		if (server.start(*this)) {
 			terminateSignal.wait();
 			// Stop the server
 			server.stop();

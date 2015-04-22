@@ -36,24 +36,14 @@ This file is a part of Mona.
 using namespace std;
 using namespace Mona;
 
-
-const string MonaServer::WWWPath("./");
-const string MonaServer::DataPath("./");
-
-
-MonaServer::MonaServer(TerminateSignal& terminateSignal, const Parameters& configs) : _pState(NULL),
+MonaServer::MonaServer(const Parameters& configs, TerminateSignal& terminateSignal) : _pState(NULL),
 	Server(configs.getNumber<UInt32>("socketBufferSize"), configs.getNumber<UInt16>("threads")), servers(sockets), _firstData(true),_data(this->poolBuffers),_terminateSignal(terminateSignal),
 	setLUAProperty([this](const string& key, const string& value) { Script::PushValue(_pState, value); lua_setfield(_pState, -2, key.c_str());} ) {
 	
-	Parameters::ForEach forEach([this](const string& key, const string& value) {
-		setString(key, value);
-	});
-	configs.iterate(forEach);
-
-	string pathApp;
+	string pathApp("./");
 	configs.getString("application.dir", pathApp);
-	(string&)WWWPath = pathApp + "www";
-	(string&)DataPath = pathApp + "data";
+	_wwwPath = pathApp + "www";
+	_dataPath = pathApp + "data";
 
 	onPublicationData = [this](const Publication& publication,DataReader& data) {
 		SCRIPT_BEGIN(_pState)
@@ -199,18 +189,18 @@ MonaServer::~MonaServer() {
 }
 
 
-bool MonaServer::start() {
+bool MonaServer::start(const Parameters& configs) {
 	if(Server::running()) {
 		ERROR("Server is already running, call stop method before");
 		return false;
 	}
 
-	if (!FileSystem::CreateDirectory(WWWPath)) {
-		ERROR("Impossible to create application directory ", WWWPath);
+	if (!FileSystem::CreateDirectory(_wwwPath)) {
+		ERROR("Impossible to create application directory ", _wwwPath);
 		return false;
 	}
 
-	return Server::start();
+	return Server::start(configs);
 }
 
 void MonaServer::startService(Service& service) {
@@ -253,7 +243,7 @@ void MonaServer::onStart() {
 
 
 	// init root server application
-	_pService.reset(new Service(_pState, WWWPath, *this));
+	_pService.reset(new Service(_pState, _wwwPath, *this));
 
 	// Init few global variable
 	Script::AddObject<LUAInvoker,Invoker>(_pState,*this);
@@ -281,7 +271,7 @@ void MonaServer::onStart() {
 	// load database
 	Exception ex;
 	_firstData = true;
-	if (_data.load(ex, DataPath, *this, true)) {
+	if (_data.load(ex, _dataPath, *this, true)) {
 		if (ex)
 			ERROR("Error on database loading, ", ex.error())
 		NOTE("Database loaded")
@@ -403,22 +393,27 @@ void MonaServer::readAddressRedirection(const string& protocol, int& index, set<
 				return;
 			}
 		} else if (lua_istable(_pState, index)) {
-			bool isConst, success;
+			bool isConst;
 			Broadcaster* pBroadcaster = Script::ToObject<Broadcaster>(_pState, isConst,index);
 			if (pBroadcaster) {
 				for (ServerConnection* pServer : *pBroadcaster) {
-					
-					EXCEPTION_TO_LOG(success=pServer->addressFromProtocol(ex, protocol, address), "Address Redirection")
-					if(success)
+					if (pServer->protocolAddress(ex, protocol, address)) {
 						addresses.emplace(address);
+						if (ex)
+							SCRIPT_WARN("Redirection address, ",ex.error())
+					} else
+						SCRIPT_ERROR("Redirection address, ",ex.error())
 				}
 				return;
 			} 
 			ServerConnection* pServer = Script::ToObject<ServerConnection>(_pState, isConst, index);
 			if (pServer) {
-				EXCEPTION_TO_LOG(success=pServer->addressFromProtocol(ex, protocol, address), "Address Redirection")
-				if(success)
+				if (pServer->protocolAddress(ex, protocol, address)) {
 					addresses.emplace(address);
+					if (ex)
+						SCRIPT_WARN("Redirection address, ",ex.error())
+				} else
+					SCRIPT_ERROR("Redirection address, ",ex.error())
 				return;
 			}
 		}
@@ -668,7 +663,7 @@ bool MonaServer::onFileAccess(Exception& ex, Client& client, Client::FileAccessT
 		SCRIPT_FUNCTION_END
 	SCRIPT_END
 
-	filePath.set(WWWPath, client.path);
+	filePath.set(_wwwPath, client.path);
 	if (!name.empty())
 		filePath.append('/', name);
 

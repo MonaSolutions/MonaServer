@@ -28,13 +28,30 @@ using namespace std;
 
 namespace Mona {
 
-Listener::Listener(Publication& publication, Client& client, Writer& writer) : _writer(writer), publication(publication), receiveAudio(true), receiveVideo(true), client(client), _firstTime(true),
+Listener::Listener(Publication& publication, Client& client, Writer& writer, const char* queryParameters) : _writer(writer), publication(publication), receiveAudio(true), receiveVideo(true), client(client), _firstTime(true),
 	_seekTime(0),_pAudioWriter(NULL),_pVideoWriter(NULL),_publicationNamePacket((const UInt8*)publication.name().c_str(),publication.name().size()),
-	_dataInfos(DATA_NONE),_startTime(0),_lastTime(0),_codecInfosSent(false),_firstMedia(true) {
+	_dataInfos(DATA_NONE),_startTime(0),_lastTime(0),_codecInfosSent(false) {
+	if (queryParameters)
+		Util::UnpackQuery(queryParameters, *this);
 }
 
 Listener::~Listener() {
 	closeWriters();
+}
+
+void Listener::onChange(const char* key, const char* value, std::size_t size) {
+	if (_pAudioWriter && _pVideoWriter && (_dataInfos&DATA_INITIALIZED) && String::ICompare(key, EXPAND("unbuffered")) == 0) {
+		if (String::ToBoolean(value, size)) {
+			_pAudioWriter->reliable = false;
+			_pVideoWriter->reliable = false;
+			_dataInfos &= ~DATA_RELIABLE;
+		} else {
+			_pAudioWriter->reliable = true;
+			_pVideoWriter->reliable = true;
+			_dataInfos |= DATA_RELIABLE;
+		}
+	}
+	Parameters::onChange(key, value, size);
 }
 
 void Listener::closeWriters() {
@@ -49,10 +66,14 @@ void Listener::closeWriters() {
 bool Listener::initWriters() {
 	// if start return false, the subscriber must unsubcribe the listener (closed by the caller)
 
+	bool firstTime(false);
+
 	if (_pVideoWriter || _pAudioWriter || _dataInfos&DATA_INITIALIZED) {
 		closeWriters();
 		WARN("Reinitialisation of one ", publication.name(), " subscription");
-	}
+	} else
+		firstTime = true;
+
 	if (!_writer.writeMedia(Writer::INIT, Writer::DATA, publicationNamePacket(),*this))// unsubscribe can be done here!
 		return false; // Here consider that the listener have to be closed by the caller
 
@@ -71,11 +92,14 @@ bool Listener::initWriters() {
 		return false; // Here consider that the listener have to be closed by the caller
 	}
 
-	if (getBool<false>("unbuffered")) {
+	if (getBoolean<false>("unbuffered")) {
 		_pAudioWriter->reliable = false;
 		_pVideoWriter->reliable = false;
 	} else
 		_dataInfos |= DATA_RELIABLE;
+
+	if (firstTime && publication.running())
+		startPublishing();
 
 	return true;
 }
@@ -94,6 +118,9 @@ void Listener::startPublishing() {
 		return; // Here consider that the listener have to be closed by the caller
 	if (!_pVideoWriter->writeMedia(Writer::START, Writer::VIDEO, publicationNamePacket(), *this))
 		return; // Here consider that the listener have to be closed by the caller
+
+	// send publication properties (metadata)
+	publication.requestProperties(*this);
 }
 
 void Listener::stopPublishing() {
@@ -111,7 +138,7 @@ void Listener::stopPublishing() {
 		return; // Here consider that the listener have to be closed by the caller
 
 	_seekTime = _lastTime;
-	_firstTime = _firstMedia = true;
+	_firstTime = true;
 	_codecInfosSent = false;
 	_startTime = 0;
 }
@@ -132,7 +159,7 @@ void Listener::pushData(DataReader& reader) {
 			return;
 	}*/
 
-	writeData(reader, Writer::USER_DATA);
+	writeData(reader, Writer::DATA_USER);
 }
 
 void Listener::writeData(DataReader& reader,Writer::DataType type) {
@@ -154,8 +181,6 @@ void Listener::pushVideo(UInt32 time,PacketReader& packet) {
 	if(!receiveVideo && !MediaCodec::H264::IsCodecInfos(packet))
 		return;
 
-	firstMedia(time);
-
 	if (!_codecInfosSent) {
 		if (MediaCodec::IsKeyFrame(packet)) {
 			_codecInfosSent = true;
@@ -176,6 +201,10 @@ void Listener::pushVideo(UInt32 time,PacketReader& packet) {
 	if (_firstTime) {
 		_startTime = time;
 		_firstTime = false;
+
+		// for audio sync (audio is usually the reference track)
+		if (pushAudioInfos(time))
+			pushAudio(time, PacketReader::Null); // push a empty audio packet to avoid a video which waits audio tracks!
 	}
 	time -= _startTime;
 
@@ -193,11 +222,10 @@ void Listener::pushAudio(UInt32 time,PacketReader& packet) {
 	if (!_pAudioWriter && !initWriters())
 		return;
 
-	firstMedia(time);
-
 	if (_firstTime) {
 		_firstTime = false;
 		_startTime = time;
+		pushAudioInfos(time);
 	}
 	time -= _startTime;
 
@@ -208,30 +236,24 @@ void Listener::pushAudio(UInt32 time,PacketReader& packet) {
 }
 
 void Listener::pushProperties(DataReader& packet) {
-	INFO("Properties sent to one listener of ",publication.name()," publicaition")
-	writeData(packet,Writer::INFO_DATA);
+	INFO("Properties sent to one listener of ",publication.name()," publication")
+	writeData(packet,Writer::DATA_INFO);
 }
 
-void Listener::firstMedia(UInt32 time) {
-	if (!_firstMedia)
-		return;
-	_firstMedia = false; // keep it here cause recursive call
-
-	if(!publication.audioCodecBuffer().empty()) {
-		PacketReader audioCodecPacket(publication.audioCodecBuffer()->data(), publication.audioCodecBuffer()->size());
-		INFO("AAC codec infos sent to one listener of ", publication.name(), " publication")
-		pushAudio(time, audioCodecPacket);
-	} else {
-		// push a empty audio packet to avoid a video which waits audio tracks!
-		pushAudio(time, PacketReader::Null);
-	}
+bool Listener::pushAudioInfos(UInt32 time) {
+	if (publication.audioCodecBuffer().empty())
+		return false;
+	PacketReader audioCodecPacket(publication.audioCodecBuffer()->data(), publication.audioCodecBuffer()->size());
+	INFO("AAC codec infos sent to one listener of ", publication.name(), " publication")
+	pushAudio(time, audioCodecPacket);
+	return true;
 }
 
 void Listener::flush() {
 	// in first data channel
 	_writer.flush();
 	// now media channel
-	if(_pAudioWriter)
+	if(_pAudioWriter) // keep in first, because audio track is sometimes the time reference track
 		_pAudioWriter->flush();
 	if(_pVideoWriter)
 		_pVideoWriter->flush();

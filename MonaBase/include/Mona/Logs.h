@@ -28,23 +28,18 @@ namespace Mona {
 
 class Logs : virtual Static {
 public:
-	enum DumpMode {
-		DUMP_NOTHING = 0,
-		DUMP_EXTERN = 1,
-		DUMP_INTERN = 2,
-		DUMP_ALL = 3
-	};
+	static void			SetLogger(Logger& logger) { std::lock_guard<std::mutex> lock(_Mutex); _PLogger = &logger; }
 
-	static void			SetLogger(Logger& logger) { _PLogger = &logger; }
-	static void			SetLevel(UInt8 level) { _Level = level; }
+	static void			SetLevel(UInt8 level) { std::lock_guard<std::mutex> lock(_Mutex); _Level = level; }
 	static UInt8		GetLevel() { return _Level; }
-	static void			SetDump(DumpMode mode) { _DumpMode = mode; }
-	static void			SetDumpLimit(Int32 limit) { _DumpLimit = limit; }
-	static DumpMode		GetDump() { return _DumpMode; }
 
+	static void			SetDumpLimit(Int32 limit) { std::lock_guard<std::mutex> lock(_Mutex); _DumpLimit = limit; }
+	static void			SetDump(const char* name); // if null, no dump, otherwise dump name, and if name is empty everything is dumped
+	static bool			IsDumping() { return _PDump ? true : false; }
 
 	template <typename ...Args>
     static void	Log(Logger::Level level, const char* file, long line, Args&&... args) {
+		std::lock_guard<std::mutex> lock(_Mutex);
 		if (_Level < level)
 			return;
 		std::string shortFile(file);
@@ -54,9 +49,10 @@ public:
 			if (found != std::string::npos)
 				shortFile.erase(0,found+1);
 		}
-			
+		
 		std::string message;
 		String::Format(message, args ...);
+
 		if (_PLogger)
             _PLogger->log(Util::CurrentThreadId(), level, file, shortFile, line, message);
 		else
@@ -64,26 +60,42 @@ public:
 	}
 
 	template <typename ...Args>
-	static void Dump(const UInt8* data, UInt32 size, Args&&... args) {
-		Buffer out;
-		std::string header;
-		String::Format(header, args ...);
-		
-		Util::Dump(data, (_DumpLimit<0 || size<_DumpLimit)? size : _DumpLimit, out, header);
-		if (out.size() == 0)
+	static void Dump(const std::string& name, const UInt8* data, UInt32 size, Args&&... args) {
+		std::shared_ptr<std::string> pDump(_PDump);
+		if (!pDump || (!pDump->empty() && String::ICompare(*pDump,name)!=0))
 			return;
+		std::string header(name);
+		Dump(String::Append(header,"=> ", args ...), data, size);
+	}
+
+	template <typename ...Args>
+	static void Dump(const char* name, const UInt8* data, UInt32 size, Args&&... args) {
+		std::shared_ptr<std::string> pDump(_PDump);
+		if (!pDump || (name && !pDump->empty() && String::ICompare(*pDump,name)!=0))
+			return;
+		std::string header(name);
+		Dump(String::Append(header,"=> ", args ...), data, size);
+	}
+
+	static void Dump(const std::string& header, const UInt8* data, UInt32 size) {
+		Buffer out;
+		std::lock_guard<std::mutex> lock(_Mutex);
+		Util::Dump(data, (_DumpLimit<0 || size<_DumpLimit) ? size : _DumpLimit, out);
 		if (_PLogger)
-			_PLogger->dump(out.data(), out.size());
+			_PLogger->dump(header, out.data(), out.size());
 		else
-			_DefaultLogger.dump(out.data(), out.size());
+			_DefaultLogger.dump(header, out.data(), out.size());
 	}
 
 private:
-	static Logger*		_PLogger;
-	static DumpMode		_DumpMode;
+	static std::mutex	_Mutex;
+
 	static UInt8		_Level;
+	static Logger*		_PLogger;
 	static Logger		_DefaultLogger;
-	static Int32		_DumpLimit; // -1 means no limit
+
+	static std::shared_ptr<std::string>	 _PDump; // NULL means no dump, empty() means all dump, otherwise is a dump filter
+	static Int32						 _DumpLimit; // -1 means no limit
 };
 
 #undef ERROR
@@ -102,8 +114,7 @@ private:
 #define DEBUG(...)	LOG(Mona::Logger::LEVEL_DEBUG,__FILE__,__LINE__, __VA_ARGS__)
 #define TRACE(...)	LOG(Mona::Logger::LEVEL_TRACE,__FILE__,__LINE__, __VA_ARGS__)
 
-#define DUMP_INTERN(...) { if(Mona::Logs::GetDump()&Mona::Logs::DUMP_INTERN) Mona::Logs::Dump(__VA_ARGS__); }
-#define DUMP(...) { if(Mona::Logs::GetDump()&Mona::Logs::DUMP_EXTERN) Mona::Logs::Dump(__VA_ARGS__); }
+#define DUMP(NAME,...) { if(Mona::Logs::IsDumping()) Mona::Logs::Dump(NAME,__VA_ARGS__); }
 
 
 } // namespace Mona

@@ -28,15 +28,12 @@ This file is a part of Mona.
 
 class MonaServer : public Mona::Server, private ServiceHandler, private Mona::DatabaseLoader {
 public:
-	MonaServer(Mona::TerminateSignal& terminateSignal, const Mona::Parameters& configs);
+	MonaServer(const Mona::Parameters& configs, Mona::TerminateSignal& terminateSignal);
 	~MonaServer();
 
-	static const std::string				WWWPath;
-	static const std::string				DataPath;
+	Servers					servers;
 
-	Servers									servers;
-
-	bool					start();
+	bool					start(const Mona::Parameters& configs);
 
 private:
 	void					manage();
@@ -55,11 +52,9 @@ private:
 	/// ServiceHandler implementation
 	void					startService(Service& service);
 	void					stopService(Service& service);
-	const std::string&		wwwPath() { return WWWPath; }
-
 
 	/// Server implementation
-	const std::string&		rootPath() const { return WWWPath; }
+	const std::string&		rootPath() const { return _wwwPath; }
 
 	//events
 	void					onStart();
@@ -94,7 +89,7 @@ private:
 	Mona::Publication::OnProperties::Type	onPublicationProperties;
 
 
-	Parameters::ForEach			setLUAProperty;
+	Mona::Parameters::ForEach	setLUAProperty;
 
 	lua_State*					_pState;
 	Mona::TerminateSignal&		_terminateSignal;
@@ -105,5 +100,7 @@ private:
 	bool						_firstData;
 
 	
+	std::string					_wwwPath;
+	std::string					_dataPath;
 };
 

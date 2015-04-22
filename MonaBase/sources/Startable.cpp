@@ -19,7 +19,9 @@ This file is a part of Mona.
 
 
 #include "Mona/Startable.h"
-#if defined(_WIN32)
+#if defined(linux)
+#include <sys/prctl.h> // for thread name
+#elif defined(_WIN32)
 #include <windows.h>
 #endif
 #include "Mona/Logs.h"
@@ -60,7 +62,7 @@ void Startable::process() {
 			struct sched_param params;
 			params.sched_priority = Priorities[_priority];
 			int result;
-			if (result=pthread_setschedparam(pthread_self(), SCHED_OTHER , &params))
+			if ((result=pthread_setschedparam(pthread_self(), SCHED_OTHER , &params)))
 				WARN("Impossible to change the thread ", _name, " priority to ", Priorities[_priority]," ",strerror(result));
 		}
 	}

@@ -24,6 +24,7 @@ This file is a part of Mona.
 #include "Mona/Options.h"
 #include "Mona/HelpFormatter.h"
 #include "Mona/Logger.h"
+#include "Mona/Path.h"
 #include <vector>
 #include <memory>
 #include <fstream>
@@ -53,11 +54,13 @@ public:
 		EXIT_CONFIG = 78,  /// configuration error
 	};
 
+	const Path&				path() const { return _path; }
+
 	const Options&			options() const { return _options; }
 
 	bool					hasArgument(const std::string& name) { return hasKey("arguments."+name); }
 	bool					argument(const std::string& name, std::string& value) { return getString("arguments." + name, value); }
-	bool					argument(const std::string& name, bool& value) { return getBool("arguments." + name, value); }
+	bool					argument(const std::string& name, bool& value) { return getBoolean("arguments." + name, value); }
 	template<typename NumberType>
 	bool					argument(const std::string& name, NumberType& value) { return getNumber<NumberType>("arguments." + name, value); }
 
@@ -78,7 +81,7 @@ protected:
 	virtual void			defineOptions(Exception& ex, Options& options);
 
 	virtual void			log(THREAD_ID threadId, Level level, const char *filePath, std::string& shortFilePath, long line, std::string& message);
-	virtual void			dump(const UInt8* data, UInt32 size);
+	virtual void			dump(const std::string& header, const UInt8* data, UInt32 size);
 	
 private:
 #if defined(_OS_UNIX)
@@ -95,6 +98,7 @@ private:
 
 	std::vector<std::string>    _args;
 	Options						_options;
+	Path						_path;
 
 	// logs
 	UInt32						_logSizeByFile;

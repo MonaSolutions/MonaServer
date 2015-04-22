@@ -43,7 +43,7 @@ public:
 			const std::shared_ptr<Peer>& pPeer);
 
 
-	void				p2pHandshake(const std::string& tag,const SocketAddress& address,UInt32 times,Session* pSession);
+	bool				p2pHandshake(const std::string& tag,const SocketAddress& address,UInt32 times,Session* pSession);
 
 	std::shared_ptr<RTMFPCookieComputing>	pRTMFPCookieComputing;
 
@@ -100,6 +100,8 @@ private:
 	bool							canWriteFollowing(RTMFPWriter& writer) { return _pLastWriter == &writer; }
 	UInt32							availableToWrite() { return RTMFP_MAX_PACKET_SIZE - (_pSender ? _pSender->packet.size() : RTMFP_HEADER_SIZE); }
 	BinaryWriter&					writeMessage(UInt8 type,UInt16 length,RTMFPWriter* pWriter=NULL);
+
+	void							writeP2PHandshake(const std::string& tag, const SocketAddress& address, RTMFP::AddressType type);
 
 	bool							keepalive();
 

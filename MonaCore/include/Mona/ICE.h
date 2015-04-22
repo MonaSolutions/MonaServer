@@ -65,9 +65,6 @@ private:
 	Type														_type;
 	std::string													_publicHost;
 
-	std::string													_serverInitiatorHost;
-	std::string													_serverRemoteHost;
-
 	const Peer&													_initiator;
 	const Peer&													_remote;
 };

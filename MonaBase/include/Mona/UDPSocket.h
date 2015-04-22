@@ -67,7 +67,7 @@ private:
 
 	const SocketAddress&	updateAddress() const { if (_address) return _address;  Exception ex; _socket.address(ex, _address); return _address; }
 	const SocketAddress&	updatePeerAddress() const { if (_peerAddress) return _peerAddress; Exception ex; _socket.peerAddress(ex, _peerAddress); return _peerAddress; }
-	void					resetAddresses() {std::lock_guard<std::mutex> lock(_mutex);_address.reset();_peerAddress.reset();}
+	void					resetAddresses() {std::lock_guard<std::mutex> lock(_mutex);_address.clear();_peerAddress.clear();}
 
 	const bool				_allowBroadcast;
 	Socket					_socket;
