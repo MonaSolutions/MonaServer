@@ -31,7 +31,7 @@ public:
 	RTMFProtocol(const char* name, Invoker& invoker, Sessions& sessions);
 	~RTMFProtocol();
 	
-	bool		load(Exception& ex,const std::string& host,UInt16 port);
+	bool		load(Exception& ex,const SocketAddress& address);
 private:
 	void		manage() { if (_pHandshake) _pHandshake->manage(); }
 	UDProtocol::OnPacket::Type onPacket;

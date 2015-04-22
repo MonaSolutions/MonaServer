@@ -35,6 +35,11 @@ Session::Session(Protocol& protocol, Invoker& invoker, const shared_ptr<Peer>& p
 	if(memcmp(peer.id,"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",ID_SIZE)==0)
 		Util::Random(peer.id,ID_SIZE);
 
+	if (!peer.serverAddress)
+		((SocketAddress&)peer.serverAddress).set(protocol.publicAddress);
+	else if (peer.serverAddress.port()==0)
+		((SocketAddress&)peer.serverAddress).set(peer.serverAddress.host(), protocol.publicAddress.port());
+
 	DEBUG("peer.id ", Util::FormatHex(peer.id, ID_SIZE, LOG_BUFFER));
 }
 	
@@ -44,6 +49,12 @@ Session::Session(Protocol& protocol, Invoker& invoker, const char* name) : _sess
 	((string&)peer.protocol) = protocol.name;
 	if(memcmp(peer.id,"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",ID_SIZE)==0)
 		Util::Random(peer.id, ID_SIZE);
+
+	if (!peer.serverAddress)
+		((SocketAddress&)peer.serverAddress).set(protocol.publicAddress);
+	else if (peer.serverAddress.port()==0)
+		((SocketAddress&)peer.serverAddress).set(peer.serverAddress.host(), protocol.publicAddress.port());
+
 	DEBUG("peer.id ", Util::FormatHex(peer.id, ID_SIZE, LOG_BUFFER));
 
 }
@@ -66,14 +77,10 @@ void Session::kill(UInt32 type) {
 	(bool&)died=true;
 }
 
-void Session::DumpResponse(const UInt8* data, UInt32 size, const SocketAddress& address, bool justInDebug) {
+void Session::DumpResponse(const char* name, const UInt8* data, UInt32 size, const SocketAddress& address, bool justInDebug) {
 	// executed just in debug mode, or in dump mode
 	if (!justInDebug || (justInDebug&&Logs::GetLevel() >= 7))
-		DUMP(data, size, "Response to ", address.toString())
-}
-
-const string&  Session::protocolName() {
-	return _protocol.name;
+		DUMP(name,data, size, "Response to ", address.toString())
 }
 
 bool Session::receive(Binary& packet) {
@@ -81,7 +88,7 @@ bool Session::receive(Binary& packet) {
 		return false;
 	peer.updateLastReception();
 	if (!dumpJustInDebug || (dumpJustInDebug && Logs::GetLevel()>=7))
-		DUMP(packet.data(),packet.size(),"Request from ",peer.address.toString())
+		DUMP(peer.protocol,packet.data(),packet.size(),"Request from ",peer.address.toString())
 	return true;
 }
 

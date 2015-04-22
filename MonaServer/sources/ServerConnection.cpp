@@ -139,7 +139,7 @@ void ServerConnection::send(const shared_ptr<ServerMessage>& pMessage) {
 	else if(handler.empty())
 		writer.write8(0);
 
-	DUMP_INTERN(pMessage->data() + 4, pMessage->size() - 4, "To ", address.toString()," server");
+	DUMP("SERVERS",pMessage->data() + 4, pMessage->size() - 4, "To ", address.toString()," server");
 	Exception ex;
 	_pClient->send(ex,pMessage);
 	if (ex)
@@ -166,7 +166,7 @@ UInt32 ServerConnection::onData(PoolBuffer& pBuffer) {
 
 	packet.shrink(size);
 	
-	DUMP_INTERN(packet.current(),packet.available(), "From ", address.toString(), " server");
+	DUMP("SERVERS",packet.current(),packet.available(), "From ", address.toString(), " server");
 
 	string handler;
 	UInt8 handlerSize = packet.read8();
@@ -218,21 +218,14 @@ void ServerConnection::onDisconnection(){
 	OnDisconnection::raise(_ex,*this); // in last because can delete this
 }
 
-bool ServerConnection::addressFromProtocol(Exception& ex, const string& protocol,SocketAddress& socketAddress) {
-
+bool ServerConnection::protocolAddress(Exception& ex, const string& protocol,SocketAddress& socketAddress) {
 	string buffer;
-	UInt16 port(0);
-	if (!getNumber(String::Format(buffer, protocol, ".port"), port)) {
-		ex.set(Exception::NETADDRESS, "Impossible to determine ", protocol, " port of ", address.toString(), " server");
+	if (!getString(String::Format(buffer, protocol, ".publicAddress"), buffer)) {
+		ex.set(Exception::SOFTWARE, "Server ", address.toString(), " has ", protocol, " disabled");
 		return false;
 	}
-	else if (port == 0) {
-		ex.set(Exception::NETADDRESS, "Server ", address.toString(), " has ", protocol, " disabled");
-		return false;
-	}
-
-	if (!getString(String::Format(buffer, protocol, ".publicHost"), buffer) && !getString("publicHost", buffer))
-		buffer = address.host().toString();
-
-	return socketAddress.set(ex, buffer, port);
+	bool success(socketAddress.set(ex, buffer)); // should never raise an exception (publicAddress is already resolved)
+	if (socketAddress.host().isLoopback()) // prefer the source server address!
+		socketAddress.set(address.host(),socketAddress.port());
+	return success;
 }

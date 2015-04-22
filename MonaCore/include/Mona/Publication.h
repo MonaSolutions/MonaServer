@@ -63,6 +63,7 @@ public:
 	const QualityOfService&	dataQOS() const { return _dataQOS; }
 
 	const Parameters&		properties() const { return _properties; }
+	bool					requestProperties(Listener& listener) const;
 
 	void					writeProperties(DataReader& reader);
 	void					clearProperties();
@@ -75,7 +76,7 @@ public:
 	void					pushVideo(UInt32 time,PacketReader& packet,UInt16 ping=0, double lostRate=0);
 	void					pushData(DataReader& reader,UInt16 ping=0, double lostRate=0);
 
-	Listener*				addListener(Exception& ex, Client& client,Writer& writer);
+	Listener*				addListener(Exception& ex, Client& client,Writer& writer, const char* queryParameters=NULL);
 	void					removeListener(Client& client);
 
 	void					flush();

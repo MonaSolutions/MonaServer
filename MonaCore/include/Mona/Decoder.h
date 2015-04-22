@@ -42,13 +42,13 @@ public:
 		onDecoding([this](Exception& ex, UInt8* data, UInt32 size) { return decoding(ex, data, size); }) {
 
 		_pDecoding->OnDecodedEnd::subscribe(*this);
-		_pDecoding->Events::OnDecoded<DecodedType>::subscribe(*this);
+		_pDecoding->Events::template OnDecoded<DecodedType>::subscribe(*this);
 		_pDecoding->Events::OnDecoding::subscribe(onDecoding);
 	}
 
 	virtual ~Decoder() {
 		_pDecoding->Events::OnDecoding::unsubscribe(onDecoding);
-		_pDecoding->Events::OnDecoded<DecodedType>::unsubscribe(*this);
+		_pDecoding->Events::template OnDecoded<DecodedType>::unsubscribe(*this);
 		_pDecoding->OnDecodedEnd::unsubscribe(*this);
 	}
 

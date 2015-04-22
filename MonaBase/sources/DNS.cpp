@@ -96,7 +96,7 @@ bool DNS::HostName(Exception& ex,string& host) {
 		host.assign(buffer);
 		return true;
 	}
-	ex.set(Exception::NETADDRESS,"Cannot get host name");
+	ex.set(Exception::NETIP,"Cannot get host name");
 	return false;
 }
 

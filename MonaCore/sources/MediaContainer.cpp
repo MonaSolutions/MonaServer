@@ -20,6 +20,7 @@ This file is a part of Mona.
 #include "Mona/MediaContainer.h"
 #include "Mona/MediaCodec.h"
 #include "Mona/AMF.h"
+#include "Mona/AMFWriter.h"
 #include "Mona/Logs.h"
 #include "Mona/SubstreamMap.h"
 #include <algorithm>
@@ -28,7 +29,18 @@ using namespace std;
 
 namespace Mona {
 
+////////////////////  BASE  ////////////////////////////
+
+void MediaContainer::write(BinaryWriter& writer, Writer::DataType dataType, MIME::Type packetType, PacketReader& packet) {
+	WARN(typeid(*this).name()," muxer doesn't support data writing operation")
+}
+
 ////////////////////  FLV  /////////////////////////////
+
+FLV::FLV(const Parameters& parameters, const PoolBuffers& poolBuffers) : MediaContainer(poolBuffers) {
+	parameters.getString("onAudio", _onAudio);
+	parameters.getString("onVideo", _onVideo);
+}
 
 // Write header
 void FLV::write(BinaryWriter& writer,UInt8 track) {
@@ -43,10 +55,53 @@ void FLV::write(BinaryWriter& writer,UInt8 track) {
 	writer.write(EXPAND("\x46\x4c\x56\x01")).write8(byteTrack).write(EXPAND("\x00\x00\x00\x09\x00\x00\x00\x00"));
 }
 
-// Writer audio or video packet
-void FLV::write(BinaryWriter& writer,UInt8 track,UInt32 time,const UInt8* data,UInt32 size) {
+// Write audio or video packet
+void FLV::write(BinaryWriter& writer, UInt8 track, UInt32 time, const UInt8* data, UInt32 size) {
+	if ((track&AUDIO && !_onAudio.empty()) || !_onVideo.empty()) {
+		 // TODO MONASERVER2 => write directly on BinaryWriter
+		AMFWriter amf(poolBuffers);
+		amf.amf0 = true;
+		if (track&AUDIO)
+			amf.writeString(_onAudio.data(),_onAudio.size());
+		else
+			amf.writeString(_onVideo.data(),_onVideo.size());
+		amf.amf0 = false;
+		amf.writeNumber(time);
+		amf.writeBytes(data, size);
+		PacketReader reader(amf.packet.data(), amf.packet.size());
+		write(writer, Writer::DATA_USER, MIME::AMF,reader);
+		return;
+	}
+	writeFrame(writer,track&AUDIO ? AMF::AUDIO : AMF::VIDEO,time,data,size);
+}
+
+// Write data packet (custom or metadata)
+void FLV::write(BinaryWriter& writer, Writer::DataType dataType, MIME::Type packetType, PacketReader& packet) {
+	if (packetType == MIME::AMF) {
+		writeFrame(writer,AMF::INFORMATIONS, 0, packet.current(), packet.available());
+		return;
+	}
+	// convert to AMF!
+	unique_ptr<DataReader> pReader;
+	if (!MIME::CreateDataReader(packetType, packet,poolBuffers, pReader)) {
+		ERROR("Impossible to convert streaming ", packetType, " data to AMF, data ignored")
+		return;
+	}
+	AMFWriter amf(poolBuffers); // TODO MONASERVER2 => write directly on BinaryWriter
+	if (DataReader::STRING == pReader->nextType()) {
+		// Write the handler name in AMF0!
+		amf.amf0 = true;
+		pReader->read(amf, 1);
+		amf.amf0 = false;
+	}
+	pReader->read(amf); // to AMF
+	writeFrame(writer,AMF::INFORMATIONS, 0, amf.packet.data(), amf.packet.size());
+}
+
+
+void FLV::writeFrame(BinaryWriter& writer,UInt8 type,UInt32 time,const UInt8* data,UInt32 size) {
 	/// 11 bytes of header
-	writer.write8(track&AUDIO ? AMF::AUDIO : AMF::VIDEO);
+	writer.write8(type);
 	// size on 3 bytes
 	writer.write24(size);
 	// time on 3 bytes
@@ -58,6 +113,86 @@ void FLV::write(BinaryWriter& writer,UInt8 track,UInt32 time,const UInt8* data,U
 	/// footer
 	writer.write32(11+size);
 }
+
+
+////////////////////  RTP  /////////////////////////////
+
+void RTP::write(BinaryWriter& writer,UInt8 track,UInt32 time,const UInt8* data,UInt32 size) {
+	if (!data || !size)
+		return;
+
+	if(!_counter) { // First packet
+		if(track&VIDEO) {
+			MediaCodec::Video codec = MediaCodec::GetVideoType(*data);
+			if (codec != MediaCodec::VIDEO_H264)
+				WARN("Video codec for type ", codec, " is not supported yet")
+		}
+		else {
+			MediaCodec::Audio codec = MediaCodec::GetAudioType(*data);
+			if (codec != MediaCodec::AUDIO_MP3)
+				INFO("Audio Codec for type : ", codec, " is not supported yet")
+		}
+	}
+	_counter++;
+
+	/// RTP Header
+	writer.write8(0x80);		// Version (2), padding and extension (0)
+
+	/// Payload
+	if (track&VIDEO) {
+
+		// h264 NAL Parsing
+		SubstreamMap subReader(data, size);
+		MPEGTS::ParseNAL(subReader, data, size);
+		bool aggregated = subReader.count() > 1;
+
+		writer.write8(0x61 + ((aggregated)? 0x80 : 00));		// Marker and Payload type (97)
+		writer.write16(_counter);	// Sequence number
+		writer.write32(time*90);	// Timestamp
+		writer.write(_SSRC);		// SSRC
+		if(aggregated) {
+			writer.write8(0x18 + ((*data==0x17)? 0x60 : 0x00)); // RTP header (F|NRI|Type)
+			_octetCount++;
+		}
+
+		UInt8* pos = NULL;
+		UInt32 readed = subReader.readNextSub(pos, size);
+		while (readed) {
+			if (aggregated)
+				writer.write16(readed); // Size of NALU
+			
+			// Write NALU
+			writer.write(pos, readed);
+			_octetCount += readed + 2*aggregated;
+
+			// Read raw data unit (Video : NALU)
+			readed = subReader.readNextSub(pos, size);
+		}
+	} else if(size>1) { // Audio (mpeg4)
+
+		writer.write8(0x8e);	// Marker (1) and Payload type (14)
+		//writer.write8(0x62);	// Marker (0) and Payload type (98)
+		writer.write16(_counter);	// Sequence number
+		writer.write32(time*22);	// Timestamp
+		writer.write(_SSRC);		// SSRC
+
+		writer.write32(0);
+		writer.write((data+1), size-1);
+		_octetCount += size+3;
+	}
+}
+
+void RTP::writeRTCP(BinaryWriter& writer,UInt8 type,UInt32 time) {
+
+	/// RTCP Header
+	writer.write(EXPAND("\x80\xc8\x00\x06"));		// Version (2), padding and Reception report count (0), packet type = 200, lenght = 6
+	writer.write(_SSRC);							// SSRC
+	writer.write64(0);								// NTP Timestamp (not needed)
+	writer.write32(time);							// RTP Timestamp
+	writer.write32(_counter);						// Packet count
+	writer.write32(_octetCount);					// Octet count
+}
+
 
 ////////////////////  MPEG_TS  /////////////////////////////	
 
@@ -119,6 +254,10 @@ UInt32 MediaContainer::MPEGTS::CalcCrc32(UInt8 * data, UInt32 datalen) {
   return crc;
 }*/
 
+#define MPEGTS_PACKET_SIZE		188
+#define TS_PROGRAM_ID_AUDIO		0x60
+#define TS_PROGRAM_ID_VIDEO		0x40
+
 // Write header
 void MPEGTS::write(BinaryWriter& writer,UInt8 track) {
 	
@@ -135,38 +274,39 @@ UInt32 MPEGTS::ParseNAL(SubstreamMap& reader, const UInt8* data, UInt32 size) {
 	if (size<offset)
 		return available;
 	
-	UInt8* pos = (UInt8*)data + offset;
-	bool twoBytesHeader = *data==0x17 && *(data+1)==0x00;
+	const UInt8* cur(data + offset);
+	const UInt8* end(data + size);
+	UInt8 twoBytesHeader = (*data==0x17 && *(data+1)==0x00) ? 1 : 0;
 
 	// Parse each NALU
-	while(size-(pos-data) > (twoBytesHeader? 2 : 4)) {
+	while((end-cur) > (twoBytesHeader ? 2 : 4)) {
 
-		if (*pos++ != 0x00) {
-			WARN("H264 NALU Stream first byte not expected : ", *(pos-1))
-			DUMP(data, size)
+		if (*cur++ != 0x00) {
+			WARN("H264 NALU Stream first byte not expected : ", *(cur-1))
+			Logs::Dump("MPEGTS NALU with wrong first byte", data, size);
 			break;
 		}
 
 		// Get size to read
-		UInt32 toRead = *pos++;
+		UInt32 toRead = *cur++;
 		if (!twoBytesHeader) {
 			toRead <<= 16;
-			toRead += *pos++ << 8;
-			toRead += *pos++;
+			toRead += *cur++ << 8;
+			toRead += *cur++;
 		}
 
-		if (toRead > size-(pos-data)) {
+		if ((cur+toRead) >= end) {
 			WARN("H264 NALU Stream size too long : ", toRead)
-			DUMP(data, size)
+			Logs::Dump("MPEGTS too long NALU", data, size);
 			break;
 		}
 
-		reader.addSub(pos-data, toRead);
-		pos += toRead-1;
+		reader.addSub(cur-data, toRead);
+		cur += toRead-1;
 
 		// Go to next NALU (two bytes header? need to ignore 0x01 byte)
-		if (pos-data + 1 + twoBytesHeader < size)
-			pos += 1 + twoBytesHeader;
+		if ((end-cur) > (1 + twoBytesHeader))
+			cur += 1 + twoBytesHeader;
 	}
 
 	// No NALU founded
@@ -208,7 +348,7 @@ void MPEGTS::writeTS(BinaryWriter& writer, UInt32& available, UInt32 time, Subst
 	// Error format
 	if (available == 0) {
 		WARN((type==VIDEO? "VIDEO" : "AUDIO"), " Frame is not well formated");
-		DUMP(subReader.originalData(), subReader.originalSize())
+		Logs::Dump("MPEGTS wrong frame", subReader.originalData(), subReader.originalSize());
 		return;
 	}
 
@@ -260,7 +400,7 @@ void MPEGTS::writeTS(BinaryWriter& writer, UInt32& available, UInt32 time, Subst
 					writer.write8(( pcr >> 26 ) & 0xff);
 					writer.write8(( pcr >> 18 ) & 0xff);
 					writer.write8(( pcr >> 10 ) & 0xff);
-					writer.write8(0x7e | ((pcr & (1<<9)) >> 2) & 0xFF | ((pcr & (1<<8)) >> 8 ) & 0xFF);
+					writer.write8(0x7e | (((pcr & (1<<9)) >> 2) & 0xFF) | (((pcr & (1<<8)) >> 8 ) & 0xFF));
 					writer.write8(pcr & 0xff);
 				}
 				else
@@ -325,8 +465,8 @@ UInt8 MPEGTS::GetAdaptiveSize(bool time, UInt32 available, bool first, bool& ada
 	adaptiveField = (available < sizeFree) || (first && time);
 
 	// PES smaller than area free size => need to fill with 0xFF
-	if (available < sizeFree-1)
-		size += (sizeFree-1) - available;
+	if (available < --sizeFree)
+		size += sizeFree - available;
 
 	// Add time if needed
 	if (first && time) 
@@ -351,7 +491,7 @@ bool MPEGTS::WritePES(BinaryWriter& writer, Track type, SubstreamMap& subReader,
 		readed = subReader.readNextSub(pos, toWrite);
 		if (!readed) {
 			WARN("End of substream before expected")
-			DUMP(subReader.originalData(), subReader.originalSize())
+			Logs::Dump("MPEGTS wrong NALU", subReader.originalData(), subReader.originalSize());
 			return false;
 		}
 
@@ -361,82 +501,6 @@ bool MPEGTS::WritePES(BinaryWriter& writer, Track type, SubstreamMap& subReader,
 	}
 
 	return true;
-}
-
-void RTP::write(BinaryWriter& writer,UInt8 track,UInt32 time,const UInt8* data,UInt32 size) {
-	if (!data || !size)
-		return;
-
-	if(!_counter) { // First packet
-		if(track&VIDEO) {
-			MediaCodec::VideoCodec codec = MediaCodec::GetVideoType(*data);
-			if (codec != MediaCodec::CODEC_H264)
-				WARN("Video codec for type ", codec, " is not supported yet")
-		}
-		else {
-			MediaCodec::AudioCodec codec = MediaCodec::GetAudioType(*data);
-			if (codec != MediaCodec::CODEC_MP3)
-				INFO("Audio Codec for type : ", codec, " is not supported yet")
-		}
-	}
-	_counter++;
-
-	/// RTP Header
-	writer.write8(0x80);		// Version (2), padding and extension (0)
-
-	/// Payload
-	if (track&VIDEO) {
-
-		// h264 NAL Parsing
-		SubstreamMap subReader(data, size);
-		MPEGTS::ParseNAL(subReader, data, size);
-		bool aggregated = subReader.count() > 1;
-
-		writer.write8(0x61 + ((aggregated)? 0x80 : 00));		// Marker and Payload type (97)
-		writer.write16(_counter);	// Sequence number
-		writer.write32(time*90);	// Timestamp
-		writer.write(_SSRC);		// SSRC
-		if(aggregated) {
-			writer.write8(0x18 + ((*data==0x17)? 0x60 : 0x00)); // RTP header (F|NRI|Type)
-			_octetCount++;
-		}
-
-		UInt8* pos = NULL;
-		UInt32 readed = subReader.readNextSub(pos, size);
-		while (readed) {
-			if (aggregated)
-				writer.write16(readed); // Size of NALU
-			
-			// Write NALU
-			writer.write(pos, readed);
-			_octetCount += readed + 2*aggregated;
-
-			// Read raw data unit (Video : NALU)
-			readed = subReader.readNextSub(pos, size);
-		}
-	} else if(size>1) { // Audio (mpeg4)
-
-		writer.write8(0x8e);	// Marker (1) and Payload type (14)
-		//writer.write8(0x62);	// Marker (0) and Payload type (98)
-		writer.write16(_counter);	// Sequence number
-		writer.write32(time*22);	// Timestamp
-		writer.write(_SSRC);		// SSRC
-
-		writer.write32(0);
-		writer.write((data+1), size-1);
-		_octetCount += size+3;
-	}
-}
-
-void RTP::writeRTCP(BinaryWriter& writer,UInt8 type,UInt32 time) {
-
-	/// RTCP Header
-	writer.write(EXPAND("\x80\xc8\x00\x06"));		// Version (2), padding and Reception report count (0), packet type = 200, lenght = 6
-	writer.write(_SSRC);							// SSRC
-	writer.write64(0);								// NTP Timestamp (not needed)
-	writer.write32(time);							// RTP Timestamp
-	writer.write32(_counter);						// Packet count
-	writer.write32(_octetCount);					// Octet count
 }
 
 } // namespace Mona

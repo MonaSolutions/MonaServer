@@ -87,6 +87,8 @@ bool MIME::CreateDataReader(Type type,PacketReader& packet,const PoolBuffers& po
 		case QUERY:
 			pReader.reset(new QueryReader(packet));
 			return true;
+		case UNKNOWN:
+			break;
 	}
 	pReader.reset();
 	packet.reset();
@@ -107,6 +109,8 @@ bool MIME::CreateDataWriter(Type type,const PoolBuffers& poolBuffers,unique_ptr<
 		case QUERY:
 			pWriter.reset(new QueryWriter(poolBuffers));
 			return true;
+		case UNKNOWN:
+			break;
 	}
 	return false;
 }

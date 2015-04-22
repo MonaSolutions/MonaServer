@@ -52,7 +52,7 @@ public:
 
 	void						setPath(const std::string& value) { ((std::string&)Client::path).assign(value); }
 	void						setQuery(const std::string& value) { ((std::string&)Client::query).assign(value); }
-	void						setServerAddress(const std::string& value) { ((std::string&)Client::serverAddress).assign(value); }
+	void						setServerAddress(const std::string& address);
 
 	template<typename PingType>
 	void						setPing(PingType value) { _ping = (value>0xFFFF ? 0xFFFF : (value==0 ? 1 : (UInt16)value)); _pingProcessing = false; _pingTime.update(); }

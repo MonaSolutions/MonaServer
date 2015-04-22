@@ -109,7 +109,7 @@ bool LUASocketAddress::Read(Exception& ex, lua_State *pState, int index, SocketA
 
 	}
 
-	ex.set(Exception::NETADDRESS, "No valid SocketAddress available to read");
+	ex.set(Exception::SOFTWARE, "No valid SocketAddress available to read");
 	return false;
 }
 

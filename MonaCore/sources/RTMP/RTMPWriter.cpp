@@ -42,10 +42,12 @@ void RTMPWriter::writeProtocolSettings() {
 void RTMPWriter::flush() {
 	if(!_pSender || !_pSender->available())
 		return;
-	_pSender->dump(_channel,_session.peer.address);
 	Exception ex;
-	if (_pEncryptKey)
+	if (_pEncryptKey) {
+		_pSender->dump(true, _channel,_session.peer.address);
 		RC4(_pEncryptKey.get(), _pSender->size(), _pSender->data(), (UInt8*)_pSender->data());
+	} else
+		_pSender->dump(false, _channel,_session.peer.address);
 	EXCEPTION_TO_LOG(_session.send<RTMPSender>(ex, qos(), _pSender), "RTMPWriter flush")
 		
 	

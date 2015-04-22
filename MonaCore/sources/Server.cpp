@@ -47,14 +47,21 @@ Server::~Server() {
 	stop();
 }
 
-bool Server::start(Startable::Priority threadPriority) {
+bool Server::start(const Parameters& parameters) {
 	if(running()) {
 		ERROR("Server is already running, call stop method before");
 		return false;
 	}
+
+	// copy parametes on invoker parameters!
+	Parameters::ForEach forEach([this](const string& key, const string& value) {
+		setString(key, value);
+	});
+	parameters.iterate(forEach);
+
 	Exception ex;
 	bool result;
-	EXCEPTION_TO_LOG(result = Startable::start(ex, threadPriority), "Server");
+	EXCEPTION_TO_LOG(result = Startable::start(ex, Startable::PRIORITY_HIGH), "Server");
 	if (result)
 		TaskHandler::start();
 	return result;

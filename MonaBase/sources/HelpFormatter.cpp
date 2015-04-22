@@ -140,7 +140,7 @@ void HelpFormatter::formatOption(ostream& ostr, const Option& option) const
 
 void HelpFormatter::formatText(ostream& ostr, const string& text, int indent) const {
 	int pos = _indent;
-	int maxWordLen = WIDTH - indent;
+	size_t maxWordLen = WIDTH - indent;
 	string word;
 	for (const char c: text) {
 		if (c == '\n') {
@@ -175,7 +175,7 @@ void HelpFormatter::formatText(ostream& ostr, const string& text, int indent) co
 }
 
 void HelpFormatter::flushWord(ostream& ostr, int& pos, string& word, int indent) const {
-	if (pos + word.length() > WIDTH) {
+	if ((pos + word.length()) > WIDTH) {
 		ostr << '\n';
 		pos = 0;
 		while (pos < indent) {

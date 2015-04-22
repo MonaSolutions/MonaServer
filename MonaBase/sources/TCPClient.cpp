@@ -63,9 +63,9 @@ void TCPClient::close() {
 	SocketAddress peerAddress;
 	{
 		lock_guard<mutex> lock(_mutex);
-		_address.reset();
+		_address.clear();
 		peerAddress.set(_peerAddress);
-		_peerAddress.reset();
+		_peerAddress.clear();
 	}
 	OnDisconnection::raise(*this,peerAddress); // in last because can delete this
 }

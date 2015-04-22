@@ -27,7 +27,7 @@ This file is a part of Mona.
 namespace Mona {
 
 
-class PacketReader: public BinaryReader, virtual NullableObject {
+class PacketReader: public BinaryReader, virtual public NullableObject {
 public:
 	PacketReader(const UInt8* data, UInt32 size) : BinaryReader(data,size) {}
 	PacketReader(PoolBuffer& pBuffer) : _ppBuffer(new PoolBuffer(pBuffer.poolBuffers)), BinaryReader(pBuffer->data(), pBuffer->size()) { _ppBuffer->swap(pBuffer); }

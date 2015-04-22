@@ -79,7 +79,7 @@ BOOL ServerApplication::ConsoleCtrlHandler(DWORD ctrlType) {
 
 void ServerApplication::ServiceMain(DWORD argc, LPTSTR* argv) {
 
-	_PThis->setBool("application.runAsService", true);
+	_PThis->setBoolean("application.runAsService", true);
 	_PThis->_isInteractive = false;
 
 	memset(&_ServiceStatus, 0, sizeof(_ServiceStatus));
@@ -181,15 +181,11 @@ bool ServerApplication::hasConsole() {
 
 
 bool ServerApplication::registerService(Exception& ex) {
-	string name, path;
-	getString("application.baseName", name);
-	getString("application.path", path);
-	
-	WinService service(name);
+	WinService service(path().name());
 	if (_displayName.empty())
-		service.registerService(ex,path);
+		service.registerService(ex,path().toString());
 	else
-		service.registerService(ex, path, _displayName);
+		service.registerService(ex, path().toString(), _displayName);
 	if (ex)
 		return false;
 	if (_startup == "auto")
@@ -203,10 +199,7 @@ bool ServerApplication::registerService(Exception& ex) {
 
 
 bool ServerApplication::unregisterService(Exception& ex) {
-	string name;
-	getString("application.baseName", name);
-	
-	WinService service(name);
+	WinService service(path().name());
 	return service.unregisterService(ex);
 }
 
@@ -311,14 +304,14 @@ void ServerApplication::beDaemon() {
 	if (!ferr)
         FATAL_ERROR("Cannot attach stderr to /dev/null");
 
-	setBool("application.runAsDaemon", true);
+	setBoolean("application.runAsDaemon", true);
 	_isInteractive=false;
 }
 
 
 void ServerApplication::defineOptions(Exception& ex, Options& options) {
     options.add(ex, "daemon", "d", "Run application as a daemon.")
-        .handler([this](Exception& ex, const string& value) { setBool("application.runAsDaemon", true); return true; });
+        .handler([this](Exception& ex, const string& value) { setBoolean("application.runAsDaemon", true); return true; });
 
     options.add(ex, "pidfile", "p", "Write the process ID of the application to given file.")
 		.argument("path")

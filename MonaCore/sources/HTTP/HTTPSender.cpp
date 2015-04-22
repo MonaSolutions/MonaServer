@@ -46,7 +46,7 @@ HTTPSender::HTTPSender(const SocketAddress& address, HTTPPacket& request,const P
 	_newHeaders(false),
 	_request(request),
 	_pSetCookieBuffer(poolBuffers),
-	TCPSender("HTTPSender") {
+	TCPSender("TCPSender") {
 	_pSetCookieBuffer.swap(pSetCookieBuffer);
 }
 
@@ -174,7 +174,7 @@ bool HTTPSender::run(Exception& ex) {
 	}
 
 	/// Dump response
-	Session::DumpResponse(data(), size(), _address);
+	Session::DumpResponse("HTTP",data(), size(), _address);
 
 	/// Send
 	return TCPSender::run(ex);

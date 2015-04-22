@@ -121,7 +121,7 @@ void HTTPSession::receive(const shared_ptr<HTTPPacket>& pPacket) {
 		// Upgrade to WebSocket
 		if (String::ICompare(pPacket->upgrade,"websocket")==0) {
 			peer.onDisconnection();
-			WSSession::enable();
+			WSSession::enable(); // keep before onConnection to solve peer.protocol value (and parameters)
 
 			DataWriter& response = _writer.writeRaw("101 Switching Protocols");
 			HTTP_BEGIN_HEADER(response.packet)
@@ -141,7 +141,7 @@ void HTTPSession::receive(const shared_ptr<HTTPPacket>& pPacket) {
 			peer.onConnection(ex, _writer,parameters);
 			if (!ex && peer.connected) {
 
-				if (!peer.parameters().getBool("index", _indexDirectory)) {
+				if (!peer.parameters().getBoolean("index", _indexDirectory)) {
 					if(peer.parameters().getString("index", _index))
 						FileSystem::GetName(_index); // Redirect to the file (get name to prevent path insertion)
 				}

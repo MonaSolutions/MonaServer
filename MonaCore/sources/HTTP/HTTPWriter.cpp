@@ -40,6 +40,7 @@ void HTTPWriter::close(const Exception& ex) {
 		case Exception::APPLICATION:
 			code = 503;
 			break;
+		default: break;
 	}
 	_lastError.assign(ex.error());
 	close(code);
@@ -163,9 +164,9 @@ bool HTTPWriter::writeMedia(MediaType type,UInt32 time,PacketReader& packet,cons
 			if (!_pRequest)
 				ex.set(Exception::APPLICATION, "HTTP streaming without request related");
 			else if (_pRequest->contentSubType.compare(0, 5, "x-flv")==0)
-				_pMedia.reset(new FLV());
+				_pMedia.reset(new FLV(properties,_session.invoker.poolBuffers));
 			else if(_pRequest->contentSubType.compare(0,4,"mp2t")==0)
-				_pMedia.reset(new MPEGTS());
+				_pMedia.reset(new MPEGTS(_session.invoker.poolBuffers));
 			else
 				ex.set(Exception::APPLICATION, "HTTP streaming for a ",_pRequest->contentSubType," unsupported");
 
@@ -185,6 +186,15 @@ bool HTTPWriter::writeMedia(MediaType type,UInt32 time,PacketReader& packet,cons
 			if (!pSender)
 				return false;
 			_pMedia->write(pSender->writeRaw(),type,time,packet.current(), packet.available());
+			break;
+		}
+		case DATA: {
+			if (!_pMedia)
+				return false;
+			HTTPSender* pSender(createSender(false));
+			if (!pSender)
+				return false;
+			_pMedia->write(pSender->writeRaw(),(Writer::DataType)(time & 0xFF),(MIME::Type)(time >> 8),packet);
 			break;
 		}
 		default:

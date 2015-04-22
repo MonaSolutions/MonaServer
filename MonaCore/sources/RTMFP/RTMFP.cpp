@@ -36,7 +36,7 @@ BinaryWriter& RTMFP::WriteAddress(BinaryWriter& writer,const SocketAddress& addr
 		writer.write8(type);
 	NET_SOCKLEN size(host.size());
 	const UInt8* bytes = (const UInt8*)host.addr();
-	for(int i=0;i<size;++i)
+	for(NET_SOCKLEN i=0;i<size;++i)
 		writer.write8(bytes[i]);
 	return writer.write16(address.port());
 }

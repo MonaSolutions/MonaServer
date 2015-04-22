@@ -50,7 +50,7 @@ public:
 	Publication*			publish(Exception& ex, Peer& peer, const std::string& name, Publication::Type type) { return publish(ex, name, type, &peer); }
 	void					unpublish(Peer& peer, const std::string& name) { unpublish(name,&peer);  }
 	Listener*				subscribe(Exception& ex,Peer& peer,std::string& name,Writer& writer);
-	Listener*				subscribe(Exception& ex,Peer& peer,const std::string& name,Writer& writer);
+	Listener*				subscribe(Exception& ex,Peer& peer,const std::string& name,Writer& writer, const char* queryParams=NULL);
 	void					unsubscribe(Peer& peer,const std::string& name);
 
 	void					addBanned(const IPAddress& ip) { _bannedList.insert(ip); }
@@ -58,7 +58,7 @@ public:
 	void					clearBannedList() { _bannedList.clear(); }
 	bool					isBanned(const IPAddress& ip) { return _bannedList.find(ip) != _bannedList.end(); }
 
-	virtual const std::string&	rootPath() const { return String::Empty; }
+	virtual const std::string&	rootPath() const = 0; // for to override! Otherwise the executable folder could see these files readable by un protocol
 
 protected:
 	Invoker(UInt32 socketBufferSize,UInt16 threads);

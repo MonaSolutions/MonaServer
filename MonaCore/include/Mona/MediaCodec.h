@@ -29,46 +29,46 @@ namespace Mona {
 class MediaCodec : virtual Static {
 public:
 
-	enum VideoCodec {
-		CODEC_RGB = 0,
-		CODEC_RLE,
-		CODEC_SORENSON,
-		CODEC_SCREEN1,
-		CODEC_VP6,
-		CODEC_VP6_ALPHA,
-		CODEC_SCREEN2,
-		CODEC_H264,
-		CODEC_H263,
-		CODEC_MPEG4_2,
-		CODEC_VIDEO_UNKNOWN = 15
+	enum Video {
+		VIDEO_RGB = 0,
+		VIDEO_RLE,
+		VIDEO_SORENSON,
+		VIDEO_SCREEN1,
+		VIDEO_VP6,
+		VIDEO_VP6_ALPHA,
+		VIDEO_SCREEN2,
+		VIDEO_H264,
+		VIDEO_H263,
+		VIDEO_MPEG4_2,
+		VIDEO_UNKNOWN = 15
 	};
 
-	enum AudioCodec {
-		CODEC_PCM = 0,
-		CODEC_ADPCM,
-		CODEC_MP3,
-		CODEC_PCM_LITTLE,
-		CODEC_NELLYMOSER_16,
-		CODEC_NELLYMOSER_8,
-		CODEC_NELLYMOSER_ANY,
-		CODEC_ALAW,
-		CODEC_ULAW,
-		CODEC_AAC = 10,
-		CODEC_SPEEX,
-		CODEC_MP3_8 = 14,
-		CODEC_AUDIO_UNKNOWN
+	enum Audio {
+		AUDIO_PCM = 0,
+		AUDIO_ADPCM,
+		AUDIO_MP3,
+		AUDIO_PCM_LITTLE,
+		AUDIO_NELLYMOSER_16,
+		AUDIO_NELLYMOSER_8,
+		AUDIO_NELLYMOSER_ANY,
+		AUDIO_ALAW,
+		AUDIO_ULAW,
+		AUDIO_AAC = 10,
+		AUDIO_SPEEX,
+		AUDIO_MP3_8 = 14,
+		AUDIO_UNKNOWN
 	};
 
-	static VideoCodec GetVideoType(UInt8 marker) { if ((marker&0x0F)>9) return CODEC_VIDEO_UNKNOWN; else return (VideoCodec)(marker&0x0F); }
-	static AudioCodec GetAudioType(UInt8 marker) { 
+	static Video GetVideoType(UInt8 marker) { if ((marker&0x0F)>9) return VIDEO_UNKNOWN; else return (Video)(marker&0x0F); }
+	static Audio GetAudioType(UInt8 marker) { 
 		switch (marker>>4)  {
 		case 9:
 		case 12:
 		case 13:
 		case 15:
-			return CODEC_AUDIO_UNKNOWN;
+			return AUDIO_UNKNOWN;
 		default:
-			return (AudioCodec)(marker>>4); 
+			return (Audio)(marker>>4); 
 		}
 	}
 

@@ -48,8 +48,7 @@ public:
 		return String::Append(buffer,_ThreadNames[id]);
 	}
 
-	static void Dump(const UInt8* data, UInt32 size, Buffer& buffer) { std::string header; Dump(data, size, buffer, header); }
-	static void Dump(const UInt8* data, UInt32 size, Buffer& buffer, const std::string& header);
+	static void Dump(const UInt8* data, UInt32 size, Buffer& buffer);
 
 	/// \brief Unpack url in path and query
 	/// \param url Url to unpack

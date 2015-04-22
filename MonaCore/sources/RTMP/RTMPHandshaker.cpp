@@ -27,19 +27,12 @@ using namespace std;
 
 namespace Mona {
 
-RTMPHandshaker::RTMPHandshaker(const SocketAddress& address,PoolBuffer& pBuffer) : failed(false),_pBuffer(pBuffer.poolBuffers), TCPSender("RTMPHandshaker"),_address(address),_writer(pBuffer.poolBuffers) {
+RTMPHandshaker::RTMPHandshaker(bool encrypted, const SocketAddress& address,PoolBuffer& pBuffer) : encrypted(encrypted), failed(false),_pBuffer(pBuffer.poolBuffers), TCPSender("RTMPHandshaker"),_address(address),_writer(pBuffer.poolBuffers) {
 	_pBuffer.swap(pBuffer);
 }
 
 bool RTMPHandshaker::compute(Exception& ex) {
-	UInt8 handshakeType(*_pBuffer->data());
-	if(handshakeType!=3 && handshakeType!=6) {
-		ex.set(Exception::PROTOCOL,"RTMP Handshake type '",handshakeType,"' unknown");
-		return false;
-	}
-
 	Crypto::HMAC hmac;
-	bool encrypted(handshakeType == 6);
 	bool middle;
 	UInt32 keySize;
 	const UInt8* key = RTMP::ValidateClient(hmac,_pBuffer->data(),_pBuffer->size(),middle,keySize); // size = HMAC_KEY_SIZE
@@ -106,7 +99,7 @@ bool RTMPHandshaker::compute(Exception& ex) {
 			return false;
 	}
 
-	Session::DumpResponse(data(), size(), _address,true);
+	Session::DumpResponse(encrypted ? "RTMPE" : "RTMP", data(), size(), _address,true);
 	return TCPSender::run(ex);
 }
 

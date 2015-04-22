@@ -135,7 +135,7 @@ const Parameters& Util::Environment() {
 	if (_Environment.count() > 0)
 		return _Environment;
 	const char* line(*environ);
-	for (UInt32 i = 0; line = *(environ + i); ++i) {
+	for (UInt32 i = 0; (line = *(environ + i)); ++i) {
 		const char* value = strchr(line, '=');
 		if (value) {
 			string name(line,(value++)-line);
@@ -284,21 +284,13 @@ size_t Util::UnpackQuery(const char* query, size_t count, const ForEachParameter
 	return countPairs;
 }
 
-void Util::Dump(const UInt8* data,UInt32 size,Buffer& buffer,const string& header) {
+void Util::Dump(const UInt8* data,UInt32 size,Buffer& buffer) {
 	UInt8 b;
 	UInt32 c(0);
-	buffer.resize((UInt32)ceil((double)size / 16) * 67 + (header.empty() ? 0 : (header.size() + 2)),false);
+	buffer.resize((UInt32)ceil((double)size / 16) * 67,false);
 
 	const UInt8* end(data+size);
 	UInt8*		 out(buffer.data());
-
-	if(!header.empty()) {
-		*out++ = '\t';
-		c = header.size();
-		memcpy(out,header.c_str(),c);
-		out += c;
-		*out++ = '\n';
-	}
 
 	while (data<end) {
 		c = 0;

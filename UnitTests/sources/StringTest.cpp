@@ -66,37 +66,37 @@ bool tryToNumber<double>(const char * value, double expected) {
 ADD_TEST(StringTest, General) {
 
 	for (signed char c=0; c >= -10; ++c)
-		CHECK(isalpha(c) && (c>='a' && c<='z' || c>='A' && c<='Z') || c < 'A' || (c > 'Z' && c<'a') || c>'z')
+		CHECK((isalpha(c) && ((c>='a' && c<='z') || (c>='A' && c<='Z'))) || c < 'A' || (c > 'Z' && c<'a') || c>'z')
 
 	for (signed char c=0; c >= -10; ++c)
-		CHECK(isdigit(c) && c>='0' && c<='9' || c < '0' || c > '9')
+		CHECK((isdigit(c) && c>='0' && c<='9') || c < '0' || c > '9')
 
 	for (signed char c=0; c >= -10; ++c)
-		CHECK(isalnum(c) && (isalpha(c) || isdigit(c)) || (!isalpha(c) && !isdigit(c)))
+		CHECK((isalnum(c) && (isalpha(c) || isdigit(c))) || (!isalpha(c) && !isdigit(c)))
 
 	for (signed char c=0; c >= -10; ++c)
-		CHECK(isblank(c) && (c==' ' || c=='\t') || (c!=' ' && c!='\t'))
+		CHECK((isblank(c) && (c==' ' || c=='\t')) || (c!=' ' && c!='\t'))
 
 	for (signed char c=0; c >= -10; ++c)
-		CHECK(isspace(c) && (c>='\t' && c<='\r' || c==' ') || (c < '\t' || (c > '\r' && c!=' ')))
+		CHECK((isspace(c) && ((c>='\t' && c<='\r') || c==' ')) || (c < '\t' || (c > '\r' && c!=' ')))
 
 	for (signed char c=0; c >= -10; ++c)
-		CHECK(iscntrl(c) && (c<=0x1F || c==0x7F) || (c>0x1F && c!=0x7F))
+		CHECK((iscntrl(c) && (c<=0x1F || c==0x7F)) || (c>0x1F && c!=0x7F))
 
 	for (signed char c=0; c >= -10; ++c)
-		CHECK(isgraph(c) && c>='!' && c<='~' || c < '!' || c > '~')
+		CHECK((isgraph(c) && c>='!' && c<='~') || c < '!' || c > '~')
 
 	for (signed char c=0; c >= -10; ++c)
-		CHECK(islower(c) && c>='a' && c<='z' || c < 'a' || c > 'z')
+		CHECK((islower(c) && c>='a' && c<='z') || c < 'a' || c > 'z')
 
 	for (signed char c=0; c >= -10; ++c)
-		CHECK(isupper(c) && c>='A' && c<='Z' || c < 'A' || c > 'Z')
+		CHECK((isupper(c) && c>='A' && c<='Z') || c < 'A' || c > 'Z')
 
 	for (signed char c=0; c >= -10; ++c)
-		CHECK(isprint(c) && c>=' ' && c<='~' || c < ' ' || c > '~')
+		CHECK((isprint(c) && c>=' ' && c<='~') || c < ' ' || c > '~')
 
 	for (signed char c=0; c >= -10; ++c)
-		CHECK(isxdigit(c) && ((c>='A' && c<='F') || (c>='a' && c<='f') || isdigit(c)) || c<'0' || (c > '9' && c<'A') || (c > 'F' && c<'a') || c>'f')
+		CHECK((isxdigit(c) && ((c>='A' && c<='F') || (c>='a' && c<='f') || isdigit(c))) || c<'0' || (c > '9' && c<'A') || (c > 'F' && c<'a') || c>'f')
 
 	for (signed char c=0; c >= -10; ++c)
 		CHECK(tolower(c)==(c+32) || c < 'A' || c > 'Z')

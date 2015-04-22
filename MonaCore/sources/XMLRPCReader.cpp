@@ -175,6 +175,9 @@ bool XMLRPCReader::onStartXMLElement(const char* name, Parameters& attributes) {
 		case TYPE:
 			ERROR("XML-RPC element ", name, " ignored, invalid in a primivite type");
 			break;
+		case UNKNOWN:
+		case VALUE:
+			break;
 	}
 
 	_xmls.emplace_back(nextXML);

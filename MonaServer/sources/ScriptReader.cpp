@@ -24,7 +24,7 @@ using namespace std;
 using namespace Mona;
 
 ScriptReader::ScriptReader(lua_State *pState, UInt32 count) : _pState(pState), _start(lua_gettop(pState)) {
-	if (count > _start)
+	if ((int)count > _start)
 		count = _start;
 	++_start;
 	_start -= count;
@@ -187,7 +187,7 @@ bool ScriptReader::readOne(UInt8 type,DataWriter& writer) {
 		if(lua_isstring(_pState,-1)) {
 			pReference = beginObject(writer,reference,lua_tostring(_pState,-1));
 			started=true;
-		} else if(size = lua_objlen(_pState,_current)) {
+		} else if((size = lua_objlen(_pState,_current))) {
 			// Array or mixed, write properties in first
 			object=false;
 			lua_pushnil(_pState);  /* first key */

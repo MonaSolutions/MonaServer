@@ -48,7 +48,7 @@ Publication::~Publication() {
 }
 
 
-Listener* Publication::addListener(Exception& ex, Client& client,Writer& writer) {
+Listener* Publication::addListener(Exception& ex, Client& client,Writer& writer, const char* queryParameters) {
 	map<Client*,Listener*>::iterator it = _listeners.lower_bound(&client);
 	if(it!=_listeners.end() && it->first==&client) {
 		WARN("Already subscribed for publication ",_name);
@@ -57,19 +57,9 @@ Listener* Publication::addListener(Exception& ex, Client& client,Writer& writer)
 	}
 	if(it!=_listeners.begin())
 		--it;
-	Listener* pListener = new Listener(*this,client,writer);
+	Listener* pListener = new Listener(*this,client,writer,queryParameters);
 	if(((Peer&)client).onSubscribe(ex,*pListener)) { // if ex, it has already been displayed as log
-		_listeners.insert(it,pair<Client*,Listener*>(&client,pListener));
-
-		if (_running) {
-			pListener->startPublishing();
-			// send publication properties (metadata)
-			PacketReader packet(_propertiesWriter.packet.data(),_propertiesWriter.packet.size());
-			AMFReader properties(packet);
-			if (properties.available())
-				pListener->pushProperties(properties);
-			pListener->flush(); // flush possible messages in startPublishing + pushProperties
-		}
+		_listeners.emplace_hint(it,&client,pListener);
 		return pListener;
 	}
 	if(!ex)
@@ -257,5 +247,16 @@ void Publication::writeProperties(DataReader& reader)  {
 	OnProperties::raise(*this,_properties);
 }
 
+bool Publication::requestProperties(Listener& listener) const {
+	if (!_running)
+		return false;
+	// send publication properties (metadata)
+	PacketReader packet(_propertiesWriter.packet.data(), _propertiesWriter.packet.size());
+	AMFReader properties(packet);
+	if (!properties.available())
+		return false;
+	listener.pushProperties(properties);
+	return true;
+}
 
 } // namespace Mona

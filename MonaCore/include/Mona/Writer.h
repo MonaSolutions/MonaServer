@@ -34,7 +34,7 @@ namespace Events {
 };
 
 class Client;
-class Writer : virtual NullableObject,
+class Writer : virtual public NullableObject,
 	public Events::OnClose {
 public:
 	enum MediaType {
@@ -46,8 +46,8 @@ public:
 		STOP
 	};
 	enum DataType {
-		USER_DATA=1,
-		INFO_DATA=2
+		DATA_USER=1,
+		DATA_INFO=2
 	};
 	enum State {
 		OPENING,

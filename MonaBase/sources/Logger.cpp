@@ -71,8 +71,9 @@ void Logger::log(THREAD_ID threadId, Level level, const char *filePath, string& 
 	cout.flush();
 }
 
-void Logger::dump(const UInt8* data, UInt32 size) {
+void Logger::dump(const string& header, const UInt8* data, UInt32 size) {
 	lock_guard<mutex> lock(_Mutex);
+	cout.write(header.data(), header.size()).put('\n');
 	cout.write((const char*)data, size);
 	cout.flush();
 }

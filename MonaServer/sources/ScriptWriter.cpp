@@ -56,29 +56,35 @@ bool ScriptWriter::repeat(UInt64 reference) {
 
 UInt64 ScriptWriter::writeDate(const Date& date) {
 	start();
+
 	lua_newtable(_pState);
 	lua_pushnumber(_pState, (double)date);
 	lua_setfield(_pState, -2, "__time");
-	lua_pushnumber(_pState, date.year());
+
+	// Attribut of LUA date are exprimed in LOCAL (there is no offset informations)
+	Date dateLocal(date,Date::LOCAL);
+
+	lua_pushnumber(_pState, dateLocal.year());
 	lua_setfield(_pState, -2, "year");
-	lua_pushnumber(_pState, date.month() + 1);
+	lua_pushnumber(_pState, dateLocal.month() + 1);
 	lua_setfield(_pState, -2, "month");
-	lua_pushnumber(_pState, date.day());
+	lua_pushnumber(_pState, dateLocal.day());
 	lua_setfield(_pState, -2, "day");
-	lua_pushnumber(_pState, date.yearDay());
+	lua_pushnumber(_pState, dateLocal.yearDay());
 	lua_setfield(_pState, -2, "yday");
-	lua_pushnumber(_pState, date.weekDay());
+	lua_pushnumber(_pState, dateLocal.weekDay());
 	lua_setfield(_pState, -2, "wday");
-	lua_pushnumber(_pState, date.hour());
+	lua_pushnumber(_pState, dateLocal.hour());
 	lua_setfield(_pState, -2, "hour");
-	lua_pushnumber(_pState, date.minute());
+	lua_pushnumber(_pState, dateLocal.minute());
 	lua_setfield(_pState, -2, "min");
-	lua_pushnumber(_pState, date.second());
+	lua_pushnumber(_pState, dateLocal.second());
 	lua_setfield(_pState, -2, "sec");
-	lua_pushnumber(_pState, date.millisecond());
+	lua_pushnumber(_pState, dateLocal.millisecond());
 	lua_setfield(_pState, -2, "msec");
-	lua_pushboolean(_pState, date.isDST() ? 1 : 0);
+	lua_pushboolean(_pState, dateLocal.isDST() ? 1 : 0);
 	lua_setfield(_pState, -2, "isdst");
+
 	UInt64 ref(reference());
 	end();
 	return ref;

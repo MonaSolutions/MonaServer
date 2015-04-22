@@ -22,8 +22,6 @@ This file is a part of Mona.
 #include "Mona/Date.h"
 #if !defined(_WIN32)
     #include <signal.h>
-#else
-	#include <windows.h>
 #endif
 #include "Mona/FileSystem.h"
 #include "Mona/Logs.h"
@@ -73,9 +71,7 @@ void Application::HandleSignal(int sig) {
 
 void Application::displayHelp() {
 	HelpFormatter helpFormatter(options());
-	string command;
-	if (getString("application.command", command))
-		helpFormatter.command = command;
+	helpFormatter.command = _path.toString();
 	helpFormatter.usage = "[options]";
 	helpFormatter.header = "options:";
 	if (onHelp(helpFormatter))
@@ -92,11 +88,9 @@ bool Application::init(int argc, const char* argv[]) {
 	
 
 	// configurations
-	string dir;
-	getString("application.dir", dir);
 	string  name("configs");
 	getString("application.baseName", name);
-	string configPath(dir);
+	string configPath(_path.parent());
 	configPath.append(name);
 	configPath.append(".ini");
 	if (loadConfigurations(configPath)) {
@@ -113,7 +107,7 @@ bool Application::init(int argc, const char* argv[]) {
 	// logs
 	Logs::SetLogger(*this);
 
-	string logDir(dir);
+	string logDir(_path.parent());
 	logDir.append("logs");
 	string logFileName("log");
 
@@ -174,9 +168,9 @@ void Application::defineOptions(Exception& ex, Options& options) {
 		return true;
 	});
 
-	options.add(ex, "dump", "d", "Enables packet traces in logs. Optional arguments are 'intern' or 'all' respectively to displays just intern packet exchanged (between servers) or all packet process. If no argument is given, just outside packet process will be dumped.")
-		.argument("intern|all", false)
-		.handler([this](Exception& ex, const string& value) { Logs::SetDump(value == "all" ? Logs::DUMP_ALL : (value == "intern" ? Logs::DUMP_INTERN : Logs::DUMP_EXTERN)); return true; });
+	options.add(ex, "dump", "d", "Enables packet traces in logs. Optional argument is a string filter to dump just packet which matchs this expression. If no argument is given, all the dumpable packet are gotten.")
+		.argument("filter", false)
+		.handler([this](Exception& ex, const string& value) { Logs::SetDump(value.c_str()); return true; });
 	
 	options.add(ex, "dumplimit", "dl", "If dump is activated this option set the limit of dump messages. Argument is an unsigned integer defining the limit of bytes to show. By default there is not limit.")
 		.argument("limit", true)
@@ -218,12 +212,15 @@ void Application::log(THREAD_ID threadId, Level level, const char *filePath, str
 	manageLogFiles();
 }
 
-void Application::dump(const UInt8* data, UInt32 size) {
+void Application::dump(const string& header, const UInt8* data, UInt32 size) {
 	if (isInteractive())
-		Logger::dump(data, size);
+		Logger::dump(header, data, size);
 	if (!_logStream.good())
 		return;
 	lock_guard<mutex> lock(_logMutex);
+	string date;
+	_logStream << Date().toString("%d/%m %H:%M:%S.%c  ", date);
+	_logStream.write(header.data(), header.size()).put('\n');
 	_logStream.write((const char*)data, size);
 	_logStream.flush();
 	manageLogFiles();
@@ -254,8 +251,8 @@ void Application::manageLogFiles() {
 
 // TODO test linux/windows (service too)
 void Application::initApplicationPaths(const char* command) {
-	if (hasKey("application.command"))
-		return; // already done!
+	if (hasKey("application.command")) // already done
+		return;
 
 	string path(command);
 
@@ -280,20 +277,13 @@ void Application::initApplicationPaths(const char* command) {
 	}
 #endif
 
+	_path.set(path);
+
 	setString("application.command", path);
-
-	vector<string> values;
-	FileSystem::Unpack(path, values);
-
 	setString("application.path", path);
-	setString("application.name", values.empty() ? String::Empty : values.back());
-	string baseName;
-	setString("application.baseName", values.empty() ? String::Empty : FileSystem::GetBaseName(values.back(),baseName));
-
-	if (!values.empty())
-		values.resize(values.size() - 1);
-	FileSystem::Pack(values, path);
-	setString("application.dir", FileSystem::MakeDirectory(path));
+	setString("application.name", _path.name());
+	setString("application.baseName", _path.baseName());
+	setString("application.dir", _path.parent());
 }
 
 } // namespace Mona

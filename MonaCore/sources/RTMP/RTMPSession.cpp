@@ -86,13 +86,25 @@ UInt32 RTMPSession::onData(PoolBuffer& pBuffer) {
 			return size;
 		}
 
+		UInt8 handshakeType(*pBuffer->data());
+		if(handshakeType!=3 && handshakeType!=6) {
+			ERROR("RTMP Handshake type '",handshakeType,"' unknown");
+			kill(PROTOCOL_DEATH);
+			return size;
+		}
+
 		if(!TCPSession::receive(pBuffer))
 			return size;
+
 		_unackBytes += 1537;
 		++_handshaking;
 
 		Exception ex;
-		_pHandshaker.reset(new RTMPHandshaker(peer.address, pBuffer));
+		_pHandshaker.reset(new RTMPHandshaker(handshakeType==6, peer.address, pBuffer));
+
+		if (_pHandshaker->encrypted)
+			((string&)peer.protocol) = "RTMPE";
+
 		send<RTMPHandshaker>(ex, _pHandshaker, NULL); // threaded!
 		if (ex) {
 			ERROR("RTMP Handshake, ", ex.error())
@@ -299,21 +311,19 @@ void RTMPSession::receive(BinaryReader& packet) {
 			_winAckSize = reader.read32();
 			break;
 		default: {
-			 // TODO peer.serverAddress?	
-
 			if (!channel.pStream) {
 				if(_mainStream.process(channel.type,channel.absoluteTime, reader,*_pWriter) && peer.connected)
 					_pWriter->isMain = true;
-				else if(!died)
+				else if (!died)
 					kill(REJECTED_DEATH);
 			} else
 				channel.pStream->process(channel.type, channel.absoluteTime, reader, *_pWriter);
 		}
 	}
 
-	if(_pWriter) {
-		_pWriter = NULL;
+	if (_pWriter) {
 		channel.pBuffer.release();
+		_pWriter = NULL;
 	}
 }
 

@@ -28,7 +28,7 @@ namespace Mona {
 class BinaryWriter : public Binary, virtual public Object {
 public:
 
-	BinaryWriter(UInt8* buffer, UInt32 size, Binary::Order byteOrder = Binary::ORDER_BIG_ENDIAN); // ORDER_BIG_ENDIAN==NETWORK_ENDIAN
+	BinaryWriter(UInt8* buffer, UInt32 size, Binary::Order byteOrder = Binary::ORDER_NETWORK);
 
 	BinaryWriter& write(const void* value, UInt32 size);
 	BinaryWriter& write(const char* value) { return write(value, strlen(value)); }

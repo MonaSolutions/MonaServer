@@ -169,39 +169,55 @@ bool RTMFPSession::keepalive() {
 }
 
 
-void RTMFPSession::p2pHandshake(const string& tag,const SocketAddress& address,UInt32 times,Session* pSession) {
+bool RTMFPSession::p2pHandshake(const string& tag,const SocketAddress& address,UInt32 times,Session* pSession) {
 	if (_failed)
-		return;
+		return false;
 
 	DEBUG("Peer newcomer address send to peer ",name()," connected");
-	
-	UInt16 size = 0x36;
-	UInt8 index=0;
-	// times starts to 0
 
-	const SocketAddress* pAddress = &address;
+	// the both peer see the server in a different way (and serverAddress.host()!= public address host written above),
+	// Means an exterior peer, but we can't know which one is the exterior peer
+	// so add an interiorAddress build with how see eachone the server on the both side
+	bool hasAnExteriorPeer(pSession && pSession->peer.serverAddress.host() != peer.serverAddress.host());
+
+	// times starts to 0
+	UInt8 index=0;
+	const SocketAddress* pAddress(&address);
 	if(pSession && !pSession->peer.localAddresses.empty()) {
 		// If two clients are on the same lan, starts with private address
 		if(pSession->peer.address.host() == peer.address.host())
 			++times;
 
-		index=times%(pSession->peer.localAddresses.size()+1);
+		index=times%(pSession->peer.localAddresses.size()+((hasAnExteriorPeer && peer.serverAddress.host() != address.host()) ? 2 : 1));
 		if (index > 0) {
-			auto it = pSession->peer.localAddresses.begin();
-			advance(it, --index);
-			pAddress = &(*it);
+			if (hasAnExteriorPeer && --index == 0)
+				pAddress = NULL;
+			else {
+				auto it = pSession->peer.localAddresses.begin();
+				advance(it, --index);
+				pAddress = &(*it);
+			}
 		}
 	}
-	size += (pAddress->host().family() == IPAddress::IPv6 ? 16 : 4);
 
-
-	BinaryWriter& writer = writeMessage(0x0F,size);
-
-	writer.write8(0x22).write8(0x21).write8(0x0F).write(peer.id, ID_SIZE);
-	RTMFP::WriteAddress(writer,*pAddress, index == 0 ? RTMFP::ADDRESS_PUBLIC : RTMFP::ADDRESS_LOCAL);
-	DEBUG("P2P address destinator exchange, ",pAddress->toString());
-	writer.write(tag);
+	if (pAddress) {
+		writeP2PHandshake(tag,*pAddress, index == 0 ? RTMFP::ADDRESS_PUBLIC : RTMFP::ADDRESS_LOCAL);
+	} else {
+		SocketAddress interiorAddress(peer.serverAddress.host(), pSession->peer.address.port());
+		writeP2PHandshake(tag,interiorAddress,RTMFP::ADDRESS_PUBLIC);
+	}
 	flush();
+	return hasAnExteriorPeer;
+}
+
+void RTMFPSession::writeP2PHandshake(const string& tag, const SocketAddress& address, RTMFP::AddressType type) {
+	DEBUG("P2P address destinator exchange, ",address.toString());
+	UInt16 size(0x36);
+	size += (address.host().family() == IPAddress::IPv6 ? 16 : 4);
+	BinaryWriter& writer = writeMessage(0x0F,size);
+	writer.write8(0x22).write8(0x21).write8(0x0F).write(peer.id, ID_SIZE);
+	RTMFP::WriteAddress(writer,address, type);
+	writer.write(tag);
 }
 
 UInt8* RTMFPSession::packet() {

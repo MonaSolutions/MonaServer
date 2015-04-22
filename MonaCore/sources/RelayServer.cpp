@@ -63,7 +63,7 @@ RelaySocket::RelaySocket(const SocketManager& manager,UInt16 port) : UDPSocket(m
 
 		SocketAddress destinator(relay.address1 == address ? relay.address2 : relay.address1);
 
-		DUMP_INTERN(pBuffer->data(), pBuffer->size(), "Relayed from ", address.toString(), " to ",destinator.toString())
+		DUMP("RELAY",pBuffer->data(), pBuffer->size(), "Relayed from ", address.toString(), " to ",destinator.toString())
 		Exception ex;
 		send(ex, pBuffer->data(), pBuffer->size(), destinator);
 		if (ex)

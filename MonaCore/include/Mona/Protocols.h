@@ -32,46 +32,80 @@ public:
 
 	void load(Sessions& sessions);
 	void unload() { _protocols.clear(); }
-	void manage() { for (std::unique_ptr<Protocol>& pProtocol : _protocols) pProtocol->manage(); }
+	void manage() { for (auto& it : _protocols) it.second->manage(); }
 
 private:
 	template<class ProtocolType, typename ...Args >
 	void loadProtocol(const char* name, UInt16 port, Sessions& sessions, Args&&... args) {
+
+		// check that name protocol is unique!
+		const auto& it(_protocols.lower_bound(name));
+		if (it != _protocols.end() && it->first == name) {
+			ERROR(name, " protocol already exists, use a unique name for each protocol");
+			return;
+		}
+
 		std::string buffer;
 		if (!_invoker.getNumber(String::Format(buffer, name, ".port"), port))
 			_invoker.setNumber(buffer, port);
 		if(port==0)
-			return;
-		std::unique_ptr<Protocol> pProtocol(new ProtocolType(name, _invoker, sessions, args ...));
+			return; // not fill parameters, so if "publicAddress" parameter doesn't exist it means that protocol is disabled!
+
+		std::unique_ptr<ProtocolType> pProtocol(new ProtocolType(name, _invoker, sessions, args ...));
 
 		std::string host("0.0.0.0");
 		_invoker.getString("host", host);
+		std::string   publicHost;
 	
-		// configs to protocol params!
+		// copy configs prefixed to protocol params! (duplicated to get easy access with protocol object)
 		Parameters::ForEach forEach;
-		forEach = [&pProtocol](const std::string& key, const std::string& value) -> void {
+		forEach = [&publicHost,&pProtocol](const std::string& key, const std::string& value) -> void {
 			pProtocol->setString(key, value);
+			if (key == "publicHost")
+				publicHost = value;
 		};
 		_invoker.iterate(String::Format(buffer,name,"."),forEach);
 
-		Exception ex;
-		bool success = false;
+
 		pProtocol->getString("host",host);
-		EXCEPTION_TO_LOG(success = ((ProtocolType*)pProtocol.get())->load(ex,host,port), name, " server")
+
+		Exception ex;
+		
+		bool success;
+		SocketAddress address;
+		EXCEPTION_TO_LOG(success = address.setWithDNS(ex, host, port), name, " server")
+		if (!success)
+			return;
+		ex.set(Exception::NIL);
+
+		// resolve every protocol public server address
+		if ((publicHost.empty() && !_invoker.getString("publicHost", publicHost)) || !((SocketAddress&)pProtocol->publicAddress).setWithDNS(ex, publicHost, port)) {
+			if (ex) {
+				WARN("Impossible to resolve ",publicHost," publicHost, should be written in an IP form");
+				ex.set(Exception::NIL);
+			}
+			((SocketAddress&)pProtocol->publicAddress).set(address);	
+		}
+		if (!pProtocol->publicAddress.host())
+			((SocketAddress&)pProtocol->publicAddress).set(IPAddress::Loopback(),port);
+		pProtocol->setString("publicAddress",pProtocol->publicAddress.toString());
+	
+		// load protocol
+		EXCEPTION_TO_LOG(success = pProtocol->load(ex,address), name, " server")
 		if (!success)
 			return;
 
-		// copy protocol params to invoker params
+		// copy protocol params to invoker params! (to get defaults protocol params + configs params on invoker)
 		for (auto& it : *pProtocol)
 			_invoker.setString(String::Format(buffer,name,".",it.first), it.second);
 
-		NOTE(name, " server started on ",host,":",port, dynamic_cast<UDProtocol*>(pProtocol.get()) ? " (UDP)" : " (TCP)");
-		_protocols.emplace_back(pProtocol.release());
+		_protocols.emplace_hint(it, std::piecewise_construct,std::forward_as_tuple(name),std::forward_as_tuple(pProtocol.release()));
+		NOTE(name, " server started on ",host,":",port, dynamic_cast<const UDProtocol*>(pProtocol.get()) ? " (UDP)" : " (TCP)");
 	}
 
 
-	std::vector<std::unique_ptr<Protocol>>	_protocols;
-	Invoker&								_invoker;
+	std::map<std::string,std::unique_ptr<Protocol>>	_protocols;
+	Invoker&										_invoker;
 };
 
 

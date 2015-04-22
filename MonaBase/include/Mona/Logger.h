@@ -42,7 +42,7 @@ public:
 
 
     virtual void log(THREAD_ID threadId, Level level, const char *filePath, std::string& shortFilePath, long line, std::string& message);
-	virtual void dump(const UInt8* data, UInt32 size);
+	virtual void dump(const std::string& header, const UInt8* data, UInt32 size);
 
 private:
 	static std::mutex	_Mutex;

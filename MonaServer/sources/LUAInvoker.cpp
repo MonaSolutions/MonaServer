@@ -180,9 +180,16 @@ int	LUAInvoker::Split(lua_State *pState) {
 
 int	LUAInvoker::Dump(lua_State *pState) {
 	SCRIPT_CALLBACK(Invoker, invoker)
+		string header;
 		SCRIPT_READ_BINARY(data, size)
+		if (SCRIPT_NEXT_TYPE == LUA_TSTRING) {
+			header.assign(STR data, size);
+			SCRIPT_READ_BINARY(data2, size2);
+			data = data2;
+			size = size2;
+		}
 		UInt32 count(SCRIPT_READ_UINT(size));
-		Logs::Dump(data,count>size ? size : count);
+		Logs::Dump(header,data,count>size ? size : count);
 	SCRIPT_CALLBACK_RETURN
 }
 
@@ -208,7 +215,7 @@ int	LUAInvoker::Publish(lua_State *pState) {
 
 int	LUAInvoker::AbsolutePath(lua_State *pState) {
 	SCRIPT_CALLBACK(Invoker,invoker)
-		SCRIPT_WRITE_STRING((MonaServer::WWWPath + "/" + SCRIPT_READ_STRING("") + "/").c_str())
+		SCRIPT_WRITE_STRING((invoker.rootPath() + "/" + SCRIPT_READ_STRING("") + "/").c_str())
 	SCRIPT_CALLBACK_RETURN
 }
 
@@ -248,7 +255,7 @@ int	LUAInvoker::Md5(lua_State *pState) {
 
 int LUAInvoker::ListPaths(lua_State *pState) {
 	SCRIPT_CALLBACK(Invoker, invoker)
-		string directory(MonaServer::WWWPath);
+		string directory(invoker.rootPath());
 		String::Append(directory,"/",SCRIPT_READ_STRING(""),"/");
 		
 		UInt32 index = 0;

@@ -197,7 +197,7 @@ UInt32 FileSystem::Paths(Exception& ex, const char* path, const ForEach& forEach
 		return count;
 	}
 	struct dirent* pEntry(NULL);
-	while(pEntry = readdir(pDirectory)) {
+	while((pEntry = readdir(pDirectory))) {
 		if (strcmp(pEntry->d_name, ".")!=0 && strcmp(pEntry->d_name, "..")!=0) {
 			++count;
 			String::Append(pathFile.assign(directory), pEntry->d_name);
@@ -497,7 +497,7 @@ bool FileSystem::GetCurrentApplication(string& path) {
 #else
 	result.resize(130);
 		// read the link target into variable linkTarget
-	ssize_t n(130);
+	size_t n(130);
 	while(n>=result.size()) {
 		result.resize(result.size()*2);
 		if((n = readlink("/proc/self/exe", &result[0], result.size()))<=0)

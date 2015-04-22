@@ -29,8 +29,7 @@ using namespace std;
 namespace Mona {
 
 ICE::ICE(const Peer& initiator,const Peer& remote,const RelayServer& relayer) : _first(true),mediaIndex(0),_relayer(relayer),_type(INITIATOR),_publicHost(initiator.address.host().toString()),_initiator(initiator),_remote(remote) {
-	SocketAddress::SplitLiteral(remote.serverAddress, _serverRemoteHost);
-	SocketAddress::SplitLiteral(initiator.serverAddress, _serverInitiatorHost);
+
 }
 
 ICE::~ICE() {
@@ -172,12 +171,12 @@ void ICE::fromSDPCandidate(const string& candidate,SDPCandidate& publicCandidate
 				if(_relayPorts[mediaIndex][compoment].insert(port).second) {
 					relayCurrentCandidates.emplace_back();
 					SDPCandidate& currentCandidate = relayCurrentCandidates.back();
-					String::Format(currentCandidate.candidate, "a=candidate:7 ",compoment," udp 1 ",_type==INITIATOR ? _serverInitiatorHost : _serverRemoteHost," ",port," typ host\\r\\n");
+					String::Format(currentCandidate.candidate, "a=candidate:7 ",compoment," udp 1 ",_type==INITIATOR ? _initiator.serverAddress.host().toString() : _remote.serverAddress.host().toString()," ",port," typ host\\r\\n");
 					currentCandidate.mLineIndex = mediaIndex;
 
 					relayCurrentCandidates.emplace_back();
 					SDPCandidate& remoteCandidate = relayRemoteCandidates.back();
-					String::Format(remoteCandidate.candidate, "a=candidate:7 ",compoment," udp 1 ",_type==INITIATOR ? _serverRemoteHost : _serverInitiatorHost," ",port," typ host\\r\\n");
+					String::Format(remoteCandidate.candidate, "a=candidate:7 ",compoment," udp 1 ",_type==INITIATOR ? _remote.serverAddress.host().toString() : _initiator.serverAddress.host().toString()," ",port," typ host\\r\\n");
 					remoteCandidate.mLineIndex = mediaIndex;
 				}
 			}	

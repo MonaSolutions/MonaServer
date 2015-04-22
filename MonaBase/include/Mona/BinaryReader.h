@@ -28,7 +28,7 @@ namespace Mona {
 class BinaryReader : public Binary, virtual public Object {
 public:
    
-    BinaryReader(const UInt8* data,UInt32 size,Binary::Order byteOrder=Binary::ORDER_BIG_ENDIAN); // ORDER_BIG_ENDIAN==NETWORK_ENDIAN
+    BinaryReader(const UInt8* data,UInt32 size,Binary::Order byteOrder=Binary::ORDER_NETWORK);
 
 	
 	UInt8*			read(UInt32 size, UInt8* buffer);

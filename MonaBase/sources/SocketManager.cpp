@@ -502,8 +502,8 @@ void SocketManager::run(Exception& exThread) {
 		}
 
 		// for each ready socket
-		int i=0;
-		for(i;i<results;++i) {
+		int i;
+		for(i=0;i<results;++i) {
 			epoll_event& event = events[i];
 
 			if(event.data.fd==readFD) {

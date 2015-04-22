@@ -132,7 +132,7 @@ bool LUAIPAddress::Read(Exception& ex, lua_State *pState, int index, IPAddress& 
 		}
 	}
 
-	ex.set(Exception::NETADDRESS, "No valid IPAddress available to read");
+	ex.set(Exception::NETIP, "No valid IPAddress available to read");
 	return false;
 }
 

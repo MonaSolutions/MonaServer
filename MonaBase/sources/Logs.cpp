@@ -24,14 +24,25 @@ using namespace std;
 
 namespace Mona {
 
-Logger*			Logs::_PLogger(NULL);
-Logs::DumpMode	Logs::_DumpMode(DUMP_NOTHING);
-Int32			Logs::_DumpLimit(-1);
+mutex							Logs::_Mutex;
+Logger*							Logs::_PLogger(NULL);
+std::shared_ptr<std::string> 	Logs::_PDump;
+Int32							Logs::_DumpLimit(-1);
 #if defined(_DEBUG)
-UInt8			Logs::_Level(Logger::LEVEL_DEBUG); // default log level
+UInt8							Logs::_Level(Logger::LEVEL_DEBUG); // default log level
 #else
-UInt8			Logs::_Level(Logger::LEVEL_INFO); // default log level
+UInt8							Logs::_Level(Logger::LEVEL_INFO); // default log level
 #endif
-Logger			Logs::_DefaultLogger;
+Logger							Logs::_DefaultLogger;
+
+
+void Logs::SetDump(const char* name) {
+	std::lock_guard<std::mutex> lock(_Mutex);
+	if (!name)
+		_PDump.reset();
+	else
+		_PDump.reset(new string(name));
+}
+
 
 } // namespace Mona

@@ -52,8 +52,8 @@ public:
 	}
 
 	/*! Return false if key doesn't exist or if it's not a boolean type, otherwise return true and assign boolean 'value' */
-	bool getBool(const std::string& key, bool& value) const { return getBool(key.c_str(), value); }
-	bool getBool(const char* key, bool& value) const;
+	bool getBoolean(const std::string& key, bool& value) const { return getBoolean(key.c_str(), value); }
+	bool getBoolean(const char* key, bool& value) const;
 
 
 	/*! A short version of getNumber with template default argument to get value as returned result */
@@ -66,13 +66,13 @@ public:
 		return result;
 	}
 
-	/*! A short version of getBool with template default argument to get value as returned result */
+	/*! A short version of getBoolean with template default argument to get value as returned result */
 	template<bool defaultValue=false>
-	bool getBool(const std::string& key) const { return getBool<defaultValue>(key.c_str()); }
+	bool getBoolean(const std::string& key) const { return getBoolean<defaultValue>(key.c_str()); }
 	template<bool defaultValue=false>
-	bool getBool(const char* key) const {
+	bool getBoolean(const char* key) const {
 		bool result(defaultValue);
-		getBool(key,result);
+		getBoolean(key,result);
 		return result;
 	}
 
@@ -96,8 +96,8 @@ public:
 		setString(key, String::Format(val, value));
 	}
 
-	void setBool(const std::string& key, bool value) { setIntern(key.c_str(), value ? "true" : "false"); }
-	void setBool(const char* key, bool value) { setIntern(key, value ? "true" : "false"); }
+	void setBoolean(const std::string& key, bool value) { setIntern(key.c_str(), value ? "true" : "false"); }
+	void setBoolean(const char* key, bool value) { setIntern(key, value ? "true" : "false"); }
 
 	typedef std::function<void(const std::string&, const std::string&)> ForEach;
 
@@ -115,8 +115,11 @@ public:
 protected:
 	Parameters() : _bytes(0) {}
 
+	 // value==NULL means "deletion"
+	virtual void onChange(const char* key, const char* value, std::size_t size) { OnChange::raise(key,value, size); }
+
+
 private:
-	
 	void setIntern(const char* key, const char* value, std::size_t size = std::string::npos);
 
 	virtual UInt32 iteration(const char* prefix,const ForEach& function) const = 0;

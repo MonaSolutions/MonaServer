@@ -47,6 +47,13 @@ Peer::~Peer() {
 	}
 }
 
+void Peer::setServerAddress(const string& address) {
+	Exception ex;
+	((SocketAddress&)serverAddress).set(ex, address);
+	if (ex.code()==Exception::NETPORT)
+		((SocketAddress&)serverAddress).set(ex, address, serverAddress.port());
+}
+
 UInt16 Peer::ping() const {
 	if (!_pingProcessing)
 		return _ping;
@@ -173,12 +180,13 @@ void Peer::onConnection(Exception& ex, Writer& writer,DataReader& parameters,Dat
 	if(!connected) {
 		_pWriter = &writer;
 
+		string buffer;
+
 		// reset default protocol parameters
 		_parameters.clear();
 		Parameters::ForEach forEach([this](const string& key,const string& value) {
 			_parameters.setString(key,value);
 		});
-		string buffer;
 		_handler.iterate(String::Format(buffer,protocol,"."), forEach);
 
 		ParameterWriter parameterWriter(_parameters);

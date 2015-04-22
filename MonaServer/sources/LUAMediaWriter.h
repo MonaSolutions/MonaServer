@@ -30,9 +30,9 @@ class LUAMediaWriter : public PacketWriter {
 public:
 	LUAMediaWriter(const PoolBuffers& poolBuffers, const char* mediaType) : PacketWriter(poolBuffers), _first(true) {
 		if(String::ICompare(mediaType, "mp2t")==0)
-			_pMedia.reset(new MPEGTS());
+			_pMedia.reset(new MPEGTS(poolBuffers));
 		else
-			_pMedia.reset(new FLV());
+			_pMedia.reset(new FLV(poolBuffers));
 	}
 
 	static int Get(lua_State* pState);

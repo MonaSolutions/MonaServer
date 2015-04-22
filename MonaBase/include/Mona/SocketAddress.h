@@ -73,7 +73,7 @@ public:
 	bool setWithDNS(Exception& ex, const std::string& hostAndPort) { return setIntern(ex, hostAndPort.c_str(), true); }
 	bool setWithDNS(Exception& ex, const char* hostAndPort) { return setIntern(ex, hostAndPort, true); }
 	
-	void reset();
+	void clear();
 
 	const IPAddress&		host() const;
 	UInt16					port() const;

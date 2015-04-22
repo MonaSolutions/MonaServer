@@ -150,7 +150,7 @@ UInt8 RTMFPHandshake::handshakeHandler(UInt8 id,const SocketAddress& address, Bi
 		
 			if(type == 0x0f) {
 
-				const UInt8* peerId = (const UInt8*)epd.c_str();
+				const UInt8* peerId((const UInt8*)epd.c_str());
 				
 				RTMFPSession* pSessionWanted = _sessions.findByPeer<RTMFPSession>(peerId);
 	
@@ -159,15 +159,27 @@ UInt8 RTMFPHandshake::handshakeHandler(UInt8 id,const SocketAddress& address, Bi
 						return 0x00; // TODO no way in RTMFP to tell "died!"
 					/// Udp hole punching
 					UInt32 times = attempt(tag);
-
+		
 					RTMFPSession* pSession(NULL);
-					if(times > 0 || address.host() == pSessionWanted->peer.address.host())
+					if(times > 0 || address.host() == pSessionWanted->peer.address.host()) // try in first just with public address (excepting if the both peer are on the same machine)
 						pSession = _sessions.findByAddress<RTMFPSession>(address,Socket::DATAGRAM);
 					
-					pSessionWanted->p2pHandshake(tag,address,times,pSession);
-
+					bool hasAnExteriorPeer(pSessionWanted->p2pHandshake(tag,address,times,pSession));
+					
+					// public address
 					RTMFP::WriteAddress(response,pSessionWanted->peer.address, RTMFP::ADDRESS_PUBLIC);
 					DEBUG("P2P address initiator exchange, ",pSessionWanted->peer.address.toString());
+
+					if (hasAnExteriorPeer && pSession->peer.serverAddress.host()!=pSessionWanted->peer.address.host()) {
+						// the both peer see the server in a different way (and serverAddress.host()!= public address host written above),
+						// Means an exterior peer, but we can't know which one is the exterior peer
+						// so add an interiorAddress build with how see eachone the server on the both side
+						SocketAddress interiorAddress(pSession->peer.serverAddress.host(), pSessionWanted->peer.address.port());
+						RTMFP::WriteAddress(response,interiorAddress, RTMFP::ADDRESS_PUBLIC);
+						DEBUG("P2P address initiator exchange, ",interiorAddress.toString());
+					}	
+
+					// local address
 					for(const SocketAddress& address : pSessionWanted->peer.localAddresses) {
 						RTMFP::WriteAddress(response,address, RTMFP::ADDRESS_LOCAL);
 						DEBUG("P2P address initiator exchange, ",address.toString());
@@ -179,14 +191,8 @@ UInt8 RTMFPHandshake::handshakeHandler(UInt8 id,const SocketAddress& address, Bi
 						if(pSession->peer.parameters().getNumber("timesBeforeTurn",timesBeforeTurn) && timesBeforeTurn>=times) {
 							UInt16 port = invoker.relayer.relay(pSession->peer.address,pSessionWanted->peer.address,20); // 20 sec de timeout is enough for RTMFP!
 							if (port > 0) {
-								string host;
-								SocketAddress::SplitLiteral(pSession->peer.serverAddress, host);
-								bool success(false);
-								Exception ex;
-								SocketAddress address;
-								EXCEPTION_TO_LOG(success=address.set(ex,host, port),"RTMFP turn impossible")
-								if (success)
-									RTMFP::WriteAddress(response, address, RTMFP::ADDRESS_REDIRECTION);
+								SocketAddress address(pSession->peer.serverAddress.host(), port);
+								RTMFP::WriteAddress(response, address, RTMFP::ADDRESS_REDIRECTION);
 							} // else ERROR already display by RelayServer class
 						}
 					}
@@ -217,7 +223,9 @@ UInt8 RTMFPHandshake::handshakeHandler(UInt8 id,const SocketAddress& address, Bi
 
 				// Fill peer infos
 				peer.properties().clear();
-				Util::UnpackUrl(epd, (string&)peer.serverAddress, (string&)peer.path,(string&)peer.query);
+				string serverAddress;
+				Util::UnpackUrl(epd, serverAddress, (string&)peer.path,(string&)peer.query);
+				peer.setServerAddress(serverAddress);
 				Util::UnpackQuery(peer.query, peer.properties());
 
 				Exception ex;
@@ -227,12 +235,9 @@ UInt8 RTMFPHandshake::handshakeHandler(UInt8 id,const SocketAddress& address, Bi
 				if(!addresses.empty()) {
 					set<SocketAddress>::iterator it;
 					for(it=addresses.begin();it!=addresses.end();++it) {
-						if (it->host().isWildcard()) {
-							SocketAddress address;
-							EXCEPTION_TO_LOG(address.set(ex, peer.serverAddress),"RTMFP onHandshake redirection");
-							if (!ex)
-								RTMFP::WriteAddress(response, address, RTMFP::ADDRESS_REDIRECTION);
-						} else
+						if (it->host().isWildcard())
+							RTMFP::WriteAddress(response, peer.serverAddress, RTMFP::ADDRESS_REDIRECTION);
+						else
 							RTMFP::WriteAddress(response, *it, RTMFP::ADDRESS_REDIRECTION);
 					}
 					return 0x71;

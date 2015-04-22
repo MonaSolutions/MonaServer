@@ -30,7 +30,7 @@ RTMFProtocol::RTMFProtocol(const char* name, Invoker& invoker, Sessions& session
 
 	setNumber("keepalivePeer",   10);
 	setNumber("keepaliveServer", 15);
-	// timesBeforeTurn
+	// timesBeforeTurn, no by default
 
 	onPacket = [this](PoolBuffer& pBuffer,const SocketAddress& address) {
 		if (pBuffer->size() < RTMFP_MIN_PACKET_SIZE) {
@@ -61,9 +61,9 @@ RTMFProtocol::~RTMFProtocol() {
 	OnPacket::unsubscribe(onPacket);
 }
 
-bool RTMFProtocol::load(Exception& ex,const string& host,UInt16 port) {
+bool RTMFProtocol::load(Exception& ex,const SocketAddress& address) {
 
-	if (!UDProtocol::load(ex,host,port))
+	if (!UDProtocol::load(ex,address))
 		return false;
 
 	
