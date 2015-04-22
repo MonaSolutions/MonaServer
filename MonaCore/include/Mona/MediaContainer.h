@@ -90,7 +90,7 @@ public:
 	/// - 2 bytes header = 0x00XY (where XY = size of NALU)
 	/// - 4 bytes header = 0x00UVWXYZ4/6 to 0x00UVWXYZ4/6 (where UVWXYZ = size of NALU)
 	/// \return total size available
-	static UInt32 ParseNAL(SubstreamMap& reader, const UInt8* data, UInt32 size, UInt32 offset = 11);
+	static UInt32 ParseNAL(SubstreamMap& reader, const UInt8* data, UInt32 size);
 
 	/// \brief Parse Audio frame
 	/// \return size available
