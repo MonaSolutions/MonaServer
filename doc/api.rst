@@ -319,7 +319,7 @@ If you need to return a custom response you can return *nil* and write you respo
     return nil
   end
 
-.. note:: You can create your own events on client object to create RPC server methods. These methods will be accessible from client side. By default if you send data to server from client without given a method name, the method invoked is *client:onMessage*. See :ref:`communication-between-server-applications` for more details.
+.. note:: You can create your own events on client object to create RPC server methods. These methods will be accessible from client side. By default if you send data to server from client without given a method name, the method invoked is *client:onMessage*. See :ref:`ref-com-server-apps` for more details.
  
 
 .. _ref-writer:
