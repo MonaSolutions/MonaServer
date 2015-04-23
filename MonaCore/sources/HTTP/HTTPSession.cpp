@@ -141,7 +141,7 @@ void HTTPSession::receive(const shared_ptr<HTTPPacket>& pPacket) {
 			peer.onConnection(ex, _writer,parameters);
 			if (!ex && peer.connected) {
 
-				if (!peer.parameters().getBoolean("index", _indexDirectory)) {
+				if (peer.parameters().getBoolean("index", _indexDirectory)) {
 					if(peer.parameters().getString("index", _index))
 						FileSystem::GetName(_index); // Redirect to the file (get name to prevent path insertion)
 				}
