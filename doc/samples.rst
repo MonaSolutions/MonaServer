@@ -21,10 +21,6 @@ To get more informations please ask us on the `MonaServer forum`_ or send a mail
 |                         | 1. Type a name to identify your meeting                           |                                                 |
 |                         | 2. Send the http link to your correspondant                       |                                                 |
 |                         |                                                                   |                                                 |
-|                         | **Notes :**                                                       |                                                 |
-|                         |                                                                   |                                                 |
-|                         | - This is just a sample, the video quality is set to the minimum  |                                                 |
-|                         | - Download the `apk installer`_ to try it on Android.             |                                                 |
 +-------------------------+-------------------------------------------------------------------+-------------------------------------------------+
 |                         | VideoPhone_ :                                                     |                                                 |
 |                         |                                                                   |                                                 |

@@ -44,7 +44,7 @@ Mona has the following dependencies :
 
 .. note:: LuaJIT_ is an alternative to the official LUA interpreter. It works faster than LUA essentially because it compiles the LUA code to machine code during execution (see `LuaJIT performance <http://luajit.org/performance_x86.html>`_ about performance comparison).
 
-As **C++11** is used in MonaServer you need to install a compiler which is compatible. At least **gcc 4.8.2** on Linux/FreeBSD/OS-X and VS 2013 on Windows.
+As **C++11** is used in MonaServer you need to install a compiler which is compatible. At least **gcc/g++ 4.8.2** on Linux/FreeBSD/OS-X and VS 2013 on Windows.
 
 LuaJIT installation
 ===================================
