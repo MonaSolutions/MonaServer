@@ -98,8 +98,11 @@ bool Listener::initWriters() {
 	} else
 		_dataInfos |= DATA_RELIABLE;
 
-	if (firstTime && publication.running())
+	if (firstTime && publication.running()) {
 		startPublishing();
+		// send publication properties (metadata)
+		publication.requestProperties(*this);
+	}
 
 	return true;
 }
@@ -118,12 +121,12 @@ void Listener::startPublishing() {
 		return; // Here consider that the listener have to be closed by the caller
 	if (!_pVideoWriter->writeMedia(Writer::START, Writer::VIDEO, publicationNamePacket(), *this))
 		return; // Here consider that the listener have to be closed by the caller
-
-	// send publication properties (metadata)
-	publication.requestProperties(*this);
 }
 
 void Listener::stopPublishing() {
+
+	if (firstTime())
+		return;
 
 	if (!_pVideoWriter || !_pAudioWriter || !(_dataInfos&DATA_INITIALIZED)) {
 		if (!initWriters())

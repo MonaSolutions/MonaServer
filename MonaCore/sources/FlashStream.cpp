@@ -127,9 +127,6 @@ void FlashStream::messageHandler(const string& name, AMFReader& message, FlashWr
 		amf.writeBoolean(true); // audioSampleAccess
 		amf.writeBoolean(true); // videoSampleAccess
 
-		double number;
-		if (message.readNumber(number))
-			_pListener->setNumber("unbuffered", number == -3000);
 		if (_bufferTime > 0)
 			_pListener->setNumber("bufferTime", _bufferTime);
 	

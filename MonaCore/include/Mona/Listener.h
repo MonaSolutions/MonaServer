@@ -68,6 +68,7 @@ private:
 	void    writeData(DataReader& reader,Writer::DataType type);
 
 	bool	initWriters();
+	bool	firstTime() { return !_pVideoWriter && !_pAudioWriter && !_dataInfos; }
 	void	closeWriters();
 
 	bool	pushAudioInfos(UInt32 time);
