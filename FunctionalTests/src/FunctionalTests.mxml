@@ -35,6 +35,10 @@
 				if (URLUtil.getProtocol(url) != "file") {
 					address.text = "rtmfp" + domainNPath[1];
 				}
+				
+				// Autoconnection (if ?auto is specified)
+				if (loaderInfo.parameters && loaderInfo.parameters.auto)
+					connect();
 			}
 			
 			// Connect to MonaServer and load tests
@@ -75,10 +79,12 @@
 				group.children.push(new RTMPLoad(this, hostDefault, applicationDefault, "RTMPE"));
 				group.children.push(new RTMPp2p(this, hostDefault, applicationDefault));
 				group.children.push(new RTMPTests(this, hostDefault, "RTMP"));
+				group.children.push(new RTMPMetadata(this, hostDefault, "RTMP", applicationDefault));
 				mapTests.push(group);
 				group = new Test(this, "RTMFP", "List of RTMFP tests", true);
 				group.children.push(new RTMFPLoad(this, hostDefault, applicationDefault));
 				group.children.push(new RTMPTests(this, hostDefault, "RTMFP"));
+				group.children.push(new RTMPMetadata(this, hostDefault, "RTMFP", applicationDefault));
 				mapTests.push(group);
 				group = new Test(this, "Other", "List of other tests", true);
 				group.children.push(new DeserializationJSON(this, hostDefault, applicationDefault));

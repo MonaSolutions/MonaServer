@@ -41,7 +41,26 @@
             // To use express install, set to playerProductInstall.swf, otherwise the empty string. 
             var xiSwfUrlStr = "playerProductInstall.swf";
             var flashvars = {};
+			
+			// ---------------- Added to get dynamically the query parameters ----------------- 
             
+            var queryIndex = window.location.href.indexOf("?");
+            if (queryIndex > 0) {
+				var queryLength = window.location.href.length - queryIndex - 1;
+				
+				// Ignore everyting behind #
+				var hash = window.location.href.indexOf("#");
+				if (hash > 0)
+					queryLength -= (window.location.href.length - hash);
+					
+            	var query = window.location.href.substr(queryIndex+1,queryLength);
+            	var tabParams = query.split("&");
+            	for (var i = 0; i < tabParams.length; i++) {
+            		var tuple = tabParams[i].split("=");
+            		flashvars[tuple[0]]=tuple[1];
+            	}
+            }
+			
             var params = {};
             params.quality = "high";
             params.bgcolor = "#869ca7";
