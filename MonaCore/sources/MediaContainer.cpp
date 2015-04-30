@@ -295,7 +295,7 @@ UInt32 MPEGTS::ParseNAL(SubstreamMap& reader, const UInt8* data, UInt32 size) {
 			toRead += *cur++;
 		}
 
-		if ((cur+toRead) >= end) {
+		if (toRead > (end-cur)) {
 			WARN("H264 NALU Stream size too long : ", toRead)
 			Logs::Dump("MPEGTS too long NALU", data, size);
 			break;
