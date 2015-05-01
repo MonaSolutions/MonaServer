@@ -34,10 +34,7 @@ public:
 		if (type == AMF::EMPTY)
 			return;
 		_front[0] = type;
-		if (time>0) {
-			BinaryWriter writer(&_front[1], 4);
-			writer.write32(time);
-		}
+		BinaryWriter(&_front[1], 4).write32(time);
 		if (type == AMF::DATA)
 			_front[5] = 0;
 	}

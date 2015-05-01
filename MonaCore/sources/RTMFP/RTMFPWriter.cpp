@@ -529,7 +529,7 @@ RTMFPMessageBuffered& RTMFPWriter::createMessage() {
 AMFWriter& RTMFPWriter::write(AMF::ContentType type,UInt32 time,const UInt8* data, UInt32 size) {
 	if (type < AMF::AUDIO || type > AMF::VIDEO)
 		time = 0; // Because it can "dropped" the packet otherwise (like if the Writer was not reliable!)
-	if(data && time && !reliable && state()==OPENED && !_band.failed() && !signature.empty()) {
+	if(data && !reliable && state()==OPENED && !_band.failed() && !signature.empty()) {
 		_messages.emplace_back(new RTMFPMessageUnbuffered(type,time,data,size));
 		flush(false);
         return AMFWriter::Null;
