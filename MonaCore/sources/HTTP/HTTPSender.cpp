@@ -84,9 +84,10 @@ bool HTTPSender::run(Exception& ex) {
 				} else
 					writeError(404, "The requested URL ",_appPath, '/',_file.name() , " was not found on this server");
 			}
-		} else if (_ifModifiedSince && _ifModifiedSince >= _file.lastModified())
+		} else if (!_pFileParams->count() && _ifModifiedSince && _ifModifiedSince >= _file.lastModified()) {
+			// not modified if there is no parameters file (impossible to determinate if the parameters have changed since the last request)
 			write("304 Not Modified", HTTP::CONTENT_ABSENT);
-		else if (_file.isFolder()) {
+		} else if (_file.isFolder()) {
 			/// Folder
 			BinaryWriter& writer(write("200 OK", HTTP::CONTENT_TEXT, "html; charset=utf-8").packet);
 			HTTP_BEGIN_HEADER(writer)

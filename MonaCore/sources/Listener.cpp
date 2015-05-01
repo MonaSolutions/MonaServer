@@ -81,7 +81,7 @@ bool Listener::initWriters() {
 		return false; // Here consider that the listener have to be closed by the caller
 	}
 
-	if (firstTime) {
+	if (firstTime && publication.running()) {
 		startPublishing();
 		// send publication properties (metadata)
 		publication.requestProperties(*this);
