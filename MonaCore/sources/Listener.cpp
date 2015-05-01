@@ -30,7 +30,7 @@ namespace Mona {
 
 Listener::Listener(Publication& publication, Client& client, Writer& writer, const char* queryParameters) : _writer(writer), publication(publication), receiveAudio(true), receiveVideo(true), client(client), _firstTime(true),
 	_seekTime(0),_pAudioWriter(NULL),_pVideoWriter(NULL),_publicationNamePacket((const UInt8*)publication.name().c_str(),publication.name().size()),
-	_dataInitialized(false),_unbuffered(false),_startTime(0),_lastTime(0),_codecInfosSent(false) {
+	_dataInitialized(false),_reliable(true),_startTime(0),_lastTime(0),_codecInfosSent(false) {
 	if (queryParameters)
 		Util::UnpackQuery(queryParameters, *this);
 }
@@ -41,7 +41,7 @@ Listener::~Listener() {
 
 void Listener::onChange(const char* key, const char* value, std::size_t size) {
 	if (String::ICompare(key, EXPAND("unbuffered")) == 0)
-		_unbuffered = String::ToBoolean(value, size);
+		_reliable = !String::ToBoolean(value, size);
 	Parameters::onChange(key, value, size);
 }
 
@@ -157,7 +157,7 @@ void Listener::writeData(DataReader& reader,Writer::DataType type) {
 		return;
 	}
 
-	if (!writeMedia(_writer, type == Writer::DATA_INFO || _unbuffered, Writer::DATA, MIME::DataType(reader) << 8 | type, reader.packet, *this))
+	if (!writeMedia(_writer, type == Writer::DATA_INFO || _reliable, Writer::DATA, MIME::DataType(reader) << 8 | type, reader.packet, *this))
 		initWriters();
 }
 
@@ -194,7 +194,7 @@ void Listener::pushVideo(UInt32 time,PacketReader& packet) {
 
 	TRACE("Video time(+seekTime) => ", time, "(+", _seekTime, ") ", Util::FormatHex(packet.current(), 5, LOG_BUFFER));
 
-	if(!writeMedia(*_pVideoWriter, MediaCodec::IsKeyFrame(packet) || _unbuffered, Writer::VIDEO, _lastTime=(time+_seekTime), packet, *this))
+	if(!writeMedia(*_pVideoWriter, MediaCodec::IsKeyFrame(packet) || _reliable, Writer::VIDEO, _lastTime=(time+_seekTime), packet, *this))
 		initWriters();
 }
 
@@ -215,7 +215,7 @@ void Listener::pushAudio(UInt32 time,PacketReader& packet) {
 
 	TRACE("Audio time(+seekTime) => ", time,"(+",_seekTime,")");
 
-	if(!writeMedia(*_pAudioWriter, MediaCodec::AAC::IsCodecInfos(packet) || _unbuffered, Writer::AUDIO, _lastTime=(time+_seekTime), packet, *this))
+	if(!writeMedia(*_pAudioWriter, MediaCodec::AAC::IsCodecInfos(packet) || _reliable, Writer::AUDIO, _lastTime=(time+_seekTime), packet, *this))
 		initWriters();
 }
 

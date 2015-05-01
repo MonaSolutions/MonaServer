@@ -60,7 +60,7 @@ public:
 private:
 
 	bool writeReliableMedia(Writer& writer, Writer::MediaType type,UInt32 time,PacketReader& packet,const Parameters& properties) { return writeMedia(writer, true, type, time, packet, properties); }
-	bool writeMedia(Writer& writer, Writer::MediaType type,UInt32 time,PacketReader& packet,const Parameters& properties) { return writeMedia(writer, _unbuffered, type, time, packet, properties);	}
+	bool writeMedia(Writer& writer, Writer::MediaType type,UInt32 time,PacketReader& packet,const Parameters& properties) { return writeMedia(writer, _reliable, type, time, packet, properties);	}
 	bool writeMedia(Writer& writer, bool reliable, Writer::MediaType type, UInt32 time, PacketReader& packet, const Parameters& properties);
 
 	void    writeData(DataReader& reader,Writer::DataType type);
@@ -86,7 +86,7 @@ private:
 	Writer*					_pAudioWriter;
 	Writer*					_pVideoWriter;
 	bool					_dataInitialized;
-	bool					_unbuffered;
+	bool					_reliable;
 	PacketReader			_publicationNamePacket;
 };
 
