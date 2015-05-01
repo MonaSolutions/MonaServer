@@ -58,17 +58,15 @@ public:
 	const QualityOfService&	dataQOS() const { return _writer.qos(); }
 
 private:
-	enum {
-		DATA_NONE=0,
-		DATA_INITIALIZED=1,
-		DATA_WASRELIABLE=2,
-		DATA_RELIABLE=4
-	};
+
+	bool writeReliableMedia(Writer& writer, Writer::MediaType type,UInt32 time,PacketReader& packet,const Parameters& properties) { return writeMedia(writer, true, type, time, packet, properties); }
+	bool writeMedia(Writer& writer, Writer::MediaType type,UInt32 time,PacketReader& packet,const Parameters& properties) { return writeMedia(writer, _unbuffered, type, time, packet, properties);	}
+	bool writeMedia(Writer& writer, bool reliable, Writer::MediaType type, UInt32 time, PacketReader& packet, const Parameters& properties);
 
 	void    writeData(DataReader& reader,Writer::DataType type);
 
 	bool	initWriters();
-	bool	firstTime() { return !_pVideoWriter && !_pAudioWriter && !_dataInfos; }
+	bool	firstTime() { return !_pVideoWriter && !_pAudioWriter && !_dataInitialized; }
 	void	closeWriters();
 
 	bool	pushAudioInfos(UInt32 time);
@@ -87,7 +85,8 @@ private:
 	Writer&					_writer;
 	Writer*					_pAudioWriter;
 	Writer*					_pVideoWriter;
-	UInt8					_dataInfos;
+	bool					_dataInitialized;
+	bool					_unbuffered;
 	PacketReader			_publicationNamePacket;
 };
 

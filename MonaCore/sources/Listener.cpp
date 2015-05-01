@@ -30,7 +30,7 @@ namespace Mona {
 
 Listener::Listener(Publication& publication, Client& client, Writer& writer, const char* queryParameters) : _writer(writer), publication(publication), receiveAudio(true), receiveVideo(true), client(client), _firstTime(true),
 	_seekTime(0),_pAudioWriter(NULL),_pVideoWriter(NULL),_publicationNamePacket((const UInt8*)publication.name().c_str(),publication.name().size()),
-	_dataInfos(DATA_NONE),_startTime(0),_lastTime(0),_codecInfosSent(false) {
+	_dataInitialized(false),_unbuffered(false),_startTime(0),_lastTime(0),_codecInfosSent(false) {
 	if (queryParameters)
 		Util::UnpackQuery(queryParameters, *this);
 }
@@ -40,17 +40,8 @@ Listener::~Listener() {
 }
 
 void Listener::onChange(const char* key, const char* value, std::size_t size) {
-	if (_pAudioWriter && _pVideoWriter && (_dataInfos&DATA_INITIALIZED) && String::ICompare(key, EXPAND("unbuffered")) == 0) {
-		if (String::ToBoolean(value, size)) {
-			_pAudioWriter->reliable = false;
-			_pVideoWriter->reliable = false;
-			_dataInfos &= ~DATA_RELIABLE;
-		} else {
-			_pAudioWriter->reliable = true;
-			_pVideoWriter->reliable = true;
-			_dataInfos |= DATA_RELIABLE;
-		}
-	}
+	if (String::ICompare(key, EXPAND("unbuffered")) == 0)
+		_unbuffered = String::ToBoolean(value, size);
 	Parameters::onChange(key, value, size);
 }
 
@@ -61,6 +52,7 @@ void Listener::closeWriters() {
 	if(_pVideoWriter)
 		_pVideoWriter->close(-1);
 	_pVideoWriter = _pAudioWriter = NULL;
+	_dataInitialized = false;
 }
 
 bool Listener::initWriters() {
@@ -68,37 +60,28 @@ bool Listener::initWriters() {
 
 	bool firstTime(false);
 
-	if (_pVideoWriter || _pAudioWriter || _dataInfos&DATA_INITIALIZED) {
+	if (_pVideoWriter || _pAudioWriter || _dataInitialized) {
 		closeWriters();
 		WARN("Reinitialisation of one ", publication.name(), " subscription");
 	} else
 		firstTime = true;
 
-	if (!_writer.writeMedia(Writer::INIT, Writer::DATA, publicationNamePacket(),*this))// unsubscribe can be done here!
+	_dataInitialized = true;
+	if (!writeReliableMedia(_writer,Writer::INIT, Writer::DATA, publicationNamePacket(),*this))// unsubscribe can be done here!
 		return false; // Here consider that the listener have to be closed by the caller
 
-	_dataInfos = DATA_INITIALIZED;
-	if (_writer.reliable)
-		_dataInfos |= DATA_WASRELIABLE;
-
 	_pAudioWriter = &_writer.newWriter();
-	if (!_pAudioWriter->writeMedia(Writer::INIT, Writer::AUDIO, publicationNamePacket(), *this)) {
+	if (!writeReliableMedia(*_pAudioWriter, Writer::INIT, Writer::AUDIO, publicationNamePacket(), *this)) {
 		closeWriters();
 		return false; // Here consider that the listener have to be closed by the caller
 	}
 	_pVideoWriter = &_writer.newWriter();
-	if (!_pVideoWriter->writeMedia(Writer::INIT, Writer::VIDEO, publicationNamePacket(), *this)) {
+	if (!writeReliableMedia(*_pVideoWriter,Writer::INIT, Writer::VIDEO, publicationNamePacket(), *this)) {
 		closeWriters();
 		return false; // Here consider that the listener have to be closed by the caller
 	}
 
-	if (getBoolean<false>("unbuffered")) {
-		_pAudioWriter->reliable = false;
-		_pVideoWriter->reliable = false;
-	} else
-		_dataInfos |= DATA_RELIABLE;
-
-	if (firstTime && publication.running()) {
+	if (firstTime) {
 		startPublishing();
 		// send publication properties (metadata)
 		publication.requestProperties(*this);
@@ -110,16 +93,16 @@ bool Listener::initWriters() {
 
 void Listener::startPublishing() {
 
-	if (!_pVideoWriter || !_pAudioWriter || !(_dataInfos&DATA_INITIALIZED)) {
+	if (!_pVideoWriter || !_pAudioWriter || !_dataInitialized) {
 		if (!initWriters())
 			return;
 	}
 
-	if (!_writer.writeMedia(Writer::START, Writer::DATA, publicationNamePacket(), *this))// unsubscribe can be done here!
+	if (!writeReliableMedia(_writer,Writer::START, Writer::DATA, publicationNamePacket(), *this))// unsubscribe can be done here!
 		return;
-	if (!_pAudioWriter->writeMedia(Writer::START, Writer::AUDIO, publicationNamePacket(), *this))
+	if (!writeReliableMedia(*_pAudioWriter, Writer::START, Writer::AUDIO, publicationNamePacket(), *this))
 		return; // Here consider that the listener have to be closed by the caller
-	if (!_pVideoWriter->writeMedia(Writer::START, Writer::VIDEO, publicationNamePacket(), *this))
+	if (!writeReliableMedia(*_pVideoWriter, Writer::START, Writer::VIDEO, publicationNamePacket(), *this))
 		return; // Here consider that the listener have to be closed by the caller
 }
 
@@ -128,16 +111,16 @@ void Listener::stopPublishing() {
 	if (firstTime())
 		return;
 
-	if (!_pVideoWriter || !_pAudioWriter || !(_dataInfos&DATA_INITIALIZED)) {
+	if (!_pVideoWriter || !_pAudioWriter || !_dataInitialized) {
 		if (!initWriters())
 			return;
 	}
 
-	if (!_writer.writeMedia(Writer::STOP, Writer::DATA, publicationNamePacket(), *this))// unsubscribe can be done here!
+	if (!writeReliableMedia(_writer, Writer::STOP, Writer::DATA, publicationNamePacket(), *this))// unsubscribe can be done here!
 		return;
-	if (!_pAudioWriter->writeMedia(Writer::STOP, Writer::AUDIO, publicationNamePacket(), *this))
+	if (!writeReliableMedia(*_pAudioWriter, Writer::STOP, Writer::AUDIO, publicationNamePacket(), *this))
 		return; // Here consider that the listener have to be closed by the caller
-	if (!_pVideoWriter->writeMedia(Writer::STOP, Writer::VIDEO, publicationNamePacket(), *this))
+	if (!writeReliableMedia(*_pVideoWriter, Writer::STOP, Writer::VIDEO, publicationNamePacket(), *this))
 		return; // Here consider that the listener have to be closed by the caller
 
 	_seekTime = _lastTime;
@@ -166,17 +149,15 @@ void Listener::pushData(DataReader& reader) {
 }
 
 void Listener::writeData(DataReader& reader,Writer::DataType type) {
-	if (!(_dataInfos&DATA_INITIALIZED) && !initWriters())
+	if (!_dataInitialized && !initWriters())
 		return;
 
 	if (!reader) {
 		ERROR("Impossible to stream ", typeid(reader).name(), " null DataReader");
 		return;
 	}
-	_writer.reliable = _dataInfos&DATA_RELIABLE ? true : false;
-	bool success(_writer.writeMedia(Writer::DATA, MIME::DataType(reader) << 8 | type, reader.packet, *this));
-	_writer.reliable = _dataInfos&DATA_WASRELIABLE ? true : false;
-	if(!success)
+
+	if (!writeMedia(_writer, type == Writer::DATA_INFO || _unbuffered, Writer::DATA, MIME::DataType(reader) << 8 | type, reader.packet, *this))
 		initWriters();
 }
 
@@ -213,7 +194,7 @@ void Listener::pushVideo(UInt32 time,PacketReader& packet) {
 
 	TRACE("Video time(+seekTime) => ", time, "(+", _seekTime, ") ", Util::FormatHex(packet.current(), 5, LOG_BUFFER));
 
-	if(!_pVideoWriter->writeMedia(Writer::VIDEO, _lastTime=(time+_seekTime), packet, *this))
+	if(!writeMedia(*_pVideoWriter, MediaCodec::IsKeyFrame(packet) || _unbuffered, Writer::VIDEO, _lastTime=(time+_seekTime), packet, *this))
 		initWriters();
 }
 
@@ -233,8 +214,8 @@ void Listener::pushAudio(UInt32 time,PacketReader& packet) {
 	time -= _startTime;
 
 	TRACE("Audio time(+seekTime) => ", time,"(+",_seekTime,")");
-	
-	if (!_pAudioWriter->writeMedia(Writer::AUDIO, _lastTime=(time+_seekTime), packet, *this))
+
+	if(!writeMedia(*_pAudioWriter, MediaCodec::AAC::IsCodecInfos(packet) || _unbuffered, Writer::AUDIO, _lastTime=(time+_seekTime), packet, *this))
 		initWriters();
 }
 
@@ -262,5 +243,12 @@ void Listener::flush() {
 		_pVideoWriter->flush();
 }
 
+bool Listener::writeMedia(Writer& writer, bool reliable, Writer::MediaType type,UInt32 time,PacketReader& packet,const Parameters& properties) {
+	bool wasReliable(writer.reliable);
+	writer.reliable = reliable;
+	bool success(writer.writeMedia(type,time,packet,properties));
+	writer.reliable = wasReliable;
+	return success;
+}
 
 } // namespace Mona
