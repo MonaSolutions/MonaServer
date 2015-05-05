@@ -64,6 +64,32 @@ RTMFPSession::RTMFPSession(RTMFProtocol& protocol,
 	// No onDecodedEnd subscription for RTMFPHandshake
 }
 
+void RTMFPSession::releasePeer() {
+	if (!_pMainStream)
+		return;
+
+	// Here no new sending must happen except "failSignal"
+	for (auto& it : _flowWriters)
+		it.second->clear();
+	
+	// unsubscribe peer for its groups
+	peer.unsubscribeGroups();
+
+	// delete flows
+	for(auto& it : _flows)
+		delete it.second;
+	_flows.clear();
+	
+	// to remove OnStart and OnStop, and erase FlashWriters (before to erase flowWriters)
+	if (_pMainStream)
+		_pMainStream.reset();
+	
+	// delete flowWriters
+	_flowWriters.clear();
+
+	peer.onDisconnection();
+}
+
 void RTMFPSession::failSignal() {
 	_failed = true;
 	if(died)
@@ -85,24 +111,8 @@ void RTMFPSession::kill(UInt32 type) {
 	if(died)
 		return;
 
-	// unsubscribe peer for its groups
-	peer.unsubscribeGroups();
-
-	// delete flows
-	for(auto& it : _flows)
-		delete it.second;
-	_flows.clear();
-	if (_pFlowNull) {
-		delete _pFlowNull;
-		_pFlowNull = NULL;
-	}
-
-	// to remove OnStart and OnStop, and erase FlashWriters (before to erase flowWriters)
-	if (_pMainStream)
-		_pMainStream.reset();
-	
-	// delete flowWriters
-	_flowWriters.clear();
+	delete _pFlowNull;
+	releasePeer();
 
 	Session::kill(type);  // at the end to "unpublish or unsubscribe" before "onDisconnection"!
 
@@ -476,14 +486,16 @@ void RTMFPSession::receive(const SocketAddress& address, BinaryReader& packet) {
 			pFlow->commit();
 			if(pFlow->consumed()) {
 				if (pFlow->critical()) {
-					_failed=true; // If connection fails, log is already displayed, and so fail the whole session!
 					if (!peer.connected) {
+						// without connection, nothing must be sent!
 						for (auto& it : _flowWriters)
 							it.second->clear();
 					}
+					fail(); // If connection fails, log is already displayed, and so fail the whole session!
+				} else {
+					_flows.erase(pFlow->id);
+					delete pFlow;
 				}
-				_flows.erase(pFlow->id);
-				delete pFlow;
 			}
 			pFlow=NULL;
 		}
@@ -502,6 +514,8 @@ RTMFPFlow* RTMFPSession::createFlow(UInt64 id,const string& signature) {
 		ERROR("Session ", name(), " is died, no more RTMFPFlow creation possible");
 		return NULL;
 	}
+	if (!_pMainStream)
+		return NULL; // has failed! use FlowNull rather
 
 	map<UInt64,RTMFPFlow*>::iterator it = _flows.lower_bound(id);
 	if(it!=_flows.end() && it->first==id) {
@@ -517,7 +531,7 @@ RTMFPFlow* RTMFPSession::createFlow(UInt64 id,const string& signature) {
 	else if (signature.size()>3 && signature.compare(0, 4, "\x00\x54\x43\x04", 4) == 0) { // NetStream
 		shared_ptr<FlashStream> pStream;
 		UInt32 idSession(BinaryReader((const UInt8*)signature.c_str() + 4, signature.length() - 4).read7BitValue());
-		if (!_pMainStream || !_pMainStream->getStream(idSession,pStream)) {
+		if (!_pMainStream->getStream(idSession,pStream)) {
 			ERROR("RTMFPFlow ",id," indicates a non-existent ",idSession," NetStream on session ",name());
 			return NULL;
 		}

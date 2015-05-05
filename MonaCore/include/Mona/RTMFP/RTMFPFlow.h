@@ -31,7 +31,7 @@ class RTMFPPacket;
 class RTMFPFragment;
 class RTMFPFlow : public virtual Object {
 public:
-	RTMFPFlow(UInt64 id,const std::string& signature,Peer& peer,Invoker& invoker, BandWriter& band, std::shared_ptr<FlashMainStream>& pMainStream);
+	RTMFPFlow(UInt64 id,const std::string& signature,Peer& peer,Invoker& invoker, BandWriter& band, const std::shared_ptr<FlashMainStream>& pMainStream);
 	RTMFPFlow(UInt64 id,const std::string& signature,const std::shared_ptr<FlashStream>& pStream, Peer& peer,Invoker& invoker, BandWriter& band);
 	virtual ~RTMFPFlow();
 

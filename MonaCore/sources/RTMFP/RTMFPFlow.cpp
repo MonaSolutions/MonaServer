@@ -72,7 +72,7 @@ public:
 };
 
 
-RTMFPFlow::RTMFPFlow(UInt64 id,const string& signature,Peer& peer,Invoker& invoker, BandWriter& band, shared_ptr<FlashMainStream>& pMainStream) : _pStream(pMainStream),_poolBuffers(invoker.poolBuffers),_numberLostFragments(0),id(id),_stage(0),_completed(false),_pPacket(NULL),_band(band) {
+RTMFPFlow::RTMFPFlow(UInt64 id,const string& signature,Peer& peer,Invoker& invoker, BandWriter& band, const shared_ptr<FlashMainStream>& pMainStream) : _pStream(pMainStream),_poolBuffers(invoker.poolBuffers),_numberLostFragments(0),id(id),_stage(0),_completed(false),_pPacket(NULL),_band(band) {
 	
 	// MAIN Stream flow OR Null flow
 
@@ -83,7 +83,7 @@ RTMFPFlow::RTMFPFlow(UInt64 id,const string& signature,Peer& peer,Invoker& invok
 		return;
 	}
 
-	(bool&)pWriter->critical = true;
+	(bool&)pWriter->critical = _pStream.use_count()<=2;
 	((UInt64&)pWriter->flowId) = id;
 }
 

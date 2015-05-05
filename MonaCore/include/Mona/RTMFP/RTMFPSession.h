@@ -74,16 +74,12 @@ private:
 		if (_failed)
 			return;
 
-		// Here no new sending must happen except "failSignal"
-		for (auto& it : _flowWriters)
-			it.second->clear();
+		releasePeer();
 
-		// unsubscribe peer for its groups
-		peer.unsubscribeGroups();
-
-		_failed = true;
 		std::string error;
-		WARN("Client failed, ", String::Format(error, args ...));
+		String::Format(error, args ...);
+		if (!error.empty())
+			WARN("Client failed, ", error);
 		failSignal();
 	}
 	
@@ -109,6 +105,7 @@ private:
 	RTMFPFlow*						createFlow(UInt64 id,const std::string& signature);
 
 	void							failSignal();
+	void							releasePeer();
 
 	FlashStream::OnStart::Type						onStreamStart;
 	FlashStream::OnStop::Type						onStreamStop;
