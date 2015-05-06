@@ -77,9 +77,9 @@ public:
 		BANDWITH			=0x06,
 		AUDIO				=0x08,
 		VIDEO				=0x09,
-		DATA				=0x0F,
+		DATA_AMF3			=0x0F,
 		INVOCATION_AMF3		=0x11,
-		INFORMATIONS		=0x12,
+		DATA				=0x12,
 		INVOCATION			=0x14
 	};
 };

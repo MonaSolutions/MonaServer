@@ -30,12 +30,12 @@ class RTMFPMessage : public virtual Object {
 public:
 
 	RTMFPMessage(bool repeatable) : repeatable(repeatable),_frontSize(0) {}
-	RTMFPMessage(AMF::ContentType type, UInt32 time, bool repeatable) :   _frontSize(type==AMF::EMPTY ? 0 : (type==AMF::DATA ? 6 : 5)), repeatable(repeatable) {
+	RTMFPMessage(AMF::ContentType type, UInt32 time, bool repeatable) :   _frontSize(type==AMF::EMPTY ? 0 : (type==AMF::DATA_AMF3 ? 6 : 5)), repeatable(repeatable) {
 		if (type == AMF::EMPTY)
 			return;
 		_front[0] = type;
 		BinaryWriter(&_front[1], 4).write32(time);
-		if (type == AMF::DATA)
+		if (type == AMF::DATA_AMF3)
 			_front[5] = 0;
 	}
 

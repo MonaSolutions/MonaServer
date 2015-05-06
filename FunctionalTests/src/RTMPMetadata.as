@@ -33,17 +33,15 @@ package
 		override public function run(onFinished:Function):void {
 			super.run(onFinished);
 			
-			// Prepare POST request
+			// Create 3 connections
 			_connection1 = new NetConnection();
 			_connection1.addEventListener(NetStatusEvent.NET_STATUS, onStatus);
 			_connection1.connect(_protocol.toLocaleLowerCase() + "://" + _host + _url);
 			
-			// Prepare POST request
 			_connection2 = new NetConnection();
 			_connection2.addEventListener(NetStatusEvent.NET_STATUS, onStatus);
 			_connection2.connect(_protocol.toLocaleLowerCase() + "://" + _host + _url);
 			
-			// Prepare POST request
 			_connection3 = new NetConnection();
 			_connection3.addEventListener(NetStatusEvent.NET_STATUS, onStatus);
 			_connection3.connect(_protocol.toLocaleLowerCase() + "://" + _host + _url);

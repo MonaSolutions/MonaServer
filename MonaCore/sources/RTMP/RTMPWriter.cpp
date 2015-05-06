@@ -141,7 +141,7 @@ AMFWriter& RTMPWriter::write(AMF::ContentType type,UInt32 time,const UInt8* data
 				packet.write8(streamId >> 8);
 				packet.write8(streamId >> 16);
 				packet.write8(streamId >> 24);
-				// if(type==AMF::DATA) TODO?
+				// if(type==AMF::DATA_AMF3) TODO?
 				//	pWriter->write8(0);
 				if (_pSender->headerSize > 12)
 					packet.write32(time);

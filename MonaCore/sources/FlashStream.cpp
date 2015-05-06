@@ -63,7 +63,7 @@ bool FlashStream::process(AMF::ContentType type,UInt32 time,PacketReader& packet
 
 	// if exception, it closes the connection, and print an ERROR message
 	switch(type) {
-		case AMF::INFORMATIONS: {
+		case AMF::DATA: {
 			string name;
 			AMFReader reader(packet);
 			reader.readString(name);
@@ -82,7 +82,7 @@ bool FlashStream::process(AMF::ContentType type,UInt32 time,PacketReader& packet
 			messageHandler(name,reader,writer);
 			break;
 		}
-		case AMF::DATA: {
+		case AMF::DATA_AMF3: {
 			AMFReader reader(packet);
 			dataHandler(reader, lostRate);
 			break;

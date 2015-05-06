@@ -71,7 +71,7 @@ AMFWriter& FlashWriter::writeAMFState(const char* name,const char* code,const st
 }
 
 AMFWriter& FlashWriter::writeInfos(const char* name) {
-	AMFWriter& writer(write(AMF::INFORMATIONS));
+	AMFWriter& writer(write(AMF::DATA));
 	writer.amf0 = true;
 	writer.writeString(name,strlen(name));
 	writer.amf0 = false;
@@ -106,7 +106,7 @@ bool FlashWriter::writeMedia(MediaType type,UInt32 time,PacketReader& packet,con
 			break;
 		case AUDIO:
 			if (!_onAudio.empty()) {
-				AMFWriter& writer(write(AMF::DATA));
+				AMFWriter& writer(write(AMF::DATA_AMF3));
 				writer.amf0 = true;
 				writer.writeString(_onAudio.data(),_onAudio.size());
 				writer.amf0 = false;
@@ -117,7 +117,7 @@ bool FlashWriter::writeMedia(MediaType type,UInt32 time,PacketReader& packet,con
 			break;
 		case VIDEO:
 			if (!_onVideo.empty()) {
-				AMFWriter& writer(write(AMF::DATA));
+				AMFWriter& writer(write(AMF::DATA_AMF3));
 				writer.amf0 = true;
 				writer.writeString(_onVideo.data(),_onVideo.size());
 				writer.amf0 = false;
@@ -136,7 +136,7 @@ bool FlashWriter::writeMedia(MediaType type,UInt32 time,PacketReader& packet,con
 					ERROR("Impossible to convert streaming ", dataType, " data to AMF, data ignored")
 					break;
 				}
-				AMFWriter& writer(write((time & 0xFF) == DATA_INFO ? AMF::INFORMATIONS : AMF::DATA, 0));
+				AMFWriter& writer(write(AMF::DATA, 0));
 				if (DataReader::STRING == pReader->nextType()) {
 					// Write the handler name in AMF0!
 					writer.amf0 = true;
@@ -146,7 +146,7 @@ bool FlashWriter::writeMedia(MediaType type,UInt32 time,PacketReader& packet,con
 				pReader->read(writer); // to AMF
 				break;
 			}
-			write((time & 0xFF) == DATA_INFO ? AMF::INFORMATIONS : AMF::DATA, 0, packet.current(),packet.available());
+			write(AMF::DATA, 0, packet.current(),packet.available());
 			break;
 		}
 		default:

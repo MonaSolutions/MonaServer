@@ -294,7 +294,7 @@ void RTMPSession::receive(BinaryReader& packet) {
 	PacketReader reader(channel.pBuffer.empty() ? packet.current() : channel.pBuffer->data(),channel.bodySize);
 
 	// To fix payload position: for this both type, it seems that we have an useless header byte
-	if (channel.type == AMF::INVOCATION_AMF3 || channel.type == AMF::DATA)
+	if (channel.type == AMF::INVOCATION_AMF3 || channel.type == AMF::DATA_AMF3)
 		reader.next(1);
 
 	switch(channel.type) {

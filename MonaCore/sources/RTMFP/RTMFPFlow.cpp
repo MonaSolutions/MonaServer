@@ -144,7 +144,7 @@ AMF::ContentType RTMFPFlow::unpack(PacketReader& packet,UInt32& time) {
 		case AMF::VIDEO:
 			time = packet.read32();
 			break;
-		case AMF::DATA:
+		case AMF::DATA_AMF3:
 			packet.next(1);
 		case AMF::RAW:
 			packet.next(4);
