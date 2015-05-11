@@ -98,9 +98,9 @@ private:
 		// copy protocol params to invoker params! (to get defaults protocol params + configs params on invoker)
 		for (auto& it : *pProtocol)
 			_invoker.setString(String::Format(buffer,name,".",it.first), it.second);
-
-		_protocols.emplace_hint(it, std::piecewise_construct,std::forward_as_tuple(name),std::forward_as_tuple(pProtocol.release()));
+		
 		NOTE(name, " server started on ",host,":",port, dynamic_cast<const UDProtocol*>(pProtocol.get()) ? " (UDP)" : " (TCP)");
+		_protocols.emplace_hint(it, std::piecewise_construct,std::forward_as_tuple(name),std::forward_as_tuple(pProtocol.release()));
 	}
 
 
