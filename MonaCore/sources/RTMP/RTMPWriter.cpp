@@ -85,22 +85,24 @@ AMFWriter& RTMPWriter::write(AMF::ContentType type,UInt32 time,const UInt8* data
 	UInt32 absoluteTime = time;
 	UInt8 headerFlag=0;
 	
-	if (time >= _channel.absoluteTime) {
-		if(_channel.pStream == channel.pStream) {
-			++headerFlag;
+	// Default = Chunk Message Type 0 : full header
+	if(_channel.pStream == channel.pStream) {
+		if (time >= _channel.absoluteTime) {
+			++headerFlag; // Chunk Message Type 1 : don't repeat the stream id
 			time -= _channel.absoluteTime; // relative time!
-			if (_channel.type == type && data && _channel.bodySize == size) {
-				++headerFlag;
+			if (_channel.type == type && data && _channel.rawSize == size) {
+				++headerFlag; // Chunk Message Type 2 : just timestamp delta
 				if (_channel.time==time)
-					++headerFlag;
+					++headerFlag; // Chunk Message Type 3 : no header
 			}
-		} else
-			_channel.pStream=channel.pStream;
-	} // else time<_channel.absoluteTime => header must be full
+		}
+	} else
+		_channel.pStream=channel.pStream;
 
 	_channel.absoluteTime =	absoluteTime;
 	_channel.time = time;
 	_channel.type = type;
+	_channel.rawSize = size;
 
 	if (!_pSender)
 		_pSender.reset(new RTMPSender(_session.invoker.poolBuffers));
@@ -109,7 +111,8 @@ AMFWriter& RTMPWriter::write(AMF::ContentType type,UInt32 time,const UInt8* data
 	BinaryWriter& packet = writer.packet;
 
 	_pSender->headerSize = 12 - 4*headerFlag;
-
+	
+	// Chunk Basic Header (fmt + Chunk Stream Id)
 	if (id>319) {
 		_pSender->headerSize += 2;
 		packet.write8((headerFlag<<6)| 1);
@@ -122,8 +125,9 @@ AMFWriter& RTMPWriter::write(AMF::ContentType type,UInt32 time,const UInt8* data
 	} else
 		packet.write8((headerFlag<<6)| id);
 
-
+	// Chunk Message Header
 	if (_pSender->headerSize > 0) {
+		// Timestamp
 		if (time<0xFFFFFF)
 			packet.write24(time);
 		else {
@@ -136,19 +140,21 @@ AMFWriter& RTMPWriter::write(AMF::ContentType type,UInt32 time,const UInt8* data
 			packet.next(3); // For size
 			packet.write8(type);
 			if (_pSender->headerSize > 8) {
+				// Message Stream Id
 				UInt32 streamId(_channel.pStream ? _channel.pStream->id : 0);
 				packet.write8(streamId);
 				packet.write8(streamId >> 8);
 				packet.write8(streamId >> 16);
 				packet.write8(streamId >> 24);
-				// if(type==AMF::DATA_AMF3) TODO?
-				//	pWriter->write8(0);
+
+				// Extended Timestamp field
 				if (_pSender->headerSize > 12)
 					packet.write32(time);
 			}
 		}
 	}
 
+	// Chunk data
 	if(data) {
 		packet.write(data,size);
         return AMFWriter::Null;

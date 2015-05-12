@@ -141,11 +141,12 @@ void HTTPSession::receive(const shared_ptr<HTTPPacket>& pPacket) {
 			peer.onConnection(ex, _writer,parameters);
 			if (!ex && peer.connected) {
 
-				if (peer.parameters().getBoolean("index", _indexDirectory)) {
-					if(peer.parameters().getString("index", _index))
+				if (peer.parameters().getBoolean("index", _indexDirectory) && peer.parameters().getString("index",_index)) {
+					if(String::ICompare(_index,"true")==0 || String::ICompare(_index,"false")==0)
+						_index.clear();
+					else
 						FileSystem::GetName(_index); // Redirect to the file (get name to prevent path insertion)
 				}
-
 				parameters.reset();
 			}
 		}

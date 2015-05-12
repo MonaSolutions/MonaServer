@@ -317,12 +317,12 @@ void HTTP::WriteDirectoryEntries(BinaryWriter& writer, const string& serverAddre
 
 	// Write column names
 	// Name		Modified	Size
-	writer.write(EXPAND("<html><head><title>Index of "))
-		.write(path).write(EXPAND("/</title><style>th {text-align: center;}</style></head><body><h1>Index of "))
-		.write(path).write(EXPAND("/</h1><pre><table cellpadding=\"0\"><tr><th><a href=\"?N="))
+	writer.write(EXPAND("<!DOCTYPE html><html><head><title>Index of "))
+		.write(path).write(EXPAND("/</title><style>th {text-align: center;} table {display: block; font-family: monospace; white-space: pre; margin: 1em 0;}</style></head><body><h1>Index of "))
+		.write(path).write(EXPAND("/</h1><table cellpadding=\"0\"><tr><th><a href=\"?N="))
 		.write(sort).write(EXPAND("\">Name</a></th><th><a href=\"?M="))
 		.write(sort).write(EXPAND("\">Modified</a></th><th><a href=\"?S="))
-		.write(sort).write(EXPAND("\">Size</a></th></tr><tr><td colspan=\"3\"><hr></td></tr>"));
+		.write(sort).write(EXPAND("\">Size</a></th></tr><tr><td colspan=\"3\"><hr/></td></tr>"));
 
 	// Write first entry - link to a parent directory
 	if(!path.empty())

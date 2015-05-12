@@ -32,9 +32,10 @@ namespace Mona {
 
 class RTMPChannel : public virtual Object {
 public:
-	RTMPChannel(const PoolBuffers& poolBuffers): absoluteTime(0),time(0),bodySize(0),type(AMF::EMPTY),pBuffer(poolBuffers) {}
+	RTMPChannel(const PoolBuffers& poolBuffers): absoluteTime(0),time(0),bodySize(0),rawSize(0),type(AMF::EMPTY),pBuffer(poolBuffers) {}
 	UInt32							bodySize;
 	UInt32							time;
+	UInt32							rawSize;
 	UInt32							absoluteTime;
 	std::shared_ptr<FlashStream>	pStream;
 	AMF::ContentType				type;
