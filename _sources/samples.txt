@@ -21,10 +21,6 @@ To get more informations please ask us on the `MonaServer forum`_ or send a mail
 |                         | 1. Type a name to identify your meeting                           |                                                 |
 |                         | 2. Send the http link to your correspondant                       |                                                 |
 |                         |                                                                   |                                                 |
-|                         | **Notes :**                                                       |                                                 |
-|                         |                                                                   |                                                 |
-|                         | - This is just a sample, the video quality is set to the minimum  |                                                 |
-|                         | - Download the `apk installer`_ to try it on Android.             |                                                 |
 +-------------------------+-------------------------------------------------------------------+-------------------------------------------------+
 |                         | VideoPhone_ :                                                     |                                                 |
 |                         |                                                                   |                                                 |
@@ -58,18 +54,23 @@ To get more informations please ask us on the `MonaServer forum`_ or send a mail
 |                         |                                                                   |                                                 |
 | |videopublisher|        | A simple video publisher working with both RTMP & RTMFP, with or  | - **Protocol :** RTMFP/RTMP                     |
 |                         | without a NetGroup, allows **synchronous recording!**             | - **P2P :** Netgroup                            |
-|                         |                                                                   |                                                 |
-|                         | **Note :** asynchronous recording is a feature in the roadmap, if | - **Recording :** in a lua synchronous way      |
+|                         |                                                                   | - **Recording :** in a lua synchronous way      |
+|                         | **Note :** asynchronous recording is a feature in the roadmap, if |                                                 |
 |                         | you need it please :doc:`contact us <contacts>`!                  |                                                 |
++-------------------------+-------------------------------------------------------------------+-------------------------------------------------+
+|                         | MobilePublisher_ :                                                |                                                 |
+|                         |                                                                   |                                                 |
+| |mobilepublisher|       | The same publisher for **Mobile** devices. Click on the image to  | - **Protocol :** RTMFP/RTMP                     |
+|                         | get the apk installer (Android).                                  | - **P2P :** Netgroup                            |
+|                         |                                                                   | - **Recording :** in a lua synchronous way      |
+|                         | **Note :** It is a FlashDevelop_ (free flex IDE) project.         |                                                 |
 +-------------------------+-------------------------------------------------------------------+-------------------------------------------------+
 |                         | VideoPlayer_ :                                                    |                                                 |
 |                         |                                                                   |                                                 |
-| |videoplayer|           | A simple video player working with both RTMP & RTMFP, with or     | - **Protocol :** RTMFP/RTMP or HTTP Progressive |
-|                         | without a NetGroup and with HTTP Progressive (only flv)!          | - **P2P :** Netgroup                            |
+| |videoplayer|           | A simple video player working with both RTMP & RTMFP, with or     | - **Protocol :** RTMFP/RTMP                     |
+|                         | without a NetGroup.                                               | - **P2P :** Netgroup                            |
 |                         |                                                                   |                                                 |
-|                         | **Note :** HTTP Progressive is a new feature providing an         |                                                 |
-|                         | alternative to RTMP & RTMFP, if you are interested to improve it  |                                                 |
-|                         | :doc:`contact us <contacts>`!                                     |                                                 |
+|                         | **Note :** Take a look at the `source code`_ to see each options. |                                                 |
 +-------------------------+-------------------------------------------------------------------+-------------------------------------------------+
 |                         | IndustrialComputing_ :                                            | - **Protocol :** WebSocket                      |
 |                         |                                                                   | - **SVG/Javascript**                            |
@@ -109,6 +110,11 @@ To get more informations please ask us on the `MonaServer forum`_ or send a mail
   :width: 250                                        
   :height: 150
   
+.. |mobilepublisher| image:: img/mobilepublisher.png                         
+  :target: http://raspi.monaserver.ovh/MonaClients/MobilePublisher/MobilePublisher.apk
+  :width: 250                                        
+  :height: 150
+  
 .. |videoplayer| image:: img/videoplayer.png                         
   :target: http://raspi.monaserver.ovh/MonaClients/VideoPlayer/
   :width: 250                                        
@@ -125,6 +131,7 @@ To get more informations please ask us on the `MonaServer forum`_ or send a mail
 .. _FileShare : http://raspi.monaserver.ovh/MonaClients/FileShare/
 .. _Chat : http://raspi.monaserver.ovh/MonaClients/chat/
 .. _VideoPublisher : http://raspi.monaserver.ovh/MonaClients/VideoPublisher/
+.. _MobilePublisher : http://raspi.monaserver.ovh/MonaClients/MobilePublisher/MobilePublisher.apk
 .. _VideoPlayer : http://raspi.monaserver.ovh/MonaClients/VideoPlayer/
 .. _IndustrialComputing : http://raspi.monaserver.ovh/MonaClients/IndustrialComputing/
 .. _`Javascript Chat`: http://raspi.monaserver.ovh/MonaClients/chat/websocket.html
@@ -137,3 +144,6 @@ To get more informations please ask us on the `MonaServer forum`_ or send a mail
 .. _`MonaClients github page` : https://github.com/MonaSolutions/MonaClients
 .. _`Raspberry Pi` : http://www.raspberrypi.org/
 .. _`apk installer` : http://raspi.monaserver.ovh/MonaClients/MonaVideo/MonaCam.apk
+.. _FlashDevelop : http://www.flashdevelop.org/
+
+.. _`source code` : https://github.com/MonaSolutions/MonaClients/blob/master/VideoPlayer/src/VideoPlayer.mxml
