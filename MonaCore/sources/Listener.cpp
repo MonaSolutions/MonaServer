@@ -41,7 +41,7 @@ Listener::~Listener() {
 
 void Listener::onChange(const char* key, const char* value, std::size_t size) {
 	if (String::ICompare(key, EXPAND("unbuffered")) == 0)
-		_reliable = !String::ToBoolean(value, size);
+		_reliable = !String::IsFalse(value, size);
 	Parameters::onChange(key, value, size);
 }
 
@@ -94,8 +94,8 @@ bool Listener::initWriters() {
 void Listener::startPublishing() {
 
 	if (!_pVideoWriter || !_pAudioWriter || !_dataInitialized) {
-		if (!initWriters())
-			return;
+		initWriters(); // call already recursivly startPublishing()!
+		return;
 	}
 
 	if (!writeReliableMedia(_writer,Writer::START, Writer::DATA, publicationNamePacket(), *this))// unsubscribe can be done here!

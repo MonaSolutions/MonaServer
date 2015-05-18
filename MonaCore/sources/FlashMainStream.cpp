@@ -20,21 +20,17 @@ This file is a part of Mona.
 #include "Mona/FlashMainStream.h"
 #include "Mona/ParameterWriter.h"
 #include "Mona/Logs.h"
-#include <openssl/evp.h>
-
 
 using namespace std;
 
 
 namespace Mona {
 
-FlashMainStream::FlashMainStream(Invoker& invoker,Peer& peer) : FlashStream(0, invoker,peer), _pGroup(NULL) {
+FlashMainStream::FlashMainStream(Invoker& invoker,Peer& peer) : FlashStream(0, invoker,peer) {
 	
 }
 
 FlashMainStream::~FlashMainStream() {
-	if(_pGroup)
-		peer.unjoinGroup(*_pGroup);
 	for (auto& it : _streams) {
 		it.second->OnStart::unsubscribe((OnStart&)*this);
 		it.second->OnStop::unsubscribe((OnStop&)*this);
@@ -168,31 +164,10 @@ void FlashMainStream::messageHandler(const string& name,AMFReader& message,Flash
 	}
 }
 
-void FlashMainStream::rawHandler(UInt8 type,PacketReader& packet,FlashWriter& writer) {
-
-	// join group
-	if(type==0x01) {
-		if(packet.available()>0) {
-			UInt32 size = packet.read7BitValue()-1;
-			if(packet.read8()==0x10) {
-				if (size > packet.available()) {
-					ERROR("Bad header size for RTMFP group id")
-					size = packet.available();
-				}
-				UInt8 groupId[ID_SIZE];
-				EVP_Digest(packet.current(),size,(unsigned char *)groupId,NULL,EVP_sha256(),NULL);
-				_pGroup = &peer.joinGroup(groupId, &writer);
-			} else
-				_pGroup = &peer.joinGroup(packet.current(), &writer);
-		}
-		return;
-	}
-	
-
-	UInt16 flag = packet.read16();
+void FlashMainStream::rawHandler(UInt16 type,PacketReader& packet,FlashWriter& writer) {
 
 	// setBufferTime
-	if(flag==0x03) {
+	if(type==0x0003) {
 		UInt16 streamId = packet.read32();
 		if(streamId==0) {
 			bufferTime(packet.read32());
@@ -209,18 +184,18 @@ void FlashMainStream::rawHandler(UInt8 type,PacketReader& packet,FlashWriter& wr
 
 	
 	 // ping message
-	if(flag==0x06) {
+	if(type==0x0006) {
 		writer.writePong(packet.read32());
 		return;
 	}
 
 	 // pong message
-	if(flag==0x07) {
+	if(type==0x0007) {
 		peer.pong();
 		return;
 	}
 
-	ERROR("Raw message ",Format<UInt8>("%.2x",type),"/",packet.read16()," unknown on main stream");
+	ERROR("Raw message ",Format<UInt16>("%.4x",type)," unknown on main stream");
 }
 
 

@@ -77,8 +77,9 @@ void FLV::write(BinaryWriter& writer, UInt8 track, UInt32 time, const UInt8* dat
 
 // Write data packet (custom or metadata)
 void FLV::write(BinaryWriter& writer, Writer::DataType dataType, MIME::Type packetType, PacketReader& packet) {
+	// keep here AMF::DATA_AMF3 here because looks fine with our serializer (and no RTMP problem here!)
 	if (packetType == MIME::AMF) {
-		writeFrame(writer,AMF::DATA, 0, packet.current(), packet.available());
+		writeFrame(writer,AMF::DATA_AMF3, 0, packet.current(), packet.available());
 		return;
 	}
 	// convert to AMF!
@@ -95,7 +96,7 @@ void FLV::write(BinaryWriter& writer, Writer::DataType dataType, MIME::Type pack
 		amf.amf0 = false;
 	}
 	pReader->read(amf); // to AMF
-	writeFrame(writer,AMF::DATA, 0, amf.packet.data(), amf.packet.size());
+	writeFrame(writer,AMF::DATA_AMF3, 0, amf.packet.data(), amf.packet.size());
 }
 
 

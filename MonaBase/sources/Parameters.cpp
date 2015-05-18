@@ -39,7 +39,7 @@ bool Parameters::getBoolean(const char* key, bool& value) const {
 	const char* temp = getRaw(key);
 	if (!temp)
 		return false;
-	value = String::ToBoolean(temp);
+	value = !String::IsFalse(temp); // otherwise considerate the value as true
 	return true;
 }
 

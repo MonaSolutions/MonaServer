@@ -32,7 +32,7 @@ public:
 	virtual ~RTMPWriter() { if (channel.pStream) channel.pStream->disengage(this); }
 
 	const UInt32	id;
-	RTMPChannel		channel;
+	RTMPChannel		channel; // Input channel
 	bool			isMain;
 
 	void			clear() { if(_pSender) _pSender.reset(); FlashWriter::clear(); }
@@ -40,7 +40,7 @@ public:
 
 	void			writeRaw(const UInt8* data,UInt32 size);
 
-	void			flush();
+	bool			flush();
 
 	void			writeAck(UInt32 count) {write(AMF::ACK).packet.write32(count);}
 	void			writeWinAckSize(UInt32 value) {write(AMF::WIN_ACKSIZE).packet.write32(value);}
@@ -50,7 +50,7 @@ private:
 
 	AMFWriter&		write(AMF::ContentType type,UInt32 time=0,const UInt8* data=NULL,UInt32 size=0);
 	
-	RTMPChannel						_channel;
+	RTMPChannel						_channel; // Output channel
 	std::shared_ptr<RTMPSender>&	_pSender;
 	TCPSession&						_session;
 	const std::shared_ptr<RC4_KEY>	_pEncryptKey;

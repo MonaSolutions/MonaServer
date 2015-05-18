@@ -65,9 +65,9 @@ void WSWriter::pack() {
 	sender.packaged = true;
 }
 
-void WSWriter::flush() {
+bool WSWriter::flush() {
 	if(_senders.empty())
-		return;
+		return false;
 	pack();
 	Exception ex;
 	for (shared_ptr<WSSender>& pSender : _senders) {
@@ -75,6 +75,7 @@ void WSWriter::flush() {
 		EXCEPTION_TO_LOG(_session.send<WSSender>(ex, qos(), pSender), "WSSender flush");
 	}
 	_senders.clear();
+	return true;
 }
 
 void WSWriter::write(UInt8 type,const UInt8* data,UInt32 size) {

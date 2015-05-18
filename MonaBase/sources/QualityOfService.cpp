@@ -26,7 +26,7 @@ namespace Mona {
 
 QualityOfService QualityOfService::Null;
 
-QualityOfService::QualityOfService() : _sampleInterval(4000),lostRate(0),byteRate(0),latency(0),_lost(0),_size(0),_latency(0),_latencyCount(0) {
+QualityOfService::QualityOfService() : lastSendingTime(0),_sampleInterval(4000),lostRate(0),byteRate(0),latency(0),_lost(0),_size(0),_latency(0),_latencyCount(0) {
 }
 
 void QualityOfService::reset() {
@@ -37,6 +37,7 @@ void QualityOfService::reset() {
 	_lost = 0;
 	_sendSamples.clear();
 	_lostSamples.clear();
+	lastSendingTime = 0;
 }
 
 void QualityOfService::add(double lost) {
@@ -84,9 +85,10 @@ void QualityOfService::add(UInt32 size, UInt16 ping, double lost) {
 		_latency += sample.latency;
 		++_latencyCount;
 		(UInt32&)latency = _latency / _latencyCount;
-
 	}
 
+	if (size>0)
+		lastSendingTime.update();
 }
 
 

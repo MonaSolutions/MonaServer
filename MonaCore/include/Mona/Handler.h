@@ -38,7 +38,7 @@ public:
 	virtual void			onDisconnection(const Client& client){}
 	virtual void			onAddressChanged(const Client& client,const SocketAddress& oldAddress) {}
 	virtual bool			onMessage(Exception& ex, Client& client, const std::string& name, DataReader& reader, UInt8 responseType) { return false; } // Exception::SOFTWARE, Exception::APPLICATION
-	virtual bool			onFileAccess(Exception& ex, Client& client,Client::FileAccessType type, Path& filePath,DataReader& parameters,DataWriter& properties){return true;}  // Exception::SOFTWARE
+	virtual bool			onFileAccess(Exception& ex, Client& client,Client::FileAccessType type, DataReader& parameters, Path& filePath, DataWriter& properties){return true;}  // Exception::SOFTWARE
 
 	virtual void			onJoinGroup(Client& client,Group& group){}
 	virtual void			onUnjoinGroup(Client& client,Group& group){}

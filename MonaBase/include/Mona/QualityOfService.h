@@ -29,13 +29,14 @@ class QualityOfService : public virtual Object {
 public:
 	QualityOfService();
 
-	void add(UInt32 size, UInt16 ping,double lostRate = 0);
-	void add(double lostRate);
+	void add(UInt32 size, UInt16 ping,double lostRate = 0); // sending
+	void add(double lostRate); // ack
 	void reset();
 
 	const double		lostRate;
 	const double		byteRate;
 	const UInt32		latency;
+	Time				lastSendingTime;
 
 	static QualityOfService Null;
 private:

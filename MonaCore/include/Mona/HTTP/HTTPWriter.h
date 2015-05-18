@@ -57,7 +57,7 @@ public:
 	DataWriter&     writeRaw(const char* code);
 
 private:
-	void			flush();
+	bool			flush();
 
 	bool			writeMedia(MediaType type,UInt32 time,PacketReader& packet,const Parameters& properties);
 

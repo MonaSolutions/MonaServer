@@ -49,10 +49,11 @@ public:
 	
 private:
 	void				onFragment(UInt64 stage,PacketReader& fragment,UInt8 flags);
-	
-	AMF::ContentType	unpack(PacketReader& packet,UInt32& time);
 
 	void				complete();
+
+	Peer&							_peer;
+	Group*							_pGroup;
 
 	bool							_completed;
 	BandWriter&						_band;

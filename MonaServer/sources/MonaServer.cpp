@@ -617,7 +617,7 @@ bool MonaServer::onMessage(Exception& ex, Client& client,const string& name,Data
 	return found;
 }
 
-bool MonaServer::onFileAccess(Exception& ex, Client& client, Client::FileAccessType type, Path& filePath,DataReader& parameters,DataWriter& properties) { 
+bool MonaServer::onFileAccess(Exception& ex, Client& client, Client::FileAccessType type, DataReader& parameters, Path& filePath, DataWriter& properties) { 
 
 	if (filePath.isFolder()) {
 		// filePath must be a file, not a folder, otherwise it's a security issue

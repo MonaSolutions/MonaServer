@@ -50,7 +50,7 @@ public:
 
 	virtual Writer&		newWriter() { return *(new RTMFPWriter(state(),signature, _band)); }
 
-	void				flush() { flush(true); }
+	bool				flush() { return flush(true); }
 
 	void				acknowledgment(PacketReader& packet);
 	void				manage(Exception& ex, Invoker& invoker);
@@ -85,7 +85,7 @@ private:
 	
 	UInt32					headerSize(UInt64 stage);
 	void					flush(BinaryWriter& writer,UInt64 stage,UInt8 flags,bool header,const RTMFPMessage& message, UInt32 offset, UInt16 size);
-	void					flush(bool full);
+	bool					flush(bool full);
 
 	void					raiseMessage();
 	RTMFPMessageBuffered&	createMessage();

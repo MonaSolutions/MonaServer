@@ -58,19 +58,30 @@ void FlashStream::disengage(FlashWriter* pWriter) {
 
 
 bool FlashStream::process(AMF::ContentType type,UInt32 time,PacketReader& packet,FlashWriter& writer,double lostRate) {
-	if(type==AMF::EMPTY)
-		return writer.state()!=Writer::CLOSED;
 
 	// if exception, it closes the connection, and print an ERROR message
 	switch(type) {
+
+		case AMF::AUDIO:
+			audioHandler(time,packet, lostRate);
+			break;
+		case AMF::VIDEO:
+			videoHandler(time,packet, lostRate);
+			break;
+
+		case AMF::DATA_AMF3:
+			packet.next();
 		case AMF::DATA: {
-			string name;
 			AMFReader reader(packet);
-			reader.readString(name);
-			messageHandler(name,reader,writer);
+			dataHandler(reader, lostRate);
 			break;
 		}
+
+		case AMF::EMPTY:
+			break;
+
 		case AMF::INVOCATION_AMF3:
+			packet.next();
 		case AMF::INVOCATION: {
 			string name;
 			AMFReader reader(packet);
@@ -82,28 +93,26 @@ bool FlashStream::process(AMF::ContentType type,UInt32 time,PacketReader& packet
 			messageHandler(name,reader,writer);
 			break;
 		}
-		case AMF::DATA_AMF3: {
-			AMFReader reader(packet);
-			dataHandler(reader, lostRate);
+
+		case AMF::RAW:
+			rawHandler(packet.read16(), packet, writer);
 			break;
-		}
-		case AMF::AUDIO:
-			audioHandler(time,packet, lostRate);
-			break;
-		case AMF::VIDEO:
-			videoHandler(time,packet, lostRate);
-			break;
-		
-			break;
-		case AMF::ACK:
-			// nothing to do, a ack message says about how many bytes have been gotten by the peer
-			// RTMFP has a complexe ack mechanism and RTMP is TCP based, ack mechanism is in system layer => so useless
-			break;
+
 		default:
-			rawHandler(type, packet, writer);
+			ERROR("Unpacking type '",Format<UInt8>("%02x",(UInt8)type),"' unknown");
 	}
+
 	writer.setCallbackHandle(0);
 	return writer.state()!=Writer::CLOSED;
+}
+
+
+UInt32 FlashStream::bufferTime(UInt32 ms) {
+	_bufferTime = ms;
+	INFO("setBufferTime ", ms, "ms on stream ",id)
+	if (_pListener)
+		_pListener->setNumber("bufferTime", ms);
+	return _bufferTime;
 }
 
 void FlashStream::messageHandler(const string& name, AMFReader& message, FlashWriter& writer) {
@@ -123,16 +132,21 @@ void FlashStream::messageHandler(const string& name, AMFReader& message, FlashWr
 		OnStart::raise(id, writer); // stream begin
 		writer.writeAMFStatus("NetStream.Play.Reset", "Playing and resetting " + publication); // for entiere playlist
 		writer.writeAMFStatus("NetStream.Play.Start", "Started playing "+publication); // for item
-		AMFWriter& amf(writer.writeInfos("|RtmpSampleAccess"));
+		AMFWriter& amf(writer.writeAMFData("|RtmpSampleAccess"));
 		amf.writeBoolean(true); // audioSampleAccess
 		amf.writeBoolean(true); // videoSampleAccess
 
 		if (_bufferTime > 0)
 			_pListener->setNumber("bufferTime", _bufferTime);
+		return;
+	}
 	
-	} else if (name == "closeStream") {
+	if (name == "closeStream") {
 		disengage(&writer);
-	} else if (name == "publish") {
+		return;
+	}
+	
+	if (name == "publish") {
 
 		disengage(&writer);
 
@@ -151,62 +165,55 @@ void FlashStream::messageHandler(const string& name, AMFReader& message, FlashWr
 			_pPublication = NULL;
 		} else
 			writer.writeAMFStatus("NetStream.Publish.Start", publication + " is now published");
-	} else if (_pListener && name == "receiveAudio") {
-		message.readBoolean(_pListener->receiveAudio);
-	} else if (_pListener && name == "receiveVideo") {
-		message.readBoolean(_pListener->receiveVideo);
-
-	} else if (_pListener && name == "pause") {
-		bool paused(true);
-		message.readBoolean(paused);
-		// TODO support pause for VOD
-		
-		if (paused) {
-			// useless, client knows it when it calls NetStream::pause method
-			// writer.writeAMFStatus("NetStream.Pause.Notify", _pListener->publication.name() + " paused");
-		} else {
-			double position;
-			if (message.readNumber(position))
-				_pListener->seek((UInt32)position);
-			OnStart::raise(id, writer); // stream begin
-			// useless, client knows it when it calls NetStream::resume method
-			//	writer.writeAMFStatus("NetStream.Unpause.Notify", _pListener->publication.name() + " resumed");
-		}
-
-	} else if (_pListener && name == "seek") {
-		double position;
-		if (message.readNumber(position)) {
-			_pListener->seek((UInt32)position);
-			 // TODO support seek for VOD
-			OnStart::raise(id, writer); // stream begin
-			// useless, client knows it when it calls NetStream::seek method, and wait "NetStream.Seek.Complete" rather (raised by client side)
-			// writer.writeAMFStatus("NetStream.Seek.Notify", _pListener->publication.name() + " seek operation");
-		} else
-			writer.writeAMFStatus("NetStream.Seek.InvalidTime", _pListener->publication.name() + " seek operation must pass in argument a milliseconds position time");
-	} else if (_pPublication && name == "@setDataFrame") {
-		// metadata
-		_pPublication->writeProperties(message);
-	} else if (_pPublication && name == "@clearDataFrame") {
-		_pPublication->clearProperties();
-	} else
-		ERROR("Message '",name,"' unknown on stream ",id);
-}
-
-
-void FlashStream::rawHandler(UInt8 type, PacketReader& packet, FlashWriter& writer) {
-	if(packet.read16()==0x22) { // TODO Here we receive RTMFP flow sync signal, useless to support it!
-		//TRACE("Sync ",id," : ",data.read32(),"/",data.read32());
 		return;
 	}
-	ERROR("Raw message ",Format<UInt8>("%.2x",type),"/",packet.read16()," unknown on stream ",id);
-}
+	
+	if (_pListener) {
 
-UInt32 FlashStream::bufferTime(UInt32 ms) {
-	_bufferTime = ms;
-	INFO("setBufferTime ", ms, "ms on stream ",id)
-	if (_pListener)
-		_pListener->setNumber("bufferTime", ms);
-	return _bufferTime;
+		if(name == "receiveAudio") {
+			message.readBoolean(_pListener->receiveAudio);
+			return;
+		}
+		
+		if (name == "receiveVideo") {
+			message.readBoolean(_pListener->receiveVideo);
+			return;
+		}
+		
+		if (name == "pause") {
+			bool paused(true);
+			message.readBoolean(paused);
+			// TODO support pause for VOD
+		
+			if (paused) {
+				// useless, client knows it when it calls NetStream::pause method
+				// writer.writeAMFStatus("NetStream.Pause.Notify", _pListener->publication.name() + " paused");
+			} else {
+				double position;
+				if (message.readNumber(position))
+					_pListener->seek((UInt32)position);
+				OnStart::raise(id, writer); // stream begin
+				// useless, client knows it when it calls NetStream::resume method
+				//	writer.writeAMFStatus("NetStream.Unpause.Notify", _pListener->publication.name() + " resumed");
+			}
+			return;
+		}
+		
+		if (name == "seek") {
+			double position;
+			if (message.readNumber(position)) {
+				_pListener->seek((UInt32)position);
+				 // TODO support seek for VOD
+				OnStart::raise(id, writer); // stream begin
+				// useless, client knows it when it calls NetStream::seek method, and wait "NetStream.Seek.Complete" rather (raised by client side)
+				// writer.writeAMFStatus("NetStream.Seek.Notify", _pListener->publication.name() + " seek operation");
+			} else
+				writer.writeAMFStatus("NetStream.Seek.InvalidTime", _pListener->publication.name() + " seek operation must pass in argument a milliseconds position time");
+			return;
+		}
+	}
+
+	ERROR("Message '",name,"' unknown on stream ",id);
 }
 
 void FlashStream::dataHandler(DataReader& data, double lostRate) {
@@ -216,25 +223,33 @@ void FlashStream::dataHandler(DataReader& data, double lostRate) {
 	}
 
 	// necessary AMF0 here!
-	if (*data.packet.current() == AMF_STRING && *(data.packet.current() + 3) == '@') {
-		
-		if (*(data.packet.current() + 1) == 0) {
-			if (*(data.packet.current() + 2) == 13 && memcmp(data.packet.current() + 3, EXPAND("@setDataFrame"))==0) {
-				// @setDataFrame
-				data.next();
-				_pPublication->writeProperties(data);
-				return;
-			} else if (*(data.packet.current() + 2) == 15 && memcmp(data.packet.current() + 3, EXPAND("@clearDataFrame"))==0) {
-				// @clearDataFrame
-				_pPublication->clearProperties();
-				return;
-			}
+	if (data.packet.available()>3 && *data.packet.current() == AMF_STRING && *(data.packet.current() + 3) == '@' && *(data.packet.current() + 1) == 0) {
+
+		if (data.packet.available()>15 && *(data.packet.current() + 2) == 13 && memcmp(data.packet.current() + 3, EXPAND("@setDataFrame"))==0) {
+			// @setDataFrame
+			data.next();
+			_pPublication->writeProperties(data);
+			return;
 		}
+
+		if (data.packet.available()>17 && *(data.packet.current() + 2) == 15 && memcmp(data.packet.current() + 3, EXPAND("@clearDataFrame"))==0) {
+			// @clearDataFrame
+			_pPublication->clearProperties();
+			return;
+		}
+
 	}
 
 	_pPublication->pushData(data,peer.ping(),lostRate);
 }
 
+void FlashStream::rawHandler(UInt16 type, PacketReader& packet, FlashWriter& writer) {
+	if(type==0x0022) { // TODO Here we receive RTMFP flow sync signal, useless to support it!
+		//TRACE("Sync ",id," : ",data.read32(),"/",data.read32());
+		return;
+	}
+	ERROR("Raw message ",Format<UInt16>("%.4x",type)," unknown on stream ",id);
+}
 
 void FlashStream::audioHandler(UInt32 time,PacketReader& packet, double lostRate) {
 	if(!_pPublication) {

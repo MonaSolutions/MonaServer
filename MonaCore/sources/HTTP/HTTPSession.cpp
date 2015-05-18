@@ -141,12 +141,16 @@ void HTTPSession::receive(const shared_ptr<HTTPPacket>& pPacket) {
 			peer.onConnection(ex, _writer,parameters);
 			if (!ex && peer.connected) {
 
-				if (peer.parameters().getBoolean("index", _indexDirectory) && peer.parameters().getString("index",_index)) {
-					if(String::ICompare(_index,"true")==0 || String::ICompare(_index,"false")==0)
+				if (peer.parameters().getString("index", _index)) {
+					if (String::IsFalse(_index)) {
+						_indexDirectory = false;
+						_index.clear();
+					} else if (String::IsTrue(_index))
 						_index.clear();
 					else
 						FileSystem::GetName(_index); // Redirect to the file (get name to prevent path insertion)
 				}
+
 				parameters.reset();
 			}
 		}
@@ -236,7 +240,7 @@ void HTTPSession::processGet(Exception& ex, HTTPPacket& request, QueryReader& pa
 	// 2 - try to get a file
 	shared_ptr<Parameters> pFileParams(new MapParameters());
 	ParameterWriter parameterWriter(*pFileParams);
-	if (peer.onRead(ex, file, parameters, parameterWriter) && !ex) {
+	if (peer.onRead(ex, parameters, file, parameterWriter) && !ex) {
 
 		// If onRead has been authorised, and that the file is a multimedia file, and it doesn't exists (no VOD, filePath.lastModified()==0 means "doesn't exists")
 		// Subscribe for a live stream with the basename file as stream name

@@ -90,7 +90,7 @@ public:
 	virtual DataWriter&		writeResponse(UInt8 type){return writeMessage();}
 	virtual void			writeRaw(const UInt8* data,UInt32 size){}
 
-	virtual void			flush() {}
+	virtual bool			flush() { return false;  } // return true if something has been sent!
 
 	operator bool() const { return !_isNull; }
 

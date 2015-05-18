@@ -70,10 +70,10 @@ AMFWriter& FlashWriter::writeAMFState(const char* name,const char* code,const st
 	return writer;
 }
 
-AMFWriter& FlashWriter::writeInfos(const char* name) {
+AMFWriter& FlashWriter::writeAMFData(const string& name) {
 	AMFWriter& writer(write(AMF::DATA));
 	writer.amf0 = true;
-	writer.writeString(name,strlen(name));
+	writer.writeString(name.data(),name.size());
 	writer.amf0 = false;
 	return writer;
 }
@@ -106,10 +106,7 @@ bool FlashWriter::writeMedia(MediaType type,UInt32 time,PacketReader& packet,con
 			break;
 		case AUDIO:
 			if (!_onAudio.empty()) {
-				AMFWriter& writer(write(AMF::DATA_AMF3));
-				writer.amf0 = true;
-				writer.writeString(_onAudio.data(),_onAudio.size());
-				writer.amf0 = false;
+				AMFWriter& writer(writeAMFData(_onAudio));
 				writer.writeNumber(time);
 				writer.writeBytes(packet.current(),packet.available());
 			} else
@@ -117,10 +114,7 @@ bool FlashWriter::writeMedia(MediaType type,UInt32 time,PacketReader& packet,con
 			break;
 		case VIDEO:
 			if (!_onVideo.empty()) {
-				AMFWriter& writer(write(AMF::DATA_AMF3));
-				writer.amf0 = true;
-				writer.writeString(_onVideo.data(),_onVideo.size());
-				writer.amf0 = false;
+				AMFWriter& writer(writeAMFData(_onVideo));
 				writer.writeNumber(time);
 				writer.writeBytes(packet.current(),packet.available());
 				

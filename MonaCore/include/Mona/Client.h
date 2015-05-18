@@ -62,6 +62,7 @@ public:
 	const std::string			query;
 	
 	const Time					lastReceptionTime;
+	
 	virtual UInt16				ping() const = 0;
 	virtual const Parameters&	properties() const =0;
 

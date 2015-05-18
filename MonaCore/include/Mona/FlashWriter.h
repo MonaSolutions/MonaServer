@@ -41,7 +41,7 @@ public:
 	AMFWriter&				writeAMFError(const char* code, const std::string& description, bool withoutClosing = false) { return writeAMFState("_error", code, description, withoutClosing); }
 	bool					writeMedia(MediaType type,UInt32 time,PacketReader& packet,const Parameters& properties);
 
-	AMFWriter&				writeInfos(const char* name);
+	AMFWriter&				writeAMFData(const std::string& name);
 
 	void					writePing() { writeRaw().write16(0x0006).write32((UInt32)Time::Now()); }
 	void					writePong(UInt32 pingTime) { writeRaw().write16(0x0007).write32(pingTime); }

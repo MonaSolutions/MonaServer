@@ -86,7 +86,11 @@ public:
 	template<typename Type>
 	static Type ToNumber(Exception& ex, Type failValue, const char* value, std::size_t size = std::string::npos);
 
-	static bool ToBoolean(const char* value,std::size_t size = std::string::npos) { return !value || ICompare(value, "0", size) == 0 || String::ICompare(value, "false", size) == 0 || String::ICompare(value, "no", size) == 0 || String::ICompare(value, "off", size) == 0 ? false : true; /* other values is considerated as true */ }
+	static bool IsTrue(const std::string& value) { return IsTrue(value.data(),value.size()); }
+	static bool IsTrue(const char* value,std::size_t size=std::string::npos) { return ICompare(value, "1", size) == 0 || String::ICompare(value, "true", size) == 0 || String::ICompare(value, "yes", size) == 0 || String::ICompare(value, "on", size) == 0; }
+	static bool IsFalse(const std::string& value) { return IsFalse(value.data(),value.size()); }
+	static bool IsFalse(const char* value, std::size_t size = std::string::npos) { return ICompare(value, "0", size) == 0 || String::ICompare(value, "false", size) == 0 || String::ICompare(value, "no", size) == 0 || String::ICompare(value, "off", size) == 0; }
+
 
 	static const std::string Empty;
 

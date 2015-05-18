@@ -203,7 +203,7 @@ bool RTMPSession::buildPacket(BinaryReader& packet) {
 				streamId += packet.read8() << 16;
 				streamId += packet.read8() << 24;
 				if (!_mainStream.getStream(streamId, channel.pStream) && streamId) {
-					ERROR("RTMPSession ",name()," indicates a non-existent ",streamId," NetStream");
+					ERROR("RTMPSession ",name()," indicates a non-existent ",streamId," FlashStream");
 					kill(PROTOCOL_DEATH);
 					return false;
 				}
@@ -293,10 +293,6 @@ void RTMPSession::receive(BinaryReader& packet) {
 
 	PacketReader reader(channel.pBuffer.empty() ? packet.current() : channel.pBuffer->data(),channel.bodySize);
 
-	// To fix payload position: for this both type, it seems that we have an useless header byte
-	if (channel.type == AMF::INVOCATION_AMF3 || channel.type == AMF::DATA_AMF3)
-		reader.next(1);
-
 	switch(channel.type) {
 		case AMF::ABORT:
 			channel.reset(_pWriter);
@@ -310,6 +306,10 @@ void RTMPSession::receive(BinaryReader& packet) {
 			break;
 		case AMF::WIN_ACKSIZE:
 			_winAckSize = reader.read32();
+			break;
+		case AMF::ACK:
+			// nothing to do, a ack message says about how many bytes have been gotten by the peer
+			// RTMFP has a complexe ack mechanism and RTMP is TCP based, ack mechanism is in system layer => so useless
 			break;
 		default: {
 			if (!channel.pStream) {

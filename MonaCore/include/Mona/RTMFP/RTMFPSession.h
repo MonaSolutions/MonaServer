@@ -89,7 +89,7 @@ private:
 
 	// Implementation of BandWriter
 	void							flush() { flush(true); }
-	UInt16 ping() const				{ return peer.ping(); }
+	UInt16							ping() const				{ return peer.ping(); }
 	const PoolBuffers&				poolBuffers() { return invoker.poolBuffers; }
 	void							initWriter(const std::shared_ptr<RTMFPWriter>& pWriter);
 	std::shared_ptr<RTMFPWriter>	changeWriter(RTMFPWriter& writer);

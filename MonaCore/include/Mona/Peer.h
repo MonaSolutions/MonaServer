@@ -61,7 +61,7 @@ public:
 	void						pong();
 
 	void						updateLastReception() { ((Time&)lastReceptionTime).update();  }
-
+	
 	ICE&		ice(const Peer& peer);
 
 	void	unsubscribeGroups(const std::function<void(const Group& group)>& forEach=nullptr);
@@ -89,11 +89,11 @@ public:
 	/// \param filePath : relative path to the file (important : the directory will be erase)
 	/// \param parameters : gives parameters to the function onRead()
 	/// \param properties : recieve output parameters returned by onRead()
-	bool onRead(Exception& ex, Path& filePath, DataReader& parameters, DataWriter& properties) { return onFileAccess(ex, FileAccessType::READ, filePath, parameters, properties); }
-	bool onWrite(Exception& ex, Path& filePath, DataReader& parameters,DataWriter& properties) { return onFileAccess(ex, FileAccessType::WRITE, filePath, parameters, properties); }
+	bool onRead(Exception& ex, DataReader& parameters, Path& filePath, DataWriter& properties) { return onFileAccess(ex, FileAccessType::READ, parameters, filePath, properties); }
+	bool onWrite(Exception& ex, DataReader& parameters, Path& filePath, DataWriter& properties) { return onFileAccess(ex, FileAccessType::WRITE, parameters, filePath, properties); }
 
 private:
-	bool onFileAccess(Exception& ex, FileAccessType type, Path& filePath, DataReader& parameters,DataWriter& properties);
+	bool onFileAccess(Exception& ex, FileAccessType type, DataReader& parameters, Path& filePath, DataWriter& properties);
 
 	void onJoinGroup(Group& group);
 	void onUnjoinGroup(Group& group,bool dummy);

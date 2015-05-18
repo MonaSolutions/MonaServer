@@ -37,10 +37,9 @@ public:
 	
 private:
 	void	messageHandler(const std::string& name, AMFReader& message, FlashWriter& writer);
-	void	rawHandler(UInt8 type, PacketReader& packet, FlashWriter& writer);
+	void	rawHandler(UInt16 type, PacketReader& packet, FlashWriter& writer);
 
 	std::map<UInt16,std::shared_ptr<FlashStream>>	_streams;
-	Group*											_pGroup;
 	std::string										_buffer;
 };
 

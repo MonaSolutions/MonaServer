@@ -438,20 +438,24 @@ void RTMFPWriter::raiseMessage() {
 		_trigger.stop();
 }
 
-void RTMFPWriter::flush(bool full) {
+bool RTMFPWriter::flush(bool full) {
 
 	if(_messagesSent.size()>100)
 		TRACE("_messagesSent.size()=",_messagesSent.size());
 
 	if(state()==OPENING) {
 		ERROR("Violation policy, impossible to flush data on a opening writer");
-		return;
+		return false;
 	}
+
+	bool hasSent(false);
 
 	// flush
 	bool header = !_band.canWriteFollowing(*this);
 
 	while(!_messages.empty()) {
+		hasSent = true;
+
 		RTMFPMessage& message(*_messages.front());
 
 		if(message.repeatable) {
@@ -512,8 +516,9 @@ void RTMFPWriter::flush(bool full) {
 		_messages.pop_front();
 	}
 
-	if(full)
+	if (full)
 		_band.flush();
+	return hasSent;
 }
 
 RTMFPMessageBuffered& RTMFPWriter::createMessage() {

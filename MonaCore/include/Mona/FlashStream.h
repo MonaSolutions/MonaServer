@@ -59,7 +59,7 @@ protected:
 private:
 
 	virtual void	messageHandler(const std::string& name, AMFReader& message, FlashWriter& writer);
-	virtual void	rawHandler(UInt8 type, PacketReader& data, FlashWriter& writer);
+	virtual void	rawHandler(UInt16 type, PacketReader& data, FlashWriter& writer);
 	virtual void	dataHandler(DataReader& data, double lostRate);
 	virtual void	audioHandler(UInt32 time, PacketReader& packet, double lostRate);
 	virtual void	videoHandler(UInt32 time,PacketReader& packet, double lostRate);

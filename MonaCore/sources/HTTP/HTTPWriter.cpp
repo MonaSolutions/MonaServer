@@ -103,18 +103,19 @@ bool HTTPWriter::send(shared_ptr<HTTPSender>& pSender) {
 	return true;
 }
 
-void HTTPWriter::flush() {
+bool HTTPWriter::flush() {
 
 	if (_requesting) // during request wait the main response before flush
-		return;
+		return false;
 
 	// now send just one response with header!
 	if (_pResponse && !send(_pResponse))
-		return;
+		return false;
 
 	// send senders
 	while (!_senders.empty() && send(_senders.front()))
 		_senders.pop_front();
+	return true;
 }
 
 DataWriter& HTTPWriter::writeMessage() {

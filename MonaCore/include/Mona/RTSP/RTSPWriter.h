@@ -75,7 +75,7 @@ public:
 	std::string		audioSSRC;
 	std::string		videoSSRC;
 private:
-	void			flush();
+	bool			flush();
 
 	bool			writeMedia(MediaType type,UInt32 time,PacketReader& packet,const Parameters& properties);
 

@@ -72,7 +72,7 @@ public:
 };
 
 
-RTMFPFlow::RTMFPFlow(UInt64 id,const string& signature,Peer& peer,Invoker& invoker, BandWriter& band, const shared_ptr<FlashMainStream>& pMainStream) : _pStream(pMainStream),_poolBuffers(invoker.poolBuffers),_numberLostFragments(0),id(id),_stage(0),_completed(false),_pPacket(NULL),_band(band) {
+RTMFPFlow::RTMFPFlow(UInt64 id,const string& signature,Peer& peer,Invoker& invoker, BandWriter& band, const shared_ptr<FlashMainStream>& pMainStream) : _pGroup(NULL), _peer(peer), _pStream(pMainStream),_poolBuffers(invoker.poolBuffers),_numberLostFragments(0),id(id),_stage(0),_completed(false),_pPacket(NULL),_band(band) {
 	
 	// MAIN Stream flow OR Null flow
 
@@ -87,7 +87,7 @@ RTMFPFlow::RTMFPFlow(UInt64 id,const string& signature,Peer& peer,Invoker& invok
 	((UInt64&)pWriter->flowId) = id;
 }
 
-RTMFPFlow::RTMFPFlow(UInt64 id,const string& signature,const shared_ptr<FlashStream>& pStream, Peer& peer,Invoker& invoker, BandWriter& band) : _pStream(pStream),_poolBuffers(invoker.poolBuffers),_numberLostFragments(0),id(id),_stage(0),_completed(false),_pPacket(NULL),_band(band) {
+RTMFPFlow::RTMFPFlow(UInt64 id,const string& signature,const shared_ptr<FlashStream>& pStream, Peer& peer,Invoker& invoker, BandWriter& band) : _pGroup(NULL), _peer(peer), _pStream(pStream),_poolBuffers(invoker.poolBuffers),_numberLostFragments(0),id(id),_stage(0),_completed(false),_pPacket(NULL),_band(band) {
 	
 	new RTMFPWriter(peer.connected ? Writer::OPENED : Writer::OPENING,signature, band, _pWriter);
 
@@ -95,6 +95,9 @@ RTMFPFlow::RTMFPFlow(UInt64 id,const string& signature,const shared_ptr<FlashStr
 
 
 RTMFPFlow::~RTMFPFlow() {
+	if(_pGroup)
+		_peer.unjoinGroup(*_pGroup);
+
 	complete();
 	if (_pStream)
 		_pStream->disengage(_pWriter.get());
@@ -127,34 +130,6 @@ void RTMFPFlow::fail(const string& error) {
 	BinaryWriter& writer = _band.writeMessage(0x5e,Util::Get7BitValueSize(id)+1);
 	writer.write7BitLongValue(id);
 	writer.write8(0); // unknown
-}
-
-AMF::ContentType RTMFPFlow::unpack(PacketReader& packet,UInt32& time) {
-	if(packet.available()==0)
-		return AMF::EMPTY;
-	AMF::ContentType type = (AMF::ContentType)packet.read8();
-	switch(type) {
-		// amf content
-		case AMF::INVOCATION_AMF3:
-			packet.next(1);
-		case AMF::INVOCATION:
-			packet.next(4);
-			return AMF::INVOCATION;
-		case AMF::AUDIO:
-		case AMF::VIDEO:
-			time = packet.read32();
-			break;
-		case AMF::DATA_AMF3:
-			packet.next(1);
-		case AMF::RAW:
-			packet.next(4);
-		case AMF::CHUNKSIZE:
-			break;
-		default:
-			ERROR("Unpacking type '",Format<UInt8>("%02x",(UInt8)type),"' unknown");
-			break;
-	}
-	return type;
 }
 
 void RTMFPFlow::commit() {
@@ -327,7 +302,35 @@ void RTMFPFlow::onFragment(UInt64 _stage,PacketReader& fragment,UInt8 flags) {
 	}
 
 	UInt32 time(0);
-	AMF::ContentType type(unpack(*pMessage, time));
+	AMF::ContentType type = (AMF::ContentType)pMessage->read8();
+	switch(type) {
+		case AMF::AUDIO:
+		case AMF::VIDEO:
+			time = pMessage->read32();
+		case AMF::CHUNKSIZE:
+			break;
+		default:
+			pMessage->next(4);
+			break;
+	}
+
+	// join group
+	if(type==AMF::CHUNKSIZE) { // trick to catch group in RTMFP (CHUNCKSIZE format doesn't exist in RTMFP)
+		if(pMessage->available()>0) {
+			UInt32 size = pMessage->read7BitValue()-1;
+			if(pMessage->read8()==0x10) {
+				if (size > pMessage->available()) {
+					ERROR("Bad header size for RTMFP group id")
+					size = pMessage->available();
+				}
+				UInt8 groupId[ID_SIZE];
+				EVP_Digest(pMessage->current(),size,(unsigned char *)groupId,NULL,EVP_sha256(),NULL);
+				_pGroup = &_peer.joinGroup(groupId, _pWriter.get());
+			} else
+				_pGroup = &_peer.joinGroup(pMessage->current(), _pWriter.get());
+		}
+		return;
+	}
 
 	lostRate = _numberLostFragments/(lostRate+_numberLostFragments);
 

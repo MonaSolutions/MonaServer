@@ -35,7 +35,7 @@ public:
 	WSWriter(TCPSession& session);
 
 	void			clear() { _senders.clear(); }
-	void			flush();
+	bool			flush();
 
 	DataWriter&		writeInvocation(const char* name);
 	DataWriter&		writeMessage();

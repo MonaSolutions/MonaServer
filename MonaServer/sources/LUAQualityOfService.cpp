@@ -34,6 +34,8 @@ int LUAQualityOfService::Get(lua_State *pState) {
 				SCRIPT_WRITE_NUMBER(qos.byteRate) // change
 			} else if (strcmp(name, "latency") == 0) {
 				SCRIPT_WRITE_NUMBER(qos.latency) // change
+			} else if(strcmp(name,"lastSendingTime")==0) {
+				SCRIPT_WRITE_NUMBER(qos.lastSendingTime)  // can change
 			}
 		}
 	SCRIPT_CALLBACK_RETURN
