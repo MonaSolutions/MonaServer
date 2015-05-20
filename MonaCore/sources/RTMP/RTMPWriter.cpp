@@ -127,12 +127,7 @@ AMFWriter& RTMPWriter::write(AMF::ContentType type,UInt32 time,const UInt8* data
 
 
 	if (_pSender->headerSize > 0) {
-		if (time<0xFFFFFF)
-			packet.write24(time);
-		else {
-			packet.write24(0xFFFFFF);
-			_pSender->headerSize += 4;
-		}
+		packet.write24(time<0xFFFFFF ? time : 0xFFFFFF);
 
 		if (_pSender->headerSize > 4) {
 			_pSender->sizePos = packet.size();
@@ -146,10 +141,12 @@ AMFWriter& RTMPWriter::write(AMF::ContentType type,UInt32 time,const UInt8* data
 				packet.write8(streamId >> 24);
 				// if(type==AMF::DATA_AMF3) TODO?
 				//	pWriter->write8(0);
-				if (_pSender->headerSize > 12)
-					packet.write32(time);
 			}
 		}
+	}
+	if (time >= 0xFFFFFF) {
+		packet.write32(time);
+		_pSender->headerSize += 4;
 	}
 
 	if(data) {

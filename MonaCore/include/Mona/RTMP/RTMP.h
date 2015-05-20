@@ -44,9 +44,10 @@ public:
 		bodySize = time = absoluteTime = 0;
 		type = AMF::EMPTY;
 		pBuffer.release();
-		if (pStream)
+		if (pStream) {
 			pStream->disengage(pWriter);
-		pStream.reset();
+			pStream.reset();
+		}
 	}
 };
 

@@ -57,7 +57,6 @@ private:
 	std::map<UInt32,RTMPWriter>			_writers;
 	std::unique_ptr<RTMPWriter>			_pController;
 	RTMPWriter*							_pWriter;
-	bool								_isRelative;
 	std::shared_ptr<RTMPSender>			_pSender;
 
 	std::shared_ptr<RTMPHandshaker>		_pHandshaker;
