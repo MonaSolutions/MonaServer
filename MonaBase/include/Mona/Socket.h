@@ -147,7 +147,7 @@ public:
 		// We can write immediatly if there are no queue packets to write,
 		// and if it remains some data to write (flush returns false)
 		if (canSend(ex) && pSender->flush(ex, *this))
-			return true;
+			return !ex;
 
 		if (ex)
 			return false;

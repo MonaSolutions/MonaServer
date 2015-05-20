@@ -51,7 +51,7 @@ private:
 	
 	bool							buffering(const PoolBuffers& poolBuffers);
 
-	// send data
+	// send data, return true if everything has been sent
 	bool							flush(Exception& ex,Socket& socket);
 
 

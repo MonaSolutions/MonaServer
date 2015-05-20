@@ -411,7 +411,9 @@ public:
 			return false;
 		lock_guard<mutex> lockAsync(_mutexAsync);
 		_senders.emplace_back(pSender);
-		return _writing = manager.startWrite(_sockfd,_pManagedSocket);
+		if (!_writing)
+			_writing = manager.startWrite(_sockfd,_pManagedSocket);
+		return _writing;
 	}
 
 		

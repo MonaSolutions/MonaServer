@@ -55,7 +55,7 @@ void HTTPSender::onSent(Socket& socket) {
 		return;
 	// disconnect socket if _connection==HTTP::CONNECTION_CLOSE
 	Exception ex;
-	socket.shutdown(ex,Socket::SEND);
+	socket.shutdown(ex);
 }
 
 
@@ -257,6 +257,7 @@ DataWriter& HTTPSender::write(const char* code, HTTP::ContentType type, const ch
 		} else if (size == 1) { // if size==1 means that we want not writing a content-length
 			// here it means that we are on a live streaming, without size limit, so we have to signal the cache-control
 			packet.write(EXPAND("\r\nCache-Control: no-cache, no-store\r\nPragma: no-cache"));
+			_connection = HTTP::CONNECTION_KEEPALIVE; // no content-length, keepalive the connection!
 		} else {
 			// reserve place to add length on sending
 			packet.write(EXPAND("\r\nContent-Length:           "));
@@ -279,6 +280,7 @@ BinaryWriter& HTTPSender::writeRaw() {
 		return DataWriter::Null.packet;
 	}
 	_pWriter.reset(new StringWriter(_poolBuffers));
+	_connection = HTTP::CONNECTION_KEEPALIVE; // write content (no new header), keepalive the connection!
 	return _pWriter->packet;
 }
 

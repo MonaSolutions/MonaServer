@@ -64,7 +64,7 @@ bool SocketSender::flush(Exception& ex,Socket& socket) {
 
 		_position += send(ex,socket,data + _position, size - _position);
 
-		if (ex) // terminate the sender
+		if (ex) // terminate the sender if error
 			_position = size;
 		// everything has been sent
 		if (_position >= size) {

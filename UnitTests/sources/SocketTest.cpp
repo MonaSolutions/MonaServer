@@ -299,8 +299,7 @@ void TCPTest(SocketManager& sockets) {
 			CHECK(client.connected());
 			CHECK(client.address());
 			CHECK(client.peerAddress()==unknown);
-			if (Util::Random<UInt8>()%2)
-				CHECK(client.send(ex,BIN EXPAND("salut")) && !ex)
+			CHECK(client.send(ex, BIN EXPAND("salut")) && !ex)
 			CHECK(client.connected());
 		}
 		CHECK(TaskSockets.join(client));
