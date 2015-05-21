@@ -179,12 +179,11 @@ bool RTMPSession::buildPacket(BinaryReader& packet) {
 
 
 	RTMPChannel& channel(pWriter->channel);
-	UInt8 timeType(0); // 0 for "no time", 1 for relative, 2 for absolute
+	bool isRelative(true);
 	if(headerSize>=4) {
 		
 		// TIME
 		channel.time = packet.read24();
-		timeType = 1;
 
 		if(headerSize>=8) {
 			// SIZE
@@ -192,7 +191,7 @@ bool RTMPSession::buildPacket(BinaryReader& packet) {
 			// TYPE
 			channel.type = (AMF::ContentType)packet.read8();
 			if(headerSize>=12) {
-				timeType = 2;
+				isRelative = false;
 				// STREAM
 				UInt32 streamId(packet.read8());
 				streamId += packet.read8() << 8;
@@ -230,9 +229,9 @@ bool RTMPSession::buildPacket(BinaryReader& packet) {
 	if (packet.available() < total)
 		return false;
 
-	//// resolve absolute time
-	if (timeType) {
-		if (timeType==1)
+	//// resolve absolute time on new packet!
+	if (channel.pBuffer.empty()) {
+		if (isRelative)
 			channel.absoluteTime += channel.time; // relative
 		else
 			channel.absoluteTime = channel.time; // absolute
