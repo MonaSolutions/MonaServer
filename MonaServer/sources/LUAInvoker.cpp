@@ -184,7 +184,7 @@ int	LUAInvoker::Dump(lua_State *pState) {
 		const UInt8* data(NULL);
 		UInt32 sizeData(0);
 		if (SCRIPT_NEXT_TYPE == LUA_TSTRING) {
-			data = BIN lua_tostring(pState, __args);
+			data = BIN lua_tostring(pState, ++__args);
 			sizeData = lua_objlen(pState, __args);
 		}
 		if (name) {
