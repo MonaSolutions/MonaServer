@@ -44,5 +44,15 @@ void Logs::SetDump(const char* name) {
 		_PDump.reset(new string(name));
 }
 
+void Logs::Dump(const string& header, const UInt8* data, UInt32 size) {
+	Buffer out;
+	std::lock_guard<std::mutex> lock(_Mutex);
+	Util::Dump(data, (_DumpLimit<0 || size<_DumpLimit) ? size : _DumpLimit, out);
+	if (_PLogger)
+		_PLogger->dump(header, out.data(), out.size());
+	else
+		_DefaultLogger.dump(header, out.data(), out.size());
+}
+
 
 } // namespace Mona

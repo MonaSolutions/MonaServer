@@ -180,16 +180,33 @@ int	LUAInvoker::Split(lua_State *pState) {
 
 int	LUAInvoker::Dump(lua_State *pState) {
 	SCRIPT_CALLBACK(Invoker, invoker)
-		string header;
-		SCRIPT_READ_BINARY(data, size)
+		SCRIPT_READ_BINARY(name, sizeName)
+		const UInt8* data(NULL);
+		UInt32 sizeData(0);
 		if (SCRIPT_NEXT_TYPE == LUA_TSTRING) {
-			header.assign(STR data, size);
-			SCRIPT_READ_BINARY(data2, size2);
-			data = data2;
-			size = size2;
+			data = BIN lua_tostring(pState, __args);
+			sizeData = lua_objlen(pState, __args);
 		}
-		UInt32 count(SCRIPT_READ_UINT(size));
-		Logs::Dump(header,data,count>size ? size : count);
+		if (name) {
+			if (data) {
+				UInt32 count(SCRIPT_READ_UINT(sizeData));
+				const char* header(STR name);
+				while (*header && !isspace(*header++));
+				const char* endName(header);
+				while (*header && isspace(*header++));
+				if (*header) {
+					SCOPED_STRINGIFY(name,header-endName,Logs::Dump(STR name, data, count > sizeData ? sizeData : count,header))
+				} else
+					Logs::Dump(STR name, data, count > sizeData ? sizeData : count);
+			} else {
+#if defined(_DEBUG)
+				UInt32 count(SCRIPT_READ_UINT(sizeName));
+				Logs::Dump(name, count > sizeName ? sizeName : count);
+#else
+				SCRIPT_WARN("debugging mona:dump(",name,",...) not removed")
+#endif
+			}
+		}
 	SCRIPT_CALLBACK_RETURN
 }
 

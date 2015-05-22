@@ -71,23 +71,22 @@ public:
 	template <typename ...Args>
 	static void Dump(const char* name, const UInt8* data, UInt32 size, Args&&... args) {
 		std::shared_ptr<std::string> pDump(_PDump);
-		if (!pDump || (name && !pDump->empty() && String::ICompare(*pDump,name)!=0))
+		if (!pDump || (!pDump->empty() && String::ICompare(*pDump,name)!=0))
 			return;
 		std::string header(name);
 		Dump(String::Append(header,"=> ", args ...), data, size);
 	}
 
-	static void Dump(const std::string& header, const UInt8* data, UInt32 size) {
-		Buffer out;
-		std::lock_guard<std::mutex> lock(_Mutex);
-		Util::Dump(data, (_DumpLimit<0 || size<_DumpLimit) ? size : _DumpLimit, out);
-		if (_PLogger)
-			_PLogger->dump(header, out.data(), out.size());
-		else
-			_DefaultLogger.dump(header, out.data(), out.size());
-	}
+#if defined(_DEBUG)
+	// To dump easly during debugging => no name filter = always displaid even if no dump argument
+	static void Dump(const UInt8* data, UInt32 size) { Dump(String::Empty, data, size); }
+#endif
 
 private:
+
+	static void Dump(const std::string& header, const UInt8* data, UInt32 size);
+
+
 	static std::mutex	_Mutex;
 
 	static UInt8		_Level;
