@@ -174,10 +174,8 @@ void Publication::pushVideo(UInt32 time,PacketReader& packet, UInt16 ping, doubl
 		return;
 	}
 
-	// string buffer;
-	// TRACE("Time Video ",time," => ",Util::FormatHex(packet.current(),16,buffer))
+	//  TRACE("Time Video ",time," => ",Util::FormatHex(packet.current(),16,LOG_BUFFER))
 	
-
 	_videoQOS.add(packet.available()+4,ping,lostRate); // 4 for time encoded
 	if(lostRate)
 		INFO((UInt8)(lostRate*100),"% video fragments lost on publication ",_name);

@@ -1,22 +1,24 @@
-
 OS := $(shell uname -s)
 
-CC=g++
-CFLAGS+=-D_GLIBCXX_USE_C99 -std=c++11
-EXEC=MonaServer
-INCLUDES=-I./../MonaBase/include/ -I./../MonaCore/include/
-LIBDIR=-L./../MonaBase/lib/ -L./../MonaCore/lib/
-LDFLAGS+="-Wl,-rpath,./../MonaBase/lib/,-rpath,./../MonaCore/lib/,-rpath,/usr/local/lib/"
-LIBS ?=-pthread -lMonaBase -lMonaCore -lcrypto -lssl -ldl -lluajit-5.1
+# Variables with default values
+GPP?=g++
+EXEC?=MonaServer
 
+# Variables extendable
+CFLAGS+=-D_GLIBCXX_USE_C99 -std=c++11
+INCLUDES+=-I./../MonaBase/include/ -I./../MonaCore/include/
+LIBDIRS+=-L./../MonaBase/lib/ -L./../MonaCore/lib/
+LDFLAGS+="-Wl,-rpath,./../MonaBase/lib/,-rpath,./../MonaCore/lib/,-rpath,/usr/local/lib/"
+LIBS+=-pthread -lMonaBase -lMonaCore -lcrypto -lssl -ldl -lluajit-5.1
 ifeq ($(OS),Darwin)
 	LBITS := $(shell getconf LONG_BIT)
 	ifeq ($(LBITS),64)
 	   # just require for OSX 64 buts
-	LIBS +=  -pagezero_size 10000 -image_base 100000000
+		LIBS +=  -pagezero_size 10000 -image_base 100000000
 	endif
 endif
 
+# Variables fixed
 SOURCES = $(wildcard $(SRCDIR)*/*.cpp)
 OBJECT = $(SOURCES:sources/%.cpp=tmp/Release/%.o)
 OBJECTD = $(SOURCES:sources/%.cpp=tmp/Debug/%.o)
@@ -28,21 +30,21 @@ release:
 	mkdir -p tmp/Release/
 	@$(MAKE) -k $(OBJECT)
 	@echo creating executable $(EXEC)
-	@$(CC) $(CFLAGS) $(LDFLAGS) $(LIBDIR) -o $(EXEC) $(OBJECT) $(LIBS)
+	@$(GPP) $(CFLAGS) $(LDFLAGS) $(LIBDIRS) -o $(EXEC) $(OBJECT) $(LIBS)
 
 debug:	
 	mkdir -p tmp/Debug/
 	@$(MAKE) -k $(OBJECTD)
 	@echo creating debugging executable $(EXEC)
-	@$(CC) -g -D_DEBUG $(CFLAGS) $(LDFLAGS) $(LIBDIR) -o $(EXEC) $(OBJECTD) $(LIBS)
+	@$(GPP) -g -D_DEBUG $(CFLAGS) $(LDFLAGS) $(LIBDIRS) -o $(EXEC) $(OBJECTD) $(LIBS)
 
 $(OBJECT): tmp/Release/%.o: sources/%.cpp
 	@echo compiling $(@:tmp/Release/%.o=sources/%.cpp)
-	@$(CC) $(CFLAGS) $(INCLUDES) -c -o $(@) $(@:tmp/Release/%.o=sources/%.cpp)
+	@$(GPP) $(CFLAGS) $(INCLUDES) -c -o $(@) $(@:tmp/Release/%.o=sources/%.cpp)
 
 $(OBJECTD): tmp/Debug/%.o: sources/%.cpp
 	@echo compiling $(@:tmp/Debug/%.o=sources/%.cpp)
-	@$(CC) -g -D_DEBUG $(CFLAGS) $(INCLUDES) -c -o $(@) $(@:tmp/Debug/%.o=sources/%.cpp)
+	@$(GPP) -g -D_DEBUG $(CFLAGS) $(INCLUDES) -c -o $(@) $(@:tmp/Debug/%.o=sources/%.cpp)
 
 clean:
 	@echo cleaning project $(EXEC)

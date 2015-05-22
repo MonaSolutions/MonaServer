@@ -1,17 +1,19 @@
 OS := $(shell uname -s)
 
-CC=g++
+# Variables with default values
+GPP?=g++
+EXEC?=UnitTests
+
+# Variables extendable
 ifeq ($(OS), FreeBSD)
 	CFLAGS+=-D_GLIBCXX_USE_C99 -std=c++11
 else
 	CFLAGS+=-std=c++11
 endif
-EXEC=UnitTests
-INCLUDES=-I./../MonaBase/include/
-LIBDIR=-L./../MonaBase/lib/
+INCLUDES+=-I./../MonaBase/include/
+LIBDIRS+=-L./../MonaBase/lib/
 LDFLAGS+="-Wl,-rpath,./../MonaBase/lib/,-rpath,/usr/local/lib/"
-LIBS ?= -pthread -lMonaBase -lcrypto -lssl
-
+LIBS+=-pthread -lMonaBase -lcrypto -lssl
 ifeq ($(OS),Darwin)
 	LBITS := $(shell getconf LONG_BIT)
 	ifeq ($(LBITS),64)
@@ -20,6 +22,7 @@ ifeq ($(OS),Darwin)
 	endif
 endif
 
+# Variables fixed
 SOURCES = $(wildcard $(SRCDIR)*/*.cpp)
 OBJECT = $(SOURCES:sources/%.cpp=tmp/Release/%.o)
 OBJECTD = $(SOURCES:sources/%.cpp=tmp/Debug/%.o)
@@ -31,21 +34,21 @@ release:
 	mkdir -p tmp/Release/
 	@$(MAKE) -k $(OBJECT)
 	@echo creating executable $(EXEC)
-	@$(CC) $(CFLAGS) $(LDFLAGS) $(LIBDIR) -o $(EXEC) $(OBJECT) $(LIBS)
+	@$(GPP) $(CFLAGS) $(LDFLAGS) $(LIBDIRS) -o $(EXEC) $(OBJECT) $(LIBS)
 
 debug:	
 	mkdir -p tmp/Debug/
 	@$(MAKE) -k $(OBJECTD)
 	@echo creating debugging executable $(EXEC)
-	@$(CC) -g -D_DEBUG $(CFLAGS) $(LDFLAGS) $(LIBDIR) -o $(EXEC) $(OBJECTD) $(LIBS)
+	@$(GPP) -g -D_DEBUG $(CFLAGS) $(LDFLAGS) $(LIBDIRS) -o $(EXEC) $(OBJECTD) $(LIBS)
 
 $(OBJECT): tmp/Release/%.o: sources/%.cpp
 	@echo compiling $(@:tmp/Release/%.o=sources/%.cpp)
-	@$(CC) $(CFLAGS) $(INCLUDES) -c -o $(@) $(@:tmp/Release/%.o=sources/%.cpp)
+	@$(GPP) $(CFLAGS) $(INCLUDES) -c -o $(@) $(@:tmp/Release/%.o=sources/%.cpp)
 
 $(OBJECTD): tmp/Debug/%.o: sources/%.cpp
 	@echo compiling $(@:tmp/Debug/%.o=sources/%.cpp)
-	@$(CC) -g -D_DEBUG $(CFLAGS) $(INCLUDES) -c -o $(@) $(@:tmp/Debug/%.o=sources/%.cpp)
+	@$(GPP) -g -D_DEBUG $(CFLAGS) $(INCLUDES) -c -o $(@) $(@:tmp/Debug/%.o=sources/%.cpp)
 
 clean:
 	@echo cleaning project $(EXEC)
