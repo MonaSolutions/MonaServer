@@ -6,7 +6,7 @@ EXEC?=MonaServer
 
 # Variables extendable
 CFLAGS+=-D_GLIBCXX_USE_C99 -std=c++11
-INCLUDES+=-I./../MonaBase/include/ -I./../MonaCore/include/
+override INCLUDES+=-I./../MonaBase/include/ -I./../MonaCore/include/
 LIBDIRS+=-L./../MonaBase/lib/ -L./../MonaCore/lib/
 LDFLAGS+="-Wl,-rpath,./../MonaBase/lib/,-rpath,./../MonaCore/lib/,-rpath,/usr/local/lib/"
 LIBS+=-pthread -lMonaBase -lMonaCore -lcrypto -lssl -ldl -lluajit-5.1

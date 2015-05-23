@@ -9,7 +9,7 @@ ifeq ($(OS),FreeBSD)
 else
 	CFLAGS+=-std=c++11
 endif
-INCLUDES+=-I./../MonaBase/include/ -I./include/
+override INCLUDES+=-I./../MonaBase/include/ -I./include/
 LIBDIRS+=-L./../MonaBase/lib/
 LIBS+=-lMonaBase -lcrypto -lssl
 

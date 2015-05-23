@@ -9,7 +9,7 @@ ifeq ($(OS),FreeBSD)
 else
 	CFLAGS+=-std=c++11
 endif
-INCLUDES+=-I./include/
+override INCLUDES+=-I./include/
 LIBS+=-lcrypto -lssl
 
 # Variables fixed
@@ -40,7 +40,7 @@ debug:
 
 $(OBJECT): tmp/Release/%.o: sources/%.cpp
 	@echo compiling $(@:tmp/Release/%.o=sources/%.cpp)
-	@$(CC) $(CFLAGS) -fpic $(INCLUDES) -c -o $(@) $(@:tmp/Release/%.o=sources/%.cpp)
+	@$(GPP) $(CFLAGS) -fpic $(INCLUDES) -c -o $(@) $(@:tmp/Release/%.o=sources/%.cpp)
 
 $(OBJECTD): tmp/Debug/%.o: sources/%.cpp
 	@echo compiling $(@:tmp/Debug/%.o=sources/%.cpp)
