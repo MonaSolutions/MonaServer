@@ -494,8 +494,8 @@ methods
 
 - **writeProperties(properties)**, set publication properties (write metadata).
 - **clearProperties()**, clear publication properties (clear metadata).
-- **pushAudio(time,packet[,offset,lost])**, push audio data to this publication. First argument is the time in milliseconds of this audio sample in the stream, the second argument is the packet data. The third optional argument allows to give an offset beginning position on the packet given (0 by default), and the last optional argument is to indicate the number of lost packets gotten since the last call for this method (it's used by QualityOfService_ object).
-- **pushVideo(time,packet[,offset,lost])**, push video data to this publication. First argument is the time in milliseconds of this video frame in the stream, the second argument is the packet data. The third optional argument allows to give an offset beginning position on the packet given (0 by default), and the last optional argument is to indicate the number of lost packets gotten since the last call for this method (it's used by QualityOfService_ object).
+- **pushAudio(time,packet[,ping])**, push audio data to this publication. First argument is the time in milliseconds of this audio sample in the stream, the second argument is the packet data. And the last optional argument is to increment the latency counter (it's used by QualityOfService_ object).
+- **pushVideo(time,packet[,ping])**, push video data to this publication. First argument is the time in milliseconds of this video frame in the stream, the second argument is the packet data. And the last optional argument is to increment the latency counter (it's used by QualityOfService_ object).
 - **pushAMFData(...)**, push data to this publication. The arguments passed are serialized in AMF.
 - **pushAMF0Data(...)**, push data to this publication. The arguments passed are serialized in AMF0.
 - **pushXMLRPCData(...)**, push data to this publication. The arguments passed are serialized in XMLRPC.

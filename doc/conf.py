@@ -145,6 +145,9 @@ html_theme_options = {
     'bootstrap_version': "3",
 }
 
+# If true, the reST sources are included in the HTML build as _sources/name. The default is True.
+html_copy_source = False
+
 # Add any paths that contain custom themes here, relative to this directory.
 html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
 

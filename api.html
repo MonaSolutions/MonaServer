@@ -19,7 +19,7 @@
         VERSION:     '1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true
+        HAS_SOURCE:  false
       };
     </script>
     <script type="text/javascript" src="_static/jquery.js"></script>
@@ -460,7 +460,7 @@ Parameters should be used to perform REST functionnalities.</p>
 </div>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
-<p class="last">You can create your own events on client object to create RPC server methods. These methods will be accessible from client side. By default if you send data to server from client without given a method name, the method invoked is <em>client:onMessage</em>. See <em class="xref std std-ref">ref-com-server-apps</em> for more details.</p>
+<p class="last">You can create your own events on client object to create RPC server methods. These methods will be accessible from client side. By default if you send data to server from client without given a method name, the method invoked is <em>client:onMessage</em>. See <a class="reference internal" href="serverapp.html#ref-com-server-apps"><em>Communication between server applications</em></a> for more details.</p>
 </div>
 </div>
 </div>
@@ -634,8 +634,8 @@ Parameters should be used to perform REST functionnalities.</p>
 <ul class="simple">
 <li><strong>writeProperties(properties)</strong>, set publication properties (write metadata).</li>
 <li><strong>clearProperties()</strong>, clear publication properties (clear metadata).</li>
-<li><strong>pushAudio(time,packet[,offset,lost])</strong>, push audio data to this publication. First argument is the time in milliseconds of this audio sample in the stream, the second argument is the packet data. The third optional argument allows to give an offset beginning position on the packet given (0 by default), and the last optional argument is to indicate the number of lost packets gotten since the last call for this method (it&#8217;s used by <a class="reference internal" href="#qualityofservice">QualityOfService</a> object).</li>
-<li><strong>pushVideo(time,packet[,offset,lost])</strong>, push video data to this publication. First argument is the time in milliseconds of this video frame in the stream, the second argument is the packet data. The third optional argument allows to give an offset beginning position on the packet given (0 by default), and the last optional argument is to indicate the number of lost packets gotten since the last call for this method (it&#8217;s used by <a class="reference internal" href="#qualityofservice">QualityOfService</a> object).</li>
+<li><strong>pushAudio(time,packet[,ping])</strong>, push audio data to this publication. First argument is the time in milliseconds of this audio sample in the stream, the second argument is the packet data. And the last optional argument is to increment the latency counter (it&#8217;s used by <a class="reference internal" href="#qualityofservice">QualityOfService</a> object).</li>
+<li><strong>pushVideo(time,packet[,ping])</strong>, push video data to this publication. First argument is the time in milliseconds of this video frame in the stream, the second argument is the packet data. And the last optional argument is to increment the latency counter (it&#8217;s used by <a class="reference internal" href="#qualityofservice">QualityOfService</a> object).</li>
 <li><strong>pushAMFData(...)</strong>, push data to this publication. The arguments passed are serialized in AMF.</li>
 <li><strong>pushAMF0Data(...)</strong>, push data to this publication. The arguments passed are serialized in AMF0.</li>
 <li><strong>pushXMLRPCData(...)</strong>, push data to this publication. The arguments passed are serialized in XMLRPC.</li>
