@@ -27,10 +27,16 @@ using namespace Mona;
 
 
 
-LUAWriter::LUAWriter(lua_State* pState,Writer& writer):writer(writer),_pState(pState) {
+LUAWriter::LUAWriter(lua_State* pState,Writer& parentWriter):writer(parentWriter),_pState(pState) {
 	onClose = [this](Int32 code) {
 		this->writer.unsubscribe(onClose);
 		Clear(_pState, this->writer);
+		// Destruct the 2nd LUAWriter & detach the garbage collector
+		if(Script::FromObject(_pState,this->writer)) {
+			Script::DetachDestructor(_pState,-1);
+			lua_pop(_pState, 1);
+		}
+		Script::ClearObject<LUAWriter>(_pState, this->writer);
 		delete this; // delete LUAWriter instance!
 	};
 	writer.subscribe(onClose);

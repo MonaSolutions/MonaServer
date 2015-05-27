@@ -88,6 +88,7 @@
 				group.children.push(new RTMPTests(this, hostDefault, "RTMFP"));
 				group.children.push(new RTMPMetadata(this, hostDefault, "RTMFP", applicationDefault));
 				group.children.push(new NetStreamData(this, hostDefault, "RTMFP", applicationDefault));
+				group.children.push(new WriterDestruction(this, hostDefault, applicationDefault));
 				mapTests.push(group);
 				group = new Test(this, "Other", "List of other tests", true);
 				group.children.push(new DeserializationJSON(this, hostDefault, applicationDefault));

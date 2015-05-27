@@ -24,7 +24,7 @@ This file is a part of Mona.
 
 class LUAWriter {
 public:
-	LUAWriter(lua_State* pState,Mona::Writer& writer);
+	LUAWriter(lua_State* pState,Mona::Writer& parentWriter);
 	Mona::Writer&		writer;
 
 	static void Init(lua_State *pState, Mona::Writer& writer) {}

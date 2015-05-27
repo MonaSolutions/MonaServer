@@ -65,8 +65,7 @@ void LUAClient::Clear(lua_State* pState,Client& client){
 	Script::ClearCollectionParameters(pState,"properties",((Peer&)client).properties());
 	Script::ClearCollectionParameters(pState,"parameters",client.parameters());
 
-	Script::ClearObject<LUAWriter>(pState, ((Client&)client).writer());
-	Script::ClearObject<LUAQualityOfService>(pState, ((Client&)client).writer().qos());
+	Script::ClearObject<LUAWriter>(pState, client.writer());
 	Script::ClearObject<LUASocketAddress>(pState, client.address);
 }
 

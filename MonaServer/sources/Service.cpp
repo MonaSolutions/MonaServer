@@ -91,7 +91,7 @@ Service* Service::open(Exception& ex) {
 	if (_lastCheck.isElapsed(2000)) { // already checked there is less of 2 sec!
 		_lastCheck.update();
 		if (!watchFile() && !path.empty() && !FileSystem::Exists(filePath.parent())) // no path/main.lua file, no main service, no path folder
-			_ex.set(Exception::APPLICATION, "Applicaton ", path, " doesn't exist");
+			_ex.set(Exception::APPLICATION, "Application ", path, " doesn't exist");
 	}
 	
 	if (_ex) {
