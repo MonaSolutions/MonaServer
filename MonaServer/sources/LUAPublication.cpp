@@ -156,6 +156,8 @@ int LUAPublication::Get(lua_State *pState) {
 				SCRIPT_CALLBACK_FIX_INDEX
 			} else if(strcmp(name,"lastTime")==0) {
 				SCRIPT_WRITE_NUMBER(publication.lastTime()) // can change
+			} else if(strcmp(name,"droppedFrames")==0) {
+				SCRIPT_WRITE_NUMBER(publication.droppedFrames()) // can change
 			} else if(strcmp(name,"listeners")==0) {
 				Script::Collection(pState, 1, "listeners");
 				SCRIPT_CALLBACK_FIX_INDEX

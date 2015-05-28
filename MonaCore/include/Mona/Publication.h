@@ -56,6 +56,7 @@ public:
 
 	const Listeners			listeners;
 
+	UInt64					droppedFrames() const { return _droppedFrames; }
 	UInt32					lastTime() const { return _lastTime; }
 
 	const QualityOfService&	videoQOS() const { return _videoQOS; }
@@ -93,6 +94,9 @@ private:
 	AMFWriter							_propertiesWriter; // In AMF because a format is required and AMF is a good network compressed format
 	MapParameters						_properties;
 
+	bool								_broken;
+	UInt64								_droppedFrames;
+	
 	UInt32								_lastTime;
 	PoolBuffer							_audioCodecBuffer;
 	PoolBuffer							_videoCodecBuffer;

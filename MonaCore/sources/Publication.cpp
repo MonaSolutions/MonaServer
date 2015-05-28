@@ -31,7 +31,7 @@ using namespace std;
 
 namespace Mona {
 
-Publication::Publication(const string& name,const PoolBuffers& poolBuffers): _propertiesWriter(poolBuffers),_running(false),poolBuffers(poolBuffers),_audioCodecBuffer(poolBuffers),_videoCodecBuffer(poolBuffers),_new(false),_name(name),_lastTime(0),listeners(_listeners) {
+Publication::Publication(const string& name,const PoolBuffers& poolBuffers): _propertiesWriter(poolBuffers),_running(false),poolBuffers(poolBuffers),_audioCodecBuffer(poolBuffers),_videoCodecBuffer(poolBuffers),_new(false),_name(name),_lastTime(0),_broken(false),_droppedFrames(0),listeners(_listeners) {
 	DEBUG("New publication ",_name);
 }
 
@@ -175,11 +175,6 @@ void Publication::pushVideo(UInt32 time,PacketReader& packet, UInt16 ping, doubl
 	}
 
 	//  TRACE("Time Video ",time," => ",Util::FormatHex(packet.current(),16,LOG_BUFFER))
-	
-	_videoQOS.add(packet.available()+4,ping,lostRate); // 4 for time encoded
-	if(lostRate)
-		INFO((UInt8)(lostRate*100),"% video fragments lost on publication ",_name);
-
 
 	// save video codec packet for future listeners
 	if (MediaCodec::H264::IsCodecInfos(packet)) {
@@ -189,6 +184,20 @@ void Publication::pushVideo(UInt32 time,PacketReader& packet, UInt16 ping, doubl
 		memcpy(_videoCodecBuffer->data(), packet.current(), packet.available());
 	}
 
+	_videoQOS.add(packet.available()+4,ping,lostRate); // 4 for time encoded
+	if(lostRate) {
+		INFO((UInt8)(lostRate*100),"% video fragments lost on publication ",_name);
+		// here we are on a new frame which don't follow the previous,
+		// so I-Frame, P-Frame, P-Frame, ... sequence is broken
+		// we have to wait the next keyframe before to redistribute it to the listeners
+		_broken = true;
+	}
+	if(_broken) {
+		++_droppedFrames;
+		if (!MediaCodec::IsKeyFrame(packet))
+			return;
+		_broken = false;
+	}
 
 	_new = true;
 	UInt32 pos = packet.position();
