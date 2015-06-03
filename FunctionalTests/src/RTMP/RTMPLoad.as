@@ -1,4 +1,4 @@
-package
+package RTMP
 {
 	import flash.events.NetStatusEvent;
 	import flash.events.TimerEvent;

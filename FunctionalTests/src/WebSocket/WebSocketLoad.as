@@ -3,7 +3,7 @@
  * https://github.com/theturtle32/AS3WebSocket.git
  * 
  ***********************************************************************/
-package
+package WebSocket
 {
 	import com.worlize.websocket.WebSocket;
 	import com.worlize.websocket.WebSocketError;

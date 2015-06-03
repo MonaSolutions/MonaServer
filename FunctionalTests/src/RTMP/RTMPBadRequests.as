@@ -1,4 +1,4 @@
-package
+package RTMP
 {
 	import flash.events.Event;
 	import flash.events.IOErrorEvent;

@@ -5,12 +5,15 @@
 	</fx:Declarations>
 	<fx:Script>
 		<![CDATA[
-			import flash.utils.getTimer;
-			
 			import mx.collections.ArrayCollection;
 			import mx.controls.Alert;
 			import mx.core.FlexGlobals;
 			import mx.utils.URLUtil;
+			import RTMP.*;
+			import HTTP.*;
+			import RTMFP.*;
+			import WebSocket.WebSocketLoad; 
+			import Other.*;
 			
 			private var applicationDefault:String = "127.0.0.1/";
 			private var hostDefault:String = "/FunctionalTests/";
@@ -94,6 +97,7 @@
 				group.children.push(new DeserializationJSON(this, hostDefault, applicationDefault));
 				group.children.push(new DeserializationXMLRPC(this, hostDefault, applicationDefault));
 				group.children.push(new ParentFunctions(this, hostDefault, applicationDefault));
+				group.children.push(new Publications(this, hostDefault, applicationDefault));
 				mapTests.push(group);
 				
 				luaGroup = new Test(this, "LUA", "List of LUA server tests", true);

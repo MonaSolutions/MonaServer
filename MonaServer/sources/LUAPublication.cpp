@@ -33,8 +33,8 @@ using namespace Mona;
 void LUAPublication::AddListener(lua_State* pState, UInt8 indexPublication, UInt8 indexListener) {
 	// -1 must be the client table!
 	Script::Collection(pState, indexPublication, "listeners");
+	lua_pushvalue(pState, -2); // client table
 	lua_pushvalue(pState, indexListener);
-	lua_pushvalue(pState, -4); // client table
 	Script::FillCollection(pState, 1);
 	lua_pop(pState, 1);
 }

@@ -1,4 +1,4 @@
-package
+package HTTP
 {
 	import flash.events.Event;
 	import flash.events.IOErrorEvent;

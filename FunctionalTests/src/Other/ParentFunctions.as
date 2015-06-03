@@ -1,4 +1,4 @@
-package
+package Other
 {
 	import flash.events.NetStatusEvent;
 	import flash.events.TimerEvent;
