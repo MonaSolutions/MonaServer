@@ -588,11 +588,10 @@ Parameters should be used to perform REST functionnalities.</p>
 <div class="section" id="id15">
 <h4>properties<a class="headerlink" href="#id15" title="Permalink to this headline">¶</a></h4>
 <ul class="simple">
-<li><strong>byteRate</strong> (read-only), byte rate (bytes per second).</li>
 <li><strong>lostRate</strong> (read-only), value between 0 and 1 to indicate the lost data rate.</li>
-<li><strong>congestionRate</strong> (read-only), value between -1 and 1 to indicate the congestion data rate. When value is negative it means that byte rate could certainly be increased because there is available bandwith (<em>-0.5</em> means that a byte rate increased of 50% is certainly possible).</li>
-<li><strong>latency</strong> (read-only), delay in milliseconds between data sending and receiving .</li>
-<li><strong>droppedFrames</strong> (read-only), only available in a video stream, indicate number of frames removed by MonaServer to wait new key frame on lost data (on stream configured in a not reliable mode), or on new subscription when the publication is live-streaming.</li>
+<li><strong>byteRate</strong> (read-only), byte rate (bytes per second).</li>
+<li><strong>latency</strong> (read-only), delay in milliseconds between data sending and receiving.</li>
+<li><strong>lastSendingTime</strong> (read-only), last time a frame has been sent.</li>
 </ul>
 </div>
 </div>
@@ -607,7 +606,7 @@ Parameters should be used to perform REST functionnalities.</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
 <ul class="last simple">
-<li>You can use the <strong>ipairs()</strong> <a class="reference external" href="http://www.lua.org/">LUA</a> function to iterate on the list of <a class="reference internal" href="#publications">Publications</a>, keys are <em>publication.name</em> and values are <a class="reference internal" href="#publication">Publication</a> object.</li>
+<li>You can use the <strong>pairs()</strong> <a class="reference external" href="http://www.lua.org/">LUA</a> function to iterate on the list of <a class="reference internal" href="#publications">Publications</a>, keys are <em>publication.name</em> and values are <a class="reference internal" href="#publication">Publication</a> object.</li>
 <li>And the &#8220;#&#8221; operator to get the number of publications.</li>
 </ul>
 </div>
@@ -621,6 +620,7 @@ Parameters should be used to perform REST functionnalities.</p>
 <ul class="simple">
 <li><strong>name</strong> (read-only), name of the publication</li>
 <li><strong>lastTime</strong> (read-only), returns the last media time published.</li>
+<li><strong>droppedFrames</strong> (read-only), return the number of dropped video frames till the publication is alive. Frames are dropped when at least one fragment is lost.</li>
 <li><strong>listeners</strong> (read-only), <a class="reference internal" href="#listeners">Listeners</a> which have subscribed for this publication.</li>
 <li><strong>audioQOS</strong> (read-only), <a class="reference internal" href="#qualityofservice">QualityOfService</a> object about audio transfer for this publication.</li>
 <li><strong>videoQOS</strong> (read-only), <a class="reference internal" href="#qualityofservice">QualityOfService</a> object about video transfer for this publication.</li>
@@ -661,7 +661,7 @@ Parameters should be used to perform REST functionnalities.</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
 <ul class="last simple">
-<li>You can use the <strong>ipairs()</strong> <a class="reference external" href="http://www.lua.org/">LUA</a> function to iterate on the list of <a class="reference internal" href="#listener">Listener</a>.</li>
+<li>You can use the <strong>pairs()</strong> <a class="reference external" href="http://www.lua.org/">LUA</a> function to iterate on the list of <a class="reference internal" href="#listener">Listener</a>, keys are <a class="reference internal" href="#client">Client</a> objects and values are <a class="reference internal" href="#listener">Listener</a> objects.</li>
 <li>And the &#8220;#&#8221; operator to get the number of listeners.</li>
 </ul>
 </div>

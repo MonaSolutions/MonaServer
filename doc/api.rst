@@ -450,11 +450,10 @@ QualityOfService
 properties
 -----------------
 
-- **byteRate** (read-only), byte rate (bytes per second).
 - **lostRate** (read-only), value between 0 and 1 to indicate the lost data rate.
-- **congestionRate** (read-only), value between -1 and 1 to indicate the congestion data rate. When value is negative it means that byte rate could certainly be increased because there is available bandwith (*-0.5* means that a byte rate increased of 50% is certainly possible).
-- **latency** (read-only), delay in milliseconds between data sending and receiving .
-- **droppedFrames** (read-only), only available in a video stream, indicate number of frames removed by MonaServer to wait new key frame on lost data (on stream configured in a not reliable mode), or on new subscription when the publication is live-streaming.
+- **byteRate** (read-only), byte rate (bytes per second).
+- **latency** (read-only), delay in milliseconds between data sending and receiving.
+- **lastSendingTime** (read-only), last time a frame has been sent.
 
 Publications
 ====================
@@ -468,7 +467,7 @@ methods
 
 .. note:: 
   
-  - You can use the **ipairs()** LUA_ function to iterate on the list of Publications_, keys are *publication.name* and values are Publication_ object.
+  - You can use the **pairs()** LUA_ function to iterate on the list of Publications_, keys are *publication.name* and values are Publication_ object.
   - And the "#" operator to get the number of publications.
 
 
@@ -482,6 +481,7 @@ properties
 
 - **name** (read-only), name of the publication
 - **lastTime** (read-only), returns the last media time published.
+- **droppedFrames** (read-only), return the number of dropped video frames till the publication is alive. Frames are dropped when at least one fragment is lost.
 - **listeners** (read-only), Listeners_ which have subscribed for this publication.
 - **audioQOS** (read-only), QualityOfService_ object about audio transfer for this publication.
 - **videoQOS** (read-only), QualityOfService_ object about video transfer for this publication.
@@ -520,7 +520,7 @@ Listeners
 
 .. note:: 
   
-  - You can use the **ipairs()** LUA_ function to iterate on the list of Listener_.
+  - You can use the **pairs()** LUA_ function to iterate on the list of Listener_, keys are Client_ objects and values are Listener_ objects.
   - And the "#" operator to get the number of listeners.
 
 
