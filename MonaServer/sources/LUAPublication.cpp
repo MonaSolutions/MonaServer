@@ -40,10 +40,10 @@ void LUAPublication::AddListener(lua_State* pState, UInt8 indexPublication, UInt
 }
 
 void LUAPublication::RemoveListener(lua_State* pState, const Publication& publication) {
-	// -1 must be the listener table!
+	// -1 must be the client table!
 	if (Script::FromObject<Publication>(pState, publication)) {
 		Script::Collection(pState, -1, "listeners");
-		lua_pushvalue(pState, -3); // listener table
+		lua_pushvalue(pState, -3); // client table
 		lua_pushnil(pState);
 		Script::FillCollection(pState, 1);
 		lua_pop(pState, 2);

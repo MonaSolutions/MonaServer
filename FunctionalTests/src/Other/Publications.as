@@ -16,11 +16,13 @@ package Other
 		private var _listener1:NetStream = null;
 		private var _listener2:NetStream = null;
 		
-		private var _listenerCounter:int = 0;
+		private var _listenerCounter:int = 0;		// listener connection counter
 		private var _connectionCounter:int = 0;
+		private var _failedCounter:int = 0; 		// only for step 3
+		private var _step:int = 0; 					// 3 Steps : normal remove of listeners/onUnsubscribe function call/onSubscribe function call returning false
 	
 		public function Publications(app:FunctionalTests, host:String, url:String) {
-			super(app, "Publications", "Test publications and listeners attributes");
+			super(app, "Publications", "Test publications and listeners connections/disconnections");
 			_host=host;
 			_url=url;
 		}
@@ -29,14 +31,22 @@ package Other
 			
 			super.run(onFinished);
 			
-			// Step 1 : Connections
+			_listenerCounter = 0;
+			_connectionCounter = 0;
+			_failedCounter = 0;			
+			_step = 1;
+			initConnection("Publications/");
+		}
+		
+		// Step 1 : Connections
+		private function initConnection(publicationApp:String):void {
 			_connection1 = new NetConnection();
 			_connection1.addEventListener(NetStatusEvent.NET_STATUS, onStatus);
-			_connection1.connect("rtmfp://" + _host + _url + "Publications");
+			_connection1.connect("rtmfp://" + _host + _url + publicationApp);
 			
 			_connection2 = new NetConnection();
 			_connection2.addEventListener(NetStatusEvent.NET_STATUS, onStatus);
-			_connection2.connect("rtmfp://" + _host + _url + "Publications");
+			_connection2.connect("rtmfp://" + _host + _url + publicationApp);
 		}
 		
 		// Close all connections properly
@@ -54,10 +64,19 @@ package Other
 			_connection2.close();
 			_connection2 = null;
 			
+			_connectionCounter = 0;
+			_listenerCounter = 0;
+			
 			if (error.length > 0)
 				onResult( { err: error } );
-			else
-				onResult( { } );
+			else {
+				
+				_step++;
+				if (_step>3)
+					onResult( { } ); // finished!
+				else
+					initConnection((_step==2)? "Publications/OnUnsubscribe/" : "Publications/OnSubscribe/"); // next step
+			}
 		}
 		
 		public function onStatus(event:NetStatusEvent):void {
@@ -105,10 +124,26 @@ package Other
 			switch(event.info.code) {
 					case "NetStream.Play.Start":
 						_listenerCounter++;
-						// Step 4 : check variables
+						// Step 4 : check objects (2 listeners)
 						if (_listenerCounter == 2) {
-						 	_connection1.call("getPublications", new Responder(onPublications,terminateConnections));
+							_listenerCounter = 0;
+						 	_connection1.call("getPublications", new Responder(onPublications1,terminateConnections));
 						}
+						break;
+					case "NetStream.Play.Stop":
+						_listenerCounter++;
+						// Step 6 : check objects (0 listeners)
+						if (_listenerCounter == 2) {
+						 	_connection1.call("getPublications", new Responder(onPublications2,terminateConnections));
+						}
+						break;
+					case "NetStream.Play.Failed":
+						if (_step == 3) {
+							_failedCounter++;
+							if (_failedCounter==2)
+								terminateConnections("");
+						} else
+							terminateConnections(event.info.code);
 						break;
 				default:
 					break;
@@ -116,22 +151,37 @@ package Other
 		}
 		
 		// Callback functions
-		private function onPublications(result:Object):void {
+		private function onPublications1(result:Object):void {
 			
 			if (result.publications.length == 1 && result.publications[0] == "publication") {
 				
 				if (result.listeners.length == 2) {
 					if ((result.listeners[0] == _connection1.nearID && result.listeners[1] == _connection2.nearID) ||
-						(result.listeners[0] == _connection2.nearID && result.listeners[1] == _connection1.nearID))
-						terminateConnections("");
-					else
-						terminateConnections("Error in getPublications, incorrect list of listeners");
+						(result.listeners[0] == _connection2.nearID && result.listeners[1] == _connection1.nearID)) {
+						// Step 5 : disconnect listeners
+						_listener1.close();
+						_listener2.close();
+					} else
+						terminateConnections("Error in getPublications1, incorrect list of listeners");
 					
 				} else 
-					terminateConnections("Error in getPublications, incorrect number of listeners : "+result.listeners.length);
+					terminateConnections("Error in getPublications1, incorrect number of listeners : "+result.listeners.length);
 			}
 			else
-				terminateConnections("Error in getPublications, incorrect list of publications : "+result.publications.length);
+				terminateConnections("Error in getPublications1, incorrect list of publications : "+result.publications.length);
+		}
+		
+		
+		private function onPublications2(result:Object):void {
+			
+			if (result.publications.length == 1 && result.publications[0] == "publication") {
+				if (result.listeners.length == 0)
+					terminateConnections("");
+				else 
+					terminateConnections("Error in getPublications2, incorrect number of listeners : "+result.listeners.length);
+			}
+			else
+				terminateConnections("Error in getPublications2, incorrect list of publications : "+result.publications.length);
 		}
 	}
 }

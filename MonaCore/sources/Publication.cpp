@@ -63,7 +63,7 @@ Listener* Publication::addListener(Exception& ex, Client& client,Writer& writer,
 		return pListener;
 	}
 	if(!ex)
-		WARN(ex.set(Exception::APPLICATION,"Not authorized to play ",_name));
+		WARN(ex.set(Exception::APPLICATION,"Not authorized to play ",_name).error());
 	delete pListener;
 	return NULL;
 }

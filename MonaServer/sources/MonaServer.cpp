@@ -744,10 +744,13 @@ bool MonaServer::onSubscribe(Exception& ex, Client& client,const Listener& liste
 		SCRIPT_FUNCTION_END
 	SCRIPT_END
 	if (!result) {
-		LUAPublication::RemoveListener(_pState, listener.publication);
-		Script::ClearObject<LUAListener>(_pState, listener);
-		if (!listener.publication.running() && listener.publication.listeners.count() == 0)
-			Script::ClearObject<LUAPublication>(_pState, listener.publication);
+		if (Script::FromObject<Client>(_pState, client)) {
+			LUAPublication::RemoveListener(_pState, listener.publication);
+			Script::ClearObject<LUAListener>(_pState, listener);
+			if (!listener.publication.running() && listener.publication.listeners.count() == 0)
+				Script::ClearObject<LUAPublication>(_pState, listener.publication);
+			lua_pop(_pState, 1);
+		}
 	} else if (!done && Script::FromObject<Client>(_pState, client)) {
 		LUAPublication::AddListener(_pState, 2, 1);
 		lua_pop(_pState, 1);
@@ -760,7 +763,6 @@ void MonaServer::onUnsubscribe(Client& client,const Listener& listener) {
 	bool done(false);
 	SCRIPT_BEGIN(_pState)
 		SCRIPT_MEMBER_FUNCTION_BEGIN(Client, client,"onUnsubscribe")
-			Script::AddObject<LUAListener>(_pState, listener);
 			LUAPublication::RemoveListener(_pState, listener.publication);
 			done = true;
 			SCRIPT_FUNCTION_CALL
@@ -769,7 +771,7 @@ void MonaServer::onUnsubscribe(Client& client,const Listener& listener) {
 
 	if (!listener.publication.running() && listener.publication.listeners.count() == 0)
 		Script::ClearObject<LUAPublication>(_pState, listener.publication);
-	else if (!done && Script::FromObject<Listener>(_pState, listener)) {
+	else if (!done && Script::FromObject<Client>(_pState, client)) {
 		LUAPublication::RemoveListener(_pState, listener.publication);
 		lua_pop(_pState, 1);
 	}
