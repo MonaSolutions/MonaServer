@@ -6,6 +6,7 @@ package HTTP
 	import flash.events.TimerEvent;
 	import flash.net.Socket;
 	import flash.system.Security;
+	import flash.utils.ByteArray;
 	import flash.utils.Timer;
 	
 	import mx.controls.Alert;
@@ -16,8 +17,12 @@ package HTTP
 		private var _sock:Socket = null;
 		private var _counter:int = 0;
 		
+		private var _step:int = 0;		// 2 Steps : send "TESTBDADREQUESTS", then send "\x20\x0A\x00\xFF\x0A"
+		
+		private var _bytes:ByteArray = null;
+		
 		public function HTTPBadRequests(app:FunctionalTests,host:String) {
-			super(app, "HTTPBadRequests", "Send 10 bad HTTP requests");
+			super(app, "HTTPBadRequests", "Send 20 bad HTTP requests");
 			_host = host;
 		}
 		
@@ -31,9 +36,17 @@ package HTTP
 			_sock.addEventListener(IOErrorEvent.IO_ERROR, onEvent);
 			_sock.addEventListener(SecurityErrorEvent.SECURITY_ERROR, onEvent);
 			
+			// ByteArray construction
+			_bytes = new ByteArray();
+			var bytes:Array = [int("0x20"), int("0x0A"), 0, int("0xFF"), int("0x0A")];
+			for (var i:int = 0; i < bytes.length; i++) {
+				_bytes.writeByte(bytes[i]);
+			}
+			
 			_sock.timeout = 1000; // timeout of 1s
 			_sock.connect(_host, 80);
 			_counter = 0;
+			_step = 0;
 		}
 		
 		private function reconnect(evt:TimerEvent):void {
@@ -44,16 +57,24 @@ package HTTP
 			
 			switch(evt.type) {
 				case Event.CONNECT :
-					_sock.writeUTFBytes("TESTBADREQUESTS");
+					if (_step==0)
+						_sock.writeUTFBytes("TESTBADREQUESTS");
+					else
+						_sock.writeBytes(_bytes);
 					break;
 				case Event.CLOSE :
 					_counter++;
-					if (_counter < 10) {
-						var myTimer:Timer = new Timer(100, 1); // 0.5 second
-						myTimer.addEventListener(TimerEvent.TIMER, reconnect);
-						myTimer.start();
-					} else
-						onResult({}); // End of tests!
+					if (_counter >= 10) {
+						_counter = 0;
+						if (_step==1) {
+							onResult( { } ); // End of tests!
+							return;
+						}
+						_step++;
+					}
+					var myTimer:Timer = new Timer(100, 1); // 0.5 second
+					myTimer.addEventListener(TimerEvent.TIMER, reconnect);
+					myTimer.start();
 					break;
 				default:
 					onResult({err:evt.toString()});

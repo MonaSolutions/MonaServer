@@ -143,8 +143,11 @@ UInt32 HTTPPacket::build(Exception& ex,UInt8* data,UInt32 size) {
 
 		if ((step == LEFT || step == CMD || step == PATH) && (isspace(byte) || byte==0)) {
 			if (step == CMD) {
+				if(!signifiant) // Space before signifiant
+					ex.set(Exception::PROTOCOL,"Unexpected space before command");
+
 				// by default command == GET
-				if ((command = HTTP::ParseCommand(ex, signifiant)) == HTTP::COMMAND_UNKNOWN) {
+				if (!signifiant || (command = HTTP::ParseCommand(ex, signifiant)) == HTTP::COMMAND_UNKNOWN) {
 					exception.set(ex);
 					continue;
 				}
