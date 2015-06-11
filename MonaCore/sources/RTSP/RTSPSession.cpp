@@ -108,6 +108,9 @@ void RTSPSession::receive(const shared_ptr<RTSPPacket>& pPacket) {
 			case RTSP::COMMAND_PLAY:
 				processPlay(ex, pPacket);
 				break;
+			default:
+				WARN("Unhandled command type : ", pPacket->command)
+				break;
 		}
 	}
 

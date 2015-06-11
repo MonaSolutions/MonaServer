@@ -20,7 +20,6 @@ This file is a part of Mona.
 
 #include "Mona/TerminateSignal.h"
 #if !defined(_WIN32)
-	#include <signal.h>
 	#include <unistd.h>
 #else
 	#include <Windows.h>

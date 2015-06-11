@@ -53,7 +53,7 @@ UInt32 RTSPPacket::build(Exception& ex,UInt8* data,UInt32 size) {
 
 	// headers
 
-	for (current; current <= end;++current) {
+	for (; current <= end;++current) {
 
 		if (memcmp(current, EXPAND("\r\n")) == 0 || memcmp(current, EXPAND("\0\n")) == 0) {
 

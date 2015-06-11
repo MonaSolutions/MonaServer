@@ -610,7 +610,7 @@ bool MonaServer::onMessage(Exception& ex, Client& client,const string& name,Data
 			if(SCRIPT_FUNCTION_ERROR)
 				ex.set(Exception::SOFTWARE,SCRIPT_FUNCTION_ERROR);
 			else if (SCRIPT_READ_AVAILABLE)
-				SCRIPT_READ_NEXT(ScriptReader(_pState, SCRIPT_READ_NEXT(SCRIPT_READ_AVAILABLE)).read(client.writer().writeResponse(responseType)));
+				SCRIPT_READ_NEXT(ScriptReader(_pState, SCRIPT_READ_AVAILABLE).read(client.writer().writeResponse(responseType)));
 		SCRIPT_FUNCTION_END
 		
 	SCRIPT_END

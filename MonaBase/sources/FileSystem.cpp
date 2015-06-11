@@ -496,8 +496,10 @@ bool FileSystem::GetCurrentApplication(string& path) {
 	result.resize(n);
 #else
 	result.resize(130);
-		// read the link target into variable linkTarget
-	size_t n(130);
+	
+	// read the link target into variable linkTarget
+	ssize_t n(130); 
+
 	while(n>=result.size()) {
 		result.resize(result.size()*2);
 		if((n = readlink("/proc/self/exe", &result[0], result.size()))<=0)

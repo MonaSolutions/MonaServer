@@ -21,6 +21,9 @@ This file is a part of Mona.
 
 #include "Mona/Mona.h"
 #include "Mona/Signal.h"
+#if !defined(_WIN32)
+  #include <signal.h>
+#endif
 
 namespace Mona {
 

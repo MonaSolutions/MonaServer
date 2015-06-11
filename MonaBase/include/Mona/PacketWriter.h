@@ -25,7 +25,7 @@ This file is a part of Mona.
 
 namespace Mona {
 
-class PacketWriter: public BinaryWriter, virtual NullableObject {
+class PacketWriter: public BinaryWriter, public virtual NullableObject {
 public:
 	PacketWriter(Buffer& buffer) : _buffer(buffer),BinaryWriter(NULL,0) {}
 	PacketWriter(const PoolBuffers& poolBuffers) : _ppBuffer(new PoolBuffer(poolBuffers)),BinaryWriter(NULL,0),_buffer(Buffer::Null) {}

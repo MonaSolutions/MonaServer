@@ -84,7 +84,7 @@ namespace Mona {
 #define HTTP_CODE_415	"Unsupported Media Type"
 #define HTTP_CODE_416	"Requested range unsatisfiable"
 #define HTTP_CODE_417	"Expectation failed"
-#define HTTP_CODE_418	"I’m a teapot"
+#define HTTP_CODE_418	"I'm a teapot"
 #define HTTP_CODE_422	"Unprocessable entity"
 #define HTTP_CODE_423	"Locked"
 #define HTTP_CODE_424	"Method failure"

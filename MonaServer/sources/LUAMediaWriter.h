@@ -42,9 +42,9 @@ public:
 	static void	Clear(lua_State* pState, LUAMediaWriter& writer) {}
 	static void	Delete(lua_State* pState, LUAMediaWriter& writer) {}
 
-private:
 	virtual ~LUAMediaWriter() {}
 
+private:
 	static int	Write(lua_State* pState);
 	
 	std::unique_ptr<MediaContainer>		_pMedia;

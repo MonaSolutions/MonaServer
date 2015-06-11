@@ -425,8 +425,8 @@ void SocketManager::run(Exception& exThread) {
         }
         
         // for each ready socket
-        int i=0;
-        for(i;i<results;++i) {
+	int i=0;
+        for(;i<results;++i) {
             struct kevent& event = events[i];
             
             if(event.ident==readFD) {

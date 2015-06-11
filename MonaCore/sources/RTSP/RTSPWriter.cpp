@@ -90,6 +90,8 @@ void RTSPWriter::close(const Exception& ex) {
 		case Exception::APPLICATION:
 			code = 406;
 			break;
+		default:
+			break;
 	}
 	_lastError.assign(ex.error());
 	close(code);
