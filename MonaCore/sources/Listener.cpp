@@ -173,7 +173,7 @@ void Listener::pushVideo(UInt32 time,PacketReader& packet) {
 				INFO("H264 codec infos sent to one listener of ", publication.name(), " publication")
 				pushVideo(time, videoCodecPacket);
 			}
-		} else if (_firstTime) {
+		} else {
 			DEBUG("Video frame dropped to wait first key frame");
 			return;
 		}
