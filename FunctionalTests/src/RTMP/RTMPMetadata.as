@@ -45,11 +45,17 @@ package RTMP
 			_connection3 = new NetConnection();
 			_connection3.addEventListener(NetStatusEvent.NET_STATUS, onStatus);
 			_connection3.connect(_protocol.toLocaleLowerCase() + "://" + _host + _url);
+			_step = 0;
 		}
 		
 		// Close all connections properly
 		private function terminateConnections(error:String):void {
 			
+			if (_out) {
+				_out.removeEventListener(NetStatusEvent.NET_STATUS, onStatusOut);
+				_out.close();
+				_out = null;
+			}
 			if (_in1) {
 				_in1.removeEventListener(NetStatusEvent.NET_STATUS, onStatusIn);
 				_in1.removeEventListener(AsyncErrorEvent.ASYNC_ERROR, onStatusIn);
@@ -67,11 +73,6 @@ package RTMP
 				_in3.removeEventListener(AsyncErrorEvent.ASYNC_ERROR, onStatusIn);
 				_in3.close();
 				_in3 = null;
-			}
-			if (_out) {
-				_out.removeEventListener(NetStatusEvent.NET_STATUS, onStatusOut);
-				_out.close();
-				_out = null;
 			}
 			_connection1.removeEventListener(NetStatusEvent.NET_STATUS, onStatus);
 			_connection1.close();

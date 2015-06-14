@@ -5,8 +5,11 @@
 	</fx:Declarations>
 	<fx:Script>
 		<![CDATA[
+			import flash.media.Video;
 			import mx.collections.ArrayCollection;
 			import mx.controls.Alert;
+			import mx.controls.Button;
+			import mx.controls.VideoDisplay;
 			import mx.core.FlexGlobals;
 			import mx.utils.URLUtil;
 			import RTMP.*;
@@ -25,10 +28,29 @@
 			
 			private var _conn:NetConnection = null; // Connection to Mona for getting list of lua tests
 			
+			private var _videoContainer:VideoDisplay;
+			
 			// Console functions
 			public function INFO(message:String):void { console.htmlText += "<p><font color='#000000'>" + message + "</font></p>"; }
 			public function SUCCESS(message:String):void { console.htmlText += "<p><b><font color='#00CC00'>" + message + "</font></b></p>"; }
 			public function ERROR(message:String):void { console.htmlText += "<p><b><i><font color='#CC0000'>ERROR : " + message + "</font></i></b></p>"; }
+			
+			public function showVideo(video:Video):void {
+				_videoContainer = new VideoDisplay();
+				_videoContainer.addChild(video);
+				_videoContainer.width = video.width;
+				_videoContainer.height = video.height;
+				_videoContainer.x = console.width / 2;
+				_videoContainer.y = console.height / 2;
+				addChild(_videoContainer);
+			}
+			
+			public function closeVideo():void {
+				if (_videoContainer) {
+					removeChild(_videoContainer);
+					_videoContainer = null;
+				}
+			}
 			
 			private function init():void {
 				
@@ -85,6 +107,7 @@
 				group.children.push(new RTMPTests(this, hostDefault, "RTMP"));
 				group.children.push(new RTMPMetadata(this, hostDefault, "RTMP", applicationDefault));
 				group.children.push(new NetStreamData(this, hostDefault, "RTMP", applicationDefault));
+				group.children.push(new RTMPMedia(this, hostDefault, "RTMP", applicationDefault));
 				mapTests.push(group);
 				group = new Test(this, "RTMFP", "List of RTMFP tests", true);
 				group.children.push(new RTMFPLoad(this, hostDefault, applicationDefault));
@@ -92,6 +115,7 @@
 				group.children.push(new RTMPMetadata(this, hostDefault, "RTMFP", applicationDefault));
 				group.children.push(new NetStreamData(this, hostDefault, "RTMFP", applicationDefault));
 				group.children.push(new WriterDestruction(this, hostDefault, applicationDefault));
+				group.children.push(new RTMPMedia(this, hostDefault, "RTMFP", applicationDefault));
 				mapTests.push(group);
 				group = new Test(this, "Other", "List of other tests", true);
 				group.children.push(new DeserializationJSON(this, hostDefault, applicationDefault));
