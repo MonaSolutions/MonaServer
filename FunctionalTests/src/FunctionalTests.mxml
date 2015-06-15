@@ -95,6 +95,7 @@
 				group.children.push(new BigDeserialize(this, hostDefault, applicationDefault));
 				group.children.push(new Cookies(this, hostDefault, applicationDefault));
 				group.children.push(new HTTPIndex(this, hostDefault, applicationDefault));
+				group.children.push(new Query(this, hostDefault, applicationDefault));
 				mapTests.push(group);
 				group = new Test(this, "WebSocket", "List of WebSocket tests", true);
 				group.children.push(new WebSocketLoad(this, hostDefault, applicationDefault));

@@ -166,7 +166,7 @@ UInt32 HTTPPacket::build(Exception& ex,UInt8* data,UInt32 size) {
 				step = VERSION;
 			} else
 				++signifiant; // for trim begin of key or value
-		} else if (step != CMD && !key && (byte == ':' || byte == 0)) {
+		} else if (step > VERSION && !key && (byte == ':' || byte == 0)) {
 			// KEY
 			key = signifiant;
 			step = LEFT;
