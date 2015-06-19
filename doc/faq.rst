@@ -142,9 +142,27 @@ First take a look at our :doc:`Main page <index>` which describe briefly the sco
 - Dynamic web applications communicating over any of our protocols (WebSocket, RTMFP, RTMP or HTTP),
 - Etc... Everything is possible as MonaServer is fast, scalable and oriented for web applications.
 
+What are the differences between CumulusServer and MonaServer?
+==========================================================================
+
+Cumulus_ is made obsolete by **MonaServer** because they are too much differences to maintain the two repositories.
+
+Here is a list of main features added in **MonaServer** :
+
+- No more Poco dependency resulting in a lightweight project,
+- A complete C++11 framework for implementing new protocols,
+- New protocols like RTMP/RTMPE, HTTP, Websocket and RTSP (this one is in beta version),
+- Any RPC function is accessible by each protocol,
+- Many bug fixes,
+- A best architecture and optimized performances,
+- A :doc:`NoSQL cache system <database>` for persistence of data,
+
+And we expect to add more features in the future but it depends on your investments.
+
 .. _`Cirrus Sample Application`: http://labs.adobe.com/technologies/cirrus/samples/
 .. _Haxball : http://www.haxball.com
 .. _OBS : https://obsproject.com
 .. _`OBS Guide` : https://obsproject.com/forum/resources/how-to-set-up-your-own-private-rtmfp-server-using-monaserver.153/
 .. _`rpi-gpio` : https://github.com/Tieske/rpi-gpio/tree/master/lua
 .. _`Configure the HTTP port` : http://www.monaserver.ovh/installation.html#http
+.. _Cumulus : https://github.com/OpenRTMFP/Cumulus/

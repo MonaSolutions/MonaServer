@@ -1,5 +1,5 @@
 
-The NoSQL Database System
+The NoSQL Cache System
 ##############################
 
 MonaServer provides you with the ability to save data in a **NoSQL** way.
@@ -78,6 +78,6 @@ And respectively you can access to parents's data using the keyword **super** :
 
 .. note::
 
-    The entire database is readed at MonaServer's start.
+    The entire database is readed at MonaServer's start so you must take care of memory limits.
 
 .. _LUA: http://www.lua.org/
