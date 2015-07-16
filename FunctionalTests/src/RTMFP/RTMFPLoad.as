@@ -27,8 +27,6 @@ package RTMFP
 			
 			super.run(onFinished);
 			
-			// Prepare POST request
-			
 			_countSuccess = 0;
 			
 			for(var i:uint;i<NB_LOAD_TESTS;++i) {

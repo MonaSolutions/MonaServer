@@ -491,11 +491,11 @@ void RTMFPSession::receive(const SocketAddress& address, BinaryReader& packet) {
 						for (auto& it : _flowWriters)
 							it.second->clear();
 					}
-					fail(); // If connection fails, log is already displayed, and so fail the whole session!
-				} else {
-					_flows.erase(pFlow->id);
-					delete pFlow;
+					// TODO: commented because it replace other events (NetConnection.Connect.Rejected)
+					// fail(); // If connection fails, log is already displayed, and so fail the whole session!
 				}
+				_flows.erase(pFlow->id);
+				delete pFlow;
 			}
 			pFlow=NULL;
 		}

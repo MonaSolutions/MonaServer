@@ -24,7 +24,7 @@ package HTTP
 			
 			// Prepare POST request
 			_http = new HTTPService();
-			_http.url = "http://" + _host + _url + "onMessage?longquery://test;:/éù%*$^/fin=value~";
+			_http.url = "http://" + _host + _url + "onMessage?longquery://test;:/one%*$^/fin=value~";
 			_http.resultFormat = "text";
 			_http.method = "GET";
 			_http.contentType = "application/json";
@@ -43,10 +43,10 @@ package HTTP
 					
 					var result:String = String(ResultEvent(event).result);
 					
-					if (result=="[{\"longquery://test;:/é%F9%*$^/fin\":\"value~\"}]")
+					if (result=="[{\"longquery://test;:/one%*$^/fin\":\"value~\"}]")
 						onResult({});
 					else
-						onResult({err:"Result is different from message!"});
+						onResult({err:"Result ( "+result+" ) is different from message!"});
 					break;
 				case FaultEvent.FAULT:
 					onResult({err:FaultEvent(event).fault.faultString});
