@@ -118,6 +118,7 @@
 				group.children.push(new WriterDestruction(this, hostDefault, applicationDefault));
 				group.children.push(new RTMPMedia(this, hostDefault, "RTMFP", applicationDefault));
 				group.children.push(new ConnectionRejected(this, hostDefault, applicationDefault));
+				group.children.push(new RTMFPLongQuery(this, hostDefault, applicationDefault));
 				mapTests.push(group);
 				group = new Test(this, "Other", "List of other tests", true);
 				group.children.push(new DeserializationJSON(this, hostDefault, applicationDefault));

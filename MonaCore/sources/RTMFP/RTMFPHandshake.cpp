@@ -136,8 +136,13 @@ UInt8 RTMFPHandshake::handshakeHandler(UInt8 id,const SocketAddress& address, Bi
 	switch(id){
 		case 0x30: {
 			
-			request.next(1);
-			UInt8 epdLen = request.read8()-1;
+			UInt8 padding = request.read8(); 
+			UInt16 epdLen(0);
+			if (padding>0x80) { // Size on 2 bytes (TODO: size is always written 2 times, see if we need to check the both)
+				epdLen = 0x80 * (padding&0x0F);
+				request.next(2);
+			}
+			epdLen += request.read8()-1;
 
 			UInt8 type = request.read8();
 
