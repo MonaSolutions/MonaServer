@@ -307,6 +307,10 @@ string& FileSystem::MakeFile(string& path) {
 
 	while (size>0 && (path.back() == '\\' || path.back() == '/'))
 		path.resize(--size);
+
+	if (size > 0 && path.back() == '.')
+		MakeFile(path);
+
 	return path;
 }
 
