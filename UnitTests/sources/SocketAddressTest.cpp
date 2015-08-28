@@ -56,8 +56,8 @@ ADD_TEST(SocketAddressTest, Behavior) {
 
 	ex.set(Exception::NIL, "");
 
-	DEBUG_CHECK(sa.setWithDNS(ex,"www.appinf.com", 80)); // TODO see if we keep this address
-	DEBUG_CHECK(sa.host().toString() == "50.57.108.29");
+	DEBUG_CHECK(sa.setWithDNS(ex,"localhost", 80)); // TODO see if we keep this address
+	DEBUG_CHECK(sa.host().toString() == "127.0.0.1");
 	DEBUG_CHECK(sa.port() == 80);
 	DEBUG_CHECK(!ex);
 

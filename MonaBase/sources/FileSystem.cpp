@@ -251,7 +251,8 @@ UInt32 FileSystem::GetSize(Exception& ex,const char* path) {
 	if (Stat(MakeFile(file).c_str(), status) != 0 || status.st_mode&S_IFDIR) {
 		ex.set(Exception::FILE, "File ", path, " doesn't exist");
 		return 0;
-	} else if (oldSize>file.size()) { // if was a folder
+	}
+	if (oldSize>file.size()) { // if was a folder
 		ex.set(Exception::FILE, "GetSize works just on file, and ", path, " is a folder");
 		return 0;
 	}
@@ -291,17 +292,37 @@ string& FileSystem::GetExtension(string& path) {
 
 string& FileSystem::MakeFile(string& path) {
 	size_t size = path.size();
+
+	// "/." => "/"
+	// "." => ""
+	// "/path/.." => "/"
+	// "/.." => "/"
+	if (size>0 && path.back() == '.') {
+		path.resize(--size);
+		if (size>0 && path.back() == '.') {
+			path.resize(--size);
+			size = GetParent(path).size();
+		}
+	}
+
 	while (size>0 && (path.back() == '\\' || path.back() == '/'))
 		path.resize(--size);
 	return path;
 }
 
 string& FileSystem::GetParent(string& path) {
+	// "/path/file" => "/path/"
+	// "/path/" => "/"
+	// "/file" => "/"
+	// "file" => "."
+	// "path/" => "."
+	// "/" => ".."
+	// "" => ".."
 	auto separator = MakeFile(path).find_last_of("/\\");
 	if (separator != string::npos)
 		path.erase(separator+1); // keep the "/" (= folder!)
 	else
-		path.assign(".");
+		path.assign(path.empty() ? ".." : ".");
 	return path;
 }
 

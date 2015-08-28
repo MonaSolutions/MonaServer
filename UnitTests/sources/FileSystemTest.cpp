@@ -39,6 +39,12 @@ ADD_TEST(FileSystemTest, Static) {
 }
 
 ADD_TEST(FileSystemTest, Resolution) {
+	Path.assign("/path/sub/..");
+	CHECK(FileSystem::GetParent(Path) == "/");
+	Path.assign("/..");
+	CHECK(FileSystem::GetParent(Path) == ".");
+
+
 	Path.assign(Home);
 	Path.append(".MonaFileSystemTest");
 

@@ -155,11 +155,11 @@ size_t Util::UnpackUrl(const char* url, string& address, string& path, string& q
 	const char* it = url;
 
 	bool isFile(true);
-	size_t lastPos = 0; /// Position of last '/' in path
+	vector<size_t> slashs;
 
 	// Get address
 	while (*it) {
-		if (*it == '/' || *it == '\\') { // no address, just 
+		if (*it == '/' || *it == '\\') { // no address, just path
 			isFile = false;
 			break;
 		}
@@ -183,8 +183,8 @@ size_t Util::UnpackUrl(const char* url, string& address, string& path, string& q
 
 	// Normalize path if was not starting with a first slash
 	if (it != url) {
+		slashs.emplace_back(0);
 		path.assign("/").append(url, it - url);
-		++lastPos;
 	}
 
 	// Normalize path => replace // by / and \ by / AND remove the last '/'
@@ -200,30 +200,48 @@ size_t Util::UnpackUrl(const char* url, string& address, string& path, string& q
 		// Add slash
         if (*it == '/' || *it == '\\') {
             ++it;
-            while (*it && (*it == '/' || *it == '\\'))
-                ++it;
+           while (*it == '/' || *it == '\\')
+               ++it;
 			isFile = false;
-			if (*it) {
-				path += '/'; // We don't add the last slash
-				lastPos = path.size();
+
+			if (*it == '.') {
+				++it;
+				if (*it == '.') {
+					// ..
+					if (slashs.empty()) {
+						path.clear();
+					} else {
+						path.resize(slashs.back());
+						slashs.pop_back();
+					}	
+					while (*it == '.')
+						++it;
+					continue;
+				}
+				while (*it == '/' || *it == '\\')
+					++it;
 			}
-		} 
-		// Add current character
-		else {
-			if (*it == '+')
-				path += ' ';
-			else if (*it == '%') {
-				DecodeURI(it, path);
-				if (*it)
-					path += *it;
-			} else
-				path += *it;
-			++it;
-			if (!isFile)
-				isFile = true;
+
+			if (*it) {
+				slashs.emplace_back(path.size());
+				path += '/'; // We don't add the last slash
+			}
+			continue;
 		}
+		// Add current character
+		if (*it == '+')
+			path += ' ';
+		else if (*it == '%') {
+			DecodeURI(it, path);
+			if (*it)
+				path += *it;
+		} else
+			path += *it;
+		++it;
+		if (!isFile)
+			isFile = true;
 	}
-	return isFile ? lastPos : string::npos;
+	return isFile ? (slashs.back()+1) : string::npos;
 }
 
 Parameters& Util::UnpackQuery(const char* query, size_t count, Parameters& parameters) {

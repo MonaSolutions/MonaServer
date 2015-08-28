@@ -22,7 +22,7 @@ This file is a part of Mona.
 #include "Mona/Mona.h"
 #include "Mona/Buffer.h"
 #include "Mona/Time.h"
-#include <deque>
+#include <map>
 #include <mutex>
 
 namespace Mona {
@@ -30,21 +30,21 @@ namespace Mona {
 class PoolBuffers : public virtual Object {
 	friend class PoolBuffer;
 public:
-	PoolBuffers(UInt32 maximumCapacity = 131072);
-	virtual ~PoolBuffers();
+	PoolBuffers() {}
+	virtual ~PoolBuffers() { clear(); }
 
-	void clear() { clear(false); }
+	void   manage();
+	UInt32 available() const { return _buffers.size(); }
+	void   clear();
 
 private:
-	void		clear(bool deleting);
 	Buffer*		beginBuffer(UInt32 size=0) const;
 	void		endBuffer(Buffer* pBuffer) const;
-
+	
 				
-	mutable std::deque<Buffer*>	_buffers;
-	mutable std::mutex			_mutex;
-	UInt32						_maximumCapacity;
-	mutable Time				_lastEmptyTime;
+	mutable std::multimap<UInt32,Buffer*>	_buffers;
+	mutable std::mutex						_mutex;
+	mutable Time							_lastEmptyTime;
 };
 
 

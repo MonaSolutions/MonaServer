@@ -74,6 +74,17 @@ ADD_TEST(UtilTest, UnpackUrl) {
 	string query;
 	string file;
 
+	CHECK(Util::UnpackUrl("/path",path,query)!=string::npos && path=="/path");
+	CHECK(Util::UnpackUrl("/",path,query)==string::npos && path=="");
+	CHECK(Util::UnpackUrl("/.",path,query)==string::npos && path=="");
+	CHECK(Util::UnpackUrl("/..",path,query)==string::npos && path=="");
+	CHECK(Util::UnpackUrl("/path/.",path,query)==string::npos && path=="/path");
+	CHECK(Util::UnpackUrl("/path/..",path,query)==string::npos && path=="");
+	CHECK(Util::UnpackUrl("/path/./sub/",path,query)==string::npos && path=="/path/sub");
+	CHECK(Util::UnpackUrl("/path//.//sub/",path,query)==string::npos && path=="/path/sub");
+	CHECK(Util::UnpackUrl("/path/../sub/",path,query)==string::npos && path=="/sub");
+	CHECK(Util::UnpackUrl("/path//..//sub/",path,query)==string::npos && path=="/sub");
+
 	CHECK(Util::UnpackUrl("rtmp://",path,query)==string::npos);
 	CHECK(Util::UnpackUrl("rtmp://127.0.0.1", address, path, query)==string::npos)
 	CHECK(Util::UnpackUrl("rtmp://127.0.0.1:1234/", address, path, query)==string::npos)
