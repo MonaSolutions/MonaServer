@@ -297,13 +297,13 @@ string& FileSystem::MakeFile(string& path) {
 	// "." => ""
 	// "/path/.." => "/"
 	// "/.." => "/"
-	if (size>0 && path.back() == '.') {
+	UInt32 count(0);
+	while (size > 0 && path.back() == '.') {
 		path.resize(--size);
-		if (size>0 && path.back() == '.') {
-			path.resize(--size);
-			size = GetParent(path).size();
-		}
+		++count;
 	}
+	if (count>=2)
+		size = GetParent(path).size();
 
 	while (size>0 && (path.back() == '\\' || path.back() == '/'))
 		path.resize(--size);
