@@ -29,7 +29,7 @@ using namespace std;
 namespace Mona {
 
 
-RTMPSession::RTMPSession(const SocketAddress& peerAddress, SocketFile& file, Protocol& protocol, Invoker& invoker) : _mainStream(invoker,peer),_unackBytes(0),_decrypted(0), _chunkSize(RTMP::DEFAULT_CHUNKSIZE), _winAckSize(RTMP::DEFAULT_WIN_ACKSIZE),_handshaking(0), _pWriter(NULL), TCPSession(peerAddress,file, protocol, invoker),
+RTMPSession::RTMPSession(const SocketAddress& peerAddress, SocketFile& file, Protocol& protocol, Invoker& invoker) : _mainStream(invoker,peer),_unackBytes(0),_readBytes(0),_bufferEvent(false),_decrypted(0), _chunkSize(RTMP::DEFAULT_CHUNKSIZE), _winAckSize(RTMP::DEFAULT_WIN_ACKSIZE),_handshaking(0), _pWriter(NULL), TCPSession(peerAddress,file, protocol, invoker),
 		onStreamStart([this](UInt16 id, FlashWriter& writer) {
 			// Stream Begin signal
 			(_pController ? (FlashWriter&)*_pController : writer).writeRaw().write16(0).write32(id);
@@ -220,8 +220,14 @@ bool RTMPSession::buildPacket(BinaryReader& packet) {
   //  TRACE("Writer ",pWriter->id," absolute time ",channel.absoluteTime)
 
 	UInt32 total(channel.bodySize);
-	if (!channel.pBuffer.empty())
+	if (!channel.pBuffer.empty()) {
+		if (channel.pBuffer->size() > total) {
+			ERROR("RTMPSession ",name()," with a chunked message which doesn't match the bodySize indicated");
+			kill(PROTOCOL_DEATH);
+			return false;
+		}
 		total -= channel.pBuffer->size();
+	}
 
 	if(total>_chunkSize)
 		total = _chunkSize;
@@ -269,7 +275,9 @@ void RTMPSession::receive(BinaryReader& packet) {
 
 	// ack if required
 	if (_unackBytes >= _winAckSize) {
-		_pController->writeAck(_unackBytes);
+		_readBytes += _unackBytes; // TODO : what's happen if > MAX_INT?
+		 TRACE("Sending ACK : ", _readBytes, " bytes (_unackBytes: ", _unackBytes, ")")
+		_pController->writeAck(_readBytes);
 		_unackBytes = 0;
 	}
 
@@ -332,8 +340,14 @@ void RTMPSession::receive(BinaryReader& packet) {
 void RTMPSession::manage() {
 	if (_pHandshaker && _pHandshaker->failed)
 		kill(PROTOCOL_DEATH);
-	else if (peer.connected && _pController && peer.ping(30000)) // 30 sec
-		_pController->writePing();
+	else if (peer.connected && _pController) {
+		if (peer.ping(30000)) // 30 sec
+			_pController->writePing();
+
+		// To keep alive the session and avoid freeze!
+		((FlashWriter&)*_pController).writeRaw().write16(_bufferEvent? 0x20 : 0x1f).write32(1);
+		_bufferEvent = !_bufferEvent;
+	}
 	TCPSession::manage();
 }
 
