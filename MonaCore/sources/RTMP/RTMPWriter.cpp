@@ -46,10 +46,10 @@ bool RTMPWriter::flush() {
 		return false;
 	Exception ex;
 	if (_pEncryptKey) {
-		_pSender->dump(true, _channel,_session.peer.address);
+		_pSender->dump(true, _session.peer.address);
 		RC4(_pEncryptKey.get(), _pSender->size(), _pSender->data(), (UInt8*)_pSender->data());
 	} else
-		_pSender->dump(false, _channel,_session.peer.address);
+		_pSender->dump(false, _session.peer.address);
 	EXCEPTION_TO_LOG(_session.send<RTMPSender>(ex, qos(), _pSender), "RTMPWriter flush")
 		
 	
@@ -110,7 +110,7 @@ AMFWriter& RTMPWriter::write(AMF::ContentType type,UInt32 time,const UInt8* data
 	if (!_pSender)
 		_pSender.reset(new RTMPSender(_session.invoker.poolBuffers));
 
-	AMFWriter& writer = _pSender->writer(_channel);
+	AMFWriter& writer = _pSender->writer();
 	BinaryWriter& packet = writer.packet;
 
 	_pSender->headerSize = 12 - 4*headerFlag;

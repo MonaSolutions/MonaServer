@@ -24,12 +24,12 @@ using namespace std;
 
 namespace Mona {
 
-void RTMPSender::pack(RTMPChannel& channel) {
+void RTMPSender::pack() {
 	if (sizePos == 0)
 		return;
 	// writer the size of the precedent playload!
-	channel.bodySize = _writer.packet.size()-sizePos+4-headerSize;
-	BinaryWriter(_writer.packet.data()+sizePos,3).write24(channel.bodySize);
+	UInt32 bodySize = _writer.packet.size()-sizePos+4-headerSize;
+	BinaryWriter(_writer.packet.data()+sizePos,3).write24(bodySize);
 	sizePos=0;
 }
 

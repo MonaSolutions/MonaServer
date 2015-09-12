@@ -40,11 +40,11 @@ public:
 	UInt32				size() const { return _writer.packet.size(); }
 
 
-	void				dump(bool encrypted, RTMPChannel& channel, const SocketAddress& address) { pack(channel); Session::DumpResponse(encrypted ? "RTMPE" : "RTMP", data(), size(), address); }
+	void				dump(bool encrypted, const SocketAddress& address) { pack(); Session::DumpResponse(encrypted ? "RTMPE" : "RTMP", data(), size(), address); }
 
-	AMFWriter&			writer(RTMPChannel& channel) { pack(channel); return _writer; }
+	AMFWriter&			writer() { pack(); return _writer; }
 private:
-	void				pack(RTMPChannel& channel);
+	void				pack();
 
 	AMFWriter			_writer;
 };

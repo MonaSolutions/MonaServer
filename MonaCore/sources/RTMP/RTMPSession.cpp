@@ -340,14 +340,8 @@ void RTMPSession::receive(BinaryReader& packet) {
 void RTMPSession::manage() {
 	if (_pHandshaker && _pHandshaker->failed)
 		kill(PROTOCOL_DEATH);
-	else if (peer.connected && _pController) {
-		if (peer.ping(30000)) // 30 sec
-			_pController->writePing();
-
-		// To keep alive the session and avoid freeze!
-		((FlashWriter&)*_pController).writeRaw().write16(_bufferEvent? 0x20 : 0x1f).write32(1);
-		_bufferEvent = !_bufferEvent;
-	}
+	else if (peer.connected && _pController && peer.ping(30000)) // 30 sec
+		_pController->writePing();
 	TCPSession::manage();
 }
 
