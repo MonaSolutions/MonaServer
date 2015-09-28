@@ -55,12 +55,12 @@ Thomas Jammet offers professional support for MonaServer, so please `contact him
 +------------------------------+--------------------------------+--------------------------------+
 
 
-Licence
+License
 *******************************************
 
 We remind you that Mona is licensed under the `GNU General Public License`_, so it is free to use.
 
-But if you want to sell a product based on MonaServer source code you can buy a commercial licence, the price is :
+But if you want to sell a product based on MonaServer source code you can buy a commercial license, the price is :
 
 EUR 5000 (approx. US-$ 6116)
 

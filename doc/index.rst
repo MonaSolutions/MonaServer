@@ -27,7 +27,7 @@ so contributions are greatly appreciated: `$`_, `€`_.
 
 You can talk with the MonaServer Community on the `MonaServer forum`_ or report a bug on the `issue page`_.
 
-Mona is licensed under the `GNU General Public License`_, please contact us for a commercial licence at mathieupoux@gmail.com or jammetthomas@gmail.com.
+Mona is licensed under the `GNU General Public License`_, please contact us for a commercial license at mathieupoux@gmail.com or jammetthomas@gmail.com.
 
 The following scheme is a little preview of what is possible with MonaServer :
 
