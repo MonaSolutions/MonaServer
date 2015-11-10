@@ -130,9 +130,6 @@
       <Filter>Application</Filter>
     </ClCompile>
     <ClCompile Include="sources\Mona.cpp" />
-    <ClCompile Include="sources\Database.cpp">
-      <Filter>File</Filter>
-    </ClCompile>
     <ClCompile Include="sources\Exceptions.cpp">
       <Filter>Util</Filter>
     </ClCompile>
@@ -169,11 +166,14 @@
     <ClCompile Include="sources\MapParameters.cpp">
       <Filter>Util</Filter>
     </ClCompile>
-    <ClCompile Include="sources\Path.cpp">
-      <Filter>File</Filter>
-    </ClCompile>
     <ClCompile Include="sources\XMLParser.cpp">
       <Filter>Util</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\File.cpp">
+      <Filter>File</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\PersistentData.cpp">
+      <Filter>File</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -310,9 +310,6 @@
       <Filter>Application</Filter>
     </ClInclude>
     <ClInclude Include="include\Mona\Mona.h" />
-    <ClInclude Include="include\Mona\Database.h">
-      <Filter>File</Filter>
-    </ClInclude>
     <ClInclude Include="include\Mona\PacketReader.h">
       <Filter>IO</Filter>
     </ClInclude>
@@ -358,11 +355,14 @@
     <ClInclude Include="include\Mona\Event.h">
       <Filter>Threading</Filter>
     </ClInclude>
-    <ClInclude Include="include\Mona\Path.h">
-      <Filter>File</Filter>
-    </ClInclude>
     <ClInclude Include="include\Mona\XMLParser.h">
       <Filter>Util</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\File.h">
+      <Filter>File</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mona\PersistentData.h">
+      <Filter>File</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

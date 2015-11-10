@@ -723,10 +723,9 @@ bool Date::update(Exception& ex, const char* current, size_t size, const char* f
 
 bool Date::parseAuto(Exception& ex, const char* data, size_t count) {
 
-	size_t length(0);
+	size_t length(0),tPos(0);
 	bool digit(false);
 	bool digits(false);
-	UInt8 tPos(0);
 	const char* current = data;
 	size_t size(count);
 

@@ -299,7 +299,7 @@ void RTMFPWriter::manage(Exception& ex, Invoker& invoker) {
 			raiseMessage();
 
 		if (ex) {
-			fail("RTMFPWriter can't deliver its data, "+ex.error());
+			fail("RTMFPWriter can't deliver its data, ",ex.error());
 			return;
 		}
 	}

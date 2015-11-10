@@ -29,7 +29,10 @@ void Test::run(UInt32 loop) {
 	for (_loop = 0; _loop < loop;++_loop)
 		TestFunction();
 	_chrono.stop();
-	NOTE(_name, " OK (",_chrono.elapsed(),"ms)");
+	if (loop>1)
+		NOTE(_name, " OK (x",_loop," ",_chrono.elapsed(),"ms)")
+	else
+		NOTE(_name, " OK (",_chrono.elapsed(),"ms)");
 }
 
 void PoolTest::runAll(UInt32 loop) {

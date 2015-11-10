@@ -221,7 +221,7 @@ void SocketManager::remove(NET_SOCKET sockfd) const {
 void SocketManager::handle(Exception& ex) {
 	if (_eventSystem==0) {
 		if (_ex)
-			ex.set(_ex);
+			ex = _ex;
 		lock_guard<recursive_mutex> lock(_mutex);
 		if (_sockets.empty())
 			return;
@@ -363,7 +363,7 @@ void SocketManager::run(Exception& exThread) {
 	_initSignal.set();
 	if (ex) { // here _eventSystem==0
 		if (!Task::waitHandle())
-			exThread.set(ex);
+			exThread = ex;
 		return;
 	}
 
@@ -405,10 +405,9 @@ void SocketManager::run(Exception& exThread) {
 		_sockfd = INVALID_SOCKET;
 	}
 	DestroyWindow(_eventSystem);
-	if (result < 0) {
-		ex.set(Exception::NETWORK, name, " failed, impossible to manage sockets");
-		exThread.set(ex);
-	}
+	if (result < 0)
+		exThread = ex.set(Exception::NETWORK, name, " failed, impossible to manage sockets");
+	
 #elif defined(_OS_BSD)
     int count = _counter+1;
     vector<struct kevent> events(count);
@@ -497,7 +496,7 @@ void SocketManager::run(Exception& exThread) {
 
 		if(results<0 && errno!=NET_EINTR) {
 			Net::SetException(ex, Net::LastError());
-			exThread.set(ex);
+			exThread = ex;
 			break;
 		}
 

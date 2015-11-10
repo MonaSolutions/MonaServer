@@ -54,7 +54,6 @@ private:
 	UInt32							_winAckSize;
 	UInt32							_unackBytes;
 	UInt32							_readBytes;
-	bool							_bufferEvent; // To send user control event 31/32 (Buffer Empty/Full) and keep connection alive!
 
 	std::map<UInt32,RTMPWriter>			_writers;
 	std::unique_ptr<RTMPWriter>			_pController;

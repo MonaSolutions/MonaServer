@@ -48,7 +48,7 @@ private:
 #if defined(_WIN32)
 	static int  __stdcall ConsoleCtrlHandler(unsigned long ctrlType);
 	static void __stdcall ServiceMain(unsigned long argc, char** argv);
-	static void __stdcall ServiceControlHandler(DWORD control);
+	static void __stdcall ServiceControlHandler(unsigned long control);
 
 	bool hasConsole();
 	bool isService();

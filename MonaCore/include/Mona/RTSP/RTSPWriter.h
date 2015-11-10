@@ -61,10 +61,6 @@ public:
 	DataWriter&		writeResponse(UInt8 type);
 	void			writeRaw(const UInt8* data, UInt32 size);
 	void			close(Int32 code=0);
-
-	/// \brief create a Sender and write the file in parameter
-	/// \param file path of the file
-	void			writeFile(const Path& file, const std::shared_ptr<Parameters>& pParameters);
 	void			close(const Exception& ex);
 
 	DataWriter&     writeRaw(const char* code);

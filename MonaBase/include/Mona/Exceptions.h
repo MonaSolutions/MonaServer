@@ -23,6 +23,7 @@ This file is a part of Mona.
 #include "Mona/String.h"
 #include <map>
 #include "assert.h"
+#include "errno.h"
 
 namespace Mona {
 
@@ -30,7 +31,7 @@ class Exception : public virtual Object {
 public:
 	///// ADD TOO in Exceptions.cpp!!
 	enum Code {
-		NIL,
+		NIL=0,
 		APPLICATION = 1,
 		SOFTWARE,
 		FILE,
@@ -60,21 +61,28 @@ public:
 	Exception& set(Code code, Args&&... args) {
 		_code = code;
 		String::Format(_error, args ...);
-		if (_code != Exception::NIL && _error.empty()) 
+		if (_code && _error.empty()) 
 			_error.assign(_CodeMessages[code]);
 		return *this;
 	}
 
-	Exception& set(const Exception& other) {
+	Exception& operator=(const Exception& other) {
 		_code = other._code;
 		_error = other._error;
+		return *this;
+	}
+	Exception& operator=(const Exception* pOther) {
+		if (pOther)
+			return operator=(*pOther);
+		_code = Exception::NIL;
+		_error.clear();
 		return *this;
 	}
 
 	operator bool() const { return _code != Exception::NIL; }
 
-	const std::string&	error() const { return _error; }
-	Code				code() const { return _code; }
+	const char*	error() const { return _error.empty() ? "Unknown error" : _error.c_str(); }
+	Code		code() const { return _code; }
 
 private:
 
@@ -106,9 +114,6 @@ private:
 	#define		FATAL_ERROR(...)					{std::string __error; throw std::runtime_error(Mona::String::Format(__error,## __VA_ARGS__,", " __FILE__ "[" LINE_STRING "]"));}
 #endif
 
-#define		EXCEPTION_TO_LOG(CALL,...)		{ \
-    bool __success = CALL; \
-    if (ex) { if (!__success) ERROR( __VA_ARGS__,", ",ex.error()) else WARN( __VA_ARGS__,", ", ex.error()); } \
-    else if (!__success) ERROR( __VA_ARGS__,", unknown error"); }
+#define EXCEPTION_TO_LOG(FUNCTION,...) if(FUNCTION) { if(ex)  WARN( __VA_ARGS__,", ", ex.error()); } else { ERROR( __VA_ARGS__,", ", ex.error()) }
 
 } // namespace Mona

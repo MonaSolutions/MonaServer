@@ -27,7 +27,7 @@ namespace Mona {
 
 
 HTTPPacket::HTTPPacket(const string& rootPath) : accessControlRequestMethod(0), accessControlRequestHeaders(NULL),
-	filePath(rootPath), _data(NULL), _size(0),
+	file(rootPath), _data(NULL), _size(0),
 	content(NULL),
 	contentLength(0),
 	contentType(HTTP::CONTENT_ABSENT),
@@ -148,7 +148,7 @@ UInt32 HTTPPacket::build(Exception& ex,UInt8* data,UInt32 size) {
 
 				// by default command == GET
 				if (!signifiant || (command = HTTP::ParseCommand(ex, signifiant)) == HTTP::COMMAND_UNKNOWN) {
-					exception.set(ex);
+					exception = ex;
 					continue;
 				}
 				signifiant = NULL;
@@ -157,11 +157,11 @@ UInt32 HTTPPacket::build(Exception& ex,UInt8* data,UInt32 size) {
 				// parse query
 				*current = 0;
 				size_t filePos = Util::UnpackUrl(signifiant, path,query);
-				filePath.append(path);
+				file.setPath(file.path(),path);
 				if (filePos != string::npos)
 					path.erase(filePos - 1);
 				else
-					filePath.append("/");
+					file.makeFolder();
 				signifiant = NULL;
 				step = VERSION;
 			} else
@@ -178,7 +178,7 @@ UInt32 HTTPPacket::build(Exception& ex,UInt8* data,UInt32 size) {
 			if (!signifiant)
 				signifiant = (const char*)current;
 			if (step == CMD && (current-data)>7) // not a HTTP valid packet, consumes all
-				exception.set(ex.set(Exception::PROTOCOL, "invalid HTTP packet"));
+				exception = ex.set(Exception::PROTOCOL, "invalid HTTP packet");
 		} else
 			step = RIGHT;
 	}

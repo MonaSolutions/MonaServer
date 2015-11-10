@@ -28,17 +28,14 @@ This file is a part of Mona.
 
 namespace Mona {
 
-class DatabaseLoader {
-public:
-	virtual void onDataLoading(const std::string& path, const UInt8* value, UInt32 size) = 0;
-};
 
-class Database : private Startable, public virtual Object {
+class PersistentData : private Startable, public virtual Object {
 public:
-	Database(const PoolBuffers& poolBuffers,const char* name = "Database") : _poolBuffers(poolBuffers),Startable(name), _disableTransaction(false) {}
+	PersistentData(const PoolBuffers& poolBuffers,const char* name = "PersistentData") : _poolBuffers(poolBuffers),Startable(name), _disableTransaction(false) {}
 
-	// returns true if has data, otherwise returns false
-	bool load(Exception& ex, const std::string& rootPath, DatabaseLoader& loader,bool disableTransaction=false);
+	typedef std::function<void(const std::string& path, const UInt8* value, UInt32 size)> ForEach;
+
+	void load(Exception& ex, const std::string& rootPath, const ForEach& forEach, bool disableTransaction=false);
 
 	bool add(Exception& ex,const std::string& path, const UInt8* value, UInt32 size);
 	bool remove(Exception& ex, const std::string& path);
@@ -61,7 +58,7 @@ private:
 
 	void run(Exception& ex);
 	void processEntry(Exception& ex, Entry& entry);
-	bool loadDirectory(Exception& ex, const std::string& directory, const std::string& path, DatabaseLoader& loader);
+	bool loadDirectory(Exception& ex, const std::string& directory, const std::string& path, const ForEach& forEach);
 
 	std::string			_rootPath;
 	std::mutex			_mutex;

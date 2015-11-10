@@ -114,7 +114,7 @@ bool WinService::registered(Exception& ex) const {
 	Exception exc;
 	bool result = open(exc);
 	if (exc.code() == Exception::SYSTEM)
-		ex.set(exc);
+		ex = exc;
 	return result;
 }
 

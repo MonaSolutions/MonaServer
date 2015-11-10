@@ -22,8 +22,8 @@ This file is a part of Mona.
 #include "Mona/Mona.h"
 #include "Mona/Group.h"
 #include "Mona/Publication.h"
-#include "Mona/Path.h"
 #include "Mona/ICE.h"
+#include "Mona/File.h"
 #include <set>
 
 namespace Mona {
@@ -89,11 +89,11 @@ public:
 	/// \param filePath : relative path to the file (important : the directory will be erase)
 	/// \param parameters : gives parameters to the function onRead()
 	/// \param properties : recieve output parameters returned by onRead()
-	bool onRead(Exception& ex, DataReader& parameters, Path& filePath, DataWriter& properties) { return onFileAccess(ex, FileAccessType::READ, parameters, filePath, properties); }
-	bool onWrite(Exception& ex, DataReader& parameters, Path& filePath, DataWriter& properties) { return onFileAccess(ex, FileAccessType::WRITE, parameters, filePath, properties); }
+	bool onRead(Exception& ex, DataReader& parameters, File& file, DataWriter& properties) { return onFileAccess(ex, FileAccessType::READ, parameters, file, properties); }
+	bool onWrite(Exception& ex, DataReader& parameters, File& file, DataWriter& properties) { return onFileAccess(ex, FileAccessType::WRITE, parameters, file, properties); }
 
 private:
-	bool onFileAccess(Exception& ex, FileAccessType type, DataReader& parameters, Path& filePath, DataWriter& properties);
+	bool onFileAccess(Exception& ex, FileAccessType type, DataReader& parameters, File& file, DataWriter& properties);
 
 	void onJoinGroup(Group& group);
 	void onUnjoinGroup(Group& group,bool dummy);

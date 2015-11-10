@@ -25,7 +25,7 @@ This file is a part of Mona.
 #include "LUAGroup.h"
 #include "LUAServer.h"
 #include "LUABroadcaster.h"
-#include "LUADataTable.h"
+#include "LUAPersistentTable.h"
 #include "LUASocketAddress.h"
 #include "LUAIPAddress.h"
 #include "ScriptWriter.h"
@@ -37,13 +37,13 @@ using namespace std;
 using namespace Mona;
 
 MonaServer::MonaServer(const Parameters& configs, TerminateSignal& terminateSignal) : _pState(NULL),
-	Server(configs.getNumber<UInt32>("socketBufferSize"), configs.getNumber<UInt16>("threads")), servers(sockets), _firstData(true),_data(this->poolBuffers),_terminateSignal(terminateSignal),
+	Server(configs.getNumber<UInt32>("socketBufferSize"), configs.getNumber<UInt16>("threads")), servers(sockets), _data(this->poolBuffers),_terminateSignal(terminateSignal),
 	setLUAProperty([this](const string& key, const string& value) { Script::PushValue(_pState, value); lua_setfield(_pState, -2, key.c_str());} ) {
 	
 	string pathApp("./");
 	configs.getString("application.dir", pathApp);
-	_wwwPath = pathApp + "www";
-	_dataPath = pathApp + "data";
+	_wwwPath.assign(pathApp).append("www");
+	_dataPath.assign(pathApp).append("data");
 
 	onPublicationData = [this](const Publication& publication,DataReader& data) {
 		SCRIPT_BEGIN(_pState)
@@ -113,7 +113,7 @@ MonaServer::MonaServer(const Parameters& configs, TerminateSignal& terminateSign
 
 		Exception ex;
 		if (!_pService->open(ex)) {
-			server.reject(ex.error().c_str());
+			server.reject(ex.error());
 			return;
 		}
 		
@@ -165,7 +165,7 @@ MonaServer::MonaServer(const Parameters& configs, TerminateSignal& terminateSign
 				SCRIPT_FUNCTION_BEGIN("onServerDisconnection",_pService->reference())
 					Script::AddObject<LUAServer>(_pState, server);
 					if (ex)
-						SCRIPT_WRITE_STRING(ex.error().c_str())
+						SCRIPT_WRITE_STRING(ex.error())
 					SCRIPT_FUNCTION_CALL
 				SCRIPT_FUNCTION_END
 			SCRIPT_END
@@ -195,11 +195,8 @@ bool MonaServer::start(const Parameters& configs) {
 		return false;
 	}
 
-	if (!FileSystem::CreateDirectory(_wwwPath)) {
-		ERROR("Impossible to create application directory ", _wwwPath);
-		return false;
-	}
-
+	Exception ex;
+	EXCEPTION_TO_LOG(FileSystem::CreateDirectory(ex, _wwwPath),"Application directory creation");
 	return Server::start(configs);
 }
 
@@ -265,18 +262,73 @@ void MonaServer::onStart() {
 
 	lua_setglobal(_pState,"mona");
 
-	Script::NewObject<LUADataTable>(_pState, *new LUADataTable(_data, _pService->path));
+	Script::NewObject<LUAPersistentTable>(_pState, *new LUAPersistentTable(_data, _pService->path));
 	lua_setfield(_pState, LUA_REGISTRYINDEX, "|data");
 	
 	// load database
 	Exception ex;
-	_firstData = true;
-	if (_data.load(ex, _dataPath, *this, true)) {
-		if (ex)
-			ERROR("Error on database loading, ", ex.error())
+	bool firstData(true);
+	PersistentData::ForEach forEach([this,&firstData](const string& path, const UInt8* value, UInt32 size) {
+		if (firstData) {
+			INFO("Database loading...")
+			firstData = false;
+		}
+		if (!_pState) {
+			ERROR("Databas load useless, no recipient")
+			return;
+		}
+		// get table and set key
+		lua_pushvalue(_pState,LUA_REGISTRYINDEX);
+		if (!path.empty()) {
+			lua_getfield(_pState, LUA_REGISTRYINDEX, "|data");
+			lua_replace(_pState, -2);
+			if (lua_isnil(_pState, -1)) {
+				lua_pop(_pState, 1);
+				ERROR("Databas load impossible because no recipient")
+				return;
+			}
+		}
+
+		string key;
+		string newPath(path);
+		if (FileSystem::GetName(path,key).empty())
+			key = "|data";
+		else
+			FileSystem::GetParent(newPath);
+		
+
+		String::ForEach forEach([this,&newPath](UInt32 index, const char* field) {
+			if (!lua_istable(_pState, -1)) {
+				lua_pop(_pState, 1);
+				WARN("Databas load entry ", newPath, " ignored because parent is not a table")
+					return false;
+			}
+			lua_getfield(_pState, -1, field);
+			if (lua_isnil(_pState, -1)) {
+				lua_pop(_pState, 1);
+				lua_newtable(_pState);
+				lua_setfield(_pState, -2, field);
+				lua_getfield(_pState, -1, field);
+			}
+			lua_replace(_pState, -2);
+			return true;
+		});
+		if (String::Split(newPath, "/", forEach, String::SPLIT_IGNORE_EMPTY | String::SPLIT_TRIM) == string::npos)
+			return;
+
+		// set value
+		Script::PushValue(_pState,value,size);
+		lua_setfield(_pState, -2, key.c_str());
+		lua_pop(_pState, 1); // remove table
+	});
+
+
+	_data.load(ex, _dataPath, forEach, true);
+	if (ex)
+		WARN("Database load, ",ex.error())
+	else if (!firstData)
 		NOTE("Database loaded")
-	}
-	
+
 	// start servers
 	servers.start(*this);
 
@@ -284,63 +336,6 @@ void MonaServer::onStart() {
 	ex.set(Exception::NIL);
 	_pService->open(ex);
 }
-
-
-void MonaServer::onDataLoading(const string& path, const UInt8* value, UInt32 size) {
-
-	if (_firstData) {
-		INFO("Database loading...")
-		_firstData = false;
-	}
-	if (!_pState) {
-		ERROR("Loading database useless, no recipient")
-		return;
-	}
-	// get table and set key
-	lua_pushvalue(_pState,LUA_REGISTRYINDEX);
-	if (!path.empty()) {
-		lua_getfield(_pState, LUA_REGISTRYINDEX, "|data");
-		lua_replace(_pState, -2);
-		if (lua_isnil(_pState, -1)) {
-			lua_pop(_pState, 1);
-			ERROR("Loading database impossible because no recipient")
-			return;
-		}
-	}
-
-	string key;
-	string newPath(path);
-	if (FileSystem::GetName(path,key).empty())
-		key = "|data";
-	else
-		FileSystem::GetParent(newPath);
-		
-
-	String::ForEach forEach([this,&newPath](UInt32 index, const char* field) {
-		if (!lua_istable(_pState, -1)) {
-			lua_pop(_pState, 1);
-			WARN("Loading database entry ", newPath, " ignored because parent is not a table")
-				return false;
-		}
-		lua_getfield(_pState, -1, field);
-		if (lua_isnil(_pState, -1)) {
-			lua_pop(_pState, 1);
-			lua_newtable(_pState);
-			lua_setfield(_pState, -2, field);
-			lua_getfield(_pState, -1, field);
-		}
-		lua_replace(_pState, -2);
-		return true;
-	});
-	if (String::Split(newPath, "/", forEach, String::SPLIT_IGNORE_EMPTY | String::SPLIT_TRIM) == string::npos)
-		return;
-
-	// set value
-	Script::PushValue(_pState,value,size);
-	lua_setfield(_pState, -2, key.c_str());
-	lua_pop(_pState, 1); // remove table
-}
-
 
 void MonaServer::onStop() {
 	// disconnect before "servers.stop" to try to get a gracefull tcp close
@@ -617,19 +612,20 @@ bool MonaServer::onMessage(Exception& ex, Client& client,const string& name,Data
 	return found;
 }
 
-bool MonaServer::onFileAccess(Exception& ex, Client& client, Client::FileAccessType type, DataReader& parameters, Path& filePath, DataWriter& properties) { 
+bool MonaServer::onFileAccess(Exception& ex, Client& client, Client::FileAccessType type, DataReader& parameters, File& file, DataWriter& properties) { 
 
-	if (filePath.isFolder()) {
+	if (file.isFolder()) {
 		// filePath must be a file, not a folder, otherwise it's a security issue
-		ex.set(Exception::PERMISSION, "Impossible to access to ",filePath.toString()," ressource through the ",client.path," application, this resource is managed by ",filePath.parent()," application");
+		ex.set(Exception::PERMISSION, "Impossible to access to ",file.path()," ressource through the ",client.path," application, this resource is managed by ",file.parent()," application");
 		return false;
 	}
 
-	bool result = true;
-	string name(filePath.name());
+	bool result(true);
+	file.setParent(_wwwPath,  client.path);
+
 	SCRIPT_BEGIN(loadService(client))
 		SCRIPT_MEMBER_FUNCTION_BEGIN(Client,client,type==Client::FileAccessType::READ ? "onRead" : "onWrite")
-			SCRIPT_WRITE_STRING(name.c_str())
+			SCRIPT_WRITE_STRING(file.name().c_str())
 			ScriptWriter writer(_pState);
 			parameters.read(writer);
 			SCRIPT_FUNCTION_CALL
@@ -642,7 +638,9 @@ bool MonaServer::onFileAccess(Exception& ex, Client& client, Client::FileAccessT
 					SCRIPT_READ_NIL
 				} else {
 					// Redirect to the file (get name to prevent path insertion)
-					FileSystem::GetName(SCRIPT_READ_STRING(name), name);
+					string name;
+					if(!file.setName(FileSystem::GetName(SCRIPT_READ_STRING(file.name()), name)))
+						file.setPath(_wwwPath,  client.path,"/"); // redirect to folder view
 				}
 				if(SCRIPT_NEXT_TYPE==LUA_TTABLE) {
 					lua_pushnil(_pState);  // first key 
@@ -662,10 +660,6 @@ bool MonaServer::onFileAccess(Exception& ex, Client& client, Client::FileAccessT
 			}
 		SCRIPT_FUNCTION_END
 	SCRIPT_END
-
-	filePath.set(_wwwPath, client.path);
-	if (!name.empty())
-		filePath.append('/', name);
 
 	return result;
 }

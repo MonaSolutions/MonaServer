@@ -54,8 +54,9 @@ Buffer* PoolBuffers::beginBuffer(UInt32 size) const {
 		lock_guard<mutex> lock(_mutex);
 		// choose the smaller buffer 
 		if (_buffers.empty()) {
-			pBuffer = new Buffer(); // keep without size parameter, because must be on capacity*2 model for future other buffer usage
+			pBuffer = new Buffer(size);
 			_lastEmptyTime.update();
+			size = 0; // not to resize
 		} else {
 			auto itBigger(size ? _buffers.lower_bound(size) : _buffers.end());
 			if (itBigger == _buffers.end())
@@ -64,11 +65,13 @@ Buffer* PoolBuffers::beginBuffer(UInt32 size) const {
 			_buffers.erase(itBigger);
 		}
 	}
-	pBuffer->resize(size,false);
+	if (size)
+		pBuffer->resize(size,false);
 	return pBuffer;
 }
 
 void PoolBuffers::endBuffer(Buffer* pBuffer) const {
+	pBuffer->clear();
 	lock_guard<mutex> lock(_mutex);
 	_buffers.emplace(pBuffer->capacity(),pBuffer);
 }

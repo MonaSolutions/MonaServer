@@ -24,7 +24,7 @@ This file is a part of Mona.
 #include "LUATCPServer.h"
 #include "LUAGroup.h"
 #include "LUAMember.h"
-#include "LUAPath.h"
+#include "LUAFile.h"
 #include "LUABroadcaster.h"
 #include "LUAXML.h"
 #include "LUAMediaWriter.h"
@@ -231,8 +231,10 @@ int	LUAInvoker::Publish(lua_State *pState) {
 }
 
 int	LUAInvoker::AbsolutePath(lua_State *pState) {
-	SCRIPT_CALLBACK(Invoker,invoker)
-		SCRIPT_WRITE_STRING((invoker.rootPath() + "/" + SCRIPT_READ_STRING("") + "/").c_str())
+	SCRIPT_CALLBACK(Invoker, invoker)
+		string path(invoker.rootPath());
+		path += '/';
+		SCRIPT_WRITE_STRING(FileSystem::MakeFolder(path += SCRIPT_READ_STRING("")).c_str())
 	SCRIPT_CALLBACK_RETURN
 }
 
@@ -270,20 +272,20 @@ int	LUAInvoker::Md5(lua_State *pState) {
 	SCRIPT_CALLBACK_RETURN
 }
 
-int LUAInvoker::ListPaths(lua_State *pState) {
+int LUAInvoker::ListFiles(lua_State *pState) {
 	SCRIPT_CALLBACK(Invoker, invoker)
 		string directory(invoker.rootPath());
-		String::Append(directory,"/",SCRIPT_READ_STRING(""),"/");
-		
+		directory += '/';
+
 		UInt32 index = 0;
 		lua_newtable(pState);
-		FileSystem::ForEach forEach([&pState, &index](const string& path){
-			Script::NewObject<LUAPath>(pState, *new Path(path));
+		FileSystem::ForEach forEach([&pState, &index](const string& path, UInt16 level){
+			Script::NewObject<LUAFile>(pState, *new File(path));
 			lua_rawseti(pState,-2,++index);
 		});
 		
 		Exception ex;
-		FileSystem::Paths(ex, directory, forEach);
+		FileSystem::ListFiles(ex, FileSystem::MakeFolder(directory += SCRIPT_READ_STRING("")), forEach);
 		if (ex)
 			SCRIPT_ERROR(ex.error());
 	SCRIPT_CALLBACK_RETURN
@@ -323,7 +325,7 @@ int	LUAInvoker::FromXML(lua_State *pState) {
 		if (ex) {
 			// erase object written
 			lua_pop(pState, lua_gettop(pState) - count);
-			SCRIPT_CALLBACK_THROW(ex.error().c_str())
+			SCRIPT_CALLBACK_THROW(ex.error())
 		}
 	SCRIPT_CALLBACK_RETURN
 }
@@ -336,7 +338,7 @@ int	LUAInvoker::ToXML(lua_State *pState) {
 			if (ex)
 				SCRIPT_WARN(ex.error());
 		} else {
-			SCRIPT_CALLBACK_THROW(ex.error().c_str())
+			SCRIPT_CALLBACK_THROW(ex.error())
 		}
 	SCRIPT_CALLBACK_RETURN
 }
@@ -524,7 +526,7 @@ int LUAInvoker::Get(lua_State *pState) {
 				lua_replace(pState, -2);
 				SCRIPT_CALLBACK_FIX_INDEX
 			} else if (strcmp(name,"listPaths")==0) {
-				SCRIPT_WRITE_FUNCTION(LUAInvoker::ListPaths)
+				SCRIPT_WRITE_FUNCTION(LUAInvoker::ListFiles)
 				SCRIPT_CALLBACK_FIX_INDEX
 			} else if (strcmp(name, "createMediaWriter") == 0) {
 				SCRIPT_WRITE_FUNCTION(LUAInvoker::CreateMediaWriter)

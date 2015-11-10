@@ -17,48 +17,51 @@ details (or else see http://www.gnu.org/licenses/).
 This file is a part of Mona.
 */
 
-#include "LUAPath.h"
+#include "LUAFile.h"
 
 using namespace std;
 using namespace Mona;
 
 
-int LUAPath::Get(lua_State *pState) {
-	SCRIPT_CALLBACK(Path,path)
+int LUAFile::Get(lua_State *pState) {
+	SCRIPT_CALLBACK(File,file)
 		const char* name = SCRIPT_READ_STRING(NULL);
 		
 		if (name) {
 			if(strcmp(name,"name")==0) {
-				SCRIPT_WRITE_STRING(path.name().c_str())
+				SCRIPT_WRITE_STRING(file.name().c_str())
 				SCRIPT_CALLBACK_FIX_INDEX
 			} else if(strcmp(name,"baseName")==0) {
-				SCRIPT_WRITE_STRING(path.baseName().c_str())
+				SCRIPT_WRITE_STRING(file.baseName().c_str())
 				SCRIPT_CALLBACK_FIX_INDEX
 			} else if(strcmp(name,"parent")==0) {
-				SCRIPT_WRITE_STRING(path.parent().c_str())
+				SCRIPT_WRITE_STRING(file.parent().c_str())
 				SCRIPT_CALLBACK_FIX_INDEX
 			} else if(strcmp(name,"extension")==0) {
-				SCRIPT_WRITE_STRING(path.extension().c_str())
+				SCRIPT_WRITE_STRING(file.extension().c_str())
 				SCRIPT_CALLBACK_FIX_INDEX
 			} else if(strcmp(name,"size")==0) {
-				SCRIPT_WRITE_NUMBER(path.size())
+				SCRIPT_WRITE_NUMBER(file.size())
 				SCRIPT_CALLBACK_FIX_INDEX
 			} else if(strcmp(name,"lastModified")==0) {
-				SCRIPT_WRITE_NUMBER(path.lastModified())
+				SCRIPT_WRITE_NUMBER(file.lastModified())
 				SCRIPT_CALLBACK_FIX_INDEX
 			} else if (strcmp(name,"isFolder")==0) {
-				SCRIPT_WRITE_BOOL(path.isFolder())
+				SCRIPT_WRITE_BOOL(file.isFolder())
 				SCRIPT_CALLBACK_FIX_INDEX
-			} else if (strcmp(name,"value")==0) {
-				SCRIPT_WRITE_STRING(path.toString().c_str());
+			} else if (strcmp(name,"isAbsolute")==0) {
+				SCRIPT_WRITE_BOOL(file.isAbsolute())
+				SCRIPT_CALLBACK_FIX_INDEX
+			} else if (strcmp(name,"path")==0) {
+				SCRIPT_WRITE_STRING(file.path().c_str());
 				SCRIPT_CALLBACK_FIX_INDEX
 			}
 		}
 	SCRIPT_CALLBACK_RETURN
 }
 
-int LUAPath::Set(lua_State *pState) {
-	SCRIPT_CALLBACK(Path,path)
+int LUAFile::Set(lua_State *pState) {
+	SCRIPT_CALLBACK(File,file)
 		lua_rawset(pState,1); // consumes key and value
 	SCRIPT_CALLBACK_RETURN
 }

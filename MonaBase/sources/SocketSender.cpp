@@ -44,7 +44,7 @@ bool SocketSender::run(Exception& ex) {
 	shared_ptr<SocketSender> pThis(_pThis);
 	_pSocket->send(exc, pThis);
 	if (exc.code() != Exception::ASSERT)
-		ex.set(exc);
+		ex = exc;
 	return true;
 }
 

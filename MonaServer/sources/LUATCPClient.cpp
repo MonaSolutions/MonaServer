@@ -111,7 +111,7 @@ int	LUATCPClient::Send(lua_State* pState) {
 		Exception ex;
 		client.send(ex,data, size);
 		if (ex)
-			SCRIPT_WRITE_STRING(ex.error().c_str())
+			SCRIPT_WRITE_STRING(ex.error())
 	SCRIPT_CALLBACK_RETURN
 }
 

@@ -54,7 +54,7 @@ Service::Service(lua_State* pState, const string& rootPath, ServiceHandler& hand
 }
 
 Service::Service(lua_State* pState, const string& rootPath, Service& parent, const string& name, ServiceHandler& handler) : _rootPath(rootPath), name(name), _lastCheck(0), _reference(LUA_REFNIL), _pParent(&parent), _handler(handler), _pState(pState), FileWatcher(rootPath,parent.path,'/',name,"/main.lua") {
-	String::Format((string&)path,parent.path,"/",name);
+	String::Format((string&)path,parent.path,'/',name);
 }
 
 Service::~Service() {
@@ -90,12 +90,12 @@ void Service::setReference(int reference) {
 Service* Service::open(Exception& ex) {
 	if (_lastCheck.isElapsed(2000)) { // already checked there is less of 2 sec!
 		_lastCheck.update();
-		if (!watchFile() && !path.empty() && !FileSystem::Exists(filePath.parent())) // no path/main.lua file, no main service, no path folder
+		if (!watchFile() && !path.empty() && !FileSystem::Exists(file.parent())) // no path/main.lua file, no main service, no path folder
 			_ex.set(Exception::APPLICATION, "Application ", path, " doesn't exist");
 	}
 	
 	if (_ex) {
-		ex.set(_ex);
+		ex = _ex;
 		return NULL;
 	}
 
@@ -225,7 +225,7 @@ void Service::loadFile() {
 	SCRIPT_BEGIN(_pState)
 
 		lua_rawgeti(_pState, LUA_REGISTRYINDEX, _reference);
-		if(luaL_loadfile(_pState,filePath.toString().c_str())!=0) {
+		if(luaL_loadfile(_pState,file.path().c_str())!=0) {
 			SCRIPT_ERROR(_ex.set(Exception::SOFTWARE, Script::LastError(_pState)).error())
 			lua_pop(_pState,1); // remove environment
 			return;
@@ -311,11 +311,11 @@ int Service::LoadFile(lua_State *pState) {
 
 	const char* name(lua_tostring(pState, 1));
 	if (!name) {
-		SCRIPT_ERROR("loadfile must take a string argument")
+		SCRIPT_ERROR("loadFile must take a string argument")
 		return 0;
 	}
 	if (FileSystem::IsFolder(name)) {
-		SCRIPT_ERROR("loadfile can't load a folder")
+		SCRIPT_ERROR("loadFile can't load a folder")
 		return 0;
 	}
 
@@ -326,7 +326,7 @@ int Service::LoadFile(lua_State *pState) {
 
 		while (pService) {
 			Exception ex;
-			String::Format(path,pService->_rootPath,pService->path,"/",name);
+			String::Format(path,pService->_rootPath,pService->path,'/',name);
 	
 			if (FileSystem::Exists(path)) {
 				if (luaL_loadfile(pState, path.c_str()) == 0) {

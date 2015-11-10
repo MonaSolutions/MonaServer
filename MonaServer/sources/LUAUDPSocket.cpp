@@ -76,7 +76,7 @@ int	LUAUDPSocket::Connect(lua_State* pState) {
 		if (!ex)
 			udp.connect(ex, address);
 		if (ex)
-			SCRIPT_WRITE_STRING(ex.error().c_str())
+			SCRIPT_WRITE_STRING(ex.error())
 	SCRIPT_CALLBACK_RETURN
 }
 

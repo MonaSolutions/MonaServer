@@ -45,7 +45,7 @@ public:
 
 	HTTP::CommandType			command;
 	std::string					path;
-	Path						filePath;
+	File						file;
 	std::string					query;
 	std::string					serverAddress;
 	float						version;
