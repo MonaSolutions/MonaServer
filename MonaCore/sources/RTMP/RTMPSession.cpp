@@ -275,8 +275,8 @@ void RTMPSession::receive(BinaryReader& packet) {
 
 	// ack if required
 	if (_unackBytes >= _winAckSize) {
-		_readBytes += _unackBytes; // TODO : what's happen if > MAX_INT?
-		 TRACE("Sending ACK : ", _readBytes, " bytes (_unackBytes: ", _unackBytes, ")")
+		_readBytes += _unackBytes;
+		NOTE("Sending ACK : ", _readBytes, " bytes (_unackBytes: ", _unackBytes, ")")
 		_pController->writeAck(_readBytes);
 		_unackBytes = 0;
 	}

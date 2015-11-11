@@ -31,14 +31,14 @@ RTMPWriter::RTMPWriter(UInt32 id,TCPSession& session,std::shared_ptr<RTMPSender>
 }
 
 void RTMPWriter::writeProtocolSettings() {
+	// to eliminate chunks of packet in the server->client direction
+	write(AMF::CHUNKSIZE).packet.write32(0x7FFFFFFF);
 	// to increase the window ack size in the server->client direction
 	writeWinAckSize(2500000);
 	// to increase the window ack size in the client->server direction
 	write(AMF::BANDWITH).packet.write32(2500000).write8(0); // hard setting
 	// Stream Begin - ID 0
 	write(AMF::RAW).packet.write16(0).write32(0);
-	// to eliminate chunks of packet in the server->client direction
-	write(AMF::CHUNKSIZE).packet.write32(0x7FFFFFFF);
 }
 
 bool RTMPWriter::flush() {
