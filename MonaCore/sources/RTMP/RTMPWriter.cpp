@@ -86,6 +86,8 @@ AMFWriter& RTMPWriter::write(AMF::ContentType type,UInt32 time,const UInt8* data
         return AMFWriter::Null;
 
 	// KEEP it in first, to assign _channel.bodySize of the previous packet before to manipulate _channel again with the new packet
+	if (!_pSender)
+		_pSender.reset(new RTMPSender(_session.invoker.poolBuffers));
 	AMFWriter& writer = _pSender->writer(_channel);
 	BinaryWriter& packet = writer.packet;
 
@@ -110,9 +112,6 @@ AMFWriter& RTMPWriter::write(AMF::ContentType type,UInt32 time,const UInt8* data
 	_channel.time = time;
 	_channel.type = type;
 	_channel.bodySize = size;
-
-	if (!_pSender)
-		_pSender.reset(new RTMPSender(_session.invoker.poolBuffers));
 
 	_pSender->headerSize = 12 - 4*headerFlag;
 

@@ -144,7 +144,7 @@ UInt8 RTMFPHandshake::handshakeHandler(UInt8 id,const SocketAddress& address, Bi
 
 			string tag;
 			request.read(16,tag);
-			response.write8(tag.size()).write(tag);
+			response.write7BitValue(tag.size()).write(tag);
 		
 			if(type == 0x0f) {
 
