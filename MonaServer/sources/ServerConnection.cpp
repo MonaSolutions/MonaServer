@@ -128,12 +128,12 @@ void ServerConnection::send(const shared_ptr<ServerMessage>& pMessage) {
 		handlerRef = it->second;
 	}
 
-	pMessage->_shift -= (handler.empty() ? Util::Get7BitValueSize(handlerRef) : handler.size());
+	pMessage->_shift -= (handler.empty() ? Util::Get7BitValueSize(handlerRef) : (UInt16)handler.size());
 
 	BinaryWriter writer((UInt8*)pMessage->data(),pMessage->size());
 
 	writer.write32(pMessage->size()-4);
-	writer.write8(handler.size()).write(handler);
+	writer.write8((UInt8)handler.size()).write(handler);
 	if(writeRef)
 		writer.write7BitEncoded(handlerRef);
 	else if(handler.empty())
