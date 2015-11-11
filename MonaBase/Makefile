@@ -18,6 +18,7 @@ ifeq ($(OS),Darwin)
 	SHARED=-dynamiclib -install_name ./../MonaBase/$(LIB)
 else
 	LIB=lib/libMonaBase.so
+	AR=lib/libMonaBase.ar
 	SHARED=-shared
 endif
 SOURCES = $(filter-out sources/Win%.cpp, $(wildcard $(SRCDIR)*/*.cpp))
@@ -30,6 +31,8 @@ release:
 	@$(MAKE) -k $(OBJECT)
 	@echo creating dynamic lib $(LIB)
 	@$(GPP) $(CFLAGS) -fPIC $(SHARED) -o $(LIB) $(OBJECT) $(LIBS)
+	@echo creating static lib $(AR)
+	@ar rcs $(AR) $(OBJECT)
 
 debug:
 	mkdir -p tmp/Debug
@@ -37,6 +40,8 @@ debug:
 	@$(MAKE) -k $(OBJECTD)
 	@echo creating dynamic debug lib $(LIB)
 	@$(GPP) -g -D_DEBUG $(CFLAGS) -fPIC $(SHARED) -o $(LIB) $(OBJECTD) $(LIBS)
+	@echo creating static lib $(AR)
+	@ar rcs $(AR) $(OBJECTD)
 
 $(OBJECT): tmp/Release/%.o: sources/%.cpp
 	@echo compiling $(@:tmp/Release/%.o=sources/%.cpp)
@@ -48,5 +53,5 @@ $(OBJECTD): tmp/Debug/%.o: sources/%.cpp
 
 clean:
 	@echo cleaning project MonaBase
-	@rm -f $(OBJECT) $(LIB)
-	@rm -f $(OBJECTD) $(LIB)
+	@rm -f $(OBJECT) $(LIB) $(AR)
+	@rm -f $(OBJECTD) $(LIB) $(AR)

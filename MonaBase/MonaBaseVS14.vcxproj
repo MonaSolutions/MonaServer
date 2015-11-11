@@ -1,0 +1,339 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{59BC76A9-32CF-4580-8C32-9F12EA4BA22B}</ProjectGuid>
+    <RootNamespace>MonaBase</RootNamespace>
+    <ProjectName>MonaBase</ProjectName>
+    <Keyword>ManagedCProj</Keyword>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v140_xp</PlatformToolset>
+    <CharacterSet>NotSet</CharacterSet>
+    <CLRSupport>false</CLRSupport>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v140</PlatformToolset>
+    <CharacterSet>NotSet</CharacterSet>
+    <CLRSupport>false</CLRSupport>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v140_xp</PlatformToolset>
+    <CharacterSet>NotSet</CharacterSet>
+    <CLRSupport>false</CLRSupport>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v140</PlatformToolset>
+    <CharacterSet>NotSet</CharacterSet>
+    <CLRSupport>false</CLRSupport>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>11.0.50727.1</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>$(ProjectDir)lib\</OutDir>
+    <IntDir>tmp/$(Configuration)\</IntDir>
+    <TargetName>$(ProjectName)d</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <TargetName>$(ProjectName)64d</TargetName>
+    <OutDir>$(ProjectDir)lib\</OutDir>
+    <IntDir>tmp64\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>$(ProjectDir)lib/\</OutDir>
+    <IntDir>tmp/$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <OutDir>$(ProjectDir)lib\</OutDir>
+    <IntDir>tmp64\$(Configuration)\</IntDir>
+    <TargetName>$(ProjectName)64</TargetName>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <AdditionalOptions>/MP %(AdditionalOptions)</AdditionalOptions>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>../External/include;include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_WINSOCK_DEPRECATED_NO_WARNINGS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <MinimalRebuild>false</MinimalRebuild>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <SDLCheck>true</SDLCheck>
+      <PrecompiledHeaderFile />
+      <PrecompiledHeaderOutputFile />
+      <DisableSpecificWarnings>
+      </DisableSpecificWarnings>
+    </ClCompile>
+    <Lib>
+      <OutputFile>$(OutDir)$(ProjectName)d.lib</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <AdditionalOptions>/MP %(AdditionalOptions)</AdditionalOptions>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>../External/include;include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN64;_WINSOCK_DEPRECATED_NO_WARNINGS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <MinimalRebuild>false</MinimalRebuild>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <SDLCheck>true</SDLCheck>
+      <PrecompiledHeaderFile>
+      </PrecompiledHeaderFile>
+      <PrecompiledHeaderOutputFile>
+      </PrecompiledHeaderOutputFile>
+      <DisableSpecificWarnings>4267;4244;4800</DisableSpecificWarnings>
+    </ClCompile>
+    <Lib>
+      <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <OmitFramePointers>true</OmitFramePointers>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
+      <AdditionalIncludeDirectories>../External/include;include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_WINSOCK_DEPRECATED_NO_WARNINGS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <PrecompiledHeader />
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat />
+      <Optimization>Full</Optimization>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <DisableSpecificWarnings>
+      </DisableSpecificWarnings>
+    </ClCompile>
+    <Lib>
+      <OutputFile>$(OutDir)$(ProjectName).lib</OutputFile>
+      <LinkTimeCodeGeneration>true</LinkTimeCodeGeneration>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <OmitFramePointers>true</OmitFramePointers>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
+      <AdditionalIncludeDirectories>../External/include;include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_WINSOCK_DEPRECATED_NO_WARNINGS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>
+      </DebugInformationFormat>
+      <Optimization>Full</Optimization>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <DisableSpecificWarnings>4267;4244;4800</DisableSpecificWarnings>
+    </ClCompile>
+    <Lib>
+      <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
+      <LinkTimeCodeGeneration>true</LinkTimeCodeGeneration>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <Reference Include="System">
+      <CopyLocalSatelliteAssemblies>true</CopyLocalSatelliteAssemblies>
+      <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
+    </Reference>
+    <Reference Include="System.Data">
+      <CopyLocalSatelliteAssemblies>true</CopyLocalSatelliteAssemblies>
+      <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
+    </Reference>
+    <Reference Include="System.Xml">
+      <CopyLocalSatelliteAssemblies>true</CopyLocalSatelliteAssemblies>
+      <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="sources\Application.cpp" />
+    <ClCompile Include="sources\Buffer.cpp" />
+    <ClCompile Include="sources\Crypto.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="sources\Date.cpp" />
+    <ClCompile Include="sources\Exceptions.cpp" />
+    <ClCompile Include="sources\DNS.cpp" />
+    <ClCompile Include="sources\File.cpp" />
+    <ClCompile Include="sources\FileSystem.cpp" />
+    <ClCompile Include="sources\FileWatcher.cpp" />
+    <ClCompile Include="sources\HelpFormatter.cpp" />
+    <ClCompile Include="sources\HostEntry.cpp" />
+    <ClCompile Include="sources\IPAddress.cpp" />
+    <ClCompile Include="sources\Logger.cpp" />
+    <ClCompile Include="sources\MapParameters.cpp" />
+    <ClCompile Include="sources\Mona.cpp" />
+    <ClCompile Include="sources\BinaryReader.cpp" />
+    <ClCompile Include="sources\BinaryWriter.cpp" />
+    <ClCompile Include="sources\AttemptCounter.cpp" />
+    <ClCompile Include="sources\DiffieHellman.cpp" />
+    <ClCompile Include="sources\Logs.cpp" />
+    <ClCompile Include="sources\Net.cpp" />
+    <ClCompile Include="sources\Option.cpp">
+      <ExceptionHandling Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Sync</ExceptionHandling>
+      <ExceptionHandling Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Sync</ExceptionHandling>
+    </ClCompile>
+    <ClCompile Include="sources\Options.cpp" />
+    <ClCompile Include="sources\Parameters.cpp" />
+    <ClCompile Include="sources\PersistentData.cpp" />
+    <ClCompile Include="sources\PoolBuffers.cpp" />
+    <ClCompile Include="sources\Process.cpp" />
+    <ClCompile Include="sources\QualityOfService.cpp" />
+    <ClCompile Include="sources\ServerApplication.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="sources\Signal.cpp" />
+    <ClCompile Include="sources\Socket.cpp" />
+    <ClCompile Include="sources\SocketAddress.cpp" />
+    <ClCompile Include="sources\String.cpp" />
+    <ClCompile Include="sources\SubstreamMap.cpp" />
+    <ClCompile Include="sources\TerminateSignal.cpp" />
+    <ClCompile Include="sources\Timezone.cpp" />
+    <ClCompile Include="sources\Trigger.cpp" />
+    <ClCompile Include="sources\Util.cpp" />
+    <ClCompile Include="sources\PoolThread.cpp" />
+    <ClCompile Include="sources\Startable.cpp" />
+    <ClCompile Include="sources\Task.cpp" />
+    <ClCompile Include="sources\TaskHandler.cpp" />
+    <ClCompile Include="sources\SocketManager.cpp" />
+    <ClCompile Include="sources\SocketSender.cpp" />
+    <ClCompile Include="sources\TCPClient.cpp" />
+    <ClCompile Include="sources\TCPServer.cpp" />
+    <ClCompile Include="sources\UDPSocket.cpp" />
+    <ClCompile Include="sources\WinRegistryKey.cpp" />
+    <ClCompile Include="sources\WinService.cpp" />
+    <ClCompile Include="sources\XMLParser.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\Mona\Binary.h" />
+    <ClInclude Include="include\Mona\Buffer.h" />
+    <ClInclude Include="include\Mona\Crypto.h" />
+    <ClInclude Include="include\Mona\Date.h" />
+    <ClInclude Include="include\Mona\Event.h" />
+    <ClInclude Include="include\Mona\DNS.h" />
+    <ClInclude Include="include\Mona\Exceptions.h" />
+    <ClInclude Include="include\Mona\File.h" />
+    <ClInclude Include="include\Mona\FileSystem.h" />
+    <ClInclude Include="include\Mona\FileWatcher.h" />
+    <ClInclude Include="include\Mona\HelpFormatter.h" />
+    <ClInclude Include="include\Mona\HostEntry.h" />
+    <ClInclude Include="include\Mona\IPAddress.h" />
+    <ClInclude Include="include\Mona\Net.h" />
+    <ClInclude Include="include\Mona\PacketReader.h" />
+    <ClInclude Include="include\Mona\PacketWriter.h" />
+    <ClInclude Include="include\Mona\Parameters.h" />
+    <ClInclude Include="include\Mona\Application.h" />
+    <ClInclude Include="include\Mona\Mona.h" />
+    <ClInclude Include="include\Mona\BinaryReader.h" />
+    <ClInclude Include="include\Mona\BinaryWriter.h" />
+    <ClInclude Include="include\Mona\AttemptCounter.h" />
+    <ClInclude Include="include\Mona\DiffieHellman.h" />
+    <ClInclude Include="include\Mona\Entities.h" />
+    <ClInclude Include="include\Mona\Entity.h" />
+    <ClInclude Include="include\Mona\Logger.h" />
+    <ClInclude Include="include\Mona\Logs.h" />
+    <ClInclude Include="include\Mona\MapParameters.h" />
+    <ClInclude Include="include\Mona\Option.h" />
+    <ClInclude Include="include\Mona\Options.h" />
+    <ClInclude Include="include\Mona\PersistentData.h" />
+    <ClInclude Include="include\Mona\PoolBuffer.h" />
+    <ClInclude Include="include\Mona\PoolBuffers.h" />
+    <ClInclude Include="include\Mona\Process.h" />
+    <ClInclude Include="include\Mona\QualityOfService.h" />
+    <ClInclude Include="include\Mona\ServerApplication.h" />
+    <ClInclude Include="include\Mona\Signal.h" />
+    <ClInclude Include="include\Mona\StopWatch.h" />
+    <ClInclude Include="include\Mona\Socket.h" />
+    <ClInclude Include="include\Mona\SocketAddress.h" />
+    <ClInclude Include="include\Mona\String.h" />
+    <ClInclude Include="include\Mona\SubstreamMap.h" />
+    <ClInclude Include="include\Mona\TerminateSignal.h" />
+    <ClInclude Include="include\Mona\Time.h" />
+    <ClInclude Include="include\Mona\Timezone.h" />
+    <ClInclude Include="include\Mona\Trigger.h" />
+    <ClInclude Include="include\Mona\Util.h" />
+    <ClInclude Include="include\Mona\PoolThread.h" />
+    <ClInclude Include="include\Mona\PoolThreads.h" />
+    <ClInclude Include="include\Mona\Startable.h" />
+    <ClInclude Include="include\Mona\Task.h" />
+    <ClInclude Include="include\Mona\TaskHandler.h" />
+    <ClInclude Include="include\Mona\WinRegistryKey.h" />
+    <ClInclude Include="include\Mona\WinService.h" />
+    <ClInclude Include="include\Mona\WorkThread.h" />
+    <ClInclude Include="include\Mona\SocketManager.h" />
+    <ClInclude Include="include\Mona\SocketSender.h" />
+    <ClInclude Include="include\Mona\TCPClient.h" />
+    <ClInclude Include="include\Mona\TCPSender.h" />
+    <ClInclude Include="include\Mona\TCPServer.h" />
+    <ClInclude Include="include\Mona\UDPSender.h" />
+    <ClInclude Include="include\Mona\UDPSocket.h" />
+    <ClInclude Include="include\Mona\XMLParser.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

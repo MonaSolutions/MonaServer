@@ -340,7 +340,7 @@ void RTMFPWriter::flush(BinaryWriter& writer,UInt64 stage,UInt8 flags,bool heade
 
 		// signature
 		if(_stageAck==0) {
-			writer.write8(signature.size()).write(signature);
+			writer.write8((UInt8)signature.size()).write(signature);
 			// No write this in the case where it's a new flow!
 			if(flowId>0) {
 				writer.write8(1+Util::Get7BitValueSize(flowId)); // following size
