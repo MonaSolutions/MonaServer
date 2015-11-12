@@ -9,7 +9,7 @@
     
     <link rel="stylesheet" href="_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="_static/bootswatch-3.2.0/amelia/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="_static/bootswatch-3.3.4/amelia/bootstrap.min.css" type="text/css" />
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/my-styles.css" type="text/css" />
     
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <script type="text/javascript" src="_static/js/jquery-1.11.0.min.js"></script>
     <script type="text/javascript" src="_static/js/jquery-fix.js"></script>
-    <script type="text/javascript" src="_static/bootstrap-3.2.0/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="_static/bootstrap-3.3.4/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
     <link rel="top" title="MonaServer" href="index.html" />
 
@@ -125,7 +125,7 @@
     
     
 
-    <div class="col-md-12">
+    <div class="col-md-12 content">
       
   <div class="section" id="server-application">
 <h1><a class="toc-backref" href="#id1">Server Application</a><a class="headerlink" href="#server-application" title="Permalink to this headline">¶</a></h1>
@@ -203,7 +203,7 @@ rtmfp://host:port/Games/myGame       -&gt;     MonaServer/www/Games/myGame/main.
 </div>
 <div class="section" id="global-configurations">
 <span id="ref-global-configurations"></span><h2><a class="toc-backref" href="#id3">Global configurations</a><a class="headerlink" href="#global-configurations" title="Permalink to this headline">¶</a></h2>
-<p><em>MonaServer.ini</em> file allows to give some global configuration values on MonaServer start-up (see <a class="reference internal" href="installation.html#ref-configurations"><em>Configurations</em></a>). To access for these values from script, use <em>mona.configs</em> property (see <a class="reference internal" href="api.html#ref-mona"><em>Mona</em></a> object description to get more details). This system allows to create your own global configuration values and access to them in scripts.</p>
+<p><em>MonaServer.ini</em> file allows to give some global configuration values on MonaServer start-up (see <a class="reference internal" href="installation.html#ref-configurations"><span>Configurations</span></a>). To access for these values from script, use <em>mona.configs</em> property (see <a class="reference internal" href="api.html#ref-mona"><span>Mona</span></a> object description to get more details). This system allows to create your own global configuration values and access to them in scripts.</p>
 <div class="highlight-ini"><div class="highlight"><pre><span class="c1">; MonaServer.ini file</span>
 <span class="na">port</span><span class="o">=</span><span class="s">19350 ; existing config</span>
 <span class="c1">; New custom config</span>
@@ -267,7 +267,7 @@ rtmfp://host:port/Games/myGame       -&gt;     MonaServer/www/Games/myGame/main.
 </div>
 <div class="admonition warning">
 <p class="first admonition-title">Warning</p>
-<p class="last">Events are functions called by the system (see <a class="reference internal" href="api.html#ref-events"><em>Events</em></a>), if an application doesn&#8217;t define <em>onConnection</em> event for example, on new client connection for this application, it&#8217;s the parent application which will receive the event. To avoid it, you have to overload the event in child application, and you can call also the parent version if needed.</p>
+<p class="last">Events are functions called by the system (see <a class="reference internal" href="api.html#ref-events"><span>Events</span></a>), if an application doesn&#8217;t define <em>onConnection</em> event for example, on new client connection for this application, it&#8217;s the parent application which will receive the event. To avoid it, you have to overload the event in child application, and you can call also the parent version if needed.</p>
 </div>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
@@ -280,7 +280,7 @@ rtmfp://host:port/Games/myGame       -&gt;     MonaServer/www/Games/myGame/main.
 <span class="n">super</span><span class="p">:</span><span class="n">hello</span><span class="p">()</span> <span class="c1">-- displays &quot;I am the root application&quot;</span>
 </pre></div>
 </div>
-<p>You can use <em>client.path</em> property to check if it&#8217;s a client connected for this application or for one child application (see <a class="reference internal" href="api.html#ref-client"><em>Client</em></a> object description).</p>
+<p>You can use <em>client.path</em> property to check if it&#8217;s a client connected for this application or for one child application (see <a class="reference internal" href="api.html#ref-client"><span>Client</span></a> object description).</p>
 </div>
 <div class="section" id="exchange-between-unrelated-server-applications">
 <h3><a class="toc-backref" href="#id6">Exchange between unrelated server applications</a><a class="headerlink" href="#exchange-between-unrelated-server-applications" title="Permalink to this headline">¶</a></h3>
@@ -450,7 +450,7 @@ For example if <em>/Games</em> application would like to call a <em>load</em> fu
 <p class="first admonition-title">Note</p>
 <p class="last">Push data is not possible with HTTP protocol because it is an old protocol based on pull data only. Long polling is a solution for this but is not implemented yet.</p>
 </div>
-<p>Here an example of push data every two seconds (see <a class="reference internal" href="api.html#ref-onmanage"><em>onManage()</em></a> event description):</p>
+<p>Here an example of push data every two seconds (see <a class="reference internal" href="api.html#ref-onmanage"><span>onManage()</span></a> event description):</p>
 <div class="highlight-lua"><div class="highlight"><pre><span class="n">writers</span> <span class="o">=</span> <span class="p">{}</span>
 <span class="k">function</span> <span class="nf">onConnection</span><span class="p">(</span><span class="n">client</span><span class="p">,</span><span class="o">...</span><span class="p">)</span>
   <span class="n">writers</span><span class="p">[</span><span class="n">client</span><span class="p">]</span> <span class="o">=</span> <span class="n">client</span><span class="p">.</span><span class="n">writer</span>
@@ -487,7 +487,7 @@ When you want push a constant flow with a large amount of data, or if you want t
 <div class="highlight-as3"><div class="highlight"><pre><span class="kd">function </span><span class="nf">refresh</span><span class="o">():</span><span class="kt">void</span> <span class="o">{...}</span>
 </pre></div>
 </div>
-<p>When you create your own <a class="reference internal" href="api.html#ref-writer"><em>Writer</em></a>, you can overload its <em>onManage</em> function, allowing you to write the same thing in a more elegant way, which avoid here <em>writers</em> table usage, and make the code really more short (see <a class="reference internal" href="api.html"><em>API</em></a> page for more details).</p>
+<p>When you create your own <a class="reference internal" href="api.html#ref-writer"><span>Writer</span></a>, you can overload its <em>onManage</em> function, allowing you to write the same thing in a more elegant way, which avoid here <em>writers</em> table usage, and make the code really more short (see <a class="reference internal" href="api.html"><em>API</em></a> page for more details).</p>
 <div class="highlight-lua"><div class="highlight"><pre><span class="k">function</span> <span class="nf">onConnection</span><span class="p">(</span><span class="n">client</span><span class="p">,</span><span class="o">...</span><span class="p">)</span>
   <span class="n">writer</span> <span class="o">=</span> <span class="n">client</span><span class="p">.</span><span class="n">writer</span><span class="p">:</span><span class="n">newFlowWriter</span><span class="p">()</span>
   <span class="k">function</span> <span class="nf">writer</span><span class="p">:</span><span class="n">onManage</span><span class="p">()</span>
@@ -499,7 +499,7 @@ When you want push a constant flow with a large amount of data, or if you want t
 <div class="highlight-as3"><div class="highlight"><pre><span class="kd">function </span><span class="nf">refresh</span><span class="o">():</span><span class="kt">void</span> <span class="o">{...}</span>
 </pre></div>
 </div>
-<p>If you have need of pushing rate greater than two seconds, use <em>onRealTime</em> event of root application (see <a class="reference internal" href="api.html#ref-events"><em>Events</em></a> for more details).</p>
+<p>If you have need of pushing rate greater than two seconds, use <em>onRealTime</em> event of root application (see <a class="reference internal" href="api.html#ref-events"><span>Events</span></a> for more details).</p>
 </div>
 </div>
 <div class="section" id="lua-types-conversions">
@@ -519,7 +519,7 @@ When you want push a constant flow with a large amount of data, or if you want t
 <span id="ref-amf-to-lua"></span><h3><a class="toc-backref" href="#id12">AMF to LUA conversions</a><a class="headerlink" href="#amf-to-lua-conversions" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><strong>Used by :</strong> RTMP, RTMFP and HTTP POST (Mime-Type: application/amf)</li>
-<li><strong>Functions :</strong> toAMF/fromAMF/toAMF0 (see <a class="reference internal" href="api.html#ref-mona"><em>Mona</em></a> object for more details)</li>
+<li><strong>Functions :</strong> toAMF/fromAMF/toAMF0 (see <a class="reference internal" href="api.html#ref-mona"><span>Mona</span></a> object for more details)</li>
 </ul>
 <p>Primitive conversion types are easy and intuitive (Number, Boolean, String). Except these primitive types, in <a class="reference external" href="http://www.lua.org/">LUA</a> all is table. Concerning AMF complex type conversions, things go as following:</p>
 <div class="highlight-lua"><div class="highlight"><pre><span class="c1">-- LUA table formatted in Object          // AMF Object</span>
@@ -610,7 +610,7 @@ For example, <em>ArrayCollection</em> is an externalizable type, and is not supp
 <span id="ref-json-to-lua"></span><h3><a class="toc-backref" href="#id14">JSON to LUA conversions</a><a class="headerlink" href="#json-to-lua-conversions" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><strong>Used by :</strong> WebSocket and HTTP POST (Mime-Type: application/json)</li>
-<li><strong>Functions :</strong> toJSON/fromJSON (see <a class="reference internal" href="api.html#ref-mona"><em>Mona</em></a> object for more details)</li>
+<li><strong>Functions :</strong> toJSON/fromJSON (see <a class="reference internal" href="api.html#ref-mona"><span>Mona</span></a> object for more details)</li>
 </ul>
 <p>As in AMF primitive, conversion types are easy and intuitive (Number, Boolean, String). For the rest, things go as following:</p>
 <div class="highlight-lua"><div class="highlight"><pre><span class="c1">-- LUA table formatted in Object          // JSON Object</span>
@@ -639,7 +639,7 @@ For example, <em>ArrayCollection</em> is an externalizable type, and is not supp
 <span id="ref-query-to-lua"></span><h3><a class="toc-backref" href="#id15">Query String to LUA conversions</a><a class="headerlink" href="#query-string-to-lua-conversions" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><strong>Used by :</strong> HTTP POST (Mime-Type: application/x-www-form-urlencoded)</li>
-<li><strong>Functions :</strong> toQuery/fromQuery (see <a class="reference internal" href="api.html#ref-mona"><em>Mona</em></a> object for more details)</li>
+<li><strong>Functions :</strong> toQuery/fromQuery (see <a class="reference internal" href="api.html#ref-mona"><span>Mona</span></a> object for more details)</li>
 </ul>
 <p>As in AMF primitive, conversion types are easy and intuitive (Number, Boolean, String). For the rest, things go as following:</p>
 <div class="highlight-lua"><div class="highlight"><pre>-- LUA table formatted in Object          // Query String
@@ -661,7 +661,7 @@ For example, <em>ArrayCollection</em> is an externalizable type, and is not supp
 <span id="ref-xmlrpc-to-lua"></span><h3><a class="reference external" href="http://xmlrpc.scripting.com/spec.html">XML-RPC</a> to LUA conversions<a class="headerlink" href="#xml-rpc-to-lua-conversions" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><strong>Used by :</strong> HTTP POST (Mime-Type: application/xml)</li>
-<li><strong>Functions :</strong> toXMLRPC/fromXMLRPC (see <a class="reference internal" href="api.html#ref-mona"><em>Mona</em></a> object for more details)</li>
+<li><strong>Functions :</strong> toXMLRPC/fromXMLRPC (see <a class="reference internal" href="api.html#ref-mona"><span>Mona</span></a> object for more details)</li>
 </ul>
 <p>There are a lot of XML format for communication, <a class="reference external" href="http://xmlrpc.scripting.com/spec.html">XML-RPC</a> has been choosen for its simplicity and because it fits well with Mona.</p>
 <div class="highlight-lua"><div class="highlight"><pre><span class="c1">-- LUA table formatted in Object          // XML-RPC Object</span>
@@ -705,7 +705,7 @@ For example, <em>ArrayCollection</em> is an externalizable type, and is not supp
 <span id="ref-xml-compatibility"></span><h3><a class="toc-backref" href="#id17">XML data compatibility (XML parser)</a><a class="headerlink" href="#xml-data-compatibility-xml-parser" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><strong>Not used in parsers</strong></li>
-<li><strong>Functions :</strong> toXML/fromXML (see <a class="reference internal" href="api.html#ref-mona"><em>Mona</em></a> object for more details)</li>
+<li><strong>Functions :</strong> toXML/fromXML (see <a class="reference internal" href="api.html#ref-mona"><span>Mona</span></a> object for more details)</li>
 </ul>
 <p>As mentioned above, Mona traduce XMLRPC calls automatically. For other types of XML data only few <a class="reference external" href="http://www.lua.org/">LUA</a> code lines are needed, using the useful XML parser.</p>
 <dl class="docutils">
@@ -716,7 +716,7 @@ For example, <em>ArrayCollection</em> is an externalizable type, and is not supp
 </ul>
 </dd>
 </dl>
-<p>See <a class="reference internal" href="api.html#ref-mona"><em>Mona</em></a> for more details.</p>
+<p>See <a class="reference internal" href="api.html#ref-mona"><span>Mona</span></a> for more details.</p>
 <div class="section" id="a-sample-with-soap">
 <h4><a class="toc-backref" href="#id18">A sample with SOAP</a><a class="headerlink" href="#a-sample-with-soap" title="Permalink to this headline">¶</a></h4>
 <p>Let us begin with an RPC addition method :</p>
@@ -837,7 +837,7 @@ So you can include your scripts like this :</p>
 <span class="k">end</span>
 </pre></div>
 </div>
-<p>Or you can always use <em>mona:absolutePath(path)</em> function (see <a class="reference internal" href="api.html#ref-mona"><em>Mona</em></a> object for more details) if you want to use the absolute path of the file :</p>
+<p>Or you can always use <em>mona:absolutePath(path)</em> function (see <a class="reference internal" href="api.html#ref-mona"><span>Mona</span></a> object for more details) if you want to use the absolute path of the file :</p>
 <div class="highlight-lua"><div class="highlight"><pre><span class="k">function</span> <span class="nf">onStart</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
   <span class="nb">dofile</span><span class="p">(</span><span class="n">mona</span><span class="p">:</span><span class="n">absolutePath</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="o">..</span><span class="s2">&quot;</span><span class="s">start.lua&quot;</span><span class="p">)</span>
 <span class="k">end</span>
@@ -899,7 +899,7 @@ The solution is to use logs macros :</p>
     </p>
     <p>
         &copy; Copyright 2015, Mathieu Poux &amp; Thomas Jammet.<br/>
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.3b2.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.<br/>
     </p>
   </div>
 </footer>

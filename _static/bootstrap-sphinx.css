@@ -165,7 +165,6 @@ table.field-list {
   }
   .bs-sidenav.affix {
     position: fixed; /* Undo the static from mobile first approach */
-    top: 80px;
   }
   .bs-sidenav.affix-bottom {
     position: absolute; /* Undo the static from mobile first approach */

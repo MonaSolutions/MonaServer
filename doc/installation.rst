@@ -9,7 +9,7 @@ We would like to remind you that Mona is licensed under the `GNU General Public 
 Binaries
 ***********************************
 
-A `32-bit Windows zipped package <http://sourceforge.net/projects/monaserver/files/MonaServer_Windows_32.zip/download>`_ is provided to quickly test MonaServer.
+A `32-bit Windows zipped package <http://sourceforge.net/projects/monaserver/files/MonaServer_1.1_Win32.zip/download>`_ is provided to quickly test MonaServer.
 
 We recommend you to clone the github version from the sources for production use.
 
@@ -57,7 +57,7 @@ For several reasons some functionalities of **LUA 52** are not allowed by defaul
         git clone http://luajit.org/git/luajit-2.0.git
 - Then set the DLUAJIT_ENABLE_LUA52COMPAT option :
     + On Linux just search DLUAJIT_ENABLE_LUA52COMPAT in *src/Makefile* and uncomment the line
-    + On Windows search the line beginning with *@set LJCOMPILE=cl /nologo /c /O2 /W3 /D_CRT_SECURE_NO_DEPRECATE* and add the */DLUAJIT_ENABLE_LUA52COMPAT* option
+    + On Windows search the line beginning with *@set LJCOMPILE=cl /nologo /c /O2 /W3 /D_CRT_SECURE_NO_DEPRECATE* in *src/msvcbuild.bat*. Then add the */DLUAJIT_ENABLE_LUA52COMPAT* option
 - Finally you can compile luajit (*make* or *src/msvcbuild.bat*)
  
 .. note:: On Linux just run **sudo make install** to install luajit on the system.
