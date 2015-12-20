@@ -24,15 +24,15 @@ img {
 
 body {
   padding-top: 80px;
-  background-color: #222;
+  /*background-color: #222;*/
 }
 
-#content {
-  background-color: #108A93;   
-}
+/*#content {
+  background-color: #108A93;
+}*/
 
 .footer {
-  background: none repeat scroll 0% 0% #222;
+  background: none repeat scroll 0% 0% #FFF;
 }
 
 /* Social proof buttons from GitHub & Twitter */

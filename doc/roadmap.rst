@@ -16,7 +16,9 @@ VOD                               Adding support for client:onRead() to RTMP/RTM
 --------------------------------  -------------------------------------------------------------------  --------------------------------
 SSL Support                       To support HTTPS, WebSocketSSL and RTMPS                             3 weeks
 --------------------------------  -------------------------------------------------------------------  --------------------------------
-WebRTC                            Adding the WebRTC_ Protocol in a promising implementation
+HLS                               To support HLS streaming (Apple HTTP Live Streaming technology)      3 weeks
+--------------------------------  -------------------------------------------------------------------  --------------------------------
+WebRTC                            Adding the WebRTC_ Protocol in a promising implementation            ~ 1 year
 ================================  ===================================================================  ================================
 
 .. _`$` : https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=VXMEGJ2MFVP4C

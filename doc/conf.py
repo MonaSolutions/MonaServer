@@ -138,7 +138,7 @@ html_theme_options = {
     'source_link_position': "",
     
     # Bootswatch (http://bootswatch.com/) theme.
-    'bootswatch_theme': "amelia",
+    'bootswatch_theme': "cerulean",
     
     # Choose Bootstrap version.
     # Values: "3" (default) or "2" (in quotes)

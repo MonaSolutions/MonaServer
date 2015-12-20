@@ -14,21 +14,29 @@ To get more informations please ask us on the `MonaServer forum`_ or send a mail
 +-------------------------+-------------------------------------------------------------------+-------------------------------------------------+
 | Screenshot & link       |  Description                                                      |   Technologies                                  |
 +=========================+===================================================================+=================================================+
-| |monavideo|             | MonaVideo_ :                                                      | - **Protocol :** RTMFP                          |
-|                         |                                                                   | - **P2P :** Full-mesh                           |
-|                         | The simpliest application of live video communication.            |                                                 |
+| |monavideo|             | MonaVideo_ :                                                      | - **Coding Languages :** Flex                   |
+|                         |                                                                   | - **Protocol :** RTMFP                          |
+|                         | The simpliest application of live video communication.            | - **P2P :** Full-mesh                           |
 |                         |                                                                   |                                                 |
 |                         | 1. Type a name to identify your meeting                           |                                                 |
 |                         | 2. Send the http link to your correspondant                       |                                                 |
 |                         |                                                                   |                                                 |
 +-------------------------+-------------------------------------------------------------------+-------------------------------------------------+
-|                         | VideoPhone_ :                                                     |                                                 |
+| |HiMona|                | HiMona_ :                                                         | - **Coding Languages :** Flex                   |
+|                         |                                                                   | - **Protocol :** RTMFP                          |
+|                         | An alternive of MonaVideo_ allowing to record the video into a    | - **P2P :** publish/play (no p2p)               |
+|                         | file directly from the flash application!                         |                                                 |
 |                         |                                                                   |                                                 |
-| |videophone|            | This is an improved version of the `Cirrus Sample Application`_   | - **Protocol :** RTMFP                          |
-|                         | with full-screen mode and a better default quality of video.      | - **P2P :** Full-mesh                           |
+|                         | **Note:** The trick imply more delays in the communication.       |                                                 |
 |                         |                                                                   |                                                 |
 +-------------------------+-------------------------------------------------------------------+-------------------------------------------------+
-|                         | Meeting_ :                                                        |                                                 |
+|                         | VideoPhone_ :                                                     | - **Coding Languages :** Flex                   |
+|                         |                                                                   | - **Protocol :** RTMFP                          |
+| |videophone|            | This is an improved version of the `Cirrus Sample Application`_   | - **P2P :** Full-mesh                           |
+|                         | with full-screen mode and a better default quality of video.      |                                                 |
+|                         |                                                                   |                                                 |
++-------------------------+-------------------------------------------------------------------+-------------------------------------------------+
+|                         | Meeting_ :                                                        | - **Coding Languages :** Flex                   |
 |                         |                                                                   |                                                 |
 | |meeting|               | This is the adaptation of the `Adobe Meeting Sample`_. It is      | - **Protocol :** RTMFP or RTMP                  |
 |                         | a more complex VideoConference application permitting to          | - **P2P :** Full-mesh or publish/play           |
@@ -36,21 +44,28 @@ To get more informations please ask us on the `MonaServer forum`_ or send a mail
 |                         | (publish/play) modes.                                             |                                                 |
 |                         |                                                                   |                                                 |
 +-------------------------+-------------------------------------------------------------------+-------------------------------------------------+
-|                         | FileShare_ :                                                      |                                                 |
+|                         | FileShare_ :                                                      | - **Coding Languages :** Flex                   |
 |                         |                                                                   |                                                 |
 | |fileshare|             | The simpliest application of P2P file sharing.                    | - **Protocol :** RTMFP                          |
 |                         |                                                                   | - **P2P :** NetGroup                            |
 |                         | 1. Load your file and share the link                              |                                                 |
-|                         | 2. Your file is shared as long as their is a peer connected       |                                                 |
+|                         | 2. Your file is shared as long as there is a peer connected       |                                                 |
 +-------------------------+-------------------------------------------------------------------+-------------------------------------------------+
-|                         | Chat_ :                                                           |                                                 |
+|                         | CopyPaste_ :                                                      | - **Coding Languages :** Flex                   |
+|                         |                                                                   |                                                 |
+| |copypaste|             | The simpliest application of text sharing.                        | - **Protocol :** RTMFP                          |
+|                         |                                                                   | - **P2P :** NetGroup                            |
+|                         | 1. Write or copy some text and share the link                     |                                                 |
+|                         | 2. Your text is shared as long as there is a peer connected       |                                                 |
++-------------------------+-------------------------------------------------------------------+-------------------------------------------------+
+|                         | Chat_ :                                                           | - **Coding Languages :** Flex & HTML/Javascript |
 |                         |                                                                   |                                                 |
 | |chat|                  | A sample chat application available in :                          | - **Protocol :** WebSocket or RTMFP/RTMP        |
 |                         |                                                                   |                                                 |
 |                         | - Javascript (WebSocket) : `Javascript Chat`_                     |                                                 |
 |                         | - Flash (RTMP/RTMFP) : `Flash Chat`_                              |                                                 |
 +-------------------------+-------------------------------------------------------------------+-------------------------------------------------+
-|                         | VideoPublisher_ :                                                 |                                                 |
+|                         | VideoPublisher_ :                                                 | - **Coding Languages :** Flex                   |
 |                         |                                                                   |                                                 |
 | |videopublisher|        | A simple video publisher working with both RTMP & RTMFP, with or  | - **Protocol :** RTMFP/RTMP                     |
 |                         | without a NetGroup, allows **synchronous recording!**             | - **P2P :** Netgroup                            |
@@ -58,22 +73,22 @@ To get more informations please ask us on the `MonaServer forum`_ or send a mail
 |                         | **Note :** asynchronous recording is a feature in the roadmap, if |                                                 |
 |                         | you need it please :doc:`contact us <contacts>`!                  |                                                 |
 +-------------------------+-------------------------------------------------------------------+-------------------------------------------------+
-|                         | MobilePublisher_ :                                                |                                                 |
+|                         | MobilePublisher_ :                                                | - **Coding Languages :** Flex mobile            |
 |                         |                                                                   |                                                 |
 | |mobilepublisher|       | The same publisher for **Mobile** devices. Click on the image to  | - **Protocol :** RTMFP/RTMP                     |
 |                         | get the apk installer (Android).                                  | - **P2P :** Netgroup                            |
 |                         |                                                                   | - **Recording :** in a lua synchronous way      |
 |                         | **Note :** It is a FlashDevelop_ (free flex IDE) project.         |                                                 |
 +-------------------------+-------------------------------------------------------------------+-------------------------------------------------+
-|                         | VideoPlayer_ :                                                    |                                                 |
+|                         | VideoPlayer_ :                                                    | - **Coding Languages :** Flex                   |
 |                         |                                                                   |                                                 |
 | |videoplayer|           | A simple video player working with both RTMP & RTMFP, with or     | - **Protocol :** RTMFP/RTMP                     |
 |                         | without a NetGroup.                                               | - **P2P :** Netgroup                            |
 |                         |                                                                   |                                                 |
 |                         | **Note :** Take a look at the `source code`_ to see each options. |                                                 |
 +-------------------------+-------------------------------------------------------------------+-------------------------------------------------+
-|                         | IndustrialComputing_ :                                            | - **Protocol :** WebSocket                      |
-|                         |                                                                   | - **SVG/Javascript**                            |
+|                         | IndustrialComputing_ :                                            | - **Coding Languages :** SVG/Javascript         |
+|                         |                                                                   | - **Protocol :** WebSocket                      |
 | |icomputing|            | A proof of concept of an Industrial Computing interface using     | - **NoSQL Database**                            |
 |                         | SVG for the view and saving data with our NoSQL Dabase system.    |                                                 |
 |                         |                                                                   |                                                 |
@@ -82,6 +97,11 @@ To get more informations please ask us on the `MonaServer forum`_ or send a mail
 
 .. |monavideo| image:: img/monavideo.png                         
   :target: http://raspi.monaserver.ovh/MonaClients/MonaVideo/
+  :width: 250                                        
+  :height: 150
+
+.. |himona| image:: img/himona.png                         
+  :target: http://raspi.monaserver.ovh/MonaClients/HiMona/
   :width: 250                                        
   :height: 150
   
@@ -97,6 +117,11 @@ To get more informations please ask us on the `MonaServer forum`_ or send a mail
   
 .. |fileshare| image:: img/fileshare.png                         
   :target: http://raspi.monaserver.ovh/MonaClients/FileShare/
+  :width: 250                                        
+  :height: 150
+  
+.. |copypaste| image:: img/copypaste.png                         
+  :target: http://raspi.monaserver.ovh/MonaClients/CopyPaste/
   :width: 250                                        
   :height: 150
   
@@ -126,9 +151,11 @@ To get more informations please ask us on the `MonaServer forum`_ or send a mail
   :height: 150
 
 .. _MonaVideo : http://raspi.monaserver.ovh/MonaClients/MonaVideo/
+.. _HiMona : http://raspi.monaserver.ovh/MonaClients/HiMona/
 .. _VideoPhone : http://raspi.monaserver.ovh/MonaClients/VideoPhone/
 .. _Meeting : http://raspi.monaserver.ovh/MonaClients/Meeting/
 .. _FileShare : http://raspi.monaserver.ovh/MonaClients/FileShare/
+.. _CopyPaste : http://raspi.monaserver.ovh/MonaClients/CopyPaste/
 .. _Chat : http://raspi.monaserver.ovh/MonaClients/chat/
 .. _VideoPublisher : http://raspi.monaserver.ovh/MonaClients/VideoPublisher/
 .. _MobilePublisher : http://raspi.monaserver.ovh/MonaClients/MobilePublisher/MobilePublisher.apk
