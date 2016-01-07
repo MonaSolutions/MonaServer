@@ -419,7 +419,7 @@ void SocketManager::run(Exception& exThread) {
         
         if(results<0 && errno!=NET_EINTR) {
             Net::SetException(ex, Net::LastError());
-            exThread.set(ex);
+			exThread = ex;
             break;
         }
         
