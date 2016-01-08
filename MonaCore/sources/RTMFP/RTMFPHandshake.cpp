@@ -30,6 +30,7 @@ namespace Mona {
 RTMFPHandshake::RTMFPHandshake(RTMFProtocol& protocol, Sessions& sessions, Invoker& invoker) : RTMFPSession(protocol, invoker, 0,RTMFP_DEFAULT_KEY ,RTMFP_DEFAULT_KEY, "RTMFPHandshake"),
 	_sessions(sessions),_pPeer(new Peer((Handler&)invoker)) {
 	
+	((string&)_pPeer->protocol) = protocol.name;
 	memcpy(_certificat,"\x01\x0A\x41\x0E",4);
 	Util::Random(&_certificat[4],64);
 	memcpy(&_certificat[68],"\x02\x15\x02\x02\x15\x05\x02\x15\x0E",9);
@@ -252,6 +253,7 @@ UInt8 RTMFPHandshake::handshakeHandler(UInt8 id,const SocketAddress& address, Bi
 						return 0;
 					}
 					_pPeer.reset(new Peer((Handler&)invoker)); // reset peer
+					((string&)_pPeer->protocol) = protocol().name;
 					_cookies.emplace(pCookie->value(), pCookie);
 					attempt.pCookie = pCookie;
 				}
