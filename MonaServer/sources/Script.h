@@ -43,20 +43,19 @@ extern "C" {
 #define SCRIPT_DEBUG(...)	SCRIPT_LOG(Mona::Logger::LEVEL_DEBUG,__FILE__,__LINE__, true, __VA_ARGS__)
 #define SCRIPT_TRACE(...)	SCRIPT_LOG(Mona::Logger::LEVEL_TRACE,__FILE__,__LINE__, true, __VA_ARGS__)
 
-#define SCRIPT_CALLBACK(TYPE,OBJ)								{int __args=1;lua_State* __pState = pState; bool __thisIsConst=false; TYPE* pObj = Script::ToObject<TYPE>(__pState,__thisIsConst,1,true);if(!pObj) return 0; TYPE& OBJ = *pObj;int __results=lua_gettop(__pState); int __top(LUA_NOREF); 
-#define SCRIPT_CALLBACK_TRY(TYPE,OBJ)							{int __args=1;lua_State* __pState = pState; bool __thisIsConst=false; TYPE* pObj = Script::ToObject<TYPE>(__pState,__thisIsConst,1,true);if(!pObj) return 0; TYPE& OBJ = *pObj;int __results=lua_gettop(__pState); int __top(LUA_NOREF); bool __canRaise(SCRIPT_NEXT_TYPE == LUA_TFUNCTION); if(__canRaise) ++__args;
+#define SCRIPT_CALLBACK(TYPE,OBJ)								{int __args=1;lua_State* __pState = pState; bool __thisIsConst=false; TYPE* pObj = Script::ToObject<TYPE>(__pState,__thisIsConst,1,true);if(!pObj) return 0; TYPE& OBJ = *pObj;int __results=lua_gettop(__pState);
+#define SCRIPT_CALLBACK_TRY(TYPE,OBJ)							{int __args=1;lua_State* __pState = pState; bool __thisIsConst=false; TYPE* pObj = Script::ToObject<TYPE>(__pState,__thisIsConst,1,true);if(!pObj) return 0; TYPE& OBJ = *pObj;int __results=lua_gettop(__pState); bool __canRaise(SCRIPT_NEXT_TYPE == LUA_TFUNCTION); if(__canRaise) ++__args;
 
 #define SCRIPT_CALLBACK_NOTCONST_CHECK							{ if(__thisIsConst) {SCRIPT_ERROR("const object can't call this method") return 0;} }
-#define SCRIPT_CALLBACK_FIX_INDEX								{ lua_pushvalue(__pState,2); lua_pushvalue(__pState, -2); lua_rawset(__pState, 1);}
 #define SCRIPT_CALLBACK_THROW(ERROR)							{ if (__canRaise) { lua_pushvalue(__pState,2); lua_pushstring(__pState,ERROR);  lua_call(pState, 1, 0); } }
-
 #define SCRIPT_CALLBACK_RETURN									__results= lua_gettop(__pState)-__results; return (__results>=0 ? __results : 0);}
 
+#define SCRIPT_FIX_RESULT										{ lua_pushvalue(__pState,2); lua_pushvalue(__pState, -2); lua_rawset(__pState, 1);}
 
-#define SCRIPT_BEGIN(STATE)										if(lua_State* __pState = STATE) { int __top(LUA_NOREF);
+#define SCRIPT_BEGIN(STATE)										if(lua_State* __pState = STATE) {
 
-#define SCRIPT_MEMBER_FUNCTION_BEGIN(TYPE,OBJ,MEMBER)			if(Script::FromObject<TYPE>(__pState,OBJ)) { lua_pushstring(__pState, MEMBER); lua_rawget(__pState,-2); lua_insert(__pState,-2); if(!lua_isfunction(__pState,-2)) lua_pop(__pState,2); else { int __top=lua_gettop(__pState)-1; const char* __name = #TYPE"."#MEMBER;
-#define SCRIPT_FUNCTION_BEGIN(NAME,REFERENCE)					{ if(REFERENCE==LUA_NOREF) { if(__top==LUA_NOREF) lua_pushvalue(__pState, LUA_ENVIRONINDEX); else lua_getfenv(__pState,lua_gettop(__pState)-__top-2); } else lua_rawgeti(__pState, LUA_REGISTRYINDEX, REFERENCE); lua_getfield(__pState,lua_istable(__pState,-1) ? -1 : LUA_GLOBALSINDEX,NAME); lua_replace(__pState,-2); if(!lua_isfunction(__pState,-1)) lua_pop(__pState,1); else { int __top=lua_gettop(__pState); const char* __name = NAME;
+#define SCRIPT_MEMBER_FUNCTION_BEGIN(TYPE,OBJ,MEMBER)			if(Script::FromObject<TYPE>(__pState,OBJ)) { lua_pushstring(__pState, MEMBER); lua_rawget(__pState,-2); lua_insert(__pState,-2); if(!lua_isfunction(__pState,-2)) lua_pop(__pState,2); else { lua_getfenv(__pState, -2); lua_rawseti(__pState, LUA_REGISTRYINDEX, LUA_ENVIRONINDEX); int __top=lua_gettop(__pState)-1; const char* __name = #TYPE"."#MEMBER;
+#define SCRIPT_FUNCTION_BEGIN(NAME,REFERENCE)					{ if (REFERENCE==LUA_ENVIRONINDEX) { if (lua_topointer(__pState,LUA_GLOBALSINDEX)==lua_topointer(__pState,LUA_ENVIRONINDEX)) lua_rawgeti(__pState, LUA_REGISTRYINDEX, LUA_ENVIRONINDEX); else lua_pushvalue(__pState, LUA_ENVIRONINDEX); } else lua_rawgeti(__pState,LUA_REGISTRYINDEX, REFERENCE); if (lua_istable(__pState, -1)) { lua_getfield(__pState, -1, NAME); lua_replace(__pState, -2); } if(!lua_isfunction(__pState,-1)) lua_pop(__pState,1); else { lua_getfenv(__pState, -1); lua_rawseti(__pState, LUA_REGISTRYINDEX, LUA_ENVIRONINDEX); int __top=lua_gettop(__pState); const char* __name = NAME;
 #define SCRIPT_FUNCTION_CALL_WITHOUT_LOG						const char* __error=NULL; if(lua_pcall(__pState,lua_gettop(__pState)-__top,LUA_MULTRET,0)) { __error = lua_tostring(__pState,-1); lua_pop(__pState,1); } --__top; int __results=lua_gettop(__pState); int __args=__top;
 #define SCRIPT_FUNCTION_CALL									const char* __error=NULL; if(lua_pcall(__pState,lua_gettop(__pState)-__top,LUA_MULTRET,0)) SCRIPT_ERROR(__error = Script::LastError(__pState)); --__top; int __results=lua_gettop(__pState); int __args=__top;
 #define SCRIPT_FUNCTION_NULL_CALL								lua_pop(__pState,lua_gettop(__pState)-__top+1);--__top;int __results=lua_gettop(__pState);int __args=__top;

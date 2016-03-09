@@ -423,114 +423,114 @@ int LUAInvoker::Get(lua_State *pState) {
 		if (name) {
 			if(strcmp(name,"clients")==0) {
 				Script::Collection(pState,1,"clients");
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name, "dump") == 0) {
 				SCRIPT_WRITE_FUNCTION(LUAInvoker::Dump)
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name, "joinGroup") == 0) {
 				SCRIPT_WRITE_FUNCTION(LUAInvoker::JoinGroup)
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name, "groups") == 0) {
 				Script::Collection(pState, 1, "groups");
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name, "publications") == 0) {
 				Script::Collection(pState, 1, "publications");
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name, "publish") == 0) {
 				SCRIPT_WRITE_FUNCTION(LUAInvoker::Publish)
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name, "toAMF") == 0) {
 				SCRIPT_WRITE_FUNCTION(LUAInvoker::ToData<Mona::AMFWriter>)
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name, "toAMF0") == 0) {
 				SCRIPT_WRITE_FUNCTION(LUAInvoker::ToAMF0)
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name, "fromAMF") == 0) {
 				SCRIPT_WRITE_FUNCTION(LUAInvoker::FromData<Mona::AMFReader>)
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name, "toJSON") == 0) {
 				SCRIPT_WRITE_FUNCTION(LUAInvoker::ToData<Mona::JSONWriter>)
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name, "fromJSON") == 0) {
 				SCRIPT_WRITE_FUNCTION(LUAInvoker::FromDataWithBuffers<Mona::JSONReader>)
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name, "toXMLRPC") == 0) {
 				SCRIPT_WRITE_FUNCTION(LUAInvoker::ToData<Mona::XMLRPCWriter>)
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name, "fromXMLRPC") == 0) {
 				SCRIPT_WRITE_FUNCTION(LUAInvoker::FromDataWithBuffers<Mona::XMLRPCReader>)
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name, "toXML") == 0) {
 				SCRIPT_WRITE_FUNCTION(LUAInvoker::ToXML)
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name, "fromXML") == 0) {
 				SCRIPT_WRITE_FUNCTION(LUAInvoker::FromXML)
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name, "toQuery") == 0) {
 				SCRIPT_WRITE_FUNCTION(LUAInvoker::ToData<Mona::QueryWriter>)
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name, "fromQuery") == 0) {
 				SCRIPT_WRITE_FUNCTION(LUAInvoker::FromData<Mona::QueryReader>)
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name, "absolutePath") == 0) {
 				SCRIPT_WRITE_FUNCTION(LUAInvoker::AbsolutePath)
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name, "time") == 0) {
 				SCRIPT_WRITE_FUNCTION(LUAInvoker::Time)
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name, "split") == 0) {
 				SCRIPT_WRITE_FUNCTION(LUAInvoker::Split)
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name, "createIPAddress") == 0) {
  				SCRIPT_WRITE_FUNCTION(LUAInvoker::CreateIPAddress<false>)
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name, "createIPAddressWithDNS") == 0) {
  				SCRIPT_WRITE_FUNCTION(LUAInvoker::CreateIPAddress<true>)
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name, "createSocketAddress") == 0) {
  				SCRIPT_WRITE_FUNCTION(LUAInvoker::CreateSocketAddress<false>)
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name, "createSocketAddressWithDNS") == 0) {
  				SCRIPT_WRITE_FUNCTION(LUAInvoker::CreateSocketAddress<true>)
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name, "createUDPSocket") == 0) {
  				SCRIPT_WRITE_FUNCTION(LUAInvoker::CreateUDPSocket)
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name, "createTCPClient") == 0) {
 				SCRIPT_WRITE_FUNCTION(LUAInvoker::CreateTCPClient)
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if(strcmp(name,"createTCPServer")==0) {
 				SCRIPT_WRITE_FUNCTION(LUAInvoker::CreateTCPServer)
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if(strcmp(name,"md5")==0) {
 				SCRIPT_WRITE_FUNCTION(LUAInvoker::Md5)
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if(strcmp(name,"sha256")==0) {
 				SCRIPT_WRITE_FUNCTION(LUAInvoker::Sha256)
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if(strcmp(name,"addToBlacklist")==0) {
 				SCRIPT_WRITE_FUNCTION(LUAInvoker::AddToBlacklist)
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if(strcmp(name,"removeFromBlacklist")==0) {
 				SCRIPT_WRITE_FUNCTION(LUAInvoker::RemoveFromBlacklist)
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name,"configs")==0) {
 				Script::Collection(pState,1, "configs");
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name,"environment")==0) {
 				Script::Collection(pState,1, "environment");
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if(strcmp(name,"servers")==0) {
 				lua_getmetatable(pState, 1);
 				lua_getfield(pState, -1, "|servers");
 				lua_replace(pState, -2);
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name,"listPaths")==0) {
 				SCRIPT_WRITE_FUNCTION(LUAInvoker::ListFiles)
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name, "createMediaWriter") == 0) {
 				SCRIPT_WRITE_FUNCTION(LUAInvoker::CreateMediaWriter)
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else {
 				Script::Collection(pState,1, "configs");
 				lua_getfield(pState, -1, name);
@@ -540,7 +540,7 @@ int LUAInvoker::Get(lua_State *pState) {
 					lua_replace(pState, -2);
 				}
 				lua_replace(pState, -2);
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			}
 		}
 	SCRIPT_CALLBACK_RETURN

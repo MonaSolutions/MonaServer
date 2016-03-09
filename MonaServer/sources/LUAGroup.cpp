@@ -91,16 +91,16 @@ int LUAGroup::Get(lua_State *pState) {
 				lua_getmetatable(pState, 1);
 				lua_getfield(pState, -1, "|id");
 				lua_replace(pState, -2);
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name, "rawId") == 0) {
 				SCRIPT_WRITE_BINARY(group.id,ID_SIZE);
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name, "size") == 0) {
 				SCRIPT_WRITE_FUNCTION(LUAGroup::Size)
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name, "members") == 0) {
 				Script::Collection(pState, 1, "members");
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			}
 		}
 	SCRIPT_CALLBACK_RETURN

@@ -135,25 +135,25 @@ int LUAUDPSocket::Get(lua_State* pState) {
 		if(name) {
 			if(strcmp(name,"connect")==0) {
 				SCRIPT_WRITE_FUNCTION(LUAUDPSocket::Connect)
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name, "disconnect") == 0) {
 				SCRIPT_WRITE_FUNCTION(LUAUDPSocket::Disconnect)
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name, "close") == 0) {
 				SCRIPT_WRITE_FUNCTION(LUAUDPSocket::Close)
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name, "send") == 0) {
 				SCRIPT_WRITE_FUNCTION(LUAUDPSocket::Send)
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name, "bind") == 0) {
 				SCRIPT_WRITE_FUNCTION(LUAUDPSocket::Bind)
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name, "address") == 0) {
 				Script::AddObject<LUASocketAddress>(pState, udp.address());
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name, "peerAddress") == 0) {
 				Script::AddObject<LUASocketAddress>(pState, udp.peerAddress());
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			}
 		}
 	SCRIPT_CALLBACK_RETURN

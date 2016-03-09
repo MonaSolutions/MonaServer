@@ -179,6 +179,28 @@ void ScriptWriter::endComplex() {
 		SCRIPT_END
 		return;
 	}
+
+	/* Allow to create method on typed object!
+	function onTypedObject(type,object)
+	  if type=="Cat" then
+		function object:meow()
+		  print("meow")
+		end
+	  end
+	end*/
+	lua_getfield(_pState, -1, "__type");
+	if (lua_isstring(_pState, -1)) {
+		int top=lua_gettop(_pState);
+		SCRIPT_BEGIN(_pState)
+			SCRIPT_FUNCTION_BEGIN("onTypedObject", LUA_ENVIRONINDEX)
+				lua_pushvalue(_pState, top); // type
+				lua_pushvalue(_pState, top-1); // object
+				SCRIPT_FUNCTION_CALL
+			SCRIPT_FUNCTION_END
+		SCRIPT_END
+	}
+	lua_pop(_pState, 1);
+
 	if (_layers.back()!=-1) {
 		_layers.pop_back();
 		return end();

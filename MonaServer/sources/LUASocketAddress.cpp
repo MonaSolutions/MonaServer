@@ -49,16 +49,16 @@ int LUASocketAddress::Get(lua_State *pState) {
 		if (name) {
 			if(strcmp(name,"host")==0) {
 				Script::AddObject<LUAIPAddress>(pState,address.host());
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if(strcmp(name,"port")==0) {
 				SCRIPT_WRITE_NUMBER(address.port())
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if(strcmp(name,"isIPv6")==0) {
 				SCRIPT_WRITE_BOOL(address.family()==IPAddress::IPv6)
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name,"value")==0) {
 				SCRIPT_WRITE_STRING(address.toString().c_str());
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			}
 		}
 	SCRIPT_CALLBACK_RETURN

@@ -108,7 +108,7 @@ bool Application::init(int argc, const char* argv[]) {
 			_logPath.assign(FileSystem::MakeFolder(logDir)).append(logFileName);
 			if (_logRotation > 0) {
 				_logPath += '.';
-				_logStream.open(_logPath += '0', ios::out | ios::binary | ios::app);
+				_logStream.open(_logPath + '0', ios::out | ios::binary | ios::app);
 			}  else
 				_logStream.open(_logPath, ios::out | ios::binary | ios::app);
 		}

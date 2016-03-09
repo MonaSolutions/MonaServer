@@ -30,31 +30,31 @@ int LUAFile::Get(lua_State *pState) {
 		if (name) {
 			if(strcmp(name,"name")==0) {
 				SCRIPT_WRITE_STRING(file.name().c_str())
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if(strcmp(name,"baseName")==0) {
 				SCRIPT_WRITE_STRING(file.baseName().c_str())
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if(strcmp(name,"parent")==0) {
 				SCRIPT_WRITE_STRING(file.parent().c_str())
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if(strcmp(name,"extension")==0) {
 				SCRIPT_WRITE_STRING(file.extension().c_str())
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if(strcmp(name,"size")==0) {
 				SCRIPT_WRITE_NUMBER(file.size())
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if(strcmp(name,"lastModified")==0) {
 				SCRIPT_WRITE_NUMBER(file.lastModified())
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name,"isFolder")==0) {
 				SCRIPT_WRITE_BOOL(file.isFolder())
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name,"isAbsolute")==0) {
 				SCRIPT_WRITE_BOOL(file.isAbsolute())
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name,"path")==0) {
 				SCRIPT_WRITE_STRING(file.path().c_str());
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			}
 		}
 	SCRIPT_CALLBACK_RETURN

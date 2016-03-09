@@ -21,6 +21,9 @@ This file is a part of Mona.
 #include "Mona/String.h"
 #include "Mona/Logs.h"
 
+#undef  SCRIPT_FIX_RESULT
+#define SCRIPT_FIX_RESULT  { lua_pushvalue(pState,2); lua_pushvalue(pState, -2); lua_rawset(pState, 1);}
+
 
 using namespace std;
 using namespace Mona;
@@ -146,7 +149,7 @@ bool Service::open(bool create) {
 	if (_reference != LUA_REFNIL)
 		return true;
 	if (!create)
-		return false;
+		return true;
 
 	//// create environment
 
@@ -190,9 +193,11 @@ bool Service::open(bool create) {
 
 	// set __index=Service::Index
 	lua_pushcfunction(_pState,&Service::Index);
+	lua_pushvalue(_pState,-3);
+	lua_setfenv(_pState, -2);
 	lua_setfield(_pState,-2,"__index");
 
-	 // to be able to call SCRIPT_CALLBACK
+	// to be able to call SCRIPT_CALLBACK
 	lua_pushlightuserdata(_pState,this);
 	lua_setfield(_pState,-2,"|this");
 	lua_pushlightuserdata(_pState,(void*)&typeid(Service));
@@ -212,7 +217,6 @@ bool Service::open(bool create) {
 	// record in registry
 	setReference(luaL_ref(_pState, LUA_REGISTRYINDEX));
 
-
 	return true;
 }
 
@@ -231,8 +235,10 @@ void Service::loadFile() {
 			return;
 		}
 
+		// set environment
 		lua_pushvalue(_pState, -2);
 		lua_setfenv(_pState, -2);
+
 		if(lua_pcall(_pState, 0,0, 0)==0) {
 			SCRIPT_FUNCTION_BEGIN("onStart",_reference)
 				SCRIPT_WRITE_STRING(path.c_str())
@@ -360,7 +366,7 @@ int Service::ExecuteFile(lua_State *pState) {
 
 	SCRIPT_BEGIN(pState)
 
-		bool isRequire(lua_toboolean(pState, lua_upvalueindex(2))!=0);
+		bool isRequire(lua_toboolean(pState, lua_upvalueindex(2)) ? true : false);
 		if (isRequire) {
 			const char* name(lua_tostring(pState, 1));
 			if (!name) {
@@ -418,7 +424,42 @@ int Service::Index(lua_State *pState) {
 		const char* key = lua_tostring(pState, 2);
 		
 		// |data table request?
-		if (strcmp(key, "data") == 0) {
+		if (strcmp(key, "mona") == 0) {
+
+			lua_getglobal(pState, "mona");
+			if (lua_istable(pState, -1)) {
+
+				// copy mona table and its metatable and change environment for functions
+				UInt32 count(0);
+				do {
+					// create a new mona table, individual for this servie
+					lua_newtable(pState);
+
+					lua_pushnil(pState);  // first key 
+					while (lua_next(pState, -3) != 0) {
+						// uses 'key' (at index -2) and 'value' (at index -1) 
+						lua_pushvalue(pState, -2); // duplicate key
+						lua_pushvalue(pState, -2); // duplicate value
+						if (lua_isfunction(pState, -1)) {
+							lua_pushvalue(pState, LUA_ENVIRONINDEX);
+							lua_setfenv(pState,-2);
+						}
+						lua_rawset(pState, -5);
+						lua_pop(pState, 1);
+					}
+					++count;
+				} while (lua_getmetatable(pState, -2));
+
+				while (--count) {
+					lua_setmetatable(pState, -3);
+					lua_pop(pState, 1);
+				}
+
+				SCRIPT_FIX_RESULT
+				return 1;
+			}
+			lua_pop(pState, 1);
+		} else if (strcmp(key, "data") == 0) {
 			lua_getfield(pState, LUA_REGISTRYINDEX, "|data");
 			if (lua_istable(pState,-1)) {
 				lua_replace(pState, -2); // replace first metatable
@@ -442,10 +483,7 @@ int Service::Index(lua_State *pState) {
 					String::Split(path, "/", forEach,String::SPLIT_IGNORE_EMPTY | String::SPLIT_TRIM);
 				}
 
-				// set data for the application!
-				lua_pushvalue(pState, 2);
-				lua_pushvalue(pState, -2);
-				lua_rawset(pState, 1);
+				SCRIPT_FIX_RESULT
 				return 1;
 			}
 			lua_pop(pState, 1);
@@ -453,12 +491,9 @@ int Service::Index(lua_State *pState) {
 
 			lua_getfield(pState, -1, "|this");
 			if (lua_isuserdata(pState, -1)) {
-				lua_pushcclosure(pState, &Service::ExecuteFile, 1);
-
-				// save dofile function
-				lua_pushvalue(pState, 2);
-				lua_pushvalue(pState, -2);
-				lua_rawset(pState, 1);
+				lua_pushboolean(pState, false); // require = false
+				lua_pushcclosure(pState, &Service::ExecuteFile, 2);
+				SCRIPT_FIX_RESULT
 				return 1;
 			}
 			lua_pop(pState, 1);
@@ -467,13 +502,9 @@ int Service::Index(lua_State *pState) {
 
 			lua_getfield(pState, -1, "|this");
 			if (lua_isuserdata(pState, -1)) {
-				lua_pushboolean(pState, true);
+				lua_pushboolean(pState, true); // require = true
 				lua_pushcclosure(pState, &Service::ExecuteFile, 2);
-
-				// save require function
-				lua_pushvalue(pState, 2);
-				lua_pushvalue(pState, -2);
-				lua_rawset(pState, 1);
+				SCRIPT_FIX_RESULT
 				return 1;
 			}
 			lua_pop(pState, 1);
@@ -483,11 +514,7 @@ int Service::Index(lua_State *pState) {
 			lua_getfield(pState, -1, "|this");
 			if (lua_isuserdata(pState, -1)) {
 				lua_pushcclosure(pState, &Service::LoadFile, 1);
-
-				// save require function
-				lua_pushvalue(pState, 2);
-				lua_pushvalue(pState, -2);
-				lua_rawset(pState, 1);
+				SCRIPT_FIX_RESULT
 				return 1;
 			}
 			lua_pop(pState, 1);
@@ -496,11 +523,8 @@ int Service::Index(lua_State *pState) {
 			// search in metatable (contains super, children, path, name, this, clients, ...)
 			lua_getfield(pState, -1, key);
 			if (!lua_isnil(pState, -1)) {
-				lua_replace(pState, -2);
-				// recort to accelerate the access
-				lua_pushvalue(pState, 2);
-				lua_pushvalue(pState, -2);
-				lua_rawset(pState, 1);
+				lua_replace(pState, -2); // replace first metatable
+				SCRIPT_FIX_RESULT
 				return 1;
 			}
 			lua_pop(pState, 1);
@@ -513,6 +537,7 @@ int Service::Index(lua_State *pState) {
 	if (lua_isnil(pState, -1))
 		return 1; // no parent (returns nil)
 
+	// search in parent
 	lua_pushvalue(pState, 2);
 	lua_gettable(pState,-2);
 	lua_replace(pState,-2); // replace parent by result

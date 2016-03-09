@@ -81,17 +81,17 @@ int LUABroadcaster::Get(lua_State *pState) {
 		if (name) {
 			if (strcmp(name, "broadcast") == 0) {
 				SCRIPT_WRITE_FUNCTION(LUABroadcaster::Broadcast)
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name, "initiators")==0) {
 				lua_getmetatable(pState, 1);
 				lua_getfield(pState, -1, "|initiators");
 				lua_replace(pState, -2);
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name, "targets") == 0) {
 				lua_getmetatable(pState, 1);
 				lua_getfield(pState, -1, "|targets");
 				lua_replace(pState, -2);
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name, "count") == 0) {
 				SCRIPT_WRITE_NUMBER(broadcaster.count())
 			} else {

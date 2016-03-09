@@ -82,13 +82,13 @@ int LUATCPServer::Get(lua_State* pState) {
 		if(name) {
 			if(strcmp(name,"start")==0) {
 				SCRIPT_WRITE_FUNCTION(LUATCPServer::Start)
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name, "stop") == 0) {
 				SCRIPT_WRITE_FUNCTION(LUATCPServer::Stop)
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name, "address") == 0) {
 				Script::AddObject<LUASocketAddress>(pState, server.address());
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if(strcmp(name,"running")==0)
 				SCRIPT_WRITE_BOOL(server.running())  // change
 		}

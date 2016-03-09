@@ -79,7 +79,6 @@ int Script::Trace(lua_State *pState) {
 	return 0;
 }
 
-
 int Script::Panic(lua_State *pState) {
 	SCRIPT_BEGIN(pState)
 		SCRIPT_FATAL(ToPrint(pState,LOG_BUFFER));
@@ -118,8 +117,6 @@ lua_State* Script::CreateState() {
 	lua_setfield(pState, -2, "__metatable");
 #endif
 	lua_setmetatable(pState, LUA_GLOBALSINDEX);
-
-
 	return pState;
 }
 

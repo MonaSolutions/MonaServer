@@ -111,6 +111,7 @@ MonaServer::MonaServer(const Parameters& configs, TerminateSignal& terminateSign
 		LUABroadcaster::AddServer(_pState,servers, server.address.toString());
 		LUABroadcaster::AddServer(_pState, server.isTarget ? servers.targets : servers.initiators, server.address.toString());
 
+		// Server connection must open the service if not always loaded!
 		Exception ex;
 		if (!_pService->open(ex)) {
 			server.reject(ex.error());
@@ -159,17 +160,15 @@ MonaServer::MonaServer(const Parameters& configs, TerminateSignal& terminateSign
 	};
 
 	onServerDisconnection = [this](const Exception& ex,const ServerConnection& server) {
-		Exception exc;
-		if (_pService->open(exc)) {
-			SCRIPT_BEGIN(_pState)
-				SCRIPT_FUNCTION_BEGIN("onServerDisconnection",_pService->reference())
-					Script::AddObject<LUAServer>(_pState, server);
-					if (ex)
-						SCRIPT_WRITE_STRING(ex.error())
-					SCRIPT_FUNCTION_CALL
-				SCRIPT_FUNCTION_END
-			SCRIPT_END
-		}
+		SCRIPT_BEGIN(_pState)
+			SCRIPT_FUNCTION_BEGIN("onServerDisconnection",_pService->reference())
+				Script::AddObject<LUAServer>(_pState, server);
+				if (ex)
+					SCRIPT_WRITE_STRING(ex.error())
+				SCRIPT_FUNCTION_CALL
+			SCRIPT_FUNCTION_END
+		SCRIPT_END
+	
 		LUABroadcaster::RemoveServer(_pState, servers, server.address.toString());
 		LUABroadcaster::RemoveServer(_pState, server.isTarget ? servers.targets : servers.initiators, server.address.toString());
 		Script::ClearObject<LUAServer>(_pState, server);
@@ -332,7 +331,7 @@ void MonaServer::onStart() {
 	// start servers
 	servers.start(*this);
 
-	// start the application (if exists)
+	// start main application (if exists)
 	ex.set(Exception::NIL);
 	_pService->open(ex);
 }
@@ -366,6 +365,7 @@ void MonaServer::manage() {
 		CRITIC("LUA stack corrupted, contains ",lua_gettop(_pState)," irregular values");
 
 	Exception ex;
+	// update the main service on manage
 	if (!_pService->open(ex))
 		return;
 	SCRIPT_BEGIN(_pState)
@@ -442,8 +442,7 @@ void MonaServer::readAddressRedirection(const string& protocol, int& index, set<
 
 void MonaServer::onRendezVousUnknown(const string& protocol,const UInt8* id,set<SocketAddress>& addresses) {
 	Exception ex;
-	if (!_pService->open(ex))
-		return;
+	// don't open the main service if not loaded by onManage (useless)
 	SCRIPT_BEGIN(_pState)
 		SCRIPT_FUNCTION_BEGIN("onRendezVousUnknown",_pService->reference())
 			SCRIPT_WRITE_STRING(protocol.c_str())
@@ -457,6 +456,7 @@ void MonaServer::onRendezVousUnknown(const string& protocol,const UInt8* id,set<
 
 void MonaServer::onHandshake(const string& protocol,const SocketAddress& address,const string& path,const Parameters& properties,UInt32 attempts,set<SocketAddress>& addresses) {
 	Exception ex;
+	// open the relating service
 	Service* pService(_pService->open(ex, path));
 	if (!pService)
 		return;
@@ -477,6 +477,7 @@ void MonaServer::onHandshake(const string& protocol,const SocketAddress& address
 
 //// CLIENT_HANDLER /////
 void MonaServer::onConnection(Exception& ex, Client& client,DataReader& parameters,DataWriter& response) {
+	// open/create the service on connection client
 	Service* pService = _pService->open(ex,client.path);
 	if (!pService) {
 		if (ex)
@@ -533,8 +534,6 @@ lua_State* MonaServer::openService(const Service& service, Client& client) {
 	// -1 must be client table
 	if (!_pState || service.reference() == LUA_REFNIL)
 		return NULL;
-
-	;
 
 	lua_rawgeti(_pState, LUA_REGISTRYINDEX, *client.setCustomData<int>(new int(service.reference())));
 
