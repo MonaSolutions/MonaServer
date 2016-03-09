@@ -439,11 +439,12 @@ int Service::Index(lua_State *pState) {
 					while (lua_next(pState, -3) != 0) {
 						// uses 'key' (at index -2) and 'value' (at index -1) 
 						lua_pushvalue(pState, -2); // duplicate key
-						lua_pushvalue(pState, -2); // duplicate value
-						if (lua_isfunction(pState, -1)) {
+						if (lua_isfunction(pState, -2)) {
+							lua_pushcfunction(pState, lua_tocfunction(pState, -2)); // new value
 							lua_pushvalue(pState, LUA_ENVIRONINDEX);
 							lua_setfenv(pState,-2);
-						}
+						} else
+							lua_pushvalue(pState, -2); // duplicate value
 						lua_rawset(pState, -5);
 						lua_pop(pState, 1);
 					}
