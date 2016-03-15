@@ -29,7 +29,6 @@ extern "C" {
 using namespace std;
 using namespace Mona;
 
-lua_Debug	Script::LuaDebug;
 
 const char* Script::LastError(lua_State *pState) {
 	int top = lua_gettop(pState);
@@ -87,8 +86,10 @@ int Script::Panic(lua_State *pState) {
 }
 
 lua_State* Script::CreateState() {
-	lua_State* pState = lua_open();
+	lua_State* pState = luaL_newstate();
+
 	luaL_openlibs(pState);
+
 	lua_atpanic(pState,&Script::Panic);
 
 	lua_pushcfunction(pState,&Script::Error);
@@ -117,6 +118,7 @@ lua_State* Script::CreateState() {
 	lua_setfield(pState, -2, "__metatable");
 #endif
 	lua_setmetatable(pState, LUA_GLOBALSINDEX);
+
 	return pState;
 }
 

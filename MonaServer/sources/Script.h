@@ -28,10 +28,6 @@ extern "C" {
 	#include "luajit-2.0/lauxlib.h"
 }
 
-
-#define SCRIPT_FILE(DEFAULT)					(strlen(Script::LuaDebug.short_src)>0 && strcmp(Script::LuaDebug.short_src,"[C]")!=0) ? Script::LuaDebug.short_src : DEFAULT
-#define SCRIPT_LINE(DEFAULT)					Script::LuaDebug.currentline>0 ? Script::LuaDebug.currentline : DEFAULT
-
 #define SCRIPT_LOG(LEVEL,FILE,LINE,DISPLAYSCALLER,...)	 { if (Mona::Logs::GetLevel() >= LEVEL)  { std::string __buffer; Script::Log(__pState,LEVEL,FILE,LINE,DISPLAYSCALLER, __VA_ARGS__); } }
 
 #define SCRIPT_FATAL(...)	SCRIPT_LOG(Mona::Logger::LEVEL_FATAL,__FILE__,__LINE__, true, __VA_ARGS__)
@@ -55,7 +51,7 @@ extern "C" {
 #define SCRIPT_BEGIN(STATE)										if(lua_State* __pState = STATE) {
 
 #define SCRIPT_MEMBER_FUNCTION_BEGIN(TYPE,OBJ,MEMBER)			if(Script::FromObject<TYPE>(__pState,OBJ)) { lua_pushstring(__pState, MEMBER); lua_rawget(__pState,-2); lua_insert(__pState,-2); if(!lua_isfunction(__pState,-2)) lua_pop(__pState,2); else { lua_getfenv(__pState, -2); lua_rawseti(__pState, LUA_REGISTRYINDEX, LUA_ENVIRONINDEX); int __top=lua_gettop(__pState)-1; const char* __name = #TYPE"."#MEMBER;
-#define SCRIPT_FUNCTION_BEGIN(NAME,REFERENCE)					{ if (REFERENCE==LUA_ENVIRONINDEX) { if (lua_topointer(__pState,LUA_GLOBALSINDEX)==lua_topointer(__pState,LUA_ENVIRONINDEX)) lua_rawgeti(__pState, LUA_REGISTRYINDEX, LUA_ENVIRONINDEX); else lua_pushvalue(__pState, LUA_ENVIRONINDEX); } else lua_rawgeti(__pState,LUA_REGISTRYINDEX, REFERENCE); if (lua_istable(__pState, -1)) { lua_getfield(__pState, -1, NAME); lua_replace(__pState, -2); } if(!lua_isfunction(__pState,-1)) lua_pop(__pState,1); else { lua_getfenv(__pState, -1); lua_rawseti(__pState, LUA_REGISTRYINDEX, LUA_ENVIRONINDEX); int __top=lua_gettop(__pState); const char* __name = NAME;
+#define SCRIPT_FUNCTION_BEGIN(NAME,REFERENCE)					{ lua_Debug	__debug; if (REFERENCE==LUA_ENVIRONINDEX && lua_getstack(_pState, 0, &__debug)==1) lua_pushvalue(__pState, LUA_ENVIRONINDEX); else lua_rawgeti(__pState,LUA_REGISTRYINDEX, REFERENCE); if (lua_istable(__pState, -1)) { lua_getfield(__pState, -1, NAME); lua_replace(__pState, -2); } if(!lua_isfunction(__pState,-1)) lua_pop(__pState,1); else { lua_getfenv(__pState, -1); lua_rawseti(__pState, LUA_REGISTRYINDEX, LUA_ENVIRONINDEX); int __top=lua_gettop(__pState); const char* __name = NAME;
 #define SCRIPT_FUNCTION_CALL_WITHOUT_LOG						const char* __error=NULL; if(lua_pcall(__pState,lua_gettop(__pState)-__top,LUA_MULTRET,0)) { __error = lua_tostring(__pState,-1); lua_pop(__pState,1); } --__top; int __results=lua_gettop(__pState); int __args=__top;
 #define SCRIPT_FUNCTION_CALL									const char* __error=NULL; if(lua_pcall(__pState,lua_gettop(__pState)-__top,LUA_MULTRET,0)) SCRIPT_ERROR(__error = Script::LastError(__pState)); --__top; int __results=lua_gettop(__pState); int __args=__top;
 #define SCRIPT_FUNCTION_NULL_CALL								lua_pop(__pState,lua_gettop(__pState)-__top+1);--__top;int __results=lua_gettop(__pState);int __args=__top;
@@ -451,29 +447,31 @@ public:
 	template <typename ...Args>
 	static void Log(lua_State* pState, Mona::Logger::Level level, const char* file, long line, bool displaysCaller, Args&&... args) {
 		// I stop remonting level stack at the sub level where I have gotten the name
-		int stack = 0;
+		int stack(0);
 		bool nameGotten(false);
-		while (lua_getstack(pState, stack++, &Script::LuaDebug) == 1) {
-			lua_getinfo(pState, Script::LuaDebug.name ? "Sl" : "nSl", &Script::LuaDebug);
-			if (nameGotten)
-				break;
-			if (Script::LuaDebug.name)
+		lua_Debug	debug;
+		debug.name = NULL;
+		while (lua_getstack(pState, stack++, &debug) == 1 && lua_getinfo(pState, nameGotten ? "Sl" : "nSl", &debug) && !nameGotten) {
+			if (debug.name)
 				nameGotten = true;
 		}
-		if (displaysCaller && Script::LuaDebug.name) {
-			if (Script::LuaDebug.namewhat)
-				Mona::Logs::Log(level, SCRIPT_FILE(file), SCRIPT_LINE(line), "(", Script::LuaDebug.namewhat, " '", Script::LuaDebug.name, "') ", args ...);
-			else
-				Mona::Logs::Log(level, SCRIPT_FILE(file), SCRIPT_LINE(line), "(", Script::LuaDebug.name, ") ", args ...);
-		} else
-			Mona::Logs::Log(level, SCRIPT_FILE(file), SCRIPT_LINE(line), args ...);
-		Script::LuaDebug.name = Script::LuaDebug.namewhat = NULL;
-		if (Script::LuaDebug.short_src)
-			Script::LuaDebug.short_src[0] = '\0';
-		Script::LuaDebug.currentline = 0;
+		
+		if (nameGotten) {
+			if (strlen(debug.short_src) && strcmp(debug.short_src, "[C]"))
+				file = debug.short_src;
+			if (debug.currentline)
+				line = debug.currentline;
+
+			if (displaysCaller) {
+				if (debug.namewhat)
+					return Mona::Logs::Log(level, file, line, "(", debug.namewhat, " '", debug.name, "') ", args ...);
+				return Mona::Logs::Log(level, file, line, "(", debug.name, ") ", args ...);
+			}
+		}
+		Mona::Logs::Log(level, file, line, args ...);
 	}
 
-	static lua_Debug	LuaDebug;
+	
 
 private:
 
