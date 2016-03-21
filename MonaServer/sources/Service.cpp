@@ -149,7 +149,7 @@ bool Service::open(bool create) {
 	if (_reference != LUA_REFNIL)
 		return true;
 	if (!create)
-		return true;
+		return false;
 
 	//// create environment
 
