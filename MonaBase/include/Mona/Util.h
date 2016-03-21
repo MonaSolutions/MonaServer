@@ -120,7 +120,7 @@ public:
 
 		if (!append)
 			accumulator = 0;
-		buffer.resize(accumulator+(UInt32)ceil(size/3.0)*4,append);
+		buffer.resize(accumulator+UInt32(ceil(size/3.0)*4),append);
 
 		char*		current = (char*)buffer.data();
 		if (!current) // to expect null writer 
@@ -158,6 +158,8 @@ public:
 		if (!append)
 			oldSize = 0;
 
+		buffer.resize(oldSize + UInt32(ceil(size / 4.0) * 3),append); // maximum size!
+	
 		UInt8*		 out((UInt8*)buffer.data());
 		if (!out) // to expect null writer 
 			return false;
@@ -173,7 +175,7 @@ public:
 
 			if ((c > 127) || (c < 0) || (_ReverseB64Table[c] > 63)) {
 				// reset the oldSize
-				buffer.resize(oldSize,append);
+				buffer.resize(oldSize);
 				return false;
 			}
 		
@@ -185,7 +187,7 @@ public:
 				*out++ = ((accumulator >> bits) & 0xFFu);
 			}
 		}
-		buffer.resize(oldSize+size,append);
+		buffer.resize(oldSize+size);
 		return true;
 	}
 
