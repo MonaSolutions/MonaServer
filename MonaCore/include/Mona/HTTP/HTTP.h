@@ -22,7 +22,7 @@ This file is a part of Mona.
 #include "Mona/Mona.h"
 #include "Mona/BinaryWriter.h"
 #include "Mona/MapParameters.h"
-#include "Mona/Path.h"
+#include "Mona/File.h"
 #include "Mona/DataWriter.h"
 #include "Mona/DataReader.h"
 
@@ -170,13 +170,13 @@ public:
 
 	static const char*	CodeToMessage(UInt16 code);
 
-	static void			WriteDirectoryEntries(BinaryWriter& writer, const std::string& serverAddress, const std::string& fullPath, const std::string& path, SortField sortField = SORT_BY_NAME, SortOrder sortOrder = SORT_ASC);
+	static bool			WriteDirectoryEntries(Exception& ex, BinaryWriter& writer, const std::string& serverAddress, const std::string& fullPath, const std::string& path, SortField sortField = SORT_BY_NAME, SortOrder sortOrder = SORT_ASC);
 
 	typedef std::function<void(const char* key,const char* data,UInt32 size)> OnCookie;
 	static bool			WriteSetCookie(DataReader& reader,Buffer& buffer,const OnCookie& onCookie=nullptr);
 
 private:
-	static void			WriteDirectoryEntry(BinaryWriter& writer, const std::string& serverAddress,const std::string& path,const Path& entry);
+	static void			WriteDirectoryEntry(BinaryWriter& writer, const std::string& serverAddress,const std::string& path,const File& entry);
 };
 
 

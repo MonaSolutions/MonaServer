@@ -30,6 +30,7 @@ namespace Mona {
 RTMFPHandshake::RTMFPHandshake(RTMFProtocol& protocol, Sessions& sessions, Invoker& invoker) : RTMFPSession(protocol, invoker, 0,RTMFP_DEFAULT_KEY ,RTMFP_DEFAULT_KEY, "RTMFPHandshake"),
 	_sessions(sessions),_pPeer(new Peer((Handler&)invoker)) {
 	
+	((string&)_pPeer->protocol) = protocol.name;
 	memcpy(_certificat,"\x01\x0A\x41\x0E",4);
 	Util::Random(&_certificat[4],64);
 	memcpy(&_certificat[68],"\x02\x15\x02\x02\x15\x05\x02\x15\x0E",9);
@@ -136,22 +137,15 @@ UInt8 RTMFPHandshake::handshakeHandler(UInt8 id,const SocketAddress& address, Bi
 	switch(id){
 		case 0x30: {
 			
-			UInt8 padding = request.read8(); 
-			UInt16 epdLen(0);
-			if (padding>0x80) { // Size on 2 bytes (TODO: size is always written 2 times, see if we need to check the both)
-				epdLen = 0x80 * (padding&0x0F);
-				request.next(2);
-			}
-			epdLen += request.read8()-1;
-
+			request.read7BitValue(); // = epdLen + 2 (useless)
+			UInt16 epdLen = request.read7BitValue()-1;
 			UInt8 type = request.read8();
-
 			string epd;
 			request.read(epdLen,epd);
 
 			string tag;
 			request.read(16,tag);
-			response.write8(tag.size()).write(tag);
+			response.write7BitValue(tag.size()).write(tag);
 		
 			if(type == 0x0f) {
 
@@ -259,6 +253,7 @@ UInt8 RTMFPHandshake::handshakeHandler(UInt8 id,const SocketAddress& address, Bi
 						return 0;
 					}
 					_pPeer.reset(new Peer((Handler&)invoker)); // reset peer
+					((string&)_pPeer->protocol) = protocol().name;
 					_cookies.emplace(pCookie->value(), pCookie);
 					attempt.pCookie = pCookie;
 				}

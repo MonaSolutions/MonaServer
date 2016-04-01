@@ -77,18 +77,18 @@ int LUAClient::Get(lua_State *pState) {
 			if(strcmp(name,"writer")==0) {
 				SCRIPT_CALLBACK_NOTCONST_CHECK
 				Script::AddObject<LUAWriter>(pState,client.writer());
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if(strcmp(name,"id")==0) {
 				lua_getmetatable(pState, 1);
 				lua_getfield(pState, -1, "|id");
 				lua_replace(pState, -2);
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if(strcmp(name,"rawId")==0) {
 				SCRIPT_WRITE_BINARY(client.id,ID_SIZE);
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if(strcmp(name,"path")==0) {
 				SCRIPT_WRITE_STRING(client.path.c_str())
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if(strcmp(name,"query")==0) {
 				SCRIPT_WRITE_STRING(client.query.c_str()) // can change (HTTP client for example)
 			} else if(strcmp(name,"address")==0) {
@@ -99,13 +99,13 @@ int LUAClient::Get(lua_State *pState) {
 				SCRIPT_WRITE_NUMBER(client.lastReceptionTime)  // can change
 			} else if(strcmp(name,"protocol")==0) {
 				SCRIPT_WRITE_STRING(client.protocol.c_str())
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name,"properties")==0) {
 				Script::Collection(pState, 1, "properties");
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name,"parameters")==0 || client.protocol==name) {
 				Script::Collection(pState, 1, name);
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else {
 				// can change
 				Script::Collection(pState,1, "properties");

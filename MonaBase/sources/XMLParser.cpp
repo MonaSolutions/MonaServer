@@ -36,7 +36,7 @@ void XMLParser::reset(const XMLState& state) {
 		return reset();
 	_reseted = true;
 	_started = state._started;
-	_ex.set(state._ex);
+	_ex = state._ex;
 	_current = state._current;
 	_tags = state._tags;
 }
@@ -45,7 +45,7 @@ void XMLParser::save(XMLState& state) {
 	state._started = _started;
 	state._current = _current;
 	state._tags    = _tags;
-	state._ex.set(_ex);
+	state._ex = _ex;
 }
 
 bool XMLParser::parse(Exception& ex) {
@@ -56,11 +56,11 @@ bool XMLParser::parse(Exception& ex) {
 	_running = true;
 	bool rest(false);
 	if (_ex)
-		ex.set(_ex);
+		ex = _ex;
 	else {
 		rest = parse();
 		if (!rest)
-			onEndXMLDocument(_ex ? ex.set(_ex).error().c_str() : NULL);
+			onEndXMLDocument(_ex ? (ex=_ex).error() : NULL);
 	}
 	_running = false;
 	return rest;

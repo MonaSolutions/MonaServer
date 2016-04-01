@@ -146,7 +146,7 @@ void RTSPSession::processDescribe(const shared_ptr<RTSPPacket>& pPacket) {
 		writer.write("v=0\r\n"); // version
 		writer.write("o=- ").write(String::Format(buffId, id())).write(' ').write(buffId).write(" IN ").write(peer.address.family() == IPAddress::IPv4? "IP4 " : "IP6 ")
 			.write(peer.address.host().toString()).write("\r\n"); // origin and session id
-		writer.write("s=").write(pPacket->filePath.name()).write("\r\n"); // session name
+		writer.write("s=").write(pPacket->file.name()).write("\r\n"); // session name
 		writer.write("t=0 0\r\n"); // active session time (permanent)
 
 		// TODO : subscribe here and get media parameters dinamycally
@@ -198,7 +198,7 @@ void RTSPSession::processPlay(Exception& ex, const std::shared_ptr<RTSPPacket>& 
 
 	if(_state != RTSP_SET)
 		ex.set(Exception::APPLICATION, "Unable to play the stream in the current state (", _state, ")");
-	else if(_pListener = invoker.subscribe(ex,peer,pPacket->filePath.baseName(),_writer)) {
+	else if(_pListener = invoker.subscribe(ex,peer,pPacket->file.baseName(),_writer)) {
 
 		_state = RTSP_PLAYING;
 		string buffer;

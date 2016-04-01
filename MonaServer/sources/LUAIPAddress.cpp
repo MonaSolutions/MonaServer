@@ -44,61 +44,61 @@ int LUAIPAddress::Get(lua_State *pState) {
 		if (name) {
 			if (strcmp(name, "isWildcard") == 0) {
 				SCRIPT_WRITE_BOOL(address.isWildcard())
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name, "isBroadcast") == 0) {
 				SCRIPT_WRITE_BOOL(address.isBroadcast())
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name, "isAnyBroadcast") == 0) {
 				SCRIPT_WRITE_BOOL(address.isAnyBroadcast())
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name, "isLoopback") == 0) {
 				SCRIPT_WRITE_BOOL(address.isLoopback())
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name, "isMulticast") == 0) {
 				SCRIPT_WRITE_BOOL(address.isMulticast())
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name, "isUnicast") == 0) {
 				SCRIPT_WRITE_BOOL(address.isUnicast())
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name, "isLinkLocal") == 0) {
 				SCRIPT_WRITE_BOOL(address.isLinkLocal())
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name, "isSiteLocal") == 0) {
 				SCRIPT_WRITE_BOOL(address.isSiteLocal())
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name, "isIPv4Compatible") == 0) {
 				SCRIPT_WRITE_BOOL(address.isIPv4Compatible())
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name, "isIPv4Mapped") == 0) {
 				SCRIPT_WRITE_BOOL(address.isIPv4Mapped())
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name, "isWellKnownMC") == 0) {
 				SCRIPT_WRITE_BOOL(address.isWellKnownMC())
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name, "isNodeLocalMC") == 0) {
 				SCRIPT_WRITE_BOOL(address.isNodeLocalMC())
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name, "isLinkLocalMC") == 0) {
 				SCRIPT_WRITE_BOOL(address.isLinkLocalMC())
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name, "isSiteLocalMC") == 0) {
 				SCRIPT_WRITE_BOOL(address.isSiteLocalMC())
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name, "isOrgLocalMC") == 0) {
 				SCRIPT_WRITE_BOOL(address.isOrgLocalMC())
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name, "isGlobalMC") == 0) {
 				SCRIPT_WRITE_BOOL(address.isGlobalMC())
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name, "isLocal") == 0) {
 				SCRIPT_WRITE_BOOL(address.isLocal())
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if(strcmp(name,"isIPv6")==0) {
 				SCRIPT_WRITE_BOOL(address.family()==IPAddress::IPv6)
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name,"value")==0) {
 				SCRIPT_WRITE_STRING(address.toString().c_str());
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			}
 		}
 	SCRIPT_CALLBACK_RETURN

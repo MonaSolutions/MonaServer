@@ -68,13 +68,13 @@ int LUAMember::Get(lua_State *pState) {
 				lua_getmetatable(pState, 1);
 				lua_getfield(pState, -1, "|id");
 				lua_replace(pState, -2);
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name, "rawId") == 0) {
 				SCRIPT_WRITE_BINARY(member.id,ID_SIZE)
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name, "release") == 0) {
 				SCRIPT_WRITE_FUNCTION(LUAMember::Release);
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			}
 		}
 	SCRIPT_CALLBACK_RETURN

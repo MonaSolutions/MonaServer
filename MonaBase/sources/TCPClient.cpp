@@ -102,7 +102,7 @@ void TCPClient::receive(Exception& ex, UInt32 available) {
 		close(); // Graceful disconnection
 		return;
 	} else if (exRecv)
-		ex.set(exRecv); // received > 0, so WARN
+		ex = exRecv; // received > 0, so WARN
 
 	_pBuffer->resize(size+received,true);
 	size = 0;

@@ -29,7 +29,7 @@ using namespace std;
 namespace Mona {
 
 
-RTMPSession::RTMPSession(const SocketAddress& peerAddress, SocketFile& file, Protocol& protocol, Invoker& invoker) : _mainStream(invoker,peer),_unackBytes(0),_readBytes(0),_bufferEvent(false),_decrypted(0), _chunkSize(RTMP::DEFAULT_CHUNKSIZE), _winAckSize(RTMP::DEFAULT_WIN_ACKSIZE),_handshaking(0), _pWriter(NULL), TCPSession(peerAddress,file, protocol, invoker),
+RTMPSession::RTMPSession(const SocketAddress& peerAddress, SocketFile& file, Protocol& protocol, Invoker& invoker) : _mainStream(invoker,peer),_unackBytes(0),_readBytes(0),_decrypted(0), _chunkSize(RTMP::DEFAULT_CHUNKSIZE), _winAckSize(RTMP::DEFAULT_WIN_ACKSIZE),_handshaking(0), _pWriter(NULL), TCPSession(peerAddress,file, protocol, invoker),
 		onStreamStart([this](UInt16 id, FlashWriter& writer) {
 			// Stream Begin signal
 			(_pController ? (FlashWriter&)*_pController : writer).writeRaw().write16(0).write32(id);
@@ -275,8 +275,8 @@ void RTMPSession::receive(BinaryReader& packet) {
 
 	// ack if required
 	if (_unackBytes >= _winAckSize) {
-		_readBytes += _unackBytes; // TODO : what's happen if > MAX_INT?
-		 TRACE("Sending ACK : ", _readBytes, " bytes (_unackBytes: ", _unackBytes, ")")
+		_readBytes += _unackBytes;
+		DEBUG("Sending ACK : ", _readBytes, " bytes (_unackBytes: ", _unackBytes, ")")
 		_pController->writeAck(_readBytes);
 		_unackBytes = 0;
 	}

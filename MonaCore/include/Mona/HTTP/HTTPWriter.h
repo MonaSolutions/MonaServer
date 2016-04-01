@@ -51,7 +51,7 @@ public:
 
 	/// \brief create a Sender and write the file in parameter
 	/// \param file path of the file
-	void			writeFile(const Path& file, const std::shared_ptr<Parameters>& pParameters);
+	void			writeFile(const std::string& path, const std::shared_ptr<Parameters>& pParameters);
 	void			close(const Exception& ex);
 
 	DataWriter&     writeRaw(const char* code);

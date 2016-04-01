@@ -56,8 +56,7 @@ public:
 	explicit Date(Int64 time,Int32 offset=LOCAL) : _isDST(false),_year(0), _month(0), _day(0),  _weekDay(7),_hour(0), _minute(0), _second(0), _millisecond(0), _changed(false), _offset(offset),_isLocal(true), Time(time) {}
 
 	// build from other  date
-	explicit Date(const Date& date) : Object(), _isDST(date._isDST),_year(date._year), _month(date._month), _day(date._day),  _weekDay(date._weekDay),_hour(date._hour), _minute(date._minute), _second(date._second), _millisecond(date._millisecond), _changed(date._changed), _offset(date._offset),_isLocal(date._isLocal), Time(0) {
-		Time::update((Time&)date);
+	explicit Date(const Date& other) : Time((Time&)other), _isDST(other._isDST),_year(other._year), _month(other._month), _day(other._day),  _weekDay(other._weekDay),_hour(other._hour), _minute(other._minute), _second(other._second), _millisecond(other._millisecond), _changed(other._changed), _offset(other._offset),_isLocal(other._isLocal) {
 	}
 	
 	// build from date

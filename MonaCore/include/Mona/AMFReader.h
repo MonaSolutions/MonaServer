@@ -51,7 +51,7 @@ private:
 	bool			readOne(UInt8 type, DataWriter& writer);
 	bool			writeOne(UInt8 type, DataWriter& writer);
 
-	const char*		readText(UInt32& size,bool nullIfEmpty=false);
+	const char*		readText(UInt32& size);
 
 	std::vector<UInt32>		_stringReferences;
 	std::vector<UInt32>		_classDefReferences;
@@ -60,6 +60,7 @@ private:
 
 	UInt8					_amf3;
 	bool					_referencing;
+	std::string				_buffer;
 
 };
 

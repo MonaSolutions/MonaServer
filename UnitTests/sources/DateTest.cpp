@@ -25,8 +25,8 @@ This file is a part of Mona.
 using namespace Mona;
 using namespace std;
 
-string		_Out;
-Date		_Date;
+static string	_Out;
+static Date		_Date;
 
 
 

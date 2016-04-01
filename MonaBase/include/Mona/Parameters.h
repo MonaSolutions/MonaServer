@@ -112,6 +112,10 @@ public:
 	virtual UInt32 count() const = 0;
 	UInt32			bytes() const { return _bytes; };
 
+	virtual const char* getRaw(const char* key) const = 0;
+	// if value==NULL the property should be removed, return true if something has changed
+	virtual UInt32 setRaw(const char* key, const char* value, UInt32 size) = 0;
+
 protected:
 	Parameters() : _bytes(0) {}
 
@@ -125,9 +129,6 @@ private:
 	virtual UInt32 iteration(const char* prefix,const ForEach& function) const = 0;
 
 	virtual void clearAll() = 0;
-	virtual const char* getRaw(const char* key) const = 0;
-	// if value==NULL the property should be removed, return true if something has changed
-	virtual UInt32 setRaw(const char* key, const char* value, UInt32 size) = 0;
 
 
 	UInt32	_bytes;

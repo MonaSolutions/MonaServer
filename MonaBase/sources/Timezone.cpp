@@ -18,8 +18,8 @@ This file is a part of Mona.
 */
 
 #include "Mona/Timezone.h"
-#include "Mona/FileSystem.h"
 #include "Mona/Util.h"
+#include "Mona/File.h"
 #include <fstream>
 #if defined(_WIN32)
 #include "windows.h"
@@ -525,11 +525,8 @@ Timezone::Timezone() : _offset(0),_dstOffset(3600000) {
 
 	//// LOAD TZ database ////////////////////////
     string path;
-   if(Util::Environment().getString("TZDIR",path)) {
-	   FileSystem::MakeDirectory(path).append(_name);
-	   if(readTZDatabase(path))
-		   return;
-   }
+	if (Util::Environment().getString("TZDIR", path) && readTZDatabase(FileSystem::MakeFolder(path).append(_name)))
+		return;
 
 #if !defined(_WIN32)
 
@@ -543,17 +540,11 @@ Timezone::Timezone() : _offset(0),_dstOffset(3600000) {
 
 #endif
 
-	if (FileSystem::GetCurrent(path)) {
-		path.append("zoneinfo/").append(_name);
-		if(readTZDatabase(path))
-			return;
-	}
+	if (FileSystem::GetCurrentDir(path) && readTZDatabase(path.append("zoneinfo/").append(_name)))
+		return;
 
-	if (FileSystem::GetCurrentApplication(path)) {
-		FileSystem::GetParent(path).append("zoneinfo/").append(_name);
-		if(readTZDatabase(path))
-			return;
-	}
+	if (File::CurrentApp && readTZDatabase(path.assign(File::CurrentApp.parent()).append("zoneinfo/").append(_name)))
+		return;
 
 #if !defined(_WIN32)
 	path.assign("/etc/localtime");

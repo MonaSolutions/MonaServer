@@ -61,7 +61,7 @@ private:
 
 	int			_top;
 	lua_State*	_pState;
-
+	
 	std::vector<int>	_layers; // int>0 means array, int==0 means object, int==-1 means mixed, int=-3/-2 means map
 	std::vector<int>	_references;
 };

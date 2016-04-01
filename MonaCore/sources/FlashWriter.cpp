@@ -46,7 +46,7 @@ AMFWriter& FlashWriter::writeMessage() {
 AMFWriter& FlashWriter::writeInvocation(const char* name, double callback) {
 	AMFWriter& writer = write(AMF::INVOCATION);
 	BinaryWriter& packet = writer.packet;
-	packet.write8(AMF_STRING).write16(strlen(name)).write(name);
+	packet.write8(AMF_STRING).write16((UInt16)strlen(name)).write(name);
 	packet.write8(AMF_NUMBER).writeNumber<double>(callback);
 	packet.write8(AMF_NULL); // for RTMP compatibility! (requiere it)
 	writer.amf0 = amf0;

@@ -85,7 +85,7 @@ UInt32 RTSPPacket::build(Exception& ex,UInt8* data,UInt32 size) {
 		if ((step == LEFT || step == CMD || step == PATH) && (isspace(byte) || byte==0)) {
 			if (step == CMD) {
 				if ((command = RTSP::ParseCommand(ex, signifiant)) == RTSP::COMMAND_UNKNOWN) {
-					exception.set(ex);
+					exception = ex;
 					continue;
 				}
 				if(command == RTSP::COMMAND_DESCRIBE) // Only for DESCRIBE : content = application/sdp
@@ -108,11 +108,11 @@ UInt32 RTSPPacket::build(Exception& ex,UInt8* data,UInt32 size) {
 				}
 
 				// Record file directory and path
-				filePath.append(path);
+				file.setPath(path);
 				if (filePos != string::npos)
 					path.erase(filePos - 1);
 				else
-					filePath.append("/");
+					file.makeFolder();
 				signifiant = NULL;
 				step = VERSION;
 			} else
@@ -129,7 +129,7 @@ UInt32 RTSPPacket::build(Exception& ex,UInt8* data,UInt32 size) {
 			if (!signifiant)
 				signifiant = (const char*)current;
 			if (step == CMD && (current-data)>13) // not a RTSP valid command, consumes all
-				exception.set(ex.set(Exception::PROTOCOL, "invalid RTSP command"));
+				exception = ex.set(Exception::PROTOCOL, "invalid RTSP command");
 		} else
 			step = RIGHT;
 	}

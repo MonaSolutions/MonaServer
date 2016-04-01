@@ -21,12 +21,12 @@ This file is a part of Mona.
 
 #include "Mona/Server.h"
 #include "Mona/TerminateSignal.h"
-#include "Mona/Database.h"
 #include "Servers.h"
 #include "Service.h"
+#include "Mona/PersistentData.h"
 
 
-class MonaServer : public Mona::Server, private ServiceHandler, private Mona::DatabaseLoader {
+class MonaServer : public Mona::Server, private ServiceHandler {
 public:
 	MonaServer(const Mona::Parameters& configs, Mona::TerminateSignal& terminateSignal);
 	~MonaServer();
@@ -46,9 +46,6 @@ private:
 	lua_State*				loadService(const Mona::Client& client) { return (_pState && client.hasCustomData()) ? _pState : NULL; }
 	lua_State*				closeService(const Mona::Client& client, int& reference);
 
-	/// DatabaseLoader implementation
-	void					onDataLoading(const std::string& path, const Mona::UInt8* value, Mona::UInt32 size);
-
 	/// ServiceHandler implementation
 	void					startService(Service& service);
 	void					stopService(Service& service);
@@ -67,7 +64,7 @@ private:
 	void					onDisconnection(const Mona::Client& client);
 	void					onAddressChanged(Mona::Client& client, const Mona::SocketAddress& oldAddress);
 	bool					onMessage(Mona::Exception& ex, Mona::Client& client,const std::string& name,Mona::DataReader& reader,Mona::UInt8 responseType);
-	bool					onFileAccess(Mona::Exception& ex, Mona::Client& client, Mona::Client::FileAccessType type, Mona::DataReader& parameters, Mona::Path& filePath, Mona::DataWriter& properties);
+	bool					onFileAccess(Mona::Exception& ex, Mona::Client& client, Mona::Client::FileAccessType type, Mona::DataReader& parameters, Mona::File& file, Mona::DataWriter& properties);
 
 	void					onJoinGroup(Mona::Client& client,Mona::Group& group);
 	void					onUnjoinGroup(Mona::Client& client,Mona::Group& group);
@@ -96,10 +93,8 @@ private:
 	std::unique_ptr<Service>	_pService;
 
 	std::set<Service*>			_servicesRunning;
-	Mona::Database				_data;
-	bool						_firstData;
+	Mona::PersistentData		_data;
 
-	
 	std::string					_wwwPath;
 	std::string					_dataPath;
 };

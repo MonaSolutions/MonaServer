@@ -274,7 +274,7 @@ HTTP::ContentType HTTP::ParseContentType(const char* value, string& subType) {
 struct EntriesComparator {
 	EntriesComparator(HTTP::SortField field, HTTP::SortOrder order) : _field(field),_order(order) {}
 
-	bool operator() (const Path* pFile1,const Path* pFile2) {
+	bool operator() (const File* pFile1,const File* pFile2) {
 		if (_field == HTTP::SORT_BY_SIZE) {
 			if (pFile1->size() != pFile2->size())
 				return _order==HTTP::SORT_ASC ? pFile1->size() < pFile2->size() : pFile2->size() < pFile1->size();
@@ -297,19 +297,15 @@ private:
 };
 
 
-void HTTP::WriteDirectoryEntries(BinaryWriter& writer, const string& serverAddress, const std::string& fullPath, const std::string& path, SortField sortField, SortOrder sortOrder) {
+bool HTTP::WriteDirectoryEntries(Exception& ex, BinaryWriter& writer, const string& serverAddress, const std::string& fullPath, const std::string& path, SortField sortField, SortOrder sortOrder) {
 
-	Exception ex;
-	vector<Path*> files;
-	FileSystem::ForEach forEach([&files](const string& filePath){
-		files.emplace_back(new Path(filePath));
+	vector<File*> files;
+	FileSystem::ForEach forEach([&files](const string& path, UInt16 level){
+		files.emplace_back(new File(path));
 	});
-
-	FileSystem::Paths(ex, fullPath, forEach);
-	if (ex) {
-		WARN(ex.error())
-		return;
-	}
+	FileSystem::ListFiles(ex, fullPath, forEach);
+	if (ex)
+		return false;
 
 	char sort[] = "D";
 	if (sortOrder==SORT_DESC)
@@ -335,16 +331,17 @@ void HTTP::WriteDirectoryEntries(BinaryWriter& writer, const string& serverAddre
 	std::sort(files.begin(), files.end(), comparator);
 
 	// Write entries
-	for (const Path* pFile : files) {
+	for (const File* pFile : files) {
 		WriteDirectoryEntry(writer, serverAddress, path, *pFile);
 		delete pFile;
 	}
 
 	// Write footer
 	writer.write(EXPAND("</table></body></html>"));
+	return true;
 }
 
-void HTTP::WriteDirectoryEntry(BinaryWriter& writer,const string& serverAddress,const string& path,const Path& entry) {
+void HTTP::WriteDirectoryEntry(BinaryWriter& writer,const string& serverAddress,const string& path,const File& entry) {
 	string size,date;
 	if (entry.isFolder())
 		size.assign("-");
@@ -357,7 +354,7 @@ void HTTP::WriteDirectoryEntry(BinaryWriter& writer,const string& serverAddress,
 	else
 		String::Format(size, Format<double>("%.1fG",entry.size()/1073741824.0));
 
-	writer.write(EXPAND("<tr><td><a href=\"http://")).write(serverAddress).write(path).write("/")
+	writer.write(EXPAND("<tr><td><a href=\"http://")).write(serverAddress).write(path).write('/')
 		.write(entry.name()).write(entry.isFolder() ? "/\">" : "\">")
 		.write(entry.name()).write(entry.isFolder() ? "/" : "").write(EXPAND("</a></td><td>&nbsp;"))
 		.write(Date(entry.lastModified()).toString("%d-%b-%Y %H:%M", date)).write(EXPAND("</td><td align=right>&nbsp;&nbsp;"))

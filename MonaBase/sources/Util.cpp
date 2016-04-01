@@ -18,13 +18,9 @@ This file is a part of Mona.
 */
 
 #include "Mona/Util.h"
-#include "Mona/Exceptions.h"
-#include "Mona/String.h"
-#include "Mona/Time.h"
 #include "Mona/Timezone.h"
+#include "Mona/File.h"
 #include <fstream>
-#include <vector>
-
 #if defined(_WIN32)
 	#include <windows.h>
 #else
@@ -40,16 +36,24 @@ This file is a part of Mona.
 	extern "C" char **environ;
 #endif
 
+
 using namespace std;
 
 namespace Mona {
 
-
-mutex					Util::_MutexEnvironment;
-MapParameters			Util::_Environment;
+Util::EnvironmentParameters		Util::_Environment;
 
 recursive_mutex			Util::_MutexThreadNames;
 map<THREAD_ID, string>	Util::_ThreadNames;
+
+// KEEP following lines after _Environment instanciation and in this order because FileSystem::CurrentDirs can use _Home or _CurrentApp
+FileSystem::Home				FileSystem::_Home;
+FileSystem::CurrentApp			FileSystem::_CurrentApp;
+FileSystem::CurrentDirs			FileSystem::_CurrentDirs;
+
+const File						File::Home(FileSystem::GetHome());
+const File						File::CurrentApp(FileSystem::GetCurrentApp());
+const File						File::CurrentDir(FileSystem::GetCurrentDir());
 
 // KEEP the following lines in this exact order (to be built correctly, and after _Environment variable)
 map<Int64,Timezone::Transition> Timezone::_Transitions;
@@ -72,6 +76,18 @@ const char Util::_ReverseB64Table[128] = {
 	64, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40,
 	41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 64, 64, 64, 64, 64
 };
+
+Util::EnvironmentParameters::EnvironmentParameters() {
+	const char* line(*environ);
+	for (UInt32 i = 0; (line = *(environ + i)); ++i) {
+		const char* value = strchr(line, '=');
+		if (value) {
+			string name(line,(value++)-line);
+			setString(name, value);
+		} else
+			setString(line, NULL);
+	}
+}
 
 THREAD_ID Util::CurrentThreadId() {
 #ifdef _WIN32
@@ -129,119 +145,94 @@ UInt8 Util::Get7BitValueSize(UInt64 value) {
 	return result;
 }
 
-// environment variables (TODO test on service windows!!)
-const Parameters& Util::Environment() {
-	lock_guard<mutex> lock(_MutexEnvironment);
-	if (_Environment.count() > 0)
-		return _Environment;
-	const char* line(*environ);
-	for (UInt32 i = 0; (line = *(environ + i)); ++i) {
-		const char* value = strchr(line, '=');
-		if (value) {
-			string name(line,(value++)-line);
-			_Environment.setString(name, value);
-		} else
-			_Environment.setString(line, NULL);
-	}
-	return _Environment;
-}
-
-
 size_t Util::UnpackUrl(const char* url, string& address, string& path, string& query) {
 	
 	path.clear();
 	query.clear();
 
-	const char* it = url;
 
-	bool isFile(true);
+	const char* dot(strpbrk(url, ":/\\"));
+	if (!dot) {
+		path.assign("/").append(url);
+		return 1; // is file!
+	}
+
+	
+	if (*dot == ':') {
+		// protocol://address
+		++dot;
+		while (*dot && (*dot == '/' || *dot == '\\'))
+			++dot;
+		if (!*dot) // no address, no path, just "scheme://"
+			return string::npos;
+		const char* itEnd(dot);
+		while (*itEnd && *itEnd != '/' && *itEnd != '\\')
+			++itEnd;
+		address.assign(dot, itEnd);
+		url = itEnd; // on slash after address
+	}
+
+	// Decode PATH
+
 	vector<size_t> slashs;
 
-	// Get address
-	while (*it) {
-		if (*it == '/' || *it == '\\') { // no address, just path
-			isFile = false;
-			break;
-		}
-		if (*it == ':') {
-			++it;
-			while (*it && (*it == '/' || *it == '\\'))
-				++it;
-			if (!*it) // no address, no path, just "scheme://"
-				return string::npos;
-			const char* itEnd(it);
-			while (*itEnd && *itEnd != '/' && *itEnd != '\\')
-				++itEnd;
-			address.assign(it, itEnd);
-			url = it = itEnd; // on slash after address
-			isFile = false;
-			break;
-		}
-		++it;
-	}
+	// level = 0 => path => next char
+	// level = 1 => path => /
+	// level > 1 => path => . after /
+	UInt8 level(1); 
 
+	ForEachDecodedChar forEach([&level,&slashs,&path,&query](char c,bool wasEncoded){
 
-	// Normalize path if was not starting with a first slash
-	if (it != url) {
-		slashs.emplace_back(0);
-		path.assign("/").append(url, it - url);
-	}
+		if (c == '?')
+			return false;
 
-	// Normalize path => replace // by / and \ by / AND remove the last '/'
-    while (*it) {
-		// Extract query part
-        if (*it == '?') {
-			query.assign(++it);
-			// remove last slashes
-			while (!path.empty() && (path.back() == '/' || path.back() == '\\'))
-				path.resize(path.size() - 1);
-			break;
-		}
-		// Add slash
-        if (*it == '/' || *it == '\\') {
-            ++it;
-           while (*it == '/' || *it == '\\')
-               ++it;
-			isFile = false;
+		// path
 
-			if (*it == '.') {
-				++it;
-				if (*it == '.') {
-					// ..
-					if (slashs.empty()) {
-						path.clear();
-					} else {
-						path.resize(slashs.back());
-						slashs.pop_back();
-					}	
-					while (*it == '.')
-						++it;
-					continue;
-				}
-				while (*it == '/' || *it == '\\')
-					++it;
+		if (c == '/' || c == '\\') {
+
+			// level + 1 = . level
+			if (level > 2) {
+				// /../
+				if (!slashs.empty()) {
+					path.resize(slashs.back());
+					slashs.pop_back();
+				} else
+					path.clear();
 			}
+			level = 1;
 
-			if (*it) {
-				slashs.emplace_back(path.size());
-				path += '/'; // We don't add the last slash
-			}
-			continue;
+			return true;
 		}
+		
+		if (level) {
+			// level = 1 or 2
+			if (level<3 && c == '.') {
+				++level;
+				return true;
+			}
+			slashs.emplace_back(path.size());
+			path.append("/..",level);
+			level = 0;
+		}
+
 		// Add current character
-		if (*it == '+')
-			path += ' ';
-		else if (*it == '%') {
-			DecodeURI(it, path);
-			if (*it)
-				path += *it;
-		} else
-			path += *it;
-		++it;
-		if (!isFile)
-			isFile = true;
+		path += c;
+
+		return true;
+	});
+
+	url += DecodeURI(url,forEach);
+
+	// get QUERY
+	if (*url)
+		query.assign(url);
+
+	if (level) {
+		if (level > 2) // /..
+			path.resize(slashs.empty() ? 0 : slashs.back());
+		return string::npos;
 	}
-	return isFile ? (slashs.back()+1) : string::npos;
+	return slashs.back()+1; // can't be empty here!
 }
 
 Parameters& Util::UnpackQuery(const char* query, size_t count, Parameters& parameters) {
@@ -253,53 +244,108 @@ Parameters& Util::UnpackQuery(const char* query, size_t count, Parameters& param
 	return parameters;
 }
 
-size_t Util::UnpackQuery(const char* query, size_t count, const ForEachParameter& forEach) {
-	const char* it(query);
-	size_t countPairs(0);
-	string name;
-	string value;
-	while (count && *it) {
+UInt32 Util::UnpackQuery(const char* query, size_t count, const ForEachParameter& forEach) {
+	Int32 countPairs(0);
+	string name,value;
+	bool isName(true);
 
-		// name
-		name.clear();
-		while (count && *it && *it != '=' && *it != '&') {
-			if (*it == '+')
-				name += ' ';
-			else if (*it == '%') {
-				DecodeURI(it, name);
-				if (count && *it)
-					name += *it;
-			} else
-				name += *it;
-			++it; --count;
-			
-		};
-		value.clear();
-		bool hasValue(false);
-		if (count && *it && *it != '&') { // if it's '='
-			// value
-			hasValue = true;
-			++it; count--; // skip '='
-			while (count && *it && *it != '&') {
-				if (*it == '+')
-					value += ' ';
-				else if (*it == '%') {
-					DecodeURI(it, value);
-					continue;
-				} else
-					value += *it;
-					
-				++it; --count;
-			};
+	ForEachDecodedChar forEachDecoded([&isName, &countPairs, &name, &value, &forEach](char c, bool wasEncoded) {
+
+		if (!wasEncoded) {
+			if (c == '&') {
+				++countPairs;
+				if (!forEach(name, isName ? NULL : value.c_str())) {
+					countPairs *= -1;
+					return false;
+				}
+				isName = true;
+				value.clear();
+				name.clear();
+				return true;
+			}
+			if (c == '=') {
+				if (isName) {
+					isName = false;
+					return true;
+				}
+			} else if (c == '+')
+				c = ' ';
 		}
-		if (count && *it) { // if it's '&'
-			++it; --count;
-		}
-		if (!forEach(name, hasValue ? value.c_str() : NULL))
-			return string::npos;
+		if (isName)
+			name += c;
+		else
+			value += c; 
+		return true;
+	});
+
+	if (DecodeURI(query, count, forEachDecoded) && countPairs>=0) {
+		// for the last pairs just if there was some decoded bytes
 		++countPairs;
+		forEach(name, isName ? NULL : value.c_str());
 	}
-	return countPairs;
+
+	return abs(countPairs);
+}
+
+UInt32 Util::DecodeURI(const char* value, std::size_t count, const ForEachDecodedChar& forEach) {
+
+	const char* begin(value);
+
+	while (count && (count!=string::npos || *value)) {
+
+		char c(*value);
+		bool encoded(false);
+
+		if (c == '%') {
+			// %
+			++value;
+			if(count!=string::npos)
+				--count;
+			if (!count || (count==string::npos && !*value)) {
+				 // syntax error
+				forEach('%',encoded);
+				return value-begin;
+			}
+			
+			char hi = toupper(*value);
+			++value;
+			if(count!=string::npos)
+				--count;
+			if (!count || (count==string::npos && !*value)) {
+				// syntax error
+				if (forEach('%',encoded))
+					forEach(hi,encoded);
+				else
+					--value;
+				return value-begin;
+			}
+			char lo = toupper(*value++);
+			if(count!=string::npos)
+				--count;
+			if (!isxdigit(lo) || !isxdigit(hi)) {
+				// syntax error
+				if (forEach('%',encoded)) {
+					if (forEach(hi, encoded)) {
+						if (forEach(lo, encoded))
+							continue;
+					} else
+						--value;
+				} else
+					value-=2;
+				return value-begin;
+			}
+			encoded = true;
+			c = ((hi - (hi<='9' ? '0' : '7')) << 4) | ((lo - (lo<='9' ? '0' : '7')) & 0x0F);
+		} else {
+			++value;
+			if(count!=string::npos)
+				--count;
+		}
+		if (!forEach(c,encoded))
+			break;
+	}
+
+	return value-begin;
 }
 
 void Util::Dump(const UInt8* data,UInt32 size,Buffer& buffer) {
@@ -342,12 +388,10 @@ void Util::Dump(const UInt8* data,UInt32 size,Buffer& buffer) {
 
 
 
-bool Util::ReadIniFile(Exception& ex,const string& path,Parameters& parameters) {
+bool Util::ReadIniFile(const string& path,Parameters& parameters) {
 	ifstream ifile(path, ios::in | ios::binary | ios::ate);
-	if (!ifile.good()) {
-		ex.set(Exception::FILE, "Impossible to open ", path, " file");
+	if (!ifile.good())
 		return false;
-	}
 	UInt32 size = (UInt32)ifile.tellg();
 	if (size == 0)
 		return true;

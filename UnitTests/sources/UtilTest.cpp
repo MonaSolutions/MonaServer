@@ -24,7 +24,7 @@ using namespace Mona;
 
 using namespace std;
 
-static MapParameters Properties;
+
 
 bool TestEncode(const char* data,UInt32 size, const char* result) {
 	static string value;
@@ -38,25 +38,29 @@ bool TestDecode(string data, const char* result, UInt32 size) {
 
 ADD_TEST(UtilTest, UnpackQuery) {
 	string value;
-	CHECK(Util::UnpackQuery("name1=value1&name2=value2", Properties).count()==2)
-	DEBUG_CHECK(Properties.getString("name1", value) && value == "value1");
-	DEBUG_CHECK(Properties.getString("name2", value) && value == "value2");
-	Properties.clear();
+	MapParameters properties;
+	CHECK(Util::UnpackQuery("name1=value1&name2=value2", properties).count()==2)
+	DEBUG_CHECK(properties.getString("name1", value) && value == "value1");
+	DEBUG_CHECK(properties.getString("name2", value) && value == "value2");
+	properties.clear();
 
 
 	string test("name1=one%20space&name2=%22one+double quotes%22&name3=percent:%25&name4=%27simple quotes%27");
-	CHECK(Util::UnpackQuery(test, Properties).count()==4); // test "count" + DecodeUrI
-	DEBUG_CHECK(Properties.getString("name1", value) && value == "one space");
-	DEBUG_CHECK(Properties.getString("name2", value) && value == "\"one double quotes\"");
-	DEBUG_CHECK(Properties.getString("name3", value) && value == "percent:%");
-	DEBUG_CHECK(Properties.getString("name4", value) && value == "'simple quotes'");
+	CHECK(Util::UnpackQuery(test, properties).count()==4); // test "count" + DecodeUrI
+	DEBUG_CHECK(properties.getString("name1", value) && value == "one space");
+	DEBUG_CHECK(properties.getString("name2", value) && value == "\"one double quotes\"");
+	DEBUG_CHECK(properties.getString("name3", value) && value == "percent:%");
+	DEBUG_CHECK(properties.getString("name4", value) && value == "'simple quotes'");
+	CHECK(Util::UnpackQuery("longquery://test;:/one%*$^/fin=value~", properties).count()==5)
+	DEBUG_CHECK(properties.getString("longquery://test;:/one%*$^/fin", value) && value == "value~");
 
 	bool next(true);
 	Util::ForEachParameter forEach([&next](const string& name, const char* value) { return next; });
 	CHECK(Util::UnpackQuery(test.c_str(), forEach) == 4); // test "string::pos" + DecodeUrI
 	CHECK(Util::UnpackQuery("name1=value1&name2=value2", 12, forEach) == 1);
 	next = false;
-	CHECK(Util::UnpackQuery(test, forEach) == string::npos);
+	CHECK(Util::UnpackQuery(test, forEach) == 1);
+
 }
 
 
@@ -78,12 +82,16 @@ ADD_TEST(UtilTest, UnpackUrl) {
 	CHECK(Util::UnpackUrl("/",path,query)==string::npos && path=="");
 	CHECK(Util::UnpackUrl("/.",path,query)==string::npos && path=="");
 	CHECK(Util::UnpackUrl("/..",path,query)==string::npos && path=="");
+	CHECK(Util::UnpackUrl("/~",path,query)!=string::npos && path=="/~");
 	CHECK(Util::UnpackUrl("/path/.",path,query)==string::npos && path=="/path");
 	CHECK(Util::UnpackUrl("/path/..",path,query)==string::npos && path=="");
+	CHECK(Util::UnpackUrl("/path/~",path,query)!=string::npos && path=="/path/~");
 	CHECK(Util::UnpackUrl("/path/./sub/",path,query)==string::npos && path=="/path/sub");
-	CHECK(Util::UnpackUrl("/path//.//sub/",path,query)==string::npos && path=="/path/sub");
 	CHECK(Util::UnpackUrl("/path/../sub/",path,query)==string::npos && path=="/sub");
-	CHECK(Util::UnpackUrl("/path//..//sub/",path,query)==string::npos && path=="/sub");
+	CHECK(Util::UnpackUrl("/path/~/sub/",path,query)==string::npos && path=="/path/~/sub");
+	CHECK(Util::UnpackUrl("//path//sub//.",path,query)==string::npos && path=="/path/sub");
+	CHECK(Util::UnpackUrl("//path//sub//..",path,query)==string::npos && path=="/path");
+	CHECK(Util::UnpackUrl("//path//sub//~",path,query)!=string::npos && path=="/path/sub/~");
 
 	CHECK(Util::UnpackUrl("rtmp://",path,query)==string::npos);
 	CHECK(Util::UnpackUrl("rtmp://127.0.0.1", address, path, query)==string::npos)

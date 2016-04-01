@@ -30,6 +30,8 @@ public:
 	/// \brief Construct a Time instance with current time value
 	Time() : _time(Now()) {}
 
+	Time(const Time& other) : _time(other._time) {}
+
 	/// \brief Construct a Time instance with defined time value
 	Time(Int64 time) : _time(time) {}
 

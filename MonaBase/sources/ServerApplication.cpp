@@ -181,11 +181,11 @@ bool ServerApplication::hasConsole() {
 
 
 bool ServerApplication::registerService(Exception& ex) {
-	WinService service(path().name());
+	WinService service(file().name());
 	if (_displayName.empty())
-		service.registerService(ex,path().toString());
+		service.registerService(ex,file().path());
 	else
-		service.registerService(ex, path().toString(), _displayName);
+		service.registerService(ex, file().path(), _displayName);
 	if (ex)
 		return false;
 	if (_startup == "auto")
@@ -199,7 +199,7 @@ bool ServerApplication::registerService(Exception& ex) {
 
 
 bool ServerApplication::unregisterService(Exception& ex) {
-	WinService service(path().name());
+	WinService service(file().name());
 	return service.unregisterService(ex);
 }
 
@@ -259,7 +259,7 @@ int ServerApplication::run(int argc, const char** argv) {
 #endif
 	if (!_pidFile.empty()) {
 		Exception ex;
-		FileSystem::Remove(ex,_pidFile);
+		FileSystem::Delete(ex,_pidFile);
 		ERROR("pid file deletion, ",ex.error());
 	}
 	return result;
