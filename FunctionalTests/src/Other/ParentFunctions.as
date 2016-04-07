@@ -53,10 +53,10 @@ package Other
 		
 		// 3rd response
 		public function onErrorNameApp(error:Object):void {
-			if (error.description=="Method 'getNameApp' not found on application /FunctionalTests/subapp/subsubapp") {
+			if (error.description=="Method client 'getNameApp' not found in application /FunctionalTests/subapp/subsubapp") {
 				_connection.call("getNameSuperParentApp", new Responder(onNameSuperParentApp)); 
 			} else {
-				onResult({err:"onErrorNameApp : Unexpected error '"+error.description+"'"});
+				onResult({err:"onErrorNameApp : Unexpected error log '"+error.description+"'"});
 				_connection.close();
 			}
 		}
