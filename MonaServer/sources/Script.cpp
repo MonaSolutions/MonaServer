@@ -18,7 +18,6 @@ This file is a part of Mona.
 */
 
 #include "Script.h"
-#include "Mona/Entity.h"
 #include "Mona/Logs.h"
 #include "Mona/Util.h"
 #include <math.h>
@@ -451,28 +450,24 @@ int Script::IPairs(lua_State* pState) {
 }
 
 
-bool Script::ToId(const UInt8* data, UInt32& size) {
-	if (size == (ID_SIZE << 1))
-		return true;
-	if (size ==ID_SIZE) {
-		Buffer buffer((UInt8*)data, size);
-		Util::UnformatHex(buffer);
-		size = (ID_SIZE << 1);
-		return  true;
+const UInt8* Script::ToId(const UInt8* data, UInt32 size, UInt8 id[64]) {
+	if (size == 64)
+		return data;
+	if (size == 32) {
+		Buffer buffer(id, 64);
+		return  Util::FormatHex(data, size, buffer).data();
 	}
-	return false;
+	return NULL;
 }
 
-bool Script::ToRawId(const UInt8* data, UInt32& size) {
-	if (size == ID_SIZE)
-		return true;
-	if (size == (ID_SIZE << 1)) {
-		Buffer buffer((UInt8*)data, size);
-		Util::UnformatHex(buffer);
-		size = ID_SIZE;
-		return  true;
+const UInt8* Script::ToRawId(const UInt8* data, UInt32 size, UInt8 rawID[32]) {
+	if (size == 32)
+		return data;
+	if (size == 64) {
+		Buffer buffer(rawID, 32);
+		return  Util::UnformatHex(data, size, buffer).data();
 	}
-	return false;
+	return NULL;
 }
 
 const char* Script::ToPrint(lua_State* pState, string& out) {

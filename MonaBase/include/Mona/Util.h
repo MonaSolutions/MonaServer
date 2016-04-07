@@ -150,7 +150,7 @@ public:
 
 
 	template <typename BufferType>
-	static bool FromBase64(BufferType& buffer) { return FromBase64((const UInt8*)buffer.data(), buffer.size(), buffer); }
+	static bool FromBase64(BufferType& buffer) { return FromBase64(BIN buffer.data(), buffer.size(), buffer); }
 
 	template <typename BufferType>
 	static bool FromBase64(const UInt8* data, UInt32 size,BufferType& buffer,bool append=false) {
@@ -242,21 +242,24 @@ public:
 	}
 
 	template <typename BufferType>
-	static BufferType& UnformatHex(BufferType& buffer) {
-		UInt32		 size(0);
-		UInt8*		 in = (UInt8*)buffer.data();
-		if (!in) // to expect null writer 
-			return buffer;
-		UInt8*		 out = in;
-		const UInt8* end = in+buffer.size();
+	static BufferType& UnformatHex(BufferType& buffer) { return UnformatHex(BIN buffer.data(), buffer.size(), buffer); }
 
-		while(in<end) {
-			UInt8 first = toupper(*in++);
-			UInt8 second = (in == end) ? '0' : toupper(*in++);
+	template <typename BufferType>
+	static BufferType& UnformatHex(const UInt8* data, UInt32 size, BufferType& buffer, bool append=false) {
+		if (!buffer.data()) // to expect null writer 
+			return buffer;
+
+		const UInt8* end(data+size);
+		UInt8* out;
+		UInt32 oldSize(append ? buffer.size() : 0);
+		buffer.resize(oldSize+UInt32(ceil(size/2.0)), append);
+		out = buffer.data() + oldSize;
+
+		while(data<end) {
+			UInt8 first = toupper(*data++);
+			UInt8 second = (data == end) ? '0' : toupper(*data++);
 			*out++ = ((first - (first<='9' ? '0' : '7')) << 4) | ((second - (second<='9' ? '0' : '7')) & 0x0F);
-			++size;
 		}
-		buffer.resize(size, false);
 		return buffer;
 	}
 
