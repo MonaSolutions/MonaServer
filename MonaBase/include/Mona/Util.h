@@ -254,7 +254,7 @@ public:
 		size = oldSize + UInt32(ceil(size / 2.0));
 		if (buffer.size()<size)
 			buffer.resize(size);
-		out = buffer.data() + oldSize;
+		out = BIN buffer.data() + oldSize;
 
 		while(data<end) {
 			UInt8 first = toupper(*data++);
