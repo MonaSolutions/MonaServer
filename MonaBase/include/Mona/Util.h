@@ -161,7 +161,7 @@ public:
 		buffer.resize(oldSize + UInt32(ceil(size / 4.0) * 3),append); // maximum size!
 	
 		UInt8*		 out((UInt8*)buffer.data());
-		if (!out) // to expect null writer 
+		if (!out) // to avoid null writer 
 			return false;
 		out += oldSize;
 		const UInt8* end(data+size);
@@ -246,14 +246,14 @@ public:
 
 	template <typename BufferType>
 	static BufferType& UnformatHex(const UInt8* data, UInt32 size, BufferType& buffer, bool append=false) {
-		if (!buffer.data()) // to expect null writer 
+		if (!buffer.data()) // to avoid null writer 
 			return buffer;
 
 		const UInt8* end(data+size);
 		UInt8* out;
 		UInt32 oldSize(append ? buffer.size() : 0);
 		buffer.resize(oldSize+UInt32(ceil(size/2.0)), append);
-		out = buffer.data() + oldSize;
+		out = (BIN buffer.data()) + oldSize;
 
 		while(data<end) {
 			UInt8 first = toupper(*data++);
