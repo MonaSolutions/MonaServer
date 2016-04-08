@@ -120,7 +120,7 @@ public:
 
 		if (!append)
 			accumulator = 0;
-		buffer.resize(accumulator+UInt32(ceil(size/3.0)*4),append);
+		buffer.resize(accumulator+UInt32(ceil(size/3.0)*4));
 
 		char*		current = (char*)buffer.data();
 		if (!current) // to expect null writer 
@@ -154,20 +154,19 @@ public:
 
 	template <typename BufferType>
 	static bool FromBase64(const UInt8* data, UInt32 size,BufferType& buffer,bool append=false) {
-		UInt32 bits(0), accumulator(0), oldSize(buffer.size());
-		if (!append)
-			oldSize = 0;
-
-		buffer.resize(oldSize + UInt32(ceil(size / 4.0) * 3),append); // maximum size!
-	
-		UInt8*		 out((UInt8*)buffer.data());
-		if (!out) // to expect null writer 
+		if (!buffer.data()) // to expect null writer 
 			return false;
-		out += oldSize;
+
+		UInt32 bits(0), oldSize(append ? buffer.size() : 0);
+		UInt32 accumulator(oldSize + UInt32(ceil(size / 4.0) * 3));
 		const UInt8* end(data+size);
 
-		size = 0;
-	
+		if (buffer.size()<accumulator)
+			buffer.resize(accumulator); // maximum size!
+		UInt8* out(BIN buffer.data() + oldSize);
+
+		accumulator = size = 0;
+
 		while(data<end) {
 			const int c = *data++;
 			if (isspace(c) || c == '=')
@@ -218,7 +217,7 @@ public:
 		}
 
 		UInt32 oldSize(options&HEX_APPEND ? buffer.size() : 0);
-		buffer.resize((end-data) * ((options&HEX_CPP) ? 4 : 2) - (skipLeft ? 1 : 0) + oldSize, (options&HEX_APPEND)>0);
+		buffer.resize((end-data) * ((options&HEX_CPP) ? 4 : 2) - (skipLeft ? 1 : 0) + oldSize);
 		UInt8* out((UInt8*)buffer.data() + oldSize);
 	
 		UInt8 ref(options&HEX_UPPER_CASE ? '7' : 'W');
@@ -252,7 +251,9 @@ public:
 		const UInt8* end(data+size);
 		UInt8* out;
 		UInt32 oldSize(append ? buffer.size() : 0);
-		buffer.resize(oldSize+UInt32(ceil(size/2.0)), append);
+		size = oldSize + UInt32(ceil(size / 2.0));
+		if (buffer.size()<size)
+			buffer.resize(size);
 		out = buffer.data() + oldSize;
 
 		while(data<end) {
@@ -260,6 +261,7 @@ public:
 			UInt8 second = (data == end) ? '0' : toupper(*data++);
 			*out++ = ((first - (first<='9' ? '0' : '7')) << 4) | ((second - (second<='9' ? '0' : '7')) & 0x0F);
 		}
+		buffer.resize(size);
 		return buffer;
 	}
 
