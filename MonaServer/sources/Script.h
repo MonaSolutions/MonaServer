@@ -87,8 +87,8 @@ public:
 	static const char*	LastError(lua_State *pState);
 	static void			Test(lua_State *pState);
 
-	static bool			ToRawId(const Mona::UInt8* data, Mona::UInt32& size);
-	static bool			ToId(const Mona::UInt8* data, Mona::UInt32& size);
+	static const Mona::UInt8* ToRawId(const Mona::UInt8* data, Mona::UInt32 size, Mona::UInt8 rawID[32]);
+	static const Mona::UInt8* ToId(const Mona::UInt8* data, Mona::UInt32 size, Mona::UInt8 id[64]);
 
 	static void			CloseState(lua_State* pState);
 	static lua_State*	CreateState();

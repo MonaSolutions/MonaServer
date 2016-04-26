@@ -39,7 +39,8 @@ public:
 		
 				Script::Collection<Service>(pState, 1, "clients");
 				
-				if (Script::ToId(id, size)) {
+				UInt8 buffer[64];
+				if ((id=Script::ToId(id, size, buffer))) {
 					lua_pushlstring(pState,(const char*) id, size);
 					lua_gettable(pState, -2);
 				} else

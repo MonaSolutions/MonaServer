@@ -52,7 +52,9 @@ public:
 			if (lua_isstring(pState, 2)) {
 				SCRIPT_READ_BINARY(id, size)
 				Client* pClient(NULL);
-				if (Script::ToRawId(id, size) && (pClient = invoker.clients(id)))
+				UInt8 rawId[32];
+				id = Script::ToRawId(id, size, rawId);
+				if (id && (pClient = invoker.clients(id)))
 					Script::AddObject<LUAClient>(pState, *pClient);
 			}
 
@@ -69,7 +71,9 @@ public:
 			if (lua_isstring(pState, 2)) {
 				SCRIPT_READ_BINARY(id, size)
 				Group* pGroup(NULL);
-				if (Script::ToRawId(id, size) && (pGroup = invoker.groups(id)))
+				UInt8 rawId[32];
+				id = Script::ToRawId(id, size, rawId);
+				if (id && (pGroup = invoker.groups(id)))
 					Script::AddObject<LUAGroup>(pState, *pGroup);
 			}
 
@@ -377,16 +381,17 @@ int LUAInvoker::JoinGroup(lua_State* pState) {
 	SCRIPT_CALLBACK(Invoker, invoker)
 
 		SCRIPT_READ_BINARY(peerId, size)
+
+		UInt8 rawId[ID_SIZE];
 		if (!peerId)
 			SCRIPT_ERROR("Member id argument missing")
-		else if (!Script::ToRawId(peerId, size))
+		else if(!(peerId = Script::ToRawId(peerId, size, rawId)))
 			SCRIPT_ERROR("Bad member format id ", string((const char*)peerId, size))
 		else {
-
 			SCRIPT_READ_BINARY(groupId, size)
 			if (!groupId)
 				SCRIPT_ERROR("Group id argument missing")
-			else if (!Script::ToRawId(groupId, size))
+			else if(!(groupId = Script::ToRawId(groupId, size, rawId)))
 				SCRIPT_ERROR("Bad group format id ", string((const char*)groupId, size))
 			else {
 
