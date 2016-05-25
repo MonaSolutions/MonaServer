@@ -39,7 +39,10 @@ This file is a part of Mona.
 #define LINE_STRING STRINGIZE(__LINE__)
 
 #define MAP_FIND_OR_EMPLACE(MAP,IT,KEY,...) auto IT = MAP.lower_bound(KEY); if (IT == MAP.end() || IT->first != KEY) {IT = MAP.emplace_hint(IT,std::piecewise_construct,std::forward_as_tuple(KEY),std::forward_as_tuple(__VA_ARGS__));}
-
+#define MAP_HAS1(m,k) ((m).find(k)!=(m).end())
+#define MAP_NOTHAS1(m,k) ((m).find(k)==(m).end())
+#define FOR_ITEM(map,item) for(auto& item : map)
+#define FOR_IT(container,it) for(auto it = container.begin();it!=container.end();++it)
 ///// Disable some annoying warnings /////
 #if defined(_MSC_VER)
 #pragma warning(disable:4018) // signed/unsigned comparison
@@ -212,6 +215,7 @@ This file is a part of Mona.
 #endif
 
 #if defined(_WIN32)
+typedef unsigned long DWORD;
 #define THREAD_ID	DWORD
 #define NOMINMAX
 #define _WINSOCKAPI_    // stops windows.h including winsock.h

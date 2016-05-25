@@ -33,11 +33,11 @@ public:
 
 	/// look if the file has changed, call clearFile if doesn't exist anymore, or call clearFile and loadFile if file has change
 	/// return true if file exists
-	bool	watchFile();
+	bool	watchFile(const Path& filePath);
 
 	const Path	filePath;
 private:
-	virtual void loadFile() = 0;
+	virtual void loadFile(const char* path) = 0;
 	virtual void clearFile() = 0;
 
 	Mona::Time	_lastModified;

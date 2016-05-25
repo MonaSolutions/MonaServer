@@ -24,7 +24,7 @@ This file is a part of Mona.
 #include "Mona/StringReader.h"
 #include "Mona/XMLRPCReader.h"
 #include "ScriptReader.h"
-
+#include "Room.h"
 using namespace std;
 using namespace Mona;
 
@@ -64,7 +64,7 @@ void LUAPublication::Delete(lua_State* pState, Publication& publication) {
 	lua_replace(pState, -2);
 	Invoker* pInvoker = (Invoker*)lua_touserdata(pState, -1);
 	if (pInvoker)
-		pInvoker->unpublish(publication.name());
+		pInvoker->defaultRoom->unpublish(publication.name());
 	lua_pop(pState, 1);
 }
 
@@ -82,7 +82,7 @@ int LUAPublication::Close(lua_State *pState) {
 				SCRIPT_ERROR("You have not the handle on publication ", publication.name(), ", you can't close it")
 			SCRIPT_END
 		} else if (publication.running())
-			pInvoker->unpublish(publication.name()); // call LUAPublication::Clear (because no destructor)
+			pInvoker->defaultRoom->unpublish(publication.name()); // call LUAPublication::Clear (because no destructor)
 
 		lua_pop(pState, 1);
 	SCRIPT_CALLBACK_RETURN

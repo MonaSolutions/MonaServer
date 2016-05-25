@@ -20,6 +20,7 @@ This file is a part of Mona.
 #include "Service.h"
 #include "Mona/String.h"
 #include "Mona/Logs.h"
+#include "LUASharedObject.h"
 
 
 using namespace std;
@@ -49,11 +50,12 @@ public:
 	}
 };
 
-Service::Service(lua_State* pState, const string& rootPath, ServiceHandler& handler) : _rootPath(rootPath), _lastCheck(0), _reference(LUA_REFNIL), _pParent(NULL), _handler(handler), _pState(pState), FileWatcher(rootPath, "/main.lua") {
+Service::Service(lua_State* pState, const string& rootPath, ServiceHandler& handler) : FileWatcher(rootPath, "/main.lua"), room(nullptr), _reference(LUA_REFNIL), _pParent(NULL), _pState(pState), _lastCheck(0), _rootPath(rootPath), _handler(handler)
+{
 
 }
 
-Service::Service(lua_State* pState, const string& rootPath, Service& parent, const string& name, ServiceHandler& handler) : _rootPath(rootPath), name(name), _lastCheck(0), _reference(LUA_REFNIL), _pParent(&parent), _handler(handler), _pState(pState), FileWatcher(rootPath,parent.path,'/',name,"/main.lua") {
+Service::Service(lua_State* pState, const string& rootPath, Service& parent, const string& name, ServiceHandler& handler) : FileWatcher(rootPath,parent.path,'/',name,"/main.lua"), name(name), room(nullptr), _reference(LUA_REFNIL), _pParent(&parent), _pState(pState), _lastCheck(0), _rootPath(rootPath), _handler(handler) {
 	String::Format((string&)path,parent.path,"/",name);
 }
 
@@ -63,6 +65,8 @@ Service::~Service() {
 		delete it.second;
 	// clean this
 	close(true);
+	if(room)
+	delete room;
 }
 
 void Service::setReference(int reference) {
@@ -90,8 +94,14 @@ void Service::setReference(int reference) {
 Service* Service::open(Exception& ex) {
 	if (_lastCheck.isElapsed(2000)) { // already checked there is less of 2 sec!
 		_lastCheck.update();
-		if (!watchFile() && !path.empty() && !FileSystem::Exists(filePath.parent())) // no path/main.lua file, no main service, no path folder
-			_ex.set(Exception::APPLICATION, "Application ", path, " doesn't exist");
+		auto& dir = filePath.parent();
+		if(!FileSystem::Exists(dir))
+			FileSystem::CreateDirectory(dir);
+		if (!watchFile(_useParentLua? _pParent->filePath:filePath) && !path.empty())
+		{
+			if(watchFile(_pParent->filePath)) _useParentLua = true;
+			//else _ex.set(Exception::APPLICATION, "Application ", path, " doesn't exist");
+		} // no path/main.lua file, no main service, no path folder
 	}
 	
 	if (_ex) {
@@ -183,7 +193,7 @@ bool Service::open(bool create) {
 	// set path
 	lua_pushstring(_pState, path.c_str());
 	lua_setfield(_pState, -2, "path");
-
+	
 	// set this
 	lua_pushvalue(_pState,-2);
 	lua_setfield(_pState, -2, "this");
@@ -216,7 +226,7 @@ bool Service::open(bool create) {
 	return true;
 }
 
-void Service::loadFile() {
+void Service::loadFile(const char* luaFilePath) {
 
 	open(true);
 	
@@ -225,7 +235,7 @@ void Service::loadFile() {
 	SCRIPT_BEGIN(_pState)
 
 		lua_rawgeti(_pState, LUA_REGISTRYINDEX, _reference);
-		if(luaL_loadfile(_pState,filePath.toString().c_str())!=0) {
+		if(luaL_loadfile(_pState, luaFilePath)!=0) {
 			SCRIPT_ERROR(_ex.set(Exception::SOFTWARE, Script::LastError(_pState)).error())
 			lua_pop(_pState,1); // remove environment
 			return;
@@ -287,7 +297,7 @@ void Service::close(bool full) {
 
 		lua_gc(_pState, LUA_GCCOLLECT, 0);
 	}
-
+	_useParentLua = false;
 	_ex.set(Exception::NIL);
 }
 
@@ -408,6 +418,18 @@ int Service::Item(lua_State *pState) {
 	SCRIPT_CALLBACK_RETURN
 }
 
+int Service::GetSO(lua_State* pState)
+{
+	int results(lua_gettop(pState));
+	SCRIPT_BEGIN(pState)
+		const char* name(lua_tostring(pState, 1));
+		Service* pService((Service*)lua_touserdata(pState, lua_upvalueindex(1)));
+		auto so = pService->room->getSO(name, false);
+		Script::AddObject<LUASharedObject>(pState,*so);
+		results = lua_gettop(pState)- results;
+	SCRIPT_END
+	return results;
+}
 
 // Call when a key is not available in the service table
 int Service::Index(lua_State *pState) {
@@ -492,7 +514,21 @@ int Service::Index(lua_State *pState) {
 			}
 			lua_pop(pState, 1);
 			
-		} else {
+		}
+		else if (strcmp(key, "getSO") == 0)
+		{
+			lua_getfield(pState, -1, "|this");
+			if (lua_isuserdata(pState, -1)) {
+				lua_pushcclosure(pState, &Service::GetSO,1);
+				// save require function
+				lua_pushvalue(pState, 2);
+				lua_pushvalue(pState, -2);
+				lua_rawset(pState, 1);
+				return 1;
+			}
+			lua_pop(pState, 1);
+		}
+		else {
 			// search in metatable (contains super, children, path, name, this, clients, ...)
 			lua_getfield(pState, -1, key);
 			if (!lua_isnil(pState, -1)) {

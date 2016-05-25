@@ -22,6 +22,7 @@ This file is a part of Mona.
 #include "Mona/Client.h"
 #include "Script.h"
 #include "Mona/FileWatcher.h"
+#include <Room.h>
 
 
 class Service;
@@ -46,7 +47,7 @@ public:
 
 	const std::string   name;
 	const std::string	path;
-
+	Mona::Room* room;
 private:
 	Service(lua_State* pState,  const std::string& rootPath, Service& parent, const std::string& name, ServiceHandler& handler);
 
@@ -57,19 +58,19 @@ private:
 	void		setReference(int reference);
 	void		close(bool full);
 
-	void		loadFile();
+	void		loadFile(const char* path);
 	void		clearFile() { close(false); }
 	void		clearEnvironment();
 
 	static int	Index(lua_State* pState);
-
+	static int GetSO(lua_State* pState);
 	Mona::Exception				_ex;
 	int							_reference;
 	Service*					_pParent;
 	lua_State*					_pState;
 	Mona::Time					_lastCheck;
 
-
+	bool						_useParentLua = false;
 	std::map<std::string,Service*>	_services;
 	const std::string&				_rootPath;
 	ServiceHandler&					_handler;

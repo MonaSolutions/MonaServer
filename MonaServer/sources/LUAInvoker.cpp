@@ -216,7 +216,7 @@ int	LUAInvoker::Publish(lua_State *pState) {
 	string name = SCRIPT_READ_STRING("");
 	Exception ex;
 	
-	Publication* pPublication = invoker.publish(ex, name,strcmp(SCRIPT_READ_STRING("live"),"record")==0 ? Publication::RECORD : Publication::LIVE);
+	Publication* pPublication = invoker.defaultRoom->publish(ex, name,strcmp(SCRIPT_READ_STRING("live"),"record")==0 ? Publication::RECORD : Publication::LIVE);
 	// ex.error already displayed!
 	if(pPublication) {
 		Script::AddObject<LUAPublication>(pState, *pPublication); // no new because already added by invoker.publish
@@ -415,12 +415,22 @@ int	LUAInvoker::CreateMediaWriter(lua_State *pState) {
 	SCRIPT_CALLBACK_RETURN
 }
 
+int LUAInvoker::GetSharedObject(lua_State* pState)
+{
+	SCRIPT_CALLBACK(Invoker, invoker)
+
+	SCRIPT_CALLBACK_RETURN
+}
+
 int LUAInvoker::Get(lua_State *pState) {
 	SCRIPT_CALLBACK(Invoker,invoker)
 		const char* name = SCRIPT_READ_STRING(NULL);
 		if (name) {
 			if(strcmp(name,"clients")==0) {
 				Script::Collection(pState,1,"clients");
+				SCRIPT_CALLBACK_FIX_INDEX
+			}else if (strcmp(name, "getSO") == 0) {
+				SCRIPT_WRITE_FUNCTION(LUAInvoker::GetSharedObject);
 				SCRIPT_CALLBACK_FIX_INDEX
 			} else if (strcmp(name, "dump") == 0) {
 				SCRIPT_WRITE_FUNCTION(LUAInvoker::Dump)

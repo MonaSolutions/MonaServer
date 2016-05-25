@@ -145,4 +145,5 @@ private:
 	static int	AbsolutePath(lua_State *pState);
 	static int	CreateMediaWriter(lua_State *pState);
 
+	static int GetSharedObject(lua_State *pState);
 };

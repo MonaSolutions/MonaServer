@@ -35,7 +35,7 @@ public:
 	Iterator end()   const { return _publications.end(); }
 
 	Iterator operator()(const std::string& name) const { return _publications.find(name); }
-
+	
 private:
 	std::map<std::string,Publication>&	_publications;
 };

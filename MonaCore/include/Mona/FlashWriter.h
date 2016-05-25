@@ -49,6 +49,7 @@ public:
 	void					setCallbackHandle(double value) { _callbackHandle = value; _callbackHandleOnAbort = 0; }
 	virtual void			clear() { _callbackHandle = _callbackHandleOnAbort; } // must erase the queueing messages (don't change the writer state)
 
+	AMFWriter&				writeSharedObject() override;
 protected:
 	FlashWriter(State state,const PoolBuffers& poolBuffers);
 	FlashWriter(FlashWriter& writer);

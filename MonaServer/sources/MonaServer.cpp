@@ -244,7 +244,8 @@ void MonaServer::onStart() {
 
 	// init root server application
 	_pService.reset(new Service(_pState, _wwwPath, *this));
-
+	_pService->room = new Room(this, _wwwPath, _wwwPath);
+	defaultRoom = _pService->room;
 	// Init few global variable
 	Script::AddObject<LUAInvoker,Invoker>(_pState,*this);
 	lua_getmetatable(_pState, -1);
@@ -488,7 +489,9 @@ void MonaServer::onConnection(Exception& ex, Client& client,DataReader& paramete
 			ERROR(ex.error())
 		return;
 	}
-
+	if (!pService->room)pService->room = new Room(this,pService->name,pService->path);
+	pService->room->clients.add(client);
+	client.room = pService->room;
 	Script::AddObject<LUAClient>(_pState,client);
 
 	SCRIPT_BEGIN(_pState)
@@ -539,8 +542,6 @@ lua_State* MonaServer::openService(const Service& service, Client& client) {
 	if (!_pState || service.reference() == LUA_REFNIL)
 		return NULL;
 
-	;
-
 	lua_rawgeti(_pState, LUA_REGISTRYINDEX, *client.setCustomData<int>(new int(service.reference())));
 
 	Script::Collection(_pState, -1, "clients");
@@ -576,7 +577,7 @@ lua_State* MonaServer::closeService(const Client& client,int& reference) {
 void MonaServer::onDisconnection(const Client& client) {
 	Script::AddObject<LUAClient>(_pState, client);
 	LUAInvoker::RemoveClient(_pState);
-	
+	client.room->onClientDisconnect((Client&)client);
 	int reference;
 	SCRIPT_BEGIN(closeService(client,reference))
 		SCRIPT_FUNCTION_BEGIN("onDisconnection",reference)
