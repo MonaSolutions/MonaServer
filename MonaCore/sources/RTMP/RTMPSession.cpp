@@ -334,6 +334,7 @@ void RTMPSession::manage() {
 		kill(PROTOCOL_DEATH);
 	else if (peer.connected && _pController && peer.ping(30000)) // 30 sec
 		_pController->writePing();
+	
 	TCPSession::manage();
 }
 

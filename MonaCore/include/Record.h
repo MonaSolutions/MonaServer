@@ -41,6 +41,7 @@ namespace Mona {
 		UInt32 _seekTime;
 	public:
 		PoolThread * pThread;
+		double duration;
 		InFileRTMPStream(const std::string& path, Invoker* invoker, Publication * p,FlashWriter* writer);
 		~InFileRTMPStream();
 		bool run(Exception& ex) override;

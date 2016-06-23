@@ -20,6 +20,7 @@ This file is a part of Mona.
 #include "Mona/RTSP/RTSPSession.h"
 #include "Mona/QueryReader.h"
 #include "Mona/HTTP/HTTP.h"
+#include "Room.h"
 #if defined(_WIN32)
 #define sscanf sscanf_s
 #endif
@@ -46,7 +47,7 @@ void RTSPSession::kill(UInt32 type){
 		return;
 
 	if (_pListener) {
-		invoker.unsubscribe(peer, _pListener->publication.name());
+		invoker.defaultRoom->unsubscribe(peer, _pListener->publication.name());
 		_pListener = NULL;
 	}
 	TCPSession::kill(type);
@@ -198,7 +199,7 @@ void RTSPSession::processPlay(Exception& ex, const std::shared_ptr<RTSPPacket>& 
 
 	if(_state != RTSP_SET)
 		ex.set(Exception::APPLICATION, "Unable to play the stream in the current state (", _state, ")");
-	else if(_pListener = invoker.subscribe(ex,peer,pPacket->filePath.baseName(),_writer)) {
+	else if(_pListener = invoker.defaultRoom->subscribe(ex,peer,pPacket->filePath.baseName(),_writer)) {
 
 		_state = RTSP_PLAYING;
 		string buffer;

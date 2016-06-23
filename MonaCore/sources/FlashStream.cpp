@@ -19,8 +19,8 @@ This file is a part of Mona.
 
 #include "Mona/FlashStream.h"
 #include "Mona/Logs.h"
-
-
+#include "Room.h"
+#include "SharedObject.h"
 using namespace std;
 
 namespace Mona {
@@ -41,7 +41,8 @@ void FlashStream::disengage(FlashWriter* pWriter) {
 		if(pWriter)
 			pWriter->writeAMFStatus("NetStream.Unpublish.Success",name + " is now unpublished");
 		 // do after writeAMFStatus because can delete the publication, so corrupt name reference
-		invoker.unpublish(peer,name);
+		peer.room->unpublish(peer,name);
+		//invoker.unpublish(peer,name);
 		_pPublication = NULL;
 	}
 	if(_pListener) {
@@ -51,7 +52,8 @@ void FlashStream::disengage(FlashWriter* pWriter) {
 			OnStop::raise(id, *pWriter); // stream end
 		}
 		 // do after writeAMFStatus because can delete the publication, so corrupt publication name reference
-		invoker.unsubscribe(peer,name);
+		//invoker.unsubscribe(peer,name);
+		peer.room->unsubscribe(peer, name);
 		_pListener = NULL;
 	}
 }
@@ -97,7 +99,53 @@ bool FlashStream::process(AMF::ContentType type,UInt32 time,PacketReader& packet
 		case AMF::RAW:
 			rawHandler(packet.read16(), packet, writer);
 			break;
-
+		case AMF::FLEXSHAREDOBJECT:
+			packet.read8();
+		case AMF::SHAREDOBJECT:
+		{
+			AMFReader reader(packet);
+			string name = reader.readString();
+			uint32_t currentVersion = packet.read32();
+			uint32_t persistence = packet.read32();
+			packet.read32();
+			SharedObject* SO = peer.room->getSO(name, persistence == 2);
+			while (packet.available() > 0) {
+				AMF::SharedObjectType type = static_cast<AMF::SharedObjectType>(packet.read8());
+				uint32_t rawLength = packet.read32();
+				uint32_t endPosition = packet.position() + rawLength;
+				switch (type) {
+				case AMF::CS_CONNECT:
+					SO->onClientConnect(peer.id);
+					_sos.insert(SO);
+					break;
+				case AMF::CS_DISCONNECT:
+					SO->onClientDisconnect(peer.id);
+					_sos.erase(SO);
+					break;
+				case AMF::CSC_DELETE_DATA:
+					SO->unSet(reader.readString());
+					break;
+				case AMF::CS_SET_ATTRIBUTE:
+					while (packet.position() < endPosition) {
+						name = reader.readString();
+						AMFObjectWriter amfo_writer(invoker.poolBuffers);
+						reader.read(amfo_writer,1);
+						SO->set(name, move(amfo_writer.amfObject), peer.id);
+					}
+					break;
+				case AMF::BW_SEND_MESSAGE:
+					//while (rtmpBody.offset < endPosition) {
+					//	AMFObject(rtmpBody);
+					//	//todo send message
+					//}
+					break;
+				default:
+					break;
+				}
+			}
+			if (SO)SO->track();
+			break;
+		}
 		default:
 			ERROR("Unpacking type '",Format<UInt8>("%02x",(UInt8)type),"' unknown");
 	}
@@ -120,22 +168,64 @@ void FlashStream::messageHandler(const string& name, AMFReader& message, FlashWr
 		disengage(&writer);
 
 		string publication;
+		double startTime = -2;
+		double length = -1;
 		message.readString(publication);
+		if (message.available())
+		{
+			message.readNumber(startTime);
+		}
+		if (message.available())
+		{
+			message.readNumber(length);
+		}
+
 		// TODO implements completly NetStream.play method, with possible NetStream.play.failed too!
 		Exception ex;
-		_pListener = invoker.subscribe(ex, peer, publication, writer); // ex already log displayed
+		//_pListener = invoker.subscribe(ex, peer, publication, writer); // ex already log displayed
+		_pListener = peer.room->subscribe(ex, peer, publication, writer);
+		double duration = 0;
 		if (!_pListener) {
 			writer.writeAMFStatus("NetStream.Play.Failed", ex.error());
 			return;
 		}
-		
+		else
+		{
+			if (startTime != -1 && !_pListener->publication.running())
+			{
+				string filePath("./www" + peer.path + "/media/" + publication + ".flv");
+				if (FileSystem::Exists(filePath))
+				{
+					auto flvReader = new InFileRTMPStream(filePath, &invoker, (Publication*)&_pListener->publication, &writer);
+					duration = flvReader->duration;
+					if (startTime > 0)
+					{
+						flvReader->seek(startTime);
+					}
+					flvReader->pThread = invoker.poolThreads.enqueue(ex, shared_ptr<InFileRTMPStream>(flvReader), flvReader->pThread);
+				}
+				else
+				{
+					writer.writeAMFStatus("NetStream.Play.StreamNotFound", ex.error());
+					return;
+				}
+			}
+		}
+
 		OnStart::raise(id, writer); // stream begin
 		writer.writeAMFStatus("NetStream.Play.Reset", "Playing and resetting " + publication); // for entiere playlist
-		writer.writeAMFStatus("NetStream.Play.Start", "Started playing "+publication); // for item
+		writer.writeAMFStatus("NetStream.Play.Start", "Started playing " + publication); // for item
 		AMFWriter& amf(writer.writeAMFData("|RtmpSampleAccess"));
 		amf.writeBoolean(true); // audioSampleAccess
 		amf.writeBoolean(true); // videoSampleAccess
-
+		if (duration){
+			auto& onMetaData = writer.writeAMFData("onMetaData");
+			onMetaData.amf0 = true;
+			onMetaData.beginObject();
+			onMetaData.writePropertyName("duration");
+			onMetaData.writeNumber(duration/1000.0);
+			onMetaData.endObject();
+		}
 		if (_bufferTime > 0)
 			_pListener->setNumber("bufferTime", _bufferTime);
 		return;
@@ -159,7 +249,8 @@ void FlashStream::messageHandler(const string& name, AMFReader& message, FlashWr
 			message.readString(type); // TODO support "append" and "appendWithGap"
 
 		Exception ex;
-		_pPublication = invoker.publish(ex, peer, publication, type == "record" ? Publication::RECORD : Publication::LIVE);
+		//_pPublication = invoker.publish(ex, peer, publication, type == "record" ? Publication::RECORD : type == "append"? Publication::APPEND : Publication::LIVE);
+		_pPublication = peer.room->publish(ex, peer, publication, type == "record" ? Publication::RECORD : type == "append" ? Publication::APPEND : Publication::LIVE);
 		if (ex) {
 			writer.writeAMFStatus("NetStream.Publish.BadName", ex.error());
 			_pPublication = NULL;
@@ -184,17 +275,18 @@ void FlashStream::messageHandler(const string& name, AMFReader& message, FlashWr
 			bool paused(true);
 			message.readBoolean(paused);
 			// TODO support pause for VOD
-		
+			if(_pListener->publication.flvReader)_pListener->publication.flvReader->paused(paused);
 			if (paused) {
 				// useless, client knows it when it calls NetStream::pause method
-				// writer.writeAMFStatus("NetStream.Pause.Notify", _pListener->publication.name() + " paused");
+				writer.writeAMFStatus("NetStream.Pause.Notify", _pListener->publication.name() + " paused");
 			} else {
 				double position;
 				if (message.readNumber(position))
 					_pListener->seek((UInt32)position);
+				//if (_pListener->publication.flvReader)_pListener->publication.flvReader->seek((UInt32)position);
 				OnStart::raise(id, writer); // stream begin
 				// useless, client knows it when it calls NetStream::resume method
-				//	writer.writeAMFStatus("NetStream.Unpause.Notify", _pListener->publication.name() + " resumed");
+				writer.writeAMFStatus("NetStream.Unpause.Notify", _pListener->publication.name() + " resumed");
 			}
 			return;
 		}
@@ -203,10 +295,10 @@ void FlashStream::messageHandler(const string& name, AMFReader& message, FlashWr
 			double position;
 			if (message.readNumber(position)) {
 				_pListener->seek((UInt32)position);
-				 // TODO support seek for VOD
+				_pListener->publication.flvReader->seek((UInt32)position);
 				OnStart::raise(id, writer); // stream begin
 				// useless, client knows it when it calls NetStream::seek method, and wait "NetStream.Seek.Complete" rather (raised by client side)
-				// writer.writeAMFStatus("NetStream.Seek.Notify", _pListener->publication.name() + " seek operation");
+				writer.writeAMFStatus("NetStream.Seek.Notify", _pListener->publication.name() + " seek operation");
 			} else
 				writer.writeAMFStatus("NetStream.Seek.InvalidTime", _pListener->publication.name() + " seek operation must pass in argument a milliseconds position time");
 			return;
