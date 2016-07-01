@@ -83,7 +83,8 @@ void Invoker::unpublish(const string& name,Peer* pPeer) {
 
 Listener* Invoker::subscribe(Exception& ex, Peer& peer,string& name,Writer& writer) {
 	string query;
-	Listener* pListener(subscribe(ex, peer, (const string&)publicationName(name, query), writer, query.c_str()));
+	publicationName(name, query);
+	Listener* pListener(subscribe(ex, peer, name, writer, query.c_str()));
 	if (pListener)
 		Util::UnpackQuery(query, *pListener);
 	return pListener;
