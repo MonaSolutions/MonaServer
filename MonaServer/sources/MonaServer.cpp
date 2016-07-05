@@ -596,7 +596,7 @@ void MonaServer::onAddressChanged(Client& client,const SocketAddress& oldAddress
 bool MonaServer::onMessage(Exception& ex, Client& client,const string& name,DataReader& reader, UInt8 responseType) {
 	bool found(false);
 	SCRIPT_BEGIN(loadService(client))
-		SCRIPT_MEMBER_FUNCTION_BEGIN(Client,client,name.c_str())
+		SCRIPT_MEMBER_FUNCTION_BEGIN(Client,client, name.c_str())
 			ScriptWriter writer(_pState);
 			reader.read(writer);
 			found=true;

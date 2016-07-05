@@ -229,7 +229,7 @@ bool RTMPSession::buildPacket(BinaryReader& packet) {
 		total -= channel.pBuffer->size();
 	}
 
-	if(total>_chunkSize)
+	if(_chunkSize && total>_chunkSize)
 		total = _chunkSize;
 
 	if (packet.available() < total)

@@ -32,7 +32,7 @@ RTMPWriter::RTMPWriter(UInt32 id,TCPSession& session,std::shared_ptr<RTMPSender>
 
 void RTMPWriter::writeProtocolSettings() {
 	// to eliminate chunks of packet in the server->client direction
-	write(AMF::CHUNKSIZE).packet.write32(0x7FFFFFFF);
+	write(AMF::CHUNKSIZE).packet.write32(0x003EFFEE);
 	// to increase the window ack size in the server->client direction
 	writeWinAckSize(2500000);
 	// to increase the window ack size in the client->server direction
@@ -95,7 +95,7 @@ AMFWriter& RTMPWriter::write(AMF::ContentType type,UInt32 time,const UInt8* data
 	UInt8 headerFlag=0;
 	
 	// Default = Chunk Message Type 0 : full header
-	if(_channel.pStream == channel.pStream) {
+	if(_channel.type && _channel.pStream == channel.pStream) {
 		if (time >= _channel.absoluteTime) {
 			++headerFlag; // Chunk Message Type 1 : don't repeat the stream id
 			time -= _channel.absoluteTime; // relative time!

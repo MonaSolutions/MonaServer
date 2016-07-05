@@ -455,8 +455,7 @@ void SocketManager::run(Exception& exThread) {
                 Socket* pSocket(*_ppSocket);
                 if(pSocket)
                     pSocket->flush(_currentException);
-            }
-	    else if(_currentException || _currentError>0 || _currentEvent>0) {
+            }  else if(_currentException || _currentError>0 || _currentEvent>0) {
                 if(!_ppSocket)
                     _ppSocket = (Socket**)event.udata;
                 Task::waitHandle();

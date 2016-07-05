@@ -195,6 +195,17 @@ DataWriter& HTTPSender::writeResponse(const char* code, bool rawWithoutLength) {
 	return write(code, _request.contentType, _request.contentSubType.c_str(), NULL, rawWithoutLength ? 1 : (MIME::DataType(_request.contentSubType.c_str())==MIME::UNKNOWN  ? 2 : 0));
 }
 
+BinaryWriter& HTTPSender::writeRaw() {
+	if (_pWriter) {
+		ERROR("HTTP response already written");
+		return DataWriter::Null.packet;
+	}
+	_pWriter.reset(new StringWriter(_poolBuffers));
+	_connection = HTTP::CONNECTION_KEEPALIVE; // write content (no new header), keepalive the connection!
+	return _pWriter->packet;
+}
+
+
 DataWriter& HTTPSender::write(const char* code, HTTP::ContentType type, const char* subType, const UInt8* data, UInt32 size) {
 	if (_pWriter) {
 		ERROR("HTTP response already written");
@@ -275,15 +286,6 @@ DataWriter& HTTPSender::write(const char* code, HTTP::ContentType type, const ch
 	return *_pWriter;
 }
 
-BinaryWriter& HTTPSender::writeRaw() {
-	if (_pWriter) {
-		ERROR("HTTP response already written");
-		return DataWriter::Null.packet;
-	}
-	_pWriter.reset(new StringWriter(_poolBuffers));
-	_connection = HTTP::CONNECTION_KEEPALIVE; // write content (no new header), keepalive the connection!
-	return _pWriter->packet;
-}
 
 void HTTPSender::replaceTemplateTags(PacketWriter& packet, ifstream& ifile, const Parameters& parameters) {
 
