@@ -32,6 +32,7 @@ RTMPWriter::RTMPWriter(UInt32 id,TCPSession& session,std::shared_ptr<RTMPSender>
 
 void RTMPWriter::writeProtocolSettings() {
 	// to eliminate chunks of packet in the server->client direction
+	// TODO => 0x003EFFEE to make Mona compatible with NimbleStreamer, reset to 0x7FFFFFFF one time NimbleStreamer fixed
 	write(AMF::CHUNKSIZE).packet.write32(0x003EFFEE);
 	// to increase the window ack size in the server->client direction
 	writeWinAckSize(2500000);
