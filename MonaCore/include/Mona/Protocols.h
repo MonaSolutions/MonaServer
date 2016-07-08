@@ -100,7 +100,7 @@ private:
 			_invoker.setString(String::Format(buffer,name,".",it.first), it.second);
 
 		NOTE(name, " server started on ",host,":",port, dynamic_cast<const UDProtocol*>(pProtocol.get()) ? " (UDP)" : " (TCP)");
-		_protocols.emplace_hint(it, name,pProtocol.release());
+		protocols.emplace_hint(it, std::piecewise_construct,std::forward_as_tuple(name),std::forward_as_tuple(pProtocol.release()));
 	}
 
 
