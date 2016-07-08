@@ -38,8 +38,6 @@ public:
 	void			clear() { if(_pSender) _pSender.reset(); FlashWriter::clear(); }
 	void			close(Int32 code=0);
 
-	//void			writeRaw(const UInt8* data,UInt32 size);
-
 	bool			flush();
 
 	void			writeAck(UInt32 count) {write(AMF::ACK).packet.write32(count);}
