@@ -58,17 +58,6 @@ bool RTMPWriter::flush() {
 	return true;
 }
 
-
-void RTMPWriter::writeRaw(const UInt8* data,UInt32 size) {
-	if(size==0) {
-		ERROR("Data must have at minimum the AMF type in its first byte")
-		return;
-	}
-	PacketReader reader(data,size);
-	AMF::ContentType type((AMF::ContentType)reader.read8());
-	write(type,reader.read32(),reader.current(),reader.available());
-}
-
 void RTMPWriter::close(Int32 code) {
 	if (code<0)
 		return;
