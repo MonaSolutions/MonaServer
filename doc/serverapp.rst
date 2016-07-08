@@ -441,12 +441,12 @@ Primitive conversion types are easy and intuitive (Number, Boolean, String). Exc
   wday=4,hour=23,min=48,sec=10,msec=435,
   isdst=false,__time=905989690435}       
 
-On a LUA_ to AMF conversion, priortiy conversion order works as following:
+On a LUA_ to AMF conversion, priority conversion order works as following:
 
-1. If the LUA table given contains the property *__raw*, it's converted to a ByteArray AMF object.
-1. If the LUA table given contains the property *__size*, it's converted to a Dictionary AMF object.
-1. If the LUA table given contains the property *__time*, it's converted to a Date AMF object.
-1. Otherwise it chooses the more adapted conversion (Object, Array, or Array associative).
+#. If the LUA table given contains the property *__raw*, it's converted to a ByteArray AMF object.
+#. If the LUA table given contains the property *__size*, it's converted to a Dictionary AMF object.
+#. If the LUA table given contains the property *__time*, it's converted to a Date AMF object.
+#. Otherwise it chooses the more adapted conversion (Object, Array, or Array associative).
 
 About *__time* property on a date object, it's the the number of milliseconds elapsed since midnight UTC of January 1 1970 (`Unix time <http://en.wikipedia.org/wiki/Unix_time>`_).
 
@@ -454,65 +454,70 @@ About Dictionary object, LUA_ table supports an `weak keys table <http://www.lua
 
 .. note:: Actually Mona supports all AMF0 and AMF3 format, excepts *Vector* and *XML* types.
 
-Custom types
------------------------------
+.. error::
+ - Complex objects are not supported by LUA to AMF conversion,
+ - IExternalizable objects (ArrayCollection apart) are not supported too, if you want us to add support for both please contact us (:doc:`contacts`).
 
-You can custom your object using typed object feature.
-Indeed, when a typed object is unserialized, *onTypedObject* application event is called.
-
-On client side, the AS3 class flag *RemoteClass* have to be added:
-
-.. code-block:: as3
-
-  [RemoteClass(alias="Cat")]
-  public class Cat {
-    public function Cat () {
-    }
-    public function meow() {
-      trace("meow")
-    }
-  }
-
-On reception of this type on script-server side, it will call our *onTypedObject* function, and you can custom your object:
-
-.. code-block:: lua
-
-  function onTypedObject(type,object)
-    if type=="Cat" then
-      function object:meow()
-        print("meow")
+..
+    Custom types
+    -----------------------------
+    
+    You can custom your object using typed object feature.
+    Indeed, when a typed object is unserialized, *onTypedObject* application event is called.
+    
+    On client side, the AS3 class flag *RemoteClass* have to be added:
+    
+    .. code-block:: as3
+    
+      [RemoteClass(alias="Cat")]
+      public class Cat {
+        public function Cat () {
+        }
+        public function meow() {
+          trace("meow")
+        }
+      }
+    
+    On reception of this type on script-server side, it will call our *onTypedObject* function, and you can custom your object:
+    
+    .. code-block:: lua
+    
+      function onTypedObject(type,object)
+        if type=="Cat" then
+          function object:meow()
+            print("meow")
+          end
+        end
       end
-    end
-  end
-
-*object* second argument contains a *__type* property, here equals to *"Cat"* (also equals to the first argument of *typeFactory* function). It means that if you want create a typed object from script-side, and send it to client, you have just to add a *__type* property.
-
-.. code-block:: lua
-
-  function onConnection(client,...)
-    response:write({__type="Cat"})
-  end
-
-Cient will try to cast it in a *Cat* class.
-
-
-You can go more further on this principle, and custom the AMF unserialization and serialization in adding __readExternal and __writeExternal function on the concerned object, it relates AS3 object which implements *IExternalizable* on client side (see `IExternalizable <http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/utils/IExternalizable.html>`_).
-For example, *ArrayCollection* is an externalizable type, and is not supported by default by the conversion system, you can add its support in adding this script code:
-
-.. code-block:: lua
-
-  function onTypedObject(type,object)
-    if type=="flex.messaging.io.ArrayCollection" then
-      function object:__readExternal(reader)
-        self.source = reader:readAMF(1)
+    
+    *object* second argument contains a *__type* property, here equals to *"Cat"* (also equals to the first argument of *typeFactory* function). It means that if you want create a typed object from script-side, and send it to client, you have just to add a *__type* property.
+    
+    .. code-block:: lua
+    
+      function onConnection(client,...)
+        response:write({__type="Cat"})
       end
-      function object:__writeExternal(writer)
-        writer:writeAMF(self.source)
+    
+    Cient will try to cast it in a *Cat* class.
+    
+    
+    You can go more further on this principle, and custom the AMF unserialization and serialization in adding __readExternal and __writeExternal function on the concerned object, it relates AS3 object which implements *IExternalizable* on client side (see `IExternalizable <http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/utils/IExternalizable.html>`_).
+    For example, *ArrayCollection* is an externalizable type, and is not supported by default by the conversion system, you can add its support in adding this script code:
+    
+    .. code-block:: lua
+    
+      function onTypedObject(type,object)
+        if type=="flex.messaging.io.ArrayCollection" then
+          function object:__readExternal(reader)
+            self.source = reader:readAMF(1)
+          end
+          function object:__writeExternal(writer)
+            writer:writeAMF(self.source)
+          end
+        end
       end
-    end
-  end
-
-*reader* and *writer* arguments are equivalent of `IDataOutput <http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/utils/IDataOutput.html>`_ and `IDataInput <http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/utils/IDataInput.html>`_) AS3 class (see :doc:`api` page for more details).
+    
+    *reader* and *writer* arguments are equivalent of `IDataOutput <http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/utils/IDataOutput.html>`_ and `IDataInput <http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/utils/IDataInput.html>`_) AS3 class (see :doc:`api` page for more details).
 
 .. _ref-json-to-lua:
 

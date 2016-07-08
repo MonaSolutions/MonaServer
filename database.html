@@ -153,7 +153,7 @@
 <div class="highlight-lua"><div class="highlight"><pre><span class="k">function</span> <span class="nf">onConnection</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
     <span class="n">data</span><span class="p">[</span><span class="s2">&quot;</span><span class="s">lastClientId&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">client</span><span class="p">.</span><span class="n">id</span>
 
-    <span class="o">#</span> <span class="n">save</span> <span class="n">each</span> <span class="n">client</span> <span class="n">connexion</span> <span class="n">time</span> <span class="k">in</span> <span class="n">a</span> <span class="n">table</span>
+    <span class="c1">-- save each client connexion time in a table</span>
     <span class="k">if</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;</span><span class="s">clientsConnexions&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="kc">nil</span> <span class="k">then</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;</span><span class="s">clientsConnexions&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span> <span class="k">end</span>
     <span class="n">data</span><span class="p">[</span><span class="s2">&quot;</span><span class="s">clientsConnexions&quot;</span><span class="p">][</span><span class="o">#</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;</span><span class="s">clientsConnexions&quot;</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="nb">os.time</span><span class="p">()</span>
 <span class="k">end</span>
@@ -173,11 +173,12 @@
 <ul class="last simple">
 <li>You can use the <strong>pairs()</strong> <a class="reference external" href="http://www.lua.org/">LUA</a> function to iterate on <strong>data</strong> or any subarray of <strong>data</strong>.</li>
 <li>And the &#8220;#&#8221; operator to get the number of elements (it&#8217;s an exception where objects properties are counted in the array size).</li>
+<li>If you want to delete an object or table you must delete all childs one by one (you can make a function) because only primitive values are deleted on the disk.</li>
 </ul>
 </div>
 <div class="admonition warning">
 <p class="first admonition-title">Warning</p>
-<p class="last">You must notice that each numbers in <strong>data</strong> are converted to string, so you have to use <strong>tonumber</strong> in order to get there number value.</p>
+<p class="last">You must notice that each number in <strong>data</strong> is converted into a string, so you could have to use <strong>tonumber</strong> for further use.</p>
 </div>
 </div>
 <div class="section" id="reading-persistent-data">

@@ -21,7 +21,7 @@ To write data in the database just assign the table **data**.
     function onConnection(client, ...)
         data["lastClientId"] = client.id
         
-        # save each client connexion time in a table
+        -- save each client connexion time in a table
         if data["clientsConnexions"] == nil then data["clientsConnexions"] = {} end
         data["clientsConnexions"][#data["clientsConnexions"]+1] = os.time()
     end
@@ -38,8 +38,9 @@ To write data in the database just assign the table **data**.
 
     - You can use the **pairs()** LUA_ function to iterate on **data** or any subarray of **data**.
     - And the "#" operator to get the number of elements (it's an exception where objects properties are counted in the array size).
+    - If you want to delete an object or table you must delete all childs one by one (you can make a function) because only primitive values are deleted on the disk.
     
-.. warning:: You must notice that each numbers in **data** are converted to string, so you have to use **tonumber** in order to get there number value.
+.. warning:: You must notice that each number in **data** is converted into a string, so you could have to use **tonumber** for further use.
 
 Reading persistent data
 ===========================================

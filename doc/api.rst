@@ -290,7 +290,7 @@ You can also reject the connexion like this :
 
   function client:onRead(file)
     if file ~= "index.html" then
-      error("Access to file ", file, " is forbidden)
+      error("Access to file is forbidden)
     end
   end
 
