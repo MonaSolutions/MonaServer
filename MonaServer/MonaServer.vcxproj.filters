@@ -71,6 +71,9 @@
     <ClInclude Include="sources\LUAMediaWriter.h">
       <Filter>LUAClass</Filter>
     </ClInclude>
+    <ClInclude Include="sources\LUASharedObject.h">
+      <Filter>LUAClass</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="sources\LUABroadcaster.cpp">
@@ -140,6 +143,9 @@
       <Filter>LUAClass</Filter>
     </ClCompile>
     <ClCompile Include="sources\LUAMediaWriter.cpp">
+      <Filter>LUAClass</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\LUASharedObject.cpp">
       <Filter>LUAClass</Filter>
     </ClCompile>
   </ItemGroup>

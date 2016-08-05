@@ -78,9 +78,24 @@ void LUASharedObject::AMFToLUA(lua_State* pState, Mona::AMFObject* object)
 	case AMF_STRING:
 		lua_pushstring(pState, object->value.str->c_str());
 		return;
+	case AMF_STRICT_ARRAY:
+	{
+		lua_newtable(pState);
+		int i = 0;
+		for (auto& item : *object->value.prop) {
+			AMFToLUA(pState, &item.second);
+			lua_rawseti(pState, -2,++i);
+		}
+	}
+		break;
 	case AMF_MIXED_ARRAY:
-		/*	result.write4BE(((*this)["length"]).value.num);
-		this->amf0encObject(result);*/
+	{
+		lua_newtable(pState);
+		for (auto& item : *object->value.prop) {
+			AMFToLUA(pState, &item.second);
+			lua_setfield(pState, -2, item.first.c_str());
+		}
+	}
 		break;
 	case AMF_BEGIN_OBJECT:
 	{

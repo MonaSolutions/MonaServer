@@ -168,7 +168,7 @@ void FlashStream::messageHandler(const string& name, AMFReader& message, FlashWr
 		disengage(&writer);
 
 		string publication;
-		double startTime = -2;
+		double startTime = -2000;
 		double length = -1;
 		message.readString(publication);
 		if (message.available())
@@ -191,11 +191,15 @@ void FlashStream::messageHandler(const string& name, AMFReader& message, FlashWr
 		}
 		else
 		{
-			if (startTime != -1 && !_pListener->publication.running())
+			if (startTime != -1000 && !_pListener->publication.running())
 			{
 				string filePath("./www" + peer.path + "/media/" + publication + ".flv");
 				if (FileSystem::Exists(filePath))
 				{
+					peer.room->unsubscribe(peer, publication);
+					publication = publication + (char*)peer.id;
+					_pListener = peer.room->subscribe(ex, peer, publication, writer);
+
 					auto flvReader = new InFileRTMPStream(filePath, &invoker, (Publication*)&_pListener->publication, &writer);
 					duration = flvReader->duration;
 					if (startTime > 0)

@@ -133,6 +133,10 @@ bool WSWriter::writeMedia(MediaType type,UInt32 time,PacketReader& packet,const 
 			if (time==DATA)
 				writeInvocation("__publishing").writeString((const char*)packet.current(),packet.available());
 			break;
+		case AUDIO:
+		case VIDEO:
+			newDataWriter(true).packet.write8(type).write(packet.current(), packet.available());
+			break;
 		case STOP:
 			if (time==DATA)
 				writeInvocation("__unpublishing").writeString((const char*)packet.current(),packet.available());

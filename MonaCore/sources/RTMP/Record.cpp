@@ -15,6 +15,7 @@ namespace Mona {
 				//FATAL("Unable to open file %s with mode (%s)", STR(_path), strerror(errno));
 				return;
 			}
+			
 			_file.seekg(-4, std::ios::end);
 			uint32_t lastTagSize = 0;
 			char* p = reinterpret_cast<char*>(&lastTagSize);
@@ -23,7 +24,8 @@ namespace Mona {
 			p = reinterpret_cast<char*>(&_timeOffset);
 			_file.get(*(p + 2)).get(*(p + 1)).get(*p).get(*(p + 3));
 			_file.close();
-			_file.open(_path, std::ios_base::binary | std::ios_base::app);
+			_file.clear();
+			_file.open(_path, std::ios_base::binary |std::ios_base::out| std::ios_base::app);
 		}
 		else
 		{
@@ -53,6 +55,7 @@ namespace Mona {
 		_file.write(reinterpret_cast<const char*>(reader->current()), totalLength);
 		t = totalLength + 11;
 		_file.put(p[3]).put(p[2]).put(p[1]).put(p[0]);
+		
 	}
 
 	OutFileRTMPStream::~OutFileRTMPStream()
@@ -60,6 +63,7 @@ namespace Mona {
 		INFO("stop recording");
 		_file.flush();
 		_file.close();
+		_file.clear();
 	}
 	
 	InFileRTMPStream::InFileRTMPStream(const std::string& path,Invoker* invoker,Publication * p,FlashWriter* writer):WorkThread("ReadFlv"),Task(*invoker), _filePath(path), _startTime(0), _publication(p), _length(0), _currentType(0), _timeStamp(0), pThread(nullptr), _writer(writer)

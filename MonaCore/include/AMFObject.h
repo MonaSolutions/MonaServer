@@ -122,8 +122,21 @@ namespace Mona
 				writer.writeString(value.str->c_str(), value.str->length());
 				break;
 			case AMF_MIXED_ARRAY:
-				/*	result.write4BE(((*this)["length"]).value.num);
-				this->amf0encObject(result);*/
+				writer.packet.write8(type);
+				writer.packet.write32(value.prop->size());
+				for (auto& item : *value.prop) {
+					writer.writePropertyName(item.first.c_str());
+					item.second.Write(writer);
+				}
+				writer.packet.write16(0);
+				writer.packet.write8(AMF_END_OBJECT);
+				break;
+			case AMF_STRICT_ARRAY:
+				writer.packet.write8(type);
+				writer.packet.write32(value.prop->size());
+				for (auto& item : *value.prop) {
+					item.second.Write(writer);
+				}
 				break;
 			case AMF_BEGIN_OBJECT:
 			{
@@ -144,6 +157,7 @@ namespace Mona
 		AMFObject* currentObject;
 		string currentPropertyName;
 		map<AMFObject*, AMFObject*> parentObjects;
+		map<AMFObject*, int> indexs;
 		AMFObjectWriter() :DataWriter(), amfObject(), currentObject(&amfObject), currentPropertyName("")
 		{
 			
@@ -174,7 +188,7 @@ namespace Mona
 		}
 
 		UInt64 beginObject(const char* type = nullptr) override {
-			if(!currentPropertyName.empty())
+			if (!currentPropertyName.empty())
 			{
 				currentObject->value.prop->emplace(currentPropertyName, new AMFObject::AMFMap());
 				AMFObject* newObject = &currentObject->value.prop->operator[](currentPropertyName);
@@ -192,23 +206,62 @@ namespace Mona
 		}
 		void  endObject() override { 
 			currentPropertyName.clear();
+			checkArray();
 			if MAP_HAS1(parentObjects,currentObject)
 			{
 				currentObject = parentObjects[currentObject];
 			}
 		}
-
+		void checkArray()
+		{
+			if(MAP_HAS1(parentObjects, currentObject) && (parentObjects[currentObject]->type == AMF_STRICT_ARRAY || parentObjects[currentObject]->type == AMF_MIXED_ARRAY))
+			{
+				char tmp[3];
+				sprintf(tmp, "%d",indexs[parentObjects[currentObject]]++);
+				currentPropertyName = tmp;
+			}
+		}
 		UInt64 beginArray(UInt32 size) override {
-			//todo 
+			
+			if (!currentPropertyName.empty())
+			{
+				currentObject->value.prop->emplace(currentPropertyName, new AMFObject::AMFMap());
+				AMFObject* newObject = &currentObject->value.prop->operator[](currentPropertyName);
+				newObject->type = AMF_STRICT_ARRAY;
+				parentObjects[newObject] = currentObject;
+				currentObject = newObject;
+			}
+			else
+			{
+				currentObject->type = AMF_STRICT_ARRAY;
+				currentObject->value.prop = new AMFObject::AMFMap();
+			}
+			indexs[currentObject] = 1;
+			currentPropertyName = "0";
 			return (UInt64)currentObject;
 		}
-		void endArray() override{ endObject(); }
+		void endArray() override {  
+			endObject();
+		}
 
 		UInt64 beginObjectArray(UInt32 size) override {
-			//todo
+			if (!currentPropertyName.empty())
+			{
+				currentObject->value.prop->emplace(currentPropertyName, new AMFObject::AMFMap());
+				AMFObject* newObject = &currentObject->value.prop->operator[](currentPropertyName);
+				newObject->type = AMF_MIXED_ARRAY;
+				parentObjects[newObject] = currentObject;
+				currentObject = newObject;
+			}else
+			{
+				currentObject->type = AMF_MIXED_ARRAY;
+				currentObject->value.prop = new AMFObject::AMFMap();
+			}
+			indexs[currentObject] = 1;
+			currentPropertyName = "0";
 			return (UInt64)currentObject;
 		}
-
+		
 		UInt64 beginMap(Exception& ex, UInt32 size, bool weakKeys = false) override
 		{
 			//todo
@@ -226,6 +279,7 @@ namespace Mona
 				currentObject->type = AMF_NUMBER;
 				currentObject->value.num = value;
 			}
+			checkArray();
 		}
 		void writeString(const char* value, UInt32 size) override
 		{
@@ -240,6 +294,7 @@ namespace Mona
 				currentObject->type = AMF_STRING;
 				currentObject->value.str = s;
 			}
+			checkArray();
 		}
 		void writeBoolean(bool value) override {
 			if (!currentPropertyName.empty())
@@ -251,6 +306,7 @@ namespace Mona
 				currentObject->type = AMF_BOOLEAN;
 				currentObject->value.b = value;
 			}
+			checkArray();
 		}
 		void writeNull() override {
 			if (!currentPropertyName.empty())
@@ -262,7 +318,7 @@ namespace Mona
 				currentObject->type = AMF_NULL;
 				currentObject->value.prop = nullptr;
 			}
-			
+			checkArray();
 		}
 		UInt64 writeDate(const Date& date) override {
 			currentObject->type = AMF_DATE;

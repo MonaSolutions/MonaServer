@@ -22,6 +22,7 @@
     <ProjectGuid>{21C16553-20EB-4346-B2A5-2018BA8A8C52}</ProjectGuid>
     <RootNamespace>SimpleServer</RootNamespace>
     <Keyword>Win32Proj</Keyword>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='release|Win32'" Label="Configuration">
@@ -38,7 +39,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
-    <PlatformToolset>v120_xp</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
     <UseOfMfc>false</UseOfMfc>
     <CharacterSet>NotSet</CharacterSet>
   </PropertyGroup>
@@ -93,7 +94,7 @@
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>../External/include;../MonaBase/include;../MonaCore/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <MinimalRebuild>false</MinimalRebuild>
+      <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <PrecompiledHeader />
@@ -227,6 +228,7 @@
     <ClInclude Include="sources\LUAIPAddress.h" />
     <ClInclude Include="sources\LUAMediaWriter.h" />
     <ClInclude Include="sources\LUAPath.h" />
+    <ClInclude Include="sources\LUASharedObject.h" />
     <ClInclude Include="sources\LUASocketAddress.h" />
     <ClInclude Include="sources\LUAXML.h" />
     <ClInclude Include="sources\MonaServer.h" />
@@ -256,6 +258,7 @@
     <ClCompile Include="sources\LUAIPAddress.cpp" />
     <ClCompile Include="sources\LUAMediaWriter.cpp" />
     <ClCompile Include="sources\LUAPath.cpp" />
+    <ClCompile Include="sources\LUASharedObject.cpp" />
     <ClCompile Include="sources\LUASocketAddress.cpp" />
     <ClCompile Include="sources\LUAXML.cpp" />
     <ClCompile Include="sources\main.cpp" />

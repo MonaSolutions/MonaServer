@@ -7,7 +7,7 @@
 tmp
 
 Debug
-
+/LuaJIT-2.0.3
 /MonaCore/lib
 
 /MonaBase/lib
@@ -17,7 +17,7 @@ Debug
 /Mona.v12.suo
 /Mona.opensdf
 /Mona.sdf
-
+/Mona.VC.db
 /MonaBase/MonaBase.vcxproj.user
 /MonaBase/MonaBase.creator
 /MonaBase/MonaBase.creator.user
