@@ -24,6 +24,7 @@ namespace Mona {
 using namespace std;
 
 
+
 bool FileWatcher::watchFile(const Path& filePath) {
 	filePath.update();
 	if (filePath.lastModified() != _lastModified) { // if path doesn't exist filePath.lastModified()==0
@@ -36,8 +37,9 @@ bool FileWatcher::watchFile(const Path& filePath) {
 			_exists = true;
 			loadFile(filePath.toString().c_str());
 		}
+
 	}
-	return _exists;
+	return lastModified ? true : false;
 }
 
 } // namespace Mona

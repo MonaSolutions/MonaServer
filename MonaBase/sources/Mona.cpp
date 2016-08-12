@@ -19,7 +19,10 @@ This file is a part of Mona.
 
 #include "Mona/Mona.h"
 
+
 namespace Mona {
+
+using namespace std;
 
 const UInt16 ASCII::_CharacterTypes[128] =  {
 	/* 00 . */ CONTROL,

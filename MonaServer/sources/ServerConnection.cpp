@@ -27,7 +27,7 @@ using namespace Mona;
 
 
 ServerConnection::ServerConnection(const SocketAddress& address,const SocketManager& manager,const char* query) : address(address), _pClient(new TCPClient(manager)), _connected(false), isTarget(true),
-	_onError([this](const Exception& ex) { _ex.set(ex); }),
+	_onError([this](const Exception& ex) { _ex=ex; }),
 	_onData([this](PoolBuffer& pBuffer) { return onData(pBuffer); }),
 	_onDisconnection([this](TCPClient& client, const SocketAddress&) { onDisconnection(); }) {
 
@@ -40,7 +40,7 @@ ServerConnection::ServerConnection(const SocketAddress& address,const SocketMana
 }
 
 ServerConnection::ServerConnection(const SocketAddress& address,SocketFile& file,const SocketManager& manager) : address(address), _pClient(new TCPClient(address,file,manager)), _connected(false), isTarget(false),
-	_onError([this](const Exception& ex) { _ex.set(ex); }),
+	_onError([this](const Exception& ex) { _ex=ex; }),
 	_onData([this](PoolBuffer& pBuffer) { return onData(pBuffer); }),
 	_onDisconnection([this](TCPClient& client, const SocketAddress&) { onDisconnection(); }) {
 
@@ -128,12 +128,12 @@ void ServerConnection::send(const shared_ptr<ServerMessage>& pMessage) {
 		handlerRef = it->second;
 	}
 
-	pMessage->_shift -= (handler.empty() ? Util::Get7BitValueSize(handlerRef) : handler.size());
+	pMessage->_shift -= (handler.empty() ? Util::Get7BitValueSize(handlerRef) : (UInt16)handler.size());
 
 	BinaryWriter writer((UInt8*)pMessage->data(),pMessage->size());
 
 	writer.write32(pMessage->size()-4);
-	writer.write8(handler.size()).write(handler);
+	writer.write8((UInt8)handler.size()).write(handler);
 	if(writeRef)
 		writer.write7BitEncoded(handlerRef);
 	else if(handler.empty())

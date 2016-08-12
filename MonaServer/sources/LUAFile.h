@@ -20,13 +20,13 @@ This file is a part of Mona.
 #pragma once
 
 #include "Script.h"
-#include "Mona/Path.h"
+#include "Mona/File.h"
 
-class LUAPath {
+class LUAFile {
 public:
-	static void Init(lua_State *pState, Mona::Path& path) {}
-	static void	Clear(lua_State* pState, Mona::Path& path) {}
-	static void	Delete(lua_State* pState, Mona::Path& path) {delete &path;}
+	static void Init(lua_State *pState, Mona::File& file) {}
+	static void	Clear(lua_State* pState, Mona::File& file) {}
+	static void	Delete(lua_State* pState, Mona::File& file) {delete &file;}
 	static int	Get(lua_State *pState);
 	static int	Set(lua_State *pState);
 };

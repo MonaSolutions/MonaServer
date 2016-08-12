@@ -41,7 +41,7 @@ Listener::~Listener() {
 
 void Listener::onChange(const char* key, const char* value, std::size_t size) {
 	if (String::ICompare(key, EXPAND("unbuffered")) == 0)
-		_reliable = !String::IsFalse(value, size);
+		_reliable = String::IsFalse(value, size);
 	Parameters::onChange(key, value, size);
 }
 

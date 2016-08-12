@@ -34,7 +34,7 @@ public:
 	void			clip(UInt32 offset);
 	void			append(const void* data, UInt32 size) { Append(*this, data, size); }
 	bool			resize(UInt32 size, bool preserveContent=true);
-	void			clear();
+	void			clear() { resize(0, false); }
 
 	// beware, data() can be null
 	UInt8*			data() { return _data; }

@@ -153,63 +153,63 @@ int LUAPublication::Get(lua_State *pState) {
 				SCRIPT_WRITE_BOOL(publication.running())
 			} else if(strcmp(name,"name")==0) {
 				SCRIPT_WRITE_STRING(publication.name().c_str())
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if(strcmp(name,"lastTime")==0) {
 				SCRIPT_WRITE_NUMBER(publication.lastTime()) // can change
 			} else if(strcmp(name,"droppedFrames")==0) {
 				SCRIPT_WRITE_NUMBER(publication.droppedFrames()) // can change
 			} else if(strcmp(name,"listeners")==0) {
 				Script::Collection(pState, 1, "listeners");
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if(strcmp(name,"audioQOS")==0) {
 				Script::AddObject<LUAQualityOfService>(pState, publication.audioQOS());
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if(strcmp(name,"videoQOS")==0) {
 				Script::AddObject<LUAQualityOfService>(pState, publication.videoQOS());
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if(strcmp(name,"dataQOS")==0) {
 				Script::AddObject<LUAQualityOfService>(pState, publication.dataQOS());
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if(strcmp(name,"close")==0) {
 				SCRIPT_WRITE_FUNCTION(LUAPublication::Close)
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if(strcmp(name,"pushAudio")==0) {
 				SCRIPT_WRITE_FUNCTION(LUAPublication::PushAudio)
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if(strcmp(name,"flush")==0) {
 				SCRIPT_WRITE_FUNCTION(LUAPublication::Flush)
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if(strcmp(name,"pushVideo")==0) {
 				SCRIPT_WRITE_FUNCTION(LUAPublication::PushVideo)
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if(strcmp(name,"pushAMFData")==0) {
 				SCRIPT_WRITE_FUNCTION(LUAPublication::PushData<Mona::AMFReader>)
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if(strcmp(name,"pushAMF0Data")==0) {
 				SCRIPT_WRITE_FUNCTION(LUAPublication::PushAMF0Data)
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if(strcmp(name,"pushXMLRPCData")==0) {
 				SCRIPT_WRITE_FUNCTION(LUAPublication::PushDataWithBuffers<Mona::XMLRPCReader>)
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if(strcmp(name,"pushJSONData")==0) {
 				SCRIPT_WRITE_FUNCTION(LUAPublication::PushDataWithBuffers<Mona::JSONReader>)
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if(strcmp(name,"pushData")==0) {
 				SCRIPT_WRITE_FUNCTION(LUAPublication::PushData<Mona::StringReader>)
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name,"writeProperties")==0) {
 				SCRIPT_WRITE_FUNCTION(LUAPublication::WriteProperties)
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name,"clearProperties")==0) {
 				SCRIPT_WRITE_FUNCTION(LUAPublication::ClearProperties)
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name,"properties")==0) {
 				if(Script::GetCollection(pState, 1, "properties")) // if no properties, must returns null
-					SCRIPT_CALLBACK_FIX_INDEX
+					SCRIPT_FIX_RESULT
 			} else if(Script::GetCollection(pState, 1, "properties")) {
 				lua_getfield(pState, -1, name);
 				lua_replace(pState, -2);
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			}
 		}
 	SCRIPT_CALLBACK_RETURN

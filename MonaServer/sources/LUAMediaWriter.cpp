@@ -46,7 +46,7 @@ int LUAMediaWriter::Get(lua_State* pState) {
 		if(name) {
 			if(strcmp(name,"write")==0) {
 				SCRIPT_WRITE_FUNCTION(LUAMediaWriter::Write)
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			}
 		}
 	SCRIPT_CALLBACK_RETURN

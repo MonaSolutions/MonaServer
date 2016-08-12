@@ -51,12 +51,6 @@
     <ClInclude Include="sources\MonaServer.h" />
     <ClInclude Include="sources\Script.h" />
     <ClInclude Include="sources\Service.h" />
-    <ClInclude Include="sources\LUADataTable.h">
-      <Filter>LUAClass</Filter>
-    </ClInclude>
-    <ClInclude Include="sources\LUAPath.h">
-      <Filter>LUAClass</Filter>
-    </ClInclude>
     <ClInclude Include="sources\LUASocketAddress.h">
       <Filter>LUAClass</Filter>
     </ClInclude>
@@ -71,7 +65,14 @@
     <ClInclude Include="sources\LUAMediaWriter.h">
       <Filter>LUAClass</Filter>
     </ClInclude>
+
     <ClInclude Include="sources\LUASharedObject.h">
+
+    <ClInclude Include="sources\LUAPersistentTable.h">
+      <Filter>LUAClass</Filter>
+    </ClInclude>
+    <ClInclude Include="sources\LUAFile.h">
+
       <Filter>LUAClass</Filter>
     </ClInclude>
   </ItemGroup>
@@ -125,12 +126,6 @@
     <ClCompile Include="sources\MonaServer.cpp" />
     <ClCompile Include="sources\Script.cpp" />
     <ClCompile Include="sources\Service.cpp" />
-    <ClCompile Include="sources\LUADataTable.cpp">
-      <Filter>LUAClass</Filter>
-    </ClCompile>
-    <ClCompile Include="sources\LUAPath.cpp">
-      <Filter>LUAClass</Filter>
-    </ClCompile>
     <ClCompile Include="sources\LUASocketAddress.cpp">
       <Filter>LUAClass</Filter>
     </ClCompile>
@@ -145,7 +140,14 @@
     <ClCompile Include="sources\LUAMediaWriter.cpp">
       <Filter>LUAClass</Filter>
     </ClCompile>
+<<<<<<< HEAD
     <ClCompile Include="sources\LUASharedObject.cpp">
+=======
+    <ClCompile Include="sources\LUAPersistentTable.cpp">
+      <Filter>LUAClass</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\LUAFile.cpp">
+>>>>>>> 99e0caa31250f429156dda1f79e45c63d65c584c
       <Filter>LUAClass</Filter>
     </ClCompile>
   </ItemGroup>

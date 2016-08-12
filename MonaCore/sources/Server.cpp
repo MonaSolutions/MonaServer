@@ -87,13 +87,13 @@ void Server::run(Exception& exc) {
 			onStart();
 
 			if (!_manager.start(exWarn, Startable::PRIORITY_LOW))
-				ex.set(exWarn);
+				ex = exWarn;
 			else if (exWarn)
 				WARN(exWarn.error());
 			while (!ex && sleep() != STOP)
 				giveHandle(ex);
 		} else
-			ex.set(exWarn);
+			ex = exWarn;
 		if (ex)
 			FATAL("Server, ", ex.error());
 		

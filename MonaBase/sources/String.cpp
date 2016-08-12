@@ -31,12 +31,12 @@ using namespace std;
 
 namespace Mona {
 
-const string String::Empty;
-
-#if defined(_WIN32)
+#if defined(_WIN32) && (_MSC_VER < 1900)
 	 // for setting number of exponent digits to 2
 	//static int output_exp_old_format(_set_output_format(_TWO_DIGIT_EXPONENT));
 #endif
+
+const string String::Empty;
 
 size_t String::Split(const char* value, const char* separators, const String::ForEach& forEach, int options) {
 	const char* it1(value);
@@ -72,6 +72,15 @@ size_t String::Split(const char* value, const char* separators, const String::Fo
 		++it1;
 	};
 	return count;
+}
+
+vector<string>& String::Split(const char* value, const char* separators, vector<string>& values, int options) {
+	ForEach forEach([&values](UInt32 index,const char* value){
+		values.emplace_back(value);
+		return true;
+	});
+	Split(value, separators, forEach, options);
+	return values;
 }
 
 

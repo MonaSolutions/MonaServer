@@ -71,7 +71,7 @@ void Application::HandleSignal(int sig) {
 
 void Application::displayHelp() {
 	HelpFormatter helpFormatter(options());
-	helpFormatter.command = _path.toString();
+	helpFormatter.command = _file.path();
 	helpFormatter.usage = "[options]";
 	helpFormatter.header = "options:";
 	if (onHelp(helpFormatter))
@@ -86,43 +86,35 @@ bool Application::init(int argc, const char* argv[]) {
 
 	initApplicationPaths(argv[0]);
 	
-
 	// configurations
-	string  name("configs");
-	getString("application.baseName", name);
-	string configPath(_path.parent());
-	configPath.append(name);
-	configPath.append(".ini");
-	if (loadConfigurations(configPath)) {
+	string configPath;
+	if (loadConfigurations(String::Format(configPath,_file.parent(),_file.baseName(),".ini"))) {
 		setString("application.configPath", configPath);
-		vector<string> values;
-		FileSystem::Unpack(configPath, values);
-		if (!values.empty())
-			values.resize(values.size() - 1);
-		FileSystem::Pack(values, configPath);
-		setString("application.configDir", configPath);
-		
+		setString("application.configDir", FileSystem::GetParent(configPath));
 	}
 
 	// logs
 	Logs::SetLogger(*this);
 
-	string logDir(_path.parent());
+	string logDir(_file.parent());
 	logDir.append("logs");
 	string logFileName("log");
 
+	Exception ex;
 	if (loadLogFiles(logDir, logFileName, _logSizeByFile, _logRotation)) {
-		FileSystem::CreateDirectory(logDir);
-		_logPath = logDir + "/" + logFileName;
-		if (_logRotation > 0) {
-			_logPath.append(".");
-			_logStream.open(_logPath + "0", ios::out | ios::binary | ios::app);
-		}  else
-			_logStream.open(_logPath, ios::out | ios::binary | ios::app);
+		bool success;
+		EXCEPTION_TO_LOG(success=FileSystem::CreateDirectory(ex, logDir),file().baseName()," log system")
+		if (success) {
+			_logPath.assign(FileSystem::MakeFolder(logDir)).append(logFileName);
+			if (_logRotation > 0) {
+				_logPath += '.';
+				_logStream.open(_logPath + '0', ios::out | ios::binary | ios::app);
+			}  else
+				_logStream.open(_logPath, ios::out | ios::binary | ios::app);
+		}
 	}
 
 	// options
-	Exception ex;
 	defineOptions(ex, _options);
 	if (ex)
         FATAL_ERROR(ex.error());
@@ -140,10 +132,10 @@ bool Application::init(int argc, const char* argv[]) {
 }
 
 bool Application::loadConfigurations(string& path) {
-	Exception ex;
-	if (Util::ReadIniFile(ex, path, *this))
-		return true;
-	DEBUG("Impossible to load configuration file (", ex.error(), ")");
+	if (Util::ReadIniFile(path, *this))
+		DEBUG("Load configuration file ",path)
+	else
+		DEBUG("Impossible to load configuration file ",path)
 	return false;
 }
 
@@ -200,9 +192,9 @@ int Application::run(int argc, const char* argv[]) {
 void Application::log(THREAD_ID threadId, Level level, const char *filePath, string& shortFilePath, long line, string& message) {
 	if (isInteractive())
 		Logger::log(threadId, level, filePath, shortFilePath, line, message);
-	lock_guard<mutex> lock(_logMutex);
-	if (!_logStream.good())
+	if (!_logStream.good()) // outside _logMutex because must stay constant, otherwise it means that write operation has raised an exception (a log folder/file retablishment is not supported today)
 		return;
+	lock_guard<mutex> lock(_logMutex);
 	string date;
 	string threadName;
 	_logStream << Date().toString("%d/%m %H:%M:%S.%c  ", date)
@@ -215,7 +207,7 @@ void Application::log(THREAD_ID threadId, Level level, const char *filePath, str
 void Application::dump(const string& header, const UInt8* data, UInt32 size) {
 	if (isInteractive())
 		Logger::dump(header, data, size);
-	if (!_logStream.good())
+	if (!_logStream.good()) // outside _logMutex because must stay constant, otherwise it means that write operation has raised an exception (a log folder/file retablishment is not supported today)
 		return;
 	lock_guard<mutex> lock(_logMutex);
 	string date;
@@ -236,13 +228,13 @@ void Application::manageLogFiles() {
 		if (num > 0)
 			String::Append(path,num);
 		Exception ex;
-		EXCEPTION_TO_LOG(FileSystem::Remove(ex,path),"Log manager")
+		EXCEPTION_TO_LOG(FileSystem::Delete(ex,path),"Log manager")
 		// rotate
 		string newPath;
 		while(--num>=0)
 			FileSystem::Rename(String::Format(path, _logPath, num), String::Format(newPath, _logPath, num + 1));
 		if (_logRotation>0)
-			_logStream.open(_logPath+"0", ios::out | ios::binary | ios::app);
+			_logStream.open(String::Format(newPath, _logPath, '0'), ios::out | ios::binary | ios::app);
 		else
 			_logStream.open(_logPath, ios::out | ios::binary | ios::app);
 	}
@@ -251,39 +243,33 @@ void Application::manageLogFiles() {
 
 // TODO test linux/windows (service too)
 void Application::initApplicationPaths(const char* command) {
-	if (hasKey("application.command")) // already done
-		return;
 
 	string path(command);
 
 #if defined(_WIN32)
-	FileSystem::GetCurrentApplication(path);
+	FileSystem::GetCurrentApp(path);
 #else
-	if(!FileSystem::GetCurrentApplication(path)) {
+	if(!FileSystem::GetCurrentApp(path)) {
+
 		if (path.find('/') != string::npos) {
-			if (!FileSystem::IsAbsolute(path)) {
-				string temp = move(path);
-				FileSystem::GetCurrent(path);
-				path.append(temp);
-			}
+			if (!FileSystem::IsAbsolute(path))
+				path.insert(0,FileSystem::GetCurrentDir(""));
 		} else {
+			// just file name!
 			string paths;
-			if (!Util::Environment().getString("PATH", paths) || !FileSystem::ResolveFileWithPaths(paths, path)) {
-				string temp = move(path);
-				FileSystem::GetCurrent(path);
-				path.append(temp);
-			}
+			if (!Util::Environment().getString("PATH", paths) || !FileSystem::ResolveFileWithPaths(paths, path))
+				path.insert(0,FileSystem::GetCurrentDir(""));
 		}
 	}
 #endif
 
-	_path.set(path);
+	_file.setPath(path);
 
 	setString("application.command", path);
 	setString("application.path", path);
-	setString("application.name", _path.name());
-	setString("application.baseName", _path.baseName());
-	setString("application.dir", _path.parent());
+	setString("application.name", _file.name());
+	setString("application.baseName", _file.baseName());
+	setString("application.dir", _file.parent());
 }
 
 } // namespace Mona

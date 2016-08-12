@@ -31,12 +31,103 @@ This file is a part of Mona.
     #include "pwd.h"
 #endif
 #include "Mona/FileSystem.h"
-#include <set>
 
 
 namespace Mona {
 
 using namespace std;
+
+
+FileSystem::Home::Home() {
+#if defined(_WIN32)
+	// windows
+
+	const char* path(Util::Environment().getRaw("HOMEPATH"));
+	if (path) {
+		if (!Util::Environment().getString("HOMEDRIVE", *this) && !Util::Environment().getString("SystemDrive", *this))
+			assign("C:");
+		append(path);
+	} else if (!Util::Environment().getString("USERPROFILE", *this)) {
+		clear();
+		return;
+	}
+#else
+	struct passwd* pwd = getpwuid(getuid());
+	if (pwd)
+		assign(pwd->pw_dir);
+	else {
+		pwd = getpwuid(geteuid());
+		if (pwd)
+			assign(pwd->pw_dir);
+		else if(!Util::Environment().getString("HOME", *this)) {
+			clear();
+			return;
+		}
+	}
+#endif
+	
+	MakeFolder(*this);
+}
+
+
+FileSystem::CurrentApp::CurrentApp() {
+	resize(PATH_MAX);
+#ifdef _WIN32
+	int n = GetModuleFileNameA(0, &(*this)[0], PATH_MAX);
+	if (n <= 0 || n > PATH_MAX) {
+		clear();
+		return;
+	}
+#else
+	// read the link target into variable linkTarget
+	ssize_t n = readlink("/proc/self/exe", &(*this)[0], PATH_MAX); 
+	if(n<=0) {
+		clear();
+		return;
+	}
+#endif
+	resize(n);
+}
+
+
+
+FileSystem::CurrentDirs::CurrentDirs() : _isNull(false) {
+	string current;
+	int n(0);
+	current.resize(PATH_MAX);
+#if defined(_WIN32)
+	char* test(&current[0]);
+	n = GetCurrentDirectoryA(PATH_MAX, test);
+	if (n < 0 || n > PATH_MAX)
+		n = 0;
+#else
+	if (getcwd(&current[0], PATH_MAX)) {
+		n = strlen(current.c_str());
+		emplace_back("/");
+	}
+#endif
+	current.resize(n);
+	_isNull = n == 0;
+	if (_isNull) {
+		// try with parrent of CurrentApp
+		if (_CurrentApp)
+			GetParent(_CurrentApp, current);
+		else // else with Home
+			current = _Home;
+	}
+
+	String::ForEach forEach([this](UInt32 index,const char* value){
+		Directory dir(empty() ? String::Empty : back());
+		dir.append(value).append("/");
+		dir.name.assign(value);
+		dir.extPos = dir.name.find_last_of('.');
+		emplace_back(move(dir));
+		return true;
+	});
+	String::Split(current, "/\\", forEach, String::SPLIT_IGNORE_EMPTY);
+	if (empty())
+		emplace_back("/"); // if nothing other possible, root!
+}
 
 
 #if defined(_WIN32)
@@ -46,171 +137,207 @@ typedef struct stat  Status;
 #endif
 
 
-static bool Stat(const string& path, Status& status) {
+static Int8 Stat(const char* path, size_t size, Status& status) {
+
+	bool isFolder;
+	if (size) {
+		char c(path[size-1]);
+		isFolder = (c=='/' || c=='\\');
+	} else
+		isFolder = true;
+
+	bool found;
+
 #if defined (_WIN32)
+	// windows doesn't accept blackslash in _wstat
 	wchar_t wFile[_MAX_PATH];
-	MultiByteToWideChar(CP_UTF8, 0, path.c_str(), -1, wFile, _MAX_PATH);
-	return _wstat(wFile, &status)==0;
+	size = MultiByteToWideChar(CP_UTF8, 0, path, size, wFile, _MAX_PATH);
+	if (isFolder)
+		wFile[size++] = '.';
+	wFile[size] = 0;
+	found = _wstat(wFile, &status)==0;
 #else
-	return ::stat(path.c_str(), &status)==0;
+	found = ::stat(size ? path : ".", &status)==0;
 #endif
+	if (!found)
+		return 0;
+	return status.st_mode&S_IFDIR ? (isFolder ? 1 : -1) : (isFolder ? -1 : 1);
 }
 
 
-FileSystem::Attributes& FileSystem::GetAttributes(Exception& ex,const char* path,Attributes& attributes) {
+FileSystem::Attributes& FileSystem::GetAttributes(const char* path,size_t size, Attributes& attributes) {
 	Status status;
-	string file(path);
-	size_t oldSize(file.size());
-	if (!Stat(MakeFile(file), status)) {
-		ex.set(Exception::FILE, "Path ", path, " doesn't exist");
-		return attributes;
-	}
-	if (status.st_mode&S_IFDIR) {
-		if (oldSize == file.size()) {
-			ex.set(Exception::FILE, "File ", path, " doesn't exist");
-			return attributes;
-		}
-	} else if (oldSize > file.size()) {
-		ex.set(Exception::FILE, "Folder ", path, " doesn't exist");
-		return attributes;
-	}
+	if (Stat(path, size, status) <= 0)
+		return attributes.reset();
 	attributes.lastModified.update(status.st_mtime*1000ll);
-	attributes.size = oldSize > file.size() ? 0 : (UInt32)status.st_size;
+	attributes.size = status.st_mode&S_IFDIR ? 0 : (UInt32)status.st_size;
 	return attributes;
 }
 
-bool FileSystem::Exists(const char* path) {
+Time& FileSystem::GetLastModified(Exception& ex, const char* path, size_t size, Time& time) {
 	Status status;
-	string file(path);
-	size_t oldSize(file.size());
-	if (!Stat(MakeFile(file), status))
+	status.st_mtime = time/1000;
+	if (Stat(path, size, status)<=0) {
+		ex.set(Exception::FILE, path, " doesn't exist");
+		return time;
+	}
+	time.update(status.st_mtime*1000ll);
+	return time;
+}
+
+UInt32 FileSystem::GetSize(Exception& ex,const char* path, size_t size, UInt32 defaultValue) {
+	Status status;
+	if (Stat(path, size, status)<=0) {
+		ex.set(Exception::FILE, path, " doesn't exist");
+		return defaultValue;
+	}
+	if (status.st_mode&S_IFDIR) { // if was a folder
+		ex.set(Exception::FILE, "GetSize works just on file, and ", path, " is a folder");
+		return defaultValue;
+	}
+	return (UInt32)status.st_size;
+}
+
+bool FileSystem::Exists(const char* path, size_t size) {
+	Status status;
+	return Stat(path, size, status)>0;
+}
+
+
+bool FileSystem::CreateDirectory(Exception& ex, const char* path, size_t size, Mode mode) {
+	Status status;
+	if (Stat(path, size, status)) {
+		if (status.st_mode&S_IFDIR)
+			return true;
+		ex.set(Exception::FILE,"Cannot create directory ",path," because a file with this path exists");
 		return false;
-	// if existing test was on folder
-	return status.st_mode&S_IFDIR ? oldSize>file.size() : oldSize==file.size();
-}
-
-void FileSystem::CreateDirectories(Exception& ex,const string& path) {
-	vector<string> directories;
-	if (Unpack(path, directories).empty())
-		return;
-	string dir;
-	if (directories.front().size()==2 && directories.front().back() == ':') {
-		// device
-		dir.append(directories.front());
-		directories.erase(directories.begin());
 	}
-	for (const string& directory : directories) {
-		dir.append("/");
-		dir.append(directory);
-		if (!CreateDirectory(dir)) {
-			ex.set(Exception::FILE, "Impossible to create ", dir, " directory");
-			return;
-		}
+
+	if (mode==HEAVY) {
+		// try to create the parent (recursive)
+		string parent;
+		GetParent(path,parent);
+		if (parent.compare(path) && !CreateDirectory(ex, parent, HEAVY))
+			return false;
 	}
-}
 
-
-bool FileSystem::CreateDirectory(const char* path) {
-	Status status;
-	string file(path);
-	if (Stat(MakeFile(file), status)) // exists already
-		return status.st_mode&S_IFDIR ? true : false;
 #if defined(_WIN32)
 	wchar_t wFile[_MAX_PATH];
-	MultiByteToWideChar(CP_UTF8, 0, file.c_str(), -1, wFile, _MAX_PATH);
-	return _wmkdir(wFile) == 0;
+	MultiByteToWideChar(CP_UTF8, 0, path, -1, wFile, _MAX_PATH);
+	if (_wmkdir(wFile) == 0)
+		return true;
 #else
-    return mkdir(file.c_str(),S_IRWXU | S_IRWXG | S_IRWXO) == 0;
+    if (mkdir(path,S_IRWXU | S_IRWXG | S_IRWXO)==0)
+		return true;
 #endif
-}
-
-bool FileSystem::Remove(Exception& ex,const char* path,bool all) {
-	bool isFolder(IsFolder(path));
-	if (all && isFolder) {
-		FileSystem::ForEach forEach([&ex](const string& filePath){
-			Remove(ex, filePath, true);
-		});
-		Exception ignore;
-		Paths(ignore, path, forEach); // if exception it's a not existent folder
-	}
-	if (!Exists(path))
-		return !ex;; // already removed!
-#if defined(_WIN32)
-	if (isFolder) {
-		wchar_t wFile[_MAX_PATH];
-		MultiByteToWideChar(CP_UTF8, 0, path, -1, wFile, _MAX_PATH);
-		if (RemoveDirectoryW(wFile)==0)
-			ex.set(Exception::FILE, "Impossible to remove folder ", path);
-	} else {
-		wchar_t wFile[_MAX_PATH];
-		MultiByteToWideChar(CP_UTF8, 0, path, -1, wFile, _MAX_PATH);
-		if(_wremove(wFile) != 0)
-			ex.set(Exception::FILE, "Impossible to remove file ", path);
-	}
-	return !ex;
-#endif
-	if (remove(path) == 0)
-		return !ex;
-	if (isFolder)
-		ex.set(Exception::FILE, "Impossible to remove folder ", path);
-	else
-		ex.set(Exception::FILE, "Impossible to remove file ", path);
+	ex.set(Exception::FILE,"Cannot create directory ",path);
 	return false;
 }
 
-UInt32 FileSystem::Paths(Exception& ex, const char* path, const ForEach& forEach) {
-	int err = 0;
-	string directory(path);
-	FileSystem::MakeDirectory(directory);
+bool FileSystem::Delete(Exception& ex, const char* path, size_t size, Mode mode) {
+	Status status;
+	if (!Stat(path, size, status))
+		return true; // already deleted
+
+	if (status.st_mode&S_IFDIR) {
+		if (!size)
+			path = ".";
+		if (mode==HEAVY) {
+			FileSystem::ForEach forEach([&ex](const string& path, UInt16 level) {
+				Delete(ex, path, HEAVY);
+			});
+			Exception ignore;
+			ListFiles(ignore, path, forEach);
+			if (ignore)
+				return true;; // if exception it's a not existent folder
+			if (ex) // impossible to remove a sub file/folder, so the parent folder can't be removed too (keep the exact exception)
+				return false;
+		}
+	}
+#if defined(_WIN32)
+	wchar_t wFile[_MAX_PATH];
+	MultiByteToWideChar(CP_UTF8, 0, path, -1, wFile, _MAX_PATH);
+	if (status.st_mode&S_IFDIR) {
+		if (RemoveDirectoryW(wFile) || GetLastError() == ERROR_FILE_NOT_FOUND)
+			return true;
+		ex.set(Exception::FILE, "Impossible to remove folder ", path);
+	} else {
+		if (DeleteFileW(wFile) || GetLastError()==ERROR_FILE_NOT_FOUND)
+			return true;
+		ex.set(Exception::FILE, "Impossible to remove file ", path);
+	}
+#else
+	if(status.st_mode&S_IFDIR) {
+		if(rmdir(path)==0 || errno==ENOENT)
+			return true;
+		ex.set(Exception::FILE, "Impossible to remove folder ", path);
+	} else {
+		if(unlink(path)==0 || errno==ENOENT)
+			return true;
+		ex.set(Exception::FILE, "Impossible to remove file ", path);
+	}
+#endif
+	return false;
+}
+
+UInt32 FileSystem::ListFiles(Exception& ex, const char* path, const ForEach& forEach, Mode mode) {
+	string directory(*path ? path : ".");
+	MakeFolder(directory);
 	UInt32 count(0);
-	string pathFile;
+	string file;
 
 #if defined(_WIN32)
-	directory.append("*");
-
 	wchar_t wDirectory[_MAX_PATH];
-	MultiByteToWideChar(CP_UTF8, 0, directory.c_str(), -1, wDirectory, _MAX_PATH);
+	wDirectory[MultiByteToWideChar(CP_UTF8, 0, directory.data(), directory.size(), wDirectory, _MAX_PATH)] = '*';
+	wDirectory[directory.size()+1] = 0;
 	
 	WIN32_FIND_DATAW fileData;
 	HANDLE	fileHandle = FindFirstFileW(wDirectory, &fileData);
 	if (fileHandle == INVALID_HANDLE_VALUE) {
-		if ((err = GetLastError()) != ERROR_NO_MORE_FILES) {
-			ex.set(Exception::FILE, "The system cannot find the directory ", path);
-			return count;
-		}
-		return count;
+		if (GetLastError() != ERROR_NO_MORE_FILES)
+			ex.set(Exception::FILE, "Cannot list files of directory ", directory);
+		return 0;
 	}
 	do {
 		if (wcscmp(fileData.cFileName, L".") != 0 && wcscmp(fileData.cFileName, L"..") != 0) {
 			++count;
-			String::Append(MakeDirectory(pathFile.assign(path)), fileData.cFileName);
-			if (fileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-				pathFile.append("/");
-			forEach(pathFile);
+			String::Format(file,directory, fileData.cFileName);
+			if (fileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+				file += '/';
+				if (mode)
+					count += ListFiles(ex, file, forEach, Mode(mode+1));
+			}
+			forEach(file,mode ? (UInt16(mode)-1) : 0);
 		}
 	} while (FindNextFileW(fileHandle, &fileData) != 0);
 	FindClose(fileHandle);
 #else
 	DIR* pDirectory = opendir(directory.c_str());
 	if (!pDirectory) {
-		ex.set(Exception::FILE, "The system cannot find the directory ",directory);
-		return count;
+		ex.set(Exception::FILE, "Cannot list files of directory ",directory);
+		return 0;
 	}
 	struct dirent* pEntry(NULL);
 	while((pEntry = readdir(pDirectory))) {
 		if (strcmp(pEntry->d_name, ".")!=0 && strcmp(pEntry->d_name, "..")!=0) {
 			++count;
-			String::Append(pathFile.assign(directory), pEntry->d_name);
+			String::Format(file, directory, pEntry->d_name);
 			// Cross-platform solution when DT_UNKNOWN or symbolic link
-			if(pEntry->d_type==DT_DIR)
-				pathFile.append("/");
-			else if(pEntry->d_type==DT_UNKNOWN || pEntry->d_type==DT_LNK) {
+			bool isFolder(false);
+			if(pEntry->d_type==DT_DIR) {
+				isFolder = true;
+			} else if(pEntry->d_type==DT_UNKNOWN || pEntry->d_type==DT_LNK) {
 				Status status;
-				Stat(pathFile, status);
+				Stat(file.data(), file.size(), status);
 				if ((status.st_mode&S_IFMT) == S_IFDIR)
-					pathFile.append("/");
+					isFolder = true;
 			}
-			forEach(pathFile);
+			if(isFolder) {
+				file += '/';
+				if (mode)
+					count += ListFiles(ex, file, forEach, Mode(mode+1));
+			}
+			forEach(file,mode ? (UInt16(mode)-1) : 0);
 		}
 	}
 	closedir(pDirectory);
@@ -218,319 +345,287 @@ UInt32 FileSystem::Paths(Exception& ex, const char* path, const ForEach& forEach
 	return count;
 }
 
-Time& FileSystem::GetLastModified(Exception& ex, const char* path, Time& time) {
-	Status status;
-	status.st_mtime = time/1000;
-	string file(path);
-	size_t oldSize(file.size());
-	if (Stat(MakeFile(file).c_str(), status) != 0) {
-		ex.set(Exception::FILE, "Path ", path, " doesn't exist");
-		return time;
-	}
-	
-	if (status.st_mode&S_IFDIR) {
-		 // if path is file
-		if (oldSize==file.size()) {
-			ex.set(Exception::FILE, "File ", path, " doesn't exist");
-			return time;
-		}
-	} else if (oldSize>file.size()) {
-		 // if path is folder
-		ex.set(Exception::FILE, "Folder ", path, " doesn't exist");
-		return time;
-	}
-	time.update(status.st_mtime*1000ll);
-	return time;
-}
+const char* FileSystem::GetFile(const char* path, size_t& size, size_t& extPos, Type& type, Int32& parentPos) {
+	const char* cur(path + size);
+	size = 0;
+	bool   scanDots(true);
+	UInt16 level(1);
+	extPos = string::npos;
+	bool firstChar(true);
+	type = FOLDER;
 
-UInt32 FileSystem::GetSize(Exception& ex,const char* path) {
-	Status status;
-	status.st_size = 0;
-	string file(path);
-	size_t oldSize(file.size());
-	if (Stat(MakeFile(file).c_str(), status) != 0 || status.st_mode&S_IFDIR) {
-		ex.set(Exception::FILE, "File ", path, " doesn't exist");
-		return 0;
-	} else if (oldSize>file.size()) { // if was a folder
-		ex.set(Exception::FILE, "GetSize works just on file, and ", path, " is a folder");
-		return 0;
-	}
-	return (UInt32)status.st_size;
-}
-
-string& FileSystem::GetName(string& path) {
-	MakeFile(path);
-	auto separator = path.find_last_of("/\\");
-	if (separator != string::npos)
-		path.erase(0, separator + 1);
-	return path;
-}
-
-
-string& FileSystem::GetBaseName(string& path) {
-	MakeFile(path);
-	auto dot = path.find_last_of('.');
-	auto separator = path.find_last_of("/\\");
-	if (dot != string::npos && (separator == string::npos || dot > separator))
-		path.resize(dot);
-	if (separator != string::npos)
-		path.erase(0, separator + 1);
-	return path;
-}
-
-
-string& FileSystem::GetExtension(string& path) {
-	MakeFile(path);
-	auto dot = path.find_last_of('.');
-	auto separator = path.find_last_of("/\\");
-	if (dot != string::npos && (separator == string::npos || dot > separator))
-		return path.erase(0, dot + 1);
-	path.clear();
-	return path;
-}
-
-string& FileSystem::MakeFile(string& path) {
-	size_t size = path.size();
-	while (size>0 && (path.back() == '\\' || path.back() == '/'))
-		path.resize(--size);
-	return path;
-}
-
-string& FileSystem::GetParent(string& path) {
-	auto separator = MakeFile(path).find_last_of("/\\");
-	if (separator != string::npos)
-		path.erase(separator+1); // keep the "/" (= folder!)
-	else
-		path.assign(".");
-	return path;
-}
-
-string& FileSystem::Pack(const vector<string>& values, string& path) {
-	path.clear();
-	bool first = true;
-	for (const string& value : values) {
-		if (value.empty())
+	while (cur-- > path) {
+		if (*cur == '/' || *cur == '\\') {
+			if (firstChar) {
+				type = FOLDER;
+				firstChar = false;
+			}
+			if (size) {
+				if (scanDots)
+					level += UInt16(size);
+				else {
+					if (!level)
+						break;
+					scanDots = true;
+					extPos = string::npos;
+				}
+				size = 0;
+			}
 			continue;
-#if defined(_WIN32)
-		if (first) {
-			if (value.size()!=2 || value.back()!= ':') // device case
-				path.append("/");
-			first = false;
-		} else
-			path.append("/");
-#else
-		path.append("/");
-#endif
-		path.append(value);
-	}
-	return path;
-}
+		}
 
-vector<string>& FileSystem::Unpack(const char* path, vector<string>& values) {
-	const char* it(path);
-	const char* itValue;
+		if (firstChar) {
+			type = FILE;
+			firstChar = false;
+		}
 
-	while (*it) {
+		if (!scanDots && level)
+			continue;
+		if (!size++)
+			--level;
 
-		// trim begin
-		while (isspace(*it))
-			++it;
-
-		itValue = it;
-		bool first = true;
-		while (*it && *it != '\\' && *it != '/') {
-			int count(0);
-			// resolve '..' and '.'
-			if (first) {
-				while (*it == '.') {
-					++count;
-					++it;
-				}
-				first = false;
-				if (count > 0 && *it != '\\' && *it != '/')
+		if (extPos==string::npos && *cur == '.') {
+			if (scanDots) {
+				if (size < 3)
 					continue;
-			}
-			if (count == 0)
-				++it;
-			else {
-				itValue = it;
-				if (count > 1) {
-					if (!values.empty())
-						values.pop_back();
-				}
-			}
+				extPos = 1;
+			} else
+				extPos = size;
 		}
+		scanDots = false;
+	}
 
-		// trim end
-		if (it != itValue) {
-			while (--it != itValue && isspace(*it));
-			++it;
-			values.emplace_back(itValue, it);
+	if (scanDots) // nothing or . or .. or something with backslash (...../)
+		level += UInt16(size);
+
+	if (level) {
+		size = 0; // no name!
+		if (FileSystem::IsAbsolute(path)) {
+#if defined(_WIN32)
+			parentPos = isalpha(*path) ? 3 : 1; // C:/ or /
+#else
+			parentPos = 1; // /
+#endif	
+			return path+parentPos;
 		}
-		if (*it)
-			++it;
+		
+		parentPos = -level;
+		return NULL; // level!
 	}
-	return values;
-}
-
-// TODO test unit
-bool FileSystem::GetHome(string& path) {
 #if defined(_WIN32)
-	// windows
-
-	// windows service has no home dir, return system directory instead
-	string homePath;
-	if (!Util::Environment().getString("HOMEDRIVE", path) || !Util::Environment().getString("HOMEPATH", homePath)) {
-		// system directory
-		char buffer[MAX_PATH];
-		DWORD n = GetSystemDirectoryA(buffer, sizeof(buffer));
-		if (n <= 0 || n >= sizeof(buffer))
-			return false;
-		path.assign(buffer);
-	}
-	path.append(homePath);
-#else
-	struct passwd* pwd = getpwuid(getuid());
-	if (pwd)
-		path.assign(pwd->pw_dir);
-	else {
-		pwd = getpwuid(geteuid());
-		if (pwd)
-			path.assign(pwd->pw_dir);
-		else if(!Util::Environment().getString("HOME", path))
-			return false;
+	else if (cur < path && size == 2 && type==FOLDER && path[1] == ':' && isalpha(*path)) {
+		parentPos = 3; // C:/
+		size = 0; // no name!
+		return path+3;
 	}
 #endif
-	MakeDirectory(path);
-	return true;
-}
+	
+	const char* name(++cur);
+	if (extPos!=string::npos)
+		extPos = size - extPos;	
 
-bool FileSystem::IsFolder(const string& path) {
-	if (path.empty())
-		return false;
-	char last(path.back());
-	if (last == '/' || last == '\\')
-		return true;
-#if defined(_WIN32)
-	return path.size()==2 && last == ':';
-#else
-	return path.size()==1 && last == '~';
-#endif
-}
+	UInt8 offset(1);
+	while (--cur >= path && (*cur == '/' || *cur == '\\'))
+		offset = 2;
 
-bool FileSystem::IsFolder(const char* path) {
-	size_t size(strlen(path));
-	if (size == 0)
-		return false;
-	char last(path[--size]);
-	if (last == '/' || last == '\\')
-		return true;
-#if defined(_WIN32)
-	return size==2 && last == ':';
-#else
-	return size==1 && last == '~';
-#endif
+	parentPos = cur - path + offset;
+	return name;
 }
 
 
-bool FileSystem::IsAbsolute(const string& path) {
-	if (path.empty())
-		return false;
-#if defined(_WIN32)
-	return path.size()>1 && isalpha(path[0]) && path[1]==':';
-#else
-	if (path[0] == '/')
-		return true;
-	if (path[0] != '~')
-		return false;
-	return path.size()==1 || path[1] == '/'; // everything in the form ~/... is absolute
-#endif
+FileSystem::Type FileSystem::GetFile(const char* path, size_t size, string& name, size_t& extPos, string& parent) {
+	
+	Type type;
+	Int32 parentPos;
+	const char* file(GetFile(path, size, extPos, type, parentPos));
+	if (file)
+		name.assign(file,size);
+	else
+		name.clear();
+
+	if (parentPos <= 0) {
+		// parent is -level!
+		parentPos += _CurrentDirs.size()-1;
+		if (parentPos<0)
+			parentPos = 0;
+		if (&parent!=&String::Empty)
+			parent.assign(_CurrentDirs[parentPos]);
+		if (++parentPos<_CurrentDirs.size()) {
+			Directory& dir(_CurrentDirs[parentPos]);
+			name.assign(dir.name);
+			extPos = dir.extPos;
+		}
+	} else if (&parent!=&String::Empty)
+		parent.assign(path, 0, parentPos);
+
+	return type;
 }
+
+
+string& FileSystem::GetName(const char* path, string& value) {
+	GetFile(path,value);
+	return value;
+}
+
+string& FileSystem::GetBaseName(const char* path, string& value) {
+	size_t extPos;
+	GetFile(path,value,extPos);
+	if (extPos!=string::npos)
+		value.erase(extPos);
+	return value;
+}
+
+string& FileSystem::GetExtension(const char* path, string& value) {
+	size_t extPos;
+	GetFile(path,value,extPos);
+	if (extPos == string::npos)
+		value.clear();
+	else
+		value.erase(0, extPos+1);
+	return value;
+}
+
+string& FileSystem::GetParent(const char* path, size_t size, string& value) {
+	Type type;
+	Int32 parentPos;
+	size_t extPos;
+	GetFile(path, size, extPos, type, parentPos);
+	if (parentPos > 0)
+		return value.assign(path, 0, parentPos);
+	parentPos += _CurrentDirs.size()-1;
+	return value.assign(_CurrentDirs[parentPos<0 ? 0 : parentPos]);
+}
+
+string& FileSystem::Resolve(string& path) {
+	Type type(FOLDER);
+	size_t extPos;
+	string newPath;
+	size_t size;
+	Int32 parentPos;
+	const char* file;
+
+	do {
+		if (type == FILE)
+			path += '.';
+		file = GetFile(path.data(),size = path.size(), extPos, type,parentPos);
+
+		if (parentPos <= 0) {
+			parentPos += _CurrentDirs.size()-1;
+			if (parentPos<0)
+				parentPos = 0;
+			if (++parentPos < _CurrentDirs.size()) {
+				newPath.insert(0, _CurrentDirs[parentPos]);
+				if (type == FILE)
+					MakeFile(newPath);
+			} else {
+				newPath.insert(0, file, size).insert(0, _CurrentDirs[--parentPos]);
+				if (type == FOLDER)
+					newPath += '/';
+			}
+			return path = move(newPath);
+		}
+		newPath.insert(0, "/").insert(0, file, size);
+		path.resize(parentPos);
+	} while (size);
+	if (type == FILE) {
+		if (newPath.size()==1) // = '/'
+			newPath += '.';
+		else
+			newPath.pop_back();
+	}
+	path.pop_back(); // can not be empty here
+	return path = move(newPath.insert(0, path));
+}
+
 bool FileSystem::IsAbsolute(const char* path) {
-	if (*path==0) // strlen(path)==0
-		return false;
+	if (path[0] == '/')
+		return true; // because _stat("/file") for windows or linux search on the current disk file as a absolute path
 #if defined(_WIN32)
-	return path[1] && isalpha(path[0]) && path[1]==':';
+	return isalpha(path[0]) && path[1]==':' && (path[2]=='/' || path[2]=='\\'); // "C:" is a file (relative path)
 #else
-	if (*path == '/')
-		return true;
-	if (*path != '~')
-		return false;
-	return *++path==0 || *path == '/'; // everything in the form ~/... is absolute
+	return false;
 #endif
+}
+
+string& FileSystem::MakeRelative(string& path) {
+	UInt32 count(0);
+#if defined(_WIN32)
+	if (isalpha(path[0]) && path[1] == ':' && (path[2] == '/' || path[2] == '\\'))
+		count += 3;
+#endif
+	while (path[count] == '/' || path[count] == '\\')
+		++count;
+	return path.erase(0, count);
 }
 
 bool FileSystem::ResolveFileWithPaths(const char* paths, string& file) {
-
-
-	String::ForEach forEach([&file](UInt32 index,const char* value) {
-		string path(value);
-		#if defined(_WIN32)
+	string path;
+	String::ForEach forEach([&file,&path](UInt32 index,const char* value) {
+		path.assign(value);
+#if defined(_WIN32)
 			// "path" => path
 			if (!path.empty() && path[0] == '"' && path.back() == '"') {
+				path.erase(path.front());
 				path.resize(path.size()-1);
-				path.erase(0, 1);
 			}
-		#endif
-		MakeDirectory(path).append(file);
-		if (Exists(path)) {
+#endif
+		if (Exists(MakeFolder(path).append(file))) {
 			file = move(path);
 			return false;
 		}
 		return true;
 	});
 #if defined(_WIN32)
-	return String::Split(paths, ";", forEach, String::SPLIT_IGNORE_EMPTY | String::SPLIT_TRIM) == string::npos;
+	return String::Split(paths, ";", forEach) == string::npos;
 #else
-	return String::Split(paths, ":", forEach, String::SPLIT_IGNORE_EMPTY | String::SPLIT_TRIM) == string::npos;
+	return String::Split(paths, ":", forEach) == string::npos;
 #endif
 }
 
-bool FileSystem::GetCurrentApplication(string& path) {
-	string result;
-#ifdef _WIN32
-	result.resize(MAX_PATH);
-	int n = GetModuleFileNameA(0, &result[0], MAX_PATH);
-	if (n <= 0)
-		return false;
-	result.resize(n);
-#else
-	result.resize(130);
+bool FileSystem::IsFolder(const string& path) {
+	return path.empty() || path.back()=='/' || path.back()=='\\';
+}
+
+bool FileSystem::IsFolder(const char* path) {
+	size_t size(strlen(path)); 
+	if (!size)
+		return true;
+	char c(path[size - 1]);
+	return c == '/' || c == '\\';
+}
 	
-	// read the link target into variable linkTarget
-	ssize_t n(130); 
 
-	while(n>=result.size()) {
-		result.resize(result.size()*2);
-		if((n = readlink("/proc/self/exe", &result[0], result.size()))<=0)
-			return false;
-	}
-	result.resize(n);
-#endif
-	path = move(result);
-	return true;
-}
-
-bool FileSystem::GetCurrent(string& path) {
-	string::size_type size = path.size();
+string& FileSystem::MakeFolder(string& path) {
+	// must allow a name concatenation
+	if (!IsFolder(path)) {
 #if defined(_WIN32)
-	path.resize(MAX_PATH);
-	int len = GetCurrentDirectoryA(MAX_PATH, &path[0]);
-	if (len <= 0) {
-		path.resize(size);
-		return false;
-	}
-	path.resize(len);
-#else
-	path.resize(PATH_MAX);
-	if (!getcwd(&path[0], PATH_MAX)) {
-		path.resize(size);
-		return false;
-	}
-	path.resize(strlen(path.c_str()));
+		if (path.size() == 2 && path.back()==':' && isalpha(path.front()))
+			path.insert(0, "./"); // to avoid to transform relative file "c:" in absolute file "c:/", use instead of the form "./c:/
 #endif
-	MakeDirectory(path);
-	return true;
+		path += '/';
+	}
+	return path;
 }
+
+string& FileSystem::MakeFile(string& path) {
+	if (!IsFolder(path))
+		return path;
+
+	if (path.empty())
+		return path = '.';
+
+	do {
+		if (path.empty()) // was absolute
+			return path.assign("/.");
+		path.pop_back();
+	} while (IsFolder(path));
+	
+#if defined(_WIN32)
+	if (path.size() == 2 && path.back() == ':' && isalpha(path.front()))
+		return path.append("/.");
+#endif
+	return path;
+}
+
 
 } // namespace Mona

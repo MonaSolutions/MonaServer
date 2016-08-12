@@ -224,11 +224,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="sources\LUADataTable.h" />
+    <ClInclude Include="sources\LUAFile.h" />
     <ClInclude Include="sources\LUAIPAddress.h" />
     <ClInclude Include="sources\LUAMediaWriter.h" />
     <ClInclude Include="sources\LUAPath.h" />
     <ClInclude Include="sources\LUASharedObject.h" />
+    <ClInclude Include="sources\LUAPersistentTable.h" />
     <ClInclude Include="sources\LUASocketAddress.h" />
     <ClInclude Include="sources\LUAXML.h" />
     <ClInclude Include="sources\MonaServer.h" />
@@ -254,11 +255,15 @@
     <ClInclude Include="sources\Servers.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="sources\LUADataTable.cpp" />
+    <ClCompile Include="sources\LUAFile.cpp" />
     <ClCompile Include="sources\LUAIPAddress.cpp" />
     <ClCompile Include="sources\LUAMediaWriter.cpp" />
+<<<<<<< HEAD
     <ClCompile Include="sources\LUAPath.cpp" />
     <ClCompile Include="sources\LUASharedObject.cpp" />
+=======
+    <ClCompile Include="sources\LUAPersistentTable.cpp" />
+>>>>>>> 99e0caa31250f429156dda1f79e45c63d65c584c
     <ClCompile Include="sources\LUASocketAddress.cpp" />
     <ClCompile Include="sources\LUAXML.cpp" />
     <ClCompile Include="sources\main.cpp" />

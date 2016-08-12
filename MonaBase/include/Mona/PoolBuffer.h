@@ -32,8 +32,6 @@ public:
 
 	operator bool() const { return _pBuffer!=NULL;  }
 	bool			empty() const { return !_pBuffer || _pBuffer->size()==0; }
-	const UInt8*	data() const { return _pBuffer ? _pBuffer->data() : NULL; }
-	UInt32			size() const { return _pBuffer ? _pBuffer->size() : 0; }
 
 	Buffer* operator->() const { if (!_pBuffer) _pBuffer=poolBuffers.beginBuffer(_size);  return _pBuffer; }
 	Buffer& operator*() const { if (!_pBuffer) _pBuffer=poolBuffers.beginBuffer(_size);  return *_pBuffer; }
@@ -44,6 +42,9 @@ public:
 
 	const PoolBuffers&	poolBuffers;
 
+	// just to be a Binary object
+	const UInt8*	data() const { return _pBuffer ? _pBuffer->data() : NULL; }
+	UInt32			size() const { return _pBuffer ? _pBuffer->size() : 0; }
 private:
 	mutable Buffer*		_pBuffer;
 	UInt32				_size;

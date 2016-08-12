@@ -340,7 +340,6 @@ void RTMFPSession::receive(const SocketAddress& address, BinaryReader& packet) {
 	UInt64 deltaNAck=0;
 
 	UInt8 type = packet.available()>0 ? packet.read8() : 0xFF;
-	bool answer = false;
 
 	// Can have nested queries
 	while(type!=0xFF) {

@@ -22,7 +22,7 @@ This file is a part of Mona.
 #include "Mona/Mona.h"
 #include "Mona/RTSP/RTSP.h"
 #include "Mona/HTTP/HTTP.h"
-#include "Mona/Path.h"
+#include "Mona/File.h"
 
 
 namespace Mona {
@@ -48,7 +48,7 @@ public:
 	RTSP::CommandType			command;
 	std::string					url;
 	std::string					path;
-	Path						filePath;
+	File						file;
 	std::string					query;
 	std::string					serverAddress;
 	float						version;

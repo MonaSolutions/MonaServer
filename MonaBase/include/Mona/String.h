@@ -22,6 +22,7 @@ This file is a part of Mona.
 #include "Mona/Mona.h"
 #include "Mona/Buffer.h"
 #include <functional>
+#include <vector>
 
 #undef max
 
@@ -54,10 +55,12 @@ public:
 		TRIM_RIGHT = 2
 	};
 
-	typedef std::function<bool(UInt32 index,const char*)> ForEach; /// String::Split function type handler
+	typedef std::function<bool(UInt32 index,const char* value)> ForEach; /// String::Split function type handler
 
 	static std::size_t Split(const std::string& value, const char* separators, const String::ForEach& forEach, int options = 0) { return Split(value.data(), separators, forEach, options); }
 	static std::size_t Split(const char* value, const char* separators, const String::ForEach& forEach, int options = 0);
+	static std::vector<std::string>& Split(const char* value, const char* separators, std::vector<std::string>& values, int options = 0);
+	static std::vector<std::string>& Split(const std::string& value, const char* separators, std::vector<std::string>& values, int options = 0) { return Split(value.c_str(),separators,values,options); }
 
 	static std::string& Trim(std::string& value, TrimOption option = TRIM_BOTH);
 	static const char*	TrimLeft(const char* value) { while (*value && isspace(*value)) ++value; return value; }

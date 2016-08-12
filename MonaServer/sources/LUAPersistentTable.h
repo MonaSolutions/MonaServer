@@ -20,23 +20,23 @@ This file is a part of Mona.
 #pragma once
 
 #include "Script.h"
-#include "Mona/Database.h"
+#include "Mona/PersistentData.h"
 #include <set>
 
-class LUADataTable {
+class LUAPersistentTable {
 public:
 
-	static void Init(lua_State *pState, LUADataTable& table);
-	static void	Clear(lua_State* pState, LUADataTable& table) {}
-	static void	Delete(lua_State* pState, LUADataTable& table) { delete &table; }
+	static void Init(lua_State *pState, LUAPersistentTable& table);
+	static void	Clear(lua_State* pState, LUAPersistentTable& table) {}
+	static void	Delete(lua_State* pState, LUAPersistentTable& table) { delete &table; }
 
 	static int Get(lua_State *pState);
 	static int Set(lua_State *pState);
 
 
-	LUADataTable(Mona::Database& database, const std::string& path) : count(0), path(path), database(database) {}
+	LUAPersistentTable(Mona::PersistentData& persistentData, const std::string& path) : count(0), path(path), persistentData(persistentData) {}
 
-	Mona::Database&			database;
+	Mona::PersistentData&	persistentData;
 	const std::string		path;
 	Mona::UInt32			count;
 

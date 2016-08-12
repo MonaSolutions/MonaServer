@@ -50,9 +50,10 @@ private:
 	FlashStream::OnStart::Type		onStreamStop;
 
 	UInt8							_handshaking;
-	UInt16							_chunkSize;
+	UInt32							_chunkSize;
 	UInt32							_winAckSize;
 	UInt32							_unackBytes;
+	UInt32							_readBytes;
 
 	std::map<UInt32,RTMPWriter>			_writers;
 	std::unique_ptr<RTMPWriter>			_pController;

@@ -132,10 +132,10 @@ DataWriter& HTTPWriter::writeResponse(UInt8 type) {
 	return pSender->writeResponse();
 }
 
-void HTTPWriter::writeFile(const Path& file, const shared_ptr<Parameters>& pParameters) {
+void HTTPWriter::writeFile(const string& path, const shared_ptr<Parameters>& pParameters) {
 	HTTPSender* pSender(createSender(false));
 	if (pSender)
-		pSender->writeFile(file,pParameters);
+		pSender->writeFile(path,pParameters);
 }	
 
 void HTTPWriter::writeRaw(const UInt8* data, UInt32 size) {

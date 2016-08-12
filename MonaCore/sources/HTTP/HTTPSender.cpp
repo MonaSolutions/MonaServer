@@ -68,10 +68,10 @@ bool HTTPSender::run(Exception& ex) {
 
 		if (!_file.exists()) {
 			if (_file.isFolder())
-				writeError(404, "The requested URL ", _buffer, " was not found on this server");
+				writeError(404, "The requested URL ", _appPath, '/',_file.name(), " was not found on this server");
 			else {
 				// last "/" is missing? is it a folder instead of file?
-				if (FileSystem::Exists(String::Format(_buffer,_file(),'/'))) {
+				if (_file.makeFolder().exists()) {
 					// Redirect to the real folder path
 					BinaryWriter& writer(write("301 Moved Permanently").packet);
 					String::Format(_buffer, "http://", _serverAddress,_appPath, '/',_file.name(), '/');
@@ -108,15 +108,16 @@ bool HTTPSender::run(Exception& ex) {
 					sortOrder = HTTP::SORT_DESC;
 			}
 
-			HTTP::WriteDirectoryEntries(writer, _serverAddress, _file.toString(), _appPath, sortField, sortOrder);
+			if (!HTTP::WriteDirectoryEntries(ex, writer, _serverAddress, _file.path(), _appPath, sortField, sortOrder))
+				writeError(500, "List folder files, ",ex.error());
 		} else {
 			/// File
 #if defined(_WIN32)
 			wchar_t wFile[_MAX_PATH];
-			MultiByteToWideChar(CP_UTF8, 0, _file.toString().c_str(), -1, wFile, _MAX_PATH);
+			MultiByteToWideChar(CP_UTF8, 0, _file.path().c_str(), -1, wFile, _MAX_PATH);
 			ifstream ifile(wFile, ios::in | ios::binary | ios::ate);
 #else
-			ifstream ifile(_file.toString(), ios::in | ios::binary | ios::ate);
+			ifstream ifile(_file.path(), ios::in | ios::binary | ios::ate);
 #endif
 			if (!ifile.good())
 				writeError(423, "Impossible to open ", _appPath, '/', _file.name(), " file");
@@ -182,9 +183,9 @@ bool HTTPSender::run(Exception& ex) {
 }
 
 
-void HTTPSender::writeFile(const Path& file, const shared_ptr<Parameters>& pParameters) {
+void HTTPSender::writeFile(const string& path, const shared_ptr<Parameters>& pParameters) {
 	_newHeaders = true;
-	_file = file;
+	_file.setPath(path);
 	_pFileParams = pParameters;
 }
 
@@ -193,6 +194,17 @@ DataWriter& HTTPSender::writeResponse(const char* code, bool rawWithoutLength) {
 		return write(code, HTTP::CONTENT_APPLICATON, "json", NULL, rawWithoutLength ? 1 : 0);
 	return write(code, _request.contentType, _request.contentSubType.c_str(), NULL, rawWithoutLength ? 1 : (MIME::DataType(_request.contentSubType.c_str())==MIME::UNKNOWN  ? 2 : 0));
 }
+
+BinaryWriter& HTTPSender::writeRaw() {
+	if (_pWriter) {
+		ERROR("HTTP response already written");
+		return DataWriter::Null.packet;
+	}
+	_pWriter.reset(new StringWriter(_poolBuffers));
+	_connection = HTTP::CONNECTION_KEEPALIVE; // write content (no new header), keepalive the connection!
+	return _pWriter->packet;
+}
+
 
 DataWriter& HTTPSender::write(const char* code, HTTP::ContentType type, const char* subType, const UInt8* data, UInt32 size) {
 	if (_pWriter) {
@@ -274,15 +286,6 @@ DataWriter& HTTPSender::write(const char* code, HTTP::ContentType type, const ch
 	return *_pWriter;
 }
 
-BinaryWriter& HTTPSender::writeRaw() {
-	if (_pWriter) {
-		ERROR("HTTP response already written");
-		return DataWriter::Null.packet;
-	}
-	_pWriter.reset(new StringWriter(_poolBuffers));
-	_connection = HTTP::CONNECTION_KEEPALIVE; // write content (no new header), keepalive the connection!
-	return _pWriter->packet;
-}
 
 void HTTPSender::replaceTemplateTags(PacketWriter& packet, ifstream& ifile, const Parameters& parameters) {
 

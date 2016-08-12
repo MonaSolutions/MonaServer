@@ -23,6 +23,14 @@ This file is a part of Mona.
 #include "Mona/Net.h"
 #include <memory>
 
+#define MAX_ADAPTERS_SIZE		15000	// Default size for SizePointer in GetAdapterAddresses()
+
+//
+// Automatically link Base library.
+//
+#if defined(_MSC_VER)
+#pragma comment(lib, "iphlpapi.lib")
+#endif
 
 namespace Mona {
 
@@ -174,10 +182,16 @@ public:
 	static const IPAddress& Loopback(Family family = IPv4);
 	// Returns a broadcast IPv4 address (255.255.255.255)
 	static const IPAddress& Broadcast();
+	
+	// Returns a list for all local IP addresses (blocking method!)
+	static const std::vector<IPAddress>& Locals() { static LocalAddresses Addresses; return Addresses; }
 
 	operator bool() const { return !isWildcard(); }
 private:
-	
+	struct LocalAddresses : std::vector<IPAddress> {
+		LocalAddresses();
+	};
+
 	std::shared_ptr<IPAddressCommon>	_pIPAddress;
 };
 

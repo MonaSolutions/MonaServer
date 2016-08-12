@@ -22,7 +22,7 @@ This file is a part of Mona.
 #include "Mona/Mona.h"
 #include "Mona/TCPSender.h"
 #include "Mona/Writer.h"
-#include "Mona/Path.h"
+#include "Mona/File.h"
 #include "Mona/Client.h"
 #include "Mona/DataReader.h"
 #include "Mona/HTTP/HTTP.h"
@@ -42,7 +42,7 @@ public:
 	// if data==NULL and size==1 means "live stream" (no content-length), if data==NULL and size>1 it will use a StringWriter (raw serialization)
 	DataWriter&		write(const char* code, HTTP::ContentType type = HTTP::CONTENT_TEXT, const char* subType = "html", const UInt8* data=NULL,UInt32 size=0);
 	DataWriter&		writeResponse(const char* code="200 OK",bool rawWithoutLength=false);
-	void			writeFile(const Path& file, const std::shared_ptr<Parameters>& pParameters);
+	void			writeFile(const std::string& path, const std::shared_ptr<Parameters>& pParameters);
 	BinaryWriter&	writeRaw();
 
 	void writeError(const std::string& error,int code) {
@@ -80,7 +80,7 @@ private:
 
 	PoolBuffer							_pSetCookieBuffer;
 	const PoolBuffers&					_poolBuffers;
-	Path								_file;
+	File								_file;
 	std::shared_ptr<Parameters>			_pFileParams;
 	const std::string					_appPath; // Relative path of the application
 	UInt8								_connection;

@@ -307,6 +307,7 @@ void Peer::onUnsubscribe(const Listener& listener) {
 	WARN("Unsubscription client before connection")
 }
 
+
 	void Peer::SendInitSharedObjectMessage(SharedObject& so)
 	{
 		auto& writer = _pWriter->writeSharedObject();
@@ -388,9 +389,10 @@ void Peer::onUnsubscribe(const Listener& listener) {
 	}
 
 	bool Peer::onFileAccess(Exception& ex, FileAccessType type, DataReader& parameters, Path& filePath, DataWriter& properties) {
+
 	if(connected)
-		return _handler.onFileAccess(ex,*this, type, parameters, filePath, properties);
-	ERROR("File '", filePath.toString(), "' access by a not connected client")
+		return _handler.onFileAccess(ex,*this, type, parameters, file, properties);
+	ERROR("File '", file.path(), "' access by a not connected client")
 	return false;
 }
 

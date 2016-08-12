@@ -40,18 +40,15 @@ void Buffer::clip(UInt32 offset) {
 	_capacity -= offset;
 }
 
-void Buffer::clear() {
-	_size = 0;
-	// fix possible clip
-	if (_offset) {
-		_capacity += _offset;
-		_data -= _offset;
-		_offset = 0;
-	}
-}
 
 bool Buffer::resize(UInt32 size,bool preserveData) {
 	if (size <= _capacity) {
+		if (_offset && !preserveData) {
+			// fix possible clip
+			_capacity += _offset;
+			_data -= _offset;
+			_offset = 0;
+		}
 		_size = size;
 		return true;
 	}

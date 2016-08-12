@@ -156,7 +156,7 @@ void FlashMainStream::messageHandler(const string& name,AMFReader& message,Flash
 		// not close the main flash stream for that!
 		Exception ex;
 		if (!peer.onMessage(ex, name, message)) {
-			ex.set(Exception::APPLICATION, "Method '", name, "' not found on application ", peer.path);
+			ex.set(Exception::APPLICATION, "Method client '", name, "' not found in application ", peer.path);
 			ERROR(ex.error())
 		}
 		if (ex)

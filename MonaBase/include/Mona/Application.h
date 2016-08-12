@@ -24,7 +24,7 @@ This file is a part of Mona.
 #include "Mona/Options.h"
 #include "Mona/HelpFormatter.h"
 #include "Mona/Logger.h"
-#include "Mona/Path.h"
+#include "Mona/File.h"
 #include <vector>
 #include <memory>
 #include <fstream>
@@ -54,7 +54,7 @@ public:
 		EXIT_CONFIG = 78,  /// configuration error
 	};
 
-	const Path&				path() const { return _path; }
+	const File&				file() const { return _file; }
 
 	const Options&			options() const { return _options; }
 
@@ -98,7 +98,7 @@ private:
 
 	std::vector<std::string>    _args;
 	Options						_options;
-	Path						_path;
+	File						_file;
 
 	// logs
 	UInt32						_logSizeByFile;

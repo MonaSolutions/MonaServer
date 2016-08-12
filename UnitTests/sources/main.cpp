@@ -98,6 +98,7 @@ private:
 	UInt32	_loop;
 };
 
+
 int main(int argc, const char* argv[]) {
     return TestApp().run(argc, argv);
 }

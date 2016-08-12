@@ -51,3 +51,7 @@ _build
 logs
 /MonaServer/www
 html-template
+/MonaServer/tmp64
+/UnitTests/tmp64
+/MonaCore/tmp64
+/MonaBase/tmp64

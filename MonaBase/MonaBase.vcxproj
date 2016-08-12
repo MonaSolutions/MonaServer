@@ -214,10 +214,10 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug|Win32'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug|x64'">false</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="sources\Database.cpp" />
     <ClCompile Include="sources\Date.cpp" />
     <ClCompile Include="sources\Exceptions.cpp" />
     <ClCompile Include="sources\DNS.cpp" />
+    <ClCompile Include="sources\File.cpp" />
     <ClCompile Include="sources\FileSystem.cpp" />
     <ClCompile Include="sources\FileWatcher.cpp" />
     <ClCompile Include="sources\HelpFormatter.cpp" />
@@ -238,7 +238,7 @@
     </ClCompile>
     <ClCompile Include="sources\Options.cpp" />
     <ClCompile Include="sources\Parameters.cpp" />
-    <ClCompile Include="sources\Path.cpp" />
+    <ClCompile Include="sources\PersistentData.cpp" />
     <ClCompile Include="sources\PoolBuffers.cpp" />
     <ClCompile Include="sources\Process.cpp" />
     <ClCompile Include="sources\QualityOfService.cpp" />
@@ -272,11 +272,11 @@
     <ClInclude Include="include\Mona\Binary.h" />
     <ClInclude Include="include\Mona\Buffer.h" />
     <ClInclude Include="include\Mona\Crypto.h" />
-    <ClInclude Include="include\Mona\Database.h" />
     <ClInclude Include="include\Mona\Date.h" />
     <ClInclude Include="include\Mona\Event.h" />
     <ClInclude Include="include\Mona\DNS.h" />
     <ClInclude Include="include\Mona\Exceptions.h" />
+    <ClInclude Include="include\Mona\File.h" />
     <ClInclude Include="include\Mona\FileSystem.h" />
     <ClInclude Include="include\Mona\FileWatcher.h" />
     <ClInclude Include="include\Mona\HelpFormatter.h" />
@@ -299,7 +299,7 @@
     <ClInclude Include="include\Mona\MapParameters.h" />
     <ClInclude Include="include\Mona\Option.h" />
     <ClInclude Include="include\Mona\Options.h" />
-    <ClInclude Include="include\Mona\Path.h" />
+    <ClInclude Include="include\Mona\PersistentData.h" />
     <ClInclude Include="include\Mona\PoolBuffer.h" />
     <ClInclude Include="include\Mona\PoolBuffers.h" />
     <ClInclude Include="include\Mona\Process.h" />

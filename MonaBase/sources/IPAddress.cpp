@@ -23,6 +23,11 @@ This file is a part of Mona.
 #include "Mona/String.h"
 #include "Mona/DNS.h"
 #include "Mona/Util.h"
+#if defined(WIN32)
+	#include <Iphlpapi.h>
+#else
+	#include <ifaddrs.h>
+#endif
 
 using namespace std;
 
@@ -559,5 +564,43 @@ const IPAddress& IPAddress::Loopback(Family family) {
 	return family == IPv6 ? IPv6Loopback : IPv4Loopback;
 }
 
+IPAddress::LocalAddresses::LocalAddresses() {
+
+#if defined (WIN32)
+		ULONG size = MAX_ADAPTERS_SIZE;
+		Buffer buffer(MAX_ADAPTERS_SIZE);
+		PIP_ADAPTER_ADDRESSES pAddresses = (IP_ADAPTER_ADDRESSES *)buffer.data(), adapt = NULL;
+		PIP_ADAPTER_UNICAST_ADDRESS aip = NULL;
+
+		if (GetAdaptersAddresses(AF_UNSPEC, GAA_FLAG_INCLUDE_PREFIX, NULL, pAddresses, &size) != NO_ERROR) {
+			emplace_back(Loopback(IPAddress::IPv4));
+			return;
+		}
+
+		for (adapt = pAddresses; adapt; adapt = adapt->Next) {
+			for (aip = adapt->FirstUnicastAddress; aip; aip = aip->Next) {
+
+				if (aip->Address.lpSockaddr->sa_family == AF_INET6)
+					emplace_back(reinterpret_cast<struct sockaddr_in6*>(aip->Address.lpSockaddr)->sin6_addr, reinterpret_cast<struct sockaddr_in6*>(aip->Address.lpSockaddr)->sin6_scope_id);
+				else if (aip->Address.lpSockaddr->sa_family == AF_INET)
+					emplace_back(reinterpret_cast<struct sockaddr_in*>(aip->Address.lpSockaddr)->sin_addr);
+			}
+		}
+#else
+		struct ifaddrs * ifAddrStruct = NULL;
+		if (getifaddrs(&ifAddrStruct) == -1) {
+			emplace_back(Loopback(IPAddress::IPv4));
+			return;
+		}
+
+		for (struct ifaddrs * ifa = ifAddrStruct; ifa; ifa = ifa->ifa_next) {
+
+			if (ifa->ifa_addr->sa_family == AF_INET6)
+				emplace_back(reinterpret_cast<struct sockaddr_in6*>(ifa->ifa_addr)->sin6_addr, reinterpret_cast<struct sockaddr_in6*>(ifa->ifa_addr)->sin6_scope_id);
+			else if (ifa->ifa_addr->sa_family == AF_INET)
+				emplace_back(reinterpret_cast<struct sockaddr_in*>(ifa->ifa_addr)->sin_addr);
+		}
+#endif
+}
 
 } // namespace Mona

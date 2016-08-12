@@ -215,12 +215,14 @@ This file is a part of Mona.
 #endif
 
 #if defined(_WIN32)
-typedef unsigned long DWORD;
-#define THREAD_ID	DWORD
+
+#define THREAD_ID uint32_t
+
 #define NOMINMAX
 #define _WINSOCKAPI_    // stops windows.h including winsock.h
 #define sprintf sprintf_s
 #define snprintf sprintf_s
+#define PATH_MAX MAX_PATH
 #elif _OS_BSD
 #define THREAD_ID	pthread_t
 #else
@@ -259,7 +261,7 @@ class Object {
 	Object(const Object& other) = delete;
 	Object& operator=(const Object& other) = delete;
 	Object(Object&& other) = delete;
-	Object operator=(Object&& other) = delete;
+	Object& operator=(Object&& other) = delete;
 public:
 	Object() {};
 	virtual ~Object() {};

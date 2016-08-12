@@ -1,0 +1,365 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="debug|Win32">
+      <Configuration>debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="debug|x64">
+      <Configuration>debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{DB5EA81E-1995-4F9B-A37E-BFB70E564D4B}</ProjectGuid>
+    <RootNamespace>MonaCore</RootNamespace>
+    <ProjectName>MonaCore</ProjectName>
+    <Keyword>ManagedCProj</Keyword>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v140_xp</PlatformToolset>
+    <CharacterSet>NotSet</CharacterSet>
+    <CLRSupport>false</CLRSupport>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v140</PlatformToolset>
+    <CharacterSet>NotSet</CharacterSet>
+    <CLRSupport>false</CLRSupport>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v140_xp</PlatformToolset>
+    <CharacterSet>NotSet</CharacterSet>
+    <CLRSupport>false</CLRSupport>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v140</PlatformToolset>
+    <CharacterSet>NotSet</CharacterSet>
+    <CLRSupport>false</CLRSupport>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>11.0.50727.1</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>$(ProjectDir)lib\</OutDir>
+    <IntDir>tmp/$(Configuration)\</IntDir>
+    <TargetName>$(ProjectName)d</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <TargetName>$(ProjectName)64d</TargetName>
+    <OutDir>$(ProjectDir)lib\</OutDir>
+    <IntDir>tmp64\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>$(ProjectDir)lib\</OutDir>
+    <IntDir>tmp/$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <OutDir>$(ProjectDir)lib\</OutDir>
+    <IntDir>tmp64\$(Configuration)\</IntDir>
+    <TargetName>$(ProjectName)64</TargetName>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <AdditionalOptions>/MP %(AdditionalOptions)</AdditionalOptions>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>../External/include;../MonaBase/include;include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <MinimalRebuild>false</MinimalRebuild>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <PrecompiledHeader />
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <SDLCheck>true</SDLCheck>
+      <DisableSpecificWarnings>
+      </DisableSpecificWarnings>
+    </ClCompile>
+    <Lib>
+      <OutputFile>$(OutDir)$(ProjectName)d.lib</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <AdditionalOptions>/MP %(AdditionalOptions)</AdditionalOptions>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>../External/include;../MonaBase/include;include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN64;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <MinimalRebuild>false</MinimalRebuild>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <SDLCheck>true</SDLCheck>
+      <DisableSpecificWarnings>4267;4244;4800</DisableSpecificWarnings>
+    </ClCompile>
+    <Lib>
+      <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <OmitFramePointers>true</OmitFramePointers>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
+      <AdditionalIncludeDirectories>include;../External/include;../MonaBase/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <PrecompiledHeader />
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat />
+      <Optimization>Full</Optimization>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <SDLCheck>
+      </SDLCheck>
+      <DisableSpecificWarnings>
+      </DisableSpecificWarnings>
+    </ClCompile>
+    <Lib>
+      <OutputFile>$(OutDir)$(ProjectName).lib</OutputFile>
+      <LinkTimeCodeGeneration>true</LinkTimeCodeGeneration>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <OmitFramePointers>true</OmitFramePointers>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
+      <AdditionalIncludeDirectories>include;../External/include;../MonaBase/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>
+      </DebugInformationFormat>
+      <Optimization>Full</Optimization>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <SDLCheck>
+      </SDLCheck>
+      <DisableSpecificWarnings>4267;4244;4800</DisableSpecificWarnings>
+    </ClCompile>
+    <Lib>
+      <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
+      <LinkTimeCodeGeneration>true</LinkTimeCodeGeneration>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <Reference Include="System">
+      <CopyLocalSatelliteAssemblies>true</CopyLocalSatelliteAssemblies>
+      <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
+    </Reference>
+    <Reference Include="System.Data">
+      <CopyLocalSatelliteAssemblies>true</CopyLocalSatelliteAssemblies>
+      <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
+    </Reference>
+    <Reference Include="System.Xml">
+      <CopyLocalSatelliteAssemblies>true</CopyLocalSatelliteAssemblies>
+      <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\Mona\Client.h" />
+    <ClInclude Include="include\Mona\Decoder.h" />
+    <ClInclude Include="include\Mona\FlashMainStream.h" />
+    <ClInclude Include="include\Mona\Group.h" />
+    <ClInclude Include="include\Mona\Handler.h" />
+    <ClInclude Include="include\Mona\HTTP\HTTPDecoder.h" />
+    <ClInclude Include="include\Mona\HTTP\HTTPPacket.h" />
+    <ClInclude Include="include\Mona\ICE.h" />
+    <ClInclude Include="include\Mona\Invoker.h" />
+    <ClInclude Include="include\Mona\MapReader.h" />
+    <ClInclude Include="include\Mona\MediaCodec.h" />
+    <ClInclude Include="include\Mona\MediaContainer.h" />
+    <ClInclude Include="include\Mona\MIME.h" />
+    <ClInclude Include="include\Mona\ParameterWriter.h" />
+    <ClInclude Include="include\Mona\Peer.h" />
+    <ClInclude Include="include\Mona\QueryReader.h" />
+    <ClInclude Include="include\Mona\QueryWriter.h" />
+    <ClInclude Include="include\Mona\ReferableReader.h" />
+    <ClInclude Include="include\Mona\RelayServer.h" />
+    <ClInclude Include="include\Mona\RTMFP\RTMFPDecoder.h" />
+    <ClInclude Include="include\Mona\RTSP\RTSPSender.h" />
+    <ClInclude Include="include\Mona\RTSP\RTSPWriter.h" />
+    <ClInclude Include="include\Mona\RTSP\RTSP.h" />
+    <ClInclude Include="include\Mona\RTSP\RTSPDecoder.h" />
+    <ClInclude Include="include\Mona\RTSP\RTSPPacket.h" />
+    <ClInclude Include="include\Mona\RTSP\RTSProtocol.h" />
+    <ClInclude Include="include\Mona\RTSP\RTSPSession.h" />
+    <ClInclude Include="include\Mona\SDP.h" />
+    <ClInclude Include="include\Mona\Server.h" />
+    <ClInclude Include="include\Mona\SplitWriter.h" />
+    <ClInclude Include="include\Mona\StringReader.h" />
+    <ClInclude Include="include\Mona\StringWriter.h" />
+    <ClInclude Include="include\Mona\TCProtocol.h" />
+    <ClInclude Include="include\Mona\UDProtocol.h" />
+    <ClInclude Include="include\Mona\WebSocket\WSDecoder.h" />
+    <ClInclude Include="include\Mona\Writer.h" />
+    <ClInclude Include="include\Mona\Protocol.h" />
+    <ClInclude Include="include\Mona\Protocols.h" />
+    <ClInclude Include="include\Mona\RTMFP\BandWriter.h" />
+    <ClInclude Include="include\Mona\RTMFP\RTMFP.h" />
+    <ClInclude Include="include\Mona\RTMFP\RTMFPCookie.h" />
+    <ClInclude Include="include\Mona\RTMFP\RTMFPCookieComputing.h" />
+    <ClInclude Include="include\Mona\RTMFP\RTMFPFlow.h" />
+    <ClInclude Include="include\Mona\RTMFP\RTMFPHandshake.h" />
+    <ClInclude Include="include\Mona\RTMFP\RTMFPMessage.h" />
+    <ClInclude Include="include\Mona\RTMFP\RTMFProtocol.h" />
+    <ClInclude Include="include\Mona\RTMFP\RTMFPSender.h" />
+    <ClInclude Include="include\Mona\RTMFP\RTMFPSession.h" />
+    <ClInclude Include="include\Mona\RTMFP\RTMFPWriter.h" />
+    <ClInclude Include="include\Mona\RTMP\RTMP.h" />
+    <ClInclude Include="include\Mona\RTMP\RTMPHandshaker.h" />
+    <ClInclude Include="include\Mona\RTMP\RTMProtocol.h" />
+    <ClInclude Include="include\Mona\RTMP\RTMPSender.h" />
+    <ClInclude Include="include\Mona\RTMP\RTMPSession.h" />
+    <ClInclude Include="include\Mona\RTMP\RTMPWriter.h" />
+    <ClInclude Include="include\Mona\WebSocket\WS.h" />
+    <ClInclude Include="include\Mona\WebSocket\WSSender.h" />
+    <ClInclude Include="include\Mona\WebSocket\WSSession.h" />
+    <ClInclude Include="include\Mona\WebSocket\WSWriter.h" />
+    <ClInclude Include="include\Mona\HTTP\HTTP.h" />
+    <ClInclude Include="include\Mona\HTTP\HTTProtocol.h" />
+    <ClInclude Include="include\Mona\HTTP\HTTPSender.h" />
+    <ClInclude Include="include\Mona\HTTP\HTTPSession.h" />
+    <ClInclude Include="include\Mona\HTTP\HTTPWriter.h" />
+    <ClInclude Include="include\Mona\Listener.h" />
+    <ClInclude Include="include\Mona\Listeners.h" />
+    <ClInclude Include="include\Mona\Publication.h" />
+    <ClInclude Include="include\Mona\Publications.h" />
+    <ClInclude Include="include\Mona\AMFReader.h" />
+    <ClInclude Include="include\Mona\AMFWriter.h" />
+    <ClInclude Include="include\Mona\DataReader.h" />
+    <ClInclude Include="include\Mona\DataWriter.h" />
+    <ClInclude Include="include\Mona\JSONReader.h" />
+    <ClInclude Include="include\Mona\JSONWriter.h" />
+    <ClInclude Include="include\Mona\Session.h" />
+    <ClInclude Include="include\Mona\Sessions.h" />
+    <ClInclude Include="include\Mona\TCPSession.h" />
+    <ClInclude Include="include\Mona\AMF.h" />
+    <ClInclude Include="include\Mona\FlashStream.h" />
+    <ClInclude Include="include\Mona\FlashWriter.h" />
+    <ClInclude Include="include\Mona\XMLRPCReader.h" />
+    <ClInclude Include="include\Mona\XMLRPCWriter.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="sources\FlashMainStream.cpp" />
+    <ClCompile Include="sources\HTTP\HTTPDecoder.cpp" />
+    <ClCompile Include="sources\HTTP\HTTPPacket.cpp" />
+    <ClCompile Include="sources\HTTP\HTTPSender.cpp" />
+    <ClCompile Include="sources\ICE.cpp" />
+    <ClCompile Include="sources\Invoker.cpp" />
+    <ClCompile Include="sources\MediaContainer.cpp" />
+    <ClCompile Include="sources\MIME.cpp" />
+    <ClCompile Include="sources\Peer.cpp" />
+    <ClCompile Include="sources\QueryReader.cpp" />
+    <ClCompile Include="sources\QueryWriter.cpp" />
+    <ClCompile Include="sources\ReferableReader.cpp" />
+    <ClCompile Include="sources\RelayServer.cpp" />
+    <ClCompile Include="sources\RTMFP\RTMFPDecoder.cpp" />
+    <ClCompile Include="sources\RTMFP\RTMFPSender.cpp" />
+    <ClCompile Include="sources\RTMP\RTMPSender.cpp" />
+    <ClCompile Include="sources\RTSP\RTSP.cpp" />
+    <ClCompile Include="sources\RTSP\RTSPPacket.cpp" />
+    <ClCompile Include="sources\RTSP\RTSPSender.cpp" />
+    <ClCompile Include="sources\RTSP\RTSPSession.cpp" />
+    <ClCompile Include="sources\RTSP\RTSPWriter.cpp" />
+    <ClCompile Include="sources\SDP.cpp" />
+    <ClCompile Include="sources\Server.cpp" />
+    <ClCompile Include="sources\WebSocket\WSDecoder.cpp" />
+    <ClCompile Include="sources\Writer.cpp" />
+    <ClCompile Include="sources\Protocols.cpp" />
+    <ClCompile Include="sources\RTMFP\RTMFP.cpp" />
+    <ClCompile Include="sources\RTMFP\RTMFPCookie.cpp" />
+    <ClCompile Include="sources\RTMFP\RTMFPCookieComputing.cpp" />
+    <ClCompile Include="sources\RTMFP\RTMFPFlow.cpp" />
+    <ClCompile Include="sources\RTMFP\RTMFPHandshake.cpp" />
+    <ClCompile Include="sources\RTMFP\RTMFProtocol.cpp" />
+    <ClCompile Include="sources\RTMFP\RTMFPSession.cpp" />
+    <ClCompile Include="sources\RTMFP\RTMFPWriter.cpp" />
+    <ClCompile Include="sources\RTMP\RTMP.cpp" />
+    <ClCompile Include="sources\RTMP\RTMPHandshaker.cpp" />
+    <ClCompile Include="sources\RTMP\RTMPSession.cpp" />
+    <ClCompile Include="sources\RTMP\RTMPWriter.cpp" />
+    <ClCompile Include="sources\WebSocket\WS.cpp" />
+    <ClCompile Include="sources\WebSocket\WSSession.cpp" />
+    <ClCompile Include="sources\WebSocket\WSWriter.cpp" />
+    <ClCompile Include="sources\HTTP\HTTP.cpp" />
+    <ClCompile Include="sources\HTTP\HTTPSession.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug|Win32'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug|x64'">false</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="sources\HTTP\HTTPWriter.cpp" />
+    <ClCompile Include="sources\Listener.cpp" />
+    <ClCompile Include="sources\Publication.cpp" />
+    <ClCompile Include="sources\AMFReader.cpp" />
+    <ClCompile Include="sources\AMFWriter.cpp" />
+    <ClCompile Include="sources\DataReader.cpp" />
+    <ClCompile Include="sources\JSONReader.cpp" />
+    <ClCompile Include="sources\JSONWriter.cpp" />
+    <ClCompile Include="sources\Session.cpp" />
+    <ClCompile Include="sources\Sessions.cpp" />
+    <ClCompile Include="sources\TCPSession.cpp" />
+    <ClCompile Include="sources\FlashStream.cpp" />
+    <ClCompile Include="sources\FlashWriter.cpp" />
+    <ClCompile Include="sources\XMLRPCReader.cpp" />
+    <ClCompile Include="sources\XMLRPCWriter.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\MonaBase\MonaBaseVS14.vcxproj">
+      <Project>{59bc76a9-32cf-4580-8c32-9f12ea4ba22b}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

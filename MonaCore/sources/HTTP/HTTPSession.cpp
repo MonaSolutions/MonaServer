@@ -140,7 +140,6 @@ void HTTPSession::receive(const shared_ptr<HTTPPacket>& pPacket) {
 
 			peer.onConnection(ex, _writer,parameters);
 			if (!ex && peer.connected) {
-
 				if (peer.parameters().getString("index", _index)) {
 					if (String::IsFalse(_index)) {
 						_indexDirectory = false;
@@ -210,51 +209,53 @@ void HTTPSession::processOptions(Exception& ex,const HTTPPacket& request) {
 void HTTPSession::processGet(Exception& ex, HTTPPacket& request, QueryReader& parameters) {
 	// use index http option in the case of GET request on a directory
 
-	Path file(request.filePath());
+	File& file(request.file);
 
-	if (file.isFolder()) {
-		// FOLDER //
-		if (_index.empty()) {
-			if (_indexDirectory) {
-				shared_ptr<Parameters> pFileParams(new MapParameters());
-				ParameterWriter parameterWriter(*pFileParams);
-				parameters.read(parameterWriter);
-				return _writer.writeFile(file, pFileParams); // folder view!
-			}
-			ex.set(Exception::PERMISSION, "No authorization to see the content of ", peer.path, "/");
+	if (!file.isFolder()) {
+		// FILE //
+
+		// 1 - priority on client method
+		if (file.extension().empty() && peer.onMessage(ex, file.name(), parameters)) // can be method!
+			return;
+	
+		// 2 - try to get a file
+		shared_ptr<Parameters> pFileParams(new MapParameters());
+		ParameterWriter parameterWriter(*pFileParams);
+		if (!peer.onRead(ex, parameters, file, parameterWriter)) {
+			if (!ex)
+				ex.set(Exception::PERMISSION, "No authorization to see the content of ", file.path());
 			return;
 		}
-		if (_index.find_last_of('.') != string::npos && peer.onMessage(ex, _index, parameters)) // can be method!
-			return;
-
-		// Redirect to the file (get name to prevent path insertion)
-		file.append(_index);
-	} 
-	
-	// FILE //
-
-	// 1 - priority on client method
-	if (file.extension().empty() && peer.onMessage(ex, file.name(), parameters)) // can be method!
-		return;
-	
-	// 2 - try to get a file
-	shared_ptr<Parameters> pFileParams(new MapParameters());
-	ParameterWriter parameterWriter(*pFileParams);
-	if (peer.onRead(ex, parameters, file, parameterWriter) && !ex) {
-
 		// If onRead has been authorised, and that the file is a multimedia file, and it doesn't exists (no VOD, filePath.lastModified()==0 means "doesn't exists")
 		// Subscribe for a live stream with the basename file as stream name
 		if (!file.exists()) {
 			if (request.contentType == HTTP::CONTENT_ABSENT)
 				request.contentType = HTTP::ExtensionToMIMEType(file.extension(), request.contentSubType);
 			if (request.contentType == HTTP::CONTENT_VIDEO || request.contentType == HTTP::CONTENT_AUDIO) {
-				if (openSubscribtion(ex, file.baseName(), _writer)) {
+				if (openSubscribtion(ex, file.baseName(), _writer))
 					return;
-				}
 			}
 		}
-		_writer.writeFile(file, pFileParams);
+		if (!file.isFolder())
+			return _writer.writeFile(file.path(), pFileParams);
 	}
+
+
+	// FOLDER //
+	if (_index.find_last_of('.') == string::npos && peer.onMessage(ex, _index, parameters)) // can be method!
+		return;
+
+	// Redirect to the file (get name to prevent path insertion), if impossible (_index empty or invalid) list directory
+	if (!_index.empty())
+		file.setPath(file.path(),_index);
+	else if (!_indexDirectory) {
+		ex.set(Exception::PERMISSION, "No authorization to see the content of ", peer.path, '/');
+		return;
+	}
+	shared_ptr<Parameters> pFileParams(new MapParameters());
+	ParameterWriter parameterWriter(*pFileParams);
+	parameters.read(parameterWriter);
+	return _writer.writeFile(file.path(), pFileParams); // folder view or index redirection (without pass by onRead because can create a infinite loop
 }
 
 } // namespace Mona

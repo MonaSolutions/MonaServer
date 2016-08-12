@@ -111,7 +111,7 @@ int	LUATCPClient::Send(lua_State* pState) {
 		Exception ex;
 		client.send(ex,data, size);
 		if (ex)
-			SCRIPT_WRITE_STRING(ex.error().c_str())
+			SCRIPT_WRITE_STRING(ex.error())
 	SCRIPT_CALLBACK_RETURN
 }
 
@@ -121,19 +121,19 @@ int LUATCPClient::Get(lua_State* pState) {
 		if(name) {
 			if(strcmp(name,"connect")==0) {
 				SCRIPT_WRITE_FUNCTION(LUATCPClient::Connect)
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name, "disconnect") == 0) {
 				SCRIPT_WRITE_FUNCTION(LUATCPClient::Disconnect)
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name, "send") == 0) {
 				SCRIPT_WRITE_FUNCTION(LUATCPClient::Send)
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name, "address") == 0) {
 				Script::AddObject<LUASocketAddress>(pState, client.address());
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name, "peerAddress") == 0) {
 				Script::AddObject<LUASocketAddress>(pState, client.peerAddress());
-				SCRIPT_CALLBACK_FIX_INDEX
+				SCRIPT_FIX_RESULT
 			} else if (strcmp(name, "idleTime") == 0) {
 				SCRIPT_WRITE_NUMBER(client.idleTime())  // change
 			} else if (strcmp(name, "connected") == 0)

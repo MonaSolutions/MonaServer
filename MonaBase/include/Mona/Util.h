@@ -66,71 +66,30 @@ public:
 	static Parameters& UnpackQuery(const char* query, std::size_t count, Parameters& parameters);
 	static Parameters& UnpackQuery(const char* query, Parameters& parameters) { return UnpackQuery(query, std::string::npos, parameters); }
 
-	/// \return the number of key/value found, or string::npos if forEach return false
-	static std::size_t UnpackQuery(const std::string& query, const ForEachParameter& forEach) { return UnpackQuery(query.data(), query.size(), forEach); }
-	static std::size_t UnpackQuery(const char* query, std::size_t count, const ForEachParameter& forEach);
-	static std::size_t UnpackQuery(const char* query, const ForEachParameter& forEach) { return UnpackQuery(query, std::string::npos, forEach); }
+	/// \return the number of key/value found
+	static UInt32 UnpackQuery(const std::string& query, const ForEachParameter& forEach) { return UnpackQuery(query.data(), query.size(), forEach); }
+	static UInt32 UnpackQuery(const char* query, std::size_t count, const ForEachParameter& forEach);
+	static UInt32 UnpackQuery(const char* query, const ForEachParameter& forEach) { return UnpackQuery(query, std::string::npos, forEach); }
 
 
-	static bool ReadIniFile(Exception& ex, const std::string& path, Parameters& parameters);
+	static bool ReadIniFile(const std::string& path, Parameters& parameters);
 
 	static unsigned ProcessorCount() { unsigned result(std::thread::hardware_concurrency());  return result > 0 ? result : 1; }
-	static const Parameters& Environment();
+	static const Parameters& Environment() { return _Environment; }
 
-	template <typename BufferType>
-	static bool DecodeURI(const char*& value, BufferType& out) { std::size_t count(std::string::npos); return DecodeURI(value, count, out); }
+	typedef std::function<bool(char c,bool wasEncoded)> ForEachDecodedChar;
 
-	template <typename BufferType>
-	static bool DecodeURI(const char*& value, std::size_t& count, BufferType& out) {
-		if (!count || !*value || *value != '%')
-			return false; // nothing, end!
-		++value; --count;
-		if (!count || !*value) {
-			String::Append(out,'%');
-			return false; // syntax error
-		}
-		char hi = *value;
-		++value; --count;
-		if (!count || !*value) {
-			String::Append(out,'%',hi);
-			return false; // syntax error
-		}
-		char lo = *value++; --count;
-		char c;
-		if (hi >= '0' && hi <= '9')
-			c = hi - '0';
-		else if (hi >= 'A' && hi <= 'F')
-			c = hi - 'A' + 10;
-		else if (hi >= 'a' && hi <= 'f')
-			c = hi - 'a' + 10;
-		else {
-			String::Append(out,'%',hi,lo);
-			return false; // syntax error
-		}
-		c *= 16;
-		if (lo >= '0' && lo <= '9')
-			c += lo - '0';
-		else if (lo >= 'A' && lo <= 'F')
-			c += lo - 'A' + 10;
-		else if (lo >= 'a' && lo <= 'f')
-			c += lo - 'a' + 10;
-		else {
-			String::Append(out,'%',hi,lo);
-			return false; // syntax error
-		}
+	static UInt32 DecodeURI(const std::string& value, const ForEachDecodedChar& forEach) { return DecodeURI(value.data(),value.size(),forEach); }
+	static UInt32 DecodeURI(const char* value, const ForEachDecodedChar& forEach)  { return DecodeURI(value,std::string::npos,forEach); }
+	static UInt32 DecodeURI(const char* value, std::size_t count, const ForEachDecodedChar& forEach);
 	
-		// Decoded! Assign next caracter & return next char
-		String::Append(out,c);
-		return true;
-	}
 
 	template <typename BufferType>
-	static BufferType&	EncodeURI(const char* in, BufferType& out) { return EncodeURI(in, strlen(in), out); }
+	static BufferType&	EncodeURI(const char* in, BufferType& out) { return EncodeURI(in, std::string::npos, out); }
 
 	template <typename BufferType>
-	static BufferType&	EncodeURI(const char* in, UInt32 size, BufferType& out) {
-		const char* end(in + size);
-		while (in<end) {
+	static BufferType&	EncodeURI(const char* in, std::size_t count, BufferType& out) {
+		while (count && (count!=std::string::npos || *in)) {
 			char c = *in++;
 			if (isxml(c))
 				Buffer::Append(out, &c, 1);
@@ -138,6 +97,8 @@ public:
 				String::Append(out, '%', Format<UInt8>("%2X", (UInt8)c));
 			else
 				Buffer::Append(out, &c, 1);
+			if(count!=std::string::npos)
+				--count;
 		}
 		return out;
 	}
@@ -159,7 +120,7 @@ public:
 
 		if (!append)
 			accumulator = 0;
-		buffer.resize(accumulator+(UInt32)ceil(size/3.0)*4,append);
+		buffer.resize(accumulator+UInt32(ceil(size/3.0)*4));
 
 		char*		current = (char*)buffer.data();
 		if (!current) // to expect null writer 
@@ -189,22 +150,23 @@ public:
 
 
 	template <typename BufferType>
-	static bool FromBase64(BufferType& buffer) { return FromBase64((const UInt8*)buffer.data(), buffer.size(), buffer); }
+	static bool FromBase64(BufferType& buffer) { return FromBase64(BIN buffer.data(), buffer.size(), buffer); }
 
 	template <typename BufferType>
 	static bool FromBase64(const UInt8* data, UInt32 size,BufferType& buffer,bool append=false) {
-		UInt32 bits(0), accumulator(0), oldSize(buffer.size());
-		if (!append)
-			oldSize = 0;
-
-		UInt8*		 out((UInt8*)buffer.data());
-		if (!out) // to expect null writer 
+		if (!buffer.data()) // to expect null writer 
 			return false;
-		out += oldSize;
+
+		UInt32 bits(0), oldSize(append ? buffer.size() : 0);
+		UInt32 accumulator(oldSize + UInt32(ceil(size / 4.0) * 3));
 		const UInt8* end(data+size);
 
-		size = 0;
-	
+		if (buffer.size()<accumulator)
+			buffer.resize(accumulator); // maximum size!
+		UInt8* out(BIN buffer.data() + oldSize);
+
+		accumulator = size = 0;
+
 		while(data<end) {
 			const int c = *data++;
 			if (isspace(c) || c == '=')
@@ -212,7 +174,7 @@ public:
 
 			if ((c > 127) || (c < 0) || (_ReverseB64Table[c] > 63)) {
 				// reset the oldSize
-				buffer.resize(oldSize,append);
+				buffer.resize(oldSize);
 				return false;
 			}
 		
@@ -224,7 +186,7 @@ public:
 				*out++ = ((accumulator >> bits) & 0xFFu);
 			}
 		}
-		buffer.resize(oldSize+size,append);
+		buffer.resize(oldSize+size);
 		return true;
 	}
 
@@ -255,7 +217,7 @@ public:
 		}
 
 		UInt32 oldSize(options&HEX_APPEND ? buffer.size() : 0);
-		buffer.resize((end-data) * ((options&HEX_CPP) ? 4 : 2) - (skipLeft ? 1 : 0) + oldSize, (options&HEX_APPEND)>0);
+		buffer.resize((end-data) * ((options&HEX_CPP) ? 4 : 2) - (skipLeft ? 1 : 0) + oldSize);
 		UInt8* out((UInt8*)buffer.data() + oldSize);
 	
 		UInt8 ref(options&HEX_UPPER_CASE ? '7' : 'W');
@@ -279,30 +241,40 @@ public:
 	}
 
 	template <typename BufferType>
-	static BufferType& UnformatHex(BufferType& buffer) {
-		UInt32		 size(0);
-		UInt8*		 in = (UInt8*)buffer.data();
-		if (!in) // to expect null writer 
-			return buffer;
-		UInt8*		 out = in;
-		const UInt8* end = in+buffer.size();
+	static BufferType& UnformatHex(BufferType& buffer) { return UnformatHex(BIN buffer.data(), buffer.size(), buffer); }
 
-		while(in<end) {
-			UInt8 first = toupper(*in++);
-			UInt8 second = (in == end) ? '0' : toupper(*in++);
+	template <typename BufferType>
+	static BufferType& UnformatHex(const UInt8* data, UInt32 size, BufferType& buffer, bool append=false) {
+		if (!buffer.data()) // to expect null writer 
+			return buffer;
+
+		const UInt8* end(data+size);
+		UInt8* out;
+		UInt32 oldSize(append ? buffer.size() : 0);
+		size = oldSize + UInt32(ceil(size / 2.0));
+		if (buffer.size()<size)
+			buffer.resize(size);
+		out = BIN buffer.data() + oldSize;
+
+		while(data<end) {
+			UInt8 first = toupper(*data++);
+			UInt8 second = (data == end) ? '0' : toupper(*data++);
 			*out++ = ((first - (first<='9' ? '0' : '7')) << 4) | ((second - (second<='9' ? '0' : '7')) & 0x0F);
-			++size;
 		}
-		buffer.resize(size, false);
+		buffer.resize(size);
 		return buffer;
 	}
 
 
 private:
 
-	static MapParameters					_Environment;
-	static std::mutex						_MutexEnvironment;
-	
+	class EnvironmentParameters : public MapParameters, public virtual Object {
+	public:
+		EnvironmentParameters();
+	};
+
+	static EnvironmentParameters			_Environment;
+
 	static std::map<THREAD_ID, std::string>	_ThreadNames;
 	static std::recursive_mutex				_MutexThreadNames;
 

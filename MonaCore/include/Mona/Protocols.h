@@ -76,7 +76,7 @@ private:
 		EXCEPTION_TO_LOG(success = address.setWithDNS(ex, host, port), name, " server")
 		if (!success)
 			return;
-		ex.set(Exception::NIL);
+		ex = NULL;
 
 		// resolve every protocol public server address
 		if ((publicHost.empty() && !_invoker.getString("publicHost", publicHost)) || !((SocketAddress&)pProtocol->publicAddress).setWithDNS(ex, publicHost, port)) {

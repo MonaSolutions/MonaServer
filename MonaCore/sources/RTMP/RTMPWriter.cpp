@@ -32,11 +32,14 @@ RTMPWriter::RTMPWriter(UInt32 id,TCPSession& session,std::shared_ptr<RTMPSender>
 
 void RTMPWriter::writeProtocolSettings() {
 	// to eliminate chunks of packet in the server->client direction
-	write(AMF::CHUNKSIZE).packet.write32(0x7FFFFFFF);
+	// TODO => 0x003EFFEE to make Mona compatible with NimbleStreamer, reset to 0x7FFFFFFF one time NimbleStreamer fixed
+	write(AMF::CHUNKSIZE).packet.write32(0x003EFFEE);
 	// to increase the window ack size in the server->client direction
 	writeWinAckSize(2500000);
 	// to increase the window ack size in the client->server direction
 	write(AMF::BANDWITH).packet.write32(2500000).write8(0); // hard setting
+	// Stream Begin - ID 0
+	write(AMF::RAW).packet.write16(0).write32(0);
 }
 
 bool RTMPWriter::flush() {
@@ -44,26 +47,15 @@ bool RTMPWriter::flush() {
 		return false;
 	Exception ex;
 	if (_pEncryptKey) {
-		_pSender->dump(true, _channel,_session.peer.address);
+		_pSender->dump(true, _channel, _session.peer.address);
 		RC4(_pEncryptKey.get(), _pSender->size(), _pSender->data(), (UInt8*)_pSender->data());
 	} else
-		_pSender->dump(false, _channel,_session.peer.address);
+		_pSender->dump(false, _channel, _session.peer.address);
 	EXCEPTION_TO_LOG(_session.send<RTMPSender>(ex, qos(), _pSender), "RTMPWriter flush")
 		
 	
 	_pSender.reset(); // release the shared buffer (poolBuffer of AMWriter)
 	return true;
-}
-
-
-void RTMPWriter::writeRaw(const UInt8* data,UInt32 size) {
-	if(size==0) {
-		ERROR("Data must have at minimum the AMF type in its first byte")
-		return;
-	}
-	PacketReader reader(data,size);
-	AMF::ContentType type((AMF::ContentType)reader.read8());
-	write(type,reader.read32(),reader.current(),reader.available());
 }
 
 void RTMPWriter::close(Int32 code) {
@@ -83,11 +75,17 @@ AMFWriter& RTMPWriter::write(AMF::ContentType type,UInt32 time,const UInt8* data
 	if(state()==CLOSED)
         return AMFWriter::Null;
 
+	// KEEP it in first, to assign _channel.bodySize of the previous packet before to manipulate _channel again with the new packet
+	if (!_pSender)
+		_pSender.reset(new RTMPSender(_session.invoker.poolBuffers));
+	AMFWriter& writer = _pSender->writer(_channel);
+	BinaryWriter& packet = writer.packet;
+
 	UInt32 absoluteTime = time;
 	UInt8 headerFlag=0;
 	
 	// Default = Chunk Message Type 0 : full header
-	if(_channel.pStream == channel.pStream) {
+	if(_channel.type && _channel.pStream == channel.pStream) {
 		if (time >= _channel.absoluteTime) {
 			++headerFlag; // Chunk Message Type 1 : don't repeat the stream id
 			time -= _channel.absoluteTime; // relative time!
@@ -104,12 +102,6 @@ AMFWriter& RTMPWriter::write(AMF::ContentType type,UInt32 time,const UInt8* data
 	_channel.time = time;
 	_channel.type = type;
 	_channel.bodySize = size;
-
-	if (!_pSender)
-		_pSender.reset(new RTMPSender(_session.invoker.poolBuffers));
-
-	AMFWriter& writer = _pSender->writer(_channel);
-	BinaryWriter& packet = writer.packet;
 
 	_pSender->headerSize = 12 - 4*headerFlag;
 

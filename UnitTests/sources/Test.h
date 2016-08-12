@@ -26,7 +26,7 @@ This file is a part of Mona.
 #include <vector>
 
 /// \brief The fixture for testing class Foo.
-class Test : virtual Mona::Object {
+class Test : public virtual Mona::Object {
 public:
 
 	Test(const char * testName) {_name = testName;}
@@ -49,7 +49,7 @@ private:
 };
 
 /// \class Container of Test classes
-class PoolTest : virtual Mona::Object {
+class PoolTest : public virtual Mona::Object {
 
 public:	
 

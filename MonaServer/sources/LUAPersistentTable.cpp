@@ -17,28 +17,29 @@ details (or else see http://www.gnu.org/licenses/).
 This file is a part of Mona.
 */
 
-#include "LUADataTable.h"
+#include "LUAPersistentTable.h"
+#include "Mona/FileSystem.h"
 
 using namespace std;
 using namespace Mona;
 
-void LUADataTable::Init(lua_State* pState, LUADataTable& table) {
+void LUAPersistentTable::Init(lua_State* pState, LUAPersistentTable& table) {
 	lua_getmetatable(pState, -1);
-	lua_pushcfunction(pState,&LUADataTable::Len);
+	lua_pushcfunction(pState,&LUAPersistentTable::Len);
 	lua_setfield(pState, -2, "__len");
 	lua_newtable(pState);
 	lua_setfield(pState,-2, "|items");
 	lua_pop(pState, 1);
 }
 
-int	LUADataTable::Len(lua_State* pState) {
-	SCRIPT_CALLBACK(LUADataTable,table)
+int	LUAPersistentTable::Len(lua_State* pState) {
+	SCRIPT_CALLBACK(LUAPersistentTable,table)
 		SCRIPT_WRITE_NUMBER(table.count)
 	SCRIPT_CALLBACK_RETURN
 }
 
-int LUADataTable::Get(lua_State *pState) {
-	SCRIPT_CALLBACK(LUADataTable, table)
+int LUAPersistentTable::Get(lua_State *pState) {
+	SCRIPT_CALLBACK(LUAPersistentTable, table)
 		const char* name = SCRIPT_READ_STRING(NULL);
 		if (name) {
 			lua_getmetatable(pState, 1);
@@ -52,13 +53,13 @@ int LUADataTable::Get(lua_State *pState) {
 	SCRIPT_CALLBACK_RETURN
 }
 
-int LUADataTable::Set(lua_State *pState) {
-	SCRIPT_CALLBACK(LUADataTable, table);
+int LUAPersistentTable::Set(lua_State *pState) {
+	SCRIPT_CALLBACK(LUAPersistentTable, table);
 		const char* name = SCRIPT_READ_STRING(NULL);
 		if (name) {
 			Int8 removing = SCRIPT_NEXT_TYPE==LUA_TNIL ? 1 : 0;
 			string path;
-			String::Format(path, table.path, '/', name, '/');
+			FileSystem::MakeFolder(String::Format(path, table.path, '/', name));
 
 			lua_getmetatable(pState, 1);
 			lua_getfield(pState, -1, "|items");
@@ -75,7 +76,7 @@ int LUADataTable::Set(lua_State *pState) {
 				if (SCRIPT_NEXT_TYPE==LUA_TTABLE) {
 
 					lua_pushvalue(pState, 2); // name
-					Script::NewObject<LUADataTable,LUADataTable>(pState,*new LUADataTable(table.database, path));
+					Script::NewObject<LUAPersistentTable,LUAPersistentTable>(pState,*new LUAPersistentTable(table.persistentData, path));
 
 					// table iteration
 					lua_pushnil(pState);  // first key 
@@ -95,12 +96,12 @@ int LUADataTable::Set(lua_State *pState) {
 					Exception ex;
 					bool success = false;
 					if (removing) {
-						if ((success = table.database.remove(ex, path)) && !lua_isnil(pState, -1) && !lua_istable(pState, -1))
+						if ((success = table.persistentData.remove(ex, path)) && !lua_isnil(pState, -1) && !lua_istable(pState, -1))
 							--table.count;
 					} else {
 						UInt32 size(0);
 						const UInt8* value = Serialize(pState,3,size);
-						if((success = table.database.add(ex, path, value , size)) && lua_isnil(pState, -1))
+						if((success = table.persistentData.add(ex, path, value , size)) && lua_isnil(pState, -1))
 							++table.count;
 					}
 					if (success) {
@@ -122,7 +123,7 @@ int LUADataTable::Set(lua_State *pState) {
 	SCRIPT_CALLBACK_RETURN;
 }
 
-const UInt8* LUADataTable::Serialize(lua_State* pState, int index, UInt32& size) {
+const UInt8* LUAPersistentTable::Serialize(lua_State* pState, int index, UInt32& size) {
 	// value to stringize is in the top
 	switch (lua_type(pState, index)) {
 		case LUA_TLIGHTUSERDATA:
