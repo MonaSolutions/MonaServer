@@ -16,7 +16,7 @@ Sphinx_ Installation
 
 RST files can produce several formats (pdf, html...) with the help of Sphinx_ tool.
 
-* First you nead to install Python_ and `Easy Install`_, the most easy way for this is to download ActivePython_, a usefall installer that contains `Easy Install`_ and several Python_ librairies.
+* First you need to install Python_ and `Easy Install`_, the most easy way for this is to download ActivePython_, a useful installer that contains `Easy Install`_ and several Python_ librairies.
 * Then you need to install Sphinx_, nothing easier, just run the following command :
 
 .. code-block:: sh
@@ -41,7 +41,7 @@ Just run the command bellow in this directory (doc) :
 
   $ make html
   
-.. note:: Result is available in directory *./_build/html*.
+.. note:: Result is available in the root directory of the documentation.
 
 If you use Notepad++ (plugin NppExec)
 ----------------------------------------------

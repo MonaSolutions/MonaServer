@@ -9,7 +9,7 @@ We would like to remind you that Mona is licensed under the `GNU General Public 
 Binaries
 ***********************************
 
-A `32-bit Windows zipped package <http://sourceforge.net/projects/monaserver/files/MonaServer_1.1_Win32.zip/download>`_ is provided to quickly test MonaServer.
+A `32-bit Windows zipped package <http://sourceforge.net/projects/monaserver/files/MonaServer_1.2_Win32.zip/download>`_ is provided to quickly test MonaServer.
 
 We recommend you to clone the github version from the sources for production use.
 
