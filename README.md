@@ -14,7 +14,7 @@ MonaServer is licensed under the [GNU General Public License], please contact us
 Binaries & Build
 ------------------
 
-A [32-bit Windows zipped package](http://sourceforge.net/projects/monaserver/files/MonaServer_Windows_32.zip/download) is provided to quickly test MonaServer.
+A [32-bit Windows zipped package](https://sourceforge.net/projects/monaserver/files/MonaServer_1.2_Win32.zip/download) is provided to quickly test MonaServer.
 
 **Note :** In order to use it you need the [C++ Redistributable Packages for Visual Studio 2013](http://www.microsoft.com/en-us/download/details.aspx?id=40784).
 
@@ -29,7 +29,7 @@ The meanings of the differents types of branchs/tags are described here :
 | Branch        | Description                                                                        |
 | ------------- |------------------------------------------------------------------------------------|
 | master        | Last version commited, using it is at your own risks (even if we test each commit) |
-| tags          | Stable versions (latest one is 1.0)                                                |
+| tags          | Stable versions (latest one is 1.2)                                                |
 
 Donations
 -------------
