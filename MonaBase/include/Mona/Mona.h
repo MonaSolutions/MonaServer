@@ -26,6 +26,9 @@ This file is a part of Mona.
 #include <cstring>
 #include <complex>
 
+// disable the "throw noexception" warning because Mona has its own exception and can use everywhere std throw on FATAL problem (unexpected behavior)
+#pragma warning(disable: 4297)
+
 /////  Usefull macros and patchs   //////
 
 #define BIN		(Mona::UInt8*)
