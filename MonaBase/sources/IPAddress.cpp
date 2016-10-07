@@ -440,7 +440,7 @@ bool IPAddress::setWithDNS(Exception& ex, const char* address) {
 			return true;
 		}
 	}
-	set(addresses.front());
+	set(*addresses.begin());
 	return true;
 }
 

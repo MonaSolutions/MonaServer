@@ -34,10 +34,18 @@ ADD_TEST(DNSTest, HostByName) {
 	CHECK(hostEntry.name() == "dnstest.appinf.com" || hostEntry.name() == "aliastest.appinf.com");
 
 	CHECK(hostEntry.addresses().size() >= 1);
-	CHECK(hostEntry.addresses().front().toString() == "1.2.3.4");
+	CHECK((*hostEntry.addresses().begin()).toString() == "1.2.3.4");
 
 	DNS::HostByName(ex, "nohost.appinf.com", hostEntry);
 	CHECK(ex); // must not to find the host
+
+	HostEntry hostEntry2;
+	Exception ex2;
+	DNS::HostByName(ex2, "monaserver.ovh", hostEntry2);
+	CHECK(!ex2)
+	DNS::HostByName(ex2, "monaserver.ovh", hostEntry2);
+	CHECK(!ex2)
+	CHECK(hostEntry2.addresses().size() == 1)
 }
 
 ADD_TEST(DNSTest, HostByAddress) {
@@ -52,7 +60,7 @@ ADD_TEST(DNSTest, HostByAddress) {
 	CHECK(hostEntry.name() == "mailhost.appinf.com");
 	CHECK(hostEntry.aliases().empty());
 	CHECK(hostEntry.addresses().size() >= 1);
-	CHECK(hostEntry.addresses().front().toString() == "80.122.195.86");
+	CHECK((*hostEntry.addresses().begin()).toString() == "80.122.195.86");
 
 	ip.set(ex, "10.0.244.253");
 	CHECK(!ex)

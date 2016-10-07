@@ -22,7 +22,7 @@ This file is a part of Mona.
 
 #include "Mona/Mona.h"
 #include "Mona/IPAddress.h"
-#include <vector>
+#include <set>
 
 
 namespace Mona {
@@ -33,7 +33,7 @@ namespace Mona {
 class HostEntry : public virtual Object {
 public:
 	typedef std::vector<std::string> AliasList;
-	typedef std::vector<IPAddress>   AddressList;
+	typedef std::set<IPAddress>   AddressList;
 	
 	// Creates an empty HostEntry.
 	HostEntry() {}

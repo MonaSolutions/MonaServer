@@ -203,7 +203,7 @@ void RTMFPFlow::receive(UInt64 _stage,UInt64 deltaNAck,PacketReader& fragment,UI
 			// leave all stages <= _stage
 			PacketReader packet(it->second->data(),it->second->size());
 			onFragment(it->first,packet,it->second.flags);
-			if(it->second.flags&MESSAGE_END) {
+			if(_completed || it->second.flags&MESSAGE_END) {
 				complete();
 				return; // to prevent a crash bug!! (double fragments deletion)
 			}
@@ -232,7 +232,7 @@ void RTMFPFlow::receive(UInt64 _stage,UInt64 deltaNAck,PacketReader& fragment,UI
 				break;
 			PacketReader packet(it->second->data(), it->second->size());
 			onFragment(nextStage++,packet,it->second.flags);
-			if(it->second.flags&MESSAGE_END) {
+			if(_completed || it->second.flags&MESSAGE_END) {
 				complete();
 				return; // to prevent a crash bug!! (double fragments deletion)
 			}
