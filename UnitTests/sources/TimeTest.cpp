@@ -26,7 +26,6 @@ This file is a part of Mona.
 using namespace Mona;
 using namespace std;
 using namespace std::chrono;
-using namespace std;
 
 // Test 
 ADD_TEST(TimeTest, General) {
