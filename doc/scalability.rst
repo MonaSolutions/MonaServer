@@ -211,12 +211,12 @@ Here we have a configuration with three servers, but many others could be added 
       function server:video(name, time, packet)
         local publication = self.publications[name]
         -- give the video packet to our publication copy
-        if publication then publication:pushVideo(packet, time) end
+        if publication then publication:pushVideo(time, packet) end
       end
       function server:audio(name, time, packet)
         local publication = self.publications[name]
         -- give the audio packet to our publication copy
-        if publication then publication:pushAudio(packet, time) end
+        if publication then publication:pushAudio(time, packet) end
       end
       function server:data(name, dataname, packet)
         local publication = self.publications[name]

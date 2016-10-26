@@ -9,7 +9,7 @@
     
     <link rel="stylesheet" href="_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="_static/bootswatch-3.3.6/cerulean/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="_static/bootswatch-3.3.4/cerulean/bootstrap.min.css" type="text/css" />
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/my-styles.css" type="text/css" />
     
@@ -27,7 +27,7 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <script type="text/javascript" src="_static/js/jquery-1.11.0.min.js"></script>
     <script type="text/javascript" src="_static/js/jquery-fix.js"></script>
-    <script type="text/javascript" src="_static/bootstrap-3.3.6/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="_static/bootstrap-3.3.4/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
     <link rel="top" title="MonaServer" href="index.html" />
 
@@ -211,7 +211,7 @@
 <ul>
 <li><dl class="first docutils">
 <dt>First download the latest release of <a class="reference external" href="http://luajit.org/">LuaJIT</a> (here with git) :</dt>
-<dd><div class="first last highlight-sh"><div class="highlight"><pre><span></span>git clone http://luajit.org/git/luajit-2.0.git
+<dd><div class="first last highlight-sh"><div class="highlight"><pre>git clone http://luajit.org/git/luajit-2.0.git
 </pre></div>
 </div>
 </dd>
@@ -254,11 +254,11 @@ You can find <a class="reference external" href="http://www.openssl.org/">OpenSS
 </ul>
 </div>
 <p>To build Mona:</p>
-<div class="highlight-sh"><div class="highlight"><pre><span></span>$ make
+<div class="highlight-sh"><div class="highlight"><pre><span class="nv">$ </span>make
 </pre></div>
 </div>
 <p>To clean:</p>
-<div class="highlight-sh"><div class="highlight"><pre><span></span>$ make clean
+<div class="highlight-sh"><div class="highlight"><pre><span class="nv">$ </span>make clean
 </pre></div>
 </div>
 </div>
@@ -267,13 +267,13 @@ You can find <a class="reference external" href="http://www.openssl.org/">OpenSS
 <p>First follow the <a class="reference internal" href="#luajit-installation">LuaJIT installation</a> steps.</p>
 <p>Create a standard EC2 AMI with a new security group. Open up all UDP and at least TCP Ports 1935 in the Security Group.</p>
 <p>Connect to the AMI and execute the following script:</p>
-<div class="highlight-sh"><div class="highlight"><pre><span></span>sudo -s
+<div class="highlight-sh"><div class="highlight"><pre>sudo -s
 yum -y groupinstall <span class="s2">&quot;Development Tools&quot;</span>
 yum -y groupinstall <span class="s2">&quot;Development Libraries&quot;</span>
 yum -y install make
 wget https://github.com/MonaSolutions/MonaServer/archive/master.zip
 unzip Mona-master.zip
-<span class="nb">cd</span> Mona-master
+<span class="nb">cd </span>Mona-master
 make
 sudo ./MonaServer --daemon
 </pre></div>
@@ -289,7 +289,7 @@ sudo ./MonaServer --daemon
 <li>Update the /etc/apt/sources.list to have at least <em>jessie</em> (rather than <em>wheezy</em>)</li>
 <li>Run theses steps to upgrade <a class="reference external" href="http://downloads.raspberrypi.org/raspbian_latest">Raspbian</a> :</li>
 </ul>
-<div class="highlight-sh"><div class="highlight"><pre><span></span>sudo aptitude update
+<div class="highlight-sh"><div class="highlight"><pre>sudo aptitude update
 sudo aptitude dist-upgrade
 sudo rpi-update
 reboot
@@ -306,7 +306,7 @@ reboot
 <p>MonaServer is statically configured by an optional configuration <em>MonaServer.ini</em> file to put in the installation folder.
 Possible configurations are :</p>
 <ul class="simple">
-<li><strong>host</strong> : address like it will be seen by clients and other servers, this option is mandatory to make working all redirection features in multiple server configuration (see <a class="reference internal" href="scalability.html"><span class="doc">Scalability and load-balancing</span></a>).</li>
+<li><strong>host</strong> : address like it will be seen by clients and other servers, this option is mandatory to make working all redirection features in multiple server configuration (see <a class="reference internal" href="scalability.html"><em>Scalability and load-balancing</em></a>).</li>
 <li><strong>socketBufferSize</strong> : allows to change the size in bytes of sockets reception and sending buffer. Increases this value if your operating system has a default value too lower for important loads.</li>
 <li><strong>threads</strong> : indicates the number of threads which will be allocated in the pool of threads of Mona. Usually it have to be equal to (or greather than) the number of cores on the host machine (virtual or physic cores). By default, an auto-detection system tries to determinate its value, but it can be perfectible on machine who owns hyper-threading technology, or on some operating systems.</li>
 </ul>
@@ -319,21 +319,21 @@ Possible configurations are :</p>
 <div class="section" id="servers">
 <h3><a class="toc-backref" href="#id13">[servers]</a><a class="headerlink" href="#servers" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
-<li><strong>port</strong> : port to receive incoming server connection (in a multiple servers configuration, see <a class="reference internal" href="scalability.html"><span class="doc">Scalability and load-balancing</span></a> for more details). If you don&#8217;t configure this port, MonaServer cannot establish a connection with it.</li>
+<li><strong>port</strong> : port to receive incoming server connection (in a multiple servers configuration, see <a class="reference internal" href="scalability.html"><em>Scalability and load-balancing</em></a> for more details). If you don&#8217;t configure this port, MonaServer cannot establish a connection with it.</li>
 </ul>
 <div class="admonition warning">
 <p class="first admonition-title">Warning</p>
 <p class="last">The exchange between servers is done in a unencrypted TCP way, so to avoid an attack by this incoming end point the <em>servers.port</em> should be protected by a firewall to allow just a connection by an other server and nothing else.</p>
 </div>
 <ul class="simple">
-<li><strong>targets</strong> : list of MonaServer addresses (separated by semicolons) to connect on start-up. When the server will start, it will try to etablish a connection to these addresses every 10 seconds (see <a class="reference internal" href="scalability.html"><span class="doc">Scalability and load-balancing</span></a> for more details). Each token can include arguments through as a query url form:</li>
+<li><strong>targets</strong> : list of MonaServer addresses (separated by semicolons) to connect on start-up. When the server will start, it will try to etablish a connection to these addresses every 10 seconds (see <a class="reference internal" href="scalability.html"><em>Scalability and load-balancing</em></a> for more details). Each token can include arguments through as a query url form:</li>
 </ul>
-<div class="highlight-ini"><div class="highlight"><pre><span></span><span class="k">[servers]</span>
+<div class="highlight-ini"><div class="highlight"><pre><span class="k">[servers]</span>
 <span class="na">targets</span><span class="o">=</span><span class="s">192.168.0.2:1936?name=master&amp;arg=val;192.168.0.3:1936</span>
 </pre></div>
 </div>
 <p>It will create dynamic properties on <em>server</em> object (see <em>server</em> object description of &#8220;Server application, api&#8221; page for more details).</p>
-<div class="highlight-lua"><div class="highlight"><pre><span></span><span class="k">function</span> <span class="nf">onServerConnection</span><span class="p">(</span><span class="n">server</span><span class="p">)</span>
+<div class="highlight-lua"><div class="highlight"><pre><span class="k">function</span> <span class="nf">onServerConnection</span><span class="p">(</span><span class="n">server</span><span class="p">)</span>
   <span class="k">if</span> <span class="n">server</span><span class="p">.</span><span class="n">name</span><span class="o">==</span><span class="s2">&quot;</span><span class="s">master&quot;</span> <span class="k">then</span> <span class="c1">-- true here just for 192.168.0.2:1936 server</span>
     <span class="n">NOTE</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">server master arg = &quot;</span><span class="o">..</span><span class="n">server</span><span class="p">.</span><span class="n">arg</span><span class="p">)</span> <span class="c1">-- displays here &quot;server master arg = val&quot;</span>
   <span class="k">end</span>
@@ -383,7 +383,7 @@ Possible configurations are :</p>
 </div>
 <div class="section" id="sample-of-monaserver-ini">
 <h3><a class="toc-backref" href="#id19">Sample of MonaServer.ini</a><a class="headerlink" href="#sample-of-monaserver-ini" title="Permalink to this headline">¶</a></h3>
-<div class="highlight-ini"><div class="highlight"><pre><span></span><span class="c1">;MonaServer.ini</span>
+<div class="highlight-ini"><div class="highlight"><pre><span class="c1">;MonaServer.ini</span>
 <span class="na">socketBufferSize</span> <span class="o">=</span> <span class="s">114688</span>
 <span class="k">[RTMFP]</span>
 <span class="na">port</span> <span class="o">=</span> <span class="s">1985</span>
@@ -404,26 +404,26 @@ Possible configurations are :</p>
 <p>MonaServer includes some argument launch options, but by default MonaServer is optimized for a production running. Command-line options are useful during development and test usage. To get full descriptions about the launch arguments start MonaServer with <em>/help</em> argument on Windows or <em>&#8211;help</em> on Unix system.</p>
 <p>Otherwise, simply start the MonaServer application with administrative rights.</p>
 <p>You can also start it as a Windows service:</p>
-<div class="highlight-sh"><div class="highlight"><pre><span></span>MonaServer.exe /registerService <span class="o">[</span>/displayName<span class="o">=</span>MonaServer /description<span class="o">=</span><span class="s2">&quot;Open Source RTMFP Server&quot;</span> /startup<span class="o">=</span>automatic<span class="o">]</span>
+<div class="highlight-sh"><div class="highlight"><pre>MonaServer.exe /registerService <span class="o">[</span>/displayName<span class="o">=</span>MonaServer /description<span class="o">=</span><span class="s2">&quot;Open Source RTMFP Server&quot;</span> /startup<span class="o">=</span>automatic<span class="o">]</span>
 </pre></div>
 </div>
 <p>Or an Unix daemon:</p>
-<div class="highlight-sh"><div class="highlight"><pre><span></span>sudo ./MonaServer --daemon <span class="o">[</span>--pidfile<span class="o">=</span>/var/run/MonaServer.pid<span class="o">]</span>
+<div class="highlight-sh"><div class="highlight"><pre>sudo ./MonaServer --daemon <span class="o">[</span>--pidfile<span class="o">=</span>/var/run/MonaServer.pid<span class="o">]</span>
 </pre></div>
 </div>
 </div>
 <div class="section" id="usage">
 <h3><a class="toc-backref" href="#id22">Usage</a><a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h3>
 <p>Flash client connects to MonaServer by the classical NetConnection way:</p>
-<div class="highlight-as3"><div class="highlight"><pre><span></span><span class="n">_netConnection</span><span class="o">.</span><span class="na">connect</span><span class="o">(</span><span class="s2">&quot;rtmfp://localhost/&quot;</span><span class="o">);</span>
+<div class="highlight-as3"><div class="highlight"><pre><span class="n">_netConnection</span><span class="o">.</span><span class="na">connect</span><span class="o">(</span><span class="s2">&quot;rtmfp://localhost/&quot;</span><span class="o">);</span>
 </pre></div>
 </div>
 <p>Here the port has its default value 1935. If you configure a different port on MonaServer you have to indicate this port in the URL (after <em>localhost</em>, of course).</p>
-<p>The path used allows you to connect for your desired <a class="reference internal" href="serverapp.html"><span class="doc">Server Application</span></a>.</p>
-<div class="highlight-as3"><div class="highlight"><pre><span></span><span class="n">_netConnection</span><span class="o">.</span><span class="na">connect</span><span class="o">(</span><span class="s2">&quot;rtmfp://localhost/myApplication&quot;</span><span class="o">);</span>
+<p>The path used allows you to connect for your desired <a class="reference internal" href="serverapp.html"><em>Server Application</em></a>.</p>
+<div class="highlight-as3"><div class="highlight"><pre><span class="n">_netConnection</span><span class="o">.</span><span class="na">connect</span><span class="o">(</span><span class="s2">&quot;rtmfp://localhost/myApplication&quot;</span><span class="o">);</span>
 </pre></div>
 </div>
-<p>To learn more, read the <a class="reference internal" href="serverapp.html"><span class="doc">Server Application</span></a> or <a class="reference internal" href="samples.html"><span class="doc">Samples</span></a> pages.</p>
+<p>To learn more, read the <a class="reference internal" href="serverapp.html"><em>Server Application</em></a> or <a class="reference internal" href="samples.html"><em>Samples</em></a> pages.</p>
 </div>
 </div>
 </div>
@@ -449,7 +449,7 @@ Possible configurations are :</p>
     </p>
     <p>
         &copy; Copyright 2015, Mathieu Poux &amp; Thomas Jammet.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.5.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.<br/>
     </p>
   </div>
 </footer>
