@@ -594,6 +594,8 @@ IPAddress::LocalAddresses::LocalAddresses() {
 		}
 
 		for (struct ifaddrs * ifa = ifAddrStruct; ifa; ifa = ifa->ifa_next) {
+			if (!ifa->ifa_addr) // address can be empty
+				continue;
 
 			if (ifa->ifa_addr->sa_family == AF_INET6)
 				emplace_back(reinterpret_cast<struct sockaddr_in6*>(ifa->ifa_addr)->sin6_addr, reinterpret_cast<struct sockaddr_in6*>(ifa->ifa_addr)->sin6_scope_id);
