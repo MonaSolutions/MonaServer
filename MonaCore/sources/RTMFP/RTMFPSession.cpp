@@ -537,6 +537,10 @@ RTMFPFlow* RTMFPSession::createFlow(UInt64 id,const string& signature) {
 		pFlow = new RTMFPFlow(id, signature, pStream, peer, invoker, *this);
 	} else if(signature.size()>2 && signature.compare(0,3,"\x00\x47\x43",3)==0)  // NetGroup
 		pFlow = new RTMFPFlow(id, signature, peer, invoker, *this, _pMainStream);
+	else {
+		ERROR("Unknown signature receive for flow creation : ", Util::FormatHex(BIN signature.data(), signature.size(), LOG_BUFFER))
+		return NULL;
+	}
 
 	return _flows.emplace_hint(it, piecewise_construct, forward_as_tuple(id), forward_as_tuple(pFlow))->second;
 }
