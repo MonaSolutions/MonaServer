@@ -444,7 +444,7 @@ void MPEGTS::writeTS(BinaryWriter& writer, UInt32& available, UInt32 time, Subst
 				writer.write8(isMetadata? 0x10 : 0x30);
 			} else {
 				writer.write32(0xfff15040);
-				writer.write16(((toWrite+7) << 5) + 0x1F);
+				writer.write16(((available+7) << 5) + 0x1F);
 				writer.write8(0xfc);
 			}
 		}
