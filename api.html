@@ -490,11 +490,11 @@ Parameters should be used to perform REST functionnalities.</p>
 <p>About stream publication it&#8217;s done like that:</p>
 <div class="highlight-as3"><div class="highlight"><pre><span class="n">_netStream</span><span class="o">.</span><span class="na">audioReliable</span> <span class="o">=</span> <span class="kc">false</span>
 <span class="n">_netStream</span><span class="o">.</span><span class="na">videoReliable</span> <span class="o">=</span> <span class="kc">false</span>
-<span class="n">_netStream</span><span class="o">.</span><span class="na">publish</span><span class="o">(</span><span class="s2">&quot;myStream?unbuffered=true&quot;</span><span class="o">)</span>
+<span class="n">_netStream</span><span class="o">.</span><span class="na">publish</span><span class="o">(</span><span class="s2">&quot;myStream&quot;</span><span class="o">)</span>
 </pre></div>
 </div>
 <p>And  about stream subscription you opt for a no-reliable mode like that:</p>
-<div class="highlight-as3"><div class="highlight"><pre><span class="n">_netStream</span><span class="o">.</span><span class="na">play</span><span class="o">(</span><span class="s2">&quot;mystream&quot;</span><span class="o">,-</span><span class="mi">3</span><span class="o">)</span>
+<div class="highlight-as3"><div class="highlight"><pre><span class="n">_netStream</span><span class="o">.</span><span class="na">play</span><span class="o">(</span><span class="s2">&quot;myStream?unbuffered=true&quot;</span><span class="o">)</span>
 </pre></div>
 </div>
 <p>Here the server will stream in a no-reliable way and without buffering, it can improve significantly performances and better cope with congestion.</p>

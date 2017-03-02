@@ -356,14 +356,14 @@ About stream publication it's done like that:
 
   _netStream.audioReliable = false
   _netStream.videoReliable = false
-  _netStream.publish("myStream?unbuffered=true")
+  _netStream.publish("myStream")
 
 
 And  about stream subscription you opt for a no-reliable mode like that:
 
 .. code-block:: as3
 
-  _netStream.play("mystream",-3)
+  _netStream.play("myStream?unbuffered=true")
 
 Here the server will stream in a no-reliable way and without buffering, it can improve significantly performances and better cope with congestion.
 
