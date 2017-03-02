@@ -356,7 +356,7 @@ About stream publication it's done like that:
 
   _netStream.audioReliable = false
   _netStream.videoReliable = false
-  _netStream.publish("mystream")
+  _netStream.publish("myStream?unbuffered=true")
 
 
 And  about stream subscription you opt for a no-reliable mode like that:
