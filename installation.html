@@ -151,14 +151,15 @@
 <li><a class="reference internal" href="#rtmfp" id="id14">[RTMFP]</a></li>
 <li><a class="reference internal" href="#rtmp" id="id15">[RTMP]</a></li>
 <li><a class="reference internal" href="#http" id="id16">[HTTP]</a></li>
-<li><a class="reference internal" href="#websocket" id="id17">[WebSocket]</a></li>
-<li><a class="reference internal" href="#logs" id="id18">[logs]</a></li>
-<li><a class="reference internal" href="#sample-of-monaserver-ini" id="id19">Sample of MonaServer.ini</a></li>
+<li><a class="reference internal" href="#rtsp" id="id17">[RTSP]</a></li>
+<li><a class="reference internal" href="#websocket" id="id18">[WebSocket]</a></li>
+<li><a class="reference internal" href="#logs" id="id19">[logs]</a></li>
+<li><a class="reference internal" href="#sample-of-monaserver-ini" id="id20">Sample of MonaServer.ini</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#launch" id="id20">Launch</a><ul>
-<li><a class="reference internal" href="#start" id="id21">Start</a></li>
-<li><a class="reference internal" href="#usage" id="id22">Usage</a></li>
+<li><a class="reference internal" href="#launch" id="id21">Launch</a><ul>
+<li><a class="reference internal" href="#start" id="id22">Start</a></li>
+<li><a class="reference internal" href="#usage" id="id23">Usage</a></li>
 </ul>
 </li>
 </ul>
@@ -344,7 +345,7 @@ Possible configurations are :</p>
 <div class="section" id="rtmfp">
 <h3><a class="toc-backref" href="#id14">[RTMFP]</a><a class="headerlink" href="#rtmfp" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
-<li><strong>port</strong> : 1935 by default (RTMFP server default port), it is the port used by MonaServer to listen incoming RTMFP requests.</li>
+<li><strong>port</strong> : 1935 by default (RTMFP server default port), set 0 if you want to disable RTMFP.</li>
 <li><strong>keepaliveServer</strong> : time in seconds for periodically sending packets keep-alive with server, 15s by default (valid value is from 5s to 255s).</li>
 <li><strong>keepalivePeer</strong> : time in seconds for periodically sending packets keep-alive between peers, 10s by default (valid value is from 5s to 255s).</li>
 </ul>
@@ -352,25 +353,31 @@ Possible configurations are :</p>
 <div class="section" id="rtmp">
 <h3><a class="toc-backref" href="#id15">[RTMP]</a><a class="headerlink" href="#rtmp" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
-<li><strong>port</strong> : 1935 by default (RTMP server default port), it is the port used by MonaServer to listen incoming RTMFP requests.</li>
+<li><strong>port</strong> : 1935 by default (RTMP server default port), set 0 if you want to disable RTMP.</li>
 </ul>
 </div>
 <div class="section" id="http">
 <h3><a class="toc-backref" href="#id16">[HTTP]</a><a class="headerlink" href="#http" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
-<li><strong>port</strong> : 80 by default (HTTP server default port), it is the port used by MonaServer to listen incoming HTTP requests.</li>
+<li><strong>port</strong> : 80 by default (HTTP server default port), set 0 if you want to disable HTTP.</li>
 <li><strong>timeout</strong> : 7 by default, it is the maximum time before server kills the connection when no data as been received.</li>
 <li><strong>index</strong> : the default index file of HTTP protocol, if it is specified it will redirect each connection to this index.</li>
 </ul>
 </div>
+<div class="section" id="rtsp">
+<h3><a class="toc-backref" href="#id17">[RTSP]</a><a class="headerlink" href="#rtsp" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><strong>port</strong> : 554 by default (RTSP server default port), set 0 if you want to disable RTSP.</li>
+</ul>
+</div>
 <div class="section" id="websocket">
-<h3><a class="toc-backref" href="#id17">[WebSocket]</a><a class="headerlink" href="#websocket" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id18">[WebSocket]</a><a class="headerlink" href="#websocket" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><strong>timeout</strong> : 120 by default, it is the maximum time before server kills the connection when no data as been received.</li>
 </ul>
 </div>
 <div class="section" id="logs">
-<h3><a class="toc-backref" href="#id18">[logs]</a><a class="headerlink" href="#logs" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id19">[logs]</a><a class="headerlink" href="#logs" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><strong>directory</strong> : directory where the log files are written (<em>MonaServer/logs</em> by default).</li>
 <li><strong>name</strong> : name of log files (<em>log</em> by default).</li>
@@ -382,7 +389,7 @@ Possible configurations are :</p>
 </div>
 </div>
 <div class="section" id="sample-of-monaserver-ini">
-<h3><a class="toc-backref" href="#id19">Sample of MonaServer.ini</a><a class="headerlink" href="#sample-of-monaserver-ini" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id20">Sample of MonaServer.ini</a><a class="headerlink" href="#sample-of-monaserver-ini" title="Permalink to this headline">¶</a></h3>
 <div class="highlight-ini"><div class="highlight"><pre><span class="c1">;MonaServer.ini</span>
 <span class="na">socketBufferSize</span> <span class="o">=</span> <span class="s">114688</span>
 <span class="k">[RTMFP]</span>
@@ -398,9 +405,9 @@ Possible configurations are :</p>
 </div>
 </div>
 <div class="section" id="launch">
-<h2><a class="toc-backref" href="#id20">Launch</a><a class="headerlink" href="#launch" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#id21">Launch</a><a class="headerlink" href="#launch" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="start">
-<h3><a class="toc-backref" href="#id21">Start</a><a class="headerlink" href="#start" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id22">Start</a><a class="headerlink" href="#start" title="Permalink to this headline">¶</a></h3>
 <p>MonaServer includes some argument launch options, but by default MonaServer is optimized for a production running. Command-line options are useful during development and test usage. To get full descriptions about the launch arguments start MonaServer with <em>/help</em> argument on Windows or <em>&#8211;help</em> on Unix system.</p>
 <p>Otherwise, simply start the MonaServer application with administrative rights.</p>
 <p>You can also start it as a Windows service:</p>
@@ -413,7 +420,7 @@ Possible configurations are :</p>
 </div>
 </div>
 <div class="section" id="usage">
-<h3><a class="toc-backref" href="#id22">Usage</a><a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id23">Usage</a><a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h3>
 <p>Flash client connects to MonaServer by the classical NetConnection way:</p>
 <div class="highlight-as3"><div class="highlight"><pre><span class="n">_netConnection</span><span class="o">.</span><span class="na">connect</span><span class="o">(</span><span class="s2">&quot;rtmfp://localhost/&quot;</span><span class="o">);</span>
 </pre></div>

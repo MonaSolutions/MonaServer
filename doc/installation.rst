@@ -182,7 +182,7 @@ It will create dynamic properties on *server* object (see *server* object descri
 [RTMFP]
 ===================================
 
-- **port** : 1935 by default (RTMFP server default port), it is the port used by MonaServer to listen incoming RTMFP requests.
+- **port** : 1935 by default (RTMFP server default port), set 0 if you want to disable RTMFP.
 
 - **keepaliveServer** : time in seconds for periodically sending packets keep-alive with server, 15s by default (valid value is from 5s to 255s).
 
@@ -191,14 +191,19 @@ It will create dynamic properties on *server* object (see *server* object descri
 [RTMP]
 ===================================
 
-- **port** : 1935 by default (RTMP server default port), it is the port used by MonaServer to listen incoming RTMFP requests.
+- **port** : 1935 by default (RTMP server default port), set 0 if you want to disable RTMP.
 
 [HTTP]
 ===================================
 
-- **port** : 80 by default (HTTP server default port), it is the port used by MonaServer to listen incoming HTTP requests.
+- **port** : 80 by default (HTTP server default port), set 0 if you want to disable HTTP.
 - **timeout** : 7 by default, it is the maximum time before server kills the connection when no data as been received.
 - **index** : the default index file of HTTP protocol, if it is specified it will redirect each connection to this index.
+
+[RTSP]
+===================================
+
+- **port** : 554 by default (RTSP server default port), set 0 if you want to disable RTSP.
 
 [WebSocket]
 ===================================
