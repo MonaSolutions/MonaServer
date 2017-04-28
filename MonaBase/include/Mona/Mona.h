@@ -159,6 +159,8 @@ This file is a part of Mona.
 #define _ARCH_ARM     0x08
 #define _ARCH_SH      0x09
 #define _ARCH_NIOS2   0x0a
+#define _ARCH_ARM64   0x0b
+#define _ARCH_AARCH64 0x0c
 
 
 #if defined(i386) || defined(__i386) || defined(__i386__) || defined(_M_IX86)
@@ -188,25 +190,37 @@ This file is a part of Mona.
 #elif defined(__arm__) || defined(__arm) || defined(ARM) || defined(_ARM_) || defined(__ARM__) || defined(_M_ARM) || defined(__ANDROID__)
 #define _ARCH _ARCH_ARM
 #if defined(__ARMEB__)
-#define _ARCH_BIG_ENDIAN 1
+	#define _ARCH_BIG_ENDIAN 1
 #else
-#define _ARCH_LITTLE_ENDIAN 1
+	#define _ARCH_LITTLE_ENDIAN 1
+#endif
+#elif defined(__arm64__) || defined(__arm64)
+#define _ARCH _ARCH_ARM64
+#if defined(__ARMEB__)
+	#define _ARCH_BIG_ENDIAN 1
+#else
+	#define _ARCH_LITTLE_ENDIAN 1
 #endif
 #elif defined(__sh__) || defined(__sh) || defined(SHx) || defined(_SHX_)
 #define _ARCH _ARCH_SH
 #if defined(__LITTLE_ENDIAN__) || (_OS == _OS_WINDOWS_CE)
-#define _ARCH_LITTLE_ENDIAN 1
+	#define _ARCH_LITTLE_ENDIAN 1
 #else
-#define _ARCH_BIG_ENDIAN 1
+	#define _ARCH_BIG_ENDIAN 1
 #endif
 #elif defined (nios2) || defined(__nios2) || defined(__nios2__)
 #define _ARCH _ARCH_NIOS2
 #if defined(__nios2_little_endian) || defined(nios2_little_endian) || defined(__nios2_little_endian__)
-#define _ARCH_LITTLE_ENDIAN 1
+	#define _ARCH_LITTLE_ENDIAN 1
 #else
-#define _ARCH_BIG_ENDIAN 1
+	#define _ARCH_BIG_ENDIAN 1
 #endif
-
+#elif defined(__AARCH64EL__)
+	#define _ARCH _ARCH_AARCH64
+	#define _ARCH_LITTLE_ENDIAN 1
+#elif defined(__AARCH64EB__)
+	#define _ARCH _ARCH_AARCH64
+	#define _ARCH_BIG_ENDIAN 1
 #endif
 
 
