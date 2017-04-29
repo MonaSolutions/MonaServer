@@ -182,7 +182,7 @@ properties
 - **query** (read-only), query part of the url (used in HTTP).
 - **writer** (read-only), the main Writer_ to communicate with the client.
 - **properties** (read-only), dynamic properties of the client connection, depends on the protocol (see :doc:`protocols`).
-- **parameters** (read-only), static parameters/configuration of the client protocol (**parameters** can be substituate by protocol name).
+- **parameters** (read-only), static parameters/configuration of the client protocol (**parameters** can be substituated by protocol name).
 
 .. note::
 
@@ -537,6 +537,7 @@ properties
 - **videoQOS** (read-only), QualityOfService_ object about video transfer for this subscription.
 - **dataQOS** (read-only), QualityOfService_ object about data transfer for this subscription.
 - **publication** (read-only), Publication_ object which describes publication listening by the subscriber.
+- **parameters** (read-only), an array containing the url query parameters after the name of the publication (publicationName?arg1=1&arg2=test).
 - **receiveAudio**, boolean to mute audio reception on the subscription.
 - **receiveVideo**, boolean to mute video reception on the subscription.
 

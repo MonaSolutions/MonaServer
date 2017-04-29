@@ -328,7 +328,7 @@
 <li><strong>query</strong> (read-only), query part of the url (used in HTTP).</li>
 <li><strong>writer</strong> (read-only), the main <a class="reference internal" href="#writer">Writer</a> to communicate with the client.</li>
 <li><strong>properties</strong> (read-only), dynamic properties of the client connection, depends on the protocol (see <a class="reference internal" href="protocols.html"><em>Specific Protocol Features</em></a>).</li>
-<li><strong>parameters</strong> (read-only), static parameters/configuration of the client protocol (<strong>parameters</strong> can be substituate by protocol name).</li>
+<li><strong>parameters</strong> (read-only), static parameters/configuration of the client protocol (<strong>parameters</strong> can be substituated by protocol name).</li>
 </ul>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
@@ -677,6 +677,7 @@ Parameters should be used to perform REST functionnalities.</p>
 <li><strong>videoQOS</strong> (read-only), <a class="reference internal" href="#qualityofservice">QualityOfService</a> object about video transfer for this subscription.</li>
 <li><strong>dataQOS</strong> (read-only), <a class="reference internal" href="#qualityofservice">QualityOfService</a> object about data transfer for this subscription.</li>
 <li><strong>publication</strong> (read-only), <a class="reference internal" href="#publication">Publication</a> object which describes publication listening by the subscriber.</li>
+<li><strong>parameters</strong> (read-only), an array containing the url query parameters after the name of the publication (publicationName?arg1=1&amp;arg2=test).</li>
 <li><strong>receiveAudio</strong>, boolean to mute audio reception on the subscription.</li>
 <li><strong>receiveVideo</strong>, boolean to mute video reception on the subscription.</li>
 </ul>
