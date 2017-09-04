@@ -38,16 +38,19 @@ public:
 	bool	initialized() { return _pDH != NULL; }
 	bool	initialize(Exception& ex,bool reset=false);
 
-	int		publicKeySize(Exception& ex) { if (!initialize(ex)) return -1; return BN_num_bytes(_pDH->pub_key); }
-	UInt8*	readPublicKey(Exception& ex, UInt8* pubKey) { if (!initialize(ex)) return NULL; readKey(_pDH->pub_key, pubKey); return pubKey; }
+	int		publicKeySize(Exception& ex) { return _publicKeySize; }
+	UInt8*	readPublicKey(Exception& ex, UInt8* key);
 
-	int		privateKeySize(Exception& ex) { if (!initialize(ex)) return -1;  return BN_num_bytes(_pDH->priv_key); }
-	UInt8*	readPrivateKey(Exception& ex, UInt8* privKey) { if (!initialize(ex)) return NULL;  readKey(_pDH->priv_key, privKey); return privKey; }
+	int		privateKeySize(Exception& ex) { return _privateKeySize; }
+	UInt8*	readPrivateKey(Exception& ex, UInt8* key);
 
 	Buffer&	computeSecret(Exception& ex, const UInt8* farPubKey, UInt32 farPubKeySize, Buffer& sharedSecret);
 
 private:
-	void	readKey(BIGNUM *pKey, UInt8* key) { BN_bn2bin(pKey, key); }
+	UInt8*	readKey(const BIGNUM *pKey, UInt8* key) const { BN_bn2bin(pKey, key); return key; }
+
+	UInt8	_publicKeySize;
+	UInt8	_privateKeySize;
 
 	DH*			_pDH;
 };

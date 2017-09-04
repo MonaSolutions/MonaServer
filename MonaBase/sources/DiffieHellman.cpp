@@ -45,7 +45,7 @@ UInt8 DH1024p[] = {
 };
 
 
-DiffieHellman::DiffieHellman() : _pDH(NULL) {
+DiffieHellman::DiffieHellman() : _pDH(NULL), _publicKeySize(0), _privateKeySize(0) {
 	
 }
 
@@ -54,18 +54,48 @@ DiffieHellman::~DiffieHellman() {
 		DH_free(_pDH);
 }
 
+UInt8*	DiffieHellman::readPublicKey(Exception& ex, UInt8* key) {
+	if (!initialize(ex)) 
+		return NULL; 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+	return readKey(_pDH->pub_key, key);
+#else
+	const BIGNUM *pubKey;
+	DH_get0_key(_pDH, &pubKey, NULL);
+	return readKey(pubKey, key);
+#endif
+}
+
+UInt8*	DiffieHellman::readPrivateKey(Exception& ex, UInt8* key) { 
+	if (!initialize(ex)) 
+		return NULL; 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+	return readKey(_pDH->priv_key, key);
+#else
+	const BIGNUM *privKey;
+	DH_get0_key(_pDH, NULL, &privKey);
+	return readKey(privKey, key);
+#endif
+}
+
 bool DiffieHellman::initialize(Exception& ex,bool reset) {
 	if(!reset && _pDH)
 		return true;
 	if(_pDH)
 		DH_free(_pDH);
 	_pDH = DH_new();
-	_pDH->p = BN_new();
-	_pDH->g = BN_new();
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+	BIGNUM* p = _pDH->p = BN_new();
+	BIGNUM* g = _pDH->g = BN_new();
+#else
+	BIGNUM* p = BN_new();
+	BIGNUM* g = BN_new();
+	DH_set0_pqg(_pDH, p, NULL, g);
+#endif
 
 	//3. initialize p, g and key length
-	BN_set_word(_pDH->g, 2); //group DH 2
-	BN_bin2bn(DH1024p,SIZE,_pDH->p); //prime number
+	BN_set_word(g, 2); //group DH 2
+	BN_bin2bn(DH1024p, SIZE, p); //prime number
 
 	//4. Generate private and public key
 	if (!DH_generate_key(_pDH)) {
@@ -73,6 +103,15 @@ bool DiffieHellman::initialize(Exception& ex,bool reset) {
 		DH_free(_pDH);
 		_pDH = NULL;
 	}
+
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+	const BIGNUM *pubKey = _pDH->pub_key, *privKey = _pDH->priv_key;
+#else
+	const BIGNUM *pubKey, *privKey;
+	DH_get0_key(_pDH, &pubKey, &privKey);
+#endif
+	_publicKeySize = BN_num_bytes(pubKey);
+	_privateKeySize = BN_num_bytes(privKey);
 	return !ex;
 }
 

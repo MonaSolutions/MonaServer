@@ -34,14 +34,25 @@ public:
 	public:
 
 		enum { SIZE = 0x20 };
-	
+
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
 		HMAC() { HMAC_CTX_init(&_hmacCTX); }
-		virtual ~HMAC() { HMAC_CTX_cleanup(&_hmacCTX); }
+		~HMAC() { HMAC_CTX_cleanup(&_hmacCTX); }
+		HMAC_CTX* get() { return &_hmacCTX; }
+#else
+		HMAC() { _hmacCTX = HMAC_CTX_new(); }
+		~HMAC() { HMAC_CTX_free(_hmacCTX); }
+		HMAC_CTX* get() { return _hmacCTX; }
+#endif
 
 		UInt8* compute(const EVP_MD* evpMD, const void* key, int keySize, const UInt8* data, size_t size, UInt8* value);
 
 	private:
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
 		HMAC_CTX _hmacCTX;
+#else
+		HMAC_CTX* _hmacCTX;
+#endif
 	};
 
 };

@@ -24,9 +24,9 @@ using namespace std;
 namespace Mona {
 
 UInt8* Crypto::HMAC::compute(const EVP_MD* evpMD, const void* key, int keySize, const UInt8* data, size_t size, UInt8* value) {
-	HMAC_Init_ex(&_hmacCTX,key, keySize, evpMD, NULL);
-	HMAC_Update(&_hmacCTX, data, size);
-	HMAC_Final(&_hmacCTX, value,NULL);
+	HMAC_Init_ex(get(),key, keySize, evpMD, NULL);
+	HMAC_Update(get(), data, size);
+	HMAC_Final(get(), value,NULL);
 	return value;
 }
 

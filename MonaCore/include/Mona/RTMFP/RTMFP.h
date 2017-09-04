@@ -42,24 +42,25 @@ public:
 		DECRYPT=0,
 		ENCRYPT
 	};
-	RTMFPEngine(const UInt8* key, Direction direction) : _direction(direction) {
+	RTMFPEngine(const UInt8* key, Direction direction) : _direction(direction), _context(EVP_CIPHER_CTX_new()) {
 		memcpy(_key, key, RTMFP_KEY_SIZE);
-		EVP_CIPHER_CTX_init(&_context);
+		EVP_CIPHER_CTX_init(_context);
 	}
 	virtual ~RTMFPEngine() {
-		EVP_CIPHER_CTX_cleanup(&_context);
+		EVP_CIPHER_CTX_cleanup(_context);
+		EVP_CIPHER_CTX_free(_context);
 	}
 
 	void process(UInt8* data, int size) {
 		static UInt8 IV[RTMFP_KEY_SIZE];
-		EVP_CipherInit_ex(&_context, EVP_aes_128_cbc(), NULL, _key, IV,_direction);
-		EVP_CipherUpdate(&_context, data, &size, data, size);
+		EVP_CipherInit_ex(_context, EVP_aes_128_cbc(), NULL, _key, IV,_direction);
+		EVP_CipherUpdate(_context, data, &size, data, size);
 	}
 
 private:
 	Direction				_direction;
 	UInt8					_key[RTMFP_KEY_SIZE];
-	EVP_CIPHER_CTX			_context;
+	EVP_CIPHER_CTX*			_context;
 };
 
 
