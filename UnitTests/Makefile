@@ -6,7 +6,7 @@ EXEC?=UnitTests
 
 # Variables extendable
 ifeq ($(OS), FreeBSD)
-	CFLAGS+=-D_GLIBCXX_USE_C99 -std=c++11
+	CFLAGS+=-D_GLIBCXX_USE_C99 -std=c++11 -Wno-terminate
 else
 	CFLAGS+=-std=c++11
 endif
