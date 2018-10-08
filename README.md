@@ -14,7 +14,7 @@ MonaServer is licensed under the [GNU General Public License], please contact us
 Binaries & Build
 ------------------
 
-A [32-bit Windows zipped package](https://sourceforge.net/projects/monaserver/files/MonaServer_1.2_Win32.zip/download) is provided to quickly test MonaServer.
+A [32-bit Windows zipped package](https://sourceforge.net/projects/monaserver/files/MonaServer_Win32.zip/download) is provided to quickly test MonaServer.
 
 **Note :** In order to use it you need the [C++ Redistributable Packages for Visual Studio 2013](http://www.microsoft.com/en-us/download/details.aspx?id=40784).
 
