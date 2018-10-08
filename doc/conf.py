@@ -45,7 +45,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'MonaServer'
-copyright = u'2016, Mathieu Poux & Thomas Jammet'
+copyright = u'2018, Mathieu Poux & Thomas Jammet'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -299,3 +299,6 @@ texinfo_documents = [
 
 # If true, do not generate a @detailmenu in the "Top" node's menu.
 #texinfo_no_detailmenu = False
+
+def setup(app):
+  app.add_stylesheet("my-styles.css") # also can be a full URL

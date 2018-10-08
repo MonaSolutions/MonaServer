@@ -563,10 +563,10 @@ As in AMF primitive, conversion types are easy and intuitive (Number, Boolean, S
 .. code-block:: lua
 
   -- LUA table formatted in Object          // Query String
-  {x=10,y=10,width=100,height=100}          x=10&y=10&width=100&height=100
+  {x=10,y=10,width=100,height=100}          -- x=10&y=10&width=100&height=100
 
   -- LUA table formatted in Array           // Query String
-  {10,10,100,100}                           10&10&100&100
+  {10,10,100,100}                           -- 10&10&100&100
 
 .. note::
   

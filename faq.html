@@ -1,35 +1,24 @@
 <!DOCTYPE html>
 
-
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
-    <title>FAQ &mdash; MonaServer</title>
-    
-    <link rel="stylesheet" href="_static/basic.css" type="text/css" />
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="_static/bootswatch-3.3.6/cerulean/bootstrap.min.css" type="text/css" />
+    <title>FAQ &#8212; MonaServer</title>
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
-    <link rel="stylesheet" href="_static/my-styles.css" type="text/css" />
-    
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    './',
-        VERSION:     '1',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  false
-      };
-    </script>
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="_static/my-styles.css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <script type="text/javascript" src="_static/js/jquery-1.11.0.min.js"></script>
     <script type="text/javascript" src="_static/js/jquery-fix.js"></script>
-    <script type="text/javascript" src="_static/bootstrap-3.3.6/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
-    <link rel="top" title="MonaServer" href="index.html" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
 
   
   <link href='http://fonts.googleapis.com/css?family=Lobster' rel='stylesheet' type='text/css'>
@@ -68,8 +57,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 
 
-  </head>
-  <body role="document">
+  </head><body>
     <div id="content">
     
 
@@ -134,9 +122,9 @@
 <ul class="simple">
 <li><a class="reference internal" href="#faq" id="id1">FAQ</a><ul>
 <li><a class="reference internal" href="#technical-questions" id="id2">Technical questions</a><ul>
-<li><a class="reference internal" href="#why-does-connections-from-ipv6-addresses-doesn-t-work-on-windows-xp-or-2000" id="id3">Why does connections from IPv6 addresses doesn&#8217;t work on Windows XP (or 2000)?</a></li>
-<li><a class="reference internal" href="#why-do-i-have-the-error-http-server-permission-denied-at-start" id="id4">Why do I have the error &#8220;HTTP server, Permission denied...&#8221; at start?</a></li>
-<li><a class="reference internal" href="#why-doesn-t-the-cirrus-sample-application-work" id="id5">Why doesn&#8217;t the Cirrus Sample Application work?</a></li>
+<li><a class="reference internal" href="#why-does-connections-from-ipv6-addresses-doesn-t-work-on-windows-xp-or-2000" id="id3">Why does connections from IPv6 addresses doesn’t work on Windows XP (or 2000)?</a></li>
+<li><a class="reference internal" href="#why-do-i-have-the-error-http-server-permission-denied-at-start" id="id4">Why do I have the error “HTTP server, Permission denied…” at start?</a></li>
+<li><a class="reference internal" href="#why-doesn-t-the-cirrus-sample-application-work" id="id5">Why doesn’t the Cirrus Sample Application work?</a></li>
 <li><a class="reference internal" href="#how-to-use-the-as3-socket-class-with-mona" id="id6">How to use the as3 Socket class with Mona?</a></li>
 <li><a class="reference internal" href="#is-there-a-way-to-record-audio-video-stream" id="id7">Is there a way to record audio&amp;video stream?</a></li>
 <li><a class="reference internal" href="#how-to-create-a-c-plugin-extending-lua" id="id8">How to create a C++ plugin extending lua?</a></li>
@@ -155,31 +143,31 @@
 <div class="section" id="technical-questions">
 <h2><a class="toc-backref" href="#id2">Technical questions</a><a class="headerlink" href="#technical-questions" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="why-does-connections-from-ipv6-addresses-doesn-t-work-on-windows-xp-or-2000">
-<h3><a class="toc-backref" href="#id3">Why does connections from IPv6 addresses doesn&#8217;t work on Windows XP (or 2000)?</a><a class="headerlink" href="#why-does-connections-from-ipv6-addresses-doesn-t-work-on-windows-xp-or-2000" title="Permalink to this headline">¶</a></h3>
-<p>By default Windows XP doesn&#8217;t support IPv6, you just need to install it in the commande line :</p>
-<div class="highlight-bash"><div class="highlight"><pre>netsh int ipv6 install
+<h3><a class="toc-backref" href="#id3">Why does connections from IPv6 addresses doesn’t work on Windows XP (or 2000)?</a><a class="headerlink" href="#why-does-connections-from-ipv6-addresses-doesn-t-work-on-windows-xp-or-2000" title="Permalink to this headline">¶</a></h3>
+<p>By default Windows XP doesn’t support IPv6, you just need to install it in the commande line :</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre>netsh int ipv6 install
 </pre></div>
 </div>
 </div>
 <div class="section" id="why-do-i-have-the-error-http-server-permission-denied-at-start">
-<h3><a class="toc-backref" href="#id4">Why do I have the error &#8220;HTTP server, Permission denied...&#8221; at start?</a><a class="headerlink" href="#why-do-i-have-the-error-http-server-permission-denied-at-start" title="Permalink to this headline">¶</a></h3>
-<p>It&#8217;s not an error, you have already a process listening on the port 80, maybe Skype or Apache?
-If you don&#8217;t want to use the HTTP/WebSocket part of MonaServer you can continue without doing anything. Otherwise you can :</p>
+<h3><a class="toc-backref" href="#id4">Why do I have the error “HTTP server, Permission denied…” at start?</a><a class="headerlink" href="#why-do-i-have-the-error-http-server-permission-denied-at-start" title="Permalink to this headline">¶</a></h3>
+<p>It’s not an error, you have already a process listening on the port 80, maybe Skype or Apache?
+If you don’t want to use the HTTP/WebSocket part of MonaServer you can continue without doing anything. Otherwise you can :</p>
 <ul class="simple">
 <li>kill the other process listening on the port 80 and restart MonaServer,</li>
 <li>or <a class="reference external" href="http://www.monaserver.ovh/installation.html#http">Configure the HTTP port</a> of MonaServer in the file MonaServer.ini (create the file)</li>
 </ul>
 <p>​
 Here is a MonaServer.ini sample :</p>
-<div class="highlight-ini"><div class="highlight"><pre><span class="k">[HTTP]</span>
+<div class="highlight-ini notranslate"><div class="highlight"><pre><span class="k">[HTTP]</span>
 <span class="na">port</span><span class="o">=</span><span class="s">8081</span>
 </pre></div>
 </div>
 </div>
 <div class="section" id="why-doesn-t-the-cirrus-sample-application-work">
-<h3>Why doesn&#8217;t the <a class="reference external" href="http://labs.adobe.com/technologies/cirrus/samples/">Cirrus Sample Application</a> work?<a class="headerlink" href="#why-doesn-t-the-cirrus-sample-application-work" title="Permalink to this headline">¶</a></h3>
+<h3>Why doesn’t the <a class="reference external" href="http://labs.adobe.com/technologies/cirrus/samples/">Cirrus Sample Application</a> work?<a class="headerlink" href="#why-doesn-t-the-cirrus-sample-application-work" title="Permalink to this headline">¶</a></h3>
 <p>Cirrus Server requires the following script:</p>
-<div class="highlight-lua"><div class="highlight"><pre><span class="k">function</span> <span class="nf">onConnection</span><span class="p">(</span><span class="n">client</span><span class="p">,</span><span class="o">...</span><span class="p">)</span>
+<div class="highlight-lua notranslate"><div class="highlight"><pre><span class="k">function</span> <span class="nf">onConnection</span><span class="p">(</span><span class="n">client</span><span class="p">,</span><span class="o">...</span><span class="p">)</span>
   <span class="k">function</span> <span class="nf">client</span><span class="p">:</span><span class="n">relay</span><span class="p">(</span><span class="n">targetId</span><span class="p">,</span><span class="o">...</span><span class="p">)</span>
     <span class="n">target</span> <span class="o">=</span> <span class="n">mona</span><span class="p">.</span><span class="n">clients</span><span class="p">(</span><span class="n">targetId</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">target</span> <span class="k">then</span>
@@ -193,12 +181,12 @@ Here is a MonaServer.ini sample :</p>
 </pre></div>
 </div>
 <p>You can add the script (seen above) in <em>www/main.lua</em> to make the <a class="reference external" href="http://labs.adobe.com/technologies/cirrus/samples/">Cirrus Sample Application</a> work.</p>
-<p>Let see <strong>VideoPhone</strong>, our improved version of the Cirrus Sample, or take a look at the <strong>Meeting sample</strong> which combine RTMFP and RTMP and add meeting rooms : <a class="reference internal" href="samples.html"><em>Samples</em></a>.</p>
+<p>Let see <strong>VideoPhone</strong>, our improved version of the Cirrus Sample, or take a look at the <strong>Meeting sample</strong> which combine RTMFP and RTMP and add meeting rooms : <a class="reference internal" href="samples.html"><span class="doc">Samples</span></a>.</p>
 </div>
 <div class="section" id="how-to-use-the-as3-socket-class-with-mona">
 <h3><a class="toc-backref" href="#id6">How to use the as3 Socket class with Mona?</a><a class="headerlink" href="#how-to-use-the-as3-socket-class-with-mona" title="Permalink to this headline">¶</a></h3>
 <p>Due to new policy rules it is not possible to use the Socket class online without having a policy file. The easier way to do this is to return the socket policy file on each connection on the port 843 (the default port used by Flash):</p>
-<div class="highlight-lua"><div class="highlight"><pre><span class="n">serverPolicyFile</span> <span class="o">=</span> <span class="n">mona</span><span class="p">:</span><span class="n">createTCPServer</span><span class="p">()</span>
+<div class="highlight-lua notranslate"><div class="highlight"><pre><span class="n">serverPolicyFile</span> <span class="o">=</span> <span class="n">mona</span><span class="p">:</span><span class="n">createTCPServer</span><span class="p">()</span>
 <span class="k">function</span> <span class="nf">serverPolicyFile</span><span class="p">:</span><span class="n">onConnection</span><span class="p">(</span><span class="n">client</span><span class="p">)</span>
 
         <span class="k">function</span> <span class="nf">client</span><span class="p">:</span><span class="n">onData</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
@@ -218,12 +206,12 @@ Here is a MonaServer.ini sample :</p>
 <div class="section" id="is-there-a-way-to-record-audio-video-stream">
 <h3><a class="toc-backref" href="#id7">Is there a way to record audio&amp;video stream?</a><a class="headerlink" href="#is-there-a-way-to-record-audio-video-stream" title="Permalink to this headline">¶</a></h3>
 <p>Recording feature is on the roadmap of Mona, until now we have prefered to put that on hold because it miss an async file mechanism in Mona to be able to manipulate files asynchronously like sockets (IOCP for Windows and libaio for linux).
-We could implement it in a classic &#8220;blocking way&#8221; but it will decrease Mona performance, not our goal, we prefer keep full real-time reactivity of Mona. If we find financial resources to develop it (see <a class="reference internal" href="contacts.html"><em>Services &amp; Contacts</em></a>), it could become our priority but until nobody has give funds for that (Mona development is our full time job, and this feature requires between 2 weeks and 1 month of job) it could take a lot of time...</p>
+We could implement it in a classic “blocking way” but it will decrease Mona performance, not our goal, we prefer keep full real-time reactivity of Mona. If we find financial resources to develop it (see <a class="reference internal" href="contacts.html"><span class="doc">Services &amp; Contacts</span></a>), it could become our priority but until nobody has give funds for that (Mona development is our full time job, and this feature requires between 2 weeks and 1 month of job) it could take a lot of time…</p>
 </div>
 <div class="section" id="how-to-create-a-c-plugin-extending-lua">
 <h3><a class="toc-backref" href="#id8">How to create a C++ plugin extending lua?</a><a class="headerlink" href="#how-to-create-a-c-plugin-extending-lua" title="Permalink to this headline">¶</a></h3>
 <p>It is very easy to create a new library extending your lua functionalities. For example the following c++ source code implements a <em>printtest(message)</em> function:</p>
-<div class="highlight-c++"><div class="highlight"><pre><span class="c1">// Don&#39;t forget extern &quot;C&quot;!</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span class="c1">// Don&#39;t forget extern &quot;C&quot;!</span>
 <span class="k">extern</span> <span class="s">&quot;C&quot;</span> <span class="p">{</span>
 <span class="cp">#include &quot;luajit-2.0/lauxlib.h&quot;</span>
 <span class="p">}</span>
@@ -243,10 +231,10 @@ We could implement it in a classic &#8220;blocking way&#8221; but it will decrea
 <span class="p">}</span>
 </pre></div>
 </div>
-<p>Now just compile the project and put the library in the execution directory of MonaServer. Restart Mona. That&#8217;s all!</p>
+<p>Now just compile the project and put the library in the execution directory of MonaServer. Restart Mona. That’s all!</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
-<p class="last">Don&#8217;t forget to link with luajit library and include files.</p>
+<p class="last">Don’t forget to link with luajit library and include files.</p>
 </div>
 </div>
 </div>
@@ -263,17 +251,17 @@ We could implement it in a classic &#8220;blocking way&#8221; but it will decrea
 </div>
 <div class="section" id="what-can-i-do-with-monaserver">
 <h3><a class="toc-backref" href="#id11">What can I do with MonaServer?</a><a class="headerlink" href="#what-can-i-do-with-monaserver" title="Permalink to this headline">¶</a></h3>
-<p>First take a look at our <a class="reference internal" href="index.html"><em>Main page</em></a> which describe briefly the scope of MonaServer. Then we could take some samples :</p>
+<p>First take a look at our <a class="reference internal" href="index.html"><span class="doc">Main page</span></a> which describe briefly the scope of MonaServer. Then we could take some samples :</p>
 <ul class="simple">
-<li>Videoconference (please take a look at the <a class="reference internal" href="samples.html"><em>Meeting sample</em></a>) or a chat service,</li>
+<li>Videoconference (please take a look at the <a class="reference internal" href="samples.html"><span class="doc">Meeting sample</span></a>) or a chat service,</li>
 <li>Remote desktop control or sharing screen online applications (see the <a class="reference external" href="https://obsproject.com/forum/resources/how-to-set-up-your-own-private-rtmfp-server-using-monaserver.153/">OBS Guide</a> on how to configure the great projet <a class="reference external" href="https://obsproject.com">OBS</a> with MonaServer),</li>
 <li>Mutiplayer online P2P games like <a class="reference external" href="http://www.haxball.com">Haxball</a>,</li>
-<li>Industrial Computing with web interface (using our <a class="reference internal" href="serversocket.html"><em>socket classes</em></a> or <a class="reference external" href="https://github.com/Tieske/rpi-gpio/tree/master/lua">rpi-gpio</a> for example on a Raspberry pi),</li>
-<li>API Server using HTTP JSON or XML-RPC (to serve other formats, please <a class="reference internal" href="contacts.html"><em>ask us</em></a>),</li>
+<li>Industrial Computing with web interface (using our <a class="reference internal" href="serversocket.html"><span class="doc">socket classes</span></a> or <a class="reference external" href="https://github.com/Tieske/rpi-gpio/tree/master/lua">rpi-gpio</a> for example on a Raspberry pi),</li>
+<li>API Server using HTTP JSON or XML-RPC (to serve other formats, please <a class="reference internal" href="contacts.html"><span class="doc">ask us</span></a>),</li>
 <li>WebTV channels using RTMFP and <em>mona:publish()</em> on server side to publish from an external source,</li>
 <li>Online P2P sharing file site,</li>
 <li>Dynamic web applications communicating over any of our protocols (WebSocket, RTMFP, RTMP or HTTP),</li>
-<li>Etc... Everything is possible as MonaServer is fast, scalable and oriented for web applications.</li>
+<li>Etc… Everything is possible as MonaServer is fast, scalable and oriented for web applications.</li>
 </ul>
 </div>
 <div class="section" id="what-are-the-differences-between-cumulusserver-and-monaserver">
@@ -287,7 +275,7 @@ We could implement it in a classic &#8220;blocking way&#8221; but it will decrea
 <li>Any RPC function is accessible by each protocol,</li>
 <li>Many bug fixes,</li>
 <li>A best architecture and optimized performances,</li>
-<li>A <a class="reference internal" href="database.html"><em>NoSQL cache system</em></a> for persistence of data,</li>
+<li>A <a class="reference internal" href="database.html"><span class="doc">NoSQL cache system</span></a> for persistence of data,</li>
 </ul>
 <p>And we expect to add more features in the future but it depends on your investments.</p>
 </div>
@@ -314,8 +302,8 @@ We could implement it in a classic &#8220;blocking way&#8221; but it will decrea
       
     </p>
     <p>
-        &copy; Copyright 2016, Mathieu Poux &amp; Thomas Jammet.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.<br/>
+        &copy; Copyright 2018, Mathieu Poux &amp; Thomas Jammet.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.<br/>
     </p>
   </div>
 </footer>

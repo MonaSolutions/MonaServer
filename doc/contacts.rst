@@ -9,13 +9,14 @@ About us
 
 We are 2 french engineers specialists of c++11 and server communication.
 
+If you want to reach us directly you can send a mail to contact@monaserver.ovh.
+
 +-----------------+---------------------------------------------------------------------------------+ 
 | Mathieu Poux    |                                                                                 |
 +=================+=================================================================================+  
-|                 | I am the original developer of the project Cumulus_ and initiator of MonaServer.|
+| |mathieu|       | I am the original developer of the project Cumulus_ and initiator of MonaServer.|
 |                 | Expert of RTMP and RTMFP I develop and do support for clients of MonaServer.    |
 |                 |                                                                                 |
-|                 | **Mail:** mathieupoux@gmail.com                                                 |
 +-----------------+---------------------------------------------------------------------------------+   
 
 
@@ -25,8 +26,6 @@ We are 2 french engineers specialists of c++11 and server communication.
 | |thomas|        |  With an experience of 5 years in Industrial Computing I am now a               |
 |                 |  freelancer working on MonaServer, developing and offering                      |
 |                 |  support for clients of MonaServer.                                             |
-|                 |                                                                                 |
-|                 |  **Mail:** jammetthomas@gmail.com                                               |
 |                 |                                                                                 |
 |                 |  |inthomas|                                                                     |
 +-----------------+---------------------------------------------------------------------------------+ 
@@ -77,6 +76,8 @@ Nevertheless we do not guarantee any response delay.
 Please remember that our development is open source, so contributions are greatly appreciated :
 
 .. |thomas| image:: img/thomas2.jpg
+
+.. |mathieu| image:: img/mathieu.png
 
 .. |inthomas| image:: img/btn_viewmy_160x25.png
   :target: http://fr.linkedin.com/pub/thomas-jammet/5a/411/60b

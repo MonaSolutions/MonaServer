@@ -1,35 +1,24 @@
 <!DOCTYPE html>
 
-
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
-    <title>Server Application &mdash; MonaServer</title>
-    
-    <link rel="stylesheet" href="_static/basic.css" type="text/css" />
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="_static/bootswatch-3.3.6/cerulean/bootstrap.min.css" type="text/css" />
+    <title>Server Application &#8212; MonaServer</title>
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
-    <link rel="stylesheet" href="_static/my-styles.css" type="text/css" />
-    
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    './',
-        VERSION:     '1',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  false
-      };
-    </script>
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="_static/my-styles.css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <script type="text/javascript" src="_static/js/jquery-1.11.0.min.js"></script>
     <script type="text/javascript" src="_static/js/jquery-fix.js"></script>
-    <script type="text/javascript" src="_static/bootstrap-3.3.6/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
-    <link rel="top" title="MonaServer" href="index.html" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
 
   
   <link href='http://fonts.googleapis.com/css?family=Lobster' rel='stylesheet' type='text/css'>
@@ -68,8 +57,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 
 
-  </head>
-  <body role="document">
+  </head><body>
     <div id="content">
     
 
@@ -170,9 +158,9 @@
 </div>
 <div class="section" id="create-a-server-application">
 <span id="ref-create-server-app"></span><h2><a class="toc-backref" href="#id2">Create a server application</a><a class="headerlink" href="#create-a-server-application" title="Permalink to this headline">¶</a></h2>
-<p>On start, Mona creates a <em>www</em> folder in its root directory if it doesn&#8217;t exist already. In this space, you can create subfolders, each one of them describes one server application. When a client connects to MonaServer, the URL path relates the application to use.
+<p>On start, Mona creates a <em>www</em> folder in its root directory if it doesn’t exist already. In this space, you can create subfolders, each one of them describes one server application. When a client connects to MonaServer, the URL path relates the application to use.
 For example, the address <em>rtmfp://host:port/myApplication</em> search its corresponding application in <em>MonaServer/www/myApplication</em> folder. First time MonaServer builds and executes the file <em>main.lua</em> presents in this folder. Then, on new comer, the application already built is executed, unless <em>main.lua</em> file has been modified since the last time. Indeed when you edit <em>main.lua</em> file, the corresponding application is rebuilt in a dynamic way, without having to restart the server.</p>
-<div class="highlight-text"><div class="highlight"><pre>rtmfp://host:port/                   -&gt;     MonaServer/www/main.lua (root application)
+<div class="highlight-text notranslate"><div class="highlight"><pre>rtmfp://host:port/                   -&gt;     MonaServer/www/main.lua (root application)
 rtmfp://host:port/myApplication      -&gt;     MonaServer/www/myApplication/main.lua
 rtmfp://host:port/Games/myGame       -&gt;     MonaServer/www/Games/myGame/main.lua
 </pre></div>
@@ -184,12 +172,12 @@ rtmfp://host:port/Games/myGame       -&gt;     MonaServer/www/Games/myGame/main.
 <li>Exceptionaly you can give root rights to a child application with the function <strong>children()</strong> as shown below. It permits to start other applications at start.</li>
 </ul>
 </div>
-<div class="highlight-lua"><div class="highlight"><pre><span class="n">children</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">childapp&quot;</span><span class="p">)</span>
+<div class="highlight-lua notranslate"><div class="highlight"><pre><span class="n">children</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">childapp&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Each application is identified by its <em>path</em>, which is exactly the <em>path</em> part of the RTMFP URL connection. In the example above, <em>root application</em> has an empty string for path, then the both others have respectively <em>/myApplication</em> and <em>/Games/myGame</em> for <em>path</em> values.</p>
 <p>Here a very simple first server application:</p>
-<div class="highlight-lua"><div class="highlight"><pre><span class="k">function</span> <span class="nf">onStart</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+<div class="highlight-lua notranslate"><div class="highlight"><pre><span class="k">function</span> <span class="nf">onStart</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
   <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">Server application &#39;&quot;</span><span class="o">..</span><span class="n">path</span><span class="o">..</span><span class="s2">&quot;</span><span class="s">&#39; started&quot;</span><span class="p">)</span>
 <span class="k">end</span>
 <span class="k">function</span> <span class="nf">onStop</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
@@ -200,15 +188,15 @@ rtmfp://host:port/Games/myGame       -&gt;     MonaServer/www/Games/myGame/main.
 </div>
 <div class="section" id="global-configurations">
 <span id="ref-global-configurations"></span><h2><a class="toc-backref" href="#id3">Global configurations</a><a class="headerlink" href="#global-configurations" title="Permalink to this headline">¶</a></h2>
-<p><em>MonaServer.ini</em> file allows to give some global configuration values on MonaServer start-up (see <a class="reference internal" href="installation.html#ref-configurations"><span>Configurations</span></a>). To access for these values from script, use <em>mona.configs</em> property (see <a class="reference internal" href="api.html#ref-mona"><span>Mona</span></a> object description to get more details). This system allows to create your own global configuration values and access to them in scripts.</p>
-<div class="highlight-ini"><div class="highlight"><pre><span class="c1">; MonaServer.ini file</span>
+<p><em>MonaServer.ini</em> file allows to give some global configuration values on MonaServer start-up (see <a class="reference internal" href="installation.html#ref-configurations"><span class="std std-ref">Configurations</span></a>). To access for these values from script, use <em>mona.configs</em> property (see <a class="reference internal" href="api.html#ref-mona"><span class="std std-ref">Mona</span></a> object description to get more details). This system allows to create your own global configuration values and access to them in scripts.</p>
+<div class="highlight-ini notranslate"><div class="highlight"><pre><span class="c1">; MonaServer.ini file</span>
 <span class="na">port</span><span class="o">=</span><span class="s">19350 ; existing config</span>
 <span class="c1">; New custom config</span>
 <span class="k">[myGroup]</span>
 <span class="na">myConfig</span><span class="o">=</span><span class="s">test</span>
 </pre></div>
 </div>
-<div class="highlight-lua"><div class="highlight"><pre><span class="c1">-- A script file</span>
+<div class="highlight-lua notranslate"><div class="highlight"><pre><span class="c1">-- A script file</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">mona</span><span class="p">.</span><span class="n">configs</span><span class="p">.</span><span class="n">port</span><span class="p">)</span> <span class="c1">-- displays &quot;19350&quot;</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">mona</span><span class="p">.</span><span class="n">configs</span><span class="p">.</span><span class="n">myGroup</span><span class="p">.</span><span class="n">myConfig</span><span class="p">)</span> <span class="c1">-- displays &quot;test&quot;</span>
 </pre></div>
@@ -220,16 +208,16 @@ rtmfp://host:port/Games/myGame       -&gt;     MonaServer/www/Games/myGame/main.
 <div class="section" id="application-inheritance">
 <h3><a class="toc-backref" href="#id5">Application inheritance</a><a class="headerlink" href="#application-inheritance" title="Permalink to this headline">¶</a></h3>
 <p>Principle is simple, for example the <em>/Games/myGame</em> application extends the <em>/Games</em> application, and so all functions and variables available in <em>/Games/main.lua</em> are available in <em>/Games/myGame/main.lua</em>.</p>
-<div class="highlight-lua"><div class="highlight"><pre><span class="c1">-- /Games script application</span>
+<div class="highlight-lua notranslate"><div class="highlight"><pre><span class="c1">-- /Games script application</span>
 <span class="n">test</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="s">I am Games&quot;</span>
 </pre></div>
 </div>
-<div class="highlight-lua"><div class="highlight"><pre><span class="c1">-- /Games/myGame script application</span>
+<div class="highlight-lua notranslate"><div class="highlight"><pre><span class="c1">-- /Games/myGame script application</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">test</span><span class="p">)</span> <span class="c1">-- displays &quot;I am Games&quot;</span>
 </pre></div>
 </div>
 <p>You can overload an inherited variable or an inherited function, and even dynamically remove the overload if need in putting value to nil.</p>
-<div class="highlight-lua"><div class="highlight"><pre><span class="c1">-- /Games/myGame script application</span>
+<div class="highlight-lua notranslate"><div class="highlight"><pre><span class="c1">-- /Games/myGame script application</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">test</span><span class="p">)</span>          <span class="c1">-- displays &quot;I am Games&quot;</span>
 <span class="n">test</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="s">I am myGame&quot;</span> <span class="c1">-- overloads test variable</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">test</span><span class="p">)</span>          <span class="c1">-- displays &quot;I am myGame&quot;</span>
@@ -238,7 +226,7 @@ rtmfp://host:port/Games/myGame       -&gt;     MonaServer/www/Games/myGame/main.
 </pre></div>
 </div>
 <p>On variable overloading (or function overloading), you can always access for the parent version in prefixing with the parent application name.</p>
-<div class="highlight-lua"><div class="highlight"><pre><span class="c1">-- /Games/myGame script application</span>
+<div class="highlight-lua notranslate"><div class="highlight"><pre><span class="c1">-- /Games/myGame script application</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">test</span><span class="p">)</span>          <span class="c1">-- displays &quot;I am Games&quot;</span>
 <span class="n">test</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="s">I am myGame&quot;</span> <span class="c1">-- overloads test variable</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">test</span><span class="p">)</span>          <span class="c1">-- displays &quot;I am myGame&quot;</span>
@@ -249,13 +237,13 @@ rtmfp://host:port/Games/myGame       -&gt;     MonaServer/www/Games/myGame/main.
 <p class="first admonition-title">Note</p>
 <p class="last">The root server application has for path an empty string.</p>
 </div>
-<div class="highlight-lua"><div class="highlight"><pre><span class="c1">-- &#39;/&#39; script application (the root server application)</span>
+<div class="highlight-lua notranslate"><div class="highlight"><pre><span class="c1">-- &#39;/&#39; script application (the root server application)</span>
 <span class="k">function</span> <span class="nf">hello</span><span class="p">()</span>
   <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">I am the root application&quot;</span><span class="p">)</span>
 <span class="k">end</span>
 </pre></div>
 </div>
-<div class="highlight-lua"><div class="highlight"><pre><span class="c1">-- /Games script application</span>
+<div class="highlight-lua notranslate"><div class="highlight"><pre><span class="c1">-- /Games script application</span>
 <span class="k">function</span> <span class="nf">hello</span><span class="p">()</span>
   <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">I am /Games application&quot;</span><span class="p">)</span>
 <span class="k">end</span>
@@ -264,43 +252,43 @@ rtmfp://host:port/Games/myGame       -&gt;     MonaServer/www/Games/myGame/main.
 </div>
 <div class="admonition warning">
 <p class="first admonition-title">Warning</p>
-<p class="last">Events are functions called by the system (see <a class="reference internal" href="api.html#ref-events"><span>Events</span></a>), if an application doesn&#8217;t define <em>onConnection</em> event for example, on new client connection for this application, it&#8217;s the parent application which will receive the event. To avoid it, you have to overload the event in child application, and you can call also the parent version if needed.</p>
+<p class="last">Events are functions called by the system (see <a class="reference internal" href="api.html#ref-events"><span class="std std-ref">Events</span></a>), if an application doesn’t define <em>onConnection</em> event for example, on new client connection for this application, it’s the parent application which will receive the event. To avoid it, you have to overload the event in child application, and you can call also the parent version if needed.</p>
 </div>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
 <p class="last">The keyword <em>super</em> is supported to refer to the the parent application:</p>
 </div>
-<div class="highlight-lua"><div class="highlight"><pre><span class="c1">-- /Games script application</span>
+<div class="highlight-lua notranslate"><div class="highlight"><pre><span class="c1">-- /Games script application</span>
 <span class="k">function</span> <span class="nf">onConnection</span><span class="p">(</span><span class="n">client</span><span class="p">,</span><span class="o">...</span><span class="p">)</span>
   <span class="k">return</span> <span class="n">super</span><span class="p">:</span><span class="n">onConnection</span><span class="p">(</span><span class="n">client</span><span class="p">,</span><span class="o">...</span><span class="p">)</span>
 <span class="k">end</span>
 <span class="n">super</span><span class="p">:</span><span class="n">hello</span><span class="p">()</span> <span class="c1">-- displays &quot;I am the root application&quot;</span>
 </pre></div>
 </div>
-<p>You can use <em>client.path</em> property to check if it&#8217;s a client connected for this application or for one child application (see <a class="reference internal" href="api.html#ref-client"><span>Client</span></a> object description).</p>
+<p>You can use <em>client.path</em> property to check if it’s a client connected for this application or for one child application (see <a class="reference internal" href="api.html#ref-client"><span class="std std-ref">Client</span></a> object description).</p>
 </div>
 <div class="section" id="exchange-between-unrelated-server-applications">
 <h3><a class="toc-backref" href="#id6">Exchange between unrelated server applications</a><a class="headerlink" href="#exchange-between-unrelated-server-applications" title="Permalink to this headline">¶</a></h3>
 <p>In class inheritance, parent class has no knowledge of its children. However, here a parent server application can access for an child variable or function in checking before its existence.
-For example if <em>/Games</em> application would like to call a <em>load</em> function in <em>/Games/myGame</em> application, it have to check <em>myGame</em> existence, if <em>myGame</em> returns nil, it means that <em>myGame</em> doesn&#8217;t exist or is not yet started.</p>
-<div class="highlight-lua"><div class="highlight"><pre><span class="c1">-- /Games script application</span>
+For example if <em>/Games</em> application would like to call a <em>load</em> function in <em>/Games/myGame</em> application, it have to check <em>myGame</em> existence, if <em>myGame</em> returns nil, it means that <em>myGame</em> doesn’t exist or is not yet started.</p>
+<div class="highlight-lua notranslate"><div class="highlight"><pre><span class="c1">-- /Games script application</span>
 <span class="k">if</span> <span class="n">myGame</span> <span class="k">then</span> <span class="n">myGame</span><span class="p">:</span><span class="nb">load</span><span class="p">()</span> <span class="k">end</span>
 </pre></div>
 </div>
-<div class="highlight-lua"><div class="highlight"><pre><span class="c1">-- /Games/myGame script application</span>
+<div class="highlight-lua notranslate"><div class="highlight"><pre><span class="c1">-- /Games/myGame script application</span>
 <span class="k">function</span> <span class="nf">load</span><span class="p">()</span> <span class="k">end</span>
   <span class="o">...</span>
 <span class="k">end</span>
 </pre></div>
 </div>
 <p>By the same way, any applications can do the same thing with any other applications, even without hierarchical relationship.</p>
-<div class="highlight-lua"><div class="highlight"><pre><span class="c1">-- /myApplication script application</span>
+<div class="highlight-lua notranslate"><div class="highlight"><pre><span class="c1">-- /myApplication script application</span>
 <span class="k">if</span> <span class="n">Games</span> <span class="k">then</span>
   <span class="k">if</span> <span class="n">Games</span><span class="p">.</span><span class="n">myGame</span> <span class="k">then</span> <span class="n">Games</span><span class="p">.</span><span class="n">myGame</span><span class="p">:</span><span class="nb">load</span><span class="p">()</span> <span class="k">end</span>
 <span class="k">end</span>
 </pre></div>
 </div>
-<div class="highlight-lua"><div class="highlight"><pre><span class="c1">-- /Games/myGame script application</span>
+<div class="highlight-lua notranslate"><div class="highlight"><pre><span class="c1">-- /Games/myGame script application</span>
 <span class="k">function</span> <span class="nf">load</span><span class="p">()</span> <span class="k">end</span>
   <span class="o">...</span>
 <span class="k">end</span>
@@ -313,7 +301,7 @@ For example if <em>/Games</em> application would like to call a <em>load</em> fu
 <div class="section" id="pull-data-remote-procedure-call">
 <h3><a class="toc-backref" href="#id8">Pull data, Remote Procedure Call</a><a class="headerlink" href="#pull-data-remote-procedure-call" title="Permalink to this headline">¶</a></h3>
 <p>You have to define your RPC functions as a member of <em>client</em> object gotten on connection, its signature will be exactly the same on client and server side. It can take multiple parameters, and it can return one result.</p>
-<div class="highlight-lua"><div class="highlight"><pre><span class="k">function</span> <span class="nf">onConnection</span><span class="p">(</span><span class="n">client</span><span class="p">,</span><span class="o">...</span><span class="p">)</span>
+<div class="highlight-lua notranslate"><div class="highlight"><pre><span class="k">function</span> <span class="nf">onConnection</span><span class="p">(</span><span class="n">client</span><span class="p">,</span><span class="o">...</span><span class="p">)</span>
   <span class="k">function</span> <span class="nf">client</span><span class="p">:</span><span class="n">test</span><span class="p">(</span><span class="n">name</span><span class="p">,</span><span class="n">firstname</span><span class="p">)</span>
     <span class="k">return</span> <span class="s2">&quot;</span><span class="s">Hello &quot;</span><span class="o">..</span><span class="n">firstname</span><span class="o">..</span><span class="s2">&quot;</span><span class="s"> &quot;</span><span class="o">..</span><span class="n">name</span>
   <span class="k">end</span>
@@ -321,7 +309,7 @@ For example if <em>/Games</em> application would like to call a <em>load</em> fu
 </pre></div>
 </div>
 <p><strong>Flash client :</strong></p>
-<div class="highlight-as3"><div class="highlight"><pre><span class="n">_netConnection</span><span class="o">.</span><span class="na">client</span> <span class="o">=</span> <span class="k">this</span>
+<div class="highlight-as3 notranslate"><div class="highlight"><pre><span class="n">_netConnection</span><span class="o">.</span><span class="na">client</span> <span class="o">=</span> <span class="k">this</span>
 <span class="n">_netConnection</span><span class="o">.</span><span class="na">call</span><span class="o">(</span><span class="s2">&quot;test&quot;</span><span class="o">,</span><span class="k">new</span> <span class="kt">Responder</span><span class="o">(</span><span class="n">onResult</span><span class="o">,</span><span class="n">onStatus</span><span class="o">),</span><span class="s2">&quot;François-Marie&quot;</span><span class="o">,</span><span class="s2">&quot;Arouet&quot;</span><span class="o">)</span>
 
 <span class="kd">function </span><span class="nf">close</span><span class="o">():</span><span class="kt">void</span> <span class="o">{</span> <span class="n">_netConnection</span><span class="o">.</span><span class="na">close</span><span class="o">()</span> <span class="o">}</span>
@@ -339,20 +327,20 @@ For example if <em>/Games</em> application would like to call a <em>load</em> fu
 <p class="last">When you change default client of NetConnection, the new client should have a <em>close()</em> method which closes the connection, because a RTMFP Server can call this function in some special cases</p>
 </div>
 <p>Note that returned result of the scripting function is a writing shortcut for:</p>
-<div class="highlight-lua"><div class="highlight"><pre><span class="k">function</span> <span class="nf">client</span><span class="p">:</span><span class="n">test</span><span class="p">(</span><span class="n">name</span><span class="p">,</span><span class="n">firstname</span><span class="p">)</span>
+<div class="highlight-lua notranslate"><div class="highlight"><pre><span class="k">function</span> <span class="nf">client</span><span class="p">:</span><span class="n">test</span><span class="p">(</span><span class="n">name</span><span class="p">,</span><span class="n">firstname</span><span class="p">)</span>
   <span class="n">client</span><span class="p">.</span><span class="n">writer</span><span class="p">:</span><span class="n">writeMessage</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">Hello &quot;</span><span class="o">..</span><span class="n">firstname</span><span class="o">..</span><span class="s2">&quot;</span><span class="s"> &quot;</span><span class="o">..</span><span class="n">name</span><span class="p">)</span>
 <span class="k">end</span>
 </pre></div>
 </div>
 <p>They both make exactly the same thing.</p>
-<p>If the function is not available on the <em>client</em> object, it returns a <em>NetConnection.Call.Failed</em> status event with <em>Method &#8216;test&#8217; not found</em> in description field. But you can also customize your own error event:</p>
-<div class="highlight-lua"><div class="highlight"><pre><span class="k">function</span> <span class="nf">client</span><span class="p">:</span><span class="n">test</span><span class="p">(</span><span class="n">name</span><span class="p">,</span><span class="n">firstname</span><span class="p">)</span>
+<p>If the function is not available on the <em>client</em> object, it returns a <em>NetConnection.Call.Failed</em> status event with <em>Method ‘test’ not found</em> in description field. But you can also customize your own error event:</p>
+<div class="highlight-lua notranslate"><div class="highlight"><pre><span class="k">function</span> <span class="nf">client</span><span class="p">:</span><span class="n">test</span><span class="p">(</span><span class="n">name</span><span class="p">,</span><span class="n">firstname</span><span class="p">)</span>
   <span class="k">if</span> <span class="ow">not</span> <span class="n">firstname</span> <span class="k">then</span> <span class="nb">error</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">test function takes two arguments&quot;</span><span class="p">)</span> <span class="k">end</span>
   <span class="k">return</span> <span class="s2">&quot;</span><span class="s">Hello &quot;</span><span class="o">..</span><span class="n">firstname</span><span class="o">..</span><span class="s2">&quot;</span><span class="s"> &quot;</span><span class="o">..</span><span class="n">name</span>
 <span class="k">end</span>
 </pre></div>
 </div>
-<div class="highlight-as3"><div class="highlight"><pre><span class="n">_netConnection</span><span class="o">.</span><span class="na">client</span> <span class="o">=</span> <span class="k">this</span>
+<div class="highlight-as3 notranslate"><div class="highlight"><pre><span class="n">_netConnection</span><span class="o">.</span><span class="na">client</span> <span class="o">=</span> <span class="k">this</span>
 <span class="n">_netConnection</span><span class="o">.</span><span class="na">call</span><span class="o">(</span><span class="s2">&quot;test&quot;</span><span class="o">,</span><span class="k">new</span> <span class="kt">Responder</span><span class="o">(</span><span class="n">onResult</span><span class="o">,</span><span class="n">onStatus</span><span class="o">),</span><span class="s2">&quot;François-Marie&quot;</span><span class="o">);</span>
 
 <span class="kd">function </span><span class="nf">close</span><span class="o">():</span><span class="kt">void</span> <span class="o">{</span> <span class="n">_netConnection</span><span class="o">.</span><span class="na">close</span><span class="o">()</span> <span class="o">}</span>
@@ -366,9 +354,9 @@ For example if <em>/Games</em> application would like to call a <em>load</em> fu
 </div>
 <div class="section" id="remote-procedure-call-with-websocket-or-http">
 <h4><a class="toc-backref" href="#id9">Remote Procedure Call with Websocket or HTTP</a><a class="headerlink" href="#remote-procedure-call-with-websocket-or-http" title="Permalink to this headline">¶</a></h4>
-<p>Websocket supports JSON RPC and HTTP supports either JSON and <a class="reference external" href="http://xmlrpc.scripting.com/spec.html">XML-RPC</a> using the &#8216;Content-Type&#8217; header. Here are samples using the same lua server part :</p>
+<p>Websocket supports JSON RPC and HTTP supports either JSON and <a class="reference external" href="http://xmlrpc.scripting.com/spec.html">XML-RPC</a> using the ‘Content-Type’ header. Here are samples using the same lua server part :</p>
 <p><strong>Websocket client :</strong></p>
-<div class="highlight-js"><div class="highlight"><pre><span class="nx">socket</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">WebSocket</span><span class="p">(</span><span class="nx">host</span><span class="p">);</span>
+<div class="highlight-js notranslate"><div class="highlight"><pre><span class="nx">socket</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">WebSocket</span><span class="p">(</span><span class="nx">host</span><span class="p">);</span>
 <span class="nx">socket</span><span class="p">.</span><span class="nx">onmessage</span> <span class="o">=</span> <span class="nx">onMessage</span><span class="p">;</span>
 <span class="kd">var</span> <span class="nx">data</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;test&quot;</span><span class="p">,</span> <span class="s2">&quot;François-Marie&quot;</span><span class="p">,</span> <span class="s2">&quot;Arouet&quot;</span><span class="p">];</span>
 <span class="nx">socket</span><span class="p">.</span><span class="nx">send</span><span class="p">(</span><span class="nx">JSON</span><span class="p">.</span><span class="nx">stringify</span><span class="p">(</span><span class="nx">data</span><span class="p">));</span>
@@ -380,7 +368,7 @@ For example if <em>/Games</em> application would like to call a <em>load</em> fu
 </pre></div>
 </div>
 <p><strong>HTTP JSON-RPC client :</strong></p>
-<div class="highlight-js"><div class="highlight"><pre><span class="kd">var</span> <span class="nx">xmlhttp</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">XMLHttpRequest</span><span class="p">();</span>
+<div class="highlight-js notranslate"><div class="highlight"><pre><span class="kd">var</span> <span class="nx">xmlhttp</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">XMLHttpRequest</span><span class="p">();</span>
 <span class="nx">xmlhttp</span><span class="p">.</span><span class="nx">open</span><span class="p">(</span><span class="s1">&#39;POST&#39;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="kc">true</span><span class="p">);</span>
 
 <span class="c1">// Manage the response</span>
@@ -397,7 +385,7 @@ For example if <em>/Games</em> application would like to call a <em>load</em> fu
 </pre></div>
 </div>
 <p><strong>HTTP XML-RPC client :</strong></p>
-<div class="highlight-js"><div class="highlight"><pre><span class="kd">var</span> <span class="nx">xmlhttp</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">XMLHttpRequest</span><span class="p">();</span>
+<div class="highlight-js notranslate"><div class="highlight"><pre><span class="kd">var</span> <span class="nx">xmlhttp</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">XMLHttpRequest</span><span class="p">();</span>
 <span class="nx">xmlhttp</span><span class="p">.</span><span class="nx">open</span><span class="p">(</span><span class="s1">&#39;POST&#39;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="kc">true</span><span class="p">);</span>
 
 <span class="c1">// Manage the response</span>
@@ -416,22 +404,22 @@ For example if <em>/Games</em> application would like to call a <em>load</em> fu
 <p class="first admonition-title">Note</p>
 <p class="last">Here we use the <a class="reference external" href="http://xmlrpc.scripting.com/spec.html">XML-RPC</a> format which is fully supported by Mona.</p>
 </div>
-<p>See more samples on <a class="reference internal" href="samples.html"><em>Samples</em></a> page.</p>
+<p>See more samples on <a class="reference internal" href="samples.html"><span class="doc">Samples</span></a> page.</p>
 </div>
 </div>
 <div class="section" id="push-data">
 <h3><a class="toc-backref" href="#id10">Push data</a><a class="headerlink" href="#push-data" title="Permalink to this headline">¶</a></h3>
 <p>Push data mechanism is either possible with Websocket and Flash using <em>client.writer</em> object.</p>
-<div class="highlight-lua"><div class="highlight"><pre><span class="n">client</span><span class="p">.</span><span class="n">writer</span><span class="p">:</span><span class="n">writeInvocation</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">onPushData&quot;</span><span class="p">,</span><span class="s2">&quot;</span><span class="s">Rambo&quot;</span><span class="p">,</span><span class="s2">&quot;</span><span class="s">John&quot;</span><span class="p">)</span>
+<div class="highlight-lua notranslate"><div class="highlight"><pre><span class="n">client</span><span class="p">.</span><span class="n">writer</span><span class="p">:</span><span class="n">writeInvocation</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">onPushData&quot;</span><span class="p">,</span><span class="s2">&quot;</span><span class="s">Rambo&quot;</span><span class="p">,</span><span class="s2">&quot;</span><span class="s">John&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p><strong>Flash client :</strong></p>
-<div class="highlight-as3"><div class="highlight"><pre><span class="kd">function </span><span class="nf">onPushData</span><span class="o">(</span><span class="n">name</span><span class="o">:</span><span class="kt">String</span><span class="o">,</span><span class="n">firstName</span><span class="o">:</span><span class="kt">String</span><span class="o">):</span><span class="kt">void</span> <span class="o">{</span>
+<div class="highlight-as3 notranslate"><div class="highlight"><pre><span class="kd">function </span><span class="nf">onPushData</span><span class="o">(</span><span class="n">name</span><span class="o">:</span><span class="kt">String</span><span class="o">,</span><span class="n">firstName</span><span class="o">:</span><span class="kt">String</span><span class="o">):</span><span class="kt">void</span> <span class="o">{</span>
 <span class="o">}</span>
 </pre></div>
 </div>
 <p><strong>Websocket client :</strong></p>
-<div class="highlight-js"><div class="highlight"><pre><span class="nx">socket</span><span class="p">.</span><span class="nx">onmessage</span> <span class="o">=</span> <span class="nx">onMessage</span><span class="p">;</span>
+<div class="highlight-js notranslate"><div class="highlight"><pre><span class="nx">socket</span><span class="p">.</span><span class="nx">onmessage</span> <span class="o">=</span> <span class="nx">onMessage</span><span class="p">;</span>
 <span class="p">...</span>
 <span class="kd">function</span> <span class="nx">onMessage</span><span class="p">(</span><span class="nx">msg</span><span class="p">){</span>
   <span class="kd">var</span> <span class="nx">response</span> <span class="o">=</span> <span class="nx">JSON</span><span class="p">.</span><span class="nx">parse</span><span class="p">(</span><span class="nx">msg</span><span class="p">.</span><span class="nx">data</span><span class="p">);</span>
@@ -447,8 +435,8 @@ For example if <em>/Games</em> application would like to call a <em>load</em> fu
 <p class="first admonition-title">Note</p>
 <p class="last">Push data is not possible with HTTP protocol because it is an old protocol based on pull data only. Long polling is a solution for this but is not implemented yet.</p>
 </div>
-<p>Here an example of push data every two seconds (see <a class="reference internal" href="api.html#ref-onmanage"><span>onManage()</span></a> event description):</p>
-<div class="highlight-lua"><div class="highlight"><pre><span class="n">writers</span> <span class="o">=</span> <span class="p">{}</span>
+<p>Here an example of push data every two seconds (see <a class="reference internal" href="api.html#ref-onmanage"><span class="std std-ref">onManage()</span></a> event description):</p>
+<div class="highlight-lua notranslate"><div class="highlight"><pre><span class="n">writers</span> <span class="o">=</span> <span class="p">{}</span>
 <span class="k">function</span> <span class="nf">onConnection</span><span class="p">(</span><span class="n">client</span><span class="p">,</span><span class="o">...</span><span class="p">)</span>
   <span class="n">writers</span><span class="p">[</span><span class="n">client</span><span class="p">]</span> <span class="o">=</span> <span class="n">client</span><span class="p">.</span><span class="n">writer</span>
 <span class="k">end</span>
@@ -462,12 +450,12 @@ For example if <em>/Games</em> application would like to call a <em>load</em> fu
 <span class="k">end</span>
 </pre></div>
 </div>
-<div class="highlight-as3"><div class="highlight"><pre><span class="kd">function </span><span class="nf">refresh</span><span class="o">():</span><span class="kt">void</span> <span class="o">{...}</span>
+<div class="highlight-as3 notranslate"><div class="highlight"><pre><span class="kd">function </span><span class="nf">refresh</span><span class="o">():</span><span class="kt">void</span> <span class="o">{...}</span>
 </pre></div>
 </div>
 <p><em>client.writer</em> returns the main flowWriter of this client. A FlowWriter is an unidirectional communication pipe, which allows to write message in a fifo for the client. Each flowWriter has some statistic exchange informations.
 When you want push a constant flow with a large amount of data, or if you want to get independant exchange statistics without disrupting the main flowWriter of one client, you can create your own flowWriter channel to push data:</p>
-<div class="highlight-lua"><div class="highlight"><pre><span class="n">writers</span> <span class="o">=</span> <span class="p">{}</span>
+<div class="highlight-lua notranslate"><div class="highlight"><pre><span class="n">writers</span> <span class="o">=</span> <span class="p">{}</span>
 <span class="k">function</span> <span class="nf">onConnection</span><span class="p">(</span><span class="n">client</span><span class="p">,</span><span class="o">...</span><span class="p">)</span>
   <span class="n">writers</span><span class="p">[</span><span class="n">client</span><span class="p">]</span> <span class="o">=</span> <span class="n">client</span><span class="p">.</span><span class="n">writer</span><span class="p">:</span><span class="n">newFlowWriter</span><span class="p">()</span>
 <span class="k">end</span>
@@ -481,11 +469,11 @@ When you want push a constant flow with a large amount of data, or if you want t
 <span class="k">end</span>
 </pre></div>
 </div>
-<div class="highlight-as3"><div class="highlight"><pre><span class="kd">function </span><span class="nf">refresh</span><span class="o">():</span><span class="kt">void</span> <span class="o">{...}</span>
+<div class="highlight-as3 notranslate"><div class="highlight"><pre><span class="kd">function </span><span class="nf">refresh</span><span class="o">():</span><span class="kt">void</span> <span class="o">{...}</span>
 </pre></div>
 </div>
-<p>When you create your own <a class="reference internal" href="api.html#ref-writer"><span>Writer</span></a>, you can overload its <em>onManage</em> function, allowing you to write the same thing in a more elegant way, which avoid here <em>writers</em> table usage, and make the code really more short (see <a class="reference internal" href="api.html"><em>API</em></a> page for more details).</p>
-<div class="highlight-lua"><div class="highlight"><pre><span class="k">function</span> <span class="nf">onConnection</span><span class="p">(</span><span class="n">client</span><span class="p">,</span><span class="o">...</span><span class="p">)</span>
+<p>When you create your own <a class="reference internal" href="api.html#ref-writer"><span class="std std-ref">Writer</span></a>, you can overload its <em>onManage</em> function, allowing you to write the same thing in a more elegant way, which avoid here <em>writers</em> table usage, and make the code really more short (see <a class="reference internal" href="api.html"><span class="doc">API</span></a> page for more details).</p>
+<div class="highlight-lua notranslate"><div class="highlight"><pre><span class="k">function</span> <span class="nf">onConnection</span><span class="p">(</span><span class="n">client</span><span class="p">,</span><span class="o">...</span><span class="p">)</span>
   <span class="n">writer</span> <span class="o">=</span> <span class="n">client</span><span class="p">.</span><span class="n">writer</span><span class="p">:</span><span class="n">newFlowWriter</span><span class="p">()</span>
   <span class="k">function</span> <span class="nf">writer</span><span class="p">:</span><span class="n">onManage</span><span class="p">()</span>
     <span class="n">self</span><span class="p">:</span><span class="n">writeInvocation</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">refresh&quot;</span><span class="p">)</span>
@@ -493,10 +481,10 @@ When you want push a constant flow with a large amount of data, or if you want t
 <span class="k">end</span>
 </pre></div>
 </div>
-<div class="highlight-as3"><div class="highlight"><pre><span class="kd">function </span><span class="nf">refresh</span><span class="o">():</span><span class="kt">void</span> <span class="o">{...}</span>
+<div class="highlight-as3 notranslate"><div class="highlight"><pre><span class="kd">function </span><span class="nf">refresh</span><span class="o">():</span><span class="kt">void</span> <span class="o">{...}</span>
 </pre></div>
 </div>
-<p>If you have need of pushing rate greater than two seconds, use <em>onRealTime</em> event of root application (see <a class="reference internal" href="api.html#ref-events"><span>Events</span></a> for more details).</p>
+<p>If you have need of pushing rate greater than two seconds, use <em>onRealTime</em> event of root application (see <a class="reference internal" href="api.html#ref-events"><span class="std std-ref">Events</span></a> for more details).</p>
 </div>
 </div>
 <div class="section" id="lua-types-conversions">
@@ -516,10 +504,10 @@ When you want push a constant flow with a large amount of data, or if you want t
 <span id="ref-amf-to-lua"></span><h3><a class="toc-backref" href="#id12">AMF to LUA conversions</a><a class="headerlink" href="#amf-to-lua-conversions" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><strong>Used by :</strong> RTMP, RTMFP and HTTP POST (Mime-Type: application/amf)</li>
-<li><strong>Functions :</strong> toAMF/fromAMF/toAMF0 (see <a class="reference internal" href="api.html#ref-mona"><span>Mona</span></a> object for more details)</li>
+<li><strong>Functions :</strong> toAMF/fromAMF/toAMF0 (see <a class="reference internal" href="api.html#ref-mona"><span class="std std-ref">Mona</span></a> object for more details)</li>
 </ul>
 <p>Primitive conversion types are easy and intuitive (Number, Boolean, String). Except these primitive types, in <a class="reference external" href="http://www.lua.org/">LUA</a> all is table. Concerning AMF complex type conversions, things go as following:</p>
-<div class="highlight-lua"><div class="highlight"><pre><span class="c1">-- LUA table formatted in Object          // AMF Object</span>
+<div class="highlight-lua notranslate"><div class="highlight"><pre><span class="c1">-- LUA table formatted in Object          // AMF Object</span>
 <span class="p">{</span><span class="n">x</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span><span class="n">y</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span><span class="n">width</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span><span class="n">height</span><span class="o">=</span><span class="mi">100</span><span class="p">}</span>          <span class="p">{</span><span class="n">x</span><span class="p">:</span><span class="mi">10</span><span class="p">,</span><span class="n">y</span><span class="p">:</span><span class="mi">10</span><span class="p">,</span><span class="n">width</span><span class="p">:</span><span class="mi">100</span><span class="p">,</span><span class="n">height</span><span class="p">:</span><span class="mi">100</span><span class="p">}</span>
 
 <span class="c1">-- LUA table formatted in Array           // AMF Array</span>
@@ -545,13 +533,13 @@ When you want push a constant flow with a large amount of data, or if you want t
 </div>
 <p>On a <a class="reference external" href="http://www.lua.org/">LUA</a> to AMF conversion, priority conversion order works as following:</p>
 <ol class="arabic simple">
-<li>If the LUA table given contains the property <em>__raw</em>, it&#8217;s converted to a ByteArray AMF object.</li>
-<li>If the LUA table given contains the property <em>__size</em>, it&#8217;s converted to a Dictionary AMF object.</li>
-<li>If the LUA table given contains the property <em>__time</em>, it&#8217;s converted to a Date AMF object.</li>
+<li>If the LUA table given contains the property <em>__raw</em>, it’s converted to a ByteArray AMF object.</li>
+<li>If the LUA table given contains the property <em>__size</em>, it’s converted to a Dictionary AMF object.</li>
+<li>If the LUA table given contains the property <em>__time</em>, it’s converted to a Date AMF object.</li>
 <li>Otherwise it chooses the more adapted conversion (Object, Array, or Array associative).</li>
 </ol>
-<p>About <em>__time</em> property on a date object, it&#8217;s the the number of milliseconds elapsed since midnight UTC of January 1 1970 (<a class="reference external" href="http://en.wikipedia.org/wiki/Unix_time">Unix time</a>).</p>
-<p>About Dictionary object, <a class="reference external" href="http://www.lua.org/">LUA</a> table supports an <a class="reference external" href="http://www.lua.org/pil/17.html">weak keys table</a> feature, and it&#8217;s used in AMF conversion with the <em>weakKeys</em> contructor argument of <a class="reference external" href="http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/utils/Dictionary.html">Dictionary AMF type</a>. It means that if you build an AMF Dictionary object with <em>weakKeys</em> equals <em>true</em> and send it to MonaServer, MonaServer converts it in a <a class="reference external" href="http://www.lua.org/">LUA</a> table with weak keys, and vice versa.</p>
+<p>About <em>__time</em> property on a date object, it’s the the number of milliseconds elapsed since midnight UTC of January 1 1970 (<a class="reference external" href="http://en.wikipedia.org/wiki/Unix_time">Unix time</a>).</p>
+<p>About Dictionary object, <a class="reference external" href="http://www.lua.org/">LUA</a> table supports an <a class="reference external" href="http://www.lua.org/pil/17.html">weak keys table</a> feature, and it’s used in AMF conversion with the <em>weakKeys</em> contructor argument of <a class="reference external" href="http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/utils/Dictionary.html">Dictionary AMF type</a>. It means that if you build an AMF Dictionary object with <em>weakKeys</em> equals <em>true</em> and send it to MonaServer, MonaServer converts it in a <a class="reference external" href="http://www.lua.org/">LUA</a> table with weak keys, and vice versa.</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
 <p class="last">Actually Mona supports all AMF0 and AMF3 format, excepts <em>Vector</em> and <em>XML</em> types.</p>
@@ -560,7 +548,7 @@ When you want push a constant flow with a large amount of data, or if you want t
 <p class="first admonition-title">Error</p>
 <ul class="last simple">
 <li>Complex objects are not supported by LUA to AMF conversion,</li>
-<li>IExternalizable objects (ArrayCollection apart) are not supported too, if you want us to add support for both please contact us (<a class="reference internal" href="contacts.html"><em>Services &amp; Contacts</em></a>).</li>
+<li>IExternalizable objects (ArrayCollection apart) are not supported too, if you want us to add support for both please contact us (<a class="reference internal" href="contacts.html"><span class="doc">Services &amp; Contacts</span></a>).</li>
 </ul>
 </div>
 </div>
@@ -568,10 +556,10 @@ When you want push a constant flow with a large amount of data, or if you want t
 <span id="ref-json-to-lua"></span><h3><a class="toc-backref" href="#id13">JSON to LUA conversions</a><a class="headerlink" href="#json-to-lua-conversions" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><strong>Used by :</strong> WebSocket and HTTP POST (Mime-Type: application/json)</li>
-<li><strong>Functions :</strong> toJSON/fromJSON (see <a class="reference internal" href="api.html#ref-mona"><span>Mona</span></a> object for more details)</li>
+<li><strong>Functions :</strong> toJSON/fromJSON (see <a class="reference internal" href="api.html#ref-mona"><span class="std std-ref">Mona</span></a> object for more details)</li>
 </ul>
 <p>As in AMF primitive, conversion types are easy and intuitive (Number, Boolean, String). For the rest, things go as following:</p>
-<div class="highlight-lua"><div class="highlight"><pre><span class="c1">-- LUA table formatted in Object          // JSON Object</span>
+<div class="highlight-lua notranslate"><div class="highlight"><pre><span class="c1">-- LUA table formatted in Object          // JSON Object</span>
 <span class="p">{</span><span class="n">x</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span><span class="n">y</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span><span class="n">width</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span><span class="n">height</span><span class="o">=</span><span class="mi">100</span><span class="p">}</span>          <span class="p">{</span><span class="s2">&quot;</span><span class="s">x&quot;</span><span class="p">:</span><span class="mi">10</span><span class="p">,</span><span class="s2">&quot;</span><span class="s">y&quot;</span><span class="p">:</span><span class="mi">10</span><span class="p">,</span><span class="s2">&quot;</span><span class="s">width&quot;</span><span class="p">:</span><span class="mi">100</span><span class="p">,</span><span class="s2">&quot;</span><span class="s">height&quot;</span><span class="p">:</span><span class="mi">100</span><span class="p">}</span>
 
 <span class="c1">-- LUA table formatted in Array           // JSON Array</span>
@@ -585,11 +573,11 @@ When you want push a constant flow with a large amount of data, or if you want t
 <p class="first admonition-title">Note</p>
 <ul class="last simple">
 <li>Order can differ from original type because there is no attribute order in lua,</li>
-<li>Notice that in JSON mixed tables don&#8217;t exist, that&#8217;s why we must create an Array with an object containing associative values,</li>
-<li>For serializations reasons JSON data need to be encapsulated in a JSON array &#8216;[]&#8217;. For example the JSON Array above will be sended by client in this format :</li>
+<li>Notice that in JSON mixed tables don’t exist, that’s why we must create an Array with an object containing associative values,</li>
+<li>For serializations reasons JSON data need to be encapsulated in a JSON array ‘[]’. For example the JSON Array above will be sended by client in this format :</li>
 </ul>
 </div>
-<div class="highlight-js"><div class="highlight"><pre><span class="nx">socket</span><span class="p">.</span><span class="nx">send</span><span class="p">(</span><span class="s2">&quot;[[10,10,100,100]]&quot;</span><span class="p">);</span>
+<div class="highlight-js notranslate"><div class="highlight"><pre><span class="nx">socket</span><span class="p">.</span><span class="nx">send</span><span class="p">(</span><span class="s2">&quot;[[10,10,100,100]]&quot;</span><span class="p">);</span>
 </pre></div>
 </div>
 </div>
@@ -597,14 +585,14 @@ When you want push a constant flow with a large amount of data, or if you want t
 <span id="ref-query-to-lua"></span><h3><a class="toc-backref" href="#id14">Query String to LUA conversions</a><a class="headerlink" href="#query-string-to-lua-conversions" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><strong>Used by :</strong> HTTP POST (Mime-Type: application/x-www-form-urlencoded)</li>
-<li><strong>Functions :</strong> toQuery/fromQuery (see <a class="reference internal" href="api.html#ref-mona"><span>Mona</span></a> object for more details)</li>
+<li><strong>Functions :</strong> toQuery/fromQuery (see <a class="reference internal" href="api.html#ref-mona"><span class="std std-ref">Mona</span></a> object for more details)</li>
 </ul>
 <p>As in AMF primitive, conversion types are easy and intuitive (Number, Boolean, String). For the rest, things go as following:</p>
-<div class="highlight-lua"><div class="highlight"><pre>-- LUA table formatted in Object          // Query String
-{x=10,y=10,width=100,height=100}          x=10&amp;y=10&amp;width=100&amp;height=100
+<div class="highlight-lua notranslate"><div class="highlight"><pre><span class="c1">-- LUA table formatted in Object          // Query String</span>
+<span class="p">{</span><span class="n">x</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span><span class="n">y</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span><span class="n">width</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span><span class="n">height</span><span class="o">=</span><span class="mi">100</span><span class="p">}</span>          <span class="c1">-- x=10&amp;y=10&amp;width=100&amp;height=100</span>
 
--- LUA table formatted in Array           // Query String
-{10,10,100,100}                           10&amp;10&amp;100&amp;100
+<span class="c1">-- LUA table formatted in Array           // Query String</span>
+<span class="p">{</span><span class="mi">10</span><span class="p">,</span><span class="mi">10</span><span class="p">,</span><span class="mi">100</span><span class="p">,</span><span class="mi">100</span><span class="p">}</span>                           <span class="c1">-- 10&amp;10&amp;100&amp;100</span>
 </pre></div>
 </div>
 <div class="admonition note">
@@ -619,10 +607,10 @@ When you want push a constant flow with a large amount of data, or if you want t
 <span id="ref-xmlrpc-to-lua"></span><h3><a class="reference external" href="http://xmlrpc.scripting.com/spec.html">XML-RPC</a> to LUA conversions<a class="headerlink" href="#xml-rpc-to-lua-conversions" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><strong>Used by :</strong> HTTP POST (Mime-Type: application/xml)</li>
-<li><strong>Functions :</strong> toXMLRPC/fromXMLRPC (see <a class="reference internal" href="api.html#ref-mona"><span>Mona</span></a> object for more details)</li>
+<li><strong>Functions :</strong> toXMLRPC/fromXMLRPC (see <a class="reference internal" href="api.html#ref-mona"><span class="std std-ref">Mona</span></a> object for more details)</li>
 </ul>
 <p>There are a lot of XML format for communication, <a class="reference external" href="http://xmlrpc.scripting.com/spec.html">XML-RPC</a> has been choosen for its simplicity and because it fits well with Mona.</p>
-<div class="highlight-lua"><div class="highlight"><pre><span class="c1">-- LUA table formatted in Object          // XML-RPC Object</span>
+<div class="highlight-lua notranslate"><div class="highlight"><pre><span class="c1">-- LUA table formatted in Object          // XML-RPC Object</span>
 <span class="p">{</span><span class="n">x</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span><span class="n">y</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span><span class="n">width</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span><span class="n">height</span><span class="o">=</span><span class="mi">100</span><span class="p">}</span>          <span class="o">&lt;</span><span class="n">struct</span><span class="o">&gt;</span>
                                               <span class="o">&lt;</span><span class="n">member</span><span class="o">&gt;&lt;</span><span class="n">name</span><span class="o">&gt;</span><span class="n">x</span><span class="o">&lt;/</span><span class="n">name</span><span class="o">&gt;&lt;</span><span class="n">value</span><span class="o">&gt;&lt;</span><span class="n">i4</span><span class="o">&gt;</span><span class="mi">10</span><span class="o">&lt;/</span><span class="n">i4</span><span class="o">&gt;&lt;/</span><span class="n">value</span><span class="o">&gt;&lt;/</span><span class="n">member</span><span class="o">&gt;</span>
                                               <span class="o">&lt;</span><span class="n">member</span><span class="o">&gt;&lt;</span><span class="n">name</span><span class="o">&gt;</span><span class="n">y</span><span class="o">&lt;/</span><span class="n">name</span><span class="o">&gt;&lt;</span><span class="n">value</span><span class="o">&gt;&lt;</span><span class="n">i4</span><span class="o">&gt;</span><span class="mi">10</span><span class="o">&lt;/</span><span class="n">i4</span><span class="o">&gt;&lt;/</span><span class="n">value</span><span class="o">&gt;&lt;/</span><span class="n">member</span><span class="o">&gt;</span>
@@ -655,7 +643,7 @@ When you want push a constant flow with a large amount of data, or if you want t
 <ul class="last simple">
 <li>As you see <a class="reference external" href="http://xmlrpc.scripting.com/spec.html">XML-RPC</a> is a bit verbose so we council you to use JSON if possible for faster communication,</li>
 <li>Order can differ from original type because there is no attribute order in lua,</li>
-<li>Notice that in <a class="reference external" href="http://xmlrpc.scripting.com/spec.html">XML-RPC</a> mixed tables don&#8217;t exist, that&#8217;s why we must create an array with an object containing associative values.</li>
+<li>Notice that in <a class="reference external" href="http://xmlrpc.scripting.com/spec.html">XML-RPC</a> mixed tables don’t exist, that’s why we must create an array with an object containing associative values.</li>
 </ul>
 </div>
 </div>
@@ -663,7 +651,7 @@ When you want push a constant flow with a large amount of data, or if you want t
 <span id="ref-xml-compatibility"></span><h3><a class="toc-backref" href="#id16">XML data compatibility (XML parser)</a><a class="headerlink" href="#xml-data-compatibility-xml-parser" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><strong>Not used in parsers</strong></li>
-<li><strong>Functions :</strong> toXML/fromXML (see <a class="reference internal" href="api.html#ref-mona"><span>Mona</span></a> object for more details)</li>
+<li><strong>Functions :</strong> toXML/fromXML (see <a class="reference internal" href="api.html#ref-mona"><span class="std std-ref">Mona</span></a> object for more details)</li>
 </ul>
 <p>As mentioned above, Mona traduce XMLRPC calls automatically. For other types of XML data only few <a class="reference external" href="http://www.lua.org/">LUA</a> code lines are needed, using the useful XML parser.</p>
 <dl class="docutils">
@@ -674,11 +662,11 @@ When you want push a constant flow with a large amount of data, or if you want t
 </ul>
 </dd>
 </dl>
-<p>See <a class="reference internal" href="api.html#ref-mona"><span>Mona</span></a> for more details.</p>
+<p>See <a class="reference internal" href="api.html#ref-mona"><span class="std std-ref">Mona</span></a> for more details.</p>
 <div class="section" id="a-sample-with-soap">
 <h4><a class="toc-backref" href="#id17">A sample with SOAP</a><a class="headerlink" href="#a-sample-with-soap" title="Permalink to this headline">¶</a></h4>
 <p>Let us begin with an RPC addition method :</p>
-<div class="highlight-lua"><div class="highlight"><pre><span class="k">function</span> <span class="nf">onConnection</span><span class="p">(</span><span class="n">client</span><span class="p">,</span><span class="o">...</span><span class="p">)</span>
+<div class="highlight-lua notranslate"><div class="highlight"><pre><span class="k">function</span> <span class="nf">onConnection</span><span class="p">(</span><span class="n">client</span><span class="p">,</span><span class="o">...</span><span class="p">)</span>
   <span class="k">function</span> <span class="nf">client</span><span class="p">:</span><span class="n">add</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">value</span><span class="o">+</span><span class="mi">1</span>
   <span class="k">end</span>
@@ -687,7 +675,7 @@ When you want push a constant flow with a large amount of data, or if you want t
 </div>
 <p>We can already call this method by an HTTP GET request (the name and the parameters are given in the URI), a JSON POST, XML-RPC or by AMF.
 But if we want absolutly to call it from a SOAP client with the following request :</p>
-<div class="highlight-xml"><div class="highlight"><pre><span class="nt">&lt;soap:Envelope</span> <span class="na">xmlns:xsi=</span><span class="s">&quot;http://www.w3.org/2001/XMLSchema-instance&quot;</span> <span class="na">xmlns:xsd=</span><span class="s">&quot;http://www.w3.org/2001/XMLSchema&quot;</span> <span class="na">xmlns:soap=</span><span class="s">&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;</span><span class="nt">&gt;</span>
+<div class="highlight-xml notranslate"><div class="highlight"><pre><span class="nt">&lt;soap:Envelope</span> <span class="na">xmlns:xsi=</span><span class="s">&quot;http://www.w3.org/2001/XMLSchema-instance&quot;</span> <span class="na">xmlns:xsd=</span><span class="s">&quot;http://www.w3.org/2001/XMLSchema&quot;</span> <span class="na">xmlns:soap=</span><span class="s">&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;</span><span class="nt">&gt;</span>
   <span class="nt">&lt;soap:Body&gt;</span>
     <span class="nt">&lt;Add</span> <span class="na">xmlns=</span><span class="s">&quot;http://localhost/&quot;</span><span class="nt">&gt;</span>
       <span class="nt">&lt;Value&gt;</span>1<span class="nt">&lt;/Value&gt;</span>
@@ -697,7 +685,7 @@ But if we want absolutly to call it from a SOAP client with the following reques
 </pre></div>
 </div>
 <p>And the expected response :</p>
-<div class="highlight-xml"><div class="highlight"><pre><span class="nt">&lt;soap:Envelope</span> <span class="na">xmlns:soap=</span><span class="s">&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;</span> <span class="na">xmlns:xsi=</span><span class="s">&quot;http://www.w3.org/2001/XMLSchema-instance&quot;</span> <span class="na">xmlns:xsd=</span><span class="s">&quot;http://www.w3.org/2001/XMLSchema&quot;</span><span class="nt">&gt;</span>
+<div class="highlight-xml notranslate"><div class="highlight"><pre><span class="nt">&lt;soap:Envelope</span> <span class="na">xmlns:soap=</span><span class="s">&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;</span> <span class="na">xmlns:xsi=</span><span class="s">&quot;http://www.w3.org/2001/XMLSchema-instance&quot;</span> <span class="na">xmlns:xsd=</span><span class="s">&quot;http://www.w3.org/2001/XMLSchema&quot;</span><span class="nt">&gt;</span>
   <span class="nt">&lt;soap:Body&gt;</span>
     <span class="nt">&lt;AddResponse</span> <span class="na">xmlns=</span><span class="s">&quot;http://localhost/&quot;</span><span class="nt">&gt;</span>
       <span class="nt">&lt;AddResult&gt;</span>
@@ -709,7 +697,7 @@ But if we want absolutly to call it from a SOAP client with the following reques
 </pre></div>
 </div>
 <p>Just rebuild the <a class="reference external" href="http://www.lua.org/">LUA</a> code lines like this :</p>
-<div class="highlight-lua"><div class="highlight"><pre><span class="k">function</span> <span class="nf">onConnection</span><span class="p">(</span><span class="n">client</span><span class="p">,</span><span class="o">...</span><span class="p">)</span>
+<div class="highlight-lua notranslate"><div class="highlight"><pre><span class="k">function</span> <span class="nf">onConnection</span><span class="p">(</span><span class="n">client</span><span class="p">,</span><span class="o">...</span><span class="p">)</span>
 
   <span class="k">function</span> <span class="nf">client</span><span class="p">:</span><span class="n">onMessage</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
     <span class="kd">local</span> <span class="n">xml</span> <span class="o">=</span> <span class="n">mona</span><span class="p">:</span><span class="n">fromXML</span><span class="p">(</span><span class="nb">error</span><span class="p">,</span><span class="n">data</span><span class="p">)</span> <span class="c1">-- parse the XML data</span>
@@ -738,7 +726,7 @@ But if we want absolutly to call it from a SOAP client with the following reques
 <p>The XML parser (fromXML/toXML) is freely inspirated by an <a class="reference external" href="https://github.com/lubyk/xml">open source project</a> to give an intuitive traduction of xml in lua variable.
 Here is an example of xml to lua conversion :</p>
 <p><strong>XML:</strong></p>
-<div class="highlight-xml"><div class="highlight"><pre><span class="cp">&lt;?xml version=&quot;1.0&quot;?&gt;</span>
+<div class="highlight-xml notranslate"><div class="highlight"><pre><span class="cp">&lt;?xml version=&quot;1.0&quot;?&gt;</span>
 <span class="nt">&lt;document&gt;</span>
   <span class="nt">&lt;article&gt;</span>
     <span class="nt">&lt;p&gt;</span>This is the first paragraph.<span class="nt">&lt;/p&gt;</span>
@@ -751,7 +739,7 @@ Here is an example of xml to lua conversion :</p>
 </pre></div>
 </div>
 <p><strong>LUA:</strong></p>
-<div class="highlight-lua"><div class="highlight"><pre><span class="p">{</span> <span class="n">xml</span> <span class="o">=</span> <span class="p">{</span><span class="n">version</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">},</span>
+<div class="highlight-lua notranslate"><div class="highlight"><pre><span class="p">{</span> <span class="n">xml</span> <span class="o">=</span> <span class="p">{</span><span class="n">version</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">},</span>
   <span class="p">{</span><span class="n">__name</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="s">document&#39;</span><span class="p">,</span>
     <span class="p">{</span><span class="n">__name</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="s">article&#39;</span><span class="p">,</span>
       <span class="p">{</span><span class="n">__name</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="s">p&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="s">This is the first paragraph.&#39;</span><span class="p">},</span>
@@ -765,10 +753,10 @@ Here is an example of xml to lua conversion :</p>
 </pre></div>
 </div>
 <p><strong>fromXML usage:</strong></p>
-<div class="highlight-lua"><div class="highlight"><pre><span class="n">variable</span> <span class="o">=</span> <span class="n">mona</span><span class="p">:</span><span class="n">fromXML</span><span class="p">(</span><span class="n">XML</span><span class="p">)</span>
+<div class="highlight-lua notranslate"><div class="highlight"><pre><span class="n">variable</span> <span class="o">=</span> <span class="n">mona</span><span class="p">:</span><span class="n">fromXML</span><span class="p">(</span><span class="n">XML</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>For facility you can access to <em>&#8220;This is the first paragraph&#8221;</em> by two ways :</p>
+<p>For facility you can access to <em>“This is the first paragraph”</em> by two ways :</p>
 <ol class="arabic simple">
 <li><em>variable[1][1][1][1]</em></li>
 <li><em>variable.document.article.p.__value</em></li>
@@ -783,7 +771,7 @@ Install your <a class="reference external" href="http://www.lua.org/">LUA</a> ex
 <p>Now if you need to organize your code in different directories for your server application, we have extended the <a class="reference external" href="http://www.lua.org/">LUA</a> functions <em>require</em>, <em>dofile</em> and <em>loadfile</em> (see <a class="reference external" href="http://www.lua.org/pil/8.html">this LUA page</a>) to allow inclusion through relative paths.
 Search begin in the directory of the application itself and recursively in each parents applications. And finally, if the file cannot be found in this way it search in the common locations of <a class="reference external" href="http://www.lua.org/">LUA</a>.
 So you can include your scripts like this :</p>
-<div class="highlight-lua"><div class="highlight"><pre><span class="kd">local</span> <span class="nb">module</span> <span class="o">=</span> <span class="nb">require</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">module.lua&quot;</span><span class="p">)</span>
+<div class="highlight-lua notranslate"><div class="highlight"><pre><span class="kd">local</span> <span class="nb">module</span> <span class="o">=</span> <span class="nb">require</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">module.lua&quot;</span><span class="p">)</span>
 <span class="nb">require</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">init.lua&quot;</span><span class="p">)</span>
 
 <span class="k">function</span> <span class="nf">onStart</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
@@ -795,8 +783,8 @@ So you can include your scripts like this :</p>
 <span class="k">end</span>
 </pre></div>
 </div>
-<p>Or you can always use <em>mona:absolutePath(path)</em> function (see <a class="reference internal" href="api.html#ref-mona"><span>Mona</span></a> object for more details) if you want to use the absolute path of the file :</p>
-<div class="highlight-lua"><div class="highlight"><pre><span class="k">function</span> <span class="nf">onStart</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+<p>Or you can always use <em>mona:absolutePath(path)</em> function (see <a class="reference internal" href="api.html#ref-mona"><span class="std std-ref">Mona</span></a> object for more details) if you want to use the absolute path of the file :</p>
+<div class="highlight-lua notranslate"><div class="highlight"><pre><span class="k">function</span> <span class="nf">onStart</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
   <span class="nb">dofile</span><span class="p">(</span><span class="n">mona</span><span class="p">:</span><span class="n">absolutePath</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="o">..</span><span class="s2">&quot;</span><span class="s">start.lua&quot;</span><span class="p">)</span>
 <span class="k">end</span>
 <span class="k">function</span> <span class="nf">onConnection</span><span class="p">(</span><span class="n">client</span><span class="p">,</span><span class="o">...</span><span class="p">)</span>
@@ -818,10 +806,10 @@ The solution is to use logs macros :</p>
 <li><strong>WARN</strong>, a warning.</li>
 <li><strong>NOTE</strong>, an important information, displayed by default in Mona log files.</li>
 <li><strong>INFO</strong>, an information, displayed by default in Mona log files.</li>
-<li><strong>DEBUG</strong>, displayed only if you start MonaServer with a more high level log (see <em>/help</em> or <em>&#8211;help</em> on command-line startup)</li>
-<li><strong>TRACE</strong>, displayed only if you start MonaServer with a more high level log (see <em>/help</em> or <em>&#8211;help</em> on command-line startup)</li>
+<li><strong>DEBUG</strong>, displayed only if you start MonaServer with a more high level log (see <em>/help</em> or <em>–help</em> on command-line startup)</li>
+<li><strong>TRACE</strong>, displayed only if you start MonaServer with a more high level log (see <em>/help</em> or <em>–help</em> on command-line startup)</li>
 </ul>
-<div class="highlight-lua"><div class="highlight"><pre><span class="k">function</span> <span class="nf">onStart</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+<div class="highlight-lua notranslate"><div class="highlight"><pre><span class="k">function</span> <span class="nf">onStart</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
   <span class="n">NOTE</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">Application &quot;</span><span class="o">..</span><span class="n">path</span><span class="o">..</span><span class="s2">&quot;</span><span class="s"> started&quot;</span><span class="p">)</span>
 <span class="k">end</span>
 <span class="k">function</span> <span class="nf">onStop</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
@@ -832,7 +820,7 @@ The solution is to use logs macros :</p>
 </div>
 <div class="section" id="api">
 <h2><a class="toc-backref" href="#id21">API</a><a class="headerlink" href="#api" title="Permalink to this headline">¶</a></h2>
-<p>The complete API documentation is available on the <a class="reference internal" href="api.html"><em>API page</em></a>.</p>
+<p>The complete API documentation is available on the <a class="reference internal" href="api.html"><span class="doc">API page</span></a>.</p>
 </div>
 </div>
 
@@ -856,8 +844,8 @@ The solution is to use logs macros :</p>
       
     </p>
     <p>
-        &copy; Copyright 2016, Mathieu Poux &amp; Thomas Jammet.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.<br/>
+        &copy; Copyright 2018, Mathieu Poux &amp; Thomas Jammet.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.<br/>
     </p>
   </div>
 </footer>

@@ -1,35 +1,24 @@
 <!DOCTYPE html>
 
-
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
-    <title>Server Application Sockets &mdash; MonaServer</title>
-    
-    <link rel="stylesheet" href="_static/basic.css" type="text/css" />
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="_static/bootswatch-3.3.6/cerulean/bootstrap.min.css" type="text/css" />
+    <title>Server Application Sockets &#8212; MonaServer</title>
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
-    <link rel="stylesheet" href="_static/my-styles.css" type="text/css" />
-    
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    './',
-        VERSION:     '1',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  false
-      };
-    </script>
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="_static/my-styles.css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <script type="text/javascript" src="_static/js/jquery-1.11.0.min.js"></script>
     <script type="text/javascript" src="_static/js/jquery-fix.js"></script>
-    <script type="text/javascript" src="_static/bootstrap-3.3.6/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
-    <link rel="top" title="MonaServer" href="index.html" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
 
   
   <link href='http://fonts.googleapis.com/css?family=Lobster' rel='stylesheet' type='text/css'>
@@ -68,8 +57,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 
 
-  </head>
-  <body role="document">
+  </head><body>
     <div id="content">
     
 
@@ -129,11 +117,11 @@
       
   <div class="section" id="server-application-sockets">
 <h1><a class="toc-backref" href="#id7">Server Application Sockets</a><a class="headerlink" href="#server-application-sockets" title="Permalink to this headline">¶</a></h1>
-<p><a class="reference internal" href="serverapp.html"><em>Server Application</em></a> in MonaServer uses <a class="reference external" href="http://www.lua.org/">LUA</a> engine. This engine can be extended with some <a class="reference external" href="http://www.lua.org/">LUA</a> extensions to add some required features (for more details see <a class="reference internal" href="serverapp.html"><em>Server Application</em></a> page.)
-Usually to add sockets feature in <a class="reference external" href="http://www.lua.org/">LUA</a>, the extension <a class="reference external" href="http://w3.impa.br/~diego/software/luasocket/">LUASocket</a> is used. But this extension has three disavantages to create a <a class="reference internal" href="serverapp.html"><em>Server Application</em></a> in MonaServer:</p>
+<p><a class="reference internal" href="serverapp.html"><span class="doc">Server Application</span></a> in MonaServer uses <a class="reference external" href="http://www.lua.org/">LUA</a> engine. This engine can be extended with some <a class="reference external" href="http://www.lua.org/">LUA</a> extensions to add some required features (for more details see <a class="reference internal" href="serverapp.html"><span class="doc">Server Application</span></a> page.)
+Usually to add sockets feature in <a class="reference external" href="http://www.lua.org/">LUA</a>, the extension <a class="reference external" href="http://w3.impa.br/~diego/software/luasocket/">LUASocket</a> is used. But this extension has three disavantages to create a <a class="reference internal" href="serverapp.html"><span class="doc">Server Application</span></a> in MonaServer:</p>
 <ul class="simple">
 <li>All methods to receive and send data are in a blocking mode by default. It can be changed, but it works not correctly especially in TCP. <a class="reference external" href="http://www.lua.org/">LUA</a> is essentialy single-threaded, and the handle have to return to Mona quickly on each script processing. We have need of non-blocking socket features which works with performance in all circumstances.</li>
-<li><a class="reference external" href="http://w3.impa.br/~diego/software/luasocket/">LUASocket</a> don&#8217;t work always fine on Windows.</li>
+<li><a class="reference external" href="http://w3.impa.br/~diego/software/luasocket/">LUASocket</a> don’t work always fine on Windows.</li>
 <li>It duplicates uselessly socket cross-platform features already provided by Mona in its core.</li>
 </ul>
 <p>For all these reason, we have made available a new <a class="reference external" href="http://www.lua.org/">LUA</a> socket features mapping on Mona socket intern framework, with only non-blocking methods.</p>
@@ -166,9 +154,9 @@ Usually to add sockets feature in <a class="reference external" href="http://www
 </div>
 <div class="section" id="tcp-client">
 <h2><a class="toc-backref" href="#id8">TCP Client</a><a class="headerlink" href="#tcp-client" title="Permalink to this headline">¶</a></h2>
-<p>To create a TCP client, call <em>mona:createTCPClient()</em> method (see <a class="reference internal" href="api.html#ref-mona"><span>Mona</span></a> object).
-Here&#8217;s a complete sample to understand its usage:</p>
-<div class="highlight-lua"><div class="highlight"><pre><span class="n">socket</span> <span class="o">=</span> <span class="n">mona</span><span class="p">:</span><span class="n">createTCPClient</span><span class="p">()</span>
+<p>To create a TCP client, call <em>mona:createTCPClient()</em> method (see <a class="reference internal" href="api.html#ref-mona"><span class="std std-ref">Mona</span></a> object).
+Here’s a complete sample to understand its usage:</p>
+<div class="highlight-lua notranslate"><div class="highlight"><pre><span class="n">socket</span> <span class="o">=</span> <span class="n">mona</span><span class="p">:</span><span class="n">createTCPClient</span><span class="p">()</span>
 <span class="k">function</span> <span class="nf">socket</span><span class="p">:</span><span class="n">onData</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
   <span class="n">NOTE</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">Reception from &quot;</span><span class="o">..</span><span class="n">self</span><span class="p">.</span><span class="n">peerAddress</span><span class="o">..</span><span class="s2">&quot;</span><span class="s"> to &quot;</span><span class="o">..</span><span class="n">self</span><span class="p">.</span><span class="n">address</span><span class="p">)</span>
   <span class="n">self</span><span class="p">:</span><span class="n">send</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="c1">-- echo sample</span>
@@ -216,9 +204,9 @@ Here&#8217;s a complete sample to understand its usage:</p>
 </div>
 <div class="section" id="tcp-server">
 <h2><a class="toc-backref" href="#id12">TCP Server</a><a class="headerlink" href="#tcp-server" title="Permalink to this headline">¶</a></h2>
-<p>To create a TCP server, call <em>mona:createTCPServer()</em> method (see <a class="reference internal" href="api.html#ref-mona"><span>Mona</span></a> object).
-Here&#8217;s a complete sample to understand its usage:</p>
-<div class="highlight-lua"><div class="highlight"><pre><span class="n">server</span> <span class="o">=</span> <span class="n">mona</span><span class="p">:</span><span class="n">createTCPServer</span><span class="p">()</span>
+<p>To create a TCP server, call <em>mona:createTCPServer()</em> method (see <a class="reference internal" href="api.html#ref-mona"><span class="std std-ref">Mona</span></a> object).
+Here’s a complete sample to understand its usage:</p>
+<div class="highlight-lua notranslate"><div class="highlight"><pre><span class="n">server</span> <span class="o">=</span> <span class="n">mona</span><span class="p">:</span><span class="n">createTCPServer</span><span class="p">()</span>
 <span class="k">function</span> <span class="nf">server</span><span class="p">:</span><span class="n">onConnection</span><span class="p">(</span><span class="n">client</span><span class="p">)</span>
   <span class="c1">-- Here we have a TCPClient object, same usage than TCPClient</span>
   <span class="k">function</span> <span class="nf">client</span><span class="p">:</span><span class="n">onData</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
@@ -256,9 +244,9 @@ Here&#8217;s a complete sample to understand its usage:</p>
 </div>
 <div class="section" id="udp-socket">
 <h2><a class="toc-backref" href="#id16">UDP Socket</a><a class="headerlink" href="#udp-socket" title="Permalink to this headline">¶</a></h2>
-<p>To create a UDP socket, call <em>mona:createUDPSocket([allowBroadcast])</em> method (see <a class="reference internal" href="api.html#ref-mona"><span>Mona</span></a> object).
-Here&#8217;s an echo sample to understand its usage:</p>
-<div class="highlight-lua"><div class="highlight"><pre><span class="n">socket</span> <span class="o">=</span> <span class="n">mona</span><span class="p">:</span><span class="n">createUDPSocket</span><span class="p">()</span>
+<p>To create a UDP socket, call <em>mona:createUDPSocket([allowBroadcast])</em> method (see <a class="reference internal" href="api.html#ref-mona"><span class="std std-ref">Mona</span></a> object).
+Here’s an echo sample to understand its usage:</p>
+<div class="highlight-lua notranslate"><div class="highlight"><pre><span class="n">socket</span> <span class="o">=</span> <span class="n">mona</span><span class="p">:</span><span class="n">createUDPSocket</span><span class="p">()</span>
 <span class="k">function</span> <span class="nf">socket</span><span class="p">:</span><span class="n">onPacket</span><span class="p">(</span><span class="n">data</span><span class="p">,</span><span class="n">address</span><span class="p">)</span>
   <span class="n">NOTE</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">Reception from &quot;</span><span class="o">..</span><span class="n">address</span><span class="p">)</span>
   <span class="n">self</span><span class="p">:</span><span class="n">send</span><span class="p">(</span><span class="n">data</span><span class="p">,</span><span class="n">address</span><span class="p">)</span> <span class="c1">-- echo sample</span>
@@ -268,7 +256,7 @@ Here&#8217;s an echo sample to understand its usage:</p>
 </pre></div>
 </div>
 <p>Following a sample in a client form, in connected mode:</p>
-<div class="highlight-lua"><div class="highlight"><pre><span class="n">socket</span> <span class="o">=</span> <span class="n">mona</span><span class="p">:</span><span class="n">createUDPSocket</span><span class="p">()</span>
+<div class="highlight-lua notranslate"><div class="highlight"><pre><span class="n">socket</span> <span class="o">=</span> <span class="n">mona</span><span class="p">:</span><span class="n">createUDPSocket</span><span class="p">()</span>
 <span class="k">function</span> <span class="nf">socket</span><span class="p">:</span><span class="n">onPacket</span><span class="p">(</span><span class="n">data</span><span class="p">,</span><span class="n">address</span><span class="p">)</span>
   <span class="n">NOTE</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">Reception from &quot;</span><span class="o">..</span><span class="n">address</span><span class="o">..</span><span class="s2">&quot;</span><span class="s">: &quot;</span><span class="o">..</span><span class="n">data</span><span class="p">)</span>
 <span class="k">end</span>
@@ -327,8 +315,8 @@ Here&#8217;s an echo sample to understand its usage:</p>
       
     </p>
     <p>
-        &copy; Copyright 2016, Mathieu Poux &amp; Thomas Jammet.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.<br/>
+        &copy; Copyright 2018, Mathieu Poux &amp; Thomas Jammet.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.<br/>
     </p>
   </div>
 </footer>
