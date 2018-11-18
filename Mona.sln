@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Express 2013 for Windows Desktop
-VisualStudioVersion = 12.0.30110.0
+# Visual Studio 14
+VisualStudioVersion = 14.0.25123.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MonaBase", "MonaBase\MonaBase.vcxproj", "{59BC76A9-32CF-4580-8C32-9F12EA4BA22B}"
 EndProject
@@ -14,46 +14,82 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "UnitTests", "UnitTests\Unit
 		{59BC76A9-32CF-4580-8C32-9F12EA4BA22B} = {59BC76A9-32CF-4580-8C32-9F12EA4BA22B}
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Linux", "Linux\Linux.vcxproj", "{E58A08AD-B04B-481D-B1E7-84296B1AFF0D}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MonaWebSocketClient", "..\..\projects\MonaWebSocketClient\MonaWebSocketClient.vcxproj", "{8120313D-0FF5-4A41-BB2B-91DAC52FC0A5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		debug|ARM = debug|ARM
 		debug|Win32 = debug|Win32
 		debug|x64 = debug|x64
+		release|ARM = release|ARM
 		release|Win32 = release|Win32
 		release|x64 = release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{59BC76A9-32CF-4580-8C32-9F12EA4BA22B}.debug|ARM.ActiveCfg = debug|Win32
 		{59BC76A9-32CF-4580-8C32-9F12EA4BA22B}.debug|Win32.ActiveCfg = debug|Win32
 		{59BC76A9-32CF-4580-8C32-9F12EA4BA22B}.debug|Win32.Build.0 = debug|Win32
 		{59BC76A9-32CF-4580-8C32-9F12EA4BA22B}.debug|x64.ActiveCfg = debug|x64
 		{59BC76A9-32CF-4580-8C32-9F12EA4BA22B}.debug|x64.Build.0 = debug|x64
+		{59BC76A9-32CF-4580-8C32-9F12EA4BA22B}.release|ARM.ActiveCfg = release|Win32
 		{59BC76A9-32CF-4580-8C32-9F12EA4BA22B}.release|Win32.ActiveCfg = release|Win32
 		{59BC76A9-32CF-4580-8C32-9F12EA4BA22B}.release|Win32.Build.0 = release|Win32
 		{59BC76A9-32CF-4580-8C32-9F12EA4BA22B}.release|x64.ActiveCfg = release|x64
 		{59BC76A9-32CF-4580-8C32-9F12EA4BA22B}.release|x64.Build.0 = release|x64
+		{DB5EA81E-1995-4F9B-A37E-BFB70E564D4B}.debug|ARM.ActiveCfg = debug|Win32
 		{DB5EA81E-1995-4F9B-A37E-BFB70E564D4B}.debug|Win32.ActiveCfg = debug|Win32
 		{DB5EA81E-1995-4F9B-A37E-BFB70E564D4B}.debug|Win32.Build.0 = debug|Win32
 		{DB5EA81E-1995-4F9B-A37E-BFB70E564D4B}.debug|x64.ActiveCfg = debug|x64
 		{DB5EA81E-1995-4F9B-A37E-BFB70E564D4B}.debug|x64.Build.0 = debug|x64
+		{DB5EA81E-1995-4F9B-A37E-BFB70E564D4B}.release|ARM.ActiveCfg = release|Win32
 		{DB5EA81E-1995-4F9B-A37E-BFB70E564D4B}.release|Win32.ActiveCfg = release|Win32
 		{DB5EA81E-1995-4F9B-A37E-BFB70E564D4B}.release|Win32.Build.0 = release|Win32
 		{DB5EA81E-1995-4F9B-A37E-BFB70E564D4B}.release|x64.ActiveCfg = release|x64
 		{DB5EA81E-1995-4F9B-A37E-BFB70E564D4B}.release|x64.Build.0 = release|x64
+		{21C16553-20EB-4346-B2A5-2018BA8A8C52}.debug|ARM.ActiveCfg = debug|Win32
 		{21C16553-20EB-4346-B2A5-2018BA8A8C52}.debug|Win32.ActiveCfg = debug|Win32
 		{21C16553-20EB-4346-B2A5-2018BA8A8C52}.debug|Win32.Build.0 = debug|Win32
 		{21C16553-20EB-4346-B2A5-2018BA8A8C52}.debug|x64.ActiveCfg = debug|x64
 		{21C16553-20EB-4346-B2A5-2018BA8A8C52}.debug|x64.Build.0 = debug|x64
+		{21C16553-20EB-4346-B2A5-2018BA8A8C52}.release|ARM.ActiveCfg = release|Win32
 		{21C16553-20EB-4346-B2A5-2018BA8A8C52}.release|Win32.ActiveCfg = release|Win32
 		{21C16553-20EB-4346-B2A5-2018BA8A8C52}.release|Win32.Build.0 = release|Win32
 		{21C16553-20EB-4346-B2A5-2018BA8A8C52}.release|x64.ActiveCfg = release|x64
 		{21C16553-20EB-4346-B2A5-2018BA8A8C52}.release|x64.Build.0 = release|x64
+		{9693B98F-14F3-4F89-930E-0AA7B1EBE8F0}.debug|ARM.ActiveCfg = Debug|Win32
 		{9693B98F-14F3-4F89-930E-0AA7B1EBE8F0}.debug|Win32.ActiveCfg = Debug|Win32
 		{9693B98F-14F3-4F89-930E-0AA7B1EBE8F0}.debug|Win32.Build.0 = Debug|Win32
 		{9693B98F-14F3-4F89-930E-0AA7B1EBE8F0}.debug|x64.ActiveCfg = Debug|x64
 		{9693B98F-14F3-4F89-930E-0AA7B1EBE8F0}.debug|x64.Build.0 = Debug|x64
+		{9693B98F-14F3-4F89-930E-0AA7B1EBE8F0}.release|ARM.ActiveCfg = Release|Win32
 		{9693B98F-14F3-4F89-930E-0AA7B1EBE8F0}.release|Win32.ActiveCfg = Release|Win32
 		{9693B98F-14F3-4F89-930E-0AA7B1EBE8F0}.release|Win32.Build.0 = Release|Win32
 		{9693B98F-14F3-4F89-930E-0AA7B1EBE8F0}.release|x64.ActiveCfg = Release|x64
 		{9693B98F-14F3-4F89-930E-0AA7B1EBE8F0}.release|x64.Build.0 = Release|x64
+		{E58A08AD-B04B-481D-B1E7-84296B1AFF0D}.debug|ARM.ActiveCfg = Debug|ARM
+		{E58A08AD-B04B-481D-B1E7-84296B1AFF0D}.debug|ARM.Build.0 = Debug|ARM
+		{E58A08AD-B04B-481D-B1E7-84296B1AFF0D}.debug|Win32.ActiveCfg = Debug|x86
+		{E58A08AD-B04B-481D-B1E7-84296B1AFF0D}.debug|Win32.Build.0 = Debug|x86
+		{E58A08AD-B04B-481D-B1E7-84296B1AFF0D}.debug|x64.ActiveCfg = Debug|x64
+		{E58A08AD-B04B-481D-B1E7-84296B1AFF0D}.debug|x64.Build.0 = Debug|x64
+		{E58A08AD-B04B-481D-B1E7-84296B1AFF0D}.release|ARM.ActiveCfg = Release|ARM
+		{E58A08AD-B04B-481D-B1E7-84296B1AFF0D}.release|ARM.Build.0 = Release|ARM
+		{E58A08AD-B04B-481D-B1E7-84296B1AFF0D}.release|Win32.ActiveCfg = Release|x86
+		{E58A08AD-B04B-481D-B1E7-84296B1AFF0D}.release|Win32.Build.0 = Release|x86
+		{E58A08AD-B04B-481D-B1E7-84296B1AFF0D}.release|x64.ActiveCfg = Release|x64
+		{E58A08AD-B04B-481D-B1E7-84296B1AFF0D}.release|x64.Build.0 = Release|x64
+		{8120313D-0FF5-4A41-BB2B-91DAC52FC0A5}.debug|ARM.ActiveCfg = Debug|Win32
+		{8120313D-0FF5-4A41-BB2B-91DAC52FC0A5}.debug|Win32.ActiveCfg = Debug|Win32
+		{8120313D-0FF5-4A41-BB2B-91DAC52FC0A5}.debug|Win32.Build.0 = Debug|Win32
+		{8120313D-0FF5-4A41-BB2B-91DAC52FC0A5}.debug|x64.ActiveCfg = Debug|x64
+		{8120313D-0FF5-4A41-BB2B-91DAC52FC0A5}.debug|x64.Build.0 = Debug|x64
+		{8120313D-0FF5-4A41-BB2B-91DAC52FC0A5}.release|ARM.ActiveCfg = Release|Win32
+		{8120313D-0FF5-4A41-BB2B-91DAC52FC0A5}.release|Win32.ActiveCfg = Release|Win32
+		{8120313D-0FF5-4A41-BB2B-91DAC52FC0A5}.release|Win32.Build.0 = Release|Win32
+		{8120313D-0FF5-4A41-BB2B-91DAC52FC0A5}.release|x64.ActiveCfg = Release|x64
+		{8120313D-0FF5-4A41-BB2B-91DAC52FC0A5}.release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -185,7 +185,7 @@ UInt64 AMFWriter::beginObject(const char* type) {
 
 	/* Can be ignored finally!
 	if(externalizable) {
-		// What follows is the value of the “inner” object
+		// What follows is the value of the “inner?object
 	} else if(hardProperties>0 && !pClassDef) {
 		// The remaining integer-data represents the number of class members that exist.
 		// If there is a class-def reference there are no property names and the number of values is equal to the number of properties in the class-def

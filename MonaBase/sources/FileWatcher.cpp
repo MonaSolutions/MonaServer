@@ -24,14 +24,20 @@ namespace Mona {
 using namespace std;
 
 
-bool FileWatcher::watchFile() {
-	Time lastModified(file.lastModified(true));
-	if (lastModified != _lastModified) { // if path doesn't exist filePath.lastModified()==0
-		if (_lastModified)
+
+bool FileWatcher::watchFile(const Path& filePath) {
+	filePath.update();
+	if (filePath.lastModified() != _lastModified) { // if path doesn't exist filePath.lastModified()==0
+		if (_lastModified) {
+			_exists = false;
 			clearFile();
-		_lastModified.update(lastModified);
-		if (lastModified)
-			loadFile();
+		}
+		_lastModified.update(filePath.lastModified());
+		if (filePath.lastModified()) {
+			_exists = true;
+			loadFile(filePath.toString().c_str());
+		}
+
 	}
 	return lastModified ? true : false;
 }

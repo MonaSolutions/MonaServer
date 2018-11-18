@@ -26,102 +26,14 @@ using namespace std;
 namespace Mona {
 
 
-Invoker::Invoker(UInt32 socketBufferSize,UInt16 threads) : poolThreads(threads),relayer(poolBuffers,poolThreads,socketBufferSize),sockets(*this,poolBuffers,poolThreads,socketBufferSize),publications(_publications), clients(), groups() {
+Invoker::Invoker(UInt32 socketBufferSize,UInt16 threads) :clients(), groups(),relayer(poolBuffers,poolThreads,socketBufferSize),sockets(*this,poolBuffers,poolThreads,socketBufferSize), poolThreads(threads), defaultRoom(nullptr) {
 	DEBUG(poolThreads.threadsAvailable()," threads available in the server poolthreads");
 		
 }
-
-
 Invoker::~Invoker() {
 	// delete groups
 	for(auto& it : groups)
 		delete it.second;
 }
-
-
-Publication* Invoker::publish(Exception& ex, const string& name, Publication::Type type, Peer* pPeer) {
-	MAP_FIND_OR_EMPLACE(_publications, it, name, name,poolBuffers);
-	Publication& publication(it->second);
-
-	if(publication.running()) { // is already publishing
-		ex.set(Exception::SOFTWARE, name, " is already publishing");
-		return NULL;
-	}
-
-	if(pPeer ? pPeer->onPublish(ex,publication) : onPublish(ex,publication)) {
-		publication.start(type);
-		return &publication;
-	}
-
-	if(!ex)
-		ex.set(Exception::APPLICATION, "Not allowed to publish ",name);
-	if (publication.listeners.count() == 0)
-		_publications.erase(it);
-	return NULL;
-}
-
-
-void Invoker::unpublish(const string& name,Peer* pPeer) {
-
-	auto it = _publications.find(name);
-	if(it == _publications.end()) {
-		DEBUG("The publication '",name,"' doesn't exist, unpublish useless");
-		return;
-	}
-	Publication& publication(it->second);
-	if (publication.running()) {
-		if (pPeer)
-			pPeer->onUnpublish(publication);
-		else
-			onUnpublish(publication);
-		publication.stop();
-	}
-	
-	if(publication.listeners.count()==0)
-		_publications.erase(it);
-}
-
-Listener* Invoker::subscribe(Exception& ex, Peer& peer,string& name,Writer& writer) {
-	string query;
-	publicationName(name, query);
-	Listener* pListener(subscribe(ex, peer, name, writer, query.c_str()));
-	if (pListener)
-		Util::UnpackQuery(query, *pListener);
-	return pListener;
-}
-
-Listener* Invoker::subscribe(Exception& ex, Peer& peer,const string& name,Writer& writer, const char* queryParams) {
-	MAP_FIND_OR_EMPLACE(_publications, it, name, name,poolBuffers);
-	Publication& publication(it->second);
-	Listener* pListener = publication.addListener(ex, peer,writer, queryParams);
-	if (!pListener) {
-		if(!publication.running() && publication.listeners.count()==0)
-			_publications.erase(it);
-	}
-	return pListener;
-}
-
-void Invoker::unsubscribe(Peer& peer,const string& name) {
-	auto it = _publications.find(name);
-	if(it == _publications.end()) {
-		DEBUG("The publication '",name,"' doesn't exists, unsubscribe useless");
-		return;
-	}
-	Publication& publication(it->second);
-	publication.removeListener(peer);
-	if(!publication.running() && publication.listeners.count()==0)
-		_publications.erase(it);
-}
-
-string& Invoker::publicationName(string& name,string& query) {
-	size_t found(name.find('?'));
-	if (found != string::npos) {
-		query = (&name[found]+1);
-		name.assign(name,0,found);
-	} else
-		query.clear();
-	return name;
-}
-
 
 } // namespace Mona

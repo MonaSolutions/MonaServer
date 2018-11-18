@@ -31,7 +31,7 @@ namespace FlashEvents {
 	struct OnStart : Event<void(UInt16 id, FlashWriter& writer)> {};
 	struct OnStop : Event<void(UInt16 id, FlashWriter& writer)> {};
 };
-
+class SharedObject;
 class FlashStream : public virtual Object,
 	public FlashEvents::OnStart,
 	public FlashEvents::OnStop {
@@ -67,6 +67,7 @@ private:
 	Publication*	_pPublication;
 	Listener*		_pListener;
 	UInt32			_bufferTime;
+	std::set<SharedObject*> _sos;
 };
 
 

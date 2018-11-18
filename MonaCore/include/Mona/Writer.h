@@ -95,7 +95,7 @@ public:
 	operator bool() const { return !_isNull; }
 
     static Writer			Null;
-
+	virtual DataWriter&		writeSharedObject(){ return DataWriter::Null; }
 protected:
 	Writer(State state);
 	Writer(const Writer& other);

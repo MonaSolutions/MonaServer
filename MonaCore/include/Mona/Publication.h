@@ -23,7 +23,7 @@ This file is a part of Mona.
 #include "Mona/Listeners.h"
 #include "Mona/Client.h"
 #include "Mona/AMFWriter.h"
-
+#include "Record.h"
 namespace Mona {
 
 namespace PublicationEvents {
@@ -44,7 +44,8 @@ class Publication : public virtual Object,
 public:
 	enum Type {
 		LIVE,
-		RECORD
+		RECORD,
+		APPEND
 	};
 
 	Publication(const std::string& name,const PoolBuffers& poolBuffers);
@@ -55,7 +56,8 @@ public:
 	const std::string&		name() const { return _name; }
 
 	const Listeners			listeners;
-
+	OutFileRTMPStream*		recorder;
+	InFileRTMPStream*		flvReader;
 	UInt64					droppedFrames() const { return _droppedFrames; }
 	UInt32					lastTime() const { return _lastTime; }
 
@@ -69,7 +71,7 @@ public:
 	void					writeProperties(DataReader& reader);
 	void					clearProperties();
 
-	void					start(Type type);
+	void					start(const std::string& path,bool append = false);
 	bool					running() const { return _running; }
 	void					stop();
 
@@ -81,8 +83,6 @@ public:
 	void					removeListener(Client& client);
 
 	void					flush();
-
-	
 	const PoolBuffer&		audioCodecBuffer() const { return _audioCodecBuffer; }
 	const PoolBuffer&		videoCodecBuffer() const { return _videoCodecBuffer; }
 

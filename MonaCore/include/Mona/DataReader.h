@@ -54,7 +54,7 @@ public:
 	virtual void	reset() { packet.reset(_pos); }
 ////////////////////
 
-
+	std::string		readString() const{ UInt16 len = packet.read16(); auto data = packet.current(); packet.next(len); return std::string((const char*)data,len); }
 	bool			readString(std::string& value) { return read(STRING,wrapper(&value)); }
 	bool			readNumber(double& number) {  return read(NUMBER,wrapper(&number)); }
 	bool			readBoolean(bool& value) {  return read(BOOLEAN,wrapper(&value)); }

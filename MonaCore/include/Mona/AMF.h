@@ -68,19 +68,26 @@ namespace Mona {
 class AMF : virtual Static {
 public:
 	enum ContentType {
-		EMPTY				=0x00,
-		CHUNKSIZE			=0x01,
-		ABORT				=0x02,
-		ACK					=0x03,
-		RAW					=0x04,
-		WIN_ACKSIZE			=0x05,
-		BANDWITH			=0x06,
-		AUDIO				=0x08,
-		VIDEO				=0x09,
-		DATA_AMF3			=0x0F,
-		INVOCATION_AMF3		=0x11,
-		DATA				=0x12,
+		EMPTY = 0x00,
+		CHUNKSIZE = 0x01,
+		ABORT = 0x02,
+		ACK = 0x03,
+		RAW = 0x04,
+		WIN_ACKSIZE = 0x05,
+		BANDWITH = 0x06,
+		AUDIO = 0x08,
+		VIDEO = 0x09,
+		DATA_AMF3 = 0x0F,
+		FLEXSHAREDOBJECT = 0x10,
+		INVOCATION_AMF3 = 0x11,
+		DATA = 0x12,
+		SHAREDOBJECT = 0x13,
 		INVOCATION			=0x14
+	};
+	enum SharedObjectType :uint8_t {
+		UNKNOWN, CS_CONNECT, CS_DISCONNECT, CS_SET_ATTRIBUTE, SC_UPDATE_DATA,
+		SC_UPDATE_DATA_ACK, BW_SEND_MESSAGE, SC_STATUS, SC_CLEAR_DATA, SC_DELETE_DATA,
+		CSC_DELETE_DATA, SC_INITIAL_DATA
 	};
 };
 

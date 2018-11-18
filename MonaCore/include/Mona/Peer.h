@@ -89,8 +89,11 @@ public:
 	/// \param filePath : relative path to the file (important : the directory will be erase)
 	/// \param parameters : gives parameters to the function onRead()
 	/// \param properties : recieve output parameters returned by onRead()
-	bool onRead(Exception& ex, DataReader& parameters, File& file, DataWriter& properties) { return onFileAccess(ex, FileAccessType::READ, parameters, file, properties); }
-	bool onWrite(Exception& ex, DataReader& parameters, File& file, DataWriter& properties) { return onFileAccess(ex, FileAccessType::WRITE, parameters, file, properties); }
+
+	bool onRead(Exception& ex, DataReader& parameters, Path& filePath, DataWriter& properties) { return onFileAccess(ex, FileAccessType::READ, parameters, filePath, properties); }
+	bool onWrite(Exception& ex, DataReader& parameters, Path& filePath, DataWriter& properties) { return onFileAccess(ex, FileAccessType::WRITE, parameters, filePath, properties); }
+	void	SendInitSharedObjectMessage(SharedObject& so) override;
+	void	SendSharedObjectMessage(SharedObject& so, DirtyInfo& dirtyInfo)  override;
 
 private:
 	bool onFileAccess(Exception& ex, FileAccessType type, DataReader& parameters, File& file, DataWriter& properties);

@@ -24,6 +24,7 @@ This file is a part of Mona.
 
 #if defined(_WIN32)
     #include "windows.h"
+
 #endif
 
 using namespace std;
@@ -32,7 +33,7 @@ namespace Mona {
 
 #if defined(_WIN32) && (_MSC_VER < 1900)
 	 // for setting number of exponent digits to 2
-	static int output_exp_old_format(_set_output_format(_TWO_DIGIT_EXPONENT));
+	//static int output_exp_old_format(_set_output_format(_TWO_DIGIT_EXPONENT));
 #endif
 
 const string String::Empty;

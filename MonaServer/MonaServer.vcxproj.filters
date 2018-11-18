@@ -65,10 +65,14 @@
     <ClInclude Include="sources\LUAMediaWriter.h">
       <Filter>LUAClass</Filter>
     </ClInclude>
+
+    <ClInclude Include="sources\LUASharedObject.h">
+
     <ClInclude Include="sources\LUAPersistentTable.h">
       <Filter>LUAClass</Filter>
     </ClInclude>
     <ClInclude Include="sources\LUAFile.h">
+
       <Filter>LUAClass</Filter>
     </ClInclude>
   </ItemGroup>
@@ -136,10 +140,14 @@
     <ClCompile Include="sources\LUAMediaWriter.cpp">
       <Filter>LUAClass</Filter>
     </ClCompile>
+<<<<<<< HEAD
+    <ClCompile Include="sources\LUASharedObject.cpp">
+=======
     <ClCompile Include="sources\LUAPersistentTable.cpp">
       <Filter>LUAClass</Filter>
     </ClCompile>
     <ClCompile Include="sources\LUAFile.cpp">
+>>>>>>> 99e0caa31250f429156dda1f79e45c63d65c584c
       <Filter>LUAClass</Filter>
     </ClCompile>
   </ItemGroup>

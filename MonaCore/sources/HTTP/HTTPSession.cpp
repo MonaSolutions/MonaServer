@@ -128,7 +128,7 @@ void HTTPSession::receive(const shared_ptr<HTTPPacket>& pPacket) {
 				HTTP_ADD_HEADER("Upgrade",EXPAND("WebSocket"))
 				HTTP_ADD_HEADER("Sec-WebSocket-Accept", WS::ComputeKey(pPacket->secWebsocketKey))
 			HTTP_END_HEADER
-			peer.onConnection(ex, wsWriter(),parameters,DataWriter::Null); // No response in handshake
+				peer.onConnection(ex, wsWriter(),parameters,DataWriter::Null); // No response in handshake
 		} // TODO else
 	} else {
 		

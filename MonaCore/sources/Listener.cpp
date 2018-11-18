@@ -134,12 +134,12 @@ void Listener::seek(UInt32 time) {
 	_firstTime = true;
 	_startTime = 0;
 	_lastTime = _seekTime = time;
-	NOTE("NEW SEEK_TIME = ",_seekTime);
+	NOTE("NEW SEEK_TIME = ", time);
 }
 
 
 void Listener::pushData(DataReader& reader) {
-	/* TODO remplacer par un relay mode à imaginer et concevoir!
+	/* TODO remplacer par un relay mode ?imaginer et concevoir!
 	if(publication.publisher()) {
 		if(ICE::ProcessSDPPacket(reader,(Peer&)*publication.publisher(),publication.publisher()->writer(),(Peer&)client,*_pDataWriter))
 			return;

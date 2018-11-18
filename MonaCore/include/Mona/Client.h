@@ -27,12 +27,15 @@ This file is a part of Mona.
 #include "Mona/DataReader.h"
 #include <vector>
 
-namespace Mona {
 
-namespace Events {
+namespace Mona {
+	struct DirtyInfo;
+	struct SharedObject;
+
+	namespace Events {
 	struct OnCallProperties : Event<bool(DataReader& reader,std::string& value)> {};
 };
-
+class Room;
 class Client : public Entity, public virtual Object,
 	public Events::OnCallProperties {
 public:
@@ -41,7 +44,7 @@ public:
 		WRITE
 	};
 
-	Client() : _pData(NULL) {}
+	Client() : room(nullptr),_pData(nullptr) {}
 
 	const SocketAddress			address;
 	const SocketAddress			serverAddress;
@@ -55,7 +58,8 @@ public:
 	bool	  hasCustomData() const { return _pData != NULL; }
 	template<typename DataType>
 	DataType* getCustomData() const { return (DataType*)_pData; }
-
+	virtual void	SendInitSharedObjectMessage(SharedObject& so)=0;
+	virtual void	SendSharedObjectMessage(SharedObject& so, DirtyInfo& dirtyInfo)=0;
 	// Alterable in class children Peer
 	
 	const std::string			path;
@@ -69,7 +73,8 @@ public:
 
 	virtual Writer&				writer() = 0;
 
-
+	Room*						room;
+	
 private:
 	mutable void*				_pData;
 };

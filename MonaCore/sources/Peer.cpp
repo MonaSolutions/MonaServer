@@ -24,7 +24,7 @@ This file is a part of Mona.
 #include "Mona/ParameterWriter.h"
 #include "Mona/Util.h"
 #include "Mona/Logs.h"
-
+#include "SharedObject.h"
 using namespace std;
 
 
@@ -307,7 +307,89 @@ void Peer::onUnsubscribe(const Listener& listener) {
 	WARN("Unsubscription client before connection")
 }
 
-bool Peer::onFileAccess(Exception& ex, FileAccessType type, DataReader& parameters, File& file, DataWriter& properties) {
+
+	void Peer::SendInitSharedObjectMessage(SharedObject& so)
+	{
+		auto& writer = _pWriter->writeSharedObject();
+		so.writeHeader(writer.packet);
+		writer.packet.write8(AMF::SC_INITIAL_DATA);
+		writer.packet.write32(0);
+		writer.packet.write8(AMF::SC_CLEAR_DATA);
+		writer.packet.write32(0);
+		FOR_ITEM(so.payloads, payload) {
+			writer.packet.write8(AMF::SC_UPDATE_DATA);
+			auto lenPtr = writer.packet.buffer(4);
+			auto start = writer.packet.size();
+			writer.writePropertyName(payload.first.c_str());
+			payload.second.Write(writer);
+			size_t len = writer.packet.size() - start;
+			UInt8* p = (UInt8*)&len;
+			*lenPtr = *(p + 3);
+			*(lenPtr+1) = *(p + 2);
+			*(lenPtr+2) = *(p + 1);
+			*(lenPtr+3) = *p;
+		}
+		_pWriter->flush();
+	}
+
+	void Peer::SendSharedObjectMessage(SharedObject& so, DirtyInfo& dirtyInfo)
+	{
+		auto& writer = _pWriter->writeSharedObject();
+		so.writeHeader(writer.packet);
+		switch (dirtyInfo.type) {
+		case AMF::SC_UPDATE_DATA:
+		{
+			if (dirtyInfo.id == id)
+			{
+				writer.packet.write8(AMF::SC_UPDATE_DATA_ACK);
+				auto lenPtr = writer.packet.buffer(4);
+				auto start = writer.packet.size();
+				writer.writePropertyName(dirtyInfo.propertyName.c_str());
+				size_t len = writer.packet.size() - start;
+				UInt8* p = (UInt8*)&len;
+				*lenPtr = *(p + 3);
+				*(lenPtr + 1) = *(p + 2);
+				*(lenPtr + 2) = *(p + 1);
+				*(lenPtr + 3) = *p;
+				_pWriter->flush();
+				return;
+			}
+			writer.packet.write8(dirtyInfo.type);
+			auto lenPtr = writer.packet.buffer(4);
+			auto start = writer.packet.size();
+			writer.writePropertyName(dirtyInfo.propertyName.c_str());
+			so.payloads[dirtyInfo.propertyName].Write(writer);
+			size_t len = writer.packet.size() - start;
+			UInt8* p = (UInt8*)&len;
+			*lenPtr = *(p + 3);
+			*(lenPtr + 1) = *(p + 2);
+			*(lenPtr + 2) = *(p + 1);
+			*(lenPtr + 3) = *p;
+			
+		}
+			break;
+		case AMF::SC_CLEAR_DATA:
+			writer.packet.write8(dirtyInfo.type);
+			writer.packet.write32(0);
+			break;
+		case AMF::SC_DELETE_DATA:
+			writer.packet.write8(dirtyInfo.type);
+			auto lenPtr = writer.packet.buffer(4);
+			auto start = writer.packet.size();
+			writer.writePropertyName(dirtyInfo.propertyName.c_str());
+			size_t len = writer.packet.size() - start;
+			UInt8* p = (UInt8*)&len;
+			*lenPtr = *(p + 3);
+			*(lenPtr + 1) = *(p + 2);
+			*(lenPtr + 2) = *(p + 1);
+			*(lenPtr + 3) = *p;
+			break;
+		}
+		_pWriter->flush();
+	}
+
+	bool Peer::onFileAccess(Exception& ex, FileAccessType type, DataReader& parameters, Path& filePath, DataWriter& properties) {
+
 	if(connected)
 		return _handler.onFileAccess(ex,*this, type, parameters, file, properties);
 	ERROR("File '", file.path(), "' access by a not connected client")

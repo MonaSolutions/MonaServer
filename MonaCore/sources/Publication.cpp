@@ -31,7 +31,8 @@ using namespace std;
 
 namespace Mona {
 
-Publication::Publication(const string& name,const PoolBuffers& poolBuffers): _propertiesWriter(poolBuffers),_running(false),poolBuffers(poolBuffers),_audioCodecBuffer(poolBuffers),_videoCodecBuffer(poolBuffers),_new(false),_name(name),_lastTime(0),_broken(false),_droppedFrames(0),listeners(_listeners) {
+Publication::Publication(const string& name,const PoolBuffers& poolBuffers): _propertiesWriter(poolBuffers),_running(false),poolBuffers(poolBuffers),_audioCodecBuffer(poolBuffers),_videoCodecBuffer(poolBuffers),_new(false),_name(name),_lastTime(0),_broken(false),_droppedFrames(0),listeners(_listeners), recorder(nullptr), flvReader(nullptr)
+{
 	DEBUG("New publication ",_name);
 }
 
@@ -57,6 +58,7 @@ Listener* Publication::addListener(Exception& ex, Client& client,Writer& writer,
 	}
 	if(it!=_listeners.begin())
 		--it;
+	
 	Listener* pListener = new Listener(*this,client,writer,queryParameters);
 	if(((Peer&)client).onSubscribe(ex,*pListener)) { // if ex, it has already been displayed as log
 		_listeners.emplace_hint(it,&client,pListener);
@@ -78,10 +80,14 @@ void Publication::removeListener(Client& client) {
 	_listeners.erase(it);
 	((Peer&)client).onUnsubscribe(*pListener);
 	delete pListener;
+	if(flvReader)
+	{
+		stop();
+	}
 }
 
 
-void Publication::start(Type type) {
+void Publication::start(const std::string& path, bool append) {
 	if (_running)
 		return;
 	INFO("Publication ", _name, " started")
@@ -89,6 +95,11 @@ void Publication::start(Type type) {
 	for (auto& it : _listeners) {
 		it.second->startPublishing();
 		it.second->flush(); // flush possible messages in startPublishing
+	}
+	if(path!="")
+	{
+		INFO("start recording...");
+		recorder = new OutFileRTMPStream(path, append);
 	}
 }
 
@@ -109,6 +120,16 @@ void Publication::stop() {
 	_running=false;
 	_videoCodecBuffer.release();
 	_audioCodecBuffer.release();
+	if (recorder)
+	{
+		delete recorder;
+		recorder = nullptr;
+	}
+	if(flvReader)
+	{
+		//delete flvReader;
+		flvReader = nullptr;
+	}
 }
 
 void Publication::flush() {
@@ -134,6 +155,10 @@ void Publication::pushData(DataReader& reader, UInt16 ping, double lostRate) {
 		(it++)->second->pushData(reader);   // listener can be removed in this call
 		reader.reset();
 	}
+	if(recorder)
+	{
+		recorder->FeedData(0, &reader.packet, AMF::DATA);
+	}
 	OnData::raise(*this, reader);
 }
 
@@ -152,6 +177,7 @@ void Publication::pushAudio(UInt32 time,PacketReader& packet, UInt16 ping, doubl
 
 	// save audio codec packet for future listeners
 	if (MediaCodec::AAC::IsCodecInfos(packet)) {
+		if (!_audioCodecBuffer.empty())return;
 		DEBUG("AAC codec infos received on publication ",_name)
 		// AAC codec && settings codec informations
 		_audioCodecBuffer->resize(packet.available(),false);
@@ -165,6 +191,8 @@ void Publication::pushAudio(UInt32 time,PacketReader& packet, UInt16 ping, doubl
 		(it++)->second->pushAudio(time,packet);  // listener can be removed in this call
 		packet.reset(pos);
 	}
+	if (recorder)
+		recorder->FeedData(time, &packet, AMF::AUDIO);
 	OnAudio::raise(*this, _lastTime=time, packet);
 }
 
@@ -178,12 +206,13 @@ void Publication::pushVideo(UInt32 time,PacketReader& packet, UInt16 ping, doubl
 
 	// save video codec packet for future listeners
 	if (MediaCodec::H264::IsCodecInfos(packet)) {
+		if (!_videoCodecBuffer.empty())return;
 		DEBUG("H264 codec infos received on publication ",_name)
 		// h264 codec && settings codec informations
 		_videoCodecBuffer->resize(packet.available(), false);
 		memcpy(_videoCodecBuffer->data(), packet.current(), packet.available());
 	}
-
+	
 	_videoQOS.add(packet.available()+4,ping,lostRate); // 4 for time encoded
 	if(lostRate) {
 		INFO((UInt8)(lostRate*100),"% video fragments lost on publication ",_name);
@@ -206,6 +235,8 @@ void Publication::pushVideo(UInt32 time,PacketReader& packet, UInt16 ping, doubl
 		(it++)->second->pushVideo(time,packet); // listener can be removed in this call
 		packet.reset(pos);
 	}
+	if(recorder)
+		recorder->FeedData(time, &packet, AMF::VIDEO);
 	OnVideo::raise(*this, _lastTime=time, packet);
 }
 

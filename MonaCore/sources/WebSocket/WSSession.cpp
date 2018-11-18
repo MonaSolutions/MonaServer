@@ -22,7 +22,7 @@ This file is a part of Mona.
 #include "Mona/JSONReader.h"
 #include "Mona/StringReader.h"
 #include "Mona/MIME.h"
-
+#include "Room.h"
 
 using namespace std;
 
@@ -65,25 +65,25 @@ void WSSession::kill(UInt32 type){
 
 bool WSSession::openSubscribtion(Exception& ex, const string& name, Writer& writer) {
 	closeSusbcription();
-	_pListener=invoker.subscribe(ex, peer, name, writer,peer.query.c_str());
+	_pListener= peer.room->subscribe(ex, peer, name, writer,peer.query.c_str());
 	return _pListener ? true : false;
 }
 void WSSession::closeSusbcription(){
 	if (_pListener) {
 		 // not remove onListenerStart and onListenerStop to raise events on invoker.unsubscribe
-		invoker.unsubscribe(peer,_pListener->publication.name());
+		peer.room->unsubscribe(peer,_pListener->publication.name());
 		_pListener=NULL;
 	}
 }
 
 bool WSSession::openPublication(Exception& ex, const string& name, Publication::Type type) {
 	closeSusbcription();
-	_pPublication=invoker.publish(ex, peer, name, type);
+	_pPublication= peer.room->publish(ex, peer, name, type);
 	return _pPublication ? true : false;
 }
 void WSSession::closePublication(){
 	if(_pPublication) {
-		invoker.unpublish(peer,_pPublication->name());
+		peer.room->unpublish(peer,_pPublication->name());
 		_pPublication=NULL;
 	}
 }
@@ -144,7 +144,10 @@ void WSSession::readMessage(Exception& ex, DataReader& reader, UInt8 responseTyp
 	std::string name("onMessage");
 	
 	if (typeid(reader).name() != typeid(StringReader).name() && reader.readString(name)) {
-
+		if (name == "__connect") {
+			peer.onConnection(ex, _writer,reader);
+			return;
+		}
 		if(name=="__publish") {
 			if(!reader.readString(name)) {
 				ex.set(Exception::PROTOCOL, "__publish method takes a stream name in first parameter",WS::CODE_MALFORMED_PAYLOAD);

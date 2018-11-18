@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 MonaServer
 ===========
 
@@ -39,3 +40,6 @@ You can contribute to the project by making a donation : [$]|[€].
 [GNU General Public License]: http://www.gnu.org/licenses/ "www.gnu.org/licenses"
 [$]: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=VXMEGJ2MFVP4C "Donation US"
 [€]: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=LW2NA26CNLS6G "Donation EU"
+=======
+#MonaServer
+>>>>>>> 8858d476b257d3c02ff82e2a1abd66af7b47bb22

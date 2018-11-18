@@ -269,6 +269,11 @@
     <ClInclude Include="include\Mona\RTSP\RTSPSender.h">
       <Filter>Protocols\RTSP</Filter>
     </ClInclude>
+    <ClInclude Include="include\Record.h" />
+    <ClInclude Include="include\SharedObject.h" />
+    <ClInclude Include="include\Room.h" />
+    <ClInclude Include="include\AMFObject.h" />
+    <ClInclude Include="include\Mona\WebSocket\WSSessionFactory.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="sources\Protocols.cpp">
@@ -437,5 +442,8 @@
     <ClCompile Include="sources\RTSP\RTSPWriter.cpp">
       <Filter>Protocols\RTSP</Filter>
     </ClCompile>
+    <ClCompile Include="sources\RTMP\Record.cpp" />
+    <ClCompile Include="sources\Room.cpp" />
+    <ClCompile Include="sources\SharedObject.cpp" />
   </ItemGroup>
 </Project>

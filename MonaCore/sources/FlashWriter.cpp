@@ -28,9 +28,15 @@ using namespace std;
 
 
 namespace Mona {
+	AMFWriter& FlashWriter::writeSharedObject()
+	{
+		AMFWriter& writer = write(AMF::SHAREDOBJECT);
 
+		writer.amf0 = true;
+		return writer;
+	}
 
-FlashWriter::FlashWriter(State state,const PoolBuffers& poolBuffers) : poolBuffers(poolBuffers),_callbackHandleOnAbort(0),_callbackHandle(0),Writer(state),amf0(false) {
+	FlashWriter::FlashWriter(State state,const PoolBuffers& poolBuffers) : poolBuffers(poolBuffers),_callbackHandleOnAbort(0),_callbackHandle(0),Writer(state),amf0(false) {
 }
 
 FlashWriter::FlashWriter(FlashWriter& writer) : poolBuffers(writer.poolBuffers),_callbackHandle(writer._callbackHandle),_callbackHandleOnAbort(0),Writer(writer),amf0(writer.amf0) {
