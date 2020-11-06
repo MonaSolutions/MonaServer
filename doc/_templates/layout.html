@@ -5,9 +5,20 @@
   {# Load google fonts (this is needed only on localhost) #}
   <link href='http://fonts.googleapis.com/css?family=Lobster' rel='stylesheet' type='text/css'>
   <link href='http://fonts.googleapis.com/css?family=Cabin' rel='stylesheet' type='text/css'>
+  
+  {# Add google analytics. #}
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-X2W458X7ZT"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+  
+    gtag('config', 'G-X2W458X7ZT');
+  </script>
 
   {# Add github banner (from: https://github.com/blog/273-github-ribbons). #}
-  <a href="https://github.com/MonaSolutions/MonaServer"
+  <a href="https://github.com/MonaSolutions/MonaServer2"
      class="visible-desktop hidden-xs"><img
     id="gh-banner"
     style="position: absolute; top: 50px; right: 0; border: 0;"
@@ -19,18 +30,6 @@
       var navHeight = $(".navbar .container").css("height");
       $("#gh-banner").css("top", navHeight);
     });
-  </script>
-  
-  {# Add google analytics. #}
-  <script>
-    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
-  
-    ga('create', 'UA-58143950-1', 'auto');
-    ga('send', 'pageview');
-  
   </script>
   {{ super() }}
 {% endblock %}

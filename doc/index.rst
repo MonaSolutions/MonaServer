@@ -1,5 +1,7 @@
 .. Mona documentation master file
 
+**UPDATE: MonaServer is no longer maintained,** MonaServer2_ **is the new official version with a lot of new features.**
+
 Overview
 #################################
 
@@ -49,3 +51,4 @@ You want to see what **MonaServer** can do for you? Let's go to the sample page 
 .. _`Raspberry Pi` : http://www.raspberrypi.org/
 .. _`MonaServer forum` : https://groups.google.com/forum/#!forum/monaserver
 .. _`issue page` : https://github.com/MonaSolutions/MonaServer/issues
+.. _MonaServer2 : https://github.com/MonaSolutions/MonaServer2
